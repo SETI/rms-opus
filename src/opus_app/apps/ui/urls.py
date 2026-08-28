@@ -1,5 +1,6 @@
 # ui/urls.py
 """The routes of the interface's own API, and of the Django admin site."""
+
 from django.contrib import admin
 from django.urls import re_path
 
@@ -23,5 +24,5 @@ urlpatterns = [
     re_path(r'^__normalizeurl.json$', api_normalize_url),
     re_path(r'^__dummy.json$', api_dummy),
     re_path(r'^__fake/__viewmetadatamodal/(?P<opus_id>[-\w]+).json$', api_dummy),
-    re_path(r'^__fake/__selectmetadatamodal.json$', api_dummy)
+    re_path(r'^__fake/__selectmetadatamodal.json$', api_dummy),
 ]

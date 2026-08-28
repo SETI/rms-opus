@@ -56,8 +56,12 @@ _TEMPLATE_SCHEMAS = frozenset({'obs_surface_geometry_target'})
 #: The suffixes that turn a category label into the name a linked field is qualified
 #: with, as ``body_qualified_label_results`` in ``opus_app.apps.paraminfo.models``
 #: strips them.
-_CATEGORY_LABEL_SUFFIXES = (' Surface Geometry Constraints', ' Geometry Constraints',
-                            ' Mission Constraints', ' Constraints')
+_CATEGORY_LABEL_SUFFIXES = (
+    ' Surface Geometry Constraints',
+    ' Geometry Constraints',
+    ' Mission Constraints',
+    ' Constraints',
+)
 
 
 class FieldRow(NamedTuple):
@@ -84,8 +88,9 @@ def _packaged_obs_table_names() -> list[str]:
         One name per ``obs_*.json`` schema that defines a table of its own, plus
         `COLLAPSED_SURFACE_GEO_TABLE` in place of the per-target template.
     """
-    names = [entry.name.removesuffix('.json')
-             for entry in import_util.table_schema_files('obs_*.json')]
+    names = [
+        entry.name.removesuffix('.json') for entry in import_util.table_schema_files('obs_*.json')
+    ]
     names = [name for name in names if name not in _TEMPLATE_SCHEMAS]
     names.append(COLLAPSED_SURFACE_GEO_TABLE)
     return names
@@ -107,10 +112,11 @@ def _read_schema(table_name: str) -> list[dict[str, Any]]:
     if table_name.startswith('obs_surface_geometry__'):
         target_name = table_name.removeprefix('obs_surface_geometry__')
         table_name = 'obs_surface_geometry_target'
-        replace = [('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
-                   ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name))]
-    contents = (import_util.TABLE_SCHEMA_DIR /
-                (table_name+'.json')).read_text(encoding='utf-8')
+        replace = [
+            ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
+            ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name)),
+        ]
+    contents = (import_util.TABLE_SCHEMA_DIR / (table_name + '.json')).read_text(encoding='utf-8')
     for old, new in replace:
         contents = contents.replace(old, new)
     schema: list[dict[str, Any]] = json.loads(contents)
@@ -215,8 +221,7 @@ def _sort_key(column: dict[str, Any], table_name: str) -> tuple[Any, ...]:
         The sort key.
     """
     sub_heading = column.get('pi_sub_heading')
-    return (column['pi_disp_order'], table_name,
-            sub_heading is not None, sub_heading or '')
+    return (column['pi_disp_order'], table_name, sub_heading is not None, sub_heading or '')
 
 
 def build_field_rows() -> list[FieldRow]:
@@ -229,7 +234,8 @@ def build_field_rows() -> list[FieldRow]:
     table_names = _packaged_obs_table_names()
     ordered_tables = build_table_names_rows(
         table_names.__contains__,
-        [name for name in table_names if name.startswith('obs_surface_geometry__')])
+        [name for name in table_names if name.startswith('obs_surface_geometry__')],
+    )
     label_by_table = {row['table_name']: row['label'] for row in ordered_tables}
 
     # Every column carrying a param_info category, indexed so that a pi_referred_slug
@@ -239,8 +245,11 @@ def build_field_rows() -> list[FieldRow]:
     by_slug: dict[str, tuple[dict[str, Any], str]] = {}
     by_old_slug: dict[str, tuple[dict[str, Any], str]] = {}
     for table_name in label_by_table:
-        columns = [column for column in _read_schema(table_name)
-                   if column.get('pi_category_name') is not None]
+        columns = [
+            column
+            for column in _read_schema(table_name)
+            if column.get('pi_category_name') is not None
+        ]
         columns_by_table[table_name] = columns
         for column in columns:
             if column.get('pi_slug'):
@@ -267,10 +276,10 @@ def build_field_rows() -> list[FieldRow]:
                     # A column with neither is not a search field: it contributes
                     # only a definition to the data dictionary.
                     continue
-                referred_column, referred_table = (by_slug.get(referred) or
-                                                   by_old_slug[referred])
-                label = _qualified_label(_results_label(referred_column),
-                                         label_by_table[referred_table])
+                referred_column, referred_table = by_slug.get(referred) or by_old_slug[referred]
+                label = _qualified_label(
+                    _results_label(referred_column), label_by_table[referred_table]
+                )
                 units = _units_for(referred_column.get('pi_form_type'))
                 slug = referred_column['pi_slug']
             elif slug.startswith('**'):
@@ -279,14 +288,18 @@ def build_field_rows() -> list[FieldRow]:
             else:
                 label = _results_label(column)
                 units = _units_for(column.get('pi_form_type'))
-            group.append((_sort_key(column, table_name),
-                          FieldRow(category_label, label, units,
-                                   _collapse_field_id(slug))))
+            group.append(
+                (
+                    _sort_key(column, table_name),
+                    FieldRow(category_label, label, units, _collapse_field_id(slug)),
+                )
+            )
 
     rows: list[FieldRow] = []
     for category_label in sorted(entries, key=lambda label: position[label]):
-        rows.extend(row for _key, row in sorted(entries[category_label],
-                                                key=lambda entry: entry[0]))
+        rows.extend(
+            row for _key, row in sorted(entries[category_label], key=lambda entry: entry[0])
+        )
     return rows
 
 
@@ -299,23 +312,23 @@ def render_field_table_rst(rows: list[FieldRow]) -> str:
     Returns:
         The table as reStructuredText, headed by a comment saying it is generated.
     """
-    lines = ['.. Written by docs/_ext/opus_field_tables.py at build time. Change the',
-             '   generator, or the table schemas it reads, rather than this file.',
-             '',
-             '.. list-table::',
-             '   :header-rows: 1',
-             '   :widths: 25 45 30',
-             '',
-             '   * - Category',
-             '     - Label and units',
-             '     - Field ID']
+    lines = [
+        '.. Written by docs/_ext/opus_field_tables.py at build time. Change the',
+        '   generator, or the table schemas it reads, rather than this file.',
+        '',
+        '.. list-table::',
+        '   :header-rows: 1',
+        '   :widths: 25 45 30',
+        '',
+        '   * - Category',
+        '     - Label and units',
+        '     - Field ID',
+    ]
     for row in rows:
         label = row.label
         if row.units:
             label = f'{label} |br| {", ".join(row.units)}'
-        lines += [f'   * - {row.category}',
-                  f'     - {label}',
-                  f'     - ``{row.field_id}``']
+        lines += [f'   * - {row.category}', f'     - {label}', f'     - ``{row.field_id}``']
     lines.append('')
     return '\n'.join(lines)
 

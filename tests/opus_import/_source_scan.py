@@ -84,6 +84,7 @@ def classes(tree: ast.Module) -> Iterator[ast.ClassDef]:
 
 def _owned_functions(cls: ast.ClassDef) -> Iterator[ast.FunctionDef]:
     """Every function `cls` itself defines, at any depth within its own body."""
+
     def descend(node: ast.AST) -> Iterator[ast.FunctionDef]:
         for child in ast.iter_child_nodes(node):
             if isinstance(child, ast.ClassDef):
@@ -94,6 +95,7 @@ def _owned_functions(cls: ast.ClassDef) -> Iterator[ast.FunctionDef]:
             if isinstance(child, ast.FunctionDef):
                 yield child
             yield from descend(child)
+
     yield from descend(cls)
 
 

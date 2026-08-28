@@ -21,7 +21,6 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``NHMVIC``."""
@@ -72,7 +71,6 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
         filespec = filespec.replace('_sci', '_eng')
         filespec = filespec.replace('_2001', '_1001')
         return filespec
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -127,7 +125,6 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('IMG')
 
-
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
     ##################################
@@ -146,7 +143,6 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
 
     def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         return 128
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -173,7 +169,6 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
 
     def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_no_res1()
-
 
     ###############################################
     ### FIELD METHODS FOR obs_instrument_nhmvic ###

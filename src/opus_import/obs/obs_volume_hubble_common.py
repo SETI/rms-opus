@@ -64,7 +64,6 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         assert obs_type in ('IMG', 'SPE', 'SPI')
         return obs_type == 'IMG' or obs_type == 'SPI'
 
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
@@ -98,7 +97,6 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         assert self.bundle is not None
         return cast(str | None, self.bundle + '/' + filespec)
 
-
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
@@ -126,8 +124,16 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
             not one of the planets.
         """
         planet_name = self._index_col('PLANET_NAME')
-        if planet_name not in ['VENUS', 'EARTH', 'MARS', 'JUPITER', 'SATURN',
-                               'URANUS', 'NEPTUNE', 'PLUTO']:
+        if planet_name not in [
+            'VENUS',
+            'EARTH',
+            'MARS',
+            'JUPITER',
+            'SATURN',
+            'URANUS',
+            'NEPTUNE',
+            'PLUTO',
+        ]:
             return 'OTH'
         return cast(str, planet_name[:3])
 
@@ -143,10 +149,9 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
 
         # We call it "EMISSION" if at least 3/4 of the passband is below 350 nm
         # and the high end of the passband is below 400 nm.
-        if wl2 < 0.4 and (3*wl1+wl2)/4 < 0.35:
+        if wl2 < 0.4 and (3 * wl1 + wl2) / 4 < 0.35:
             return self._create_mult('EMISSION')
         return self._create_mult('REFLECT')
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -180,7 +185,6 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
             return None
         return as_int(min(lines, samples))
 
-
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
@@ -192,8 +196,7 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
             return None
         # This is necessary because in some cases these are backwards in the table!
         if wl1 > wl2:
-            self._log_nonrepeating_warning(
-                        'MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
+            self._log_nonrepeating_warning('MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
             return cast(FloatField, wl2)
         return cast(FloatField, wl1)
 
@@ -204,8 +207,7 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
             return None
         # This is necessary because in some cases these are backwards in the table!
         if wl1 > wl2:
-            self._log_nonrepeating_warning(
-                        'MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
+            self._log_nonrepeating_warning('MAXIMUM_WAVELENGTH < MINIMUM_WAVELENGTH; swapping')
             return cast(FloatField, wl1)
         return cast(FloatField, wl2)
 
@@ -220,7 +222,6 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
 
     def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_no_res1()
-
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -267,7 +268,7 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         instrument = self.instrument_id
         assert instrument is not None
         filter_name = self._index_col('FILTER_NAME')
-        if filter_name.startswith('ND'): # For STIS ND_3 => ND3
+        if filter_name.startswith('ND'):  # For STIS ND_3 => ND3
             filter_name = filter_name.replace('_', '')
         else:
             filter_name = filter_name.replace('_', ' ')
@@ -275,7 +276,7 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
         return self._create_mult_keep_case(col_val=ret, grouping=instrument[3:])
 
     def field_obs_mission_hubble_filter_type(self) -> MultFieldRet:
-        raise NotImplementedError # Required
+        raise NotImplementedError  # Required
 
     def field_obs_mission_hubble_aperture_type(self) -> MultFieldRet:
         instrument = self.instrument_id

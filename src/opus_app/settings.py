@@ -21,13 +21,14 @@ from opus_config import get_config
 
 # First check to see if we have the memcache package installed
 _has_memcache = False
-try: # pragma: no cover
+try:  # pragma: no cover
     # An optional accelerator rather than a declared dependency: OPUS runs
     # without it, on Django's local-memory cache. It is not in the project's
     # requirements and ships no stubs, so the checker cannot see it either.
     import pymemcache  # type: ignore[import-not-found]
+
     _has_memcache = True
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     pass
 
 # Now check to see if memcached is actually running
@@ -219,7 +220,7 @@ TEMPLATES = [
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
-            ]
+            ],
         },
     },
 ]
@@ -245,19 +246,19 @@ INSTALLED_APPS = [
     'opus_app.apps.tools',
 ]
 
-if _has_memcache: # pragma: no cover
+if _has_memcache:  # pragma: no cover
     CACHES = {
-        "default": {
-            "BACKEND":"django.core.cache.backends.memcached.PyMemcacheCache",
-            "LOCATION": "127.0.0.1:11211",
-            "TIMEOUT": None,
+        'default': {
+            'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+            'LOCATION': '127.0.0.1:11211',
+            'TIMEOUT': None,
         },
     }
 else:
-    CACHES = { # pragma: no cover
-       'default': {
-           'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        #    'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    CACHES = {  # pragma: no cover
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            #    'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
 
@@ -275,14 +276,14 @@ LOGGING = {
     'disable_existing_loggers': True,
     'formatters': {
         'standard': {
-            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
+            'format': '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s',
+            'datefmt': '%d/%b/%Y %H:%M:%S',
         },
     },
     'handlers': {
         'null': {
-            'level':'DEBUG',
-            'class':'logging.NullHandler',
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
         },
         'logfile': {
             'level': OPUS_LOG_FILE_LEVEL,
@@ -292,10 +293,10 @@ LOGGING = {
             'backupCount': 2,
             'formatter': 'standard',
         },
-        'console':{
+        'console': {
             'level': OPUS_LOG_CONSOLE_LEVEL,
             'class': 'logging.StreamHandler',
-            'formatter': 'standard'
+            'formatter': 'standard',
         },
     },
     'loggers': {
@@ -349,7 +350,7 @@ LOGGING = {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-    }
+    },
 }
 
 
@@ -371,8 +372,8 @@ DATABASES = {
         'PASSWORD': DB_PASSWORD,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
         'TEST': {
-                    'NAME': DB_SCHEMA_NAME,  # use same database for test as prod YES
-                },
+            'NAME': DB_SCHEMA_NAME,  # use same database for test as prod YES
+        },
     },
 }
 
@@ -382,23 +383,54 @@ DATABASES = {
 
 # Tables in which every observation in the database appears.
 # These tables are ALWAYS shown to the user and are not triggered.
-BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
-               'obs_surface_geometry_name', 'obs_surface_geometry',
-               'obs_wavelength', 'obs_type_image', 'obs_profile']
+BASE_TABLES = [
+    'obs_general',
+    'obs_pds',
+    'obs_ring_geometry',
+    'obs_surface_geometry_name',
+    'obs_surface_geometry',
+    'obs_wavelength',
+    'obs_type_image',
+    'obs_profile',
+]
 
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
-SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
-                   'cart_browse', 'cart_order', 'cart_page', 'cart_startobs',
-                   'colls_browse', 'colls_order', 'colls_page',
-                   'colls_startobs',
-                   'cols', 'col_chooser', 'detail', 'download',
-                   'expanded_cats',
-                   'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
-                   'range', 'recyclebin', 'reqno', 'request',
-                   'types', 'url_cols', 'units', 'unselected_types', 'view',
-                   'widgets', 'widgets2',
-                   '__sessionid')
+SLUGS_NOT_IN_DB = (
+    'browse',
+    'order',
+    'page',
+    'startobs',
+    'cart_browse',
+    'cart_order',
+    'cart_page',
+    'cart_startobs',
+    'colls_browse',
+    'colls_order',
+    'colls_page',
+    'colls_startobs',
+    'cols',
+    'col_chooser',
+    'detail',
+    'download',
+    'expanded_cats',
+    'gallery_data_viewer',
+    'ignorelog',
+    'limit',
+    'loc_type',
+    'range',
+    'recyclebin',
+    'reqno',
+    'request',
+    'types',
+    'url_cols',
+    'units',
+    'unselected_types',
+    'view',
+    'widgets',
+    'widgets2',
+    '__sessionid',
+)
 
 # The columns selected when OPUS is first initialized
 DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
@@ -408,34 +440,33 @@ DEFAULT_WIDGETS = 'instrument,observationtype,target'
 
 # The sort order to be used if there is no order specified in the URL, or
 # the order slug has no value.
-DEFAULT_SORT_ORDER = 'time1,opusid' # This must be a list of slugs
+DEFAULT_SORT_ORDER = 'time1,opusid'  # This must be a list of slugs
 
 # The sort order to append after all other sort orders to ensure the ordering
 # is always deterministic. This field should be unique for all observations.
-FINAL_SORT_ORDER = 'opusid' # This must be a slug
+FINAL_SORT_ORDER = 'opusid'  # This must be a slug
 
-IMAGE_COLUMNS   = ['thumb.jpg','small.jpg','med.jpg','full.jpg']
+IMAGE_COLUMNS = ['thumb.jpg', 'small.jpg', 'med.jpg', 'full.jpg']
 
-THUMBNAIL_IMAGE_SIZE = 100 # Pixels
+THUMBNAIL_IMAGE_SIZE = 100  # Pixels
 PREVIEW_SIZE_TO_PDS_TYPE = {
     'thumb': ('Browse Image (thumbnail)', 'Browse Diagram (thumbnail)'),
-    'small': ('Browse Image (small)',     'Browse Diagram (small)'),
-    'med':   ('Browse Image (medium)',    'Browse Diagram (medium)'),
-    'full':  ('Browse Image (full-size)', 'Browse Diagram (full-size)')
+    'small': ('Browse Image (small)', 'Browse Diagram (small)'),
+    'med': ('Browse Image (medium)', 'Browse Diagram (medium)'),
+    'full': ('Browse Image (full-size)', 'Browse Diagram (full-size)'),
 }
 
 PREVIEW_GUIDES = {
     'Cassini CIRS': 'https://pds-rings.seti.org/cassini/cirs/COCIRS_previews.txt',
     'Cassini UVIS': 'https://pds-rings.seti.org/cassini/uvis/UVIS_previews.txt',
-    'Cassini VIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt'
+    'Cassini VIMS': 'https://pds-rings.seti.org/cassini/vims/COVIMS_previews.txt',
 }
 
 # Browse products displayed in OPUS detail tab
-DISPLAYED_BROWSE_PRODUCTS = ['browse_medium', 'diagram_medium',
-                             'browse_full', 'diagram_full']
+DISPLAYED_BROWSE_PRODUCTS = ['browse_medium', 'diagram_medium', 'browse_full', 'diagram_full']
 
-RANGE_FORM_TYPES = ('LONG','RANGE')
-MULT_FORM_TYPES  = ('GROUP','MULTIGROUP')
+RANGE_FORM_TYPES = ('LONG', 'RANGE')
+MULT_FORM_TYPES = ('GROUP', 'MULTIGROUP')
 
 # First one in list is the default
 STRING_QTYPES = ('contains', 'begins', 'ends', 'matches', 'excludes', 'regex')
@@ -444,22 +475,22 @@ RANGE_QTYPES = ('any', 'all', 'only')
 DEFAULT_PAGE_LIMIT = 100
 DEFAULT_STRINGCHOICE_LIMIT = 100
 
-SQL_MAX_LIMIT = 100000000 # Max size for a LIMIT clause
+SQL_MAX_LIMIT = 100000000  # Max size for a LIMIT clause
 
 # More than this many rows in the cache table -> don't join it
 STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000
 # Timeout for SELECT when joined with cache table
-STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500 # ms
+STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500  # ms
 # Timeout for SELECT When not joined with cache table
-STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500 # ms
+STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500  # ms
 
 THUMBNAIL_NOT_FOUND = 'https://opus.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
 MAX_SELECTIONS_ALLOWED = 10000
 MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 10000
 MAX_SELECTIONS_FOR_URL_DOWNLOAD = 10000
-MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
-MAX_CUM_DOWNLOAD_SIZE = 50*1024*1024*1024 # 50 gigs max cum downloads for a session
+MAX_DOWNLOAD_SIZE = 3 * 1024 * 1024 * 1024  # 3 gig max for any single download
+MAX_CUM_DOWNLOAD_SIZE = 50 * 1024 * 1024 * 1024  # 50 gigs max cum downloads for a session
 
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
@@ -475,7 +506,7 @@ OPUS_FILE_VERSION = ''
 DOWNLOAD_FORMATS = {
     'zip': ('application/zip', 'w', 'r'),
     'tar': ('application/x-tar', 'w', 'r'),
-    'tgz': ('application/gzip', 'w:gz', 'r:gz'), # same as .tar.gz, we will use .tgz here
+    'tgz': ('application/gzip', 'w:gz', 'r:gz'),  # same as .tar.gz, we will use .tgz here
 }
 
 # We don't want to have these characters in HTML class or ID for customized tooltips.

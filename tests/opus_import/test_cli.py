@@ -31,8 +31,14 @@ def test_parser_defaults_to_doing_nothing() -> None:
 def test_parser_reads_bundles_and_options() -> None:
     """Bundle descriptors are positional; the options around them keep their names."""
     args = cli._create_argument_parser().parse_args(
-        ['--import-check-duplicate-id', '--do-all-import',
-         '--override-db-schema', 'opus_test_db', 'COISS_2002,COISS_2008'])
+        [
+            '--import-check-duplicate-id',
+            '--do-all-import',
+            '--override-db-schema',
+            'opus_test_db',
+            'COISS_2002,COISS_2008',
+        ]
+    )
     assert args.bundles == ['COISS_2002,COISS_2008']
     assert args.do_all_import is True
     assert args.import_check_duplicate_id is True
@@ -69,9 +75,14 @@ def _run_without_settings(directory: Path, *arguments: str) -> subprocess.Comple
     workdir.mkdir()
     env = dict(os.environ)
     env.pop(OPUS_CONFIG_ENV_VAR, None)
-    return subprocess.run([sys.executable, '-m', 'opus_import', *arguments],
-                          capture_output=True, text=True, cwd=workdir, env=env,
-                          check=False)
+    return subprocess.run(
+        [sys.executable, '-m', 'opus_import', *arguments],
+        capture_output=True,
+        text=True,
+        cwd=workdir,
+        env=env,
+        check=False,
+    )
 
 
 def test_help_works_without_a_configuration_file(tmp_path: Path) -> None:

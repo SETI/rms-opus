@@ -18,13 +18,11 @@ class ObsPds(ObsBase):
     declaring the type `opus_import.obs.field_types` gives that column.
     """
 
-
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
     ### Don't override these ###
-
 
     def field_obs_pds_opus_id(self) -> StrField:
         return self.opus_id
@@ -37,7 +35,6 @@ class ObsPds(ObsBase):
 
     def field_obs_pds_primary_filespec(self) -> StrField:
         return self.primary_filespec
-
 
     ################################
     ### ! Might override these ! ###
@@ -57,7 +54,6 @@ class ObsPds(ObsBase):
 
     def field_obs_pds_note(self) -> StrField:
         return None
-
 
     ###################################
     ### !!! Must override these !!! ###

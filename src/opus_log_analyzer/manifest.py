@@ -7,6 +7,7 @@ report shows: by product category and type, by volume set, and by both.
 Sizes are de-duplicated by file path within a manifest before being summed,
 because one file can appear under several product types.
 """
+
 from __future__ import annotations
 
 import collections
@@ -42,14 +43,15 @@ class ManifestEntry(NamedTuple):
             manifest.
         """
         try:
-            return ManifestEntry(opus_id=line['OPUS ID'],
-                                 product_category=line['Product Category'],
-                                 product_type=line['Product Type'],
-                                 file_path=line['File Path'],
-                                 size=int(line['Size']),
-                                 # product_type_abbr=line['Product Type Abbrev'],
-                                 # version=line['Version']
-                                 )
+            return ManifestEntry(
+                opus_id=line['OPUS ID'],
+                product_category=line['Product Category'],
+                product_type=line['Product Type'],
+                file_path=line['File Path'],
+                size=int(line['Size']),
+                # product_type_abbr=line['Product Type Abbrev'],
+                # version=line['Version']
+            )
         except Exception:
             return None
 
@@ -69,6 +71,7 @@ class ManifestEntry(NamedTuple):
         path = PosixPath(self.file_path)
         assert path.is_absolute()
         return path.parts[2]  #   ["/" "volume" volumename, .....]
+
 
 class Manifest(NamedTuple):
     """One manifest file and the entries read from it."""
@@ -91,11 +94,15 @@ class Manifest(NamedTuple):
         try:
             with open(file_name, newline='') as file:
                 reader = csv.DictReader(file)
-                entries = [entry for line in reader
-                           for entry in [ManifestEntry.from_csv_line(line)] if entry]
+                entries = [
+                    entry
+                    for line in reader
+                    for entry in [ManifestEntry.from_csv_line(line)]
+                    if entry
+                ]
                 return Manifest(file_name, entries)
         except Exception:
-            print(f"Error while reading Manifest file {file_name}")
+            print(f'Error while reading Manifest file {file_name}')
             return None
 
     @staticmethod
@@ -109,9 +116,12 @@ class Manifest(NamedTuple):
             One manifest per file that could be read; a file that could not is
             omitted rather than reported here.
         """
-        return [manifest for file_name in file_names
-                for manifest in [Manifest.read_manifest(file_name)]
-                if manifest is not None]
+        return [
+            manifest
+            for file_name in file_names
+            for manifest in [Manifest.read_manifest(file_name)]
+            if manifest is not None
+        ]
 
     def size_in_bytes(self) -> int:
         """Total bytes this manifest accounts for, counting each file once.
@@ -168,8 +178,9 @@ class ManifestStatus:
         """
         self._manifests = manifests
 
-    def __get_one_table(self, grouper: Callable[[ManifestEntry], tuple[str, ...]]) -> \
-            tuple[Sequence[SummaryLine], SummaryLine]:
+    def __get_one_table(
+        self, grouper: Callable[[ManifestEntry], tuple[str, ...]]
+    ) -> tuple[Sequence[SummaryLine], SummaryLine]:
         """Build one summary table by grouping every entry on a key.
 
         Parameters:
@@ -180,7 +191,9 @@ class ManifestStatus:
             manifest and OPUS-id counts are 0, because summing them across
             groups would double-count anything appearing in more than one.
         """
-        all_items = [(manifest, entry) for manifest in self._manifests for entry in manifest.entries]
+        all_items = [
+            (manifest, entry) for manifest in self._manifests for entry in manifest.entries
+        ]
         all_items.sort(key=lambda item: grouper(item[1]))
 
         result: list[SummaryLine] = []
@@ -194,16 +207,23 @@ class ManifestStatus:
                     file_path_to_size[manifest, entry.file_path] = entry.size
             file_path_count = len(file_path_to_size)
             file_path_bytes = sum(file_path_to_size.values())
-            result.append(SummaryLine(key=key,
-                                      manifest_count=manifest_count,
-                                      opus_id_count=opus_id_count,
-                                      file_path_count=file_path_count, file_path_bytes=file_path_bytes))
+            result.append(
+                SummaryLine(
+                    key=key,
+                    manifest_count=manifest_count,
+                    opus_id_count=opus_id_count,
+                    file_path_count=file_path_count,
+                    file_path_bytes=file_path_bytes,
+                )
+            )
 
-        total = SummaryLine(key=(),
-                            manifest_count=0,
-                            opus_id_count=0,
-                            file_path_count=sum(x.file_path_count for x in result),
-                            file_path_bytes=sum(x.file_path_bytes for x in result))
+        total = SummaryLine(
+            key=(),
+            manifest_count=0,
+            opus_id_count=0,
+            file_path_count=sum(x.file_path_count for x in result),
+            file_path_bytes=sum(x.file_path_bytes for x in result),
+        )
         return result, total
 
     def __get_statistics(self) -> dict[str, Any]:
@@ -214,25 +234,29 @@ class ManifestStatus:
             `manifest_count`, `opus_id_count` counted across all manifests, and
             `data`, the per-manifest byte totals.
         """
-        result1, total1 = self.__get_one_table(lambda entry: (entry.product_category, entry.product_type))
+        result1, total1 = self.__get_one_table(
+            lambda entry: (entry.product_category, entry.product_type)
+        )
         result2, total2 = self.__get_one_table(lambda entry: (entry.volume_set,))
         result3, total3 = self.__get_one_table(lambda entry: (entry.volume_set, entry.product_type))
 
-        summary1 = Summary(lines=result1, total=total1, headers=('Product Category', 'Product Type'))
+        summary1 = Summary(
+            lines=result1, total=total1, headers=('Product Category', 'Product Type')
+        )
         summary2 = Summary(lines=result2, total=total2, headers=('Volume Set',))
         summary3 = Summary(lines=result3, total=total3, headers=('Volume Set', 'Product Type'))
 
         manifest_count = len(self._manifests)
-        opus_id_count = len({entry.opus_id
-                             for manifest in self._manifests
-                             for entry in manifest.entries})
+        opus_id_count = len(
+            {entry.opus_id for manifest in self._manifests for entry in manifest.entries}
+        )
         data = tuple(manifest.size_in_bytes() for manifest in self._manifests)
 
         return {
-            "tables": (summary1, summary2, summary3),
-            "manifest_count": manifest_count,
-            "opus_id_count": opus_id_count,
-            "data": data,
+            'tables': (summary1, summary2, summary3),
+            'manifest_count': manifest_count,
+            'opus_id_count': opus_id_count,
+            'data': data,
         }
 
     @staticmethod

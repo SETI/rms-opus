@@ -326,8 +326,7 @@ class _TableReader:
             return None
         return self.read_str(key)
 
-    def read_choice(self, key: str, choices: tuple[str, ...], *,
-                    default: Any = _REQUIRED) -> str:
+    def read_choice(self, key: str, choices: tuple[str, ...], *, default: Any = _REQUIRED) -> str:
         """Read a string that has to be one of a fixed set of values.
 
         Parameters:
@@ -368,8 +367,9 @@ class _TableReader:
             self._fail(f'{key!r} must be true or false, not {type(value).__name__}')
         return value
 
-    def read_bool_or_choice(self, key: str, choices: tuple[str, ...], *,
-                            default: Any = _REQUIRED) -> bool | str:
+    def read_bool_or_choice(
+        self, key: str, choices: tuple[str, ...], *, default: Any = _REQUIRED
+    ) -> bool | str:
         """Read a value that is either a boolean or one of a fixed set of strings.
 
         Parameters:
@@ -391,8 +391,10 @@ class _TableReader:
             return value
         if isinstance(value, str):
             return self._canonical(key, value, choices)
-        self._fail(f'{key!r} must be true, false or one of {", ".join(choices)}, '
-                   f'not {type(value).__name__}')
+        self._fail(
+            f'{key!r} must be true, false or one of {", ".join(choices)}, '
+            f'not {type(value).__name__}'
+        )
 
     def read_optional_int(self, key: str) -> int | None:
         """Read a whole number that may be left out of the file.
@@ -450,12 +452,10 @@ class _TableReader:
         """
         value = self._take(key, _REQUIRED)
         if not isinstance(value, list):
-            self._fail(f'{key!r} must be an array of strings, not '
-                       f'{type(value).__name__}')
+            self._fail(f'{key!r} must be an array of strings, not {type(value).__name__}')
         for entry in value:
             if not isinstance(entry, str):
-                self._fail(f'every entry of {key!r} must be a string, not '
-                           f'{type(entry).__name__}')
+                self._fail(f'every entry of {key!r} must be a string, not {type(entry).__name__}')
         return tuple(value)
 
     def finish(self) -> None:
@@ -490,7 +490,8 @@ def _read_database(source: Path, values: dict[str, Any]) -> DatabaseConfig:
         database=table.read_str('database', default=''),
         schema=table.read_str('schema'),
         user=table.read_str('user'),
-        password=table.read_str('password'))
+        password=table.read_str('password'),
+    )
     table.finish()
     return config
 
@@ -519,7 +520,8 @@ def _read_paths(source: Path, values: dict[str, Any]) -> PathsConfig:
         last_blog_update_file=table.read_str('last_blog_update_file'),
         notification_file=table.read_str('notification_file'),
         static_root=table.read_optional_str('static_root'),
-        opus_static_root=table.read_str('opus_static_root'))
+        opus_static_root=table.read_str('opus_static_root'),
+    )
     table.finish()
     return config
 
@@ -549,17 +551,13 @@ def _read_django(source: Path, values: dict[str, Any]) -> DjangoConfig:
         viewmaster_url=table.read_str('viewmaster_url'),
         tar_file_url=table.read_str('tar_file_url'),
         log_file_level=table.read_choice('log_file_level', LOG_LEVELS, default='INFO'),
-        log_console_level=table.read_choice('log_console_level', LOG_LEVELS,
-                                            default='INFO'),
-        log_django_level=table.read_choice('log_django_level', LOG_LEVELS,
-                                           default='WARNING'),
-        log_api_calls=table.read_bool_or_choice('log_api_calls', LOG_LEVELS,
-                                                default=False),
+        log_console_level=table.read_choice('log_console_level', LOG_LEVELS, default='INFO'),
+        log_django_level=table.read_choice('log_django_level', LOG_LEVELS, default='WARNING'),
+        log_api_calls=table.read_bool_or_choice('log_api_calls', LOG_LEVELS, default=False),
         fake_api_delays=table.read_optional_int('fake_api_delays'),
-        fake_error404_probability=table.read_float('fake_error404_probability',
-                                                   default=0.),
-        fake_error500_probability=table.read_float('fake_error500_probability',
-                                                   default=0.))
+        fake_error404_probability=table.read_float('fake_error404_probability', default=0.0),
+        fake_error500_probability=table.read_float('fake_error500_probability', default=0.0),
+    )
     table.finish()
     return config
 
@@ -581,7 +579,8 @@ def _read_import(source: Path, values: dict[str, Any]) -> ImportConfig:
     config = ImportConfig(
         table_temp_prefix=table.read_str('table_temp_prefix', default='imp_'),
         log_file=table.read_str('log_file'),
-        debug_log_file=table.read_str('debug_log_file'))
+        debug_log_file=table.read_str('debug_log_file'),
+    )
     table.finish()
     return config
 
@@ -603,12 +602,14 @@ def _read_tables(source: Path, raw: dict[str, Any]) -> dict[str, dict[str, Any]]
     """
     missing = [name for name in TABLE_NAMES if name not in raw]
     if len(missing) > 0:
-        raise ConfigError(f'{source} is missing the table(s): '
-                          + ', '.join(f'[{name}]' for name in missing))
+        raise ConfigError(
+            f'{source} is missing the table(s): ' + ', '.join(f'[{name}]' for name in missing)
+        )
     unknown = sorted(set(raw) - set(TABLE_NAMES))
     if len(unknown) > 0:
-        raise ConfigError(f'{source} has unknown top-level entry(s): '
-                          + ', '.join(repr(name) for name in unknown))
+        raise ConfigError(
+            f'{source} has unknown top-level entry(s): ' + ', '.join(repr(name) for name in unknown)
+        )
     for name in TABLE_NAMES:
         if not isinstance(raw[name], dict):
             raise ConfigError(f'{source}: [{name}] must be a table')
@@ -635,8 +636,9 @@ def load_config(path: Path | str) -> OpusConfig:
         with source.open('rb') as stream:
             raw = tomllib.load(stream)
     except OSError as err:
-        raise ConfigError(f'Cannot read the OPUS configuration file {source}: '
-                          f'{err.strerror}') from err
+        raise ConfigError(
+            f'Cannot read the OPUS configuration file {source}: {err.strerror}'
+        ) from err
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as err:
         # tomllib decodes the bytes itself, so a file in the wrong encoding fails
         # here too rather than reaching the caller as a UnicodeDecodeError.
@@ -648,7 +650,8 @@ def load_config(path: Path | str) -> OpusConfig:
         database=_read_database(source, tables['database']),
         paths=_read_paths(source, tables['paths']),
         django=_read_django(source, tables['django']),
-        import_=_read_import(source, tables['import']))
+        import_=_read_import(source, tables['import']),
+    )
 
 
 def config_path() -> Path:
@@ -667,7 +670,8 @@ def config_path() -> Path:
         raise ConfigError(
             f'The {OPUS_CONFIG_ENV_VAR} environment variable is not set. Set it to '
             f'the path of the OPUS configuration file; OPUS has no default location '
-            f'for it.')
+            f'for it.'
+        )
     return Path(value)
 
 

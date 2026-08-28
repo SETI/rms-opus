@@ -23,9 +23,9 @@ if TYPE_CHECKING:
     from opus_import.context import ImportContext
 
 
-def build_table_names_rows(table_exists: Callable[[str], bool],
-                           surface_geometry_table_names: Iterable[str]
-                           ) -> list[dict[str, Any]]:
+def build_table_names_rows(
+    table_exists: Callable[[str], bool], surface_geometry_table_names: Iterable[str]
+) -> list[dict[str, Any]]:
     """Return the ``table_names`` rows for a set of permanent tables, in display order.
 
     ``obs_general`` comes first and is written whether or not the table is there; then
@@ -60,9 +60,9 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
     # obs_general first
     entry = {
         'table_name': 'obs_general',
-        'label':      'General Constraints',
-        'display':    'Y',
-        'disp_order': disp_order
+        'label': 'General Constraints',
+        'display': 'Y',
+        'disp_order': disp_order,
     }
     disp_order += 1
     rows.append(entry)
@@ -71,9 +71,9 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
     if table_exists('obs_pds'):
         entry = {
             'table_name': 'obs_pds',
-            'label':      'PDS Constraints',
-            'display':    'Y',
-            'disp_order': disp_order
+            'label': 'PDS Constraints',
+            'display': 'Y',
+            'disp_order': disp_order,
         }
         disp_order += 1
         rows.append(entry)
@@ -81,9 +81,9 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
     if table_exists('obs_type_image'):
         entry = {
             'table_name': 'obs_type_image',
-            'label':      'Image Constraints',
-            'display':    'Y',
-            'disp_order': disp_order
+            'label': 'Image Constraints',
+            'display': 'Y',
+            'disp_order': disp_order,
         }
         disp_order += 1
         rows.append(entry)
@@ -91,9 +91,9 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
     if table_exists('obs_wavelength'):
         entry = {
             'table_name': 'obs_wavelength',
-            'label':      'Wavelength Constraints',
-            'display':    'Y',
-            'disp_order': disp_order
+            'label': 'Wavelength Constraints',
+            'display': 'Y',
+            'disp_order': disp_order,
         }
         disp_order += 1
         rows.append(entry)
@@ -101,9 +101,9 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
     if table_exists('obs_profile'):
         entry = {
             'table_name': 'obs_profile',
-            'label':      'Occultation/Reflectance Profiles Constraints',
-            'display':    'Y',
-            'disp_order': disp_order
+            'label': 'Occultation/Reflectance Profiles Constraints',
+            'display': 'Y',
+            'disp_order': disp_order,
         }
         disp_order += 1
         rows.append(entry)
@@ -111,9 +111,9 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
     if table_exists('obs_surface_geometry_name'):
         entry = {
             'table_name': 'obs_surface_geometry_name',
-            'label':      'Surface Geometry Constraints',
-            'display':    'Y',
-            'disp_order': disp_order
+            'label': 'Surface Geometry Constraints',
+            'display': 'Y',
+            'disp_order': disp_order,
         }
         disp_order += 1
         rows.append(entry)
@@ -121,9 +121,9 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
     if table_exists('obs_surface_geometry'):
         entry = {
             'table_name': 'obs_surface_geometry',
-            'label':      'Surface Geometry Constraints',
-            'display':    'Y',
-            'disp_order': disp_order
+            'label': 'Surface Geometry Constraints',
+            'display': 'Y',
+            'disp_order': disp_order,
         }
         disp_order += 1
         rows.append(entry)
@@ -133,9 +133,9 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
         target_name = import_util.decode_target_name(target_name).title()
         entry = {
             'table_name': table_name,
-            'label':      target_name + ' Surface Geometry Constraints',
-            'display':    'Y',
-            'disp_order': disp_order
+            'label': target_name + ' Surface Geometry Constraints',
+            'display': 'Y',
+            'disp_order': disp_order,
         }
         disp_order += 1
         rows.append(entry)
@@ -143,25 +143,24 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
     if table_exists('obs_ring_geometry'):
         entry = {
             'table_name': 'obs_ring_geometry',
-            'label':      'Ring Geometry Constraints',
-            'display':    'Y',
-            'disp_order': disp_order
+            'label': 'Ring Geometry Constraints',
+            'display': 'Y',
+            'disp_order': disp_order,
         }
         disp_order += 1
         rows.append(entry)
 
     # Then missions
-    for mission_id in sorted(
-        config_data.MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
-        table_name = 'obs_mission_'+config_data.MISSION_ID_TO_MISSION_TABLE_SFX[
-                                                            mission_id]
+    for mission_id in sorted(config_data.MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
+        table_name = 'obs_mission_' + config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
         if table_exists(table_name):
             entry = {
                 'table_name': table_name,
-                'label':      (config_data.MISSION_ID_TO_MISSION_NAME[mission_id] +
-                               ' Mission Constraints'),
-                'display':    'Y',
-                'disp_order': disp_order
+                'label': (
+                    config_data.MISSION_ID_TO_MISSION_NAME[mission_id] + ' Mission Constraints'
+                ),
+                'display': 'Y',
+                'disp_order': disp_order,
             }
             disp_order += 1
             rows.append(entry)
@@ -173,15 +172,15 @@ def build_table_names_rows(table_exists: Callable[[str], bool],
             # This is a hack because we don't actually have HST instrument
             # tables, but instead put everything in the mission tables
             display = 'N'
-        table_name = 'obs_instrument_'+instrument_id.lower()
+        table_name = 'obs_instrument_' + instrument_id.lower()
         if table_exists(table_name):
             entry = {
                 'table_name': table_name,
-                'label':      (config_data.INSTRUMENT_ID_TO_INSTRUMENT_NAME[
-                                                                        instrument_id]+
-                               ' Constraints'),
-                'display':    display,
-                'disp_order': disp_order
+                'label': (
+                    config_data.INSTRUMENT_ID_TO_INSTRUMENT_NAME[instrument_id] + ' Constraints'
+                ),
+                'display': display,
+                'disp_order': disp_order,
             }
             disp_order += 1
             rows.append(entry)
@@ -208,14 +207,15 @@ def create_import_table_names_table(ctx: ImportContext) -> None:
     assert table_names_schema is not None
     # Start from scratch
     db.drop_table('import', 'table_names')
-    db.create_table('import', 'table_names', table_names_schema,
-                    ignore_if_exists=False)
+    db.create_table('import', 'table_names', table_names_schema, ignore_if_exists=False)
 
     rows = build_table_names_rows(
         lambda table_name: db.table_exists('perm', table_name),
-        db.table_names('perm', prefix='obs_surface_geometry__'))
+        db.table_names('perm', prefix='obs_surface_geometry__'),
+    )
 
     db.insert_rows('import', 'table_names', rows)
+
 
 def copy_table_names_from_import_to_permanent(ctx: ImportContext) -> None:
     """Replace the permanent ``table_names`` table with the import one.
@@ -233,8 +233,7 @@ def copy_table_names_from_import_to_permanent(ctx: ImportContext) -> None:
     # table_names.json is packaged with opus_import, so the schema is always found.
     assert table_names_schema is not None
     db.drop_table('perm', 'table_names')
-    db.create_table('perm', 'table_names', table_names_schema,
-                    ignore_if_exists=False)
+    db.create_table('perm', 'table_names', table_names_schema, ignore_if_exists=False)
 
     db.copy_rows_between_namespaces('import', 'perm', 'table_names')
 

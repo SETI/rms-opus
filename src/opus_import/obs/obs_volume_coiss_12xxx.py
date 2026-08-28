@@ -30,7 +30,6 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``COISS``."""
@@ -47,7 +46,6 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
             this bundle's observations are identified by.
         """
         return filespec.replace('.LBL', '.IMG')
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -113,8 +111,7 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         return self._create_mult('REFLECT')
 
     def field_obs_general_observation_type(self) -> MultFieldRet:
-        return self._create_mult('IMG') # Image
-
+        return self._create_mult('IMG')  # Image
 
     ############################
     ### OVERRIDE FROM ObsPds ###
@@ -122,7 +119,6 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
 
     def field_obs_pds_note(self) -> StrField:
         return cast(StrField, self._index_col('DESCRIPTION'))
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -148,7 +144,6 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
     def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         return self.field_obs_type_image_greater_pixel_size()
 
-
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
@@ -159,7 +154,7 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         central_wl, fwhm, _effective_wl = self._coiss_wavelength_helper(camera, filter1, filter2)
         if central_wl is None or fwhm is None:
             return None
-        return (central_wl - fwhm/2) / 1000 # microns
+        return (central_wl - fwhm / 2) / 1000  # microns
 
     def field_obs_wavelength_wavelength2(self) -> FloatField:
         camera = self._index_col('INSTRUMENT_ID')[3]
@@ -167,7 +162,7 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         central_wl, fwhm, _effective_wl = self._coiss_wavelength_helper(camera, filter1, filter2)
         if central_wl is None or fwhm is None:
             return None
-        return (central_wl + fwhm/2) / 1000 # microns
+        return (central_wl + fwhm / 2) / 1000  # microns
 
     def field_obs_wavelength_wave_res1(self) -> FloatField:
         return self._wave_res_from_full_bandwidth()
@@ -186,7 +181,6 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         if the_filter.find('P') != -1:
             return self._create_mult('LINEAR')
         return self._create_mult('NONE')
-
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
@@ -211,16 +205,18 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
             self._log_nonrepeating_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
-                f'({sc_cvt}) are in the wrong order - setting to count1')
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '
+                + f'({sc_cvt}) are in the wrong order - setting to count1'
+            )
             sc_cvt = sc1
         else:
             image_number = self._index_col('IMAGE_NUMBER')
             sc2_int = int(sc_cvt)
             if int(image_number) != sc2_int:
                 self._log_nonrepeating_warning(
-                     f'spacecraft_clock_count2 ({sc_cvt}) and COISS IMAGE_NUMBER '+
-                     f'({image_number}) don\'t match')
+                    f'spacecraft_clock_count2 ({sc_cvt}) and COISS IMAGE_NUMBER '
+                    + f"({image_number}) don't match"
+                )
 
         return sc_cvt
 
@@ -228,8 +224,9 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
         return self._time_from_index(column='EARTH_RECEIVED_START_TIME')
 
     def field_obs_mission_cassini_ert2(self) -> FloatField:
-        return self._time2_from_index(self.field_obs_mission_cassini_ert1(),
-                                      column='EARTH_RECEIVED_STOP_TIME')
+        return self._time2_from_index(
+            self.field_obs_mission_cassini_ert1(), column='EARTH_RECEIVED_STOP_TIME'
+        )
 
     def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         mp = self._cassini_normalize_mission_phase_name()

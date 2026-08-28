@@ -15,7 +15,15 @@ from opus_import.obs.obs_type_image import ObsTypeImage
 from opus_import.obs.obs_wavelength import ObsWavelength
 
 
-class ObsCommonPDS4(ObsGeneralPDS4, ObsPdsPDS4, ObsTypeImage, ObsWavelength,
-                    ObsProfilePDS4, ObsRingGeometry, ObsSurfaceGeometry,
-                    ObsSurfaceGeometryName, ObsSurfaceGeometryTarget):
+class ObsCommonPDS4(
+    ObsGeneralPDS4,
+    ObsPdsPDS4,
+    ObsTypeImage,
+    ObsWavelength,
+    ObsProfilePDS4,
+    ObsRingGeometry,
+    ObsSurfaceGeometry,
+    ObsSurfaceGeometryName,
+    ObsSurfaceGeometryTarget,
+):
     """Every table module a PDS4 observation needs, combined in one base class."""

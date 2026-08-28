@@ -25,14 +25,34 @@ from .conftest import make_context
 
 #: (mission common class, helper name, opus_support parser, display name, a valid SCLK)
 MISSIONS = [
-    (ObsCassiniCommon, '_parse_cassini_sclk', opus_support.parse_cassini_sclk,
-     'Cassini', '1/1294561143.125'),
-    (ObsVolumeVoyagerCommon, '_parse_voyager_sclk', opus_support.parse_voyager_sclk,
-     'Voyager', '3/20997.32'),
-    (ObsVolumeGalileoCommon, '_parse_galileo_sclk', opus_support.parse_galileo_sclk,
-     'Galileo', '03464059.00'),
-    (ObsVolumeNewHorizonsCommon, '_parse_new_horizons_sclk',
-     opus_support.parse_new_horizons_sclk, 'New Horizons', '1/0034948318:00000'),
+    (
+        ObsCassiniCommon,
+        '_parse_cassini_sclk',
+        opus_support.parse_cassini_sclk,
+        'Cassini',
+        '1/1294561143.125',
+    ),
+    (
+        ObsVolumeVoyagerCommon,
+        '_parse_voyager_sclk',
+        opus_support.parse_voyager_sclk,
+        'Voyager',
+        '3/20997.32',
+    ),
+    (
+        ObsVolumeGalileoCommon,
+        '_parse_galileo_sclk',
+        opus_support.parse_galileo_sclk,
+        'Galileo',
+        '03464059.00',
+    ),
+    (
+        ObsVolumeNewHorizonsCommon,
+        '_parse_new_horizons_sclk',
+        opus_support.parse_new_horizons_sclk,
+        'New Horizons',
+        '1/0034948318:00000',
+    ),
 ]
 
 MISSION_IDS = [mission[3] for mission in MISSIONS]
@@ -45,18 +65,24 @@ def _recording_obs(cls: type, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, lis
     """Build an obs object whose error and warning logging is captured, not emitted."""
     obs = cls(make_context())
     logged: list[str] = []
-    monkeypatch.setattr(obs, '_log_nonrepeating_error',
-                        lambda msg: logged.append(f'error: {msg}'))
-    monkeypatch.setattr(obs, '_log_nonrepeating_warning',
-                        lambda msg: logged.append(f'warning: {msg}'))
+    monkeypatch.setattr(obs, '_log_nonrepeating_error', lambda msg: logged.append(f'error: {msg}'))
+    monkeypatch.setattr(
+        obs, '_log_nonrepeating_warning', lambda msg: logged.append(f'warning: {msg}')
+    )
     return obs, logged
 
 
-@pytest.mark.parametrize(('cls', 'helper_name', 'parse_func', 'mission', 'good_sclk'),
-                         MISSIONS, ids=MISSION_IDS)
+@pytest.mark.parametrize(
+    ('cls', 'helper_name', 'parse_func', 'mission', 'good_sclk'), MISSIONS, ids=MISSION_IDS
+)
 def test_a_good_sclk_converts_exactly_as_the_parser_does(
-        cls: type, helper_name: str, parse_func: Any, mission: str, good_sclk: str,
-        monkeypatch: pytest.MonkeyPatch) -> None:
+    cls: type,
+    helper_name: str,
+    parse_func: Any,
+    mission: str,
+    good_sclk: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """The helper adds error handling and nothing else to the opus_support parser."""
     obs, logged = _recording_obs(cls, monkeypatch)
 
@@ -64,11 +90,17 @@ def test_a_good_sclk_converts_exactly_as_the_parser_does(
     assert logged == []
 
 
-@pytest.mark.parametrize(('cls', 'helper_name', 'parse_func', 'mission', 'good_sclk'),
-                         MISSIONS, ids=MISSION_IDS)
+@pytest.mark.parametrize(
+    ('cls', 'helper_name', 'parse_func', 'mission', 'good_sclk'), MISSIONS, ids=MISSION_IDS
+)
 def test_a_bad_sclk_is_reported_and_returns_none(
-        cls: type, helper_name: str, parse_func: Any, mission: str, good_sclk: str,
-        monkeypatch: pytest.MonkeyPatch) -> None:
+    cls: type,
+    helper_name: str,
+    parse_func: Any,
+    mission: str,
+    good_sclk: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """A bad SCLK is one nonrepeating error naming the mission, the value and the cause.
 
     The wrapper's whole format string is asserted, because it is the text the import log
@@ -88,19 +120,18 @@ def test_a_bad_sclk_is_reported_and_returns_none(
     assert logged == [f'error: {expected}']
 
 
-def test_the_cassini_message_is_exactly_this_text(
-        monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_cassini_message_is_exactly_this_text(monkeypatch: pytest.MonkeyPatch) -> None:
     """One literal spelling of the message, so the format string cannot drift silently."""
     obs, logged = _recording_obs(ObsCassiniCommon, monkeypatch)
 
     assert obs._parse_cassini_sclk('1/zzz') is None
 
-    assert logged == ['error: Unable to parse Cassini SCLK "1/zzz": '
-                      'Cassini clock fields must be integers: zzz']
+    assert logged == [
+        'error: Unable to parse Cassini SCLK "1/zzz": Cassini clock fields must be integers: zzz'
+    ]
 
 
-def test_cassini_can_report_a_bad_sclk_as_a_warning(
-        monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cassini_can_report_a_bad_sclk_as_a_warning(monkeypatch: pytest.MonkeyPatch) -> None:
     """COCIRS_56xxx reports at warning level; the helper's log_func is how it still can."""
     obs, logged = _recording_obs(ObsCassiniCommon, monkeypatch)
 

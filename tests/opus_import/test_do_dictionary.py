@@ -25,13 +25,13 @@ class _FakeDatabase:
         self.created_tables: list[str] = []
         self.inserted: list[tuple[str, list[dict[str, Any]]]] = []
 
-    def create_table(self, namespace: str, table_name: str, schema: Any,
-                     ignore_if_exists: bool = True) -> bool:
+    def create_table(
+        self, namespace: str, table_name: str, schema: Any, ignore_if_exists: bool = True
+    ) -> bool:
         self.created_tables.append(table_name)
         return True
 
-    def insert_rows(self, namespace: str, table_name: str,
-                    rows: list[dict[str, Any]]) -> None:
+    def insert_rows(self, namespace: str, table_name: str, rows: list[dict[str, Any]]) -> None:
         self.inserted.append((table_name, rows))
 
 
@@ -44,8 +44,7 @@ def fake_pipeline() -> tuple[ImportContext, _FakeDatabase, RecordingLogger]:
     return ctx, db, logger
 
 
-def _use_contexts_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
-                       contents: str) -> Path:
+def _use_contexts_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, contents: str) -> Path:
     """Write `contents` as the contexts.csv the step will read, and return its path."""
     contexts_file = tmp_path / 'contexts.csv'
     contexts_file.write_text(contents, encoding='utf-8')
@@ -54,26 +53,34 @@ def _use_contexts_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 
 
 def test_create_import_contexts_table_reads_every_row(
-        fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
-        monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     """A well-formed file is turned into one row per line, with no error logged."""
     ctx, db, logger = fake_pipeline
-    _use_contexts_file(monkeypatch, tmp_path,
-                       'COISS,Cassini ISS,NULL\nCOVIMS,Cassini VIMS,NULL\n')
+    _use_contexts_file(monkeypatch, tmp_path, 'COISS,Cassini ISS,NULL\nCOVIMS,Cassini VIMS,NULL\n')
 
     assert do_dictionary.create_import_contexts_table(ctx) is True
 
     assert db.created_tables == ['contexts']
-    assert db.inserted == [('contexts', [
-        {'name': 'COISS', 'description': 'Cassini ISS', 'parent': 'NULL'},
-        {'name': 'COVIMS', 'description': 'Cassini VIMS', 'parent': 'NULL'},
-    ])]
+    assert db.inserted == [
+        (
+            'contexts',
+            [
+                {'name': 'COISS', 'description': 'Cassini ISS', 'parent': 'NULL'},
+                {'name': 'COVIMS', 'description': 'Cassini VIMS', 'parent': 'NULL'},
+            ],
+        )
+    ]
     assert logger.messages_at('error') == []
 
 
 def test_create_import_contexts_table_names_the_bad_row_and_its_file(
-        fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
-        monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     """A row without exactly three fields aborts the step, naming the file and the row.
 
     The message used to be an f-string missing its ``f``, so it reported the literal
@@ -83,8 +90,8 @@ def test_create_import_contexts_table_names_the_bad_row_and_its_file(
     """
     ctx, _db, logger = fake_pipeline
     contexts_file = _use_contexts_file(
-        monkeypatch, tmp_path,
-        'COISS,Cassini ISS,NULL\nCOVIMS,Cassini VIMS,NULL,EXTRA\n')
+        monkeypatch, tmp_path, 'COISS,Cassini ISS,NULL\nCOVIMS,Cassini VIMS,NULL,EXTRA\n'
+    )
 
     assert do_dictionary.create_import_contexts_table(ctx) is False
 
@@ -96,8 +103,10 @@ def test_create_import_contexts_table_names_the_bad_row_and_its_file(
 
 
 def test_create_import_contexts_table_inserts_nothing_when_a_row_is_bad(
-        fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
-        monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     """The step returns before writing, so a malformed file leaves the table empty."""
     ctx, db, _logger = fake_pipeline
     _use_contexts_file(monkeypatch, tmp_path, 'ONLY_TWO,FIELDS\n')
@@ -107,8 +116,10 @@ def test_create_import_contexts_table_inserts_nothing_when_a_row_is_bad(
 
 
 def test_create_import_contexts_table_reports_an_unreadable_file(
-        fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
-        monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     """A missing contexts.csv is an error naming the file, not a traceback."""
     ctx, _db, logger = fake_pipeline
     monkeypatch.setattr(import_util, 'DICTIONARY_DATA_DIR', tmp_path)
@@ -121,7 +132,8 @@ def test_create_import_contexts_table_reports_an_unreadable_file(
 
 
 def test_packaged_contexts_file_has_three_fields_in_every_row(
-        fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger]) -> None:
+    fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
+) -> None:
     """The shipped contexts.csv is well formed, so the bad-row branch never fires.
 
     This reads the real package data (no `DICTIONARY_DATA_DIR` override), so it is what

@@ -56,8 +56,15 @@ def _make_warning_handler(ctx: ImportContext) -> WarningHandler:
         the context on every call rather than closing over it, because reporting
         the accumulated warnings replaces the list with a fresh one.
     """
-    def handler(message: Warning | str, category: type[Warning], filename: str,
-                lineno: int, file: TextIO | None, line: str | None) -> None:
+
+    def handler(
+        message: Warning | str,
+        category: type[Warning],
+        filename: str,
+        lineno: int,
+        file: TextIO | None,
+        line: str | None,
+    ) -> None:
         """Record one warning's text on the context, discarding everything else.
 
         Parameters:
@@ -80,37 +87,47 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         A parser whose ``prog`` is ``opus_import``, matching the way the pipeline is
         invoked (``python -m opus_import``).
     """
-    parser = argparse.ArgumentParser(
-        prog='opus_import',
-        description='OPUS Import Pipeline')
+    parser = argparse.ArgumentParser(prog='opus_import', description='OPUS Import Pipeline')
 
     # Database arguments
     parser.add_argument(
-        '--read-only', action='store_true', default=False,
-        help="Don't modify or create any SQL table"
+        '--read-only',
+        action='store_true',
+        default=False,
+        help="Don't modify or create any SQL table",
     )
     parser.add_argument(
-        '--override-db-schema', type=str, default=None,
-        help='Override the database schema specified in the configuration file'
+        '--override-db-schema',
+        type=str,
+        default=None,
+        help='Override the database schema specified in the configuration file',
     )
     parser.add_argument(
-        '--override-pds3-data-dir', type=str, default=None,
+        '--override-pds3-data-dir',
+        type=str,
+        default=None,
         help='Override the PDS3 holdings directory specified in the configuration '
-             'file (.../holdings)'
+        'file (.../holdings)',
     )
     parser.add_argument(
-        '--override-pds4-data-dir', type=str, default=None,
+        '--override-pds4-data-dir',
+        type=str,
+        default=None,
         help='Override the PDS4 holdings directory specified in the configuration '
-             'file (.../pds4-holdings)'
+        'file (.../pds4-holdings)',
     )
     parser.add_argument(
-        '--dont-use-shelves-only', action='store_true', default=False,
-        help='Look at actual pdsdata volumes/bundles instead of using shelve files'
+        '--dont-use-shelves-only',
+        action='store_true',
+        default=False,
+        help='Look at actual pdsdata volumes/bundles instead of using shelve files',
     )
 
     # What to actually do - main import
     parser.add_argument(
-        '--do-it-all', action='store_true', default=False,
+        '--do-it-all',
+        action='store_true',
+        default=False,
         help="""Perform all import and aux functions. This implies, in order:
                 --drop-old-import-tables
                 --import
@@ -122,21 +139,25 @@ def _create_argument_parser() -> argparse.ArgumentParser:
                 --create-table-names
                 --create-cart
                 --drop-cache-tables
-             """
+             """,
     )
 
     parser.add_argument(
-        '--do-all-import', action='store_true', default=False,
+        '--do-all-import',
+        action='store_true',
+        default=False,
         help="""Perform all import functions. This implies, in order:
                 --drop-old-import-tables
                 --import
                 --copy-import-to-permanent-tables
                 --drop-new-import-tables
-             """
+             """,
     )
 
     parser.add_argument(
-        '--do-import-finalization', action='store_true', default=False,
+        '--do-import-finalization',
+        action='store_true',
+        default=False,
         help="""Perform all import functions related to permanent tables. This implies, in order:
                 --copy-import-to-permanent-tables
                 --drop-new-import-tables
@@ -146,206 +167,278 @@ def _create_argument_parser() -> argparse.ArgumentParser:
                 --create-table-names
                 --create-cart
                 --drop-cache-tables
-             """
+             """,
     )
 
     parser.add_argument(
-        '--cleanup-aux-tables', action='store_true', default=False,
+        '--cleanup-aux-tables',
+        action='store_true',
+        default=False,
         help="""Create or clean up auxiliary tables. This implies:
                 --create-param-info
                 --create-partables
                 --create-table-names
                 --create-cart
                 --drop-cache-tables
-             """
+             """,
     )
 
     parser.add_argument(
-        '--drop-old-import-tables', action='store_true', default=False,
-        help='Drop ALL the old import tables'
+        '--drop-old-import-tables',
+        action='store_true',
+        default=False,
+        help='Drop ALL the old import tables',
     )
 
     parser.add_argument(
-        '--delete-import-bundles', action='store_true', default=False,
-        help='Delete the given bundles from the import tables'
+        '--delete-import-bundles',
+        action='store_true',
+        default=False,
+        help='Delete the given bundles from the import tables',
     )
 
     parser.add_argument(
-        '--import', dest='do_import', action='store_true', default=False,
+        '--import',
+        dest='do_import',
+        action='store_true',
+        default=False,
         help="""Perform an import of the specified bundles; implies
-                --delete-import-bundles"""
+                --delete-import-bundles""",
     )
     parser.add_argument(
-        '--leave-old-import-tables', action='store_true', default=False,
+        '--leave-old-import-tables',
+        action='store_true',
+        default=False,
         help="""Leave the previous import tables and just add to them. Overrides
-                --drop-old-import-tables."""
+                --drop-old-import-tables.""",
     )
     parser.add_argument(
-        '--import-ignore-errors', action='store_true', default=False,
+        '--import-ignore-errors',
+        action='store_true',
+        default=False,
         help='Copy to the permanent tables even with errors, and substitute made-up '
-             'values where a real one cannot be determined -- an unknown target name '
-             'becomes OTHER rather than dropping the observation. The result is '
-             'wrong on purpose; for debugging'
+        'values where a real one cannot be determined -- an unknown target name '
+        'becomes OTHER rather than dropping the observation. The result is '
+        'wrong on purpose; for debugging',
     )
     parser.add_argument(
-        '--import-suppress-mult-messages', action='store_true', default=False,
-        help='Don\'t give messages about mult table maintenance'
+        '--import-suppress-mult-messages',
+        action='store_true',
+        default=False,
+        help="Don't give messages about mult table maintenance",
     )
     parser.add_argument(
-        '--import-report-missing-ring-geo', action='store_true', default=False,
-        help='Report observations that should have ring_geo data but don\'t'
+        '--import-report-missing-ring-geo',
+        action='store_true',
+        default=False,
+        help="Report observations that should have ring_geo data but don't",
     )
     parser.add_argument(
-        '--import-report-missing-sky-geo', action='store_true', default=False,
-        help='Report observations that should have sky_geo data but don\'t'
+        '--import-report-missing-sky-geo',
+        action='store_true',
+        default=False,
+        help="Report observations that should have sky_geo data but don't",
     )
     parser.add_argument(
-        '--import-report-inventory-mismatch', action='store_true', default=False,
-        help='Report mismatches between inventory and surface geometry tables'
+        '--import-report-inventory-mismatch',
+        action='store_true',
+        default=False,
+        help='Report mismatches between inventory and surface geometry tables',
     )
     parser.add_argument(
-        '--import-force-metadata-index', action='store_true', default=False,
-        help='Force the use of metadata index files and fail if none available'
+        '--import-force-metadata-index',
+        action='store_true',
+        default=False,
+        help='Force the use of metadata index files and fail if none available',
     )
     parser.add_argument(
-        '--import-check-duplicate-id', action='store_true', default=False,
-        help='Check for duplicate opus_id; needed for GOSSI,COUVIS,NH'
+        '--import-check-duplicate-id',
+        action='store_true',
+        default=False,
+        help='Check for duplicate opus_id; needed for GOSSI,COUVIS,NH',
     )
     parser.add_argument(
-        '--import-ignore-missing-images', action='store_true', default=False,
-        help='Don\'t warn about missing browse images'
+        '--import-ignore-missing-images',
+        action='store_true',
+        default=False,
+        help="Don't warn about missing browse images",
     )
     parser.add_argument(
-        '--import-ignore-geo-mismatch', action='store_true', default=False,
-        help='Don\'t warn about gridless column mismatch in geo files'
+        '--import-ignore-geo-mismatch',
+        action='store_true',
+        default=False,
+        help="Don't warn about gridless column mismatch in geo files",
     )
     parser.add_argument(
-        '--import-dont-use-row-files', action='store_true', default=False,
+        '--import-dont-use-row-files',
+        action='store_true',
+        default=False,
         help="""Do not use metadata row files to determine whether index and summary
-                files should be included in the files table"""
+                files should be included in the files table""",
     )
     parser.add_argument(
-        '--import-report-empty-products', action='store_true', default=False,
-        help='Report empty products during import'
+        '--import-report-empty-products',
+        action='store_true',
+        default=False,
+        help='Report empty products during import',
     )
     parser.add_argument(
-        '--import-fake-images', action='store_true', default=False,
-        help='Fake the existence of browse images if real browse files are missing'
-    )
-
-    parser.add_argument(
-        '--delete-permanent-import-bundles', action='store_true', default=False,
-        help='Delete the bundles in the import tables from the permanent tables'
-    )
-    parser.add_argument(
-        '--delete-permanent-bundles', action='store_true', default=False,
-        help='Delete the given bundles from the permanent tables'
+        '--import-fake-images',
+        action='store_true',
+        default=False,
+        help='Fake the existence of browse images if real browse files are missing',
     )
 
     parser.add_argument(
-        '--copy-import-to-permanent-tables', action='store_true', default=False,
+        '--delete-permanent-import-bundles',
+        action='store_true',
+        default=False,
+        help='Delete the bundles in the import tables from the permanent tables',
+    )
+    parser.add_argument(
+        '--delete-permanent-bundles',
+        action='store_true',
+        default=False,
+        help='Delete the given bundles from the permanent tables',
+    )
+
+    parser.add_argument(
+        '--copy-import-to-permanent-tables',
+        action='store_true',
+        default=False,
         help="""Copy all temporary import tables to the permanent tables;
                 implies --delete-permanent-import-bundles
-             """
+             """,
     )
     parser.add_argument(
-        '--drop-permanent-tables', action='store_true', default=False,
+        '--drop-permanent-tables',
+        action='store_true',
+        default=False,
         help="""Delete ALL permanent tables; requires --scorched-earth.
-                WARNING: THIS DELETES ALL EXISTING DATA"""
+                WARNING: THIS DELETES ALL EXISTING DATA""",
     )
     parser.add_argument(
-        '--scorched-earth', action='store_true', default=False,
-        help='You are serious about deleting all tables!'
-    )
-
-    parser.add_argument(
-        '--drop-new-import-tables', action='store_true', default=False,
-        help='Drop the new import tables after copying to permanent (if selected)'
+        '--scorched-earth',
+        action='store_true',
+        default=False,
+        help='You are serious about deleting all tables!',
     )
 
     parser.add_argument(
-        '--analyze-permanent-tables', action='store_true', default=False,
-        help='Analyze (recompute key distribution) the permanent tables'
+        '--drop-new-import-tables',
+        action='store_true',
+        default=False,
+        help='Drop the new import tables after copying to permanent (if selected)',
+    )
+
+    parser.add_argument(
+        '--analyze-permanent-tables',
+        action='store_true',
+        default=False,
+        help='Analyze (recompute key distribution) the permanent tables',
     )
 
     # Import-related auxiliary functions
 
     parser.add_argument(
-        '--create-param-info', action='store_true', default=False,
-        help='Create the param_info table; includes copying to permanent table'
+        '--create-param-info',
+        action='store_true',
+        default=False,
+        help='Create the param_info table; includes copying to permanent table',
     )
     parser.add_argument(
-        '--create-partables', action='store_true', default=False,
-        help='Create the partables table; includes copying to permanent table'
+        '--create-partables',
+        action='store_true',
+        default=False,
+        help='Create the partables table; includes copying to permanent table',
     )
     parser.add_argument(
-        '--create-table-names', action='store_true', default=False,
-        help='Create the table_names table; includes copying to permanent table'
+        '--create-table-names',
+        action='store_true',
+        default=False,
+        help='Create the table_names table; includes copying to permanent table',
     )
     parser.add_argument(
-        '--update-mult-info', action='store_true', default=False,
-        help='Update the details of preprogrammed mult tables'
+        '--update-mult-info',
+        action='store_true',
+        default=False,
+        help='Update the details of preprogrammed mult tables',
     )
 
     # Functions other than main import
 
     parser.add_argument(
-        '--drop-cache-tables', action='store_true', default=False,
-        help='Drop the cache tables used by OPUS; also clears user_searches'
+        '--drop-cache-tables',
+        action='store_true',
+        default=False,
+        help='Drop the cache tables used by OPUS; also clears user_searches',
     )
     parser.add_argument(
-        '--create-cart', action='store_true', default=False,
-        help='Create the cart table used by OPUS'
+        '--create-cart',
+        action='store_true',
+        default=False,
+        help='Create the cart table used by OPUS',
     )
 
     parser.add_argument(
-        '--validate-perm', action='store_true', default=False,
-        help='Perform validation of the final permanent tables'
+        '--validate-perm',
+        action='store_true',
+        default=False,
+        help='Perform validation of the final permanent tables',
     )
 
     parser.add_argument(
-        '--import-dictionary', action='store_true', default=False,
-        help='Import the dictionary and contexts from scratch'
+        '--import-dictionary',
+        action='store_true',
+        default=False,
+        help='Import the dictionary and contexts from scratch',
     )
 
     # Arguments about bundle selection
     parser.add_argument(
-        'bundles', type=str, default=None, nargs='*',
+        'bundles',
+        type=str,
+        default=None,
+        nargs='*',
         metavar='VOL_DESC,VOL_DESC...',
         help="""Comma-separated list of bundle descriptors (COISS_1xxx,COVIMS_0089)
-                to import""")
+                to import""",
+    )
 
     parser.add_argument(
-        '--exclude-bundles', type=str, default=None,
+        '--exclude-bundles',
+        type=str,
+        default=None,
         metavar='VOL_NAME,VOL_NAME...',
         help="""Comma-separated list of bundle names (COVIMS_0089,COISS_2111)
-                to exclude from importing""")
+                to exclude from importing""",
+    )
 
     # Arguments about logging
     parser.add_argument(
-        '--no-log-pdsfile', action='store_true', default=False,
-        help="""Don't log output of pdsfile actions"""
+        '--no-log-pdsfile',
+        action='store_true',
+        default=False,
+        help="""Don't log output of pdsfile actions""",
     )
     parser.add_argument(
-        '--log-sql', action='store_true', default=False,
-        help='Also log all SQL commands'
+        '--log-sql', action='store_true', default=False, help='Also log all SQL commands'
     )
     parser.add_argument(
-        '--log-debug-limit', type=int, default=-1,
-        help='Limit the number of debug messages'
+        '--log-debug-limit', type=int, default=-1, help='Limit the number of debug messages'
     )
     parser.add_argument(
-        '--log-info-limit', type=int, default=-1,
-        help='Limit the number of info messages'
+        '--log-info-limit', type=int, default=-1, help='Limit the number of info messages'
     )
     parser.add_argument(
-        '--log-suppress-traceback', action='store_true', default=False,
-        help='Omit tracebacks from exception reports'
+        '--log-suppress-traceback',
+        action='store_true',
+        default=False,
+        help='Omit tracebacks from exception reports',
     )
 
     parser.add_argument(
-        '--profile', action='store_true', default=False,
-        help='Do performance profiling'
+        '--profile', action='store_true', default=False, help='Do performance profiling'
     )
 
     return parser
@@ -415,18 +508,16 @@ def main() -> None:
     # works without a configuration file.
     config = get_config()
 
-    logger = pdslogger.PdsLogger(LOGNAME,
-                                 limits={'info': args.log_info_limit,
-                                         'debug': args.log_debug_limit})
+    logger = pdslogger.PdsLogger(
+        LOGNAME, limits={'info': args.log_info_limit, 'debug': args.log_debug_limit}
+    )
     ctx = ImportContext(args=args, logger=logger)
 
     info_logfile = os.path.abspath(config.import_.log_file)
     debug_logfile = os.path.abspath(config.import_.debug_log_file)
 
-    info_handler = pdslogger.file_handler(info_logfile, level=logging.INFO,
-                                          rotation='ymdhms')
-    debug_handler = pdslogger.file_handler(debug_logfile, level=logging.DEBUG,
-                                           rotation='ymdhms')
+    info_handler = pdslogger.file_handler(info_logfile, level=logging.INFO, rotation='ymdhms')
+    debug_handler = pdslogger.file_handler(debug_logfile, level=logging.DEBUG, rotation='ymdhms')
 
     logger.add_handler(info_handler)
     logger.add_handler(debug_handler)
@@ -446,26 +537,24 @@ def main() -> None:
     #
     ################################################################################
 
-    if (args.drop_permanent_tables !=
-        args.scorched_earth):
-        logger.log('fatal',
-            '--drop-permanent-tables and --scorched-earth must be used together')
+    if args.drop_permanent_tables != args.scorched_earth:
+        logger.log('fatal', '--drop-permanent-tables and --scorched-earth must be used together')
         sys.exit(-1)
 
     our_schema_name = config.database.schema
     if args.override_db_schema:
         our_schema_name = args.override_db_schema
 
-    try: # Top-level exception handling so we always log what's going on
+    try:  # Top-level exception handling so we always log what's going on
         # Start the profiling
         if args.profile:
             pr = cProfile.Profile()
             pr.enable()
 
         logger.open(
-                'Performing all requested import functions',
-                limits={'info': args.log_info_limit,
-                        'debug': args.log_debug_limit})
+            'Performing all requested import functions',
+            limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+        )
 
         if not args.dont_use_shelves_only:
             Pds3File.use_shelves_only()
@@ -491,13 +580,17 @@ def main() -> None:
 
         try:
             ctx.db = importdb.get_db(
-                            config.database.brand, config.database.host,
-                            config.database.database, our_schema_name,
-                            config.database.user, config.database.password,
-                            mult_form_types=GROUP_FORM_TYPES,
-                            logger=logger,
-                            import_prefix=config.import_.table_temp_prefix,
-                            read_only=args.read_only)
+                config.database.brand,
+                config.database.host,
+                config.database.database,
+                our_schema_name,
+                config.database.user,
+                config.database.password,
+                mult_form_types=GROUP_FORM_TYPES,
+                logger=logger,
+                import_prefix=config.import_.table_temp_prefix,
+                read_only=args.read_only,
+            )
         except importdb.ImportDBError:
             sys.exit(-1)
 
@@ -510,13 +603,11 @@ def main() -> None:
         # Note, however, that do_import_steps() might actually delete ALL permanent
         # tables with --scorched-earth, which means our effort here will be wasted,
         # so don't bother in that case.
-        if ((args.drop_cache_tables or
-             args.create_cart) and
-             not args.drop_permanent_tables):
+        if (args.drop_cache_tables or args.create_cart) and not args.drop_permanent_tables:
             logger.open(
                 'Cleaning up OPUS/Django tables',
-                limits={'info': args.log_info_limit,
-                        'debug': args.log_debug_limit})
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
 
             if args.create_cart:
                 do_cart.create_cart(ctx)
@@ -531,13 +622,11 @@ def main() -> None:
         # This MUST be done after the permanent tables are created, since they
         # are used to determine what goes into the param_info table.
 
-        if (args.create_param_info or
-            args.create_partables or
-            args.create_table_names):
+        if args.create_param_info or args.create_partables or args.create_table_names:
             logger.open(
-                    'Creating auxiliary tables',
-                    limits={'info': args.log_info_limit,
-                            'debug': args.log_debug_limit})
+                'Creating auxiliary tables',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
 
             if args.create_param_info:
                 do_param_info.do_param_info(ctx)
@@ -551,8 +640,8 @@ def main() -> None:
         if args.update_mult_info:
             logger.open(
                 'Updating preprogrammed mult tables',
-                limits={'info': args.log_info_limit,
-                        'debug': args.log_debug_limit})
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
 
             do_update_mult_info.update_mult_info(ctx)
 
@@ -561,12 +650,11 @@ def main() -> None:
         if args.validate_perm:
             do_validate.do_validate(ctx, 'perm')
 
-        if (args.create_cart and
-            ctx.try_cart_later):
+        if args.create_cart and ctx.try_cart_later:
             logger.open(
                 'Trying to create cart table a second time',
-                limits={'info': args.log_info_limit,
-                        'debug': args.log_debug_limit})
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
 
             do_cart.create_cart(ctx)
 
@@ -575,8 +663,8 @@ def main() -> None:
         if args.import_dictionary:
             logger.open(
                 'Importing dictionary',
-                limits={'info': args.log_info_limit,
-                        'debug': args.log_debug_limit})
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
             do_dictionary.do_dictionary(ctx)
             logger.close()
 

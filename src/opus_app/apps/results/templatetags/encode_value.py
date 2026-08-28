@@ -11,6 +11,7 @@ from django import template
 
 register = template.Library()
 
+
 @register.filter(name='encode_value')
 def encode_value(value: str | None) -> str:
     """Encode a search value for use in an OPUS URL.
@@ -23,6 +24,6 @@ def encode_value(value: str | None) -> str:
         and the characters `-_.!~*'()` left alone. None is encoded as the text
         `NULL`.
     """
-    if value is None: # pragma: no cover - not currently used
+    if value is None:  # pragma: no cover - not currently used
         value = 'NULL'
     return urllib.parse.quote_plus(value, "-_.!~*'()")

@@ -19,7 +19,6 @@ class ObsVolumeGalileoCommon(ObsCommonPDS3):
         """
         return self._parse_sclk(opus_support.parse_galileo_sclk, sclk, 'Galileo')
 
-
     #############################################
     ### FIELD METHODS FOR obs_mission_galileo ###
     #############################################

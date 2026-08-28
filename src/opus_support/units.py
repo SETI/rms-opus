@@ -61,8 +61,7 @@ FormatFunc = Callable[..., str]
 #: function that parses text in this unit (None to read it as a plain number), the
 #: function that formats a value in this unit (None to format it as a plain number),
 #: and the suffixes a user may type to name this unit explicitly.
-UnitConversion = tuple[str | None, float, ParseFunc | None, FormatFunc | None,
-                       list[str]]
+UnitConversion = tuple[str | None, float, ParseFunc | None, FormatFunc | None, list[str]]
 
 
 class UnitInfo(TypedDict):
@@ -83,6 +82,7 @@ class UnitInfo(TypedDict):
     display_result: bool
     default: str
     conversions: dict[str, UnitConversion]
+
 
 ################################################################################
 ################################################################################
@@ -118,146 +118,182 @@ UNIT_FORMAT_DB: dict[str, UnitInfo] = {
         'display_result': False,
         'default': 'range_cassini_sclk',
         'conversions': {
-            'range_cassini_sclk': (None, 1,
-                                   parse_cassini_sclk, format_cassini_sclk, [])
-        }
+            'range_cassini_sclk': (None, 1, parse_cassini_sclk, format_cassini_sclk, [])
+        },
     },
     'range_galileo_sclk': {
         'display_search': False,
         'display_result': False,
         'default': 'range_galileo_sclk',
         'conversions': {
-            'range_galileo_sclk': (None, 1,
-                                   parse_galileo_sclk, format_galileo_sclk, [])
-        }
+            'range_galileo_sclk': (None, 1, parse_galileo_sclk, format_galileo_sclk, [])
+        },
     },
     'range_new_horizons_sclk': {
         'display_search': False,
         'display_result': False,
         'default': 'range_new_horizons_sclk',
         'conversions': {
-            'range_new_horizons_sclk': (None, 1,
-                                        parse_new_horizons_sclk,
-                                        format_new_horizons_sclk, [])
-        }
+            'range_new_horizons_sclk': (
+                None,
+                1,
+                parse_new_horizons_sclk,
+                format_new_horizons_sclk,
+                [],
+            )
+        },
     },
     'range_voyager_sclk': {
         'display_search': False,
         'display_result': False,
         'default': 'range_voyager_sclk',
         'conversions': {
-            'range_voyager_sclk': (None, 1,
-                                   parse_voyager_sclk, format_voyager_sclk, [])
-        }
+            'range_voyager_sclk': (None, 1, parse_voyager_sclk, format_voyager_sclk, [])
+        },
     },
     'range_cassini_rev_no': {
         'display_search': False,
         'display_result': False,
         'default': 'range_cassini_rev_no',
         'conversions': {
-            'range_cassini_rev_no': (None, 1,
-                                     parse_cassini_orbit, format_cassini_orbit,
-                                     [])
-        }
+            'range_cassini_rev_no': (None, 1, parse_cassini_orbit, format_cassini_orbit, [])
+        },
     },
     'datetime': {
         'display_search': True,
         'display_result': True,
         'default': 'ymdhms',
         'conversions': {
-            'ymdhms':       ('YMDhms',   1, parse_time, format_time_ymd,  []),
-            'ydhms':        ('YDhms',    1, parse_time, format_time_ydoy, []),
-            'jd':           ('JD',       1, parse_time, format_time_jd,   []),
-            'jed':          ('JED',      1, parse_time, format_time_jed,  []),
-            'mjd':          ('MJD',      1, parse_time, format_time_mjd,  []),
-            'mjed':         ('MJED',     1, parse_time, format_time_mjed, []),
-            'et':           ('SPICE ET', 1, parse_time, format_time_et,   [])
-        }
+            'ymdhms': ('YMDhms', 1, parse_time, format_time_ymd, []),
+            'ydhms': ('YDhms', 1, parse_time, format_time_ydoy, []),
+            'jd': ('JD', 1, parse_time, format_time_jd, []),
+            'jed': ('JED', 1, parse_time, format_time_jed, []),
+            'mjd': ('MJD', 1, parse_time, format_time_mjd, []),
+            'mjed': ('MJED', 1, parse_time, format_time_mjed, []),
+            'et': ('SPICE ET', 1, parse_time, format_time_et, []),
+        },
     },
-    'duration': { # Difference between two datetimes
+    'duration': {  # Difference between two datetimes
         'display_search': True,
         'display_result': True,
         'default': 'seconds',
         'conversions': {
-            'seconds':      ('secs',    1,           None, None,
-                             ['s', 'sec', 'secs', 'second', 'seconds']),
-            'microseconds': ('usecs',   0.000001,    None, None,
-                             ['us', 'usec', 'usecs', 'microsecond',
-                              'microseconds']),
-            'milliseconds': ('msecs',   0.001,       None, None,
-                             ['ms', 'msec', 'msecs', 'millisecond',
-                              'milliseconds']),
-            'minutes':      ('minutes', 60.,         None, None,
-                             ['min', 'mins', 'minute', 'minutes']),
-            'hours':        ('hours',   60.*60.,     None, None,
-                             ['h', 'hr', 'hrs', 'hour', 'hours']),
-            'days':         ('days',    60.*60.*24., None, None,
-                             ['d', 'day', 'days']),
-        }
+            'seconds': ('secs', 1, None, None, ['s', 'sec', 'secs', 'second', 'seconds']),
+            'microseconds': (
+                'usecs',
+                0.000001,
+                None,
+                None,
+                ['us', 'usec', 'usecs', 'microsecond', 'microseconds'],
+            ),
+            'milliseconds': (
+                'msecs',
+                0.001,
+                None,
+                None,
+                ['ms', 'msec', 'msecs', 'millisecond', 'milliseconds'],
+            ),
+            'minutes': ('minutes', 60.0, None, None, ['min', 'mins', 'minute', 'minutes']),
+            'hours': ('hours', 60.0 * 60.0, None, None, ['h', 'hr', 'hrs', 'hour', 'hours']),
+            'days': ('days', 60.0 * 60.0 * 24.0, None, None, ['d', 'day', 'days']),
+        },
     },
-    'generic_angle': { # Generic degrees, like lighting geometry
+    'generic_angle': {  # Generic degrees, like lighting geometry
         'display_search': True,
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,      None, None,
-                             ['d', 'deg', 'degs', 'degree', 'degrees']),
-            'radians':      ('radians',    DEG_RAD, None, None,
-                             ['r', 'rad', 'rads', 'radians']),
-        }
+            'degrees': ('degrees', 1.0, None, None, ['d', 'deg', 'degs', 'degree', 'degrees']),
+            'radians': ('radians', DEG_RAD, None, None, ['r', 'rad', 'rads', 'radians']),
+        },
     },
     'angle_resolution': {
         'display_search': True,
         'display_result': True,
         'default': 'degrees_pixel',
         'conversions': {
-            'degrees_pixel': ('degrees/pixel',    1.,      None, None,
-                              ['d/p', 'd/pix', 'd/pixel', 'dperpix',
-                               'dperpixel',
-                               'deg/p', 'deg/pix', 'deg/pixel', 'degperpix',
-                               'degperpixel',
-                               'degs/p', 'degs/pix', 'degs/pixel',
-                               'degsperpix', 'degsperpixel',
-                               'degree/p', 'degree/pix', 'degree/pixel',
-                               'degreeperpix', 'degreeperpixel',
-                               'degrees/p', 'degrees/pix', 'degrees/pixel',
-                               'degreesperpix', 'degreesperpixel']),
-            'radians_pixel': ('radians/pixel',    DEG_RAD, None, None,
-                              ['r/p', 'r/pix', 'r/pixel', 'rperpix',
-                               'rperpixel',
-                               'rad/p', 'rad/pix', 'rad/pixel', 'radperpix',
-                               'radperpixel',
-                               'rads/p', 'rads/pix', 'rads/pixel',
-                               'radsperpix', 'radsperpixel',
-                               'radians/p', 'radians/pix', 'radians/pixel',
-                               'radiansperpix', 'radiansperpixel']),
-        }
+            'degrees_pixel': (
+                'degrees/pixel',
+                1.0,
+                None,
+                None,
+                [
+                    'd/p',
+                    'd/pix',
+                    'd/pixel',
+                    'dperpix',
+                    'dperpixel',
+                    'deg/p',
+                    'deg/pix',
+                    'deg/pixel',
+                    'degperpix',
+                    'degperpixel',
+                    'degs/p',
+                    'degs/pix',
+                    'degs/pixel',
+                    'degsperpix',
+                    'degsperpixel',
+                    'degree/p',
+                    'degree/pix',
+                    'degree/pixel',
+                    'degreeperpix',
+                    'degreeperpixel',
+                    'degrees/p',
+                    'degrees/pix',
+                    'degrees/pixel',
+                    'degreesperpix',
+                    'degreesperpixel',
+                ],
+            ),
+            'radians_pixel': (
+                'radians/pixel',
+                DEG_RAD,
+                None,
+                None,
+                [
+                    'r/p',
+                    'r/pix',
+                    'r/pixel',
+                    'rperpix',
+                    'rperpixel',
+                    'rad/p',
+                    'rad/pix',
+                    'rad/pixel',
+                    'radperpix',
+                    'radperpixel',
+                    'rads/p',
+                    'rads/pix',
+                    'rads/pixel',
+                    'radsperpix',
+                    'radsperpixel',
+                    'radians/p',
+                    'radians/pix',
+                    'radians/pixel',
+                    'radiansperpix',
+                    'radiansperpixel',
+                ],
+            ),
+        },
     },
-    'latitude': { # Latitude on a body; includes declination
+    'latitude': {  # Latitude on a body; includes declination
         'display_search': True,
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,      parse_dms, format_dms_hms,
-                             []),
-            'dms':          ('DMS',        1.,      parse_dms, format_dms_hms,
-                             []),
-            'radians':      ('radians',    DEG_RAD, parse_dms, format_dms_hms,
-                             []),
-        }
+            'degrees': ('degrees', 1.0, parse_dms, format_dms_hms, []),
+            'dms': ('DMS', 1.0, parse_dms, format_dms_hms, []),
+            'radians': ('radians', DEG_RAD, parse_dms, format_dms_hms, []),
+        },
     },
-    'longitude': { # Longitude on a body or ring
+    'longitude': {  # Longitude on a body or ring
         'display_search': True,
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,      parse_dms, format_dms_hms,
-                             []),
-            'dms':          ('DMS',        1.,      parse_dms, format_dms_hms,
-                             []),
-            'radians':      ('radians',    DEG_RAD, parse_dms, format_dms_hms,
-                             []),
-        }
+            'degrees': ('degrees', 1.0, parse_dms, format_dms_hms, []),
+            'dms': ('DMS', 1.0, parse_dms, format_dms_hms, []),
+            'radians': ('radians', DEG_RAD, parse_dms, format_dms_hms, []),
+        },
     },
     # We do something unusual for hour_angle, since we need people to be
     # able to type in a number in either "dms" or "hms" format at any time and
@@ -265,184 +301,301 @@ UNIT_FORMAT_DB: dict[str, UnitInfo] = {
     # conversion factor, and we need a special format routine for hours as
     # a floating point number (which divides by 15) rather than using the normal
     # number conversion.
-    'hour_angle': { # Hour angle; includes right ascension
+    'hour_angle': {  # Hour angle; includes right ascension
         'display_search': True,
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,  parse_dms_hms, format_dms_hms,
-                             []),
-            'dms':          ('DMS',        1.,  parse_dms_hms, format_dms_hms,
-                             []),
-            'hours':        ('hours',      1.,  parse_hms_dms, format_dms_hms,
-                             []),
-            'hms':          ('HMS',        1.,  parse_hms_dms, format_dms_hms,
-                             []),
-            'radians':      ('radians',    DEG_RAD,
-                                           parse_dms_hms, format_dms_hms,
-                             []),
-        }
+            'degrees': ('degrees', 1.0, parse_dms_hms, format_dms_hms, []),
+            'dms': ('DMS', 1.0, parse_dms_hms, format_dms_hms, []),
+            'hours': ('hours', 1.0, parse_hms_dms, format_dms_hms, []),
+            'hms': ('HMS', 1.0, parse_hms_dms, format_dms_hms, []),
+            'radians': ('radians', DEG_RAD, parse_dms_hms, format_dms_hms, []),
+        },
     },
     'distance_ring': {
         'display_search': True,
         'display_result': True,
         'default': 'km',
         'conversions': {
-            'km':           ('km',         1,      None, None,
-                             ['km', 'kms', 'kilometer', 'kilometers']),
-            'm':            ('m',          1e-3,   None, None,
-                             ['m', 'ms', 'meter', 'meters']),
-            'jupiterradii': ('Rj (71492)', 71492., None, None,
-                             ['rj(71492)', 'rj']),
-            'saturnradii':  ('Rs (60330)', 60330., None, None,
-                             ['rs(60330)', 'rs']),
-            'neptuneradii': ('Rn (25225)', 25225., None, None,
-                             ['rn(25225)', 'rn']),
-            'uranusradii':  ('Ru (25559)', 25559., None, None,
-                             ['ru(25559)', 'ru']),
-        }
+            'km': ('km', 1, None, None, ['km', 'kms', 'kilometer', 'kilometers']),
+            'm': ('m', 1e-3, None, None, ['m', 'ms', 'meter', 'meters']),
+            'jupiterradii': ('Rj (71492)', 71492.0, None, None, ['rj(71492)', 'rj']),
+            'saturnradii': ('Rs (60330)', 60330.0, None, None, ['rs(60330)', 'rs']),
+            'neptuneradii': ('Rn (25225)', 25225.0, None, None, ['rn(25225)', 'rn']),
+            'uranusradii': ('Ru (25559)', 25559.0, None, None, ['ru(25559)', 'ru']),
+        },
     },
     'distance': {
         'display_search': True,
         'display_result': True,
         'default': 'km',
         'conversions': {
-            'km':           ('km',         1,             None, None,
-                             ['km', 'kms', 'kilometer', 'kilometers']),
-            'm':            ('m',          1e-3,          None, None,
-                             ['m', 'ms', 'meter', 'meters']),
-            'au':           ('AU',         149597870.700, None, None,
-                             ['au'])
-        }
+            'km': ('km', 1, None, None, ['km', 'kms', 'kilometer', 'kilometers']),
+            'm': ('m', 1e-3, None, None, ['m', 'ms', 'meter', 'meters']),
+            'au': ('AU', 149597870.700, None, None, ['au']),
+        },
     },
     'distance_resolution': {
         'display_search': True,
         'display_result': True,
         'default': 'km_pixel',
         'conversions': {
-            'km_pixel':     ('km/pixel', 1,    None, None,
-                             ['km/p', 'km/pix', 'km/pixel', 'kmperpix',
-                              'kmperpixel',
-                              'kms/p', 'kms/pix', 'kms/pixel', 'kmsperpix',
-                              'kmsperpixel',
-                              'kilometer/p', 'kilometer/pix', 'kilometer/pixel',
-                              'kilometerperpix', 'kilometerperpixel',
-                              'kilometers/p', 'kilometers/pix',
-                              'kilometers/pixel', 'kilometersperpix',
-                              'kilometersperpixel']),
-            'm_pixel':      ('m/pixel',  1e-3, None, None,
-                             ['m/p', 'm/pix', 'm/pixel', 'mperpix',
-                              'mperpixel',
-                              'ms/p', 'ms/pix', 'ms/pixel', 'msperpix',
-                              'msperpixel',
-                              'meter/p', 'meter/pix', 'meter/pixel',
-                              'meterperpix', 'meterperpixel',
-                              'meters/p', 'meters/pix',
-                              'meters/pixel', 'metersperpix',
-                              'metersperpixel']),
-        }
+            'km_pixel': (
+                'km/pixel',
+                1,
+                None,
+                None,
+                [
+                    'km/p',
+                    'km/pix',
+                    'km/pixel',
+                    'kmperpix',
+                    'kmperpixel',
+                    'kms/p',
+                    'kms/pix',
+                    'kms/pixel',
+                    'kmsperpix',
+                    'kmsperpixel',
+                    'kilometer/p',
+                    'kilometer/pix',
+                    'kilometer/pixel',
+                    'kilometerperpix',
+                    'kilometerperpixel',
+                    'kilometers/p',
+                    'kilometers/pix',
+                    'kilometers/pixel',
+                    'kilometersperpix',
+                    'kilometersperpixel',
+                ],
+            ),
+            'm_pixel': (
+                'm/pixel',
+                1e-3,
+                None,
+                None,
+                [
+                    'm/p',
+                    'm/pix',
+                    'm/pixel',
+                    'mperpix',
+                    'mperpixel',
+                    'ms/p',
+                    'ms/pix',
+                    'ms/pixel',
+                    'msperpix',
+                    'msperpixel',
+                    'meter/p',
+                    'meter/pix',
+                    'meter/pixel',
+                    'meterperpix',
+                    'meterperpixel',
+                    'meters/p',
+                    'meters/pix',
+                    'meters/pixel',
+                    'metersperpix',
+                    'metersperpixel',
+                ],
+            ),
+        },
     },
     'wavelength': {
         'display_search': True,
         'display_result': True,
         'default': 'microns',
         'conversions': {
-            'microns':      ('microns',   1.,   None, None,
-                             ['um', 'umeter', 'umeters',
-                              'micron', 'microns',
-                              'micrometer', 'micrometers']),
-            'angstroms':    ('angstroms', 1e-4, None, None,
-                             ['ang', 'angstrom', 'angstroms']),
-            'nm':           ('nm',        1e-3, None, None,
-                             ['nm', 'nanometer', 'nanometers']),
-            'cm':           ('cm',        1e4,  None, None,
-                             ['cm', 'centimeter', 'centimeters']),
-        }
+            'microns': (
+                'microns',
+                1.0,
+                None,
+                None,
+                ['um', 'umeter', 'umeters', 'micron', 'microns', 'micrometer', 'micrometers'],
+            ),
+            'angstroms': ('angstroms', 1e-4, None, None, ['ang', 'angstrom', 'angstroms']),
+            'nm': ('nm', 1e-3, None, None, ['nm', 'nanometer', 'nanometers']),
+            'cm': ('cm', 1e4, None, None, ['cm', 'centimeter', 'centimeters']),
+        },
     },
     'wavelength_resolution': {
         'display_search': True,
         'display_result': True,
         'default': 'microns_pixel',
         'conversions': {
-            'microns_pixel':      ('microns/pixel',   1,    None, None,
-                                   ['um/p', 'um/pix', 'um/pixel', 'umperpix',
-                                    'umperpixel',
-                                    'micron/p', 'micron/pix', 'micron/pixel',
-                                    'micronperpix', 'micronperpixel',
-                                    'microns/p', 'microns/pix', 'microns/pixel',
-                                    'micronsperpix', 'micronsperpixel',
-                                    'micrometer/p', 'micrometer/pix',
-                                    'micrometer/pixel',
-                                    'micrometerperpix', 'micrometerperpixel',
-                                    'micrometers/p', 'micrometers/pix',
-                                    'micrometers/pixel', 'micrometersperpix',
-                                    'micrometersperpixel']),
-            'angstroms_pixel':    ('angstroms/pixel', 1e-4, None, None,
-                                   ['ang/p', 'ang/pix', 'ang/pixel',
-                                    'angperpix', 'angperpixel',
-                                    'angstrom/p', 'angstrom/pix',
-                                    'angstrom/pixel',
-                                    'angstromperpix', 'angstromperpixel',
-                                    'angstroms/p', 'angstroms/pix',
-                                    'angstroms/pixel',
-                                    'angstromsperpix', 'angstromsperpixel']),
-            'nm_pixel':           ('nm/pixel',        1e-3, None, None,
-                                   ['nm/p', 'nm/pix', 'nm/pixel', 'nmperpix',
-                                    'nmperpixel',
-                                    'nanometer/p', 'nanometer/pix',
-                                    'nanometer/pixel',
-                                    'nanometerperpix', 'nanometerperpixel',
-                                    'nanometers/p', 'nanometers/pix',
-                                    'nanometers/pixel', 'nanometersperpix',
-                                    'nanometersperpixel']),
-            'cm_pixel':           ('cm/pixel',        1e4,  None, None,
-                                   ['cm/p', 'cm/pix', 'cm/pixel', 'cmperpix',
-                                    'cmperpixel',
-                                    'centimeter/p', 'centimeter/pix',
-                                    'centimeter/pixel',
-                                    'centimeterperpix', 'centimeterperpixel',
-                                    'centimeters/p', 'centimeters/pix',
-                                    'centimeters/pixel', 'centimetersperpix',
-                                    'centimetersperpixel']),
-        }
+            'microns_pixel': (
+                'microns/pixel',
+                1,
+                None,
+                None,
+                [
+                    'um/p',
+                    'um/pix',
+                    'um/pixel',
+                    'umperpix',
+                    'umperpixel',
+                    'micron/p',
+                    'micron/pix',
+                    'micron/pixel',
+                    'micronperpix',
+                    'micronperpixel',
+                    'microns/p',
+                    'microns/pix',
+                    'microns/pixel',
+                    'micronsperpix',
+                    'micronsperpixel',
+                    'micrometer/p',
+                    'micrometer/pix',
+                    'micrometer/pixel',
+                    'micrometerperpix',
+                    'micrometerperpixel',
+                    'micrometers/p',
+                    'micrometers/pix',
+                    'micrometers/pixel',
+                    'micrometersperpix',
+                    'micrometersperpixel',
+                ],
+            ),
+            'angstroms_pixel': (
+                'angstroms/pixel',
+                1e-4,
+                None,
+                None,
+                [
+                    'ang/p',
+                    'ang/pix',
+                    'ang/pixel',
+                    'angperpix',
+                    'angperpixel',
+                    'angstrom/p',
+                    'angstrom/pix',
+                    'angstrom/pixel',
+                    'angstromperpix',
+                    'angstromperpixel',
+                    'angstroms/p',
+                    'angstroms/pix',
+                    'angstroms/pixel',
+                    'angstromsperpix',
+                    'angstromsperpixel',
+                ],
+            ),
+            'nm_pixel': (
+                'nm/pixel',
+                1e-3,
+                None,
+                None,
+                [
+                    'nm/p',
+                    'nm/pix',
+                    'nm/pixel',
+                    'nmperpix',
+                    'nmperpixel',
+                    'nanometer/p',
+                    'nanometer/pix',
+                    'nanometer/pixel',
+                    'nanometerperpix',
+                    'nanometerperpixel',
+                    'nanometers/p',
+                    'nanometers/pix',
+                    'nanometers/pixel',
+                    'nanometersperpix',
+                    'nanometersperpixel',
+                ],
+            ),
+            'cm_pixel': (
+                'cm/pixel',
+                1e4,
+                None,
+                None,
+                [
+                    'cm/p',
+                    'cm/pix',
+                    'cm/pixel',
+                    'cmperpix',
+                    'cmperpixel',
+                    'centimeter/p',
+                    'centimeter/pix',
+                    'centimeter/pixel',
+                    'centimeterperpix',
+                    'centimeterperpixel',
+                    'centimeters/p',
+                    'centimeters/pix',
+                    'centimeters/pixel',
+                    'centimetersperpix',
+                    'centimetersperpixel',
+                ],
+            ),
+        },
     },
     'wavenumber': {
         'display_search': True,
         'display_result': True,
         'default': '1_cm',
         'conversions': {
-            '1_cm':         ('cm^-1', 1.,   None, None,
-                             ['1/cm', 'cm^-1', 'cm**-1']),
-            '1_m':          ('m^-1',  1e-2, None, None,
-                             ['1/m', 'm^-1', 'm**-1']),
-        }
+            '1_cm': ('cm^-1', 1.0, None, None, ['1/cm', 'cm^-1', 'cm**-1']),
+            '1_m': ('m^-1', 1e-2, None, None, ['1/m', 'm^-1', 'm**-1']),
+        },
     },
     'wavenumber_resolution': {
         'display_search': True,
         'display_result': True,
         'default': '1_cm_pixel',
         'conversions': {
-            '1_cm_pixel':  ('cm^-1/pixel', 1.,   None, None,
-                            ['1/cm/p', '1/cm/pix', '1/cm/pixel', '1/cmperpix',
-                             '1/cmperpixel',
-                             '1/centimeter/p', '1/centimeter/pix',
-                             '1/centimeter/pixel',
-                             '1/centimeterperpix', '1/centimeterperpixel',
-                             'cm^-1/p', 'cm^-1/pix', 'cm^-1/pixel',
-                             'cm^-1perpix', 'cm^-1perpixel',
-                             'cm**-1/p', 'cm**-1/pix', 'cm**-1/pixel',
-                             'cm**-1perpix', 'cm**-1perpixel']),
-            '1_m_pixel':   ('m^-1/pixel',  1e-2, None, None,
-                            ['1/m/p', '1/m/pix', '1/m/pixel', '1/mperpix',
-                             '1/mperpixel',
-                             '1/meter/p', '1/meter/pix',
-                             '1/meter/pixel',
-                             '1/meterperpix', '1/meterperpixel',
-                             'm^-1/p', 'm^-1/pix', 'm^-1/pixel',
-                             'm^-1perpix', 'm^-1perpixel',
-                             'm**-1/p', 'm**-1/pix', 'm**-1/pixel',
-                             'm**-1perpix', 'm**-1perpixel']),
-        }
+            '1_cm_pixel': (
+                'cm^-1/pixel',
+                1.0,
+                None,
+                None,
+                [
+                    '1/cm/p',
+                    '1/cm/pix',
+                    '1/cm/pixel',
+                    '1/cmperpix',
+                    '1/cmperpixel',
+                    '1/centimeter/p',
+                    '1/centimeter/pix',
+                    '1/centimeter/pixel',
+                    '1/centimeterperpix',
+                    '1/centimeterperpixel',
+                    'cm^-1/p',
+                    'cm^-1/pix',
+                    'cm^-1/pixel',
+                    'cm^-1perpix',
+                    'cm^-1perpixel',
+                    'cm**-1/p',
+                    'cm**-1/pix',
+                    'cm**-1/pixel',
+                    'cm**-1perpix',
+                    'cm**-1perpixel',
+                ],
+            ),
+            '1_m_pixel': (
+                'm^-1/pixel',
+                1e-2,
+                None,
+                None,
+                [
+                    '1/m/p',
+                    '1/m/pix',
+                    '1/m/pixel',
+                    '1/mperpix',
+                    '1/mperpixel',
+                    '1/meter/p',
+                    '1/meter/pix',
+                    '1/meter/pixel',
+                    '1/meterperpix',
+                    '1/meterperpixel',
+                    'm^-1/p',
+                    'm^-1/pix',
+                    'm^-1/pixel',
+                    'm^-1perpix',
+                    'm^-1perpixel',
+                    'm**-1/p',
+                    'm**-1/pix',
+                    'm**-1/pixel',
+                    'm**-1perpix',
+                    'm**-1perpixel',
+                ],
+            ),
+        },
     },
 }
 
@@ -455,8 +608,10 @@ UNIT_FORMAT_DB: dict[str, UnitInfo] = {
 # On the other hand, unit can be in any case, since it's potentially supplied
 # by the user, and we force it to lower case.
 
-def convert_to_default_unit(val: float | None, unit_id: str | None,
-                            unit: str | None) -> float | None:
+
+def convert_to_default_unit(
+    val: float | None, unit_id: str | None, unit: str | None
+) -> float | None:
     """Convert a value from a specific unit to the default unit for unit_id.
 
     Parameters:
@@ -493,8 +648,10 @@ def convert_to_default_unit(val: float | None, unit_id: str | None,
         raise ValueError
     return ret
 
-def convert_from_default_unit(val: float | None, unit_id: str | None,
-                              unit: str | None) -> float | None:
+
+def convert_from_default_unit(
+    val: float | None, unit_id: str | None, unit: str | None
+) -> float | None:
     """Convert a value from the default unit to a specific unit for unit_id.
 
     Parameters:
@@ -531,7 +688,9 @@ def convert_from_default_unit(val: float | None, unit_id: str | None,
         raise ValueError
     return ret
 
+
 ### GET INFORMATION ABOUT UNITS
+
 
 def get_valid_units(unit_id: str | None) -> list[str] | None:
     """Get the list of valid units for a unit_id.
@@ -550,6 +709,7 @@ def get_valid_units(unit_id: str | None) -> list[str] | None:
         # initialization above.
         valid_units = list(unit_info['conversions'].keys())
     return valid_units
+
 
 def get_unit_display_names(unit_id: str | None) -> dict[str, str | None] | None:
     """Get a dictionary with valid units as keys and display names as values.
@@ -571,6 +731,7 @@ def get_unit_display_names(unit_id: str | None) -> dict[str, str | None] | None:
             display_names[unit] = valid_units[unit][0]
     return display_names
 
+
 def get_unit_display_name(unit_id: str, unit: str) -> str | None:
     """Get the display name for a given valid unit_id and unit.
 
@@ -588,6 +749,7 @@ def get_unit_display_name(unit_id: str, unit: str) -> str | None:
     unit = unit.lower()
     return UNIT_FORMAT_DB[unit_id]['conversions'][unit][0]
 
+
 def is_valid_unit_id(unit_id: str | None) -> bool:
     """Check if a unit_id is valid.
 
@@ -598,6 +760,7 @@ def is_valid_unit_id(unit_id: str | None) -> bool:
         True if `unit_id` names a unit system.
     """
     return unit_id in UNIT_FORMAT_DB
+
 
 def is_valid_unit(unit_id: str, unit: str) -> bool:
     """Check if a unit is a valid unit for a valid unit_id.
@@ -615,6 +778,7 @@ def is_valid_unit(unit_id: str, unit: str) -> bool:
     unit = unit.lower()
     return unit in UNIT_FORMAT_DB[unit_id]['conversions']
 
+
 def get_default_unit(unit_id: str | None) -> str | None:
     """Return the default unit for a unit_id.
 
@@ -630,6 +794,7 @@ def get_default_unit(unit_id: str | None) -> str | None:
     if unit_id is None:
         return None
     return UNIT_FORMAT_DB[unit_id]['default']
+
 
 def display_search_unit(unit_id: str | None) -> bool:
     """Check if a unit name should be displayed for a unit_id on the Search tab.
@@ -648,6 +813,7 @@ def display_search_unit(unit_id: str | None) -> bool:
         return False
     return UNIT_FORMAT_DB[unit_id]['display_search']
 
+
 def display_result_unit(unit_id: str | None) -> bool:
     """Check if a unit name should be displayed for a unit_id for results.
 
@@ -665,6 +831,7 @@ def display_result_unit(unit_id: str | None) -> bool:
         return False
     return UNIT_FORMAT_DB[unit_id]['display_result']
 
+
 def display_unit_ever(unit_id: str | None) -> bool:
     """Check if a unit name should ever be displayed for a unit_id.
 
@@ -680,8 +847,9 @@ def display_unit_ever(unit_id: str | None) -> bool:
     """
     return display_search_unit(unit_id) or display_result_unit(unit_id)
 
+
 def get_disp_default_and_avail_units(
-        param_form_type: str | None
+    param_form_type: str | None,
 ) -> tuple[str | None, str | None, dict[str, str | None] | None]:
     """Return display, default, and available units for a given ParamInfo form type.
 
@@ -697,8 +865,7 @@ def get_disp_default_and_avail_units(
     Raises:
         KeyError: If the form type names a unit system that does not exist.
     """
-    (_form_type, _form_type_format,
-     form_type_unit_id) = parse_form_type(param_form_type)
+    (_form_type, _form_type_format, form_type_unit_id) = parse_form_type(param_form_type)
 
     is_displayed = display_result_unit(form_type_unit_id)
     if not is_displayed:
@@ -713,10 +880,13 @@ def get_disp_default_and_avail_units(
     disp_unit = get_unit_display_name(form_type_unit_id, default_unit)
     return disp_unit, default_unit, available_units
 
+
 ### FORMAT A VALUE FOR A GIVEN UNIT
 
-def adjust_format_string_for_units(numerical_format: str, unit_id: str | None,
-                                   unit: str | None) -> str:
+
+def adjust_format_string_for_units(
+    numerical_format: str, unit_id: str | None, unit: str | None
+) -> str:
     """Adjust a format string size for a change of units.
 
     This takes a format string of the form ".<n>f" and adjusts the value
@@ -741,8 +911,7 @@ def adjust_format_string_for_units(numerical_format: str, unit_id: str | None,
     """
     if unit_id is None:
         return numerical_format
-    if (not numerical_format.startswith('.') or
-        not numerical_format.endswith('f')):
+    if not numerical_format.startswith('.') or not numerical_format.endswith('f'):
         return numerical_format
     # A unit_id always arrives with the unit that goes with it.
     assert unit is not None
@@ -755,15 +924,19 @@ def adjust_format_string_for_units(numerical_format: str, unit_id: str | None,
     # the absolute value of negative numbers (which is removing decimal places),
     # which is also good. In both cases we're being conservative - adding too
     # many or removing too few.
-    factor = int(np.ceil(np.log10(
-                 UNIT_FORMAT_DB[unit_id]['conversions'][unit][1])))
+    factor = int(np.ceil(np.log10(UNIT_FORMAT_DB[unit_id]['conversions'][unit][1])))
     dec = max(int(numerical_format[1:-1]) + factor, 0)
     return '.' + str(dec) + 'f'
 
-def format_unit_value(val: float | str | None, numerical_format: str | None,
-                      unit_id: str | None, unit: str | None,
-                      keep_trailing_zeros: bool = False,
-                      convert_from_default: bool = True) -> str | None:
+
+def format_unit_value(
+    val: float | str | None,
+    numerical_format: str | None,
+    unit_id: str | None,
+    unit: str | None,
+    keep_trailing_zeros: bool = False,
+    convert_from_default: bool = True,
+) -> str | None:
     """Format a value based on the unit_id and specific unit.
 
     Parameters:
@@ -812,18 +985,23 @@ def format_unit_value(val: float | str | None, numerical_format: str | None,
             return str(val)
         if abs(val) >= 1e8:
             numerical_format = numerical_format.replace('f', 'e')
-        new_format = adjust_format_string_for_units(numerical_format,
-                                                    unit_id, unit)
-        ret = ('{:'+new_format+'}').format(val)
+        new_format = adjust_format_string_for_units(numerical_format, unit_id, unit)
+        ret = ('{:' + new_format + '}').format(val)
         if not keep_trailing_zeros:
             ret = _strip_trailing_zeros(ret)
         return ret
-    return format_func(val, unit_id=unit_id, unit=unit,
-                       numerical_format=numerical_format,
-                       keep_trailing_zeros=keep_trailing_zeros)
+    return format_func(
+        val,
+        unit_id=unit_id,
+        unit=unit,
+        numerical_format=numerical_format,
+        keep_trailing_zeros=keep_trailing_zeros,
+    )
 
-def parse_unit_value(s: str | None, numerical_format: str | None,
-                     unit_id: str | None, unit: str | None) -> float | None:
+
+def parse_unit_value(
+    s: str | None, numerical_format: str | None, unit_id: str | None, unit: str | None
+) -> float | None:
     """Parse a string given the unit and numerical format.
 
     We assume that the value returned should be in the given unit, so
@@ -862,8 +1040,9 @@ def parse_unit_value(s: str | None, numerical_format: str | None,
         # for one that does not.
         assert unit is not None
         unit = unit.lower()
-        (_display_name, conversion_factor, parse_func,
-         _display_func, _) = UNIT_FORMAT_DB[unit_id]['conversions'][unit]
+        (_display_name, conversion_factor, parse_func, _display_func, _) = UNIT_FORMAT_DB[unit_id][
+            'conversions'
+        ][unit]
     if parse_func is None:
         # Direct numeric conversion with no special parsing
         # Choose between float or int parsing
@@ -890,9 +1069,9 @@ def parse_unit_value(s: str | None, numerical_format: str | None,
                 if s.endswith(trial_suffix):
                     force_unit = trial_unit
                     # Strip off the unit name from the number
-                    s = s[:-len(trial_suffix)]
+                    s = s[: -len(trial_suffix)]
                     break
-        ret = parse_func(s) # Parse the int or float
+        ret = parse_func(s)  # Parse the int or float
         # math.isfinite() raises OverflowError - not ValueError - on an int too
         # large to convert to a float, and every rejection from this parser must
         # be a ValueError or it escapes the caller's guard. A 400-digit numeric
@@ -913,9 +1092,14 @@ def parse_unit_value(s: str | None, numerical_format: str | None,
     # those are ones that might specify an explicit unit (like "1d" for radians)
     # but we wouldn't have caught it as part of the generic numeric processing
     # above
-    return parse_func(s, conversion_factor=conversion_factor,
-                      numerical_format=numerical_format,
-                      unit_id=unit_id, unit=unit)
+    return parse_func(
+        s,
+        conversion_factor=conversion_factor,
+        numerical_format=numerical_format,
+        unit_id=unit_id,
+        unit=unit,
+    )
+
 
 def parse_form_type(s: str | None) -> tuple[str | None, str | None, str | None]:
     """Parse the ParamInfo FORM_TYPE with its subfields.
@@ -945,6 +1129,7 @@ def parse_form_type(s: str | None) -> tuple[str | None, str | None, str | None]:
 
     return form_type, form_type_format, form_type_unit
 
+
 def get_single_parse_function(unit_id: str | None) -> ParseFunc | None:
     """Return the parse func for a unit_id with a single non-displayed unit.
 
@@ -964,8 +1149,9 @@ def get_single_parse_function(unit_id: str | None) -> ParseFunc | None:
         default_unit = get_default_unit(unit_id)
         # unit_id is not None here, so neither is its default unit.
         assert default_unit is not None
-        parse_func = (UNIT_FORMAT_DB[unit_id]['conversions'][default_unit][2])
+        parse_func = UNIT_FORMAT_DB[unit_id]['conversions'][default_unit][2]
     return parse_func
+
 
 def get_single_format_function(unit_id: str | None) -> FormatFunc | None:
     """Return the format func for a unit_id with a single non-displayed unit.
@@ -986,5 +1172,5 @@ def get_single_format_function(unit_id: str | None) -> FormatFunc | None:
         default_unit = get_default_unit(unit_id)
         # unit_id is not None here, so neither is its default unit.
         assert default_unit is not None
-        format_func = (UNIT_FORMAT_DB[unit_id]['conversions'][default_unit][3])
+        format_func = UNIT_FORMAT_DB[unit_id]['conversions'][default_unit][3]
     return format_func

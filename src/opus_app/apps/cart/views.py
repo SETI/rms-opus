@@ -143,8 +143,10 @@ def api_view_cart(request: HttpRequest) -> HttpResponse:
     for _name, product_versions in info['product_cat_dict'].items():
         for _ver, types in product_versions.items():
             for prod_type in types:
-                if (prod_type['slug_name'] in not_selected_product_types or
-                    not prod_type['default_checked']):
+                if (
+                    prod_type['slug_name'] in not_selected_product_types
+                    or not prod_type['default_checked']
+                ):
                     prod_type['selected'] = ''
                 else:
                     prod_type['selected'] = 'checked'
@@ -156,10 +158,14 @@ def api_view_cart(request: HttpRequest) -> HttpResponse:
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
 
-    return json_response({'html': html,
-                          'count': info['count'],
-                          'recycled_count': info['recycled_count'],
-                          'reqno': reqno})
+    return json_response(
+        {
+            'html': html,
+            'count': info['count'],
+            'recycled_count': info['recycled_count'],
+            'reqno': reqno,
+        }
+    )
 
 
 @never_cache
@@ -267,7 +273,7 @@ def api_get_cart_csv(request: HttpRequest, *, api_code: int) -> HttpResponse:
     if error is not None:
         return get_search_results_chunk_error_handler(error)
 
-    if column_labels is None: # pragma: no cover -
+    if column_labels is None:  # pragma: no cover -
         # This should never happen because the bad slugs are caught inside
         # _csv_helper
         raise Http400Error(http400_unknown_slug(None, request))
@@ -282,8 +288,9 @@ def api_get_cart_csv(request: HttpRequest, *, api_code: int) -> HttpResponse:
 
 @never_cache
 @api_view
-def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
-                  **kwargs: Any) -> HttpResponse:
+def api_edit_cart(
+    request: HttpRequest, action: str, *, api_code: int, **kwargs: Any
+) -> HttpResponse:
     """Add or remove items from a cart.
 
     This is a PRIVATE API.
@@ -353,16 +360,14 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
 
     reqno = get_reqno(request)
     if reqno is None:
-        log.error('api_edit_cart: Missing or badly formatted reqno: %r',
-                  request.GET)
+        log.error('api_edit_cart: Missing or badly formatted reqno: %r', request.GET)
         raise Http400Error(http400_bad_or_missing_reqno(request))
 
     opus_id: list[str] | None = None
     if action in ('add', 'remove'):
         opus_id_str = request.GET.get('opusid', None)
-        if not opus_id_str: # Also catches empty string
-            log.error('api_edit_cart: Missing opusid: %r',
-                      request.GET)
+        if not opus_id_str:  # Also catches empty string
+            log.error('api_edit_cart: Missing opusid: %r', request.GET)
             raise Http400Error(http400_missing_opus_id(request))
         opus_id = opus_id_str.split(',')
 
@@ -383,10 +388,8 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
         # because it is not part of #512. (%s of request.GET itself is already
         # safe: QueryDict's str() is its repr(), which escapes control
         # characters in the values.)
-        log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin_str,
-                  request.GET)
-        raise Http400Error(http400_bad_recyclebin(recycle_bin_str,
-                                                  request)) from None
+        log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin_str, request.GET)
+        raise Http400Error(http400_bad_recyclebin(recycle_bin_str, request)) from None
 
     err: str | Literal[False] | HttpResponse
     if action == 'add':
@@ -398,16 +401,14 @@ def api_edit_cart(request: HttpRequest, action: str, *, api_code: int,
         assert opus_id is not None
         err = _remove_from_cart_table(opus_id, session_id, recycle_bin)
     elif action in ('addrange', 'removerange'):
-        err = _edit_cart_range(request, session_id, action, recycle_bin,
-                               api_code)
+        err = _edit_cart_range(request, session_id, action, recycle_bin, api_code)
     elif action == 'addall':
         err = _edit_cart_addall(request, session_id, recycle_bin, api_code)
-    else: # pragma: no cover - error catchall
-        log.error('api_edit_cart: Unknown action %r: %r', action,
-                  request.GET)
+    else:  # pragma: no cover - error catchall
+        log.error('api_edit_cart: Unknown action %r: %r', action, request.GET)
         return HttpResponseServerError(http500_internal_error(request))
 
-    if isinstance(err, HttpResponse): # pragma: no cover - database error
+    if isinstance(err, HttpResponse):  # pragma: no cover - database error
         return err
 
     download_str = request.GET.get('download', 0)
@@ -501,8 +502,7 @@ def api_reset_session(request: HttpRequest) -> HttpResponse:
     except ValueError:
         recycle_bin = None
     if recycle_bin not in (0, 1):
-        log.error('api_reset_session: Badly formatted recyclebin %r',
-                  recycle_str)
+        log.error('api_reset_session: Badly formatted recyclebin %r', recycle_str)
         raise Http400Error(http400_bad_recyclebin(recycle_str, request))
 
     download_str = request.GET.get('download', 0)
@@ -514,15 +514,17 @@ def api_reset_session(request: HttpRequest) -> HttpResponse:
         log.error('api_reset_session: Badly formatted download %r', download_str)
         raise Http400Error(http400_bad_download(download_str, request))
 
-    conditions = [sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
-                                        '=', sql_builder.value(session_id))]
+    conditions = [
+        sql_builder.binary_op(
+            sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+        )
+    ]
     if recycle_bin:
         # Only empty the recycle bin, leaving the rest of the cart alone.
         conditions.append(
-            sql_builder.binary_op(sql_builder.column('recycled', 'cart'), '=',
-                                  sql_builder.value(1)))
-    sql, values = sql_builder.delete_from(
-        'cart', sql_builder.join_exprs(conditions, 'AND'))
+            sql_builder.binary_op(sql_builder.column('recycled', 'cart'), '=', sql_builder.value(1))
+        )
+    sql, values = sql_builder.delete_from('cart', sql_builder.join_exprs(conditions, 'AND'))
     log.debug('api_reset_session SQL: %r %r', sql, values)
     cursor = connection.cursor()
     cursor.execute(sql, values)
@@ -545,8 +547,9 @@ def api_reset_session(request: HttpRequest) -> HttpResponse:
 
 @never_cache
 @api_view
-def api_create_download(request: HttpRequest, opus_id: str | None = None,
-                        fmt: str | None = None, *, api_code: int) -> HttpResponse:
+def api_create_download(
+    request: HttpRequest, opus_id: str | None = None, fmt: str | None = None, *, api_code: int
+) -> HttpResponse:
     r"""Creates an archive file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
@@ -582,32 +585,38 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
         opus_ids = [opus_id]
         return_directly = True
     else:
-        num_selections = (Cart.objects
-                          .filter(session_id__exact=session_id)
-                          .filter(recycled=0)
-                          .count())
+        num_selections = (
+            Cart.objects.filter(session_id__exact=session_id).filter(recycled=0).count()
+        )
         if url_file_only:
             max_selections = settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD
             if num_selections > max_selections:
-                return json_response({'error':
-                      'You are attempting to download more than the maximum '
-                    +f'permitted number ({max_selections}) of observations in '
-                    + 'a URL archive. Please reduce the number of '
-                    + 'observations you are trying to download.'})
+                return json_response(
+                    {
+                        'error': 'You are attempting to download more than the maximum '
+                        + f'permitted number ({max_selections}) of observations in '
+                        + 'a URL archive. Please reduce the number of '
+                        + 'observations you are trying to download.'
+                    }
+                )
         else:
             max_selections = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
             if num_selections > max_selections:
-                return json_response({'error':
-                      'You are attempting to download more than the maximum '
-                    +f'permitted number ({max_selections}) of observations in '
-                    + 'a data archive. Please either reduce the number of '
-                    + 'observations you are trying to download or download a '
-                    + 'URL archive instead and then retrieve the data products '
-                    + 'using "wget".'})
-        res = (Cart.objects
-               .filter(session_id__exact=session_id)
-               .filter(recycled=0)
-               .values_list('opus_id'))
+                return json_response(
+                    {
+                        'error': 'You are attempting to download more than the maximum '
+                        + f'permitted number ({max_selections}) of observations in '
+                        + 'a data archive. Please either reduce the number of '
+                        + 'observations you are trying to download or download a '
+                        + 'URL archive instead and then retrieve the data products '
+                        + 'using "wget".'
+                    }
+                )
+        res = (
+            Cart.objects.filter(session_id__exact=session_id)
+            .filter(recycled=0)
+            .values_list('opus_id')
+        )
         opus_ids = [x[0] for x in res]
         return_directly = False
 
@@ -617,8 +626,7 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
     # Fetch the full file info of the files we'll be zipping up
     # We want the raw objects so we can get the file metadata as well as the
     # abspath
-    files = get_pds_products(opus_ids, loc_type='raw',
-                             product_types=product_types)
+    files = get_pds_products(opus_ids, loc_type='raw', product_types=product_types)
 
     file_type = 'url' if url_file_only else 'data'
 
@@ -636,7 +644,7 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
     archive_root = download_filename(opus_id, file_type)
     archive_base_file_name = archive_root + f'.{fmt}'
     archive_file_name = settings.TAR_FILE_PATH + archive_base_file_name
-    manifest_file_name = settings.MANIFEST_FILE_PATH+f'manifest_{archive_root}.csv'
+    manifest_file_name = settings.MANIFEST_FILE_PATH + f'manifest_{archive_root}.csv'
     csv_file_name = settings.TAR_FILE_PATH + f'csv_{archive_root}.txt'
     url_file_name = settings.TAR_FILE_PATH + f'url_{archive_root}.txt'
 
@@ -647,26 +655,32 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
         info = _get_download_info(product_types, session_id)
         download_size = info['total_download_size']
         if download_size > settings.MAX_DOWNLOAD_SIZE:
-            return json_response({'error':
-                 'Sorry, this download would require '
-                 +f'{download_size:,}'
-                 +' bytes but the maximum allowed is '
-                 +f'{settings.MAX_DOWNLOAD_SIZE:,}'
-                 +' bytes. Please either reduce the number of '
-                 +'observations you are trying to download, reduce the number '
-                 +'of data products for each observation, or download a URL '
-                 +'archive instead and then retrieve the data products using '
-                 +'"wget".'})
+            return json_response(
+                {
+                    'error': 'Sorry, this download would require '
+                    + f'{download_size:,}'
+                    + ' bytes but the maximum allowed is '
+                    + f'{settings.MAX_DOWNLOAD_SIZE:,}'
+                    + ' bytes. Please either reduce the number of '
+                    + 'observations you are trying to download, reduce the number '
+                    + 'of data products for each observation, or download a URL '
+                    + 'archive instead and then retrieve the data products using '
+                    + '"wget".'
+                }
+            )
 
         # Don't keep creating downloads after user has reached their size limit
         # for this session
         cum_download_size = request.session.get('cum_download_size', 0)
         cum_download_size += download_size
         if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
-            return json_response({'error':
-                 'Sorry, maximum cumulative download size ('
-                 +f'{settings.MAX_CUM_DOWNLOAD_SIZE:,}'
-                 +' bytes) reached for this session'})
+            return json_response(
+                {
+                    'error': 'Sorry, maximum cumulative download size ('
+                    + f'{settings.MAX_CUM_DOWNLOAD_SIZE:,}'
+                    + ' bytes) reached for this session'
+                }
+            )
         request.session['cum_download_size'] = int(cum_download_size)
 
     mime_type = settings.DOWNLOAD_FORMATS[fmt][0]
@@ -699,9 +713,11 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
     # rest of this function and closed explicitly below, so a context manager does
     # not fit without restructuring the whole download-assembly block.
     manifest_fp = open(manifest_file_name, 'w')  # noqa: SIM115
-    manifest_fp.write('OPUS ID,Product Category,Product Type,'
-                      +'Product Type Abbrev,'
-                      +'Version,File Path,Checksum,Size\n')
+    manifest_fp.write(
+        'OPUS ID,Product Category,Product Type,'
+        + 'Product Type Abbrev,'
+        + 'Version,File Path,Checksum,Size\n'
+    )
     url_fp = open(url_file_name, 'w')  # noqa: SIM115
 
     errors = []
@@ -726,12 +742,14 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
                     pds_version = file_data['pds_version']
                     if pds_version == 3:
                         logical_path = path[
-                            path.index(settings.PDS3_HOLDINGS_DIR)+
-                            len(settings.PDS3_HOLDINGS_DIR):]
+                            path.index(settings.PDS3_HOLDINGS_DIR)
+                            + len(settings.PDS3_HOLDINGS_DIR) :
+                        ]
                     else:
                         logical_path = path[
-                            path.index(settings.PDS4_HOLDINGS_DIR)+
-                            len(settings.PDS4_HOLDINGS_DIR):]
+                            path.index(settings.PDS4_HOLDINGS_DIR)
+                            + len(settings.PDS4_HOLDINGS_DIR) :
+                        ]
                     if pretty_name not in files_info:
                         files_info[pretty_name] = [logical_path]
                     elif logical_path not in files_info[pretty_name]:
@@ -756,19 +774,23 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
                     pds_version = file_data['pds_version']
                     if pds_version == 3:
                         logical_path = path[
-                            path.index(settings.PDS3_HOLDINGS_DIR)+
-                            len(settings.PDS3_HOLDINGS_DIR):]
+                            path.index(settings.PDS3_HOLDINGS_DIR)
+                            + len(settings.PDS3_HOLDINGS_DIR) :
+                        ]
                     else:
                         logical_path = path[
-                            path.index(settings.PDS4_HOLDINGS_DIR)+
-                            len(settings.PDS4_HOLDINGS_DIR):]
-                    mdigest = (f'{f_opus_id},{category},{product_type},'
-                              +f'{product_abbrev},{version_name},{logical_path},'
-                              +f'{checksum},{size}')
-                    manifest_fp.write(mdigest+'\n')
+                            path.index(settings.PDS4_HOLDINGS_DIR)
+                            + len(settings.PDS4_HOLDINGS_DIR) :
+                        ]
+                    mdigest = (
+                        f'{f_opus_id},{category},{product_type},'
+                        + f'{product_abbrev},{version_name},{logical_path},'
+                        + f'{checksum},{size}'
+                    )
+                    manifest_fp.write(mdigest + '\n')
 
                     if logical_path not in added:
-                        url_fp.write(url+'\n')
+                        url_fp.write(url + '\n')
                         filename = os.path.basename(path)
                         # If hierarchical_struct is 1 or there are multiple paths
                         # for the same file basename, we store files with hierarchy
@@ -781,20 +803,24 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
                                     archive_file.write(path, arcname=filename)  # type: ignore[union-attr]  # zip branch; see the note above
                                 else:
                                     archive_file.add(path, arcname=filename)  # type: ignore[union-attr]  # tar branch; see the note above
-                            except Exception: # pragma: no cover - internal error
+                            except Exception:  # pragma: no cover - internal error
                                 log.exception(
                                     'api_create_download threw exception for '
-                                    +'opus_id %r, product_type %r, file %r, '
-                                    +'pretty_name %r',
-                                    f_opus_id, product_type, path, pretty_name)
+                                    + 'opus_id %r, product_type %r, file %r, '
+                                    + 'pretty_name %r',
+                                    f_opus_id,
+                                    product_type,
+                                    path,
+                                    pretty_name,
+                                )
                                 errors.append('Error adding: ' + pretty_name)
                         added.append(logical_path)
 
     # Write errors to manifest file
-    if errors: # pragma: no cover - internal error
+    if errors:  # pragma: no cover - internal error
         manifest_fp.write('Errors:\n')
         for e in errors:
-            manifest_fp.write(e+'\n')
+            manifest_fp.write(e + '\n')
 
     # Add manifests and checksum files to tarball and close everything up
     manifest_fp.close()
@@ -813,8 +839,7 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
     os.remove(url_file_name)
 
     if return_directly:
-        response['Content-Disposition'] = ('attachment; filename='
-                                           + archive_base_file_name)
+        response['Content-Disposition'] = 'attachment; filename=' + archive_base_file_name
         ret = response
     else:
         archive_url = settings.TAR_FILE_URL_PATH + archive_base_file_name
@@ -829,8 +854,8 @@ def api_create_download(request: HttpRequest, opus_id: str | None = None,
 #
 ################################################################################
 
-def _get_download_info(product_types: list[str],
-                       session_id: str | None) -> dict[str, Any]:
+
+def _get_download_info(product_types: list[str], session_id: str | None) -> dict[str, Any]:
     """Return information about the current cart useful for download.
 
     The resulting totals are limited to the given product_types.
@@ -874,32 +899,37 @@ def _get_download_info(product_types: list[str],
         """Return the condition tying obs_files rows to their cart entries."""
         return sql_builder.columns_equal(
             sql_builder.column('obs_general_id', 'cart'),
-            sql_builder.column('obs_general_id', 'obs_files'))
+            sql_builder.column('obs_general_id', 'obs_files'),
+        )
 
     def in_this_cart() -> sql_builder.Expr:
         """Return the condition restricting the cart to this session."""
-        return sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
-                                     '=', sql_builder.value(session_id))
+        return sql_builder.binary_op(
+            sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+        )
 
     def not_recycled() -> sql_builder.Expr:
         """Return the condition excluding the recycle bin."""
-        return sql_builder.binary_op(sql_builder.column('recycled', 'cart'),
-                                     '=', sql_builder.value(0))
+        return sql_builder.binary_op(
+            sql_builder.column('recycled', 'cart'), '=', sql_builder.value(0)
+        )
 
     # Retrieve the distinct list of product types for all observations,
     # including the ones in the recycle bin.  This is used to allow the items
     # in the cart to be added/removed from the recycle bin and update the
     # download data panel without redrawing the cart page on every edit.
     select = sql_builder.Select(distinct=True)
-    for column_name, alias in (('category', 'cat'), ('sort_order', 'sort'),
-                               ('short_name', 'short'), ('full_name', 'full'),
-                               ('default_checked', 'checked'),
-                               ('version_name', 'ver'),
-                               ('version_number', 'ver_num')):
-        select.add_column(sql_builder.column(column_name, 'obs_files'),
-                          alias=alias)
-    select.add_from('obs_files').add_join('INNER', 'cart',
-                                          cart_join_condition())
+    for column_name, alias in (
+        ('category', 'cat'),
+        ('sort_order', 'sort'),
+        ('short_name', 'short'),
+        ('full_name', 'full'),
+        ('default_checked', 'checked'),
+        ('version_name', 'ver'),
+        ('version_number', 'ver_num'),
+    ):
+        select.add_column(sql_builder.column(column_name, 'obs_files'), alias=alias)
+    select.add_from('obs_files').add_join('INNER', 'cart', cart_join_condition())
     select.add_where(in_this_cart())
     # Put "Current" version on top of others
     select.add_order_by(sql_builder.column('sort'))
@@ -941,12 +971,10 @@ def _get_download_info(product_types: list[str],
                 cur_product_list = []
                 product_cat_dict[pretty_name][ver] = cur_product_list
         try:
-            entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
-                                            term=short_name)
+            entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE', term=short_name)
             tooltip = entry.definition
-        except Definitions.DoesNotExist: # pragma: no cover - import error
-            log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"',
-                      short_name)
+        except Definitions.DoesNotExist:  # pragma: no cover - import error
+            log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"', short_name)
             tooltip = None
         product_dict_entry = {
             'slug_name': short_name,
@@ -957,45 +985,43 @@ def _get_download_info(product_types: list[str],
             'download_size': 0,
             'download_size_pretty': 0,
             'default_checked': default_checked,
-            'product_type_with_version': f'{short_name}@{ver}'
+            'product_type_with_version': f'{short_name}@{ver}',
         }
         cur_product_list.append(product_dict_entry)
         short_name_ver = short_name + '@' + ver.lower()
         product_dict_by_short_name_ver[short_name_ver] = product_dict_entry
 
-
-# SELECT obs_files.category,
-#        obs_files.sort_order,
-#        obs_files.short_name,
-#        obs_files.version_name,
-#        obs_files.full_name,
-#        obs_files.default_checked,
-#        count(distinct obs_files.opus_id) as product_count,
-#        count(distinct obs_files.logical_path) as download_count,
-#        t2.download_size as downloadsize
-# FROM obs_files,
-#
-#      (SELECT t1.short_name, t1.version_name, sum(t1.size) as download_size
-#              FROM (SELECT DISTINCT obs_files.short_name, obs_files.version_name,
-#                                    obs_files.logical_path, obs_files.size
-#                           FROM obs_files
-#                           WHERE opus_id IN ('co-iss-n1460960653', 'co-iss-n1460960868')
-#                   ) as t1
-#              GROUP BY t1.short_name, t1.version_name
-#      ) as t2
-# WHERE obs_files.short_name=t2.short_name
-#   AND obs_files.version_name=t2.version_name
-#   AND obs_files.opus_id in ('co-iss-n1460960653', 'co-iss-n1460960868')
-# GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name,
-#          obs_files.version_name, obs_files.full_name, obs_files.default_checked
-# ORDER BY sort_order;
+    # SELECT obs_files.category,
+    #        obs_files.sort_order,
+    #        obs_files.short_name,
+    #        obs_files.version_name,
+    #        obs_files.full_name,
+    #        obs_files.default_checked,
+    #        count(distinct obs_files.opus_id) as product_count,
+    #        count(distinct obs_files.logical_path) as download_count,
+    #        t2.download_size as downloadsize
+    # FROM obs_files,
+    #
+    #      (SELECT t1.short_name, t1.version_name, sum(t1.size) as download_size
+    #              FROM (SELECT DISTINCT obs_files.short_name, obs_files.version_name,
+    #                                    obs_files.logical_path, obs_files.size
+    #                           FROM obs_files
+    #                           WHERE opus_id IN ('co-iss-n1460960653', 'co-iss-n1460960868')
+    #                   ) as t1
+    #              GROUP BY t1.short_name, t1.version_name
+    #      ) as t2
+    # WHERE obs_files.short_name=t2.short_name
+    #   AND obs_files.version_name=t2.version_name
+    #   AND obs_files.opus_id in ('co-iss-n1460960653', 'co-iss-n1460960868')
+    # GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name,
+    #          obs_files.version_name, obs_files.full_name, obs_files.default_checked
+    # ORDER BY sort_order;
     # Nested SELECT #2: the distinct files in the cart, so that a file shared by
     # two observations is only counted and sized once.
     distinct_files = sql_builder.Select(distinct=True)
     for column_name in ('short_name', 'version_name', 'logical_path', 'size'):
         distinct_files.add_column(sql_builder.column(column_name, 'obs_files'))
-    distinct_files.add_from('obs_files').add_join('INNER', 'cart',
-                                                  cart_join_condition())
+    distinct_files.add_from('obs_files').add_join('INNER', 'cart', cart_join_condition())
     distinct_files.add_where(in_this_cart())
     distinct_files.add_where(not_recycled())
 
@@ -1003,9 +1029,9 @@ def _get_download_info(product_types: list[str],
     sizes_by_product = sql_builder.Select()
     sizes_by_product.add_column(sql_builder.column('short_name', 't1'))
     sizes_by_product.add_column(sql_builder.column('version_name', 't1'))
-    sizes_by_product.add_column(sql_builder.sum_of(sql_builder.column('size',
-                                                                      't1')),
-                                alias='download_size')
+    sizes_by_product.add_column(
+        sql_builder.sum_of(sql_builder.column('size', 't1')), alias='download_size'
+    )
     sizes_by_product.add_from(sql_builder.Subquery(distinct_files, 't1'))
     sizes_by_product.add_group_by(sql_builder.column('short_name', 't1'))
     sizes_by_product.add_group_by(sql_builder.column('version_name', 't1'))
@@ -1015,31 +1041,33 @@ def _get_download_info(product_types: list[str],
     # For a given short_name, the category, sort_order, and full_name are
     # always the same. Thus we can group by all four and it's the same as
     # grouping by just short_name. We need them all here to return to the user.
-    for column_name, alias in (('category', 'cat'), ('sort_order', 'sort'),
-                               ('short_name', 'short'), ('version_name', 'ver'),
-                               ('full_name', 'full'),
-                               ('default_checked', 'checked')):
-        select.add_column(sql_builder.column(column_name, 'obs_files'),
-                          alias=alias)
+    for column_name, alias in (
+        ('category', 'cat'),
+        ('sort_order', 'sort'),
+        ('short_name', 'short'),
+        ('version_name', 'ver'),
+        ('full_name', 'full'),
+        ('default_checked', 'checked'),
+    ):
+        select.add_column(sql_builder.column(column_name, 'obs_files'), alias=alias)
 
     # download_size is the total sizes of all distinct filenames
     # Note there is only one download_size per short_name, so when we add
     # download_size to the GROUP BY later, we aren't actually aggregating
     # anything.
-    select.add_column(sql_builder.column('download_size', 't2'),
-                      alias='download_size')
+    select.add_column(sql_builder.column('download_size', 't2'), alias='download_size')
 
     # download_count is the number of distinct filenames
     select.add_column(
-        sql_builder.count_distinct(sql_builder.column('logical_path',
-                                                      'obs_files')),
-        alias='download_count')
+        sql_builder.count_distinct(sql_builder.column('logical_path', 'obs_files')),
+        alias='download_count',
+    )
 
     # product_count is the number of distinct OPUS_IDs in each group
     select.add_column(
-        sql_builder.count_distinct(sql_builder.column('obs_general_id',
-                                                      'obs_files')),
-        alias='product_count')
+        sql_builder.count_distinct(sql_builder.column('obs_general_id', 'obs_files')),
+        alias='product_count',
+    )
 
     # The per-product-type totals are cross-joined with the cart's files and
     # matched up in the WHERE clause below, which is what pairs each row with
@@ -1048,12 +1076,17 @@ def _get_download_info(product_types: list[str],
     select.add_from('obs_files').add_join('INNER', 'cart', cart_join_condition())
     select.add_where(in_this_cart())
     select.add_where(not_recycled())
-    select.add_where(sql_builder.columns_equal(
-        sql_builder.column('short_name', 'obs_files'),
-        sql_builder.column('short_name', 't2')))
-    select.add_where(sql_builder.columns_equal(
-        sql_builder.column('version_name', 'obs_files'),
-        sql_builder.column('version_name', 't2')))
+    select.add_where(
+        sql_builder.columns_equal(
+            sql_builder.column('short_name', 'obs_files'), sql_builder.column('short_name', 't2')
+        )
+    )
+    select.add_where(
+        sql_builder.columns_equal(
+            sql_builder.column('version_name', 'obs_files'),
+            sql_builder.column('version_name', 't2'),
+        )
+    )
 
     for alias in ('cat', 'sort', 'short', 'ver', 'full', 'checked'):
         select.add_group_by(sql_builder.column(alias))
@@ -1069,8 +1102,17 @@ def _get_download_info(product_types: list[str],
     total_download_count = 0
 
     for res in results:
-        (category, _sort_order, short_name, version_name, full_name,
-         checked, download_size, download_count, product_count) = res
+        (
+            category,
+            _sort_order,
+            short_name,
+            version_name,
+            full_name,
+            checked,
+            download_size,
+            download_count,
+            product_count,
+        ) = res
         short_name_ver = short_name + '@' + version_name.lower()
         download_size = int(download_size)
         download_count = int(download_count)
@@ -1097,13 +1139,15 @@ def _get_download_info(product_types: list[str],
         product_dict_by_short_name_ver[short_name_ver]['product_count'] = product_count
         product_dict_by_short_name_ver[short_name_ver]['download_count'] = download_count
         product_dict_by_short_name_ver[short_name_ver]['download_size'] = download_size
-        product_dict_by_short_name_ver[short_name_ver]['download_size_pretty'] = nice_file_size(download_size)
+        product_dict_by_short_name_ver[short_name_ver]['download_size_pretty'] = nice_file_size(
+            download_size
+        )
 
     ret = {
         'total_download_count': total_download_count,
         'total_download_size': total_download_size,
-        'total_download_size_pretty':  nice_file_size(total_download_size),
-        'product_cat_dict': product_cat_dict
+        'total_download_size_pretty': nice_file_size(total_download_size),
+        'product_cat_dict': product_cat_dict,
     }
 
     return ret
@@ -1115,8 +1159,10 @@ def _get_download_info(product_types: list[str],
 #
 ################################################################################
 
-def _add_to_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
-                       session_id: str | None) -> str | Literal[False]:
+
+def _add_to_cart_table(
+    opus_id_list: str | list[str] | tuple[str, ...], session_id: str | None
+) -> str | Literal[False]:
     """Add OPUS_IDs to the cart table.
 
     Note that we don't care here if the caller set recyclebin=0 or 1 because
@@ -1132,41 +1178,39 @@ def _add_to_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
         saying why none of them were.
     """
     cursor = connection.cursor()
-    if not isinstance(opus_id_list, (list, tuple)): # pragma: no cover -
+    if not isinstance(opus_id_list, (list, tuple)):  # pragma: no cover -
         # We currently never pass in a list
         opus_id_list = [opus_id_list]
-    general_res = (ObsGeneral.objects.filter(opus_id__in=opus_id_list)
-                   .values_list('opus_id', 'id'))
+    general_res = ObsGeneral.objects.filter(opus_id__in=opus_id_list).values_list('opus_id', 'id')
     if len(general_res) != len(opus_id_list):
         # There are a few things this misses - empty opus_ids and duplicate
         # opus_ids will return this same error. But it doesn't seem worth
         # trying to catch those for an internal API.
-        return ('Internal Error: One or more OPUS_IDs not found; '
-                +'nothing added to cart')
+        return 'Internal Error: One or more OPUS_IDs not found; ' + 'nothing added to cart'
 
-    num_cart_and_recycle = (Cart.objects
-                            .filter(session_id__exact=session_id)
-                            .count())
+    num_cart_and_recycle = Cart.objects.filter(session_id__exact=session_id).count()
 
     # Subtract out the number of observations already in the cart, whether in
     # the recycle bin or not, since these won't count towards the total.
-    incart_count = (Cart.objects
-                    .filter(session_id__exact=session_id)
-                    .filter(opus_id__in=opus_id_list)
-                    .count())
+    incart_count = (
+        Cart.objects.filter(session_id__exact=session_id).filter(opus_id__in=opus_id_list).count()
+    )
 
-    if (num_cart_and_recycle+len(general_res)-incart_count >
-        settings.MAX_SELECTIONS_ALLOWED):
+    if num_cart_and_recycle + len(general_res) - incart_count > settings.MAX_SELECTIONS_ALLOWED:
         if len(general_res) == 1:
-            return (f'Your request to add OPUS ID {opus_id_list[0]} to the '
-                    +'cart failed - there are already too many observations '
-                    +'in the cart and recycle bin. The maximum allowed is '
-                    +f'{settings.MAX_SELECTIONS_ALLOWED:,d}.')
+            return (
+                f'Your request to add OPUS ID {opus_id_list[0]} to the '
+                + 'cart failed - there are already too many observations '
+                + 'in the cart and recycle bin. The maximum allowed is '
+                + f'{settings.MAX_SELECTIONS_ALLOWED:,d}.'
+            )
         else:
-            return ('Your request to add multiple OPUS IDs to the cart failed '
-                    +'- there are already too many observations in the cart '
-                    +'and recycle bin. The maximum allowed is '
-                    +f'{settings.MAX_SELECTIONS_ALLOWED:,d}.')
+            return (
+                'Your request to add multiple OPUS IDs to the cart failed '
+                + '- there are already too many observations in the cart '
+                + 'and recycle bin. The maximum allowed is '
+                + f'{settings.MAX_SELECTIONS_ALLOWED:,d}.'
+            )
 
     # We use REPLACE INTO to avoid problems with duplicate entries or
     # race conditions that would be caused by deleting first and then adding.
@@ -1182,9 +1226,10 @@ def _add_to_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
 
     return False
 
-def _remove_from_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
-                            session_id: str | None,
-                            recycle_bin: int) -> str | Literal[False]:
+
+def _remove_from_cart_table(
+    opus_id_list: str | list[str] | tuple[str, ...], session_id: str | None, recycle_bin: int
+) -> str | Literal[False]:
     """Remove OPUS_IDs from the cart table.
 
     If recycle_bin is True, then remove moves an observation into the
@@ -1203,21 +1248,20 @@ def _remove_from_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
         why nothing was removed.
     """
     cursor = connection.cursor()
-    if not isinstance(opus_id_list, (list, tuple)): # pragma: no cover -
+    if not isinstance(opus_id_list, (list, tuple)):  # pragma: no cover -
         # We currently never pass in a list
         opus_id_list = [opus_id_list]
     if recycle_bin:
         # If the recycle_bin flag is set, then this updates the existing entries
         # in the cart table to set recycled=1.
-        res = (Cart.objects
-               .filter(session_id__exact=session_id)
-               .filter(opus_id__in=opus_id_list)
-               .values_list('opus_id', 'obs_general_id'))
+        res = (
+            Cart.objects.filter(session_id__exact=session_id)
+            .filter(opus_id__in=opus_id_list)
+            .values_list('opus_id', 'obs_general_id')
+        )
         if len(res) != len(opus_id_list):
-            return ('Internal Error: One or more OPUS_IDs not found; '
-                    +'nothing removed from cart')
-        values = [(session_id, obs_general_id, opus_id, 1)
-                  for opus_id, obs_general_id in res]
+            return 'Internal Error: One or more OPUS_IDs not found; ' + 'nothing removed from cart'
+        values = [(session_id, obs_general_id, opus_id, 1) for opus_id, obs_general_id in res]
         sql = sql_builder.replace_into_values('cart', _CART_COLUMNS)
         log.debug('_remove_from_cart_table SQL: %r %r', sql, values)
         cursor.executemany(sql, values)
@@ -1226,17 +1270,25 @@ def _remove_from_cart_table(opus_id_list: str | list[str] | tuple[str, ...],
         sql, values = sql_builder.delete_from(
             'cart',
             sql_builder.join_exprs(
-                [sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
-                                       '=', sql_builder.value(session_id)),
-                 sql_builder.in_sequence(sql_builder.column('opus_id', 'cart'),
-                                         list(opus_id_list))], 'AND'))
+                [
+                    sql_builder.binary_op(
+                        sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+                    ),
+                    sql_builder.in_sequence(
+                        sql_builder.column('opus_id', 'cart'), list(opus_id_list)
+                    ),
+                ],
+                'AND',
+            ),
+        )
         log.debug('_remove_from_cart_table SQL: %r %r', sql, values)
         cursor.execute(sql, values)
     return False
 
-def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
-                     recycle_bin: int,
-                     api_code: int) -> str | Literal[False] | HttpResponse:
+
+def _edit_cart_range(
+    request: HttpRequest, session_id: str | None, action: str, recycle_bin: int, api_code: int
+) -> str | Literal[False] | HttpResponse:
     """Add or remove a range of opus_ids based on the current sort order.
 
     The range's two endpoints are the `range=<OPUS_ID>,<OPUS_ID>` parameter, and
@@ -1289,15 +1341,14 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         # parse_order_slug returns both lists or neither, and the check above has
         # ruled out "neither".
         assert order_descending_params is not None
-        (order_terms, order_mult_tables,
-         order_obs_tables) = create_order_by_terms(order_params,
-                                                   order_descending_params)
-        if order_terms is None: # pragma: no cover -
+        (order_terms, order_mult_tables, order_obs_tables) = create_order_by_terms(
+            order_params, order_descending_params
+        )
+        if order_terms is None:  # pragma: no cover -
             # parse_order_slug resolves every slug through the same ParamInfo
             # lookup, so it fails first; this guard is here because the function
             # documents the return, not because a route reaches it.
-            log.error('_edit_cart_range: Could not build order terms for %r',
-                      all_order)
+            log.error('_edit_cart_range: Could not build order terms for %r', all_order)
             raise Http400Error(http400_unknown_slug(None, request))
         # create_order_by_terms returns all three values or none of them, and the
         # check above has ruled out "none".
@@ -1316,7 +1367,7 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         # The table name embeds the session id, which get_session_id leaves None
         # only where Django could not create a session key at all.
         assert session_id is not None
-        temp_table_name = 'temp_'+session_id+'_'+pid_sfx+'_'+time_sfx
+        temp_table_name = 'temp_' + session_id + '_' + pid_sfx + '_' + time_sfx
         temp_select = sql_builder.Select()
         temp_select.add_column(sql_builder.column('id', 'obs_general'))
         temp_from = temp_select.add_from('obs_general')
@@ -1325,26 +1376,35 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         # And JOIN all the mult_ tables together
         add_mult_table_joins(temp_from, sorted(order_mult_tables))
         temp_from.add_join(
-            'INNER', 'cart',
+            'INNER',
+            'cart',
             sql_builder.join_exprs(
-                [sql_builder.columns_equal(
-                    sql_builder.column('id', 'obs_general'),
-                    sql_builder.column('obs_general_id', 'cart')),
-                 sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
-                                       '=', sql_builder.value(session_id))],
-                'AND'))
+                [
+                    sql_builder.columns_equal(
+                        sql_builder.column('id', 'obs_general'),
+                        sql_builder.column('obs_general_id', 'cart'),
+                    ),
+                    sql_builder.binary_op(
+                        sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+                    ),
+                ],
+                'AND',
+            ),
+        )
         for order_column, descending in order_terms:
             temp_select.add_order_by(order_column, descending=descending)
         temp_sql, params = sql_builder.create_table_as_select(
-            temp_table_name, temp_select,
-            column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS, temporary=True)
+            temp_table_name,
+            temp_select,
+            column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS,
+            temporary=True,
+        )
         try:
             cursor.execute(temp_sql, params)
-        except DatabaseError: # pragma: no cover - database error
+        except DatabaseError:  # pragma: no cover - database error
             log.exception('_edit_cart_range: "%r" "%r" failed', temp_sql, params)
             return HttpResponseServerError(http500_database_error(request))
-        log.debug('_edit_cart_range SQL (%.2f secs): %r %r',
-                  time.time()-time1, temp_sql, params)
+        log.debug('_edit_cart_range SQL (%.2f secs): %r %r', time.time() - time1, temp_sql, params)
 
         user_query_table = temp_table_name
     else:
@@ -1355,19 +1415,22 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
 
         (selections, extras) = url_to_search_params(request.GET)
         if selections is None:
-            log.error('_edit_cart_range: Could not find selections for'
-                      +' request %r', request.GET)
+            log.error(
+                '_edit_cart_range: Could not find selections for' + ' request %r', request.GET
+            )
             raise Http400Error(http400_search_params_invalid(request))
 
         # url_to_search_params returns both values or neither, and the check above
         # has ruled out "neither".
         assert extras is not None
-        user_query_table = get_user_query_table(selections, extras,
-                                                api_code=api_code)
-        if not user_query_table: # pragma: no cover - database error
-            log.error('_edit_cart_range: get_user_query_table failed '
-                      +'*** Selections %r *** Extras %r',
-                      str(selections), str(extras))
+        user_query_table = get_user_query_table(selections, extras, api_code=api_code)
+        if not user_query_table:  # pragma: no cover - database error
+            log.error(
+                '_edit_cart_range: get_user_query_table failed '
+                + '*** Selections %r *** Extras %r',
+                str(selections),
+                str(extras),
+            )
             return HttpResponseServerError(http500_search_cache_failed(request))
 
     cursor = connection.cursor()
@@ -1375,8 +1438,8 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
     def cache_table_join_condition() -> sql_builder.Expr:
         """Return the condition matching obs_general rows to those of the query table."""
         return sql_builder.columns_equal(
-            sql_builder.column('id', user_query_table),
-            sql_builder.column('id', 'obs_general'))
+            sql_builder.column('id', user_query_table), sql_builder.column('id', 'obs_general')
+        )
 
     sort_orders = []
     for opus_id in ids:
@@ -1385,60 +1448,71 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
         sort_order_select.add_from('obs_general').add_join(
-            'INNER', user_query_table, cache_table_join_condition())
-        sort_order_select.add_where(sql_builder.binary_op(
-            sql_builder.column('opus_id', 'obs_general'), '=',
-            sql_builder.value(opus_id)))
+            'INNER', user_query_table, cache_table_join_condition()
+        )
+        sort_order_select.add_where(
+            sql_builder.binary_op(
+                sql_builder.column('opus_id', 'obs_general'), '=', sql_builder.value(opus_id)
+            )
+        )
         sql, values = sort_order_select.build()
         log.debug('_edit_cart_range SQL: %r %r', sql, values)
         cursor.execute(sql, values)
         results = cursor.fetchall()
         if len(results) == 0:
-            log.error('_edit_cart_range: No OPUS ID "%r" in obs_general',
-                      opus_id)
+            log.error('_edit_cart_range: No OPUS ID "%r" in obs_general', opus_id)
             if request.GET.get('view', 'browse') == 'cart':
-                return (f'An OPUS ID was given to {action} that was not found '
-                        +'in the cart')
+                return f'An OPUS ID was given to {action} that was not found ' + 'in the cart'
             else:
-                return (f'An OPUS ID was given to {action} that was not found '
-                        +'using the supplied search criteria')
+                return (
+                    f'An OPUS ID was given to {action} that was not found '
+                    + 'using the supplied search criteria'
+                )
         sort_orders.append(results[0][0])
 
     sort_order_column = sql_builder.column('sort_order', user_query_table)
     range_condition = sql_builder.join_exprs(
-        [sql_builder.binary_op(sort_order_column, '>=',
-                               sql_builder.value(min(sort_orders))),
-         sql_builder.binary_op(sort_order_column, '<=',
-                               sql_builder.value(max(sort_orders)))], 'AND')
+        [
+            sql_builder.binary_op(sort_order_column, '>=', sql_builder.value(min(sort_orders))),
+            sql_builder.binary_op(sort_order_column, '<=', sql_builder.value(max(sort_orders))),
+        ],
+        'AND',
+    )
 
     def range_from_source(restrict_to_cart: bool) -> sql_builder.FromSource:
         """Return the FROM clause selecting the observations in the range."""
         from_source = sql_builder.FromSource('obs_general')
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
-        from_source.add_join('INNER', user_query_table,
-                             cache_table_join_condition())
+        from_source.add_join('INNER', user_query_table, cache_table_join_condition())
         if restrict_to_cart:
             # Restrict to observations already in this session's cart
             from_source.add_join(
-                'INNER', 'cart',
+                'INNER',
+                'cart',
                 sql_builder.join_exprs(
-                    [sql_builder.binary_op(
-                        sql_builder.column('session_id', 'cart'), '=',
-                        sql_builder.value(session_id)),
-                     sql_builder.columns_equal(
-                         sql_builder.column('obs_general_id', 'cart'),
-                         sql_builder.column('id', 'obs_general'))], 'AND'))
+                    [
+                        sql_builder.binary_op(
+                            sql_builder.column('session_id', 'cart'),
+                            '=',
+                            sql_builder.value(session_id),
+                        ),
+                        sql_builder.columns_equal(
+                            sql_builder.column('obs_general_id', 'cart'),
+                            sql_builder.column('id', 'obs_general'),
+                        ),
+                    ],
+                    'AND',
+                ),
+            )
         return from_source
 
     if action == 'addrange' or (action == 'removerange' and recycle_bin):
-        num_cart_and_recycle = (Cart.objects
-                                .filter(session_id__exact=session_id)
-                                .count())
+        num_cart_and_recycle = Cart.objects.filter(session_id__exact=session_id).count()
 
         # removerange with recyclebin=1 only flips the recycled flag on rows that
         # are already in the cart, so its statements are restricted to those.
-        restrict_to_cart = (action == 'removerange')
+        restrict_to_cart = action == 'removerange'
 
         if not recycle_bin:
             # We don't want to check the maximum when moving items to or from
@@ -1457,9 +1531,12 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
             try:
                 cursor.execute(sql, count_params)
                 num_new = cursor.fetchone()[0]
-            except DatabaseError: # pragma: no cover - database error
-                log.exception('_edit_cart_range: SQL query failed for request '
-                              +'%r: SQL "%r"', request.GET, sql)
+            except DatabaseError:  # pragma: no cover - database error
+                log.exception(
+                    '_edit_cart_range: SQL query failed for request ' + '%r: SQL "%r"',
+                    request.GET,
+                    sql,
+                )
                 return HttpResponseServerError(http500_database_error(request))
 
             # Subtract the number of observations that are already in the cart.
@@ -1474,20 +1551,24 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
             try:
                 cursor.execute(sql, dup_params)
                 num_old = cursor.fetchone()[0]
-            except DatabaseError: # pragma: no cover - database error
-                log.exception('_edit_cart_range: SQL query failed for request '
-                              +'%r: SQL "%r"', request.GET, sql)
+            except DatabaseError:  # pragma: no cover - database error
+                log.exception(
+                    '_edit_cart_range: SQL query failed for request ' + '%r: SQL "%r"',
+                    request.GET,
+                    sql,
+                )
                 return HttpResponseServerError(http500_database_error(request))
 
-            num_wanted = num_new-num_old
-            if (num_cart_and_recycle+num_wanted >
-                settings.MAX_SELECTIONS_ALLOWED):
-                return (f'Your request to add {num_wanted:,d} observations ('
-                        +f'OPUS IDs {ids[0]} to {ids[1]}) '
-                        +'to the cart failed. The resulting cart and recycle '
-                        +'bin would have more than the maximum '
-                        +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
-                        +'allowed. None of the observations were added.')
+            num_wanted = num_new - num_old
+            if num_cart_and_recycle + num_wanted > settings.MAX_SELECTIONS_ALLOWED:
+                return (
+                    f'Your request to add {num_wanted:,d} observations ('
+                    + f'OPUS IDs {ids[0]} to {ids[1]}) '
+                    + 'to the cart failed. The resulting cart and recycle '
+                    + 'bin would have more than the maximum '
+                    + f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
+                    + 'allowed. None of the observations were added.'
+                )
 
         # We always set recycled to "0" on addrange. If an observation is
         # already in the cart, it won't be changed. If it's in the recycle bin,
@@ -1504,16 +1585,18 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         edit_select.add_column(sql_builder.value(recycled))
         edit_select.add_from_source(range_from_source(restrict_to_cart))
         edit_select.add_where(range_condition)
-        sql, sql_params = sql_builder.replace_into_select('cart', _CART_COLUMNS,
-                                                          edit_select)
+        sql, sql_params = sql_builder.replace_into_select('cart', _CART_COLUMNS, edit_select)
 
-    elif action == 'removerange': # recycle_bin == 0
+    elif action == 'removerange':  # recycle_bin == 0
         delete_from_source = sql_builder.FromSource('cart')
         delete_from_source.add_join(
-            'INNER', user_query_table,
+            'INNER',
+            user_query_table,
             sql_builder.columns_equal(
                 sql_builder.column('id', user_query_table),
-                sql_builder.column('obs_general_id', 'cart')))
+                sql_builder.column('obs_general_id', 'cart'),
+            ),
+        )
         # The join above matches on obs_general_id alone, and the cart table
         # holds every session's rows, so the session has to be named here as
         # well or this deletes the observations in the range from every other
@@ -1523,14 +1606,17 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         # cart, it only narrows which observations are in range -- another
         # session's row for one of those same observations still joins.
         delete_condition = sql_builder.join_exprs(
-            [sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
-                                   '=', sql_builder.value(session_id)),
-             range_condition], 'AND')
-        sql, sql_params = sql_builder.delete_joined('cart', delete_from_source,
-                                                    delete_condition)
-    else: # pragma: no cover - error catchall
-        log.error('_edit_cart_range: Unknown action %r: %r', action,
-                  request.GET)
+            [
+                sql_builder.binary_op(
+                    sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+                ),
+                range_condition,
+            ],
+            'AND',
+        )
+        sql, sql_params = sql_builder.delete_joined('cart', delete_from_source, delete_condition)
+    else:  # pragma: no cover - error catchall
+        log.error('_edit_cart_range: Unknown action %r: %r', action, request.GET)
         return HttpResponseServerError(http500_internal_error(request))
 
     log.debug('_edit_cart_range SQL: %r %r', sql, sql_params)
@@ -1540,16 +1626,16 @@ def _edit_cart_range(request: HttpRequest, session_id: str | None, action: str,
         sql = sql_builder.drop_table(temp_table_name)
         try:
             cursor.execute(sql)
-        except DatabaseError: # pragma: no cover - database error
+        except DatabaseError:  # pragma: no cover - database error
             log.exception('_edit_cart_range: "%r" failed', sql)
             return HttpResponseServerError(http500_database_error(request))
 
     return False
 
 
-def _edit_cart_addall(request: HttpRequest, session_id: str | None,
-                      recycle_bin: int,
-                      api_code: int) -> str | Literal[False] | HttpResponse:
+def _edit_cart_addall(
+    request: HttpRequest, session_id: str | None, recycle_bin: int, api_code: int
+) -> str | Literal[False] | HttpResponse:
     """Add all results from a search into the cart table.
 
     With view=browse the search results are the source of "all". With view=cart
@@ -1577,7 +1663,7 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
     if view == 'browse':
         # We ignore recycle_bin here because it doesn't mean anything
         count, user_query_table, err = get_result_count_helper(request, api_code)
-        if err is not None: # pragma: no cover - database errors
+        if err is not None:  # pragma: no cover - database errors
             return err
 
         # get_result_count_helper returns a count and a table name whenever it
@@ -1585,9 +1671,7 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
         assert count is not None
         assert user_query_table is not None
 
-        num_cart_and_recycle = (Cart.objects
-                                .filter(session_id__exact=session_id)
-                                .count())
+        num_cart_and_recycle = Cart.objects.filter(session_id__exact=session_id).count()
 
         # Subtract off the number of observations already in the cart or
         # recycle bin because adding them back won't change the count.
@@ -1596,28 +1680,38 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
         dup_select.add_from('cart').add_join(
-            'INNER', user_query_table,
+            'INNER',
+            user_query_table,
             sql_builder.columns_equal(
                 sql_builder.column('id', user_query_table),
-                sql_builder.column('obs_general_id', 'cart')))
-        dup_select.add_where(sql_builder.binary_op(
-            sql_builder.column('session_id', 'cart'), '=',
-            sql_builder.value(session_id)))
+                sql_builder.column('obs_general_id', 'cart'),
+            ),
+        )
+        dup_select.add_where(
+            sql_builder.binary_op(
+                sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+            )
+        )
         sql, values = dup_select.build()
         try:
             cursor.execute(sql, values)
             num_dup = cursor.fetchone()[0]
-        except DatabaseError: # pragma: no cover - database error
-            log.exception('_edit_cart_addall: SQL query failed for request %r: '
-                          +'SQL "%r"', request.GET, sql)
+        except DatabaseError:  # pragma: no cover - database error
+            log.exception(
+                '_edit_cart_addall: SQL query failed for request %r: ' + 'SQL "%r"',
+                request.GET,
+                sql,
+            )
             return HttpResponseServerError(http500_database_error(request))
 
-        if num_cart_and_recycle+count-num_dup > settings.MAX_SELECTIONS_ALLOWED:
-            return (f'Your request to add all {count:,d} observations '
-                    +'to the cart failed. The resulting cart and recycle bin '
-                    +'would have more than the maximum '
-                    +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
-                    +'allowed. None of the observations were added.')
+        if num_cart_and_recycle + count - num_dup > settings.MAX_SELECTIONS_ALLOWED:
+            return (
+                f'Your request to add all {count:,d} observations '
+                + 'to the cart failed. The resulting cart and recycle bin '
+                + 'would have more than the maximum '
+                + f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
+                + 'allowed. None of the observations were added.'
+            )
 
         addall_select = sql_builder.Select()
         addall_select.add_column(sql_builder.value(session_id))
@@ -1628,12 +1722,13 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
         addall_select.add_from('obs_general').add_join(
-            'INNER', user_query_table,
+            'INNER',
+            user_query_table,
             sql_builder.columns_equal(
-                sql_builder.column('id', user_query_table),
-                sql_builder.column('id', 'obs_general')))
-        sql, values = sql_builder.replace_into_select('cart', _CART_COLUMNS,
-                                                      addall_select)
+                sql_builder.column('id', user_query_table), sql_builder.column('id', 'obs_general')
+            ),
+        )
+        sql, values = sql_builder.replace_into_select('cart', _CART_COLUMNS, addall_select)
 
         log.debug('_edit_cart_addall SQL: %r %r', sql, values)
         cursor.execute(sql, values)
@@ -1644,13 +1739,16 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
         # allow it and just don't do anything.
         if recycle_bin:
             sql, values = sql_builder.update(
-                'cart', [('recycled', 0)],
-                sql_builder.binary_op(sql_builder.column('session_id', 'cart'),
-                                      '=', sql_builder.value(session_id)))
+                'cart',
+                [('recycled', 0)],
+                sql_builder.binary_op(
+                    sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+                ),
+            )
             log.debug('_edit_cart_addall SQL: %r %r', sql, values)
             cursor.execute(sql, values)
 
-    else: # pragma: no cover - error catchall
+    else:  # pragma: no cover - error catchall
         log.error('_edit_cart_addall: Bad view %r', view)
 
     return False
@@ -1663,10 +1761,9 @@ def _edit_cart_addall(request: HttpRequest, session_id: str | None,
 ################################################################################
 
 
-def _csv_helper(request: HttpRequest, opus_id: str | None,
-                api_code: int | None = None
-                ) -> tuple[list[str] | None, list[list[Any]] | None,
-                           tuple[int, str] | None]:
+def _csv_helper(
+    request: HttpRequest, opus_id: str | None, api_code: int | None = None
+) -> tuple[list[str] | None, list[list[Any]] | None, tuple[int, str] | None]:
     """Create the data for a CSV file containing the cart data.
 
     Parameters:
@@ -1684,23 +1781,23 @@ def _csv_helper(request: HttpRequest, opus_id: str | None,
         slug that does not exist.
     """
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    (_page_no, _start_obs, _limit,
-     page, _order, _aux, error) = get_search_results_chunk(
-                                                     request,
-                                                     use_cart=(opus_id is None),
-                                                     ignore_recycle_bin=True,
-                                                     limit='all',
-                                                     opus_id=opus_id,
-                                                     api_code=api_code)
+    (_page_no, _start_obs, _limit, page, _order, _aux, error) = get_search_results_chunk(
+        request,
+        use_cart=(opus_id is None),
+        ignore_recycle_bin=True,
+        limit='all',
+        opus_id=opus_id,
+        api_code=api_code,
+    )
 
     slug_list = cols_to_slug_list(slugs)
 
     return labels_for_slugs(slug_list), page, error
 
 
-def _create_csv_file(request: HttpRequest, csv_file_name: str,
-                     opus_id: str | None,
-                     api_code: int | None = None) -> HttpResponse | None:
+def _create_csv_file(
+    request: HttpRequest, csv_file_name: str, opus_id: str | None, api_code: int | None = None
+) -> HttpResponse | None:
     """Create a CSV file containing the cart data.
 
     The header row and the data rows are appended to the named file, which is
@@ -1726,7 +1823,7 @@ def _create_csv_file(request: HttpRequest, csv_file_name: str,
     if error is not None:
         return get_search_results_chunk_error_handler(error)
 
-    if column_labels is None: # pragma: no cover -
+    if column_labels is None:  # pragma: no cover -
         # This should never happen because the bad slugs are caught inside
         # _csv_helper
         raise Http400Error(http400_unknown_slug(None, request))

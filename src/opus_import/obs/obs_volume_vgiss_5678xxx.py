@@ -14,15 +14,15 @@ from opus_import.obs.obs_volume_voyager_common import ObsVolumeVoyagerCommon
 # Data from: https://pds-rings.seti.org/voyager/iss/inst_cat_wa1.html#inst_info
 # (WL MIN, WL MAX)
 _VGISS_FILTER_WAVELENGTHS = {
-    'CLEAR':  (280, 640),
+    'CLEAR': (280, 640),
     'VIOLET': (350, 450),
-    'GREEN':  (530, 640),
+    'GREEN': (530, 640),
     'ORANGE': (590, 640),
     'SODIUM': (588, 590),
-    'UV':     (280, 370),
-    'BLUE':   (430, 530),
+    'UV': (280, 370),
+    'BLUE': (430, 530),
     'CH4_JS': (614, 624),
-    'CH4_U':  (536, 546),
+    'CH4_U': (536, 546),
 }
 
 
@@ -36,7 +36,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
-
 
     @property
     def instrument_id(self) -> str | None:
@@ -64,8 +63,7 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         pdsf = self._pdsfile_from_filespec(full_filespec)
         opus_id = pdsf.opus_id
         if not opus_id:
-            self._log_nonrepeating_error(
-                        'Unable to create OPUS_ID from supplemental index')
+            self._log_nonrepeating_error('Unable to create OPUS_ID from supplemental index')
             return cast(str | None, filespec.split('/')[-1])
         return cast(str | None, opus_id)
 
@@ -80,7 +78,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
             this bundle's observations are identified by.
         """
         return filespec.replace('.LBL', '.IMG')
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -127,14 +124,12 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('IMG')
 
-
     ############################
     ### OVERRIDE FROM ObsPds ###
     ############################
 
     def field_obs_pds_note(self) -> StrField:
         return cast(StrField, self._index_col('NOTE'))
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -163,7 +158,7 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         sample2 = self._supp_index_col('LAST_SAMPLE')
         # int() because the index columns arrive from numpy, which does not subclass
         # int; see opus_import.obs.field_types.as_int.
-        return int(line2-line1+1), int(sample2-sample1+1)
+        return int(line2 - line1 + 1), int(sample2 - sample1 + 1)
 
     def field_obs_type_image_greater_pixel_size(self) -> IntField:
         pix1, pix2 = self._vgiss_pixel_size_helper()
@@ -172,7 +167,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         pix1, pix2 = self._vgiss_pixel_size_helper()
         return min(pix1, pix2)
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -195,13 +189,13 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
         wavelengths = self._vgiss_wavelength_helper()
         if wavelengths is None:
             return None
-        return wavelengths[0] / 1000 # microns
+        return wavelengths[0] / 1000  # microns
 
     def field_obs_wavelength_wavelength2(self) -> FloatField:
         wavelengths = self._vgiss_wavelength_helper()
         if wavelengths is None:
             return None
-        return wavelengths[1] / 1000 # microns
+        return wavelengths[1] / 1000  # microns
 
     def field_obs_wavelength_wave_res1(self) -> FloatField:
         return self._wave_res_from_full_bandwidth()
@@ -214,7 +208,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
 
     def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_no_res1()
-
 
     ############################################
     ### OVERRIDE FROM ObsVolumeVoyagerCommon ###
@@ -230,7 +223,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
 
     def field_obs_mission_voyager_mission_phase_name(self) -> MultFieldRet:
         return self._create_mult(self._mission_phase_name())
-
 
     ##############################################
     ### FIELD METHODS FOR obs_instrument_vgiss ###
@@ -273,9 +265,9 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     def field_obs_instrument_vgiss_usable_lines(self) -> IntField:
         line1 = self._supp_index_col('FIRST_LINE')
         line2 = self._supp_index_col('LAST_LINE')
-        return as_int(line2-line1+1)
+        return as_int(line2 - line1 + 1)
 
     def field_obs_instrument_vgiss_usable_samples(self) -> IntField:
         sample1 = self._supp_index_col('FIRST_SAMPLE')
         sample2 = self._supp_index_col('LAST_SAMPLE')
-        return as_int(sample2-sample1+1)
+        return as_int(sample2 - sample1 + 1)

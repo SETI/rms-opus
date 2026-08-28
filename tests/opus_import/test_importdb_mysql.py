@@ -31,18 +31,28 @@ class _RecordingDB(ImportDBMySQL):
 
     def __init__(self) -> None:
         # Deliberately skips ImportDBMySQL.__init__, which connects to a server.
-        ImportDBSuper.__init__(self, 'host', 'db', 'schema', 'user', 'password',
-                               import_prefix='imp_', logger=None)
+        ImportDBSuper.__init__(
+            self, 'host', 'db', 'schema', 'user', 'password', import_prefix='imp_', logger=None
+        )
         self.executed: list[tuple[str, list[Any] | None]] = []
 
-    def _execute(self, cmd: str, param_list: Any = None, cur: Any = None,
-                 mutates: bool = False) -> None:
+    def _execute(
+        self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
+    ) -> None:
         self.executed.append((cmd, param_list))
 
 
 def _mult_row(id_num: int, value: str) -> dict[str, Any]:
-    return {'id': id_num, 'value': value, 'label': value, 'disp_order': f'{id_num:03d}',
-            'display': 'Y', 'grouping': None, 'group_disp_order': None, 'aliases': None}
+    return {
+        'id': id_num,
+        'value': value,
+        'label': value,
+        'disp_order': f'{id_num:03d}',
+        'display': 'Y',
+        'grouping': None,
+        'group_disp_order': None,
+        'aliases': None,
+    }
 
 
 @pytest.fixture
@@ -52,8 +62,12 @@ def db() -> _RecordingDB:
 
 def test_upsert_rows_writes_every_row_in_one_statement(db: _RecordingDB) -> None:
     """Three rows of one table become one INSERT, not three."""
-    db.upsert_rows('import', 'mult_obs_general_planet_id', 'id',
-                   [_mult_row(0, 'JUP'), _mult_row(1, 'SAT'), _mult_row(2, 'URA')])
+    db.upsert_rows(
+        'import',
+        'mult_obs_general_planet_id',
+        'id',
+        [_mult_row(0, 'JUP'), _mult_row(1, 'SAT'), _mult_row(2, 'URA')],
+    )
 
     assert len(db.executed) == 1
     cmd, params = db.executed[0]
@@ -68,9 +82,32 @@ def test_upsert_rows_writes_every_row_in_one_statement(db: _RecordingDB) -> None
     assert 'NULL' not in cmd
     # Eight columns per row, in sorted-column order: aliases, disp_order, display,
     # group_disp_order, grouping, id, label, value.
-    assert params == [None, '000', 'Y', None, None, 0, 'JUP', 'JUP',
-                      None, '001', 'Y', None, None, 1, 'SAT', 'SAT',
-                      None, '002', 'Y', None, None, 2, 'URA', 'URA']
+    assert params == [
+        None,
+        '000',
+        'Y',
+        None,
+        None,
+        0,
+        'JUP',
+        'JUP',
+        None,
+        '001',
+        'Y',
+        None,
+        None,
+        1,
+        'SAT',
+        'SAT',
+        None,
+        '002',
+        'Y',
+        None,
+        None,
+        2,
+        'URA',
+        'URA',
+    ]
 
 
 def test_upsert_rows_does_not_assign_the_key_column(db: _RecordingDB) -> None:
@@ -83,8 +120,7 @@ def test_upsert_rows_does_not_assign_the_key_column(db: _RecordingDB) -> None:
     assert '`value`=`new`.`value`' in update_clause
 
 
-def test_upsert_rows_names_the_new_row_through_the_alias_not_values(
-        db: _RecordingDB) -> None:
+def test_upsert_rows_names_the_new_row_through_the_alias_not_values(db: _RecordingDB) -> None:
     """The update clause reads the row alias, and `VALUES(col)` is gone entirely.
 
     ``VALUES(col)`` was deprecated in MySQL 8.0.20 and still parses, so a server would
@@ -93,8 +129,9 @@ def test_upsert_rows_names_the_new_row_through_the_alias_not_values(
     alias is declared once, immediately before the clause that reads it, and the
     deprecated spelling appears nowhere.
     """
-    db.upsert_rows('import', 'mult_obs_general_planet_id', 'id',
-                   [_mult_row(0, 'JUP'), _mult_row(1, 'SAT')])
+    db.upsert_rows(
+        'import', 'mult_obs_general_planet_id', 'id', [_mult_row(0, 'JUP'), _mult_row(1, 'SAT')]
+    )
 
     cmd, _params = db.executed[0]
     assert 'VALUES(`' not in cmd
@@ -109,8 +146,7 @@ def test_upsert_rows_names_the_new_row_through_the_alias_not_values(
         assert value == f'`new`.{column}', assignment
 
 
-def test_upsert_rows_does_not_alias_a_row_as_the_table_it_writes(
-        db: _RecordingDB) -> None:
+def test_upsert_rows_does_not_alias_a_row_as_the_table_it_writes(db: _RecordingDB) -> None:
     """A table called ``new`` gets a different row alias, because MySQL forbids the clash.
 
     MySQL requires the row alias to differ from the table name, and the ``perm``
@@ -129,8 +165,7 @@ def test_upsert_rows_does_not_alias_a_row_as_the_table_it_writes(
     assert ' AS `new` ' not in cmd
 
 
-def test_upsert_rows_keeps_the_plain_alias_for_every_other_table(
-        db: _RecordingDB) -> None:
+def test_upsert_rows_keeps_the_plain_alias_for_every_other_table(db: _RecordingDB) -> None:
     """The rename is confined to the colliding name; nothing else pays for it.
 
     Without this, widening the guard -- renaming the alias for every table, or matching
@@ -146,20 +181,25 @@ def test_upsert_rows_keeps_the_plain_alias_for_every_other_table(
 
 def test_upsert_rows_splits_large_row_sets_into_packets(db: _RecordingDB) -> None:
     """MySQL rejects an unbounded statement, so rows go 1000 at a time."""
-    db.upsert_rows('perm', 'mult_obs_general_target_name', 'id',
-                   [_mult_row(i, f'T{i}') for i in range(2500)])
+    db.upsert_rows(
+        'perm', 'mult_obs_general_target_name', 'id', [_mult_row(i, f'T{i}') for i in range(2500)]
+    )
 
     assert len(db.executed) == 3
     assert [cmd.count('ON DUPLICATE KEY UPDATE') for cmd, _ in db.executed] == [1, 1, 1]
     # Eight columns per row, every one of them a parameter.
-    assert [len(params) // 8 for _cmd, params in db.executed
-            if params is not None] == [1000, 1000, 500]
+    assert [len(params) // 8 for _cmd, params in db.executed if params is not None] == [
+        1000,
+        1000,
+        500,
+    ]
 
 
 def test_upsert_rows_groups_rows_that_have_different_columns(db: _RecordingDB) -> None:
     """A mixed row set still produces correct statements, one per column set."""
-    db.upsert_rows('import', 'mult_x', 'id',
-                   [{'id': 0, 'value': 'a'}, {'id': 1, 'value': 'b', 'extra': 'c'}])
+    db.upsert_rows(
+        'import', 'mult_x', 'id', [{'id': 0, 'value': 'a'}, {'id': 1, 'value': 'b', 'extra': 'c'}]
+    )
 
     assert len(db.executed) == 2
     # Sorted-column order per group: (id, value), then (extra, id, value).
@@ -176,8 +216,7 @@ def test_upsert_rows_does_nothing_for_an_empty_row_set(db: _RecordingDB) -> None
 
 def test_upsert_rows_passes_a_missing_value_as_a_parameter(db: _RecordingDB) -> None:
     """None is a bound parameter like any other value; MySQLdb renders it as NULL."""
-    db.upsert_rows('import', 'mult_x', 'id',
-                   [{'id': 0, 'value': None}, {'id': 1, 'value': 'a'}])
+    db.upsert_rows('import', 'mult_x', 'id', [{'id': 0, 'value': None}, {'id': 1, 'value': 'a'}])
 
     assert len(db.executed) == 1
     cmd, params = db.executed[0]
@@ -185,8 +224,7 @@ def test_upsert_rows_passes_a_missing_value_as_a_parameter(db: _RecordingDB) -> 
     assert params == [0, None, 1, 'a']
 
 
-def test_upsert_rows_omits_the_update_clause_for_a_key_only_row(
-        db: _RecordingDB) -> None:
+def test_upsert_rows_omits_the_update_clause_for_a_key_only_row(db: _RecordingDB) -> None:
     """With nothing but the key there is nothing to assign, so no dangling clause.
 
     Not reachable with today's eight-column mult rows, but the row-by-row
@@ -201,25 +239,27 @@ def test_upsert_rows_omits_the_update_clause_for_a_key_only_row(
     assert params == [0]
 
 
-@pytest.mark.parametrize('name', ['obs_general', 'imp_obs_general', 'cache_12',
-                                  'J2000_longitude', '_mult_val_'])
-def test_quote_identifier_accepts_the_names_opus_uses(db: _RecordingDB,
-                                                      name: str) -> None:
+@pytest.mark.parametrize(
+    'name', ['obs_general', 'imp_obs_general', 'cache_12', 'J2000_longitude', '_mult_val_']
+)
+def test_quote_identifier_accepts_the_names_opus_uses(db: _RecordingDB, name: str) -> None:
     """Everything OPUS actually names is letters, digits and underscores."""
     assert db.quote_identifier(name) == f'`{name}`'
 
 
-@pytest.mark.parametrize('name', [
-    'obs`general',        # would end the quoting early
-    'obs_general.id',     # a qualified name is two identifiers, not one
-    'obs general',
-    'obs;DROP TABLE x',
-    '',
-    None,
-    17,
-])
-def test_quote_identifier_rejects_anything_else(db: _RecordingDB,
-                                                name: Any) -> None:
+@pytest.mark.parametrize(
+    'name',
+    [
+        'obs`general',  # would end the quoting early
+        'obs_general.id',  # a qualified name is two identifiers, not one
+        'obs general',
+        'obs;DROP TABLE x',
+        '',
+        None,
+        17,
+    ],
+)
+def test_quote_identifier_rejects_anything_else(db: _RecordingDB, name: Any) -> None:
     """Backticks quote a name but do not escape a backtick inside it."""
     with pytest.raises(ImportDBError):
         db.quote_identifier(name)
@@ -234,13 +274,16 @@ def test_where_clause_values_travel_as_parameters(db: _RecordingDB) -> None:
     """
     where = f'{db.quote_identifier("bundle_id")}=%s'
     db.delete_rows('perm', 'obs_general', where, where_params=['COISS_2002'])
-    db.copy_rows_between_namespaces('import', 'perm', 'obs_general', where=where,
-                                    where_params=['COISS_2002'])
+    db.copy_rows_between_namespaces(
+        'import', 'perm', 'obs_general', where=where, where_params=['COISS_2002']
+    )
 
     assert db.executed == [
         ('DELETE FROM `obs_general` WHERE `bundle_id`=%s', ['COISS_2002']),
-        ('INSERT INTO `obs_general` SELECT * FROM `imp_obs_general`'
-         ' WHERE `bundle_id`=%s', ['COISS_2002']),
+        (
+            'INSERT INTO `obs_general` SELECT * FROM `imp_obs_general` WHERE `bundle_id`=%s',
+            ['COISS_2002'],
+        ),
     ]
 
 
@@ -251,20 +294,22 @@ def test_a_where_clause_with_no_parameters_passes_none(db: _RecordingDB) -> None
     assert db.executed == [('DELETE FROM `obs_general`', None)]
 
 
-def test_update_row_parameterizes_the_set_values_and_the_where(
-        db: _RecordingDB) -> None:
+def test_update_row_parameterizes_the_set_values_and_the_where(db: _RecordingDB) -> None:
     """The SET list and the WHERE clause contribute parameters in that order."""
-    db.update_row('perm', 'mult_x', {'label': 'Saturn', 'disp_order': 3},
-                  f'{db.quote_identifier("id")}=%s', where_params=[7])
+    db.update_row(
+        'perm',
+        'mult_x',
+        {'label': 'Saturn', 'disp_order': 3},
+        f'{db.quote_identifier("id")}=%s',
+        where_params=[7],
+    )
 
     assert db.executed == [
-        ('UPDATE `mult_x` SET `disp_order`=%s,`label`=%s WHERE `id`=%s',
-         [3, 'Saturn', 7]),
+        ('UPDATE `mult_x` SET `disp_order`=%s,`label`=%s WHERE `id`=%s', [3, 'Saturn', 7]),
     ]
 
 
-def test_upsert_row_omits_the_update_clause_for_a_key_only_row(
-        db: _RecordingDB) -> None:
+def test_upsert_row_omits_the_update_clause_for_a_key_only_row(db: _RecordingDB) -> None:
     """With nothing but the key there is nothing to assign, so no dangling clause.
 
     The same rule `upsert_rows` follows. It is not reachable through the pipeline,
@@ -285,8 +330,9 @@ def test_upsert_row_assigns_every_column_except_the_key(db: _RecordingDB) -> Non
     db.upsert_row('import', 'mult_x', 'id', {'id': 0, 'value': 'a'})
 
     cmd, params = db.executed[0]
-    assert cmd == ('INSERT INTO `imp_mult_x` (`id`,`value`) VALUES(%s,%s) '
-                   'ON DUPLICATE KEY UPDATE `value`=%s')
+    assert cmd == (
+        'INSERT INTO `imp_mult_x` (`id`,`value`) VALUES(%s,%s) ON DUPLICATE KEY UPDATE `value`=%s'
+    )
     # The row's values, then the values the update clause re-binds.
     assert params == [0, 'a', 'a']
 
@@ -294,19 +340,22 @@ def test_upsert_row_assigns_every_column_except_the_key(db: _RecordingDB) -> Non
 class _FailingDB(_RecordingDB):
     """An ImportDBMySQL whose every statement fails the way the server would."""
 
-    def _execute(self, cmd: str, param_list: Any = None, cur: Any = None,
-                 mutates: bool = False) -> None:
+    def _execute(
+        self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
+    ) -> None:
         raise MySQLdb.Error(1146, "Table 'x' doesn't exist")
 
 
-@pytest.mark.parametrize(('method', 'args'), [
-    ('delete_rows', ('import', 'obs_general')),
-    ('copy_rows_between_namespaces', ('import', 'perm', 'obs_general')),
-    ('upsert_rows', ('import', 'mult_x', 'id', [{'id': 0, 'value': 'a'}])),
-], ids=['delete_rows', 'copy_rows_between_namespaces', 'upsert_rows'])
-def test_a_failed_statement_becomes_an_import_db_error(method: str,
-                                                       args: tuple[Any, ...]
-                                                       ) -> None:
+@pytest.mark.parametrize(
+    ('method', 'args'),
+    [
+        ('delete_rows', ('import', 'obs_general')),
+        ('copy_rows_between_namespaces', ('import', 'perm', 'obs_general')),
+        ('upsert_rows', ('import', 'mult_x', 'id', [{'id': 0, 'value': 'a'}])),
+    ],
+    ids=['delete_rows', 'copy_rows_between_namespaces', 'upsert_rows'],
+)
+def test_a_failed_statement_becomes_an_import_db_error(method: str, args: tuple[Any, ...]) -> None:
     """Every mutating method reports a server failure as ImportDBError.
 
     `delete_rows` and `copy_rows_between_namespaces` used to let the raw

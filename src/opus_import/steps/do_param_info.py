@@ -69,8 +69,7 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
     for table_name in table_names:
         table_schema = import_util.read_schema_for_table(ctx, table_name)
         if table_schema is None:
-            logger.log('error',
-                       f'Unable to read table schema for "{table_name}"')
+            logger.log('error', f'Unable to read table schema for "{table_name}"')
             return False
         for column in table_schema:
             category_name = column.get('pi_category_name', None)
@@ -78,13 +77,16 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
                 continue
             field_name = column.get('field_name', None)
             form_type_str = column.get('pi_form_type', None)
-            (_form_type, _form_type_format,
-             form_type_unit_id) = opus_support.parse_form_type(form_type_str)
+            (_form_type, _form_type_format, form_type_unit_id) = opus_support.parse_form_type(
+                form_type_str
+            )
             if form_type_unit_id and not opus_support.is_valid_unit_id(form_type_unit_id):
-                logger.log('error',
-                           f'"{form_type_unit_id}" '
-                           +f'in "{category_name}/{field_name}" is not '
-                           +'a valid unit')
+                logger.log(
+                    'error',
+                    f'"{form_type_unit_id}" '
+                    + f'in "{category_name}/{field_name}" is not '
+                    + 'a valid unit',
+                )
                 return False
             # if pi_ranges exists in .json, get the corresponding ranges info
             # from dict and convert it to str before storing to database
@@ -94,18 +96,15 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
                     ranges = ranges_json[ranges]
                     ranges = json.dumps(ranges)
                 else:
-                    logger.log('error',
-                               f'pi_ranges: "{ranges}" is not in "{ranges_file}"')
+                    logger.log('error', f'pi_ranges: "{ranges}" is not in "{ranges_file}"')
                     return False
 
             new_row = {
                 'category_name': category_name,
                 'dict_context': column.get('pi_dict_context', None),
                 'dict_name': column.get('pi_dict_name', None),
-                'dict_context_results': column.get('pi_dict_context_results',
-                                                   None),
-                'dict_name_results': column.get('pi_dict_name_results',
-                                                None),
+                'dict_context_results': column.get('pi_dict_context_results', None),
+                'dict_name_results': column.get('pi_dict_name_results', None),
                 'disp_order': column['pi_disp_order'],
                 'display': column['pi_display'],
                 'display_results': column['pi_display_results'],
@@ -127,6 +126,7 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
     db.insert_rows('import', 'param_info', rows)
 
     return True
+
 
 def copy_param_info_from_import_to_permanent(ctx: ImportContext) -> None:
     """Replace the permanent ``param_info`` table with the import one.

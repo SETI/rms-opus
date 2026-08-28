@@ -30,7 +30,6 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
         """
         return filespec.replace('.LBL', '.TAB')
 
-
     ################################
     ### OVERRIDE FROM ObsGeneral ###
     ################################
@@ -55,7 +54,6 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
     def field_obs_general_observation_type(self) -> MultFieldRet:
         return self._create_mult('OCC')
 
-
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
@@ -70,8 +68,7 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
             return self._create_mult('I')
         if '_E_' in filespec:
             return self._create_mult('E')
-        self._log_nonrepeating_error(
-            f'Unknown ring occultation direction in filespec "{filespec}"')
+        self._log_nonrepeating_error(f'Unknown ring occultation direction in filespec "{filespec}"')
         return self._create_mult(None)
 
     def field_obs_profile_body_occ_flag(self) -> MultFieldRet:
@@ -82,7 +79,6 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
 
     def field_obs_profile_optical_depth2(self) -> FloatField:
         return cast(FloatField, self._supp_index_col('HIGHEST_DETECTABLE_OPACITY'))
-
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
@@ -101,18 +97,20 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
         return cast(FloatField, self._index_col('RADIAL_RESOLUTION'))
 
     def field_obs_ring_geometry_j2000_longitude1(self) -> FloatField:
-        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
-            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+        if (
+            self.field_obs_ring_geometry_ascending_longitude1() == 0
+            and self.field_obs_ring_geometry_ascending_longitude2() == 360
+        ):
             return 0
-        return self._ascending_to_j2000(
-            self.field_obs_ring_geometry_ascending_longitude1())
+        return self._ascending_to_j2000(self.field_obs_ring_geometry_ascending_longitude1())
 
     def field_obs_ring_geometry_j2000_longitude2(self) -> FloatField:
-        if (self.field_obs_ring_geometry_ascending_longitude1() == 0 and
-            self.field_obs_ring_geometry_ascending_longitude2() == 360):
+        if (
+            self.field_obs_ring_geometry_ascending_longitude1() == 0
+            and self.field_obs_ring_geometry_ascending_longitude2() == 360
+        ):
             return 360
-        return self._ascending_to_j2000(
-            self.field_obs_ring_geometry_ascending_longitude2())
+        return self._ascending_to_j2000(self.field_obs_ring_geometry_ascending_longitude2())
 
     def field_obs_ring_geometry_ascending_longitude1(self) -> FloatField:
         return cast(FloatField, self._index_col('MINIMUM_RING_LONGITUDE'))
@@ -127,10 +125,10 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
         return cast(FloatField, self._index_col('MAXIMUM_OBSERVED_RING_AZIMUTH'))
 
     def field_obs_ring_geometry_phase1(self) -> FloatField:
-        return 180.
+        return 180.0
 
     def field_obs_ring_geometry_phase2(self) -> FloatField:
-        return 180.
+        return 180.0
 
     def field_obs_ring_geometry_ring_center_phase1(self) -> FloatField:
         return self.field_obs_ring_geometry_phase1()
@@ -166,5 +164,6 @@ class ObsVolumeCassiniOccCommon(ObsCassiniCommonPDS3):
         return self._time_from_index(column='RING_EVENT_START_TIME')
 
     def field_obs_ring_geometry_ring_intercept_time2(self) -> FloatField:
-        return self._time2_from_index(self.field_obs_ring_geometry_ring_intercept_time1(),
-                                      column='RING_EVENT_STOP_TIME')
+        return self._time2_from_index(
+            self.field_obs_ring_geometry_ring_intercept_time1(), column='RING_EVENT_STOP_TIME'
+        )

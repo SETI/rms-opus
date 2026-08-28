@@ -44,18 +44,18 @@ def create_cart(ctx: ImportContext) -> None:
             # Oops! We've already been down this road once, and apparently the
             # creation of obs_general failed. So we can't do anything.
             import_util.log_error(
-                ctx,
-                'Unable to create "cart" table because "obs_general" doesn\'t exist')
+                ctx, 'Unable to create "cart" table because "obs_general" doesn\'t exist'
+            )
             return
         ctx.try_cart_later = True
         import_util.log_warning(
-                ctx,
-                'Unable to create "cart" table because "obs_general" doesn\'t exist'
-                +' - Will try again later')
+            ctx,
+            'Unable to create "cart" table because "obs_general" doesn\'t exist'
+            + ' - Will try again later',
+        )
         return
     cart_schema = import_util.read_schema_for_table(ctx, 'cart')
     # cart.json is packaged with opus_import, so the schema is always found.
     assert cart_schema is not None
     db.drop_table('perm', 'cart')
-    db.create_table('perm', 'cart', cart_schema,
-                    ignore_if_exists=False)
+    db.create_table('perm', 'cart', cart_schema, ignore_if_exists=False)

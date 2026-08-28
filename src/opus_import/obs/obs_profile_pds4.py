@@ -23,7 +23,6 @@ class ObsProfilePDS4(ObsProfile, ObsBasePDS4):
     ### ! Might override these ! ###
     ################################
 
-
     def field_obs_profile_occ_type(self) -> MultFieldRet:
         return self._create_mult(None)
 

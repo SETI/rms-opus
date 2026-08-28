@@ -49,8 +49,9 @@ class ObsBase:
     mask that marks a value as missing.
     """
 
-    def __init__(self, ctx: ImportContext, bundle: str | None = None,
-                 metadata: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, ctx: ImportContext, bundle: str | None = None, metadata: dict[str, Any] | None = None
+    ) -> None:
         """Initialize an ObsBase object.
 
         Parameters:
@@ -68,9 +69,9 @@ class ObsBase:
                 and they can't cache results. It is None while the tables are being
                 created, before any observation has been read.
         """
-        self._ctx            = ctx
-        self._bundle         = bundle
-        self._metadata       = metadata
+        self._ctx = ctx
+        self._bundle = bundle
+        self._metadata = metadata
         # --import-ignore-errors, read from the run's arguments rather than taken as a
         # constructor argument. It used to be a parameter with a False default that no
         # construction site ever passed, so the two branches reading it -- an unknown
@@ -79,11 +80,10 @@ class ObsBase:
         # honoured it when deciding whether to abort, and the obs layer never saw it.
         # Reading it eagerly means a context built without real parsed arguments fails
         # at construction rather than only on the rare branch that consults it.
-        self._ignore_errors  = ctx.args.import_ignore_errors
+        self._ignore_errors = ctx.args.import_ignore_errors
 
-        self._opus_id_last_filespec: str | None = None # For caching opus_id
-        self._opus_id_cached: str | None        = None
-
+        self._opus_id_last_filespec: str | None = None  # For caching opus_id
+        self._opus_id_cached: str | None = None
 
     ###################################
     ### !!! Must override these !!! ###
@@ -140,10 +140,13 @@ class ObsBase:
         """
         raise NotImplementedError
 
-    def primary_filespec_from_index_row(self, row: IndexRow, convert_lbl: bool = False,
-                                        add_phase_from_row: bool = False,
-                                        add_phase_from_inst: bool = False
-                                        ) -> str | None:
+    def primary_filespec_from_index_row(
+        self,
+        row: IndexRow,
+        convert_lbl: bool = False,
+        add_phase_from_row: bool = False,
+        add_phase_from_inst: bool = False,
+    ) -> str | None:
         """Build a file specification from a row of any of this bundle's index files.
 
         This is how a supplemental, geometry or inventory index row is matched up with
@@ -220,16 +223,15 @@ class ObsBase:
         """
         raise NotImplementedError
 
-
     #############################
     ### Public access methods ###
     #############################
 
     def __str__(self) -> str:
         """Return the class, bundle and error handling, for a debugging dump."""
-        s  = 'class '+type(self).__name__+'\n'
-        s += '  bundle = '+str(self._bundle)+'\n'
-        s += '  ignore_errors = '+str(self._ignore_errors)+'\n'
+        s = 'class ' + type(self).__name__ + '\n'
+        s += '  bundle = ' + str(self._bundle) + '\n'
+        s += '  ignore_errors = ' + str(self._ignore_errors) + '\n'
         return s
 
     @property
@@ -257,7 +259,8 @@ class ObsBase:
         # hit, so the very first invalid observation is the one that goes unreported.
         if filespec is None:
             self._log_nonrepeating_error(
-                        'Unable to create OPUS_ID: this observation has no filespec')
+                'Unable to create OPUS_ID: this observation has no filespec'
+            )
             return None
         if filespec == self._opus_id_last_filespec:
             # Creating the OPUS ID can be expensive so we cache it here because
@@ -266,8 +269,7 @@ class ObsBase:
         pdsf = self._pdsfile_from_filespec(filespec)
         opus_id: str | None = pdsf.opus_id
         if not opus_id:
-            self._log_nonrepeating_error(
-                        f'Unable to create OPUS_ID using filespec {filespec}')
+            self._log_nonrepeating_error(f'Unable to create OPUS_ID using filespec {filespec}')
             return None
         self._opus_id_last_filespec = filespec
         self._opus_id_cached = opus_id
@@ -292,20 +294,22 @@ class ObsBase:
         full_filespec = self.primary_filespec_from_index_row(row)
         if full_filespec is None:
             self._log_nonrepeating_warning(
-                    'Unable to create OPUS_ID from index: the row names no file')
+                'Unable to create OPUS_ID from index: the row names no file'
+            )
             return None
         try:
             pdsf = self._pdsfile_from_filespec(full_filespec)
         except KeyError:
             self._log_nonrepeating_warning(
-                    'Unable to create OPUS_ID from index '+
-                    f'using filespec {full_filespec} - internal PdsFile crash')
+                'Unable to create OPUS_ID from index '
+                + f'using filespec {full_filespec} - internal PdsFile crash'
+            )
             return None
         opus_id: str | None = pdsf.opus_id
         if not opus_id:
             self._log_nonrepeating_warning(
-                    f'Unable to create OPUS_ID from index using filespec '
-                    f'{full_filespec}')
+                f'Unable to create OPUS_ID from index using filespec {full_filespec}'
+            )
             return None
         return opus_id
 
@@ -346,7 +350,6 @@ class ObsBase:
         """
         return None
 
-
     ### Helpers for other data_sources ###
 
     def compute_longitude_field(self) -> FloatField:
@@ -362,25 +365,25 @@ class ObsBase:
         assert self._metadata is not None
         field_name = self._metadata['field_name']
         table_name = self._metadata['table_name']
-        row = self._metadata[table_name+'_row']
+        row = self._metadata[table_name + '_row']
 
         assert not field_name.startswith('d_'), (table_name, field_name)
 
-        long1 = row[field_name+'1']
-        long2 = row[field_name+'2']
+        long1 = row[field_name + '1']
+        long2 = row[field_name + '2']
 
         if long1 is None or long2 is None:
             return None
 
         if long2 >= long1:
-            the_long = (long1 + long2)/2.
+            the_long = (long1 + long2) / 2.0
         else:
-            the_long = (long1 + long2 + 360.)/2.
+            the_long = (long1 + long2 + 360.0) / 2.0
 
         if the_long >= 360:
-            the_long -= 360.
+            the_long -= 360.0
         if the_long < 0:
-            the_long += 360.
+            the_long += 360.0
 
         center: float = the_long
         return center
@@ -397,26 +400,25 @@ class ObsBase:
         assert self._metadata is not None
         field_name = self._metadata['field_name']
         table_name = self._metadata['table_name']
-        row = self._metadata[table_name+'_row']
+        row = self._metadata[table_name + '_row']
 
         assert field_name.startswith('d_'), (table_name, field_name)
 
-        field_name = field_name[2:] # Get rid of d_
+        field_name = field_name[2:]  # Get rid of d_
 
-        long1 = row[field_name+'1']
-        long2 = row[field_name+'2']
+        long1 = row[field_name + '1']
+        long2 = row[field_name + '2']
 
         if long1 is None or long2 is None:
             return None
 
         if long2 >= long1:
-            the_long = (long1 + long2)/2.
+            the_long = (long1 + long2) / 2.0
         else:
-            the_long = (long1 + long2 + 360.)/2.
+            the_long = (long1 + long2 + 360.0) / 2.0
 
         half_span: float = the_long - long1
         return half_span
-
 
     ###############################
     ### Internal access methods ###
@@ -485,9 +487,14 @@ class ObsBase:
         assert self._metadata is not None
         return import_util.safe_column(self._metadata['supp_index_label'], col, idx=idx)
 
-    def _ring_geo_index_col(self, col: str, col2: str | None = None,
-                            col3: str | None = None, idx: int | None = None,
-                            missing_ok: bool = False) -> FloatField:
+    def _ring_geo_index_col(
+        self,
+        col: str,
+        col2: str | None = None,
+        col3: str | None = None,
+        idx: int | None = None,
+        missing_ok: bool = False,
+    ) -> FloatField:
         """Read a column of the ring geometry summary row.
 
         Unlike the other index readers this one declares a float, because every column
@@ -515,22 +522,22 @@ class ObsBase:
 
         # ring_geo is an optional index file so we allow it to be missing
         assert self._metadata is not None
-        if ('ring_geo_row' not in self._metadata or
-            self._metadata['ring_geo_row'] is None):
+        if 'ring_geo_row' not in self._metadata or self._metadata['ring_geo_row'] is None:
             return None
-        if (col not in self._metadata['ring_geo_row'] and
-            (col2 is None or col2 not in self._metadata['ring_geo_row']) and
-            (col3 is None or col3 not in self._metadata['ring_geo_row'])):
+        if (
+            col not in self._metadata['ring_geo_row']
+            and (col2 is None or col2 not in self._metadata['ring_geo_row'])
+            and (col3 is None or col3 not in self._metadata['ring_geo_row'])
+        ):
             if not missing_ok:
                 if col2 is None:
-                    self._log_nonrepeating_error(
-                        f'Column "{col}" not found in ring_geo')
+                    self._log_nonrepeating_error(f'Column "{col}" not found in ring_geo')
                 else:
                     self._log_nonrepeating_error(
-                        f'Columns "{col}" or "{col2}" not found in ring_geo')
+                        f'Columns "{col}" or "{col2}" not found in ring_geo'
+                    )
             return None
-        ret: FloatField = import_util.safe_column(self._metadata['ring_geo_row'], col,
-                                                  idx=idx)
+        ret: FloatField = import_util.safe_column(self._metadata['ring_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
             ret = import_util.safe_column(self._metadata['ring_geo_row'], col2, idx=idx)
         if ret is None and col3 is not None:
@@ -551,13 +558,17 @@ class ObsBase:
         assert self._metadata is not None
         if 'sky_geo_row' not in self._metadata or self._metadata['sky_geo_row'] is None:
             return None
-        ret: FloatField = import_util.safe_column(self._metadata['sky_geo_row'], col,
-                                                  idx=idx)
+        ret: FloatField = import_util.safe_column(self._metadata['sky_geo_row'], col, idx=idx)
         return ret
 
-    def _surface_geo_index_col(self, col: str, col2: str | None = None,
-                               col3: str | None = None, idx: int | None = None,
-                               missing_ok: bool = False) -> FloatField:
+    def _surface_geo_index_col(
+        self,
+        col: str,
+        col2: str | None = None,
+        col3: str | None = None,
+        idx: int | None = None,
+        missing_ok: bool = False,
+    ) -> FloatField:
         """Read a column of the surface geometry summary row for the current target.
 
         Parameters:
@@ -580,28 +591,26 @@ class ObsBase:
 
         # surface_geo is an optional index file so we allow it to be missing
         assert self._metadata is not None
-        if ('surface_geo_row' not in self._metadata or
-            self._metadata['surface_geo_row'] is None):
+        if 'surface_geo_row' not in self._metadata or self._metadata['surface_geo_row'] is None:
             return None
-        if (col not in self._metadata['surface_geo_row'] and
-            (col2 is None or col2 not in self._metadata['surface_geo_row']) and
-            (col3 is None or col3 not in self._metadata['surface_geo_row'])):
+        if (
+            col not in self._metadata['surface_geo_row']
+            and (col2 is None or col2 not in self._metadata['surface_geo_row'])
+            and (col3 is None or col3 not in self._metadata['surface_geo_row'])
+        ):
             if not missing_ok:
                 if col2 is None:
-                    self._log_nonrepeating_error(
-                        f'Column "{col}" not found in surface_geo')
+                    self._log_nonrepeating_error(f'Column "{col}" not found in surface_geo')
                 else:
                     self._log_nonrepeating_error(
-                        f'Columns "{col}" or "{col2}" not found in surface_geo')
+                        f'Columns "{col}" or "{col2}" not found in surface_geo'
+                    )
             return None
-        ret: FloatField = import_util.safe_column(self._metadata['surface_geo_row'], col,
-                                                  idx=idx)
+        ret: FloatField = import_util.safe_column(self._metadata['surface_geo_row'], col, idx=idx)
         if ret is None and col2 is not None:
-            ret = import_util.safe_column(self._metadata['surface_geo_row'], col2,
-                                          idx=idx)
+            ret = import_util.safe_column(self._metadata['surface_geo_row'], col2, idx=idx)
         if ret is None and col3 is not None:
-            ret = import_util.safe_column(self._metadata['surface_geo_row'], col3,
-                                          idx=idx)
+            ret = import_util.safe_column(self._metadata['surface_geo_row'], col3, idx=idx)
         return ret
 
     def _col_in_index(self, col: str) -> bool:
@@ -660,9 +669,11 @@ class ObsBase:
         # as appropriate. If not found anywhere, return None.
         assert self._metadata is not None
         for index in ['supp_index_row', 'index_row', 'supp_index_label', 'index_label']:
-            if (index in self._metadata and
-                self._metadata[index] is not None and
-                col in self._metadata[index]):
+            if (
+                index in self._metadata
+                and self._metadata[index] is not None
+                and col in self._metadata[index]
+            ):
                 return index
         return None
 
@@ -679,8 +690,7 @@ class ObsBase:
         """
         index = self._col_in_some_index(col)
         if index is None:
-            self._log_nonrepeating_error(
-                f'Column "{col}" not found in supp_index or index')
+            self._log_nonrepeating_error(f'Column "{col}" not found in supp_index or index')
             return None
         assert self._metadata is not None
         return import_util.safe_column(self._metadata[index], col, idx=idx)
@@ -699,16 +709,15 @@ class ObsBase:
         index = self._col_in_some_index_or_label(col)
         if index is None:
             self._log_nonrepeating_error(
-                f'Column "{col}" not found in supp_index or index or their labels')
+                f'Column "{col}" not found in supp_index or index or their labels'
+            )
             return None
         assert self._metadata is not None
         return import_util.safe_column(self._metadata[index], col, idx=idx)
 
-
     ### Utility functions useful for subclasses ###
 
-    def _get_target_info(self, target_name: str | None
-                         ) -> tuple[str | None, TargetInfo | None]:
+    def _get_target_info(self, target_name: str | None) -> tuple[str | None, TargetInfo | None]:
         """Look a target name up, applying this pipeline's spelling corrections first.
 
         Parameters:
@@ -757,12 +766,17 @@ class ObsBase:
                 planet_id = 'OTHER'
         return config_targets.PLANET_GROUP_MAPPING[planet_id]
 
-    def _create_mult(self, col_val: str | int | float | None,
-                     disp_name: str | None = None,
-                     disp: str = 'Y', disp_order: int | str | None = None,
-                     grouping: str | None = None, group_disp_order: str | None = None,
-                     tooltip: str | None = None,
-                     aliases: list[str] | None = None) -> MultField:
+    def _create_mult(
+        self,
+        col_val: str | int | float | None,
+        disp_name: str | None = None,
+        disp: str = 'Y',
+        disp_order: int | str | None = None,
+        grouping: str | None = None,
+        group_disp_order: str | None = None,
+        tooltip: str | None = None,
+        aliases: list[str] | None = None,
+    ) -> MultField:
         """Build the value a group column's field method returns.
 
         A group column stores an index into a ``mult_`` table rather than the value
@@ -804,12 +818,16 @@ class ObsBase:
         #     data_dict['aliases'] = json.dumps(aliases_list)
         return data_dict
 
-    def _create_mult_keep_case(self, col_val: str | None, disp: str = 'Y',
-                               disp_order: int | str | None = None,
-                               grouping: str | None = None,
-                               group_disp_order: str | None = None,
-                               tooltip: str | None = None,
-                               aliases: list[str] | None = None) -> MultField:
+    def _create_mult_keep_case(
+        self,
+        col_val: str | None,
+        disp: str = 'Y',
+        disp_order: int | str | None = None,
+        grouping: str | None = None,
+        group_disp_order: str | None = None,
+        tooltip: str | None = None,
+        aliases: list[str] | None = None,
+    ) -> MultField:
         """Build a group column's value, showing it exactly as it is spelled.
 
         `ObsBase._create_mult` leaves the label to be derived, and the derivation
@@ -829,16 +847,20 @@ class ObsBase:
         Returns:
             The `opus_import.obs.field_types.MultField` for this value.
         """
-        return self._create_mult(col_val=col_val, disp_name=col_val, disp=disp,
-                                 disp_order=disp_order, grouping=grouping,
-                                 group_disp_order=group_disp_order,
-                                 tooltip=tooltip, aliases=aliases)
-
+        return self._create_mult(
+            col_val=col_val,
+            disp_name=col_val,
+            disp=disp,
+            disp_order=disp_order,
+            grouping=grouping,
+            group_disp_order=group_disp_order,
+            tooltip=tooltip,
+            aliases=aliases,
+        )
 
     # Helpers for time fields
 
-    def _time_helper(self, index: str, column: str,
-                     missing_index_ok: bool = False) -> FloatField:
+    def _time_helper(self, index: str, column: str, missing_index_ok: bool = False) -> FloatField:
         """Read and convert a time from one of the indexes.
 
         Parameters:
@@ -854,8 +876,7 @@ class ObsBase:
         # Read and convert a time, which can exist in various indexes or
         # columns.
         assert self._metadata is not None
-        if missing_index_ok and (index not in self._metadata or
-                                 self._metadata[index] is None):
+        if missing_index_ok and (index not in self._metadata or self._metadata[index] is None):
             return None
         the_time = import_util.safe_column(self._metadata[index], column)
         if the_time is None:
@@ -869,8 +890,9 @@ class ObsBase:
 
         return time_sec
 
-    def _time2_helper(self, index: str, start_time_sec: FloatField, column: str,
-                      missing_index_ok: bool = False) -> FloatField:
+    def _time2_helper(
+        self, index: str, start_time_sec: FloatField, column: str, missing_index_ok: bool = False
+    ) -> FloatField:
         """Read and convert a stop time, holding it at or after the start time.
 
         Parameters:
@@ -890,8 +912,7 @@ class ObsBase:
         # columns. Compare it to the starting time to make sure they're in the proper
         # order.
         assert self._metadata is not None
-        if missing_index_ok and (index not in self._metadata or
-                                 self._metadata[index] is None):
+        if missing_index_ok and (index not in self._metadata or self._metadata[index] is None):
             return None
         index_row = self._metadata[index]
         stop_time = import_util.safe_column(index_row, column)
@@ -906,18 +927,22 @@ class ObsBase:
 
         if start_time_sec is not None and stop_time_sec < start_time_sec:
             self._log_nonrepeating_warning(
-                        f'{column} start and end ({stop_time}) '+
-                        'are in the wrong order - setting to start time')
+                f'{column} start and end ({stop_time}) '
+                + 'are in the wrong order - setting to start time'
+            )
             stop_time_sec = start_time_sec
 
         return stop_time_sec
 
-
     # Helper for spacecraft clock fields
 
-    def _parse_sclk(self, parse_func: Callable[[str], float], sclk: str,
-                    mission_name: str,
-                    log_func: Callable[[str], None] | None = None) -> FloatField:
+    def _parse_sclk(
+        self,
+        parse_func: Callable[[str], float],
+        sclk: str,
+        mission_name: str,
+        log_func: Callable[[str], None] | None = None,
+    ) -> FloatField:
         """Parse a spacecraft clock count, reporting a bad one instead of raising.
 
         Every mission's spacecraft_clock_count field function needs the same
@@ -942,7 +967,6 @@ class ObsBase:
                 log_func = self._log_nonrepeating_error
             log_func(f'Unable to parse {mission_name} SCLK "{sclk}": {e}')
             return None
-
 
     ### Error logging ###
 

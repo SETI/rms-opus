@@ -42,9 +42,13 @@ class Definitions(models.Model):
 
     id = models.IntegerField(primary_key=True)
     term = models.CharField(max_length=255)
-    context = models.ForeignKey(Contexts, models.DO_NOTHING,
-                                related_name='%(class)s_name',
-                                db_column='context', to_field='name')
+    context = models.ForeignKey(
+        Contexts,
+        models.DO_NOTHING,
+        related_name='%(class)s_name',
+        db_column='context',
+        to_field='name',
+    )
     definition = models.TextField()
     timestamp = models.DateTimeField()
 
@@ -77,8 +81,7 @@ def get_def_for_tooltip(term: str | None, context: str | None) -> str | None:
         # it raises AttributeError. Every ParamInfo column this is called with is
         # nullable, so that is a real fault rather than a typing artifact, and it is
         # recorded here instead of being annotated away.
-        if not context.startswith('MULT_'): # type: ignore[union-attr] # pragma: no cover - import error
-            log.error('No tooltip definition for context "%r" term "%r"',
-                      context, term)
+        if not context.startswith('MULT_'):  # type: ignore[union-attr] # pragma: no cover - import error
+            log.error('No tooltip definition for context "%r" term "%r"', context, term)
         return None
     return entry.definition

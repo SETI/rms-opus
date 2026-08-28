@@ -59,7 +59,6 @@ _SCHEMA_DIR = Path(config_data.__file__).parent / 'table_schemas'
 _VALUES_FIXTURE = Path(__file__).parent / 'fixtures' / 'obs_field_values.json'
 
 
-
 def _alias_for(field_type: str | None, form_type: str | None) -> str | None:
     """Return the alias a schema column's field method must declare.
 
@@ -148,7 +147,8 @@ def _declared_annotations() -> dict[str, str]:
         if declared.setdefault(name, annotation) != annotation:
             raise AssertionError(
                 f'{module}:{line} {cls}.{name} declares {annotation!r}, but another '
-                f'class declares {declared[name]!r} for the same column')
+                f'class declares {declared[name]!r} for the same column'
+            )
     return declared
 
 
@@ -210,12 +210,12 @@ def _tables_for(instrument: ObsBase) -> list[str]:
 
 def _schema_for(table: str) -> list[dict[str, Any]] | None:
     """Return a table's packaged schema, through the reader the pipeline uses."""
-    schema: list[dict[str, Any]] | None = import_util.read_schema_for_table(
-        make_context(), table)
+    schema: list[dict[str, Any]] | None = import_util.read_schema_for_table(make_context(), table)
     return schema
 
 
 # --- Layer 1: the annotations agree with the schemas ---------------------------------
+
 
 def test_the_hierarchy_is_actually_being_read() -> None:
     """The source scan finds the methods, so the checks below are not vacuous.
@@ -241,8 +241,11 @@ def test_every_field_method_answers_to_a_schema_column() -> None:
     decompose that way is unreachable -- dead code, or a name with a typo in it.
     """
     columns = _schema_columns()
-    orphans = [(module, cls, name) for module, cls, name, _line, _ann in _field_methods()
-               if name not in columns]
+    orphans = [
+        (module, cls, name)
+        for module, cls, name, _line, _ann in _field_methods()
+        if name not in columns
+    ]
 
     assert orphans == []
 
@@ -255,8 +258,10 @@ def test_every_field_method_is_annotated_from_its_schema_column() -> None:
         column = columns[name]
         expected = _alias_for(column.get('field_type'), column.get('pi_form_type'))
         if annotation != expected:
-            wrong.append(f'{module}:{line} {cls}.{name} declares {annotation!r}, '
-                         f'schema calls for {expected!r}')
+            wrong.append(
+                f'{module}:{line} {cls}.{name} declares {annotation!r}, '
+                f'schema calls for {expected!r}'
+            )
 
     assert wrong == []
 
@@ -285,17 +290,20 @@ def test_every_column_the_import_computes_has_a_field_method() -> None:
                     # import cannot use: calling it aborts the column.
                     missing.append(
                         f'{cls.__name__} populates {table} but resolves {name} to a '
-                        f'stub that only raises')
+                        f'stub that only raises'
+                    )
 
     assert missing == []
 
 
 def test_the_decision_table_covers_every_column_the_import_computes() -> None:
     """No computed column falls through the table with no alias to check against."""
-    uncovered = [name for name, column in _schema_columns().items()
-                 if column.get('data_source') == 'COMPUTE'
-                 and _alias_for(column.get('field_type'),
-                                column.get('pi_form_type')) is None]
+    uncovered = [
+        name
+        for name, column in _schema_columns().items()
+        if column.get('data_source') == 'COMPUTE'
+        and _alias_for(column.get('field_type'), column.get('pi_form_type')) is None
+    ]
 
     assert uncovered == []
 
@@ -309,10 +317,12 @@ def test_a_group_column_is_decided_by_its_form_type_not_its_storage_type() -> No
     stops exercising that case, which would make the rule untested rather than wrong.
     """
     group_but_not_mult = {
-        name: column['field_type'] for name, column in _schema_columns().items()
+        name: column['field_type']
+        for name, column in _schema_columns().items()
         if isinstance(column.get('pi_form_type'), str)
         and column['pi_form_type'].split(':')[0] in ('GROUP', 'MULTIGROUP')
-        and column['field_type'] not in ('mult_idx', 'mult_list')}
+        and column['field_type'] not in ('mult_idx', 'mult_list')
+    }
 
     assert group_but_not_mult, 'no non-mult_idx column carries a group form type'
     for name, field_type in group_but_not_mult.items():
@@ -332,84 +342,151 @@ def test_a_group_column_is_decided_by_its_form_type_not_its_storage_type() -> No
 #: older and newer generations of these files, and a name outside this set simply reads
 #: as absent -- which is exactly what it would do against a bundle whose summary file
 #: does not carry it.
-_GEOMETRY_COLUMNS = frozenset((
-    'CENTER_DISTANCE', 'CENTER_PHASE_ANGLE', 'CENTER_RESOLUTION',
-    'COARSEST_EDGE_ON_RADIAL_RESOLUTION', 'COARSEST_RADIAL_RESOLUTION',
-    'COARSEST_RING_INTERCEPT_RESOLUTION', 'FINEST_EDGE_ON_RADIAL_RESOLUTION',
-    'FINEST_RADIAL_RESOLUTION', 'FINEST_RING_INTERCEPT_RESOLUTION',
-    'MAXIMUM_CENTER_DISTANCE', 'MAXIMUM_CENTER_PHASE_ANGLE',
-    'MAXIMUM_CENTER_RESOLUTION', 'MAXIMUM_COARSEST_SURFACE_RESOLUTION',
-    'MAXIMUM_DECLINATION', 'MAXIMUM_EDGE_ON_INTERCEPT_DISTANCE',
-    'MAXIMUM_EDGE_ON_RING_ALTITUDE', 'MAXIMUM_EDGE_ON_RING_LONGITUDE',
-    'MAXIMUM_EDGE_ON_RING_LONGITUDE_WRT_NODE', 'MAXIMUM_EDGE_ON_RING_RADIUS',
-    'MAXIMUM_EDGE_ON_SOLAR_HOUR_ANGLE', 'MAXIMUM_EMISSION_ANGLE',
-    'MAXIMUM_FINEST_SURFACE_RESOLUTION', 'MAXIMUM_IAU_LONGITUDE',
-    'MAXIMUM_IAU_LONGITUDE_EAST', 'MAXIMUM_INCIDENCE_ANGLE',
-    'MAXIMUM_LOCAL_HOUR_ANGLE', 'MAXIMUM_LONGITUDE_WRT_OBSERVER',
-    'MAXIMUM_LONGITUDE_WRT_OBSERVER_EAST', 'MAXIMUM_NORTH_BASED_EMISSION_ANGLE',
-    'MAXIMUM_NORTH_BASED_INCIDENCE_ANGLE', 'MAXIMUM_OBSERVER_RING_ELEVATION',
-    'MAXIMUM_OBSERVER_RING_OPENING', 'MAXIMUM_OBSERVER_RING_OPENING_ANGLE',
-    'MAXIMUM_PHASE_ANGLE', 'MAXIMUM_PLANETOCENTRIC_LATITUDE',
-    'MAXIMUM_PLANETOGRAPHIC_LATITUDE', 'MAXIMUM_RIGHT_ASCENSION',
-    'MAXIMUM_RING_AZIMUTH', 'MAXIMUM_RING_CENTER_DISTANCE',
-    'MAXIMUM_RING_CENTER_EMISSION_ANGLE', 'MAXIMUM_RING_CENTER_INCIDENCE_ANGLE',
-    'MAXIMUM_RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
-    'MAXIMUM_RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
-    'MAXIMUM_RING_CENTER_PHASE_ANGLE', 'MAXIMUM_RING_DISTANCE',
-    'MAXIMUM_RING_EMISSION_ANGLE', 'MAXIMUM_RING_INCIDENCE_ANGLE',
-    'MAXIMUM_RING_LONGITUDE', 'MAXIMUM_RING_LONGITUDE_WRT_NODE',
-    'MAXIMUM_RING_LONGITUDE_WRT_OBSERVER', 'MAXIMUM_RING_PHASE_ANGLE',
-    'MAXIMUM_RING_RADIUS', 'MAXIMUM_SOLAR_HOUR_ANGLE',
-    'MAXIMUM_SOLAR_RING_ELEVATION', 'MAXIMUM_SOLAR_RING_OPENING',
-    'MAXIMUM_SOLAR_RING_OPENING_ANGLE', 'MAXIMUM_SUB_OBSERVER_IAU_LONGITUDE',
-    'MAXIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
-    'MAXIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
-    'MAXIMUM_SUB_OBSERVER_RING_LONGITUDE', 'MAXIMUM_SUB_SOLAR_IAU_LONGITUDE',
-    'MAXIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
-    'MAXIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE', 'MAXIMUM_SUB_SOLAR_RING_LONGITUDE',
-    'MAXIMUM_SURFACE_DISTANCE', 'MINIMUM_CENTER_DISTANCE',
-    'MINIMUM_CENTER_PHASE_ANGLE', 'MINIMUM_CENTER_RESOLUTION',
-    'MINIMUM_COARSEST_SURFACE_RESOLUTION', 'MINIMUM_DECLINATION',
-    'MINIMUM_EDGE_ON_INTERCEPT_DISTANCE', 'MINIMUM_EDGE_ON_RING_ALTITUDE',
-    'MINIMUM_EDGE_ON_RING_LONGITUDE', 'MINIMUM_EDGE_ON_RING_LONGITUDE_WRT_NODE',
-    'MINIMUM_EDGE_ON_RING_RADIUS', 'MINIMUM_EDGE_ON_SOLAR_HOUR_ANGLE',
-    'MINIMUM_EMISSION_ANGLE', 'MINIMUM_FINEST_SURFACE_RESOLUTION',
-    'MINIMUM_IAU_LONGITUDE', 'MINIMUM_IAU_LONGITUDE_EAST',
-    'MINIMUM_INCIDENCE_ANGLE', 'MINIMUM_LOCAL_HOUR_ANGLE',
-    'MINIMUM_LONGITUDE_WRT_OBSERVER', 'MINIMUM_LONGITUDE_WRT_OBSERVER_EAST',
-    'MINIMUM_NORTH_BASED_EMISSION_ANGLE', 'MINIMUM_NORTH_BASED_INCIDENCE_ANGLE',
-    'MINIMUM_OBSERVER_RING_ELEVATION', 'MINIMUM_OBSERVER_RING_OPENING',
-    'MINIMUM_OBSERVER_RING_OPENING_ANGLE', 'MINIMUM_PHASE_ANGLE',
-    'MINIMUM_PLANETOCENTRIC_LATITUDE', 'MINIMUM_PLANETOGRAPHIC_LATITUDE',
-    'MINIMUM_RIGHT_ASCENSION', 'MINIMUM_RING_AZIMUTH',
-    'MINIMUM_RING_CENTER_DISTANCE', 'MINIMUM_RING_CENTER_EMISSION_ANGLE',
-    'MINIMUM_RING_CENTER_INCIDENCE_ANGLE',
-    'MINIMUM_RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
-    'MINIMUM_RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
-    'MINIMUM_RING_CENTER_PHASE_ANGLE', 'MINIMUM_RING_DISTANCE',
-    'MINIMUM_RING_EMISSION_ANGLE', 'MINIMUM_RING_INCIDENCE_ANGLE',
-    'MINIMUM_RING_LONGITUDE', 'MINIMUM_RING_LONGITUDE_WRT_NODE',
-    'MINIMUM_RING_LONGITUDE_WRT_OBSERVER', 'MINIMUM_RING_PHASE_ANGLE',
-    'MINIMUM_RING_RADIUS', 'MINIMUM_SOLAR_HOUR_ANGLE',
-    'MINIMUM_SOLAR_RING_ELEVATION', 'MINIMUM_SOLAR_RING_OPENING',
-    'MINIMUM_SOLAR_RING_OPENING_ANGLE', 'MINIMUM_SUB_OBSERVER_IAU_LONGITUDE',
-    'MINIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
-    'MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
-    'MINIMUM_SUB_OBSERVER_RING_LONGITUDE', 'MINIMUM_SUB_SOLAR_IAU_LONGITUDE',
-    'MINIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
-    'MINIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE', 'MINIMUM_SUB_SOLAR_RING_LONGITUDE',
-    'MINIMUM_SURFACE_DISTANCE', 'OBSERVER_RING_OPENING_ANGLE',
-    'RING_CENTER_DISTANCE', 'RING_CENTER_EMISSION_ANGLE',
-    'RING_CENTER_INCIDENCE_ANGLE', 'RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
-    'RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE', 'RING_CENTER_PHASE_ANGLE',
-    'SOLAR_RING_OPENING_ANGLE', 'SUB_OBSERVER_IAU_LONGITUDE',
-    'SUB_OBSERVER_IAU_LONGITUDE_EAST', 'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
-    'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE', 'SUB_OBSERVER_RING_LONGITUDE',
-    'SUB_OBSERVER_RING_LONGITUDE_WRT_NODE', 'SUB_SOLAR_IAU_LONGITUDE',
-    'SUB_SOLAR_IAU_LONGITUDE_EAST', 'SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
-    'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE', 'SUB_SOLAR_RING_LONGITUDE',
-    'SUB_SOLAR_RING_LONGITUDE_WRT_NODE'
-))
+_GEOMETRY_COLUMNS = frozenset(
+    (
+        'CENTER_DISTANCE',
+        'CENTER_PHASE_ANGLE',
+        'CENTER_RESOLUTION',
+        'COARSEST_EDGE_ON_RADIAL_RESOLUTION',
+        'COARSEST_RADIAL_RESOLUTION',
+        'COARSEST_RING_INTERCEPT_RESOLUTION',
+        'FINEST_EDGE_ON_RADIAL_RESOLUTION',
+        'FINEST_RADIAL_RESOLUTION',
+        'FINEST_RING_INTERCEPT_RESOLUTION',
+        'MAXIMUM_CENTER_DISTANCE',
+        'MAXIMUM_CENTER_PHASE_ANGLE',
+        'MAXIMUM_CENTER_RESOLUTION',
+        'MAXIMUM_COARSEST_SURFACE_RESOLUTION',
+        'MAXIMUM_DECLINATION',
+        'MAXIMUM_EDGE_ON_INTERCEPT_DISTANCE',
+        'MAXIMUM_EDGE_ON_RING_ALTITUDE',
+        'MAXIMUM_EDGE_ON_RING_LONGITUDE',
+        'MAXIMUM_EDGE_ON_RING_LONGITUDE_WRT_NODE',
+        'MAXIMUM_EDGE_ON_RING_RADIUS',
+        'MAXIMUM_EDGE_ON_SOLAR_HOUR_ANGLE',
+        'MAXIMUM_EMISSION_ANGLE',
+        'MAXIMUM_FINEST_SURFACE_RESOLUTION',
+        'MAXIMUM_IAU_LONGITUDE',
+        'MAXIMUM_IAU_LONGITUDE_EAST',
+        'MAXIMUM_INCIDENCE_ANGLE',
+        'MAXIMUM_LOCAL_HOUR_ANGLE',
+        'MAXIMUM_LONGITUDE_WRT_OBSERVER',
+        'MAXIMUM_LONGITUDE_WRT_OBSERVER_EAST',
+        'MAXIMUM_NORTH_BASED_EMISSION_ANGLE',
+        'MAXIMUM_NORTH_BASED_INCIDENCE_ANGLE',
+        'MAXIMUM_OBSERVER_RING_ELEVATION',
+        'MAXIMUM_OBSERVER_RING_OPENING',
+        'MAXIMUM_OBSERVER_RING_OPENING_ANGLE',
+        'MAXIMUM_PHASE_ANGLE',
+        'MAXIMUM_PLANETOCENTRIC_LATITUDE',
+        'MAXIMUM_PLANETOGRAPHIC_LATITUDE',
+        'MAXIMUM_RIGHT_ASCENSION',
+        'MAXIMUM_RING_AZIMUTH',
+        'MAXIMUM_RING_CENTER_DISTANCE',
+        'MAXIMUM_RING_CENTER_EMISSION_ANGLE',
+        'MAXIMUM_RING_CENTER_INCIDENCE_ANGLE',
+        'MAXIMUM_RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
+        'MAXIMUM_RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
+        'MAXIMUM_RING_CENTER_PHASE_ANGLE',
+        'MAXIMUM_RING_DISTANCE',
+        'MAXIMUM_RING_EMISSION_ANGLE',
+        'MAXIMUM_RING_INCIDENCE_ANGLE',
+        'MAXIMUM_RING_LONGITUDE',
+        'MAXIMUM_RING_LONGITUDE_WRT_NODE',
+        'MAXIMUM_RING_LONGITUDE_WRT_OBSERVER',
+        'MAXIMUM_RING_PHASE_ANGLE',
+        'MAXIMUM_RING_RADIUS',
+        'MAXIMUM_SOLAR_HOUR_ANGLE',
+        'MAXIMUM_SOLAR_RING_ELEVATION',
+        'MAXIMUM_SOLAR_RING_OPENING',
+        'MAXIMUM_SOLAR_RING_OPENING_ANGLE',
+        'MAXIMUM_SUB_OBSERVER_IAU_LONGITUDE',
+        'MAXIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
+        'MAXIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
+        'MAXIMUM_SUB_OBSERVER_RING_LONGITUDE',
+        'MAXIMUM_SUB_SOLAR_IAU_LONGITUDE',
+        'MAXIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
+        'MAXIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
+        'MAXIMUM_SUB_SOLAR_RING_LONGITUDE',
+        'MAXIMUM_SURFACE_DISTANCE',
+        'MINIMUM_CENTER_DISTANCE',
+        'MINIMUM_CENTER_PHASE_ANGLE',
+        'MINIMUM_CENTER_RESOLUTION',
+        'MINIMUM_COARSEST_SURFACE_RESOLUTION',
+        'MINIMUM_DECLINATION',
+        'MINIMUM_EDGE_ON_INTERCEPT_DISTANCE',
+        'MINIMUM_EDGE_ON_RING_ALTITUDE',
+        'MINIMUM_EDGE_ON_RING_LONGITUDE',
+        'MINIMUM_EDGE_ON_RING_LONGITUDE_WRT_NODE',
+        'MINIMUM_EDGE_ON_RING_RADIUS',
+        'MINIMUM_EDGE_ON_SOLAR_HOUR_ANGLE',
+        'MINIMUM_EMISSION_ANGLE',
+        'MINIMUM_FINEST_SURFACE_RESOLUTION',
+        'MINIMUM_IAU_LONGITUDE',
+        'MINIMUM_IAU_LONGITUDE_EAST',
+        'MINIMUM_INCIDENCE_ANGLE',
+        'MINIMUM_LOCAL_HOUR_ANGLE',
+        'MINIMUM_LONGITUDE_WRT_OBSERVER',
+        'MINIMUM_LONGITUDE_WRT_OBSERVER_EAST',
+        'MINIMUM_NORTH_BASED_EMISSION_ANGLE',
+        'MINIMUM_NORTH_BASED_INCIDENCE_ANGLE',
+        'MINIMUM_OBSERVER_RING_ELEVATION',
+        'MINIMUM_OBSERVER_RING_OPENING',
+        'MINIMUM_OBSERVER_RING_OPENING_ANGLE',
+        'MINIMUM_PHASE_ANGLE',
+        'MINIMUM_PLANETOCENTRIC_LATITUDE',
+        'MINIMUM_PLANETOGRAPHIC_LATITUDE',
+        'MINIMUM_RIGHT_ASCENSION',
+        'MINIMUM_RING_AZIMUTH',
+        'MINIMUM_RING_CENTER_DISTANCE',
+        'MINIMUM_RING_CENTER_EMISSION_ANGLE',
+        'MINIMUM_RING_CENTER_INCIDENCE_ANGLE',
+        'MINIMUM_RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
+        'MINIMUM_RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
+        'MINIMUM_RING_CENTER_PHASE_ANGLE',
+        'MINIMUM_RING_DISTANCE',
+        'MINIMUM_RING_EMISSION_ANGLE',
+        'MINIMUM_RING_INCIDENCE_ANGLE',
+        'MINIMUM_RING_LONGITUDE',
+        'MINIMUM_RING_LONGITUDE_WRT_NODE',
+        'MINIMUM_RING_LONGITUDE_WRT_OBSERVER',
+        'MINIMUM_RING_PHASE_ANGLE',
+        'MINIMUM_RING_RADIUS',
+        'MINIMUM_SOLAR_HOUR_ANGLE',
+        'MINIMUM_SOLAR_RING_ELEVATION',
+        'MINIMUM_SOLAR_RING_OPENING',
+        'MINIMUM_SOLAR_RING_OPENING_ANGLE',
+        'MINIMUM_SUB_OBSERVER_IAU_LONGITUDE',
+        'MINIMUM_SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
+        'MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
+        'MINIMUM_SUB_OBSERVER_RING_LONGITUDE',
+        'MINIMUM_SUB_SOLAR_IAU_LONGITUDE',
+        'MINIMUM_SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
+        'MINIMUM_SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
+        'MINIMUM_SUB_SOLAR_RING_LONGITUDE',
+        'MINIMUM_SURFACE_DISTANCE',
+        'OBSERVER_RING_OPENING_ANGLE',
+        'RING_CENTER_DISTANCE',
+        'RING_CENTER_EMISSION_ANGLE',
+        'RING_CENTER_INCIDENCE_ANGLE',
+        'RING_CENTER_NORTH_BASED_EMISSION_ANGLE',
+        'RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE',
+        'RING_CENTER_PHASE_ANGLE',
+        'SOLAR_RING_OPENING_ANGLE',
+        'SUB_OBSERVER_IAU_LONGITUDE',
+        'SUB_OBSERVER_IAU_LONGITUDE_EAST',
+        'SUB_OBSERVER_PLANETOCENTRIC_LATITUDE',
+        'SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE',
+        'SUB_OBSERVER_RING_LONGITUDE',
+        'SUB_OBSERVER_RING_LONGITUDE_WRT_NODE',
+        'SUB_SOLAR_IAU_LONGITUDE',
+        'SUB_SOLAR_IAU_LONGITUDE_EAST',
+        'SUB_SOLAR_PLANETOCENTRIC_LATITUDE',
+        'SUB_SOLAR_PLANETOGRAPHIC_LATITUDE',
+        'SUB_SOLAR_RING_LONGITUDE',
+        'SUB_SOLAR_RING_LONGITUDE_WRT_NODE',
+    )
+)
 
 
 class _GeometryRow(dict[str, Any]):
@@ -563,8 +640,7 @@ _MISSION_FIXTURES: dict[str, dict[str, Any]] = {
         'index_row': {
             'PATH_NAME': 'data/20070108_003059',
             'FILE_NAME': 'lor_0030597859_0x630_eng.lbl',
-            'FILE_SPECIFICATION_NAME':
-                'data/20070108_003059/lor_0030597859_0x630_eng.lbl',
+            'FILE_SPECIFICATION_NAME': 'data/20070108_003059/lor_0030597859_0x630_eng.lbl',
             'DATA_SET_ID': 'NH-J-LORRI-2-JUPITER-V1.0',
             'PRODUCT_ID': 'LOR_0030597859',
             'PRODUCT_CREATION_TIME': '2008-01-01T00:00:00.000',
@@ -711,7 +787,8 @@ def _instrument_for(fixture: dict[str, Any]) -> ObsBase:
     # the one thing an obs class asks the file system for. Everything else it reads
     # comes from the metadata above.
     instrument._pdsfile_from_filespec = (  # type: ignore[method-assign]
-        lambda filespec: _FakePdsFile())
+        lambda filespec: _FakePdsFile()
+    )
     return instrument
 
 
@@ -720,15 +797,15 @@ def _matches(alias: str, value: Any) -> bool:
     if alias == 'StrField':
         return value is None or isinstance(value, str)
     if alias == 'FloatField':
-        return value is None or (isinstance(value, float | int)
-                                 and not isinstance(value, bool))
+        return value is None or (isinstance(value, float | int) and not isinstance(value, bool))
     if alias == 'IntField':
         return value is None or (isinstance(value, int) and not isinstance(value, bool))
     if alias == 'MultFieldRet':
         # An empty list is refused deliberately: a GROUP column produces exactly one
         # value, and `import_observation_table` asserts that in production.
-        return _is_mult(value) or (isinstance(value, list) and len(value) > 0
-                                   and all(_is_mult(v) for v in value))
+        return _is_mult(value) or (
+            isinstance(value, list) and len(value) > 0 and all(_is_mult(v) for v in value)
+        )
     if alias == 'list[MultField]':
         return isinstance(value, list) and all(_is_mult(v) for v in value)
     raise AssertionError(f'unknown alias {alias}')
@@ -799,8 +876,9 @@ def _drive(instrument_id: str) -> tuple[list[str], list[str], int, int]:
     return _drive_fixture(instrument_id, _MISSION_FIXTURES[instrument_id])
 
 
-def _drive_fixture(instrument_id: str,
-                   fixture: dict[str, Any]) -> tuple[list[str], list[str], int, int]:
+def _drive_fixture(
+    instrument_id: str, fixture: dict[str, Any]
+) -> tuple[list[str], list[str], int, int]:
     """Call every field method one mission's class resolves.
 
     Returns:
@@ -828,9 +906,10 @@ def _drive_fixture(instrument_id: str,
                 continue
             # `_metadata` is `dict | None` on ObsBase; `_instrument_for` always
             # supplies one, which the checker cannot see through the attribute.
-            instrument._metadata['table_name'] = table   # type: ignore[index]
-            instrument._metadata['field_name'] = (       # type: ignore[index]
-                column['field_name'])
+            instrument._metadata['table_name'] = table  # type: ignore[index]
+            instrument._metadata['field_name'] = (  # type: ignore[index]
+                column['field_name']
+            )
             try:
                 value = getattr(instrument, name)()
             except Exception as exc:
@@ -843,8 +922,7 @@ def _drive_fixture(instrument_id: str,
             alias = declared[name]
             if not _matches(alias, value):
                 wrong.append(f'{name} declares {alias} but returned {value!r}')
-            elif value is not None and not (_is_mult(value)
-                                            and value['col_val'] is None):
+            elif value is not None and not (_is_mult(value) and value['col_val'] is None):
                 non_null += 1
     return wrong, raised, returned, non_null
 
@@ -868,9 +946,10 @@ def _values_for(instrument_id: str) -> dict[str, Any]:
                 continue
             # `_metadata` is `dict | None` on ObsBase; `_instrument_for` always
             # supplies one, which the checker cannot see through the attribute.
-            instrument._metadata['table_name'] = table   # type: ignore[index]
-            instrument._metadata['field_name'] = (       # type: ignore[index]
-                column['field_name'])
+            instrument._metadata['table_name'] = table  # type: ignore[index]
+            instrument._metadata['field_name'] = (  # type: ignore[index]
+                column['field_name']
+            )
             values[f'{table}/{name}'] = _jsonable(getattr(instrument, name)())
     return values
 
@@ -905,11 +984,13 @@ def test_every_value_is_the_one_recorded(request: pytest.FixtureRequest) -> None
     and read the resulting diff: every line of it is a change in what the import would
     store.
     """
-    actual = {instrument_id: _values_for(instrument_id)
-              for instrument_id in sorted(_MISSION_FIXTURES)}
+    actual = {
+        instrument_id: _values_for(instrument_id) for instrument_id in sorted(_MISSION_FIXTURES)
+    }
     if request.config.getoption('--regenerate-obs-values'):
         _VALUES_FIXTURE.write_text(
-            json.dumps(actual, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+            json.dumps(actual, indent=1, sort_keys=True) + '\n', encoding='utf-8'
+        )
         pytest.skip(f'regenerated {_VALUES_FIXTURE}')
     expected = json.loads(_VALUES_FIXTURE.read_text(encoding='utf-8'))
 
@@ -943,8 +1024,7 @@ def test_no_field_method_raises_on_a_complete_observation(instrument_id: str) ->
 
 
 @pytest.mark.parametrize('instrument_id', sorted(_MISSION_FIXTURES))
-def test_the_fixture_drives_as_much_of_the_class_as_it_used_to(
-        instrument_id: str) -> None:
+def test_the_fixture_drives_as_much_of_the_class_as_it_used_to(instrument_id: str) -> None:
     """Exactly this many methods return, and exactly this many return a real value.
 
     The pair is a measurement of behavior, not a budget. A geometry column renamed to
@@ -963,10 +1043,13 @@ def test_every_mission_is_represented() -> None:
     Regenerated from `opus_import.config_data`, so a mission added later fails this
     rather than quietly going unchecked.
     """
-    covered = {_class_by_name(f['class_name'])(make_context()).mission_id
-               for f in _MISSION_FIXTURES.values()}
+    covered = {
+        _class_by_name(f['class_name'])(make_context()).mission_id
+        for f in _MISSION_FIXTURES.values()
+    }
     every_mission = set(config_data.MISSION_ID_TO_MISSION_TABLE_SFX) & {
-        cls(make_context()).mission_id for cls in _leaf_classes()}
+        cls(make_context()).mission_id for cls in _leaf_classes()
+    }
 
     assert covered == every_mission
 
@@ -987,9 +1070,11 @@ def test_the_geometry_row_stands_in_for_a_summary_file() -> None:
 
 def test_no_field_method_is_left_unannotated() -> None:
     """Every one of them carries a return annotation, which layer 1 then checks."""
-    unannotated = [f'{module}:{line} {cls}.{name}'
-                   for module, cls, name, line, annotation in _field_methods()
-                   if annotation is None]
+    unannotated = [
+        f'{module}:{line} {cls}.{name}'
+        for module, cls, name, line, annotation in _field_methods()
+        if annotation is None
+    ]
 
     assert unannotated == []
 
@@ -1034,12 +1119,10 @@ def test_a_missing_index_column_is_reported_rather_than_crashing_the_bundle() ->
     # An index row with none of the columns these methods read.
     metadata: dict[str, Any] = {'index_row': {}}
 
-    cocirs = ObsVolumeCOCIRS56xxx(make_context(),
-                                  bundle='COCIRS_5408', metadata=metadata)
+    cocirs = ObsVolumeCOCIRS56xxx(make_context(), bundle='COCIRS_5408', metadata=metadata)
     assert cocirs.primary_filespec is None
 
-    covims = ObsVolumeCOVIMS0xxx(make_context(),
-                                 bundle='COVIMS_0006', metadata=metadata)
+    covims = ObsVolumeCOVIMS0xxx(make_context(), bundle='COVIMS_0006', metadata=metadata)
     assert covims.field_obs_mission_cassini_spacecraft_clock_count1() is None
     assert covims.field_obs_mission_cassini_spacecraft_clock_count2() is None
 
@@ -1049,7 +1132,8 @@ def test_a_missing_index_column_is_reported_rather_than_crashing_the_bundle() ->
 
 
 def test_a_missing_filespec_is_reported_on_the_very_first_observation(
-        monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """The empty opus_id cache must not answer for an observation that has no filespec.
 
     `ObsBase` starts the cache at ``(None, None)``, so a `primary_filespec` of None
@@ -1098,8 +1182,7 @@ def test_as_int_refuses_to_round() -> None:
 
 
 @pytest.mark.parametrize('instrument_id', sorted(_MISSION_FIXTURES))
-def test_an_integer_column_is_an_int_even_from_a_numpy_index(
-        instrument_id: str) -> None:
+def test_an_integer_column_is_an_int_even_from_a_numpy_index(instrument_id: str) -> None:
     """Drive each mission with numpy-typed index values, as ``pdstable`` produces them.
 
     The fixtures hold plain Python numbers, which is why the layer above cannot see
@@ -1109,9 +1192,13 @@ def test_an_integer_column_is_an_int_even_from_a_numpy_index(
     """
     fixture = _MISSION_FIXTURES[instrument_id]
     numpy_fixture = {
-        key: ({k: (np.int64(v) if type(v) is int else v) for k, v in value.items()}
-              if isinstance(value, dict) else value)
-        for key, value in fixture.items()}
+        key: (
+            {k: (np.int64(v) if type(v) is int else v) for k, v in value.items()}
+            if isinstance(value, dict)
+            else value
+        )
+        for key, value in fixture.items()
+    }
 
     wrong, raised, _returned, _non_null = _drive_fixture(instrument_id, numpy_fixture)
 
@@ -1125,8 +1212,9 @@ _INT_CALLS = frozenset(('as_int', 'int', 'len', 'ord'))
 _TYPE_PRESERVING_CALLS = frozenset(('min', 'max', 'abs', 'round', 'sum'))
 
 
-def _yields_an_int(value: ast.expr, assigned: dict[str, ast.expr],
-                   inductive: set[str], depth: int = 0) -> bool:
+def _yields_an_int(
+    value: ast.expr, assigned: dict[str, ast.expr], inductive: set[str], depth: int = 0
+) -> bool:
     """Whether an expression can be seen to yield a builtin `int` (or None).
 
     Parameters:
@@ -1143,8 +1231,9 @@ def _yields_an_int(value: ast.expr, assigned: dict[str, ast.expr],
     """
     if depth > 8:
         return True
-    recurse = functools.partial(_yields_an_int, assigned=assigned,
-                                inductive=inductive, depth=depth + 1)
+    recurse = functools.partial(
+        _yields_an_int, assigned=assigned, inductive=inductive, depth=depth + 1
+    )
     if isinstance(value, ast.Constant):
         return value.value is None or isinstance(value.value, int)
     if isinstance(value, ast.IfExp):
@@ -1155,8 +1244,13 @@ def _yields_an_int(value: ast.expr, assigned: dict[str, ast.expr],
         return recurse(value.operand)
     if isinstance(value, ast.Call):
         func = value.func
-        name = (func.attr if isinstance(func, ast.Attribute)
-                else func.id if isinstance(func, ast.Name) else None)
+        name = (
+            func.attr
+            if isinstance(func, ast.Attribute)
+            else func.id
+            if isinstance(func, ast.Name)
+            else None
+        )
         if name in _INT_CALLS:
             return True
         if name in _TYPE_PRESERVING_CALLS:
@@ -1190,7 +1284,7 @@ def _assigned_locals(fn: ast.FunctionDef) -> dict[str, ast.expr]:
             targets = [node.target]
             assigned_value = node.value
         for target in targets:
-            names = (target.elts if isinstance(target, ast.Tuple) else [target])
+            names = target.elts if isinstance(target, ast.Tuple) else [target]
             for element in names:
                 if not isinstance(element, ast.Name):
                     continue
@@ -1222,9 +1316,11 @@ def _int_returning_functions() -> frozenset[str]:
                     continue
                 returns = ast.unparse(fn.returns)
                 if returns in ('int', 'IntField') or (
-                        returns.startswith('tuple[')
-                        and 'int' in returns and 'float' not in returns
-                        and 'str' not in returns):
+                    returns.startswith('tuple[')
+                    and 'int' in returns
+                    and 'float' not in returns
+                    and 'str' not in returns
+                ):
                     names.add(fn.name)
     return frozenset(names)
 
@@ -1260,18 +1356,18 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
             if _yields_an_int(node.value, assigned, inductive):
                 continue
             unconverted.append(
-                f'{name}:{node.lineno} {cls_name}.{fn.name} returns '
-                f'{ast.unparse(node.value)[:60]}')
+                f'{name}:{node.lineno} {cls_name}.{fn.name} returns {ast.unparse(node.value)[:60]}'
+            )
 
     # Tied to the declarations rather than to a constant: a floor of 50 is cleared by a
     # scan that sees a third of the tree, which is exactly the failure this needs to
     # catch. `_declared_annotations` is built by a separate traversal, so agreement
     # between the two is evidence neither silently shrank.
-    expected = {name for name, alias in _declared_annotations().items()
-                if 'IntField' in alias}
+    expected = {name for name, alias in _declared_annotations().items() if 'IntField' in alias}
     seen = {fn.name for _module, _cls, fn in functions}
-    assert expected - seen == set(), f'IntField methods the sweep never saw: '\
-                                     f'{sorted(expected - seen)}'
+    assert expected - seen == set(), (
+        f'IntField methods the sweep never saw: {sorted(expected - seen)}'
+    )
     assert unconverted == []
 
 

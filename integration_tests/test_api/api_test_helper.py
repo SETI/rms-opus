@@ -65,7 +65,8 @@ def go_live_target() -> str | None:
         raise RuntimeError(
             f'{GO_LIVE_ENV_VAR}={target!r} names no server: it must be one of '
             f'{", ".join(GO_LIVE_TARGETS)}, or be unset to run against the locally '
-            f'imported database.')
+            f'imported database.'
+        )
     return target
 
 
@@ -96,8 +97,7 @@ class ApiTestHelper(_ApiTestHelperBase):
     # Use with extreme caution!
     UPDATE_FILES = False
 
-    def _get_response(self, url: str,
-                      allow_redirects: bool = True) -> requests.Response:
+    def _get_response(self, url: str, allow_redirects: bool = True) -> requests.Response:
         """Fetch one API URL, from the local test client or a live server.
 
         Parameters:
@@ -110,14 +110,15 @@ class ApiTestHelper(_ApiTestHelperBase):
             The response, whichever client answered it.
         """
         target = go_live_target()
-        if not target or target == "production":
-            url = "https://opus.pds-rings.seti.org" + url
+        if not target or target == 'production':
+            url = 'https://opus.pds-rings.seti.org' + url
         else:
-            url = "http://dev.pds.seti.org" + url
+            url = 'http://dev.pds.seti.org' + url
         return self.client.get(url, allow_redirects=allow_redirects)
 
-    def _run_redirect_equal(self, url: str, expected_location: str,
-                            expected_status: int = 302) -> None:
+    def _run_redirect_equal(
+        self, url: str, expected_location: str, expected_status: int = 302
+    ) -> None:
         """Assert that one URL redirects, with the status and target it should.
 
         The redirect is not followed: what is being checked is the response itself,
@@ -134,8 +135,7 @@ class ApiTestHelper(_ApiTestHelperBase):
         self.assertEqual(expected_status, response.status_code)
         self.assertEqual(expected_location, response.headers['Location'])
 
-    def _run_status_equal(self, url: str, expected: int,
-                          err_string: str | None = None) -> None:
+    def _run_status_equal(self, url: str, expected: int, err_string: str | None = None) -> None:
         """Assert one URL's status code, and optionally text in its error body.
 
         Parameters:
@@ -190,14 +190,16 @@ class ApiTestHelper(_ApiTestHelperBase):
                 form.
         """
         if len(got) > 10000 or len(expected) > 10000:
-            return # Too slow
+            return  # Too slow
         print('Diffs:')
         diff = difflib.SequenceMatcher(a=got, b=expected)
         for tag, i1, i2, j1, j2 in diff.get_opcodes():
             if tag == 'equal':
                 continue
-            print(f'{tag:7} got[{i1:5d}:{i2:5d}] --> exp[{j1:5d}:{j2:5d}] {got[i1:i2]} '
-                  f'--> {expected[j1:j2]}')
+            print(
+                f'{tag:7} got[{i1:5d}:{i2:5d}] --> exp[{j1:5d}:{j2:5d}] {got[i1:i2]} '
+                f'--> {expected[j1:j2]}'
+            )
 
     @staticmethod
     def _clean_string(s: object) -> str:
@@ -215,14 +217,17 @@ class ApiTestHelper(_ApiTestHelperBase):
         s = str(s)
         if s.startswith("b'"):
             s = s[2:-1]
-        return (s.replace(r'\\r', '')
-                 .replace(r'\r', '')
-                 .replace('\r', '')
-                 .replace(r'\\n', r'\n')
-                 .replace(r'\n', '\n'))
+        return (
+            s.replace(r'\\r', '')
+            .replace(r'\r', '')
+            .replace('\r', '')
+            .replace(r'\\n', r'\n')
+            .replace(r'\n', '\n')
+        )
 
-    def _run_json_equal(self, url: str, expected: Any,
-                        ignore: str | list[str] | tuple[str, ...] | None = None) -> None:
+    def _run_json_equal(
+        self, url: str, expected: Any, ignore: str | list[str] | tuple[str, ...] | None = None
+    ) -> None:
         """Assert one URL answers 200 with a given JSON document.
 
         Parameters:
@@ -264,10 +269,10 @@ class ApiTestHelper(_ApiTestHelperBase):
         self.assertEqual(200, response.status_code)
         jdata = json.loads(response.content)
         if self.UPDATE_FILES:
-            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+            with open(_RESPONSES_FILE_ROOT + exp_file, 'w') as fp:
                 fp.write(json.dumps(jdata, indent=4))
             return
-        with open(_RESPONSES_FILE_ROOT+exp_file) as fp:
+        with open(_RESPONSES_FILE_ROOT + exp_file) as fp:
             expected = json.loads(fp.read())
         print('Got:')
         print(jdata)
@@ -298,8 +303,9 @@ class ApiTestHelper(_ApiTestHelperBase):
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
 
-    def _run_html_equal_file(self, url: str, exp_file: str,
-                             embedded_dynamic_image: bool = False) -> None:
+    def _run_html_equal_file(
+        self, url: str, exp_file: str, embedded_dynamic_image: bool = False
+    ) -> None:
         """Assert one URL answers 200 with the HTML body recorded in a file.
 
         Parameters:
@@ -314,10 +320,10 @@ class ApiTestHelper(_ApiTestHelperBase):
         self.assertEqual(200, response.status_code)
         if self.UPDATE_FILES:
             content = self._clean_string(response.content.decode())
-            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+            with open(_RESPONSES_FILE_ROOT + exp_file, 'w') as fp:
                 fp.write(content)
             return
-        with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
+        with open(_RESPONSES_FILE_ROOT + exp_file, 'rb') as fp:
             expected_bytes = fp.read()
         expected = self._clean_string(expected_bytes)
         resp = self._clean_string(str(response.content))
@@ -364,15 +370,16 @@ class ApiTestHelper(_ApiTestHelperBase):
         ind = s.find(start_str)
         if ind == -1:
             return s
-        ret = s[:ind+len(start_str)]
+        ret = s[: ind + len(start_str)]
         if end_str:
             ind = s.find(end_str)
             if ind != -1:
                 ret += s[ind:]
         return ret
 
-    def _run_html_range_file(self, url: str, exp_file: str, start_str: str,
-                             end_str: str | None) -> None:
+    def _run_html_range_file(
+        self, url: str, exp_file: str, start_str: str, end_str: str | None
+    ) -> None:
         """Assert one URL matches a recorded response outside a varying range.
 
         Parameters:
@@ -384,13 +391,13 @@ class ApiTestHelper(_ApiTestHelperBase):
         print(url)
         response = self._get_response(url)
         self.assertEqual(200, response.status_code)
-        with open(_RESPONSES_FILE_ROOT+exp_file) as fp:
+        with open(_RESPONSES_FILE_ROOT + exp_file) as fp:
             expected = fp.read()
         expected = self._remove_range(expected, start_str, end_str)
         resp = self._clean_string(str(response.content))
         resp = self._remove_range(resp, start_str, end_str)
         if self.UPDATE_FILES:
-            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+            with open(_RESPONSES_FILE_ROOT + exp_file, 'w') as fp:
                 fp.write(resp)
             return
         print('Got:')
@@ -416,8 +423,7 @@ class ApiTestHelper(_ApiTestHelperBase):
             The body with that wrapper and its carriage returns removed.
         """
         text = str(text)[2:-1]
-        text = (text.replace('\\\\r', '').replace('\\r', '')
-                .replace('\r', ''))
+        text = text.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
         return text
 
     def _run_csv_equal(self, url: str, expected: object) -> None:
@@ -451,10 +457,10 @@ class ApiTestHelper(_ApiTestHelperBase):
         response = self._get_response(url)
         self.assertEqual(200, response.status_code)
         if self.UPDATE_FILES:
-            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+            with open(_RESPONSES_FILE_ROOT + exp_file, 'w') as fp:
                 fp.write(response.content.decode())
             return
-        with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
+        with open(_RESPONSES_FILE_ROOT + exp_file, 'rb') as fp:
             expected_bytes = fp.read()
         expected = self._cleanup_csv(expected_bytes)
         resp = self._cleanup_csv(response.content)
@@ -466,8 +472,9 @@ class ApiTestHelper(_ApiTestHelperBase):
             self._print_clean_diffs(resp, expected)
         self.assertEqual(expected, resp)
 
-    def _run_archive_file_equal(self, url: str, expected: list[str],
-                                response_type: str = 'json', fmt: str = 'zip') -> None:
+    def _run_archive_file_equal(
+        self, url: str, expected: list[str], response_type: str = 'json', fmt: str = 'zip'
+    ) -> None:
         """Assert a download URL produces an archive holding exactly named members.
 
         The archive is read either from the path the JSON response names or from the
@@ -505,7 +512,7 @@ class ApiTestHelper(_ApiTestHelperBase):
         else:
             binary_stream = BytesIO(response.content)
             file = response.headers['Content-Disposition']
-            archive_file_path = (settings.TAR_FILE_PATH + file[file.index('=')+1::])
+            archive_file_path = settings.TAR_FILE_PATH + file[file.index('=') + 1 : :]
             if fmt == 'zip':
                 archive_file = zipfile.ZipFile(binary_stream, mode=read_mode)
             else:
@@ -552,7 +559,9 @@ class ApiTestHelper(_ApiTestHelperBase):
 
         result = re.sub(
             r'<img class="([^"]*)" src="data:image/png;charset=utf-8;base64,([^"]*)" ([^>]*)>',
-            pull_out_image, data)
+            pull_out_image,
+            data,
+        )
         return result, images
 
     def __assert_images_identical(self, image1: bytes, image2: bytes) -> None:
@@ -568,8 +577,8 @@ class ApiTestHelper(_ApiTestHelperBase):
         decoded1: PILImage = Image.open(BytesIO(image1)).convert('RGB')
         decoded2: PILImage = Image.open(BytesIO(image2)).convert('RGB')
         # Must be the same size
-        self.assertEqual(decoded1.size, decoded2.size, "Image size mismatch")
+        self.assertEqual(decoded1.size, decoded2.size, 'Image size mismatch')
 
         # getbbox returns the bounds of the non-zero elements. None if all are zero.
         difference = ImageChops.difference(decoded1, decoded2)
-        self.assertIsNone(difference.getbbox(), "Images differ")
+        self.assertIsNone(difference.getbbox(), 'Images differ')

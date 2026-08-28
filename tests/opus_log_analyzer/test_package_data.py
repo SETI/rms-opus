@@ -13,8 +13,7 @@ import pytest
 from opus_log_analyzer.jinga_environment import JINJA_ENVIRONMENT
 
 # Every template the reports use, directly or through an {% include %}.
-TEMPLATE_NAMES = ('error_analysis.html', 'histogram.html', 'log_analysis.html',
-                  'summary.html')
+TEMPLATE_NAMES = ('error_analysis.html', 'histogram.html', 'log_analysis.html', 'summary.html')
 
 
 def test_every_template_ships() -> None:
@@ -40,9 +39,17 @@ def test_templates_are_found_from_any_working_directory(tmp_path: Path) -> None:
     `chdir` inside this process would come too late to prove anything.
     """
     result = subprocess.run(
-        [sys.executable, '-c',
-         'from opus_log_analyzer.jinga_environment import JINJA_ENVIRONMENT\n'
-         "print(JINJA_ENVIRONMENT.get_template('log_analysis.html').name)"],
-        cwd=tmp_path, capture_output=True, text=True, check=False, timeout=60)
+        [
+            sys.executable,
+            '-c',
+            'from opus_log_analyzer.jinga_environment import JINJA_ENVIRONMENT\n'
+            "print(JINJA_ENVIRONMENT.get_template('log_analysis.html').name)",
+        ],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
+    )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == 'log_analysis.html'

@@ -86,14 +86,9 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
             try:
                 definition = ' '.join(str(label[item_name]['DESCRIPTION']).split())
             except KeyError:
-                logger.log('warning',
-                           f'No description for item {item_name}: "{term}"')
+                logger.log('warning', f'No description for item {item_name}: "{term}"')
                 continue
-            new_row = {
-                'term': term,
-                'context': context,
-                'definition': definition
-            }
+            new_row = {'term': term, 'context': context, 'definition': definition}
             rows.append(new_row)
 
     for schema_file in json_list:
@@ -104,26 +99,20 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
         assert schema is not None
         for column in schema:
             for suffix in ('', '_results'):
-                if 'definition'+suffix in column:
-                    definition = column['definition'+suffix]
-                    if column.get('pi_dict_name'+suffix, None) is None:
-                        logger.log('error',
-                           f'Missing term for "{definition}" in "{file_name}"')
+                if 'definition' + suffix in column:
+                    definition = column['definition' + suffix]
+                    if column.get('pi_dict_name' + suffix, None) is None:
+                        logger.log('error', f'Missing term for "{definition}" in "{file_name}"')
                         bad_db = True
                         continue
-                    term = column['pi_dict_name'+suffix]
-                    if column.get('pi_dict_context'+suffix, None) is None:
-                        logger.log('error',
-                         f'Missing context for "{definition}" in "{file_name}"')
+                    term = column['pi_dict_name' + suffix]
+                    if column.get('pi_dict_context' + suffix, None) is None:
+                        logger.log('error', f'Missing context for "{definition}" in "{file_name}"')
                         bad_db = True
                         continue
-                    context = column['pi_dict_context'+suffix]
+                    context = column['pi_dict_context' + suffix]
 
-                    new_row = {
-                        'term': term,
-                        'context': context,
-                        'definition': definition
-                    }
+                    new_row = {'term': term, 'context': context, 'definition': definition}
                     rows.append(new_row)
 
     if bad_db:
@@ -133,11 +122,11 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
     mult_tp_ctx_rows: list[dict[str, Any]] = []
     for tooltips_file in mult_tooltips_json_list:
         name = tooltips_file.name
-        slug = name[name.rindex('_')+1:-5]
+        slug = name[name.rindex('_') + 1 : -5]
         new_row = {
             'name': f'MULT_{slug.upper()}',
             'description': f'OPUS {slug.title()}',
-            'parent': 'NULL'
+            'parent': 'NULL',
         }
         mult_tp_ctx_rows.append(new_row)
 
@@ -145,6 +134,7 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
     db.insert_rows('import', 'definitions', rows)
 
     return True
+
 
 def create_import_contexts_table(ctx: ImportContext) -> bool:
     """Fill the import ``contexts`` table from the packaged ``contexts.csv``.
@@ -181,11 +171,7 @@ def create_import_contexts_table(ctx: ImportContext) -> bool:
                     logger.log('error', f'Bad row in "{contexts_file}": {row}')
                     return False
                 name, description, parent = row
-                new_row = {
-                    'name': name,
-                    'description': description,
-                    'parent': parent
-                }
+                new_row = {'name': name, 'description': description, 'parent': parent}
                 rows.append(new_row)
     except OSError as e:
         logger.log('error', f'Failed to read {contexts_file}: {e.strerror}')
@@ -229,6 +215,7 @@ def copy_dictionary_from_import_to_permanent(ctx: ImportContext) -> None:
 
     db.copy_rows_between_namespaces('import', 'perm', 'definitions')
 
+
 def do_dictionary(ctx: ImportContext) -> None:
     """Rebuild the permanent dictionary tables, driven by ``--import-dictionary``.
 
@@ -243,8 +230,7 @@ def do_dictionary(ctx: ImportContext) -> None:
     # Contexts has to come first because of a foreign key
     db.drop_table('import', 'definitions')
     db.drop_table('import', 'contexts')
-    if (create_import_contexts_table(ctx) and
-        create_import_definitions_table(ctx)):
+    if create_import_contexts_table(ctx) and create_import_definitions_table(ctx):
         copy_dictionary_from_import_to_permanent(ctx)
     db.drop_table('import', 'definitions')
     db.drop_table('import', 'contexts')

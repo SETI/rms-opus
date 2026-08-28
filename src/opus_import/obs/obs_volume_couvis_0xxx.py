@@ -24,7 +24,6 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``COUVIS``."""
@@ -100,7 +99,8 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
 
         if not self._has_supp_index():
             self._log_nonrepeating_error(
-                '_is_image has channel EUV or FUV but no DATA_OBJECT_TYPE available')
+                '_is_image has channel EUV or FUV but no DATA_OBJECT_TYPE available'
+            )
             return False
 
         object_type = self._supp_index_col('DATA_OBJECT_TYPE')
@@ -121,10 +121,9 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         channel, _image_time = self._channel_time_helper()
         if channel == 'HSP':
             # HSP integration_duration is in milliseconds!
-            return cast(FloatField, dur/1000)
+            return cast(FloatField, dur / 1000)
         # EUV and FUV are in seconds! What were they thinking?
         return cast(FloatField, dur)
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -153,7 +152,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         if samples is None or integration_duration is None:
             return None
 
-        return cast(FloatField, start_time_sec + samples*integration_duration)
+        return cast(FloatField, start_time_sec + samples * integration_duration)
 
     # We occasionally don't bother to generate ring_geo data for COUVIS, like during
     # cruise, so just use the given RA/DEC from the index if needed. We don't make
@@ -190,8 +189,15 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         else:
             image_camera = filename[:3]
             image_time = filename[3:17]
-        image_time_str = (image_time[:4] + '-' + image_time[5:8] + 'T' +
-                          image_time[9:11] + '-' + image_time[12:14])
+        image_time_str = (
+            image_time[:4]
+            + '-'
+            + image_time[5:8]
+            + 'T'
+            + image_time[9:11]
+            + '-'
+            + image_time[12:14]
+        )
         planet = self._cassini_planet_id()
         if planet == 'OTH':
             pl_str = ''
@@ -207,18 +213,16 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         if not self._has_supp_index():
             return self._create_mult(None)
         description = self._supp_index_col('DESCRIPTION').upper()
-        if (description.find('OCCULTATION') != -1 and
-            description.find('CALIBRATION') == -1):
+        if description.find('OCCULTATION') != -1 and description.find('CALIBRATION') == -1:
             return self._create_mult('OPDEPTH')
         return self._create_mult('EMISSION')
 
     def field_obs_general_observation_type(self) -> MultFieldRet:
         channel, _image_time = self._channel_time_helper()
         if channel == 'HSP' or channel == 'HDAC':
-            return self._create_mult('TS') # Time Series
+            return self._create_mult('TS')  # Time Series
         assert channel == 'EUV' or channel == 'FUV'
-        return self._create_mult('SCU') # Spectral Cube
-
+        return self._create_mult('SCU')  # Spectral Cube
 
     ############################
     ### OVERRIDE FROM ObsPds ###
@@ -230,7 +234,6 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         description = self._supp_index_col('DESCRIPTION')
         description = description.replace('The purpose of this observation is ', '')
         return cast(StrField, description)
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -274,8 +277,8 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
             return None, None
         # as_int because every one of these columns arrives from numpy, which does not
         # subclass int; see opus_import.obs.field_types.as_int.
-        min_val = min(samples, (line2-line1+1)//line_bin)
-        max_val = max(samples, (line2-line1+1)//line_bin)
+        min_val = min(samples, (line2 - line1 + 1) // line_bin)
+        max_val = max(samples, (line2 - line1 + 1) // line_bin)
         min_ret: IntField = None if min_val < 0 else as_int(min_val)
         max_ret: IntField = None if max_val < 0 else as_int(max_val)
 
@@ -286,7 +289,6 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
 
     def field_obs_type_image_lesser_pixel_size(self) -> IntField:
         return self._pixel_size_helper()[0]
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -327,9 +329,9 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
             return None
 
         if channel == 'EUV':
-            return cast(FloatField, 0.0558 + (band2+1) * 0.0000607422)
+            return cast(FloatField, 0.0558 + (band2 + 1) * 0.0000607422)
         if channel == 'FUV':
-            return cast(FloatField, 0.11 + (band2+1) * 0.000078125)
+            return cast(FloatField, 0.11 + (band2 + 1) * 0.000078125)
 
         self._log_nonrepeating_error(f'wavelength2 has unknown channel type {channel}')
         return None
@@ -388,7 +390,6 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
 
         return as_int((band2 - band1 + 1) // band_bin)
 
-
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
     ##########################################
@@ -397,8 +398,7 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
         if sc is None or not sc.startswith('1/'):
-            self._log_nonrepeating_error(
-                f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
+            self._log_nonrepeating_error(f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
         return self._parse_cassini_sclk(sc)
 
@@ -413,11 +413,10 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
         # and leave the column empty, as count1 already did.
         if sc_cvt is None or time1 is None or time2 is None:
             return None
-        return sc_cvt + time2-time1
+        return sc_cvt + time2 - time1
 
     def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         return self._create_mult(self._cassini_normalize_mission_phase_name())
-
 
     ###############################################
     ### FIELD METHODS FOR obs_instrument_couvis ###

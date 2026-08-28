@@ -28,7 +28,6 @@ class ObsProfilePDS3(ObsProfile, ObsBasePDS3):
     # we provide a default for all fields and don't require subclasses to
     # override the methods.
 
-
     def field_obs_profile_occ_type(self) -> MultFieldRet:
         return self._create_mult(None)
 

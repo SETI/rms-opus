@@ -21,14 +21,15 @@ class ObsBasePDS3(ObsBase):
     ### Public access methods ###
     #############################
 
-
     # Warning: This doesn't work for COCIRS. That's OK for now because there is
     # no supplemental metadata for those volumes.
-    def primary_filespec_from_index_row(self, row: IndexRow,
-                                        convert_lbl: bool = False,
-                                        add_phase_from_row: bool = False,
-                                        add_phase_from_inst: bool = False
-                                        ) -> str | None:
+    def primary_filespec_from_index_row(
+        self,
+        row: IndexRow,
+        convert_lbl: bool = False,
+        add_phase_from_row: bool = False,
+        add_phase_from_inst: bool = False,
+    ) -> str | None:
         """Build a file specification from a row of any of this volume's PDS3 index files.
 
         Deliberately generic rather than overridden per instrument: within one volume the
@@ -59,15 +60,15 @@ class ObsBasePDS3(ObsBase):
         # we don't rely on getting it from there.
         bundle_id = row.get('VOLUME_ID', None)
         if bundle_id is None:
-            bundle_id = row.get('VOLUME_NAME', None) # VG_[5678]xxx
+            bundle_id = row.get('VOLUME_NAME', None)  # VG_[5678]xxx
         if bundle_id is not None and bundle_id.rstrip('/') != self.bundle:
             self._log_nonrepeating_error('Volume ID in index file inconsistent')
             return None
 
         filespec = row.get('FILE_SPECIFICATION_NAME', None)
         if filespec is None:
-            path_name = row.get('PATH_NAME', '').strip('/') # NH
-            filename = row.get('FILE_NAME', '').strip('/') # NH and COUVIS_0xxx
+            path_name = row.get('PATH_NAME', '').strip('/')  # NH
+            filename = row.get('FILE_NAME', '').strip('/')  # NH and COUVIS_0xxx
             if path_name != '':
                 path_name = path_name + '/'
             filespec = path_name + filename
@@ -79,7 +80,7 @@ class ObsBasePDS3(ObsBase):
         # to the filespec
         assert self.bundle is not None
         ret = filespec.strip('/')
-        if not ret.startswith(self.bundle+'/'):
+        if not ret.startswith(self.bundle + '/'):
             ret = self.bundle + '/' + filespec.lstrip('/')
         if convert_lbl:
             ret = self.convert_filespec_from_lbl(ret)
@@ -94,14 +95,13 @@ class ObsBasePDS3(ObsBase):
                 components = opus_id.split('_')
                 sfx = components[-1]
                 if sfx in ('ir', 'vis'):
-                    ret += '_'+sfx
+                    ret += '_' + sfx
 
         # Likewise, we have to do the same thing when looking up the row, but in
         # this case we have to get the phase name from this instance.
         if add_phase_from_inst and self.phase_name:
-            ret += '_'+self.phase_name.lower()
+            ret += '_' + self.phase_name.lower()
         return cast(str | None, ret)
-
 
     ###############################
     ### Internal access methods ###
@@ -125,7 +125,6 @@ class ObsBasePDS3(ObsBase):
         # here.
         filespec = self.convert_filespec_from_lbl(filespec)
         return pdsfile.pds3file.Pds3File.from_filespec(filespec, fix_case=True)
-
 
     # Helpers for time fields
 
@@ -151,8 +150,9 @@ class ObsBasePDS3(ObsBase):
         """
         return self._time_helper('supp_index_row', column)
 
-    def _time2_from_index(self, start_time_sec: FloatField,
-                          column: str = 'STOP_TIME') -> FloatField:
+    def _time2_from_index(
+        self, start_time_sec: FloatField, column: str = 'STOP_TIME'
+    ) -> FloatField:
         """Read the observation's stop time from the primary index row.
 
         Parameters:
@@ -164,8 +164,9 @@ class ObsBasePDS3(ObsBase):
         """
         return self._time2_helper('index_row', start_time_sec, column)
 
-    def _time2_from_supp_index(self, start_time_sec: FloatField,
-                               column: str = 'STOP_TIME') -> FloatField:
+    def _time2_from_supp_index(
+        self, start_time_sec: FloatField, column: str = 'STOP_TIME'
+    ) -> FloatField:
         """Read the observation's stop time from the supplemental index row.
 
         Parameters:
@@ -188,13 +189,11 @@ class ObsBasePDS3(ObsBase):
         """
         index = self._col_in_some_index(column)
         if index is None:
-            self._log_nonrepeating_error(
-                f'Column "{column}" not found in supp_index or index')
+            self._log_nonrepeating_error(f'Column "{column}" not found in supp_index or index')
             return None
         return self._time_helper(index, column=column)
 
-    def _time2_from_some_index(self, time1: FloatField,
-                               column: str = 'STOP_TIME') -> FloatField:
+    def _time2_from_some_index(self, time1: FloatField, column: str = 'STOP_TIME') -> FloatField:
         """Read the observation's stop time from whichever index row carries the column.
 
         Parameters:
@@ -206,7 +205,6 @@ class ObsBasePDS3(ObsBase):
         """
         index = self._col_in_some_index_or_label(column)
         if index is None:
-            self._log_nonrepeating_error(
-                f'Column "{column}" not found in supp_index or index')
+            self._log_nonrepeating_error(f'Column "{column}" not found in supp_index or index')
             return None
         return self._time2_helper(index, time1, column=column)

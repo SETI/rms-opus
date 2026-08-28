@@ -20,9 +20,7 @@ from pathlib import Path
 
 import pytest
 
-SERVER_SCRIPTS = (
-    Path(__file__).resolve().parents[2] / 'scripts' / 'server'
-)
+SERVER_SCRIPTS = Path(__file__).resolve().parents[2] / 'scripts' / 'server'
 READER = SERVER_SCRIPTS / 'import_and_deploy' / '_read_deploy_env.sh'
 TEMPLATE = SERVER_SCRIPTS / 'deploy.env.template'
 

@@ -15,7 +15,7 @@ from opus_import.obs.obs_volume_voyager_common import ObsVolumeVoyagerCommon
 _VG_TARGET_TO_MISSION_PHASE_MAPPING = {
     'S RINGS': 'SATURN ENCOUNTER',
     'U RINGS': 'URANUS ENCOUNTER',
-    'N RINGS': 'NEPTUNE ENCOUNTER'
+    'N RINGS': 'NEPTUNE ENCOUNTER',
 }
 
 # Note: threshold values are determined by observing the results from OPUS.
@@ -40,13 +40,14 @@ THRESHOLD_START_TIME_VG_AT_NORTH = julian.tai_from_iso(
         '1980-11-13T04:19:30.640',
         '1981-08-26T04:16:45.080',
         '1985-11-06T17:22:30.040',
-        '1986-01-24T17:10:13.320'
+        '1986-01-24T17:10:13.320',
     ]
 )
 
 # This class handles everything that the instruments VGISS, VGPPS, VGRSS,
 # and VGUVS have in common in the VG_28xx reflection/occultation profile
 # volumes.
+
 
 class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
     """What every Voyager ring-profile volume shares.
@@ -58,7 +59,6 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
-
 
     @property
     def mission_id(self) -> str:
@@ -77,14 +77,12 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
         """
         return filespec.replace('.LBL', '.TAB')
 
-
     ############################
     ### OVERRIDE FROM ObsPds ###
     ############################
 
     def field_obs_pds_product_creation_time(self) -> FloatField:
         return self._product_creation_time_from_supp_index()
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -108,7 +106,6 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
     def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_no_res1()
 
-
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
@@ -119,8 +116,9 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
 
         if wl_band2 is not None and wl_band2 != 'N/A' and wl_band1 != wl_band2:
             self._log_nonrepeating_error(
-                f'Mismatched WAVELENGTH_BAND_1 "{wl_band1}" and '+
-                f'WAVELENGTH_BAND_2 "{wl_band2}"')
+                f'Mismatched WAVELENGTH_BAND_1 "{wl_band1}" and '
+                + f'WAVELENGTH_BAND_2 "{wl_band2}"'
+            )
             return self._create_mult(None)
         if '-BAND' in wl_band1:
             wl_band1 = wl_band1[0]
@@ -135,13 +133,13 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
 
         if src_name2 is not None and src_name1 != src_name2:
             self._log_nonrepeating_error(
-                f'Mismatched SIGNAL_SOURCE_NAME_1 "{src_name1}" and '+
-                f'SIGNAL_SOURCE_NAME_2 "{src_name2}"')
+                f'Mismatched SIGNAL_SOURCE_NAME_1 "{src_name1}" and '
+                + f'SIGNAL_SOURCE_NAME_2 "{src_name2}"'
+            )
 
         if src_name1.upper().startswith('VOYAGER'):
             return self._create_mult(src_name1)
         return self._create_mult(col_val=src_name1, grouping='Stars')
-
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
@@ -193,9 +191,9 @@ class ObsVolumeVG28xx(ObsVolumeVoyagerCommon):
         return self._time_from_supp_index(column='RING_EVENT_START_TIME')
 
     def field_obs_ring_geometry_ring_intercept_time2(self) -> FloatField:
-        return self._time2_from_supp_index(self.field_obs_ring_geometry_ring_intercept_time1(),
-                                      column='RING_EVENT_STOP_TIME')
-
+        return self._time2_from_supp_index(
+            self.field_obs_ring_geometry_ring_intercept_time1(), column='RING_EVENT_STOP_TIME'
+        )
 
     ############################################
     ### OVERRIDE FROM ObsVolumeVoyagerCommon ###

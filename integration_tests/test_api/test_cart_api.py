@@ -79,7 +79,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         self.data_download_maximum = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
         self.max_download_size = settings.MAX_DOWNLOAD_SIZE
         self.max_cum_download_size = settings.MAX_CUM_DOWNLOAD_SIZE
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
@@ -94,16 +94,14 @@ class ApiCartTests(ApiTestHelper, TestCase):
         settings.MAX_DOWNLOAD_SIZE = self.max_download_size
         settings.MAX_CUM_DOWNLOAD_SIZE = self.max_cum_download_size
 
-
-            ##################################################
-            ######### /__cart/view.json: API TESTS #########
-            ##################################################
+        ##################################################
+        ######### /__cart/view.json: API TESTS #########
+        ##################################################
 
     def test__api_cart_view_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/view: no reqno"
         url = '/__cart/view.json'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_reqno('/__cart/view.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_reqno('/__cart/view.json'))
 
     def test__api_cart_view_types_default(self) -> None:
         "[test_cart_api.py] /__cart/view: types default"
@@ -138,22 +136,19 @@ class ApiCartTests(ApiTestHelper, TestCase):
         url = '/__cart/view.json?unselected_types=coiss_raw,coiss_calib,coiss_thumb,coiss_medium,coiss_full&reqno=710'
         self._run_json_equal_file(url, 'test__api_cart_view_types_unselected.json')
 
-
-            ##################################################
-            ######### /__cart/status.json: API TESTS #########
-            ##################################################
+        ##################################################
+        ######### /__cart/status.json: API TESTS #########
+        ##################################################
 
     def test__api_cart_status_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/status: no reqno"
         url = '/__cart/status.json'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_reqno('/__cart/status.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_reqno('/__cart/status.json'))
 
     def test__api_cart_status_bad_download(self) -> None:
         "[test_cart_api.py] /__cart/status: bad download"
         url = '/__cart/status.json?download=inf&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_download('inf', '/__cart/status.json'))
+        self._run_status_equal(url, 400, http400_bad_download('inf', '/__cart/status.json'))
 
     def test__api_cart_status_download_ver(self) -> None:
         "[test_cart_api.py] /__cart/status: download=1, types is set to version 2 calib"
@@ -169,73 +164,77 @@ class ApiCartTests(ApiTestHelper, TestCase):
     # We don't bother otherwise testing this separately because it's used
     # extensively in all the tests below
 
-
-            #################################################
-            ######### /__cart/reset.json: API TESTS #########
-            #################################################
+    #################################################
+    ######### /__cart/reset.json: API TESTS #########
+    #################################################
 
     def test__api_cart_reset_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/reset: no reqno"
         url = '/__cart/reset.json'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_reqno('/__cart/reset.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_reqno('/__cart/reset.json'))
 
     def test__api_cart_reset_download0(self) -> None:
         "[test_cart_api.py] /__cart/reset: download 0"
         url = '/__cart/reset.json?download=0&reqno=456'
-        expected = {"count": 0, "recycled_count": 0, "reqno": 456}
+        expected = {'count': 0, 'recycled_count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_reset_download1(self) -> None:
         "[test_cart_api.py] /__cart/reset: download 1"
         url = '/__cart/reset.json?download=1&reqno=456'
-        expected = {"total_download_count": 0, "total_download_size": 0, "total_download_size_pretty": "0B", "product_cat_dict": {}, "count": 0, "recycled_count": 0, "reqno": 456}
+        expected = {
+            'total_download_count': 0,
+            'total_download_size': 0,
+            'total_download_size_pretty': '0B',
+            'product_cat_dict': {},
+            'count': 0,
+            'recycled_count': 0,
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_reset_bad_download(self) -> None:
         "[test_cart_api.py] /__cart/reset: bad download"
         url = '/__cart/reset.json?download=inf&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_download('inf', '/__cart/reset.json'))
+        self._run_status_equal(url, 400, http400_bad_download('inf', '/__cart/reset.json'))
 
     def test__api_cart_reset_recyclebin0(self) -> None:
         "[test_cart_api.py] /__cart/reset: recyclebin 0"
         url = '/__cart/reset.json?recyclebin=0&reqno=456'
-        expected = {"count": 0, "recycled_count": 0, "reqno": 456}
+        expected = {'count': 0, 'recycled_count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        expected = {"count": 1, "recycled_count": 0, "reqno": 456, "error": False}
+        expected = {'count': 1, 'recycled_count': 0, 'reqno': 456, 'error': False}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=456&recyclebin=1'
-        expected = {"count": 0, "recycled_count": 1, "reqno": 456, "error": False}
+        expected = {'count': 0, 'recycled_count': 1, 'reqno': 456, 'error': False}
         self._run_json_equal(url, expected)
         url = '/__cart/reset.json?recyclebin=0&reqno=456'
-        expected = {"count": 0, "recycled_count": 0, "reqno": 456}
+        expected = {'count': 0, 'recycled_count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_reset_recyclebin1(self) -> None:
         "[test_cart_api.py] /__cart/reset: recyclebin 1"
         url = '/__cart/reset.json?recyclebin=0&reqno=456'
-        expected = {"count": 0, "recycled_count": 0, "reqno": 456}
+        expected = {'count': 0, 'recycled_count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        expected = {"count": 1, "recycled_count": 0, "reqno": 456, "error": False}
+        expected = {'count': 1, 'recycled_count': 0, 'reqno': 456, 'error': False}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360010&reqno=456'
-        expected = {"count": 2, "recycled_count": 0, "reqno": 456, "error": False}
+        expected = {'count': 2, 'recycled_count': 0, 'reqno': 456, 'error': False}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=456&recyclebin=1'
-        expected = {"count": 1, "recycled_count": 1, "reqno": 456, "error": False}
+        expected = {'count': 1, 'recycled_count': 1, 'reqno': 456, 'error': False}
         self._run_json_equal(url, expected)
         url = '/__cart/reset.json?recyclebin=1&reqno=456'
-        expected = {"count": 1, "recycled_count": 0, "reqno": 456}
+        expected = {'count': 1, 'recycled_count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_reset_bad_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/reset: bad download"
         url = '/__cart/reset.json?recyclebin=1e38&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_recyclebin('1e38', '/__cart/reset.json'))
+        self._run_status_equal(url, 400, http400_bad_recyclebin('1e38', '/__cart/reset.json'))
 
     def test__api_cart_reset(self) -> None:
         "[test_cart_api.py] /__cart/reset"
@@ -246,16 +245,14 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 1}
         self._run_json_equal(url, expected)
 
-
-            ###############################################
-            ######### /__cart/add.json: API TESTS #########
-            ###############################################
+        ###############################################
+        ######### /__cart/add.json: API TESTS #########
+        ###############################################
 
     def test__api_cart_add_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/add: no reqno"
         url = '/__cart/add.json?opusid=co-iss-n1460961026'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_reqno('/__cart/add.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_reqno('/__cart/add.json'))
 
     def test__api_cart_add_missing(self) -> None:
         "[test_cart_api.py] /__cart/add: missing OPUSID no download"
@@ -263,8 +260,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_missing_opus_id('/__cart/add.json'))
+        self._run_status_equal(url, 400, http400_missing_opus_id('/__cart/add.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -275,8 +271,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_missing_opus_id('/__cart/add.json'))
+        self._run_status_equal(url, 400, http400_missing_opus_id('/__cart/add.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -326,7 +321,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026,co-iss-n1460961026&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_bad(self) -> None:
@@ -335,7 +335,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-xn1460961026&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad(self) -> None:
@@ -347,7 +352,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-xn1460961026&reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 1,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad_multi(self) -> None:
@@ -356,7 +366,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026,co-iss-xn1460961026&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad_multi_2(self) -> None:
@@ -365,7 +380,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026,&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad_multi_3(self) -> None:
@@ -374,7 +394,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=,co-iss-n1460961026&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_good_bad_multi_4(self) -> None:
@@ -383,7 +408,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=,&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_mixture(self) -> None:
@@ -395,7 +425,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=WOOHOO&reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 1,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360010&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
@@ -407,7 +442,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=nh-mvic-mpf_000526016&reqno=456'
-        expected = {'recycled_count': 0, 'count': 2, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 2,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_mixture_multi(self) -> None:
@@ -419,13 +459,23 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=WOOHOO&reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 1,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360010,hst-11559-wfc3-ib4v22guq&reqno=456'
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=nh-mvic-mpf_000526016&reqno=456'
-        expected = {'recycled_count': 0, 'count': 2, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 2,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
@@ -437,8 +487,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?download=1&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_missing_opus_id('/__cart/add.json'))
+        self._run_status_equal(url, 400, http400_missing_opus_id('/__cart/add.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -449,8 +498,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=nh-mvic-mpf_000526016&download=1x2&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_download('1x2', '/__cart/add.json'))
+        self._run_status_equal(url, 400, http400_bad_download('1x2', '/__cart/add.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -489,12 +537,17 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 0.', 'reqno': 456}
+            expected = {
+                'recycled_count': 0,
+                'count': 0,
+                'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 0.',
+                'reqno': 456,
+            }
         url = '/__cart/status.json?reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -527,10 +580,15 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026,hst-11559-wfc3-ib4v22guq&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add multiple OPUS IDs to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.', 'reqno': 456}
+            expected = {
+                'recycled_count': 0,
+                'count': 0,
+                'error': 'Your request to add multiple OPUS IDs to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.',
+                'reqno': 456,
+            }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -549,10 +607,15 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=hst-11559-wfc3-ib4v22guq&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 0, 'count': 1, 'error': 'Your request to add OPUS ID hst-11559-wfc3-ib4v22guq to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.', 'reqno': 456}
+            expected = {
+                'recycled_count': 0,
+                'count': 1,
+                'error': 'Your request to add OPUS ID hst-11559-wfc3-ib4v22guq to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 1.',
+                'reqno': 456,
+            }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
@@ -577,28 +640,31 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=vg-iss-2-s-c4360018&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 0, 'count': 2, 'error': 'Your request to add OPUS ID vg-iss-2-s-c4360018 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
+            expected = {
+                'recycled_count': 0,
+                'count': 2,
+                'error': 'Your request to add OPUS ID vg-iss-2-s-c4360018 to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.',
+                'reqno': 456,
+            }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 2, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-
-            ##################################################
-            ######### /__cart/remove.json: API TESTS #########
-            ##################################################
+        ##################################################
+        ######### /__cart/remove.json: API TESTS #########
+        ##################################################
 
     def test__api_cart_remove_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/remove: no reqno"
         url = '/__cart/remove.json?opusid=co-iss-n1460961026'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_reqno('/__cart/remove.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_reqno('/__cart/remove.json'))
 
     def test__api_cart_remove_missing(self) -> None:
         "[test_cart_api.py] /__cart/remove: missing OPUSID no download"
@@ -606,8 +672,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_missing_opus_id('/__cart/remove.json'))
+        self._run_status_equal(url, 400, http400_missing_opus_id('/__cart/remove.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -618,8 +683,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_missing_opus_id('/__cart/remove.json'))
+        self._run_status_equal(url, 400, http400_missing_opus_id('/__cart/remove.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -663,8 +727,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
     def test__api_cart_remove_one_recyclebinx(self) -> None:
         "[test_cart_api.py] /__cart/remove: recyclebin=x"
         url = '/__cart/remove.json?opusid=co-vims-v1484504505_ir&reqno=456&recyclebin=x'
-        self._run_status_equal(url, 400,
-                               http400_bad_recyclebin('x', '/__cart/remove.json'))
+        self._run_status_equal(url, 400, http400_bad_recyclebin('x', '/__cart/remove.json'))
 
     def test__api_cart_remove_duplicate(self) -> None:
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download"
@@ -725,7 +788,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         self._run_json_equal(url, expected)
         # Removing an unknown opusid throws an error with recyclebin
         url = '/__cart/remove.json?opusid=co-vims-v1484528864_irx&reqno=456&recyclebin=1'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing removed from cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing removed from cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -835,7 +903,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         url = '/__cart/add.json?opusid=go-ssi-c0347174400&reqno=456'
         expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/remove.json?opusid=WOOHOO,co-vims-v1484528864_ir,vg-iss-2-s-c4360010&reqno=456'
+        url = (
+            '/__cart/remove.json?opusid=WOOHOO,co-vims-v1484528864_ir,vg-iss-2-s-c4360010&reqno=456'
+        )
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=nh-mvic-mpf_000526016x&reqno=456'
@@ -854,7 +924,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-xn1460961026&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'Internal Error: One or more OPUS_IDs not found; nothing added to cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         # Removing an unknown opusid doesn't throw an error
         url = '/__cart/remove.json?opusid=co-iss-xn1460961026&reqno=101010101'
@@ -867,8 +942,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?download=1&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_missing_opus_id('/__cart/remove.json'))
+        self._run_status_equal(url, 400, http400_missing_opus_id('/__cart/remove.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -882,7 +956,16 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1'
-        expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 123456, "total_download_count": 0, "total_download_size": 0, "total_download_size_pretty": "0B", "product_cat_dict": {}}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': False,
+            'reqno': 123456,
+            'total_download_count': 0,
+            'total_download_size': 0,
+            'total_download_size_pretty': '0B',
+            'product_cat_dict': {},
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_remove_download_ver(self) -> None:
@@ -935,7 +1018,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         url = '/__cart/add.json?opusid=co-iss-n1460960653&download=0&reqno=101010101'
         expected = {'error': False, 'recycled_count': 0, 'count': 2, 'reqno': 101010101}
         self._run_json_equal(url, expected)
-        url = '/__cart/remove.json?opusid=co-iss-n1460960868&download=1&reqno=101010102&recyclebin=1'
+        url = (
+            '/__cart/remove.json?opusid=co-iss-n1460960868&download=1&reqno=101010102&recyclebin=1'
+        )
         self._run_json_equal_file(url, 'api_cart_add_two_remove_one_download_recyclebin1.json')
 
     def test__api_cart_unselect_option_one_download_recyclebin0(self) -> None:
@@ -947,21 +1032,28 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'error': False, 'count': 1, 'recycled_count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1'
-        expected = {'total_download_count': 0, 'total_download_size': 0, 'total_download_size_pretty': '0B', 'product_cat_dict': {}, 'error': False, 'count': 0, 'recycled_count': 0, 'reqno': 123456}
+        expected = {
+            'total_download_count': 0,
+            'total_download_size': 0,
+            'total_download_size_pretty': '0B',
+            'product_cat_dict': {},
+            'error': False,
+            'count': 0,
+            'recycled_count': 0,
+            'reqno': 123456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1460961026&reqno=458'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 458}
 
-
-            #############################################################
-            ######### /__cart/addrange.json (browse): API TESTS #########
-            #############################################################
+        #############################################################
+        ######### /__cart/addrange.json (browse): API TESTS #########
+        #############################################################
 
     def test__api_cart_addrange_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/addrange: no reqno"
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_reqno('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_reqno('/__cart/addrange.json'))
 
     def test__api_cart_addrange_missing(self) -> None:
         "[test_cart_api.py] /__cart/addrange: missing range no download"
@@ -969,8 +1061,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -981,8 +1072,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -993,8 +1083,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1005,8 +1094,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir,&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1017,8 +1105,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=,co-vims-v1484504505_ir&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1029,8 +1116,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1143,7 +1229,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1155,7 +1246,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1167,7 +1263,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1179,8 +1280,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?bundleidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_search_params_invalid('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_search_params_invalid('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1236,8 +1336,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?download=1&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1257,13 +1356,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 567}
         else:
-            expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add 1 observations (OPUS IDs co-vims-v1484504505_ir to co-vims-v1484504505_ir) to the cart failed. The resulting cart and recycle bin would have more than the maximum (0) allowed. None of the observations were added.', 'reqno': 567}
+            expected = {
+                'recycled_count': 0,
+                'count': 0,
+                'error': 'Your request to add 1 observations (OPUS IDs co-vims-v1484504505_ir to co-vims-v1484504505_ir) to the cart failed. The resulting cart and recycle bin would have more than the maximum (0) allowed. None of the observations were added.',
+                'reqno': 567,
+            }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1292,16 +1396,14 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-
-            ################################################################
-            ######### /__cart/removerange.json (browse): API TESTS #########
-            ################################################################
+        ################################################################
+        ######### /__cart/removerange.json (browse): API TESTS #########
+        ################################################################
 
     def test__api_cart_removerange_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/removerange: no reqno"
         url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_reqno('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_reqno('/__cart/removerange.json'))
 
     def test__api_cart_removerange_missing(self) -> None:
         "[test_cart_api.py] /__cart/removerange: missing range no download"
@@ -1310,8 +1412,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         self._run_json_equal(url, expected)
         self._run_status_equal(url, 200)
         url = '/__cart/removerange.json?reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1322,8 +1423,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1334,8 +1434,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1346,8 +1445,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir,&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1358,8 +1456,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=,co-vims-v1484504505_ir&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1370,8 +1467,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1478,7 +1574,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1490,7 +1591,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_irx&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'An OPUS ID was given to addrange that was not found using the supplied search criteria',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1502,7 +1608,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?bundleid=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1514,8 +1625,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?bundleidXX=COVIMS_0006&range=vg-iss-2-s-c4360001,vg-iss-2-s-c4360001&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_search_params_invalid('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_search_params_invalid('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1577,8 +1687,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?download=1&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/removerange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/removerange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1606,10 +1715,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 4, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-
-            ###########################################################
-            ######### /__cart/addrange.json (cart): API TESTS #########
-            ###########################################################
+        ###########################################################
+        ######### /__cart/addrange.json (cart): API TESTS #########
+        ###########################################################
 
     def test__api_cart_addrange_one_cart_missing(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart missing"
@@ -1617,7 +1725,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found in the cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'An OPUS ID was given to addrange that was not found in the cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1629,8 +1742,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1641,8 +1753,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_range('/__cart/addrange.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_range('/__cart/addrange.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -1655,10 +1766,11 @@ class ApiCartTests(ApiTestHelper, TestCase):
         url = '/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = ('/__cart/addrange.json?view=cart&order=xxx'
-               +'&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456')
-        self._run_status_equal(url, 400,
-                               http400_unknown_slug(None, '/__cart/addrange.json'))
+        url = (
+            '/__cart/addrange.json?view=cart&order=xxx'
+            + '&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        )
+        self._run_status_equal(url, 400, http400_unknown_slug(None, '/__cart/addrange.json'))
 
     def test__api_cart_addrange_duplicate_cart(self) -> None:
         "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download"
@@ -1705,7 +1817,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 1, 'error': 'An OPUS ID was given to addrange that was not found in the cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 1,
+            'error': 'An OPUS ID was given to addrange that was not found in the cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
@@ -1720,7 +1837,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 6, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484507574_vis&reqno=456'
-        expected = {'recycled_count': 0, 'count': 6, 'error': 'An OPUS ID was given to addrange that was not found in the cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 6,
+            'error': 'An OPUS ID was given to addrange that was not found in the cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 6, 'reqno': 456}
@@ -1739,10 +1861,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-
-            ##############################################################
-            ######### /__cart/removerange.json (cart): API TESTS #########
-            ##############################################################
+        ##############################################################
+        ######### /__cart/removerange.json (cart): API TESTS #########
+        ##############################################################
 
     def test__api_cart_removerange_add_one_cart(self) -> None:
         "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download cart"
@@ -1780,7 +1901,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&bundleid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 0,
+            'error': 'An OPUS ID was given to removerange that was not found in the cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -1863,7 +1989,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 13, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488643823_vis,co-vims-v1488643823_vis&reqno=456'
-        expected = {'recycled_count': 0, 'count': 13, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 13,
+            'error': 'An OPUS ID was given to removerange that was not found in the cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 13, 'reqno': 456}
@@ -1882,7 +2013,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 106, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488653840_ir,co-vims-v1488653840_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 106, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 106,
+            'error': 'An OPUS ID was given to removerange that was not found in the cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 106, 'reqno': 456}
@@ -1901,7 +2037,12 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 12, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1488645839_ir,co-vims-v1488645839_vis&reqno=456'
-        expected = {'recycled_count': 0, 'count': 12, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
+        expected = {
+            'recycled_count': 0,
+            'count': 12,
+            'error': 'An OPUS ID was given to removerange that was not found in the cart',
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 12, 'reqno': 456}
@@ -1919,10 +2060,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 4, 'count': 4, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-
-            #######################################################################
-            ######### /__cart/removerange.json (cross-session): API TESTS #########
-            #######################################################################
+        #######################################################################
+        ######### /__cart/removerange.json (cross-session): API TESTS #########
+        #######################################################################
 
     # Every other test in this file drives one session, so none of them can tell
     # a cart statement that is scoped to the caller from one that is not. Both of
@@ -1942,11 +2082,17 @@ class ApiCartTests(ApiTestHelper, TestCase):
         url = f'/__cart/reset.json?reqno=42&__sessionid={session_id}'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = ('/__cart/addrange.json?bundleid=COVIMS_0006'
-               f'&range={_CROSS_SESSION_RANGE}&reqno=456'
-               f'&__sessionid={session_id}')
-        expected = {'recycled_count': 0, 'count': _CROSS_SESSION_RANGE_COUNT,
-                    'error': False, 'reqno': 456}
+        url = (
+            '/__cart/addrange.json?bundleid=COVIMS_0006'
+            f'&range={_CROSS_SESSION_RANGE}&reqno=456'
+            f'&__sessionid={session_id}'
+        )
+        expected = {
+            'recycled_count': 0,
+            'count': _CROSS_SESSION_RANGE_COUNT,
+            'error': False,
+            'reqno': 456,
+        }
         self._run_json_equal(url, expected)
 
     def _fill_both_cross_session_carts(self) -> None:
@@ -1962,16 +2108,17 @@ class ApiCartTests(ApiTestHelper, TestCase):
     def _assert_session_b_cart_intact(self) -> None:
         """Assert session B still holds everything it put in its cart."""
         url = f'/__cart/status.json?reqno=456&__sessionid={_CROSS_SESSION_B}'
-        expected = {'recycled_count': 0, 'count': _CROSS_SESSION_RANGE_COUNT,
-                    'reqno': 456}
+        expected = {'recycled_count': 0, 'count': _CROSS_SESSION_RANGE_COUNT, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_other_session(self) -> None:
         "[test_cart_api.py] /__cart/removerange: leaves another session's cart alone"
         self._fill_both_cross_session_carts()
-        url = ('/__cart/removerange.json?bundleid=COVIMS_0006'
-               f'&range={_CROSS_SESSION_RANGE}&reqno=456'
-               f'&__sessionid={_CROSS_SESSION_A}')
+        url = (
+            '/__cart/removerange.json?bundleid=COVIMS_0006'
+            f'&range={_CROSS_SESSION_RANGE}&reqno=456'
+            f'&__sessionid={_CROSS_SESSION_A}'
+        )
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         self._assert_session_b_cart_intact()
@@ -1981,23 +2128,23 @@ class ApiCartTests(ApiTestHelper, TestCase):
         self._fill_both_cross_session_carts()
         # A subrange, so this also shows the DELETE still removes exactly the
         # observations it should from the session that asked for it.
-        url = ('/__cart/removerange.json?view=cart'
-               '&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis'
-               f'&reqno=456&__sessionid={_CROSS_SESSION_A}')
+        url = (
+            '/__cart/removerange.json?view=cart'
+            '&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis'
+            f'&reqno=456&__sessionid={_CROSS_SESSION_A}'
+        )
         expected = {'recycled_count': 0, 'count': 10, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         self._assert_session_b_cart_intact()
 
-
-            ##################################################
-            ######### /__cart/addall.json: API TESTS #########
-            ##################################################
+        ##################################################
+        ######### /__cart/addall.json: API TESTS #########
+        ##################################################
 
     def test__api_cart_addall_no_reqno(self) -> None:
         "[test_cart_api.py] /__cart/addall: no reqno"
         url = '/__cart/addall.json?bundleid=VGISS_6210'
-        self._run_status_equal(url, 400,
-                               http400_bad_or_missing_reqno('/__cart/addall.json'))
+        self._run_status_equal(url, 400, http400_bad_or_missing_reqno('/__cart/addall.json'))
 
     def test__api_cart_addall_one(self) -> None:
         "[test_cart_api.py] /__cart/addall: one time no download"
@@ -2059,8 +2206,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?bundleidXX=COVIMS_0006&reqno=456'
-        self._run_status_equal(url, 400,
-                               http400_search_params_invalid('/__cart/addall.json'))
+        self._run_status_equal(url, 400, http400_search_params_invalid('/__cart/addall.json'))
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2098,13 +2244,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 0, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (905) allowed. None of the observations were added.', 'reqno': 456}
+            expected = {
+                'recycled_count': 0,
+                'count': 0,
+                'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (905) allowed. None of the observations were added.',
+                'reqno': 456,
+            }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -2146,10 +2297,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-
-            ######################################################
-            ######### /__cart/<all> recyclebin API TESTS #########
-            ######################################################
+        ######################################################
+        ######### /__cart/<all> recyclebin API TESTS #########
+        ######################################################
 
     def test__api_cart_add_remove_recyclebin(self) -> None:
         "[test_cart_api.py] /__cart/add&remove: recyclebin"
@@ -2195,7 +2345,193 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 8, 'count': 3492, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/reset.json?reqno=42&recyclebin=1&download=1'
-        expected = {'total_download_count': 5301, 'total_download_size': 2038950365, 'total_download_size_pretty': '1G', 'product_cat_dict': {'Cassini VIMS-Specific Products': {'Current': [{'slug_name': 'covims_raw', 'tooltip': 'Raw data files (*.qub) for Cassini VIMS. Observations are in binary format, uncalibrated, and contain raw data numbers from both the VIS and IR detectors. Associated labels (*.lbl) are text files that contain information about the observation, including how to interpret the binary data.', 'product_type': 'Raw Cube', 'product_count': 3492, 'download_count': 3535, 'download_size': 1947398604, 'download_size_pretty': '1G', 'default_checked': 1, 'product_type_with_version': 'covims_raw@Current'}, {'slug_name': 'covims_thumb', 'tooltip': 'Thumbnail-size (131x69) JPEGs (*.jpeg_small) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (thumbnail)', 'product_count': 3490, 'download_count': 1765, 'download_size': 5021315, 'download_size_pretty': '4M', 'default_checked': 0, 'product_type_with_version': 'covims_thumb@Current'}, {'slug_name': 'covims_medium', 'tooltip': 'Medium-size (786x414) JPEGs (*.jpeg) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (medium)', 'product_count': 3490, 'download_count': 1765, 'download_size': 52995823, 'download_size_pretty': '50M', 'default_checked': 0, 'product_type_with_version': 'covims_medium@Current'}, {'slug_name': 'covims_full', 'tooltip': 'Full-size (131x69) TIFFs (*.tiff) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.', 'product_type': 'Extra Preview (full)', 'product_count': 3490, 'download_count': 1765, 'download_size': 89259580, 'download_size_pretty': '85M', 'default_checked': 0, 'product_type_with_version': 'covims_full@Current'}, {'slug_name': 'covims_documentation', 'tooltip': 'RMS-curated document collection for Cassini VIMS observations.', 'product_type': 'Documentation', 'product_count': 3492, 'download_count': 5, 'download_size': 7942850, 'download_size_pretty': '7M', 'default_checked': 0, 'product_type_with_version': 'covims_documentation@Current'}]}, 'Metadata Products': {'Current': [{'slug_name': 'rms_index', 'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl or *.xml), if available, describe the contents of the text files.', 'product_type': 'RMS Node Augmented Index', 'product_count': 3492, 'download_count': 2, 'download_size': 1958899, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'rms_index@Current'}, {'slug_name': 'supplemental_index', 'tooltip': 'Text files ([volume]_supplemental_index.tab) created by the Ring-Moon Systems Node that augment metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Supplemental Index', 'product_count': 3492, 'download_count': 2, 'download_size': 1786592, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'supplemental_index@Current'}, {'slug_name': 'inventory', 'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Target Body Inventory', 'product_count': 3492, 'download_count': 2, 'download_size': 383776, 'download_size_pretty': '374K', 'default_checked': 0, 'product_type_with_version': 'inventory@Current'}, {'slug_name': 'planet_geometry', 'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Planet Geometry Index', 'product_count': 3388, 'download_count': 2, 'download_size': 1485943, 'download_size_pretty': '1M', 'default_checked': 0, 'product_type_with_version': 'planet_geometry@Current'}, {'slug_name': 'moon_geometry', 'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Moon Geometry Index', 'product_count': 1010, 'download_count': 2, 'download_size': 458874, 'download_size_pretty': '448K', 'default_checked': 0, 'product_type_with_version': 'moon_geometry@Current'}, {'slug_name': 'ring_geometry', 'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.', 'product_type': 'Ring Geometry Index', 'product_count': 3388, 'download_count': 2, 'download_size': 2382135, 'download_size_pretty': '2M', 'default_checked': 0, 'product_type_with_version': 'ring_geometry@Current'}]}, 'Browse Products': {'Current': [{'slug_name': 'browse_thumb', 'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (thumbnail)', 'product_count': 3492, 'download_count': 1766, 'download_size': 15145336, 'download_size_pretty': '14M', 'default_checked': 0, 'product_type_with_version': 'browse_thumb@Current'}, {'slug_name': 'browse_small', 'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (small)', 'product_count': 3492, 'download_count': 1766, 'download_size': 54531187, 'download_size_pretty': '52M', 'default_checked': 0, 'product_type_with_version': 'browse_small@Current'}, {'slug_name': 'browse_medium', 'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (medium)', 'product_count': 3492, 'download_count': 1766, 'download_size': 91551761, 'download_size_pretty': '87M', 'default_checked': 0, 'product_type_with_version': 'browse_medium@Current'}, {'slug_name': 'browse_full', 'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.', 'product_type': 'Browse Image (full)', 'product_count': 3492, 'download_count': 1766, 'download_size': 91551761, 'download_size_pretty': '87M', 'default_checked': 1, 'product_type_with_version': 'browse_full@Current'}]}}, 'count': 3492, 'recycled_count': 0, 'reqno': 42}
+        expected = {
+            'total_download_count': 5301,
+            'total_download_size': 2038950365,
+            'total_download_size_pretty': '1G',
+            'product_cat_dict': {
+                'Cassini VIMS-Specific Products': {
+                    'Current': [
+                        {
+                            'slug_name': 'covims_raw',
+                            'tooltip': 'Raw data files (*.qub) for Cassini VIMS. Observations are in binary format, uncalibrated, and contain raw data numbers from both the VIS and IR detectors. Associated labels (*.lbl) are text files that contain information about the observation, including how to interpret the binary data.',
+                            'product_type': 'Raw Cube',
+                            'product_count': 3492,
+                            'download_count': 3535,
+                            'download_size': 1947398604,
+                            'download_size_pretty': '1G',
+                            'default_checked': 1,
+                            'product_type_with_version': 'covims_raw@Current',
+                        },
+                        {
+                            'slug_name': 'covims_thumb',
+                            'tooltip': 'Thumbnail-size (131x69) JPEGs (*.jpeg_small) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.',
+                            'product_type': 'Extra Preview (thumbnail)',
+                            'product_count': 3490,
+                            'download_count': 1765,
+                            'download_size': 5021315,
+                            'download_size_pretty': '4M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'covims_thumb@Current',
+                        },
+                        {
+                            'slug_name': 'covims_medium',
+                            'tooltip': 'Medium-size (786x414) JPEGs (*.jpeg) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.',
+                            'product_type': 'Extra Preview (medium)',
+                            'product_count': 3490,
+                            'download_count': 1765,
+                            'download_size': 52995823,
+                            'download_size_pretty': '50M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'covims_medium@Current',
+                        },
+                        {
+                            'slug_name': 'covims_full',
+                            'tooltip': 'Full-size (131x69) TIFFs (*.tiff) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye.',
+                            'product_type': 'Extra Preview (full)',
+                            'product_count': 3490,
+                            'download_count': 1765,
+                            'download_size': 89259580,
+                            'download_size_pretty': '85M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'covims_full@Current',
+                        },
+                        {
+                            'slug_name': 'covims_documentation',
+                            'tooltip': 'RMS-curated document collection for Cassini VIMS observations.',
+                            'product_type': 'Documentation',
+                            'product_count': 3492,
+                            'download_count': 5,
+                            'download_size': 7942850,
+                            'download_size_pretty': '7M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'covims_documentation@Current',
+                        },
+                    ]
+                },
+                'Metadata Products': {
+                    'Current': [
+                        {
+                            'slug_name': 'rms_index',
+                            'tooltip': 'Text files created by the Ring-Moon Systems Node that summarize or augment some metadata for all observations in a particular volume. Associated labels (*.lbl or *.xml), if available, describe the contents of the text files.',
+                            'product_type': 'RMS Node Augmented Index',
+                            'product_count': 3492,
+                            'download_count': 2,
+                            'download_size': 1958899,
+                            'download_size_pretty': '1M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'rms_index@Current',
+                        },
+                        {
+                            'slug_name': 'supplemental_index',
+                            'tooltip': 'Text files ([volume]_supplemental_index.tab) created by the Ring-Moon Systems Node that augment metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files.',
+                            'product_type': 'Supplemental Index',
+                            'product_count': 3492,
+                            'download_count': 2,
+                            'download_size': 1786592,
+                            'download_size_pretty': '1M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'supplemental_index@Current',
+                        },
+                        {
+                            'slug_name': 'inventory',
+                            'tooltip': 'Text files ([volume]_inventory.csv) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.',
+                            'product_type': 'Target Body Inventory',
+                            'product_count': 3492,
+                            'download_count': 2,
+                            'download_size': 383776,
+                            'download_size_pretty': '374K',
+                            'default_checked': 0,
+                            'product_type_with_version': 'inventory@Current',
+                        },
+                        {
+                            'slug_name': 'planet_geometry',
+                            'tooltip': 'Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.',
+                            'product_type': 'Planet Geometry Index',
+                            'product_count': 3388,
+                            'download_count': 2,
+                            'download_size': 1485943,
+                            'download_size_pretty': '1M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'planet_geometry@Current',
+                        },
+                        {
+                            'slug_name': 'moon_geometry',
+                            'tooltip': 'Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.',
+                            'product_type': 'Moon Geometry Index',
+                            'product_count': 1010,
+                            'download_count': 2,
+                            'download_size': 458874,
+                            'download_size_pretty': '448K',
+                            'default_checked': 0,
+                            'product_type_with_version': 'moon_geometry@Current',
+                        },
+                        {
+                            'slug_name': 'ring_geometry',
+                            'tooltip': 'Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.',
+                            'product_type': 'Ring Geometry Index',
+                            'product_count': 3388,
+                            'download_count': 2,
+                            'download_size': 2382135,
+                            'download_size_pretty': '2M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'ring_geometry@Current',
+                        },
+                    ]
+                },
+                'Browse Products': {
+                    'Current': [
+                        {
+                            'slug_name': 'browse_thumb',
+                            'tooltip': 'Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.',
+                            'product_type': 'Browse Image (thumbnail)',
+                            'product_count': 3492,
+                            'download_count': 1766,
+                            'download_size': 15145336,
+                            'download_size_pretty': '14M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'browse_thumb@Current',
+                        },
+                        {
+                            'slug_name': 'browse_small',
+                            'tooltip': 'Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.',
+                            'product_type': 'Browse Image (small)',
+                            'product_count': 3492,
+                            'download_count': 1766,
+                            'download_size': 54531187,
+                            'download_size_pretty': '52M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'browse_small@Current',
+                        },
+                        {
+                            'slug_name': 'browse_medium',
+                            'tooltip': 'Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.',
+                            'product_type': 'Browse Image (medium)',
+                            'product_count': 3492,
+                            'download_count': 1766,
+                            'download_size': 91551761,
+                            'download_size_pretty': '87M',
+                            'default_checked': 0,
+                            'product_type_with_version': 'browse_medium@Current',
+                        },
+                        {
+                            'slug_name': 'browse_full',
+                            'tooltip': 'Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.',
+                            'product_type': 'Browse Image (full)',
+                            'product_count': 3492,
+                            'download_count': 1766,
+                            'download_size': 91551761,
+                            'download_size_pretty': '87M',
+                            'default_checked': 1,
+                            'product_type_with_version': 'browse_full@Current',
+                        },
+                    ]
+                },
+            },
+            'count': 3492,
+            'recycled_count': 0,
+            'reqno': 42,
+        }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 3492, 'reqno': 456}
@@ -2235,7 +2571,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         url = '/__cart/removerange.json?view=cart&range=co-vims-v1484509868_ir,co-vims-v1484510890_vis&reqno=456&recyclebin=1'
         expected = {'recycled_count': 8, 'count': 3487, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/__cart/addall.json?view=cart&reqno=456' # Does nothing
+        url = '/__cart/addall.json?view=cart&reqno=456'  # Does nothing
         expected = {'recycled_count': 8, 'count': 3487, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?view=cart&reqno=456&recyclebin=1'
@@ -2260,15 +2596,20 @@ class ApiCartTests(ApiTestHelper, TestCase):
         self._run_json_equal(url, expected)
         # Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 0, 'count': 2, 'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
+            expected = {
+                'recycled_count': 0,
+                'count': 2,
+                'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.',
+                'reqno': 456,
+            }
         # LIVE:  Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir, co-vims-v1484510890_vis
         # LOCAL: Cart: vg-iss-2-s-c4360018, co-vims-v1484509868_ir
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1484509868_ir&recyclebin=1&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'error': False, 'reqno': 456}
@@ -2277,16 +2618,21 @@ class ApiCartTests(ApiTestHelper, TestCase):
         # LOCAL: Cart: vg-iss-2-s-c4360018                          RECYC: co-vims-v1484509868_ir = 2
         # Test add when something is in recyclebin
         url = '/__cart/add.json?opusid=co-vims-v1484510890_vis&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 1, 'count': 1, 'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.', 'reqno': 456}
+            expected = {
+                'recycled_count': 1,
+                'count': 1,
+                'error': 'Your request to add OPUS ID co-vims-v1484510890_vis to the cart failed - there are already too many observations in the cart and recycle bin. The maximum allowed is 2.',
+                'reqno': 456,
+            }
         self._run_json_equal(url, expected)
         # LIVE:  Cart: vg-iss-2-s-c4360018, co-vims-v1484510890_vis RECYC: co-vims-v1484509868_ir = 3
         # LOCAL: Cart: vg-iss-2-s-c4360018                          RECYC: co-vims-v1484509868_ir = 2
         # Test add when something is in recyclebin
         url = '/__cart/status.json?reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 2, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 1, 'reqno': 456}
@@ -2331,13 +2677,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 1, 'count': 16, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addrange.json?range=vg-iss-2-s-c4360018,vg-iss-2-s-c4360018&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 17, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 1, 'count': 16, 'error': 'Your request to add 1 observations (OPUS IDs vg-iss-2-s-c4360018 to vg-iss-2-s-c4360018) to the cart failed. The resulting cart and recycle bin would have more than the maximum (17) allowed. None of the observations were added.', 'reqno': 456}
+            expected = {
+                'recycled_count': 1,
+                'count': 16,
+                'error': 'Your request to add 1 observations (OPUS IDs vg-iss-2-s-c4360018 to vg-iss-2-s-c4360018) to the cart failed. The resulting cart and recycle bin would have more than the maximum (17) allowed. None of the observations were added.',
+                'reqno': 456,
+            }
         self._run_json_equal(url, expected)
         url = '/__cart/remove.json?opusid=co-vims-v1488642557_ir&reqno=456&recyclebin=0'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         else:
             expected = {'recycled_count': 0, 'count': 16, 'error': False, 'reqno': 456}
@@ -2359,13 +2710,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/addall.json?bundleid=VGISS_6210&reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 1, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
+            expected = {
+                'recycled_count': 1,
+                'count': 0,
+                'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (906) allowed. None of the observations were added.',
+                'reqno': 456,
+            }
         self._run_json_equal(url, expected)
         url = '/__cart/status.json?reqno=456'
-        if go_live_target(): # pragma: no cover - remote server
+        if go_live_target():  # pragma: no cover - remote server
             expected = {'recycled_count': 1, 'count': 906, 'reqno': 456}
         else:
             expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
@@ -2387,10 +2743,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-
-            ###############################################
-            ######### /__cart/data.csv: API TESTS #########
-            ###############################################
+        ###############################################
+        ######### /__cart/data.csv: API TESTS #########
+        ###############################################
 
     def test__api_cart_datacsv_empty(self) -> None:
         "[test_cart_api.py] /__cart/datacsv: empty"
@@ -2422,13 +2777,11 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__cart/data.csv?cols=instrumentidx'
-        self._run_status_equal(url, 400,
-                               http400_unknown_slug('instrumentidx', '/__cart/data.csv'))
+        self._run_status_equal(url, 400, http400_unknown_slug('instrumentidx', '/__cart/data.csv'))
 
-
-            ####################################################
-            ######### /__cart/download.json: API TESTS #########
-            ####################################################
+        ####################################################
+        ######### /__cart/download.json: API TESTS #########
+        ####################################################
 
     def test__api_cart_download_single_hierarchical_zip_all_types(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=zip all types"
@@ -2439,7 +2792,46 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'documents/COISS_0xxx/Archive-SIS.pdf', 'documents/COISS_0xxx/Archive-SIS.txt', 'documents/COISS_0xxx/CISSCAL-Users-Guide.pdf', 'documents/COISS_0xxx/Calibration-Plan.pdf', 'documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf', 'documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf', 'documents/COISS_0xxx/Data-Product-SIS.pdf', 'documents/COISS_0xxx/Data-Product-SIS.txt', 'documents/COISS_0xxx/ISS-Users-Guide.docx', 'documents/COISS_0xxx/ISS-Users-Guide.pdf', 'documents/COISS_0xxx/Owen-2003-ISS-Distortion-Model.pdf', 'documents/COISS_0xxx/VICAR-File-Format.pdf', 'manifest.csv', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl', 'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_med.jpg', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_small.jpg', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_thumb.jpg', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/extras/browse/1462783195_1462915477/N1462840881_1.IMG.jpeg', 'volumes/COISS_2xxx/COISS_2002/extras/full/1462783195_1462915477/N1462840881_1.IMG.png', 'volumes/COISS_2xxx/COISS_2002/extras/thumbnail/1462783195_1462915477/N1462840881_1.IMG.jpeg_small', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'documents/COISS_0xxx/Archive-SIS.pdf',
+            'documents/COISS_0xxx/Archive-SIS.txt',
+            'documents/COISS_0xxx/CISSCAL-Users-Guide.pdf',
+            'documents/COISS_0xxx/Calibration-Plan.pdf',
+            'documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf',
+            'documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf',
+            'documents/COISS_0xxx/Data-Product-SIS.pdf',
+            'documents/COISS_0xxx/Data-Product-SIS.txt',
+            'documents/COISS_0xxx/ISS-Users-Guide.docx',
+            'documents/COISS_0xxx/ISS-Users-Guide.pdf',
+            'documents/COISS_0xxx/Owen-2003-ISS-Distortion-Model.pdf',
+            'documents/COISS_0xxx/VICAR-File-Format.pdf',
+            'manifest.csv',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.csv',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl',
+            'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_med.jpg',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_small.jpg',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_thumb.jpg',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/extras/browse/1462783195_1462915477/N1462840881_1.IMG.jpeg',
+            'volumes/COISS_2xxx/COISS_2002/extras/full/1462783195_1462915477/N1462840881_1.IMG.png',
+            'volumes/COISS_2xxx/COISS_2002/extras/thumbnail/1462783195_1462915477/N1462840881_1.IMG.jpeg_small',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     def test__api_cart_download_single_no_hierarchical_zip(self) -> None:
@@ -2451,7 +2843,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'manifest.csv',
+            'data.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     def test__api_cart_download_single_no_hierarchical_zip_cols(self) -> None:
@@ -2463,7 +2866,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&cols=target,opusid,time1&hierarchical=0'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'manifest.csv',
+            'data.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     def test__api_cart_download_single_no_hierarchical_zip_bad_cols(self) -> None:
@@ -2475,8 +2889,7 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&cols=targetx,opusid,time1&hierarchical=0'
-        self._run_status_equal(url, 400,
-                               http400_unknown_slug('targetx', '/__cart/download.json'))
+        self._run_status_equal(url, 400, http400_unknown_slug('targetx', '/__cart/download.json'))
 
     def test__api_cart_download_single_no_hierarchical_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=tar"
@@ -2487,7 +2900,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tar'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'manifest.csv',
+            'data.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     def test__api_cart_download_single_no_hierarchical_tgz(self) -> None:
@@ -2499,7 +2923,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tgz'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'manifest.csv',
+            'data.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with duplicated file names from different versions, no hierarchical
@@ -2512,7 +2947,22 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=0'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_full.png',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # One opus id with duplicated file names from different versions, no hierarchical
@@ -2525,7 +2975,22 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=0&fmt=tar'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_full.png',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with duplicated file names from different versions, no hierarchical
@@ -2538,7 +3003,22 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=0&fmt=tgz'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_full.png',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     def test__api_cart_download_single_hierarchical_zip(self) -> None:
@@ -2550,7 +3030,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
-        expected = ['volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
+        expected = [
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'manifest.csv',
+            'data.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     def test__api_cart_download_single_hierarchical_tar(self) -> None:
@@ -2562,7 +3053,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tar'
-        expected = ['volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
+        expected = [
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'manifest.csv',
+            'data.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     def test__api_cart_download_single_hierarchical_tgz(self) -> None:
@@ -2574,7 +3076,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
-        expected = ['volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
+        expected = [
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'manifest.csv',
+            'data.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with duplicated file names from different versions
@@ -2587,7 +3100,22 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # One opus id with duplicated file names from different versions
@@ -2600,7 +3128,22 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=1&fmt=tar'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with duplicated file names from different versions
@@ -2613,7 +3156,22 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=1&fmt=tgz'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with version name "1.0" that doesn't match version name "1" in db
@@ -2704,7 +3262,17 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_calib@all&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'urls.txt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # One opus id with version name "all"
@@ -2717,7 +3285,17 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_calib@all&hierarchical=1&fmt=tar'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'urls.txt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with version name "all"
@@ -2730,7 +3308,17 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_calib@all&hierarchical=1&fmt=tgz'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'urls.txt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # One opus id with no version, this will return the current version
@@ -2743,7 +3331,13 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_calib&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'urls.txt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # One opus id with no version, this will return the current version
@@ -2756,7 +3350,13 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_calib&hierarchical=1&fmt=tar'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'urls.txt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # One opus id with no version, this will return the current version
@@ -2769,7 +3369,13 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_calib&hierarchical=1&fmt=tgz'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'urls.txt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids with duplicated file names from different versions
@@ -2785,7 +3391,31 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=0'
-        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1460973661_1.IMG',
+            'N1460973661_1.LBL',
+            'N1460973661_1_full.png',
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_full.png',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids with duplicated file names from different versions
@@ -2801,7 +3431,31 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=0&fmt=tar'
-        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1460973661_1.IMG',
+            'N1460973661_1.LBL',
+            'N1460973661_1_full.png',
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_full.png',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids with duplicated file names from different versions
@@ -2817,7 +3471,31 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=0&fmt=tgz'
-        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_full.png', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1460973661_1.IMG',
+            'N1460973661_1.LBL',
+            'N1460973661_1_full.png',
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_full.png',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids with duplicated file names from different versions
@@ -2833,7 +3511,31 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids with duplicated file names from different versions
@@ -2849,7 +3551,31 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=1&fmt=tar'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids with duplicated file names from different versions
@@ -2865,7 +3591,31 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib@current,coiss_calib@1,coiss_calib@2,browse_full&hierarchical=1&fmt=tgz'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v1/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx_v2/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
@@ -2881,7 +3631,23 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
-        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_CALIB.IMG', 'N1460973661_1_CALIB.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1460973661_1.IMG',
+            'N1460973661_1.LBL',
+            'N1460973661_1_CALIB.IMG',
+            'N1460973661_1_CALIB.LBL',
+            'N1460973661_1_full.png',
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
@@ -2897,7 +3663,23 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tar'
-        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_CALIB.IMG', 'N1460973661_1_CALIB.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1460973661_1.IMG',
+            'N1460973661_1.LBL',
+            'N1460973661_1_CALIB.IMG',
+            'N1460973661_1_CALIB.LBL',
+            'N1460973661_1_full.png',
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
@@ -2913,7 +3695,23 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tgz'
-        expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_CALIB.IMG', 'N1460973661_1_CALIB.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1460973661_1.IMG',
+            'N1460973661_1.LBL',
+            'N1460973661_1_CALIB.IMG',
+            'N1460973661_1_CALIB.LBL',
+            'N1460973661_1_full.png',
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
@@ -2929,7 +3727,23 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
@@ -2945,7 +3759,23 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tar'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
@@ -2961,7 +3791,23 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -2977,7 +3823,25 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'N1481265970_1.IMG',
+            'N1481265970_1.LBL',
+            'N1481265970_1_CALIB.IMG',
+            'N1481265970_1_CALIB.LBL',
+            'N1481265970_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -2993,7 +3857,25 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tar'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'N1481265970_1.IMG',
+            'N1481265970_1.LBL',
+            'N1481265970_1_CALIB.IMG',
+            'N1481265970_1_CALIB.LBL',
+            'N1481265970_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -3009,7 +3891,25 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tgz'
-        expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'N1462840881_1.IMG',
+            'N1462840881_1.LBL',
+            'N1462840881_1_CALIB.IMG',
+            'N1462840881_1_CALIB.LBL',
+            'N1462840881_1_full.png',
+            'N1481265970_1.IMG',
+            'N1481265970_1.LBL',
+            'N1481265970_1_CALIB.IMG',
+            'N1481265970_1_CALIB.LBL',
+            'N1481265970_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -3025,7 +3925,25 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -3041,7 +3959,25 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tar'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -3057,7 +3993,25 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
-        expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png',
+            'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG',
+            'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL',
+            'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # A PDS4 bundle
@@ -3079,18 +4033,22 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 4, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=ebur_occ_ring_0100,ebur_occ_global_1000,ebur_occ_atmos,rms_index&hierarchical=1&fmt=tgz'
-        expected = ['bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_delta_ingress_100m.xml',
-                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_delta_ingress_100m.tab',
-                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_epsilon_ingress_100m.xml',
-                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_epsilon_ingress_100m.tab',
-                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_ingress_1000m.xml',
-                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_ingress_1000m.tab',
-                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_ingress.xml',
-                    'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_ingress.tab',
-                    'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_rings_index.csv',
-                    'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_global_index.csv',
-                    'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_atmosphere_index.csv',
-                    'data.csv', 'manifest.csv', 'urls.txt']
+        expected = [
+            'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_delta_ingress_100m.xml',
+            'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_delta_ingress_100m.tab',
+            'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_epsilon_ingress_100m.xml',
+            'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/rings/u0_kao_91cm_734nm_radius_epsilon_ingress_100m.tab',
+            'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_ingress_1000m.xml',
+            'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/global/u0_kao_91cm_734nm_radius_equator_ingress_1000m.tab',
+            'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_ingress.xml',
+            'bundles/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_ingress.tab',
+            'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_rings_index.csv',
+            'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_global_index.csv',
+            'metadata/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/uranus_occ_u0_kao_91cm_atmosphere_index.csv',
+            'data.csv',
+            'manifest.csv',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, fmt='tgz')
 
     def test__api_cart_download_multiple_tar_urlonly(self) -> None:
@@ -3121,7 +4079,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?fmt=tar&urlonly=1'
-        expected = {'error': 'You are attempting to download more than the maximum permitted number (1) of observations in a URL archive. Please reduce the number of observations you are trying to download.'}
+        expected = {
+            'error': 'You are attempting to download more than the maximum permitted number (1) of observations in a URL archive. Please reduce the number of observations you are trying to download.'
+        }
         self._run_json_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -3138,7 +4098,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
-        expected = {'error': 'You are attempting to download more than the maximum permitted number (1) of observations in a data archive. Please either reduce the number of observations you are trying to download or download a URL archive instead and then retrieve the data products using "wget".'}
+        expected = {
+            'error': 'You are attempting to download more than the maximum permitted number (1) of observations in a data archive. Please either reduce the number of observations you are trying to download or download a URL archive instead and then retrieve the data products using "wget".'
+        }
         self._run_json_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -3155,7 +4117,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
-        expected = {'error': 'Sorry, this download would require 7,665,180 bytes but the maximum allowed is 1,000 bytes. Please either reduce the number of observations you are trying to download, reduce the number of data products for each observation, or download a URL archive instead and then retrieve the data products using "wget".'}
+        expected = {
+            'error': 'Sorry, this download would require 7,665,180 bytes but the maximum allowed is 1,000 bytes. Please either reduce the number of observations you are trying to download, reduce the number of data products for each observation, or download a URL archive instead and then retrieve the data products using "wget".'
+        }
         self._run_json_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
@@ -3172,7 +4136,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 457}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
-        expected = {'error': 'Sorry, maximum cumulative download size (2,000 bytes) reached for this session'}
+        expected = {
+            'error': 'Sorry, maximum cumulative download size (2,000 bytes) reached for this session'
+        }
         self._run_json_equal(url, expected)
 
     def test__api_cart_download_unsupported_format(self) -> None:
@@ -3184,8 +4150,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=xxx'
-        self._run_status_equal(url, 400,
-                               http400_unknown_download_file_format('xxx', '/__cart/download.json'))
+        self._run_status_equal(
+            url, 400, http400_unknown_download_file_format('xxx', '/__cart/download.json')
+        )
 
     def test__api_cart_download_empty_tar(self) -> None:
         "[test_cart_api.py] /__cart/download.json: empty fmt=tar"
@@ -3196,10 +4163,9 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected = {'error': 'No observations selected'}
         self._run_json_equal(url, expected)
 
-
-            ###########################################################
-            ######### /api/download/<opusid>.<fmt>: API TESTS #########
-            ###########################################################
+        ###########################################################
+        ######### /api/download/<opusid>.<fmt>: API TESTS #########
+        ###########################################################
 
     def test__api_download_no_hierarchical_zip(self) -> None:
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & no hierarchical"
@@ -3207,7 +4173,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.zip?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
-        expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1481265970_1.IMG',
+            'N1481265970_1.LBL',
+            'N1481265970_1_CALIB.IMG',
+            'N1481265970_1_CALIB.LBL',
+            'N1481265970_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, response_type='binary')
 
     def test__api_download_no_hierarchical_tar(self) -> None:
@@ -3216,7 +4193,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tar?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
-        expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1481265970_1.IMG',
+            'N1481265970_1.LBL',
+            'N1481265970_1_CALIB.IMG',
+            'N1481265970_1_CALIB.LBL',
+            'N1481265970_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
 
     def test__api_download_no_hierarchical_urlonly_tar(self) -> None:
@@ -3234,7 +4222,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tgz?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
-        expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        expected = [
+            'N1481265970_1.IMG',
+            'N1481265970_1.LBL',
+            'N1481265970_1_CALIB.IMG',
+            'N1481265970_1_CALIB.LBL',
+            'N1481265970_1_full.png',
+            'data.csv',
+            'manifest.csv',
+            'prefix2.fmt',
+            'tlmtab.fmt',
+            'urls.txt',
+        ]
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tgz')
 
     def test__api_download_hierarchical_zip(self) -> None:
@@ -3243,7 +4242,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.zip?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, response_type='binary')
 
     def test__api_download_hierarchical_tar(self) -> None:
@@ -3252,7 +4262,18 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tar?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
 
     def test__api_download_hierarchical_tgz(self) -> None:
@@ -3261,5 +4282,16 @@ class ApiCartTests(ApiTestHelper, TestCase):
         expected: Any = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tgz?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
-        expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        expected = [
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG',
+            'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL',
+            'data.csv',
+            'manifest.csv',
+            'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png',
+            'urls.txt',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG',
+            'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL',
+            'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt',
+            'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt',
+        ]
         self._run_archive_file_equal(url, expected, response_type='binary', fmt='tgz')

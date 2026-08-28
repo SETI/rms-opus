@@ -49,8 +49,9 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def csv_response(filename: str, data: Iterable[Iterable[Any]],
-                 column_names: Sequence[str] | None = None) -> HttpResponse:
+def csv_response(
+    filename: str, data: Iterable[Iterable[Any]], column_names: Sequence[str] | None = None
+) -> HttpResponse:
     """Return a CSV file as a downloadable response.
 
     Parameters:
@@ -69,6 +70,7 @@ def csv_response(filename: str, data: Iterable[Iterable[Any]],
     writer.writerows(data)
     return response
 
+
 def json_response(data: Any) -> HttpResponse:
     """Return a value as a JSON response.
 
@@ -79,6 +81,7 @@ def json_response(data: Any) -> HttpResponse:
         An `HttpResponse` holding the serialized value.
     """
     return HttpResponse(json.dumps(data), content_type='application/json')
+
 
 def download_filename(opus_id: str | None, file_type: str | None) -> str:
     """Create a unique filename for a user's cart or CSV file.
@@ -95,19 +98,20 @@ def download_filename(opus_id: str | None, file_type: str | None) -> str:
     # A salt that keeps two downloads in the same second from colliding.
     # It names a temporary file; it guards nothing and is not a secret.
     random_ascii = random.choice(string.ascii_letters).lower()  # nosec B311
-    timestamp = "T".join(str(datetime.datetime.now()).split(' '))
+    timestamp = 'T'.join(str(datetime.datetime.now()).split(' '))
     # Windows doesn't like ':' in filenames
     timestamp = timestamp.replace(':', '-')
     # And we don't want a period to confuse the suffix later
     timestamp = timestamp.replace('.', '-')
-    if file_type is None: # pragma: no cover - future use
+    if file_type is None:  # pragma: no cover - future use
         file_type = ''
-    if file_type: # pragma: no cover - future use
+    if file_type:  # pragma: no cover - future use
         file_type += '-'
     root = f'pdsrms-{timestamp}-{file_type}{random_ascii}'
     if opus_id:
         root += f'_{opus_id}'
     return root
+
 
 def strip_numeric_suffix(name: str) -> str:
     """Strip a trailing 1 or 2, if any, from a slug.
@@ -122,6 +126,7 @@ def strip_numeric_suffix(name: str) -> str:
         return name[:-1]
     return name
 
+
 def get_numeric_suffix(name: str) -> str | None:
     """Get a trailing 1 or 2, if any, from a slug.
 
@@ -131,10 +136,11 @@ def get_numeric_suffix(name: str) -> str | None:
     Returns:
         The trailing `'1'` or `'2'`, or None if the slug ends with neither.
     """
-    if len(name) > 0 and name[-1] in ['1', '2']: # pragma: no cover -
+    if len(name) > 0 and name[-1] in ['1', '2']:  # pragma: no cover -
         # Generalization not currently needed
         return name[-1]
-    return None # pragma: no cover - see above
+    return None  # pragma: no cover - see above
+
 
 def sort_dictionary(old_dict: dict[str, Any]) -> dict[str, Any]:
     """Sort a dictionary by key.
@@ -150,6 +156,7 @@ def sort_dictionary(old_dict: dict[str, Any]) -> dict[str, Any]:
         new_dict[key] = old_dict[key]
     return new_dict
 
+
 def get_session_id(request: HttpRequest) -> str | None:
     """Get the current session id, or create one if none available.
 
@@ -164,15 +171,16 @@ def get_session_id(request: HttpRequest) -> str | None:
         key at all.
     """
     session_id = None
-    if request.GET is not None: # pragma: no cover - only happens with real web browser
+    if request.GET is not None:  # pragma: no cover - only happens with real web browser
         session_id = request.GET.get('__sessionid', None)
-    if session_id is None: # pragma: no cover - only happens with real web browser
+    if session_id is None:  # pragma: no cover - only happens with real web browser
         if not request.session.get('has_session'):
             request.session['has_session'] = True
         if not request.session.session_key:
             request.session.create()
         session_id = request.session.session_key
     return session_id
+
 
 def get_reqno(request: HttpRequest) -> int | None:
     """Get the reqno, if any, and return it as an int if possible.
@@ -216,8 +224,10 @@ def _log_api_call_line(s: str) -> None:
     # being cast away. This is the only place that fix has to land.
     getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)  # type: ignore[union-attr]
 
-def enter_api_call(name: str, request: HttpRequest | None,
-                   kwargs: dict[str, Any] | None = None) -> int:
+
+def enter_api_call(
+    name: str, request: HttpRequest | None, kwargs: dict[str, Any] | None = None
+) -> int:
     """Record the entry into an API.
 
     Parameters:
@@ -236,19 +246,18 @@ def enter_api_call(name: str, request: HttpRequest | None,
     # Guarded here as well as inside the helper: building this line means
     # json.dumps of the whole query string, which is not worth doing to throw
     # away.
-    if settings.OPUS_LOG_API_CALLS: # pragma: no cover - internal debugging
+    if settings.OPUS_LOG_API_CALLS:  # pragma: no cover - internal debugging
         s = 'API ' + str(_API_CALL_NUMBER) + ' '
         if request and request.path:
             s += request.path
         if kwargs:
             s += ' ' + str(kwargs)
         if request and request.GET:
-            s += ' ' + json.dumps(request.GET, sort_keys=True,
-                                  indent=4,
-                                  separators=(',', ': '))
+            s += ' ' + json.dumps(request.GET, sort_keys=True, indent=4, separators=(',', ': '))
         _log_api_call_line(s)
     _API_START_TIMES[_API_CALL_NUMBER] = time.time()
     return _API_CALL_NUMBER
+
 
 def exit_api_call(api_code: int, ret: Any) -> None:
     """Record the exit from an API.
@@ -264,38 +273,39 @@ def exit_api_call(api_code: int, ret: Any) -> None:
             note rather than decoded.
     """
     end_time = time.time()
-    delay_amount = 0.
-    if settings.OPUS_FAKE_API_DELAYS is not None: # pragma: no cover - internal debugging
+    delay_amount = 0.0
+    if settings.OPUS_FAKE_API_DELAYS is not None:  # pragma: no cover - internal debugging
         if settings.OPUS_FAKE_API_DELAYS > 0:
-            delay_amount = settings.OPUS_FAKE_API_DELAYS / 1000.
+            delay_amount = settings.OPUS_FAKE_API_DELAYS / 1000.0
         elif settings.OPUS_FAKE_API_DELAYS < 0:
             # Fault injection: a jittered artificial delay, off unless a
             # configuration file asks for it.
-            delay_amount = random.uniform(0.,  # nosec B311
-                                          -settings.OPUS_FAKE_API_DELAYS/1000.)
-    if settings.OPUS_LOG_API_CALLS: # pragma: no cover - internal debugging
+            delay_amount = random.uniform(
+                0.0,  # nosec B311
+                -settings.OPUS_FAKE_API_DELAYS / 1000.0,
+            )
+    if settings.OPUS_LOG_API_CALLS:  # pragma: no cover - internal debugging
         s = 'API ' + str(api_code) + ' EXIT'
-        if api_code in _API_START_TIMES: # pragma: no cover - internal debugging
-            s += ' ' + str(end_time-_API_START_TIMES[api_code]) + ' secs'
+        if api_code in _API_START_TIMES:  # pragma: no cover - internal debugging
+            s += ' ' + str(end_time - _API_START_TIMES[api_code]) + ' secs'
         ret_str = str(ret)
-        ret_str = ' '.join(ret_str.split()) # Compress whitespace
+        ret_str = ' '.join(ret_str.split())  # Compress whitespace
         s += ': ' + ret_str[:240]
         if isinstance(ret, HttpResponse):
             # An archive download is megabytes of binary; decoding it to log 240
             # characters would cost more than the log line is worth.
-            if ret.get('Content-Type', '').startswith(('text/',
-                                                       'application/json')):
+            if ret.get('Content-Type', '').startswith(('text/', 'application/json')):
                 try:
                     s += '\n' + ret.content.decode()[:240]
                 except Exception:
                     s += '\n(Unable to display)'
             else:
                 s += '\n(Binary content not displayed)'
-        if delay_amount: # pragma: no cover - internal debugging
+        if delay_amount:  # pragma: no cover - internal debugging
             s += f'\nDELAYING RETURN {delay_amount} SECONDS'
         _log_api_call_line(s)
     _API_START_TIMES.pop(api_code, None)
-    if delay_amount: # pragma: no cover - internal debugging
+    if delay_amount:  # pragma: no cover - internal debugging
         time.sleep(delay_amount)
 
 
@@ -304,6 +314,7 @@ def exit_api_call(api_code: int, ret: Any) -> None:
 # THE API VIEW DECORATOR
 #
 ################################################################################
+
 
 class Http400Error(Exception):
     """Raised by an API handler when the request itself is malformed.
@@ -333,8 +344,7 @@ _HTTP400_TEMPLATE_NAME = '400.html'
 #: `CommonMiddleware.process_request` calls `get_host()` first and rejects the
 #: request before any view runs. `MultiPartParserError`, which Django also handles,
 #: is deliberately absent - OPUS reads no request body, so nothing can produce it.
-_DJANGO_HANDLED_EXCEPTIONS = (Http404, BadRequest, PermissionDenied,
-                              SuspiciousOperation)
+_DJANGO_HANDLED_EXCEPTIONS = (Http404, BadRequest, PermissionDenied, SuspiciousOperation)
 
 
 def _request_path(r: HttpRequest | str | None) -> str:
@@ -355,8 +365,7 @@ def _request_path(r: HttpRequest | str | None) -> str:
     return r.path
 
 
-def _http400_response(request: HttpRequest | None,
-                      exception: Http400Error) -> HttpResponse:
+def _http400_response(request: HttpRequest | None, exception: Http400Error) -> HttpResponse:
     """Render the OPUS error page for an HTTP 400.
 
     This mirrors what Django's own `page_not_found` view does for `Http404`: the
@@ -373,8 +382,7 @@ def _http400_response(request: HttpRequest | None,
     message = exception.args[0] if exception.args else None
     if not isinstance(message, str):
         message = type(exception).__name__
-    context = {'request_path': quote(_request_path(request)),
-               'exception': message}
+    context = {'request_path': quote(_request_path(request)), 'exception': message}
     body = loader.render_to_string(_HTTP400_TEMPLATE_NAME, context, request)
     return HttpResponse(body, content_type='text/html; charset=utf-8', status=400)
 
@@ -505,6 +513,7 @@ def api_view(handler: Callable[..., HttpResponse]) -> Callable[..., HttpResponse
 #
 ################################################################################
 
+
 def is_old_format_ring_obs_id(s: str) -> bool:
     """Return True if the string is a valid old-format ringobsid.
 
@@ -516,8 +525,10 @@ def is_old_format_ring_obs_id(s: str) -> bool:
     """
     return len(s) > 2 and (s[0] == '_' or s[1] == '_')
 
-def convert_ring_obs_id_to_opus_id(ring_obs_id: str,
-                                   force_ring_obs_id_fmt: bool = False) -> str | None:
+
+def convert_ring_obs_id_to_opus_id(
+    ring_obs_id: str, force_ring_obs_id_fmt: bool = False
+) -> str | None:
     """Given an old-format ringobsid, return the new opusid.
 
     Parameters:
@@ -529,21 +540,21 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id: str,
         The opusid, the argument unchanged when it is not an old-format
         ringobsid, or None when no observation has that ringobsid.
     """
-    if (not force_ring_obs_id_fmt and
-        not is_old_format_ring_obs_id(ring_obs_id)):
+    if not force_ring_obs_id_fmt and not is_old_format_ring_obs_id(ring_obs_id):
         return ring_obs_id
     try:
         return ObsGeneral.objects.get(ring_obs_id=ring_obs_id).opus_id
     except ObjectDoesNotExist:
         log.error('No matching RING_OBS_ID for %r', ring_obs_id)
         return None
-    except MultipleObjectsReturned: # pragma: no cover - import error
+    except MultipleObjectsReturned:  # pragma: no cover - import error
         log.exception('More than one matching RING_OBS_ID for %r', ring_obs_id)
         first = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id).first()
         # Reached only from MultipleObjectsReturned, so the queryset has at
         # least two rows and .first() cannot be None.
         assert first is not None
         return first.opus_id
+
 
 def get_mult_name(param_qualified_name: str) -> str:
     """Returns mult widget foreign key table name.
@@ -555,6 +566,7 @@ def get_mult_name(param_qualified_name: str) -> str:
         The name of the ``mult_`` table holding that field's values.
     """
     return 'mult_' + '_'.join(param_qualified_name.split('.'))
+
 
 def get_git_version() -> str:
     """Return the version of the OPUS distribution this site is running.
@@ -573,6 +585,7 @@ def get_git_version() -> str:
             installed and cannot serve static assets either.
     """
     return importlib.metadata.version('rms-opus')
+
 
 def cols_to_slug_list(slugs: str | None) -> list[str]:
     """Split a comma-separated `?cols=` value into slugs.
@@ -601,58 +614,74 @@ def cols_to_slug_list(slugs: str | None) -> list[str]:
 #
 ################################################################################
 
+
 def http404_no_request(s: HttpRequest | str | None) -> str:
     """The handler was called with no request, or one with no GET or META."""
     return f'Internal error (No request was provided) for {_request_path(s)}'
+
 
 def http400_bad_or_missing_reqno(r: HttpRequest | str | None) -> str:
     """The reqno parameter is absent or is not a non-negative integer."""
     return f'Internal error (Bad or missing reqno) for {_request_path(r)}'
 
+
 def http400_missing_opus_id(r: HttpRequest | str | None) -> str:
     """An OPUS ID is required but none was given."""
     return f'Missing OPUSID for {_request_path(r)}'
+
 
 def http404_unknown_format(fmt: object, r: HttpRequest | str | None) -> str:
     """The requested return format is not one this endpoint can produce."""
     return f'Internal error (Unknown return format "{fmt}") for {_request_path(r)}'
 
+
 def http400_bad_or_missing_range(r: HttpRequest | str | None) -> str:
     """The range parameter is absent or is not a pair of OPUS IDs."""
     return f'Internal error (Bad or missing range) for {_request_path(r)}'
+
 
 def http400_bad_download(download: object, r: HttpRequest | str | None) -> str:
     """The download parameter is not 0 or 1."""
     return f'Badly formatted download argument "{download}" for {_request_path(r)}'
 
+
 def http400_bad_recyclebin(recyclebin: object, r: HttpRequest | str | None) -> str:
     """The recyclebin parameter is not 0 or 1."""
-    return (f'Internal error (Badly formatted recyclebin argument '
-            f'"{recyclebin}") for {_request_path(r)}')
+    return (
+        f'Internal error (Badly formatted recyclebin argument '
+        f'"{recyclebin}") for {_request_path(r)}'
+    )
+
 
 def http400_bad_collapse(collapse: object, r: HttpRequest | str | None) -> str:
     """The collapse parameter is not an integer."""
     return f'Badly formatted collapse argument "{collapse}" for {_request_path(r)}'
 
+
 def http400_bad_limit(limit: object, r: HttpRequest | str | None) -> str:
     """The limit parameter is not an integer in the permitted range."""
     return f'Badly formatted limit "{limit}" for {_request_path(r)}'
+
 
 def http400_bad_startobs(startobs: object, r: HttpRequest | str | None) -> str:
     """The startobs parameter is not an integer."""
     return f'Badly formatted startobs "{startobs}" for {_request_path(r)}'
 
+
 def http400_bad_pageno(pageno: object, r: HttpRequest | str | None) -> str:
     """The page parameter is not an integer."""
     return f'Badly formatted page number "{pageno}" for {_request_path(r)}'
+
 
 def http400_bad_offset(offset: object, r: HttpRequest | str | None) -> str:
     """The offset computed from startobs or page is outside the permitted range."""
     return f'Bad computed offset "{offset}" for {_request_path(r)}'
 
+
 def http400_search_params_invalid(r: HttpRequest | str | None) -> str:
     """The search parameters in the query string could not be parsed."""
     return f'Search parameters invalid for {_request_path(r)}'
+
 
 def http400_unknown_slug(slug: object, r: HttpRequest | str | None) -> str:
     """A metadata field slug the caller supplied does not exist."""
@@ -660,30 +689,36 @@ def http400_unknown_slug(slug: object, r: HttpRequest | str | None) -> str:
         return f'Unknown metadata field slug for {_request_path(r)}'
     return f'Unknown metadata field "{slug}" for {_request_path(r)}'
 
+
 def http400_unknown_units(units: object, slug: object, r: HttpRequest | str | None) -> str:
     """The requested units are not valid for the given metadata field."""
-    return (f'Unknown units "{units}" for metadata field "{slug}" for '
-            f'{_request_path(r)}')
+    return f'Unknown units "{units}" for metadata field "{slug}" for {_request_path(r)}'
+
 
 def http404_unknown_ring_obs_id(ringobsid: object, r: HttpRequest | str | None) -> str:
     """The old-format ringobsid in the URL path names no observation."""
     return f'Unknown RINGOBSID "{ringobsid}" for {_request_path(r)}'
 
+
 def http404_unknown_opus_id(opusid: object, r: HttpRequest | str | None) -> str:
     """The OPUS ID in the URL path names no observation."""
     return f'Unknown OPUSID "{opusid}" for {_request_path(r)}'
+
 
 def http400_unknown_category(r: HttpRequest | str | None) -> str:
     """A category named in the cats parameter does not exist."""
     return f'Unknown category for {_request_path(r)}'
 
+
 def http400_unknown_download_file_format(fmt: object, r: HttpRequest | str | None) -> str:
     """The requested archive format is not one OPUS can create."""
     return f'Unknown DOWNLOAD FILE FORMAT "{fmt}" for {_request_path(r)}'
 
+
 def http404_fake_error(r: HttpRequest | str | None) -> str:
     """A 404 injected by OPUS_FAKE_SERVER_ERROR404_PROBABILITY."""
     return f'Fake HTTP404 error for {_request_path(r)}'
+
 
 def wrap_http500_string(s: str) -> str:
     """Wrap an internal-error message the way the Django debug page does.
@@ -706,18 +741,23 @@ def wrap_http500_string(s: str) -> str:
     """
     return f'<div id="info">{escape(s)}</div>'
 
-def http500_search_cache_failed(r: HttpRequest | str | None) -> str: # pragma: no cover - database error
+
+def http500_search_cache_failed(
+    r: HttpRequest | str | None,
+) -> str:  # pragma: no cover - database error
     """The search cache table could not be found or created."""
     return wrap_http500_string(f'Internal database error for {_request_path(r)}')
 
-def http500_database_error(r: HttpRequest | str | None) -> str: # pragma: no cover - database error
+
+def http500_database_error(r: HttpRequest | str | None) -> str:  # pragma: no cover - database error
     """A database query failed."""
     return wrap_http500_string(f'Internal database error for {_request_path(r)}')
 
+
 def http500_internal_error(r: HttpRequest | str | None) -> str:
     """Something failed that is not the caller's fault and has no better message."""
-    return wrap_http500_string(
-                f'Unspecified internal server error for {_request_path(r)}')
+    return wrap_http500_string(f'Unspecified internal server error for {_request_path(r)}')
+
 
 def http500_fake_error(r: HttpRequest | str | None) -> str:
     """A 500 injected by OPUS_FAKE_SERVER_ERROR500_PROBABILITY."""

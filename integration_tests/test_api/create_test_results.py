@@ -6,7 +6,7 @@ diff it produces before committing it -- every line of it is a change in what
 the API returns.
 """
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import json
 
     import requests

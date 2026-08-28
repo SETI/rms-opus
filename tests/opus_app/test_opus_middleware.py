@@ -39,6 +39,7 @@ def _run(response: HttpResponse) -> HttpResponse:
     Returns:
         What the middleware answers with.
     """
+
     def chain(_request: HttpRequest) -> HttpResponse:
         return response
 
@@ -48,8 +49,7 @@ def _run(response: HttpResponse) -> HttpResponse:
 def test_strips_whitespace_from_a_text_response() -> None:
     """Leading and trailing whitespace goes, and so do the blank lines."""
     response = _run(HttpResponse(SPACED, content_type='text/html'))
-    assert (response.content.decode()
-            == '<html>\n<body>\n<p>  Text  </p>\n</body>\n</html>\n')
+    assert response.content.decode() == '<html>\n<body>\n<p>  Text  </p>\n</body>\n</html>\n'
 
 
 def test_nostrip_marker_is_removed_and_nothing_else_is_touched() -> None:

@@ -20,24 +20,20 @@ class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
     ### OVERRIDE FROM ObsBase ###
     #############################
 
-
     @property
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``COVIMS``."""
         return 'COVIMS'
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
     def field_obs_wavelength_wavelength1(self) -> FloatField:
-        return cast(FloatField,
-                    self._index_col('MINIMUM_WAVELENGTH') / 1000.) # nm -> micron
+        return cast(FloatField, self._index_col('MINIMUM_WAVELENGTH') / 1000.0)  # nm -> micron
 
     def field_obs_wavelength_wavelength2(self) -> FloatField:
-        return cast(FloatField,
-                    self._index_col('MAXIMUM_WAVELENGTH') / 1000.) # nm -> micron
+        return cast(FloatField, self._index_col('MAXIMUM_WAVELENGTH') / 1000.0)  # nm -> micron
 
     def field_obs_wavelength_wave_res1(self) -> FloatField:
         return self._wave_res_from_full_bandwidth()
@@ -51,17 +47,15 @@ class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
     def field_obs_wavelength_wave_no_res2(self) -> FloatField:
         return self.field_obs_wavelength_wave_no_res1()
 
-
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
 
     def field_obs_profile_temporal_sampling(self) -> FloatField:
-        return cast(FloatField, self._supp_index_col('IR_EXPOSURE') / 1000) # msec -> sec
+        return cast(FloatField, self._supp_index_col('IR_EXPOSURE') / 1000)  # msec -> sec
 
     def field_obs_profile_wl_band(self) -> MultFieldRet:
         return self._create_mult('IR')
-
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
@@ -88,20 +82,20 @@ class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
         sc_cvt = self._parse_cassini_sclk(sc)
         if sc_cvt is None:
             return None
-        sc_cvt += 1 # Round up
+        sc_cvt += 1  # Round up
 
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
             self._log_nonrepeating_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
-                f'({sc_cvt}) are in the wrong order - setting to count1')
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '
+                + f'({sc_cvt}) are in the wrong order - setting to count1'
+            )
             sc_cvt = sc1
 
         return sc_cvt
 
     def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         return self._create_mult(self._cassini_normalize_mission_phase_name())
-
 
     ###############################################
     ### FIELD METHODS FOR obs_instrument_covims ###
@@ -135,7 +129,7 @@ class ObsVolumeCOVIMS8xxx(ObsVolumeUVISVIMSOccCommon):
         ir_exp = self._supp_index_col('IR_EXPOSURE')
         if ir_exp is None:
             return None
-        return cast(FloatField, ir_exp / 1000.)
+        return cast(FloatField, ir_exp / 1000.0)
 
     def field_obs_instrument_covims_ir_sampling_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._supp_index_col('IR_SAMPLING_MODE_ID'))

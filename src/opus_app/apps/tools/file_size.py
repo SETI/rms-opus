@@ -17,11 +17,11 @@ response fixtures, so the formatting is reproduced exactly rather than improved.
 #: rendered by the final statement, which is also what keeps every branch here
 #: reachable.
 _SIZE_UNITS = (
-    (1024 ** 5, 'P'),
-    (1024 ** 4, 'T'),
-    (1024 ** 3, 'G'),
-    (1024 ** 2, 'M'),
-    (1024 ** 1, 'K'),
+    (1024**5, 'P'),
+    (1024**4, 'T'),
+    (1024**3, 'G'),
+    (1024**2, 'M'),
+    (1024**1, 'K'),
 )
 
 

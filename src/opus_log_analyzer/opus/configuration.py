@@ -4,6 +4,7 @@
 field definitions, holds the settings the OPUS-specific code needs for a run, and
 builds the per-session parser and the HTML generator the analyzer asks it for.
 """
+
 import collections
 import textwrap
 from collections.abc import Sequence
@@ -23,6 +24,7 @@ class Configuration(AbstractConfiguration):
     """
     A generator class for creating a SessionInfo.
     """
+
     _slug_map: slug.ToInfoMap
     _default_column_slug_info: MetadataSlugInfo
     _api_host_url: str
@@ -34,14 +36,26 @@ class Configuration(AbstractConfiguration):
 
     _sessionless_downloads: list[tuple[str, LogEntry]]
 
-    DEFAULT_COLUMN_INFO: ClassVar[list[str]] = ['opusid', 'instrument', 'planet', 'target',
-                                                'time1', 'observationduration']
+    DEFAULT_COLUMN_INFO: ClassVar[list[str]] = [
+        'opusid',
+        'instrument',
+        'planet',
+        'target',
+        'time1',
+        'observationduration',
+    ]
 
-    def __init__(self, *, api_host_url: str, debug_show_all: bool, no_sessions: bool,
-                 ip_to_host_converter: IpToHostConverter,
-                 sessions_relative_directory: str | None,
-                 manifests: Sequence[str],
-                 **_: Any):
+    def __init__(
+        self,
+        *,
+        api_host_url: str,
+        debug_show_all: bool,
+        no_sessions: bool,
+        ip_to_host_converter: IpToHostConverter,
+        sessions_relative_directory: str | None,
+        manifests: Sequence[str],
+        **_: Any,
+    ):
         """Read the OPUS field definitions and keep the settings for one run.
 
         Parameters:
@@ -61,7 +75,9 @@ class Configuration(AbstractConfiguration):
                 whole argument namespace.
         """
         self._slug_map = slug.ToInfoMap(api_host_url)
-        self._default_column_slug_info = QueryHandler.get_metadata_slug_info(self.DEFAULT_COLUMN_INFO, self._slug_map)
+        self._default_column_slug_info = QueryHandler.get_metadata_slug_info(
+            self.DEFAULT_COLUMN_INFO, self._slug_map
+        )
         self._api_host_url = api_host_url
         self._debug_show_all = debug_show_all
         self._elide_session_info = no_sessions
@@ -72,8 +88,13 @@ class Configuration(AbstractConfiguration):
 
     def create_session_info(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
-        return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html,
-                           self._sessionless_downloads)
+        return SessionInfo(
+            self._slug_map,
+            self._default_column_slug_info,
+            self._debug_show_all,
+            uses_html,
+            self._sessionless_downloads,
+        )
 
     def create_batch_html_generator(self, host_infos_by_ip: list[HostInfo]) -> HtmlGenerator:
         """Create the generator that renders a batch run.
@@ -141,7 +162,10 @@ class Configuration(AbstractConfiguration):
             # keeps the tree green without hiding the fault, and mypy's
             # warn_unused_ignores will flag it the moment #1465 is fixed.
             search_slug_info, column_slug_info, _ = session_info.get_slug_info()  # type: ignore[misc]
-            for info_type, slug_and_flags in (("search", search_slug_info), ("column", column_slug_info)):
+            for info_type, slug_and_flags in (
+                ('search', search_slug_info),
+                ('column', column_slug_info),
+            ):
                 for slug_name, is_obsolete in slug_and_flags:
                     all_info[info_type][slug_name] = is_obsolete
 
@@ -159,9 +183,11 @@ class Configuration(AbstractConfiguration):
             result = ', '.join(
                 # Use ~ as a non-breaking space for textwrap.  We replace it with a space, below
                 (slug + '~[OBSOLETE]') if all_info[slug] else slug
-                for slug in sorted(all_info[info_type], key=str.lower))
-            wrapped = textwrap.fill(result, 100,
-                                    initial_indent=f'{info_type.title()} slugs: ', subsequent_indent='    ')
+                for slug in sorted(all_info[info_type], key=str.lower)
+            )
+            wrapped = textwrap.fill(
+                result, 100, initial_indent=f'{info_type.title()} slugs: ', subsequent_indent='    '
+            )
             print(wrapped.replace('~', ' '), file=output)
 
         show_info('search')

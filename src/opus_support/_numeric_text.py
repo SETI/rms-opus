@@ -25,8 +25,9 @@ def _strip_trailing_zeros(s: str) -> str:
         # Strip trailing .000s from the mantissa part of NNN.DDDZZZe+EEE
         s1, s2 = s.split('e')
         s1 = s1.rstrip('0').rstrip('.')
-        s = s1+'e'+s2
+        s = s1 + 'e' + s2
     return s
+
 
 def _clean_numeric_field(s: str, compress_spaces: bool = True) -> str:
     """Remove useless characters like , or _ from a string.
@@ -40,7 +41,7 @@ def _clean_numeric_field(s: str, compress_spaces: bool = True) -> str:
         The text in lower case with every comma and underscore removed, and every
         space removed as well unless `compress_spaces` is False.
     """
-    ret = s.lower().replace(',', '').replace('_','')
+    ret = s.lower().replace(',', '').replace('_', '')
     if compress_spaces:
         ret = ret.replace(' ', '')
     return ret

@@ -32,6 +32,7 @@ class MultiFloatField(forms.Field):
 
     pass
 
+
 class SearchForm(forms.Form):
     """The search inputs for the fields named by a mapping of slug to value.
 
@@ -40,6 +41,7 @@ class SearchForm(forms.Form):
     under that slug. A text field also gets the qtype dropdown that goes beside it,
     and so does a range field whose two endpoints are separate columns.
     """
+
     def __init__(self, form_vals: Mapping[str, Any], *args: Any, **kwargs: Any) -> None:
         """Build the inputs for every slug in the mapping.
 
@@ -64,31 +66,32 @@ class SearchForm(forms.Form):
             # that names no field is a fault rather than an input case. The one
             # caller resolves each slug before it builds the mapping.
             assert param_info is not None
-            (form_type, _form_type_format,
-             _form_type_unit_id) = parse_form_type(param_info.form_type)
+            (form_type, _form_type_format, _form_type_unit_id) = parse_form_type(
+                param_info.form_type
+            )
 
             if form_type == 'STRING':
-                choices: Iterable[tuple[str, str]] = ((x,x) for x in settings.STRING_QTYPES)
+                choices: Iterable[tuple[str, str]] = ((x, x) for x in settings.STRING_QTYPES)
                 self.fields[slug] = forms.CharField(
                     widget=forms.TextInput(
-                        attrs={'class': 'STRING',
-                               'size': '50',
-                               'tabindex': 0,
-                               'data-slugname': slug
-                               }),
+                        attrs={
+                            'class': 'STRING',
+                            'size': '50',
+                            'tabindex': 0,
+                            'data-slugname': slug,
+                        }
+                    ),
                     required=False,
-                    label='')
-                self.fields['qtype-'+slug] = forms.CharField(
-                     required=False,
-                     label='',
-                     widget=forms.Select(
-                        choices=choices,
-                        attrs={'tabindex': 0, 'class': 'STRING'}
-                     ),
+                    label='',
+                )
+                self.fields['qtype-' + slug] = forms.CharField(
+                    required=False,
+                    label='',
+                    widget=forms.Select(choices=choices, attrs={'tabindex': 0, 'class': 'STRING'}),
                 )
 
             if form_type in settings.RANGE_FORM_TYPES:
-                choices = ((x,x) for x in settings.RANGE_QTYPES)
+                choices = ((x, x) for x in settings.RANGE_QTYPES)
                 slug_no_num = strip_numeric_suffix(slug)
                 num = get_numeric_suffix(slug)
 
@@ -107,8 +110,7 @@ class SearchForm(forms.Form):
 
                 # dropdown only available when ranges info is available
                 ranges = param_info.get_ranges_info()
-                dropdown_class = ('op-ranges-dropdown-menu dropdown-toggle'
-                                  if ranges else '')
+                dropdown_class = 'op-ranges-dropdown-menu dropdown-toggle' if ranges else ''
                 data_toggle = 'dropdown' if ranges else ''
 
                 self.fields[slug] = MultiFloatField(
@@ -116,59 +118,65 @@ class SearchForm(forms.Form):
                     label=label.capitalize(),
                     widget=forms.TextInput(
                         attrs={
-                            'class': 'op-range-input-'+label+' RANGE '+dropdown_class,
+                            'class': 'op-range-input-' + label + ' RANGE ' + dropdown_class,
                             'placeholder': hints,
                             'autocomplete': 'off',
                             'data-slugname': slug_no_num,
                             'data-bs-toggle': data_toggle,
                             'aria-haspopup': 'true',
-                            'aria-expanded': 'false'
+                            'aria-expanded': 'false',
                         }
                     ),
                 )
                 # Make sure order is min, max
                 if not is_single_column_range(param_info.param_qualified_name()):
-                    self.fields['qtype-'+slug_no_num] = forms.CharField(
+                    self.fields['qtype-' + slug_no_num] = forms.CharField(
                         required=False,
                         label='',
                         widget=forms.Select(
-                            choices=choices,
-                            attrs={'tabindex': 0, 'class': 'RANGE'}
+                            choices=choices, attrs={'tabindex': 0, 'class': 'RANGE'}
                         ),
                     )
-                    self.field_order = [slug_no_num+'1', slug_no_num+'2',
-                                        'qtype-'+slug_no_num]
+                    self.field_order = [
+                        slug_no_num + '1',
+                        slug_no_num + '2',
+                        'qtype-' + slug_no_num,
+                    ]
                 else:
-                    self.field_order = [slug_no_num+'1', slug_no_num+'2']
+                    self.field_order = [slug_no_num + '1', slug_no_num + '2']
 
             elif form_type in settings.MULT_FORM_TYPES:
                 param_qualified_name = param_info.param_qualified_name()
                 mult_param = get_mult_name(param_qualified_name)
-                model = apps.get_model('search', mult_param.title().replace('_',''))
+                model = apps.get_model('search', mult_param.title().replace('_', ''))
 
                 # grouped mult fields
-                choices = [(mult.label, mult.label) for mult in
-                               model.objects
-                               .filter(grouping=grouping, display='Y')
-                               .order_by('disp_order')]
+                choices = [
+                    (mult.label, mult.label)
+                    for mult in model.objects.filter(grouping=grouping, display='Y').order_by(
+                        'disp_order'
+                    )
+                ]
 
                 if param_qualified_name == 'obs_surface_geometry_name.target_name':
                     self.fields[slug] = forms.CharField(
-                            label='',
-                            widget=forms.RadioSelect(attrs={'class': 'singlechoice'},
-                                                     choices=choices),
-                            required=False)
+                        label='',
+                        widget=forms.RadioSelect(attrs={'class': 'singlechoice'}, choices=choices),
+                        required=False,
+                    )
                 else:
                     self.fields[slug] = forms.CharField(
-                            label='',
-                            widget=forms.CheckboxSelectMultiple(attrs={'class': 'multichoice'},
-                                                                choices=choices),
-                            required=False)
+                        label='',
+                        widget=forms.CheckboxSelectMultiple(
+                            attrs={'class': 'multichoice'}, choices=choices
+                        ),
+                        required=False,
+                    )
 
         if form_type in settings.RANGE_FORM_TYPES:
             my_fields = self.fields
             self.fields = {}
-            self.fields[slug_no_num+'1'] = my_fields[slug_no_num+'1']
-            self.fields[slug_no_num+'2'] = my_fields[slug_no_num+'2']
-            if 'qtype-'+slug_no_num in my_fields:
-                self.fields['qtype-'+slug_no_num] = my_fields['qtype-'+slug_no_num]
+            self.fields[slug_no_num + '1'] = my_fields[slug_no_num + '1']
+            self.fields[slug_no_num + '2'] = my_fields[slug_no_num + '2']
+            if 'qtype-' + slug_no_num in my_fields:
+                self.fields['qtype-' + slug_no_num] = my_fields['qtype-' + slug_no_num]

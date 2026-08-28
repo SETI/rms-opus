@@ -94,7 +94,8 @@ def as_int(value: Any) -> IntField:
     if converted != value:
         raise ValueError(
             f'{value!r} is not an integer; converting it would store {converted!r}, '
-            f'a value the source data does not contain')
+            f'a value the source data does not contain'
+        )
     return converted
 
 

@@ -5,6 +5,7 @@ patterns have to be resolved against a run date before anything is read. That
 date comes from `--date`, which accepts a relative day count, a month, or a
 day.
 """
+
 import datetime
 import glob
 import re
@@ -38,8 +39,10 @@ def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> 
     run_date = __parse_date_argument(args)
     if not error_analysis:
         # From the beginning of the month to the specified date
-        dates = [datetime.datetime(year=run_date.year, month=run_date.month, day=day)
-                 for day in range(1, run_date.day + 1)]
+        dates = [
+            datetime.datetime(year=run_date.year, month=run_date.month, day=day)
+            for day in range(1, run_date.day + 1)
+        ]
     else:
         # Just the date
         dates = [run_date]
@@ -56,7 +59,9 @@ def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> 
             dates, sorted by name. A pattern matching nothing contributes
             nothing.
         """
-        all_patterns = {date.strftime(file_pattern) for file_pattern in file_patterns for date in dates}
+        all_patterns = {
+            date.strftime(file_pattern) for file_pattern in file_patterns for date in dates
+        }
         all_files = sorted(file for pattern in all_patterns for file in glob.glob(pattern))
         return all_files
 
@@ -64,9 +69,9 @@ def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> 
         args.log_files = expand_and_glob_filenames(args.log_files)
         print(f'Found {len(args.log_files)} log files')
         if len(args.log_files) == 0:
-            raise Exception("No log files matching pattern found")
+            raise Exception('No log files matching pattern found')
     else:
-        raise Exception("Must specify at least one file pattern for cronjob mode")
+        raise Exception('Must specify at least one file pattern for cronjob mode')
 
     if not error_analysis and args.manifests:
         args.manifests = expand_and_glob_filenames(args.manifests)
@@ -85,7 +90,9 @@ def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> 
 def __parse_date_argument(args: Namespace) -> datetime.datetime:
     """Figure out the date to use, based on the --date argument."""
     date = args.date
-    today = datetime.datetime.now(tz=DEFAULT_TIMEZONE).replace(hour=0, minute=0, second=0, microsecond=0)
+    today = datetime.datetime.now(tz=DEFAULT_TIMEZONE).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
     # if the argument isn't present, use today
     if not date:
         return today
@@ -97,12 +104,17 @@ def __parse_date_argument(args: Namespace) -> datetime.datetime:
     match = re.fullmatch(r'(\d\d\d\d)-(\d\d)', date)
     if match:
         year_month = datetime.datetime(
-            tzinfo=DEFAULT_TIMEZONE, year=int(match.group(1)), month=int(match.group(2)), day=1)
+            tzinfo=DEFAULT_TIMEZONE, year=int(match.group(1)), month=int(match.group(2)), day=1
+        )
         sometime_following_month = year_month + datetime.timedelta(days=31)
         return sometime_following_month - datetime.timedelta(days=sometime_following_month.day)
     # if the argument is dddd-dd-dd, then treat it as year-month-day
     match = re.fullmatch(r'(\d\d\d\d)-(\d\d)-(\d\d)', date)
     if match:
         return datetime.datetime(
-            tzinfo=DEFAULT_TIMEZONE, year=int(match.group(1)), month=int(match.group(2)), day=int(match.group(3)))
+            tzinfo=DEFAULT_TIMEZONE,
+            year=int(match.group(1)),
+            month=int(match.group(2)),
+            day=int(match.group(3)),
+        )
     raise Exception('date must be one of -<int>, yyyy-mm, or yyyy-mm-dd')

@@ -17,18 +17,20 @@ import numpy as np
 HOST = 'http://127.0.0.1:8000'
 
 TARGET_LIST = [
-    'Jupiter',         # 89973
-    'Saturn',          # 412035
-    'Saturn Rings',    # 317258
-    'Titan',           # 197325
+    'Jupiter',  # 89973
+    'Saturn',  # 412035
+    'Saturn Rings',  # 317258
+    'Titan',  # 197325
     'Jupiter,Saturn',  # 502008
     'Saturn,Saturn Rings',
     'Jupiter,Saturn,Saturn Rings,Titan',
     # 'Atlas,Calypso,Daphnis,Dione,Enceladus,Epimetheus,Helene,Hyperion,Hyrrokkin,Iapetus,Pandora,Pan,Pallene,Mimas,Methone,Janus,Phoebe,Polydeuces,Prometheus,Rhea,Saturn,Titan,Tethys,Telesto,Saturn+Rings,Io,Adrastea,Amalthea,Jupiter,Jupiter+Rings,Callisto,Europa,Thebe,Ganymede',
 ]
 
-def run_one_test(search_params: str, columns: str, num_iterations: int,
-                 randomize_search: bool = False) -> None:
+
+def run_one_test(
+    search_params: str, columns: str, num_iterations: int, randomize_search: bool = False
+) -> None:
     """Run one test multiple times and collect statistics.
 
     Parameters:
@@ -63,7 +65,7 @@ def run_one_test(search_params: str, columns: str, num_iterations: int,
         with urllib.request.urlopen(url) as response:
             response.read()
             end_time = time.time()
-            time_list.append(end_time-request_start)
+            time_list.append(end_time - request_start)
     if not randomize_search and num_iterations > 1:
         # Throw away the first result because that was just priming the cache
         del time_list[0]
@@ -76,16 +78,14 @@ def main() -> None:
     print('--- Target search tests (1 run)')
 
     for test_num, target in enumerate(TARGET_LIST):
-        print(f'{test_num+1:3d}: ', end='')
-        run_one_test(f'target={urllib.parse.quote(target)}', 'opusid', 1,
-                     randomize_search=False)
+        print(f'{test_num + 1:3d}: ', end='')
+        run_one_test(f'target={urllib.parse.quote(target)}', 'opusid', 1, randomize_search=False)
 
     print('--- Target search + time tests (10 runs)')
 
     for test_num, target in enumerate(TARGET_LIST):
-        print(f'{test_num+1:3d}: ', end='')
-        run_one_test(f'target={urllib.parse.quote(target)}', 'opusid', 10,
-                     randomize_search=True)
+        print(f'{test_num + 1:3d}: ', end='')
+        run_one_test(f'target={urllib.parse.quote(target)}', 'opusid', 10, randomize_search=True)
 
     print('--- Target metadata test')
     run_one_test('', 'opusid,target', 10, randomize_search=False)

@@ -7,14 +7,15 @@ from opus_import.obs.field_types import FloatField, MultFieldRet, StrField
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 _MISSION_PHASE_NAMES = {
-    'JUPITER ENCOUNTER':              'Jupiter Encounter',
-    'PLUTO CRUISE':                   'Pluto Cruise',
-    'PLUTO ENCOUNTER':                'Pluto Encounter',
-    'POST-LAUNCH CHECKOUT':           'Post-Launch Checkout',
-    'CRUISE TO FIRST KBO EN':         'Cruise to First KBO Encounter',
-    'CRUISE TO FIRST KBO ENCOUNTER':  'Cruise to First KBO Encounter',
-    'KEM1 ENCOUNTER':                 'KEM1 Encounter',
+    'JUPITER ENCOUNTER': 'Jupiter Encounter',
+    'PLUTO CRUISE': 'Pluto Cruise',
+    'PLUTO ENCOUNTER': 'Pluto Encounter',
+    'POST-LAUNCH CHECKOUT': 'Post-Launch Checkout',
+    'CRUISE TO FIRST KBO EN': 'Cruise to First KBO Encounter',
+    'CRUISE TO FIRST KBO ENCOUNTER': 'Cruise to First KBO Encounter',
+    'KEM1 ENCOUNTER': 'KEM1 Encounter',
 }
+
 
 class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
     """What every New Horizons volume shares.
@@ -28,9 +29,7 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
 
         Returns the converted SCLK, or None if it could not be parsed.
         """
-        return self._parse_sclk(opus_support.parse_new_horizons_sclk, sclk,
-                                'New Horizons')
-
+        return self._parse_sclk(opus_support.parse_new_horizons_sclk, sclk, 'New Horizons')
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -47,15 +46,16 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
             return self._create_mult('JUP')
         if mp in ('PLUTO CRUISE', 'PLUTO ENCOUNTER'):
             return self._create_mult('PLU')
-        if mp in ('POST-LAUNCH CHECKOUT',
-                  'CRUISE TO FIRST KBO EN',
-                  'CRUISE TO FIRST KBO ENCOUNTER',
-                  'KEM1 ENCOUNTER'):
+        if mp in (
+            'POST-LAUNCH CHECKOUT',
+            'CRUISE TO FIRST KBO EN',
+            'CRUISE TO FIRST KBO ENCOUNTER',
+            'KEM1 ENCOUNTER',
+        ):
             return self._create_mult('OTH')
 
         self._log_nonrepeating_error(f'Unknown MISSION_PHASE_NAME "{mp}"')
         return self._create_mult('OTH')
-
 
     ############################
     ### OVERRIDE FROM ObsPds ###
@@ -66,7 +66,6 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
         if note == 'NULL':
             return None
         return cast(StrField, note)
-
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -103,7 +102,8 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
         if sc1 is not None and sc_cvt < sc1:
             self._log_nonrepeating_warning(
                 f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-                +'are in the wrong order - setting to count1')
+                + 'are in the wrong order - setting to count1'
+            )
             sc_cvt = sc1
 
         return sc_cvt

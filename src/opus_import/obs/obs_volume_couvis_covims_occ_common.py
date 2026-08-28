@@ -21,7 +21,6 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-
     def field_obs_general_time1(self) -> FloatField:
         return self._time_from_supp_index()
 
@@ -40,15 +39,12 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
     def field_obs_general_declination2(self) -> FloatField:
         return self._prof_ra_dec_helper('index_row', 'STAR_NAME')[3]
 
-
     ############################
     ### OVERRIDE FROM ObsPds ###
     ############################
 
     def field_obs_pds_note(self) -> StrField:
-        return cast(StrField,
-                    'Data quality ' + self._supp_index_col('DATA_QUALITY_SCORE').lower())
-
+        return cast(StrField, 'Data quality ' + self._supp_index_col('DATA_QUALITY_SCORE').lower())
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
@@ -67,12 +63,12 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
         assert target_name is not None
         if target_name.upper().startswith('CASSINI'):
             return self._create_mult(col_val=target_name, disp_name=target_name_info[2])
-        return self._create_mult(col_val=target_name, disp_name=target_name_info[2],
-                                 grouping='Stars')
+        return self._create_mult(
+            col_val=target_name, disp_name=target_name_info[2], grouping='Stars'
+        )
 
     def field_obs_profile_host(self) -> MultFieldRet:
         return self._create_mult('cassini')
-
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
@@ -91,28 +87,28 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
         return cast(FloatField, self._index_col('OBSERVED_RING_ELEVATION'))
 
     def field_obs_ring_geometry_incidence1(self) -> FloatField:
-        return cast(FloatField, 90. - abs(self._index_col('OBSERVED_RING_ELEVATION')))
+        return cast(FloatField, 90.0 - abs(self._index_col('OBSERVED_RING_ELEVATION')))
 
     def field_obs_ring_geometry_incidence2(self) -> FloatField:
-        return cast(FloatField, 90. - abs(self._index_col('OBSERVED_RING_ELEVATION')))
+        return cast(FloatField, 90.0 - abs(self._index_col('OBSERVED_RING_ELEVATION')))
 
     def field_obs_ring_geometry_emission1(self) -> FloatField:
-        return cast(FloatField, 90. + abs(self._index_col('OBSERVED_RING_ELEVATION')))
+        return cast(FloatField, 90.0 + abs(self._index_col('OBSERVED_RING_ELEVATION')))
 
     def field_obs_ring_geometry_emission2(self) -> FloatField:
-        return cast(FloatField, 90. + abs(self._index_col('OBSERVED_RING_ELEVATION')))
+        return cast(FloatField, 90.0 + abs(self._index_col('OBSERVED_RING_ELEVATION')))
 
     def field_obs_ring_geometry_north_based_incidence1(self) -> FloatField:
-        return cast(FloatField, 90. + self._index_col('OBSERVED_RING_ELEVATION'))
+        return cast(FloatField, 90.0 + self._index_col('OBSERVED_RING_ELEVATION'))
 
     def field_obs_ring_geometry_north_based_incidence2(self) -> FloatField:
-        return cast(FloatField, 90. + self._index_col('OBSERVED_RING_ELEVATION'))
+        return cast(FloatField, 90.0 + self._index_col('OBSERVED_RING_ELEVATION'))
 
     def field_obs_ring_geometry_north_based_emission1(self) -> FloatField:
-        return cast(FloatField, 90. - self._index_col('OBSERVED_RING_ELEVATION'))
+        return cast(FloatField, 90.0 - self._index_col('OBSERVED_RING_ELEVATION'))
 
     def field_obs_ring_geometry_north_based_emission2(self) -> FloatField:
-        return cast(FloatField, 90. - self._index_col('OBSERVED_RING_ELEVATION'))
+        return cast(FloatField, 90.0 - self._index_col('OBSERVED_RING_ELEVATION'))
 
     def field_obs_ring_geometry_solar_ring_opening_angle1(self) -> FloatField:
         return cast(FloatField, -self._index_col('OBSERVED_RING_ELEVATION'))
@@ -125,7 +121,6 @@ class ObsVolumeUVISVIMSOccCommon(ObsVolumeCassiniOccCommon):
 
     def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
         return cast(FloatField, self._index_col('OBSERVED_RING_ELEVATION'))
-
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###

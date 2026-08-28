@@ -47,7 +47,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         assert ea is not None
         return 0 <= ea <= 90
 
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
@@ -76,15 +75,13 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         # each target.
         if self._is_ring_map_projection():
             if self._index_col('PRIMARY_BODY_NAME') != 'SATURN':
-                self._log_nonrepeating_error(
-                    'Ring observation but PRIMARY_BODY_NAME != "SATURN"')
+                self._log_nonrepeating_error('Ring observation but PRIMARY_BODY_NAME != "SATURN"')
                 return ()
             if self._index_col('TARGET_NAME') != 'S_RINGS':
-                self._log_nonrepeating_error(
-                    'Ring observation but TARGET_NAME != "S_RINGS"')
+                self._log_nonrepeating_error('Ring observation but TARGET_NAME != "S_RINGS"')
                 return ()
             return ('SATURN',)
-        return (self._index_col('TARGET_NAME'), )
+        return (self._index_col('TARGET_NAME'),)
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
         """Convert a ``.LBL`` file specification to the ``.tar.gz`` data file.
@@ -97,7 +94,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
             this bundle's observations are identified by.
         """
         return filespec.replace('.LBL', '.tar.gz')
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -121,8 +117,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         return self._create_mult('THERMAL')
 
     def field_obs_general_observation_type(self) -> MultFieldRet:
-        return self._create_mult('SCU') # Spectral Cube
-
+        return self._create_mult('SCU')  # Spectral Cube
 
     ############################
     ### OVERRIDE FROM ObsPds ###
@@ -134,7 +129,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
 
     def field_obs_pds_product_creation_time(self) -> FloatField:
         return None
-
 
     ###################################
     ### OVERRIDE FROM ObsWavelength ###
@@ -157,14 +151,14 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         wn2 = self._supp_index_col('MAXIMUM_WAVENUMBER')
         if wnr is None or wn2 is None:
             return None
-        return cast(FloatField, MICRONS_PER_CM*wnr/(wn2*wn2))
+        return cast(FloatField, MICRONS_PER_CM * wnr / (wn2 * wn2))
 
     def field_obs_wavelength_wave_res2(self) -> FloatField:
         wnr = self._supp_index_col('BAND_BIN_WIDTH')
         wn1 = self._supp_index_col('MINIMUM_WAVENUMBER')
         if wnr is None or wn1 is None:
             return None
-        return cast(FloatField, MICRONS_PER_CM*wnr/(wn1*wn1))
+        return cast(FloatField, MICRONS_PER_CM * wnr / (wn1 * wn1))
 
     def field_obs_wavelength_wave_no1(self) -> FloatField:
         return cast(FloatField, self._supp_index_col('MINIMUM_WAVENUMBER'))
@@ -183,7 +177,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
 
     def field_obs_wavelength_spec_size(self) -> IntField:
         return as_int(self._supp_index_col('BANDS'))
-
 
     #####################################
     ### OVERRIDE FROM ObsRingGeometry ###
@@ -216,8 +209,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     def field_obs_ring_geometry_j2000_longitude1(self) -> FloatField:
         # Since there's only one longitude, not a range, we don't have to
         # worry about the 0-360 problem.
-        return self._ascending_to_j2000(
-            self.field_obs_ring_geometry_ascending_longitude1())
+        return self._ascending_to_j2000(self.field_obs_ring_geometry_ascending_longitude1())
 
     def field_obs_ring_geometry_j2000_longitude2(self) -> FloatField:
         return self.field_obs_ring_geometry_j2000_longitude1()
@@ -226,8 +218,9 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         if not self._is_ring_map_projection():
             return None
         # Longitude is degrees EAST from the ascending node! Why?
-        return cast(FloatField,
-                    (self._index_col('CSS:MEAN_RING_BORESIGHT_LONGITUDE_ZPD') + 180.) % 360.)
+        return cast(
+            FloatField, (self._index_col('CSS:MEAN_RING_BORESIGHT_LONGITUDE_ZPD') + 180.0) % 360.0
+        )
 
     def field_obs_ring_geometry_ascending_longitude2(self) -> FloatField:
         return self.field_obs_ring_geometry_ascending_longitude1()
@@ -235,8 +228,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     def field_obs_ring_geometry_solar_hour_angle1(self) -> FloatField:
         if not self._is_ring_map_projection():
             return None
-        return cast(FloatField,
-                    self._index_col('CSS:MEAN_RING_BORESIGHT_LOCAL_TIME') * 15.)
+        return cast(FloatField, self._index_col('CSS:MEAN_RING_BORESIGHT_LOCAL_TIME') * 15.0)
 
     def field_obs_ring_geometry_solar_hour_angle2(self) -> FloatField:
         return self.field_obs_ring_geometry_solar_hour_angle1()
@@ -247,7 +239,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         # Positive north, negative south
         inc = self.field_obs_ring_geometry_north_based_incidence1()
         assert inc is not None
-        return 90. - inc
+        return 90.0 - inc
 
     def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
         return self.field_obs_ring_geometry_solar_ring_elevation1()
@@ -258,7 +250,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         # Positive north, negative south
         ea = self.field_obs_ring_geometry_north_based_emission1()
         assert ea is not None
-        return 90. - ea
+        return 90.0 - ea
 
     def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
         return self.field_obs_ring_geometry_observer_ring_elevation1()
@@ -281,7 +273,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         elif is_ring_north_side_lit:
             return cast(FloatField, inc)
         else:
-            return cast(FloatField, 180. - inc)
+            return cast(FloatField, 180.0 - inc)
 
     def field_obs_ring_geometry_incidence2(self) -> FloatField:
         return self.field_obs_ring_geometry_incidence1()
@@ -296,7 +288,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         elif is_ring_north_side_lit:
             return cast(FloatField, ea)
         else:
-            return cast(FloatField, 180. - ea)
+            return cast(FloatField, 180.0 - ea)
 
     def field_obs_ring_geometry_emission2(self) -> FloatField:
         return self.field_obs_ring_geometry_emission1()
@@ -322,7 +314,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     # Because both observer and solar opening angles are body-centered, and we
     # don't have body-centered incidence or emission angle, we can't provide
     # them
-
 
     ##############################################
     ### OVERRIDE FROM ObsSurfaceGeometryTarget ###
@@ -387,26 +378,22 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1(self) -> FloatField:
         if self._is_ring_map_projection():
             return None
-        return cast(FloatField,
-                    self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE'))
+        return cast(FloatField, self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE'))
 
     def field_obs_surface_geometry_target_sub_observer_planetocentric_latitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_observer_planetocentric_latitude1()
 
     def field_obs_surface_geometry_target_sub_observer_planetographic_latitude1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return cast(FloatField,
-                        self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LATITUDE_MIDDLE'))
-        return cast(FloatField,
-                    self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE'))
+            return cast(FloatField, self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LATITUDE_MIDDLE'))
+        return cast(FloatField, self._index_col('CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE'))
 
     def field_obs_surface_geometry_target_sub_observer_planetographic_latitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_observer_planetographic_latitude1()
 
     def field_obs_surface_geometry_target_sub_solar_iau_west_longitude1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return cast(FloatField,
-                        self._index_col('CSS:PRIMARY_SUB_SOLAR_LONGITUDE_MIDDLE'))
+            return cast(FloatField, self._index_col('CSS:PRIMARY_SUB_SOLAR_LONGITUDE_MIDDLE'))
         return cast(FloatField, self._index_col('CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE'))
 
     def field_obs_surface_geometry_target_sub_solar_iau_west_longitude2(self) -> FloatField:
@@ -414,23 +401,19 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
 
     def field_obs_surface_geometry_target_sub_observer_iau_west_longitude1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return cast(FloatField,
-                        self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LONGITUDE_MIDDLE'))
-        return cast(FloatField,
-                    self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE'))
+            return cast(FloatField, self._index_col('CSS:PRIMARY_SUB_SPACECRAFT_LONGITUDE_MIDDLE'))
+        return cast(FloatField, self._index_col('CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE'))
 
     def field_obs_surface_geometry_target_sub_observer_iau_west_longitude2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_sub_observer_iau_west_longitude1()
 
     def field_obs_surface_geometry_target_center_distance1(self) -> FloatField:
         if self._is_ring_map_projection():
-            return cast(FloatField,
-                        self._index_col('CSS:PRIMARY_SPACECRAFT_RANGE_MIDDLE'))
+            return cast(FloatField, self._index_col('CSS:PRIMARY_SPACECRAFT_RANGE_MIDDLE'))
         return cast(FloatField, self._index_col('CSS:BODY_SPACECRAFT_RANGE_MIDDLE'))
 
     def field_obs_surface_geometry_target_center_distance2(self) -> FloatField:
         return self.field_obs_surface_geometry_target_center_distance1()
-
 
     ##########################################
     ### OVERRIDE FROM ObsCassiniCommonPDS3 ###
@@ -448,8 +431,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
         sc = self._fix_cassini_sclk(sc)
         if sc is None or not sc.startswith('1/'):
-            self._log_nonrepeating_error(
-                f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
+            self._log_nonrepeating_error(f'Badly formatted SPACECRAFT_CLOCK_START_COUNT "{sc}"')
             return None
         return self._parse_cassini_sclk(sc)
 
@@ -457,8 +439,7 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         sc = self._index_col('SPACECRAFT_CLOCK_STOP_COUNT')
         sc = self._fix_cassini_sclk(sc)
         if sc is None or not sc.startswith('1/'):
-            self._log_nonrepeating_error(
-                f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
+            self._log_nonrepeating_error(f'Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "{sc}"')
             return None
         sc_cvt = self._parse_cassini_sclk(sc)
         if sc_cvt is None:
@@ -467,8 +448,9 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
             self._log_nonrepeating_warning(
-                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '+
-                f'({sc_cvt}) are in the wrong order - setting to count1')
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 '
+                + f'({sc_cvt}) are in the wrong order - setting to count1'
+            )
             sc_cvt = sc1
 
         return sc_cvt
@@ -476,7 +458,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     def field_obs_mission_cassini_mission_phase_name(self) -> MultFieldRet:
         mp = self._cassini_normalize_mission_phase_name()
         return self._create_mult(mp)
-
 
     ###############################################
     ### FIELD METHODS FOR obs_instrument_cocirs ###

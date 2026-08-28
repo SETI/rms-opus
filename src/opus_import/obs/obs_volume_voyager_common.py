@@ -26,7 +26,6 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
         """
         return self._parse_sclk(opus_support.parse_voyager_sclk, sclk, 'Voyager')
 
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################
@@ -45,7 +44,7 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
         """
         inst_host = self._some_index_col('INSTRUMENT_HOST_NAME')
         assert inst_host in ['VOYAGER 1', 'VOYAGER 2']
-        return cast(str, 'VG'+inst_host[-1])
+        return cast(str, 'VG' + inst_host[-1])
 
     @property
     def primary_filespec(self) -> str | None:
@@ -65,7 +64,6 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
         filespec = self._index_col('FILE_SPECIFICATION_NAME')
         assert self.bundle is not None
         return cast(str | None, self.bundle + '/' + filespec)
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -98,7 +96,6 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
 
     def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult(self._planet_id())
-
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -138,9 +135,10 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
         sc1 = self.field_obs_mission_voyager_spacecraft_clock_count1()
         if sc1 is not None and sc_cvt < sc1:
             self._log_nonrepeating_warning(
-                    f'spacecraft_clock_count1 ({sc1}) and '+
-                    f'spacecraft_clock_count2 ({sc_cvt}) '+
-                    'are in the wrong order - setting to count1')
+                f'spacecraft_clock_count1 ({sc1}) and '
+                + f'spacecraft_clock_count2 ({sc_cvt}) '
+                + 'are in the wrong order - setting to count1'
+            )
             sc_cvt = sc1
 
         return sc_cvt

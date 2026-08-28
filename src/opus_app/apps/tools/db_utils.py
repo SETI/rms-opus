@@ -37,6 +37,7 @@ MYSQL_TABLE_NOT_EXISTS = 1146
 MYSQL_TABLE_ALREADY_EXISTS = 1050
 MYSQL_EXECUTION_TIME_EXCEEDED = 3024
 
+
 def table_model_from_name(table_name: str) -> type[Any]:
     """Given a table name (obs_pds) return the Django model class (ObsPds).
 
@@ -54,6 +55,7 @@ def table_model_from_name(table_name: str) -> type[Any]:
 
     # This can throw LookupError
     return apps.get_model('search', model_name)
+
 
 def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
     """Return all rows containing opus_id in table_name (better be only one!).
@@ -76,8 +78,8 @@ def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
     # The model class is chosen by name, so its manager and everything that comes
     # off it are untyped; both returns are that table's queryset.
     if table_name == 'obs_general':
-        return table_model.objects.filter(opus_id=opus_id) # type: ignore[no-any-return]
-    return table_model.objects.filter(obs_general__opus_id=opus_id) # type: ignore[no-any-return]
+        return table_model.objects.filter(opus_id=opus_id)  # type: ignore[no-any-return]
+    return table_model.objects.filter(obs_general__opus_id=opus_id)  # type: ignore[no-any-return]
 
 
 # Looking up entries in the mult tables is slow, so cache them in memory as they
@@ -85,8 +87,8 @@ def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
 # much memory even in the worst case.
 _PRETTY_MULT_CACHE: dict[tuple[str, Any], dict[str, str | None]] = {}
 
-def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any,
-                                 cvt_null: bool) -> str | None:
+
+def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any, cvt_null: bool) -> str | None:
     """Given a param_info for a mult and the mult value, return the pretty label.
 
     Parameters:
@@ -101,13 +103,12 @@ def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any,
         mult table has no such row, or when the row is the null one and `cvt_null`
         is false.
     """
-    if param_info.form_type is None: # pragma: no cover - import error
+    if param_info.form_type is None:  # pragma: no cover - import error
         return None
 
-    (form_type, _form_type_format,
-     _form_type_unit_id) = parse_form_type(param_info.form_type)
+    (form_type, _form_type_format, _form_type_unit_id) = parse_form_type(param_info.form_type)
 
-    if form_type not in settings.MULT_FORM_TYPES: # pragma: no cover - import error
+    if form_type not in settings.MULT_FORM_TYPES:  # pragma: no cover - import error
         return None
 
     key = (param_info.param_qualified_name(), value)
@@ -115,10 +116,10 @@ def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any,
         result = _PRETTY_MULT_CACHE[key]
     else:
         mult_param = get_mult_name(param_info.param_qualified_name())
-        model = apps.get_model('search', mult_param.title().replace('_',''))
+        model = apps.get_model('search', mult_param.title().replace('_', ''))
 
-        results = model.objects.filter(id=value).values('value','label')
-        if not results: # pragma: no cover - import error
+        results = model.objects.filter(id=value).values('value', 'label')
+        if not results:  # pragma: no cover - import error
             return None
         result = results[0]
         _PRETTY_MULT_CACHE[key] = result
@@ -126,8 +127,10 @@ def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any,
         return None
     return result['label']
 
-def lookup_pretty_value_for_mult_list(param_info: ParamInfo, mult_vals: Iterable[Any],
-                                      cvt_null: bool) -> str:
+
+def lookup_pretty_value_for_mult_list(
+    param_info: ParamInfo, mult_vals: Iterable[Any], cvt_null: bool
+) -> str:
     """Given a param_info for a mult list and its values, return the pretty labels.
 
     Parameters:
@@ -142,13 +145,11 @@ def lookup_pretty_value_for_mult_list(param_info: ParamInfo, mult_vals: Iterable
     """
     result_list = []
     for mult_val in mult_vals:
-        ret = lookup_pretty_value_for_mult(param_info,
-                                           mult_val,
-                                           cvt_null=cvt_null)
+        ret = lookup_pretty_value_for_mult(param_info, mult_val, cvt_null=cvt_null)
         result_list.append(ret)
     # lookup_pretty_value_for_mult returns None for a mult table's null row when
     # cvt_null is false, and joining a None raises TypeError. That is a real fault
     # rather than a typing artifact, and choosing what a null should display as
     # belongs to the caller that passes cvt_null, so the declaration is left honest
     # and the fault is recorded instead of being cast away.
-    return ','.join(result_list) # type: ignore[arg-type]
+    return ','.join(result_list)  # type: ignore[arg-type]

@@ -6,6 +6,7 @@ class named `Configuration` in the module given to `--configuration`, which supp
 the per-session parser, the HTML generator and the summary report that `LogParser`
 drives.  `opus_log_analyzer.opus.configuration` is the configuration shipped for OPUS.
 """
+
 import abc
 import re
 from collections.abc import Callable
@@ -40,7 +41,9 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         raise Exception()
 
     @abc.abstractmethod
-    def create_batch_html_generator(self, host_infos_by_ip: list[Any]) -> 'AbstractBatchHtmlGenerator':
+    def create_batch_html_generator(
+        self, host_infos_by_ip: list[Any]
+    ) -> 'AbstractBatchHtmlGenerator':
         """
         Creates a blackbox capable of giving the Jinja template whatever information it needs
         """
@@ -151,10 +154,12 @@ class PatternRegistry:
             A decorator that adds the method it is given to this registry and hands
             it back unchanged, so several patterns can be stacked on one method.
         """
+
         def decorator_for_pattern(method: PatternRegistry.METHOD) -> PatternRegistry.METHOD:
             """Add the method to the registry under this pattern and return it."""
             self.patterns.append((re.compile(pattern), method))
             return method
+
         return decorator_for_pattern
 
     def find_matching_pattern(self, path: str) -> tuple[METHOD, Match[str]] | None:
@@ -167,10 +172,8 @@ class PatternRegistry:
             The first method whose pattern matches, in the order the patterns were
             registered, together with the match, or None if no pattern matches.
         """
-        for (pattern, method) in self.patterns:
+        for pattern, method in self.patterns:
             match = re.match(pattern, path)
             if match:
                 return method, match
         return None
-
-

@@ -41,6 +41,10 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     Parameters:
         parser: The pytest command-line parser.
     """
-    parser.addoption('--regenerate-obs-values', action='store_true', default=False,
-                     help='Rewrite tests/opus_import/fixtures/obs_field_values.json '
-                          'from what the obs classes currently produce.')
+    parser.addoption(
+        '--regenerate-obs-values',
+        action='store_true',
+        default=False,
+        help='Rewrite tests/opus_import/fixtures/obs_field_values.json '
+        'from what the obs classes currently produce.',
+    )

@@ -97,15 +97,17 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+
 @method_decorator(never_cache, name='dispatch')
-class MainSite(TemplateView): # pragma: no cover - only accessed from browser
+class MainSite(TemplateView):  # pragma: no cover - only accessed from browser
     """Serve the page the OPUS user interface runs in.
 
     `opus_app/urls.py` routes both `/` and `/opus/` here. The response renders
     `ui/base.html` and is marked never-cache, so a browser coming back to the
     page asks for it again rather than showing a stored copy.
     """
-    template_name = "ui/base.html"
+
+    template_name = 'ui/base.html'
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Build the template context the page starts up from.
@@ -138,9 +140,10 @@ class MainSite(TemplateView): # pragma: no cover - only accessed from browser
         context['api_guide_url'] = settings.API_GUIDE_URL
         if settings.OPUS_FILE_VERSION == '':
             settings.OPUS_FILE_VERSION = get_git_version()
-        context['VERSION_SUFFIX'] = '?version='+settings.OPUS_FILE_VERSION
+        context['VERSION_SUFFIX'] = '?version=' + settings.OPUS_FILE_VERSION
         context['allow_fallback'] = True
         return context
+
 
 @never_cache
 @api_view
@@ -179,20 +182,21 @@ def api_notifications(request: HttpRequest) -> HttpResponse:
 
     lastupdate = None
     try:
-        with open(settings.OPUS_LAST_BLOG_UPDATE_FILE) as fp: # pragma: no cover -
+        with open(settings.OPUS_LAST_BLOG_UPDATE_FILE) as fp:  # pragma: no cover -
             # There's no guarantee there will be a blog update file during the
             # unit tests
             lastupdate_val = fp.read().strip()
             if lastupdate_val:
                 lastupdate = lastupdate_val
     except FileNotFoundError:
-        log.error('api_notifications: Failed to read file "%r"',
-                  settings.OPUS_LAST_BLOG_UPDATE_FILE)
+        log.error(
+            'api_notifications: Failed to read file "%r"', settings.OPUS_LAST_BLOG_UPDATE_FILE
+        )
 
     notification = None
     notification_modify = None
     try:
-        with open(settings.OPUS_NOTIFICATION_FILE) as fp: # pragma: no cover -
+        with open(settings.OPUS_NOTIFICATION_FILE) as fp:  # pragma: no cover -
             # There's no guarantee there will be a notification file during the
             # unit tests
             notification_val = fp.read().strip()
@@ -200,20 +204,24 @@ def api_notifications(request: HttpRequest) -> HttpResponse:
                 notification = notification_val
             try:
                 notification_modify = os.path.getmtime(settings.OPUS_NOTIFICATION_FILE)
-            except OSError: # pragma: no cover - filesystem error
+            except OSError:  # pragma: no cover - filesystem error
                 # The file was opened a few lines above, so a failure to stat it
                 # is not the ordinary "no notification today" case the enclosing
                 # FileNotFoundError handler covers.
-                log.exception('api_notifications: Failed to read the modify '
-                              'date of file "%r"',
-                              settings.OPUS_NOTIFICATION_FILE)
+                log.exception(
+                    'api_notifications: Failed to read the modify date of file "%r"',
+                    settings.OPUS_NOTIFICATION_FILE,
+                )
     except FileNotFoundError:
-        log.debug('api_notifications: Failed to read file "%r"',
-                  settings.OPUS_NOTIFICATION_FILE)
+        log.debug('api_notifications: Failed to read file "%r"', settings.OPUS_NOTIFICATION_FILE)
 
-    return json_response({'lastupdate': lastupdate,
-                          'notification': notification,
-                          'notification_mdate': notification_modify})
+    return json_response(
+        {
+            'lastupdate': lastupdate,
+            'notification': notification,
+            'notification_mdate': notification_modify,
+        }
+    )
 
 
 @api_view
@@ -248,7 +256,7 @@ def api_get_menu(request: HttpRequest) -> HttpResponse:
         raise Http400Error(http400_bad_or_missing_reqno('/__menu.json'))
 
     menu_context = _get_menu_labels(request, 'search')
-    menu_context['which'] = 'search' # Used to create DOM IDs
+    menu_context['which'] = 'search'  # Used to create DOM IDs
     menu_template = get_template('ui/menu.html')
     html = menu_template.render(menu_context)
 
@@ -289,25 +297,27 @@ def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
     col_slugs: str | list[str]
     col_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
     col_slugs = cols_to_slug_list(col_slugs)
-    col_slugs = list(filter(None, col_slugs)) # Eliminate empty slugs
+    col_slugs = list(filter(None, col_slugs))  # Eliminate empty slugs
     if not col_slugs:
         col_slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
     col_slugs_info = {}
     for col_slug in col_slugs:
         # If the desired_unit is None, the default unit will be displayed, else the
         # desired_unit is displayed.
-        p, desired_unit = get_param_info_by_slug(col_slug, 'col',
-                                                 allow_units_override=True)
+        p, desired_unit = get_param_info_by_slug(col_slug, 'col', allow_units_override=True)
         if p is None:
             log.error('api_get_metadata_selector: unknown cols slug %r', col_slug)
             raise Http400Error(http400_unknown_slug(col_slug, request))
         # disp_unit, default_unit and units are not fields of ParamInfo: they are
         # attached to the row for the menu templates to read.
-        (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
-         p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
+        (
+            p.disp_unit,
+            p.default_unit,  # type: ignore[attr-defined]
+            p.units,
+        ) = get_disp_default_and_avail_units(p.form_type)  # type: ignore[attr-defined]
 
         if desired_unit is not None:
-            p.disp_unit = p.units[desired_unit] # type: ignore[attr-defined]
+            p.disp_unit = p.units[desired_unit]  # type: ignore[attr-defined]
 
         if ':' in col_slug:
             col_slug, _, _ = col_slug.partition(':')
@@ -320,14 +330,13 @@ def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
     search_slugs = request.GET.get('widgets', None)
     if search_slugs:
         search_slugs = cols_to_slug_list(search_slugs)
-        search_slugs = filter(None, search_slugs) # Eliminate empty slugs
+        search_slugs = filter(None, search_slugs)  # Eliminate empty slugs
         for search_slug in search_slugs:
             pi = get_param_info_by_slug(search_slug, 'widget')
             if pi is None:
-                log.error('api_get_metadata_selector: unknown widgets slug %r',
-                          search_slug)
+                log.error('api_get_metadata_selector: unknown widgets slug %r', search_slug)
                 raise Http400Error(http400_unknown_slug(search_slug, request))
-            if pi.display_results: # pragma: no cover -
+            if pi.display_results:  # pragma: no cover -
                 # We don't currently support any search slugs that aren't also
                 # displayed
                 search_slugs_info.append(pi)
@@ -335,8 +344,7 @@ def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
     reqno = get_reqno(request)
     if reqno is None:
         log.error('api_get_metadata_selector: Missing or badly formatted reqno')
-        raise Http400Error(
-                    http400_bad_or_missing_reqno('/__metadata_selector.json'))
+        raise Http400Error(http400_bad_or_missing_reqno('/__metadata_selector.json'))
 
     menu_context = _get_menu_labels(request, 'selector', search_slugs_info)
 
@@ -347,8 +355,7 @@ def api_get_metadata_selector(request: HttpRequest) -> HttpResponse:
     html = menu_template.render(menu_context)
     add_field_html = add_field_menu_template.render(menu_context)
 
-    return json_response({'html': html, 'add_field_html': add_field_html,
-                          'reqno': reqno})
+    return json_response({'html': html, 'add_field_html': add_field_html, 'reqno': reqno})
 
 
 @never_cache
@@ -381,9 +388,9 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
         Http400Error: The slug names no search field.
     """
 
-    def _update_form_with_grouping(form: str,
-                                   form_vals: dict[str, str | list[str] | None],
-                                   glabel: str) -> str:
+    def _update_form_with_grouping(
+        form: str, form_vals: dict[str, str | list[str] | None], glabel: str
+    ) -> str:
         """Append one mult group, and the inputs belonging to it, to the form.
 
         Parameters:
@@ -405,7 +412,7 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
         for idx, dir_name in enumerate(dir_list):
             current_hierarchy = dir_name if idx == 0 else (current_hierarchy + '_' + dir_name)
             # Check if the current hierarchy exists
-            if current_hierarchy in form: # pragma: no cover - XXX
+            if current_hierarchy in form:  # pragma: no cover - XXX
                 # We don't currently have any multi-level categories so this will
                 # never execute.
                 # Remove </ul> to make sure the next level directory is wrapped
@@ -415,33 +422,42 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 # If the current hierarchy exists, and it's at the lowest level,
                 # we will render the input form
                 if idx == len(dir_list) - 1:
-                    html += (SearchForm(form_vals,
-                                        auto_id='%s_' + str(dir_name),
-                                        grouping=glabel).as_ul()
-                            +'</ul>' * num_of_u_tags)
+                    html += (
+                        SearchForm(
+                            form_vals, auto_id='%s_' + str(dir_name), grouping=glabel
+                        ).as_ul()
+                        + '</ul>' * num_of_u_tags
+                    )
                     form += html
                     return form
                 else:
                     continue
 
             # If it's a brand new category, we will create a new mult group container
-            html += ("\n\n"
-                     +'<div class="mult-group-label-container'
-                     +' mult-group-' + str(current_hierarchy) + '">'
-                     +'<span class="indicator fa fa-plus">'
-                     +'</span>'
-                     +'<span class="mult-group-label">'
-                     +str(dir_name) + '</span>'
-                     +'<span class="hints"></span></div>'
-                     +'<ul class="mult-group"'
-                     +' data-group=' + str(current_hierarchy) + '>')
-            if idx == len(dir_list) - 1: # pragma: no cover - XXX
+            html += (
+                '\n\n'
+                + '<div class="mult-group-label-container'
+                + ' mult-group-'
+                + str(current_hierarchy)
+                + '">'
+                + '<span class="indicator fa fa-plus">'
+                + '</span>'
+                + '<span class="mult-group-label">'
+                + str(dir_name)
+                + '</span>'
+                + '<span class="hints"></span></div>'
+                + '<ul class="mult-group"'
+                + ' data-group='
+                + str(current_hierarchy)
+                + '>'
+            )
+            if idx == len(dir_list) - 1:  # pragma: no cover - XXX
                 # We don't currently have any multi-level categories so this will always
                 # execute.
-                html += (SearchForm(form_vals,
-                                    auto_id='%s_' + str(dir_name),
-                                    grouping=glabel).as_ul()
-                        +'</ul>' * num_of_u_tags)
+                html += (
+                    SearchForm(form_vals, auto_id='%s_' + str(dir_name), grouping=glabel).as_ul()
+                    + '</ul>' * num_of_u_tags
+                )
         form += html
         return form
 
@@ -455,12 +471,10 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
         # suffix-stripped form the lookup used, so "badslug1" is not reported as
         # "badslug" in either place. %r so a control character in the slug cannot
         # forge a log line.
-        log.error('api_get_widget: Could not find param_info entry for slug %r',
-                  requested_slug)
+        log.error('api_get_widget: Could not find param_info entry for slug %r', requested_slug)
         raise Http400Error(http400_unknown_slug(requested_slug, request))
 
-    (form_type, form_type_format,
-     form_type_unit_id) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format, form_type_unit_id) = parse_form_type(param_info.form_type)
     param_qualified_name = param_info.param_qualified_name()
 
     tooltip = param_info.get_tooltip()
@@ -479,11 +493,11 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
     grouped_options = {}
     is_grouped_mult = False
 
-    if request and request.GET is not None: # pragma: no cover - always should be True
-        (selections, extras) = url_to_search_params(request.GET,
-                                                    allow_errors=True,
-                                                    allow_empty=True)
-        if selections is None: # pragma: no cover -
+    if request and request.GET is not None:  # pragma: no cover - always should be True
+        (selections, extras) = url_to_search_params(
+            request.GET, allow_errors=True, allow_empty=True
+        )
+        if selections is None:  # pragma: no cover -
             # Would only happen if the front end screws up badly.
             # XXX Really should throw an error of some kind
             selections = {}
@@ -515,10 +529,10 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
 
         slug_no_num = strip_numeric_suffix(slug)
 
-        slug1 = slug_no_num+'1'
-        slug2 = slug_no_num+'2'
-        param1 = param_qualified_name_no_num+'1'
-        param2 = param_qualified_name_no_num+'2'
+        slug1 = slug_no_num + '1'
+        slug2 = slug_no_num + '2'
+        param1 = param_qualified_name_no_num + '1'
+        param2 = param_qualified_name_no_num + '2'
 
         form_vals = {slug1: None, slug2: None}
 
@@ -534,12 +548,14 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
             len2 = 0
         length = len1 if len1 > len2 else len2
 
-        if not length: # param is not constrained
-            form = ('<ul class="op-search-inputs-set">'
-                    +str(SearchForm(form_vals, auto_id=auto_id).as_ul())
-                    +'</ul>')
+        if not length:  # param is not constrained
+            form = (
+                '<ul class="op-search-inputs-set">'
+                + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+                + '</ul>'
+            )
 
-        else: # param is constrained
+        else:  # param is constrained
             initial_unit = None
             units = extras['units']
             initial_unit = units[param_qualified_name_no_num][0]
@@ -548,22 +564,24 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
             while key < length:
                 try:
                     form_vals[slug1] = format_unit_value(
-                                                selections[param1][key],
-                                                form_type_format,
-                                                form_type_unit_id,
-                                                initial_unit,
-                                                convert_from_default=False)
-                except (IndexError, KeyError, ValueError, TypeError): # pragma: no cover -
+                        selections[param1][key],
+                        form_type_format,
+                        form_type_unit_id,
+                        initial_unit,
+                        convert_from_default=False,
+                    )
+                except (IndexError, KeyError, ValueError, TypeError):  # pragma: no cover -
                     # Will only happen if the front end screws up badly
                     form_vals[slug1] = None
                 try:
                     form_vals[slug2] = format_unit_value(
-                                                selections[param2][key],
-                                                form_type_format,
-                                                form_type_unit_id,
-                                                initial_unit,
-                                                convert_from_default=False)
-                except (IndexError, KeyError, ValueError, TypeError): # pragma: no cover -
+                        selections[param2][key],
+                        form_type_format,
+                        form_type_unit_id,
+                        initial_unit,
+                        convert_from_default=False,
+                    )
+                except (IndexError, KeyError, ValueError, TypeError):  # pragma: no cover -
                     # Will only happen if the front end screws up badly
                     form_vals[slug2] = None
 
@@ -571,11 +589,13 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 if key != 0:
                     extra_str = 'op-extra-search-inputs'
 
-                form += ('<ul class="op-search-inputs-set '
-                         +extra_str + '">'
-                         +str(SearchForm(form_vals,
-                                         auto_id=auto_id).as_ul())
-                         +'</ul>')
+                form += (
+                    '<ul class="op-search-inputs-set '
+                    + extra_str
+                    + '">'
+                    + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+                    + '</ul>'
+                )
                 key += 1
 
     elif form_type == 'STRING':
@@ -587,17 +607,21 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 if key_num != 0:
                     extra_str = 'op-extra-search-inputs'
 
-                form += ('<ul class="op-search-inputs-set '
-                         +extra_str + '">'
-                         +str(SearchForm(form_vals,
-                                         auto_id=auto_id).as_ul())
-                         +'</ul>')
+                form += (
+                    '<ul class="op-search-inputs-set '
+                    + extra_str
+                    + '">'
+                    + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+                    + '</ul>'
+                )
         else:
-            form = ('<ul class="op-search-inputs-set">'
-                    +str(SearchForm(form_vals, auto_id=auto_id).as_ul())
-                    +'</ul>')
+            form = (
+                '<ul class="op-search-inputs-set">'
+                + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+                + '</ul>'
+            )
 
-    else: # MULT form types
+    else:  # MULT form types
         assert form_type in settings.MULT_FORM_TYPES, form_type
         values = None
         form_vals = {slug: None}
@@ -605,14 +629,14 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
             values = selections[param_qualified_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
         mult_param = get_mult_name(param_qualified_name)
-        model = apps.get_model('search',mult_param.title().replace('_',''))
+        model = apps.get_model('search', mult_param.title().replace('_', ''))
 
         if values is not None:
             # Make form choices case-insensitive
             choices = [mult.label for mult in model.objects.filter(display='Y')]
             new_values = []
             for val in values:
-                for choice in choices: # pragma: no cover - loop should never complete
+                for choice in choices:  # pragma: no cover - loop should never complete
                     if val.upper() == choice.upper():
                         val = choice
                         break
@@ -623,8 +647,7 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
         # None grouping values will be displayed before grouping values
         if list(model.objects.filter(grouping=None)):
             form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
-            for count, mult in enumerate(model.objects.filter(display='Y')
-                                        .order_by('disp_order')):
+            for count, mult in enumerate(model.objects.filter(display='Y').order_by('disp_order')):
                 tp_id = mult.label
                 # If there is any invalid characters for HTML class/id
                 # we will replace invalid characters in the mult options
@@ -633,18 +656,15 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 for ch in settings.INVALID_CLASS_CHAR:
                     if ch in tp_id:
                         tp_id = tp_id.replace(ch, '-')
-                mult_tooltip = get_def_for_tooltip(mult.value, 'MULT_'+slug.upper())
-                if mult_tooltip is not None: # pragma: no cover - XXX
+                mult_tooltip = get_def_for_tooltip(mult.value, 'MULT_' + slug.upper())
+                if mult_tooltip is not None:  # pragma: no cover - XXX
                     # No mults currently have tooltips
                     customized_input = True
                 options.append((count, mult.label, mult_tooltip, tp_id))
 
         # Group the entries with the same grouping values.
         # Different groups will be displayed based on group_disp_order
-        grouping_entries = (model.objects
-                            .order_by('group_disp_order')
-                            .distinct()
-                            .values('grouping'))
+        grouping_entries = model.objects.order_by('group_disp_order').distinct().values('grouping')
         for entry in grouping_entries:
             options_of_a_group = []
             glabel = entry['grouping']
@@ -652,23 +672,21 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
             # `# pragma: no cover`, which must stay attached to that condition for
             # the integration coverage gate.
             if glabel is not None and glabel != 'NULL':  # noqa: SIM102
-                if model.objects.filter(grouping=glabel)[0:1]: # pragma: no cover -
+                if model.objects.filter(grouping=glabel)[0:1]:  # pragma: no cover -
                     # There should always be at least one item under the grouping
                     form = _update_form_with_grouping(form, form_vals, glabel)
-                    for count, mult in enumerate(model.objects.filter(grouping=glabel,
-                                                      display='Y')
-                                                .order_by('disp_order')):
+                    for count, mult in enumerate(
+                        model.objects.filter(grouping=glabel, display='Y').order_by('disp_order')
+                    ):
                         tp_id = mult.label
                         for ch in settings.INVALID_CLASS_CHAR:
                             if ch in tp_id:
                                 tp_id = tp_id.replace(ch, '-')
-                        mult_tooltip = get_def_for_tooltip(mult.value,
-                                                           'MULT_'+slug.upper())
+                        mult_tooltip = get_def_for_tooltip(mult.value, 'MULT_' + slug.upper())
                         if mult_tooltip is not None:
                             customized_input = True
-                        options_of_a_group.append((count, mult.label,
-                                                   mult_tooltip, tp_id))
-                    grouped_options[(glabel,glabel)] = options_of_a_group
+                        options_of_a_group.append((count, mult.label, mult_tooltip, tp_id))
+                    grouped_options[(glabel, glabel)] = options_of_a_group
 
     # This is a really horrible hack. They removed the ability to set a default
     # dropdown choice in Django 2.x. See the Django template file
@@ -680,13 +698,13 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
     #   <option value="QQQ" selected>QQQ</option>
     # where QQQ is the initial_qtype.
     if initial_qtype:
-        form = form.replace(f'<option value="{initial_qtype}">',
-                            f'<option value="{initial_qtype}" selected>')
+        form = form.replace(
+            f'<option value="{initial_qtype}">', f'<option value="{initial_qtype}" selected>'
+        )
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
-    (form_type, form_type_format,
-     form_type_unit_id) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format, form_type_unit_id) = parse_form_type(param_info.form_type)
     units = get_unit_display_names(form_type_unit_id)
     valid_units = get_valid_units(form_type_unit_id)
     ranges = param_info.get_ranges_info()
@@ -701,10 +719,12 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 # There are always valid units; this is just a safety check
                 for unit in valid_units:
                     new_unit.append(unit)
-                    new_val1.append(format_unit_value(val1, default_format,
-                                                      form_type_unit_id, unit))
-                    new_val2.append(format_unit_value(val2, default_format,
-                                                      form_type_unit_id, unit))
+                    new_val1.append(
+                        format_unit_value(val1, default_format, form_type_unit_id, unit)
+                    )
+                    new_val2.append(
+                        format_unit_value(val2, default_format, form_type_unit_id, unit)
+                    )
             item['valid_units_info'] = zip(new_unit, new_val1, new_val2, strict=False)
 
     # Get the current selections for customized widget inputs, need to pass into
@@ -717,23 +737,23 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
     # don't pass it to the template
     if not display_search_unit(form_type_unit_id):
         units = None
-    template = "ui/widget.html"
+    template = 'ui/widget.html'
     context = {
-        "slug": slug,
-        "label": label,
-        "tooltip": tooltip,
-        "intro": intro,
-        "form": form,
-        "form_type": form_type,
-        "range_form_types": settings.RANGE_FORM_TYPES,
-        "mult_form_types": settings.MULT_FORM_TYPES,
-        "units": units,
-        "ranges": ranges,
-        "customized_input": customized_input,
-        "grouped_options": grouped_options,
-        "options": options,
-        "is_grouped_mult": is_grouped_mult,
-        "selections": current_selections,
+        'slug': slug,
+        'label': label,
+        'tooltip': tooltip,
+        'intro': intro,
+        'form': form,
+        'form_type': form_type,
+        'range_form_types': settings.RANGE_FORM_TYPES,
+        'mult_form_types': settings.MULT_FORM_TYPES,
+        'units': units,
+        'ranges': ranges,
+        'customized_input': customized_input,
+        'grouped_options': grouped_options,
+        'options': options,
+        'is_grouped_mult': is_grouped_mult,
+        'selections': current_selections,
     }
 
     return render(request, template, context)
@@ -781,8 +801,10 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
         # 'instrumentid' is a fixed slug rather than anything the caller sent. A
         # param_info table without it is a broken import, and this call is where
         # that would surface either way.
-        get_param_info_by_slug('instrumentid', 'col'), # type: ignore[arg-type]
-        obs_general.instrument_id, False)
+        get_param_info_by_slug('instrumentid', 'col'),  # type: ignore[arg-type]
+        obs_general.instrument_id,
+        False,
+    )
     filespec = obs_general.primary_filespec
     selection = filespec.split('/')[-1].split('.')[0]
 
@@ -807,7 +829,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
     # The medium image is what's displayed on the Detail page
     # XXX This should be replaced with a viewset query and pixel size
     preview_med_list = get_pds_preview_images(opus_id, None, 'med')
-    if len(preview_med_list) != 1: # pragma: no cover - data error
+    if len(preview_med_list) != 1:  # pragma: no cover - data error
         log.error('Failed to find single med size image for "%r"', opus_id)
         preview_med_url = ''
     else:
@@ -815,7 +837,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
 
     # The full-size image is provided in case the user clicks on the medium one
     preview_full_list = get_pds_preview_images(opus_id, None, 'full')
-    if len(preview_full_list) != 1: # pragma: no cover - data error
+    if len(preview_full_list) != 1:  # pragma: no cover - data error
         log.error('Failed to find single full size image for "%r"', opus_id)
         preview_full_url = ''
     else:
@@ -832,7 +854,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
     # On the details page, we display the list of available filenames after
     # each product type
     products = get_pds_products(opus_id)[opus_id]
-    if not products: # pragma: no cover - data error
+    if not products:  # pragma: no cover - data error
         products = {}
     new_products: dict[str, dict[str, dict[str, Any]]] = {}
     for version in products:
@@ -847,38 +869,37 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
             # PDS4 by looking for a file with the extension '.xml', which
             # is definitely a hack. The restriction will need to be removed
             # when it does. TODOPDS4
-            if (product_type[3].find('Index') != -1 and
-                not any(x.endswith('.xml') for x in file_list)): # TODOPDS4
+            if product_type[3].find('Index') != -1 and not any(
+                x.endswith('.xml') for x in file_list
+            ):  # TODOPDS4
                 tab_url = None
-                for fn in file_list: # pragma: no cover -
+                for fn in file_list:  # pragma: no cover -
                     # We always have a tab in our current data
-                    if (fn.endswith('.tab') or
-                        fn.endswith('.TAB')):
+                    if fn.endswith('.tab') or fn.endswith('.TAB'):
                         tab_url = fn
                         break
-                if tab_url: # pragma: no cover -
+                if tab_url:  # pragma: no cover -
                     # We always have a tab in our current data
                     tab_url = tab_url.replace('holdings', 'viewmaster')
-                    tab_url += '/'+selection
-                    tab_url = tab_url.replace(settings.PRODUCT_HTTP_PATH,
-                                              settings.VIEWMASTER_ROOT_PATH)
+                    tab_url += '/' + selection
+                    tab_url = tab_url.replace(
+                        settings.PRODUCT_HTTP_PATH, settings.VIEWMASTER_ROOT_PATH
+                    )
                 product_info['product_link'] = tab_url
             else:
                 product_info['product_link'] = None
             file_list = file_list[:]
             for i in range(len(file_list)):
                 fn = file_list[i].split('/')[-1]
-                file_list[i] = {'filename': fn,
-                                'link': file_list[i]}
+                file_list[i] = {'filename': fn, 'link': file_list[i]}
             product_info['files'] = file_list
             try:
                 entry = Definitions.objects.get(
-                                    context__name='OPUS_PRODUCT_TYPE',
-                                    term=product_type[2])
+                    context__name='OPUS_PRODUCT_TYPE', term=product_type[2]
+                )
                 product_info['tooltip'] = entry.definition
-            except Definitions.DoesNotExist: # pragma: no cover - import error
-                log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"',
-                          product_type[2])
+            except Definitions.DoesNotExist:  # pragma: no cover - import error
+                log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"', product_type[2])
                 product_info['tooltip'] = None
             new_products[version][product_type[3]] = product_info
 
@@ -890,7 +911,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
         'products': new_products,
         'opus_id': opus_id,
         'instrument_id': instrument_id,
-        'cart': cart
+        'cart': cart,
     }
 
     return render(request, 'ui/detail.html', context)
@@ -930,6 +951,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     Raises:
         Http404: The call arrived without a usable request.
     """
+
     def _escape_or_label_results(old_slug: str, pi: ParamInfo) -> str:
         """Return the name to give a metadata field in a message to the user.
 
@@ -947,7 +969,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             # assumes a displayable field has a results label, and nothing
             # enforces that, so the ignore records the assumption here rather
             # than asserting a property of the data this code cannot check.
-            return pi.body_qualified_label_results() # type: ignore[return-value]
+            return pi.body_qualified_label_results()  # type: ignore[return-value]
         return escape(old_slug)
 
     def _escape_or_label(old_slug: str, pi: ParamInfo) -> str:
@@ -961,12 +983,12 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         Returns:
             The field's search label, or the escaped slug.
         """
-        if pi.display_results: # pragma: no cover -
+        if pi.display_results:  # pragma: no cover -
             # We don't currently support any display terms that aren't
             # also search terms
             # As above, for the search label.
-            return pi.body_qualified_label() # type: ignore[return-value]
-        return escape(old_slug) # pragma: no cover
+            return pi.body_qualified_label()  # type: ignore[return-value]
+        return escape(old_slug)  # pragma: no cover
 
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request('/__normalizeurl.json'))
@@ -976,7 +998,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     # query string cannot produce that -- every key it finds gets a value, even an
     # empty one -- so what this builds is a dictionary of strings.
     original_slugs: dict[str, str]
-    original_slugs = dict(list(request.GET.items())) # type: ignore[arg-type] # Make it mutable
+    original_slugs = dict(list(request.GET.items()))  # type: ignore[arg-type] # Make it mutable
 
     # When we are given a URL, this is the user just selecting something like
     # opus.pds-rings.seti.org/opus
@@ -996,12 +1018,23 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     required_widgets_list = []
 
     handled_slugs = []
-    search_slugs_by_clause: dict[str, list[tuple[str,
-                                                 str | None, str | None,
-                                                 str | None, str | None,
-                                                 str | None, str | None,
-                                                 str | None, str | None]]] = {}
-    units_by_slug: dict[str, str | None] = {} # To enforce a single unit for all clauses of a slug
+    search_slugs_by_clause: dict[
+        str,
+        list[
+            tuple[
+                str,
+                str | None,
+                str | None,
+                str | None,
+                str | None,
+                str | None,
+                str | None,
+                str | None,
+                str | None,
+            ]
+        ],
+    ] = {}
+    units_by_slug: dict[str, str | None] = {}  # To enforce a single unit for all clauses of a slug
 
     # Sort to make tests deterministic and to group qtype and unit
     # with search slugs
@@ -1019,12 +1052,12 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         """
         clause_num_str = ''
         if '_' in key:
-            clause_num_str = key[key.index('_'):]
-            key = key[:key.index('_')]
+            clause_num_str = key[key.index('_') :]
+            key = key[: key.index('_')]
         if key.startswith('qtype-'):
-            key = key[6:]+'0' # Add 0 to sort before 1/2 suffixes
+            key = key[6:] + '0'  # Add 0 to sort before 1/2 suffixes
         elif key.startswith('unit-'):
-            key = key[5:]+'0'
+            key = key[5:] + '0'
         key += clause_num_str
         return key
 
@@ -1042,11 +1075,11 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         clause_num_str = ''
         orig_slug = slug
         if '_' in slug:
-            clause_num_str = slug[slug.rindex('_'):]
+            clause_num_str = slug[slug.rindex('_') :]
             try:
                 clause_num = int(clause_num_str[1:])
                 if clause_num > 0:
-                    slug = slug[:slug.rindex('_')]
+                    slug = slug[: slug.rindex('_')]
                 else:
                     raise ValueError
             except ValueError:
@@ -1072,8 +1105,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
 
         # Note 'slug' could be old or new version, but pi.slug is always new
         if not pi:
-            msg = ('Search term "' + escape(orig_slug) + '" is unknown; '
-                   +'it has been ignored.')
+            msg = 'Search term "' + escape(orig_slug) + '" is unknown; ' + 'it has been ignored.'
             msg_list.append(msg)
             continue
         # The slug column is nullable in the model, and everything below indexes
@@ -1081,40 +1113,50 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         assert pi.slug is not None
         # Search slugs might have numeric suffixes but single column ranges
         # don't so just ignore all the numbers.
-        if (not is_qtype and not is_unit and
-            strip_numeric_suffix(slug) != strip_numeric_suffix(pi.slug)):
+        if (
+            not is_qtype
+            and not is_unit
+            and strip_numeric_suffix(slug) != strip_numeric_suffix(pi.slug)
+        ):
             old_ui_slug_flag = True
         pi_searchable: ParamInfo | None
         pi_searchable = pi
         if pi.slug[-1] == '2':
             # We have to look at the '1' version to see if it's searchable
-            pi_searchable = get_param_info_by_slug(
-                                    strip_numeric_suffix(pi.slug)+'1', 'search')
-            if not pi_searchable: # pragma: no cover - we don't have non-searchable slugs
-                log.error('api_normalize_url: Found slug "%r" but not "%r"',
-                          pi.slug, strip_numeric_suffix(pi.slug)+'1')
+            pi_searchable = get_param_info_by_slug(strip_numeric_suffix(pi.slug) + '1', 'search')
+            if not pi_searchable:  # pragma: no cover - we don't have non-searchable slugs
+                log.error(
+                    'api_normalize_url: Found slug "%r" but not "%r"',
+                    pi.slug,
+                    strip_numeric_suffix(pi.slug) + '1',
+                )
                 continue
-        handled_slugs.append(pi.slug+clause_num_str)
+        handled_slugs.append(pi.slug + clause_num_str)
         if pi.old_slug:
-            handled_slugs.append(pi.old_slug+clause_num_str)
+            handled_slugs.append(pi.old_slug + clause_num_str)
         if not pi_searchable.display and slug != 'ringobsid':
             # Special exception for ringobsid - we don't have it marked
             # searchable in param_info, but we want to allow it here
-            msg = ('Search field "' + _escape_or_label_results(orig_slug, pi)
-                   +'" is not searchable; it has been removed.')
+            msg = (
+                'Search field "'
+                + _escape_or_label_results(orig_slug, pi)
+                + '" is not searchable; it has been removed.'
+            )
             msg_list.append(msg)
             continue
-        (form_type, _form_type_format,
-         form_type_unit_id) = parse_form_type(pi_searchable.form_type)
+        (form_type, _form_type_format, form_type_unit_id) = parse_form_type(pi_searchable.form_type)
 
         is_range = form_type in settings.RANGE_FORM_TYPES
         is_mult = form_type in settings.MULT_FORM_TYPES
         is_string = not is_range and not is_mult
 
         if is_mult and clause_num_str:
-            msg = ('Search field "' + _escape_or_label_results(orig_slug, pi)
-                   +'" has a clause number but none is permitted; '
-                   +'it has been removed.')
+            msg = (
+                'Search field "'
+                + _escape_or_label_results(orig_slug, pi)
+                + '" has a clause number but none is permitted; '
+                + 'it has been removed.'
+            )
             msg_list.append(msg)
             continue
 
@@ -1136,32 +1178,32 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             # as well, so handle that case too by throwing away one of them.
             # This is so unusual we don't bother to make a message for it.
             pi1 = pi
-            if not is_qtype and not is_unit: # We found a real '1' slug
-                search1 = strip_numeric_suffix(pi.slug)+'1'
-                search1_val = original_slugs[slug+clause_num_str]
-            slug2 = strip_numeric_suffix(pi.slug)+'2'
-            if slug2+clause_num_str not in original_slugs and pi.old_slug:
-                slug2 = strip_numeric_suffix(pi.old_slug)+'2'
-            if slug2+clause_num_str in original_slugs:
+            if not is_qtype and not is_unit:  # We found a real '1' slug
+                search1 = strip_numeric_suffix(pi.slug) + '1'
+                search1_val = original_slugs[slug + clause_num_str]
+            slug2 = strip_numeric_suffix(pi.slug) + '2'
+            if slug2 + clause_num_str not in original_slugs and pi.old_slug:
+                slug2 = strip_numeric_suffix(pi.old_slug) + '2'
+            if slug2 + clause_num_str in original_slugs:
                 if pi.old_slug:
-                    handled_slugs.append(
-                        strip_numeric_suffix(pi.old_slug)+'2'+clause_num_str)
-                handled_slugs.append(
-                        strip_numeric_suffix(pi.slug)+'2'+clause_num_str)
+                    handled_slugs.append(strip_numeric_suffix(pi.old_slug) + '2' + clause_num_str)
+                handled_slugs.append(strip_numeric_suffix(pi.slug) + '2' + clause_num_str)
                 pi2 = get_param_info_by_slug(slug2, 'search')
-                if not pi2: # pragma: no cover - import error
-                    log.error('api_normalize_url: Search term "%r" was found '
-                              +' but "%r" was not',
-                              escape(slug), escape(slug2))
+                if not pi2:  # pragma: no cover - import error
+                    log.error(
+                        'api_normalize_url: Search term "%r" was found ' + ' but "%r" was not',
+                        escape(slug),
+                        escape(slug2),
+                    )
                 else:
                     # Don't bother checking .display and .display_results
                     # here because this slug is governed by the '1' version.
                     # The nullable slug column again, used unchecked below.
                     assert pi2.slug is not None
-                    search2 = strip_numeric_suffix(pi2.slug)+'2'
-                    search2_val = original_slugs[slug2+clause_num_str]
+                    search2 = strip_numeric_suffix(pi2.slug) + '2'
+                    search2_val = original_slugs[slug2 + clause_num_str]
             else:
-                search2 = strip_numeric_suffix(pi.slug)+'2'
+                search2 = strip_numeric_suffix(pi.slug) + '2'
         if ((is_qtype or is_unit) and is_range) or slug[-1] == '2':
             # We found a '2', look for a '1' OR we found a qtype or unit,
             # so look for a '1' even if the '2' isn't there.
@@ -1171,53 +1213,56 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             # This is so unusual we don't bother to make a message for it.
             pi2 = pi
             if not is_qtype and not is_unit:
-                search2 = strip_numeric_suffix(pi.slug)+'2'
-                search2_val = original_slugs[slug+clause_num_str]
-            slug1 = strip_numeric_suffix(pi.slug)+'1'
-            if slug1+clause_num_str not in original_slugs and pi.old_slug:
-                slug1 = strip_numeric_suffix(pi.old_slug)+'1'
-            if slug1+clause_num_str in original_slugs:
-                if pi.old_slug: # pragma: no cover -
+                search2 = strip_numeric_suffix(pi.slug) + '2'
+                search2_val = original_slugs[slug + clause_num_str]
+            slug1 = strip_numeric_suffix(pi.slug) + '1'
+            if slug1 + clause_num_str not in original_slugs and pi.old_slug:
+                slug1 = strip_numeric_suffix(pi.old_slug) + '1'
+            if slug1 + clause_num_str in original_slugs:
+                if pi.old_slug:  # pragma: no cover -
                     # This always has to be true if we got this far. We can
                     # only be in this section if we had a '2' slug
                     # alphabetically earlier than a '1' slug, which means they
                     # must be a combination of old/new. But if they are a
                     # combination, then by definition there's an old_slug!
-                    handled_slugs.append(
-                        strip_numeric_suffix(pi.old_slug)+'1'+clause_num_str)
-                handled_slugs.append(
-                        strip_numeric_suffix(pi.slug)+'1'+clause_num_str)
+                    handled_slugs.append(strip_numeric_suffix(pi.old_slug) + '1' + clause_num_str)
+                handled_slugs.append(strip_numeric_suffix(pi.slug) + '1' + clause_num_str)
                 pi1 = get_param_info_by_slug(slug1, 'search')
-                if not pi1: # pragma: no cover - import error
-                    log.error('api_normalize_url: Search term "%r" was found '
-                              +' but "%r" was not',
-                              escape(slug), escape(slug1))
+                if not pi1:  # pragma: no cover - import error
+                    log.error(
+                        'api_normalize_url: Search term "%r" was found ' + ' but "%r" was not',
+                        escape(slug),
+                        escape(slug1),
+                    )
                 else:
                     # The nullable slug column again, used unchecked below.
                     assert pi1.slug is not None
-                    search1 = strip_numeric_suffix(pi1.slug)+'1'
-                    search1_val = original_slugs[slug1+clause_num_str]
+                    search1 = strip_numeric_suffix(pi1.slug) + '1'
+                    search1_val = original_slugs[slug1 + clause_num_str]
             else:
-                search1 = strip_numeric_suffix(pi.slug)+'1'
-        if (((is_qtype or is_unit) and not is_range) or
-            (not is_qtype and not is_unit and
-             slug[-1] != '1' and slug[-1] != '2')):
+                search1 = strip_numeric_suffix(pi.slug) + '1'
+        if ((is_qtype or is_unit) and not is_range) or (
+            not is_qtype and not is_unit and slug[-1] != '1' and slug[-1] != '2'
+        ):
             # Not numeric
             pi1 = pi
             search1 = pi.slug
-            if slug+clause_num_str in original_slugs:
-                search1_val = original_slugs[slug+clause_num_str]
+            if slug + clause_num_str in original_slugs:
+                search1_val = original_slugs[slug + clause_num_str]
                 # If we're searching for ringobsid, convert it to opusid and
                 # also convert the parameter to the new opusid format
                 if pi.slug == 'ringobsid':
                     search1 = 'opusid'
                     new_search1_val = convert_ring_obs_id_to_opus_id(
-                                                search1_val,
-                                                force_ring_obs_id_fmt=True)
+                        search1_val, force_ring_obs_id_fmt=True
+                    )
                     if not new_search1_val:
-                        msg = ('RING OBS ID "' + escape(search1_val)
-                               +'" not found; the ringobsid search term has been '
-                               +'removed.')
+                        msg = (
+                            'RING OBS ID "'
+                            + escape(search1_val)
+                            + '" not found; the ringobsid search term has been '
+                            + 'removed.'
+                        )
                         msg_list.append(msg)
                         continue
                     search1_val = new_search1_val
@@ -1240,24 +1285,23 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
         old_qtype_slug = qtype_slug
         found_qtype: str | Literal[False] = False
-        if qtype_slug+clause_num_str in original_slugs:
-            found_qtype = qtype_slug+clause_num_str
+        if qtype_slug + clause_num_str in original_slugs:
+            found_qtype = qtype_slug + clause_num_str
         elif pi.old_slug:
             old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.old_slug)
-        if old_qtype_slug+clause_num_str in original_slugs:
-            found_qtype = old_qtype_slug+clause_num_str
+        if old_qtype_slug + clause_num_str in original_slugs:
+            found_qtype = old_qtype_slug + clause_num_str
             if pi.old_slug:
-                handled_slugs.append('qtype-'
-                                     +strip_numeric_suffix(pi.old_slug)
-                                     +clause_num_str)
-            handled_slugs.append('qtype-'
-                                 +strip_numeric_suffix(pi.slug)
-                                 +clause_num_str)
-            qtype_val = original_slugs[old_qtype_slug+clause_num_str]
+                handled_slugs.append('qtype-' + strip_numeric_suffix(pi.old_slug) + clause_num_str)
+            handled_slugs.append('qtype-' + strip_numeric_suffix(pi.slug) + clause_num_str)
+            qtype_val = original_slugs[old_qtype_slug + clause_num_str]
             if valid_qtypes and qtype_val not in valid_qtypes:
-                msg = ('Query type "'+escape(orig_slug)
-                       +'" has an illegal value; '
-                       +'it has been set to the default.')
+                msg = (
+                    'Query type "'
+                    + escape(orig_slug)
+                    + '" has an illegal value; '
+                    + 'it has been set to the default.'
+                )
                 msg_list.append(msg)
                 qtype_val = qtype_default
         elif qtype_default:
@@ -1269,9 +1313,13 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
 
         if found_qtype and not valid_qtypes:
             # We have a qtype for a field that doesn't allow qtypes!
-            msg = ('Search term "'+escape(found_qtype)+'" is a query type for '
-                   +'a field that does not allow query types; '
-                   +'it has been ignored.')
+            msg = (
+                'Search term "'
+                + escape(found_qtype)
+                + '" is a query type for '
+                + 'a field that does not allow query types; '
+                + 'it has been ignored.'
+            )
             msg_list.append(msg)
 
         if qtype_slug == 'qtype-ringobsid':
@@ -1279,8 +1327,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
 
         ### Handle units ###
 
-        (form_type, _form_type_format,
-         form_type_unit_id) = parse_form_type(pi.form_type)
+        (form_type, _form_type_format, form_type_unit_id) = parse_form_type(pi.form_type)
         valid_units = get_valid_units(form_type_unit_id)
         # For our purpose, a unit_id that is never shown to the user (not
         # during search and not during results) is not actually a valid unit
@@ -1300,29 +1347,28 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         unit_slug = 'unit-' + strip_numeric_suffix(pi.slug)
         old_unit_slug = unit_slug
         found_unit: str | Literal[False] = False
-        if unit_slug+clause_num_str in original_slugs:
-            found_unit = unit_slug+clause_num_str
+        if unit_slug + clause_num_str in original_slugs:
+            found_unit = unit_slug + clause_num_str
         elif pi.old_slug:
             old_unit_slug = 'unit-' + strip_numeric_suffix(pi.old_slug)
-        if old_unit_slug+clause_num_str in original_slugs:
-            found_unit = old_unit_slug+clause_num_str
+        if old_unit_slug + clause_num_str in original_slugs:
+            found_unit = old_unit_slug + clause_num_str
             if pi.old_slug:
-                handled_slugs.append('unit-'
-                                     +strip_numeric_suffix(pi.old_slug)
-                                     +clause_num_str)
-            handled_slugs.append('unit-'
-                                 +strip_numeric_suffix(pi.slug)
-                                 +clause_num_str)
-            unit_val = original_slugs[old_unit_slug+clause_num_str]
+                handled_slugs.append('unit-' + strip_numeric_suffix(pi.old_slug) + clause_num_str)
+            handled_slugs.append('unit-' + strip_numeric_suffix(pi.slug) + clause_num_str)
+            unit_val = original_slugs[old_unit_slug + clause_num_str]
             # Silently replace old units with new versions
             unit_val = unit_val.replace('/', '_')
-            if unit_val == 'hourangle': # pragma: no cover -
+            if unit_val == 'hourangle':  # pragma: no cover -
                 # backwards compatibility that we don't really care about
                 unit_val = 'hours'
             if valid_units and unit_val not in valid_units:
-                msg = ('Unit "'+escape(found_unit)
-                       +'" has an illegal value; '
-                       +'it has been set to the default.')
+                msg = (
+                    'Unit "'
+                    + escape(found_unit)
+                    + '" has an illegal value; '
+                    + 'it has been set to the default.'
+                )
                 msg_list.append(msg)
                 unit_val = unit_default
         elif unit_default:
@@ -1334,23 +1380,34 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
 
         if found_unit and not valid_units:
             # We have a unit for a field that doesn't allow units!
-            msg = ('Search term "'+escape(found_unit)+'" is a unit for '
-                   +'a field that does not allow units; '
-                   +'it has been ignored.')
+            msg = (
+                'Search term "'
+                + escape(found_unit)
+                + '" is a unit for '
+                + 'a field that does not allow units; '
+                + 'it has been ignored.'
+            )
             msg_list.append(msg)
 
         if unit_slug in units_by_slug:
             if unit_val != units_by_slug[unit_slug]:
                 if found_unit:
-                    msg = ('Search term "'+escape(found_unit)+'" is a unit that'
-                           +' is inconsistent with the units for previous'
-                           +' instances of this search field; it has been'
-                           +' ignored.')
+                    msg = (
+                        'Search term "'
+                        + escape(found_unit)
+                        + '" is a unit that'
+                        + ' is inconsistent with the units for previous'
+                        + ' instances of this search field; it has been'
+                        + ' ignored.'
+                    )
                 else:
-                    msg = ('No unit specified for "'+escape(orig_slug)
-                           +'" but units were specified for other instances '
-                           +'of this search field; the previous units have '
-                           +'been used.')
+                    msg = (
+                        'No unit specified for "'
+                        + escape(orig_slug)
+                        + '" but units were specified for other instances '
+                        + 'of this search field; the previous units have '
+                        + 'been used.'
+                    )
                 msg_list.append(msg)
                 unit_val = units_by_slug[unit_slug]
         elif unit_slug:
@@ -1367,14 +1424,17 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             temp_dict[qtype_slug] = qtype_val
         if unit_slug and unit_val is not None:
             temp_dict[unit_slug] = unit_val
-        (selections, _extras) = url_to_search_params(temp_dict,
-                                                    allow_errors=True,
-                                                    return_slugs=True,
-                                                    pretty_results=True)
-        if selections is None: # pragma: no cover - can't happen
+        (selections, _extras) = url_to_search_params(
+            temp_dict, allow_errors=True, return_slugs=True, pretty_results=True
+        )
+        if selections is None:  # pragma: no cover - can't happen
             # Even after all that effort, something still failed miserably
-            msg = ('Search query for "'+escape(slug)+'" failed for '
-                   +'internal reasons - ignoring')
+            msg = (
+                'Search query for "'
+                + escape(slug)
+                + '" failed for '
+                + 'internal reasons - ignoring'
+            )
             msg_list.append(msg)
             continue
 
@@ -1385,14 +1445,18 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             assert pi1 is not None
             if selections[search1] is None:
                 if is_range:
-                    msg = ('Search query for "'
-                           +_escape_or_label(search1, pi1)
-                           +'" minimum had an illegal value; '
-                           +'it has been ignored.')
+                    msg = (
+                        'Search query for "'
+                        + _escape_or_label(search1, pi1)
+                        + '" minimum had an illegal value; '
+                        + 'it has been ignored.'
+                    )
                 else:
-                    msg = ('Search query for "'
-                           +_escape_or_label_results(search1, pi1)
-                           +'" had an illegal value; it has been ignored.')
+                    msg = (
+                        'Search query for "'
+                        + _escape_or_label_results(search1, pi1)
+                        + '" had an illegal value; it has been ignored.'
+                    )
                 msg_list.append(msg)
                 search1 = None
             else:
@@ -1402,14 +1466,16 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             assert search2 is not None
             assert pi2 is not None
             if selections[search2] is None:
-                msg = ('Search query for "'
-                       +_escape_or_label(search2, pi2)
-                       +'" maximum had an illegal value; it has been ignored.')
+                msg = (
+                    'Search query for "'
+                    + _escape_or_label(search2, pi2)
+                    + '" maximum had an illegal value; it has been ignored.'
+                )
                 msg_list.append(msg)
                 search2 = None
             else:
                 search2_val = selections[search2]
-                if isinstance(search2_val, (list, tuple)): # pragma: no cover -
+                if isinstance(search2_val, (list, tuple)):  # pragma: no cover -
                     # This should never happen, because lists are only returned
                     # for strings, and strings never have a '2' slug
                     search2_val = search2_val[0]
@@ -1420,11 +1486,19 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         slug_no_num = strip_numeric_suffix(pi.slug)
         if slug_no_num not in search_slugs_by_clause:
             search_slugs_by_clause[slug_no_num] = []
-        search_slugs_by_clause[slug_no_num].append((clause_num_str,
-                                                    search1, search1_val,
-                                                    search2, search2_val,
-                                                    qtype_slug, qtype_val,
-                                                    unit_slug, unit_val))
+        search_slugs_by_clause[slug_no_num].append(
+            (
+                clause_num_str,
+                search1,
+                search1_val,
+                search2,
+                search2_val,
+                qtype_slug,
+                qtype_val,
+                unit_slug,
+                unit_val,
+            )
+        )
 
         # Make sure that if we have values to search, that the search widget
         # is also enabled.
@@ -1437,32 +1511,32 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     # Sort all the clauses for each slug key in numerical order
     # If there are duplicate numbers, do it in syntactic order
     for _search_slug, search_list in search_slugs_by_clause.items():
-        search_list.sort(key=lambda x: (0 if x[0] == '' else int(x[0][1:]),
-                                        x))
+        search_list.sort(key=lambda x: (0 if x[0] == '' else int(x[0][1:]), x))
 
-    for search_slug in sorted(search_slugs_by_clause.keys(),
-                              key=str.lower):
+    for search_slug in sorted(search_slugs_by_clause.keys(), key=str.lower):
         for idx, search_data in enumerate(search_slugs_by_clause[search_slug]):
-            (_clause_str,
-             search1, search1_val,
-             search2, search2_val,
-             qtype, qtype_val,
-             unit, unit_val) = search_data
+            (
+                _clause_str,
+                search1,
+                search1_val,
+                search2,
+                search2_val,
+                qtype,
+                qtype_val,
+                unit,
+                unit_val,
+            ) = search_data
             clause_num_str = ''
             if len(search_slugs_by_clause[search_slug]) != 1:
-                clause_num_str = f'_{idx+1:02d}'
+                clause_num_str = f'_{idx + 1:02d}'
             if search1 and search1_val is not None:
-                new_url_search_list.append([search1+clause_num_str,
-                                            search1_val])
+                new_url_search_list.append([search1 + clause_num_str, search1_val])
             if search2 and search2_val is not None:
-                new_url_search_list.append([search2+clause_num_str,
-                                            search2_val])
-            if qtype: # Always include the qtype
-                new_url_search_list.append([qtype+clause_num_str,
-                                            qtype_val])
-            if unit: # Always include the unit
-                new_url_search_list.append([unit+clause_num_str,
-                                            unit_val])
+                new_url_search_list.append([search2 + clause_num_str, search2_val])
+            if qtype:  # Always include the qtype
+                new_url_search_list.append([qtype + clause_num_str, qtype_val])
+            if unit:  # Always include the unit
+                new_url_search_list.append([unit + clause_num_str, unit_val])
 
     #
     # Deal with all the slugs we know about that AREN'T search terms.
@@ -1471,15 +1545,15 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     ### COLS
     cols_list = []
     cols = original_slugs.get('cols', settings.DEFAULT_COLUMNS)
-    if (cols ==
-        'ringobsid,planet,target,phase1,phase2,time1,time2'):
-        msg = ('Your URL uses the old defaults for selected metadata; '
-               +'they have been replaced with the new defaults.')
+    if cols == 'ringobsid,planet,target,phase1,phase2,time1,time2':
+        msg = (
+            'Your URL uses the old defaults for selected metadata; '
+            + 'they have been replaced with the new defaults.'
+        )
         msg_list.append(msg)
         cols = settings.DEFAULT_COLUMNS
     if cols == '':
-        msg = ('Your selected metadata list is empty; '
-               +'it has been replaced with the defaults.')
+        msg = 'Your selected metadata list is empty; ' + 'it has been replaced with the defaults.'
         msg_list.append(msg)
         cols = settings.DEFAULT_COLUMNS
     for col in cols.split(','):
@@ -1487,38 +1561,46 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             continue
         if col == 'ringobsid':
             col = 'opusid'
-        pi, desired_units = get_param_info_by_slug(col, 'col', allow_units_override=True,
-                                                   check_valid_units=False)
+        pi, desired_units = get_param_info_by_slug(
+            col, 'col', allow_units_override=True, check_valid_units=False
+        )
         # It used to be OK for single-column ranges to have a '1' at the end
         if not pi and col[-1] == '1':
-            pi, desired_units = get_param_info_by_slug(strip_numeric_suffix(col), 'col',
-                                                       allow_units_override=True,
-                                                       check_valid_units=False)
+            pi, desired_units = get_param_info_by_slug(
+                strip_numeric_suffix(col), 'col', allow_units_override=True, check_valid_units=False
+            )
         if not pi:
-            msg = ('Selected metadata field "' + escape(col)
-                   +'" is unknown; it has been removed.')
+            msg = 'Selected metadata field "' + escape(col) + '" is unknown; it has been removed.'
             msg_list.append(msg)
             continue
         if not pi.display_results:
-            msg = ('Selected metadata field "' + escape(col)
-                   +'" is not displayable; it has been removed.')
+            msg = (
+                'Selected metadata field "'
+                + escape(col)
+                + '" is not displayable; it has been removed.'
+            )
             msg_list.append(msg)
             continue
         if pi.slug in cols_list:
             # A displayable field is assumed to have a results label, as in
             # _escape_or_label_results above.
-            msg = ('Selected metadata field "' # type: ignore[operator]
-                   +pi.body_qualified_label_results()
-                   +'" is duplicated in the list of selected metadata; '
-                   +'only one copy is being used.')
+            msg = (
+                'Selected metadata field "'  # type: ignore[operator]
+                + pi.body_qualified_label_results()
+                + '" is duplicated in the list of selected metadata; '
+                + 'only one copy is being used.'
+            )
             msg_list.append(msg)
             continue
         if desired_units is not None and not pi.is_valid_unit(desired_units):
             # As above.
-            msg = ('Selected metadata field "' # type: ignore[operator]
-                   +pi.body_qualified_label_results()
-                   +'" has invalid units "' + escape(desired_units)
-                   +'"; units have been removed.')
+            msg = (
+                'Selected metadata field "'  # type: ignore[operator]
+                + pi.body_qualified_label_results()
+                + '" has invalid units "'
+                + escape(desired_units)
+                + '"; units have been removed.'
+            )
             msg_list.append(msg)
             desired_units = None
         if col.partition(':')[0] != pi.slug:
@@ -1527,8 +1609,9 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         assert pi.slug is not None
         cols_list.append(f'{pi.slug}:{desired_units}' if desired_units else pi.slug)
     if len(cols_list) == 0:
-        msg = ('Your new selected metadata list is empty; '
-               +'it has been replaced with the defaults.')
+        msg = (
+            'Your new selected metadata list is empty; ' + 'it has been replaced with the defaults.'
+        )
         msg_list.append(msg)
         new_cols = settings.DEFAULT_COLUMNS
     else:
@@ -1538,11 +1621,12 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     ### WIDGETS
     widgets_list = []
     widgets = original_slugs.get('widgets', '')
-    if (widgets == 'planet,target' and
-        widgets != settings.DEFAULT_WIDGETS): # pragma: no cover -
+    if widgets == 'planet,target' and widgets != settings.DEFAULT_WIDGETS:  # pragma: no cover -
         # At least for now, these are the same, so this can't happen
-        msg = ('Your URL uses the old defaults for search fields; '
-               +'they have been replaced with the new defaults.')
+        msg = (
+            'Your URL uses the old defaults for search fields; '
+            + 'they have been replaced with the new defaults.'
+        )
         msg_list.append(msg)
         widgets = settings.DEFAULT_WIDGETS
     for widget in widgets.split(','):
@@ -1554,13 +1638,13 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         if not pi and widget[-1] == '1':
             pi = get_param_info_by_slug(strip_numeric_suffix(widget), 'widget')
         if not pi:
-            msg = ('Search field "' + escape(widget) + '" is unknown; it '
-                   +'has been removed.')
+            msg = 'Search field "' + escape(widget) + '" is unknown; it ' + 'has been removed.'
             msg_list.append(msg)
             continue
         if not pi.display:
-            msg = ('Search field "' + escape(widget) + '" is not '
-                   +'searchable; it has been removed.')
+            msg = (
+                'Search field "' + escape(widget) + '" is not ' + 'searchable; it has been removed.'
+            )
             msg_list.append(msg)
             continue
         # As in the search loop above: the nullable slug column, used unchecked.
@@ -1570,9 +1654,12 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             # As above. This field reached here by being searchable rather than
             # displayable, so the assumption is the wider one that the two go
             # together, which the metadata selector relies on as well.
-            msg = ('Search field "' + pi.body_qualified_label_results() # type: ignore[operator]
-                   +'" is duplicated in the list of search fields; '
-                   +'only one copy is being used.')
+            msg = (
+                'Search field "'
+                + pi.body_qualified_label_results()  # type: ignore[operator]
+                + '" is duplicated in the list of search fields; '
+                + 'only one copy is being used.'
+            )
             msg_list.append(msg)
             continue
         widgets_list.append(widget_name)
@@ -1619,35 +1706,41 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         if not pi and order[-1] == '1':
             pi = get_param_info_by_slug(strip_numeric_suffix(order), 'widget')
         if not pi:
-            msg = ('Sort order metadata field "' + escape(order)
-                   +'" is unknown; it has been removed.')
+            msg = (
+                'Sort order metadata field "' + escape(order) + '" is unknown; it has been removed.'
+            )
             msg_list.append(msg)
             continue
         if pi.slug in order_slug_list:
             # As above; a duplicate got past the displayable check on its first
             # time through this loop.
-            msg = ('Sort order metadata field "' # type: ignore[operator]
-                   +pi.body_qualified_label_results()
-                   +'" is duplicated in the list of sort orders; '
-                   +'only one copy is being used.')
+            msg = (
+                'Sort order metadata field "'  # type: ignore[operator]
+                + pi.body_qualified_label_results()
+                + '" is duplicated in the list of sort orders; '
+                + 'only one copy is being used.'
+            )
             msg_list.append(msg)
             continue
         if not pi.display_results:
-            msg = ('Sort order metadata field "' + escape(order)
-                   +'" is not displayable; it has been removed.')
+            msg = (
+                'Sort order metadata field "'
+                + escape(order)
+                + '" is not displayable; it has been removed.'
+            )
             msg_list.append(msg)
             continue
         # As in the search loop above: the nullable slug column, used unchecked.
         assert pi.slug is not None
         order_slug_list.append(pi.slug)
         if desc:
-            order_list.append('-'+pi.slug)
+            order_list.append('-' + pi.slug)
         else:
             order_list.append(pi.slug)
         if order != pi.slug:
             old_ui_slug_flag = True
         if pi.slug == 'opusid':
-            if order_num != len(order_split)-1:
+            if order_num != len(order_split) - 1:
                 msg = 'Fields after "opusid" in the sort order have been removed.'
                 msg_list.append(msg)
             break
@@ -1664,11 +1757,12 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     ### VIEW
     view_val = None
     if 'view' in original_slugs:
-        if original_slugs['view'] not in ('search', 'browse',
-                                     'collection', 'cart', 'detail'):
-            msg = ('The value for "view" was not one of '
-                   +'"search", "browse", "collection", "cart", or '
-                   +'"detail"; it has been set to "search".')
+        if original_slugs['view'] not in ('search', 'browse', 'collection', 'cart', 'detail'):
+            msg = (
+                'The value for "view" was not one of '
+                + '"search", "browse", "collection", "cart", or '
+                + '"detail"; it has been set to "search".'
+            )
             msg_list.append(msg)
             view_val = 'search'
         else:
@@ -1689,88 +1783,106 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     # a possibility here.
     for prefix in ('', 'cart_'):
         browse_val = None
-        if prefix+'browse' in original_slugs:
-            if original_slugs[prefix+'browse'] not in ('gallery', 'data'):
-                msg = (f'The value for "{prefix}browse" was not either '
-                       +'"gallery" or "data"; it has been set to "gallery".')
+        if prefix + 'browse' in original_slugs:
+            if original_slugs[prefix + 'browse'] not in ('gallery', 'data'):
+                msg = (
+                    f'The value for "{prefix}browse" was not either '
+                    + '"gallery" or "data"; it has been set to "gallery".'
+                )
                 msg_list.append(msg)
                 browse_val = 'gallery'
             else:
-                browse_val = original_slugs[prefix+'browse']
-            del original_slugs[prefix+'browse']
+                browse_val = original_slugs[prefix + 'browse']
+            del original_slugs[prefix + 'browse']
         if browse_val is None:
             # msg = 'The "browse" field is missing; it has been set to the default.'
             # msg_list.append(msg)
             browse_val = 'gallery'
-        new_url_suffix_list.append((prefix+'browse', browse_val))
+        new_url_suffix_list.append((prefix + 'browse', browse_val))
 
     ### PAGE and STARTOBS (and CART_PAGE and CART_STARTOBS)
     for prefix in ('', 'cart_'):
         startobs_val = None
-        if prefix+'page' in original_slugs:
+        if prefix + 'page' in original_slugs:
             old_ui_slug_flag = True
             page_no = 1
             try:
-                page_no = int(original_slugs[prefix+'page'])
+                page_no = int(original_slugs[prefix + 'page'])
             except ValueError:
-                msg = (f'The value for the "{prefix}page" term was not a valid '
-                       +'integer; it has been set to 1.')
+                msg = (
+                    f'The value for the "{prefix}page" term was not a valid '
+                    + 'integer; it has been set to 1.'
+                )
                 msg_list.append(msg)
                 page_no = 1
             else:
                 if page_no < 1 or page_no > 20000:
                     page_no = 1
-                    msg = (f'The value for the "{prefix}page" term was not '
-                           +'between 1 and 20000; it has been set to 1.')
+                    msg = (
+                        f'The value for the "{prefix}page" term was not '
+                        + 'between 1 and 20000; it has been set to 1.'
+                    )
                     msg_list.append(msg)
                     page_no = 1
-            del original_slugs[prefix+'page']
-            startobs_val = (page_no-1)*100+1
-        if prefix+'startobs' in original_slugs:
+            del original_slugs[prefix + 'page']
+            startobs_val = (page_no - 1) * 100 + 1
+        if prefix + 'startobs' in original_slugs:
             try:
-                startobs_val = int(original_slugs[prefix+'startobs'])
+                startobs_val = int(original_slugs[prefix + 'startobs'])
             except ValueError:
-                msg = (f'The value for the "{prefix}startobs" term was not a '
-                       +'valid integer; it has been set to 1.')
+                msg = (
+                    f'The value for the "{prefix}startobs" term was not a '
+                    + 'valid integer; it has been set to 1.'
+                )
                 msg_list.append(msg)
                 startobs_val = 1
             else:
                 if startobs_val < 1 or startobs_val > 10000000:
-                    msg = (f'The value for the "{prefix}startobs" term was not '
-                           +'between 1 and 10000000; it has been set to 1.')
+                    msg = (
+                        f'The value for the "{prefix}startobs" term was not '
+                        + 'between 1 and 10000000; it has been set to 1.'
+                    )
                     msg_list.append(msg)
                     startobs_val = 1
-            del original_slugs[prefix+'startobs']
+            del original_slugs[prefix + 'startobs']
         if not startobs_val:
             # msg = (f'The "{prefix}startobs" or "{prefix}page" fields are '
             #        +f'missing; {prefix}startobs has been set to 1.')
             # msg_list.append(msg)
             startobs_val = 1
-        new_url_suffix_list.append((prefix+'startobs', startobs_val))
+        new_url_suffix_list.append((prefix + 'startobs', startobs_val))
 
     ### DETAIL
     detail_val = None
     if original_slugs.get('detail'):
         opus_id = convert_ring_obs_id_to_opus_id(original_slugs['detail'])
         if not opus_id:
-            msg = ('You appear to be using an obsolete RINGOBS_ID ('
-                   +escape(original_slugs['detail'])
-                   +'), but it could not be converted '
-                   +'to a new OPUS_ID. It has been ignored.')
+            msg = (
+                'You appear to be using an obsolete RINGOBS_ID ('
+                + escape(original_slugs['detail'])
+                + '), but it could not be converted '
+                + 'to a new OPUS_ID. It has been ignored.'
+            )
             msg_list.append(msg)
         else:
             if opus_id != original_slugs['detail']:
-                msg = ('You appear to be using an obsolete RINGOBS_ID ('
-                       +escape(original_slugs['detail'])
-                       +') instead of the equivalent new '
-                       +'OPUS_ID ('+opus_id+'); it has been converted for you.')
+                msg = (
+                    'You appear to be using an obsolete RINGOBS_ID ('
+                    + escape(original_slugs['detail'])
+                    + ') instead of the equivalent new '
+                    + 'OPUS_ID ('
+                    + opus_id
+                    + '); it has been converted for you.'
+                )
                 msg_list.append(msg)
             try:
                 _ = ObsGeneral.objects.get(opus_id=opus_id)
             except ObjectDoesNotExist:
-                msg = ('The OPUS_ID specified for the "detail" tab '
-                       +'was not found in the current database; '
-                       +'it has been ignored.')
+                msg = (
+                    'The OPUS_ID specified for the "detail" tab '
+                    + 'was not found in the current database; '
+                    + 'it has been ignored.'
+                )
                 msg_list.append(msg)
             else:
                 detail_val = opus_id
@@ -1788,10 +1900,9 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
 
     # Now let's see if we forgot anything
     for slug in original_slugs:
-        if slug in handled_slugs: # pragma: no cover - bug if False
+        if slug in handled_slugs:  # pragma: no cover - bug if False
             continue
-        log.error('api_normalize_url: Failed to handle slug %r',
-                  slug) # pragma: no cover
+        log.error('api_normalize_url: Failed to handle slug %r', slug)  # pragma: no cover
 
     new_url_list = []
     new_url_dict_list: list[dict[str, str | int | None]] = []
@@ -1811,27 +1922,31 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     final_msg: str | None
     final_msg = ''
     if old_ui_slug_flag:
-        msg = ('<p>Your bookmarked URL is from a previous version of OPUS. '
-               +'It has been adjusted to conform to the current version.</p>')
+        msg = (
+            '<p>Your bookmarked URL is from a previous version of OPUS. '
+            + 'It has been adjusted to conform to the current version.</p>'
+        )
         final_msg = msg + final_msg
     if msg_list:
         final_msg += '<p>We found the following issues with your bookmarked '
         final_msg += 'URL:</p><ul>'
         for msg in msg_list:
-            final_msg += '<li>'+msg+'</li>'
+            final_msg += '<li>' + msg + '</li>'
         final_msg += '</ul>'
     if final_msg:
-        msg = ('<p>We strongly recommend that you replace your old bookmark '
-               +'with the updated URL in your browser so that you will not see '
-               +'this message in the future.</p>')
+        msg = (
+            '<p>We strongly recommend that you replace your old bookmark '
+            + 'with the updated URL in your browser so that you will not see '
+            + 'this message in the future.</p>'
+        )
         final_msg += msg
 
     if url_was_empty or final_msg == '':
         final_msg = None
 
-    return json_response({'new_url': '&'.join(new_url_list),
-                          'new_slugs': new_url_dict_list,
-                          'msg': final_msg})
+    return json_response(
+        {'new_url': '&'.join(new_url_list), 'new_slugs': new_url_dict_list, 'msg': final_msg}
+    )
 
 
 @never_cache
@@ -1868,9 +1983,10 @@ def api_dummy(request: HttpRequest, *args: str, **kwargs: str) -> HttpResponse:
 #
 ################################################################################
 
-def _get_menu_labels(request: HttpRequest | None, labels_view: str,
-                     search_slugs_info: list[ParamInfo] | None = None
-                     ) -> dict[str, Any]:
+
+def _get_menu_labels(
+    request: HttpRequest | None, labels_view: str, search_slugs_info: list[ParamInfo] | None = None
+) -> dict[str, Any]:
     """Return the categories in the search tab or metadata selector.
 
     The categories are the ones the current search makes available: with no
@@ -1900,17 +2016,16 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
     """
     labels_view = 'selector' if labels_view == 'selector' else 'search'
     if labels_view == 'search':
-        filter_ = "display"
+        filter_ = 'display'
     else:
-        filter_ = "display_results"
+        filter_ = 'display_results'
 
     if search_slugs_info:
         expanded_cats = ['search_fields']
     else:
         expanded_cats = ['obs_general']
-    if request and request.GET: # pragma: no cover - will always be True
-        (selections, extras) = url_to_search_params(request.GET,
-                                                    allow_errors=True)
+    if request and request.GET:  # pragma: no cover - will always be True
+        (selections, extras) = url_to_search_params(request.GET, allow_errors=True)
         # Remember which categories the user had previous expanded so that when we
         # regenerate the category list we can expand them again.
         get_expanded_cats = request.GET.get('expanded_cats')
@@ -1918,7 +2033,7 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
             expanded_cats = []
         elif get_expanded_cats is not None:
             expanded_cats = get_expanded_cats.split(',')
-    else: # pragma: no cover - see above
+    else:  # pragma: no cover - see above
         selections = None
 
     # get_triggered_tables answers None when it could not build the search's
@@ -1942,12 +2057,13 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
     # can return None, which Django's filter would reject at run time. That is a
     # real unchecked-None defect, recorded in the Execution notes rather than
     # guarded here, so the marker stands in for it rather than hiding it.
-    divs = (TableNames.objects.filter(display='Y', # type: ignore[misc]
-                                      table_name__in=triggered_tables)
-                               .order_by('disp_order'))
-    params = (ParamInfo.objects.filter(**{filter_:1,
-                                          "category_name__in":triggered_tables})
-                               .order_by('disp_order'))
+    divs = TableNames.objects.filter(
+        display='Y',  # type: ignore[misc]
+        table_name__in=triggered_tables,
+    ).order_by('disp_order')
+    params = ParamInfo.objects.filter(
+        **{filter_: 1, 'category_name__in': triggered_tables}
+    ).order_by('disp_order')
 
     # Build a struct that relates sub_headings to div_titles
     # Note this is a mess because params contains ALL the params for all the
@@ -1985,11 +2101,11 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
         # the row here for the menu templates to read, which is why the checker
         # has to be told about each of the four.
         if table_name in expanded_cats:
-            d.collapsed = '' # type: ignore[attr-defined]
-            d.show = 'show' # type: ignore[attr-defined]
+            d.collapsed = ''  # type: ignore[attr-defined]
+            d.show = 'show'  # type: ignore[attr-defined]
         else:
-            d.collapsed = 'collapsed' # type: ignore[attr-defined]
-            d.show = '' # type: ignore[attr-defined]
+            d.collapsed = 'collapsed'  # type: ignore[attr-defined]
+            d.show = ''  # type: ignore[attr-defined]
         menu_data.setdefault(table_name, {})
 
         if labels_view == 'search':
@@ -1997,13 +2113,19 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
             # XXX This really shouldn't be here!!
             menu_data[table_name]['menu_help'] = None
             if table_name == 'obs_surface_geometry':
-                menu_data[table_name]['menu_help'] = "Surface geometry, when available, is provided for all bodies in the field of view. Use Surface Geometry Target Selector to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, Galileo SSI, New Horizons LORRI, and Voyager ISS."
+                menu_data[table_name]['menu_help'] = (
+                    'Surface geometry, when available, is provided for all bodies in the field of view. Use Surface Geometry Target Selector to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, Galileo SSI, New Horizons LORRI, and Voyager ISS.'
+                )
 
             if table_name == 'obs_ring_geometry':
-                menu_data[table_name]['menu_help'] = "Supported instruments: Cassini ISS, UVIS, and VIMS, Galileo SSI, New Horizons LORRI, and Voyager ISS."
+                menu_data[table_name]['menu_help'] = (
+                    'Supported instruments: Cassini ISS, UVIS, and VIMS, Galileo SSI, New Horizons LORRI, and Voyager ISS.'
+                )
 
             if table_name == 'obs_instrument_cocirs':
-                menu_data[table_name]['menu_help'] = "Cassini CIRS data is only available through June 30, 2010"
+                menu_data[table_name]['menu_help'] = (
+                    'Cassini CIRS data is only available through June 30, 2010'
+                )
 
         if sub_headings.get(d.table_name):
             # this div is divided into sub headings
@@ -2011,24 +2133,24 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
 
             menu_data[table_name].setdefault('data', {})
             for sub_head in sub_headings[d.table_name]:
-                if table_name+'-'+slugify(sub_head) in expanded_cats:
+                if table_name + '-' + slugify(sub_head) in expanded_cats:
                     sub_head_tuple = (sub_head, '', 'show')
                 else:
                     sub_head_tuple = (sub_head, 'collapsed', '')
 
-                all_param_info = (ParamInfo.objects
-                                  .filter(**{filter_:1,
-                                             'category_name': d.table_name,
-                                             'sub_heading': sub_head}))
+                all_param_info = ParamInfo.objects.filter(
+                    **{filter_: 1, 'category_name': d.table_name, 'sub_heading': sub_head}
+                )
                 for p in all_param_info:
                     # If referred_slug exists, we will look up the param info
                     # based on the referred_slug.
-                    if p.referred_slug is not None: # pragma: no cover -
+                    if p.referred_slug is not None:  # pragma: no cover -
                         # We don't have any referred slugs in sub-headings in the current
                         # design.
                         # A referred slug will never contain a unit specifier
-                        p = get_param_info_by_slug(p.referred_slug, 'col',
-                                                   allow_units_override=False)
+                        p = get_param_info_by_slug(
+                            p.referred_slug, 'col', allow_units_override=False
+                        )
                         # Both lines below dereference p, so a referred_slug that
                         # names no field is already a crash here.
                         assert p is not None
@@ -2043,7 +2165,7 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
                             # We can just skip these because we never use them
                             # for search widgets
                             continue
-                        if p.slug[-1] == '1': # pragma: no cover -
+                        if p.slug[-1] == '1':  # pragma: no cover -
                             # We don't currently have any single-column ranges under
                             # subheadings so we will always get here.
                             # Strip the trailing 1 off all ranges
@@ -2051,23 +2173,22 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
                     # disp_unit, default_unit and units are not fields of
                     # ParamInfo either; they are attached for the templates the
                     # same way, wherever this function lists a field.
-                    (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
-                     p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
-                    menu_data[table_name]['data'].setdefault(sub_head_tuple,
-                                                               []).append(p)
+                    (
+                        p.disp_unit,
+                        p.default_unit,  # type: ignore[attr-defined]
+                        p.units,
+                    ) = get_disp_default_and_avail_units(p.form_type)  # type: ignore[attr-defined]
+                    menu_data[table_name]['data'].setdefault(sub_head_tuple, []).append(p)
         else:
             # this div has no sub headings
             menu_data[table_name]['has_sub_heading'] = False
-            for p in ParamInfo.objects.filter(**{filter_:1,
-                                                'category_name': d.table_name}):
-
+            for p in ParamInfo.objects.filter(**{filter_: 1, 'category_name': d.table_name}):
                 # If referred_slug exists, we will put that referred_slug
                 # under the current category.
                 if p.referred_slug is not None:
                     referred_slug = p.referred_slug
                     # A referred slug will never contain a unit specifier
-                    p = get_param_info_by_slug(referred_slug, 'col',
-                                               allow_units_override=False)
+                    p = get_param_info_by_slug(referred_slug, 'col', allow_units_override=False)
                     # As above: the lines below dereference p.
                     assert p is not None
                     p.label = p.body_qualified_label()
@@ -2081,23 +2202,28 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
                 if labels_view == 'search':
                     # As above: this branch indexes the nullable slug column.
                     assert p.slug is not None
-                    if p.slug[-1] == '2': # pragma: no cover -
+                    if p.slug[-1] == '2':  # pragma: no cover -
                         # These should already be marked as non-display and thus
                         # were filtered out by the filter_ function above.
                         continue
                     if p.slug[-1] == '1':
                         # Strip the trailing 1 off all ranges
                         p.slug = strip_numeric_suffix(p.slug)
-                (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
-                 p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
+                (
+                    p.disp_unit,
+                    p.default_unit,  # type: ignore[attr-defined]
+                    p.units,
+                ) = get_disp_default_and_avail_units(p.form_type)  # type: ignore[attr-defined]
                 menu_data[table_name].setdefault('data', []).append(p)
 
     # If there are any search slugs, put those in first
     if labels_view == 'selector' and search_slugs_info:
         # Thanks to the way templates work, we can fake up a TableNames object
         # by using a standard dictionary.
-        search_div: dict[str, str | bool] = {'table_name': 'search_fields',
-                                            'label': 'Current Search Fields'}
+        search_div: dict[str, str | bool] = {
+            'table_name': 'search_fields',
+            'label': 'Current Search Fields',
+        }
         if 'search_fields' in expanded_cats:
             search_div['collapsed'] = ''
             search_div['show'] = 'show'
@@ -2108,8 +2234,11 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
         menu_data.setdefault('search_fields', {})
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:
-            (p.disp_unit, p.default_unit, # type: ignore[attr-defined]
-             p.units) = get_disp_default_and_avail_units(p.form_type) # type: ignore[attr-defined]
+            (
+                p.disp_unit,
+                p.default_unit,  # type: ignore[attr-defined]
+                p.units,
+            ) = get_disp_default_and_avail_units(p.form_type)  # type: ignore[attr-defined]
             menu_data['search_fields'].setdefault('data', []).append(p)
             # The line below indexes the nullable slug column.
             assert p.slug is not None
@@ -2118,13 +2247,15 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
                 # the min and max slugs to the list.
                 # This is generated by a search field, not a metadata column, so there
                 # will never be a units modifier here.
-                p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col',
-                                            allow_units_override=False)
+                p2 = get_param_info_by_slug(p.slug[:-1] + '2', 'col', allow_units_override=False)
                 # The line below dereferences p2, so a range field whose '2' half
                 # is missing from param_info is already a crash here.
                 assert p2 is not None
-                (p2.disp_unit, p2.default_unit, # type: ignore[attr-defined]
-                 p2.units) = get_disp_default_and_avail_units(p2.form_type) # type: ignore[attr-defined]
+                (
+                    p2.disp_unit,
+                    p2.default_unit,  # type: ignore[attr-defined]
+                    p2.units,
+                ) = get_disp_default_and_avail_units(p2.form_type)  # type: ignore[attr-defined]
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
     new_div_list = []
@@ -2140,7 +2271,7 @@ def _get_menu_labels(request: HttpRequest | None, labels_view: str,
         else:
             # first_category is attached to the row for the template, like
             # collapsed and show above.
-            div.first_category = first_category # type: ignore[attr-defined]
+            div.first_category = first_category  # type: ignore[attr-defined]
         first_category = False
 
     return {'menu': {'data': menu_data, 'divs': new_div_list}}

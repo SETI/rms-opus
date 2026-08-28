@@ -9,4 +9,3 @@ and the checks on the imported data itself (`test_db_data`). A fourth directory,
 collects it: `conftest.py` ignores the directory, and the script's work is behind a
 `__main__` guard, so importing the module measures nothing.
 """
-

@@ -68,10 +68,13 @@ def _obs(cls: type[ObsBase], columns: dict[str, Any]) -> tuple[Any, list[str]]:
 
 # --- COVIMS_8xxx: the `+1` that moved out of the try -------------------------
 
+
 def _covims_8xxx(start: str, stop: str) -> tuple[Any, list[str]]:
     """Build a COVIMS_8xxx observation whose two clock columns hold `start`/`stop`."""
-    return _obs(ObsVolumeCOVIMS8xxx, {'SPACECRAFT_CLOCK_START_COUNT': start,
-                                      'SPACECRAFT_CLOCK_STOP_COUNT': stop})
+    return _obs(
+        ObsVolumeCOVIMS8xxx,
+        {'SPACECRAFT_CLOCK_START_COUNT': start, 'SPACECRAFT_CLOCK_STOP_COUNT': stop},
+    )
 
 
 def test_covims_8xxx_count2_still_rounds_up() -> None:
@@ -79,7 +82,8 @@ def test_covims_8xxx_count2_still_rounds_up() -> None:
     obs, logged = _covims_8xxx(GOOD_SCLK, '1/1294561200.000')
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count2() == (
-        opus_support.parse_cassini_sclk('1/1294561200.000') + 1)
+        opus_support.parse_cassini_sclk('1/1294561200.000') + 1
+    )
     assert logged == []
 
 
@@ -99,16 +103,22 @@ def test_covims_8xxx_count2_falls_back_to_count1_when_out_of_order() -> None:
     obs, _logged = _covims_8xxx('1/1294561200.000', '1/1294561100.000')
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count2() == (
-        obs.field_obs_mission_cassini_spacecraft_clock_count1())
+        obs.field_obs_mission_cassini_spacecraft_clock_count1()
+    )
 
 
 # --- PDS4: the message names the string that was actually parsed -------------
 
+
 def _fring_mosaics(start: Any, stop: Any) -> tuple[Any, list[str]]:
     """Build a PDS4 F-ring-mosaic observation with its two clock columns set."""
-    return _obs(ObsBundleCassiniISSFRingMosaicsRSFrench2025,
-                {'cassini:spacecraft_clock_start_count': start,
-                 'cassini:spacecraft_clock_stop_count': stop})
+    return _obs(
+        ObsBundleCassiniISSFRingMosaicsRSFrench2025,
+        {
+            'cassini:spacecraft_clock_start_count': start,
+            'cassini:spacecraft_clock_stop_count': stop,
+        },
+    )
 
 
 def test_pds4_sclk_is_parsed_with_surrounding_whitespace_stripped() -> None:
@@ -116,7 +126,8 @@ def test_pds4_sclk_is_parsed_with_surrounding_whitespace_stripped() -> None:
     obs, logged = _fring_mosaics(f'  {GOOD_SCLK}  ', f'  {GOOD_SCLK}  ')
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count1() == (
-        opus_support.parse_cassini_sclk(GOOD_SCLK))
+        opus_support.parse_cassini_sclk(GOOD_SCLK)
+    )
     assert logged == []
 
 
@@ -156,13 +167,13 @@ def test_cocirs_count2_guard_names_the_stop_count(cls: type, level: str) -> None
     SPACECRAFT_CLOCK_START_COUNT, which sent an operator to the wrong column. The whole
     line is asserted, so the level each volume reports at is pinned too.
     """
-    obs, logged = _obs(cls, {'SPACECRAFT_CLOCK_START_COUNT': GOOD_SCLK,
-                             'SPACECRAFT_CLOCK_STOP_COUNT': 'nonsense'})
+    obs, logged = _obs(
+        cls, {'SPACECRAFT_CLOCK_START_COUNT': GOOD_SCLK, 'SPACECRAFT_CLOCK_STOP_COUNT': 'nonsense'}
+    )
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count2() is None
     # _fix_cassini_sclk supplies the missing fractional field before the guard runs.
-    assert logged == [f'{level}: Badly formatted SPACECRAFT_CLOCK_STOP_COUNT '
-                      '"nonsense.000"']
+    assert logged == [f'{level}: Badly formatted SPACECRAFT_CLOCK_STOP_COUNT "nonsense.000"']
 
 
 @pytest.mark.parametrize(('cls', 'level'), COCIRS_GUARD_LEVEL, ids=COCIRS_IDS)
@@ -171,14 +182,12 @@ def test_cocirs_count1_guard_still_names_the_start_count(cls: type, level: str) 
     obs, logged = _obs(cls, {'SPACECRAFT_CLOCK_START_COUNT': 'nonsense'})
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count1() is None
-    assert logged == [f'{level}: Badly formatted SPACECRAFT_CLOCK_START_COUNT '
-                      '"nonsense.000"']
+    assert logged == [f'{level}: Badly formatted SPACECRAFT_CLOCK_START_COUNT "nonsense.000"']
 
 
 def test_cocirs_56xxx_reports_an_unparseable_sclk_as_a_warning() -> None:
     """COCIRS_56xxx is the one file that logs a bad SCLK below error level."""
-    obs, logged = _obs(ObsVolumeCOCIRS56xxx,
-                       {'SPACECRAFT_CLOCK_START_COUNT': BAD_SCLK})
+    obs, logged = _obs(ObsVolumeCOCIRS56xxx, {'SPACECRAFT_CLOCK_START_COUNT': BAD_SCLK})
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count1() is None
     assert len(logged) == 1
@@ -187,8 +196,7 @@ def test_cocirs_56xxx_reports_an_unparseable_sclk_as_a_warning() -> None:
 
 def test_cocirs_01xxx_reports_an_unparseable_sclk_as_an_error() -> None:
     """Its sibling volume logs the same failure at error level."""
-    obs, logged = _obs(ObsVolumeCOCIRS01xxx,
-                       {'SPACECRAFT_CLOCK_START_COUNT': BAD_SCLK})
+    obs, logged = _obs(ObsVolumeCOCIRS01xxx, {'SPACECRAFT_CLOCK_START_COUNT': BAD_SCLK})
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count1() is None
     assert len(logged) == 1

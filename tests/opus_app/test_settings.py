@@ -99,13 +99,16 @@ EXPECTED_SETTINGS = {
     'OPUS_FAKE_SERVER_ERROR500_PROBABILITY': 0.75,
 }
 
-_DUMP_SETTINGS = ('import json, sys; import opus_app.settings as settings; '
-                  'print(json.dumps({name: getattr(settings, name) '
-                  'for name in sys.argv[1:]}))')
+_DUMP_SETTINGS = (
+    'import json, sys; import opus_app.settings as settings; '
+    'print(json.dumps({name: getattr(settings, name) '
+    'for name in sys.argv[1:]}))'
+)
 
 
-def _import_settings(config: Path | None, directory: Path,
-                     *names: str) -> subprocess.CompletedProcess[str]:
+def _import_settings(
+    config: Path | None, directory: Path, *names: str
+) -> subprocess.CompletedProcess[str]:
     """Import the settings module in a subprocess and print the settings asked for.
 
     Parameters:
@@ -123,9 +126,14 @@ def _import_settings(config: Path | None, directory: Path,
         env.pop(OPUS_CONFIG_ENV_VAR, None)
     else:
         env[OPUS_CONFIG_ENV_VAR] = str(config)
-    return subprocess.run([sys.executable, '-c', _DUMP_SETTINGS, *names],
-                          capture_output=True, text=True, cwd=directory, env=env,
-                          check=False)
+    return subprocess.run(
+        [sys.executable, '-c', _DUMP_SETTINGS, *names],
+        capture_output=True,
+        text=True,
+        cwd=directory,
+        env=env,
+        check=False,
+    )
 
 
 @pytest.fixture
@@ -154,8 +162,9 @@ def loaded_settings(distinct_config: Path, tmp_path: Path) -> dict[str, object]:
 
 
 @pytest.mark.parametrize('name', list(EXPECTED_SETTINGS))
-def test_settings_publish_the_configured_value(loaded_settings: dict[str, object],
-                                               name: str) -> None:
+def test_settings_publish_the_configured_value(
+    loaded_settings: dict[str, object], name: str
+) -> None:
     """Each setting holds the value its own configuration key supplies."""
     assert loaded_settings[name] == EXPECTED_SETTINGS[name]
 
@@ -165,12 +174,16 @@ def test_allowed_hosts_is_a_list(loaded_settings: dict[str, object]) -> None:
     assert isinstance(loaded_settings['ALLOWED_HOSTS'], list)
 
 
-@pytest.mark.parametrize(('brand', 'engine'), [
-    ('MySQL', 'django.db.backends.mysql'),
-    ('PostgreSQL', 'django.db.backends.postgresql'),
-])
-def test_database_engine_follows_the_configured_brand(tmp_path: Path, brand: str,
-                                                      engine: str) -> None:
+@pytest.mark.parametrize(
+    ('brand', 'engine'),
+    [
+        ('MySQL', 'django.db.backends.mysql'),
+        ('PostgreSQL', 'django.db.backends.postgresql'),
+    ],
+)
+def test_database_engine_follows_the_configured_brand(
+    tmp_path: Path, brand: str, engine: str
+) -> None:
     """The engine is selected from the brand the import pipeline reads from too.
 
     Were it hardcoded, a configuration naming one brand would drive the import pipeline

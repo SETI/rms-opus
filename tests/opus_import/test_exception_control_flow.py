@@ -39,16 +39,32 @@ from ._source_scan import module_files
 #: `impglobals.DATABASE` global it replaced. `DATABASE` is kept because a module that
 #: reintroduced a global of that name would be doing the very thing this sweep exists to
 #: catch, whichever spelling it used.
-_DB_NAMES = frozenset({
-    'db',
-    'DATABASE',
-    '_execute', '_execute_and_fetchall',
-    'analyze_table', 'convert_namespace_to_raw', 'convert_raw_to_namespace',
-    'copy_rows_between_namespaces', 'create_table', 'delete_rows', 'drop_table',
-    'find_column_max', 'general_select', 'insert_row', 'insert_rows', 'read_rows',
-    'table_exists', 'table_info', 'table_names', 'update_row', 'upsert_row',
-    'upsert_rows',
-})
+_DB_NAMES = frozenset(
+    {
+        'db',
+        'DATABASE',
+        '_execute',
+        '_execute_and_fetchall',
+        'analyze_table',
+        'convert_namespace_to_raw',
+        'convert_raw_to_namespace',
+        'copy_rows_between_namespaces',
+        'create_table',
+        'delete_rows',
+        'drop_table',
+        'find_column_max',
+        'general_select',
+        'insert_row',
+        'insert_rows',
+        'read_rows',
+        'table_exists',
+        'table_info',
+        'table_names',
+        'update_row',
+        'upsert_row',
+        'upsert_rows',
+    }
+)
 
 #: Modules an obs class must not import, because each is a route to the database.
 _DB_MODULES = ('opus_import.importdb', 'opus_import.steps')
@@ -107,13 +123,17 @@ def test_an_obs_module_never_reaches_the_database(path: Path) -> None:
             # names too rather than only the fully qualified form.
             module = node.module or ''
             imported = [alias.name for alias in node.names]
-            if (module.startswith(_DB_MODULES)
-                    or module.split('.')[0] in _DB_TAILS
-                    or (node.level and any(name in _DB_TAILS for name in imported))):
+            if (
+                module.startswith(_DB_MODULES)
+                or module.split('.')[0] in _DB_TAILS
+                or (node.level and any(name in _DB_TAILS for name in imported))
+            ):
                 offenders.append(
                     f'line {node.lineno}: from {"." * node.level}{module} '
-                    f'import {", ".join(imported)}')
+                    f'import {", ".join(imported)}'
+                )
 
     assert offenders == [], (
         f'{path.name} reaches the database, which makes the `except Exception:` in '
-        f'import_run_field_function able to swallow an ImportDBError: {offenders}')
+        f'import_run_field_function able to swallow an ImportDBError: {offenders}'
+    )
