@@ -32,6 +32,8 @@ from opus_import.obs.field_types import FloatField, MultField
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
+    import pdsfile
+
     from opus_import.context import ImportContext
     from opus_import.import_util import IndexRow
 
@@ -168,7 +170,7 @@ class ObsBase:
         """
         raise NotImplementedError
 
-    def _pdsfile_from_filespec(self, filespec: str) -> Any:
+    def _pdsfile_from_filespec(self, filespec: str) -> pdsfile.PdsFile:
         """Return the ``pdsfile`` object for a file specification.
 
         Parameters:
@@ -176,7 +178,10 @@ class ObsBase:
 
         Returns:
             A ``Pds3File`` or ``Pds4File``, which is what supplies the OPUS id and the
-            browse products.
+            browse products. ``PdsFile`` is the base both derive from, so it is what
+            the two overrides have in common. It is not checked: ``pdsfile`` ships no
+            annotations, so it sits in ``ignore_missing_imports`` in pyproject.toml and
+            the checker resolves this name to ``Any``.
 
         Raises:
             NotImplementedError: Always; a PDS-version subclass must override this.

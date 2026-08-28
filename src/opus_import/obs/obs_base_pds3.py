@@ -5,7 +5,7 @@ answers them for PDS3. The file specification is the interesting one, because a 
 volume's several index files do not spell it the same way.
 """
 
-from typing import Any, cast
+from typing import cast
 
 import pdsfile
 
@@ -107,16 +107,16 @@ class ObsBasePDS3(ObsBase):
     ### Internal access methods ###
     ###############################
 
-    def _pdsfile_from_filespec(self, filespec: str) -> Any:
+    def _pdsfile_from_filespec(self, filespec: str) -> pdsfile.PdsFile:
         """Return the ``Pds3File`` for a file specification.
 
         Parameters:
             filespec: The path, relative to the holdings root.
 
         Returns:
-            The ``pdsfile`` object. A PDS3 primary file specification often names the
-            ``.LBL`` file, which ``from_filespec`` does not accept, so it is converted to
-            the data file first.
+            The ``pdsfile`` object, typed as the ``PdsFile`` base ``Pds3File`` derives
+            from. A PDS3 primary file specification often names the ``.LBL`` file, which
+            ``from_filespec`` does not accept, so it is converted to the data file first.
         """
         # Create a PdsFile object from a primary filespec.
         # The PDS3 filespec is often the .LBL file, but from_filespec doesn't
