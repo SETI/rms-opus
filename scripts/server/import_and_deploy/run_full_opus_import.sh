@@ -10,7 +10,15 @@ export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/
 # world-writable, so another local account can pre-create the path -- or a symlink at
 # it -- and _full_opus_import_wrapper.sh's redirection would then follow it. mktemp
 # creates the file atomically, mode 0600, and fails rather than reusing an existing one.
-NOHUP_LOGFILE="$(mktemp "${TMPDIR:-/tmp}/opus_import.XXXXXXXX.log")"
+# The failure is checked because this script has no `set -e` and mktemp is the
+# first command here that can fail at all: a $$-derived name could not. Without
+# the check an unwritable or full /tmp leaves NOHUP_LOGFILE empty, the wrapper
+# dies on `ambiguous redirect` before running anything, and it cannot even mail
+# the failure -- while this script goes on to print IMPORT IS RUNNING.
+NOHUP_LOGFILE="$(mktemp "${TMPDIR:-/tmp}/opus_import.XXXXXXXX.log")" || {
+    echo "Could not create a log file under ${TMPDIR:-/tmp}; import not started." >&2
+    exit 1
+}
 export NOHUP_LOGFILE
 
 # The argument is forwarded the whole way down. It was not before -- this outer

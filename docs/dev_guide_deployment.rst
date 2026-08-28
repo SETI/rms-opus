@@ -70,7 +70,8 @@ Copy ``opus.toml.template``, fill in every ``<PLACEHOLDER>``, and export
 import pipeline, and any management command::
 
     curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
-    cp opus.toml.template /etc/opus/opus.toml
+    sudo install -d -m 755 /etc/opus
+    sudo install -m 600 opus.toml.template /etc/opus/opus.toml
     export OPUS_CONFIG=/etc/opus/opus.toml
 
 The template is **repository** infrastructure and is deliberately not inside the wheel:
@@ -78,6 +79,12 @@ nothing in the code reads it, and shipping it would mean extracting it through
 ``importlib.resources`` instead of opening a file. A ``pip``-installed server therefore
 fetches it as above, or copies it from a checkout. (``-f`` is load-bearing: without it
 ``curl`` exits 0 on a 404 and writes the error page into the file the next line copies.)
+
+``install -m 600`` rather than ``cp``: the placeholders are about to be replaced with
+a database password and a Django secret key, and ``cp`` gives the new file whatever
+the caller's umask allows -- world-readable on a default one. This is the mode
+``_write_opus_toml.sh`` gives the file it generates, and the mode the layout below
+records for a deployed installation; the hand-built case is the same file.
 
 There is no default location for the file. A server running several OPUS
 installations gives each one its own file, its own ``OPUS_CONFIG``, its own database
@@ -240,8 +247,13 @@ separation is deliberate:
 ``scripts/server/secrets/deploy.env``
     Shell syntax, read by the scripts **before any OPUS code exists on the machine**.
     It says where to install, which database credentials to use, where the PDS holdings
-    are, and what Django's secret key is. Copy ``scripts/server/deploy.env.template``,
-    fill in every ``<PLACEHOLDER>``, and ``chmod 600`` it; the directory is git-ignored.
+    are, and what Django's secret key is. Install it with the two commands
+    ``deploy.env.template`` gives at the top of itself -- ``install -d -m 700`` for
+    ``scripts/server/secrets/`` and ``install -m 600`` for the file -- then fill in
+    every ``<PLACEHOLDER>``. Both modes are set as the thing is created rather than
+    afterwards, because the scripts ``source`` this file: a directory left
+    world-writable by a permissive umask lets another local account substitute shell
+    code that the deploy then runs. The directory is git-ignored.
 
 ``opus.toml``
     Read by the installed application and the import pipeline at run time.
