@@ -164,15 +164,45 @@ def test_the_scan_finds_the_lower_case_and_suffixed_spellings(tmp_path: Path) ->
     assert len(found) == 2, found
 
 
+#: Real lines from ``src/opus_import/dictionary_data/pdsdd.full``. The instrument code
+#: is ``PPR`` -- the Photopolarimeter Radiometer -- so each of these ends in something
+#: an unanchored pattern reads as a reference.
+PDS_DATASET_IDENTIFIERS = (
+    b'     "GO-A-PPR-2-EDR-GASPRA-V1.0",\n',
+    b'     "GO-A-PPR-3-RDR-IDA-V1.0",\n',
+    b'     "GO-A1-PPR-2-RDR-V1.0",\n',
+)
+
+
 def test_the_pattern_ignores_a_pds_dataset_identifier() -> None:
     """A PDS dataset id whose instrument code is ``PPR`` is not a reference.
 
-    ``src/opus_import/dictionary_data/pdsdd.full`` ships dozens of these. Drop the
-    leading word boundary from the pattern and every one of them matches, so the gate
-    goes red on a tree that is clean -- and the natural repair is to stop scanning the
-    packaged data, which would also stop scanning a file somebody might comment.
+    ``src/opus_import/dictionary_data/pdsdd.full`` ships dozens of these, and the
+    briefing for the change that added this module quoted a count measured without the
+    anchor -- 33 of its references were these strings. So this is not a hypothetical:
+    an unanchored gate is red on a clean tree, and the natural repair is to stop
+    scanning the packaged data, which would also stop scanning a file somebody might
+    one day comment.
     """
-    assert _references_in(b'"GO-A-PPR-2-EDR-GASPRA-V1.0",\n', 'pdsdd.full') == []
+    for line in PDS_DATASET_IDENTIFIERS:
+        assert _references_in(line, 'pdsdd.full') == [], line
+
+
+def test_dropping_the_anchor_is_what_would_break_it() -> None:
+    """The anchor is load-bearing, demonstrated rather than asserted.
+
+    Without this, `test_the_pattern_ignores_a_pds_dataset_identifier` would pass just as
+    happily against a pattern that matched nothing at all, and the reason for the ``\\b``
+    would be a comment rather than a fact. Here the same identifiers are run against the
+    unanchored pattern and *must* match, which is what makes the anchored result mean
+    something.
+    """
+    unanchored = re.compile(PLAN_PR_REFERENCE.pattern.replace(rb'\b', b''),
+                            PLAN_PR_REFERENCE.flags)
+    assert unanchored.pattern != PLAN_PR_REFERENCE.pattern
+
+    for line in PDS_DATASET_IDENTIFIERS:
+        assert unanchored.search(line) is not None, line
 
 
 def test_the_unscanned_paths_are_carrying_something() -> None:

@@ -6962,7 +6962,8 @@ body; never rewrite or delete earlier notes.*
       is within contract; but the sibling branch in `ObsBase._get_target_info` answers
       `'OTHER'` for the same situation, and the two should agree. Not changed here
       because #1478's scope is the wiring, and because nobody has yet seen this branch
-      run against real holdings.
+      run against real holdings. **Filed as #1482** and cross-referenced from #1478, so
+      it is scheduled rather than only recorded here.
   - **#1479 is done and buys documentation, not checking.** All three
     `_pdsfile_from_filespec` definitions are annotated `-> pdsfile.PdsFile`, the base
     both `Pds3File` and `Pds4File` derive from. `pdsfile.*` is still in
@@ -6975,8 +6976,13 @@ body; never rewrite or delete earlier notes.*
       not document a leading-underscore method, so the annotation never reaches the API
       reference and `sphinx-build -W -n` cannot trip on it. Contrast
       `pdslogger.PdsLogger`, which does appear and does have an entry.
-    - Drift from the issue: the installed `rms-pdsfile` is **0.1.2**, not the 0.0.18 the
-      issue and PR-22's note name. `PdsFile` is still the common base in 0.1.2.
+    - Drift from the issue, and it is two true things rather than one wrong one:
+      `pyproject.toml` declares the **floor** `rms-pdsfile>=0.0.18`, which is the figure
+      the issue quotes, while pip **resolves** 0.1.2 today. With `requirements.txt`
+      deleted the floor is the only constraint, so the resolved version has already
+      moved past the old pin -- the open-floor behaviour rfrench ruled on deliberately,
+      not a surprise, and the reason the integration job logs `pip freeze`. `PdsFile`
+      is still the common base in 0.1.2.
   - **The `VALUES(col)` -> `AS new` switch is done, in `upsert_rows` only.** `upsert_row`
     (singular) was checked before being left alone and never used the deprecated form: it
     builds `col=%s` from bound parameters, because one statement there carries one row.
@@ -6993,6 +6999,17 @@ body; never rewrite or delete earlier notes.*
       with **2510 rows identical column for column**. The server also answers the
       question directly: the old form raises warning 1287, `'VALUES function' is
       deprecated`, once per assigned column, and the new form raises none.
+  - **`rewrite`'s required status checks are SIX, not the five the 2026-08-27 PR-21 note
+    lists.** That note was written before `Package` was added, immediately ahead of
+    PR-22's merge, so its list is complete for its own date and stale now. Read back
+    from the API at this PR:
+    `Run Lint`, `Integration Tests (self-hosted-linux, 3.12)`, `Unit Tests (3.12)`,
+    `Unit Tests (3.13)`, `Docs`, `Package`. **PR-24 must carry all six** when it redoes
+    the protection swap for `main`; a stale list there fails closed (blocking every PR
+    on a context that will never report) or open (dropping a gate), both silently.
+    Regenerate rather than trusting any list, including this one:
+    `gh api repos/SETI/rms-opus/branches/<branch>/protection --jq
+    '.required_status_checks.contexts'`.
   - **rev 7.22's SHA pins are gone and PR-20's other workflow hardening is untouched.**
     Two chapters of the developer guide also stated the pinning as a current convention
     -- `dev_guide_conventions.rst`'s decisions list, which recorded it as a second
