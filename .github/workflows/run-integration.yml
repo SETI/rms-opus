@@ -88,17 +88,8 @@ jobs:
           #   python-version: "3.12"
       fail-fast: true
     steps:
-      # Third-party actions are pinned to a full commit SHA with the release in
-      # a trailing comment, here and in every workflow in this repository. This
-      # is a deliberate, documented deviation from .cursor/rules/environment.mdc,
-      # which advises pinning to a major tag: a major tag is mutable, and this
-      # job runs on hardware the RMS Node owns rather than a disposable cloud VM,
-      # so a moved tag would execute unreviewed third-party code there. Update a
-      # pin by resolving the new release with
-      # `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha` and changing both
-      # the SHA and the comment.
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm derives the version from tags, which the default
@@ -121,7 +112,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -158,7 +149,7 @@ jobs:
           scripts/automated_tests/opus_main_test.sh
 
       - name: Upload coverage report to codecov
-        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac  # v5.5.5
+        uses: codecov/codecov-action@v5
         if: matrix.os == 'self-hosted-linux' && matrix.python-version == '3.12'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
