@@ -3,9 +3,10 @@
 ``_read_deploy_env.sh`` is what every server script sources before it does anything
 else, and it is the deploy's only chance to reject a bad environment *before* it stops
 Apache. Its failure modes are all quiet ones: a key missing from ``deploy.env``, a key
-left as the ``<PLACEHOLDER>`` the template ships, or a key present but empty. The last
-of those is not hypothetical -- an unset ``OPUS_SECRET_KEY`` that this reader lets by
-reaches ``opus.toml`` as an empty string, and Django then runs with no secret key.
+left as the ``<PLACEHOLDER>`` the template ships, or a key present but empty. Quiet
+because nothing downstream objects on its own: an empty ``OPUS_SECRET_KEY`` is a
+well-formed TOML string, :func:`opus_config.load_config` reads it, and Django starts
+with no secret key.
 
 Like the generator tests beside them, these run the shipped script under ``bash``
 rather than re-implementing what it does.

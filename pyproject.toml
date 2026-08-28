@@ -420,7 +420,8 @@ enabled = false
 # Recurse the code trees; exclude the fixture- and live-server-driven suites
 # (integration_tests/{test_api,test_db_data,test_perf}) and the out-of-scope
 # perf_test/.
-# Every code tree is under src/; `tests/` is deliberately not a target.
+# The packages are under src/, and `targets` below adds integration_tests/ and
+# manage.py; `tests/` is deliberately not a target.
 # Path-anchored so a same-named directory elsewhere in the tree cannot match by
 # accident. integration_tests/apps_db_tests is deliberately absent: the per-app suites
 # it holds are scanned.

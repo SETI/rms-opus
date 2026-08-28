@@ -36,7 +36,7 @@ jobs:
     # are what take the time, and they are the network-dependent ones.
     timeout-minutes: 30
     env:
-      # Every code tree lives under src/; the live-DB suites are in
+      # The importable packages live under src/; the live-DB suites are in
       # integration_tests/, the unit suite in tests/, the documentation build's
       # own extensions in docs/, manage.py at the root.
       # Vulture also scans vulture_whitelist.py so whitelisted names count as

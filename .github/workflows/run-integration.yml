@@ -131,10 +131,12 @@ jobs:
           fi
           python -m pip install --upgrade pip
           python -m pip install wheel
-          # The same install command the GitHub-hosted lint and unit jobs run, so
-          # both sides resolve the declared dependencies and a check cannot pass
-          # there and fail here purely because this runner installed older
-          # versions of them.
+          # The same install command the GitHub-hosted lint and unit jobs run:
+          # both sides install the declared dependencies rather than a lock file.
+          # This runner's `venv` persists between runs and is not recreated with
+          # `--clear`, so pip keeps any installed version that still satisfies a
+          # requirement; the `pip freeze` below is what says which versions a run
+          # actually used.
           # `-e` is what wires up src/, since opus_support and the rest are
           # imported as installed packages rather than through a sys.path insert.
           python -m pip install -e ".[dev]"

@@ -105,7 +105,7 @@ SCOPE_SPECIFIED=false
 : "${ENABLE_SPHINX:=true}"
 : "${ENABLE_PYMARKDOWN:=true}"
 
-# Every code tree lives under src/, with the live-DB suites in
+# The importable packages live under src/, with the live-DB suites in
 # integration_tests/, the unit suite in tests/, the documentation build's own
 # extensions in docs/ and manage.py at the root.
 # Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted

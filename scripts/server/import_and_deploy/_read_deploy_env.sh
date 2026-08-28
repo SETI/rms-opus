@@ -27,9 +27,10 @@ fi
 source ${SECRETS_DIR}/deploy.env
 
 # Every variable the chain needs, checked here rather than where it is used, so a
-# deploy fails before it stops Apache rather than half way through. OPUS_SECRET_KEY
-# is in this list because an unset one reaches opus.toml as an empty string, and
-# Django then runs with no secret key.
+# deploy fails before it stops Apache rather than half way through. Emptiness is
+# refused as well as absence, because nothing downstream objects to an empty value:
+# an empty OPUS_SECRET_KEY is a well-formed TOML string and Django starts with no
+# secret key.
 for _required in \
     OPUS_DIR OPUS_DB_USER OPUS_DB_PASSWORD OPUS_SECRET_KEY \
     PDS3_HOLDINGS_DIR PDS4_HOLDINGS_DIR LAST_BLOG_UPDATE_FILE NOTIFICATION_FILE; do

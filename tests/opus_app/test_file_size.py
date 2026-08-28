@@ -4,9 +4,9 @@
 `download_size_pretty` — and it is embedded in the golden response fixtures, so what
 these tests pin is the exact string for every rung of the ladder, not a formatting
 choice open to revision here. The table below states the hand-picked ones; the sweep
-that follows checks the same contract over the whole usable range against
-`float_division_size`, a second implementation of the format written deliberately
-unlike the one under test.
+that follows checks the same contract against `float_division_size` -- a second
+implementation of the format, written deliberately unlike the one under test -- over
+counts sampled across the whole usable range.
 
 The module deliberately imports nothing from Django, so these run without the app
 registry or a configuration file.
@@ -93,8 +93,8 @@ def float_division_size(size_bytes: int) -> str:
     return str(int(size_bytes / factor)) + suffix
 
 
-def test_matches_the_float_oracle_across_every_reachable_size() -> None:
-    """Sweep `nice_file_size` against the float oracle over the whole usable range.
+def test_matches_the_float_oracle_across_sampled_sizes() -> None:
+    """Sweep `nice_file_size` against the float oracle over sampled counts.
 
     The parity table above pins hand-picked values; this drives both
     implementations over ~35,000 counts, sampled both uniformly and within each
