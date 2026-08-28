@@ -5,11 +5,11 @@ These tests never open a connection: they build an `ImportDBMySQL` through
 shape of the statement: one statement per packet of rows, **every** value passed as a
 parameter rather than interpolated, and the key column left out of the update clause.
 
-PR-12 tightened the middle one. Before it, only `str` values became parameters and
-everything else -- numbers, booleans, None -- was formatted into the statement text with
-`str()`; now every value is a `%s`, which is what makes "no value is ever formatted into
-SQL text" true of this backend rather than nearly true. The identifier tests below cover
-the other half of that change.
+The middle one is the one that was tightened. This backend used to pass only `str`
+values as parameters and format everything else -- numbers, booleans, None -- into
+the statement text with `str()`; now every value is a `%s`, which is what makes
+"no value is ever formatted into SQL text" true of this backend rather than nearly
+true. The identifier tests below cover the other half of that change.
 """
 
 from typing import Any
@@ -80,7 +80,33 @@ def test_upsert_rows_does_not_assign_the_key_column(db: _RecordingDB) -> None:
     cmd, _params = db.executed[0]
     update_clause = cmd.split('ON DUPLICATE KEY UPDATE', 1)[1]
     assert '`id`=' not in update_clause
-    assert '`value`=VALUES(`value`)' in update_clause
+    assert '`value`=`new`.`value`' in update_clause
+
+
+def test_upsert_rows_names_the_new_row_through_the_alias_not_values(
+        db: _RecordingDB) -> None:
+    """The update clause reads the row alias, and `VALUES(col)` is gone entirely.
+
+    ``VALUES(col)`` was deprecated in MySQL 8.0.20 and still parses, so a server would
+    accept either form and the deprecation would go on being emitted with nothing to
+    report it. Only reading the statement catches that, which is what this does: the
+    alias is declared once, immediately before the clause that reads it, and the
+    deprecated spelling appears nowhere.
+    """
+    db.upsert_rows('import', 'mult_obs_general_planet_id', 'id',
+                   [_mult_row(0, 'JUP'), _mult_row(1, 'SAT')])
+
+    cmd, _params = db.executed[0]
+    assert 'VALUES(`' not in cmd
+    assert cmd.count(' AS `new` ON DUPLICATE KEY UPDATE ') == 1
+    update_clause = cmd.split('ON DUPLICATE KEY UPDATE', 1)[1]
+    # Every assigned column reads its value off the alias -- the whole point of the
+    # form, and what a partial rewrite would leave half true.
+    assignments = update_clause.strip().split(',')
+    assert len(assignments) == 7
+    for assignment in assignments:
+        column, value = assignment.split('=')
+        assert value == f'`new`.{column}', assignment
 
 
 def test_upsert_rows_splits_large_row_sets_into_packets(db: _RecordingDB) -> None:

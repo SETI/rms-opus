@@ -53,7 +53,9 @@ database -- and two supporting packages:
 Runtime and dependencies
 ------------------------
 
-OPUS needs **Python 3.12 or later** and **MySQL 8**. The database backend is written
+OPUS needs **Python 3.12 or later** and **MySQL 8.0.19 or later**, which is the
+release that added the ``AS new`` row alias the import pipeline's multi-row upserts
+use. The database backend is written
 against an abstraction (:mod:`opus_import.importdb`) that keeps room for another
 brand, but MySQL is the only brand implemented.
 

@@ -898,8 +898,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                f'VALUES({placeholders})')
         if assign_list:
             # A row of nothing but the key has nothing to assign, and an empty
-            # assignment list is a syntax error. `upsert_rows` already guards
-            # this; the two are otherwise the same statement.
+            # assignment list is a syntax error. `upsert_rows` guards the same case.
+            # Its update clause needs a row alias and this one does not: a statement
+            # here carries a single row, so each new value is already at hand as a
+            # bound parameter.
             cmd += ' ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
 
         try:
@@ -948,12 +950,15 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         for sorted_column_names, group_rows in groups.items():
             quoted_columns = self._quoted_column_list(sorted_column_names)
             # ON DUPLICATE KEY UPDATE has to name each row's new value indirectly,
-            # because one statement carries many rows. VALUES(col) is deprecated as
-            # of MySQL 8.0.20 in favor of a row alias, but the alias form needs
-            # 8.0.19+ and the deployed servers' version has not been confirmed, so
-            # this keeps the floor where Django already puts it.
+            # because one statement carries many rows. The row alias MySQL 8.0.19
+            # added is how: it names the row being inserted, so `new`.`col` is that
+            # row's value for that column. It replaces VALUES(col), which 8.0.20
+            # deprecated -- so this raises the server floor from Django's own 8.0.11
+            # to 8.0.19, which README.md and the developer guide's prerequisites now
+            # state.
+            row_alias = self.quote_identifier('new')
             assign_list = ','.join(
-                f'{self.quote_identifier(c)}=VALUES({self.quote_identifier(c)})'
+                f'{self.quote_identifier(c)}={row_alias}.{self.quote_identifier(c)}'
                 for c in sorted_column_names if c != key_name)
 
             num_packets = ((len(group_rows)-1) // packet_size) + 1
@@ -973,7 +978,11 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                        f'({quoted_columns}) VALUES'
                        + ','.join(value_tuples))
                 if assign_list:
-                    cmd += ' ON DUPLICATE KEY UPDATE ' + assign_list
+                    # The alias is emitted only with the clause that reads it. A row
+                    # of nothing but the key has nothing to assign, and an alias with
+                    # no ON DUPLICATE KEY UPDATE after it would name a row nothing
+                    # refers to.
+                    cmd += f' AS {row_alias} ON DUPLICATE KEY UPDATE ' + assign_list
 
                 try:
                     self._execute(cmd, param_list, mutates=True)

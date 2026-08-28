@@ -10,8 +10,9 @@ is brought up. It covers a development installation on one machine and, from
 Prerequisites
 -------------
 
-* **MySQL 8**, with a user allowed to create and drop databases -- the import pipeline
-  creates every OPUS table itself.
+* **MySQL 8.0.19 or later**, with a user allowed to create and drop databases -- the
+  import pipeline creates every OPUS table itself, and writes its multi-row upserts
+  with the ``AS new`` row alias that 8.0.19 added.
 * **memcached**, plus the ``pymemcache`` Python client. **Neither is a declared
   dependency**: :mod:`opus_app.settings` tries to import ``pymemcache`` and falls back
   to Django's local-memory cache when it is absent, so an installation that skips this

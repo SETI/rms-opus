@@ -7,8 +7,9 @@ Prerequisites
 -------------
 
 * **Python 3.12 or later**. The test matrix runs 3.12 and 3.13.
-* **MySQL 8**, with a user allowed to create and drop databases. The import pipeline
-  creates every OPUS table itself.
+* **MySQL 8.0.19 or later**, with a user allowed to create and drop databases. The
+  import pipeline creates every OPUS table itself, and writes its multi-row upserts
+  with the ``AS new`` row alias that 8.0.19 added.
 * **The MySQL client development headers**, because ``mysqlclient`` ships no Linux
   wheel and is compiled during the install. On Debian or Ubuntu::
 

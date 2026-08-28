@@ -49,8 +49,9 @@ on: the packages carry no API stability guarantees.
 
 ## Installation
 
-`rms-opus` requires **Python 3.12 or later** and **MySQL 8**. It also needs the MySQL
-client development headers, because its MySQL driver has no Linux wheel and is compiled
+`rms-opus` requires **Python 3.12 or later** and **MySQL 8.0.19 or later** — the
+import pipeline writes its multi-row upserts with the row alias that release added.
+It also needs the MySQL client development headers, because its MySQL driver has no Linux wheel and is compiled
 during the install:
 
 ```bash
