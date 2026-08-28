@@ -7263,6 +7263,15 @@ body; never rewrite or delete earlier notes.*
     floor is stated in `README.md` and the introduction chapter; the reason for it is stated
     once, in the environment chapter's prerequisites and at the statement in
     `importdb/mysql.py` that needs it.
+  - **Recorded as a candidate, not fixed here** (CodeRabbit, PR-23a): the self-hosted
+    integration job creates its virtualenv with `python -m venv venv` over a workspace that
+    persists between runs, and never passes `--clear`, so `pip install -e ".[dev]"` keeps any
+    already-installed version that still satisfies a requirement. The GitHub-hosted jobs start
+    from nothing every time. The two sides can therefore resolve different trees despite
+    running the same install command -- which is the class rev 7.20 recorded when `requests`
+    2.32.5 vs 2.34.2 made mypy green in CI and red locally. `pip freeze` in the integration job
+    is what reveals it after the fact. Whoever fixes it owns one line, and owns the slower
+    integration run that comes with a clean venv.
   - **PR-24 must delete `tests/repo/test_pr_references.py`** (and `tests/repo/` with it, if
     nothing else has landed there) before the merge to `main`. rfrench's call: the test
     enforces a rule about *this plan's* PR numbers, which is scaffolding for the modernization
