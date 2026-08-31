@@ -151,11 +151,11 @@ they are talking to.
 installed apps, the template configuration, the storage backends, the session policy and
 the time zone.
 
-**The OPUS apps' own constants**, everything below the banner comment reading *From
-here on, the configuration is for the OPUS apps, not Django itself*: the default columns,
-widgets and sort order; the query types each field type
-allows; the four preview sizes; the paging and download limits; the archive formats; and
-the slugs that appear in a URL but are not database fields.
+**The OPUS apps' own constants**, everything below the banner comment reading *From here
+on, the configuration is for the OPUS apps, not Django itself*: the default columns,
+widgets and sort order; the query types each field type allows; the four preview sizes;
+the paging and download limits; the archive formats; and the slugs that appear in a URL
+but are not database fields.
 
 Three details are easy to trip over. **Nothing here reads the environment** except
 ``OPUS_CONFIG``, by way of :mod:`opus_config`, so there is no second source of truth.
