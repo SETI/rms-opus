@@ -41,9 +41,9 @@ The chapters are in reading order, and the order is deliberate:
   say where everything is.
 * **The whole system at once** -- :ref:`dev_guide_architecture` is the one-page map of
   the two programs and the database between them. Read it before either subsystem.
-* **The import pipeline** -- seven chapters, from :ref:`dev_guide_import` through
+* **The import pipeline** -- nine chapters, from :ref:`dev_guide_import` through
   :ref:`dev_guide_import_extending`, covering how holdings become tables, how to run a
-  run, what each module does, and how to add to it.
+  run, what each module does, how it is tested without holdings, and how to add to it.
 * **The database** -- :ref:`dev_guide_table_schemas`, :ref:`dev_guide_database`,
   :ref:`dev_guide_opus_id` and :ref:`dev_guide_dictionary` describe the thing the two
   programs share.
