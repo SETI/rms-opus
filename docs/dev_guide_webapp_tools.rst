@@ -291,9 +291,9 @@ and the joins hanging off it;
 and a source may be a plain table name, a
 :class:`~opus_app.apps.tools.sql_builder.Subquery` -- which holds a whole
 :class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- or a
-:class:`~opus_app.apps.tools.sql_builder.JSONTable`. The
-:class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is not a tree:
-a statement can hold a statement.
+:class:`~opus_app.apps.tools.sql_builder.JSONTable`.
+The :class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is
+not a tree: a statement can hold a statement.
 
 **The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
 order. It and :class:`~opus_app.apps.tools.sql_builder.FromSource` are the two mutable
