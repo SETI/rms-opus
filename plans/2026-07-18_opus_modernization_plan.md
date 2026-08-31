@@ -7517,3 +7517,16 @@ body; never rewrite or delete earlier notes.*
     opened without a logger answers `table_exists` from a cache that never learned about the
     table it just created. Every production call site passes a logger, which is why nothing
     has hit it.
+
+- **2026-08-31 (orchestrator):** PR-19 merged as #1486 (squash `5b635314`); `Import Tests`
+  is now a required context on `rewrite` (seven contexts total — PR-24's protection swap to
+  `main` must carry all seven, read off a real run). Three notes for later PRs and readers
+  of earlier notes: (1) the term "pdsfile 3" appearing in earlier notes and revisions was a
+  fabrication — the orchestrator misread a typo ("Three is" for "There is"); no such version
+  exists (rms-pdsfile tags are v0.1.x), and every shipped occurrence was swept by PR-19; read
+  it as "the pdsfile rewrite's eventual release". (2) §4a's "re-trigger CodeRabbit in
+  10-minute increments" is superseded by rfrench's ruling: CodeRabbit allows ONE review per
+  hour — batch all changes, request once on the final green head, wait out the hour on a
+  rate limit. (3) The PR-19 spec snapshot `plans/2026-08-30_pr19_mini_holdings_fixture.md`
+  is regenerated as-executed; the §12 "Executed and merged" paragraph lists every deviation
+  between the reviewed spec and the merged tree.
