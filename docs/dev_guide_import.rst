@@ -321,7 +321,7 @@ later table's field methods read what an earlier one computed.
 **A field method's exception costs one field, not the run.**
 :func:`~opus_import.steps.do_import_obs.import_run_field_function` catches it, logs it
 with its traceback, and returns None for that column. What makes that containment safe
-is the restriction on what an obs class can reach, described in
+is that an obs class can log but cannot reach the database; see
 :ref:`dev_guide_import_obs_base`.
 
 .. _dev_guide_import_ids:
@@ -394,7 +394,9 @@ Invariants
 * **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
   constraint enforces it.
 * **An import run is single-threaded, and one obs instance serves a whole bundle**,
-  which is what makes the no-caching rule of :ref:`dev_guide_import_obs_base` necessary.
+  whose metadata dictionary is replaced in place once per row -- so **no obs method may
+  cache anything derived from it**. :ref:`dev_guide_import_obs_base` gives the one
+  pattern that is allowed.
 * **Row ids depend on insertion order**, so anything that changes the order rows are
   produced in changes every id. Directory listings are sorted for exactly this reason.
 * **Longitudes carry two derived columns.** A ``LONG`` field stores, besides its minimum

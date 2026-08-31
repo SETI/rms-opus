@@ -185,8 +185,9 @@ but the steps are:
 5. If it has templates, put them in ``<name>/templates/<name>/``. The app-directories
    loader finds them; the explicit list in the ``TEMPLATES`` setting is a second route to
    the same directories and does not have to be extended.
-6. If it declares a model, make it ``managed = False`` -- see
-   :ref:`dev_guide_webapp_models`.
+6. If it declares a model, make it ``managed = False``: the import pipeline creates
+   every OPUS table, so a managed model would invite a migration that must not exist.
+   See :ref:`dev_guide_webapp_models`.
 
 .. _dev_guide_webapp_extending_frontend:
 
