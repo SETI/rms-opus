@@ -6,7 +6,9 @@ the session that produces it has ended. The workflow runs the suite once with a 
 coverage report and then this module alone.
 
 Running it without that report is an error rather than a skip: a check that reports
-success when it cannot see its input is not a check.
+success when it cannot see its input is not a check. The command it names in that error
+is a bare ``--cov`` on purpose -- naming a package there would measure a different scope
+from the one ``[tool.coverage.run]`` defines and ``fail_under`` is calibrated against.
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ def findings() -> obs_execution.Findings:
         pytest.fail(
             f'{report_path} is missing. Run the suite with a JSON coverage report first: '
             'pytest import_tests --ignore=import_tests/test_obs_execution.py '
-            '--cov=opus_import --cov-report=json:coverage.json'
+            '--cov --cov-report=json:coverage.json'
         )
     return obs_execution.check(
         obs_execution.read_report(report_path),
