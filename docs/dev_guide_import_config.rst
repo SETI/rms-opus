@@ -453,11 +453,13 @@ which database to write.
 :func:`~opus_config.config.get_config` is the entry point; it reads the file
 :func:`~opus_config.config.config_path` resolves from ``OPUS_CONFIG`` and **caches the
 result for the life of the process**, so a test that loads a different configuration has
-to clear that cache. The file becomes four frozen dataclasses --
+to clear that cache. The file becomes a tree of frozen dataclasses: an
+:class:`~opus_config.config.OpusConfig` holding one per TOML table --
 :class:`~opus_config.config.DatabaseConfig`, :class:`~opus_config.config.PathsConfig`,
-:class:`~opus_config.config.DjangoConfig` and :class:`~opus_config.config.ImportConfig`
--- so nothing downstream can mutate a setting, and every key is read through a typed
-accessor rather than by indexing a dictionary.
+:class:`~opus_config.config.DjangoConfig` and :class:`~opus_config.config.ImportConfig`,
+the last spelled ``import_`` because ``import`` is a keyword. Nothing downstream can
+mutate a setting, and every key is read through a typed accessor rather than by indexing
+a dictionary.
 
 Three properties are worth relying on:
 
