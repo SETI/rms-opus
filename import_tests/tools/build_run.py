@@ -540,9 +540,10 @@ def _migrate_and_diff(
 def reimport_paths(run: ImportRun) -> RunPaths:
     """Return where a re-import of one run's bundles writes.
 
-    The tree and the schema are the finished run's; the configuration file and the log
-    directory are the re-import's own, because pdslogger appends and the first run's logs
-    are what the log assertions read.
+    The built tree is the finished run's, because re-importing means importing the same
+    files again. The log directory is the re-import's own, because pdslogger appends and
+    the first run's logs are what the log assertions read; the configuration file is its
+    own because that is what points the invocation at that log directory.
 
     Parameters:
         run: The completed run to re-import into.
@@ -575,8 +576,9 @@ def reimport_bundle(run: ImportRun, bundle: str, credentials: DatabaseCredential
 
     Returns:
         What the invocation did. Its status is worth reading: a re-import that never ran
-        leaves the database exactly as the first import left it, which is also what a
-        correct re-import looks like.
+        leaves the database as the first import left it, which is what all three of the
+        re-import assertions also accept, so nothing downstream can tell it from a
+        re-import that worked.
     """
     paths = reimport_paths(run)
     write_opus_config(paths, run.schema, credentials)

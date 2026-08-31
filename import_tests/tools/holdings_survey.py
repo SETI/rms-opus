@@ -1,8 +1,10 @@
 """Which bundle each registered volume type is represented by, and where its files are.
 
 The fixture carries one bundle per entry of `opus_import.config_bundle_info.BUNDLE_INFO`
-that OPUS actually imports, so a newly registered type fails the recorder rather than
-quietly going untested. Which bundle is a rule, not a list: the entry's own pattern is
+that OPUS actually imports, so a newly registered type fails the suite rather than
+quietly going untested -- the recorder records it as an exclusion with a reason, and
+`import_tests.test_expected_products` is what refuses to accept one it cannot match to a
+registered type. Which bundle is a rule, not a list: the entry's own pattern is
 matched against the holdings, the bundles the self-hosted integration run already imports
 are dropped, and the middle of what remains is taken. A volume set's early volumes are
 its least representative -- pre-encounter, before the instrument has anything to look at

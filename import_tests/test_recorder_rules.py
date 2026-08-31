@@ -61,7 +61,7 @@ def _rows(*values: tuple[Any, ...]) -> list[dict[str, Any]]:
 def test_a_short_index_keeps_every_row() -> None:
     """An index no longer than the floor is not sampled at all.
 
-    Two identical rows cover one class between them, so what is being pinned is that a
+    Two identical rows cover exactly the same classes, so what is being pinned is that a
     short index is returned whole rather than scored down to what is distinct about it.
     """
     rows = _rows(('CLEAR', 'SATURN', (1.0, 2.0)), ('CLEAR', 'SATURN', (1.0, 2.0)))
