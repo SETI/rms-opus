@@ -15,6 +15,13 @@
 # This is permanent rather than a workaround for one pull request: it will be true of
 # every future fixture regeneration.
 reviews:
+  # Only the default branch is reviewed unless it is named here, and this repository's
+  # work happens on `rewrite` -- a long-lived branch that every modernization pull request
+  # targets. Without this line, adding this file silently turns review off for all of
+  # them, which is what happened the first time it was added.
+  auto_review:
+    base_branches:
+      - "rewrite"
   path_filters:
     - "!tests/fixtures/mini_holdings/**"
     - "!import_tests/goldens/**"

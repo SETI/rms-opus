@@ -175,7 +175,7 @@ fail.
 
 ``pytest import_tests`` above is the everyday form: about two minutes, no coverage, with
 the three executed-functions tests skipping because the report they read is not there.
-Measuring coverage roughly doubles that and takes two commands, because the check reads
+Measuring coverage costs about two and a half times that and takes two commands, because the check reads
 the report the rest of the suite writes and cannot see it until that session has ended --
 see :ref:`dev_guide_import_fixture`, which gives both and says when each is wanted.
 

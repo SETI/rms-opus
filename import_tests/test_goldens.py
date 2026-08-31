@@ -203,7 +203,7 @@ def test_every_excused_table_gives_a_reason() -> None:
 #: which is the whole point of dropping the column in the first place.
 DERIVATIONS = {
     ('obs_files', 'url'): (
-        'CONCAT(CASE pds_version WHEN 3 THEN %s WHEN 4 THEN %s END, "/", logical_path)',
+        "CONCAT(CASE pds_version WHEN 3 THEN %s WHEN 4 THEN %s END, '/', logical_path)",
         [fixture_layout.PDS3_ROOT_NAME, fixture_layout.PDS4_ROOT_NAME],
     ),
 }
@@ -217,6 +217,22 @@ def test_every_dropped_column_has_a_derivation() -> None:
         for column in columns
     }
     assert sorted(dropped) == sorted(DERIVATIONS)
+
+
+def test_no_derivation_rebuilds_a_column_from_itself() -> None:
+    """A derivation has to use other columns, or it proves nothing.
+
+    ``('checksum', [])`` would satisfy every other check here -- ``WHERE checksum <>
+    checksum`` selects no rows whatever the values are -- and would delete that column's
+    coverage while looking like it had kept it. That is the failure the derivation table
+    exists to prevent, so it must not be able to pass through it.
+    """
+    circular = sorted(
+        (table, column)
+        for (table, column), (expression, _parameters) in DERIVATIONS.items()
+        if re.search(rf'\b{re.escape(column)}\b', expression)
+    )
+    assert circular == []
 
 
 @pytest.mark.parametrize(('table', 'column'), sorted(DERIVATIONS))
@@ -237,7 +253,8 @@ def test_a_dropped_column_still_holds_what_it_is_derived_from(
     rows = golden_io.query(
         db_credentials,
         main_run.schema,
-        f'SELECT `{column}`, {expression} FROM `{table}` WHERE `{column}` <> {expression} LIMIT 5',
+        f'SELECT `{column}`, {expression} FROM `{table}` '
+        f'WHERE NOT (`{column}` <=> {expression}) LIMIT 5',
         [*parameters, *parameters],
     )
     assert rows == []
@@ -318,8 +335,8 @@ def test_reimport_leaves_the_rest_of_the_database_untouched(
 ) -> None:
     """Every table holding none of that bundle's rows is byte-identical to its golden.
 
-    That is every mult table, and every table the dictionary and finalization steps
-    write. The mult tables are where the upsert lands, so this is the assertion that
+    That is every mult table, and every table the finalization and dictionary steps write
+    that carries no bundle of its own. The mult tables are where the upsert lands, so this is the assertion that
     says the update half of the upsert reproduced what the insert half wrote, ids
     included: a second write of a value the table already holds updates its row rather
     than adding a second one under a new id.

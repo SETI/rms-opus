@@ -21,7 +21,7 @@ def test_table_schema_dir_holds_the_schemas() -> None:
     assert (import_util.TABLE_SCHEMA_DIR / 'param_info_ranges.json').is_file()
 
 
-def test_dictionary_data_dir_holds_the_pds_sources() -> None:
+def test_dictionary_data_dir_holds_the_context_tree() -> None:
     """The packaged dictionary directory holds the one file `--import-dictionary` reads.
 
     The definitions themselves come from the table schemas; this directory supplies only

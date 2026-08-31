@@ -98,9 +98,9 @@ The steps
 
 :mod:`opus_import.steps.do_dictionary`
     Fills the ``contexts`` and ``definitions`` tables, which is where every tooltip
-    comes from. The terms come from two places: the PDS data dictionary that ships
-    with the package, and the ``definition`` entries in the table schemas, which is
-    where OPUS's own parameters and mult values are described. It runs only under
+    comes from. The terms are the ``definition`` entries in the packaged table
+    schemas, which is where OPUS's own parameters and mult values are described, filed
+    under the context named beside each one. It runs only under
     ``--import-dictionary``, and it is the last thing a run does.
 
 :mod:`opus_import.steps.do_cart`

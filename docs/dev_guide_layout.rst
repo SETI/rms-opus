@@ -59,7 +59,7 @@ The tree below annotates the directories and files a developer works in.
     │   │   ├── steps/                    # the do_* steps; four do_import_* modules are
     │   │   │                             #   internals of do_import, not steps
     │   │   ├── table_schemas/            # package data: the JSON that defines every OPUS table
-    │   │   ├── dictionary_data/          # package data: the PDS data dictionary sources
+    │   │   ├── dictionary_data/          # package data: the dictionary context tree
     │   │   └── util/                     # hand-run authoring tools, not part of a run
     │   ├── opus_app/             # the Django project
     │   │   ├── settings.py, urls.py, wsgi.py

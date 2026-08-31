@@ -5,10 +5,13 @@ for on its own after that run rather than during it -- the report does not exist
 the session that produces it has ended. The workflow runs the suite once with a JSON
 coverage report and then this module alone.
 
-Running it without that report is an error rather than a skip: a check that reports
-success when it cannot see its input is not a check. The command it names in that error
-is a bare ``--cov`` on purpose -- naming a package there would measure a different scope
-from the one ``[tool.coverage.run]`` defines and ``fail_under`` is calibrated against.
+Running it without that report means two different things in two places. Locally it means
+the suite was run the default way, without coverage, so these tests skip and say how to
+produce the data. Under CI it means the job that owns this gate stopped producing its
+input, so it fails: a check that reports success when it cannot see its input is not a
+check. Both messages name a bare ``--cov`` on purpose -- naming a package there would
+measure a different scope from the one ``[tool.coverage.run]`` defines and ``fail_under``
+is calibrated against.
 """
 
 from __future__ import annotations

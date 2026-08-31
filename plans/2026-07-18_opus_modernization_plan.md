@@ -7456,11 +7456,18 @@ body; never rewrite or delete earlier notes.*
     the schemas. Measured motivation: `--import-dictionary` took 31s, 99% of it in the
     pdsdd parser (cProfile: 130.5 of 131.7 instrumented seconds, 749M calls), paid three
     times per suite run, for rows nothing could read. `contexts.csv` keeps its `PSDD` row --
-    it is the **parent** of all 22 other contexts, so removing it would orphan them.
+    it is the **root of the context tree**, the direct parent of 8 rows and the ancestor of
+    21 of the other 22, so removing it would orphan them. This falsifies three more clauses
+    of the PR-19 spec, named here for the same reason as the others:
+    `plans/2026-08-30_pr19_mini_holdings_fixture.md` §104 ("the packaged `pdsdd.full` --
+    deterministic, shipped in the wheel"), §193 ("the packaged `pdsdd.full` is used"), and
+    §145's coverage table, which lists "the dictionary step against the packaged
+    `pdsdd.full`" as covered -- doubly false now, since the file is gone and `definitions`
+    is excused from the goldens.
     `util/dump_pds_definitions.py` stays: it parses a user-supplied PDS *index label* to
     help author table schemas and never touched `pdsdd.full`.
   - **The suite is ~2 minutes by default.** A bare `pytest import_tests` is 223 passed, 3
-    skipped in 1:36; with coverage it is 222 passed in 4:01. Getting there: the pdsdd
+    skipped in 1:36; with coverage it is 222 passed in 4:01, plus the second command's 4. Getting there: the pdsdd
     removal took the main run from 106s to 69s, and the negative cases now stop after their
     imports rather than running the full production sequence (4.9s and 3.9s, from ~39s
     each) -- their assertions read only `obs_general`, the target-name mult table, the step

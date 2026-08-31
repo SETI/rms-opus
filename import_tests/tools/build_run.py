@@ -469,7 +469,8 @@ def perform_run(
     extra_import_args: Iterable[str] = (),
     finalize: bool = True,
 ) -> ImportRun:
-    """Build a tree and run the whole pipeline sequence against it.
+    """Build a tree and run the pipeline against it -- the whole sequence unless
+    `finalize` says otherwise.
 
     The sequence is the one the integration import script runs: drop everything, import
     each bundle on its own, clean up the auxiliary tables, import the dictionary,

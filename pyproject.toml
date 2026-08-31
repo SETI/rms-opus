@@ -238,7 +238,7 @@ namespaces = false
 "*" = ["py.typed"]
 # The import pipeline reads these at run time through importlib.resources, so they have
 # to be inside the wheel: the JSON schemas that define every OPUS table (plus the two
-# lists of values deliberately left unmapped), and the PDS data dictionary sources that
+# lists of values deliberately left unmapped), and the dictionary context tree that
 # `--import-dictionary` reads.
 "opus_import" = ["table_schemas/*", "dictionary_data/*"]
 # The log analyzer's Jinja report templates, loaded by package name (jinja2's
