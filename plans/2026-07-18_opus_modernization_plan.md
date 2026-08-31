@@ -7321,8 +7321,19 @@ body; never rewrite or delete earlier notes.*
     dominate and there are now 24 of them. The whole PR is **564 changed files, of which
     49 are not recorded fixture data**, so it exceeds CodeRabbit's 100-file cap and rev
     7.2's wide-PR exception applies, exactly as that note predicted.
-  - **Two things the import does that are not deterministic, and what the suite does about
-    them.** Both are real and neither is PR-19's to fix. (1) `do_param_info` asks the
+  - **A third non-determinism, found by CI and fixed here.** `do_import.import_one_bundle`
+    iterated `os.listdir` of the index directory unsorted. A bundle can have several
+    primary indexes -- COCIRS_1xxx has one per cube geometry -- and row ids are handed out
+    in insertion order, so **every id in the database depended on how one filesystem
+    happened to enumerate one directory**. The suite's first CI run caught it: 19 golden
+    comparisons failed with identical row counts and identical values, the COCIRS ring
+    indexes simply sorted ahead of the equirectangular ones on a GitHub runner and behind
+    them here. `sorted()` fixes it, the goldens were regenerated over the fixed order, and
+    the diff was verified to be ids only. This is the defect class the suite was built to
+    find, and it found one on the first run against a machine that was not the one the
+    fixture was recorded on.
+  - **Two more things the import does that are not deterministic, and what the suite does
+    about them.** Both are real and neither is PR-19's to fix. (1) `do_param_info` asks the
     backend which tables to describe and gets a **set**, so the ids it hands out follow a
     string-hash order that Python randomizes per process: two identical imports give
     `param_info` the same rows under different ids. The suite pins `PYTHONHASHSEED` in the
