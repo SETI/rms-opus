@@ -25,10 +25,18 @@
 #   --vulture              Run vulture only
 #   --sphinx               Run Sphinx build only
 #   --pymarkdown           Run PyMarkdown scan only
+#   --import-tests         ALSO run the import suite. Opt-in and never part of a
+#                          default run: it needs a reachable MySQL server, which no
+#                          other check does, and takes about two minutes. Combined
+#                          with a --* flag it is added to that selection; on its own
+#                          it is added to the full run.
 #   -h, --help             Show this help message
 #
 # Environment:
 #   VENV or VENV_PATH        Path to virtualenv (default: $PROJECT_ROOT/venv)
+#   OPUS_TEST_DB_HOST/_USER/_PASSWORD   Where --import-tests finds MySQL. The suite
+#                            reads them itself, defaulting to root with no password
+#                            on 127.0.0.1.
 #   CLEANUP_GRACE_PERIOD     Seconds to wait for graceful shutdown (default: 5)
 #
 #   Pytest coverage minimum: configure fail_under in coverage config (e.g.
@@ -50,6 +58,7 @@
 #     ENABLE_VULTURE      (default: true)
 #     ENABLE_SPHINX       (default: true)
 #     ENABLE_PYMARKDOWN   PyMarkdown scan (default: true)
+#     ENABLE_IMPORT_TESTS (default: true, but --import-tests must ask for it too)
 #
 # Checks (each run separately; -d runs both Sphinx and Markdown):
 #   Code:     optional: ruff check, ruff format --check, mypy, pytest, pyroma,
@@ -85,6 +94,7 @@ RUN_BANDIT=false
 RUN_VULTURE=false
 RUN_SPHINX=false
 RUN_PYMARKDOWN=false
+RUN_IMPORT_TESTS=false
 SCOPE_SPECIFIED=false
 
 # Per-check defaults (override by exporting before invoking this script, or
@@ -104,6 +114,7 @@ SCOPE_SPECIFIED=false
 : "${ENABLE_VULTURE:=true}"
 : "${ENABLE_SPHINX:=true}"
 : "${ENABLE_PYMARKDOWN:=true}"
+: "${ENABLE_IMPORT_TESTS:=true}"
 
 # The importable packages live under src/, with the live-DB suites in
 # integration_tests/, the holdings-free import suite in import_tests/, the unit
@@ -280,6 +291,14 @@ while [[ $# -gt 0 ]]; do
             SCOPE_SPECIFIED=true
             shift
             ;;
+        --import-tests)
+            # Deliberately does not set SCOPE_SPECIFIED: this flag *adds* the import
+            # suite rather than narrowing the run to it. On its own it means the full
+            # run plus the import suite; alongside another --* flag it is added to that
+            # selection instead.
+            RUN_IMPORT_TESTS=true
+            shift
+            ;;
         --pyroma)
             RUN_PYROMA=true
             SCOPE_SPECIFIED=true
@@ -352,6 +371,7 @@ _code_checks_any_scheduled() {
     [ "$RUN_PYROMA" = true ] && [ "$ENABLE_PYROMA" = true ] && return 0
     [ "$RUN_BANDIT" = true ] && [ "$ENABLE_BANDIT" = true ] && return 0
     [ "$RUN_VULTURE" = true ] && [ "$ENABLE_VULTURE" = true ] && return 0
+    [ "$RUN_IMPORT_TESTS" = true ] && [ "$ENABLE_IMPORT_TESTS" = true ] && return 0
     return 1
 }
 
@@ -442,6 +462,21 @@ run_code_checks() {
             print_error "Pytest failed"
             failed=true
             failed_checks="${failed_checks}Code - Pytest"$'\n'
+        fi
+    fi
+
+    # The import suite, opt-in because it is the one check needing a server. The bare
+    # form, no coverage: that is the everyday one and about two minutes, and the coverage
+    # form is two commands belonging to the Import Tests job. It reads
+    # OPUS_TEST_DB_HOST/_USER/_PASSWORD itself.
+    if [ "$RUN_IMPORT_TESTS" = true ] && [ "$ENABLE_IMPORT_TESTS" = true ]; then
+        print_info "Running pytest import_tests (needs a reachable MySQL)..."
+        if python -m pytest -q import_tests; then
+            print_success "Import tests passed"
+        else
+            print_error "Import tests failed"
+            failed=true
+            failed_checks="${failed_checks}Code - Import tests"$'\n'
         fi
     fi
 

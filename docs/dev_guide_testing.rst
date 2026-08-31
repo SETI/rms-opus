@@ -153,11 +153,12 @@ Running the checks
 ``scripts/run-all-checks.sh`` runs everything this repository gates on, in parallel by
 default::
 
-    ./scripts/run-all-checks.sh              # everything
-    ./scripts/run-all-checks.sh -c           # only the code checks
-    ./scripts/run-all-checks.sh -d           # only Sphinx and PyMarkdown
-    ./scripts/run-all-checks.sh --mypy       # one check
-    ./scripts/run-all-checks.sh -s           # sequentially, for readable output
+    ./scripts/run-all-checks.sh                 # everything
+    ./scripts/run-all-checks.sh -c              # only the code checks
+    ./scripts/run-all-checks.sh -d              # only Sphinx and PyMarkdown
+    ./scripts/run-all-checks.sh --mypy          # one check
+    ./scripts/run-all-checks.sh -s              # sequentially, for readable output
+    ./scripts/run-all-checks.sh --import-tests  # everything, plus the import suite
 
 What it runs, and what each one is configured by:
 
@@ -196,6 +197,15 @@ What it runs, and what each one is configured by:
      - ``pymarkdown scan``
      - ``[tool.pymarkdown.*]``
 
-It runs the holdings-free suite only. Each check has an ``ENABLE_*`` toggle at the top of
-the script, so one that is not yet expected to pass can be switched off in one place rather
-than deleted.
+It runs the holdings-free suite only, which is why a full run needs nothing but a
+checkout: every other check reads files.
+
+``--import-tests`` adds the import suite to whatever else is running -- on its own, to the
+full run; alongside another ``--*`` flag, to that selection. It is opt-in and never part of
+a default run, because it is the one check that needs a reachable MySQL server and it takes
+about two minutes against the eighteen seconds everything else costs. It uses the bare
+form, without coverage, and reads ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER`` and
+``OPUS_TEST_DB_PASSWORD`` itself. A failure fails the script, like any other check.
+
+Each check has an ``ENABLE_*`` toggle at the top of the script, so one that is not yet
+expected to pass can be switched off in one place rather than deleted.
