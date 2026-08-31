@@ -159,7 +159,7 @@ def write_manifest(path: Path, entries: dict[str, Any]) -> None:
             which means the layout altered the data rather than only its presentation.
     """
     text = format_manifest(entries)
-    if ast.literal_eval(text) != entries:
+    if read_manifest_text(text, str(path)) != entries:
         raise ValueError(f'Manifest text does not round-trip: {path}')
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding='utf-8')

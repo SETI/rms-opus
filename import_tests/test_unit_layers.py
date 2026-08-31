@@ -153,7 +153,8 @@ def import_db(
         runs.
     """
     schema = fixture_layout.schema_name(os.getpid(), _SQL_CASE)
-    created_schemas.append(schema)
+    if schema not in created_schemas:
+        created_schemas.append(schema)
     golden_io.execute(db_credentials, None, f'DROP DATABASE IF EXISTS `{schema}`')
     db = importdb.get_db(
         'MySQL',
