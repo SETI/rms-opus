@@ -173,10 +173,11 @@ the import once per worker into the same schema. Each run creates schemas named
 ``opus_import_test_<pid>`` and drops every one of them when the session ends, pass or
 fail.
 
-A complete run of it is two commands, not one, because its executed-functions check
-reads the coverage report the rest of the suite writes and cannot see it until that
-session has ended -- see :ref:`dev_guide_import_fixture`, which gives both. The
-single-command form above is what to use while working on anything else in the suite.
+``pytest import_tests`` above is the everyday form: about two minutes, no coverage, with
+the three executed-functions tests skipping because the report they read is not there.
+Measuring coverage roughly doubles that and takes two commands, because the check reads
+the report the rest of the suite writes and cannot see it until that session has ended --
+see :ref:`dev_guide_import_fixture`, which gives both and says when each is wanted.
 
 ``--dist loadscope`` keeps each test module on one worker, which matters for the
 modules that mock time or share a fixture. The live-database suites are deliberately

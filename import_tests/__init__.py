@@ -2,10 +2,14 @@
 
 The suite runs the real ``opus_import`` command line against a checked-in mini-holdings
 tree and a MySQL server. It is not part of the default ``pytest`` run -- ``testpaths``
-in ``pyproject.toml`` selects ``tests`` only -- so it is asked for by name, in two
-invocations, because `import_tests.test_obs_execution` reads the coverage report the
-rest of the suite writes and that report does not exist until the session producing it
-has ended::
+in ``pyproject.toml`` selects ``tests`` only -- so it is asked for by name::
+
+    pytest import_tests
+
+That is the everyday form: about two minutes, no coverage, and
+`import_tests.test_obs_execution` skips because the report it reads is not there.
+Coverage roughly doubles the runtime and takes two invocations, because that report does
+not exist until the session producing it has ended::
 
     pytest import_tests --ignore=import_tests/test_obs_execution.py \\
         --cov --cov-report=json:coverage.json

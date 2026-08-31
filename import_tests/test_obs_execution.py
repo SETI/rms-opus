@@ -13,20 +13,47 @@ from the one ``[tool.coverage.run]`` defines and ``fail_under`` is calibrated ag
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from import_tests.tools import fixture_layout, obs_execution, whitelist_blocks
 
+#: What GitHub Actions sets in every step of every job. Its presence is how this module
+#: tells "a developer ran the suite the quick way" from "the job that owns this gate did
+#: not produce its input", which have the same symptom and opposite meanings.
+CI_ENV_VAR = 'GITHUB_ACTIONS'
+
+#: The two commands that produce the report, named in both the skip and the failure so
+#: whichever one a reader hits tells them what to run.
+HOW_TO_PRODUCE = (
+    'pytest import_tests --ignore=import_tests/test_obs_execution.py '
+    '--cov --cov-report=json:coverage.json && pytest import_tests/test_obs_execution.py'
+)
+
 
 @pytest.fixture(scope='session')
 def findings() -> obs_execution.Findings:
-    """Compare the coverage report with the checked-in whitelist."""
+    """Compare the coverage report with the checked-in whitelist.
+
+    A missing report means two different things in two places, and this is where they are
+    told apart. Locally it means the suite was run the default way, without coverage,
+    which is the fast way and the one the developer guide recommends -- so these tests
+    skip and say how to produce the data. Under CI it means the job that owns this gate
+    stopped producing its input, so it is a failure: skipping there would let someone drop
+    ``--cov`` from the workflow and silently delete the gate, which is exactly the
+    check-that-cannot-fail this module exists to be.
+    """
     report_path = obs_execution.DEFAULT_REPORT
     if not report_path.is_file():
-        pytest.fail(
-            f'{report_path} is missing. Run the suite with a JSON coverage report first: '
-            'pytest import_tests --ignore=import_tests/test_obs_execution.py '
-            '--cov --cov-report=json:coverage.json'
+        if os.environ.get(CI_ENV_VAR):
+            pytest.fail(
+                f'{report_path} is missing under {CI_ENV_VAR}, where this gate is '
+                f'required. The job must run: {HOW_TO_PRODUCE}'
+            )
+        pytest.skip(
+            f'{report_path} is missing, so there is nothing to check the obs layer '
+            f'against. This is the default local run; to produce it: {HOW_TO_PRODUCE}'
         )
     return obs_execution.check(
         obs_execution.read_report(report_path),
