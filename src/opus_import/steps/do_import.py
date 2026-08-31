@@ -134,7 +134,12 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
     for path in index_paths:
         if not os.path.exists(path):
             continue
-        basenames = os.listdir(path)
+        # Sorted, because a bundle can have several primary indexes -- COCIRS_1xxx has
+        # one per cube geometry -- and row ids are handed out in the order rows are
+        # inserted. Taking them in `os.listdir` order makes every id in the database
+        # depend on how one filesystem happened to enumerate one directory, so two
+        # imports of identical holdings on two machines disagree about every id.
+        basenames = sorted(os.listdir(path))
         ret = True
         for basename in basenames:
             if basename in primary_index_names:

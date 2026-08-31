@@ -1,12 +1,12 @@
 id	value	label	disp_order	display	grouping	group_disp_order	aliases
 0	Saturn	Saturn	Saturn	Y	\N	\N	\N
-1	Titan	Titan	Titan	Y	\N	\N	\N
+1	Dione	Dione	Dione	Y	\N	\N	\N
 2	Rhea	Rhea	Rhea	Y	\N	\N	\N
-3	Dione	Dione	Dione	Y	\N	\N	\N
+3	Titan	Titan	Titan	Y	\N	\N	\N
 4	Enceladus	Enceladus	Enceladus	Y	\N	\N	\N
-5	Tethys	Tethys	Tethys	Y	\N	\N	\N
-6	Helene	Helene	Helene	Y	\N	\N	\N
-7	Mimas	Mimas	Mimas	Y	\N	\N	\N
+5	Helene	Helene	Helene	Y	\N	\N	\N
+6	Mimas	Mimas	Mimas	Y	\N	\N	\N
+7	Tethys	Tethys	Tethys	Y	\N	\N	\N
 8	S_Rings	S_Rings	S_Rings	Y	\N	\N	\N
 9	Sky	Sky	Sky	Y	\N	\N	\N
 10	Unk	Unk	Unk	Y	\N	\N	\N

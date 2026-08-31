@@ -1,12 +1,12 @@
 id	value	label	disp_order	display	grouping	group_disp_order	aliases
 0	SATURN	Saturn	Saturn	Y	Saturn	060	\N
-1	TITAN	Titan	Titan	Y	Saturn	060	\N
+1	DIONE	Dione	Dione	Y	Saturn	060	\N
 2	RHEA	Rhea	Rhea	Y	Saturn	060	\N
-3	DIONE	Dione	Dione	Y	Saturn	060	\N
+3	TITAN	Titan	Titan	Y	Saturn	060	\N
 4	ENCELADUS	Enceladus	Enceladus	Y	Saturn	060	\N
-5	TETHYS	Tethys	Tethys	Y	Saturn	060	\N
-6	HELENE	Helene	Helene	Y	Saturn	060	\N
-7	MIMAS	Mimas	Mimas	Y	Saturn	060	\N
+5	HELENE	Helene	Helene	Y	Saturn	060	\N
+6	MIMAS	Mimas	Mimas	Y	Saturn	060	\N
+7	TETHYS	Tethys	Tethys	Y	Saturn	060	\N
 8	KIVIUQ	Kiviuq	Kiviuq	Y	Saturn	060	\N
 9	EPIMETHEUS	Epimetheus	Epimetheus	Y	Saturn	060	\N
 10	PAN	Pan	Pan	Y	Saturn	060	\N

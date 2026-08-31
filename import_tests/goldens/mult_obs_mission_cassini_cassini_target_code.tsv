@@ -1,13 +1,13 @@
 id	value	label	disp_order	display	grouping	group_disp_order	aliases
 0	IC	IC (Instrument calibration)	IC (Instrument calibration)	Y	\N	\N	\N
-1	OT	OT (Other)	OT (Other)	Y	\N	\N	\N
-2	RH	RH (Rhea)	RH (Rhea)	Y	\N	\N	\N
-3	SA	SA (Saturn)	SA (Saturn)	Y	\N	\N	\N
-4	TI	TI (Titan)	TI (Titan)	Y	\N	\N	\N
-5	DI	DI (Dione)	DI (Dione)	Y	\N	\N	\N
-6	EN	EN (Enceladus)	EN (Enceladus)	Y	\N	\N	\N
-7	HE	HE (Helene)	HE (Helene)	Y	\N	\N	\N
-8	MI	MI (Mimas)	MI (Mimas)	Y	\N	\N	\N
+1	RH	RH (Rhea)	RH (Rhea)	Y	\N	\N	\N
+2	TI	TI (Titan)	TI (Titan)	Y	\N	\N	\N
+3	DI	DI (Dione)	DI (Dione)	Y	\N	\N	\N
+4	EN	EN (Enceladus)	EN (Enceladus)	Y	\N	\N	\N
+5	HE	HE (Helene)	HE (Helene)	Y	\N	\N	\N
+6	MI	MI (Mimas)	MI (Mimas)	Y	\N	\N	\N
+7	OT	OT (Other)	OT (Other)	Y	\N	\N	\N
+8	SA	SA (Saturn)	SA (Saturn)	Y	\N	\N	\N
 9	RI	RI (Rings - general)	RI (Rings - general)	Y	\N	\N	\N
 10	IA	IA (Iapetus)	IA (Iapetus)	Y	\N	\N	\N
 11	ST	ST (Star)	ST (Star)	Y	\N	\N	\N
