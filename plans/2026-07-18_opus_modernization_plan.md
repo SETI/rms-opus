@@ -7319,9 +7319,8 @@ body; never rewrite or delete earlier notes.*
     677 KB unsorted here), so it is not a figure to regress against. The 2026-08-26
     estimate of ~475 KB raw was for one PDS3 volume plus one PDS4 bundle at N=20; labels
     dominate and there are now 24 of them. The whole PR is **564 changed files, of which
-    49 are not recorded fixture data**
-    -- the rest is recorded data -- so it exceeds CodeRabbit's 100-file cap and rev 7.2's
-    wide-PR exception applies, exactly as that note predicted.
+    49 are not recorded fixture data**, so it exceeds CodeRabbit's 100-file cap and rev
+    7.2's wide-PR exception applies, exactly as that note predicted.
   - **Two things the import does that are not deterministic, and what the suite does about
     them.** Both are real and neither is PR-19's to fix. (1) `do_param_info` asks the
     backend which tables to describe and gets a **set**, so the ids it hands out follow a

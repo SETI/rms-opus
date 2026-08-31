@@ -66,7 +66,7 @@ def created_schemas(db_credentials: DatabaseCredentials) -> Iterator[list[str]]:
 def subprocess_coverage() -> Iterator[None]:
     """Measure the pipeline's subprocesses too, and leave nothing behind afterwards.
 
-    Coverage reaches a subprocess through a ``.pth`` file in site-packages, which is
+    Coverage reaches a subprocess through a ``.pth`` file in a site directory, which is
     installed only while a measured session is running: left there, it would make every
     later interpreter in that environment import coverage at startup.
 

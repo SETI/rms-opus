@@ -70,14 +70,16 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
 def check_run_is_clean(run: build_run.ImportRun, credentials: DatabaseCredentials) -> list[str]:
     """Return the reasons a run must not be blessed into the goldens.
 
-    Two of the suite's standards, checked before anything is written rather than after: a
-    broken run must never become the thing later runs are compared against. It is every
-    check `import_tests.test_run_logs` makes, plus the products comparison
-    `import_tests.test_expected_products` makes -- not that module's registry-coverage
-    checks, which describe the fixture rather than the run and fail the suite on their
-    own. A step that died before it logged, and a log file that was never written at all,
-    are both counted, because either would make the log checks below read an empty file
-    and find nothing wrong with it.
+    Everything the suite asks about the *run itself*, checked before anything is written
+    rather than after: a broken run must never become the thing later runs are compared
+    against. That is `import_tests.test_run_logs`' checks and the products comparison
+    `import_tests.test_expected_products` makes. What is deliberately not here is what
+    those modules ask about the checked-in files rather than the run -- whether every
+    whitelist entry sits under a comment, whether the registry is covered -- which fail
+    the suite on their own and would fail it identically before and after a regeneration.
+    A step that died before it logged, and a log file that was never written at all, are
+    both counted, because either would make the log checks below read an empty file and
+    find nothing wrong with it.
 
     Parameters:
         run: The completed run.
