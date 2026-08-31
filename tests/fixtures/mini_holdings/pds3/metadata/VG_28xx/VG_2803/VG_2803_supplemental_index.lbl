@@ -1,0 +1,420 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 453
+FILE_RECORDS                    = 20
+^INDEX_TABLE                    = "VG_2803_supplemental_index.tab"
+
+VOLUME_ID                       = "VG_2803"
+DATA_SET_ID                     = "VG1/VG2-SR/UR-RSS-4-OCC-V1.0"
+PRODUCT_CREATION_TIME           = 2022-02-22T22:22:22
+SPACECRAFT_NAME                 = "VOYAGER 2"
+SPACECRAFT_ID                   = VG2
+INSTRUMENT_NAME                 = "RADIO SCIENCE SUBSYSTEM"
+
+OBJECT                          = INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 20
+  COLUMNS                       = 31
+  ROW_BYTES                     = 453
+  INDEX_TYPE                    = SINGLE
+  DESCRIPTION                   = "This is a supplemental table of information
+extracted from label files on this archive volume. There is one record per
+label file in the volume. The files indexed are those in the CALIB, EASYDATA,
+EDITDATA, GEOMETRY, IMAGES, NOISDATA, LOWDATA, SORCDATA, SPICE, TRAJECT, and
+VECTORS directories."
+
+  OBJECT                        = COLUMN
+    NAME                        = VOLUME_ID
+    COLUMN_NUMBER               = 1
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 7
+    FORMAT                      = A7
+  DESCRIPTION                   = "Identifier of the volume in which the data
+cube resides."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FILE_SPECIFICATION_NAME
+    COLUMN_NUMBER               = 2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 12
+    BYTES                       = 54
+    FORMAT                      = A54
+    DESCRIPTION                 = "Name and directory path of the PDS label
+file describing this particular file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = DATA_SET_ID
+    COLUMN_NUMBER               = 3
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 69
+    BYTES                       = 33
+    FORMAT                      = A33
+    DESCRIPTION                 = "The product ID associated with the
+given file. This is typically the file name, sometimes with a
+directory name prepended to make it unique."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_CREATION_TIME
+    COLUMN_NUMBER               = 4
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 105
+    BYTES                       = 19
+    FORMAT                      = A19
+    DESCRIPTION                 = "Time of creation of this cube on the
+ground. Format: 'yyyy-mm-ddThh:mm:ss'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_HOST_NAME
+    COLUMN_NUMBER               = 5
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 127
+    BYTES                       = 9
+    FORMAT                      = A9
+    DESCRIPTION                 = "The full name of the host on which an
+instrument is based. This host can be either a spacecraft or an earth base."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_ID
+    COLUMN_NUMBER               = 6
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 139
+    BYTES                       = 8
+    FORMAT                      = A8
+    DESCRIPTION                 = "Brief identifier of the instrument
+associated with the data product."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = OCCULTATION_TYPE
+    COLUMN_NUMBER               = 7
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 150
+    BYTES                       = 11
+    FORMAT                      = A11
+    DESCRIPTION                 = "The type of occultation, 'STELLAR',
+'RADIO', or 'SOLAR'. Alternatively, 'REFLECTANCE' indicates that this is a
+radial profile of ring reflectance values, rather than data from an actual
+occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PLANETARY_OCCULTATION_FLAG
+    COLUMN_NUMBER               = 8
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 164
+    BYTES                       = 1
+    FORMAT                      = A1
+    DESCRIPTION                 = "'Y' if this occultation profile intersepts
+the central planet; 'N' otherwise."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = WAVELENGTH_BAND_1
+    COLUMN_NUMBER               = 9
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 168
+    BYTES                       = 6
+    FORMAT                      = A6
+    DESCRIPTION                 = "The wavelength band at which the
+occultation was observed. If two or more wavelength bans were observed, this
+is the first."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = WAVELENGTH_BAND_2
+    COLUMN_NUMBER               = 10
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 177
+    BYTES                       = 6
+    FORMAT                      = A6
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "A second wavelength band at which the
+occultation was observed. If only one band was used, this value is 'N/A'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_WAVELENGTH
+    COLUMN_NUMBER               = 11
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 185
+    BYTES                       = 11
+    FORMAT                      = "F11.4"
+    UNIT                        = "micron"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The minimum value in the range of
+wavelengths observed, in microns."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_WAVELENGTH
+    COLUMN_NUMBER               = 12
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 197
+    BYTES                       = 11
+    FORMAT                      = "F11.4"
+    UNIT                        = "micron"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The maximum value in the range of
+wavelengths observed, in microns."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = EARTH_RECEIVED_START_TIME
+    COLUMN_NUMBER               = 13
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 210
+    BYTES                       = 23
+    FORMAT                      = A23
+    UNKNOWN_CONSTANT            = "UNK"
+    DESCRIPTION                 = "The earliest time that the data or
+transmission reached Earth."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = EARTH_RECEIVED_STOP_TIME
+    COLUMN_NUMBER               = 14
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 236
+    BYTES                       = 23
+    FORMAT                      = A23
+    UNKNOWN_CONSTANT            = "UNK"
+    DESCRIPTION                 = "The latest time that the data or
+transmission reached Earth."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_EVENT_START_TIME
+    COLUMN_NUMBER               = 15
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 262
+    BYTES                       = 23
+    FORMAT                      = A23
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The earliest time that observed photons
+intercepted the ring plane."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_EVENT_STOP_TIME
+    COLUMN_NUMBER               = 16
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 288
+    BYTES                       = 23
+    FORMAT                      = A23
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The latest time that observed photons
+intercepted the ring plane."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_RADIUS
+    COLUMN_NUMBER               = 17
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 313
+    BYTES                       = 12
+    FORMAT                      = "F12.5"
+    UNIT                        = "km"
+    UNKNOWN_CONSTANT            = -99.
+    DESCRIPTION                 = "The innermost ring radius observed, in km."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_RADIUS
+    COLUMN_NUMBER               = 18
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 326
+    BYTES                       = 12
+    FORMAT                      = "F12.5"
+    UNIT                        = "km"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The outermost ring radius observed, in km."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RADIAL_RESOLUTION
+    COLUMN_NUMBER               = 19
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 339
+    BYTES                       = 7
+    FORMAT                      = "F7.3"
+    UNIT                        = "km"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The finest resolution in the data set, in
+km."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RADIAL_RESOLUTION
+    COLUMN_NUMBER               = 20
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 347
+    BYTES                       = 7
+    FORMAT                      = "F7.3"
+    UNIT                        = "km"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The coarsest resolution in the data set, in
+km."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INCIDENCE_ANGLE
+    COLUMN_NUMBER               = 21
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 355
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNIT                        = "deg"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The angle between the ring plane normal and
+the direction to the source of illumination, be it a star, the Sun, or radio
+transmissions from a spacecraft."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_EMISSION_ANGLE
+    COLUMN_NUMBER               = 22
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 366
+    BYTES                       = 6
+    FORMAT                      = "F6.2"
+    UNIT                        = "deg"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The minimum value of the emission angle,
+defined as the angle between the ring plane normal on the illuminated face,
+and the direction to the detector. Values > 90 correspond to views of the
+ring's unlit face. For occultations, this is 180 minus the incidence angle."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_EMISSION_ANGLE
+    COLUMN_NUMBER               = 23
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 373
+    BYTES                       = 6
+    FORMAT                      = "F6.2"
+    UNIT                        = "deg"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The maximum value of the emission angle,
+defined as the angle between the ring plane normal on the illuminated face,
+and the direction to the detector. Values > 90 correspond to views of the
+ring's unlit face. For occultations, this is 180 minus the incidence angle."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_PHASE_ANGLE
+    COLUMN_NUMBER               = 24
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 380
+    BYTES                       = 6
+    FORMAT                      = "F6.2"
+    UNIT                        = "deg"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The minimum value of the phase angle,
+defined as the angle between the direction to the source and the direction to
+the detector, as observed at the ring plane. For occultations, this is always
+180 degrees."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_PHASE_ANGLE
+    COLUMN_NUMBER               = 25
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 387
+    BYTES                       = 6
+    FORMAT                      = "F6.2"
+    UNIT                        = "deg"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The maximum value of the phase angle,
+defined as the angle between the direction to the source and the direction to
+the detector, as observed at the ring plane. For occultations, this is always
+180 degrees."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_LONGITUDE_WRT_NODE
+    COLUMN_NUMBER               = 26
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 394
+    BYTES                       = 7
+    FORMAT                      = "F7.3"
+    UNIT                        = "deg"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The minimum value of the inertial ring
+longitude of the intercept point. Longitudes are measured relative to the
+ascending node of the ring plane on the Earth's J2000 equator."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_LONGITUDE_WRT_NODE
+    COLUMN_NUMBER               = 27
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 402
+    BYTES                       = 7
+    FORMAT                      = "F7.3"
+    UNIT                        = "deg"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    DESCRIPTION                 = "The maximum value of the inertial ring
+longitude of the intercept point. Longitudes are measured relative to the
+ascending node of the ring plane on the Earth's J2000 equator."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RECEIVER_HOST_NAME
+    COLUMN_NUMBER               = 28
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 411
+    BYTES                       = 9
+    FORMAT                      = A9
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The host (spacecraft or Earth base) where
+the photons were received."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SIGNAL_SOURCE_NAME_1
+    COLUMN_NUMBER               = 29
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 423
+    BYTES                       = 9
+    FORMAT                      = A9
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The source of the photons, e.g., the name
+of a star, the Sun, or a spacecraft transimitting radio signals. If this
+product is relevant to more than one source of photons, this is the first."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SIGNAL_SOURCE_NAME_2
+    COLUMN_NUMBER               = 30
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 435
+    BYTES                       = 9
+    FORMAT                      = A9
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "If this product is relevant to photons from
+more than one source, this is the second; otherwise, the value is 'N/A', for
+'not applicable'. The value is the name of a star, the Sun, or a spacecraft
+transimitting radio signals."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TEMPORAL_SAMPLING_INTERVAL
+    COLUMN_NUMBER               = 31
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 446
+    BYTES                       = 6
+    FORMAT                      = "F6.2"
+    NOT_APPLICABLE_CONSTANT     = -99.
+    UNIT                        = "s"
+    DESCRIPTION                 = "The time interval between adjacent samples
+in the associated occultation profile."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = INDEX_TABLE
+END

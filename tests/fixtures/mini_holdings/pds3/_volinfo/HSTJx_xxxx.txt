@@ -1,0 +1,18 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+
+HSTJx_xxxx            | HST ACS placeholder volumes for OPUS queries                  || 1.3 | 2020-09-24
+HSTJx_xxxx/HSTJ1_0507 | HST ACS images of the Jupiter system 2006-02-07 to 2006-04-14 || 1.2 | 2018-07-14 | HST-J-ACS-5-ID10507-V1.2
+
+
+HSTJx_xxxx_v1.1/HSTJ1_0507 | HST ACS images of the Jupiter system 2006-02-07 to 2006-04-14 || 1.1 | 2018-03-25 | HST-J-ACS-5-ID10507-V1.1
+
+HSTJx_xxxx_v1.0/HSTJ1_0507 | HST ACS images of the Jupiter system 2006-02-07 to 2006-04-14 || 1.0 | 2013-06-17 | HST-J-ACS-5-ID10507-V1.0
+
+metadata/HSTJx_xxxx/HSTJ1_0507   | HST ACS metadata for the Jupiter system 2006-02-07 to 2006-04-14 || 1.3 | 2025-06-09
+
+metadata/HSTJx_xxxx_v1.0/HSTJ1_0507   | HST ACS metadata for the Jupiter system 2006-02-07 to 2006-04-14 || 1.0 | 2018-08-24
+
+metadata/HSTJx_xxxx_v1.1/HSTJ1_0507   | HST ACS metadata for the Jupiter system 2006-02-07 to 2006-04-14 || 1.1 | 2020-09-24
+
+metadata/HSTJx_xxxx_v1.2/HSTJ1_0507   | HST ACS metadata for the Jupiter system 2006-02-07 to 2006-04-14 || 1.2 | 2021-01-21

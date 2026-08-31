@@ -1,0 +1,6 @@
+{
+    'NHPCMV_1001_index.lbl': [(6, 'NHPCMV_1001_index.tab', 'NHPCMV_1001_index.tab')],
+    'NHPCMV_1001_index.tab': 'NHPCMV_1001_index.lbl',
+    'NHPCMV_1001_supplemental_index.lbl': [(4, 'NHPCMV_1001_supplemental_index.tab', 'NHPCMV_1001_supplemental_index.tab')],
+    'NHPCMV_1001_supplemental_index.tab': 'NHPCMV_1001_supplemental_index.lbl',
+}

@@ -1,0 +1,16 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+
+COUVIS_0xxx             | Cassini UVIS (Ultraviolet Spectrometer) data collection                            || 2.0 | 2019-11-14
+COUVIS_0xxx/COUVIS_0031 | Cassini UVIS Saturn data 2010-04-01 to 2010-06-30 (SC clock 1648802103-1656556010) || 2.0 | 2019-11-14 | CO-S-UVIS-2-CALIB-V1.2 | CO-S-UVIS-2-CUBE-V1.5 | CO-S-UVIS-2-SPEC-V1.5 | CO-S-UVIS-2-SSB-V1.2
+
+COUVIS_0xxx_v1/COUVIS_0031 | Cassini UVIS Saturn data 2010-04-01 to 2010-06-30 (SC clock 1648802103-1656556010) || 1.0 | 2011-04-01 | CO-S-UVIS-2-CALIB-V1.2 | CO-S-UVIS-2-CUBE-V1.2 | CO-S-UVIS-2-SPEC-V1.2 | CO-S-UVIS-2-SSB-V1.2
+
+metadata/COUVIS_0xxx/COUVIS_0031  | Cassini UVIS metadata 2010-04-01 to 2010-06-30 (SC clock 1648802103-1656556010) || 1.3 | 2022-01-04
+
+metadata/COUVIS_0xxx_v1.0/COUVIS_0031  | Cassini UVIS metadata 2010-04-01 to 2010-06-30 (SC clock 1648802103-1656556010) || 1.0 | 2018-08-24
+
+metadata/COUVIS_0xxx_v1.1/COUVIS_0031  | Cassini UVIS metadata 2010-04-01 to 2010-06-30 (SC clock 1648802103-1656556010) || 1.1 | 2020-10-10
+
+metadata/COUVIS_0xxx_v1.2/COUVIS_0031  | Cassini UVIS metadata 2010-04-01 to 2010-06-30 (SC clock 1648802103-1656556010) || 1.2 | 2021-02-22
+

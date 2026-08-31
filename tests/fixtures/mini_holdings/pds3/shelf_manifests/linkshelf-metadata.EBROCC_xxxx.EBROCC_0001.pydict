@@ -1,0 +1,6 @@
+{
+    'EBROCC_0001_index.lbl': [(4, 'EBROCC_0001_index.tab', 'EBROCC_0001_index.tab')],
+    'EBROCC_0001_index.tab': 'EBROCC_0001_index.lbl',
+    'EBROCC_0001_supplemental_index.lbl': [(4, 'EBROCC_0001_supplemental_index.tab', 'EBROCC_0001_supplemental_index.tab')],
+    'EBROCC_0001_supplemental_index.tab': 'EBROCC_0001_supplemental_index.lbl',
+}

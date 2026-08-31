@@ -1,0 +1,6 @@
+{
+    'CORSS_8001_index.lbl': [(4, 'CORSS_8001_index.tab', 'CORSS_8001_index.tab')],
+    'CORSS_8001_index.tab': 'CORSS_8001_index.lbl',
+    'CORSS_8001_supplemental_index.lbl': [(4, 'CORSS_8001_supplemental_index.tab', 'CORSS_8001_supplemental_index.tab')],
+    'CORSS_8001_supplemental_index.tab': 'CORSS_8001_supplemental_index.lbl',
+}

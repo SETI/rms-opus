@@ -1,0 +1,16 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+
+HSTUx_xxxx            | HST WFPC2 placeholder volumes for OPUS queries                    || 1.1 | 2019-08-29
+HSTUx_xxxx/HSTU0_7308 | HST WFPC2 images of the Jupiter system   1997-07-03 to 1997-09-20 || 1.1 | 2018-03-25 | HST-J-WFPC2-5-ID7308-V1.1
+
+HSTUx_xxxx_v1.0/HSTU0_7308 | HST WFPC2 images of the Jupiter system   1997-07-03 to 1997-09-20 || 1.0 | 2010-08-13 | HST-J-WFPC2-5-ID7308-V1.0
+
+metadata/HSTUx_xxxx/HSTU0_7308   | HST WFPC2 metadata for the Jupiter system   1997-07-03 to 1997-09-20 || 1.3 | 2025-06-09
+
+metadata/HSTUx_xxxx_v1.0/HSTU0_7308   | HST WFPC2 metadata for the Jupiter system   1997-07-03 to 1997-09-20 || 1.0 | 2018-08-24
+
+metadata/HSTUx_xxxx_v1.1/HSTU0_7308   | HST WFPC2 metadata for the Jupiter system   1997-07-03 to 1997-09-20 || 1.1 | 2019-09-10
+
+metadata/HSTUx_xxxx_v1.2/HSTU0_7308   | HST WFPC2 metadata for the Jupiter system   1997-07-03 to 1997-09-20 || 1.2 | 2021-01-22
+

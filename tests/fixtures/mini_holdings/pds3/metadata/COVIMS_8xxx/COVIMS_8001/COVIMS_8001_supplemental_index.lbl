@@ -1,0 +1,249 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+FILE_RECORDS                    = 20
+RECORD_BYTES                    = 322
+^SUPPLEMENTAL_INDEX_TABLE       = "COVIMS_8001_supplemental_index.tab"
+
+VOLUME_ID                       = "COVIMS_8001"
+PRODUCT_CREATION_TIME           = 2020-10-16T20:00:00
+
+INSTRUMENT_HOST_NAME            = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID              = "CO"
+INSTRUMENT_NAME                 = "VISUAL AND INFRARED MAPPING SPECTROMETER"
+INSTRUMENT_ID                   = "VIMS"
+
+OBJECT                          = SUPPLEMENTAL_INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 20
+  ROW_BYTES                     = 322
+  COLUMNS                       = 20
+  INDEX_TYPE                    = SINGLE
+
+  DESCRIPTION                   = "This index supplements the file
+    index/index.tab found in the COVIMS_8001 volume. It contains a small set
+    of useful parameter values that are not found in the default index
+    but exist in the PDS label files."
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 1
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 11
+    FORMAT                      = A11
+    DESCRIPTION                 = "The volume ID provides a unique identifier
+      for a PDS data volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 2
+    NAME                        = FILE_SPECIFICATION_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 16
+    BYTES                       = 50
+    FORMAT                      = A50
+    DESCRIPTION                 = "Name and path of the PDS label file
+      describing the particular file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 3
+    NAME                        = START_TIME
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 69
+    BYTES                       = 21
+    FORMAT                      = A21
+    DESCRIPTION                 = "Midtime of the earliest data for
+      this occultation (UTC)."
+  END_OBJECT     = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 4
+    NAME                        = STOP_TIME
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 93
+    BYTES                       = 21
+    FORMAT                      = A21
+    DESCRIPTION                 = "Midtime of the latest data for
+      this occultation (UTC)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 5
+    NAME                        = SPACECRAFT_CLOCK_START_COUNT
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 117
+    BYTES                       = 16
+    FORMAT                      = A16
+    DESCRIPTION                 = "The seconds and subRTI portions of the
+      spacecraft clock at the beginning of the occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 6
+    NAME                        = SPACECRAFT_CLOCK_STOP_COUNT
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 136
+    BYTES                       = 16
+    FORMAT                      = A16
+    DESCRIPTION                 = "The seconds and subRTI portions of the
+      spacecraft clock at the end of the occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 7
+    NAME                        = LOWEST_DETECTABLE_OPACITY
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 154
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    NULL_CONSTANT               = -1.
+    DESCRIPTION                 = "The highest opacity detectable in the
+      occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 8
+    NAME                        = HIGHEST_DETECTABLE_OPACITY
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 165
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    NULL_CONSTANT               = -1.
+    DESCRIPTION                 = "The highest opacity detectable in the
+      occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 9
+    NAME                        = DATA_QUALITY_SCORE
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 177
+    BYTES                       = 8
+    FORMAT                      = A8
+    DESCRIPTION                 = "The quality score of the data."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 10
+    NAME                        = OBSERVATION_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 188
+    BYTES                       = 32
+    FORMAT                      = A32
+    DESCRIPTION                 = "Name of the observation of which this
+      occultation is a part."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 11
+    NAME                        = SEQUENCE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 223
+    BYTES                       = 8
+    FORMAT                      = A8
+    DESCRIPTION                 = "Identifies the segment associated with this
+      image."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 12
+    NAME                        = IR_SAMPLING_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 234
+    BYTES                       = 6
+    FORMAT                      = A6
+    DESCRIPTION                 = "The spatial resolution mode of the IR
+      channel in the original raw data products."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 13
+    NAME                        = IR_EXPOSURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 242
+    BYTES                       = 10
+    FORMAT                      = "F10.4"
+    DESCRIPTION                 = "The IR exposure time for each pixel,
+      in milliseconds, in the original raw data products."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 14
+    NAME                        = SWATH_WIDTH
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 253
+    BYTES                       = 2
+    FORMAT                      = I2
+    DESCRIPTION                 = "The number of pixels (in the X direction)
+      collected during each observation in the original raw data products."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 15
+    NAME                        = SWATH_LENGTH
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 256
+    BYTES                       = 2
+    FORMAT                      = I2
+    DESCRIPTION                 = "The number of slices (in the Z direction)
+      collected during each observation in the original raw data products."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 16
+    NAME                        = SPECTRAL_SUMMING
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 260
+    BYTES                       = 3
+    FORMAT                      = A3
+    DESCRIPTION                 = "Indicates whether the cubes had some
+      bands summed in the original raw data products."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 17
+    NAME                        = SPECTRAL_EDITING
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 266
+    BYTES                       = 3
+    FORMAT                      = A3
+    DESCRIPTION                 = "Indicates whether the cubes had been reduced
+      to a subset of the bands in the original raw data products."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 18
+    NAME                        = INSTRUMENT_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 272
+    BYTES                       = 20
+    FORMAT                      = A20
+    DESCRIPTION                 = "The mode in which the instrument is
+      acquiring data in the original raw data products."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 19
+    NAME                        = STAR_TRACKING
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 295
+    BYTES                       = 3
+    FORMAT                      = A3
+    DESCRIPTION                 = "A flag indication whether star tracking was
+      used in the original raw data products."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 20
+    NAME                        = PRODUCT_CREATION_TIME
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 301
+    BYTES                       = 19
+    FORMAT                      = A19
+    DESCRIPTION                 = "Approximate UTC date and time when the PDS
+data product was created."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = SUPPLEMENTAL_INDEX_TABLE
+END
