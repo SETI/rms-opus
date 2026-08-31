@@ -71,7 +71,7 @@ that answers approximately.
 
 **The matched portion is highlighted** by re-applying the user's pattern to each
 suggestion. It uses the third-party ``regex`` module rather than :mod:`re`, because that
-is closer to the ICU regular expressions MySQL matched with; and a pattern that fails to
+is closer to the ICU regular expression library MySQL uses; and a pattern that fails to
 compile here is swallowed, because the highlighting is cosmetic and the results are not.
 
 Results are cached in the Django cache, keyed by the field, a hash of the partial query,
