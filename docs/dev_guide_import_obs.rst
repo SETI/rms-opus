@@ -420,13 +420,11 @@ Other helpers
 ~~~~~~~~~~~~~
 
 ``_get_target_info(target_name)``
-    Upper-cases the name, folds it through
-    ``TARGET_NAME_MAPPING`` (:mod:`opus_import.config_targets.target_name_mapping`), and
-    looks it up in
+    Upper-cases the name, folds it through ``TARGET_NAME_MAPPING``
+    (:mod:`opus_import.config_targets.target_name_mapping`), and looks it up in
     ``TARGET_NAME_INFO`` (:mod:`opus_import.config_targets.target_name_info`). An unknown
-    name is reported through
-    :meth:`~opus_import.context.ImportLog.unknown_target_name` and returns
-    ``(None, None)`` -- or ``OTHER`` under ``--import-ignore-errors``, so the
+    name is reported through :meth:`~opus_import.context.ImportLog.unknown_target_name`
+    and returns ``(None, None)`` -- or ``OTHER`` under ``--import-ignore-errors``, so the
     observation still imports.
 
 ``_get_planet_group_info(target_name)``
@@ -644,12 +642,11 @@ Ten of its methods raise here, and both PDS-version variants
 empty defaults -- because the table has a row for *every* observation, so a bundle that
 is not an occultation must not be required to answer.
 
-Two helpers serve the occultation classes: ``_star_name_helper`` reads a star name out
-of an index and resolves it, and ``_prof_ra_dec_helper`` returns the four right-ascension
-and declination columns from
-``STAR_RA_DEC`` (:mod:`opus_import.config_targets.star_ra_dec`), widened by the class
-constant ``_STAR_RA_DEC_SLOP`` -- which is 0.0, a decision recorded in the source, so
-stars are fixed points.
+Two helpers serve the occultation classes: ``_star_name_helper`` reads a star name out of
+an index and resolves it, and ``_prof_ra_dec_helper`` returns the four right-ascension and
+declination columns from ``STAR_RA_DEC`` (:mod:`opus_import.config_targets.star_ra_dec`),
+widened by the class constant ``_STAR_RA_DEC_SLOP`` -- which is 0.0, a decision recorded
+in the source, so stars are fixed points.
 
 ObsRingGeometry -- ``obs_ring_geometry``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -665,11 +662,10 @@ geometry, edge-on viewing geometry, pole, image geometry and timing.
 Two things in it are not a plain read:
 
 * **Ascending-node longitudes.** A module constant gives each planet's ring-plane
-  ascending node in degrees from the J2000 prime meridian, and
-  ``_j2000_to_ascending`` / ``_ascending_to_j2000`` convert between the two systems.
-  Eight columns try the summary file's own ``..._WRT_NODE`` column first and fall back to
-  the conversion, with a special case that keeps a 0--360 range as 0--360, because nothing
-  else would make sense.
+  ascending node in degrees from the J2000 prime meridian, and ``_j2000_to_ascending`` /
+  ``_ascending_to_j2000`` convert between the two systems. Eight columns try the summary
+  file's own ``..._WRT_NODE`` column first and fall back to the conversion, with a special
+  case that keeps a 0--360 range as 0--360, because nothing else would make sense.
 * :meth:`~opus_import.obs.obs_ring_geometry.ObsRingGeometry.validate_ring_geo_fields`
   reports a **gridless** value whose minimum and maximum disagree -- twelve column stems
   covering ring-center distance, the sub-solar and sub-observer longitudes, the

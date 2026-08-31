@@ -316,10 +316,10 @@ Shared: ObsVolumeUVISVIMSOccCommon
 
 What the UVIS and VIMS ring-occultation volumes share, and what distinguishes them from
 the radio one: these are **stellar** occultations. The source is a star, so right
-ascension and declination come from
-``STAR_RA_DEC`` (:mod:`opus_import.config_targets.star_ra_dec`); times come from the
-supplemental index; and the whole family of ring elevation, incidence and emission
-columns is derived arithmetically from the single ``OBSERVED_RING_ELEVATION`` column.
+ascension and declination come from ``STAR_RA_DEC``
+(:mod:`opus_import.config_targets.star_ra_dec`); times come from the supplemental index;
+and the whole family of ring elevation, incidence and emission columns is derived
+arithmetically from the single ``OBSERVED_RING_ELEVATION`` column.
 
 Leaf: ObsVolumeCORSS8xxx
 ~~~~~~~~~~~~~~~~~~~~~~~~

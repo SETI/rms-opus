@@ -286,14 +286,13 @@ the expression layer below returns one, and everything a statement is assembled 
 one.
 
 **The sources.** :class:`~opus_app.apps.tools.sql_builder.FromSource` is one table source
-and the joins hanging off it;
-:class:`~opus_app.apps.tools.sql_builder.Join` is one of those joins;
-and a source may be a plain table name, a
+and the joins hanging off it; :class:`~opus_app.apps.tools.sql_builder.Join` is one of
+those joins; and a source may be a plain table name, a
 :class:`~opus_app.apps.tools.sql_builder.Subquery` -- which holds a whole
 :class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- or a
 :class:`~opus_app.apps.tools.sql_builder.JSONTable`.
-The :class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is
-not a tree: a statement can hold a statement.
+The :class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is not a
+tree: a statement can hold a statement.
 
 **The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
 order. It and :class:`~opus_app.apps.tools.sql_builder.FromSource` are the two mutable

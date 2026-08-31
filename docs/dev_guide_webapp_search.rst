@@ -335,9 +335,7 @@ Python file in the repository. It holds 231 model classes:
 
 * one per ``obs_`` table;
 * one per ``mult_`` table;
-* ``Partables``,
-  ``TableNames`` and
-  ``UserSearches``;
+* ``Partables``, ``TableNames`` and ``UserSearches``;
 * and a ``ZZ``-prefixed model for every other table the database happens to hold -- the
   Django contrib tables, and the four OPUS tables that have hand-written models in the
   apps that own them.
