@@ -83,10 +83,14 @@ class ObsGeneral(ObsBase):
             self._log_nonrepeating_warning(f'ViewSet threw IOError for "{filespec}": {e}')
             viewset = None
 
-        # `viewset` reports "no view set" as False rather than None, so the test has to
-        # be for a real set: a truthiness test leaves a bool in the type, and every
-        # attribute read below is one the bool does not have.
-        if isinstance(viewset, PdsViewSet):
+        # A miss comes back two different ways, and this branch has to reject both.
+        # pdsfile answers a file that does not exist, and a directory whose candidate
+        # children all decline, with None; everything else that fails gets an *empty*
+        # `PdsViewSet`, which is falsy but is not None -- and whose `thumbnail` raises
+        # IndexError rather than returning nothing. So the test is for a real set that
+        # holds something: the isinstance is what leaves a `PdsViewSet` in the type
+        # instead of a bool, and the truthiness is what keeps the empty one out.
+        if isinstance(viewset, PdsViewSet) and viewset:
             browse_data = viewset.to_dict()
             if not self._ctx.args.import_ignore_missing_images:
                 if not viewset.thumbnail:
