@@ -139,17 +139,17 @@ where four pieces of Cassini knowledge live:
   ``<PRIME>_<REVNO><TARGETCODE>_<ACTIVITYNAME><ACTIVITYNUMBER>_<INST>``, with a
   three-part VIMS variant. Parsing it gives the revolution number, the prime instrument,
   the target code and the activity name, each of which becomes an
-  ``obs_mission_cassini`` column. A 58-entry table maps the two-letter target codes onto
+  ``obs_mission_cassini`` column. A 57-entry table maps the two-letter target codes onto
   display names.
 * **The mission phase, derived from the time rather than read from the label**, because
   the labels do not agree on how a phase is spelled or on when one ends. A table of
-  twenty phase/interval triples is walked, short encounters first so that they win.
+  nineteen phase/interval triples is walked, short encounters first so that they win.
 * **The planet, and which side of the rings is lit.** Both are decided by comparing the
   observation's stop time against fixed instants: Jupiter and Saturn arrival, and
   Saturn's 2009 equinox.
-* **The Cassini ISS filter table** -- around 150 ``(camera, filter1, filter2)`` entries
-  giving a central wavelength, a full width at half maximum and an effective wavelength
-  in nanometers, from the ISS Data User's Guide and the CISSCAL calibration tables --
+* **The Cassini ISS filter table** -- 107 ``(camera, filter1, filter2)`` entries giving
+  a central wavelength, a full width at half maximum and an effective wavelength in
+  nanometers, from the ISS Data User's Guide and the CISSCAL calibration tables --
   together with the helper that falls back to CLEAR for an unknown polarizer combination
   and the one that joins two filter wheels into a combined name with the polarizer
   second.
