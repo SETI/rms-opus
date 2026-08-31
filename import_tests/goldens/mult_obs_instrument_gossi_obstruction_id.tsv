@@ -1,0 +1,4 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	POSSIBLE	Possible	010	Y	\N	\N	\N
+1	NOT POSSIBLE	Not Possible	020	Y	\N	\N	\N
+2	PRESENCE VERIFIED	Presence Verified	030	Y	\N	\N	\N

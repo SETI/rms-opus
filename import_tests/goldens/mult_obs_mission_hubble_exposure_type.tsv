@@ -1,0 +1,7 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	EXCESSIVE DOWNTIME	Excessive Downtime	010	Y	\N	\N	\N
+1	INDETERMINATE	Indeterminate	020	Y	\N	\N	\N
+2	INTERRUPTED	Interrupted	030	Y	\N	\N	\N
+3	NORMAL	Normal	040	Y	\N	\N	\N
+4	TDF-DOWN AT EXPSTART	TDF-Down At Expstart	050	Y	\N	\N	\N
+5	UNKNOWN	Unknown	060	Y	\N	\N	\N

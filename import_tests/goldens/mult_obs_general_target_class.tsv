@@ -1,0 +1,8 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	PLANET	Planet	010	Y	\N	\N	\N
+1	REG_SAT	Regular Satellite	020	Y	\N	\N	\N
+2	IRR_SAT	Irregular Satellite	030	Y	\N	\N	\N
+3	RING	Ring	040	Y	\N	\N	\N
+4	SKY	Sky	050	Y	\N	\N	\N
+5	CALIBRATION	Calibration	060	Y	\N	\N	\N
+6	OTHER	Other	070	Y	\N	\N	\N
