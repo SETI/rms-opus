@@ -26,7 +26,12 @@ scripts/server/secrets/
 migrations/
 
 .coverage
+# The parallel data files the pipeline's subprocesses write during the import suite,
+# which pytest-cov combines into .coverage at the end of the run.
+.coverage.*
 coverage.xml
+# The per-function report the import suite's executed-functions check reads.
+coverage.json
 coverage_report.txt
 htmlcov/
 # Written by the profiling recipe in integration_tests/test_api/TEST_API_README.md

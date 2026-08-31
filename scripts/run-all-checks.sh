@@ -106,17 +106,18 @@ SCOPE_SPECIFIED=false
 : "${ENABLE_PYMARKDOWN:=true}"
 
 # The importable packages live under src/, with the live-DB suites in
-# integration_tests/, the unit suite in tests/, the documentation build's own
-# extensions in docs/ and manage.py at the root.
+# integration_tests/, the holdings-free import suite in import_tests/, the unit
+# suite in tests/, the documentation build's own extensions in docs/ and
+# manage.py at the root.
 # Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
 # names count as used); min-confidence/exclude come from [tool.vulture]. Bandit
-# never scans tests.
-: "${OPUS_RUFF_PATHS:=src integration_tests tests docs manage.py}"
+# never scans a test tree.
+: "${OPUS_RUFF_PATHS:=src integration_tests import_tests tests docs manage.py}"
 # mypy covers the same trees, and integration_tests/ is checked strictly like
 # every other one: no tree carries a burn-down entry.
-: "${OPUS_MYPY_PATHS:=src integration_tests tests docs manage.py}"
+: "${OPUS_MYPY_PATHS:=src integration_tests import_tests tests docs manage.py}"
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
-: "${OPUS_VULTURE_PATHS:=src integration_tests tests docs manage.py vulture_whitelist.py}"
+: "${OPUS_VULTURE_PATHS:=src integration_tests import_tests tests docs manage.py vulture_whitelist.py}"
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -423,10 +424,15 @@ run_code_checks() {
 
     # -n controls parallelism; --dist loadscope keeps each test module on one
     # worker to avoid time-mocking and fixture-isolation interference.
-    # testpaths and the strict options come from pyproject.toml. No --cov here:
-    # this suite does not yet reach the [tool.coverage.report] fail_under
-    # threshold, so measuring it would fail a healthy tree. The gate turns on
-    # with the holdings-free import suite that is written to meet it.
+    # testpaths and the strict options come from pyproject.toml.
+    #
+    # No --cov here, and import_tests/ is not in this invocation. Exactly one
+    # job measures coverage and exactly one number gates: the Import Tests job
+    # in run-tests.yml runs `pytest import_tests --cov`, and
+    # [tool.coverage.report] fail_under is that run's own floor. Measuring the
+    # holdings-free unit suite alone against that floor would fail a healthy
+    # tree, and this script has to stay runnable without a MySQL server, which
+    # import_tests needs.
     if [ "$RUN_PYTEST" = true ] && [ "$ENABLE_PYTEST" = true ]; then
         print_info "Running pytest (-n ${PYTEST_WORKERS})..."
         if python -m pytest -q -n "$PYTEST_WORKERS" --dist loadscope tests; then

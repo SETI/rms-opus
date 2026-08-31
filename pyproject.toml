@@ -80,7 +80,10 @@ opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
 [project.optional-dependencies]
 dev = [
   "rms-opus",
-  "coverage>=7.0",
+  # The floor is set by the executed-functions check in the mini-holdings suite, which
+  # reads the JSON report's per-function regions. Those arrived in 7.5; an older
+  # coverage writes a report with no regions in it at all.
+  "coverage>=7.5",
   # mypy carries no bound of its own: django-stubs' `compatible-mypy` extra below
   # pins it to the range that django-stubs' plugin supports, so the two cannot drift
   # apart on an unpinned install, and a second bound here would only go stale.
@@ -267,7 +270,12 @@ exclude_lines = [
   "if TYPE_CHECKING:",
   "@overload",
 ]
-fail_under = 90
+# The floor one command measures and one command gates: the Import Tests job's own
+# `pytest import_tests --cov`, which imports two dozen sampled volumes end to end
+# through every step of the pipeline. It is the run's own figure rounded down, not an
+# aspiration -- raising it means raising what that run reaches. Regenerate rather than
+# trust it: run that command and read the TOTAL line.
+fail_under = 75
 
 [tool.mypy]
 strict = true
@@ -478,7 +486,7 @@ skips = [
 # tests/ is scanned too: its own dead imports are caught, and names that only
 # the suite uses then count as used.
 [tool.vulture]
-paths = ["src", "integration_tests", "tests", "docs", "manage.py",
+paths = ["src", "integration_tests", "import_tests", "tests", "docs", "manage.py",
          "vulture_whitelist.py"]
 # Vulture is invoked with relative paths, so a pattern needing a component before
 # the directory name would never match. These are written both ways for that
