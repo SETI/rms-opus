@@ -273,6 +273,49 @@ with its traceback, and returns None for that column. An obs class is handed the
 context only so that it can log, never so that it can reach the database -- which is
 what makes that containment safe.
 
+.. _dev_guide_import_ids:
+
+Row ids and mult ids
+--------------------
+
+Two kinds of surrogate integer hold the database together, and neither is assigned by the
+database server.
+
+**The row id.** Every ``obs_`` table has an ``id`` column, and every table but
+``obs_general`` also has an ``obs_general_id`` naming the row this one hangs off. The
+pipeline assigns both: a ``MAX_ID`` column gets one more than the largest id used in that
+table so far, and an ``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this
+observation already produced.
+
+The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, which
+takes the larger of the two namespaces' maxima. That is what makes a **re-import** of one
+bundle safe: its new rows are numbered above everything already present in either
+namespace, and its old rows are deleted only afterwards. It is also why a re-import
+renumbers that bundle above the rest of the table, which is a documented consequence
+rather than an accident.
+
+The run keeps the running maximum in
+:attr:`~opus_import.context.ImportContext.max_table_id_cache` rather than querying for
+each row, and clears it per bundle. **Ids therefore depend on the order rows are
+produced in**, which is why the pipeline sorts every directory listing and every table
+name it iterates.
+
+**The mult id.** A column whose value comes from a fixed set stores an integer index into
+that column's ``mult_`` table rather than the value itself. The table is
+``mult_<table>_<column>``, its ids start at zero, and a value not already there is given
+one more than the current maximum -- unless the column's schema pins its values with
+``mult_options``, in which case a value that is not among them is an error.
+
+Nothing enforces the reference: a ``mult_idx`` column carries a plain index and **no
+foreign key**. That is why the write order matters, and why the mult tables go out before
+the ``obs_`` tables.
+
+A ``mult_list`` column -- one an observation can have several values of -- stores a JSON
+array of those ids instead, with missing values omitted rather than stored as null.
+
+:ref:`dev_guide_import_steps_do_import_mult` describes the caching and the derived sort
+order, and :ref:`dev_guide_database` describes what the tables look like.
+
 .. _dev_guide_import_obs_dispatch:
 
 Why there is a class hierarchy

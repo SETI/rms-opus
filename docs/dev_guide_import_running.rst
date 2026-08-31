@@ -64,7 +64,8 @@ The options
 -----------
 
 Every step of a run is switched on by its own option. Nothing happens by default: an
-``opus_import`` invocation with no options connects to the database and exits.
+``opus_import`` invocation with no options reads the configuration, preloads the two
+holdings roots, connects to the database, and exits having changed nothing.
 
 Aggregates
 ~~~~~~~~~~
