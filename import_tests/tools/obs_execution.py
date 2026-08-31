@@ -59,6 +59,14 @@ class ExecutionReport:
 def read_report(report_path: Path) -> ExecutionReport:
     """Read a coverage JSON report and split the obs layer's functions in two.
 
+    A function whose region holds no measurable statements is described by neither set.
+    That is a real category rather than a technicality: ``[tool.coverage.report]``
+    excludes ``raise NotImplementedError``, so an abstract method whose whole body is
+    that line has nothing coverage can record, and its region reads exactly like a
+    method nobody called even when every subclass call goes through it. "Nothing to
+    prove" and "never ran" are different answers, and conflating them would fill the
+    whitelist with entries that could never come off it.
+
     Parameters:
         report_path: The report to read.
 
@@ -70,7 +78,7 @@ def read_report(report_path: Path) -> ExecutionReport:
             of this suite, so its absence means the check is being asked a question
             nothing has answered.
         ValueError: If the report carries no per-function regions, which a coverage
-            older than 7.5 produces.
+            older than 7.6 produces.
     """
     data = json.loads(report_path.read_text(encoding='utf-8'))
     executed: set[str] = set()
@@ -85,6 +93,8 @@ def read_report(report_path: Path) -> ExecutionReport:
         for qualname, region in file_data['functions'].items():
             if qualname == _MODULE_REGION:
                 continue
+            if region['summary']['num_statements'] == 0:
+                continue
             name = f'{file_key}{ENTRY_SEPARATOR}{qualname}'
             if len(region['executed_lines']) > 0:
                 executed.add(name)
@@ -93,7 +103,7 @@ def read_report(report_path: Path) -> ExecutionReport:
     if not saw_regions:
         raise ValueError(
             f'{report_path} carries no per-function regions for {OBS_PATH_MARKER}; '
-            'they need coverage 7.5 or newer and a run that reached the obs layer'
+            'they need coverage 7.6 or newer and a run that reached the obs layer'
         )
     return ExecutionReport(executed=executed, unexecuted=unexecuted)
 

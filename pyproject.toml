@@ -81,9 +81,10 @@ opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
 dev = [
   "rms-opus",
   # The floor is set by the executed-functions check in the mini-holdings suite, which
-  # reads the JSON report's per-function regions. Those arrived in 7.5; an older
-  # coverage writes a report with no regions in it at all.
-  "coverage>=7.5",
+  # reads the JSON report's per-function regions. Those arrived with JSON report format
+  # version 3, in 7.6.0 ("3: add region information (functions, classes)" in
+  # coverage/jsonreport.py); 7.5.x writes format 2, which has no regions in it at all.
+  "coverage>=7.6",
   # mypy carries no bound of its own: django-stubs' `compatible-mypy` extra below
   # pins it to the range that django-stubs' plugin supports, so the two cannot drift
   # apart on an unpinned install, and a second bound here would only go stale.

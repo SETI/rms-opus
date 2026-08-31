@@ -6,6 +6,14 @@
 # function's def line to the enclosing module region, so a method that was only defined
 # reports 0% in its own region and only a real call registers.
 #
+# The file keys are relative to the repository root, because that is where the suite is
+# run from. A run started somewhere else produces keys that match none of these.
+#
+# A function with nothing to measure is not on this list and cannot be: an abstract
+# method whose whole body is `raise NotImplementedError` has no statements coverage
+# records, because [tool.coverage.report] excludes that line, so the check has no
+# question to ask about it and skips it.
+#
 # Entries are grouped, and each group carries the comment that justifies it. An entry
 # naming a function that did execute, or one that no longer exists, fails the suite, so
 # this file cannot quietly outlive what it describes.
@@ -68,21 +76,13 @@ src/opus_import/obs/obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.py::ObsBun
 src/opus_import/obs/obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.py::ObsBundleCassiniISSFRingMosaicsRSFrench2025.primary_filespec
 src/opus_import/obs/obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.py::ObsBundleCassiniISSFRingMosaicsRSFrench2025.primary_filespec_from_index_row
 
-# Base-class methods that every concrete class overrides. The dispatch reaches the
-# subclass's own definition, and coverage attributes the call to the subclass's region,
-# so the base definition is a contract rather than code the import runs. Each of these
-# names does execute -- in the class that overrides it.
-src/opus_import/obs/obs_base.py::ObsBase._pdsfile_from_filespec
-src/opus_import/obs/obs_base.py::ObsBase._time2_from_some_index
-src/opus_import/obs/obs_base.py::ObsBase._time_from_some_index
-src/opus_import/obs/obs_base.py::ObsBase.inst_host_id
-src/opus_import/obs/obs_base.py::ObsBase.instrument_id
-src/opus_import/obs/obs_base.py::ObsBase.mission_id
-src/opus_import/obs/obs_base.py::ObsBase.primary_filespec
-src/opus_import/obs/obs_base.py::ObsBase.primary_filespec_from_index_row
+# Shared implementations every concrete class in reach overrides. The dispatch lands on
+# the subclass's own definition and coverage attributes the call there, so the shared
+# body is a default the fixture's volumes all happen to replace. Unlike the abstract
+# methods, these do carry statements -- there really is code here that no fixture volume
+# runs -- so a volume set whose class stops overriding one of them takes its entry off
+# this list.
 src/opus_import/obs/obs_base_pds4.py::ObsBasePDS4._time2_from_index
-src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_general_time1
-src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_general_time2
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_bundle_id
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_camera
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_combined_filter
@@ -97,7 +97,6 @@ src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_shutter_mode_id
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_shutter_state_id
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_target_desc
-src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_mission_cassini_mission_phase_name
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_mission_cassini_obs_name
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_mission_cassini_spacecraft_clock_count1
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_mission_cassini_spacecraft_clock_count2
@@ -115,24 +114,6 @@ src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_i
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_shutter_state_id
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_target_desc
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_mission_cassini_obs_name
-src/opus_import/obs/obs_general.py::ObsGeneral._target_name
-src/opus_import/obs/obs_general.py::ObsGeneral.field_obs_general_observation_type
-src/opus_import/obs/obs_general.py::ObsGeneral.field_obs_general_planet_id
-src/opus_import/obs/obs_general.py::ObsGeneral.field_obs_general_quantity
-src/opus_import/obs/obs_pds.py::ObsPds.field_obs_pds_data_set_id
-src/opus_import/obs/obs_pds.py::ObsPds.field_obs_pds_primary_lid
-src/opus_import/obs/obs_pds.py::ObsPds.field_obs_pds_product_creation_time
-src/opus_import/obs/obs_pds.py::ObsPds.field_obs_pds_product_id
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_body_occ_flag
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_host
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_occ_dir
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_occ_type
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_optical_depth1
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_optical_depth2
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_quality_score
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_source
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_temporal_sampling
-src/opus_import/obs/obs_profile.py::ObsProfile.field_obs_profile_wl_band
 src/opus_import/obs/obs_profile_pds4.py::ObsProfilePDS4.field_obs_profile_body_occ_flag
 src/opus_import/obs/obs_profile_pds4.py::ObsProfilePDS4.field_obs_profile_host
 src/opus_import/obs/obs_profile_pds4.py::ObsProfilePDS4.field_obs_profile_occ_dir
@@ -142,13 +123,6 @@ src/opus_import/obs/obs_profile_pds4.py::ObsProfilePDS4.field_obs_profile_optica
 src/opus_import/obs/obs_profile_pds4.py::ObsProfilePDS4.field_obs_profile_quality_score
 src/opus_import/obs/obs_profile_pds4.py::ObsProfilePDS4.field_obs_profile_source
 src/opus_import/obs/obs_profile_pds4.py::ObsProfilePDS4.field_obs_profile_wl_band
-src/opus_import/obs/obs_ring_geometry.py::ObsRingGeometry.field_obs_general_planet_id
-src/opus_import/obs/obs_volume_galileo_common.py::ObsVolumeGalileoCommon.field_obs_mission_galileo_orbit_number
-src/opus_import/obs/obs_volume_galileo_common.py::ObsVolumeGalileoCommon.field_obs_mission_galileo_spacecraft_clock_count1
-src/opus_import/obs/obs_volume_galileo_common.py::ObsVolumeGalileoCommon.field_obs_mission_galileo_spacecraft_clock_count2
-src/opus_import/obs/obs_volume_hubble_common.py::ObsVolumeHubbleCommon._observation_type
-src/opus_import/obs/obs_volume_hubble_common.py::ObsVolumeHubbleCommon.field_obs_mission_hubble_filter_type
-src/opus_import/obs/obs_volume_voyager_common.py::ObsVolumeVoyagerCommon._mission_phase_name
 src/opus_import/obs/obs_wavelength.py::ObsWavelength.field_obs_wavelength_wavelength1
 src/opus_import/obs/obs_wavelength.py::ObsWavelength.field_obs_wavelength_wavelength2
 
