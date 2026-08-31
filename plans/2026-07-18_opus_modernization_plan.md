@@ -7294,11 +7294,22 @@ body; never rewrite or delete earlier notes.*
     the first PDS4 existence check.
   - **`pdsfile.*` is out of `ignore_missing_imports`, which closes #1479.** The rewrite
     ships `py.typed`, so mypy strict now checks every pdsfile call site. The whole error
-    surface was **10 errors in 4 files** and all are fixed here: `viewset` reports "no view
-    set" as `False` rather than None, so a truthiness test leaves a `bool` in the type
+    surface was **10 errors in 4 files** and all are fixed here: `viewset` is
+    `PdsViewSet | bool`, so a truthiness test leaves a `bool` in the type
     (`obs_general.py`); `abspath` is `str | None` on a `PdsFile`, which two call sites had
     to narrow; and one test's fake pdsfile needed a cast. Regenerate rather than trust that
     count.
+  - **`viewset` misses in two different ways, and a caller has to reject both.** pdsfile's
+    own `viewset_lookup` docstring says it in as many words: a file that does not exist,
+    and a directory whose candidate children all decline, give `None`; **everything else
+    that fails gives an empty `PdsViewSet`**, which is falsy but is not None -- and whose
+    `thumbnail` and `full_size` raise `IndexError` rather than returning nothing. So the
+    narrowing in `obs_general.field_obs_general_preview_images` is
+    `isinstance(viewset, PdsViewSet) and viewset`: the isinstance is what satisfies mypy
+    and the truthiness is what preserves behavior. An isinstance alone turns the old
+    "Missing all browse/diagram images" warning into an uncaught `IndexError`, and the
+    mini-holdings fixture cannot see it -- every fixture bundle's primary filespec matches
+    its rules module's viewables -- so only the self-hosted integration run would.
   - **The fixture and the goldens, measured.** 24 volumes -- one per `BUNDLE_INFO` entry
     with an instrument class, minus the one entry with no bundle in the holdings
     (`cassini_iss_fring_mosaics_rsfrench2025`, recorded in `exclusions.tsv`). 371 files,
@@ -7343,7 +7354,7 @@ body; never rewrite or delete earlier notes.*
     on top of the sampled rows -- and the same rule is what puts Hubble's `*_hstfiles` and
     Voyager's `*_index` tables in the fixture at all: the import never reads them as
     metadata, but it lists them among an observation's products.
-  - **Five claims in the PR-19 specification that reality contradicts**, none of which
+  - **Six claims in the PR-19 specification that reality contradicts**, none of which
     changes what the design asks for. (1) The §4 statement that "production holdings carry
     no sidecars either" is false -- every production info shelf has a `.py` sidecar beside
     its `.pickle`. The instruction it justifies still holds and was verified directly: the
@@ -7373,7 +7384,12 @@ body; never rewrite or delete earlier notes.*
     server-numbered columns are dropped, with a third assertion that neither half is empty.
     The split is *stronger* where it matters: the byte-identical half is exactly the mult
     tables and the finalization tables, which is where the upsert lands, so the update half
-    of the upsert is still held to its ids.
+    of the upsert is still held to its ids. (6) §5 says coverage's per-function JSON
+    regions "arrived in 7.5". They arrived in **7.6.0**, with JSON report format version 3
+    -- 7.5.x writes format 2, which carries no `functions` key at all (verified by reading
+    `coverage/jsonreport.py` in the 7.5.0, 7.5.4 and 7.6.0 sdists). The dev floor is
+    `coverage>=7.6`; a `>=7.5` floor would let a resolve pick a coverage that fails the
+    job.
   - **The negative cases' crafted input is a recipe, not a copied table.**
     `import_tests/fixtures/negative/ignore_errors.tsv` names the *registered type*, the row,
     the column and the replacement, and the overlay is built from it at run time. A
@@ -7382,13 +7398,25 @@ body; never rewrite or delete earlier notes.*
   - **The unit-coverage gate is live and measured at 75%.** `[tool.coverage.report]
     fail_under` is what `pytest import_tests --cov` reaches, rounded down; the unit legs and
     `scripts/run-all-checks.sh` stay `--cov`-free, so exactly one job measures and exactly
-    one number gates. Of the 1,396 functions under `src/opus_import/obs/`, **1,259 are
-    proven executed by the run**; the 137 in the whitelist are the 50 belonging to the type
-    with no bundle in the holdings, 79 base-class definitions every concrete class
-    overrides, and 8 branches the sampled rows do not reach. `codecov.yml`'s unflagged
+    one number gates. Of the 1,396 function regions under `src/opus_import/obs/`, 36 hold
+    no statement coverage can record -- an abstract method whose whole body is
+    `raise NotImplementedError`, which `exclude_lines` excludes, reads exactly like a
+    method nobody called, so the check skips a region with no statements rather than
+    demanding a whitelist entry that could never come off. Of the 1,360 that remain,
+    **1,259 are proven executed by the run**; the 101 in the whitelist are the 50 belonging
+    to the type with no bundle in the holdings, 43 shared implementations every concrete
+    class in reach overrides, and 8 branches the sampled rows do not reach. `codecov.yml`'s
+    unflagged
     project/patch statuses are gone: the integration upload carries the `integration` flag
     with the 90% target and the new upload carries `import`, informational, because an
     unflagged default measures the two uploads merged.
+  - **The recorder's schema comparison is opt-in, and that is a narrowing of §3.** §3 has
+    the recorder always compare each volume set's volumes and report any whose index schema
+    differs. `--compare-schemas` does it on request instead, because it parses **every**
+    volume of every volume set rather than the two dozen the fixture keeps -- hours against
+    minutes, on a run an operator does by hand. It reports both halves the specification
+    asks for: columns the sibling has and the representative does not, and value classes a
+    shared column shows that the representative's rows never take.
   - **Recorded as a candidate, not fixed here:** `importdb/mysql.py`'s `create_table`
     updates its own table-name cache *inside* its `if self.logger:` branch, so a connection
     opened without a logger answers `table_exists` from a cache that never learned about the
