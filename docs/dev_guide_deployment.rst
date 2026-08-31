@@ -195,7 +195,7 @@ what users see, so it is done deliberately.
 4. **Point an installation at the new database and exercise it** before switching the
    public one over. That is what the per-database directory layout is for: a second
    installation with its own ``opus.toml`` can serve the new schema while the public one
-   still serves the old.
+   goes on serving the schema it was pointed at.
 5. **Switch over**, by moving the served symlink, or by running
    ``deploy_new_code_and_database.sh`` against the new database name.
 6. **Flush memcached and restart the application**, as above.

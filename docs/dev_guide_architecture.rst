@@ -115,7 +115,7 @@ It has five layers, root outward:
 
 :ref:`dev_guide_import_obs` has the class diagram, the contracts and the method
 resolution order -- which is not obvious, and is the usual way a newly added class
-misbehaves. :ref:`dev_guide_import_obs_classes` catalogues every mission and leaf class.
+misbehaves. :ref:`dev_guide_import_obs_classes` catalogs every mission and leaf class.
 
 .. _dev_guide_architecture_webapp:
 

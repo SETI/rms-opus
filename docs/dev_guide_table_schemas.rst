@@ -206,7 +206,7 @@ dispatch on.
 Validating the value
 ~~~~~~~~~~~~~~~~~~~~
 
-**All four of these keys are honoured only on a numeric column** -- one whose
+**All four of these keys are honored only on a numeric column** -- one whose
 ``field_type`` starts with ``int``, ``uint`` or ``real``. Every one of them is read
 inside that single branch of
 :func:`opus_import.steps.do_import_obs.import_observation_table`, so putting

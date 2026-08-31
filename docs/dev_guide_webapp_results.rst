@@ -16,7 +16,7 @@ all three go through one paging routine.
 The ``results`` app
 -------------------
 
-Fourteen routed handlers, all reading and none writing. Every one that pages through
+Twelve routed handlers, all reading and none writing. Every one that pages through
 observations goes through
 :func:`~opus_app.apps.results.views.get_search_results_chunk`.
 
@@ -173,8 +173,9 @@ around a value searches for that exact value.
 The ``metadata`` app
 --------------------
 
-What is *searchable*, rather than what was found. Eight routes, four of which are private
-wrappers that add a ``reqno`` echo. **The private ones are not themselves decorated**:
+What is *searchable*, rather than what was found. Eight routes served by seven
+handlers, three of which are private wrappers that add a ``reqno`` echo. **The private
+ones are not themselves decorated**:
 each simply calls its public twin, which is where the
 :func:`~opus_app.apps.tools.app_utils.api_view` wrapping happens.
 

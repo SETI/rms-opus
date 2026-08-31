@@ -73,7 +73,7 @@ saying which one to use.
    :ref:`dev_guide_import_obs_mro` first.
 3. **Override only what differs.** Everything the mission and the table modules already
    answer correctly should be left alone. :ref:`dev_guide_import_obs_classes` is a
-   catalogue of what each existing leaf found it had to override, which is the quickest
+   catalog of what each existing leaf found it had to override, which is the quickest
    guide to what a new one is likely to need.
 4. **Run the import.**
 

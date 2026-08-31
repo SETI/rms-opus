@@ -125,9 +125,9 @@ Three naming traps, worth knowing before you go looking for a file:
 Cassini
 -------
 
-Eleven classes -- more than any other mission, because Cassini contributes four imaging
-and spectroscopy instruments plus three ring-occultation volume sets and two PDS4
-bundles.
+Fifteen classes -- more than any other mission, because Cassini contributes four
+imaging and spectroscopy instruments plus three ring-occultation volume sets and two
+PDS4 bundles. Five of them are shared and ten are leaves.
 
 Shared: :class:`~opus_import.obs.obs_cassini_common.ObsCassiniCommon`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

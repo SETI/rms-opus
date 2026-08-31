@@ -141,9 +141,11 @@ this is an abstract class by convention rather than through :mod:`abc`.
    * - ``_execute_and_fetchall(cmd, func_name, param_list=None)``
      - Execute one query and return every row of its result.
 
-The eleven concrete members are the two namespace converters and their two predicates,
-``table_exists``, ``read_rows``, ``_execute``, the warning collector
-``_make_warning_handler``, and the ``_enter``/``_exit`` pair.
+The eleven concrete members are the constructor, the two namespace converters and
+their two predicates, ``table_exists``, ``read_rows``, ``_execute``, the warning
+collector ``_make_warning_handler``, and the ``_enter``/``_exit`` pair. The two
+converters do carry a ``raise NotImplementedError`` for a namespace value that is not
+one of the three, which is unreachable for a valid one.
 
 Read-only runs
 ~~~~~~~~~~~~~~

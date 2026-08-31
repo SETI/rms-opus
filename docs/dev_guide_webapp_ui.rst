@@ -137,7 +137,7 @@ and returns both the new URL and an HTML message explaining what had to change.
 It normalizes, in order: every search slug, with its query type and its unit; the
 metadata column list; the widget list; the sort order; the tab being viewed; the two
 browse modes; the two paging positions; and the observation being detailed. For each it
-resolves a renamed slug to its current name, drops a value that no longer makes sense,
+resolves a renamed slug to its current name, drops a value that does not resolve,
 and fills in the default for anything the URL leaves out.
 
 Three of its rules are worth knowing:
@@ -233,11 +233,10 @@ it.
 The API guide redirect
 ~~~~~~~~~~~~~~~~~~~~~~
 
-``apiguide.pdf`` used to render a PDF of the public API guide from inside the
-application. The guide is published as documentation instead, so the route now answers a
-302 to the ``API_GUIDE_URL`` setting. It is the one deliberate exception to the
-API-compatibility waiver in :ref:`dev_guide_conventions`: the URL still resolves, and a
-test pins the redirect.
+``apiguide.pdf`` answers a 302 to the ``API_GUIDE_URL`` setting rather than serving a
+generated PDF, because the public API guide is published as documentation and is not
+built here. It is the one deliberate exception to the API-compatibility waiver in
+:ref:`dev_guide_conventions`: the URL resolves, and a test pins the redirect.
 
 The route keeps the capture group it has always had, so the set of URLs it matches does
 not change -- and that has a consequence: Django's redirect view interpolates the

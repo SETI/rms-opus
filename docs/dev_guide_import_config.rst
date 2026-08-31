@@ -3,9 +3,9 @@
 Import Configuration Data
 =========================
 
-Six modules answer the question "what exists?": which missions, spacecraft and
-instruments OPUS knows, which bundles it can import and how, and which targets it can
-name. They are plain module-level constants -- the import reads them and never writes
+Three modules and one package answer the question "what exists?": which missions,
+spacecraft and instruments OPUS knows, which bundles it can import and how, and which
+targets it can name. They are plain module-level constants -- the import reads them and never writes
 them -- and adding a mission, an instrument or a bundle means editing them.
 
 This chapter documents every one of them. :ref:`dev_guide_import_extending` is the

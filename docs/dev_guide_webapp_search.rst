@@ -131,10 +131,10 @@ Four behaviors are load-bearing:
   widget builder rewrites it back, so the interface never sees the substitution.
 * **Both ends of a range are always recorded**, even when only one was given, so the two
   lists stay the same length and a clause's two ends cannot drift apart.
-* **A slug and its old spelling are both consumed.** Every slug the search resolves marks
-  the whole family of names -- current and old, both range ends, and the three prefixed
-  forms -- as used, which is what stops a URL mixing an old name and a new one for the
-  same field from being searched twice.
+* **A slug and its previous spelling are both consumed.** Every slug the search
+  resolves marks the whole family of names -- both spellings, both range ends, and the
+  three prefixed forms -- as used, which is what stops a URL that mixes the two spellings
+  of one field from searching it twice.
 * **``sourceunit-`` exists only for the URL normalizer.** It names the unit a value is
   *written* in, where ``unit-`` names the unit it should be *converted to*. Nothing else
   should use it.
@@ -264,8 +264,8 @@ kind of slug it is, because the four kinds spell the same field differently:
    * - ``'search'``
      - A search term, which may carry either suffix.
 
-Each lookup tries the current slug and then the old one, so a bookmark using a previous
-spelling still resolves.
+Each lookup tries the current slug and then the ``old_slug`` column, so a bookmark
+written with a previous spelling resolves.
 
 **The results are cached in a module-level dictionary**, because the function is called
 very often and each call costs at least one database query. Three properties of that

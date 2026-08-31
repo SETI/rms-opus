@@ -112,8 +112,8 @@ Slug and name helpers
     A copy with the keys in sorted order, which is what makes a search's hash stable.
 
 :func:`~opus_app.apps.tools.app_utils.is_old_format_ring_obs_id` and :func:`~opus_app.apps.tools.app_utils.convert_ring_obs_id_to_opus_id`
-    OPUS identified observations by a ``RING_OBS_ID`` before it used OPUS IDs, and old
-    bookmarks still carry one. These recognize and convert it.
+    A ``RING_OBS_ID`` is the identifier some bookmarks carry in place of an OPUS ID.
+    These recognize one and convert it.
 
 :func:`~opus_app.apps.tools.app_utils.download_filename`
     The name of a temporary download: a fixed prefix, a timestamp, the kind of file, one

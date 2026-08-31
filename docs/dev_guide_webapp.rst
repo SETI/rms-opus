@@ -213,9 +213,8 @@ The wrapper's exception handling is deliberately asymmetric:
 * :exc:`django.http.Http404`, :exc:`~django.core.exceptions.BadRequest`,
   :exc:`~django.core.exceptions.PermissionDenied` and
   :exc:`~django.core.exceptions.SuspiciousOperation` are **re-raised** after being
-  logged, so each keeps the response and the logging Django gives it -- a 404 keeps the
-  body it has always had, and a suspicious request still reaches Django's security
-  logger.
+  logged, so each keeps the response and the logging Django gives it -- a 404 keeps
+  Django's own body, and a suspicious request reaches Django's security logger.
 * :exc:`~opus_app.apps.tools.app_utils.Http400Error` is rendered into a 400 response and
   returned.
 * Anything else is logged with its traceback and becomes a 500.
