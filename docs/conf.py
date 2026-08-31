@@ -240,7 +240,10 @@ nitpick_ignore_regex: list[tuple[str, str]] = []
 
 html_theme = 'sphinx_rtd_theme'
 html_title = f'rms-opus {release}'
-html_static_path: list[str] = []
+html_static_path: list[str] = ['_static']
+
+# Widen the theme's content column; see the comment in the stylesheet.
+html_css_files = ['custom.css']
 
 # -- Mermaid ------------------------------------------------------------------
 
