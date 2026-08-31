@@ -13,11 +13,13 @@ why.
 
 from __future__ import annotations
 
+import ast
 import json
 from dataclasses import dataclass
 from pathlib import Path
 
 from import_tests.tools import fixture_layout
+from opus_import.steps.do_import_obs import field_function_name
 
 #: The tree whose functions have to be shown executed. Matched as a path suffix, because
 #: a coverage report's file keys depend on where the run was started from.
@@ -162,3 +164,90 @@ def check(report: ExecutionReport, whitelist: list[str]) -> Findings:
         needless=sorted(admitted & report.executed),
         unknown=sorted(admitted - report.known),
     )
+
+
+#: Where the packaged table schemas live, which is what names every dispatched method.
+_SCHEMA_DIR = fixture_layout.REPO_ROOT / 'src' / 'opus_import' / 'table_schemas'
+
+#: The trees a call to an obs method could be written in.
+_SOURCE_ROOTS = ('src', 'tests', 'import_tests', 'integration_tests', 'scripts')
+
+
+def dispatched_names() -> set[str]:
+    """Return every obs method name the pipeline can call without naming it in source.
+
+    The import computes a field method's name from the table and column it is filling,
+    so those methods have no textual call site and are reached anyway. That rule is
+    `opus_import.steps.do_import_obs.field_function_name`, and it is asked rather than
+    restated, so a change to the rule changes this set with it.
+
+    Returns:
+        The method names the packaged schemas make reachable.
+    """
+    names = set()
+    for path in sorted(_SCHEMA_DIR.glob('*.json')):
+        try:
+            schema = json.loads(path.read_text(encoding='utf-8'))
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(schema, list):
+            continue
+        for column in schema:
+            if isinstance(column, dict) and column.get('field_name'):
+                names.add(field_function_name(path.stem, column['field_name']))
+    return names
+
+
+def referenced_names() -> set[str]:
+    """Return every name the shipped source mentions somewhere other than a definition.
+
+    Read from the syntax tree rather than the text: an attribute access and a bare name
+    are what a call site looks like, and a `def` line is not one.
+
+    Returns:
+        The names used anywhere under `_SOURCE_ROOTS`.
+    """
+    used: set[str] = set()
+    for root in _SOURCE_ROOTS:
+        directory = fixture_layout.REPO_ROOT / root
+        if not directory.is_dir():
+            continue
+        for path in sorted(directory.rglob('*.py')):
+            try:
+                tree = ast.parse(path.read_text(encoding='utf-8'))
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Attribute):
+                    used.add(node.attr)
+                elif isinstance(node, ast.Name):
+                    used.add(node.id)
+    return used
+
+
+def unreachable_entries(whitelist: list[str]) -> list[str]:
+    """Return the whitelist entries naming a function nothing can call.
+
+    "This fixture does not reach it" and "nothing reaches it" are different claims, and
+    only the first belongs in the whitelist: the second is dead code, and admitting it
+    here would keep it alive by explaining away the only evidence of its deadness.
+
+    A function counts as reachable if the pipeline can dispatch to it by name, if any
+    shipped source mentions it, or if it is a dunder -- those are called by the language
+    rather than by name, so no call site exists to find.
+
+    Parameters:
+        whitelist: The entries to check.
+
+    Returns:
+        One entry per function with no caller of any kind, sorted.
+    """
+    reachable = dispatched_names() | referenced_names()
+    unreachable = []
+    for entry in whitelist:
+        method = entry.partition(ENTRY_SEPARATOR)[2].rsplit('.', 1)[-1]
+        if method.startswith('__') and method.endswith('__'):
+            continue
+        if method not in reachable:
+            unreachable.append(entry)
+    return sorted(unreachable)

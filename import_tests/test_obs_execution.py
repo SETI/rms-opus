@@ -91,3 +91,16 @@ def test_every_whitelist_entry_carries_a_reason() -> None:
         )
         == []
     )
+
+
+def test_no_whitelist_entry_names_dead_code() -> None:
+    """Every whitelisted function is one something could call.
+
+    The whitelist admits functions this fixture does not reach. A function *nothing*
+    reaches is a different thing -- dead code -- and admitting it here would keep it
+    alive by explaining away the only evidence of its deadness. Reachable means the
+    import can dispatch to it by name from a packaged schema, or some shipped source
+    mentions it, or it is a dunder the language calls without naming.
+    """
+    whitelist = obs_execution.read_whitelist(fixture_layout.UNEXECUTED_METHODS_FILE)
+    assert obs_execution.unreachable_entries(whitelist) == []
