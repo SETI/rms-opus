@@ -111,7 +111,7 @@ Part of ``docs/`` is generated rather than written:
   before each build and are git-ignored: the API reference's ``automodule`` pages
   (``api_reference.rst`` and ``api_opus_*.rst``) and the API guide's metadata-field
   table (``api_guide_fields_table.rst``). Changing what they contain means changing
-  the generator, not the file. See :ref:`dev_guide_environment` for how to run them.
+  the generator, not the file. See :ref:`dev_guide_testing` for how to run them.
 
 ``src/opus_app/apps/search/models.py`` is also generated -- by
 ``scripts/models/create_opus_models.sh``, from a populated database -- but it *is*

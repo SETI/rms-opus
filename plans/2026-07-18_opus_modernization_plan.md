@@ -7422,10 +7422,10 @@ body; never rewrite or delete earlier notes.*
     no statement coverage can record -- an abstract method whose whole body is
     `raise NotImplementedError`, which `exclude_lines` excludes, reads exactly like a
     method nobody called, so the check skips a region with no statements rather than
-    demanding a whitelist entry that could never come off. Of the 1,360 that remain,
-    **1,259 are proven executed by the run**; the 101 in the whitelist are the 50 belonging
-    to the type with no bundle in the holdings, 43 shared implementations every concrete
-    class in reach overrides, and 8 branches the sampled rows do not reach. `codecov.yml`'s
+    demanding a whitelist entry that could never come off. Of the 1,355 that remain,
+    **1,259 are proven executed by the run**; the 96 in the whitelist are the 50 belonging
+    to the type with no bundle in the holdings, 41 shared implementations every concrete
+    class in reach overrides, and 5 branches the sampled rows do not reach. `codecov.yml`'s
     unflagged
     project/patch statuses are gone: the integration upload carries the `integration` flag
     with the 90% target and the new upload carries `import`, informational, because an
@@ -7483,6 +7483,35 @@ body; never rewrite or delete earlier notes.*
     statuses and the error log, all of which `--do-all-import` has already written. The main
     run keeps the full sequence, which is where that order is under test. This narrows the
     spec's §5 "each negative case is its own run" to a reduced step list.
+  - **Five dead obs functions deleted, and a guard so the whitelist cannot hide another.**
+    The unexecuted-method whitelist admits functions *this fixture* does not reach; a
+    function **nothing** reaches is dead code, and admitting it there keeps it alive by
+    explaining away the only evidence of its deadness. An audit of all 101 entries asked
+    one question each -- is there any caller, static or by the import's name dispatch? --
+    and found six with neither. Five were dead and are gone with their entries:
+    `ObsVolumeCOCIRS01xxx._is_cassini_at_north` (its sign logic is carried by
+    `observer_ring_elevation1`'s `90 - ea`), `ObsVolumeVGISS5678xxx.opus_id_from_supp_index_row`
+    (moot -- supp rows join by primary filespec, and the only opus-id derivation is
+    `opus_id_from_index_row` on primary rows), `ObsBase._supp_index_label_col`,
+    `ObsBase._col_in_supp_index` and `ObsPdsPDS3._product_creation_time_from_index`. All
+    five are definition-only on `origin/main` as well, so none was orphaned by this
+    modernization. The sixth, `ObsBase.__str__`, **stays**: a dunder is called by the
+    language rather than by name, which is the false positive any such check has to
+    handle. `import_tests.tools.obs_execution.unreachable_entries` now fails a whitelist
+    entry whose function has no caller at all, where reachable means the import can
+    dispatch to it by name from a packaged schema -- asked of `field_function_name`, not
+    restated -- or some shipped source mentions it, or it is a dunder. Mutation-tested:
+    re-whitelisting a deleted function turns it red.
+  - **The dev guide has a Testing chapter.** `docs/dev_guide_testing.rst`, holding the
+    material that was buried inside Environment Setup plus the integration instructions
+    that did not exist: what each of the three suites needs, and for `integration_tests/`
+    the actual three-step chain read out of the scripts -- `opus_setup_environment.sh`
+    writes `opus.toml`, `import_for_tests.sh` populates a per-run schema from the
+    holdings, `opus_run_unittests_coverage.sh` runs the three trees in one serial pytest
+    under `COVERAGE_RCFILE`. It says plainly that the chain is **not generally runnable**,
+    because the import needs the terabyte holdings, rather than implying a developer
+    without that machine can follow it. It also records the trap in `opus_main_test.sh`:
+    that script is not the coverage gate and exits 0 at 99%; `opus_check_coverage.sh` is.
   - **Recorded as a candidate, not fixed here:** `importdb/mysql.py`'s `create_table`
     updates its own table-name cache *inside* its `if self.logger:` branch, so a connection
     opened without a logger answers `table_exists` from a cache that never learned about the

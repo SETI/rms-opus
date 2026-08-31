@@ -107,12 +107,12 @@ for one; `tests/fixtures/opus_ci.toml` is the checked-in dummy configuration the
 jobs use, and `scripts/run-all-checks.sh` sets it for you.
 
 A bare `pytest` runs the holdings-free suite in `tests/` and nothing else. Two other
-suites are asked for by name. `import_tests/` runs the import pipeline end to end
-against a checked-in fixture of real, subsetted PDS metadata; it needs a MySQL server
-but no holdings, and the developer guide's import-fixture chapter explains how to run
-and regenerate it. The suites in `integration_tests/` need a database populated by the
-import pipeline and, for some of them, the holdings behind it; see
-`integration_tests/test_api/TEST_API_README.md`.
+suites are asked for by name: `import_tests/` runs the import pipeline end to end
+against a checked-in fixture of real, subsetted PDS metadata, needing a MySQL server but
+no holdings, and `integration_tests/` needs a database a real import has populated and,
+for some of them, the holdings behind it. The developer guide's **Testing** chapter
+covers all three -- what each needs, how to run it, and how to populate the database the
+integration suites want.
 
 For more verbose output:
 

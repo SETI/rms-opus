@@ -277,10 +277,10 @@ exclude_lines = [
 # aspiration -- raising it means raising what that run reaches. Regenerate rather than
 # trust it: run that command and read the TOTAL line.
 #
-# That run measures 75.257%: 8,699 of 11,559 statements and branches, which is not the
+# That run measures 75.368%: 8,693 of 11,534 statements and branches, which is not the
 # `Stmts`/`Miss` pair the term report's left-hand columns show. `fail_under` compares the
-# figure rounded to whole percent, so the job passes down to 74.51% -- roughly 86 of those
-# 11,559. A failure that close to the number is a real drop in what the run reaches, most
+# figure rounded to whole percent, so the job passes down to 74.51% -- roughly 99 of those
+# 11,534. A failure that close to the number is a real drop in what the run reaches, most
 # likely a pdsfile release changing which products exist, and the answer is to find what
 # stopped executing rather than to lower the floor.
 fail_under = 75
