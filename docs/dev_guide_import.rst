@@ -89,6 +89,46 @@ Because the import tables survive a failure, a run can be **resumed rather than
 restarted**: the per-step options let a second invocation redo only the part that
 failed.
 
+.. _dev_guide_import_context:
+
+The run's state lives in one object
+------------------------------------
+
+:class:`opus_import.context.ImportContext` carries everything one run shares between its
+layers. Exactly one is built, by :func:`opus_import.cli.main`, and passed by hand from
+there down: ``cli`` hands it to each step, the steps hand it to each other, and the obs
+classes keep it as their ``_ctx``. **Nothing in the pipeline reaches for pipeline state
+any other way**, and no step module has a module-level global.
+
+Its fields fall into three groups:
+
+**What the run was given** -- the parsed arguments, the logger, and the open database.
+
+**Where the run currently is** -- the bundle, the 1-based index row number, and the
+primary file specification. These are what
+:class:`~opus_import.context.ImportLog` puts in front of every message, so a line read
+out of a log names the observation that produced it. The file specification is None for
+part of each row, because some bundles take it from the supplemental index.
+
+**What the run has accumulated** -- the caches described in
+:ref:`dev_guide_import_ids` and :ref:`dev_guide_import_steps_do_import_mult`, the
+records of which non-repeating messages have already been logged, the Python warnings
+collected since they were last reported, and
+:attr:`~opus_import.context.ImportContext.import_has_bad_data`.
+
+Three of those have different lifetimes, and mixing them up is a real bug:
+:attr:`~opus_import.context.ImportContext.max_table_id_cache`,
+:attr:`~opus_import.context.ImportContext.mult_table_cache` and
+:attr:`~opus_import.context.ImportContext.modified_mult_tables` are cleared **per
+bundle**, while
+:attr:`~opus_import.context.ImportContext.created_import_mult_tables` is cleared **per
+run**.
+
+Logging goes through :attr:`~opus_import.context.ImportContext.log`, an
+:class:`~opus_import.context.ImportLog` bound to the context. The step modules reach the
+same operations through the ``log_*`` functions in :mod:`opus_import.import_util`, which
+take the context as their first argument; both spellings are one implementation.
+
 .. _dev_guide_import_pass_structure:
 
 The pass structure of a run
