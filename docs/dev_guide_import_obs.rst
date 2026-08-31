@@ -683,7 +683,8 @@ Surface geometry is three tables, because it answers three different questions.
 One class, many tables
 ~~~~~~~~~~~~~~~~~~~~~~
 
-There is exactly one ``ObsSurfaceGeometryTarget`` class and one template schema, and the
+There is exactly one :class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` class
+and one template schema, and the
 ``<TARGET>`` placeholder is substituted at three separate points. This is the mechanism
 to understand before touching surface geometry:
 

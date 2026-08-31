@@ -309,8 +309,8 @@ whole shape. It:
     attempt at the cart table, then ``--import-dictionary``.
 
 Any exception that reaches the top is logged as fatal -- with its traceback unless
-``--log-suppress-traceback`` -- and the run exits non-zero. ``SystemExit`` and
-``KeyboardInterrupt`` deliberately propagate rather than being caught.
+``--log-suppress-traceback`` -- and the run exits non-zero. :exc:`SystemExit` and
+:exc:`KeyboardInterrupt` deliberately propagate rather than being caught.
 
 .. _dev_guide_import_logs:
 

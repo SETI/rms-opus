@@ -145,11 +145,11 @@ but the steps are:
 
 1. Create ``src/opus_app/apps/<name>/`` with an ``__init__.py`` carrying a one-line
    docstring, a ``views.py`` and a ``urls.py``. **No** ``apps.py`` **and no**
-   ``AppConfig``: none of the OPUS apps defines one, and Django's default is what they
-   all use.
+   :class:`~django.apps.AppConfig` subclass: none of the OPUS apps defines one, and
+   Django's default is what they all use.
 2. Add the dotted path to ``INSTALLED_APPS`` in :mod:`opus_app.settings`. Django derives
-   the app label from the last component, so ``opus_app.apps.foo`` has the label
-   ``foo``.
+   the app label from the path's last component, so an app under ``apps/foo/`` has the
+   label ``foo``.
 3. Add an ``include`` of its ``urls`` to the list in :mod:`opus_app.urls`, so that its
    routes are mounted at both prefixes.
 4. **Add a logger entry** to the ``LOGGING`` settings. The key must be a prefix of the
