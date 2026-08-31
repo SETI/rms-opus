@@ -44,8 +44,11 @@ these locations.
 
 **5. The application answers at the vhost root.** :mod:`opus_app.urls` mounts every route
 twice -- at ``/`` and under ``/opus/`` -- so mounting the application at the root makes
-both work, and no prefix stripping is needed. The ``opus/`` prefix exists for the
-development server, which has nothing in front of it.
+both work, and no prefix stripping is needed. The ``opus/`` prefix is there for the
+development server, which has nothing in front of it; the URL map's own comment marks it
+as such. Mounting the application under a sub-path works too, because the server strips
+that path before Django sees it, but the configurations below mount at the root, which is
+what ``public_url`` and ``product_http_path`` are written for.
 
 Two more, which are conventions rather than requirements:
 
