@@ -69,22 +69,23 @@ _UNORDERED_JSON_SORT_KEY = 'url'
 
 #: Tables the goldens deliberately do not cover, each with the reason it is excused.
 #:
-#: This is not the same kind of exclusion as the tables ``manage.py migrate`` creates,
-#: which the run measures for itself. These are judgement calls, so they are written down
-#: with their reasons and `import_tests.test_goldens` holds each one to three rules: the
-#: table has to exist in the run *and hold rows*, so an entry cannot outlive the table it
-#: excuses nor cover for one that silently emptied; it has to be absent from the goldens
-#: directory, so an excused table cannot also be compared; and it has to carry a reason. A
-#: table missing from the goldens for any other reason still fails.
-EXCLUDED_TABLES = {
-    'definitions': (
-        'a pure function of packaged inputs: the dictionary step reads the table schemas '
-        'this repository ships and writes one row per definition they carry, so the table '
-        'restates an input and nothing about the fixture, the holdings or the import '
-        'pipeline can move it. The contexts table, which the same step writes, is small '
-        'and stays goldened. Ruled by rfrench 2026-08-31.'
-    ),
-}
+#: **Empty, and the empty state is the point.** This is not the same kind of exclusion as
+#: the tables ``manage.py migrate`` creates, which the run measures for itself; these are
+#: judgement calls, and none currently survives scrutiny. ``definitions`` was excused
+#: while it restated a frozen 1.8 MB data file; with that file gone it holds 619 rows
+#: computed from the table schemas, the UI reads it for every tooltip, and 244 KB is a
+#: fair price for covering it (ruled by rfrench 2026-08-31, superseding the exclusion
+#: ruled the same day).
+#:
+#: The mechanism stays because the rules it carries are what make an exclusion safe to
+#: add. `import_tests.test_goldens` holds every entry to three: the table has to exist in
+#: the run *and hold rows*, so an entry cannot outlive the table it excuses nor cover for
+#: one that silently emptied; it has to be absent from the goldens directory, so an
+#: excused table cannot also be compared; and it has to carry a reason. Those checks pass
+#: trivially over an empty mapping and start doing work the moment anyone adds to it,
+#: which is when they are needed. A table missing from the goldens for any other reason
+#: still fails.
+EXCLUDED_TABLES: dict[str, str] = {}
 
 #: Columns a golden drops because another column in the same row rebuilds them.
 #:

@@ -109,21 +109,23 @@ The goldens
     ``import_tests/goldens/<table>.tsv`` holds every table the run leaves behind, one
     file per table, rows ordered by primary key. Which tables are covered is a rule:
     everything the schema holds, minus the tables ``manage.py migrate`` creates -- captured
-    as the before/after difference around the migration step rather than listed -- minus a
-    short list of tables excused by name. A table the import newly writes therefore shows
-    up as a golden that does not exist rather than escaping comparison.
+    as the before/after difference around the migration step rather than listed -- minus
+    any table excused by name, of which there are none today. A table the import newly
+    writes therefore shows up as a golden that does not exist rather than escaping
+    comparison.
 
-    One table is excused today: ``definitions``, which the dictionary step fills from the
-    ``definition`` entries in the packaged table schemas. Those ship in this repository, so
-    the table restates an input rather than reporting anything the fixture, the holdings or
-    the pipeline can move. ``contexts``, which the same step writes, is small and stays. An
-    excused table is held to three rules so the exclusion cannot rot into a silent gap: it
-    has to exist in the run *and hold rows*, so an entry can neither outlive the table it
-    excuses nor cover for one that quietly emptied; it must not also have a golden; and it
-    has to carry a written reason. Both the generator and the comparison read the list from
+    No table is excused today, and the list is empty on purpose rather than by omission.
+    ``definitions`` was excused while it restated a frozen 1.8 MB data file; with that file
+    gone it holds 619 rows computed from the table schemas, the UI reads it for every
+    tooltip, and 244 KB is a fair price for covering it. The mechanism stays, because the
+    rules it carries are what make an exclusion safe to add: an excused table has to exist
+    in the run *and hold rows*, so an entry can neither outlive the table it excuses nor
+    cover for one that quietly emptied; it must not also have a golden; and it has to carry
+    a written reason. Those checks pass trivially over an empty list and start doing work
+    the moment anyone adds to it. Both the generator and the comparison read the list from
     one place, so they cannot disagree about what is covered.
 
-    One column is dropped as well as one table. ``obs_files.url`` is ``holdings/`` or
+    One column is dropped, though. ``obs_files.url`` is ``holdings/`` or
     ``pds4-holdings/`` followed by the logical path, on all 10,199 rows, and carrying it
     cost about a quarter of the widest table's golden -- 819,984 bytes to store a
     concatenation. It is dropped, and the concatenation is asserted against the database

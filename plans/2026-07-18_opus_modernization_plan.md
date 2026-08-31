@@ -7313,9 +7313,9 @@ body; never rewrite or delete earlier notes.*
   - **The fixture and the goldens, measured.** 24 volumes -- one per `BUNDLE_INFO` entry
     with an instrument class, minus the one entry with no bundle in the holdings
     (`cassini_iss_fring_mosaics_rsfrench2025`, recorded in `exclusions.tsv`). 371 files,
-    **4,964,026 bytes raw**, 7,146 expected products, 193 shelf manifests; **143 golden
-    tables, 4,180,668 bytes** after the 2026-08-31 size rulings below (144 tables /
-    5,921,220 bytes before them). Packed it is a little over 0.6 MB, stated loosely on purpose:
+    **4,964,026 bytes raw**, 7,146 expected products, 193 shelf manifests; **144 golden
+    tables, 4,424,700 bytes** after the 2026-08-31 size rulings below (5,921,220 bytes
+    before them). Packed it is a little over 0.6 MB, stated loosely on purpose:
     a `tar | gzip` byte count moves with tar's directory ordering (664 KB sorted against
     677 KB unsorted here), so it is not a figure to regress against. The 2026-08-26
     estimate of ~475 KB raw was for one PDS3 volume plus one PDS4 bundle at N=20; labels
@@ -7442,10 +7442,15 @@ body; never rewrite or delete earlier notes.*
     the import writes", that the table exclusion "is exactly the tables `manage.py migrate`
     creates -- **never by a list here**", and that no column beyond the timestamps is
     normalized. All three are now false by ruling, and a reader of those clauses would
-    otherwise be misled. (1) The `definitions` golden is dropped: the table is a pure
-    function of packaged inputs. It is a *reasoned* exclusion -- `golden_io.EXCLUDED_TABLES`
-    carries the reason, and three tests hold it to existing, holding rows, and not also
-    being goldened. (2) `obs_files.url` is dropped as derivable, with the derivation
+    otherwise be misled. (1) The `definitions` golden was dropped and then
+    **restored the same day**, the exclusion superseded once `pdsdd.full` went: the table
+    is no longer a megabyte restating a frozen file but 619 rows computed from the packaged
+    table schemas, and the UI reads it for every tooltip. It is goldened, at 244,032 bytes
+    -- five times the ~50 KB the reversal estimated, because definitions carry long prose.
+    `golden_io.EXCLUDED_TABLES` is therefore **empty**, and deliberately kept along with
+    the three tests that hold any future entry to existing, holding rows, and not also
+    being goldened: those pass trivially over an empty mapping and start working the
+    moment anyone adds to it. (2) `obs_files.url` is dropped as derivable, with the derivation
     asserted against the database instead of stored, so the saving is bytes and not
     coverage. (3) `pdsdd.full` is removed from the pipeline. (4) Coverage is off by default
     locally; the executed-functions tests skip without a report but still **fail** under
