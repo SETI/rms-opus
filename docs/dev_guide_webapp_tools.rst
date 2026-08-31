@@ -34,8 +34,8 @@ Seven modules, each covered in full below.
 
 .. _dev_guide_webapp_tools_app_utils:
 
-:mod:`opus_app.apps.tools.app_utils`
-------------------------------------
+opus_app.apps.tools.app_utils
+-----------------------------
 
 Read :func:`~opus_app.apps.tools.app_utils.api_view` first. Every handler that answers
 an API call is wrapped in it, and it is what turns an exception into a response, records
@@ -181,8 +181,8 @@ same way wherever it is found, and so that changing the wording is one edit.
 
 .. _dev_guide_webapp_tools_sql_builder:
 
-:mod:`opus_app.apps.tools.sql_builder`
---------------------------------------
+opus_app.apps.tools.sql_builder
+-------------------------------
 
 Most of the OPUS API is served by hand-written SQL rather than by the ORM, for two
 reasons the module's own docstring states: the search results live in a cache table whose
@@ -317,8 +317,8 @@ created with, because both are consumed the same way.
 
 .. _dev_guide_webapp_tools_db_utils:
 
-:mod:`opus_app.apps.tools.db_utils`
------------------------------------
+opus_app.apps.tools.db_utils
+----------------------------
 
 Model lookup by table name, and the labels behind the ``mult_`` tables.
 
@@ -345,8 +345,8 @@ autocomplete endpoint learns its restricted query timed out.
 
 .. _dev_guide_webapp_tools_file_utils:
 
-:mod:`opus_app.apps.tools.file_utils`
--------------------------------------
+opus_app.apps.tools.file_utils
+------------------------------
 
 Lookups against ``obs_files``, the table listing every file of every observation. Every
 function here starts from one or more OPUS IDs and returns files that belong to them.
@@ -373,8 +373,8 @@ size and the checksum are columns the import wrote from a shelf.
 
 .. _dev_guide_webapp_tools_dictionary:
 
-:mod:`opus_app.apps.tools.dictionary`
--------------------------------------
+opus_app.apps.tools.dictionary
+------------------------------
 
 The two data-dictionary tables and the tooltip lookup against them.
 :class:`~opus_app.apps.tools.dictionary.Contexts` is one namespace of terms and
@@ -394,8 +394,8 @@ and ``cart`` all use them.
 
 .. _dev_guide_webapp_tools_file_size:
 
-:mod:`opus_app.apps.tools.file_size`
-------------------------------------
+opus_app.apps.tools.file_size
+-----------------------------
 
 :func:`~opus_app.apps.tools.file_size.nice_file_size` renders a byte count the way the
 cart displays it: powers of 1024, a single-letter suffix, and **the fractional part
@@ -407,8 +407,8 @@ a formatting choice open to revision.
 
 .. _dev_guide_webapp_tools_middleware:
 
-:mod:`opus_app.apps.tools.opus_middleware`
-------------------------------------------
+opus_app.apps.tools.opus_middleware
+-----------------------------------
 
 :class:`~opus_app.apps.tools.opus_middleware.StripWhitespaceMiddleware` is the one
 OPUS-authored entry in ``MIDDLEWARE``, and it is last in the chain. It strips each line's

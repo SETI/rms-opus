@@ -49,8 +49,8 @@ The steps
 
 .. _dev_guide_import_steps_do_cart:
 
-:mod:`opus_import.steps.do_cart`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_cart
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creates the empty ``cart`` table the web application fills as users select products.
 Option: ``--create-cart``.
@@ -69,8 +69,8 @@ failure is an error.
 
 .. _dev_guide_import_steps_do_django:
 
-:mod:`opus_import.steps.do_django`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_django
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Discards the tables the web application caches search results in. Option:
 ``--drop-cache-tables``.
@@ -85,8 +85,8 @@ finishes.
 
 .. _dev_guide_import_steps_do_import:
 
-:mod:`opus_import.steps.do_import`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_import
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The observation import. Option: ``--import``, plus everything that implies it. It also
 owns the work for three options that are **not** steps of their own --
@@ -131,8 +131,8 @@ the bundle up in ``BUNDLE_INFO``, finds the primary index files and imports each
 
 .. _dev_guide_import_steps_do_param_info:
 
-:mod:`opus_import.steps.do_param_info`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_param_info
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Builds ``param_info``, the table that tells the web application what the search form
 contains. Option: ``--create-param-info``.
@@ -161,8 +161,8 @@ decides which schemas it reads.
 
 .. _dev_guide_import_steps_do_partables:
 
-:mod:`opus_import.steps.do_partables`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_partables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Builds ``partables``, which maps a value a user can search for onto the table of further
 search parameters that value makes relevant -- choosing the Cassini mission reveals the
@@ -203,8 +203,8 @@ imported still gets a row.
 
 .. _dev_guide_import_steps_do_table_names:
 
-:mod:`opus_import.steps.do_table_names`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_table_names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Builds ``table_names``, which names and orders the "Constraints" categories the search
 form and the Details tab are divided into. Option: ``--create-table-names``.
@@ -241,8 +241,8 @@ does need a row, or it has no section and its fields are invisible.
 
 .. _dev_guide_import_steps_do_update_mult_info:
 
-:mod:`opus_import.steps.do_update_mult_info`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_update_mult_info
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Writes the display details a schema pins for a ``mult_`` table -- the label, the sort
 order, the display flag, the grouping -- back over the permanent table the import
@@ -268,8 +268,8 @@ values that landed in the wrong columns.
 
 .. _dev_guide_import_steps_do_validate:
 
-:mod:`opus_import.steps.do_validate`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_validate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Checks the invariants no database constraint can express. Option: ``--validate-perm``,
 which runs it against the permanent namespace. **Nothing here changes the database**,
@@ -313,8 +313,8 @@ Four checks, in this order:
 
 .. _dev_guide_import_steps_do_dictionary:
 
-:mod:`opus_import.steps.do_dictionary`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_dictionary
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Fills ``contexts`` and ``definitions``, which is where every tooltip in the user
 interface comes from. Option: ``--import-dictionary``. It is the last thing a run does.
@@ -339,8 +339,8 @@ them as a unit.
 
 .. _dev_guide_import_steps_do_import_tables:
 
-:mod:`opus_import.steps.do_import_tables`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_import_tables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating, deleting and copying the ``obs_`` tables.
 
@@ -401,8 +401,8 @@ Its functions:
 
 .. _dev_guide_import_steps_do_import_index:
 
-:mod:`opus_import.steps.do_import_index`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_import_index
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Importing every observation one primary index file describes.
 :ref:`dev_guide_import_one_index` walks it; this section names its three functions.
@@ -428,8 +428,8 @@ Importing every observation one primary index file describes.
 
 .. _dev_guide_import_steps_do_import_obs:
 
-:mod:`opus_import.steps.do_import_obs`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_import_obs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Computing one row of one observation table. :ref:`dev_guide_import_one_row` walks the
 dispatch and the validation; the three functions are:
@@ -451,8 +451,8 @@ dispatch and the validation; the three functions are:
 
 .. _dev_guide_import_steps_do_import_mult:
 
-:mod:`opus_import.steps.do_import_mult`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_import.steps.do_import_mult
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Reading, caching and writing the ``mult_`` tables that hold the enumerated values of
 the ``obs_`` columns.

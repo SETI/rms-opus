@@ -13,8 +13,8 @@ recipe that puts them together.
 
 .. _dev_guide_import_config_data:
 
-:mod:`opus_import.config_data`
-------------------------------
+opus_import.config_data
+-----------------------
 
 The names, ids and orderings shared across missions and instruments. Nine constants,
 all read-only.
@@ -137,8 +137,8 @@ row and a second display position.
 
 .. _dev_guide_import_config_bundle_info:
 
-:mod:`opus_import.config_bundle_info`
--------------------------------------
+opus_import.config_bundle_info
+------------------------------
 
 ``BUNDLE_INFO`` is the registry that makes a bundle importable at all. It is a list of
 ``(regular expression, BundleInfo)`` pairs, read by
@@ -354,8 +354,8 @@ newly registered type cannot go untested (see :ref:`dev_guide_import_fixture`).
 
 .. _dev_guide_import_config_targets:
 
-:mod:`opus_import.config_targets`
----------------------------------
+opus_import.config_targets
+--------------------------
 
 Four tables describing every target OPUS can name, in one module each and re-exported
 from the package, so a consumer writes ``config_targets.TARGET_NAME_INFO`` without
@@ -423,8 +423,8 @@ knowing which module it lives in.
 
 .. _dev_guide_import_config_instruments:
 
-:mod:`opus_import.instruments`
-------------------------------
+opus_import.instruments
+-----------------------
 
 Two per-instrument hook tables, both keyed by a regular expression matched against a
 label's file name, and **both empty**: every label OPUS imports is readable as it

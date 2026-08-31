@@ -215,8 +215,10 @@ what decides it, and :mod:`opus_import.obs` is the authoritative statement.
 
 .. _dev_guide_import_obs_base:
 
-The root: :class:`~opus_import.obs.obs_base.ObsBase`
-----------------------------------------------------
+The root: ObsBase
+-----------------
+
+:class:`opus_import.obs.obs_base.ObsBase`
 
 One instance is created per bundle, not per observation.
 :func:`~opus_import.steps.do_import_index.import_one_index` mutates the metadata
@@ -537,8 +539,10 @@ schema column plus the test that checks the correspondence. Two methods of
 :class:`~opus_import.obs.obs_volume_covims_0xxx.ObsVolumeCOVIMS0xxx` are the exception,
 and say something the schema cannot.
 
-:class:`~opus_import.obs.obs_general.ObsGeneral` -- ``obs_general``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ObsGeneral -- ``obs_general``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_general.ObsGeneral`
 
 What every observation has: its ids, its target, its times, and its sky position. This
 is the master table, and every other table's rows hang off it.
@@ -570,8 +574,10 @@ The methods fall into three groups:
 pairing exists to put the PDS4 base into the class's ancestry, and a PDS4 bundle class
 has to answer ``_target_name`` itself.
 
-:class:`~opus_import.obs.obs_pds.ObsPds` -- ``obs_pds``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ObsPds -- ``obs_pds``
+~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_pds.ObsPds`
 
 What the PDS archive says about the product: its data set, its product id, and when it
 was made. ``opus_id``, ``bundle_id``, ``instrument_id`` and ``primary_filespec`` are
@@ -586,8 +592,10 @@ PDS4 product is the other way round, so
 ``pds:logical_identifier`` and leaves the other two None. Both are stored so that a
 search can use either.
 
-:class:`~opus_import.obs.obs_type_image.ObsTypeImage` -- ``obs_type_image``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ObsTypeImage -- ``obs_type_image``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_type_image.ObsTypeImage`
 
 An image's dimensions and its intensity levels. Everything but the three derived id
 columns defaults to None or to a null mult, because an observation that is not an image
@@ -598,8 +606,10 @@ detector of a given bit depth records: ``EIGHT_BIT_IMAGE_LEVELS``,
 ``duration`` deliberately does **not** default to the observation's duration: it is None
 unless the observation is an image at all.
 
-:class:`~opus_import.obs.obs_wavelength.ObsWavelength` -- ``obs_wavelength``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ObsWavelength -- ``obs_wavelength``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_wavelength.ObsWavelength`
 
 The observation's spectral coverage and resolution, in both wavelength and wavenumber.
 **Units are the thing to get right here.** Wavelengths are stored in microns and
@@ -612,8 +622,10 @@ the converted wavelengths, and four helpers derive a resolution from a full band
 from the other system's resolution, so a subclass usually supplies only the two
 wavelength endpoints.
 
-:class:`~opus_import.obs.obs_profile.ObsProfile` -- ``obs_profile``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ObsProfile -- ``obs_profile``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_profile.ObsProfile`
 
 What an occultation profile records: its direction, its source, and its optical depth.
 Ten of its methods raise here, and both PDS-version variants
@@ -629,8 +641,10 @@ and declination columns from
 constant ``_STAR_RA_DEC_SLOP`` -- which is 0.0, a decision recorded in the source, so
 stars are fixed points.
 
-:class:`~opus_import.obs.obs_ring_geometry.ObsRingGeometry` -- ``obs_ring_geometry``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ObsRingGeometry -- ``obs_ring_geometry``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_ring_geometry.ObsRingGeometry`
 
 Where the observation fell on a ring plane, and at what angles. It is the largest table
 module: 84 field methods, none abstract, almost all of them reading a column of the ring

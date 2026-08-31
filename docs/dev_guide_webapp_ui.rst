@@ -50,8 +50,10 @@ the user works, and every route below serves one of those pieces.
 Every ``__``-prefixed route is private; the page itself and the admin site are not.
 Of the private ones, all but ``__menu.json`` carry ``@never_cache``.
 
-:class:`~opus_app.apps.ui.views.MainSite`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+MainSite
+~~~~~~~~
+
+:class:`opus_app.apps.ui.views.MainSite`
 
 Renders ``ui/base.html`` and supplies the front end's start-up defaults: the default
 columns, widgets, sort order and selection limit; the preview guides; the API guide's
@@ -64,8 +66,10 @@ That suffix is what cache-busts the assets on a release. It comes from the
 distribution's version the first time this view runs** -- so it is computed once per
 worker process and is stable thereafter.
 
-:func:`~opus_app.apps.ui.views.api_notifications`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+api_notifications
+~~~~~~~~~~~~~~~~~
+
+:func:`opus_app.apps.ui.views.api_notifications`
 
 Two pieces of site content that are maintained outside the repository, each in a file the
 configuration names: the date of the last blog update, and the HTML of any short-term
@@ -74,8 +78,10 @@ null, which is how OPUS says there is nothing to show. The notification's modifi
 time is returned as well, so the front end can tell a new notification from one the user
 has already dismissed.
 
-:func:`~opus_app.apps.ui.views.api_get_menu` and :func:`~opus_app.apps.ui.views.api_get_metadata_selector`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+api_get_menu and api_get_metadata_selector
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:func:`opus_app.apps.ui.views.api_get_menu`, :func:`opus_app.apps.ui.views.api_get_metadata_selector`
 
 Both render a category-and-field tree, and both get it from the same private helper. They
 differ in which fields they list -- the **searchable** ones for the Search tab, the
@@ -99,8 +105,10 @@ Each field is decorated with its display unit, its default unit and its availabl
 before the template sees it, which is why the templates need to know nothing about the
 unit system.
 
-:func:`~opus_app.apps.ui.views.api_get_widget`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+api_get_widget
+~~~~~~~~~~~~~~
+
+:func:`opus_app.apps.ui.views.api_get_widget`
 
 Builds one search widget, **with the current search already filled in**, and returns it
 as HTML rather than JSON. A range field constrained more than once comes back with one
@@ -117,8 +125,10 @@ It also undoes the OPUS ID substitution: the search parser rewrites
 ``obs_pds.opus_id`` to ``obs_general.opus_id`` for efficiency, and this rewrites it back,
 so the widget appears where the user expects it.
 
-:func:`~opus_app.apps.ui.views.api_init_detail_page`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+api_init_detail_page
+~~~~~~~~~~~~~~~~~~~~
+
+:func:`opus_app.apps.ui.views.api_init_detail_page`
 
 The parts of the Details tab that are **fast** to compute: the instrument, the preview
 images, whether the observation is in the cart, and the file listing grouped by version
@@ -128,8 +138,10 @@ results app, which is the whole reason this handler exists.
 Each product type carries the tooltip its data-dictionary term supplies, and an index
 product gets a link into the Node's file browser.
 
-:func:`~opus_app.apps.ui.views.api_normalize_url`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+api_normalize_url
+~~~~~~~~~~~~~~~~~
+
+:func:`opus_app.apps.ui.views.api_normalize_url`
 
 **The largest handler in OPUS**, and the one that makes an OPUS URL a durable bookmark.
 Given a top-level URL it rewrites every part of it into the form the current OPUS uses,
@@ -153,15 +165,17 @@ Three of its rules are worth knowing:
 The message it returns is null when the URL needed no explaining -- including when it was
 empty, which is what a caller with no bookmark at all sends.
 
-:func:`~opus_app.apps.ui.views.api_dummy`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+api_dummy
+~~~~~~~~~
+
+:func:`opus_app.apps.ui.views.api_dummy`
 
 Returns an empty object. Three routes reach it: one for network performance testing, and
 two ``__fake/`` modal URLs so that the front end can record a user action in the web log
 without doing any work. The results app routes a fourth.
 
-:mod:`opus_app.apps.ui.templatetags.multilines_template_tags`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+opus_app.apps.ui.templatetags.multilines_template_tags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 One line of code, and a page of explanation for it. Django's template lexer splits a
 template with a regular expression whose wildcard cannot cross a newline, so a tag

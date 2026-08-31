@@ -9,8 +9,8 @@ the steps and the obs classes share live.
 
 .. _dev_guide_import_db_importdb:
 
-:mod:`opus_import.importdb`
----------------------------
+opus_import.importdb
+--------------------
 
 One module per database brand, behind one abstract interface.
 :func:`opus_import.importdb.get_db` is the only way the pipeline opens a database: it
@@ -165,8 +165,10 @@ Python warnings; ``_exit`` reports any warnings together with the statements tha
 produced them, so a warning read out of a log names the SQL that caused it. Nesting is
 tracked, so an inner operation does not clear an outer one's record.
 
-MySQL: :class:`~opus_import.importdb.mysql.ImportDBMySQL`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+MySQL: ImportDBMySQL
+~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.importdb.mysql.ImportDBMySQL`
 
 The one implemented brand. It renders the OPUS table schemas as MySQL DDL and builds the
 statements that read and write rows. Four things about it are worth knowing before
@@ -220,8 +222,10 @@ The type mapping
 An unrecognized type raises :exc:`NotImplementedError` rather than being guessed at, in
 both directions.
 
-PostgreSQL: :class:`~opus_import.importdb.postgresql.ImportDBPostgreSQL`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PostgreSQL: ImportDBPostgreSQL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.importdb.postgresql.ImportDBPostgreSQL`
 
 Nothing here is implemented. The class inherits every
 :exc:`NotImplementedError` stub unchanged and defines only a constructor, and
@@ -232,8 +236,8 @@ matching placeholder on the Django side.
 
 .. _dev_guide_import_db_import_util:
 
-:mod:`opus_import.import_util`
-------------------------------
+opus_import.import_util
+-----------------------
 
 The helpers the steps and the obs classes share. Two of them hold state that outlives a
 call and is deliberately never cleared: :class:`~opus_import.import_util.NoDupLogger`'s

@@ -98,7 +98,7 @@ is a bound parameter.
 .. _dev_guide_webapp_extending_field:
 
 Adding a searchable or displayable field
------------------------------------------
+----------------------------------------
 
 **There is nothing to do in the web application.** A field exists because the import
 pipeline wrote a ``param_info`` row for it, and everything downstream -- the menu, the

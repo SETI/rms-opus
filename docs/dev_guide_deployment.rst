@@ -153,7 +153,7 @@ whose only exercise is a production deploy is a generator nobody has checked.
 .. _dev_guide_deployment_after_import:
 
 Two things that always have to happen
---------------------------------------
+-------------------------------------
 
 After **anything** that changes the database, and both are easy to forget:
 

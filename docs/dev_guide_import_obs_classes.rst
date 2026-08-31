@@ -129,8 +129,10 @@ Fifteen classes -- more than any other mission, because Cassini contributes four
 imaging and spectroscopy instruments plus three ring-occultation volume sets and two
 PDS4 bundles. Five of them are shared and ten are leaves.
 
-Shared: :class:`~opus_import.obs.obs_cassini_common.ObsCassiniCommon`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsCassiniCommon
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_cassini_common.ObsCassiniCommon`
 
 What every Cassini instrument shares, and the largest of the mission classes. It is
 where four pieces of Cassini knowledge live:
@@ -158,8 +160,10 @@ where four pieces of Cassini knowledge live:
 It also declares the whole ``obs_instrument_coiss`` column set as None-returning stubs,
 so that each PDS-version half can fill them from its own label vocabulary.
 
-Shared: :class:`~opus_import.obs.obs_cassini_common_pds3.ObsCassiniCommonPDS3`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsCassiniCommonPDS3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_cassini_common_pds3.ObsCassiniCommonPDS3`
 
 What every Cassini instrument's PDS3 volumes share. Two things distinguish it:
 
@@ -174,16 +178,20 @@ What every Cassini instrument's PDS3 volumes share. Two things distinguish it:
 It fills the ``obs_instrument_coiss`` columns from the PDS3 label keywords, normalizing
 the order of the observation-type words and reporting a change in length as an error.
 
-Shared: :class:`~opus_import.obs.obs_cassini_common_pds4.ObsCassiniCommonPDS4`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsCassiniCommonPDS4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_cassini_common_pds4.ObsCassiniCommonPDS4`
 
 The same for PDS4, reading the ``cassini:`` namespace instead of PDS3 keywords. Unlike
 the PDS3 half it implements the two spacecraft clock columns itself, including the
 out-of-order correction, and those two strip the label value's surrounding whitespace
 before parsing it.
 
-Leaf: :class:`~opus_import.obs.obs_volume_coiss_12xxx.ObsVolumeCOISS12xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeCOISS12xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_coiss_12xxx.ObsVolumeCOISS12xxx`
 
 **COISS_1xxx and COISS_2xxx** -- Cassini ISS images of Jupiter and of Saturn.
 
@@ -200,8 +208,10 @@ Leaf: :class:`~opus_import.obs.obs_volume_coiss_12xxx.ObsVolumeCOISS12xxx`
   beginning ``UV`` makes the quantity emission.
 * ``.LBL`` converts to ``.IMG``.
 
-Leaf: :class:`~opus_import.obs.obs_volume_cocirs_01xxx.ObsVolumeCOCIRS01xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeCOCIRS01xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_cocirs_01xxx.ObsVolumeCOCIRS01xxx`
 
 **COCIRS_0402 to 0419, COCIRS_0500 onward, and COCIRS_1xxx** -- Cassini CIRS cubes.
 (The registry's pattern leaves COCIRS_0420 to 0499 matching nothing at all, so a volume
@@ -224,8 +234,10 @@ set:
 The earlier COCIRS_0xxx volumes -- 0000 to 0399 and 0401 -- are registered with no obs
 class at all: they are cruise volumes with no metadata.
 
-Leaf: :class:`~opus_import.obs.obs_volume_cocirs_56xxx.ObsVolumeCOCIRS56xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeCOCIRS56xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_cocirs_56xxx.ObsVolumeCOCIRS56xxx`
 
 **COCIRS_5xxx and COCIRS_6xxx** -- Cassini CIRS spectra. Its primary index is
 ``OBSINDEX.LBL``, one of the two registry entries that name a fixed file rather than one
@@ -240,8 +252,10 @@ derived from the bundle id -- the other being the Cassini ISS F ring mosaics bun
 * It fills the six CIRS instrument-mode flag columns that COCIRS_0xxx and COCIRS_1xxx
   leave None.
 
-Leaf: :class:`~opus_import.obs.obs_volume_couvis_0xxx.ObsVolumeCOUVIS0xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeCOUVIS0xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_couvis_0xxx.ObsVolumeCOUVIS0xxx`
 
 **COUVIS_0xxx** -- Cassini UVIS. One volume set holding four instruments: two
 spectrographs (EUV and FUV), a high-speed photometer (HSP) and a hydrogen-deuterium
@@ -257,8 +271,10 @@ size and whether the observation counts as an image at all.
 * The primary file specification is the ``FILE_NAME`` column, already volume-relative.
 * ``.LBL`` converts to ``.DAT``.
 
-Leaf: :class:`~opus_import.obs.obs_volume_covims_0xxx.ObsVolumeCOVIMS0xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeCOVIMS0xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_covims_0xxx.ObsVolumeCOVIMS0xxx`
 
 **COVIMS_0xxx** -- Cassini VIMS cubes. This is the class that makes *phases* exist: one
 index row describes both an infrared and a visible observation, so it overrides
@@ -272,8 +288,10 @@ to a time series. The spacecraft clock is given the partition VIMS omits. The fi
 specification is built from separate path and file columns, and ``.lbl`` converts to
 ``.qub`` in lower case.
 
-Shared: :class:`~opus_import.obs.obs_volume_cassini_occ_common.ObsVolumeCassiniOccCommon`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsVolumeCassiniOccCommon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_cassini_occ_common.ObsVolumeCassiniOccCommon`
 
 What the three Cassini ring-occultation volumes share. The target is hardcoded to
 ``S RINGS`` -- that is what a ring occultation is of, by construction -- the planet is
@@ -284,8 +302,10 @@ primary index's radius, resolution, longitude and azimuth columns, the phase ang
 pinned at 180 degrees, and the two optical depth columns come from the supplemental
 index. ``.LBL`` converts to ``.TAB``.
 
-Shared: :class:`~opus_import.obs.obs_volume_couvis_covims_occ_common.ObsVolumeUVISVIMSOccCommon`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsVolumeUVISVIMSOccCommon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_couvis_covims_occ_common.ObsVolumeUVISVIMSOccCommon`
 
 What the UVIS and VIMS ring-occultation volumes share, and what distinguishes them from
 the radio one: these are **stellar** occultations. The source is a star, so right
@@ -294,8 +314,10 @@ ascension and declination come from
 supplemental index; and the whole family of ring elevation, incidence and emission
 columns is derived arithmetically from the single ``OBSERVED_RING_ELEVATION`` column.
 
-Leaf: :class:`~opus_import.obs.obs_volume_corss_8xxx.ObsVolumeCORSS8xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeCORSS8xxx
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_corss_8xxx.ObsVolumeCORSS8xxx`
 
 **CORSS_8001** -- Cassini radio science ring occultations. A **radio** occultation, so
 the source is the spacecraft's own signal and the host is a Deep Space Network station:
@@ -307,16 +329,20 @@ There is **no** ``obs_instrument_corss`` **table**: everything Cassini RSS recor
 OPUS searches on is an ``obs_profile`` column, which is why ``CORSS`` appears in
 ``INSTRUMENT_ID_TO_MISSION_ID`` and not in ``INSTRUMENT_ID_TO_INSTRUMENT_NAME``.
 
-Leaf: :class:`~opus_import.obs.obs_volume_couvis_8xxx.ObsVolumeCOUVIS8xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeCOUVIS8xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_couvis_8xxx.ObsVolumeCOUVIS8xxx`
 
 **COUVIS_8001** -- Cassini UVIS stellar ring occultations. Wavelengths converted from
 nanometers, temporal sampling from the supplemental integration duration in
 milliseconds, the wavelength band fixed at UV, the channel fixed at HSP, and every
 COUVIS band, line and sample column None.
 
-Leaf: :class:`~opus_import.obs.obs_volume_covims_8xxx.ObsVolumeCOVIMS8xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeCOVIMS8xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_covims_8xxx.ObsVolumeCOVIMS8xxx`
 
 **COVIMS_8001** -- Cassini VIMS stellar ring occultations. Temporal sampling from the
 infrared exposure; the wavelength band fixed at IR; and a spacecraft clock quirk of its
@@ -325,8 +351,10 @@ exceed 255, so they are truncated. Every ``obs_instrument_covims`` column comes 
 supplemental index rather than the primary one; the three visible-channel columns are
 constants, because this volume has no visible channel.
 
-Leaf: :class:`~opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.ObsBundleCassiniISSFRingMosaicsRSFrench2025`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsBundleCassiniISSFRingMosaicsRSFrench2025
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.ObsBundleCassiniISSFRingMosaicsRSFrench2025`
 
 **cassini_iss_fring_mosaics_rsfrench2025** -- PDS4 mosaics of Saturn's F ring built from
 Cassini ISS images. A derived product rather than a raw observation, and it shows:
@@ -341,8 +369,10 @@ Cassini ISS images. A derived product rather than a raw observation, and it show
   :meth:`~opus_import.obs.obs_base.ObsBase.primary_filespec_from_index_row` to use the
   index's own ``file_spec`` column.
 
-Leaf: :class:`~opus_import.obs.obs_bundle_cassini_uvis_solarocc_beckerjarmak2023.ObsBundleCassiniUvisSolarOccBeckerJarmak`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsBundleCassiniUvisSolarOccBeckerJarmak
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_bundle_cassini_uvis_solarocc_beckerjarmak2023.ObsBundleCassiniUvisSolarOccBeckerJarmak`
 
 **cassini_uvis_solarocc_beckerjarmak2023** -- Cassini UVIS **solar** occultations of
 Saturn's rings, in PDS4. One of three classes with two bases, combining the PDS4
@@ -357,15 +387,19 @@ in the bundle uses the same configuration.
 Galileo
 -------
 
-Shared: :class:`~opus_import.obs.obs_volume_galileo_common.ObsVolumeGalileoCommon`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsVolumeGalileoCommon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_galileo_common.ObsVolumeGalileoCommon`
 
 The smallest mission class: the Galileo spacecraft clock parser and the two
 ``obs_mission_galileo`` id columns. Everything else -- the orbit number and the two clock
 counts -- raises.
 
-Leaf: :class:`~opus_import.obs.obs_volume_go_0xxx.ObsVolumeGO0xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeGO0xxx
+~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_go_0xxx.ObsVolumeGO0xxx`
 
 **GO_0002 through GO_0029** -- Galileo SSI images. (``GO_0001`` is registered and
 deliberately ignored.)
@@ -384,8 +418,10 @@ deliberately ignored.)
 Hubble
 ------
 
-Shared: :class:`~opus_import.obs.obs_volume_hubble_common.ObsVolumeHubbleCommon`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsVolumeHubbleCommon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_hubble_common.ObsVolumeHubbleCommon`
 
 What every HST instrument shares: splitting the ``+``-joined filter name into its two
 wheels (more than two is an error), classifying an observation as an image or a
@@ -455,8 +491,10 @@ All five derive directly from the shared class and differ chiefly in how they de
 New Horizons
 ------------
 
-Shared: :class:`~opus_import.obs.obs_volume_new_horizons_common.ObsVolumeNewHorizonsCommon`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsVolumeNewHorizonsCommon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_new_horizons_common.ObsVolumeNewHorizonsCommon`
 
 The New Horizons spacecraft clock format, the two clock counts assembled from the
 supplemental partition and count columns with an out-of-order warning, a seven-entry
@@ -469,8 +507,10 @@ raw bundle is the one holding the primary file specification that ``rms-pdsfile`
 reports. :func:`~opus_import.import_util.yield_import_bundle_ids` reverses the order for
 that reason, and the ``2xxx`` volumes are registered as deliberately ignored.
 
-Leaf: :class:`~opus_import.obs.obs_volume_nhxxlo_xxxx.ObsVolumeNHxxLOXxxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeNHxxLOXxxx
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_nhxxlo_xxxx.ObsVolumeNHxxLOXxxx`
 
 **NHxxLO_1001** -- New Horizons LORRI. OPUS identifies an observation by its engineering
 FITS file, so the file-specification conversion makes four substitutions at once:
@@ -478,8 +518,10 @@ FITS file, so the file-specification conversion makes four substitutions at once
 ``_1001``. Fixed 1024 by 1024 frames, twelve-bit levels, a fixed wavelength range, and a
 compression type and a binning mode.
 
-Leaf: :class:`~opus_import.obs.obs_volume_nhxxmv_xxxx.ObsVolumeNHxxMVXxxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeNHxxMVXxxx
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_nhxxmv_xxxx.ObsVolumeNHxxMVXxxx`
 
 **NHxxMV_1001** -- New Horizons MVIC, identified the same way. Push-broom rather than
 framing, so the image type differs and the frame is 5024 by 128; a different wavelength
@@ -489,8 +531,10 @@ registered with ``temporal_camera`` set, where LORRI is not.
 Voyager
 -------
 
-Shared: :class:`~opus_import.obs.obs_volume_voyager_common.ObsVolumeVoyagerCommon`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsVolumeVoyagerCommon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_voyager_common.ObsVolumeVoyagerCommon`
 
 The one mission where **the spacecraft is read per observation rather than fixed per
 volume**: the instrument host id is derived from the last character of
@@ -500,8 +544,10 @@ time, and the planet derived from the first three letters of the mission phase. 
 mission phase itself raises, because it is recorded in a different place in each volume
 set.
 
-Leaf: :class:`~opus_import.obs.obs_volume_vgiss_5678xxx.ObsVolumeVGISS5678xxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeVGISS5678xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_vgiss_5678xxx.ObsVolumeVGISS5678xxx`
 
 **VGISS_5xxx through VGISS_8xxx** -- Voyager ISS images of the four outer planets. The
 only Voyager volume set whose primary index is not the plain one: it uses
@@ -513,8 +559,10 @@ window columns and also exposed as their own columns; a negative exposure durati
 returned as None (one observation in the archive has one); the UV filter making the
 quantity emission; and ``.LBL`` converting to ``.IMG``.
 
-Shared: :class:`~opus_import.obs.obs_volume_vg28xx.ObsVolumeVG28xx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsVolumeVG28xx
+~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_vg28xx.ObsVolumeVG28xx`
 
 What every Voyager ring-profile volume shares. These four volumes hold **radial ring
 profiles reconstructed from the observations**, not the original observations, and it
@@ -525,8 +573,10 @@ target name because the volumes record no phase of their own.
 It also exports the list of instants at which Voyager crossed each ring plane, which the
 subclasses use to check which side of the rings they were on.
 
-Shared: :class:`~opus_import.obs.obs_volume_vg2801_vg2802.ObsVolumeVG28xxVGPPSUVS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsVolumeVG28xxVGPPSUVS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_vg2801_vg2802.ObsVolumeVG28xxVGPPSUVS`
 
 What VG_2801 and VG_2802 share. These carry no geometry summary, so **which face of the
 rings the signal source was on is decided from the star and the planet** and then
@@ -540,15 +590,19 @@ the ring plane's own reckoning and south-facing by the convention the other colu
 Incidence angles are computed from the emission angles and cross-checked against the
 label's own incidence, erroring when they differ by more than a small tolerance.
 
-Leaves: :class:`~opus_import.obs.obs_volume_vg2801_vg2802.ObsVolumeVG2801VGPPS` and :class:`~opus_import.obs.obs_volume_vg2801_vg2802.ObsVolumeVG2802VGUVS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaves: ObsVolumeVG2801VGPPS and ObsVolumeVG2802VGUVS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_vg2801_vg2802.ObsVolumeVG2801VGPPS`, :class:`opus_import.obs.obs_volume_vg2801_vg2802.ObsVolumeVG2802VGUVS`
 
 **VG_2801** and **VG_2802** -- Voyager PPS and UVS radial ring profiles. Each supplies
 exactly one thing: its instrument id. Everything else is the shared class above. They
 are the two smallest leaves in the hierarchy, and they are the reason that class exists.
 
-Leaf: :class:`~opus_import.obs.obs_volume_vg2803.ObsVolumeVG2803VGRSS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeVG2803VGRSS
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_vg2803.ObsVolumeVG2803VGRSS`
 
 **VG_2803** -- Voyager radio science radial ring profiles. A radio rather than a stellar
 occultation, with its own two-entry DSN station table keyed off the receiver host name.
@@ -556,8 +610,10 @@ Its Uranus special case is much narrower than VG_2801's: it flips only the *sola
 elevation. North-based incidence is taken straight from the emission angle, because the
 south side is lit.
 
-Leaf: :class:`~opus_import.obs.obs_volume_vg2810.ObsVolumeVG2810VGISS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeVG2810VGISS
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_vg2810.ObsVolumeVG2810VGISS`
 
 **VG_2810** -- Voyager ISS radial ring profiles, reconstructed from the images. The only
 VG_28xx leaf that is **reflectance rather than occultation**: the quantity, the
@@ -569,8 +625,10 @@ plain ones. It is also the only one with real phase-angle columns, and it fills 
 Ground-based
 ------------
 
-Leaf: :class:`~opus_import.obs.obs_volume_ebrocc_xxxx.ObsVolumeEBROCCxxxx`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsVolumeEBROCCxxxx
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_volume_ebrocc_xxxx.ObsVolumeEBROCCxxxx`
 
 **EBROCC_0001** -- ground-based stellar occultations of Saturn's rings from 1989. It
 derives straight from :class:`~opus_import.obs.obs_common_pds3.ObsCommonPDS3`; there is
@@ -582,8 +640,10 @@ The whole event's geometry is fixed and recorded in the source, because every
 observation was of one star on one date. Right ascension, declination and the source
 name come from the **index label** rather than from a row, which no other class does.
 
-Shared: :class:`~opus_import.obs.obs_bundle_occ_common.ObsBundleOccCommon`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shared: ObsBundleOccCommon
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_bundle_occ_common.ObsBundleOccCommon`
 
 What every PDS4 occultation bundle shares. The primary file specification is the index
 row's ``filepath`` column, already relative to the holdings root -- no bundle prefix,
@@ -592,8 +652,10 @@ geometry family is derived from the ``rings:`` namespace and from the single lig
 incidence angle. Ring intercept times are taken as barycentric dynamical time with no
 conversion.
 
-Leaf: :class:`~opus_import.obs.obs_bundle_uranus_occs_earthbased.ObsBundleUranusOccsEarthbased`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Leaf: ObsBundleUranusOccsEarthbased
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_bundle_uranus_occs_earthbased.ObsBundleUranusOccsEarthbased`
 
 **uranus_occ_u\*** -- Earth-based stellar occultations of Uranus and its rings, in PDS4.
 Three primary index files per bundle: rings, global and atmosphere.

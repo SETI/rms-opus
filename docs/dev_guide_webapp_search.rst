@@ -30,8 +30,10 @@ The routes
 
 Both are mounted at the site root and under the ``opus/`` prefix, like every OPUS route.
 
-:func:`~opus_app.apps.search.views.api_normalize_input`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+api_normalize_input
+~~~~~~~~~~~~~~~~~~~
+
+:func:`opus_app.apps.search.views.api_normalize_input`
 
 Validates and normalizes the whole current search, one field at a time. For each
 searchable slug it parses the value and, if it can, returns the value re-rendered from
@@ -44,8 +46,10 @@ lets the interface put one input box in an error state while the rest keep worki
 
 It requires a ``reqno`` and echoes it back.
 
-:func:`~opus_app.apps.search.views.api_string_search_choices`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+api_string_search_choices
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:func:`opus_app.apps.search.views.api_string_search_choices`
 
 The autocomplete dropdown for a string field: every value the field can still take,
 given what the user has typed into it and given the rest of the search. Four things about
@@ -83,8 +87,10 @@ it is never cached.
 Turning a URL into a search
 ---------------------------
 
-:func:`~opus_app.apps.search.views.url_to_search_params`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+url_to_search_params
+~~~~~~~~~~~~~~~~~~~~
+
+:func:`opus_app.apps.search.views.url_to_search_params`
 
 The main routine, and the one to read first. It takes a request's query mapping and
 returns the ``(selections, extras)`` pair everything downstream works in. Its own
@@ -240,7 +246,7 @@ than through Python, and only MySQL knows what it will accept.
 .. _dev_guide_webapp_search_paraminfo_cache:
 
 The ``param_info`` lookup, and its cache
------------------------------------------
+----------------------------------------
 
 :func:`~opus_app.apps.search.views.get_param_info_by_slug` resolves a slug to its
 :class:`~opus_app.apps.paraminfo.models.ParamInfo` row. It takes a ``source`` saying what

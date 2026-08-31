@@ -92,7 +92,7 @@ failed.
 .. _dev_guide_import_context:
 
 The run's state lives in one object
-------------------------------------
+-----------------------------------
 
 :class:`opus_import.context.ImportContext` carries everything one run shares between its
 layers. Exactly one is built, by :func:`opus_import.cli.main`, and passed by hand from
