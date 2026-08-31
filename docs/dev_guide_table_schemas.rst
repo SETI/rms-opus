@@ -321,3 +321,8 @@ Adding a column
 ---------------
 
 See :ref:`dev_guide_extending_column`.
+
+API reference
+-------------
+
+:doc:`api_opus_import`
