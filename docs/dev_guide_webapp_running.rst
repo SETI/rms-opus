@@ -25,26 +25,25 @@ The environment
        is unset, so only ``django-admin`` and anything else running Django directly has
        to supply it.
 
-Nothing else is read from the environment. Every value a deployment can vary --
-credentials, hosts, paths, log levels, the fault-injection knobs -- comes from the
-configuration file. :ref:`dev_guide_installation` documents every key.
+Nothing else is read from the environment: the only :data:`os.environ` access in the
+whole package is :mod:`opus_app.wsgi`'s. Every value a deployment can vary -- credentials,
+hosts, paths, log levels, the fault-injection knobs -- comes from the configuration file,
+and :ref:`dev_guide_installation` tabulates every key.
 
 The development server
 ----------------------
 
-From a checkout::
+:ref:`dev_guide_environment` gives the three commands for a checkout. Two things about
+what they do:
 
-    export OPUS_CONFIG=$PWD/opus.toml
-    python manage.py migrate      # once, for Django's own contrib tables
-    python manage.py runserver
+**The site is served twice.** ``http://127.0.0.1:8000/opus/`` and
+``http://127.0.0.1:8000/`` are the same application, because :mod:`opus_app.urls` mounts
+every route at both. The ``opus/`` prefix is there for the development server, which has
+no web server in front of it.
 
-Then open ``http://127.0.0.1:8000/opus/``. The site is served at the root as well, so
-``http://127.0.0.1:8000/`` works too; the ``opus/`` prefix exists because a production
-installation is fronted by a web server that supplies one.
-
-``migrate`` creates only Django's session, auth, contenttypes and admin tables. **Every
-OPUS table is created by the import pipeline instead**, so there are no OPUS migrations
-to run and none to write.
+**``migrate`` creates only Django's own contrib tables** -- session, auth, contenttypes
+and admin. Every OPUS table comes from an import instead, which is why there are no OPUS
+migrations.
 
 ``manage.py`` is a development convenience and carries no OPUS-specific commands. The
 ones worth knowing are Django's own: ``check``, ``migrate``, ``shell``,
@@ -72,6 +71,8 @@ process's environment.** It is read when the settings module is imported, which 
 inside the worker, long before any request. :ref:`dev_guide_web_server` gives worked
 configurations for nginx with gunicorn or uWSGI, and for Apache with ``mod_wsgi``,
 each of which arranges it differently.
+
+.. _dev_guide_webapp_static:
 
 Static files
 ------------
@@ -111,22 +112,13 @@ template- and JavaScript-referenced asset to survive ``collectstatic`` first.
 Caching, and clearing it
 ------------------------
 
-Install ``memcached`` and the ``pymemcache`` client to have the caching behave the way a
-server does. **Neither is a declared dependency**: :mod:`opus_app.settings` tries to import
-``pymemcache``, then tries to connect to a local memcached, and falls back to Django's
-per-process local-memory cache if the import fails or the connection is **refused**. Any
-other connection failure -- a timeout, a name that resolves oddly -- is not caught and
-stops the application at startup. An installation that skips this
-runs -- slowly, per process, and with the cache-flushing step below doing nothing at all.
-
-::
-
-    sudo apt-get install memcached libmemcached-tools
-    pip install pymemcache
-    # watch it while OPUS runs:
-    watch -n1 -d 'memcstat --servers localhost'
-
-``memcstat`` is in ``libmemcached-tools``, not in ``memcached``.
+:ref:`dev_guide_installation_prereqs` says how to install ``memcached`` and its client,
+and why neither is a declared dependency. The behavior to know here is the fallback:
+:mod:`opus_app.settings` decides at import time, and it decides **twice** -- whether
+``pymemcache`` imports, and whether a connection to a local memcached succeeds -- falling
+back to Django's per-process local-memory cache if the import fails or the connection is
+**refused**. Any other connection failure, a timeout or a name that resolves oddly, is
+**not caught** and stops the application at startup.
 
 Emptying the shared cache is one module::
 

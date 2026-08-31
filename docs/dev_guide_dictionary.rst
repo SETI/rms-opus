@@ -96,8 +96,8 @@ The copy order is the reverse of the drop order, for the foreign key: ``definiti
 dropped first and created last.
 
 **A failed dictionary import does not change the run's exit status.** It reports through
-the log, like :mod:`~opus_import.steps.do_validate`, which is another reason an
-automated import gates on ``ERRORS.log``.
+the log, like :mod:`~opus_import.steps.do_validate`; see
+:ref:`dev_guide_import_verifying`.
 
 Adding a term
 -------------

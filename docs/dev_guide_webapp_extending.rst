@@ -25,8 +25,8 @@ Adding an API endpoint
    helpers. The wrapper inspects the signature once, at decoration time, and supplies one
    only when it is declared.
 3. **Route it** in the app's own ``urls.py``. Nothing else needs editing:
-   :mod:`opus_app.urls` includes every app's routes and mounts the whole set twice, at
-   the site root and under the ``opus/`` prefix.
+   :mod:`opus_app.urls` includes every app's routes and mounts the whole set at both
+   prefixes.
 4. **Decide which API it is.** A name beginning ``__`` is private, carries no
    compatibility promise, and by convention requires and echoes a ``reqno``. Anything
    else is public and is documented in :ref:`api_guide`.
@@ -139,10 +139,8 @@ side afterwards, and all three are operational rather than code:
 
 1. **Regenerate the models** if the column is in a new table:
    ``scripts/models/create_opus_models.sh``.
-2. **Restart the workers**, because the ``param_info`` lookup is a process-local
-   dictionary that nothing clears. See :ref:`dev_guide_webapp_search_paraminfo_cache`.
-3. **Clear the shared cache**, because result counts, mult counts and range endpoints are
-   cached per search.
+2. **Restart the workers and clear the shared cache**, for the reasons
+   :ref:`dev_guide_deployment_after_import` gives.
 
 .. _dev_guide_webapp_extending_format:
 
@@ -187,9 +185,8 @@ but the steps are:
 5. If it has templates, put them in ``<name>/templates/<name>/``. The app-directories
    loader finds them; the explicit list in the ``TEMPLATES`` setting is a second route to
    the same directories and does not have to be extended.
-6. If it declares a model, make it ``managed = False``. **Every OPUS table is created by
-   the import pipeline**, so a managed model would invite a migration that must not
-   exist.
+6. If it declares a model, make it ``managed = False`` -- see
+   :ref:`dev_guide_webapp_models`.
 
 .. _dev_guide_webapp_extending_frontend:
 
@@ -207,9 +204,8 @@ Three conventions to follow, because everything else already does:
 * **Reflect state into the hash.** Anything a user changes that should survive a
   bookmark goes through ``hash.js``; that is what makes an OPUS URL a permanent link, and
   what :func:`~opus_app.apps.ui.views.api_normalize_url` then has to be taught about.
-* **Reference assets under** ``/static_media/``. The prefix is hardcoded in ``opus.js``,
-  pinned by the golden fixtures and aliased in the production web server configuration,
-  so it is not a setting you can change from one side.
+* **Reference assets under** ``/static_media/``, which is fixed for the reasons
+  :ref:`dev_guide_webapp_static` gives.
 
 Adding a **search widget type** is more than a front-end change: the widget's HTML comes
 from :func:`~opus_app.apps.ui.views.api_get_widget` and

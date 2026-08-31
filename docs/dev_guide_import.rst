@@ -320,9 +320,9 @@ later table's field methods read what an earlier one computed.
 
 **A field method's exception costs one field, not the run.**
 :func:`~opus_import.steps.do_import_obs.import_run_field_function` catches it, logs it
-with its traceback, and returns None for that column. An obs class is handed the run
-context only so that it can log, never so that it can reach the database -- which is
-what makes that containment safe.
+with its traceback, and returns None for that column. What makes that containment safe
+is the restriction on what an obs class can reach, described in
+:ref:`dev_guide_import_obs_base`.
 
 .. _dev_guide_import_ids:
 
@@ -380,8 +380,7 @@ and inherits the several hundred it agrees with.
 The layering, root outward, is: what every observation shares, then what a PDS version
 decides, then what one OPUS table needs, then what a mission shares, then what one
 volume set or bundle knows. :ref:`dev_guide_import_obs` describes each layer, the
-contract it defines, and the method resolution order that falls out -- which is not
-obvious, and is the usual way a newly added class misbehaves.
+contract it defines, and the method resolution order that falls out.
 
 .. _dev_guide_import_invariants:
 
@@ -394,12 +393,8 @@ Invariants
   guarantee the design rests on.
 * **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
   constraint enforces it.
-* **An import run is single-threaded, and one obs instance serves a whole bundle.** The
-  instance holds the current row's metadata, and
-  :func:`~opus_import.steps.do_import_index.import_one_index` replaces that dictionary
-  in place once per row, so **no obs method may cache anything derived from it**.
-  :attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows the pattern that is allowed:
-  it re-derives whenever the file specification it was computed from changes.
+* **An import run is single-threaded, and one obs instance serves a whole bundle**,
+  which is what makes the no-caching rule of :ref:`dev_guide_import_obs_base` necessary.
 * **Row ids depend on insertion order**, so anything that changes the order rows are
   produced in changes every id. Directory listings are sorted for exactly this reason.
 * **Longitudes carry two derived columns.** A ``LONG`` field stores, besides its minimum
@@ -420,9 +415,8 @@ Errors and warnings
 
 A run reports through :class:`opus_import.context.ImportLog`, reached as ``ctx.log``,
 and the step modules call the same operations through the ``log_*`` functions in
-:mod:`opus_import.import_util`. Every message is prefixed with the bundle, index row and
-primary file specification the run is currently on, so a message read out of a log file
-names the observation that produced it.
+:mod:`opus_import.import_util`; :ref:`dev_guide_import_context` describes both and the
+position prefix every message carries.
 
 **What ends up in the error log is what gates an automated import.** The exit status is
 not the whole story: :mod:`~opus_import.steps.do_validate` reports through the log

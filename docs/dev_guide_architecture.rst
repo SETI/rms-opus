@@ -49,14 +49,10 @@ that observation belongs to.
         F --> G[(Permanent tables: obs_*, mult_*)]
         G --> H[(Auxiliary tables:<br/>param_info, table_names, partables)]
 
-Every **imported** table is written to the import tables first -- the ones whose names
-carry the ``table_temp_prefix`` from the configuration -- and copied over the permanent
-tables only once the whole run has succeeded. A failed import therefore cannot leave the
-web application serving half a bundle of observation metadata.
-:ref:`dev_guide_import_two_namespaces` is the whole of that design.
-
-The protection covers the imported tables and no others; the cart and cache tables are
-reset outside it.
+Every **imported** table is written to the import tables first and copied over the
+permanent tables only once the whole run has succeeded, which is the guarantee the design
+rests on; the cart and cache tables are reset outside that protection.
+:ref:`dev_guide_import_two_namespaces` is the whole of it.
 
 The auxiliary tables come last because each needs the permanent tables to be there, but
 only ``param_info`` is really derived from what was imported -- ``table_names`` and
@@ -71,13 +67,9 @@ it, and what each auxiliary table is built from.
 The obs class hierarchy
 -----------------------
 
-The pipeline's largest structure is the family of classes that computes a column's value.
-One instance is created per bundle, and
-:func:`opus_import.steps.do_import_obs.import_run_field_function` calls its
-``field_obs_<table>_<column>`` method once per column of each table the bundle fills.
-Everything about the hierarchy exists to decide which class that call lands on.
-
-It has five layers, root outward:
+The pipeline's largest structure is the family of classes that computes a column's
+value, and :ref:`dev_guide_import_obs` is where it is described. The shape, for the map:
+five layers, root outward.
 
 .. list-table::
    :header-rows: 1
@@ -86,23 +78,20 @@ It has five layers, root outward:
    * - Layer
      - Answers
    * - :class:`~opus_import.obs.obs_base.ObsBase`
-     - What every observation shares: the metadata, the index readers, the mult builder.
-       It also *declares*, as methods that raise, the questions only a PDS version or an
+     - What every observation shares, plus the questions only a PDS version or an
        instrument can answer.
    * - The PDS-version bases
-     - Where a file specification comes from, and what the time columns are called.
+     - What PDS3 and PDS4 decide.
    * - One module per OPUS table
-     - That table's field methods. Two assembly classes combine all nine so a mission
-       class names one base instead of nine.
+     - That table's field methods.
    * - One module per mission
-     - What an instrument's archives share: a spacecraft clock format, an
-       observation-name grammar, a mission phase.
+     - What an instrument's archives share.
    * - One module per bundle or volume set
-     - The leaf, which knows how one particular archive spells things.
+     - How one particular archive spells things.
 
 :ref:`dev_guide_import_obs` has the class diagram, the contracts and the method
-resolution order -- which is not obvious, and is the usual way a newly added class
-misbehaves. :ref:`dev_guide_import_obs_classes` catalogs every mission and leaf class.
+resolution order; :ref:`dev_guide_import_obs_classes` catalogs every mission and leaf
+class.
 
 .. _dev_guide_architecture_webapp:
 

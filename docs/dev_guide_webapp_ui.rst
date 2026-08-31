@@ -401,9 +401,8 @@ scrollbar library. **The vendored trees ship in the wheel deliberately**: a
 pip-deployed server has no checkout to collect static files from, so
 ``collectstatic`` has to find them inside the package.
 
-One constraint runs through all of it: **the ``/static_media/`` prefix is hardcoded** in
-``opus.js``, embedded in the golden API fixtures, and aliased in the production web
-server configuration. It cannot be changed by changing the setting alone.
+One constraint runs through all of it: the ``/static_media/`` prefix cannot be changed
+by changing the setting alone. See :ref:`dev_guide_webapp_static`.
 
 :func:`~opus_import.import_util.slug_name_for_sfc_target` in the import pipeline
 carries a matching warning: the surface geometry target slugs it builds are re-derived in

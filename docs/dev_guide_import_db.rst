@@ -319,9 +319,8 @@ Table names
 
 :func:`~opus_import.import_util.table_name_for_sfc_target` and :func:`~opus_import.import_util.slug_name_for_sfc_target`
     The two forms a surface geometry target takes: the table-name suffix, and the slug
-    the web application's search parameters embed. The slug form has a warning attached
-    -- changing it means changing ``getSurfacegeoTargetSlug`` in the front end's
-    ``utils.js`` too.
+    the web application's search parameters embed. The slug form carries a warning about
+    the front end; see :ref:`dev_guide_import_obs_target_template`.
 
 Schemas
 ~~~~~~~

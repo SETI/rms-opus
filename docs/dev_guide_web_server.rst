@@ -34,8 +34,7 @@ is served. This is the single most common way a deployment fails, and each serve
 arranges it differently -- see each section below.
 
 **3. Static files are served at** ``/static_media/``, from the directory ``static_root``
-names. The prefix is not a setting you can change from one side: it is hardcoded in the
-front end's ``opus.js``, embedded in the golden API fixtures, and aliased here.
+names. The prefix is fixed; :ref:`dev_guide_webapp_static` says why.
 
 **4. Data products are served at** ``/holdings/`` **and** ``/pds4-holdings/``, from the
 two holdings roots. The import stores each file's path as ``holdings/...`` or

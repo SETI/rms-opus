@@ -132,8 +132,8 @@ Two consumers are worth knowing about.
 instrument maps to generate one ``table_names`` row per mission and instrument table
 that exists, and :mod:`~opus_import.steps.do_partables` loops all three id maps to
 generate the triggers. **Neither needs a hand-written row for a new mission or
-instrument**, which is exactly why adding one by hand would give the table a second
-row and a second display position.
+instrument**; :ref:`dev_guide_extending_instrument` says what that means for adding
+one.
 
 .. _dev_guide_import_config_bundle_info:
 
@@ -417,9 +417,8 @@ knowing which module it lives in.
     access. ``_prof_ra_dec_helper`` reads
     it to give an occultation's source star a position.
 
-    :mod:`opus_import.util.retrieve_ra_dec` prints entries in this format, but its own
-    star list is shorter than this table. **Merge its output in; never paste it over
-    the table.**
+    :mod:`opus_import.util.retrieve_ra_dec` prints entries in this format; see
+    :ref:`dev_guide_import_running` for the one rule about using its output.
 
 .. _dev_guide_import_config_instruments:
 

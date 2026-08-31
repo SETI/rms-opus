@@ -294,8 +294,8 @@ which runs it against the permanent namespace. **Nothing here changes the databa
 and a failure is worth attention rather than being fatal -- the tables are already
 written, and an import that produced them is not undone by a validation error.
 
-**It reports through the logger and still exits zero**, which is why an automated import
-gates on ``ERRORS.log`` rather than on the exit status.
+**It reports through the logger and still exits zero**, which is one of the reasons
+:ref:`dev_guide_import_verifying` gates on ``ERRORS.log``.
 
 Four checks, in this order:
 
@@ -467,7 +467,7 @@ dispatch and the validation; the three functions are:
     specification, which is not recoverable -- the whole observation is discarded.
 
 :func:`~opus_import.steps.do_import_obs.field_function_name`
-    The pipeline's only rule for finding a field method. The tests resolve the hierarchy
+    The naming rule of :ref:`dev_guide_import_one_row`. The tests resolve the hierarchy
     against the schemas *through this function* rather than restating the rule, so
     changing it here changes what they check.
 

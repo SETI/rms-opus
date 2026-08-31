@@ -35,6 +35,8 @@ with the cache-flushing step of a deploy doing nothing at all.
 
     sudo apt-get install memcached libmemcached-tools
     pip install pymemcache
+    # watch it while OPUS runs; memcstat is in libmemcached-tools, not memcached:
+    watch -n1 -d 'memcstat --servers localhost'
 
 **wkhtmltopdf**, only for the help pages' PDF downloads. Every other page works without
 it; see :ref:`dev_guide_webapp_help_app`.
@@ -305,9 +307,8 @@ Collecting the static files
     DJANGO_SETTINGS_MODULE=opus_app.settings \
     django-admin collectstatic --noinput
 
-They go to ``static_root``, and the web server serves them from there directly. The
-public URL prefix is ``/static_media/`` and must stay that way; see
-:ref:`dev_guide_webapp_running`.
+:ref:`dev_guide_webapp_static` describes where they go, the difference between
+``static_root`` and ``opus_static_root``, and why the public prefix is fixed.
 
 .. _dev_guide_installation_full_import:
 
@@ -339,17 +340,15 @@ Galileo and New Horizons, because their bundles carry observations that appear i
 than one. The option's own help text names a third, COUVIS, which no wrapper passes it
 for; take the scripts as the record of what is actually run.
 
-When it finishes:
+When it finishes, three more commands complete the database::
 
-1. **Read** ``ERRORS.log``. An empty one is the gate.
-2. **Load the dictionary**: ``opus_import --override-db-schema opus3_new
-   --import-dictionary``.
-3. **Run the migration** against the new schema, for Django's contrib tables.
-4. **Validate**: ``opus_import --override-db-schema opus3_new --validate-perm``, then
-   read the error log again.
-5. **Compare row counts** against the database being served. Nothing does this for you.
-6. **Point a test installation at the new schema** and exercise it before switching the
-   public one over.
+    opus_import --override-db-schema opus3_new --import-dictionary
+    OPUS_CONFIG=... DJANGO_SETTINGS_MODULE=opus_app.settings django-admin migrate
+    opus_import --override-db-schema opus3_new --validate-perm
+
+and then :ref:`dev_guide_deployment_runbook` is what to do with it: read
+``ERRORS.log``, compare it against the database being served, exercise it from a test
+installation, and only then switch over.
 
 .. _dev_guide_installation_smoke:
 
