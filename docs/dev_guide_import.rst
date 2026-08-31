@@ -397,9 +397,12 @@ Invariants
 * **Units are the schema's business, not the field method's.** A field method returns a
   value in the column's default unit; :mod:`opus_support` is what converts to and from
   everything else, driven by the ``pi_form_type`` the schema declares.
-* **The primary file specification must come from the primary index.** It is what finds
-  an observation's row in every other index file and what the OPUS ID is derived from,
-  so an obs class that took it from a supplemental index could not do either.
+* **The primary file specification is what everything else hangs off.** It is what
+  finds an observation's row in the supplemental, geometry and inventory files, and it
+  is what the OPUS ID is derived from, so an obs class computes it before any of those
+  is looked up. A bundle whose obs class takes it from the supplemental index instead is
+  why :attr:`~opus_import.context.ImportContext.current_primary_filespec` is documented
+  as unknown for part of each row.
 
 .. _dev_guide_import_errors:
 
