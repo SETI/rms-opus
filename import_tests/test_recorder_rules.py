@@ -59,9 +59,59 @@ def _rows(*values: tuple[Any, ...]) -> list[dict[str, Any]]:
 
 
 def test_a_short_index_keeps_every_row() -> None:
-    """An index no longer than the floor is not sampled at all."""
-    rows = _rows(('CLEAR', 'SATURN', (1.0, 2.0)), ('CLEAR', 'SATURN', (3.0, 4.0)))
+    """An index no longer than the floor is not sampled at all.
+
+    The second row is a duplicate of the first, so a sampler that scored it would keep
+    only one: the floor is what puts both in the fixture.
+    """
+    rows = _rows(('CLEAR', 'SATURN', (1.0, 2.0)), ('CLEAR', 'SATURN', (1.0, 2.0)))
     assert row_sampling.select_rows(rows, floor=2, cap=20) == [0, 1]
+
+
+def test_a_row_is_classified_by_code_path_rather_than_by_value() -> None:
+    """The classes one row contributes, written out rather than recomputed.
+
+    Every other assertion here asks the sampler to agree with itself -- `select_rows`
+    optimises over `row_classes` and `uncovered_classes` recomputes it, so a wrong class
+    is invisible to both. This is the one that says what a class actually is: an
+    enumerated cell contributes its own value, a sentinel contributes "missing" whatever
+    its spelling, a non-enumerated cell contributes only "present", and a minimum/maximum
+    pair contributes one extra class of its own saying whether the range wraps.
+    """
+    columns = ('FILTER_NAME', 'NOTE', 'QUALITY', 'LON_MINIMUM', 'LON_MAXIMUM')
+    rows = [
+        dict(zip(columns, values, strict=True))
+        for values in [
+            ('CLEAR', 'a', 'GOOD', 350.0, 10.0),
+            ('CLEAR', 'b', 'GOOD', 1.0, 5.0),
+            ('GREEN', 'c', 'N/A', 2.0, 6.0),
+            ('GREEN', 'd', 'GOOD', 3.0, 7.0),
+        ]
+    ]
+    # Enumerated means *strictly* fewer distinct present values than the index has rows,
+    # so a column holding one value per row is an identifier and a near-constant one is
+    # an enumeration. Four rows: two filters and one quality value qualify; the note and
+    # the two longitudes have a different value in every row and do not.
+    assert row_sampling.enumerated_cells(rows) == {'FILTER_NAME', 'QUALITY'}
+
+    enumerated = row_sampling.enumerated_cells(rows)
+    pairs = [('LON_MINIMUM', 'LON_MAXIMUM')]
+    assert row_sampling.row_classes(rows[0], pairs, enumerated) == {
+        ('FILTER_NAME', '=CLEAR'),
+        ('QUALITY', '=GOOD'),
+        ('NOTE', row_sampling.PRESENT_CLASS),
+        ('LON_MINIMUM', row_sampling.PRESENT_CLASS),
+        ('LON_MAXIMUM', row_sampling.PRESENT_CLASS),
+        ('LON_MINIMUM/LON_MAXIMUM', row_sampling.WRAPPED_CLASS),
+    }
+    assert row_sampling.row_classes(rows[2], pairs, enumerated) == {
+        ('FILTER_NAME', '=GREEN'),
+        ('QUALITY', row_sampling.MISSING_CLASS),
+        ('NOTE', row_sampling.PRESENT_CLASS),
+        ('LON_MINIMUM', row_sampling.PRESENT_CLASS),
+        ('LON_MAXIMUM', row_sampling.PRESENT_CLASS),
+        ('LON_MINIMUM/LON_MAXIMUM', row_sampling.UNWRAPPED_CLASS),
+    }
 
 
 def test_sampling_covers_every_class_it_can() -> None:
@@ -105,7 +155,11 @@ def test_the_cap_bounds_what_is_kept_and_is_reported() -> None:
     chosen = row_sampling.select_rows(rows, floor=2, cap=3)
     assert len(chosen) == 3
     assert chosen == sorted(chosen)
-    assert len(row_sampling.uncovered_classes(rows, chosen)) > 0
+    # Three rows show three of the five filters, so exactly the other two are the cost.
+    assert row_sampling.uncovered_classes(rows, chosen) == {
+        ('FILTER_NAME', '=FILTER3'),
+        ('FILTER_NAME', '=FILTER4'),
+    }
 
 
 def test_sampling_stops_once_there_is_nothing_left_to_cover() -> None:
@@ -196,14 +250,23 @@ def test_a_manifest_name_becomes_the_shelf_path_pdsfile_reads() -> None:
 
 
 @pytest.mark.parametrize(
-    ('shelf_type', 'table'),
-    [('index', None), ('info', 'a_table'), ('link', 'a_table'), ('nonesuch', None)],
+    ('shelf_type', 'table', 'message'),
+    [
+        ('index', None, 'must name its table'),
+        ('info', 'a_table', 'covers a whole bundle'),
+        ('link', 'a_table', 'covers a whole bundle'),
+        ('nonesuch', None, 'Unknown shelf type'),
+    ],
 )
 def test_a_manifest_name_that_no_shelf_path_exists_for_is_refused(
-    shelf_type: str, table: str | None
+    shelf_type: str, table: str | None, message: str
 ) -> None:
-    """An index shelf needs a table and the others cannot have one."""
-    with pytest.raises(ValueError, match='shelf'):
+    """An index shelf needs a table and the others cannot have one.
+
+    Each case names the message it expects, not just "some ValueError": all three say
+    "shelf", so matching on that alone would pass with the two guards swapped.
+    """
+    with pytest.raises(ValueError, match=message):
         shelf_manifests.ManifestName(shelf_type, 'metadata', 'SET', 'BUNDLE', table)
 
 
@@ -234,6 +297,24 @@ def test_an_index_key_resolves_the_way_pdsfile_resolves_it(selection: str, expec
     """The three steps, in order, on a shelf holding one key."""
     keys = {'c3450001': 'C3450001'}
     assert shelf_capture.matching_index_key(keys, selection) == expected
+
+
+def test_a_prefix_selection_takes_the_longest_key_not_just_any() -> None:
+    """With two keys the selection starts with, the longer one wins.
+
+    A one-key shelf cannot show this: "the longest of the keys the selection starts with"
+    and "the first one found" agree there, so a resolution that dropped the ``max`` would
+    still look right. Two keys is the smallest shelf that tells them apart, and pdsfile
+    really does take the longest.
+    """
+    keys = {'c345': 'C345', 'c3450001': 'C3450001'}
+    assert shelf_capture.matching_index_key(keys, 'c3450001_raw') == 'C3450001'
+
+
+def test_several_keys_the_selection_starts_with_are_not_ambiguous() -> None:
+    """Only the *starts-with* step can be ambiguous; the inside step always resolves."""
+    keys = {'c345': 'C345', 'c3450001': 'C3450001'}
+    assert shelf_capture.matching_index_key(keys, 'c345') == 'C345'
 
 
 def test_an_ambiguous_index_key_resolves_to_nothing() -> None:
