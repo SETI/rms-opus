@@ -1,12 +1,10 @@
 """The obs class for VGISS_5xxx through VGISS_8xxx.
 
-Voyager ISS images of the four outer planets. The supplemental index names the volume in
-a column of its own, which is why the OPUS id is derived from it separately.
+Voyager ISS images of the four outer planets.
 """
 
 from typing import cast
 
-from opus_import.import_util import IndexRow
 from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
 from opus_import.obs.obs_type_image import EIGHT_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_voyager_common import ObsVolumeVoyagerCommon
@@ -41,31 +39,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     def instrument_id(self) -> str | None:
         """The OPUS instrument id, ``VGISS``."""
         return 'VGISS'
-
-    def opus_id_from_supp_index_row(self, supp_row: IndexRow) -> str | None:
-        """Return the OPUS id a supplemental index row describes.
-
-        The supplemental index for these volumes names the volume in a different column
-        from
-        every other index, which is why this exists alongside
-        `opus_import.obs.obs_base.ObsBase.opus_id_from_index_row`.
-
-        Parameters:
-            supp_row: The supplemental index row to read.
-
-        Returns:
-            The OPUS id, or the file's own name if ``pdsfile`` could not derive one, which
-            is logged as an error.
-        """
-        bundle_id = supp_row['VOLUME_NAME']
-        filespec = supp_row['FILE_SPECIFICATION_NAME']
-        full_filespec = bundle_id + '/' + filespec
-        pdsf = self._pdsfile_from_filespec(full_filespec)
-        opus_id = pdsf.opus_id
-        if not opus_id:
-            self._log_nonrepeating_error('Unable to create OPUS_ID from supplemental index')
-            return cast(str | None, filespec.split('/')[-1])
-        return cast(str | None, opus_id)
 
     def convert_filespec_from_lbl(self, filespec: str) -> str:
         """Convert a ``.LBL`` file specification to the ``.IMG`` data file.

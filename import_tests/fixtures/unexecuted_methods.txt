@@ -132,10 +132,5 @@ src/opus_import/obs/obs_wavelength.py::ObsWavelength.field_obs_wavelength_wavele
 # and the rest are alternative accessors an instrument uses only for values its
 # representative volume happens not to carry.
 src/opus_import/obs/obs_base.py::ObsBase.__str__
-src/opus_import/obs/obs_base.py::ObsBase._col_in_supp_index
 src/opus_import/obs/obs_base.py::ObsBase._log_nonrepeating_error
 src/opus_import/obs/obs_base.py::ObsBase._log_warning
-src/opus_import/obs/obs_base.py::ObsBase._supp_index_label_col
-src/opus_import/obs/obs_pds_pds3.py::ObsPdsPDS3._product_creation_time_from_index
-src/opus_import/obs/obs_volume_cocirs_01xxx.py::ObsVolumeCOCIRS01xxx._is_cassini_at_north
-src/opus_import/obs/obs_volume_vgiss_5678xxx.py::ObsVolumeVGISS5678xxx.opus_id_from_supp_index_row
