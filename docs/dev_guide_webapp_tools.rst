@@ -428,10 +428,8 @@ Model lookup by table name, and the labels behind the ``mult_`` tables.
     clears it, so a re-imported label needs the workers restarted.
 
 Three MySQL error numbers are declared here for callers to match a database exception
-against: ``MYSQL_TABLE_NOT_EXISTS``,
-``MYSQL_TABLE_ALREADY_EXISTS`` -- which is how the
-cache-table race is resolved -- and
-``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
+against: ``MYSQL_TABLE_NOT_EXISTS``, ``MYSQL_TABLE_ALREADY_EXISTS`` -- which is how the
+cache-table race is resolved -- and ``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
 autocomplete endpoint learns its restricted query timed out.
 
 .. _dev_guide_webapp_tools_file_utils:

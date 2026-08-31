@@ -667,9 +667,8 @@ Two things in it are not a plain read:
 * **Ascending-node longitudes.** A module constant gives each planet's ring-plane
   ascending node in degrees from the J2000 prime meridian, and
   ``_j2000_to_ascending`` / ``_ascending_to_j2000`` convert between the two systems.
-  Eight columns try the summary file's own ``..._WRT_NODE`` column first and fall back
-  to the
-  conversion, with a special case that keeps a 0--360 range as 0--360, because nothing
+  Eight columns try the summary file's own ``..._WRT_NODE`` column first and fall back to
+  the conversion, with a special case that keeps a 0--360 range as 0--360, because nothing
   else would make sense.
 * :meth:`~opus_import.obs.obs_ring_geometry.ObsRingGeometry.validate_ring_geo_fields`
   reports a **gridless** value whose minimum and maximum disagree -- twelve column stems

@@ -396,9 +396,8 @@ knowing which module it lives in.
 ``TARGET_NAME_MAPPING`` (:mod:`opus_import.config_targets.target_name_mapping`)
     269 entries folding an instrument's own spelling onto a canonical name, so that
     observations of one body are searchable under one name whichever mission took them.
-    It is applied first, before the lookup above:
-    ``_get_target_info`` upper-cases the label's
-    value, maps it through this table, and only then looks it up. The entries are
+    It is applied first, before the lookup above: ``_get_target_info`` upper-cases the
+    label's value, maps it through this table, and only then looks it up. The entries are
     grouped by the archive that needs them -- COCIRS, COISS, COUVIS, HST, GOSSI, New
     Horizons, a miscellaneous group, and a large block of star names. ``'VEGA'`` maps to
     ``'ALF_LYR'``; ``'S_RINGS'`` maps to ``'S RINGS'``; ``'2003UB313'`` maps to
@@ -406,16 +405,15 @@ knowing which module it lives in.
 
 ``PLANET_GROUP_MAPPING`` (:mod:`opus_import.config_targets.planet_group_mapping`)
     Eleven entries mapping a planet id -- plus ``OTHER`` and None -- to the label and
-    sort key the search form groups targets under.
-    ``_get_planet_group_info`` reads it, and a
-    target with no planet, or one the tables do not describe, is grouped under
+    sort key the search form groups targets under. ``_get_planet_group_info`` reads it,
+    and a target with no planet, or one the tables do not describe, is grouped under
     ``OTHER``.
 
 ``STAR_RA_DEC`` (:mod:`opus_import.config_targets.star_ra_dec`)
     190 entries mapping a star name to its ``(right ascension, declination)`` in
     degrees, J2000. It is checked in rather than fetched, so an import needs no network
-    access. ``_prof_ra_dec_helper`` reads
-    it to give an occultation's source star a position.
+    access. ``_prof_ra_dec_helper`` reads it to give an occultation's source star a
+    position.
 
     :mod:`opus_import.util.retrieve_ra_dec` prints entries in this format; see
     :ref:`dev_guide_import_running` for the one rule about using its output.

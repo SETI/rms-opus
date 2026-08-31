@@ -239,9 +239,9 @@ looked up in the field's ``mult_`` table to get their ids, and a ``GROUP`` field
 an ``IN`` test while a ``MULTIGROUP`` field becomes an OR of JSON containment tests,
 because it holds a list.
 
-``_valid_regex`` is how a user's regular expression is
-checked: **by asking the server**, since OPUS runs the expression through MySQL rather
-than through Python, and only MySQL knows what it will accept.
+``_valid_regex`` is how a user's regular expression is checked: **by asking the server**,
+since OPUS runs the expression through MySQL rather than through Python, and only MySQL
+knows what it will accept.
 
 .. _dev_guide_webapp_search_paraminfo_cache:
 
@@ -284,8 +284,8 @@ cache matter:
 * It is a plain dictionary rather than an :func:`functools.lru_cache`, because several
   callers **mutate** the row they are given, so each needs its own copy.
 
-``_get_param_info_by_qualified_name`` is the other
-direction -- a ``table.column`` name to its row -- and is **not** cached.
+``_get_param_info_by_qualified_name`` is the other direction -- a ``table.column`` name to
+its row -- and is **not** cached.
 
 The join helpers
 ----------------
@@ -367,9 +367,9 @@ Consequences worth knowing:
 * The ``cache_NNN`` tables are never modeled at all, which is the reason
   :mod:`opus_app.apps.tools.sql_builder` exists.
 
-``UserSearches`` is the one generated model worth
-reading: its unique key over the four hashes is what makes a search's cache table number
-stable, and :ref:`dev_guide_webapp_search_flow` describes how that is used.
+``UserSearches`` is the one generated model worth reading: its unique key over the four
+hashes is what makes a search's cache table number stable, and
+:ref:`dev_guide_webapp_search_flow` describes how that is used.
 
 API reference
 -------------

@@ -119,21 +119,19 @@ What each handler returns
 :func:`~opus_app.apps.results.views.api_get_metadata` and :func:`~opus_app.apps.results.views.api_get_metadata_internal`
     One observation's metadata. Both delegate to
     :func:`~opus_app.apps.results.views.get_metadata`. Without a column list it walks the
-    "Constraints" categories in display order and returns every displayable field of
-    each; with ``cols`` it returns exactly those fields, through
-    ``_get_metadata_by_slugs``. The private form differs
-    in three ways: its HTML is the Details tab's flavor, with tooltips and search icons;
-    its column slugs may carry a ``:unit`` suffix; and it accepts a list of columns to
-    embed in the search links it renders.
+    "Constraints" categories in display order and returns every displayable field of each;
+    with ``cols`` it returns exactly those fields, through ``_get_metadata_by_slugs``. The
+    private form differs in three ways: its HTML is the Details tab's flavor, with
+    tooltips and search icons; its column slugs may carry a ``:unit`` suffix; and it
+    accepts a list of columns to embed in the search links it renders.
 
 :func:`~opus_app.apps.results.views.api_get_images_by_size`, :func:`~opus_app.apps.results.views.api_get_images` and :func:`~opus_app.apps.results.views.api_get_image`
     The preview images for a search at one size, for a search at every size, and for one
-    observation. All three share
-    ``_api_get_images``, which reads the preview JSON out
-    of ``obs_general`` and hands it to
+    observation. All three share ``_api_get_images``, which reads the preview JSON out of
+    ``obs_general`` and hands it to
     :func:`~opus_app.apps.tools.file_utils.get_pds_preview_images`. The single-observation
-    form works by injecting an OPUS ID constraint into a copy of the query string, so
-    that one code path serves both.
+    form works by injecting an OPUS ID constraint into a copy of the query string, so that
+    one code path serves both.
 
 :func:`~opus_app.apps.results.views.api_get_files`
     Every file of one observation, or of a whole search, optionally filtered by product
@@ -181,8 +179,7 @@ The ``metadata`` app
 
 What is *searchable*, rather than what was found. Eight routes served by seven
 handlers, three of which are private wrappers that add a ``reqno`` echo. **The private
-ones are not themselves decorated**:
-each simply calls its public twin, which is where the
+ones are not themselves decorated**: each simply calls its public twin, which is where the
 :func:`~opus_app.apps.tools.app_utils.api_view` wrapping happens.
 
 .. list-table::
@@ -252,9 +249,9 @@ The ``cart`` app
 
 The one app that writes rows a user can see. (The search app writes too --
 ``user_searches`` and the ``cache_NNN`` tables -- but nothing a user selected.) A cart is
-the set of ``cart`` rows carrying one session id;
-a row whose ``recycled`` column is set is in the recycle bin -- still in the table,
-counted separately, and left out of the download totals and the archives themselves.
+the set of ``cart`` rows carrying one session id; a row whose ``recycled`` column is set
+is in the recycle bin -- still in the table, counted separately, and left out of the
+download totals and the archives themselves.
 
 Every route is private except ``api/download/<opus_id>.(zip|tar|tgz)``, which is
 public and is documented in :ref:`api_guide`.
@@ -313,12 +310,12 @@ the Django session.
 Adding a range
 ~~~~~~~~~~~~~~
 
-``_edit_cart_range`` adds or removes an inclusive range of
-observations, given the two ends' OPUS IDs, **in the current sort order**. Reading the
-browse list it uses the search's cache table; reading the cart it has to build a
-**temporary table** of the session's cart in sort order first, because the cart has no
-cache table of its own. The delete form explicitly carries the session id in its WHERE
-clause, so it cannot reach another user's cart.
+``_edit_cart_range`` adds or removes an inclusive range of observations, given the two
+ends' OPUS IDs, **in the current sort order**. Reading the browse list it uses the
+search's cache table; reading the cart it has to build a **temporary table** of the
+session's cart in sort order first, because the cart has no cache table of its own. The
+delete form explicitly carries the session id in its WHERE clause, so it cannot reach
+another user's cart.
 
 Reading the cart
 ~~~~~~~~~~~~~~~~
@@ -374,16 +371,16 @@ Downloads
 A single-observation download is streamed back directly; a cart download is written under
 the configured directory and its URL returned, because it can be very large.
 
-``_get_download_info`` is what the Selections page's numbers
-come from: the product types the whole cart offers -- **the whole cart, recycle bin
-included, so the panel need not be redrawn on every edit** -- and, separately, the file
-counts and total sizes over the **non-recycled** cart only. Sizes are totaled over
-*distinct* logical paths, because one file can serve several observations.
+``_get_download_info`` is what the Selections page's numbers come from: the product types
+the whole cart offers -- **the whole cart, recycle bin included, so the panel need not be
+redrawn on every edit** -- and, separately, the file counts and total sizes over the
+**non-recycled** cart only. Sizes are totaled over *distinct* logical paths, because one
+file can serve several observations.
 
 :func:`~opus_app.apps.cart.views.api_get_cart_csv` streams the cart as CSV, through
-``_csv_helper``, which is a thin wrapper over the same
-paging engine with the recycle bin included and no limit. ``_create_csv_file`` is the
-other half: it writes the metadata CSV that goes inside a download archive.
+``_csv_helper``, which is a thin wrapper over the same paging engine with the recycle bin
+included and no limit. ``_create_csv_file`` is the other half: it writes the metadata CSV
+that goes inside a download archive.
 
 The model
 ~~~~~~~~~
