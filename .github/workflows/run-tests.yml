@@ -245,6 +245,12 @@ jobs:
           --health-timeout=5s
           --health-retries=12
     env:
+      # Where the suite reaches the service container. OPUS_CONFIG comes from the
+      # workflow-level env above, and pytest needs it here like everywhere else:
+      # pytest-django configures Django from it at session start. The
+      # configuration each pipeline subprocess reads is a different file, written
+      # per run by the suite itself and pointing at the schema and the built tree.
+      #
       # 127.0.0.1 rather than localhost: MySQLdb reads localhost as a request
       # for a Unix socket, which exists on a developer's machine and not beside
       # a service container.
