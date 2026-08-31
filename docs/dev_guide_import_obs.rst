@@ -133,9 +133,9 @@ The shape of it
         ObsSurfaceGeometryName <|-- ObsCommonPDS4
         ObsSurfaceGeometryTarget <|-- ObsCommonPDS4
 
-The diagram shows every class in this chapter and every direct base of each. The
-mission and volume-set classes hang off
-:class:`~opus_import.obs.obs_common_pds3.ObsCommonPDS3` and
+The diagram shows every class in this chapter and every direct base of each, and it pans
+and zooms in the browser, which is how to read it at this size. The mission and volume-set
+classes hang off :class:`~opus_import.obs.obs_common_pds3.ObsCommonPDS3` and
 :class:`~opus_import.obs.obs_common_pds4.ObsCommonPDS4` and are drawn in
 :ref:`dev_guide_import_obs_classes`.
 

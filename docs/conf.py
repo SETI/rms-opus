@@ -248,6 +248,10 @@ html_static_path: list[str] = []
 # the build needs nothing installed beyond the Python dependencies.
 mermaid_output_format = 'raw'
 
+# Wrap every rendered diagram in a d3 pan/zoom surface, so a reader can drag and
+# scale the large class diagrams instead of squinting at a page-width image.
+mermaid_d3_zoom = True
+
 # -- MyST ---------------------------------------------------------------------
 
 myst_heading_anchors = 3
