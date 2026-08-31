@@ -43,6 +43,30 @@ GOLDENED_TABLES = golden_io.goldened_tables(fixture_layout.GOLDENS_DIR)
 #: them buries the other failures in the same run.
 DIFF_LINE_LIMIT = 60
 
+#: How many rows on each side the report hands to `difflib`, starting at the first row
+#: that differs. difflib compares the whole of both sequences before it yields anything,
+#: and ``obs_files`` has ten thousand rows: a change that moves most of them would spend
+#: minutes building a report of which only the first `DIFF_LINE_LIMIT` lines are printed.
+#: A report that takes longer than the job it runs in is a report nobody reads.
+DIFF_WINDOW = 400
+
+
+def _first_difference(expected: list[str], actual: list[str]) -> int:
+    """Return the index of the first line the two sides disagree on.
+
+    Parameters:
+        expected: The golden's lines.
+        actual: The run's lines.
+
+    Returns:
+        The first index where they differ, or the length of the shorter one when the
+        shorter is a prefix of the longer.
+    """
+    for index, (left, right) in enumerate(zip(expected, actual, strict=False)):
+        if left != right:
+            return index
+    return min(len(expected), len(actual))
+
 
 def _unified_diff(table: str, expected: str, actual: str) -> str:
     """Return a readable difference between a golden and what the run produced.
@@ -53,18 +77,24 @@ def _unified_diff(table: str, expected: str, actual: str) -> str:
         actual: The serialized table.
 
     Returns:
-        A unified diff, so a failure reads as rows rather than as a boolean, truncated
-        to `DIFF_LINE_LIMIT` lines with a count of what was left out.
+        A unified diff of at most `DIFF_WINDOW` rows on each side, starting at the first
+        row that differs, so a failure reads as rows rather than as a boolean. The header
+        states both row counts, so a truncated view still says how big the change is.
     """
-    lines = list(
-        difflib.unified_diff(
-            expected.splitlines(),
-            actual.splitlines(),
+    expected_lines = expected.splitlines()
+    actual_lines = actual.splitlines()
+    start = _first_difference(expected_lines, actual_lines)
+    lines = [
+        f'{table}: {len(expected_lines)} golden lines, {len(actual_lines)} run lines, '
+        f'first difference at line {start + 1}',
+        *difflib.unified_diff(
+            expected_lines[start : start + DIFF_WINDOW],
+            actual_lines[start : start + DIFF_WINDOW],
             fromfile=f'golden/{table}',
             tofile=f'run/{table}',
             lineterm='',
-        )
-    )
+        ),
+    ]
     if len(lines) > DIFF_LINE_LIMIT:
         remaining = len(lines) - DIFF_LINE_LIMIT
         lines = [*lines[:DIFF_LINE_LIMIT], f'... and {remaining} more difference lines']
