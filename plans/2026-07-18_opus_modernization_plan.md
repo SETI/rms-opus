@@ -7382,9 +7382,11 @@ body; never rewrite or delete earlier notes.*
     table holding none of that bundle's rows must be byte-identical to its golden, ids
     included, and a table holding them must hold the same rows once those two
     server-numbered columns are dropped, with a third assertion that neither half is empty.
-    The split is *stronger* where it matters: the byte-identical half is exactly the mult
-    tables and the finalization tables, which is where the upsert lands, so the update half
-    of the upsert is still held to its ids. (6) §5 says coverage's per-function JSON
+    The split is *stronger* where it matters, and wider than "the mult tables": of the 144
+    goldened tables, 47 carry a `bundle_id` and only **18** hold a row of the re-imported
+    volume, so the byte-identical half is the mult tables, the dictionary and finalization
+    tables, **and the 29 obs tables that hold no row of that volume** -- 126 of 144 held to
+    their ids, the upsert's landing place among them. (6) §5 says coverage's per-function JSON
     regions "arrived in 7.5". They arrived in **7.6.0**, with JSON report format version 3
     -- 7.5.x writes format 2, which carries no `functions` key at all (verified by reading
     `coverage/jsonreport.py` in the 7.5.0, 7.5.4 and 7.6.0 sdists). The dev floor is

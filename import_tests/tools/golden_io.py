@@ -303,9 +303,14 @@ def without_surrogate_ids(text: str) -> str:
 
     Returns:
         The same text with every `SURROGATE_ID_COLUMNS` field removed from the header and
-        from every row, and the rows sorted.
+        from every row, and the rows sorted. Text with no lines at all comes back
+        unchanged: a golden is written with a header line and a serialized table always
+        has one, so an empty one is a corrupted file, and returning it lets the
+        comparison fail as a readable difference rather than as a traceback here.
     """
     lines = text.splitlines()
+    if len(lines) == 0:
+        return text
     header = lines[0].split('\t')
     keep = [index for index, name in enumerate(header) if name not in SURROGATE_ID_COLUMNS]
 
