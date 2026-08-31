@@ -281,3 +281,8 @@ Operating checklist
      - The log-analyzer cron jobs. They are per-installation and are not deployed.
    * - Results look stale
      - :ref:`dev_guide_deployment_after_import`.
+
+API reference
+-------------
+
+:doc:`api_opus_config`, :doc:`api_opus_log_analyzer`

@@ -188,7 +188,9 @@ Three notes on that block:
 nginx with uWSGI
 ----------------
 
-The same nginx block, with the ``location /`` replaced by::
+The same nginx block, with the ``location /`` replaced by:
+
+.. code-block:: nginx
 
     location / {
         include uwsgi_params;
@@ -376,14 +378,17 @@ equivalent for nginx's own log format.
 Checking it
 -----------
 
-In order, because each check depends on the one before::
+In order, because each check depends on the one before. The first runs a server in
+the foreground and does not return, so give it a terminal of its own and run the rest in
+another::
 
     # The application starts and the configuration reaches it. `env` is load-bearing:
     # a default sudoers resets the environment and refuses to pass OPUS_CONFIG through.
-    # This one runs in the foreground, so give it a terminal of its own.
     sudo -u opus env OPUS_CONFIG=/etc/opus/opus.toml \
         /opus/src/rms-opus/opus_venv/bin/gunicorn \
         --bind 127.0.0.1:8001 opus_app.wsgi:application
+
+Then, in a second terminal::
 
     # The web server proxies to it.
     curl -sI https://opus.example.org/ | head -1
@@ -433,3 +438,8 @@ Where to go next
 
 :ref:`dev_guide_deployment`
     The Node's deploy chain, and the runbook for replacing a database.
+
+API reference
+-------------
+
+:doc:`api_opus_app`
