@@ -202,7 +202,8 @@ for this check); and the alias is emitted only alongside the clause that reads i
 because a row of nothing but the key has nothing to assign.
 
 Both :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows` and
-:meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows` write in packets of 1000 rows.
+:meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows` write in packets of
+1000 rows.
 
 **Connecting.** The constructor connects without naming a database and then issues
 ``USE``; an unknown-database error makes it **create the schema** and retry, which is
