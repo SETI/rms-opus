@@ -165,6 +165,25 @@ def write_manifest(path: Path, entries: dict[str, Any]) -> None:
     path.write_text(text, encoding='utf-8')
 
 
+def read_manifest_text(text: str, source: str = '<text>') -> dict[str, Any]:
+    """Read manifest text back into the shelf dictionary it holds.
+
+    Parameters:
+        text: The manifest's contents.
+        source: What to name in an error message.
+
+    Returns:
+        The dictionary the text contains.
+
+    Raises:
+        ValueError: If the text does not hold a single dictionary literal.
+    """
+    value = ast.literal_eval(text)
+    if not isinstance(value, dict):
+        raise ValueError(f'Manifest does not hold a dictionary: {source}')
+    return value
+
+
 def read_manifest(path: Path) -> dict[str, Any]:
     """Read a manifest file back into the shelf dictionary it holds.
 
@@ -177,7 +196,4 @@ def read_manifest(path: Path) -> dict[str, Any]:
     Raises:
         ValueError: If the file does not hold a single dictionary literal.
     """
-    value = ast.literal_eval(path.read_text(encoding='utf-8'))
-    if not isinstance(value, dict):
-        raise ValueError(f'Manifest does not hold a dictionary: {path}')
-    return value
+    return read_manifest_text(path.read_text(encoding='utf-8'), str(path))
