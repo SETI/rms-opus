@@ -627,11 +627,10 @@ The observation's spectral coverage and resolution, in both wavelength and waven
 wavenumbers in cm\ :sup:`-1`, and the module constant ``MICRONS_PER_CM`` (10000.0) is
 the conversion: ``wavelength = MICRONS_PER_CM / wavenumber``, and a resolution converts
 as ``MICRONS_PER_CM * resolution / wavelength**2`` -- the square of the wavelength the
-resolution applies at, which is what the two conversion helpers divide by. The wavenumber
-columns default to
-the converted wavelengths, and four helpers derive a resolution from a full bandwidth or
-from the other system's resolution, so a subclass usually supplies only the two
-wavelength endpoints.
+resolution applies at, which is what the two conversion helpers divide by. The
+wavenumber columns default to the converted wavelengths, and four helpers derive a
+resolution from a full bandwidth or from the other system's resolution, so a subclass
+usually supplies only the two wavelength endpoints.
 
 ObsProfile -- ``obs_profile``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

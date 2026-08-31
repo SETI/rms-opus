@@ -537,10 +537,9 @@ from a table whose values are pinned by ``mult_options`` is an error, and return
 when the schema pins none. The rules, in order: a null-ish label sorts to the end,
 keyed ``zzz`` for ``NULL``, ``zzy`` for ``N/A`` and ``zzx`` for ``NONE`` -- unless the
 column has a unit, in which case those three sort by their own text instead; a column
-with a unit
-sorts by the parsed number, zero-padded; a table whose labels are all numeric sorts
-numerically; ``Yes`` sorts before ``No`` and ``On`` before ``Off``; anything else sorts
-by its label.
+with a unit sorts by the parsed number, zero-padded; a table whose labels are all
+numeric sorts numerically; ``Yes`` sorts before ``No`` and ``On`` before ``Off``;
+anything else sorts by its label.
 
 **Writing back.** :func:`~opus_import.steps.do_import_mult.dump_import_mult_tables`
 upserts every modified table at the end of each index file.
