@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -527,6 +528,19 @@ def _choose_and_record(
             _compare_schemas(ctx, entry, recorded, siblings, report)
 
 
+def _lexical(path: Path | str) -> Path:
+    """Return an absolute path with ``..`` collapsed and symlinks left alone.
+
+    Parameters:
+        path: The path to normalize.
+
+    Returns:
+        The normalized absolute path. `Path.resolve` would also follow every symlink,
+        which is the other half of the comparison rather than this one.
+    """
+    return Path(os.path.normpath(Path(path).absolute()))
+
+
 def _check_scratch_is_outside_the_holdings(args: argparse.Namespace) -> None:
     """Refuse a scratch directory that overlaps either holdings root.
 
@@ -549,10 +563,13 @@ def _check_scratch_is_outside_the_holdings(args: argparse.Namespace) -> None:
     ):
         # Both spellings, because on the holdings machine `/data/pdsdata/holdings` is a
         # symlink onto another filesystem. Resolving catches a scratch path that reaches
-        # the same tree by another route; not resolving catches a scratch path that
+        # the same tree by another route; the lexical pair catches a scratch path that
         # contains the symlink itself, which an rmtree would remove just as effectively.
+        # The lexical pair is normalized but not resolved: `..` has to be collapsed or
+        # `holdings/../scratch` reads as inside the holdings when it is beside them,
+        # while following the link would defeat the point of comparing lexically at all.
         for scratch, holdings in (
-            (Path(args.scratch).absolute(), given.absolute()),
+            (_lexical(args.scratch), _lexical(given)),
             (Path(args.scratch).resolve(), given.resolve()),
         ):
             if (
