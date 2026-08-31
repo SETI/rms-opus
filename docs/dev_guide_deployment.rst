@@ -147,8 +147,8 @@ Both failures name the variable at fault, but they happen at different moments. 
 missing-value check runs before the deploy stops Apache; the generator runs from
 ``_opus_setup_environment.sh``, which is sourced **after** the stop, so a value TOML
 cannot represent leaves Apache down until it is corrected. That script's own comments
-record the same hazard for its other failure point, the ``find_spec`` lookup that locates
-Apache's WSGI target.
+record the same hazard for its other failure point, the :func:`importlib.util.find_spec`
+lookup that locates Apache's WSGI target.
 
 ``_write_opus_toml.sh`` is a separate program rather than a block inside the setup script
 so that it can be run on its own against a controlled environment and its output loaded

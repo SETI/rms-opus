@@ -361,9 +361,9 @@ than a path under ``site-packages``. To create one by hand::
       'import importlib.util; print(importlib.util.find_spec("opus_app.wsgi").origin)')
     ln -sfn "$OPUS_WSGI" /opus/src/rms-opus/wsgi.py
 
-``find_spec`` locates the file **without importing it**. Importing
-:mod:`opus_app.wsgi` would build the application -- configuring Django and opening the
-log file -- which is not something a deploy step should do.
+:func:`importlib.util.find_spec` locates the file **without importing it**. Importing
+:mod:`opus_app.wsgi` would build the application -- configuring Django and opening the log
+file -- which is not something a deploy step should do.
 
 The access log
 ~~~~~~~~~~~~~~
