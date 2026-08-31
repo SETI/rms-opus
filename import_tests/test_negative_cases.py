@@ -98,21 +98,22 @@ def test_metadata_less_volume_still_imports(
     assert _row_count(db_credentials, main_run.schema, bundle) > 0
 
 
-def test_duplicate_opus_ids_leave_one_row_each(
-    duplicate_id_run: ImportRun, db_credentials: DatabaseCredentials
+def test_duplicate_opus_ids_are_resolved_rather_than_rejected(
+    duplicate_id_run: ImportRun,
 ) -> None:
-    """Importing a volume twice in one invocation leaves one row per observation.
+    """Importing a volume twice in one invocation runs to the end without an error.
 
-    The second copy's OPUS ids are already in the import tables, and each one's earlier
-    row is deleted before the new one is written. Without that, the permanent tables
-    would carry the observation twice.
+    That is the failure mode the flag prevents, and asking the finished database how
+    many rows share an OPUS id would not see it: ``obs_general.opus_id`` carries a
+    ``unique`` key, so a duplicate row cannot exist to be counted -- the *insert* is what
+    fails. The flag makes the import delete each OPUS id's earlier row before writing the
+    new one; without it, the second copy's insert is rejected and the run logs an error.
     """
-    rows = golden_io.query(
-        db_credentials,
-        duplicate_id_run.schema,
-        f'SELECT opus_id, COUNT(*) FROM `{_OBS_GENERAL}` GROUP BY opus_id HAVING COUNT(*) > 1',
-    )
-    assert rows == []
+    stopped = [
+        f'{" ".join(step.arguments)} exited {step.returncode}' for step in duplicate_id_run.steps
+    ]
+    assert [line for line in stopped if not line.endswith('exited 0')] == []
+    assert run_logs.distinct(run_logs.read_messages(duplicate_id_run.paths.errors_log)) == []
 
 
 def test_duplicate_id_run_imported_the_observations(
@@ -138,8 +139,9 @@ def test_unknown_target_becomes_other(
 ) -> None:
     """An unknown target name imports as ``OTHER`` instead of dropping the observation.
 
-    The flag has to reach the obs layer for this to happen at all; before it did, the
-    fallback existed and never ran.
+    The flag has to reach the obs layer for the fallback to run at all, which is what
+    this asserts: an ``OTHER`` row in the target-name mult table is the only evidence
+    anywhere that the observation was kept rather than dropped.
     """
     rows = golden_io.query(
         db_credentials,

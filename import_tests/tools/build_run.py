@@ -339,23 +339,33 @@ def install_subprocess_coverage() -> Path | None:
     later interpreter in that environment import coverage at startup.
 
     Returns:
-        The ``.pth`` file, or None if the run is not being measured or the interpreter
-        has no writable site directory, in which case the subprocesses go unmeasured
-        rather than the run failing.
+        The ``.pth`` file, or None when the run is not being measured.
+
+    Raises:
+        RuntimeError: If the run is being measured and no site directory would take the
+            file. Failing quietly instead would leave every pipeline subprocess
+            unmeasured, and the only symptom would be the coverage floor failing at a
+            third of its usual figure with nothing saying why.
     """
     if coverage.Coverage.current() is None:
         return None
+    attempted = []
     for directory in sys.path:
         candidate = Path(directory)
         if candidate.name != 'site-packages' or not candidate.is_dir():
             continue
+        attempted.append(str(candidate))
         pth_path = candidate / COVERAGE_PTH_NAME
         try:
             pth_path.write_text(COVERAGE_PTH_CONTENT, encoding='utf-8')
         except OSError:
             continue
         return pth_path
-    return None
+    raise RuntimeError(
+        'Coverage is measuring this session, but no site-packages directory on sys.path '
+        f'would take {COVERAGE_PTH_NAME}, so the pipeline subprocesses would go '
+        f'unmeasured. Tried: {attempted or "none"}'
+    )
 
 
 def run_environment(config_file: Path) -> dict[str, str]:

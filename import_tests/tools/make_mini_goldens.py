@@ -70,6 +70,13 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
 def check_run_is_clean(run: build_run.ImportRun, credentials: DatabaseCredentials) -> list[str]:
     """Return the reasons a run must not be blessed into the goldens.
 
+    This is the same standard `import_tests.test_run_logs` and
+    `import_tests.test_expected_products` hold a run to, checked before anything is
+    written rather than after: a broken run must never become the thing later runs are
+    compared against. A step that died before it logged, and a log file that was never
+    written at all, are both counted, because either would make the log checks below
+    read an empty file and find nothing wrong with it.
+
     Parameters:
         run: The completed run.
         credentials: How to reach the database server.
@@ -78,6 +85,16 @@ def check_run_is_clean(run: build_run.ImportRun, credentials: DatabaseCredential
         One line per problem, empty when the run is clean.
     """
     problems = []
+    for step in run.steps:
+        if step.returncode != 0:
+            problems.append(
+                f'{" ".join(step.arguments)} exited {step.returncode}: '
+                f'{step.stderr.strip()[-2000:]}'
+            )
+    for path in (run.paths.errors_log, run.paths.warnings_log):
+        if not path.is_file():
+            problems.append(f'{path} was never written, so the run logged nowhere')
+
     errors = run_logs.read_messages(run.paths.errors_log)
     if len(errors) > 0:
         problems.append(f'{len(errors)} error(s) logged, first: {errors[0]}')

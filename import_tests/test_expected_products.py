@@ -35,24 +35,54 @@ def product_sets(
     )
 
 
+def _exclusions() -> dict[str, str]:
+    """Return the excluded instrument classes and the reason each one gives.
+
+    Returns:
+        The class name mapped to its reason, for every non-comment, non-blank line.
+
+    Raises:
+        ValueError: If a line names a class without a reason. The exclusions file is a
+            whitelist like the other two, and an entry nobody justified is what a
+            whitelist exists to prevent.
+    """
+    excluded = {}
+    for number, line in enumerate(
+        fixture_layout.EXCLUSIONS_FILE.read_text(encoding='utf-8').splitlines(), start=1
+    ):
+        stripped = line.strip()
+        if len(stripped) == 0 or stripped.startswith('#'):
+            continue
+        name, tab, reason = line.partition('\t')
+        if len(tab) == 0 or len(reason.strip()) == 0:
+            raise ValueError(f'{fixture_layout.EXCLUSIONS_FILE.name} line {number} gives no reason')
+        excluded[name.strip()] = reason.strip()
+    return excluded
+
+
 def test_every_registered_type_is_covered(main_run: ImportRun) -> None:
     """Every bundle type OPUS imports is represented, or excluded with a reason.
 
     The completeness check is the registry minus the exclusions, so a newly registered
     type arrives here as a failure rather than as coverage nobody noticed was missing.
     """
-    excluded = {
-        line.split('\t')[0]
-        for line in fixture_layout.EXCLUSIONS_FILE.read_text(encoding='utf-8').splitlines()
-        if len(line.strip()) > 0
-    }
     entries = holdings_survey.registry_entries()
     covered = {
         entry.instrument_class_name
         for entry in entries
         if any(re.fullmatch(entry.pattern, bundle) for bundle in main_run.bundles)
     }
-    assert covered == {entry.instrument_class_name for entry in entries} - excluded
+    assert covered == {entry.instrument_class_name for entry in entries} - set(_exclusions())
+
+
+def test_every_exclusion_names_a_registered_type() -> None:
+    """No exclusion names a class the registry does not carry.
+
+    An exclusion for a class nobody registers any more excuses nothing, and would go on
+    excusing whatever type later took its name.
+    """
+    registered = {entry.instrument_class_name for entry in holdings_survey.registry_entries()}
+    assert sorted(set(_exclusions()) - registered) == []
 
 
 def test_fixture_records_products_for_every_bundle(main_run: ImportRun) -> None:

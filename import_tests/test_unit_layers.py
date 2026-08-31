@@ -140,14 +140,20 @@ def _import_context() -> ImportContext:
 
 
 @pytest.fixture
-def import_db(db_credentials: DatabaseCredentials) -> Iterator[ImportDBSuper]:
+def import_db(
+    db_credentials: DatabaseCredentials, created_schemas: list[str]
+) -> Iterator[ImportDBSuper]:
     """Open the pipeline's own database object against a schema of this test's own.
 
     Yields:
         The database object. Its schema is created on the way in and dropped on the way
-        out, so each test starts from nothing.
+        out, so each test starts from nothing. It is registered with the session's own
+        list as well, so that the one rule -- every schema a session creates is dropped
+        when the session ends -- covers this schema too if this fixture's teardown never
+        runs.
     """
     schema = fixture_layout.schema_name(os.getpid(), _SQL_CASE)
+    created_schemas.append(schema)
     golden_io.execute(db_credentials, None, f'DROP DATABASE IF EXISTS `{schema}`')
     db = importdb.get_db(
         'MySQL',

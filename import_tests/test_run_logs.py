@@ -35,6 +35,22 @@ def warning_classification(
     return run_logs.classify(warnings, whitelist)
 
 
+def test_the_run_wrote_both_logs(main_run: ImportRun) -> None:
+    """Both log files exist, so the checks below are reading a run rather than nothing.
+
+    `import_tests.tools.run_logs.read_messages` answers a missing file with no messages,
+    which is right for a step that logged nothing and wrong as the whole of a run: a
+    misdirected log directory would make every check in this module pass by describing
+    an empty file.
+    """
+    missing = [
+        str(path)
+        for path in (main_run.paths.errors_log, main_run.paths.warnings_log)
+        if not path.is_file()
+    ]
+    assert missing == []
+
+
 def test_no_pipeline_step_stopped(main_run: ImportRun) -> None:
     """No invocation of the pipeline exited non-zero.
 
