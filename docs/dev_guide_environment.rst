@@ -19,8 +19,11 @@ Prerequisites
   does. It is not needed to run the tests.
 * **wkhtmltopdf**, only if you want the help pages' PDF downloads to work. Without it
   every other page still renders.
-* **The PDS holdings**, only to run an import or the integration suites. Everything in
-  ``tests/`` runs without them.
+* **The PDS holdings**, only to run a real import against the archive, or the
+  integration suites that need the database such an import populates. Neither
+  holdings-free suite touches them: ``tests/`` needs nothing, and ``import_tests/`` runs
+  the import pipeline end to end against its own checked-in fixture, needing a MySQL
+  server but no holdings and no pre-populated database.
 
 A development checkout
 ----------------------
