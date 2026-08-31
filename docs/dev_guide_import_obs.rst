@@ -568,8 +568,8 @@ The methods fall into three groups:
   that succeeds but finds nothing gives an *empty* view set, which is falsy and whose
   ``thumbnail`` raises rather than returning nothing; and the two exception branches set
   None themselves. The guard is an ``isinstance`` test **and** a truthiness test for that
-  reason: the first rejects ``False`` and None while keeping a
-  ``PdsViewSet`` in the type, and the second rejects the empty one.
+  reason: the first rejects ``False`` and None while keeping a ``PdsViewSet`` in the type,
+  and the second rejects the empty one.
 * **Might override** -- ``target_name``, ``time1``, ``time2``,
   ``observation_duration``, the four right-ascension and declination columns, and
   ``ring_obs_id``. The four sky columns and ``ring_obs_id`` default to None;
