@@ -146,6 +146,11 @@ marker so that it cannot be defeated by a test that forgets one:
     The holdings-free suite. It needs no database and no PDS files, and it is what
     ``pytest`` alone runs, because ``testpaths`` in ``pyproject.toml`` names it.
 
+``import_tests/``
+    The end-to-end test of the import pipeline against the checked-in mini-holdings
+    fixture. It needs a MySQL server but no PDS files, and it runs only when this
+    directory is named explicitly. See :ref:`dev_guide_import_fixture`.
+
 ``integration_tests/``
     The suites that need a database an import has populated and, for some of them,
     the holdings behind it. They run only when this directory is named explicitly.
@@ -157,7 +162,16 @@ marker so that it cannot be defeated by a test that forgets one:
     pytest tests/opus_support/test_units.py  # one file
     pytest -k parse_form_type                # one test by name
     pytest --cov --cov-fail-under=0          # with coverage; see the note below
+    pytest import_tests                      # the import pipeline, against MySQL
     pytest integration_tests                 # the live-database suites, serially
+
+``import_tests`` reads its database credentials from ``OPUS_TEST_DB_HOST``,
+``OPUS_TEST_DB_USER`` and ``OPUS_TEST_DB_PASSWORD``, defaulting to ``root`` with no
+password on ``127.0.0.1``. It runs serially: the run is one long import followed by fast
+assertions, so ``-n`` buys nothing, and a session-scoped fixture under xdist would run
+the import once per worker into the same schema. Each run creates schemas named
+``opus_import_test_<pid>`` and drops every one of them when the session ends, pass or
+fail.
 
 ``--dist loadscope`` keeps each test module on one worker, which matters for the
 modules that mock time or share a fixture. The live-database suites are deliberately
@@ -169,13 +183,12 @@ the invocation above passes ``--cov-fail-under=0``:
 
 * ``[tool.coverage]`` in ``pyproject.toml`` measures :mod:`opus_support`,
   :mod:`opus_config`, :mod:`opus_import` and :mod:`opus_log_analyzer` -- the Django
-  application is excluded. Its ``fail_under = 90`` is a **target, not a gate that
-  anything runs today**: nothing measures coverage against *this* configuration --
-  neither workflow does, and the automated-test scripts select the other configuration
-  below -- and the holdings-free suite reaches well under it, so a bare ``pytest --cov``
-  exits non-zero on a perfectly healthy tree. Pass ``--cov-fail-under=0`` to see the
-  report without the target, or raise the number the suite reaches rather than the
-  target.
+  application is excluded. **Exactly one command measures it and exactly one number
+  gates it**: the ``Import Tests`` job runs ``pytest import_tests --cov``, and
+  ``fail_under`` is the floor that run has to stay at or above. Any other suite measured
+  against this configuration reaches far less of the four packages, which is why the
+  invocation above passes ``--cov-fail-under=0`` and why ``scripts/run-all-checks.sh``
+  runs no coverage at all.
 * ``integration_tests/.coveragerc`` measures ``src/opus_app/apps``,
   ``integration_tests/test_api`` and ``src/opus_support``, and **is** gated, at 100%.
   ``scripts/automated_tests/opus_run_unittests_coverage.sh`` measures it and
@@ -295,10 +308,18 @@ Both trigger the same way: on a push or a pull request against the branches thei
 ``on:`` block names, on a daily schedule, and on demand through
 ``workflow_dispatch``. Read the branch list out of the workflow rather than from here.
 
-``run-tests.yml`` runs on GitHub-hosted runners and has four jobs: **Run Lint** (ruff,
-bandit, vulture, mypy, PyMarkdown), **Unit Tests** on Python 3.12 and 3.13, **Docs**
-(the same ``-W -n`` Sphinx build as above), and **Package**. None of them needs
-holdings or a database.
+``run-tests.yml`` runs on GitHub-hosted runners and has five jobs: **Run Lint** (ruff,
+bandit, vulture, mypy, PyMarkdown), **Unit Tests** on Python 3.12 and 3.13, **Import
+Tests**, **Docs** (the same ``-W -n`` Sphinx build as above), and **Package**. None of
+them needs holdings; **Import Tests** is the only one that needs a database, and it
+brings its own as a MySQL service container.
+
+**Import Tests** runs the whole import pipeline against the checked-in mini-holdings
+fixture -- see :ref:`dev_guide_import_fixture` -- and is the only job that measures unit
+coverage. It runs the suite twice on purpose: once for the assertions and the coverage
+report, and once for the module that reads that report to prove every ``obs`` function
+was executed rather than merely imported, which cannot see the report until the session
+that writes it has ended.
 
 **Package** is the release path minus the upload: it builds the source distribution and
 the wheel, validates them with ``twine check --strict`` and ``pyroma``, then installs
@@ -315,11 +336,24 @@ the golden-response API suite, the live-database Django suites, and
 coverage gate measures what all of them reach together. It is what proves that a
 refactor did not change what OPUS answers.
 
-The lint, unit and integration jobs all install the same thing a developer does,
+The lint, unit, import and integration jobs all install the same thing a developer does,
 ``pip install -e ".[dev]"`` -- **Docs** installs ``".[docs]"`` and **Package**
 deliberately installs the built wheel instead of the project. No job installs from a
 lock file, so the integration job logs ``pip freeze``, which is where to look when a
 check that passed yesterday fails today.
+
+Every one of them then installs ``rms-pdsfile`` from the rewrite branch on top, and so
+does a development checkout::
+
+    pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
+
+This is interim, until ``pdsfile`` 3 is released, and it is deliberately not a
+``[project]`` dependency: the published wheel declares the PyPI package. It is needed
+everywhere because ``opus_import`` enables ``Pds4File.use_shelves_only()`` and the
+released ``rms-pdsfile`` has no filesystem fallback behind that flag -- under it,
+``from_path`` raises on the first PDS4 existence check. Before the first release
+carrying that line, the ``rms-pdsfile`` floor in ``[project]`` dependencies has to move
+to the rewrite's release.
 
 Third-party actions are referenced by major tag -- ``actions/checkout@v6`` and the
 rest -- which is what ``.cursor/rules/environment.mdc`` asks for. The one exception
