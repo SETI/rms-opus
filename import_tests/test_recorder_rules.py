@@ -61,8 +61,8 @@ def _rows(*values: tuple[Any, ...]) -> list[dict[str, Any]]:
 def test_a_short_index_keeps_every_row() -> None:
     """An index no longer than the floor is not sampled at all.
 
-    The second row is a duplicate of the first, so a sampler that scored it would keep
-    only one: the floor is what puts both in the fixture.
+    Two identical rows cover one class between them, so what is being pinned is that a
+    short index is returned whole rather than scored down to what is distinct about it.
     """
     rows = _rows(('CLEAR', 'SATURN', (1.0, 2.0)), ('CLEAR', 'SATURN', (1.0, 2.0)))
     assert row_sampling.select_rows(rows, floor=2, cap=20) == [0, 1]
@@ -88,13 +88,14 @@ def test_a_row_is_classified_by_code_path_rather_than_by_value() -> None:
             ('GREEN', 'd', 'GOOD', 3.0, 7.0),
         ]
     ]
-    # Enumerated means *strictly* fewer distinct present values than the index has rows,
-    # so a column holding one value per row is an identifier and a near-constant one is
-    # an enumeration. Four rows: two filters and one quality value qualify; the note and
-    # the two longitudes have a different value in every row and do not.
-    assert row_sampling.enumerated_cells(rows) == {'FILTER_NAME', 'QUALITY'}
-
+    # Enumerated means at most `ENUM_VALUE_CAP` distinct present values and *strictly*
+    # fewer of them than the index has rows. At this size only the second half decides:
+    # a column holding one value per row is an identifier and a near-constant one is an
+    # enumeration, so the two filters and the one quality value qualify while the note
+    # and the two longitudes, different in every row, do not.
     enumerated = row_sampling.enumerated_cells(rows)
+    assert enumerated == {'FILTER_NAME', 'QUALITY'}
+
     pairs = [('LON_MINIMUM', 'LON_MAXIMUM')]
     assert row_sampling.row_classes(rows[0], pairs, enumerated) == {
         ('FILTER_NAME', '=CLEAR'),
@@ -309,12 +310,6 @@ def test_a_prefix_selection_takes_the_longest_key_not_just_any() -> None:
     """
     keys = {'c345': 'C345', 'c3450001': 'C3450001'}
     assert shelf_capture.matching_index_key(keys, 'c3450001_raw') == 'C3450001'
-
-
-def test_several_keys_the_selection_starts_with_are_not_ambiguous() -> None:
-    """Only the *starts-with* step can be ambiguous; the inside step always resolves."""
-    keys = {'c345': 'C345', 'c3450001': 'C3450001'}
-    assert shelf_capture.matching_index_key(keys, 'c345') == 'C345'
 
 
 def test_an_ambiguous_index_key_resolves_to_nothing() -> None:

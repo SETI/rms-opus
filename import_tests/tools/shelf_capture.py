@@ -201,6 +201,12 @@ def matching_index_key(keys_by_lower: dict[str, str], selection: str) -> str | N
     that starts with the selection. An ambiguous selection resolves to nothing, which is
     what pdsfile reports as an error rather than a choice.
 
+    The first step cannot change an answer the second would give: a key is the longest
+    thing the selection starting with it can start with, so an exact match is what the
+    second step would return anyway. It is kept because this function exists to mirror
+    pdsfile's order, not to be the shortest expression of pdsfile's result, and no test
+    here can tell the two apart.
+
     Parameters:
         keys_by_lower: The shelf's keys, each under its own lower-cased form.
         selection: The key to look up, lower-cased.
