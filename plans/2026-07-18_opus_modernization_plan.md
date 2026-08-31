@@ -7313,10 +7313,13 @@ body; never rewrite or delete earlier notes.*
   - **The fixture and the goldens, measured.** 24 volumes -- one per `BUNDLE_INFO` entry
     with an instrument class, minus the one entry with no bundle in the holdings
     (`cassini_iss_fring_mosaics_rsfrench2025`, recorded in `exclusions.tsv`). 371 files,
-    **4,964,026 bytes raw / 676,695 packed** (`tar | gzip -9`), 7,146 expected products,
-    193 shelf manifests; 144 golden tables, 5,921,220 bytes. The 2026-08-26 estimate of
-    ~475 KB raw was for one PDS3 volume plus one PDS4 bundle at N=20; labels dominate and
-    there are now 24 of them. The whole PR is **564 changed files, of which 49 are code**
+    **4,964,026 bytes raw**, 7,146 expected products, 193 shelf manifests; 144 golden
+    tables, 5,921,220 bytes. Packed it is a little over 0.6 MB, stated loosely on purpose:
+    a `tar | gzip` byte count moves with tar's directory ordering (664 KB sorted against
+    677 KB unsorted here), so it is not a figure to regress against. The 2026-08-26
+    estimate of ~475 KB raw was for one PDS3 volume plus one PDS4 bundle at N=20; labels
+    dominate and there are now 24 of them. The whole PR is **564 changed files, of which
+    49 are not recorded fixture data**
     -- the rest is recorded data -- so it exceeds CodeRabbit's 100-file cap and rev 7.2's
     wide-PR exception applies, exactly as that note predicted.
   - **Two things the import does that are not deterministic, and what the suite does about

@@ -60,10 +60,10 @@ Expected products
 
 The registry's own coverage
     ``exclusions.tsv`` names each registered bundle type that has no bundle in the
-    holdings at all. The fixture carries one bundle per entry of
-    the bundle registry in :mod:`opus_import.config_bundle_info` that OPUS imports, minus
-    those,
-    so a newly registered type fails the recorder rather than quietly going untested.
+    holdings at all, with the reason beside it. The fixture carries one bundle per entry
+    of the bundle registry in :mod:`opus_import.config_bundle_info` that OPUS imports,
+    minus those, so a newly registered type fails the recorder rather than quietly going
+    untested, and an exclusion for a type nobody registers any more fails too.
 
 Which volume represents each type is a rule rather than a list: the entry's own pattern
 is matched against the holdings, the volumes ``scripts/import/import_for_tests.sh``

@@ -60,12 +60,16 @@ def read_report(report_path: Path) -> ExecutionReport:
     """Read a coverage JSON report and split the obs layer's functions in two.
 
     A function whose region holds no measurable statements is described by neither set.
-    That is a real category rather than a technicality: ``[tool.coverage.report]``
-    excludes ``raise NotImplementedError``, so an abstract method whose whole body is
-    that line has nothing coverage can record, and its region reads exactly like a
-    method nobody called even when every subclass call goes through it. "Nothing to
-    prove" and "never ran" are different answers, and conflating them would fill the
-    whitelist with entries that could never come off it.
+    That is a real category rather than a technicality: every line of such a body is one
+    ``[tool.coverage.report]``'s ``exclude_lines`` removes, so there is nothing coverage
+    can record and the region reads exactly like a method nobody called -- even when
+    every call goes through it. In this tree that is an abstract method whose whole body
+    is ``raise NotImplementedError``, and a stub inside an ``if TYPE_CHECKING:`` block;
+    the rule is written against the exclusion rather than against those two shapes, so a
+    body emptied by ``pragma: no cover`` or by the ``def __repr__`` entry lands in the
+    same category without anyone having to notice. "Nothing to prove" and "never ran" are
+    different answers, and conflating them would fill the whitelist with entries that
+    could never come off it.
 
     Parameters:
         report_path: The report to read.

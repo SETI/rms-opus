@@ -9,10 +9,11 @@
 # The file keys are relative to the repository root, because that is where the suite is
 # run from. A run started somewhere else produces keys that match none of these.
 #
-# A function with nothing to measure is not on this list and cannot be: an abstract
-# method whose whole body is `raise NotImplementedError` has no statements coverage
-# records, because [tool.coverage.report] excludes that line, so the check has no
-# question to ask about it and skips it.
+# A function with nothing to measure is not on this list and cannot be. When every line
+# of a body is one [tool.coverage.report]'s exclude_lines removes, coverage records
+# nothing for it and the check has no question to ask. In this tree that is an abstract
+# method whose whole body is `raise NotImplementedError`, and a stub inside an
+# `if TYPE_CHECKING:` block.
 #
 # Entries are grouped, and each group carries the comment that justifies it. An entry
 # naming a function that did execute, or one that no longer exists, fails the suite, so
