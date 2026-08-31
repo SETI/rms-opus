@@ -3,6 +3,14 @@
 Each of these is its own run into its own schema with its own log directory -- pdslogger
 appends, so a shared log directory would put a deliberately broken run's errors in front
 of the clean run's assertions -- and each is exempt from the main run's clean-log rules.
+
+A negative run stops after its imports rather than following the main run's full
+sequence. Everything asserted here is in place by then: ``--do-all-import`` copies to the
+permanent tables, so ``obs_general`` and the target-name mult table are written, and the
+rest of what these tests read is the run's own step statuses and error log. The auxiliary
+tables, the dictionary, the Django migration and the validation produce nothing any
+assertion below looks at, and running them three times a suite bought only wall clock.
+The main run keeps the production order, which is where that order is under test.
 """
 
 from __future__ import annotations

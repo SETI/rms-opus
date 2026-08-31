@@ -124,6 +124,7 @@ def duplicate_id_run(
         db_credentials,
         bundle_groups=[[bundle, bundle]],
         extra_import_args=['--import-check-duplicate-id'],
+        finalize=False,
     )
 
 
@@ -152,4 +153,5 @@ def ignore_errors_run(
         overlay=overlay,
         bundle_groups=[[recipe.bundle]],
         extra_import_args=['--import-ignore-errors'],
+        finalize=False,
     )

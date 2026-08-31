@@ -7313,8 +7313,9 @@ body; never rewrite or delete earlier notes.*
   - **The fixture and the goldens, measured.** 24 volumes -- one per `BUNDLE_INFO` entry
     with an instrument class, minus the one entry with no bundle in the holdings
     (`cassini_iss_fring_mosaics_rsfrench2025`, recorded in `exclusions.tsv`). 371 files,
-    **4,964,026 bytes raw**, 7,146 expected products, 193 shelf manifests; 144 golden
-    tables, 5,921,220 bytes. Packed it is a little over 0.6 MB, stated loosely on purpose:
+    **4,964,026 bytes raw**, 7,146 expected products, 193 shelf manifests; **143 golden
+    tables, 4,180,668 bytes** after the 2026-08-31 size rulings below (144 tables /
+    5,921,220 bytes before them). Packed it is a little over 0.6 MB, stated loosely on purpose:
     a `tar | gzip` byte count moves with tar's directory ordering (664 KB sorted against
     677 KB unsorted here), so it is not a figure to regress against. The 2026-08-26
     estimate of ~475 KB raw was for one PDS3 volume plus one PDS4 bundle at N=20; labels
@@ -7432,6 +7433,40 @@ body; never rewrite or delete earlier notes.*
     minutes, on a run an operator does by hand. It reports both halves the specification
     asks for: columns the sibling has and the representative does not, and value classes a
     shared column shows that the representative's rows never take.
+  - **Four rfrench rulings of 2026-08-31, three of which supersede the PR-19 spec.** The
+    spec (`plans/2026-08-30_pr19_mini_holdings_fixture.md`) says goldens cover "every table
+    the import writes", that the table exclusion "is exactly the tables `manage.py migrate`
+    creates -- **never by a list here**", and that no column beyond the timestamps is
+    normalized. All three are now false by ruling, and a reader of those clauses would
+    otherwise be misled. (1) The `definitions` golden is dropped: the table is a pure
+    function of packaged inputs. It is a *reasoned* exclusion -- `golden_io.EXCLUDED_TABLES`
+    carries the reason, and three tests hold it to existing, holding rows, and not also
+    being goldened. (2) `obs_files.url` is dropped as derivable, with the derivation
+    asserted against the database instead of stored, so the saving is bytes and not
+    coverage. (3) `pdsdd.full` is removed from the pipeline. (4) Coverage is off by default
+    locally; the executed-functions tests skip without a report but still **fail** under
+    `GITHUB_ACTIONS`, so dropping `--cov` from the workflow cannot delete the gate.
+  - **Two production behavior changes ride in PR-19**, neither of them test-only. (a) The
+    `sorted()` fix above changes the order rows are inserted, so a fresh import assigns
+    different ids to any bundle with several primary indexes. (b) **`pdsdd.full` is deleted
+    and the `definitions` table loses its 2,195 PSDD rows**, 78% of the 2,814 it held. They
+    were unreachable: `PSDD` appears in none of the 22 `pi_dict_context` values the packaged
+    schemas carry, the application's only literal context filter is `OPUS_PRODUCT_TYPE`, and
+    the three `PSDD` strings in the schemas are prose comments. Tooltip content comes from
+    the schemas. Measured motivation: `--import-dictionary` took 31s, 99% of it in the
+    pdsdd parser (cProfile: 130.5 of 131.7 instrumented seconds, 749M calls), paid three
+    times per suite run, for rows nothing could read. `contexts.csv` keeps its `PSDD` row --
+    it is the **parent** of all 22 other contexts, so removing it would orphan them.
+    `util/dump_pds_definitions.py` stays: it parses a user-supplied PDS *index label* to
+    help author table schemas and never touched `pdsdd.full`.
+  - **The suite is ~2 minutes by default.** A bare `pytest import_tests` is 223 passed, 3
+    skipped in 1:36; with coverage it is 222 passed in 4:01. Getting there: the pdsdd
+    removal took the main run from 106s to 69s, and the negative cases now stop after their
+    imports rather than running the full production sequence (4.9s and 3.9s, from ~39s
+    each) -- their assertions read only `obs_general`, the target-name mult table, the step
+    statuses and the error log, all of which `--do-all-import` has already written. The main
+    run keeps the full sequence, which is where that order is under test. This narrows the
+    spec's §5 "each negative case is its own run" to a reduced step list.
   - **Recorded as a candidate, not fixed here:** `importdb/mysql.py`'s `create_table`
     updates its own table-name cache *inside* its `if self.logger:` branch, so a connection
     opened without a logger answers `table_exists` from a cache that never learned about the

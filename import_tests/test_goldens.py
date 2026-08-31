@@ -1,17 +1,23 @@
 """Every table the import writes, compared row by row against a recorded run.
 
 From an empty database the import is deterministic: ids are handed out in table order
-from the highest already present. So the goldens are the whole of the expected output,
-and any difference outside a timestamp column is a change in behavior rather than noise.
+from the highest already present. So a difference between a golden and a run is a change
+in behavior rather than noise.
 
-Which tables are compared is a rule, not a list: everything the schema holds except the
-tables ``manage.py migrate`` created. A table the import newly writes shows up here as a
-golden that does not exist, and one it stops writing as a golden nothing produced.
+The goldens are not quite the whole of the expected output, and both gaps are deliberate
+and guarded here. A few tables are excused by name with a written reason, and a column
+that another column rebuilds is dropped rather than stored twice -- with the rebuilding
+asserted against the database, so dropping it costs bytes and not coverage.
 
-The re-import assertions at the end are the exception to "the goldens are the whole of
-the expected output", and they say so where they make it: importing a bundle a second
-time renumbers that bundle's rows, because ids are handed out from the highest already
-present and the old rows are deleted only afterwards.
+Which tables are compared is otherwise a rule, not a list: everything the schema holds
+except the tables ``manage.py migrate`` created. A table the import newly writes shows up
+here as a golden that does not exist, and one it stops writing as a golden nothing
+produced.
+
+The re-import assertions at the end carry a normalization of their own, and say so where
+they make it: importing a bundle a second time renumbers that bundle's rows, because ids
+are handed out from the highest already present and the old rows are deleted only
+afterwards.
 """
 
 from __future__ import annotations
@@ -150,12 +156,28 @@ def test_every_excused_table_is_one_the_run_writes(
     An entry that excuses nothing is the same defect as a whitelist line that admits
     nothing: it is a claim about the run that has stopped being true, and it would go on
     excusing whatever later took that name.
+
+    Existing is not enough, so the rows are counted too. An excused table that the step
+    creates and then fills with nothing looks identical to a healthy one from the
+    schema's point of view, and no golden is watching it.
     """
     written = set(golden_io.list_tables(db_credentials, main_run.schema))
-    assert sorted(set(golden_io.EXCLUDED_TABLES) - written) == []
+    missing = sorted(set(golden_io.EXCLUDED_TABLES) - written)
+    assert missing == []
+    empty = sorted(
+        table
+        for table in golden_io.EXCLUDED_TABLES
+        if int(
+            golden_io.query(db_credentials, main_run.schema, f'SELECT COUNT(*) FROM `{table}`')[0][
+                0
+            ]
+        )
+        == 0
+    )
+    assert empty == []
 
 
-def test_no_excused_table_is_also_goldened(main_run: ImportRun) -> None:
+def test_no_excused_table_is_also_goldened() -> None:
     """A table cannot be both excused from comparison and compared.
 
     Without this, deleting an entry's reason while leaving its golden in place -- or the
@@ -170,6 +192,68 @@ def test_every_excused_table_gives_a_reason() -> None:
         table for table, reason in golden_io.EXCLUDED_TABLES.items() if len(reason.strip()) == 0
     )
     assert unexplained == []
+
+
+#: How to rebuild each column the goldens drop, from columns they keep.
+#:
+#: A column may be dropped only if it can be re-derived, and this is where the derivation
+#: is written down and run. Without it `golden_io.DERIVED_COLUMNS` would be a way to
+#: delete coverage silently: naming a genuinely independent column there and regenerating
+#: would leave the suite green with the values gone. The check costs no golden bytes,
+#: which is the whole point of dropping the column in the first place.
+DERIVATIONS = {
+    ('obs_files', 'url'): (
+        'CONCAT(CASE pds_version WHEN 3 THEN %s WHEN 4 THEN %s END, "/", logical_path)',
+        [fixture_layout.PDS3_ROOT_NAME, fixture_layout.PDS4_ROOT_NAME],
+    ),
+}
+
+
+def test_every_dropped_column_has_a_derivation() -> None:
+    """No column is dropped without a rule for rebuilding it, and none is left over."""
+    dropped = {
+        (table, column)
+        for table, columns in golden_io.DERIVED_COLUMNS.items()
+        for column in columns
+    }
+    assert sorted(dropped) == sorted(DERIVATIONS)
+
+
+@pytest.mark.parametrize(('table', 'column'), sorted(DERIVATIONS))
+def test_a_dropped_column_still_holds_what_it_is_derived_from(
+    table: str, column: str, main_run: ImportRun, db_credentials: DatabaseCredentials
+) -> None:
+    """Every row's dropped column is exactly what the golden's own columns rebuild.
+
+    ``obs_files.url`` is the case this exists for, and it is not merely pdsfile's answer
+    repeated: pdsfile serves a file from an HTML root that *begins* with a slash, and
+    ``do_import_index`` strips it. That strip is this repository's behavior, and dropping
+    the column from the golden left nothing observing it -- the expected-products
+    comparison never reads ``url``, it re-derives the same path itself and compares that
+    against the recorder. So the derivation is asserted here instead, against the
+    database, where it costs nothing to store.
+    """
+    expression, parameters = DERIVATIONS[table, column]
+    rows = golden_io.query(
+        db_credentials,
+        main_run.schema,
+        f'SELECT `{column}`, {expression} FROM `{table}` WHERE `{column}` <> {expression} LIMIT 5',
+        [*parameters, *parameters],
+    )
+    assert rows == []
+
+
+@pytest.mark.parametrize(('table', 'column'), sorted(DERIVATIONS))
+def test_the_derivation_check_is_looking_at_rows(
+    table: str, column: str, main_run: ImportRun, db_credentials: DatabaseCredentials
+) -> None:
+    """The table the derivation is checked against is not empty.
+
+    A comparison over no rows passes, and would go on passing if the import stopped
+    writing the table entirely.
+    """
+    rows = golden_io.query(db_credentials, main_run.schema, f'SELECT COUNT(*) FROM `{table}`')
+    assert int(rows[0][0]) > 0
 
 
 @pytest.mark.parametrize('table', GOLDENED_TABLES)

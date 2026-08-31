@@ -129,10 +129,11 @@ def write_goldens(
 ) -> list[str]:
     """Serialize every table the run left behind, replacing the goldens directory.
 
-    Which tables are covered is a rule rather than a list: everything the schema holds
-    except the tables ``manage.py migrate`` created. A table the import newly writes then
-    appears as a new golden rather than escaping comparison, and one it stops writing
-    leaves an orphaned file behind for review.
+    Which tables are covered comes from `golden_io.tables_to_golden`, so this and the
+    comparison cannot disagree about it: everything the schema holds, minus the tables
+    ``manage.py migrate`` created, minus the few excused by name with a written reason. A
+    table the import newly writes then appears as a new golden rather than escaping
+    comparison, and one it stops writing leaves an orphaned file behind for review.
 
     Parameters:
         run: The completed run.

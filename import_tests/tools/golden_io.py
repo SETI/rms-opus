@@ -6,15 +6,23 @@ by convention. It also holds the small amount of raw database access the suite n
 over the same MySQLdb driver the import itself uses.
 
 From an empty database the import is deterministic: row ids are handed out in table
-order from the highest id already present. So a golden normalizes only two things, each
-named and justified where it is applied: the columns MySQL fills in with the wall clock
-(`TIMESTAMP_DATA_TYPE`) are dropped, and one JSON list whose order pdsfile documents as
-unstable (`_UNORDERED_JSON_COLUMNS`) is sorted. Any other column that differs between two
-clean runs is a defect rather than a normalization candidate.
+order from the highest id already present. So a golden drops or reorders only what is
+named here, each justified where it is applied.
 
-`without_surrogate_ids` is a third normalization, and it is deliberately not part of
-writing or reading a golden: only the re-import comparison uses it, because only a
-re-import renumbers rows.
+Two of them are about values that are not stable: the columns MySQL fills in with the
+wall clock (`TIMESTAMP_DATA_TYPE`) are dropped, and one JSON list whose order pdsfile
+documents as unstable (`_UNORDERED_JSON_COLUMNS`) is sorted. Any *other* column that
+differs between two clean runs is a defect rather than a normalization candidate.
+
+The third is about a value that is perfectly stable and simply redundant:
+`DERIVED_COLUMNS` drops a column another column in the same row rebuilds. That is a size
+decision rather than a stability one, and it is only safe because the rebuilding is
+asserted -- `import_tests.test_goldens` re-derives each dropped column against the
+database, so what is saved is bytes and not coverage.
+
+`without_surrogate_ids` is a fourth, and it is deliberately not part of writing or
+reading a golden: only the re-import comparison uses it, because only a re-import
+renumbers rows.
 """
 
 from __future__ import annotations
@@ -63,37 +71,46 @@ _UNORDERED_JSON_SORT_KEY = 'url'
 #:
 #: This is not the same kind of exclusion as the tables ``manage.py migrate`` creates,
 #: which the run measures for itself. These are judgement calls, so they are written down
-#: with their reasons and `import_tests.test_goldens` holds each one to two rules: the
-#: table has to exist in the run, so an entry cannot outlive the table it excuses, and it
-#: has to be absent from the goldens directory, so an excused table cannot also be
-#: compared. A table missing from the goldens for any other reason still fails.
+#: with their reasons and `import_tests.test_goldens` holds each one to three rules: the
+#: table has to exist in the run *and hold rows*, so an entry cannot outlive the table it
+#: excuses nor cover for one that silently emptied; it has to be absent from the goldens
+#: directory, so an excused table cannot also be compared; and it has to carry a reason. A
+#: table missing from the goldens for any other reason still fails.
 EXCLUDED_TABLES = {
     'definitions': (
-        'a pure function of the frozen packaged pdsdd.full: the dictionary step reads '
-        'that file and writes one row per term, so the table restates an input this '
-        'repository ships and nothing about the fixture or the pipeline can move it. '
-        'The contexts table, which the same step writes, is small and stays goldened. '
-        'Ruled by rfrench 2026-08-31.'
+        'a pure function of packaged inputs: the dictionary step reads the table schemas '
+        'this repository ships and writes one row per definition they carry, so the table '
+        'restates an input and nothing about the fixture, the holdings or the import '
+        'pipeline can move it. The contexts table, which the same step writes, is small '
+        'and stays goldened. Ruled by rfrench 2026-08-31.'
     ),
 }
 
-#: Columns dropped from a golden because the same value is derivable from another column
-#: in the same row, and something else already asserts the column it derives from.
+#: Columns a golden drops because another column in the same row rebuilds them.
 #:
-#: ``obs_files.url`` is ``<holdings root>/<logical_path>`` -- pdsfile's ``html_path``
-#: contract, "``html_root_`` followed by the logical path", with the root chosen by
-#: ``pds_version``. It reproduces on every row of the recorded fixture, so a golden
-#: carrying both columns spends a third of this table's bytes asserting string
-#: concatenation. What the paths themselves are is asserted in both directions by the
-#: expected-products comparison, which is the check that can actually fail on them; what
-#: this golden is for in this table is the values the shelves feed -- checksum, size,
-#: width, height -- and their linkage to an OPUS id. Ruled by rfrench 2026-08-31.
+#: Dropping one is only safe because the rebuilding is asserted: ``DERIVATIONS`` in
+#: `import_tests.test_goldens` re-derives each of these against the database, so a column
+#: named here costs bytes and not coverage. Adding an entry without a derivation fails.
 #:
-#: Nothing else in ``obs_files`` is derivable from the path, and that was measured rather
-#: than assumed: 62 to 83 logical paths carry two or more different values of
-#: ``sort_order``, ``short_name``, ``full_name`` and ``product_order``, because one file
-#: serves several observations under different product classifications. Those columns
-#: stay.
+#: ``obs_files.url`` is the whole list. It is ``holdings/`` or ``pds4-holdings/`` followed
+#: by the logical path, on all 10,199 rows of the recorded fixture, and it is worth being
+#: precise about whose behavior that is. pdsfile serves a file from ``html_root_`` + the
+#: logical path, but ``html_root_`` *begins* with a slash, and OPUS strips it --
+#: ``do_import_index`` stores ``file.url.strip('/')``. So the column is first-party
+#: behavior over a third-party value, which is why the derivation is asserted rather than
+#: assumed. The root also coincides with the regime only because the fixture preloads one
+#: holdings directory per regime; pdsfile numbers them ``holdings1``, ``holdings2`` when
+#: more than one is preloaded.
+#:
+#: Carrying it cost about a quarter of this table's golden -- 819,984 of 3,326,180 bytes
+#: -- to store a concatenation. Ruled by rfrench 2026-08-31.
+#:
+#: Nothing else in ``obs_files`` is a mechanical transform of the path. The four columns
+#: whose names invite the suspicion were measured rather than assumed: 62 to 83 logical
+#: paths carry two or more different values of ``sort_order``, ``short_name``,
+#: ``full_name`` and ``product_order``, because one file serves several observations
+#: under different product classifications. The rest are shelf-fed values, which have one
+#: value per path in this fixture but are not computed from it.
 DERIVED_COLUMNS = {'obs_files': frozenset({'url'})}
 
 #: The columns the server numbers rather than the import computing: ``id`` is the

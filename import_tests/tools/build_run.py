@@ -467,6 +467,7 @@ def perform_run(
     overlay: Path | None = None,
     bundle_groups: Sequence[Sequence[str]] | None = None,
     extra_import_args: Iterable[str] = (),
+    finalize: bool = True,
 ) -> ImportRun:
     """Build a tree and run the whole pipeline sequence against it.
 
@@ -486,6 +487,14 @@ def perform_run(
             is what puts them in the same import tables, which is where a duplicate OPUS
             id between them can be seen at all.
         extra_import_args: Arguments added to each ``--do-all-import`` invocation.
+        finalize: Whether to run the four steps after the imports -- the auxiliary
+            tables, the dictionary, the Django migration and the validation. True is the
+            production sequence and what the main run uses. False stops after the
+            imports, which is all a negative case needs: ``--do-all-import`` already
+            copies to the permanent tables, so ``obs_general`` and the mult tables the
+            negative assertions read exist without any of the four, and none of those
+            assertions reads a table only a later step creates. A run that stops early
+            leaves `ImportRun.django_tables` empty, so it can never be goldened.
 
     Returns:
         The completed run.
@@ -506,6 +515,8 @@ def perform_run(
                 paths.config_file, [*IMPORT_ARGS, *extra_import_args, ','.join(group)]
             )
         )
+    if not finalize:
+        return run
     run.steps.append(run_pipeline_step(paths.config_file, AUX_ARGS))
     run.steps.append(run_pipeline_step(paths.config_file, DICTIONARY_ARGS))
     run.django_tables = _migrate_and_diff(paths, schema, credentials, run)

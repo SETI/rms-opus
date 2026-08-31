@@ -10,17 +10,26 @@ tested without them: a few megabytes of real, subsetted archive metadata checked
 temporary holdings tree and runs the real ``opus_import`` command line against.
 
 The suite is not part of a bare ``pytest`` run. It needs a MySQL server, and it is asked
-for by name -- in two invocations, because one of its checks reads the coverage report
-the other one writes, and that report does not exist until the session producing it has
-ended::
+for by name::
+
+    pytest import_tests
+
+That is the everyday form and the one to use: about two minutes, no coverage. The three
+executed-functions tests **skip** in it, saying what to run instead, because the report
+they read is not there.
+
+Coverage is the other form, and it roughly doubles the runtime. It is two invocations,
+because the executed-functions check reads the report the rest of the suite writes and
+that report does not exist until the session producing it has ended::
 
     pytest import_tests --ignore=import_tests/test_obs_execution.py \
         --cov --cov-report=json:coverage.json
     pytest import_tests/test_obs_execution.py
 
-Running ``pytest import_tests`` on its own is fine while working on anything but that
-check: the executed-functions module then fails, naming the two commands above, rather
-than passing on a report it cannot see.
+Use it when working on the unexecuted-method whitelist, when you want the
+executed-functions report, or to reproduce what CI gates on. Under CI the skip does not
+apply: with ``GITHUB_ACTIONS`` set, a missing report is a failure rather than a skip, so
+dropping ``--cov`` from the workflow cannot quietly delete the gate.
 
 What the fixture is
 -------------------
@@ -105,29 +114,37 @@ The goldens
     up as a golden that does not exist rather than escaping comparison.
 
     One table is excused today: ``definitions``, which the dictionary step fills from the
-    packaged ``pdsdd.full``. That file is frozen and ships in this repository, so the
-    table restates an input rather than reporting anything the fixture or the pipeline can
-    move, and a megabyte of golden buys nothing. ``contexts``, which the same step writes,
-    is small and stays. An excused table is held to three rules so the exclusion cannot rot
-    into a silent gap: it has to exist in the run, so an entry cannot outlive the table it
-    excuses; it must not also have a golden; and it has to carry a written reason. Both the
-    generator and the comparison read the list from one place, so they cannot disagree
-    about what is covered.
+    ``definition`` entries in the packaged table schemas. Those ship in this repository, so
+    the table restates an input rather than reporting anything the fixture, the holdings or
+    the pipeline can move. ``contexts``, which the same step writes, is small and stays. An
+    excused table is held to three rules so the exclusion cannot rot into a silent gap: it
+    has to exist in the run *and hold rows*, so an entry can neither outlive the table it
+    excuses nor cover for one that quietly emptied; it must not also have a golden; and it
+    has to carry a written reason. Both the generator and the comparison read the list from
+    one place, so they cannot disagree about what is covered.
 
-    One column is dropped as well as one table. ``obs_files.url`` is
-    ``<holdings root>/<logical path>`` and nothing else -- pdsfile serves a file from its
-    HTML root followed by its logical path, and that reproduces on every row of the
-    fixture -- so a golden carrying both columns spends a third of the widest table's
-    bytes asserting string concatenation. What those paths are is asserted in both
-    directions by the expected-products comparison, which is the check that can actually
-    fail on them; what the golden is for in this table is the values the shelves feed,
-    ``checksum``, ``size``, ``width`` and ``height``, and their linkage to an OPUS id.
-    Nothing else in the table is derivable from the path, and that was measured rather
-    than assumed: between 62 and 83 logical paths carry two or more different values of
-    ``sort_order``, ``short_name``, ``full_name`` and ``product_order``, because one file
-    serves several observations under different product classifications.
+    One column is dropped as well as one table. ``obs_files.url`` is ``holdings/`` or
+    ``pds4-holdings/`` followed by the logical path, on all 10,199 rows, and carrying it
+    cost about a quarter of the widest table's golden -- 819,984 bytes to store a
+    concatenation. It is dropped, and the concatenation is asserted against the database
+    instead, where it costs nothing to keep: that assertion is not optional decoration,
+    because the column is *this repository's* behavior and not just pdsfile's. pdsfile
+    serves a file from an HTML root that begins with a slash; ``do_import_index`` stores
+    ``file.url.strip('/')``. The expected-products comparison does not cover it -- it
+    never reads ``url``, it re-derives the same path itself and compares that against the
+    recorder -- so without the derivation check, dropping the column would have deleted
+    the only thing watching that line.
 
-    Two things are normalized, and no more. Every column MySQL declares as a
+    Nothing else in the table is a mechanical transform of the path. The four columns
+    whose names invite the suspicion were measured rather than assumed: between 62 and 83
+    logical paths carry two or more different values of ``sort_order``, ``short_name``,
+    ``full_name`` and ``product_order``, because one file serves several observations
+    under different product classifications. The rest are the values the shelves feed --
+    ``checksum``, ``size``, ``width``, ``height`` -- which happen to have one value per
+    path here but are not computed from it, and which are what the golden is for in this
+    table, together with their linkage to an OPUS id.
+
+    Two further things are normalized. Every column MySQL declares as a
     ``timestamp`` is dropped: the import never writes one and the server fills them from
     the wall clock. And ``obs_general.preview_images`` has its JSON list sorted, because
     it is a ``PdsViewSet`` rendered to a dictionary and ``pdsfile`` documents that its
