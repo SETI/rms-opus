@@ -372,21 +372,25 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         # happened to return rows in. A caller that hands out row ids in this order --
         # `do_param_info` does -- would otherwise give the same database different ids on
         # different machines, which is a difference nothing else can explain.
+        #
+        # Sorted *after* the prefix comes off, not before: the prefix is matched without
+        # regard to case, so two tables can carry it in different spellings and stripping
+        # it would then undo an ordering established on the fuller names.
         ret_names: Collection[str]
         if namespace == 'all':
             ret_names = sorted(self._table_names)
         elif namespace == 'import':
-            ret_names = [
+            ret_names = sorted(
                 self.convert_namespace_to_raw(namespace, x)
-                for x in sorted(self._table_names)
+                for x in self._table_names
                 if self._is_import_namespace(x)
-            ]
+            )
         elif namespace == 'perm':
-            ret_names = [
+            ret_names = sorted(
                 self.convert_namespace_to_raw(namespace, x)
-                for x in sorted(self._table_names)
+                for x in self._table_names
                 if self._is_perm_namespace(x)
-            ]
+            )
         else:
             raise NotImplementedError(namespace)
 
