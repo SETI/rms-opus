@@ -63,10 +63,28 @@ def created_schemas(db_credentials: DatabaseCredentials) -> Iterator[list[str]]:
 
 
 @pytest.fixture(scope='session')
+def subprocess_coverage() -> Iterator[None]:
+    """Measure the pipeline's subprocesses too, and leave nothing behind afterwards.
+
+    Coverage reaches a subprocess through a ``.pth`` file in site-packages, which is
+    installed only while a measured session is running: left there, it would make every
+    later interpreter in that environment import coverage at startup.
+
+    Yields:
+        Nothing; the fixture exists for what it installs and removes.
+    """
+    pth_path = build_run.install_subprocess_coverage()
+    yield
+    if pth_path is not None:
+        pth_path.unlink(missing_ok=True)
+
+
+@pytest.fixture(scope='session')
 def main_run(
     tmp_path_factory: pytest.TempPathFactory,
     db_credentials: DatabaseCredentials,
     created_schemas: list[str],
+    subprocess_coverage: None,
 ) -> build_run.ImportRun:
     """Import the whole fixture once, and hand every test the finished run.
 
@@ -84,6 +102,7 @@ def duplicate_id_run(
     tmp_path_factory: pytest.TempPathFactory,
     db_credentials: DatabaseCredentials,
     created_schemas: list[str],
+    subprocess_coverage: None,
 ) -> build_run.ImportRun:
     """Import one volume twice in a single invocation, under the duplicate-id check.
 
@@ -113,6 +132,7 @@ def ignore_errors_run(
     tmp_path_factory: pytest.TempPathFactory,
     db_credentials: DatabaseCredentials,
     created_schemas: list[str],
+    subprocess_coverage: None,
 ) -> build_run.ImportRun:
     """Import a fixture whose index names a target OPUS does not know.
 

@@ -23,3 +23,11 @@
 # both handlers, so a later PR that narrows the scan paths or rewrites those
 # tests would need it back. Re-check with `vulture src` before removing it.
 lineno  # unused variable (warnings.showwarning callback)
+
+# `subprocess_coverage` is a pytest fixture requested by name and used for its effect
+# rather than its value: it installs the .pth file that lets coverage measure the
+# pipeline's subprocesses, and removes it again when the session ends. Three run
+# fixtures in import_tests/conftest.py depend on it so that it is installed before any
+# subprocess starts, which is the whole point, and pytest resolves the dependency by
+# parameter name -- so the parameter cannot be renamed or dropped.
+subprocess_coverage  # unused variable (pytest fixture requested for its effect)

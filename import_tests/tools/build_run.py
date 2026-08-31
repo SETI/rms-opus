@@ -342,10 +342,17 @@ def install_subprocess_coverage() -> Path | None:
     file that calls ``coverage.process_startup()`` before anything else runs. The
     variable alone does nothing.
 
+    Nothing is installed unless this process is itself being measured, and the caller is
+    expected to remove what is returned: a ``.pth`` left in site-packages makes every
+    later interpreter in that environment import coverage at startup.
+
     Returns:
-        The ``.pth`` file, or None if the interpreter has no writable site directory,
-        in which case the subprocesses go unmeasured rather than the run failing.
+        The ``.pth`` file, or None if the run is not being measured or the interpreter
+        has no writable site directory, in which case the subprocesses go unmeasured
+        rather than the run failing.
     """
+    if coverage.Coverage.current() is None:
+        return None
     for directory in sys.path:
         candidate = Path(directory)
         if candidate.name != 'site-packages' or not candidate.is_dir():
@@ -469,7 +476,6 @@ def perform_run(
     paths = RunPaths.under(root)
     build_holdings_tree(paths, overlay=overlay)
     write_opus_config(paths, schema, credentials)
-    install_subprocess_coverage()
 
     groups = [[bundle] for bundle in fixture_bundles()] if bundle_groups is None else bundle_groups
     run = ImportRun(
