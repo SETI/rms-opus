@@ -27,11 +27,6 @@ Deleting bundles from perm tables but cart table not wiped
 # for filter diversity, so reaching one of these is the point rather than an accident.
 \[COISS_\d+ index row \d+ "[^"]*"\] Using CLEAR instead of polarized filter for unknown COISS filter combination \S+
 
-# The inventory files' target list has no entry in the PDS data dictionary, so the
-# dictionary step has no description to attach to it. It is a gap in the archive's
-# dictionary rather than in this import.
-No description for item TARGET_LIST: "TARGET_LIST"
-
 # Two Hubble observations of one filter disagree about that filter's wavelength bounds,
 # which the mult-table maintenance reports as it folds them into one row. The archive
 # says both, and OPUS keeps the first.

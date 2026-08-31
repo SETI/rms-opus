@@ -465,7 +465,6 @@ jobs:
 
           for package, name in [
               ('opus_import.table_schemas', 'obs_general.json'),
-              ('opus_import.dictionary_data', 'pdsdd.full'),
               ('opus_import.dictionary_data', 'contexts.csv'),
               ('opus_log_analyzer.templates', 'log_analysis.html'),
           ]:
