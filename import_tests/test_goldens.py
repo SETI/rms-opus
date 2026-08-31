@@ -150,10 +150,17 @@ def test_django_tables_are_the_only_ones_excluded(main_run: ImportRun) -> None:
 def test_table_matches_its_golden(
     table: str, main_run: ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
-    """One table's rows are exactly what a clean recorded run produced."""
+    """One table's rows are exactly what a clean recorded run produced.
+
+    The assertion is on the report rather than on the two texts, deliberately: pytest
+    explains a failed ``==`` between two strings with ``difflib.ndiff``, which on
+    ``obs_files``' ten thousand rows takes longer than the job it runs in. `_unified_diff`
+    is the bounded report that replaces it.
+    """
     expected = golden_io.read_golden(fixture_layout.GOLDENS_DIR, table)
     actual = golden_io.serialize_table(db_credentials, main_run.schema, table)
-    assert actual == expected, _unified_diff(table, expected, actual)
+    difference = None if actual == expected else _unified_diff(table, expected, actual)
+    assert difference is None, difference
 
 
 @pytest.fixture(scope='session')
