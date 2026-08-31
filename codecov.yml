@@ -1,8 +1,30 @@
 coverage:
   status:
+    # Two uploads reach this project and they measure different trees under
+    # different coverage configurations: the self-hosted integration workflow
+    # sends the Django application's coverage under `integration`, and the
+    # GitHub-hosted Import Tests job sends the import pipeline's under `import`.
+    # There is deliberately no unflagged default: an unflagged status measures
+    # the two merged, so whichever of them sits lower would decide the result
+    # for both, and neither target would mean what it says.
     project:
-      default:
+      integration:
+        flags:
+          - integration
         target: 90%
+      import:
+        flags:
+          - import
+        # Informational while the import suite's floor is the figure its own run
+        # measures rather than an aspiration. `fail_under` in pyproject.toml is
+        # what actually gates that number; raising both together is one decision.
+        informational: true
     patch:
-      default:
+      integration:
+        flags:
+          - integration
         target: 90%
+      import:
+        flags:
+          - import
+        informational: true

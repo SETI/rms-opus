@@ -25,10 +25,18 @@
 #   --vulture              Run vulture only
 #   --sphinx               Run Sphinx build only
 #   --pymarkdown           Run PyMarkdown scan only
+#   --import-tests         ALSO run the import suite. Opt-in and never part of a
+#                          default run: it needs a reachable MySQL server, which no
+#                          other check does, and takes about two minutes. Combined
+#                          with a --* flag it is added to that selection; on its own
+#                          it is added to the full run.
 #   -h, --help             Show this help message
 #
 # Environment:
 #   VENV or VENV_PATH        Path to virtualenv (default: $PROJECT_ROOT/venv)
+#   OPUS_TEST_DB_HOST/_USER/_PASSWORD   Where --import-tests finds MySQL. The suite
+#                            reads them itself, defaulting to root with no password
+#                            on 127.0.0.1.
 #   CLEANUP_GRACE_PERIOD     Seconds to wait for graceful shutdown (default: 5)
 #
 #   Pytest coverage minimum: configure fail_under in coverage config (e.g.
@@ -50,6 +58,7 @@
 #     ENABLE_VULTURE      (default: true)
 #     ENABLE_SPHINX       (default: true)
 #     ENABLE_PYMARKDOWN   PyMarkdown scan (default: true)
+#     ENABLE_IMPORT_TESTS (default: true, but --import-tests must ask for it too)
 #
 # Checks (each run separately; -d runs both Sphinx and Markdown):
 #   Code:     optional: ruff check, ruff format --check, mypy, pytest, pyroma,
@@ -85,6 +94,7 @@ RUN_BANDIT=false
 RUN_VULTURE=false
 RUN_SPHINX=false
 RUN_PYMARKDOWN=false
+RUN_IMPORT_TESTS=false
 SCOPE_SPECIFIED=false
 
 # Per-check defaults (override by exporting before invoking this script, or
@@ -104,19 +114,22 @@ SCOPE_SPECIFIED=false
 : "${ENABLE_VULTURE:=true}"
 : "${ENABLE_SPHINX:=true}"
 : "${ENABLE_PYMARKDOWN:=true}"
+: "${ENABLE_IMPORT_TESTS:=true}"
 
 # The importable packages live under src/, with the live-DB suites in
-# integration_tests/, the unit suite in tests/, the documentation build's own
-# extensions in docs/ and manage.py at the root.
+# integration_tests/, the holdings-free import suite in import_tests/, the unit
+# suite in tests/, the documentation build's own extensions in docs/ and
+# manage.py at the root.
 # Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
 # names count as used); min-confidence/exclude come from [tool.vulture]. Bandit
-# never scans tests.
-: "${OPUS_RUFF_PATHS:=src integration_tests tests docs manage.py}"
+# skips tests/ and import_tests/ but does scan integration_tests/, which drives a
+# live server.
+: "${OPUS_RUFF_PATHS:=src integration_tests import_tests tests docs manage.py}"
 # mypy covers the same trees, and integration_tests/ is checked strictly like
 # every other one: no tree carries a burn-down entry.
-: "${OPUS_MYPY_PATHS:=src integration_tests tests docs manage.py}"
+: "${OPUS_MYPY_PATHS:=src integration_tests import_tests tests docs manage.py}"
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
-: "${OPUS_VULTURE_PATHS:=src integration_tests tests docs manage.py vulture_whitelist.py}"
+: "${OPUS_VULTURE_PATHS:=src integration_tests import_tests tests docs manage.py vulture_whitelist.py}"
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -278,6 +291,14 @@ while [[ $# -gt 0 ]]; do
             SCOPE_SPECIFIED=true
             shift
             ;;
+        --import-tests)
+            # Deliberately does not set SCOPE_SPECIFIED: this flag *adds* the import
+            # suite rather than narrowing the run to it. On its own it means the full
+            # run plus the import suite; alongside another --* flag it is added to that
+            # selection instead.
+            RUN_IMPORT_TESTS=true
+            shift
+            ;;
         --pyroma)
             RUN_PYROMA=true
             SCOPE_SPECIFIED=true
@@ -350,6 +371,7 @@ _code_checks_any_scheduled() {
     [ "$RUN_PYROMA" = true ] && [ "$ENABLE_PYROMA" = true ] && return 0
     [ "$RUN_BANDIT" = true ] && [ "$ENABLE_BANDIT" = true ] && return 0
     [ "$RUN_VULTURE" = true ] && [ "$ENABLE_VULTURE" = true ] && return 0
+    [ "$RUN_IMPORT_TESTS" = true ] && [ "$ENABLE_IMPORT_TESTS" = true ] && return 0
     return 1
 }
 
@@ -423,10 +445,15 @@ run_code_checks() {
 
     # -n controls parallelism; --dist loadscope keeps each test module on one
     # worker to avoid time-mocking and fixture-isolation interference.
-    # testpaths and the strict options come from pyproject.toml. No --cov here:
-    # this suite does not yet reach the [tool.coverage.report] fail_under
-    # threshold, so measuring it would fail a healthy tree. The gate turns on
-    # with the holdings-free import suite that is written to meet it.
+    # testpaths and the strict options come from pyproject.toml.
+    #
+    # No --cov here, and import_tests/ is not in this invocation. Exactly one
+    # job measures coverage and exactly one number gates: the Import Tests job
+    # in run-tests.yml runs `pytest import_tests --cov`, and
+    # [tool.coverage.report] fail_under is that run's own floor. Measuring the
+    # holdings-free unit suite alone against that floor would fail a healthy
+    # tree, and this script has to stay runnable without a MySQL server, which
+    # import_tests needs.
     if [ "$RUN_PYTEST" = true ] && [ "$ENABLE_PYTEST" = true ]; then
         print_info "Running pytest (-n ${PYTEST_WORKERS})..."
         if python -m pytest -q -n "$PYTEST_WORKERS" --dist loadscope tests; then
@@ -435,6 +462,21 @@ run_code_checks() {
             print_error "Pytest failed"
             failed=true
             failed_checks="${failed_checks}Code - Pytest"$'\n'
+        fi
+    fi
+
+    # The import suite, opt-in because it is the one check needing a server. The bare
+    # form, no coverage: that is the everyday one and about two minutes, and the coverage
+    # form is two commands belonging to the Import Tests job. It reads
+    # OPUS_TEST_DB_HOST/_USER/_PASSWORD itself.
+    if [ "$RUN_IMPORT_TESTS" = true ] && [ "$ENABLE_IMPORT_TESTS" = true ]; then
+        print_info "Running pytest import_tests (needs a reachable MySQL)..."
+        if python -m pytest -q import_tests; then
+            print_success "Import tests passed"
+        else
+            print_error "Import tests failed"
+            failed=true
+            failed_checks="${failed_checks}Code - Import tests"$'\n'
         fi
     fi
 

@@ -1,0 +1,10 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	IMG	Image	010	Y	\N	\N	\N
+1	MOS	Mosaic	020	Y	\N	\N	\N
+2	SPE	Spectrum	030	Y	\N	\N	\N
+3	SPI	Spectral Image	040	Y	\N	\N	\N
+4	SCU	Spectral Cube	050	Y	\N	\N	\N
+5	TS	Time Series	060	Y	\N	\N	\N
+6	STS	Spectral Time Series	070	Y	\N	\N	\N
+7	OCC	Occultation Profile	080	Y	\N	\N	\N
+8	REF	Reflectance Profile	090	Y	\N	\N	\N

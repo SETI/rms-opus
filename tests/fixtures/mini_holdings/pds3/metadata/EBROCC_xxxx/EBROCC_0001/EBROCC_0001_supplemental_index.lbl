@@ -1,0 +1,201 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+FILE_RECORDS                    = 2
+RECORD_BYTES                    = 259
+^SUPPLEMENTAL_INDEX_TABLE       = "EBROCC_0001_supplemental_index.tab"
+
+PRODUCT_CREATION_TIME           = 2025-04-16T10:55:41
+VOLUME_ID                       = "EBROCC_0001"
+TARGET_TYPE                     = RING
+TARGET_NAME                     = "S RINGS"
+FEATURE_NAME                    = "MAIN RINGS"
+OBSERVATION_TYPE                = "STELLAR OCCULTATION"
+STAR_NAME                       = "28 SGR"
+
+OBJECT                          = SUPPLEMENTAL_INDEX_TABLE
+  INDEX_TYPE                    = SINGLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 2
+  ROW_BYTES                     = 259
+  COLUMNS                       = 15
+
+  DESCRIPTION                   = "This index supplements the profile index
+    with a small set of useful parameter values that are not found in the
+    default index but exist in the PDS label files."
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 1
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 11
+    FORMAT                      = A11
+    DESCRIPTION                 = "The volume ID provides a unique identifier
+        for a PDS data volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 2
+    NAME                        = FILE_SPECIFICATION_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 16
+    BYTES                       = 23
+    FORMAT                      = A23
+    DESCRIPTION                 = "Name and path of the PDS label file
+        describing the particular file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 3
+    NAME                        = DATA_SET_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 42
+    BYTES                       = 26
+    FORMAT                      = A26
+    DESCRIPTION                 = "The unique identifier for a PDS data set."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 4
+    NAME                        = INSTRUMENT_HOST_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 71
+    BYTES                       = 6
+    FORMAT                      = A6
+    DESCRIPTION                 = "The identifier for the observatory."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 5
+    NAME                        = INSTRUMENT_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 80
+    BYTES                       = 6
+    FORMAT                      = A6
+    DESCRIPTION                 = "The identifier for the instrument."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 6
+    NAME                        = TARGET_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 89
+    BYTES                       = 7
+    FORMAT                      = A7
+    DESCRIPTION                 = "The PDS identifier for the target."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 7
+    NAME                        = STAR_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 99
+    BYTES                       = 6
+    FORMAT                      = A6
+    DESCRIPTION                 = "The name of the star."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 8
+    NAME                        = WAVELENGTH
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 107
+    BYTES                       = 5
+    FORMAT                      = "F5.3"
+    UNIT                        = "micron"
+    DESCRIPTION                 = "Mean wavelength of the observation, in
+        microns."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 9
+    NAME                        = PLANETARY_OCCULTATION_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 114
+    BYTES                       = 1
+    FORMAT                      = A1
+    DESCRIPTION                 = "A flag indicating whether a planet was in
+        the path of the occultation: 'Y' for yes or 'N' for no."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 10
+    NAME                        = MINIMUM_RING_RADIUS
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 117
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "km"
+    NULL_CONSTANT               = -999.
+    DESCRIPTION                 = "Ring radius is the distance from the center
+        of the planet to the point where a line of sight intercepts the ring
+        plane. The field tabulates the minimum ring radius present in the
+        occultation profile."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 11
+    NAME                        = MAXIMUM_RING_RADIUS
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 130
+    BYTES                       = 12
+    FORMAT                      = "F12.3"
+    UNIT                        = "km"
+    NULL_CONSTANT               = -999.
+    DESCRIPTION                 = "Ring radius is the distance from the center
+        of the planet to the point where a line of sight intercepts the ring
+        plane. The field tabulates the maximum ring radius present in the
+        occultation profile."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 12
+    NAME                        = RADIAL_RESOLUTION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 143
+    BYTES                       = 10
+    FORMAT                      = "F10.5"
+    UNIT                        = "km"
+    NULL_CONSTANT               = -999.
+    DESCRIPTION                 = "The approximate radial resolution of the
+        occultation profile."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 13
+    NAME                        = INCIDENCE_ANGLE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 154
+    BYTES                       = 8
+    FORMAT                      = "F8.3"
+    UNIT                        = "deg"
+    NULL_CONSTANT               = -999.
+    DESCRIPTION                 = "The incidence angle of the occultation
+        profile."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 14
+    NAME                        = INSTRUMENT_HOST_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 164
+    BYTES                       = 54
+    FORMAT                      = A54
+    DESCRIPTION                 = "A slightly modified version of the
+        profile label's INSTRUMENT_HOST_NAME field."
+  END_OBJECT                    = COLUMN
+
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 15
+    NAME                        = INSTRUMENT_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 221
+    BYTES                       = 36
+    FORMAT                      = A36
+    DESCRIPTION                 = "A slightly modified version of the
+        profile label's INSTRUMENT_NAME field."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = SUPPLEMENTAL_INDEX_TABLE
+END

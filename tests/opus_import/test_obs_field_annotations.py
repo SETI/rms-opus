@@ -39,7 +39,7 @@ import textwrap
 import typing
 import zlib
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pytest
@@ -53,6 +53,9 @@ from opus_import.steps.do_import_obs import field_function_name
 
 from ._source_scan import class_functions, functions_in, parsed_modules
 from .conftest import make_context
+
+if TYPE_CHECKING:
+    from pdsfile.pdsfile import PdsFile
 
 _OBS_DIR = Path(obs.__file__).parent
 _SCHEMA_DIR = Path(config_data.__file__).parent / 'table_schemas'
@@ -787,7 +790,7 @@ def _instrument_for(fixture: dict[str, Any]) -> ObsBase:
     # the one thing an obs class asks the file system for. Everything else it reads
     # comes from the metadata above.
     instrument._pdsfile_from_filespec = (  # type: ignore[method-assign]
-        lambda filespec: _FakePdsFile()
+        lambda filespec: cast('PdsFile', _FakePdsFile())
     )
     return instrument
 

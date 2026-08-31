@@ -180,9 +180,9 @@ class ObsBase:
         Returns:
             A ``Pds3File`` or ``Pds4File``, which is what supplies the OPUS id and the
             browse products. ``PdsFile`` is the base both derive from, so it is what
-            the two overrides have in common. It is not checked: ``pdsfile`` ships no
-            annotations, so it sits in ``ignore_missing_imports`` in pyproject.toml and
-            the checker resolves this name to ``Any``.
+            the two overrides have in common, and it is really checked: ``pdsfile``
+            ships ``py.typed``, so it carries no ``ignore_missing_imports`` entry and
+            every call on the returned object is type-checked.
 
         Raises:
             NotImplementedError: Always; a PDS-version subclass must override this.
@@ -472,19 +472,6 @@ class ObsBase:
         assert self._metadata is not None
         return import_util.safe_column(self._metadata['index_label'], col, idx=idx)
 
-    def _supp_index_label_col(self, col: str, idx: int | None = None) -> Any:
-        """Read a keyword of the supplemental index's own label.
-
-        Parameters:
-            col: The label keyword to read.
-            idx: Which element to read from a keyword holding a sequence.
-
-        Returns:
-            The value, as described in `ObsBase._index_label_col`.
-        """
-        assert self._metadata is not None
-        return import_util.safe_column(self._metadata['supp_index_label'], col, idx=idx)
-
     def _ring_geo_index_col(
         self,
         col: str,
@@ -619,15 +606,6 @@ class ObsBase:
         """
         assert self._metadata is not None
         return col in self._metadata['index_row']
-
-    def _col_in_supp_index(self, col: str) -> bool:
-        """Whether the supplemental index row carries a column.
-
-        Parameters:
-            col: The column to look for.
-        """
-        assert self._metadata is not None
-        return col in self._metadata['supp_index_row']
 
     def _col_in_some_index(self, col: str) -> str | None:
         """Find which index row carries a column.

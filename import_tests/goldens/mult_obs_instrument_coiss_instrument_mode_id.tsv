@@ -1,0 +1,5 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	FULL	FULL	010	Y	\N	\N	\N
+1	SUM2	SUM2	020	Y	\N	\N	\N
+2	SUM4	SUM4	030	Y	\N	\N	\N
+3	\N	N/A	040	Y	\N	\N	\N

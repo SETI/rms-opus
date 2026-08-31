@@ -4,14 +4,14 @@ Repository Layout
 =================
 
 The importable distribution is everything under ``src/``. Everything else --
-``tests/``, ``integration_tests/``, ``scripts/``, ``docs/``, ``perf_test/`` and the
-root files -- is supporting code that is not installed, with two deliberate
-exceptions: ``manage.py`` at the root is a development convenience, and the package
-data inside ``src/`` (table schemas, dictionary sources, templates, static assets)
-ships in the wheel because the code reads it at run time. How it is found differs by
-package: :mod:`opus_import` uses :mod:`importlib.resources`, the log analyzer loads its
-Jinja templates by package name, and the Django app's templates and static files are
-found by Django's own loaders.
+``tests/``, ``import_tests/``, ``integration_tests/``, ``scripts/``, ``docs/``,
+``perf_test/`` and the root files -- is supporting code that is not installed, with two
+deliberate exceptions: ``manage.py`` at the root is a development convenience, and the
+package data inside ``src/`` (table schemas, dictionary sources, templates, static
+assets) ships in the wheel because the code reads it at run time. How it is found
+differs by package: :mod:`opus_import` uses :mod:`importlib.resources`, the log analyzer
+loads its Jinja templates by package name, and the Django app's templates and static
+files are found by Django's own loaders.
 
 The tree below annotates the directories and files a developer works in.
 
@@ -59,7 +59,7 @@ The tree below annotates the directories and files a developer works in.
     │   │   ├── steps/                    # the do_* steps; four do_import_* modules are
     │   │   │                             #   internals of do_import, not steps
     │   │   ├── table_schemas/            # package data: the JSON that defines every OPUS table
-    │   │   ├── dictionary_data/          # package data: the PDS data dictionary sources
+    │   │   ├── dictionary_data/          # package data: the dictionary context tree
     │   │   └── util/                     # hand-run authoring tools, not part of a run
     │   ├── opus_app/             # the Django project
     │   │   ├── settings.py, urls.py, wsgi.py
@@ -78,6 +78,11 @@ The tree below annotates the directories and files a developer works in.
     │   └── opus_packaging/       # what the distribution promises rather than what the
     │                             #   code computes: the console-script entry points, and
     │                             #   the deploy chain's two shell scripts, run as shell
+    ├── import_tests/             # the import pipeline end to end against the checked-in
+    │   │                         #   mini-holdings fixture; needs MySQL, no holdings
+    │   ├── tools/                # the recorder, the builder and the golden generator
+    │   ├── goldens/              # the expected contents of every table the import writes
+    │   └── fixtures/             # the negative cases and the unexecuted-method whitelist
     ├── integration_tests/        # the suites that need an imported database and the
     │   │                         #   holdings behind it; run them by naming this directory
     │   ├── .coveragerc           # the 100% gate's coverage configuration
@@ -106,7 +111,7 @@ Part of ``docs/`` is generated rather than written:
   before each build and are git-ignored: the API reference's ``automodule`` pages
   (``api_reference.rst`` and ``api_opus_*.rst``) and the API guide's metadata-field
   table (``api_guide_fields_table.rst``). Changing what they contain means changing
-  the generator, not the file. See :ref:`dev_guide_environment` for how to run them.
+  the generator, not the file. See :ref:`dev_guide_testing` for how to run them.
 
 ``src/opus_app/apps/search/models.py`` is also generated -- by
 ``scripts/models/create_opus_models.sh``, from a populated database -- but it *is*

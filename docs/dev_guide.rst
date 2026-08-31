@@ -14,8 +14,10 @@ query an OPUS server.
    dev_guide_introduction
    dev_guide_layout
    dev_guide_environment
+   dev_guide_testing
    dev_guide_architecture
    dev_guide_import
+   dev_guide_import_fixture
    dev_guide_table_schemas
    dev_guide_database
    dev_guide_opus_id

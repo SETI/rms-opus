@@ -374,7 +374,9 @@ class ImportDBSuper:
                 name.
 
         Returns:
-            The matching table names, in no particular order.
+            The matching table names, sorted. An implementation must sort them, because a
+            caller handing out row ids while iterating this would otherwise produce a
+            different database on a different machine.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.

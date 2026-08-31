@@ -80,7 +80,11 @@ opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
 [project.optional-dependencies]
 dev = [
   "rms-opus",
-  "coverage>=7.0",
+  # The floor is set by the executed-functions check in the mini-holdings suite, which
+  # reads the JSON report's per-function regions. Those arrived with JSON report format
+  # version 3, in 7.6.0 ("3: add region information (functions, classes)" in
+  # coverage/jsonreport.py); 7.5.x writes format 2, which has no regions in it at all.
+  "coverage>=7.6",
   # mypy carries no bound of its own: django-stubs' `compatible-mypy` extra below
   # pins it to the range that django-stubs' plugin supports, so the two cannot drift
   # apart on an unpinned install, and a second bound here would only go stale.
@@ -234,7 +238,7 @@ namespaces = false
 "*" = ["py.typed"]
 # The import pipeline reads these at run time through importlib.resources, so they have
 # to be inside the wheel: the JSON schemas that define every OPUS table (plus the two
-# lists of values deliberately left unmapped), and the PDS data dictionary sources that
+# lists of values deliberately left unmapped), and the dictionary context tree that
 # `--import-dictionary` reads.
 "opus_import" = ["table_schemas/*", "dictionary_data/*"]
 # The log analyzer's Jinja report templates, loaded by package name (jinja2's
@@ -267,7 +271,19 @@ exclude_lines = [
   "if TYPE_CHECKING:",
   "@overload",
 ]
-fail_under = 90
+# The floor one command measures and one command gates: the Import Tests job's own
+# `pytest import_tests --cov`, which imports two dozen sampled volumes end to end
+# through every step of the pipeline. It is the run's own figure rounded down, not an
+# aspiration -- raising it means raising what that run reaches. Regenerate rather than
+# trust it: run that command and read the TOTAL line.
+#
+# That run measures 75.368%: 8,693 of 11,534 statements and branches, which is not the
+# `Stmts`/`Miss` pair the term report's left-hand columns show. `fail_under` compares the
+# figure rounded to whole percent, so the job passes down to 74.51% -- roughly 99 of those
+# 11,534. A failure that close to the number is a real drop in what the run reaches, most
+# likely a pdsfile release changing which products exist, and the answer is to find what
+# stopped executing rather than to lower the floor.
+fail_under = 75
 
 [tool.mypy]
 strict = true
@@ -321,7 +337,7 @@ django_settings_module = "opus_app.settings"
 # opinion about them beside django-stubs for the sake of the one name the suite
 # imports (`RequestsClient`, used only on the live-server path).
 [[tool.mypy.overrides]]
-module = ["julian.*", "pdfkit.*", "pdsfile.*", "pdslogger.*", "pdsparser.*",
+module = ["julian.*", "pdfkit.*", "pdslogger.*", "pdsparser.*",
           "pdstable.*", "rest_framework.*"]
 ignore_missing_imports = true
 
@@ -478,7 +494,7 @@ skips = [
 # tests/ is scanned too: its own dead imports are caught, and names that only
 # the suite uses then count as used.
 [tool.vulture]
-paths = ["src", "integration_tests", "tests", "docs", "manage.py",
+paths = ["src", "integration_tests", "import_tests", "tests", "docs", "manage.py",
          "vulture_whitelist.py"]
 # Vulture is invoked with relative paths, so a pattern needing a component before
 # the directory name would never match. These are written both ways for that

@@ -140,6 +140,13 @@ jobs:
           # `-e` is what wires up src/, since opus_support and the rest are
           # imported as installed packages rather than through a sys.path insert.
           python -m pip install -e ".[dev]"
+          # The pdsfile rewrite, from its branch tip, until it ships to PyPI.
+          # It is not a [project] dependency: the wheel this repository publishes
+          # declares the PyPI package. Every environment that installs or type-checks
+          # this package needs it, this one included, because `opus_import` enables
+          # Pds4File.use_shelves_only() and 0.0.18 has no filesystem fallback behind
+          # that flag -- from_path raises there on the first PDS4 existence check.
+          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
           echo
           # The resolved tree, logged so that a failure caused by a new release of
           # a dependency can be read off the run that first saw it -- which is the
@@ -154,6 +161,12 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
+          # Its own flag, because a second upload reaches this project from the
+          # GitHub-hosted Import Tests job and measures a different tree under a
+          # different coverage configuration. codecov.yml gives each flag its own
+          # status and carries no unflagged default, which would measure the two
+          # of them merged.
+          flags: integration
           verbose: true
 
       - name: Check coverage level

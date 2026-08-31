@@ -165,9 +165,9 @@ def test_the_scan_finds_the_lower_case_and_suffixed_spellings(tmp_path: Path) ->
     assert len(found) == 2, found
 
 
-#: Real lines from ``src/opus_import/dictionary_data/pdsdd.full``. The instrument code
-#: is ``PPR`` -- the Photopolarimeter Radiometer -- so each of these ends in something
-#: an unanchored pattern reads as a reference.
+#: PDS dataset identifiers, in the form the packaged data used to ship them. The
+#: instrument code is ``PPR`` -- the Photopolarimeter Radiometer -- so each of these ends
+#: in something an unanchored pattern reads as a reference.
 PDS_DATASET_IDENTIFIERS = (
     b'     "GO-A-PPR-2-EDR-GASPRA-V1.0",\n',
     b'     "GO-A-PPR-3-RDR-IDA-V1.0",\n',
@@ -178,12 +178,12 @@ PDS_DATASET_IDENTIFIERS = (
 def test_the_pattern_ignores_a_pds_dataset_identifier() -> None:
     """A PDS dataset id whose instrument code is ``PPR`` is not a reference.
 
-    ``src/opus_import/dictionary_data/pdsdd.full`` ships dozens of these, and the
-    briefing for the change that added this module quoted a count measured without the
-    anchor -- 33 of its references were these strings. So this is not a hypothetical:
-    an unanchored gate is red on a clean tree, and the natural repair is to stop
-    scanning the packaged data, which would also stop scanning a file somebody might
-    one day comment.
+    The packaged PDS data dictionary shipped dozens of these, and the briefing for the
+    change that added this module quoted a count measured without the anchor -- 33 of its
+    references were these strings. That file has since been removed, but the shape it
+    exercised is not hypothetical: an unanchored gate is red on any tree carrying a PDS
+    dataset identifier, and the natural repair is to stop scanning packaged data, which
+    would also stop scanning a file somebody might one day comment.
     """
     for line in PDS_DATASET_IDENTIFIERS:
         assert _references_in(line, 'pdsdd.full') == [], line

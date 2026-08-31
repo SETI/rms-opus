@@ -123,14 +123,23 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
     if vol_info['pds_version'] == 3:
         # These are the plain <volume>/index directories for PDS3 volumes that
         # don't have a separate metadata directory
-        index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'INDEX'))
-        index_paths.append(import_util.safe_join(bundle_pdsfile.abspath, 'index'))
+        bundle_abspath = bundle_pdsfile.abspath
+        # A pdsfile below a merged or category-level directory has no absolute path, and
+        # neither is a bundle -- which the check above has already required this to be.
+        assert bundle_abspath is not None
+        index_paths.append(import_util.safe_join(bundle_abspath, 'INDEX'))
+        index_paths.append(import_util.safe_join(bundle_abspath, 'index'))
     found_in_this_dir = False
 
     for path in index_paths:
         if not os.path.exists(path):
             continue
-        basenames = os.listdir(path)
+        # Sorted, because a bundle can have several primary indexes -- COCIRS_1xxx has
+        # one per cube geometry -- and row ids are handed out in the order rows are
+        # inserted. Taking them in `os.listdir` order makes every id in the database
+        # depend on how one filesystem happened to enumerate one directory, so two
+        # imports of identical holdings on two machines disagree about every id.
+        basenames = sorted(os.listdir(path))
         ret = True
         for basename in basenames:
             if basename in primary_index_names:

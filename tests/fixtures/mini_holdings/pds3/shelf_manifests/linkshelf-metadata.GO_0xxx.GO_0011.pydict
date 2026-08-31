@@ -1,0 +1,12 @@
+{
+    'GO_0011_body_summary.lbl': [(4, 'GO_0011_body_summary.tab', 'GO_0011_body_summary.tab')],
+    'GO_0011_body_summary.tab': 'GO_0011_body_summary.lbl',
+    'GO_0011_index.lbl': [(4, 'GO_0011_index.tab', 'GO_0011_index.tab')],
+    'GO_0011_index.tab': 'GO_0011_index.lbl',
+    'GO_0011_inventory.csv': 'GO_0011_inventory.lbl',
+    'GO_0011_inventory.lbl': [(16, 'GO_0011_inventory.csv', 'GO_0011_inventory.csv')],
+    'GO_0011_sky_summary.lbl': [(4, 'GO_0011_sky_summary.tab', 'GO_0011_sky_summary.tab')],
+    'GO_0011_sky_summary.tab': 'GO_0011_sky_summary.lbl',
+    'GO_0011_supplemental_index.lbl': [(4, 'GO_0011_supplemental_index.tab', 'GO_0011_supplemental_index.tab')],
+    'GO_0011_supplemental_index.tab': 'GO_0011_supplemental_index.lbl',
+}

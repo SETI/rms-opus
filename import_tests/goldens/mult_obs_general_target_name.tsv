@@ -1,0 +1,51 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	SATURN	Saturn	Saturn	Y	Saturn	060	\N
+1	DIONE	Dione	Dione	Y	Saturn	060	\N
+2	RHEA	Rhea	Rhea	Y	Saturn	060	\N
+3	TITAN	Titan	Titan	Y	Saturn	060	\N
+4	ENCELADUS	Enceladus	Enceladus	Y	Saturn	060	\N
+5	HELENE	Helene	Helene	Y	Saturn	060	\N
+6	MIMAS	Mimas	Mimas	Y	Saturn	060	\N
+7	TETHYS	Tethys	Tethys	Y	Saturn	060	\N
+8	S RINGS	Saturn Rings	Saturn Rings	Y	Saturn	060	\N
+9	SKY	Sky	Sky	Y	Other	100	\N
+10	UNKNOWN	Unknown	Unknown	Y	Other	100	\N
+11	IAPETUS	Iapetus	Iapetus	Y	Saturn	060	\N
+12	STAR	Star	Star	Y	Other	100	\N
+13	KIVIUQ	Kiviuq	Kiviuq	Y	Saturn	060	\N
+14	PAN	Pan	Pan	Y	Saturn	060	\N
+15	SOLAR WIND	Solar Wind	Solar Wind	Y	Other	100	\N
+16	JANUS	Janus	Janus	Y	Saturn	060	\N
+17	ALBIORIX	Albiorix	Albiorix	Y	Saturn	060	\N
+18	CALIBRATION	Calibration	Calibration	Y	Other	100	\N
+19	SUN	Sun	Sun	Y	Other	100	\N
+20	HYPERION	Hyperion	Hyperion	Y	Saturn	060	\N
+21	EARTH	Earth	Earth	Y	Earth	030	\N
+22	JUPITER	Jupiter	Jupiter	Y	Jupiter	050	\N
+23	URANUS	Uranus	Uranus	Y	Uranus	070	\N
+24	ARROKOTH	Arrokoth	Arrokoth	Y	Other	100	\N
+25	2011 HK103	2011 HK103	2011 HK103	Y	Other	100	\N
+26	2011 JW31	2011 JW31	2011 JW31	Y	Other	100	\N
+27	2011 JY31	2011 JY31	2011 JY31	Y	Other	100	\N
+28	2014 OE394	2014 OE394	2014 OE394	Y	Other	100	\N
+29	2011 JA32	2011 JA32	2011 JA32	Y	Other	100	\N
+30	2014 OJ394	2014 OJ394	2014 OJ394	Y	Other	100	\N
+31	2011 HF103	2011 HF103	2011 HF103	Y	Other	100	\N
+32	2011 HZ102	2011 HZ102	2011 HZ102	Y	Other	100	\N
+33	2014 OS393	2014 OS393	2014 OS393	Y	Other	100	\N
+34	2014 PN70	2014 PN70	2014 PN70	Y	Other	100	\N
+35	QUAOAR	Quaoar	Quaoar	Y	Other	100	\N
+36	NONE	None	zzxNone	Y	Other	100	\N
+37	TRITON	Triton	Triton	Y	Neptune	080	\N
+38	NGC 3532	NGC 3532	NGC 3532	Y	Other	100	\N
+39	M7	M7	M7	Y	Other	100	\N
+40	HD_37962	HD 37962	HD 37962	Y	Other	100	\N
+41	2002 MS4	2002 MS4	2002 MS4	Y	Other	100	\N
+42	2018 MF13	2018 MF13	2018 MF13	Y	Other	100	\N
+43	2018 MG13	2018 MG13	2018 MG13	Y	Other	100	\N
+44	NEPTUNE	Neptune	Neptune	Y	Neptune	080	\N
+45	CHARON	Charon	Charon	Y	Pluto	090	\N
+46	KERBEROS	Kerberos	Kerberos	Y	Pluto	090	\N
+47	DARK	Dark	Dark	Y	Other	100	\N
+48	U RINGS	Uranus Rings	Uranus Rings	Y	Uranus	070	\N
+49	N RINGS	Neptune Rings	Neptune Rings	Y	Neptune	080	\N

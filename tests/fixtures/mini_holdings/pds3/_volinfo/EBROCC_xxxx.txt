@@ -1,0 +1,11 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+EBROCC_xxxx             | Earth-based ring occultation data                         || 1.0 | 2003-09-30
+EBROCC_xxxx/EBROCC_0001 | Earth-based data from 28 Sgr occultation of Saturn's ring || 1.0 | 2003-09-30 | ESO1M-SR-APPH-4-OCC-V1.0 | ESO22M-SR-APPH-4-OCC-V1.0 | IRTF-SR-URAC-4-OCC-V1.0 | LICK1M-SR-CCDC-4-OCC-V1.0 | MCD27M-SR-IIRAR-4-OCC-V1.0 | PAL200-SR-CIRC-4-OCC-V1.0
+
+metadata/EBROCC_xxxx/EBROCC_0001  | Earth-based ring occultation metadatadata          || 1.2 | 2025-06-01
+
+metadata/EBROCC_xxxx_v1.0/EBROCC_0001  | Earth-based ring occultation metadatadata          || 1.0 | 2020-08-20
+
+metadata/EBROCC_xxxx_v1.1/EBROCC_0001  | Earth-based ring occultation metadatadata          || 1.1 | 2022-02-17
+

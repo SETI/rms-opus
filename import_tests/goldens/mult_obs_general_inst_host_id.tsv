@@ -1,0 +1,8 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	CO	Cassini	010	Y	\N	\N	\N
+1	GO	Galileo	020	Y	\N	\N	\N
+2	HST	Hubble	030	Y	\N	\N	\N
+3	NH	New Horizons	040	Y	\N	\N	\N
+4	VG1	Voyager 1	050	Y	\N	\N	\N
+5	VG2	Voyager 2	060	Y	\N	\N	\N
+6	GB	Ground-based	070	Y	\N	\N	\N

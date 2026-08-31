@@ -1,10 +1,9 @@
 """Build the ``definitions`` and ``contexts`` tables behind the UI's tooltips.
 
-A definition is a term, the context it belongs to, and its prose. The terms come from
-two places: the PDS data dictionary that ships with the package, and the ``definition``
-entries in the packaged table schemas, which is where OPUS's own parameters and mult
-values are described. A context names where a term came from, and exists so that the
-same word can mean different things to different missions.
+A definition is a term, the context it belongs to, and its prose. The terms come from the
+``definition`` entries in the packaged table schemas, which is where OPUS's own
+parameters and mult values are described. A context names where a term came from, and
+exists so that the same word can mean different things to different missions.
 
 Neither table is touched by an ordinary import: this step runs only under
 ``--import-dictionary``, and is the last thing `opus_import.cli` does.
@@ -14,10 +13,7 @@ from __future__ import annotations
 
 import csv
 import os
-from importlib.resources import as_file
 from typing import TYPE_CHECKING, Any
-
-import pdsparser
 
 from opus_import import import_util
 
@@ -26,23 +22,25 @@ if TYPE_CHECKING:
 
 
 def create_import_definitions_table(ctx: ImportContext) -> bool:
-    """Fill the import ``definitions`` table from the dictionary and the table schemas.
+    """Fill the import ``definitions`` table from the table schemas.
 
-    The packaged ``pdsdd.full`` contributes one row per dictionary item that has both a
-    name and a description, all in the ``PSDD`` context; an item with no description is
-    reported as a warning and skipped. Each packaged ``obs*``, ``internal_def*`` and
-    ``mult_tooltips*`` schema then contributes a row per ``definition`` and
-    ``definition_results`` entry it carries. The mult tooltip files also contribute
-    their own rows to ``contexts``, one per file, named after the slug in the file name.
+    Each packaged ``obs*``, ``internal_def*`` and ``mult_tooltips*`` schema contributes a
+    row per ``definition`` and ``definition_results`` entry it carries, filed under the
+    ``pi_dict_context`` beside it. The mult tooltip files also contribute their own rows
+    to ``contexts``, one per file, named after the slug in the file name.
+
+    The schemas are the whole source. Every tooltip the application asks for is looked up
+    under a context one of them names, or under ``OPUS_PRODUCT_TYPE``, and those are the
+    contexts filled here.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
 
     Returns:
-        True on success. False if the PDS dictionary could not be read, or a schema
-        entry has a definition but no term or no context -- each of which is logged as
-        an error. Every fault is found before returning, so one run reports all of them,
-        and nothing is written to the database when any is found.
+        True on success. False if a schema entry has a definition but no term or no
+        context -- each of which is logged as an error. Every fault is found before
+        returning, so one run reports all of them, and nothing is written to the database
+        when any is found.
     """
     db = ctx.db
     assert db is not None
@@ -57,7 +55,6 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
 
     bad_db = False
 
-    pds_file = import_util.DICTIONARY_DATA_DIR / 'pdsdd.full'
     json_list = import_util.table_schema_files('obs*.json')
     json_list += import_util.table_schema_files('internal_def*.json')
     # Tooltips for mults
@@ -65,31 +62,6 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
     json_list += mult_tooltips_json_list
 
     rows: list[dict[str, Any]] = []
-
-    logger.log('info', f'Importing {pds_file}')
-
-    context = 'PSDD'
-    try:
-        with as_file(pds_file) as pds_path:
-            label = pdsparser.PdsLabel.from_file(pds_path)
-    except OSError as e:
-        logger.log('error', f'Failed to read {pds_file}: {e.strerror}')
-        bad_db = True
-    else:
-        # pdsparser.PdsLabel is dict-like (keyed __getitem__) but not iterable,
-        # so bare iteration falls back to integer indexing and raises; iterate
-        # its keys explicitly.
-        for item_name in label.keys():  # noqa: SIM118
-            if item_name == 'objects' or label[item_name] is None:
-                continue
-            term = str(label[item_name]['NAME']).rstrip('\r\n')
-            try:
-                definition = ' '.join(str(label[item_name]['DESCRIPTION']).split())
-            except KeyError:
-                logger.log('warning', f'No description for item {item_name}: "{term}"')
-                continue
-            new_row = {'term': term, 'context': context, 'definition': definition}
-            rows.append(new_row)
 
     for schema_file in json_list:
         file_name = os.path.splitext(schema_file.name)[0]

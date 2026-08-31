@@ -7277,3 +7277,243 @@ body; never rewrite or delete earlier notes.*
     enforces a rule about *this plan's* PR numbers, which is scaffolding for the modernization
     sequence and not something the shipped repository should carry. The rule it enforces is
     obeyed by the tree it leaves behind.
+- **2026-08-30 (PR-19 executed):** the import pipeline has a holdings-free end-to-end
+  test. `import_tests/` runs the real `opus_import` command line against a temporary tree
+  built from `tests/fixtures/mini_holdings/`, and the **Import Tests** job in
+  `run-tests.yml` runs it against a MySQL service container. Facts later PRs need:
+  - **PR-24 carries three things forward unchanged.** (a) The `Import Tests` context is a
+    new required-check candidate alongside the six existing ones -- rev 7.27(e) already
+    assigns the protection swap to PR-24. (b) The **pdsfile-rewrite install step** is in
+    every environment that installs or type-checks this package: the lint, unit, Import
+    Tests and docs jobs and the package job's wheel smoke in `run-tests.yml`, and the
+    self-hosted workflow's `pip install -e ".[dev]"`. It tracks the branch tip, not a SHA.
+    (c) **Before the first PyPI publish carrying the enabled `Pds4File.use_shelves_only()`
+    line, the `rms-pdsfile` floor in `[project]` dependencies has to move to the rewrite's
+    release**: a wheel declaring `>=0.0.18` with that line enabled does not work, because
+    0.0.18's empty-key branch returns False with no fall-through and `from_path` raises on
+    the first PDS4 existence check.
+  - **`pdsfile.*` is out of `ignore_missing_imports`, which closes #1479.** The rewrite
+    ships `py.typed`, so mypy strict now checks every pdsfile call site. The whole error
+    surface was **10 errors in 4 files** and all are fixed here: `viewset` is
+    `PdsViewSet | bool`, so a truthiness test leaves a `bool` in the type
+    (`obs_general.py`); `abspath` is `str | None` on a `PdsFile`, which two call sites had
+    to narrow; and one test's fake pdsfile needed a cast. Regenerate rather than trust that
+    count.
+  - **`viewset` misses in two different ways, and a caller has to reject both.** pdsfile's
+    own `viewset_lookup` docstring says it in as many words: a file that does not exist,
+    and a directory whose candidate children all decline, give `None`; **everything else
+    that fails gives an empty `PdsViewSet`**, which is falsy but is not None -- and whose
+    `thumbnail` and `full_size` raise `IndexError` rather than returning nothing. So the
+    narrowing in `obs_general.field_obs_general_preview_images` is
+    `isinstance(viewset, PdsViewSet) and viewset`: the isinstance is what satisfies mypy
+    and the truthiness is what preserves behavior. An isinstance alone turns the old
+    "Missing all browse/diagram images" warning into an uncaught `IndexError`, and the
+    mini-holdings fixture cannot see it -- every fixture bundle's primary filespec matches
+    its rules module's viewables -- so only the self-hosted integration run would.
+  - **The fixture and the goldens, measured.** 24 volumes -- one per `BUNDLE_INFO` entry
+    with an instrument class, minus the one entry with no bundle in the holdings
+    (`cassini_iss_fring_mosaics_rsfrench2025`, recorded in `exclusions.tsv`). 371 files,
+    **4,964,026 bytes raw**, 7,146 expected products, 193 shelf manifests; **144 golden
+    tables, 4,424,700 bytes** after the 2026-08-31 size rulings below (5,921,220 bytes
+    before them). Packed it is a little over 0.6 MB, stated loosely on purpose:
+    a `tar | gzip` byte count moves with tar's directory ordering (664 KB sorted against
+    677 KB unsorted here), so it is not a figure to regress against. The 2026-08-26
+    estimate of ~475 KB raw was for one PDS3 volume plus one PDS4 bundle at N=20; labels
+    dominate and there are now 24 of them. The whole PR is **564 changed files, of which
+    49 are not recorded fixture data**, so it exceeds CodeRabbit's 100-file cap and rev
+    7.2's wide-PR exception applies, exactly as that note predicted.
+  - **A third non-determinism, found by CI and fixed here.** `do_import.import_one_bundle`
+    iterated `os.listdir` of the index directory unsorted. A bundle can have several
+    primary indexes -- COCIRS_1xxx has one per cube geometry -- and row ids are handed out
+    in insertion order, so **every id in the database depended on how one filesystem
+    happened to enumerate one directory**. The suite's first CI run caught it: 19 golden
+    comparisons failed with identical row counts and identical values, the COCIRS ring
+    indexes simply sorted ahead of the equirectangular ones on a GitHub runner and behind
+    them here. `sorted()` fixes it, the goldens were regenerated over the fixed order, and
+    the diff was verified to be ids only. This is the defect class the suite was built to
+    find, and it found one on the first run against a machine that was not the one the
+    fixture was recorded on.
+  - **Two more things the import does that are not deterministic, and what the suite does
+    about them.** Both are real and neither is PR-19's to fix. (1) `do_param_info` asks the
+    backend which tables to describe and gets a **set**, so the ids it hands out follow a
+    string-hash order that Python randomizes per process. The suite pinned
+    `PYTHONHASHSEED` for it, **which turned out not to be enough**: the set is filled from
+    an `INFORMATION_SCHEMA` query with no `ORDER BY`, so its iteration order depends on the
+    insertion order too, and CI produced different `param_info` ids from the same fixture
+    on a run whose only change was recorder-only code. Fixed at the source instead --
+    `ImportDBSuper.table_names` now returns sorted names, which every other caller in the
+    pipeline was already wrapping in `sorted()`; `do_param_info` was the one that was not.
+    The hash-seed pin stays, since it costs nothing and covers any set order this does not. (2) `obs_general.preview_images` is `PdsViewSet.to_dict()`, and pdsfile
+    documents that its members come out "in the iteration order of a Python set, which is
+    not the order they were appended in and is not stable across processes" -- a set of
+    objects, so the hash seed does not settle it either. The golden serializer sorts that
+    one list, which is a **second normalization beyond the specification's timestamp-only
+    rule** and is named and justified where it is applied. Both would be better fixed at
+    the source: a sorted table list in `do_param_info`, and a sorted or ordered view set.
+  - **Four things about the holdings machine that a recorder run depends on.** (a) The
+    holdings sit on a **case-insensitive filesystem**: `OBSINDEX.tab` and `OBSINDEX.TAB`
+    are the same file there and different files in the repository, so the recorder takes a
+    table's name from its label's own `^` pointer rather than from the label's name with an
+    extension swapped. (b) The PDS4 shelf tools have to be pointed at a **bundle set**, not
+    at a bundle: pdsfile reports `uranus_occ_support` as a bundle set of its own, so naming
+    it directly makes the tools' driver expand it a second time and try to checksum the
+    directories inside it. (c) The tools are run with `--reinitialize`, and the tree the
+    recorder itself wrote is re-staged every run, because reusing the previous run's copy
+    builds shelves over files that are no longer the fixture's. (d) The recorder deletes
+    what it owns before it writes, so a volume that is no longer chosen disappears rather
+    than lingering.
+  - **The row-file check decides which index files reach `obs_files`, and it does not read
+    the rows.** `find_selected_row_key` asks whether an index's *shelf* carries the
+    observation's key; the key is not always the row's own file name (a Voyager occultation
+    index row for a calibration file carries the profile's key) and not always equal to it
+    (a Voyager image index is keyed by the image number while the observation's file name
+    carries a `_RAW` suffix, which pdsfile resolves by longest prefix). So the fixture reads
+    the production index shelf and keeps the rows that shelf maps the observations' keys to,
+    on top of the sampled rows -- and the same rule is what puts Hubble's `*_hstfiles` and
+    Voyager's `*_index` tables in the fixture at all: the import never reads them as
+    metadata, but it lists them among an observation's products.
+  - **Six claims in the PR-19 specification that reality contradicts**, none of which
+    changes what the design asks for. (1) The §4 statement that "production holdings carry
+    no sidecars either" is false -- every production info shelf has a `.py` sidecar beside
+    its `.pickle`. The instruction it justifies still holds and was verified directly: the
+    import never reaches pdsfile's null-key sidecar path, and the built tree's pickles alone
+    are sufficient. (2) §5's "crafted duplicate-opus-id pair" cannot be a duplicated index
+    row: `obs_general.opus_id` carries a `unique` key, so a second row with the same id
+    fails the insert before `--import-check-duplicate-id` is consulted. The case is instead
+    one volume imported **twice in a single `--do-all-import` invocation**, which is the
+    production situation the flag exists for (GO_0016/GO_0017 share observations) and the
+    only one that reaches `read_existing_import_opus_id`. (3) §2's PDS4 excerpt assumes a
+    bundle-level metadata directory; `cassini_uvis_solarocc_beckerjarmak2023` keeps its
+    index directly under its bundle set, and pdsfile then addresses each file there as a
+    bundle of its own, so the fixture mirrors the holdings' own layout below `metadata/`
+    rather than assuming `<bundle set>/<bundle>/`. (4) §2 expects `uranus_occ_support`
+    shelves in the fixture; pdsfile **raises** rather than naming a shelf for a file inside
+    a `_support` directory, so no manifest can make one answer, and those products are
+    recorded nowhere. The recorder reports every bundle it drops for that reason. (5) §5's
+    "re-importing a volume the database already holds must change nothing but timestamp
+    columns" is false, and cannot be made true: `import_util.find_max_table_id` hands out
+    ids from the largest already present **in either namespace**, and the perm-table delete
+    happens after the import tables are filled, so a re-imported bundle is renumbered above
+    everything else in the table. Measured on the fixture: every table keeps its exact row
+    count and every value outside `id` and `obs_general_id` is unchanged; the re-imported
+    volume's ids move (63 becomes 399, and so on). The assertion is therefore split -- a
+    table holding none of that bundle's rows must be byte-identical to its golden, ids
+    included, and a table holding them must hold the same rows once those two
+    server-numbered columns are dropped, with a third assertion that neither half is empty.
+    The split is *stronger* where it matters, and wider than "the mult tables": of the 144
+    goldened tables, 47 carry a `bundle_id` and only **18** hold a row of the re-imported
+    volume, so the byte-identical half is the mult tables, the dictionary and finalization
+    tables, **and the 29 obs tables that hold no row of that volume** -- 126 of 144 held to
+    their ids, the upsert's landing place among them. (6) §5 says coverage's per-function JSON
+    regions "arrived in 7.5". They arrived in **7.6.0**, with JSON report format version 3
+    -- 7.5.x writes format 2, which carries no `functions` key at all (verified by reading
+    `coverage/jsonreport.py` in the 7.5.0, 7.5.4 and 7.6.0 sdists). The dev floor is
+    `coverage>=7.6`; a `>=7.5` floor would let a resolve pick a coverage that fails the
+    job.
+  - **The negative cases' crafted input is a recipe, not a copied table.**
+    `import_tests/fixtures/negative/ignore_errors.tsv` names the *registered type*, the row,
+    the column and the replacement, and the overlay is built from it at run time. A
+    checked-in copy of a subsetted index would name a volume that the recorder's own
+    selection rule chooses, and would go stale the day that choice changed.
+  - **The unit-coverage gate is live and measured at 75%.** `[tool.coverage.report]
+    fail_under` is what `pytest import_tests --cov` reaches, rounded down; the unit legs and
+    `scripts/run-all-checks.sh` stay `--cov`-free, so exactly one job measures and exactly
+    one number gates. Of the 1,396 function regions under `src/opus_import/obs/`, 36 hold
+    no statement coverage can record -- an abstract method whose whole body is
+    `raise NotImplementedError`, which `exclude_lines` excludes, reads exactly like a
+    method nobody called, so the check skips a region with no statements rather than
+    demanding a whitelist entry that could never come off. Of the 1,355 that remain,
+    **1,259 are proven executed by the run**; the 96 in the whitelist are the 50 belonging
+    to the type with no bundle in the holdings, 41 shared implementations every concrete
+    class in reach overrides, and 5 branches the sampled rows do not reach. `codecov.yml`'s
+    unflagged
+    project/patch statuses are gone: the integration upload carries the `integration` flag
+    with the 90% target and the new upload carries `import`, informational, because an
+    unflagged default measures the two uploads merged.
+  - **The recorder's schema comparison is opt-in, and that is a narrowing of §3.** §3 has
+    the recorder always compare each volume set's volumes and report any whose index schema
+    differs. `--compare-schemas` does it on request instead, because it parses **every**
+    volume of every volume set rather than the two dozen the fixture keeps -- hours against
+    minutes, on a run an operator does by hand. It reports both halves the specification
+    asks for: columns the sibling has and the representative does not, and value classes a
+    shared column shows that the representative's rows never take.
+  - **Four rfrench rulings of 2026-08-31, three of which supersede the PR-19 spec.** The
+    spec (`plans/2026-08-30_pr19_mini_holdings_fixture.md`) says goldens cover "every table
+    the import writes", that the table exclusion "is exactly the tables `manage.py migrate`
+    creates -- **never by a list here**", and that no column beyond the timestamps is
+    normalized. All three are now false by ruling, and a reader of those clauses would
+    otherwise be misled. (1) The `definitions` golden was dropped and then
+    **restored the same day**, the exclusion superseded once `pdsdd.full` went: the table
+    is no longer a megabyte restating a frozen file but 619 rows computed from the packaged
+    table schemas, and the UI reads it for every tooltip. It is goldened, at 244,032 bytes
+    -- five times the ~50 KB the reversal estimated, because definitions carry long prose.
+    `golden_io.EXCLUDED_TABLES` is therefore **empty**, and deliberately kept along with
+    the three tests that hold any future entry to existing, holding rows, and not also
+    being goldened: those pass trivially over an empty mapping and start working the
+    moment anyone adds to it. (2) `obs_files.url` is dropped as derivable, with the derivation
+    asserted against the database instead of stored, so the saving is bytes and not
+    coverage. (3) `pdsdd.full` is removed from the pipeline. (4) Coverage is off by default
+    locally; the executed-functions tests skip without a report but still **fail** under
+    `GITHUB_ACTIONS`, so dropping `--cov` from the workflow cannot delete the gate.
+  - **Two production behavior changes ride in PR-19**, neither of them test-only. (a) The
+    `sorted()` fix above changes the order rows are inserted, so a fresh import assigns
+    different ids to any bundle with several primary indexes. (b) **`pdsdd.full` is deleted
+    and the `definitions` table loses its 2,195 PSDD rows**, 78% of the 2,814 it held. They
+    were unreachable: `PSDD` appears in none of the 22 `pi_dict_context` values the packaged
+    schemas carry, the application's only literal context filter is `OPUS_PRODUCT_TYPE`, and
+    the three `PSDD` strings in the schemas are prose comments. Tooltip content comes from
+    the schemas. Measured motivation: `--import-dictionary` took 31s, 99% of it in the
+    pdsdd parser (cProfile: 130.5 of 131.7 instrumented seconds, 749M calls), paid three
+    times per suite run, for rows nothing could read. `contexts.csv` keeps its `PSDD` row --
+    it is the **root of the context tree**, the direct parent of 8 rows and the ancestor of
+    21 of the other 22, so removing it would orphan them. This falsifies three more clauses
+    of the PR-19 spec, named here for the same reason as the others:
+    `plans/2026-08-30_pr19_mini_holdings_fixture.md` §104 ("the packaged `pdsdd.full` --
+    deterministic, shipped in the wheel"), §193 ("the packaged `pdsdd.full` is used"), and
+    §145's coverage table, which lists "the dictionary step against the packaged
+    `pdsdd.full`" as covered -- doubly false now, since the file is gone and `definitions`
+    is excused from the goldens.
+    `util/dump_pds_definitions.py` stays: it parses a user-supplied PDS *index label* to
+    help author table schemas and never touched `pdsdd.full`.
+  - **The suite is ~2 minutes by default.** A bare `pytest import_tests` is 223 passed, 3
+    skipped in 1:36; with coverage it is 222 passed in 4:01, plus the second command's 4. Getting there: the pdsdd
+    removal took the main run from 106s to 69s, and the negative cases now stop after their
+    imports rather than running the full production sequence (4.9s and 3.9s, from ~39s
+    each) -- their assertions read only `obs_general`, the target-name mult table, the step
+    statuses and the error log, all of which `--do-all-import` has already written. The main
+    run keeps the full sequence, which is where that order is under test. This narrows the
+    spec's §5 "each negative case is its own run" to a reduced step list.
+  - **Five dead obs functions deleted, and a guard so the whitelist cannot hide another.**
+    The unexecuted-method whitelist admits functions *this fixture* does not reach; a
+    function **nothing** reaches is dead code, and admitting it there keeps it alive by
+    explaining away the only evidence of its deadness. An audit of all 101 entries asked
+    one question each -- is there any caller, static or by the import's name dispatch? --
+    and found six with neither. Five were dead and are gone with their entries:
+    `ObsVolumeCOCIRS01xxx._is_cassini_at_north` (its sign logic is carried by
+    `observer_ring_elevation1`'s `90 - ea`), `ObsVolumeVGISS5678xxx.opus_id_from_supp_index_row`
+    (moot -- supp rows join by primary filespec, and the only opus-id derivation is
+    `opus_id_from_index_row` on primary rows), `ObsBase._supp_index_label_col`,
+    `ObsBase._col_in_supp_index` and `ObsPdsPDS3._product_creation_time_from_index`. All
+    five are definition-only on `origin/main` as well, so none was orphaned by this
+    modernization. The sixth, `ObsBase.__str__`, **stays**: a dunder is called by the
+    language rather than by name, which is the false positive any such check has to
+    handle. `import_tests.tools.obs_execution.unreachable_entries` now fails a whitelist
+    entry whose function has no caller at all, where reachable means the import can
+    dispatch to it by name from a packaged schema -- asked of `field_function_name`, not
+    restated -- or some shipped source mentions it, or it is a dunder. Mutation-tested:
+    re-whitelisting a deleted function turns it red.
+  - **The dev guide has a Testing chapter.** `docs/dev_guide_testing.rst`, holding the
+    material that was buried inside Environment Setup plus the integration instructions
+    that did not exist: what each of the three suites needs, and for `integration_tests/`
+    the actual three-step chain read out of the scripts -- `opus_setup_environment.sh`
+    writes `opus.toml`, `import_for_tests.sh` populates a per-run schema from the
+    holdings, `opus_run_unittests_coverage.sh` runs the three trees in one serial pytest
+    under `COVERAGE_RCFILE`. It says plainly that the chain is **not generally runnable**,
+    because the import needs the terabyte holdings, rather than implying a developer
+    without that machine can follow it. It also records the trap in `opus_main_test.sh`:
+    that script is not the coverage gate and exits 0 at 99%; `opus_check_coverage.sh` is.
+  - **Recorded as a candidate, not fixed here:** `importdb/mysql.py`'s `create_table`
+    updates its own table-name cache *inside* its `if self.logger:` branch, so a connection
+    opened without a logger answers `table_exists` from a cache that never learned about the
+    table it just created. Every production call site passes a logger, which is why nothing
+    has hit it.

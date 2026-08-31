@@ -1,0 +1,225 @@
+PDS_VERSION_ID              = PDS3
+RECORD_TYPE                 = FIXED_LENGTH
+FILE_RECORDS                = 20
+RECORD_BYTES                = 262
+^SUPPLEMENTAL_INDEX_TABLE   = "COCIRS_1101_cube_equi_supplemental_index.tab"
+
+VOLUME_ID                   = "COCIRS_1101"
+PRODUCT_CREATION_TIME       = 2021-10-03T10:25:11
+
+INSTRUMENT_HOST_NAME        = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID          = "CO"
+INSTRUMENT_NAME             = "COMPOSITE INFRARED SPECTROMETER"
+INSTRUMENT_ID               = "CIRS"
+
+OBJECT                          = SUPPLEMENTAL_INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 20
+  ROW_BYTES                     = 262
+  COLUMNS                       = 17
+  INDEX_TYPE                    = SINGLE
+
+  DESCRIPTION                   = "This index supplements the file
+    INDEX/*INDEX.TAB found in the COCIRS_0/1xxx volumes. It contains a set of
+    useful parameter values that are found in the labels but are not found in
+    the default index files."
+
+    OBJECT                      = COLUMN
+      NAME                      = VOLUME_ID
+      DATA_TYPE                 = CHARACTER
+      COLUMN_NUMBER             = 1
+      START_BYTE                = 2
+      BYTES                     = 11
+      FORMAT                    = A11
+      DESCRIPTION               = "The volume containing this product."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = FILE_SPECIFICATION_NAME
+      DATA_TYPE                 = CHARACTER
+      COLUMN_NUMBER             = 2
+      START_BYTE                = 16
+      BYTES                     = 73
+      FORMAT                    = A73
+      DESCRIPTION               = "Pathname to the detached label that
+                                   identifies this data file."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = OBSERVATION_ID
+      DATA_TYPE                 = CHARACTER
+      COLUMN_NUMBER             = 3
+      START_BYTE                = 92
+      BYTES                     = 29
+      FORMAT                    = A29
+      DESCRIPTION               = "Unique bservation identifier as used by
+                                   the Cassini project."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = MISSION_PHASE_NAME
+      DATA_TYPE                 = CHARACTER
+      COLUMN_NUMBER             = 4
+      START_BYTE                = 124
+      BYTES                     = 25
+      FORMAT                    = A25
+      DESCRIPTION               = "Mission phase of which this observation
+                                   is a part."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = DETECTOR_ID
+      DATA_TYPE                 = CHARACTER
+      COLUMN_NUMBER             = 5
+      START_BYTE                = 152
+      BYTES                     = 3
+      FORMAT                    = A3
+      DESCRIPTION               = "The CIRS focal plane used to obtain the
+                                   data, one of 'FP1', 'FP3', or 'FP4'."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = LINES
+      DATA_TYPE                 = ASCII_INTEGER
+      COLUMN_NUMBER             = 6
+      START_BYTE                = 157
+      BYTES                     = 5
+      FORMAT                    = I5
+      DESCRIPTION               = "Number of lines in the data cube. The axis
+                                   order is (band, line, sample), with band
+                                   being the slowest-changing axis."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = LINE_SAMPLES
+      DATA_TYPE                 = ASCII_INTEGER
+      COLUMN_NUMBER             = 7
+      START_BYTE                = 163
+      BYTES                     = 5
+      FORMAT                    = I5
+      DESCRIPTION               = "Number of samples in the data array. The
+                                   axis order is (band, line, sample), with
+                                   band being the slowest-changing axis."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = BANDS
+      DATA_TYPE                 = ASCII_INTEGER
+      COLUMN_NUMBER             = 8
+      START_BYTE                = 169
+      BYTES                     = 5
+      FORMAT                    = I5
+      DESCRIPTION               = "The number of wavenumber bins in the data
+                                   array. The axis order is (band, line,
+                                   sample), with band being the slowest-
+                                   changing axis. This value does not include
+                                   any backplanes."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = BACKPLANES
+      DATA_TYPE                 = ASCII_INTEGER
+      COLUMN_NUMBER             = 9
+      START_BYTE                = 175
+      BYTES                     = 2
+      FORMAT                    = I2
+      DESCRIPTION               = "The number of geometric backplanes in the
+                                   data array. Backplanes are 2-D arrays in
+                                   (line, sample) coordinates, which contain
+                                   geometric information. Backplanes follow
+                                   the last wavelength bin in each data array,
+                                   so the actual array dimensions are (bands +
+                                   backplanes, lines, samples), with the first
+                                   axis being the slowest-changing axis."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = MINIMUM_WAVENUMBER
+      DATA_TYPE                 = ASCII_REAL
+      COLUMN_NUMBER             = 10
+      START_BYTE                = 178
+      BYTES                     = 8
+      FORMAT                    = "F8.3"
+      DESCRIPTION               = "The minimum wavenumber in the file, in
+                                   inverse cm."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = MAXIMUM_WAVENUMBER
+      DATA_TYPE                 = ASCII_REAL
+      COLUMN_NUMBER             = 11
+      START_BYTE                = 187
+      BYTES                     = 8
+      FORMAT                    = "F8.3"
+      DESCRIPTION               = "The maximum wavenumber in the file, in
+                                   inverse cm."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = BAND_BIN_WIDTH
+      DATA_TYPE                 = ASCII_REAL
+      COLUMN_NUMBER             = 12
+      START_BYTE                = 196
+      BYTES                     = 6
+      FORMAT                    = "F6.3"
+      DESCRIPTION               = "The width of each wavenumber bin in inverse
+                                   cm."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = DATA_COUNT
+      DATA_TYPE                 = ASCII_INTEGER
+      COLUMN_NUMBER             = 13
+      START_BYTE                = 203
+      BYTES                     = 6
+      FORMAT                    = I6
+      DESCRIPTION               = "The number of interferograms combined to
+                                   create this file."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = "CSS:MIN_FOOTPRINT_LINE"
+      DATA_TYPE                 = ASCII_REAL
+      COLUMN_NUMBER             = 14
+      START_BYTE                = 210
+      BYTES                     = 12
+      FORMAT                    = "F12.5"
+      DESCRIPTION               = "The minimum line number containing the
+                                   target."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = "CSS:MAX_FOOTPRINT_LINE"
+      DATA_TYPE                 = ASCII_REAL
+      COLUMN_NUMBER             = 15
+      START_BYTE                = 223
+      BYTES                     = 12
+      FORMAT                    = "F12.5"
+      DESCRIPTION               = "The maximum line number containing the
+                                   target."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = "CSS:MIN_FOOTPRINT_SAMPLE"
+      DATA_TYPE                 = ASCII_REAL
+      COLUMN_NUMBER             = 16
+      START_BYTE                = 236
+      BYTES                     = 12
+      FORMAT                    = "F12.5"
+      DESCRIPTION               = "The minimum sample number containing the
+                                   target."
+    END_OBJECT                  = COLUMN
+
+    OBJECT                      = COLUMN
+      NAME                      = MAX_FOOTPRINT_SAMPLE
+      DATA_TYPE                 = ASCII_REAL
+      COLUMN_NUMBER             = 17
+      START_BYTE                = 249
+      BYTES                     = 12
+      FORMAT                    = "F12.5"
+      DESCRIPTION               = "The maximum sample number containing the
+                                   target."
+    END_OBJECT                  = COLUMN
+
+END_OBJECT                      = SUPPLEMENTAL_INDEX_TABLE
+END

@@ -1,0 +1,6 @@
+{
+    'COVIMS_8001_index.lbl': [(4, 'COVIMS_8001_index.tab', 'COVIMS_8001_index.tab')],
+    'COVIMS_8001_index.tab': 'COVIMS_8001_index.lbl',
+    'COVIMS_8001_supplemental_index.lbl': [(4, 'COVIMS_8001_supplemental_index.tab', 'COVIMS_8001_supplemental_index.tab')],
+    'COVIMS_8001_supplemental_index.tab': 'COVIMS_8001_supplemental_index.lbl',
+}

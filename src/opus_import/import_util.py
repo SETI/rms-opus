@@ -95,7 +95,7 @@ class MultOption(NamedTuple):
 
 # Data that ships inside the package, located through importlib.resources rather than
 # from __file__ or the working directory so that it is found in an installed wheel too:
-# the JSON schemas that define every OPUS table, and the PDS data dictionary sources the
+# the JSON schemas that define every OPUS table, and the dictionary context tree the
 # dictionary import step reads.
 TABLE_SCHEMA_DIR = files('opus_import') / 'table_schemas'
 DICTIONARY_DATA_DIR = files('opus_import') / 'dictionary_data'

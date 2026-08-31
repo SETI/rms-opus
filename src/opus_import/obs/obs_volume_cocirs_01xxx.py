@@ -34,19 +34,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
         """Whether this cube is projected onto the ring plane rather than onto a body."""
         return self._get_cube_map_projection() == 'r'
 
-    # Use north based emission angle to determine if observer is at the north of the
-    # ring.
-    def _is_cassini_at_north(self) -> bool:
-        """Whether the spacecraft was on the north face of the rings.
-
-        Returns:
-            True for a north-based emission angle of 90 degrees or less, which is what
-            decides the sign of the observer's ring elevation.
-        """
-        ea = self.field_obs_ring_geometry_north_based_emission1()
-        assert ea is not None
-        return 0 <= ea <= 90
-
     #############################
     ### OVERRIDE FROM ObsBase ###
     #############################

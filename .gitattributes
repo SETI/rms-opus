@@ -2,3 +2,18 @@ src/opus_app/static/admin linguist-vendored
 src/opus_app/static/cdn_fallback linguist-vendored
 src/opus_app/static/coreui linguist-vendored
 src/opus_app/static/perfect-scrollbar linguist-vendored
+
+# The mini-holdings fixture is real archive content, and its PDS3 tables are
+# fixed-length records terminated by CRLF -- the label's RECORD_BYTES counts both
+# bytes, so COISS_2055_index.tab is 20 records of exactly 3069. Git must not touch a
+# line ending in there: committing one of these under core.autocrlf on a Windows
+# machine normalizes CRLF to LF, every record loses a byte, and every row is then
+# parsed one byte short with no error anywhere. -text turns end-of-line conversion off
+# for the whole fixture, in both directions, whatever the developer's configuration
+# says.
+tests/fixtures/mini_holdings/** -text
+
+# The goldens are this repository's own text, written and read by one serializer with
+# \n line endings, so they follow the repository's normal rules and are marked text so
+# a diff of one shows rows.
+import_tests/goldens/*.tsv text eol=lf

@@ -43,7 +43,7 @@ What the tools enforce
 ----------------------
 
 Every rule that *can* be checked mechanically is, and
-``scripts/run-all-checks.sh`` runs the checks (see :ref:`dev_guide_environment` for
+``scripts/run-all-checks.sh`` runs the checks (see :ref:`dev_guide_testing` for
 the list and what configures each one). Three of them are worth knowing about before
 writing code:
 

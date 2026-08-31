@@ -21,14 +21,6 @@ class ObsPdsPDS3(ObsPds, ObsBasePDS3):
 
     # Product creation time helpers
 
-    def _product_creation_time_from_index(self) -> FloatField:
-        """Read when this product was created, from the primary index row.
-
-        Returns:
-            The time in seconds TAI, or None if the column is missing or unparsable.
-        """
-        return self._time_from_index(column='PRODUCT_CREATION_TIME')
-
     def _product_creation_time_from_supp_index(self) -> FloatField:
         """Read when this product was created, from the supplemental index row.
 

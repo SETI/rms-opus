@@ -1,0 +1,6 @@
+{
+    'NHKELO_1001_index.lbl': [(6, 'NHKELO_1001_index.tab', 'NHKELO_1001_index.tab')],
+    'NHKELO_1001_index.tab': 'NHKELO_1001_index.lbl',
+    'NHKELO_1001_supplemental_index.lbl': [(4, 'NHKELO_1001_supplemental_index.tab', 'NHKELO_1001_supplemental_index.tab')],
+    'NHKELO_1001_supplemental_index.tab': 'NHKELO_1001_supplemental_index.lbl',
+}

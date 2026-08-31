@@ -34,8 +34,8 @@ perfectly good column lists that simply do not describe a table of their own:
 ``internal_def_product_types.json``
     A dictionary source rather than a table. Its entries carry only ``definition``,
     ``pi_dict_name`` and ``pi_dict_context`` -- no ``field_name``, no ``field_type``
-    -- and :mod:`opus_import.steps.do_dictionary` reads them alongside the PDS data
-    dictionary.
+    -- and :mod:`opus_import.steps.do_dictionary` reads them to fill the
+    ``definitions`` table.
 
 Reading a schema is :func:`opus_import.import_util.read_schema_for_table`, and it is
 the only place that substitution happens.

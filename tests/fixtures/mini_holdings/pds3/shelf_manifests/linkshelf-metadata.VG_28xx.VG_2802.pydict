@@ -1,0 +1,6 @@
+{
+    'VG_2802_index.lbl': [(4, 'VG_2802_index.tab', 'VG_2802_index.tab')],
+    'VG_2802_index.tab': 'VG_2802_index.lbl',
+    'VG_2802_supplemental_index.lbl': [(4, 'VG_2802_supplemental_index.tab', 'VG_2802_supplemental_index.tab')],
+    'VG_2802_supplemental_index.tab': 'VG_2802_supplemental_index.lbl',
+}

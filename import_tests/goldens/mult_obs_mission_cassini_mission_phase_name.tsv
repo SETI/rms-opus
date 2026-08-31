@@ -1,0 +1,20 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	INTERPLANETARY CRUISE	Interplanetary Cruise	000	Y	\N	\N	\N
+1	VENUS 1 ENCOUNTER	Venus 1 Encounter	010	Y	\N	\N	\N
+2	VENUS 2 ENCOUNTER	Venus 2 Encounter	020	Y	\N	\N	\N
+3	EARTH ENCOUNTER	Earth Encounter	030	Y	\N	\N	\N
+4	OUTER CRUISE	Outer Cruise	040	Y	\N	\N	\N
+5	JUPITER ENCOUNTER	Jupiter Encounter	050	Y	\N	\N	\N
+6	SCIENCE CRUISE	Science Cruise	060	Y	\N	\N	\N
+7	APPROACH SCIENCE	Approach Science	070	Y	\N	\N	\N
+8	PHOEBE ENCOUNTER	Phoebe Encounter	080	Y	\N	\N	\N
+9	TOUR PRE-HUYGENS	Tour Pre-Huygens	090	Y	\N	\N	\N
+10	SATURN ORBIT INSERTION	Saturn Orbit Insertion	100	Y	\N	\N	\N
+11	TITAN A ENCOUNTER	Titan A Encounter	110	Y	\N	\N	\N
+12	TITAN B ENCOUNTER	Titan B Encounter	120	Y	\N	\N	\N
+13	HUYGENS PROBE SEPARATION	Huygens Probe Separation	130	Y	\N	\N	\N
+14	HUYGENS DESCENT	Huygens Descent	140	Y	\N	\N	\N
+15	TITAN C HUYGENS	Titan C Huygens	150	Y	\N	\N	\N
+16	TOUR (PRIME MISSION)	Tour (Prime Mission)	160	Y	\N	\N	\N
+17	EQUINOX MISSION (XM)	Equinox Mission (XM)	170	Y	\N	\N	\N
+18	SOLSTICE MISSION (XXM)	Solstice Mission (XXM)	180	Y	\N	\N	\N

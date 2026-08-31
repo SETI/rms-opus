@@ -706,7 +706,9 @@ def get_opus_products_rows_for_filespec(
 
     products = pdsf.opus_products()
     if '' in products:
-        file_list_str = '  '.join([x.abspath for x in products[''][0]])
+        # A product that is not local has no absolute path; it cannot be named in the
+        # message, and there is nothing to say about it beyond the ones that can.
+        file_list_str = '  '.join([x.abspath for x in products[''][0] if x.abspath is not None])
         if ctx.args.import_report_empty_products:
             import_util.log_nonrepeating_warning(
                 ctx, f'Empty opus_product key for files: {file_list_str}'

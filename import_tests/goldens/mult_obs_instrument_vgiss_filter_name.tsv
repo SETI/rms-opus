@@ -1,0 +1,10 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	CLEAR	Clear	010	Y	\N	\N	\N
+1	UV	UV	020	Y	\N	\N	\N
+2	VIOLET	Violet	030	Y	\N	\N	\N
+3	BLUE	Blue	040	Y	\N	\N	\N
+4	GREEN	Green	050	Y	\N	\N	\N
+5	CH4_U	Methane-U	060	Y	\N	\N	\N
+6	SODIUM	Sodium-D	070	Y	\N	\N	\N
+7	ORANGE	Orange	080	Y	\N	\N	\N
+8	CH4_JS	Methane-JST	090	Y	\N	\N	\N
