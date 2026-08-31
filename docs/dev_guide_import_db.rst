@@ -274,8 +274,8 @@ Bundle expansion and PDS table reading
     logged before the run exits, so one invocation reports all of them. A New Horizons
     bundleset's listing is reversed, so its calibrated bundle is yielded before its raw
     one; see :ref:`dev_guide_import_obs_classes` for what that is for and what else it
-    reorders. Anything named by ``--exclude-bundles``, and
-    any name containing a dot, is dropped.
+    reorders. Anything named by ``--exclude-bundles``, and any name containing a dot,
+    is dropped.
 
 :func:`~opus_import.import_util.safe_pdstable_read`
     Reads a PDS index table. For PDS3 it delegates to
