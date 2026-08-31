@@ -370,8 +370,9 @@ In order, because each check depends on the one before::
     # Static files are served by the web server, not by Django.
     curl -sI https://opus.example.org/static_media/js/opus.js | head -1
 
-    # A data product resolves.
-    curl -sI https://opus.example.org/holdings/ | head -1
+    # A data product resolves. Directory listing is off, so ask for a real file --
+    # take one out of api/files below, or off the Details tab.
+    curl -sI https://opus.example.org/holdings/<a logical path> | head -1
 
     # The application can reach the database.
     curl -s 'https://opus.example.org/api/meta/result_count.json?planet=Saturn'
