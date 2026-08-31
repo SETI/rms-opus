@@ -111,7 +111,8 @@ SCOPE_SPECIFIED=false
 # manage.py at the root.
 # Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
 # names count as used); min-confidence/exclude come from [tool.vulture]. Bandit
-# never scans a test tree.
+# skips tests/ and import_tests/ but does scan integration_tests/, which drives a
+# live server.
 : "${OPUS_RUFF_PATHS:=src integration_tests import_tests tests docs manage.py}"
 # mypy covers the same trees, and integration_tests/ is checked strictly like
 # every other one: no tree carries a burn-down entry.

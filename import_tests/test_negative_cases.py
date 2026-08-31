@@ -84,6 +84,7 @@ def _bundle_names(root: Path) -> set[str]:
     return {
         bundle_dir.name
         for bundleset_dir in root.iterdir()
+        if bundleset_dir.is_dir()
         for bundle_dir in bundleset_dir.iterdir()
         if bundle_dir.is_dir()
     }

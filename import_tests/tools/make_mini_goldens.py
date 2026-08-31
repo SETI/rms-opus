@@ -67,7 +67,9 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def check_run_is_clean(run: build_run.ImportRun, credentials: DatabaseCredentials) -> list[str]:
+def check_run_is_clean(
+    run: build_run.ImportRun, credentials: DatabaseCredentials, *, ignore_whitelist: bool = False
+) -> list[str]:
     """Return the reasons a run must not be blessed into the goldens.
 
     Everything the suite asks about the *run itself*, checked before anything is written
@@ -84,6 +86,11 @@ def check_run_is_clean(run: build_run.ImportRun, credentials: DatabaseCredential
     Parameters:
         run: The completed run.
         credentials: How to reach the database server.
+        ignore_whitelist: Whether to skip the two checks that compare the run's warnings
+            with the checked-in whitelist. True only while seeding that whitelist, when
+            it does not describe this run yet and by definition cannot pass. Every other
+            check still applies: a whitelist seeded from a run whose steps died or whose
+            products are wrong would enshrine that run's warnings as the expected ones.
 
     Returns:
         One line per problem, empty when the run is clean.
@@ -103,15 +110,16 @@ def check_run_is_clean(run: build_run.ImportRun, credentials: DatabaseCredential
     if len(errors) > 0:
         problems.append(f'{len(errors)} error(s) logged, first: {errors[0]}')
 
-    warnings = run_logs.read_messages(run.paths.warnings_log)
-    entries = run_logs.read_whitelist(fixture_layout.WARNING_WHITELIST_FILE)
-    unmatched, unused = run_logs.classify(warnings, entries)
-    for message in run_logs.distinct(unmatched):
-        problems.append(f'warning not admitted by the whitelist: {message}')
-    for entry in unused:
-        problems.append(
-            f'whitelist line {entry.line_number} matched no warning: {entry.pattern.pattern}'
-        )
+    if not ignore_whitelist:
+        warnings = run_logs.read_messages(run.paths.warnings_log)
+        entries = run_logs.read_whitelist(fixture_layout.WARNING_WHITELIST_FILE)
+        unmatched, unused = run_logs.classify(warnings, entries)
+        for message in run_logs.distinct(unmatched):
+            problems.append(f'warning not admitted by the whitelist: {message}')
+        for entry in unused:
+            problems.append(
+                f'whitelist line {entry.line_number} matched no warning: {entry.pattern.pattern}'
+            )
 
     missing, extra = expected_products.differences(
         expected_products.read_expected_products(),
@@ -169,11 +177,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix='mini_holdings_goldens_') as temporary:
         try:
             run = build_run.perform_run(Path(temporary), schema, credentials)
-            if args.seed_whitelist:
+            problems = check_run_is_clean(run, credentials, ignore_whitelist=args.seed_whitelist)
+            if len(problems) == 0 and args.seed_whitelist:
                 for message in run_logs.distinct(run_logs.read_messages(run.paths.warnings_log)):
                     print(message)
                 return 0
-            problems = check_run_is_clean(run, credentials)
             if len(problems) > 0:
                 print('Refusing to write goldens; the run was not clean:')
                 for problem in problems:

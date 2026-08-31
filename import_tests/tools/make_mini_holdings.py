@@ -527,6 +527,46 @@ def _choose_and_record(
             _compare_schemas(ctx, entry, recorded, siblings, report)
 
 
+def _check_scratch_is_outside_the_holdings(args: argparse.Namespace) -> None:
+    """Refuse a scratch directory that overlaps either holdings root.
+
+    This module promises it never writes into the holdings, and until now nothing
+    enforced it. The staging step calls ``shutil.rmtree`` on its destination before
+    refilling it, so a ``--scratch`` path containing or contained by a holdings root
+    would delete real archive directories -- terabytes that no fixture can rebuild, on
+    the one machine that has them. The check is cheap and the mistake is not recoverable,
+    so it runs before anything is staged.
+
+    Parameters:
+        args: The parsed command line, for the scratch and holdings paths.
+
+    Raises:
+        ValueError: If the scratch directory is, contains, or sits inside a holdings root.
+    """
+    for name, given in (
+        ('--pds3-holdings', Path(args.pds3_holdings)),
+        ('--pds4-holdings', Path(args.pds4_holdings)),
+    ):
+        # Both spellings, because on the holdings machine `/data/pdsdata/holdings` is a
+        # symlink onto another filesystem. Resolving catches a scratch path that reaches
+        # the same tree by another route; not resolving catches a scratch path that
+        # contains the symlink itself, which an rmtree would remove just as effectively.
+        for scratch, holdings in (
+            (Path(args.scratch).absolute(), given.absolute()),
+            (Path(args.scratch).resolve(), given.resolve()),
+        ):
+            if (
+                scratch == holdings
+                or holdings.is_relative_to(scratch)
+                or scratch.is_relative_to(holdings)
+            ):
+                raise ValueError(
+                    f'--scratch {scratch} overlaps {name} {holdings}. The recorder deletes '
+                    'and refills its scratch tree, so it must sit outside the holdings '
+                    'entirely.'
+                )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Record the whole fixture.
 
@@ -537,6 +577,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         0 once the fixture is written; the run raises rather than returning non-zero.
     """
     args = _parse_args(argv)
+    _check_scratch_is_outside_the_holdings(args)
     Pds3File.preload(str(args.pds3_holdings))
     Pds4File.preload(str(args.pds4_holdings))
 

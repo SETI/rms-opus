@@ -206,8 +206,8 @@ def row_classes(
         for name, item in _cells(column, value):
             pairs.add((name, _cell_class(item, enumerated=name in enumerated)))
     for low, high in range_pairs:
-        low_value = row.get(low)
-        high_value = row.get(high)
+        low_value = _plain(row.get(low))
+        high_value = _plain(row.get(high))
         if is_missing(low_value) or is_missing(high_value):
             continue
         if not isinstance(low_value, (int, float)) or not isinstance(high_value, (int, float)):

@@ -248,10 +248,15 @@ def script_bundle_descriptors(script_path: Path) -> list[str]:
             continue
         if '--do-all-import' not in stripped:
             continue
-        fields = stripped.split()
-        position = fields.index('--do-all-import')
-        if position + 1 < len(fields):
-            descriptors.extend(fields[position + 1].split(','))
+        for index, field in enumerate(stripped.split()):
+            # Both spellings the option takes. Matching the substring alone would also
+            # match `--do-all-import-something`, and asking for the exact token alone
+            # would miss the `=` form and raise looking for it.
+            if field.startswith('--do-all-import='):
+                descriptors.extend(field.partition('=')[2].split(','))
+            elif field == '--do-all-import':
+                following = stripped.split()[index + 1 : index + 2]
+                descriptors.extend(word for value in following for word in value.split(','))
     return descriptors
 
 

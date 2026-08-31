@@ -98,8 +98,8 @@ def subset_fixed_length_table(table_bytes: bytes, record_bytes: int, rows: list[
     total = len(table_bytes) // record_bytes
     parts = []
     for row in rows:
-        if row >= total:
-            raise ValueError(f'Row {row} is past the end of a {total}-row table')
+        if row < 0 or row >= total:
+            raise ValueError(f'Row {row} is outside a {total}-row table')
         parts.append(table_bytes[row * record_bytes : (row + 1) * record_bytes])
     return b''.join(parts)
 
@@ -115,13 +115,13 @@ def subset_line_table(table_bytes: bytes, rows: list[int]) -> bytes:
         The kept lines with their original terminators.
 
     Raises:
-        ValueError: If a line number is past the end of the file.
+        ValueError: If a line number is negative or past the end of the file.
     """
     lines = table_bytes.splitlines(keepends=True)
     parts = []
     for row in rows:
-        if row >= len(lines):
-            raise ValueError(f'Line {row} is past the end of a {len(lines)}-line file')
+        if row < 0 or row >= len(lines):
+            raise ValueError(f'Line {row} is outside a {len(lines)}-line file')
         parts.append(lines[row])
     return b''.join(parts)
 
@@ -144,8 +144,8 @@ def subset_csv(csv_bytes: bytes, rows: list[int]) -> bytes:
         raise ValueError('CSV file is empty')
     parts = [lines[0]]
     for row in rows:
-        if row + 1 >= len(lines):
-            raise ValueError(f'Row {row} is past the end of a {len(lines) - 1}-row CSV')
+        if row < 0 or row + 1 >= len(lines):
+            raise ValueError(f'Row {row} is outside a {len(lines) - 1}-row CSV')
         parts.append(lines[row + 1])
     return b''.join(parts)
 
