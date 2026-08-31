@@ -125,11 +125,7 @@ def reimport_bundle_id(run: ImportRun) -> str:
 @pytest.fixture(scope='session')
 def run_tables(main_run: ImportRun, db_credentials: DatabaseCredentials) -> list[str]:
     """Return the tables the run left behind that the goldens are expected to cover."""
-    return [
-        table
-        for table in golden_io.list_tables(db_credentials, main_run.schema)
-        if table not in main_run.django_tables
-    ]
+    return golden_io.tables_to_golden(db_credentials, main_run.schema, main_run.django_tables)
 
 
 def test_goldens_cover_exactly_the_tables_the_run_wrote(run_tables: list[str]) -> None:
@@ -137,13 +133,43 @@ def test_goldens_cover_exactly_the_tables_the_run_wrote(run_tables: list[str]) -
     assert sorted(GOLDENED_TABLES) == sorted(run_tables)
 
 
-def test_django_tables_are_the_only_ones_excluded(main_run: ImportRun) -> None:
+def test_the_migration_created_tables_to_exclude(main_run: ImportRun) -> None:
     """The migration created some tables, which is what the golden exclusion is for.
 
     A migration that created nothing would mean the exclusion is measuring the wrong
     thing, and every Django table would then arrive as an unexplained extra table.
     """
     assert len(main_run.django_tables) > 0
+
+
+def test_every_excused_table_is_one_the_run_writes(
+    main_run: ImportRun, db_credentials: DatabaseCredentials
+) -> None:
+    """No entry in the excused list names a table the import no longer produces.
+
+    An entry that excuses nothing is the same defect as a whitelist line that admits
+    nothing: it is a claim about the run that has stopped being true, and it would go on
+    excusing whatever later took that name.
+    """
+    written = set(golden_io.list_tables(db_credentials, main_run.schema))
+    assert sorted(set(golden_io.EXCLUDED_TABLES) - written) == []
+
+
+def test_no_excused_table_is_also_goldened(main_run: ImportRun) -> None:
+    """A table cannot be both excused from comparison and compared.
+
+    Without this, deleting an entry's reason while leaving its golden in place -- or the
+    reverse -- would leave the two halves disagreeing with nothing to say so.
+    """
+    assert sorted(set(golden_io.EXCLUDED_TABLES) & set(GOLDENED_TABLES)) == []
+
+
+def test_every_excused_table_gives_a_reason() -> None:
+    """Each exclusion is a judgement call, so each one is written down and justified."""
+    unexplained = sorted(
+        table for table, reason in golden_io.EXCLUDED_TABLES.items() if len(reason.strip()) == 0
+    )
+    assert unexplained == []
 
 
 @pytest.mark.parametrize('table', GOLDENED_TABLES)

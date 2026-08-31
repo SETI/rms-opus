@@ -59,6 +59,43 @@ _UNORDERED_JSON_COLUMNS = {('obs_general', 'preview_images'): 'viewables'}
 #: What each entry of that list is sorted by.
 _UNORDERED_JSON_SORT_KEY = 'url'
 
+#: Tables the goldens deliberately do not cover, each with the reason it is excused.
+#:
+#: This is not the same kind of exclusion as the tables ``manage.py migrate`` creates,
+#: which the run measures for itself. These are judgement calls, so they are written down
+#: with their reasons and `import_tests.test_goldens` holds each one to two rules: the
+#: table has to exist in the run, so an entry cannot outlive the table it excuses, and it
+#: has to be absent from the goldens directory, so an excused table cannot also be
+#: compared. A table missing from the goldens for any other reason still fails.
+EXCLUDED_TABLES = {
+    'definitions': (
+        'a pure function of the frozen packaged pdsdd.full: the dictionary step reads '
+        'that file and writes one row per term, so the table restates an input this '
+        'repository ships and nothing about the fixture or the pipeline can move it. '
+        'The contexts table, which the same step writes, is small and stays goldened. '
+        'Ruled by rfrench 2026-08-31.'
+    ),
+}
+
+#: Columns dropped from a golden because the same value is derivable from another column
+#: in the same row, and something else already asserts the column it derives from.
+#:
+#: ``obs_files.url`` is ``<holdings root>/<logical_path>`` -- pdsfile's ``html_path``
+#: contract, "``html_root_`` followed by the logical path", with the root chosen by
+#: ``pds_version``. It reproduces on every row of the recorded fixture, so a golden
+#: carrying both columns spends a third of this table's bytes asserting string
+#: concatenation. What the paths themselves are is asserted in both directions by the
+#: expected-products comparison, which is the check that can actually fail on them; what
+#: this golden is for in this table is the values the shelves feed -- checksum, size,
+#: width, height -- and their linkage to an OPUS id. Ruled by rfrench 2026-08-31.
+#:
+#: Nothing else in ``obs_files`` is derivable from the path, and that was measured rather
+#: than assumed: 62 to 83 logical paths carry two or more different values of
+#: ``sort_order``, ``short_name``, ``full_name`` and ``product_order``, because one file
+#: serves several observations under different product classifications. Those columns
+#: stay.
+DERIVED_COLUMNS = {'obs_files': frozenset({'url'})}
+
 #: The columns the server numbers rather than the import computing: ``id`` is the
 #: auto-incremented row id and ``obs_general_id`` is the foreign key naming an
 #: observation's ``obs_general`` row. They are stable across two clean runs from an empty
@@ -253,10 +290,15 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
     Every column MySQL declares as a timestamp is dropped: the import never writes one,
     and the server fills them from the wall clock. Which columns those are is read from
     the server rather than listed here, so a new timestamp column is handled the day it
-    appears. One further column is reordered rather than dropped -- see
-    `_UNORDERED_JSON_COLUMNS`, which names it and says why. Nothing else is normalized:
-    from an empty database every other value the import writes is the same on every run,
-    and one that is not is a defect rather than a normalization candidate.
+    appears. `DERIVED_COLUMNS` names the further columns dropped because the same value is
+    derivable from another column beside it, and one column is reordered rather than
+    dropped -- see `_UNORDERED_JSON_COLUMNS`. Nothing else is normalized: from an empty
+    database every other value the import writes is the same on every run, and one that is
+    not is a defect rather than a normalization candidate.
+
+    Both the generator and the comparison call this, so a golden and the run it is
+    compared against are projected the same way by construction rather than by two lists
+    agreeing.
 
     Parameters:
         credentials: How to reach the server.
@@ -266,10 +308,11 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
     Returns:
         A header line of column names, then one line per row, ordered by primary key.
     """
+    derived = DERIVED_COLUMNS.get(table, frozenset())
     columns = [
         name
         for name, data_type in _columns(credentials, schema, table)
-        if data_type != TIMESTAMP_DATA_TYPE
+        if data_type != TIMESTAMP_DATA_TYPE and name not in derived
     ]
     if len(columns) == 0:
         return '\n'
@@ -438,3 +481,28 @@ def goldened_tables(directory: Path) -> list[str]:
     if not directory.is_dir():
         return []
     return sorted(path.stem for path in directory.glob(f'*{GOLDEN_EXT}'))
+
+
+def tables_to_golden(
+    credentials: DatabaseCredentials, schema: str, django_tables: frozenset[str]
+) -> list[str]:
+    """Return the tables a run leaves behind that the goldens are expected to cover.
+
+    The rule in one place, because the generator writing the goldens and the test
+    comparing them have to mean the same thing by it: everything the schema holds, minus
+    the tables ``manage.py migrate`` created -- which the run measures for itself -- minus
+    `EXCLUDED_TABLES`, which are written down with their reasons.
+
+    Parameters:
+        credentials: How to reach the server.
+        schema: The schema the run imported into.
+        django_tables: The tables the migration created.
+
+    Returns:
+        The table names, sorted.
+    """
+    return sorted(
+        table
+        for table in list_tables(credentials, schema)
+        if table not in django_tables and table not in EXCLUDED_TABLES
+    )

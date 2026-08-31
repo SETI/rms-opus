@@ -99,10 +99,33 @@ The logs
 The goldens
     ``import_tests/goldens/<table>.tsv`` holds every table the run leaves behind, one
     file per table, rows ordered by primary key. Which tables are covered is a rule:
-    everything the schema holds except the tables ``manage.py migrate`` creates, captured
-    as the before/after difference around the migration step. A table the import newly
-    writes therefore shows up as a golden that does not exist rather than escaping
-    comparison.
+    everything the schema holds, minus the tables ``manage.py migrate`` creates -- captured
+    as the before/after difference around the migration step rather than listed -- minus a
+    short list of tables excused by name. A table the import newly writes therefore shows
+    up as a golden that does not exist rather than escaping comparison.
+
+    One table is excused today: ``definitions``, which the dictionary step fills from the
+    packaged ``pdsdd.full``. That file is frozen and ships in this repository, so the
+    table restates an input rather than reporting anything the fixture or the pipeline can
+    move, and a megabyte of golden buys nothing. ``contexts``, which the same step writes,
+    is small and stays. An excused table is held to three rules so the exclusion cannot rot
+    into a silent gap: it has to exist in the run, so an entry cannot outlive the table it
+    excuses; it must not also have a golden; and it has to carry a written reason. Both the
+    generator and the comparison read the list from one place, so they cannot disagree
+    about what is covered.
+
+    One column is dropped as well as one table. ``obs_files.url`` is
+    ``<holdings root>/<logical path>`` and nothing else -- pdsfile serves a file from its
+    HTML root followed by its logical path, and that reproduces on every row of the
+    fixture -- so a golden carrying both columns spends a third of the widest table's
+    bytes asserting string concatenation. What those paths are is asserted in both
+    directions by the expected-products comparison, which is the check that can actually
+    fail on them; what the golden is for in this table is the values the shelves feed,
+    ``checksum``, ``size``, ``width`` and ``height``, and their linkage to an OPUS id.
+    Nothing else in the table is derivable from the path, and that was measured rather
+    than assumed: between 62 and 83 logical paths carry two or more different values of
+    ``sort_order``, ``short_name``, ``full_name`` and ``product_order``, because one file
+    serves several observations under different product classifications.
 
     Two things are normalized, and no more. Every column MySQL declares as a
     ``timestamp`` is dropped: the import never writes one and the server fills them from

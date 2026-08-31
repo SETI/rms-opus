@@ -145,11 +145,7 @@ def write_goldens(
     directory.mkdir(parents=True, exist_ok=True)
     for stale in directory.glob(f'*{golden_io.GOLDEN_EXT}'):
         stale.unlink()
-    tables = [
-        table
-        for table in golden_io.list_tables(credentials, run.schema)
-        if table not in run.django_tables
-    ]
+    tables = golden_io.tables_to_golden(credentials, run.schema, run.django_tables)
     for table in tables:
         golden_io.write_golden(
             directory, table, golden_io.serialize_table(credentials, run.schema, table)
