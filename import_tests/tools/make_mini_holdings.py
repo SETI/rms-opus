@@ -5,7 +5,8 @@ holdings, and it never writes into them: everything the maintenance tools produc
 built in a scratch directory and read back from there.
 
     python -m import_tests.tools.make_mini_holdings \\
-        --pds3-holdings /path/to/holdings --pds4-holdings /path/to/pds4-holdings
+        --pds3-holdings /path/to/holdings --pds4-holdings /path/to/pds4-holdings \\
+        --scratch /path/to/a/scratch/directory
 
 Re-running it and reading the diff is the drift report: the fixture encodes pdsfile's
 current answers, so a pdsfile change that moves them shows up here as changed lines
@@ -404,11 +405,26 @@ def _compare_schemas(
             sibling_rows, _ = metadata_subsets.read_index(ctx, sibling_files[0], entry.pds_version)
         except ValueError:
             continue
-        extra_columns = sorted(set(row_sampling.column_profile(sibling_rows)) - set(chosen_profile))
+        sibling_profile = row_sampling.column_profile(sibling_rows)
+        extra_columns = sorted(set(sibling_profile) - set(chosen_profile))
         if len(extra_columns) > 0:
             report.schema_differences.append(
                 f'{sibling.bundle_id} has index columns {chosen.location.bundle_id} does not: '
                 f'{extra_columns}'
+            )
+        # The columns both have, where the sibling shows a class the chosen volume never
+        # does. That is the case worth acting on: a shared column carrying a mult value
+        # or a missing/sentinel form the representative's rows never take is a code path
+        # the fixture cannot reach, and no column-name comparison would see it.
+        extra_classes = {
+            column: sorted(classes - chosen_profile[column])
+            for column, classes in sibling_profile.items()
+            if column in chosen_profile and len(classes - chosen_profile[column]) > 0
+        }
+        if len(extra_classes) > 0:
+            report.schema_differences.append(
+                f'{sibling.bundle_id} has index values {chosen.location.bundle_id} does not: '
+                f'{sorted(extra_classes.items())[:10]}'
             )
 
 
@@ -458,7 +474,10 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument(
         '--compare-schemas',
         action='store_true',
-        help='Also report sibling volumes whose index schema differs from the chosen one',
+        help='Also report sibling volumes whose index columns or values differ from the '
+        'chosen one. Off by default because it parses every volume of every volume set '
+        'rather than the two dozen the fixture keeps, which is hours rather than '
+        'minutes; run it when deciding whether a type needs a second representative',
     )
     return parser.parse_args(argv)
 
