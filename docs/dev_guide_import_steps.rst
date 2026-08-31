@@ -137,6 +137,12 @@ opus_import.steps.do_param_info
 Builds ``param_info``, the table that tells the web application what the search form
 contains. Option: ``--create-param-info``.
 
+Three public functions:
+:func:`~opus_import.steps.do_param_info.create_import_param_info_table` builds the import
+table, :func:`~opus_import.steps.do_param_info.copy_param_info_from_import_to_permanent`
+copies it over, and :func:`~opus_import.steps.do_param_info.do_param_info` is the step
+that runs both.
+
 One row per column that carries a ``pi_category_name``, read out of the **packaged
 schema** of every permanent ``obs_`` table. A column with no ``param_info`` row is
 invisible to users no matter what the import wrote into it. The row copies the ``pi_*``
@@ -167,6 +173,11 @@ opus_import.steps.do_partables
 Builds ``partables``, which maps a value a user can search for onto the table of further
 search parameters that value makes relevant -- choosing the Cassini mission reveals the
 Cassini mission table. Option: ``--create-partables``.
+
+Three public functions, in the same shape as ``do_param_info``'s:
+:func:`~opus_import.steps.do_partables.create_import_partables_table`,
+:func:`~opus_import.steps.do_partables.copy_partables_from_import_to_permanent` and
+:func:`~opus_import.steps.do_partables.do_partables`.
 
 A row is ``(trigger_tab, trigger_col, trigger_val, partable)``. The rows are
 **generated** from the configuration maps, in four groups:
@@ -208,6 +219,12 @@ opus_import.steps.do_table_names
 
 Builds ``table_names``, which names and orders the "Constraints" categories the search
 form and the Details tab are divided into. Option: ``--create-table-names``.
+
+Four public functions:
+:func:`~opus_import.steps.do_table_names.build_table_names_rows`,
+:func:`~opus_import.steps.do_table_names.create_import_table_names_table`,
+:func:`~opus_import.steps.do_table_names.copy_table_names_from_import_to_permanent` and
+:func:`~opus_import.steps.do_table_names.do_table_names`.
 
 :func:`~opus_import.steps.do_table_names.build_table_names_rows` is the authority on
 what a category is called and what order the categories come in. It is a pure function
@@ -319,6 +336,12 @@ opus_import.steps.do_dictionary
 Fills ``contexts`` and ``definitions``, which is where every tooltip in the user
 interface comes from. Option: ``--import-dictionary``. It is the last thing a run does.
 :ref:`dev_guide_dictionary` describes the two tables and where their content comes from.
+
+Four public functions:
+:func:`~opus_import.steps.do_dictionary.create_import_contexts_table` and
+:func:`~opus_import.steps.do_dictionary.create_import_definitions_table` build the two
+import tables, :func:`~opus_import.steps.do_dictionary.copy_dictionary_from_import_to_permanent`
+copies them over, and :func:`~opus_import.steps.do_dictionary.do_dictionary` is the step.
 
 The step builds both import tables, copies them over the permanent ones only if both
 builds succeeded, and drops the import tables **both before and after**, so a failed
@@ -455,7 +478,16 @@ opus_import.steps.do_import_mult
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Reading, caching and writing the ``mult_`` tables that hold the enumerated values of
-the ``obs_`` columns.
+the ``obs_`` columns. Five public functions:
+:func:`~opus_import.steps.do_import_mult.read_or_create_mult_table` fetches one table
+into the run's cache, :func:`~opus_import.steps.do_import_mult.mult_table_lookup_id`
+finds an existing value's row id without adding one,
+:func:`~opus_import.steps.do_import_mult.update_mult_table` finds or adds a value and
+returns the id an ``obs_`` column stores,
+:func:`~opus_import.steps.do_import_mult.dump_import_mult_tables` writes the modified
+tables back, and
+:func:`~opus_import.steps.do_import_mult.copy_mult_from_import_to_permanent` copies them
+to the permanent namespace.
 
 **Naming.** :func:`~opus_import.import_util.table_name_mult` builds
 ``mult_<table>_<column>``, both lowercased --

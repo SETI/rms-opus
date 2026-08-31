@@ -55,29 +55,16 @@ tables only once the whole run has succeeded. A failed import therefore cannot l
 web application serving half a bundle of observation metadata.
 :ref:`dev_guide_import_two_namespaces` is the whole of that design.
 
-The protection covers the imported tables and no others. ``cart`` is created directly in
-the permanent namespace, and the ``cache_*`` and ``user_searches`` tables are dropped
-there outright; a failed run can leave those already reset. They hold no imported data --
-see :ref:`dev_guide_import_steps_do_cart` and :ref:`dev_guide_import_steps_do_django` --
-which is why they are outside the copy.
+The protection covers the imported tables and no others; the cart and cache tables are
+reset outside it.
 
 The auxiliary tables come last because each needs the permanent tables to be there, but
-only one of them is really derived from what was imported:
+only ``param_info`` is really derived from what was imported -- ``table_names`` and
+``partables`` are generated from the configuration maps and the schemas, so a mission
+that was never imported still gets a row.
 
-* ``param_info`` comes from the ``pi_*`` metadata in the schemas of the permanent tables
-  -- so it does follow the import, but its content is the schemas'.
-* ``table_names`` is built by
-  :func:`~opus_import.steps.do_table_names.build_table_names_rows`, which **generates**
-  the mission and instrument rows by looping the configuration maps and **enumerates
-  every other table by hand**; which permanent tables exist filters the result. A table
-  of a new kind with no row there gets no section, however much data it holds -- but a
-  new mission or instrument table must *not* be added by hand, because it is generated
-  already.
-* ``partables`` comes from static configuration too: it enumerates every trigger OPUS
-  knows, from the mission, instrument and host maps in :mod:`opus_import.config_data`. A
-  mission that was never imported still gets a row.
-
-:ref:`dev_guide_import_steps` states the order the steps run in and what forces it.
+:ref:`dev_guide_import_steps` states the order the steps run in, what forces each part of
+it, and what each auxiliary table is built from.
 
 .. _dev_guide_architecture_obs:
 
@@ -223,3 +210,8 @@ Nothing in the pipeline imports :mod:`opus_app`, and nothing in the application 
 :mod:`opus_config` for the installation's settings, and :mod:`opus_support` for the unit,
 time and angle conversions both have to perform identically. :ref:`dev_guide_support`
 describes both.
+
+API reference
+-------------
+
+:doc:`api_reference`

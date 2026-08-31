@@ -216,6 +216,88 @@ into ``LIMIT '1'``, so the type check is the actual guarantee.
 order and each clause contributes its parameters at the point its placeholders appear, so
 a caller cannot get the ordering wrong by appending to the wrong list.
 
+The shape of it
+~~~~~~~~~~~~~~~
+
+.. mermaid::
+
+    classDiagram
+        class Expr {
+            <<NamedTuple>>
+            +sql
+            +params
+        }
+        class Select {
+            +add_column()
+            +add_from()
+            +add_from_source()
+            +add_where()
+            +add_group_by()
+            +add_order_by()
+            +limit()
+            +offset()
+            +build()
+        }
+        class FromSource {
+            +source
+            +joins
+            +add_join()
+            +render()
+        }
+        class Join {
+            +kind
+            +source
+            +on
+            +render()
+        }
+        class Subquery {
+            +select
+            +alias
+            +render()
+        }
+        class JSONTable {
+            +source_column
+            +value_column
+            +alias
+            +render()
+        }
+        class SQLIdentifierError {
+            ValueError
+        }
+
+        Select "1" *-- "many" FromSource : FROM
+        FromSource "1" *-- "many" Join
+        FromSource ..> Subquery : source may be
+        FromSource ..> JSONTable : source may be
+        Join ..> Subquery : source may be
+        Join ..> JSONTable : source may be
+        Subquery *-- Select
+        Select ..> Expr : columns, WHERE, GROUP BY, ORDER BY
+        Join ..> Expr : ON
+        JSONTable ..> Expr : source column
+        Select ..> SQLIdentifierError : raises
+
+Reading it in three groups:
+
+**The value.** :class:`~opus_app.apps.tools.sql_builder.Expr` is the whole vocabulary --
+a rendered fragment of SQL and the parameters its placeholders consume. Every function in
+the expression layer below returns one, and everything a statement is assembled out of is
+one.
+
+**The sources.** :class:`~opus_app.apps.tools.sql_builder.FromSource` is one table source
+and the joins hanging off it;
+:class:`~opus_app.apps.tools.sql_builder.Join` is one of those joins;
+and a source may be a plain table name, a
+:class:`~opus_app.apps.tools.sql_builder.Subquery` -- which holds a whole
+:class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- or a
+:class:`~opus_app.apps.tools.sql_builder.JSONTable`. That last one is why the diagram is
+not a tree: a statement can hold a statement.
+
+**The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
+order, and it is the only class here with state a caller accumulates into.
+:exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError` is what any of them raises for
+a name that is not safe to use as an identifier.
+
 The expression layer
 ~~~~~~~~~~~~~~~~~~~~
 

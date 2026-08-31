@@ -53,16 +53,21 @@ Adding an API endpoint
 
     @never_cache
     @api_view
-    def api_my_endpoint(request: HttpRequest, *, api_code: int) -> HttpResponse:
+    def api_my_endpoint(request: HttpRequest) -> HttpResponse:
         """One line saying what this returns.
 
         This is a PRIVATE API.
 
-        Arguments:
-            reqno: The request number, echoed back.
+        ```
+        Format: __api/myendpoint.json
+        Arguments: reqno=<N>
+        ```
+
+        Parameters:
+            request: The HTTP request, whose query string carries ``reqno``.
 
         Returns:
-            The JSON response.
+            The answer as JSON, with ``reqno`` echoed back.
 
         Raises:
             Http400Error: If ``reqno`` is missing or malformed.
@@ -71,6 +76,29 @@ Adding an API endpoint
         if reqno is None:
             raise Http400Error(http400_bad_or_missing_reqno(request))
         return json_response({'answer': ..., 'reqno': reqno})
+
+Declare ``api_code`` only where the handler passes it on -- as
+:func:`~opus_app.apps.results.views.api_get_data` does, to
+:func:`~opus_app.apps.results.views.get_search_results_chunk`. The skeleton above does
+not, so it does not declare one:
+
+.. code-block:: python
+
+    @never_cache
+    @api_view
+    def api_my_searching_endpoint(request: HttpRequest, *, api_code: int) -> HttpResponse:
+        """One line saying what this returns.
+
+        Parameters:
+            request: The HTTP request, whose query string carries the search.
+            api_code: The API call number, supplied by the decorator and passed on so
+                that the search helpers log against it.
+
+        Returns:
+            The answer as JSON.
+        """
+        chunk = get_search_results_chunk(request, cols='opusid', api_code=api_code)
+        ...
 
 .. code-block:: python
 
