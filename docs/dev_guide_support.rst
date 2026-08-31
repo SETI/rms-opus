@@ -73,7 +73,15 @@ implementation, not what to import.
 The package's header carries a standing demand for **100% test coverage**, and
 ``tests/opus_support/`` is where it is met. A new unit system, clock format or angle
 spelling comes with tests for its parse and its format, in both directions, including
-the values it rejects.
+the values it rejects. :ref:`dev_guide_extending_unit` is the recipe for adding a unit,
+and it is where the one non-obvious rule lives: the order units are listed in does not
+decide the default.
+
+Both programs reach these conversions. The import pipeline normalizes what it reads out
+of a PDS label with them (:ref:`dev_guide_import_one_row`), and the web application
+parses what a user typed and formats what it returns with the same functions
+(:ref:`dev_guide_webapp_search_url_to_params`). That both sides agree exactly is the
+whole reason this is one package.
 
 API reference
 -------------

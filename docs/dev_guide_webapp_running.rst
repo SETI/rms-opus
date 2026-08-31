@@ -1,0 +1,220 @@
+.. _dev_guide_webapp_running:
+
+Running the Web Application
+===========================
+
+The web application needs a database an import has already populated. Everything below
+assumes one; :ref:`dev_guide_import_running` is how to get one, and
+:ref:`dev_guide_installation` is how to bring up a server from nothing.
+
+The environment
+---------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 32 68
+
+   * - Variable
+     - Meaning
+   * - ``OPUS_CONFIG``
+     - The installation's TOML file. **Required by every process**, with no default
+       location. Importing :mod:`opus_app.settings` reads it, so a missing or invalid
+       file fails at startup rather than at the first request.
+   * - ``DJANGO_SETTINGS_MODULE``
+     - ``opus_app.settings``. ``manage.py`` and :mod:`opus_app.wsgi` both set it if it
+       is unset, so only ``django-admin`` and anything else running Django directly has
+       to supply it.
+
+Nothing else is read from the environment. Every value a deployment can vary --
+credentials, hosts, paths, log levels, the fault-injection knobs -- comes from the
+configuration file. :ref:`dev_guide_installation` documents every key.
+
+The development server
+----------------------
+
+From a checkout::
+
+    export OPUS_CONFIG=$PWD/opus.toml
+    python manage.py migrate      # once, for Django's own contrib tables
+    python manage.py runserver
+
+Then open ``http://127.0.0.1:8000/opus/``. The site is served at the root as well, so
+``http://127.0.0.1:8000/`` works too; the ``opus/`` prefix exists because a production
+installation is fronted by a web server that supplies one.
+
+``migrate`` creates only Django's session, auth, contenttypes and admin tables. **Every
+OPUS table is created by the import pipeline instead**, so there are no OPUS migrations
+to run and none to write.
+
+``manage.py`` is a development convenience and carries no OPUS-specific commands. The
+ones worth knowing are Django's own: ``check``, ``migrate``, ``shell``,
+``collectstatic``, and ``diffsettings``. **The test suites are not run through it** --
+``pytest`` runs the holdings-free suite and ``pytest integration_tests`` the
+live-database ones; see :ref:`dev_guide_testing`.
+
+An installed OPUS has no ``manage.py``: it is not in the wheel. Use ``django-admin``
+with both environment variables set instead.
+
+Under a WSGI server
+-------------------
+
+:mod:`opus_app.wsgi` is the entry point. It sets ``DJANGO_SETTINGS_MODULE`` if it is
+unset and builds ``application``; it does nothing to :data:`sys.path`, because the
+distribution is installed and importable.
+
+Point any WSGI server at ``opus_app.wsgi:application``. For a smoke test::
+
+    OPUS_CONFIG=/etc/opus/opus.toml gunicorn opus_app.wsgi:application
+
+**The one thing that has to be arranged is that ``OPUS_CONFIG`` reaches the worker
+process's environment.** It is read when the settings module is imported, which happens
+inside the worker, long before any request. :ref:`dev_guide_web_server` gives worked
+configurations for nginx with gunicorn or uWSGI, and for Apache with ``mod_wsgi``,
+each of which arranges it differently.
+
+Static files
+------------
+
+The on-disk directory is ``src/opus_app/static/``; **the public URL prefix is**
+``/static_media/``, and it must stay that way -- it is hardcoded in the front end's
+``opus.js``, embedded in the golden API fixtures, and aliased in the production web
+server configuration.
+
+A development installation serves them through Django's staticfiles app and needs no
+further step. A server gathers them into one directory that the web server serves
+directly::
+
+    OPUS_CONFIG=/etc/opus/opus.toml \
+    DJANGO_SETTINGS_MODULE=opus_app.settings \
+    django-admin collectstatic --noinput
+
+``--noinput`` is what the deploy scripts pass: ``collectstatic`` asks for confirmation
+before overwriting, and a deploy has nobody to ask.
+
+Two configuration keys are easy to confuse:
+
+``static_root``
+    Where ``collectstatic`` puts them. A development installation leaves it out --
+    it never runs ``collectstatic`` -- and Django's own default applies.
+
+``opus_static_root``
+    The directory the help pages' PDF renderer reads assets out of. On a server it is
+    the same directory as ``static_root``; in a development installation it points at
+    ``.../src/opus_app/static``.
+
+The staticfiles backend is deliberately the plain one rather than a manifest one: OPUS
+cache-busts its asset URLs with a ``?version=`` suffix that
+:mod:`opus_app.apps.tools.app_utils` supplies, and a manifest backend would require every
+template- and JavaScript-referenced asset to survive ``collectstatic`` first.
+
+Caching, and clearing it
+------------------------
+
+Install ``memcached`` and the ``pymemcache`` client to have the caching behave the way a
+server does. **Neither is a declared dependency**: :mod:`opus_app.settings` tries to
+import ``pymemcache``, then tries to connect to a local memcached, and falls back to
+Django's per-process local-memory cache if either fails. An installation that skips this
+runs -- slowly, per process, and with the cache-flushing step below doing nothing at all.
+
+::
+
+    sudo apt-get install memcached libmemcached-tools
+    pip install pymemcache
+    # watch it while OPUS runs:
+    watch -n1 -d 'memcstat --servers localhost'
+
+``memcstat`` is in ``libmemcached-tools``, not in ``memcached``.
+
+**After anything that changes the database, two things have to happen**, and both are
+easy to forget:
+
+1. **Empty the shared Django cache**, because it holds search results keyed by a search
+   that now means something else::
+
+       OPUS_CONFIG=/etc/opus/opus.toml python -m opus_app.clear_django_cache
+
+   That module does exactly this and nothing else: it imports ``CACHES`` from
+   :mod:`opus_app.settings`, calls ``settings.configure()`` with only that setting -- so
+   the app registry is never loaded -- and calls ``cache.clear()``. It runs entirely at
+   import, which is why it must be run as a module and never imported, and why the API
+   reference leaves it out. Restarting memcached has the same effect.
+
+2. **Restart every worker process**, because some caches are module-level dictionaries
+   private to a process -- the ``param_info`` lookup in
+   :mod:`opus_app.apps.search.views` and the mult-label lookup in
+   :mod:`opus_app.apps.tools.db_utils`. Nothing running outside a worker can reach those,
+   ``clear_django_cache`` included.
+
+Logging
+-------
+
+:mod:`opus_app.settings` configures two handlers: a console handler and a rotating file
+handler writing to the path ``[paths] opus_log_file`` names, at 50 KB with two backups.
+Their levels come from ``[django] log_file_level`` and ``log_console_level``; Django's
+own loggers are separate, at ``log_django_level``.
+
+**The application opens its log file during startup**, so a missing log directory stops
+the application rather than degrading it. That is also why the checked-in CI
+configuration puts every path it opens directly under ``/tmp``.
+
+Each OPUS app has its own logger entry, and each key **must be a prefix of the app
+modules' actual names** -- they call ``logging.getLogger(__name__)``, giving names like
+``opus_app.apps.cart.views``. A key that prefixes no real logger silently stops that
+app's records reaching the log file.
+
+Setting ``log_api_calls`` to a level name logs every API call's entry and exit. It is
+false in every normal deployment.
+
+Fault injection
+---------------
+
+Three configuration keys make the server misbehave on purpose, for exercising the front
+end's error handling:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Key
+     - Effect
+   * - ``fake_api_delays``
+     - Delay every API response by this many milliseconds. A negative value delays a
+       random amount between zero and its magnitude, which is what a jittery network
+       looks like. The delay is applied **after** the call is logged, so the log records
+       the time the response was produced.
+   * - ``fake_error404_probability``
+     - The probability, from 0 to 1, that any API call is answered with an injected 404
+       instead of running its handler.
+   * - ``fake_error500_probability``
+     - The same, for a 500.
+
+All three default to no effect, and the two probabilities are rolled once per call,
+before the handler runs.
+
+Running against a different database
+------------------------------------
+
+The database is named in the configuration file, so pointing an installation at a
+different one means a different configuration file and a different ``OPUS_CONFIG``. That
+is exactly how a server exercises a newly imported database before switching the public
+one over -- see the runbook in :ref:`dev_guide_deployment`.
+
+A server running several OPUS installations gives each one its own file, its own
+``OPUS_CONFIG``, its own database schema and its own ``cache_server_prefix``, which is
+what keeps them from colliding in a shared memcached.
+
+Testing what it answers
+-----------------------
+
+``integration_tests/test_api/`` is the golden-response suite: it exercises the public API
+against a populated database and compares the answers byte for byte. It is what proves
+that a refactor did not change what OPUS returns.
+:ref:`running-the-integration-suites` describes the three-step chain that populates a
+database and runs it, and why it is not generally runnable without the holdings.
+
+``tests/opus_app/`` holds the parts that need no database and runs in a bare ``pytest``.
+
+API reference
+-------------
+
+:doc:`api_opus_app`

@@ -1,199 +1,27 @@
 .. _dev_guide_deployment:
 
-Deployment
-==========
+Deployment and Operations
+=========================
 
-This chapter describes what a running OPUS installation consists of and how each part
-is brought up. It covers a development installation on one machine and, from
-:ref:`deployment_server` onward, the Node's production arrangement.
-
-Prerequisites
--------------
-
-* **MySQL 8.0.19 or later**, with a user allowed to create and drop databases -- the
-  import pipeline creates every OPUS table itself, and writes its multi-row upserts
-  with the ``AS new`` row alias that 8.0.19 added.
-* **memcached**, plus the ``pymemcache`` Python client. **Neither is a declared
-  dependency**: :mod:`opus_app.settings` tries to import ``pymemcache`` and falls back
-  to Django's local-memory cache when it is absent, so an installation that skips this
-  step runs -- slowly, per process, and with the cache-flushing step below doing
-  nothing at all. Install both deliberately::
-
-      sudo apt-get install memcached libmemcached-tools
-      pip install pymemcache
-      # watch it while OPUS runs:
-      watch -n1 -d 'memcstat --servers localhost'
-
-  ``memcstat`` is in ``libmemcached-tools``, not in ``memcached``.
-
-* **The MySQL client development headers**, because ``mysqlclient`` is compiled
-  during the install::
-
-      sudo apt-get install pkg-config default-libmysqlclient-dev build-essential
-
-* **wkhtmltopdf**, only for the help pages' PDF downloads. Every other page works
-  without it.
-* **The PDS holdings**, mounted read-only, for the import pipeline.
-
-Installing
-----------
-
-::
-
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install rms-opus
-
-A development installation uses an editable install of a checkout instead; see
-:ref:`dev_guide_environment`.
-
-Dependencies are declared in ``pyproject.toml`` with **floors, not pins** -- only
-``django`` carries an upper bound, because 5.2 is the LTS this application targets. There
-is no lock file: a fresh install resolves each dependency to its newest compatible
-release. To reproduce one installation exactly on another machine, generate a constraints
-file from a known-good one and install against it::
-
-    # on the known-good installation
-    python -m pip freeze > constraints.txt
-
-    # on the new one
-    pip install rms-opus -c constraints.txt
-
-Nothing in the deploy chain maintains such a file; it is there for the case where ops
-wants a reproducible install rather than the newest one.
-
-Configuring
------------
-
-Copy ``opus.toml.template``, fill in every ``<PLACEHOLDER>``, and export
-``OPUS_CONFIG`` in the environment of **every** OPUS process -- the WSGI server, the
-import pipeline, and any management command::
-
-    curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
-    sudo install -d -m 755 /etc/opus
-    sudo install -m 600 -o opus -g opus opus.toml.template /etc/opus/opus.toml
-    export OPUS_CONFIG=/etc/opus/opus.toml
-
-The template is **repository** infrastructure and is deliberately not inside the wheel:
-nothing in the code reads it, and shipping it would mean extracting it through
-``importlib.resources`` instead of opening a file. A ``pip``-installed server therefore
-fetches it as above, or copies it from a checkout. (``-f`` is load-bearing: without it
-``curl`` exits 0 on a 404 and writes the error page into the file the next line copies.)
-
-``opus`` in those commands is the account OPUS runs as, and it has to exist before
-the second one: ``install -o`` fails on an unknown user rather than creating it. On
-a host that has no such account yet, make one -- ``sudo useradd --system
---no-create-home opus`` -- or substitute whichever account the WSGI daemon process
-and the import pipeline will run as.
-
-``install`` rather than ``cp``, and **both** of its options matter. The mode is 0600
-because the placeholders are about to be replaced by a database password and a
-Django secret key, and ``cp`` would give the file whatever the caller's umask allows
--- world-readable under a default one. The ownership is what makes 0600 usable:
-``opus`` here stands for whatever account OPUS runs as, and a **root**-owned 0600
-file is unreadable to it, so the ``django-admin migrate`` and ``opus_import``
-commands below would fail on the configuration they were handed rather than on
-anything in it. ``_write_opus_toml.sh`` gets this for free by writing the file as
-the deploy user; a hand-built installation has to say who owns it.
-
-For the same reason, run the ``<PLACEHOLDER>`` edit and every command below that
-names ``OPUS_CONFIG`` -- ``django-admin migrate``, ``opus_import``, and anything
-else that reads the configuration -- **as that account**, with ``sudo -u opus`` or
-an equivalent. A 0600 file is readable by exactly one user, which is the point of
-the mode and the reason a third admin account fares no better than root.
-
-There is no default location for the file. A server running several OPUS
-installations gives each one its own file, its own ``OPUS_CONFIG``, its own database
-schema and its own ``cache_server_prefix``, which is what keeps them from colliding in
-the shared memcached.
-
-That is the hand-built case. On the Node's own servers the deploy chain writes
-``opus.toml`` itself, from a separate file; see :ref:`deployment_server`.
-
-Set ``debug = false`` and a real ``secret_key`` on any installation that is reachable
-from outside the machine, and make sure every directory the ``[paths]`` section names
-exists and is writable by the user OPUS runs as. The web application opens its log
-file during startup, so a missing log directory stops the application rather than
-degrading it.
-
-Creating the database
----------------------
-
-Django's own contrib tables -- sessions, auth, content types, admin -- come from a
-migration::
-
-    OPUS_CONFIG=/etc/opus/opus.toml \
-    DJANGO_SETTINGS_MODULE=opus_app.settings \
-    django-admin migrate
-
-Every OPUS table comes from an import instead, so there are no OPUS migrations to run
-and none to write::
-
-    OPUS_CONFIG=/etc/opus/opus.toml opus_import --do-it-all COISS_2002
-
-``--do-it-all`` imports the named bundles, copies the result over the permanent
-tables, and rebuilds the auxiliary tables. :mod:`opus_import.cli` documents the
-individual steps, and ``scripts/import/`` holds the wrappers the Node uses:
-``import_all.sh`` for a full production import, ``import_for_tests.sh`` for the fixed
-bundle list the integration suite runs against, and ``clone_database.sh`` to copy a
-database.
-
-Collecting static files
------------------------
-
-On a server, Django's ``collectstatic`` gathers the JavaScript, CSS and images into
-one directory that the web server serves directly::
-
-    OPUS_CONFIG=/etc/opus/opus.toml \
-    DJANGO_SETTINGS_MODULE=opus_app.settings \
-    django-admin collectstatic --noinput
-
-``--noinput`` is what the deploy scripts pass: ``collectstatic`` asks for confirmation
-before overwriting, and a deploy has nobody to ask.
-
-``static_root`` in the configuration is where they go; a development installation
-leaves it out, because it never runs ``collectstatic``, and Django's own default
-applies.
-
-``opus_static_root`` is a different thing and is easy to confuse with it: it is the
-directory the help pages' PDF renderer reads assets out of, and on a server it is the
-same directory as ``static_root``. In a development installation it points at
-``.../src/opus_app/static``.
-
-The public URL prefix is ``/static_media/`` either way, which is long-standing and
-deliberate.
-
-Running the application
------------------------
-
-Production serves :mod:`opus_app.wsgi` through Apache and ``mod_wsgi``. The vhost
-needs ``WSGIScriptAlias`` pointing at the installed ``opus_app/wsgi.py``, and it needs
-``OPUS_CONFIG`` in the WSGI process's environment -- ``WSGIDaemonProcess`` does not
-inherit the shell's.
-
-The installed module lives inside the virtual environment's ``site-packages``, whose
-path contains the Python minor version, so naming it directly in the vhost means
-editing the vhost after every Python upgrade. On the Node's servers the deploy chain
-avoids that by writing a symlink to it at a fixed path and re-pointing that symlink on
-every deploy; see :ref:`deployment_server` for the path and the stanza.
-
-Any other WSGI server works the same way; ``gunicorn opus_app.wsgi:application`` is
-enough for a smoke test. For development, ``python manage.py runserver`` serves the
-site at ``http://127.0.0.1:8000/opus/``.
+:ref:`dev_guide_installation` brings an installation up by hand and
+:ref:`dev_guide_web_server` puts a server in front of it. This chapter is what happens
+after that: the Node's own deploy chain, the two things that always have to happen when a
+database changes, the runbook for replacing one, and the cron jobs that keep the log
+reports current.
 
 .. _deployment_server:
 
 The Node's production arrangement
 ---------------------------------
 
-``scripts/server/import_and_deploy/`` holds the scripts that deploy a new database or
-a new release on the Node's servers.
+``scripts/server/import_and_deploy/`` holds the scripts that deploy a new database or a
+new release on the Node's servers.
 
 **A deployed installation is not a checkout.** It is a directory holding a virtual
-environment with the released ``rms-opus`` distribution installed from PyPI, the
+environment with the released ``rms-opus`` distribution installed **from PyPI**, the
 ``opus.toml`` that installation reads, and the ``wsgi.py`` symlink Apache points at.
 Nothing on the server builds from source. The one checkout a server keeps is the one
-holding these scripts, which is also where ``deploy.env`` lives.
+holding these scripts, which is also where the deploy configuration lives.
 
 The layout makes the served directory a symbolic link to a per-database directory, so
 that swapping databases is a link change rather than a copy:
@@ -206,108 +34,190 @@ that swapping databases is a link change rather than a copy:
         opus.toml                 # this installation's configuration, mode 0600
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
 
-``wsgi.py`` is the fixed path the vhost names, so it survives both a release upgrade
-and a Python upgrade::
+Underneath the installation root the deploy chain also expects, or creates,
+``opus_logs/`` for the web application's log, ``downloads/`` and ``manifests/`` for the
+cart archives, and ``static_media/`` for the collected static files.
 
-    WSGIScriptAlias / /opus/src/rms-opus/wsgi.py
-    WSGIDaemonProcess opus python-home=/opus/src/rms-opus/opus_venv
-    WSGIProcessGroup opus
+The scripts
+-----------
 
-``OPUS_CONFIG`` has to reach that daemon process, and **the deploy scripts' export does
-not**: they run in a shell, and Apache starts from init. mod_wsgi has no directive for
-per-process environment variables either, so ``SetEnv`` in the vhost will not do it --
-that populates the WSGI *request* environ, long after ``opus_app.wsgi`` has imported
-settings. What works is putting it in the environment Apache itself starts with. On
-Debian and Ubuntu ``apache2ctl`` sources ``/etc/apache2/envvars`` before starting the
-server, and daemon processes inherit from there::
+``deploy_new_code_and_database.sh <database name> [<version spec>]``
+    A full deploy. It stops Apache and memcached, removes any existing installation
+    directory for that database, builds a new one -- virtual environment, ``pip
+    install``, generated ``opus.toml``, ``wsgi.py`` symlink -- moves the served link onto
+    it, then runs the migration, ``collectstatic``, the cache clear and the dictionary
+    and auxiliary-table rebuild, and starts memcached and Apache again.
 
-    # /etc/apache2/envvars
-    export OPUS_CONFIG=/opus/src/rms-opus/opus.toml
+``deploy_new_code_only.sh [<version spec>]``
+    Upgrades the existing installation **in place** with ``pip install --upgrade``,
+    reusing its ``opus.toml``, because only a full deploy knows which database to name in
+    one. It re-points the ``wsgi.py`` symlink, runs the migration -- not optional, since
+    upgrading to the newest release can cross a Django version that adds a contrib
+    migration -- collects the static files, clears the cache, and rebuilds
+    ``param_info``, ``partables``, ``table_names`` and the dictionary.
 
-A server running several OPUS installations cannot share one such variable; give each
-its own Apache instance, or set the variable from a wrapper ``wsgi.py`` of its own that
-assigns ``os.environ['OPUS_CONFIG']`` before importing :mod:`opus_app.wsgi`.
+    **It refuses to run against anything that is not an installation this chain
+    created**: a git checkout at that path, a missing virtual environment, or a missing
+    ``opus.toml``. An in-place upgrade of any of those would leave a half-converted
+    installation, so the refusal names the full deploy as the way across.
 
-``deploy_new_code_and_database.sh <database name> [<version spec>]`` stops Apache and
-memcached, builds a new installation directory with that release in it, writes its
-``opus.toml``, moves the link, then migrates, collects static files and imports the
-dictionary, and starts Apache and memcached again.
+``run_full_opus_import.sh [<version spec>]``
+    Runs a complete import into a brand-new schema, which is the first half of bringing
+    up a new database. It builds its own installation under a timestamped directory, so
+    the import runs against the release being deployed rather than against whatever is
+    currently serving; then it dumps the finished database and loads it onto the Node's
+    other server. It runs detached and mails the log when it finishes.
 
-``deploy_new_code_only.sh [<version spec>]`` upgrades the existing installation in place
-with ``pip install --upgrade`` instead, reusing its ``opus.toml`` because only a full
-deploy knows which database to name in one.
-
-The optional argument of both is a **PEP 440 version specifier** appended to the
+The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==3.23.0`` for a particular release, omitted for the newest.
 
-``deploy_new_code_only.sh`` refuses to run against anything that is not an installation
-this chain created -- a git checkout at that path, a missing ``opus_venv``, or a missing
-``opus.toml`` -- and names the full deploy as the way across. An in-place upgrade of
-any of those would leave a half-converted installation, so the way forward is
-``deploy_new_code_and_database.sh``, which builds the installation from nothing.
+``scripts/server/database/`` holds four scripts that dump a database from one of the two
+servers and load it onto the other. ``scripts/import/clone_database.sh`` copies one
+database to another on the same server.
 
-``run_full_opus_import.sh`` runs a complete import into a new database, which is the
-first half of bringing up a new one.
-
-``scripts/server/database/`` holds the dump and load scripts used to move a database
-between machines.
+.. _dev_guide_deployment_config:
 
 Deploy configuration
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 The deploy chain has its own configuration, separate from the application's, and the
-separation is deliberate:
+separation is deliberate.
 
 ``scripts/server/secrets/deploy.env``
-    Shell syntax, read by the scripts **before any OPUS code exists on the machine**.
-    It says where to install, which database credentials to use, where the PDS holdings
-    are, and what Django's secret key is. Install it with the two commands
-    ``deploy.env.template`` gives at the top of itself -- ``install -d -m 700`` for
-    ``scripts/server/secrets/`` and ``install -m 600`` for the file -- then fill in
-    every ``<PLACEHOLDER>``. Both modes are set as the thing is created rather than
-    afterwards, because the scripts ``source`` this file: a directory left
-    world-writable by a permissive umask lets another local account substitute shell
-    code that the deploy then runs. The directory is git-ignored.
+    **Shell syntax**, read by the scripts before any OPUS code exists on the machine. It
+    says where to install, which database credentials to use, where the PDS holdings are,
+    what Django's secret key is, and where the two site-content files live. Eight
+    variables, every one of them required:
+
+    .. list-table::
+       :header-rows: 1
+       :widths: 34 66
+
+       * - Variable
+         - Meaning
+       * - ``OPUS_DIR``
+         - The installation root, under which the chain expects or creates the five
+           directories listed above.
+       * - ``OPUS_DB_USER``, ``OPUS_DB_PASSWORD``
+         - The MySQL account the import pipeline and the web application connect as.
+       * - ``OPUS_SECRET_KEY``
+         - Django's secret key for this server.
+       * - ``PDS3_HOLDINGS_DIR``, ``PDS4_HOLDINGS_DIR``
+         - The two holdings roots. The deploy checks that ``volumes/`` and ``bundles/``
+           exist under them.
+       * - ``LAST_BLOG_UPDATE_FILE``, ``NOTIFICATION_FILE``
+         - The two files of site content the interface displays.
 
 ``opus.toml``
     Read by the installed application and the import pipeline at run time.
     ``_write_opus_toml.sh`` **generates it** per installation from the values above, and
-    the deploy exports ``OPUS_CONFIG`` pointing at it. On a Node server, do not
-    hand-write this file from ``opus.toml.template`` as the section above describes: the
-    next deploy overwrites it. Change ``deploy.env`` instead.
+    the deploy exports ``OPUS_CONFIG`` pointing at it. **On a Node server, do not
+    hand-write this file**: the next deploy overwrites it. Change ``deploy.env``
+    instead.
 
-``_read_deploy_env.sh`` refuses to continue if any value is missing, empty, or still the
-``<PLACEHOLDER>`` the template ships, and the generator refuses a value containing a
-control character, because TOML cannot represent one inside a quoted string. Both
-failures name the variable at fault, and both happen before the deploy stops Apache.
+Installing the secrets file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Two things always have to happen after a database changes, and both are easy to
-forget:
+Copy ``scripts/server/deploy.env.template`` into ``scripts/server/secrets/``, with the
+two commands the template gives at the top of itself, and then fill in every
+``<PLACEHOLDER>``::
 
-* **The shared Django cache has to be emptied**, because it holds search results
-  keyed by a search that now means something else.
-  ``python -m opus_app.clear_django_cache`` does exactly this and nothing else: it
-  configures ``CACHES`` and calls ``cache.clear()``. Restarting memcached has the same
-  effect, and is what the deploy scripts do.
-* **Every worker process has to be restarted**, because some caches are module-level
-  dictionaries private to a process -- the ``param_info`` lookup in
-  :mod:`opus_app.apps.search.views` and the mult-value lookup in
-  :mod:`opus_app.apps.tools.db_utils`. Nothing running outside a worker can reach
-  those, ``clear_django_cache`` included, so restarting Apache is the only thing that
-  clears them.
+    install -d -m 700 scripts/server/secrets
+    install -m 600 scripts/server/deploy.env.template scripts/server/secrets/deploy.env
 
-The log analyzer
-----------------
+**Both modes are set as the thing is created rather than afterwards.** The scripts read
+this file with ``source``, i.e. they *run* it as shell code with the deploy user's
+privileges, so a directory left world-writable by a permissive umask would let another
+local account substitute code the deploy then executes. The directory is git-ignored.
 
-``scripts/server/log_analyzer/`` holds three cron templates -- a nightly update, an
-end-of-month report and a full refresh. They are templates: each installation fills in
-the placeholders (the virtual environment, the Apache log directory and its file
-prefix, and the web directory the reports are published to) and installs the result in
-its own crontab. Nothing substitutes or runs them automatically.
+Two validations run before a deploy touches anything:
 
-They invoke the analyzer as ``opus_log_analyzer``, the console script the
-distribution installs; ``python -m opus_log_analyzer`` runs the same ``main`` and takes
-the same arguments. For example, the nightly update is::
+* ``_read_deploy_env.sh`` refuses to continue if any of the eight variables is missing,
+  **empty**, or still the placeholder the template ships. Emptiness is refused as well as
+  absence because nothing downstream objects to an empty value -- an empty secret key is
+  a well-formed TOML string, and Django starts with no secret key.
+* ``_write_opus_toml.sh`` refuses a value containing a control character, because TOML
+  cannot represent one inside a quoted string, and it writes the generated file under a
+  restrictive umask into a temporary name before renaming it into place, so the file is
+  never briefly readable while it already holds the password.
+
+Both failures name the variable at fault, and both happen **before the deploy stops
+Apache**.
+
+``_write_opus_toml.sh`` is a separate program rather than a block inside the setup script
+so that it can be run on its own against a controlled environment and its output loaded
+through :func:`opus_config.config.load_config` -- which is what its unit test does. A generator
+whose only exercise is a production deploy is a generator nobody has checked.
+
+.. _dev_guide_deployment_after_import:
+
+Two things that always have to happen
+--------------------------------------
+
+After **anything** that changes the database, and both are easy to forget:
+
+**1. The shared Django cache has to be emptied**, because it holds result counts, mult
+counts, range endpoints and product-type lists keyed by a search that now means something
+else::
+
+    OPUS_CONFIG=/etc/opus/opus.toml python -m opus_app.clear_django_cache
+
+That module configures the cache backend and calls ``clear()``, and does nothing else.
+Restarting memcached has the same effect, and is what the deploy scripts do.
+
+**2. Every worker process has to be restarted**, because some caches are module-level
+dictionaries private to a process -- the ``param_info`` lookup in
+:mod:`opus_app.apps.search.views` and the mult-label lookup in
+:mod:`opus_app.apps.tools.db_utils`. **Nothing running outside a worker can reach those**,
+``clear_django_cache`` included, so restarting the application is the only thing that
+clears them. See :ref:`dev_guide_webapp_caching`.
+
+.. _dev_guide_deployment_runbook:
+
+The import runbook
+------------------
+
+A production import is long -- hours to days for the full holdings -- and it replaces
+what users see, so it is done deliberately.
+
+1. **Import into a new database, not the one being served.**
+   ``--override-db-schema`` points one run at a different schema without editing the
+   configuration, and the pipeline creates a schema that does not exist. This is the step
+   that makes everything after it reversible.
+2. **Read the error log.** The import's own exit status is not the whole story:
+   ``--validate-perm`` and the dictionary import both report through the log rather than
+   through the status, so an automated run gates on ``ERRORS.log`` being empty.
+   :ref:`dev_guide_import_verifying` is the full check.
+3. **Compare the new database against the one being served.** ``import_all.sh`` prints
+   the name of each before it asks for confirmation, so that the erase cannot be aimed at
+   the wrong one; it prints no row counts, and comparing those is a separate query you run
+   yourself.
+4. **Point an installation at the new database and exercise it** before switching the
+   public one over. That is what the per-database directory layout is for: a second
+   installation with its own ``opus.toml`` can serve the new schema while the public one
+   still serves the old.
+5. **Switch over**, by moving the served symlink, or by running
+   ``deploy_new_code_and_database.sh`` against the new database name.
+6. **Flush memcached and restart the application**, as above.
+
+**An import can be resumed rather than restarted.** The per-step options let a run redo
+only the part that failed, and the import tables survive a failure precisely so that this
+is possible -- see :ref:`dev_guide_import_two_namespaces`.
+
+.. _dev_guide_deployment_log_analyzer:
+
+The log analyzer cron jobs
+--------------------------
+
+``scripts/server/log_analyzer/`` holds three cron templates: a nightly update, an
+end-of-month report, and a full refresh over a range of months. They are **templates**:
+each installation fills in the placeholders -- the virtual environment, the Apache log
+directory and its file prefix, and the web directory the reports are published to -- and
+installs the result in its own crontab. Nothing substitutes or runs them automatically.
+
+They invoke the analyzer as ``opus_log_analyzer``, the console script the distribution
+installs; ``python -m opus_log_analyzer`` runs the same entry point and takes the same
+arguments. The nightly update is::
 
     #!/bin/bash
     source <VENV>/bin/activate
@@ -319,27 +229,50 @@ the same arguments. For example, the nightly update is::
     cp -r /tmp/log_analyzer_results_temp/* <WWW>/log_analyzer_results
     rm -rf /tmp/log_analyzer_results_temp
 
-The reports it writes are internal operator pages, not part of the public site.
+The end-of-month job is the same command with ``--cronjob-date -1``, and the refresh job
+loops the same command over each month of a year range. The reports they write are
+internal operator pages, not part of the public site. :ref:`dev_guide_log_analyzer`
+describes the program.
 
-Import runbook
---------------
+.. _dev_guide_deployment_releasing:
 
-A production import is long -- hours to days for the full holdings -- and it replaces
-what users see, so it is done deliberately:
+Releasing
+---------
 
-1. **Import into a new database**, not the one being served. ``--override-db-schema``
-   points one run at a different schema without editing the configuration.
-2. **Read the error log.** The import's own exit status is not the whole story:
-   ``--validate-perm`` reports through the log rather than through its status, so an
-   automated run gates on the error log being empty.
-3. **Compare the new database against the one being served.** ``import_all.sh``
-   prints the name of each before it asks for confirmation, so that the erase cannot
-   be aimed at the wrong one; it prints no row counts, and comparing those is a
-   separate query you run yourself.
-4. **Point an installation at the new database** and exercise it before switching the
-   public one over.
-5. **Flush memcached and restart the application**, as above.
+The version comes from the git tag, through setuptools-scm, and is written into the
+distribution at build time; nothing carries a hard-coded version string. Tags continue
+the zero-padded ``v3.x`` scheme -- ``scripts/releases/add_release_tag.sh`` creates one,
+and ``scripts/releases/show_version_tags.sh`` lists them.
 
-An import can be resumed rather than restarted: the per-step options let a run redo
-only the part that failed, and the import tables survive a failure precisely so that
-this is possible.
+Publishing a tagged release on GitHub triggers the PyPI publish workflow, which builds
+the distributions, validates them, and uploads them. A second workflow does the same
+against Test PyPI and runs only on demand. :ref:`dev_guide_environment` describes both,
+and the ``Package`` job that exercises the whole release path except the upload itself on
+every push.
+
+A deploy then installs that release by version specifier, which is why the deploy scripts
+take a PEP 440 specifier rather than a branch name.
+
+Operating checklist
+-------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 34 66
+
+   * - Task
+     - What to do
+   * - Deploy a new release, same database
+     - ``deploy_new_code_only.sh ==<version>``
+   * - Deploy a new database
+     - ``run_full_opus_import.sh``, verify, then
+       ``deploy_new_code_and_database.sh <name>``
+   * - Change a credential or a path
+     - Edit ``deploy.env``, then run a deploy. Never edit ``opus.toml`` on a Node server.
+   * - Change a field label or a tooltip
+     - Edit the table schema, re-run ``--update-mult-info`` or ``--import-dictionary``,
+       clear the cache and restart the workers.
+   * - Reports look stale
+     - The log-analyzer cron jobs. They are per-installation and are not deployed.
+   * - Results look stale
+     - :ref:`dev_guide_deployment_after_import`.

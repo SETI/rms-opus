@@ -320,4 +320,4 @@ reason: the key is read everywhere else, so no key-level check can see it. See
 Adding a column
 ---------------
 
-See :ref:`dev_guide_extending`.
+See :ref:`dev_guide_extending_column`.

@@ -1,184 +1,369 @@
 .. _dev_guide_import:
 
-The Import Pipeline
-===================
+The Import Pipeline: Theory of Operation
+========================================
 
-:mod:`opus_import` reads PDS3 volumes and PDS4 bundles and writes every OPUS table.
-It is a program rather than a library: nothing outside the distribution imports it,
-and it is run as ``opus_import``, the console script the distribution installs, or
-equivalently as ``python -m opus_import``.
+:mod:`opus_import` reads PDS3 volumes and PDS4 bundles and writes every OPUS table. It
+is a program rather than a library: nothing outside the distribution imports it, and it
+is run as ``opus_import``, the console script the distribution installs, or equivalently
+as ``python -m opus_import``.
 
-Overview
---------
+This chapter is the *why*. It explains what a run does and what forces it to do it that
+way. The chapters after it are the *what*: :ref:`dev_guide_import_running` is the
+command-line surface, :ref:`dev_guide_import_config` is the data that says what exists,
+:ref:`dev_guide_import_steps` walks every step module, :ref:`dev_guide_import_obs` and
+:ref:`dev_guide_import_obs_classes` walk the class hierarchy that computes the values,
+and :ref:`dev_guide_import_db` is the SQL layer underneath.
 
-A run is a sequence of steps. The command line asks for the ones it wants,
-:mod:`opus_import.cli` runs the requested subset in a fixed order, and each step is a
-``do_*`` module under :mod:`opus_import.steps`. The order is not a preference: the
-cart and cache tables have to be cleaned before the permanent tables are rebuilt
-because a cart row can reference them, and the auxiliary tables have to be built after
-the permanent tables because they are derived from them. :mod:`opus_import.steps`
-states the whole order and what forces each part of it.
+.. _dev_guide_import_what_it_does:
 
-The run's state lives in one object. :class:`opus_import.context.ImportContext` carries
-the parsed arguments, the open database, the loggers, and the caches a run accumulates
--- the mult tables it has read, the maximum row id per table, the warnings it has
-already reported. Every step takes it as its only parameter. Nothing in the pipeline
-reaches for a module-level global.
+What a run produces
+-------------------
 
-Configuration data
+An import run turns the index tables of a set of bundles into the whole OPUS database:
+
+.. mermaid::
+
+    flowchart TD
+        H[(PDS3 and PDS4 holdings:<br/>primary index, summary and<br/>supplemental index files, shelves)]
+        BI[config_bundle_info:<br/>which obs class, which index files]
+        OB[One obs class instance per bundle]
+        IMP[(Import tables:<br/>imp_obs_*, imp_mult_*)]
+        PERM[(Permanent tables:<br/>obs_*, mult_*)]
+        AUX[(Auxiliary tables:<br/>param_info, table_names,<br/>partables, contexts, definitions)]
+        SUP[(Support tables:<br/>cart, user_searches)]
+
+        H --> BI
+        BI --> OB
+        OB --> IMP
+        IMP -->|only if the whole run succeeded| PERM
+        PERM --> AUX
+        PERM -.-> SUP
+
+Four groups of table come out, and they are produced at different times and with
+different guarantees:
+
+**The observation tables** -- ``obs_general``, ``obs_pds``, the per-mission and
+per-instrument tables, the geometry tables, ``obs_files``, and the ``mult_`` tables of
+enumerated values that go with them. These are the imported data.
+
+**The auxiliary tables** -- ``param_info``, ``table_names``, ``partables``,
+``contexts`` and ``definitions``. These describe the search form rather than the
+observations, and only ``param_info`` is really derived from what was imported; the
+others come from the checked-in table schemas and configuration maps.
+:ref:`dev_guide_database` describes each of them.
+
+**The support tables** -- ``cart``, ``user_searches`` and the ``cache_*`` tables. The
+web application owns their contents; the import only resets them, because an import
+changes what a search means.
+
+**Django's own contrib tables** -- sessions, auth, content types, admin. These come from
+``django-admin migrate``, not from the import. There are no OPUS migrations, because
+every OPUS table is created from a table schema by the import itself.
+
+.. _dev_guide_import_two_namespaces:
+
+The two namespaces
 ------------------
 
-Three modules answer "what exists", and adding a mission, an instrument or a bundle
-means editing them:
+Every imported table exists twice. The **import namespace** carries the prefix the
+configuration's ``table_temp_prefix`` names (``imp_`` by default), and the **permanent
+namespace** carries no prefix and is what the web application reads.
+:meth:`~opus_import.importdb.super.ImportDBSuper.convert_raw_to_namespace` is what turns
+a bare table name into one or the other, and no step module builds a prefixed name
+itself.
 
-:mod:`opus_import.config_data`
-    Which missions, spacecraft and instruments there are, and which mission each
-    belongs to. It also holds ``TABLES_TO_POPULATE``, the kinds of table an
-    observation can fill, whose mission, instrument and surface-geometry entries carry
-    placeholders substituted per bundle.
+A run writes only the import tables. It copies them over the permanent tables at the
+very end, and **only if nothing logged an error**
+(:func:`~opus_import.steps.do_import.do_import_steps` skips the copy otherwise, unless
+``--import-ignore-errors`` says to go ahead). This is the guarantee the whole design
+rests on: a failed import cannot leave the web application serving half a bundle of
+observation metadata.
 
-:mod:`opus_import.config_bundle_info`
-    ``BUNDLE_INFO``: a list of (regular expression matching a bundle id, details)
-    pairs, and the only thing that makes a bundle importable at all. The details are
-    the obs class that computes its rows, the PDS version, the primary index file
-    names -- ``primary_index`` is a tuple, and a bundle set may name more than one --
-    and two flags. Nothing here maps a
-    bundle-id *prefix* to an instrument: the regular expression selects the class
-    directly.
+The protection covers the imported tables and no others. ``cart`` is created directly in
+the permanent namespace, and the ``cache_*`` and ``user_searches`` tables are dropped
+there outright, so a failed run can leave those already reset. They hold no imported
+data, which is why they are outside the copy.
 
-:mod:`opus_import.config_targets`
-    Target names, the class each target belongs to, and the alias mapping that folds
-    a label's spelling onto the name OPUS uses.
+Because the import tables survive a failure, a run can be **resumed rather than
+restarted**: the per-step options let a second invocation redo only the part that
+failed.
 
-The steps
----------
+.. _dev_guide_import_pass_structure:
 
-:mod:`opus_import.steps.do_import`
-    The observation import itself, behind ``--import`` and everything that implies
-    it. It is large enough to live in five modules: ``do_import.py`` holds the main
-    loop and the per-bundle driver, and four modules that are **not** steps of their
-    own hold its internals -- :mod:`~opus_import.steps.do_import_tables` (creating,
-    deleting and copying the ``obs_`` tables),
-    :mod:`~opus_import.steps.do_import_mult` (the ``mult_`` tables),
-    :mod:`~opus_import.steps.do_import_index` (one primary index file) and
-    :mod:`~opus_import.steps.do_import_obs` (one row of one table).
+The pass structure of a run
+---------------------------
 
-:mod:`opus_import.steps.do_param_info`
-    Builds ``param_info``, the table that tells the web application what the search
-    form contains. One row per column that carries a ``pi_category_name``. A column
-    with no ``param_info`` row is invisible to users no matter what the import wrote
-    into it.
+A run is a sequence of steps, each a ``do_*`` module under :mod:`opus_import.steps`.
+The command line asks for the ones it wants and :mod:`opus_import.cli` runs the
+requested subset **in a fixed order**. The order is not a preference; each part of it is
+forced by something:
 
-:mod:`opus_import.steps.do_table_names`
-    Builds ``table_names``, which names and orders the "Constraints" categories.
-    ``build_table_names_rows`` generates the mission and instrument rows from the
-    configuration maps and enumerates the rest individually, so only a table of a *new
-    kind* needs a row adding; adding a mission or instrument table by hand would give it
-    a second row. See :doc:`dev_guide_extending` for the recipe.
+1. **Clean up the cart and cache tables** (:mod:`~opus_import.steps.do_cart`,
+   :mod:`~opus_import.steps.do_django`). A ``cart`` row can reference an observation, so
+   the cart has to be emptied before the permanent tables are rebuilt underneath it.
+2. **Import the observations** (:mod:`~opus_import.steps.do_import`). This is the long
+   part, and it owns the copy to the permanent namespace as well.
+3. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
+   :mod:`~opus_import.steps.do_partables`,
+   :mod:`~opus_import.steps.do_table_names`). Each of these is derived from the
+   permanent tables -- from which of them exist, and from their schemas -- so it must
+   follow the copy.
+4. **Pin the mult display details** (:mod:`~opus_import.steps.do_update_mult_info`),
+   **validate** (:mod:`~opus_import.steps.do_validate`), and retry the cart if creating
+   it earlier failed because the permanent tables did not exist yet.
+5. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`), last.
 
-:mod:`opus_import.steps.do_partables`
-    Builds ``partables``, which maps a value a user can search for onto the table of
-    further search parameters that value makes relevant -- choosing the Cassini
-    mission reveals the Cassini mission table. The web application reads it to decide
-    which sections of the search form to offer, so a mission or instrument with no row
-    here has no searchable columns of its own.
+``--drop-permanent-tables`` reorders the first part: the leading cleanup is skipped and
+:mod:`~opus_import.steps.do_import` performs it instead, after the drop, because
+dropping the permanent tables also drops the cart.
 
-:mod:`opus_import.steps.do_update_mult_info`
-    Writes the display details a schema pins for a ``mult_`` table -- the label, the
-    sort order, the grouping -- back over the table the import discovered, so that
-    editing a schema changes a label without a re-import. It runs only under
-    ``--update-mult-info``; ``--do-it-all`` does not imply it.
+:mod:`opus_import.steps` states the whole order and what forces each part of it, and is
+the authority if this summary and it ever disagree.
 
-:mod:`opus_import.steps.do_validate`
-    Checks the invariants no database constraint can express: that every user-visible
-    column is described in ``param_info``, that a paired minimum and maximum are
-    really in that order, and that observations sharing a filter agree about that
-    filter's wavelengths. It changes nothing and it is not fatal -- see *Errors and
-    warnings* below for what that means for an automated run.
+.. _dev_guide_import_per_bundle:
 
-:mod:`opus_import.steps.do_dictionary`
-    Fills the ``contexts`` and ``definitions`` tables, which is where every tooltip
-    comes from. The terms are the ``definition`` entries in the packaged table
-    schemas, which is where OPUS's own parameters and mult values are described, filed
-    under the context named beside each one. It runs only under
-    ``--import-dictionary``, and it is the last thing a run does.
+Inside one bundle
+-----------------
 
-:mod:`opus_import.steps.do_cart`
-    Creates the ``cart`` table empty, directly in the permanent namespace: there is
-    nothing to import into it, and it starts empty on every run.
+:func:`~opus_import.steps.do_import.import_one_bundle` is the per-bundle driver. Given a
+bundle id it:
 
-:mod:`opus_import.steps.do_django`
-    Drops the ``cache_*`` tables the web application holds search results in, and the
-    ``user_searches`` table they are keyed by, recreating the latter empty. An import
-    changes what a search returns, so every cached result is stale once it finishes.
+1. **Looks the bundle up** in ``BUNDLE_INFO``
+   (:mod:`opus_import.config_bundle_info`). A bundle id matching no entry is one OPUS
+   does not know, and is an error. An entry whose ``instrument_class`` is None names a
+   bundle OPUS knows about and deliberately ignores, which counts as success.
+2. **Resolves it to a ``pdsfile`` object** -- ``Pds3File.from_path`` or
+   ``Pds4File.from_path`` -- and requires it to be a bundle.
+3. **Finds the primary index files.** ``BUNDLE_INFO`` gives one or more file-name
+   patterns with ``<BUNDLE>`` standing for the bundle id. The search looks through the
+   bundle's ``metadata`` directories and, for PDS3, the volume's own ``INDEX`` and
+   ``index`` directories. **Every index in the first directory that has one is
+   imported, and no later directory is searched**, so a bundle whose indexes are split
+   across directories imports only the first group.
+4. **Imports each index** through
+   :func:`~opus_import.steps.do_import_index.import_one_index`.
 
-How one observation becomes a row
----------------------------------
+The directory listing is **sorted** before the file names are matched, and that is
+load-bearing rather than tidy: a bundle can have several primary indexes -- COCIRS_1xxx
+has one per cube geometry -- and row ids are handed out in insertion order. Taking the
+files in ``os.listdir`` order would make every id in the database depend on how one
+filesystem happened to enumerate one directory, so two imports of identical holdings on
+two machines would disagree about every id.
 
-:func:`opus_import.steps.do_import.import_one_bundle` looks through the bundle's
-metadata and index directories for each of the primary index names ``BUNDLE_INFO``
-gives it, and runs
-:func:`opus_import.steps.do_import_index.import_one_index` once per index it finds.
-That function reads the index with ``pdstable``, then **discovers** the supplemental
-indexes rather than being told about them, by scanning the same directories for the
-file-name endings it knows (``SUMMARY.LBL``, ``SUPPLEMENTAL_INDEX.LBL``,
-``INVENTORY.LBL``). It joins each row to what it found and hands the assembled
-``metadata`` dictionary to the bundle's obs class
-instance -- **replacing it in place**, once per row. That is why no obs method may
-cache anything derived from ``metadata``:
-:attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows the pattern that is allowed,
-re-deriving whenever the file specification it was computed from changes.
+.. _dev_guide_import_one_index:
 
-For each table the observation belongs to,
-:func:`~opus_import.steps.do_import_obs.import_observation_table` walks that table's
-schema and computes one value per column, dispatching on the column's ``data_source``
-(see :ref:`dev_guide_table_schemas`). The common case is ``COMPUTE``, which calls the
-``field_obs_<table>_<column>`` method of the obs class instance.
+Inside one index file
+---------------------
 
-A field method's exception is treated as a bad field rather than as an aborted import:
-an obs class is handed the context only so that it can log, never so that it can reach
-the database. That is what lets one malformed label cost one observation rather than
-the run.
+:func:`~opus_import.steps.do_import_index.import_one_index` is where a holdings tree
+becomes rows. It has two halves.
 
-Important invariants
---------------------
+**The first half assembles the metadata.** It reads the primary index with ``pdstable``,
+then *discovers* the files beside it, as described in
+:ref:`dev_guide_holdings_opus_consumes`, and cross-references each one to the primary
+index on the primary file specification. Ring, sky and inventory summaries have at most
+one row per observation and become a dictionary keyed by file specification; a surface
+geometry summary has one row per target per observation and becomes a dictionary of
+dictionaries, keyed by file specification and then by target name. Both the rows and the
+files' own labels are kept, because different instruments record useful values in each.
 
-* **Nothing is visible until the run succeeds.** Every table is written under the
-  import prefix and copied over the permanent tables at the end. Deleting the import
+An empty associated index is reported as an **error** rather than passed over: it reads
+as a successful read of a file with no rows, so without the check the whole bundle would
+import silently short of that metadata.
+
+Two bundle-level flags shape this half. ``validate_index_rows`` handles archives whose
+index carries more than one row per observation: the OPUS id of every row is computed
+(cheap), rows sharing an id are collected, and only for those is the id mapped back to a
+file specification (expensive) to decide which row to keep. The rest are dropped with a
+log line. ``temporal_camera`` is passed straight through onto the metadata for the obs
+classes to read.
+
+**The second half is the master loop.** For each index row, and for each *phase* of that
+row, every table the observation belongs to gets one row computed by
+:func:`~opus_import.steps.do_import_obs.import_observation_table`. Three things are
+deferred, in this order:
+
+* the ``obs_surface_geometry__<TARGET>`` tables, because which of them exist depends on
+  the targets the observations turn out to mention;
+* ``obs_surface_geometry`` itself, because its target list is only known once those have
+  been walked;
+* ``obs_files``, because it needs the ``obs_general`` and ``obs_pds`` rows and
+  contributes many rows per observation rather than one.
+
+**Nothing is written to the database until every row of the index has been computed.**
+Then the ``mult_`` tables go out, and only then the ``obs_`` tables -- because an
+``obs_`` row stores the row id its value was given in the corresponding ``mult_`` table,
+and that row has to exist to be looked up. Nothing enforces the order: a ``mult_idx``
+column carries a plain index, not a foreign key. Within the ``obs_`` tables,
+``obs_general`` goes first, and *that* one really is a foreign-key target for the rest.
+
+Where the surface geometry comes from varies. Most bundles have separate summary files
+per target. Some -- COCIRS_[01]xxx among them -- carry it inline in the primary index
+instead, and their obs class returns the target names from
+:meth:`~opus_import.obs.obs_base.ObsBase.surface_geo_target_list` so that the same
+tables are filled from the index row.
+
+.. _dev_guide_import_one_row:
+
+Inside one row
+--------------
+
+:func:`~opus_import.steps.do_import_obs.import_observation_table` computes one
+observation's row of one table by walking that table's schema and producing one value
+per column. Three kinds of column are skipped outright: ``timestamp``, which the
+database maintains itself; a column marked ``put_mults_here``, which holds another
+column's mult id; and a ``pi_referred_slug`` entry, which describes a search parameter
+rather than a column.
+
+For every other column it dispatches on the schema's ``data_source``:
+
+.. list-table::
+   :header-rows: 1
+
+   * - ``data_source``
+     - Where the value comes from
+   * - ``COMPUTE``
+     - The obs instance's ``field_obs_<table>_<column>`` method. This is almost every
+       column.
+   * - ``OBS_GENERAL_ID``
+     - The ``id`` of this observation's ``obs_general`` row, which is how every other
+       table hangs off it.
+   * - ``MAX_ID``
+     - One more than the largest id used in this table so far, from the run's
+       per-table id cache.
+   * - ``LONGITUDE_FIELD``
+     - :meth:`~opus_import.obs.obs_base.ObsBase.compute_longitude_field`.
+   * - ``D_LONGITUDE_FIELD``
+     - :meth:`~opus_import.obs.obs_base.ObsBase.compute_d_longitude_field`.
+
+The method name is produced by
+:func:`~opus_import.steps.do_import_obs.field_function_name`, and that is the pipeline's
+**only** rule for finding a field method: ``field_`` plus the table name plus the column
+name, with every ``obs_surface_geometry__<TARGET>`` table folded onto
+``obs_surface_geometry_target`` because they are all built from one template. A method
+whose name that rule cannot produce is a method that is never called.
+
+The computed value is then checked against what the schema declares, and **validation
+reports rather than raises**, so one bad row does not end the run:
+
+* a flag column's value is folded onto ``Yes``/``No`` or ``On``/``Off``; an
+  unrecognized spelling becomes NULL and logs an error;
+* a ``charNNN`` column keeps a value of the right type -- an over-long string is
+  truncated, a non-string becomes the empty string -- and logs an error either way;
+* a numeric column's value must parse, must not equal a ``val_sentinel``, and must lie
+  between ``val_min`` and ``val_max``. It becomes NULL if it does not. A column carrying
+  ``val_set_invalid_to_null`` logs an out-of-range value at **debug** level instead of
+  as an error, so those are discarded silently and the run still succeeds.
+
+Logging an error is what marks the run as having produced bad data, and that is what
+suppresses the copy to the permanent tables at the end.
+
+Finally, a column whose ``pi_form_type`` is a GROUP type has its value replaced by a
+``mult_`` table row id, adding the value to that table if it is new. A ``mult_list``
+column holds several values and is written as a JSON array, with a missing value omitted
+rather than stored as null.
+
+The row is left on the metadata dictionary under ``<table_name>_row`` as well as
+returned, which is how a later table's field methods read what an earlier one computed.
+
+**A field method's exception costs one field, not the run.**
+:func:`~opus_import.steps.do_import_obs.import_run_field_function` catches it, logs it
+with its traceback, and returns None for that column. An obs class is handed the run
+context only so that it can log, never so that it can reach the database -- which is
+what makes that containment safe.
+
+.. _dev_guide_import_obs_dispatch:
+
+Why there is a class hierarchy
+------------------------------
+
+One obs class instance is created per bundle, and every ``COMPUTE`` column of every
+table is a method call on it. The hierarchy exists entirely to decide which class that
+call lands on, so that an archive that spells something unusually overrides one method
+and inherits the several hundred it agrees with.
+
+The layering, root outward, is: what every observation shares, then what a PDS version
+decides, then what one OPUS table needs, then what a mission shares, then what one
+volume set or bundle knows. :ref:`dev_guide_import_obs` describes each layer, the
+contract it defines, and the method resolution order that falls out -- which is not
+obvious, and is the usual way a newly added class misbehaves.
+
+.. _dev_guide_import_invariants:
+
+Invariants
+----------
+
+* **Nothing is visible until the run succeeds.** Every imported table is written under
+  the import prefix and copied over the permanent tables at the end. Deleting the import
   tables before the copy, or copying before every bundle has been read, breaks the
-  guarantee the whole design rests on.
-* **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** An ``obs_`` row
-  stores the row id its value was given in the corresponding ``mult_`` table, so that
-  row has to exist first. No database constraint enforces it.
-* **An import run is single-threaded and one obs instance serves a whole bundle.**
-  The instance holds the current row's metadata, so it is not safe to share.
-* **Longitudes carry two derived columns.** A ``LONG`` field stores, besides its
-  minimum and maximum, the midpoint and the span of the range, because a longitude
-  search has to handle the wrap at 360 degrees. ``LONGITUDE_FIELD`` and
-  ``D_LONGITUDE_FIELD`` are the ``data_source`` values that fill them.
-* **Units are the schema's business, not the field method's.** A field method returns
-  a value in the column's default unit; :mod:`opus_support` is what converts to and
-  from everything else, driven by the ``pi_form_type`` the schema declares.
+  guarantee the design rests on.
+* **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
+  constraint enforces it.
+* **An import run is single-threaded, and one obs instance serves a whole bundle.** The
+  instance holds the current row's metadata, and
+  :func:`~opus_import.steps.do_import_index.import_one_index` replaces that dictionary
+  in place once per row, so **no obs method may cache anything derived from it**.
+  :attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows the pattern that is allowed:
+  it re-derives whenever the file specification it was computed from changes.
+* **Row ids depend on insertion order**, so anything that changes the order rows are
+  produced in changes every id. Directory listings are sorted for exactly this reason.
+* **Longitudes carry two derived columns.** A ``LONG`` field stores, besides its minimum
+  and maximum, the midpoint and the half-span of the range, because a longitude search
+  has to handle the wrap at 360 degrees.
+* **Units are the schema's business, not the field method's.** A field method returns a
+  value in the column's default unit; :mod:`opus_support` is what converts to and from
+  everything else, driven by the ``pi_form_type`` the schema declares.
+* **The primary file specification must come from the primary index.** It is what finds
+  an observation's row in every other index file and what the OPUS ID is derived from,
+  so an obs class that took it from a supplemental index could not do either.
+
+.. _dev_guide_import_errors:
 
 Errors and warnings
 -------------------
 
-A run reports through :class:`opus_import.context.ImportLog`, and what ends up in the
-error log is what gates an automated import: ``--validate-perm`` does not fail a run
-through its exit status, and the check that matters is whether the error log came out
-empty. The ``log_nonrepeating_*`` helpers in :mod:`opus_import.import_util` exist
-because a single systematic fault would otherwise be reported once per observation.
+A run reports through :class:`opus_import.context.ImportLog`, reached as ``ctx.log``,
+and the step modules call the same operations through the ``log_*`` functions in
+:mod:`opus_import.import_util`. Every message is prefixed with the bundle, index row and
+primary file specification the run is currently on, so a message read out of a log file
+names the observation that produced it.
 
-Authoring tools
----------------
+**What ends up in the error log is what gates an automated import.** The exit status is
+not the whole story: :mod:`~opus_import.steps.do_validate` reports through the log
+rather than through the status, so a script that only checks the status will pass a run
+that found problems. Gate on ``ERRORS.log`` being empty.
 
-:mod:`opus_import.util` holds tools that are run by hand while authoring a schema, not
-during an import: ``dump_pds_definitions`` takes the path of a **PDS index label** and
-prints that label's field definitions in the form a table schema's ``definition``
-entries want, and ``retrieve_ra_dec`` queries SIMBAD for a star's coordinates. Both do
-their work inside a ``main()`` behind an ``if __name__ == '__main__':`` guard, so
-importing either one -- which the documentation build does -- runs nothing and reaches
-no network.
+The ``nonrepeating_`` variants log a given message once per run and ignore it after
+that. They exist because a single systematic fault -- one column missing from one
+index -- would otherwise be reported once per observation, hundreds of thousands of
+times.
+
+:attr:`~opus_import.context.ImportContext.import_has_bad_data` is the flag that
+suppresses the copy to the permanent tables. Every ``log`` error sets it, and a few
+sites set it directly; it is **not** a complete record of the run's errors, because
+several steps log failures straight to the underlying logger and leave it alone.
+
+Where to go next
+----------------
+
+:ref:`dev_guide_import_running`
+    Every command-line option, what a run prints, and how to verify one succeeded.
+
+:ref:`dev_guide_import_config`
+    ``BUNDLE_INFO``, the mission and instrument maps, and the target tables.
+
+:ref:`dev_guide_import_steps`
+    Every ``do_*`` module.
+
+:ref:`dev_guide_import_obs`
+    The obs class hierarchy and its contracts.
+
+:ref:`dev_guide_import_db`
+    The database layer and the shared helpers.
+
+:ref:`dev_guide_import_extending`
+    Recipes for adding a column, a bundle, an instrument or a mission.
 
 API reference
 -------------
