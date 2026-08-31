@@ -280,9 +280,9 @@ The session and the recycle bin
 
 Every handler begins with :func:`~opus_app.apps.tools.app_utils.get_session_id`, and every
 read and write carries that session id. The ``cart`` table's unique key over the session
-and the observation is what makes the writes idempotent, and is why they are ``REPLACE
-INTO`` rather than a delete followed by an insert: a second concurrent write becomes a
-replacement rather than a duplicate.
+and the observation is what makes the writes idempotent, and is why they are
+``REPLACE INTO`` rather than a delete followed by an insert: a second concurrent write
+becomes a replacement rather than a duplicate.
 
 :func:`~opus_app.apps.cart.views.api_edit_cart`'s own docstring carries the authoritative
 state-transition table for the five actions crossed with the recycle-bin flag; it is the

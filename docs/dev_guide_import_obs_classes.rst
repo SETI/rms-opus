@@ -114,7 +114,7 @@ Three naming traps, worth knowing before you go looking for a file:
 * Two class names **drop or reorder** what their module names carry:
   :class:`~opus_import.obs.obs_volume_couvis_covims_occ_common.ObsVolumeUVISVIMSOccCommon`, and
   :class:`~opus_import.obs.obs_bundle_cassini_uvis_solarocc_beckerjarmak2023.ObsBundleCassiniUvisSolarOccBeckerJarmak`,
-  which drops the year its module carries. Several VG_28xx classes add an instrument
+  which drops the year its module carries. Several VG_28xx classes *add* an instrument
   suffix their modules lack, and the three sharing ``obs_volume_vg2801_vg2802.py`` name
   the volume differently as well, which is the next trap rather than this one.
 * ``obs_volume_vg28xx.py`` holds
