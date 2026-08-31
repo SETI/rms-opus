@@ -706,8 +706,9 @@ Surface geometry is three tables, because it answers three different questions.
     planetocentric latitude, west longitude, distance and resolution, lighting geometry,
     pole and limb, image geometry and timing. The eight **east longitude** columns are
     computed rather than read, and are marked do-not-override: six are
-    ``(360 - west) % 360``, with a special case on the upper endpoint that keeps a 360 as
-    360, and the two observer columns are the plain negation instead.
+    ``(360 - west) % 360``, with a special case on the upper endpoint that keeps a 0--360
+    west range as a 0--360 east range, since the formula would otherwise turn its 360 into
+    0, and the two observer columns are the plain negation instead.
     :meth:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.validate_surface_geo_fields`
     is the surface counterpart of the ring validator, over nine gridless stems.
 
