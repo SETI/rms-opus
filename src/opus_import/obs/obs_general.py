@@ -11,6 +11,8 @@ outright.
 import json
 import os
 
+from pdsfile.pdsviewable import PdsViewSet
+
 from opus_import.obs.field_types import FloatField, MultField, MultFieldRet, StrField
 from opus_import.obs.obs_base import ObsBase
 
@@ -81,7 +83,10 @@ class ObsGeneral(ObsBase):
             self._log_nonrepeating_warning(f'ViewSet threw IOError for "{filespec}": {e}')
             viewset = None
 
-        if viewset:
+        # `viewset` reports "no view set" as False rather than None, so the test has to
+        # be for a real set: a truthiness test leaves a bool in the type, and every
+        # attribute read below is one the bool does not have.
+        if isinstance(viewset, PdsViewSet):
             browse_data = viewset.to_dict()
             if not self._ctx.args.import_ignore_missing_images:
                 if not viewset.thumbnail:
