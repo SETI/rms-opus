@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from import_tests.tools import build_run, fixture_layout, golden_io, holdings_survey
+from import_tests.tools import build_run, fixture_layout, golden_io, holdings_survey, run_logs
 
 if TYPE_CHECKING:
     from import_tests.tools.build_run import ImportRun
@@ -177,12 +177,26 @@ def reimport(
     It mutates the finished database, so it is deliberately the last thing this module
     does: the golden comparisons above are defined before it and run before it.
 
+    The invocation's own status is checked here rather than left to the assertions below,
+    because a re-import that died on startup leaves the database exactly as the first
+    import left it -- and all three of those assertions pass on a database nothing
+    touched. This fixture is the only place that can tell "unchanged because the update
+    path is correct" from "unchanged because nothing ran".
+
     Returns:
         The tables holding the re-imported bundle's rows, and the tables holding none of
         them, each sorted.
+
+    Raises:
+        AssertionError: If the re-import invocation exited non-zero or logged an error.
     """
     bundle = reimport_bundle_id(main_run)
-    build_run.reimport_bundle(main_run, bundle, db_credentials)
+    step = build_run.reimport_bundle(main_run, bundle, db_credentials)
+    assert step.returncode == 0, f'the re-import exited {step.returncode}: {step.stderr[-2000:]}'
+    errors_log = main_run.paths.root / build_run.REIMPORT_LOG_DIRNAME / build_run.ERRORS_LOG
+    assert errors_log.is_file(), f'the re-import wrote no log to {errors_log}'
+    errors = run_logs.distinct(run_logs.read_messages(errors_log))
+    assert errors == [], errors
     holding = golden_io.tables_holding_bundle(db_credentials, main_run.schema, run_tables, bundle)
     return sorted(holding), sorted(set(run_tables) - holding)
 

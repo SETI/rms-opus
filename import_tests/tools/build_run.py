@@ -20,6 +20,7 @@ import os
 import pickle
 import re
 import shutil
+import site
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -68,6 +69,11 @@ VALIDATE_ARGS = ('--validate-perm',)
 #: log directory. The run's real gate is what these hold, not the exit status.
 ERRORS_LOG = 'ERRORS.log'
 WARNINGS_LOG = 'WARNINGS.log'
+
+#: Where `reimport_bundle` writes its logs, under the run's own directory. It is a
+#: directory of its own because pdslogger appends: sharing one would put the re-import's
+#: records in front of the assertions that read the first run's.
+REIMPORT_LOG_DIRNAME = 'logs_reimport'
 
 
 @dataclass(frozen=True)
@@ -338,6 +344,12 @@ def install_subprocess_coverage() -> Path | None:
     expected to remove what is returned: a ``.pth`` left in site-packages makes every
     later interpreter in that environment import coverage at startup.
 
+    Where the file goes is asked of `site`, not guessed from a directory name: a Debian
+    or Ubuntu system interpreter calls its directory ``dist-packages``, and a rule that
+    only recognized ``site-packages`` would abort a measured run there. The *user* site
+    directory is deliberately not a candidate -- it outlives the interpreter this session
+    is running, and a file left in someone's home directory is not this suite's to leave.
+
     Returns:
         The ``.pth`` file, or None when the run is not being measured.
 
@@ -345,14 +357,14 @@ def install_subprocess_coverage() -> Path | None:
         RuntimeError: If the run is being measured and no site directory would take the
             file. Failing quietly instead would leave every pipeline subprocess
             unmeasured, and the only symptom would be the coverage floor failing at a
-            third of its usual figure with nothing saying why.
+            fraction of its usual figure with nothing saying why.
     """
     if coverage.Coverage.current() is None:
         return None
     attempted = []
-    for directory in sys.path:
+    for directory in site.getsitepackages():
         candidate = Path(directory)
-        if candidate.name != 'site-packages' or not candidate.is_dir():
+        if not candidate.is_dir():
             continue
         attempted.append(str(candidate))
         pth_path = candidate / COVERAGE_PTH_NAME
@@ -362,9 +374,9 @@ def install_subprocess_coverage() -> Path | None:
             continue
         return pth_path
     raise RuntimeError(
-        'Coverage is measuring this session, but no site-packages directory on sys.path '
-        f'would take {COVERAGE_PTH_NAME}, so the pipeline subprocesses would go '
-        f'unmeasured. Tried: {attempted or "none"}'
+        "Coverage is measuring this session, but none of this interpreter's site "
+        f'directories would take {COVERAGE_PTH_NAME}, so the pipeline subprocesses would '
+        f'go unmeasured. Tried: {attempted or "none"}'
     )
 
 
@@ -543,7 +555,7 @@ def reimport_bundle(run: ImportRun, bundle: str, credentials: DatabaseCredential
         pds3_holdings=run.paths.pds3_holdings,
         pds4_holdings=run.paths.pds4_holdings,
         config_file=run.paths.root / 'opus_reimport.toml',
-        log_dir=run.paths.root / 'logs_reimport',
+        log_dir=run.paths.root / REIMPORT_LOG_DIRNAME,
     )
     write_opus_config(paths, run.schema, credentials)
     return run_pipeline_step(paths.config_file, [*IMPORT_ARGS, bundle])
