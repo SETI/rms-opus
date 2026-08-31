@@ -68,8 +68,8 @@ The obs class hierarchy
 -----------------------
 
 The pipeline's largest structure is the family of classes that computes a column's
-value, and :ref:`dev_guide_import_obs` is where it is described. Its shape is five
-layers, root outward:
+value, and :ref:`dev_guide_import_obs` is where it is described. The family's shape is
+five layers, root outward:
 
 .. list-table::
    :header-rows: 1

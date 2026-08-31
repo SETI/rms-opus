@@ -314,9 +314,9 @@ column holds several values and is written as a JSON array, with a missing value
 rather than stored as null.
 
 Each computed row is left on the metadata dictionary under ``<table_name>_row`` as well
-as returned. :func:`~opus_import.steps.do_import_obs.import_observation_table` installs
-the dictionary there **before** computing into it, which is how a later table's field
-methods read what an earlier one computed -- and how a field method can read what an
+as returned, which is how a later table's field methods read what an earlier one
+computed. :func:`~opus_import.steps.do_import_obs.import_observation_table` installs the
+dictionary there **before** computing into it, so a field method can also read what an
 earlier column of its own table produced.
 
 **A field method's exception costs one field, not the run.**

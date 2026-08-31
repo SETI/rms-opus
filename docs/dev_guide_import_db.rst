@@ -142,10 +142,10 @@ this is an abstract class by convention rather than through :mod:`abc`.
    * - ``_execute_and_fetchall(cmd, func_name, param_list=None)``
      - Execute one query and return every row of its result.
 
-The eleven concrete members are the constructor, the two namespace converters and
-their two predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
-:meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning collector
-``_make_warning_handler``, and the ``_enter``/``_exit`` pair. The two
+The eleven concrete members are the constructor, the two namespace converters and their
+two predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
+:meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
+collector ``_make_warning_handler``, and the ``_enter``/``_exit`` pair. The two
 converters do carry a ``raise NotImplementedError`` for a namespace value that is not
 one of the three, which is unreachable for a valid one.
 
@@ -223,9 +223,9 @@ The type mapping
 
 :meth:`~opus_import.importdb.super.ImportDBSuper.create_table` is where a schema's
 ``field_type`` becomes a MySQL type, and
-:meth:`~opus_import.importdb.super.ImportDBSuper.table_info` is the reverse. :ref:`dev_guide_table_schemas` lists the mapping.
-An unrecognized type raises :exc:`NotImplementedError` rather than being guessed at, in
-both directions.
+:meth:`~opus_import.importdb.super.ImportDBSuper.table_info` is the reverse.
+:ref:`dev_guide_table_schemas` lists the mapping. An unrecognized type raises
+:exc:`NotImplementedError` rather than being guessed at, in both directions.
 
 PostgreSQL: ImportDBPostgreSQL
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -311,9 +311,9 @@ Table names
     ``mult_<table>_<column>``, both lowercased.
 
 :func:`~opus_import.import_util.table_name_param_info` and :func:`~opus_import.import_util.table_name_partables`
-    The two auxiliary tables' names, namespace-converted like every other
-    ``table_name_*`` helper. **Neither has a caller**, which the source records beside
-    them.
+    The two auxiliary tables' names, and the **only** ``table_name_*`` helpers that
+    namespace-convert -- which is why they alone take the context. **Neither has a
+    caller**, which the source records beside them.
 
 :func:`~opus_import.import_util.encode_target_name` and :func:`~opus_import.import_util.decode_target_name`
     A target name is not a legal SQL identifier, so it is encoded: lowercased, with

@@ -326,10 +326,11 @@ Reading the cart
 :func:`~opus_app.apps.cart.views.api_view_cart`
     The OPUS-specific left side of the Selections page, rendered as HTML by
     ``cart/cart.html``: the cart and recycle-bin counts, and the product-type table
-    ``_get_download_info`` builds, with each type's file count and total size. It reports
-    on the **whole** cart whatever the user has ticked; an optional ``types`` argument
-    marks the types the caller did not select, which the template renders unchecked.
-    It does not page through observations -- that is
+    ``_get_download_info`` builds, with each type's file count and total size. Two
+    arguments shape it, and they do different things: ``types`` limits which product
+    types the totals cover, defaulting to ``all``; ``unselected_types`` names the types
+    the template renders **unchecked**, as is any type ``obs_files`` does not mark
+    ``default_checked``. It does not page through observations -- that is
     :func:`~opus_app.apps.results.views.api_get_data_and_images` with ``view=cart``.
 
 :func:`~opus_app.apps.cart.views.api_cart_status`

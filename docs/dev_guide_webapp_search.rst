@@ -8,7 +8,7 @@ search form calls while a user types, the routines that turn a search URL into S
 the generated Django models for every OPUS table.
 
 Only the first is routed. The second is imported by nearly every other app, which is
-why this is one of the largest modules in the project.
+why :mod:`opus_app.apps.search`'s ``views`` module is one of the largest in the project.
 :ref:`dev_guide_webapp_search_flow` is the mechanism; this chapter is the code.
 
 The routes

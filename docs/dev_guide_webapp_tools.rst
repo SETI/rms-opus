@@ -277,7 +277,6 @@ The shape of it
         Join ..> Expr : ON
         JSONTable ..> Expr : source column
         ValueError <|-- SQLIdentifierError
-        Expr ..> SQLIdentifierError : quoting raises
 
 Reading it in three groups:
 
@@ -299,9 +298,10 @@ a statement can hold a statement.
 **The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
 order. It and :class:`~opus_app.apps.tools.sql_builder.FromSource` are the two mutable
 classes here, each accumulating what a caller adds to it.
-:exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError` comes from one place --
-:func:`~opus_app.apps.tools.sql_builder.quote_identifier` -- and reaches a caller through
-whichever of these was quoting a name at the time.
+:exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError` is raised in one place --
+:func:`~opus_app.apps.tools.sql_builder.quote_identifier` -- which every function and
+every ``render`` method that emits an identifier calls, so it can surface from anywhere
+in the module.
 
 The expression layer
 ~~~~~~~~~~~~~~~~~~~~
@@ -397,10 +397,10 @@ caller whose SELECT is already rendered),
 Two invariants in that list are deliberate. **A WHERE clause is required** by
 :func:`~opus_app.apps.tools.sql_builder.delete_from` and
 :func:`~opus_app.apps.tools.sql_builder.update`: there is no call site that empties a
-table, and making it optional would let a caller emit one by leaving an argument out. And the cart's writes go
-through ``REPLACE INTO`` rather than a delete followed by an insert, because the cart
-table's unique key over the session and the observation turns a concurrent second write
-into a replacement instead of a duplicate.
+table, and making it optional would let a caller emit one by leaving an argument out.
+And the cart's writes go through ``REPLACE INTO`` rather than a delete followed by an
+insert, because the cart table's unique key over the session and the observation turns a
+concurrent second write into a replacement instead of a duplicate.
 
 :data:`~opus_app.apps.tools.sql_builder.CACHE_TABLE_COLUMN_DEFS` is the column definition
 both the durable ``cache_NNN`` table and the cart range editor's temporary table are

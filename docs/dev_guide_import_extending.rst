@@ -264,11 +264,12 @@ a matter of filling it in.
 3. **Add the engine** to the ``_db_engines`` map in :mod:`opus_app.settings`, so that
    the web application follows the same configured brand. The placeholder is already
    there.
-4. **Check the schema translation.** :meth:`~opus_import.importdb.super.ImportDBSuper.create_table`
-   and :meth:`~opus_import.importdb.super.ImportDBSuper.table_info` are a matched pair: the
+4. **Check the schema translation.**
+   :meth:`~opus_import.importdb.super.ImportDBSuper.create_table` and
+   :meth:`~opus_import.importdb.super.ImportDBSuper.table_info` are a matched pair: the
    first turns a schema's ``field_type`` into the brand's SQL type and the second turns
-   it back. :ref:`dev_guide_table_schemas` lists the types a schema may
-   name, and an unrecognized one must raise rather than be guessed at.
+   it back. :ref:`dev_guide_table_schemas` lists the types a schema may name, and an
+   unrecognized one must raise rather than be guessed at.
 
 Nothing else in the pipeline names a brand, so there is no third place to change.
 

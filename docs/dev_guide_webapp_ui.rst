@@ -255,9 +255,8 @@ built here. It is the one place where the compatibility waiver in
 resolves, and a test pins the redirect, but what comes back is a redirect rather than a
 document.
 
-The route's pattern keeps its capture group, so the set of URLs it matches is
-unchanged -- and that has a consequence: Django's redirect view interpolates the
-captured group into the target, so **the target URL must contain no percent sign at
+The route's pattern carries a capture group, and Django's redirect view interpolates
+the captured group into the target -- so **the target URL must contain no percent sign at
 all**, or requesting the route raises.
 
 .. _dev_guide_webapp_paraminfo_app:
