@@ -344,9 +344,9 @@ class ImportDBMySQL(ImportDBSuper):
                 name.
 
         Returns:
-            The matching table names, in no particular order. Passing a prefix always
-            gives a new list; asking for ``'all'`` without one gives the cache itself,
-            which the caller must not modify.
+            The matching table names, sorted. That order is part of the contract, because
+            a caller handing out row ids while iterating this would otherwise produce a
+            different database on a different machine. Every path returns a new list.
 
         Raises:
             NotImplementedError: If the namespace is not one of the three.
@@ -367,19 +367,24 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
             #             f'  Current table names: {sorted(self._table_names)}')
         super()._exit()
 
+        # Sorted, because the cache is a set filled from a query with no ORDER BY, so
+        # its iteration order depends on both the hash seed and the order the server
+        # happened to return rows in. A caller that hands out row ids in this order --
+        # `do_param_info` does -- would otherwise give the same database different ids on
+        # different machines, which is a difference nothing else can explain.
         ret_names: Collection[str]
         if namespace == 'all':
-            ret_names = self._table_names
+            ret_names = sorted(self._table_names)
         elif namespace == 'import':
             ret_names = [
                 self.convert_namespace_to_raw(namespace, x)
-                for x in self._table_names
+                for x in sorted(self._table_names)
                 if self._is_import_namespace(x)
             ]
         elif namespace == 'perm':
             ret_names = [
                 self.convert_namespace_to_raw(namespace, x)
-                for x in self._table_names
+                for x in sorted(self._table_names)
                 if self._is_perm_namespace(x)
             ]
         else:

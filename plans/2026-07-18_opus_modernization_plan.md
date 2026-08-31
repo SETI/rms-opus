@@ -7336,10 +7336,14 @@ body; never rewrite or delete earlier notes.*
   - **Two more things the import does that are not deterministic, and what the suite does
     about them.** Both are real and neither is PR-19's to fix. (1) `do_param_info` asks the
     backend which tables to describe and gets a **set**, so the ids it hands out follow a
-    string-hash order that Python randomizes per process: two identical imports give
-    `param_info` the same rows under different ids. The suite pins `PYTHONHASHSEED` in the
-    pipeline's subprocesses, which is a property of the harness rather than of the
-    pipeline. (2) `obs_general.preview_images` is `PdsViewSet.to_dict()`, and pdsfile
+    string-hash order that Python randomizes per process. The suite pinned
+    `PYTHONHASHSEED` for it, **which turned out not to be enough**: the set is filled from
+    an `INFORMATION_SCHEMA` query with no `ORDER BY`, so its iteration order depends on the
+    insertion order too, and CI produced different `param_info` ids from the same fixture
+    on a run whose only change was recorder-only code. Fixed at the source instead --
+    `ImportDBSuper.table_names` now returns sorted names, which every other caller in the
+    pipeline was already wrapping in `sorted()`; `do_param_info` was the one that was not.
+    The hash-seed pin stays, since it costs nothing and covers any set order this does not. (2) `obs_general.preview_images` is `PdsViewSet.to_dict()`, and pdsfile
     documents that its members come out "in the iteration order of a Python set, which is
     not the order they were appended in and is not stable across processes" -- a set of
     objects, so the hash seed does not settle it either. The golden serializer sorts that

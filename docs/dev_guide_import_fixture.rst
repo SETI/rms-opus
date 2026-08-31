@@ -150,11 +150,13 @@ The goldens
     it is a ``PdsViewSet`` rendered to a dictionary and ``pdsfile`` documents that its
     members come out in the iteration order of a Python set, which is not stable across
     processes. A third measure sits outside the goldens: the suite pins
-    ``PYTHONHASHSEED`` in the pipeline's subprocesses, because ``do_param_info`` asks the
-    backend which tables to describe and gets a *set*, so the ids it hands out otherwise
-    follow a per-process string-hash order. Both would be better fixed at the source --
-    a sorted or ordered view set, and a sorted table list -- and neither is a property of
-    the pipeline that this suite should be teaching anybody to rely on.
+    ``PYTHONHASHSEED`` in the pipeline's subprocesses, because several steps iterate sets
+    of strings. The one that used to matter most, ``do_param_info``, is now fixed at its
+    source -- the backend returns table names sorted -- after CI showed the hash-seed pin
+    alone was not enough, since that set is filled from a query with no ``ORDER BY`` and so
+    depends on insertion order as well. The view set would be better fixed at its source
+    too, and neither is a property of the pipeline this suite should teach anybody to rely
+    on.
 
 The re-import path
     One volume is imported a second time into the finished database, and every table is
