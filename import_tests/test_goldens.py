@@ -193,7 +193,7 @@ def reimport(
     bundle = reimport_bundle_id(main_run)
     step = build_run.reimport_bundle(main_run, bundle, db_credentials)
     assert step.returncode == 0, f'the re-import exited {step.returncode}: {step.stderr[-2000:]}'
-    errors_log = main_run.paths.root / build_run.REIMPORT_LOG_DIRNAME / build_run.ERRORS_LOG
+    errors_log = build_run.reimport_paths(main_run).errors_log
     assert errors_log.is_file(), f'the re-import wrote no log to {errors_log}'
     errors = run_logs.distinct(run_logs.read_messages(errors_log))
     assert errors == [], errors

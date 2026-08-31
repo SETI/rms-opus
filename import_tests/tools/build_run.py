@@ -70,10 +70,11 @@ VALIDATE_ARGS = ('--validate-perm',)
 ERRORS_LOG = 'ERRORS.log'
 WARNINGS_LOG = 'WARNINGS.log'
 
-#: Where `reimport_bundle` writes its logs, under the run's own directory. It is a
-#: directory of its own because pdslogger appends: sharing one would put the re-import's
-#: records in front of the assertions that read the first run's.
+#: What `reimport_bundle` writes beside the first run's, under the run's own directory.
+#: The log directory is its own because pdslogger appends: sharing one would put the
+#: re-import's records in front of the assertions that read the first run's.
 REIMPORT_LOG_DIRNAME = 'logs_reimport'
+REIMPORT_CONFIG_NAME = 'opus_reimport.toml'
 
 
 @dataclass(frozen=True)
@@ -341,7 +342,7 @@ def install_subprocess_coverage() -> Path | None:
     variable alone does nothing.
 
     Nothing is installed unless this process is itself being measured, and the caller is
-    expected to remove what is returned: a ``.pth`` left in site-packages makes every
+    expected to remove what is returned: a ``.pth`` left in a site directory makes every
     later interpreter in that environment import coverage at startup.
 
     Where the file goes is asked of `site`, not guessed from a directory name: a Debian
@@ -376,7 +377,9 @@ def install_subprocess_coverage() -> Path | None:
     raise RuntimeError(
         "Coverage is measuring this session, but none of this interpreter's site "
         f'directories would take {COVERAGE_PTH_NAME}, so the pipeline subprocesses would '
-        f'go unmeasured. Tried: {attempted or "none"}'
+        f'go unmeasured. Tried: {attempted or "none"}. The per-user site directory is '
+        'deliberately not among them, because a file left there outlives this session; '
+        'run the suite in a virtual environment.'
     )
 
 
@@ -534,6 +537,29 @@ def _migrate_and_diff(
     return frozenset(after) - frozenset(before)
 
 
+def reimport_paths(run: ImportRun) -> RunPaths:
+    """Return where a re-import of one run's bundles writes.
+
+    The tree and the schema are the finished run's; the configuration file and the log
+    directory are the re-import's own, because pdslogger appends and the first run's logs
+    are what the log assertions read.
+
+    Parameters:
+        run: The completed run to re-import into.
+
+    Returns:
+        The paths, so that the caller running the re-import and the caller reading its
+        log agree about where it went without either of them spelling out the layout.
+    """
+    return RunPaths(
+        root=run.paths.root,
+        pds3_holdings=run.paths.pds3_holdings,
+        pds4_holdings=run.paths.pds4_holdings,
+        config_file=run.paths.root / REIMPORT_CONFIG_NAME,
+        log_dir=run.paths.root / REIMPORT_LOG_DIRNAME,
+    )
+
+
 def reimport_bundle(run: ImportRun, bundle: str, credentials: DatabaseCredentials) -> StepResult:
     """Import one bundle a second time into the schema that already holds it.
 
@@ -548,15 +574,11 @@ def reimport_bundle(run: ImportRun, bundle: str, credentials: DatabaseCredential
         credentials: How to reach the database server.
 
     Returns:
-        What the invocation did.
+        What the invocation did. Its status is worth reading: a re-import that never ran
+        leaves the database exactly as the first import left it, which is also what a
+        correct re-import looks like.
     """
-    paths = RunPaths(
-        root=run.paths.root,
-        pds3_holdings=run.paths.pds3_holdings,
-        pds4_holdings=run.paths.pds4_holdings,
-        config_file=run.paths.root / 'opus_reimport.toml',
-        log_dir=run.paths.root / REIMPORT_LOG_DIRNAME,
-    )
+    paths = reimport_paths(run)
     write_opus_config(paths, run.schema, credentials)
     return run_pipeline_step(paths.config_file, [*IMPORT_ARGS, bundle])
 
