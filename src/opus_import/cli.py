@@ -561,11 +561,12 @@ def main() -> None:
             Pds4File.use_shelves_only()
             Pds3File.require_shelves(True)
             # PDS4 asks the shelves first and falls back to the file system when no
-            # shelf covers a path, which is what the holdings need while they carry
-            # shelves for some PDS4 bundles and not others. Requiring them turns a
-            # missing shelf into an exception, so that line waits until the holdings
-            # have a shelf for every PDS4 bundle, at which point PDS4 gains the same
-            # guarantee PDS3 has here.
+            # shelf covers a path. The production holdings have no PDS4 shelves at all,
+            # so today every PDS4 existence check takes that fallback and this line
+            # costs nothing; a tree that does have them -- one a test builds, or the
+            # production tree once it grows them -- gets the shelf-answered existence
+            # PDS3 has. Requiring shelves turns a missing one into an exception, so the
+            # line below waits until every PDS4 bundle in the holdings has one.
             # Pds4File.require_shelves(True)
         if args.override_pds3_data_dir:
             Pds3File.preload(args.override_pds3_data_dir)

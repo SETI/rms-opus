@@ -10,9 +10,17 @@ tested without them: a few megabytes of real, subsetted archive metadata checked
 temporary holdings tree and runs the real ``opus_import`` command line against.
 
 The suite is not part of a bare ``pytest`` run. It needs a MySQL server, and it is asked
-for by name::
+for by name -- in two invocations, because one of its checks reads the coverage report
+the other one writes, and that report does not exist until the session producing it has
+ended::
 
-    pytest import_tests
+    pytest import_tests --ignore=import_tests/test_obs_execution.py \
+        --cov --cov-report=json:coverage.json
+    pytest import_tests/test_obs_execution.py
+
+Running ``pytest import_tests`` on its own is fine while working on anything but that
+check: the executed-functions module then fails, naming the two commands above, rather
+than passing on a report it cannot see.
 
 What the fixture is
 -------------------
@@ -53,7 +61,8 @@ Expected products
 The registry's own coverage
     ``exclusions.tsv`` names each registered bundle type that has no bundle in the
     holdings at all. The fixture carries one bundle per entry of
-    the bundle registry in `opus_import.config_bundle_info` that OPUS imports, minus those,
+    the bundle registry in :mod:`opus_import.config_bundle_info` that OPUS imports, minus
+    those,
     so a newly registered type fails the recorder rather than quietly going untested.
 
 Which volume represents each type is a rule rather than a list: the entry's own pattern
@@ -93,9 +102,19 @@ The goldens
     everything the schema holds except the tables ``manage.py migrate`` creates, captured
     as the before/after difference around the migration step. A table the import newly
     writes therefore shows up as a golden that does not exist rather than escaping
-    comparison. The only normalization is that every column MySQL declares as a
+    comparison.
+
+    Two things are normalized, and no more. Every column MySQL declares as a
     ``timestamp`` is dropped: the import never writes one and the server fills them from
-    the wall clock.
+    the wall clock. And ``obs_general.preview_images`` has its JSON list sorted, because
+    it is a ``PdsViewSet`` rendered to a dictionary and ``pdsfile`` documents that its
+    members come out in the iteration order of a Python set, which is not stable across
+    processes. A third measure sits outside the goldens: the suite pins
+    ``PYTHONHASHSEED`` in the pipeline's subprocesses, because ``do_param_info`` asks the
+    backend which tables to describe and gets a *set*, so the ids it hands out otherwise
+    follow a per-process string-hash order. Both would be better fixed at the source --
+    a sorted or ordered view set, and a sorted table list -- and neither is a property of
+    the pipeline that this suite should be teaching anybody to rely on.
 
 The re-import path
     One volume is imported a second time into the finished database, and every table is
@@ -168,6 +187,20 @@ straight out of the production holdings; PDS4 holdings have none, so it builds t
 reads its digests from the checksum file rather than computing them -- over plain copies
 staged in the scratch directory. It prints one line per recorded volume with the
 observation and product counts, and one line per candidate it skipped, with the reason.
+
+**Delete the scratch directory when the holdings have changed.** A PDS4 bundle is
+staged by copying it, and a copy that is already there is kept rather than made again --
+these are gigabyte-scale bundles that normally do not change between runs. When one has
+changed, the shelves get built over the previous copy's bytes, and the recorder's diff
+then shows nothing at all: the one failure mode where the fixture silently stops
+describing the archive. An empty scratch directory costs a few minutes and removes the
+question.
+
+``--compare-schemas`` is the other thing to run by hand, and it is off by default
+because it parses every volume of every volume set rather than the two dozen the fixture
+keeps. It reports the sibling volumes whose primary index carries a column, or a value
+class in a shared column, that the chosen representative's does not -- which is the
+evidence for giving a type a second representative.
 
 **Then the goldens.** They need a MySQL server and no holdings::
 

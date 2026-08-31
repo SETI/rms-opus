@@ -124,8 +124,8 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
         # These are the plain <volume>/index directories for PDS3 volumes that
         # don't have a separate metadata directory
         bundle_abspath = bundle_pdsfile.abspath
-        # Only a merged directory has no absolute path, and the bundle check above has
-        # already rejected one.
+        # A pdsfile below a merged or category-level directory has no absolute path, and
+        # neither is a bundle -- which the check above has already required this to be.
         assert bundle_abspath is not None
         index_paths.append(import_util.safe_join(bundle_abspath, 'INDEX'))
         index_paths.append(import_util.safe_join(bundle_abspath, 'index'))
