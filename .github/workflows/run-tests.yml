@@ -297,8 +297,8 @@ jobs:
         # Serial on purpose: the run is one long import followed by fast
         # assertions, so xdist buys nothing, and a session-scoped fixture under
         # -n would run the whole import once per worker into the same schema.
-        # The coverage scope is [tool.coverage.run]'s own source list (plan
-        # section 5a), so a bare --cov is what keeps this job and the
+        # The coverage scope is [tool.coverage.run]'s own source list in
+        # pyproject.toml, so a bare --cov is what keeps this job and the
         # configuration from disagreeing. The JSON report is what the
         # executed-functions check reads in the next step.
         run: |
