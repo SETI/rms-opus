@@ -310,6 +310,14 @@ def without_surrogate_ids(text: str) -> str:
     keep = [index for index, name in enumerate(header) if name not in SURROGATE_ID_COLUMNS]
 
     def project(line: str) -> str:
+        """Return one line with the surrogate id fields removed.
+
+        Parameters:
+            line: A header or row line.
+
+        Returns:
+            The line's remaining fields, tab-separated.
+        """
         fields = line.split('\t')
         return '\t'.join(fields[index] for index in keep)
 

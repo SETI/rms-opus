@@ -80,13 +80,27 @@ def _fixture_metadata_dir(entry: RegistryEntry, location: BundleLocation) -> Pat
     The fixture mirrors the holdings' own layout below ``metadata/``, because pdsfile
     discovers a bundle's metadata by walking that layout: a PDS4 bundle sharing its name
     with its bundle set keeps its files one level higher than a PDS3 volume does.
+
+    Parameters:
+        entry: The registry entry the bundle represents, which says which regime it is.
+        location: Where the bundle's files are in the holdings.
+
+    Returns:
+        The directory under the fixture root.
     """
     root = fixture_layout.PDS3_METADATA if entry.pds_version == 3 else fixture_layout.PDS4_METADATA
     return root / location.metadata_relpath
 
 
 def _fixture_volume_index_dir(location: BundleLocation) -> Path:
-    """Return where a PDS3 volume's own index directory is checked in."""
+    """Return where a PDS3 volume's own index directory is checked in.
+
+    Parameters:
+        location: Where the volume's files are in the holdings.
+
+    Returns:
+        The directory under the fixture root.
+    """
     return (
         fixture_layout.PDS3_VOLUME_INDEX
         / location.bundleset
