@@ -140,7 +140,7 @@ jobs:
           # `-e` is what wires up src/, since opus_support and the rest are
           # imported as installed packages rather than through a sys.path insert.
           python -m pip install -e ".[dev]"
-          # The pdsfile rewrite, from its branch tip, until pdsfile 3 is released.
+          # The pdsfile rewrite, from its branch tip, until it ships to PyPI.
           # It is not a [project] dependency: the wheel this repository publishes
           # declares the PyPI package. Every environment that installs or type-checks
           # this package needs it, this one included, because `opus_import` enables
