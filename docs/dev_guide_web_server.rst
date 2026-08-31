@@ -119,14 +119,14 @@ The nginx server block
     }
 
     server {
-        listen 443 ssl http2;
+        listen 443 ssl;
+        http2 on;                              # nginx before 1.25.1: listen 443 ssl http2;
         server_name opus.example.org;          # must appear in allowed_hosts
 
         ssl_certificate     /etc/ssl/certs/opus.example.org.pem;
         ssl_certificate_key /etc/ssl/private/opus.example.org.key;
 
-        # A cart archive can be large, and a search URL can be long.
-        client_max_body_size 1m;
+        # An OPUS search URL carries every constraint, so it can be long.
         large_client_header_buffers 4 16k;
 
         # The static files collectstatic gathered. The prefix is fixed; the
@@ -265,7 +265,8 @@ The vhost
 .. code-block:: apache
 
     <VirtualHost *:443>
-        ServerName opus.example.org          # must appear in allowed_hosts
+        # ServerName must appear in the allowed_hosts setting.
+        ServerName opus.example.org
 
         SSLEngine on
         SSLCertificateFile    /etc/ssl/certs/opus.example.org.pem
@@ -300,12 +301,12 @@ The vhost
         Alias /holdings/ /pds/holdings/
         <Directory /pds/holdings>
             Require all granted
-            Options -Indexes FollowSymLinks
+            Options -Indexes +FollowSymLinks
         </Directory>
         Alias /pds4-holdings/ /pds/pds4-holdings/
         <Directory /pds/pds4-holdings>
             Require all granted
-            Options -Indexes FollowSymLinks
+            Options -Indexes +FollowSymLinks
         </Directory>
 
         # Cart archives.
