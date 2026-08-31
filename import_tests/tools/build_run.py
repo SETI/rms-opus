@@ -194,19 +194,15 @@ def _copy_tree(source: Path, destination: Path) -> None:
     shutil.copytree(source, destination, dirs_exist_ok=True)
 
 
-def _write_shelves(manifest_dir: Path, holdings_root: Path) -> int:
+def _write_shelves(manifest_dir: Path, holdings_root: Path) -> None:
     """Pickle every manifest in a directory into the shelf path its name encodes.
 
     Parameters:
         manifest_dir: The fixture's manifests for one regime.
         holdings_root: The built holdings root to write the pickles under.
-
-    Returns:
-        How many shelves were written.
     """
     if not manifest_dir.is_dir():
-        return 0
-    written = 0
+        return
     for manifest_path in sorted(manifest_dir.glob(f'*{shelf_manifests.MANIFEST_EXT}')):
         name = shelf_manifests.ManifestName.parse(manifest_path.name)
         entries = shelf_manifests.read_manifest(manifest_path)
@@ -214,8 +210,6 @@ def _write_shelves(manifest_dir: Path, holdings_root: Path) -> int:
         shelf_path.parent.mkdir(parents=True, exist_ok=True)
         with shelf_path.open('wb') as handle:
             pickle.dump(entries, handle)
-        written += 1
-    return written
 
 
 def build_holdings_tree(paths: RunPaths, *, overlay: Path | None = None) -> None:
@@ -263,16 +257,15 @@ def _toml_string(value: str) -> str:
     return value.replace('\\', '\\\\').replace('"', '\\"')
 
 
-def write_opus_config(paths: RunPaths, schema: str, credentials: DatabaseCredentials) -> Path:
+def write_opus_config(paths: RunPaths, schema: str, credentials: DatabaseCredentials) -> None:
     """Write the configuration file the run reads, with every key the loader requires.
+
+    It goes to ``paths.config_file``, which is what every caller passes to the pipeline.
 
     Parameters:
         paths: Where the run's tree and logs are.
         schema: The database schema to import into.
         credentials: How to reach the database server.
-
-    Returns:
-        The file written.
     """
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
@@ -287,7 +280,6 @@ def write_opus_config(paths: RunPaths, schema: str, credentials: DatabaseCredent
         log_dir=_toml_string(paths.log_dir.as_posix()),
     )
     paths.config_file.write_text(text, encoding='utf-8')
-    return paths.config_file
 
 
 #: Every key `opus_config` requires, not only the ones this suite reads: the loader
