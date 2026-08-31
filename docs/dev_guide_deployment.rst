@@ -144,10 +144,10 @@ Two validations run before a deploy touches anything:
   never briefly readable while it already holds the password.
 
 Both failures name the variable at fault, but they happen at different moments. The
-missing-value check runs before the deploy stops Apache; the generator runs from the
-environment setup, which is sourced **after** it, so a value TOML cannot represent leaves
-Apache down until it is corrected. ``_opus_setup_environment.sh`` says so in its own
-comment.
+missing-value check runs before the deploy stops Apache; the generator runs from
+``_opus_setup_environment.sh``, which is sourced **after** the stop, so a value TOML
+cannot represent leaves Apache down until it is corrected. That script's own comments
+note the same hazard for the other way it can fail there.
 
 ``_write_opus_toml.sh`` is a separate program rather than a block inside the setup script
 so that it can be run on its own against a controlled environment and its output loaded

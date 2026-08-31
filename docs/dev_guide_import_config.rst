@@ -469,9 +469,11 @@ Three properties are worth relying on:
 * **A key with a default is optional and a key without one is required**, and the
   distinction is in the accessor call rather than in a separate list.
   :ref:`dev_guide_installation` tabulates every key and which it is.
-* **The brand is validated against** :data:`~opus_config.config.DATABASE_BRANDS`, which
-  is what lets both :func:`opus_import.importdb.get_db` and :mod:`opus_app.settings`
-  dispatch on it without re-checking.
+* **The brand is validated against** :data:`~opus_config.config.DATABASE_BRANDS`, so a
+  consumer receives a value already known to be one of the two.
+  :mod:`opus_app.settings` dispatches on it blind, through a two-entry map;
+  :func:`opus_import.importdb.get_db` re-checks anyway and raises for anything it does
+  not implement.
 
 :ref:`dev_guide_support` describes the package alongside :mod:`opus_support`, and
 :ref:`dev_guide_installation` describes writing a file.

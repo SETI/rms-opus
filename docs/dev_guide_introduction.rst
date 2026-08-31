@@ -121,8 +121,7 @@ primary index on the primary file specification:
    * - File
      - What it contributes
    * - ``<bundle>_supplemental_index.lbl``
-     - Extra columns for the same observations -- at most one row each. Several
-       instruments take the primary file specification itself from here.
+     - Extra columns for the same observations -- at most one row each.
    * - ``<bundle>_ring_summary.lbl``
      - Ring geometry, at most one row per observation. Fills ``obs_ring_geometry``.
    * - ``<bundle>_sky_summary.lbl``

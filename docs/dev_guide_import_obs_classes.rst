@@ -111,8 +111,11 @@ PDS4 bundle.
 
 Three naming traps, worth knowing before you go looking for a file:
 
-* :class:`~opus_import.obs.obs_volume_couvis_covims_occ_common.ObsVolumeUVISVIMSOccCommon`
-  is one of the two classes whose name does not track its file name.
+* Two class names do not track their file names:
+  :class:`~opus_import.obs.obs_volume_couvis_covims_occ_common.ObsVolumeUVISVIMSOccCommon`,
+  and
+  :class:`~opus_import.obs.obs_bundle_cassini_uvis_solarocc_beckerjarmak2023.ObsBundleCassiniUvisSolarOccBeckerJarmak`,
+  which drops the year its module carries.
 * ``obs_volume_vg28xx.py`` holds
   :class:`~opus_import.obs.obs_volume_vg28xx.ObsVolumeVG28xx`, but the VG_2801 and
   VG_2802 classes and their shared parent
@@ -504,13 +507,17 @@ supplemental partition and count columns with an out-of-order warning, a seven-e
 mission-phase name table (which carries both spellings of one phase), the planet derived
 from that phase, and the note column.
 
-New Horizons is the one mission whose bundleset expansion is reordered:
-:func:`~opus_import.import_util.yield_import_bundle_ids` yields a bundleset's calibrated
-``2xxx`` bundle before its raw ``1001`` one, reversing the order the bundleset lists them
-in, so that the raw bundle is the one left holding the primary file specification
-``rms-pdsfile`` reports. **The reversal changes nothing today**, because the
-``NH...._2\d\d\d`` registry entry has no obs class and those bundles are never imported;
-it is there for the arrangement where they are.
+New Horizons is the one mission whose bundleset expansion is reordered.
+:func:`~opus_import.import_util.yield_import_bundle_ids` reverses a New Horizons
+bundleset's whole listing, so that a bundleset's calibrated ``2xxx`` bundle is yielded
+before its raw ``1001`` one and the raw bundle is left holding the primary file
+specification ``rms-pdsfile`` reports.
+
+Two things follow. The reversal applies to the **whole** listing, not to each pair, so it
+also reverses the relative order of the ``_1001`` bundles inside a bundleset -- and row
+ids depend on that order. And it fires only when a bundleset is expanded: every ``NH``
+shorthand instead names an explicit, hand-ordered list of ``_1001`` bundles, because that
+order matters for its own reason, which the source records against a filed issue.
 
 Leaf: ObsVolumeNHxxLOXxxx
 ~~~~~~~~~~~~~~~~~~~~~~~~~

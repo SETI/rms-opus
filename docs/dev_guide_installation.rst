@@ -343,12 +343,18 @@ for; take the scripts as the record of what is actually run.
 When it finishes, three more commands complete the database::
 
     opus_import --override-db-schema opus3_new --import-dictionary
-    OPUS_CONFIG=... DJANGO_SETTINGS_MODULE=opus_app.settings django-admin migrate
+
+    # django-admin has no --override-db-schema: it takes the schema from the
+    # configuration file, so this one needs a file that names opus3_new. Running it
+    # against the production configuration migrates the database being served.
+    OPUS_CONFIG=/etc/opus/opus_new.toml \
+    DJANGO_SETTINGS_MODULE=opus_app.settings django-admin migrate
+
     opus_import --override-db-schema opus3_new --validate-perm
 
-and then :ref:`dev_guide_deployment_runbook` is what to do with it: read
-``ERRORS.log``, compare it against the database being served, exercise it from a test
-installation, and only then switch over.
+and then :ref:`dev_guide_deployment_runbook` is what to do with the result: read
+``ERRORS.log``, compare the new database's row counts against the one being served,
+exercise it from a test installation, and only then switch over.
 
 .. _dev_guide_installation_smoke:
 

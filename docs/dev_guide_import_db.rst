@@ -143,8 +143,9 @@ this is an abstract class by convention rather than through :mod:`abc`.
      - Execute one query and return every row of its result.
 
 The eleven concrete members are the constructor, the two namespace converters and
-their two predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`, :meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
-collector ``_make_warning_handler``, and the ``_enter``/``_exit`` pair. The two
+their two predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
+:meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning collector
+``_make_warning_handler``, and the ``_enter``/``_exit`` pair. The two
 converters do carry a ``raise NotImplementedError`` for a namespace value that is not
 one of the three, which is unreachable for a valid one.
 
@@ -200,7 +201,8 @@ alias to differ from the table name, so a table called ``new`` gets the alias
 for this check); and the alias is emitted only alongside the clause that reads it,
 because a row of nothing but the key has nothing to assign.
 
-Both :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows` and :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows` write in packets of 1000 rows.
+Both :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows` and
+:meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows` write in packets of 1000 rows.
 
 **Connecting.** The constructor connects without naming a database and then issues
 ``USE``; an unknown-database error makes it **create the schema** and retry, which is
@@ -219,8 +221,9 @@ is not a simulation anything can be driven through.**
 The type mapping
 ~~~~~~~~~~~~~~~~
 
-:meth:`~opus_import.importdb.super.ImportDBSuper.create_table` is where a schema's ``field_type`` becomes a MySQL
-type, and :meth:`~opus_import.importdb.super.ImportDBSuper.table_info` is the reverse. :ref:`dev_guide_table_schemas` lists the mapping.
+:meth:`~opus_import.importdb.super.ImportDBSuper.create_table` is where a schema's
+``field_type`` becomes a MySQL type, and
+:meth:`~opus_import.importdb.super.ImportDBSuper.table_info` is the reverse. :ref:`dev_guide_table_schemas` lists the mapping.
 An unrecognized type raises :exc:`NotImplementedError` rather than being guessed at, in
 both directions.
 
@@ -269,9 +272,9 @@ Bundle expansion and PDS table reading
     order: ids, bundleset names, and the mission and instrument shorthands. Every
     descriptor is validated as a PDS3 path and then as a PDS4 one, and every bad one is
     logged before the run exits, so one invocation reports all of them. A New Horizons
-    bundleset yields its calibrated bundle before its raw one; see
-    :ref:`dev_guide_import_obs_classes` for what that is for and why it changes nothing
-    today. Anything named by ``--exclude-bundles``, and
+    bundleset's listing is reversed, so its calibrated bundle is yielded before its raw
+    one; see :ref:`dev_guide_import_obs_classes` for what that is for and what else it
+    reorders. Anything named by ``--exclude-bundles``, and
     any name containing a dot, is dropped.
 
 :func:`~opus_import.import_util.safe_pdstable_read`
@@ -308,8 +311,9 @@ Table names
     ``mult_<table>_<column>``, both lowercased.
 
 :func:`~opus_import.import_util.table_name_param_info` and :func:`~opus_import.import_util.table_name_partables`
-    The two auxiliary tables' names, which are constants rather than computed. They exist
-    so that no step spells either name itself.
+    The two auxiliary tables' names, namespace-converted like every other
+    ``table_name_*`` helper. **Neither has a caller**, which the source records beside
+    them.
 
 :func:`~opus_import.import_util.encode_target_name` and :func:`~opus_import.import_util.decode_target_name`
     A target name is not a legal SQL identifier, so it is encoded: lowercased, with

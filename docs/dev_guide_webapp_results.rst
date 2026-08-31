@@ -164,9 +164,10 @@ What each handler returns
     too.
 
 Two private helpers build the SQL the app's own queries need:
-``_results_column_select`` turns a resolved column list into the SELECT terms and the
-tables they require joined, and ``_product_types_select`` builds the query behind both
-product-type endpoints.
+``_results_column_select`` turns a resolved column list into the SELECT terms, in the
+caller's order -- which is what the result rows are then unpacked positionally against --
+and leaves every join to its callers; ``_product_types_select`` builds the query behind
+both product-type endpoints.
 
 :mod:`opus_app.apps.results.templatetags.encode_value` supplies one template filter,
 :func:`~opus_app.apps.results.templatetags.encode_value.encode_value`, which turns a
@@ -305,11 +306,6 @@ Underneath the five actions sit four helpers: ``_add_to_cart_table`` and
 implements ``addall`` by reading the whole current view and adding every observation in
 it, and ``_edit_cart_range`` is below.
 
-Underneath the five actions sit four helpers: ``_add_to_cart_table`` and
-``_remove_from_cart_table`` are the single-observation writes, ``_edit_cart_addall``
-implements ``addall`` by reading the whole current view and adding every observation in
-it, and ``_edit_cart_range`` is below.
-
 :func:`~opus_app.apps.cart.views.api_reset_session` empties the cart -- or, with the
 recycle-bin flag, only the bin. Despite the name it deletes cart rows and does not touch
 the Django session.
@@ -328,28 +324,13 @@ Reading the cart
 ~~~~~~~~~~~~~~~~
 
 :func:`~opus_app.apps.cart.views.api_view_cart`
-    One page of the cart, in the same shape
-    :func:`~opus_app.apps.results.views.api_get_data_and_images` returns for the browse
-    grid, so the front end renders both with one code path. It reads through the same
-    paging engine in its cart mode -- joining the ``cart`` table directly rather than a
-    search's cache table -- and it can be asked for the recycle bin instead.
-
-:func:`~opus_app.apps.cart.views.api_cart_status`
-    The numbers the Selections panel shows: how many observations are in the cart and how
-    many in the recycle bin, and, when asked, the download summary from
-    ``_get_download_info`` -- the product types the cart offers and the file counts and
-    total sizes each would contribute. It is the endpoint the interface calls after every
-    cart edit, which is why the expensive half is optional.
-
-Reading the cart
-~~~~~~~~~~~~~~~~
-
-:func:`~opus_app.apps.cart.views.api_view_cart`
-    One page of the cart, in the same shape
-    :func:`~opus_app.apps.results.views.api_get_data_and_images` returns for the browse
-    grid, so the front end renders both with one code path. It reads through the same
-    paging engine in its cart mode -- joining the ``cart`` table directly rather than a
-    search's cache table -- and it can be asked for the recycle bin instead.
+    The OPUS-specific left side of the Selections page, rendered as HTML by
+    ``cart/cart.html``: the cart and recycle-bin counts, and the product-type table
+    ``_get_download_info`` builds, with each type's file count and total size. It reports
+    on the **whole** cart whatever the user has ticked; an optional ``types`` argument
+    marks the types the caller did not select, which the template renders unchecked.
+    It does not page through observations -- that is
+    :func:`~opus_app.apps.results.views.api_get_data_and_images` with ``view=cart``.
 
 :func:`~opus_app.apps.cart.views.api_cart_status`
     The numbers the Selections panel shows: how many observations are in the cart and how

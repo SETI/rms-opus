@@ -256,16 +256,18 @@ a matter of filling it in.
 1. **Implement the sixteen abstract members** of
    :class:`~opus_import.importdb.super.ImportDBSuper`, listed in
    :ref:`dev_guide_import_db_importdb`. Two of their contracts are not optional:
-   :meth:`~opus_import.importdb.super.ImportDBSuper.table_names` must return its names **sorted**, or two imports of identical
-   holdings will disagree about every row id; and every identifier must be validated
-   before it is quoted, because quoting alone does not escape the quote character.
+   :meth:`~opus_import.importdb.super.ImportDBSuper.table_names` must return its names
+   **sorted**, or two imports of identical holdings will disagree about every row id;
+   and every identifier must be validated before it is quoted, because quoting alone
+   does not escape the quote character.
 2. **Add the branch** to :func:`opus_import.importdb.get_db`.
 3. **Add the engine** to the ``_db_engines`` map in :mod:`opus_app.settings`, so that
    the web application follows the same configured brand. The placeholder is already
    there.
-4. **Check the schema translation.** :meth:`~opus_import.importdb.super.ImportDBSuper.create_table` and
-   :meth:`~opus_import.importdb.super.ImportDBSuper.table_info` are a matched pair: the first turns a schema's ``field_type`` into the brand's SQL type and the
-   second turns it back. :ref:`dev_guide_table_schemas` lists the types a schema may
+4. **Check the schema translation.** :meth:`~opus_import.importdb.super.ImportDBSuper.create_table`
+   and :meth:`~opus_import.importdb.super.ImportDBSuper.table_info` are a matched pair: the
+   first turns a schema's ``field_type`` into the brand's SQL type and the second turns
+   it back. :ref:`dev_guide_table_schemas` lists the types a schema may
    name, and an unrecognized one must raise rather than be guessed at.
 
 Nothing else in the pipeline names a brand, so there is no third place to change.

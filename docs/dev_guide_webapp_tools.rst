@@ -277,8 +277,7 @@ The shape of it
         Join ..> Expr : ON
         JSONTable ..> Expr : source column
         ValueError <|-- SQLIdentifierError
-        ValueError <|-- SQLIdentifierError
-        Select ..> SQLIdentifierError : raises
+        Expr ..> SQLIdentifierError : quoting raises
 
 Reading it in three groups:
 
@@ -293,13 +292,16 @@ and the joins hanging off it;
 and a source may be a plain table name, a
 :class:`~opus_app.apps.tools.sql_builder.Subquery` -- which holds a whole
 :class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- or a
-:class:`~opus_app.apps.tools.sql_builder.JSONTable`. That last one is why the diagram is
-not a tree: a statement can hold a statement.
+:class:`~opus_app.apps.tools.sql_builder.JSONTable`. The
+:class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is not a tree:
+a statement can hold a statement.
 
 **The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
-order, and it is the only class here with state a caller accumulates into.
-:exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError` is what any of them raises for
-a name that is not safe to use as an identifier.
+order. It and :class:`~opus_app.apps.tools.sql_builder.FromSource` are the two mutable
+classes here, each accumulating what a caller adds to it.
+:exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError` comes from one place --
+:func:`~opus_app.apps.tools.sql_builder.quote_identifier` -- and reaches a caller through
+whichever of these was quoting a name at the time.
 
 The expression layer
 ~~~~~~~~~~~~~~~~~~~~
@@ -394,8 +396,8 @@ caller whose SELECT is already rendered),
 
 Two invariants in that list are deliberate. **A WHERE clause is required** by
 :func:`~opus_app.apps.tools.sql_builder.delete_from` and
-:func:`~opus_app.apps.tools.sql_builder.update`: there is no call site that empties a table, and making it
-optional would let a caller emit one by leaving an argument out. And the cart's writes go
+:func:`~opus_app.apps.tools.sql_builder.update`: there is no call site that empties a
+table, and making it optional would let a caller emit one by leaving an argument out. And the cart's writes go
 through ``REPLACE INTO`` rather than a delete followed by an insert, because the cart
 table's unique key over the session and the observation turns a concurrent second write
 into a replacement instead of a duplicate.

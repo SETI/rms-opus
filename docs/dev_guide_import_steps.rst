@@ -175,7 +175,8 @@ Builds ``partables``, which maps a value a user can search for onto the table of
 search parameters that value makes relevant -- choosing the Cassini mission reveals the
 Cassini mission table. Option: ``--create-partables``.
 
-Three public functions, in the same shape as ``do_param_info``'s:
+Three public functions, in the same shape as
+:mod:`~opus_import.steps.do_param_info`'s:
 :func:`~opus_import.steps.do_partables.create_import_partables_table`,
 :func:`~opus_import.steps.do_partables.copy_partables_from_import_to_permanent` and
 :func:`~opus_import.steps.do_partables.do_partables`.
