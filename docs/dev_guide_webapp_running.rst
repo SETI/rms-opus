@@ -125,25 +125,18 @@ runs -- slowly, per process, and with the cache-flushing step below doing nothin
 
 ``memcstat`` is in ``libmemcached-tools``, not in ``memcached``.
 
-**After anything that changes the database, two things have to happen**, and both are
-easy to forget:
+Emptying the shared cache is one module::
 
-1. **Empty the shared Django cache**, because it holds search results keyed by a search
-   that now means something else::
+    OPUS_CONFIG=/etc/opus/opus.toml python -m opus_app.clear_django_cache
 
-       OPUS_CONFIG=/etc/opus/opus.toml python -m opus_app.clear_django_cache
+It imports ``CACHES`` from :mod:`opus_app.settings`, calls ``settings.configure()`` with
+only that setting -- so the app registry is never loaded -- and calls ``cache.clear()``.
+It does its work at import, which is why it must be run as a module and never imported,
+and why the API reference leaves it out. Restarting memcached has the same effect.
 
-   That module does exactly this and nothing else: it imports ``CACHES`` from
-   :mod:`opus_app.settings`, calls ``settings.configure()`` with only that setting -- so
-   the app registry is never loaded -- and calls ``cache.clear()``. It runs entirely at
-   import, which is why it must be run as a module and never imported, and why the API
-   reference leaves it out. Restarting memcached has the same effect.
-
-2. **Restart every worker process**, because some caches are module-level dictionaries
-   private to a process -- the ``param_info`` lookup in
-   :mod:`opus_app.apps.search.views` and the mult-label lookup in
-   :mod:`opus_app.apps.tools.db_utils`. Nothing running outside a worker can reach those,
-   ``clear_django_cache`` included.
+That is only half of what an import requires, because the process-local caches
+:ref:`dev_guide_webapp_caching` describes are out of its reach.
+:ref:`dev_guide_deployment_after_import` is the full statement.
 
 Logging
 -------
