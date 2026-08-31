@@ -86,8 +86,10 @@ a table nobody fills.
 
 The 21 volume sets that have browse products: the four Cassini ISS and CIRS sets, the
 Cassini UVIS and VIMS sets, EBROCC, Galileo, the five Hubble sets, the two New
-Horizons sets, and the four Voyager ISS sets. It gates the preview-image computation in
-:class:`~opus_import.obs.obs_general.ObsGeneral`.
+Horizons sets, and the four Voyager ISS sets. **Nothing reads it.**
+:meth:`~opus_import.obs.obs_general.ObsGeneral.field_obs_general_preview_images` decides
+whether an observation has previews by asking ``rms-pdsfile`` for a view set, not by
+consulting this list.
 
 The mission, host and instrument maps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -346,9 +348,9 @@ Twenty-nine entries: twenty-five PDS3 and four PDS4, of which four have no
      - yes
 
 Read the registry out of the module rather than out of this table when the two
-disagree: the module is the specification, and the mini-holdings fixture holds one
-bundle per importable entry so that a newly registered type cannot go untested (see
-:ref:`dev_guide_import_fixture`).
+disagree: the module is the specification. The mini-holdings fixture holds one bundle
+per importable entry, minus the entries its own ``exclusions.tsv`` excuses by name, so a
+newly registered type cannot go untested (see :ref:`dev_guide_import_fixture`).
 
 .. _dev_guide_import_config_targets:
 
@@ -369,9 +371,9 @@ knowing which module it lives in.
        * - Element
          - Meaning
        * - 0
-         - The planet the target is associated with -- ``MER``, ``VEN``, ``EAR``,
-           ``MAR``, ``JUP``, ``SAT``, ``URA``, ``NEP`` or ``PLU`` -- or None for a
-           target that belongs to no planet.
+         - The planet the target is associated with: one of the keys of
+           ``PLANET_GROUP_MAPPING``, or None for a target that belongs to no planet,
+           which is what most entries are. ``MER`` is a legal value that no entry uses.
        * - 1
          - The target class: ``PLANET``, ``REG_SAT``, ``IRR_SAT``, ``RING``, ``SKY``,
            ``CALIBRATION`` or ``OTHER``. This is stored in ``obs_general.target_class``.

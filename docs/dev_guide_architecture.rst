@@ -142,7 +142,7 @@ built once per distinct search.
 Three parts of that flow are worth knowing before changing any of it, and each has a
 chapter of its own.
 
-**Every routed handler is wrapped in**
+**Every handler that answers an API call is wrapped in**
 :func:`~opus_app.apps.tools.app_utils.api_view`. It records the call, turns an
 :exc:`~opus_app.apps.tools.app_utils.Http400Error` raised anywhere inside the handler
 into an HTTP 400, turns any other unhandled exception into an HTTP 500 logged with its
@@ -167,7 +167,7 @@ are always passed as parameters, and identifiers are validated before they are q
 :ref:`dev_guide_webapp_tools_sql_builder` says what that buys and where the two
 exceptions are.
 
-The eight Django apps are :ref:`dev_guide_webapp_tools`,
+The eight Django apps are described across :ref:`dev_guide_webapp_tools`,
 :ref:`dev_guide_webapp_search`, :ref:`dev_guide_webapp_results` and
 :ref:`dev_guide_webapp_ui`.
 

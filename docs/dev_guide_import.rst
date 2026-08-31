@@ -187,7 +187,7 @@ bundle id it:
 The directory listing is **sorted** before the file names are matched, and that is
 load-bearing rather than tidy: a bundle can have several primary indexes -- COCIRS_1xxx
 has one per cube geometry -- and row ids are handed out in insertion order. Taking the
-files in ``os.listdir`` order would make every id in the database depend on how one
+files in :func:`os.listdir` order would make every id in the database depend on how one
 filesystem happened to enumerate one directory, so two imports of identical holdings on
 two machines would disagree about every id.
 

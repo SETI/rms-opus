@@ -94,7 +94,7 @@ docstring is the authoritative statement of the shapes; the summary is:
   ORed clause.
 * **extras** -- ``'qtypes'``, ``'units'`` and ``'order'``.
 
-Six flags change what it does:
+Five flags change what it does:
 
 .. list-table::
    :header-rows: 1
@@ -304,7 +304,7 @@ slug to value and grows one input per slug, choosing what kind from the field's
 ``param_info`` row:
 
 * a **string** field gets a text input plus the query-type dropdown beside it;
-* a **range** field gets a labelled endpoint input, and gets a query-type dropdown
+* a **range** field gets a labeled endpoint input, and gets a query-type dropdown
   **only if it is not a single-column range**;
 * a **mult** field gets a checkbox group -- except
   ``obs_surface_geometry_name.target_name``, which gets radio buttons, because a surface
@@ -358,7 +358,7 @@ Consequences worth knowing:
   out, naming it on the reference's landing page so that a reader who cannot find it is
   told why.
 * **A new OPUS table does not exist to the web application until this has been run.**
-* The ``cache_NNN`` tables are never modelled at all, which is the reason
+* The ``cache_NNN`` tables are never modeled at all, which is the reason
   :mod:`opus_app.apps.tools.sql_builder` exists.
 
 ``UserSearches`` is the one generated model worth

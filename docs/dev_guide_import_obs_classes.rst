@@ -109,7 +109,7 @@ PDS4 bundle.
 Three naming traps, worth knowing before you go looking for a file:
 
 * :class:`~opus_import.obs.obs_volume_couvis_covims_occ_common.ObsVolumeUVISVIMSOccCommon`
-  is the one class whose name does not track its file name.
+  is one of the two classes whose name does not track its file name.
 * ``obs_volume_vg28xx.py`` holds
   :class:`~opus_import.obs.obs_volume_vg28xx.ObsVolumeVG28xx`, but the VG_2801 and
   VG_2802 classes and their shared parent
@@ -144,9 +144,10 @@ where four pieces of Cassini knowledge live:
 * **The mission phase, derived from the time rather than read from the label**, because
   the labels do not agree on how a phase is spelled or on when one ends. A table of
   nineteen phase/interval triples is walked, short encounters first so that they win.
-* **The planet, and which side of the rings is lit.** Both are decided by comparing the
-  observation's stop time against fixed instants: Jupiter and Saturn arrival, and
-  Saturn's 2009 equinox.
+* **The planet, and which side of the rings is lit.** Both are decided against fixed
+  instants -- the planet by comparing the observation's **stop** time against Jupiter and
+  Saturn arrival, and the lit ring face by comparing its **start** time against Saturn's
+  2009 equinox.
 * **The Cassini ISS filter table** -- 107 ``(camera, filter1, filter2)`` entries giving
   a central wavelength, a full width at half maximum and an effective wavelength in
   nanometers, from the ISS Data User's Guide and the CISSCAL calibration tables --
@@ -163,12 +164,12 @@ Shared: :class:`~opus_import.obs.obs_cassini_common_pds3.ObsCassiniCommonPDS3`
 What every Cassini instrument's PDS3 volumes share. Two things distinguish it:
 
 * **Reconciling the target.** ``TARGET_NAME``, ``TARGET_DESC`` and the observation
-  name's target code do not always agree, and four numbered rules decide between them --
-  chiefly that a SATURN or SKY target with a ring target code, or with a description
-  mentioning rings, is really ``S RINGS``.
+  name's target code do not always agree, and three numbered rules plus a fallthrough
+  decide between them -- chiefly that a SATURN or SKY target with a ring target code, or
+  with a description mentioning rings, is really ``S RINGS``.
 * **Repairing spacecraft clock counts.** Three per-instrument fixes: CIRS omits the
   fractional part, and VIMS and UVIS write fractional parts that are not clock ticks.
-  Each is tied to a filed issue.
+  The latter two cite the filed issue they answer.
 
 It fills the ``obs_instrument_coiss`` columns from the PDS3 label keywords, normalizing
 the order of the observation-type words and reporting a change in length as an error.
@@ -178,7 +179,8 @@ Shared: :class:`~opus_import.obs.obs_cassini_common_pds4.ObsCassiniCommonPDS4`
 
 The same for PDS4, reading the ``cassini:`` namespace instead of PDS3 keywords. Unlike
 the PDS3 half it implements the two spacecraft clock columns itself, including the
-out-of-order correction, and it strips whitespace from every label value.
+out-of-order correction, and those two strip the label value's surrounding whitespace
+before parsing it.
 
 Leaf: :class:`~opus_import.obs.obs_volume_coiss_12xxx.ObsVolumeCOISS12xxx`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -201,8 +203,10 @@ Leaf: :class:`~opus_import.obs.obs_volume_coiss_12xxx.ObsVolumeCOISS12xxx`
 Leaf: :class:`~opus_import.obs.obs_volume_cocirs_01xxx.ObsVolumeCOCIRS01xxx`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**COCIRS_0xxx (from 0402 on) and COCIRS_1xxx** -- Cassini CIRS cubes. The most unusual
-leaf in the set:
+**COCIRS_0402 to 0419, COCIRS_0500 onward, and COCIRS_1xxx** -- Cassini CIRS cubes.
+(The registry's pattern leaves COCIRS_0420 to 0499 matching nothing at all, so a volume
+in that range would be reported as one OPUS does not know.) The most unusual leaf in the
+set:
 
 * **Three primary index files**, one per cube geometry (equirectangular, point, ring).
 * **The map projection is read from the last letter of ``PRODUCT_ID``**, and it switches
@@ -224,8 +228,8 @@ Leaf: :class:`~opus_import.obs.obs_volume_cocirs_56xxx.ObsVolumeCOCIRS56xxx`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **COCIRS_5xxx and COCIRS_6xxx** -- Cassini CIRS spectra. Its primary index is
-``OBSINDEX.LBL``, the one entry in the registry that names a fixed file rather than one
-derived from the bundle id.
+``OBSINDEX.LBL``, one of the two registry entries that name a fixed file rather than one
+derived from the bundle id -- the other being the Cassini ISS F ring mosaics bundle.
 
 * The primary file specification comes from ``SPECTRUM_FILE_SPECIFICATION`` rather than
   from the index's own file column, and may be None.
@@ -318,7 +322,8 @@ Leaf: :class:`~opus_import.obs.obs_volume_covims_8xxx.ObsVolumeCOVIMS8xxx`
 infrared exposure; the wavelength band fixed at IR; and a spacecraft clock quirk of its
 own, since this volume's clock fractions are in units where the fractional part can
 exceed 255, so they are truncated. Every ``obs_instrument_covims`` column comes from the
-supplemental index rather than the primary one.
+supplemental index rather than the primary one; the three visible-channel columns are
+constants, because this volume has no visible channel.
 
 Leaf: :class:`~opus_import.obs.obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.ObsBundleCassiniISSFRingMosaicsRSFrench2025`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -389,7 +394,8 @@ when at least three quarters of the passband is below 350 nm and its high end is
 400 nm. It swaps a reversed wavelength pair with a warning, and it fills the whole
 ``obs_mission_hubble`` column family -- proposal id, principal investigator, detector,
 publication date, target name, guidance lock type, filter and aperture -- with the
-detector, filter and aperture prefixed and grouped by the instrument.
+detector prefixed by the instrument, and the filter and aperture both prefixed and
+grouped by it.
 
 Two members raise: the observation type, and the filter type.
 
@@ -424,7 +430,7 @@ All five derive directly from the shared class and differ chiefly in how they de
      - Spectroscopic for a grism **or** a prism. Filter types come from explicit
        published lists. A ``POL`` filter in the second wheel makes the polarization
        linear. One grism warns that its resolving power depends on the channel and the
-       order, so no spectral size can be computed.
+       order, and computes a spectral size from an assumed one anyway.
    * - :class:`~opus_import.obs.obs_volume_hstnx_xxxx.ObsVolumeHSTNxxxxx`
      - ``HSTNx_xxxx``
      - NICMOS
@@ -435,8 +441,9 @@ All five derive directly from the shared class and differ chiefly in how they de
      - ``HSTOx_xxxx``
      - STIS
      - **The only one that reads the distinction directly**, from
-       ``OBSERVATION_TYPE``. Also the only one filling wavelength resolutions, the
-       proposed aperture type and the optical element.
+       ``OBSERVATION_TYPE``. Also the only one that overrides the shared wavelength
+       resolutions, and the only one filling the proposed aperture type and the optical
+       element.
    * - :class:`~opus_import.obs.obs_volume_hstux_xxxx.ObsVolumeHSTUxxxxx`
      - ``HSTUx_xxxx``
      - WFPC2
@@ -497,7 +504,7 @@ Leaf: :class:`~opus_import.obs.obs_volume_vgiss_5678xxx.ObsVolumeVGISS5678xxx`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **VGISS_5xxx through VGISS_8xxx** -- Voyager ISS images of the four outer planets. The
-only volume set whose primary index is not the plain one: it uses
+only Voyager volume set whose primary index is not the plain one: it uses
 ``<BUNDLE>_raw_image_index.lbl``.
 
 A nine-filter wavelength table including the two methane filters; the mission phase read
@@ -573,9 +580,7 @@ no ground-based mission class.
 volume: a six-entry table maps the host and instrument ids onto a PDS4 instrument id.
 The whole event's geometry is fixed and recorded in the source, because every
 observation was of one star on one date. Right ascension, declination and the source
-name come from the **index label** rather than from a row -- the only class that reads
-from there -- and the occultation direction may be ``BOTH``, which no other occultation
-class accepts.
+name come from the **index label** rather than from a row, which no other class does.
 
 Shared: :class:`~opus_import.obs.obs_bundle_occ_common.ObsBundleOccCommon`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

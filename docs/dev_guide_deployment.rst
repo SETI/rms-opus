@@ -34,9 +34,10 @@ that swapping databases is a link change rather than a copy:
         opus.toml                 # this installation's configuration, mode 0600
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
 
-Underneath the installation root the deploy chain also expects, or creates,
-``opus_logs/`` for the web application's log, ``downloads/`` and ``manifests/`` for the
-cart archives, and ``static_media/`` for the collected static files.
+Underneath the installation root the deploy chain also expects, or creates, five
+directories: ``src/`` for the per-database installations above, ``opus_logs/`` for the
+web application's log, ``downloads/`` and ``manifests/`` for the cart archives, and
+``static_media/`` for the collected static files.
 
 The scripts
 -----------

@@ -341,7 +341,7 @@ Logging
     own warnings, of which an import produces hundreds of thousands. The record of what
     has been said is a **class-level set shared by every instance and never cleared**, so
     a message is logged once per process; it is a set rather than a list because it
-    never shrinks and was previously scanned linearly on every call.
+    never shrinks and is searched on every call.
 
 :func:`~opus_import.import_util.log_error`, :func:`~opus_import.import_util.log_warning`, :func:`~opus_import.import_util.log_info`, :func:`~opus_import.import_util.log_debug`
     The step modules' spelling of the four levels. Each delegates to the matching

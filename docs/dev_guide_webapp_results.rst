@@ -248,7 +248,8 @@ The one app that **writes**. A cart is the set of ``cart`` rows carrying one ses
 a row whose ``recycled`` column is set is in the recycle bin -- still in the table,
 counted separately, and left out of the download totals and the archives themselves.
 
-Every route is private.
+Every route is private except ``api/download/<opus_id>.(zip|tar|tgz)``, which is
+public and is documented in :ref:`api_guide`.
 
 .. list-table::
    :header-rows: 1
@@ -338,7 +339,7 @@ the configured directory and its URL returned, because it can be very large.
 ``_get_download_info`` is what the Selections page's numbers
 come from: the product types the whole cart offers -- **the whole cart, recycle bin
 included, so the panel need not be redrawn on every edit** -- and, separately, the file
-counts and total sizes over the **non-recycled** cart only. Sizes are totalled over
+counts and total sizes over the **non-recycled** cart only. Sizes are totaled over
 *distinct* logical paths, because one file can serve several observations.
 
 :func:`~opus_app.apps.cart.views.api_get_cart_csv` streams the cart as CSV, through

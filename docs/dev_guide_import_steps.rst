@@ -221,7 +221,7 @@ two generated groups. The order it emits is:
 1. ``obs_general`` -- "General Constraints", written unconditionally.
 2. ``obs_pds``, ``obs_type_image``, ``obs_wavelength``, ``obs_profile``,
    ``obs_surface_geometry_name``, ``obs_surface_geometry``, each if it exists.
-3. One per ``obs_surface_geometry__<TARGET>`` table, labelled from the decoded target
+3. One per ``obs_surface_geometry__<TARGET>`` table, labeled from the decoded target
    name.
 4. ``obs_ring_geometry``.
 5. One per mission table that exists, **generated** by looping

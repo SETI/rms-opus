@@ -23,7 +23,7 @@ The request lifecycle
 .. mermaid::
 
     flowchart TD
-        R([HTTP request]) --> M[MIDDLEWARE:<br/>cache, gzip, common, session,<br/>auth, CSRF, messages,<br/>StripWhitespaceMiddleware]
+        R([HTTP request]) --> M[MIDDLEWARE:<br/>cache update, gzip, common, session,<br/>auth, CSRF, messages, cache fetch,<br/>StripWhitespaceMiddleware]
         M --> U[opus_app.urls:<br/>each app contributes its routes,<br/>mounted at / and at /opus/]
         U --> V[the view, wrapped in api_view]
         V --> P[url_to_search_params:<br/>the query string becomes<br/>selections and extras]
@@ -48,9 +48,11 @@ Django's own. :class:`~opus_app.apps.tools.opus_middleware.StripWhitespaceMiddle
 strips leading and trailing whitespace from a text response, which the templates
 generate a great deal of.
 
-**3. Every routed handler is wrapped in**
-:func:`~opus_app.apps.tools.app_utils.api_view`. It is the single place a failure
-becomes a status code, and it is described in :ref:`dev_guide_webapp_errors` below.
+**3. Every handler that answers an API call is wrapped in**
+:func:`~opus_app.apps.tools.app_utils.api_view` -- directly, or through the public twin
+it delegates to. It is the single place a failure becomes a status code, and it is
+described in :ref:`dev_guide_webapp_errors` below. The page itself, Django's admin site
+and the API guide's redirect are the routes that are not API calls and are not wrapped.
 
 **4. A search becomes a cache table.**
 :func:`~opus_app.apps.search.views.url_to_search_params` turns the query string into two

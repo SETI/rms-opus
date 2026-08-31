@@ -228,7 +228,7 @@ changes.
 Construction and attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``ObsBase(ctx, bundle=None, metadata=None)``. Three instance attributes plus two cache
+``ObsBase(ctx, bundle=None, metadata=None)``. Four instance attributes plus two cache
 slots:
 
 .. list-table::
@@ -337,7 +337,7 @@ here and the leaf class.
      - a PDS-version base
      - The start and stop times in seconds TAI, or None.
 
-Two more members are declared here with a working default and are meant to be
+Three more members are declared here with a working default and are meant to be
 overridden where a bundle differs:
 
 * :attr:`~opus_import.obs.obs_base.ObsBase.phase_names` returns ``['']`` -- one
@@ -504,9 +504,10 @@ The PDS-version bases
 ---------------------
 
 :class:`~opus_import.obs.obs_base_pds3.ObsBasePDS3`
-    Builds a file specification out of a PDS3 index row: it checks ``VOLUME_ID`` against
-    ``VOLUME_NAME``, takes ``FILE_SPECIFICATION_NAME`` if it is there, and otherwise
-    joins ``PATH_NAME`` and ``FILE_NAME``. It prepends the bundle id unless the row
+    Builds a file specification out of a PDS3 index row: it checks ``VOLUME_ID`` -- or
+    ``VOLUME_NAME``, for an index that has no ``VOLUME_ID`` -- against the bundle being
+    imported, takes ``FILE_SPECIFICATION_NAME`` if it is there, and otherwise joins
+    ``PATH_NAME`` and ``FILE_NAME``. It prepends the bundle id unless the row
     already carries it, which GOSSI and COUVIS_0xxx do. It supplies
     ``_time_from_index``, ``_time_from_supp_index``, ``_time2_from_index`` and
     ``_time2_from_supp_index`` defaulting to ``START_TIME`` and ``STOP_TIME``, and
@@ -518,7 +519,7 @@ The PDS-version bases
 
 :class:`~opus_import.obs.obs_base_pds4.ObsBasePDS4`
     Much simpler: a PDS4 index row carries its own ``filepath`` column, so the file
-    specification is that value and the three phase flags are ignored. The time columns
+    specification is that value and the three remaining arguments are ignored. The time columns
     default to ``pds:start_date_time`` and ``pds:stop_date_time``, and there is **no
     supplemental-index form** of either, because the PDS4 bundles OPUS imports have
     none.
@@ -530,9 +531,11 @@ The table modules
 
 Nine modules, one per OPUS table. Each holds that table's ``field_obs_*`` methods, and
 each method fills the schema column its name ends in. Per the project's coding
-conventions, ``field_obs_*`` methods carry no individual docstrings -- each class says so
-once in its own -- because the authoritative statement of what one returns is its schema
-column plus the test that checks the correspondence.
+conventions, a ``field_obs_*`` method carries no individual docstring -- each class says
+so once in its own -- because the authoritative statement of what one returns is its
+schema column plus the test that checks the correspondence. Two methods of
+:class:`~opus_import.obs.obs_volume_covims_0xxx.ObsVolumeCOVIMS0xxx` are the exception,
+and say something the schema cannot.
 
 :class:`~opus_import.obs.obs_general.ObsGeneral` -- ``obs_general``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -540,24 +543,26 @@ column plus the test that checks the correspondence.
 What every observation has: its ids, its target, its times, and its sky position. This
 is the master table, and every other table's rows hang off it.
 
-The methods fall into three groups, which the source marks with banner comments:
+The methods fall into three groups:
 
 * **Do not override** -- ``opus_id``, ``bundle_id``, ``instrument_id``,
   ``inst_host_id``, ``mission_id``, ``target_class``, ``primary_filespec`` and
   ``preview_images``. These are derived from the contract members above.
   ``preview_images`` is the interesting one: it asks ``rms-pdsfile`` for a view set and
   renders it to JSON, and it honors ``--import-ignore-missing-images`` and
-  ``--import-fake-images``. Its handling of a missing view set is load-bearing --
-  ``rms-pdsfile`` answers a file that does not exist with None, but answers a directory
-  whose candidates all decline with an *empty* view set, which is falsy and is not None,
-  and whose ``thumbnail`` raises.
+  ``--import-fake-images``. Its handling of a miss is load-bearing, because a miss comes
+  back two different ways: ``rms-pdsfile`` answers a file that does not exist, and a
+  directory whose candidate children all decline, with None -- while everything else that
+  fails gets an *empty* view set, which is falsy, is not None, and whose ``thumbnail``
+  raises. The test therefore has to reject both.
 * **Might override** -- ``target_name``, ``time1``, ``time2``,
   ``observation_duration``, the four right-ascension and declination columns, and
   ``ring_obs_id``. The four sky columns and ``ring_obs_id`` default to None;
   ``observation_duration`` is ``max(time2 - time1, 0)``.
 * **Must override** -- ``planet_id``, ``quantity`` and ``observation_type``, each of
-  which raises. Plus ``_target_name``, which returns one ``(name, shown name)`` pair per
-  target and also raises, since no two archives record the target the same way.
+  which raises. ``_target_name`` belongs with them: it returns one ``(name, shown name)``
+  pair per target and raises too, since no two archives record the target the same way,
+  even though the source files it under the might-override banner.
 
 :class:`~opus_import.obs.obs_general_pds3.ObsGeneralPDS3` supplies ``_target_name`` from
 ``TARGET_NAME`` in whichever index or label carries it.
@@ -600,7 +605,9 @@ The observation's spectral coverage and resolution, in both wavelength and waven
 **Units are the thing to get right here.** Wavelengths are stored in microns and
 wavenumbers in cm\ :sup:`-1`, and the module constant ``MICRONS_PER_CM`` (10000.0) is
 the conversion: ``wavelength = MICRONS_PER_CM / wavenumber``, and a resolution converts
-as ``MICRONS_PER_CM * resolution / wavenumber**2``. The wavenumber columns default to
+as ``MICRONS_PER_CM * resolution / wavelength**2`` -- the square of the wavelength the
+resolution applies at, which is what the two conversion helpers divide by. The wavenumber
+columns default to
 the converted wavelengths, and four helpers derive a resolution from a full bandwidth or
 from the other system's resolution, so a subclass usually supplies only the two
 wavelength endpoints.
@@ -635,8 +642,9 @@ Two things in it are not a plain read:
 
 * **Ascending-node longitudes.** A module constant gives each planet's ring-plane
   ascending node in degrees from the J2000 prime meridian, and
-  ``_j2000_to_ascending`` / ``_ascending_to_j2000`` convert between the two systems. Six
-  columns try the summary file's own ``..._WRT_NODE`` column first and fall back to the
+  ``_j2000_to_ascending`` / ``_ascending_to_j2000`` convert between the two systems.
+  Eight columns try the summary file's own ``..._WRT_NODE`` column first and fall back
+  to the
   conversion, with a special case that keeps a 0--360 range as 0--360, because nothing
   else would make sense.
 * :meth:`~opus_import.obs.obs_ring_geometry.ObsRingGeometry.validate_ring_geo_fields`
@@ -673,8 +681,9 @@ Surface geometry is three tables, because it answers three different questions.
     surface geometry summary row for the current target, grouped by planetographic and
     planetocentric latitude, west longitude, distance and resolution, lighting geometry,
     pole and limb, image geometry and timing. The eight **east longitude** columns are
-    computed rather than read -- ``(360 - west) % 360``, with a special case keeping a
-    360 as 360 -- and are marked do-not-override.
+    computed rather than read, and are marked do-not-override: six are
+    ``(360 - west) % 360``, with a special case keeping a 360 as 360, and the two
+    observer columns are the plain negation instead.
     :meth:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.validate_surface_geo_fields`
     is the surface counterpart of the ring validator, over nine gridless stems.
 

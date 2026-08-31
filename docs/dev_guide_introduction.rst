@@ -49,8 +49,13 @@ The chapters are in reading order, and the order is deliberate:
   programs share.
 * **The web application** -- seven chapters, from :ref:`dev_guide_webapp` through
   :ref:`dev_guide_webapp_extending`.
+* **The shared packages and the log analyzer** -- :ref:`dev_guide_support` covers the
+  two packages both programs depend on, and :ref:`dev_guide_log_analyzer` the third
+  program.
 * **Installing and running a server** -- :ref:`dev_guide_installation`,
   :ref:`dev_guide_web_server` and :ref:`dev_guide_deployment`.
+* **Working on it** -- :ref:`dev_guide_conventions` and
+  :ref:`dev_guide_contributing`, then the generated :doc:`api_reference`.
 
 What the distribution contains
 ------------------------------

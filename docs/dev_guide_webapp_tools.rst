@@ -37,13 +37,14 @@ Seven modules, each covered in full below.
 :mod:`opus_app.apps.tools.app_utils`
 ------------------------------------
 
-Read :func:`~opus_app.apps.tools.app_utils.api_view` first. Every routed handler is
-wrapped in it, and it is what turns an exception into a response, records the call, and
-applies the fault-injection knobs.
+Read :func:`~opus_app.apps.tools.app_utils.api_view` first. Every handler that answers
+an API call is wrapped in it, and it is what turns an exception into a response, records
+the call, and applies the fault-injection knobs. A handler that is a thin private wrapper
+around a public one is not decorated itself; the wrapping it gets is its twin's.
 
 :func:`~opus_app.apps.tools.app_utils.api_view`
-    The decorator. At **decoration** time it inspects the handler's signature once to see
-    whether it wants an ``api_code``. At **call** time it: assigns the call number and
+    The decorator. At **decoration** time it inspects the handler's signature once to
+    see whether it wants an ``api_code``. At **call** time it: assigns the call number and
     records the start time; supplies ``api_code`` if the handler declared it; consults the
     injected-fault roll, and runs the handler only if that returned nothing; and then
     handles the outcome as described in :ref:`dev_guide_webapp_errors`.
@@ -58,7 +59,7 @@ Response builders
 ~~~~~~~~~~~~~~~~~
 
 :func:`~opus_app.apps.tools.app_utils.json_response`
-    ``json.dumps`` with ``application/json``.
+    :func:`json.dumps` with the ``application/json`` content type.
 
 :func:`~opus_app.apps.tools.app_utils.csv_response`
     A CSV attachment, with an optional header row. The filename is given without its
@@ -291,7 +292,7 @@ The statement layer
 :exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError`
     Raised when a name about to be used as an identifier is unsafe.
 
-Ten module-level functions render whole statements:
+Nine module-level functions render whole statements:
 :func:`~opus_app.apps.tools.sql_builder.create_table_from_select_sql` and
 :func:`~opus_app.apps.tools.sql_builder.create_table_as_select` (the first for the one
 caller whose SELECT is already rendered),

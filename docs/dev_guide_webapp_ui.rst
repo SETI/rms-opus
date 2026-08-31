@@ -47,7 +47,8 @@ the user works, and every route below serves one of those pieces.
    * - ``admin/``
      - Django's admin site. No app defines an admin module, so it is effectively inert.
 
-Every one of them is private. All but ``__menu.json`` carry ``@never_cache``.
+Every ``__``-prefixed route is private; the page itself and the admin site are not.
+Of the private ones, all but ``__menu.json`` carry ``@never_cache``.
 
 :class:`~opus_app.apps.ui.views.MainSite`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -238,8 +239,8 @@ generated PDF, because the public API guide is published as documentation and is
 built here. It is the one deliberate exception to the API-compatibility waiver in
 :ref:`dev_guide_conventions`: the URL resolves, and a test pins the redirect.
 
-The route keeps the capture group it has always had, so the set of URLs it matches does
-not change -- and that has a consequence: Django's redirect view interpolates the
+The route's pattern keeps a capture group, so the set of URLs it matches is unchanged
+by the redirect -- and that has a consequence: Django's redirect view interpolates the
 captured group into the target, so **the target URL must contain no percent sign at
 all**, or requesting the route raises.
 
