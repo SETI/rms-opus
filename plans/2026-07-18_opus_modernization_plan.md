@@ -7277,3 +7277,119 @@ body; never rewrite or delete earlier notes.*
     enforces a rule about *this plan's* PR numbers, which is scaffolding for the modernization
     sequence and not something the shipped repository should carry. The rule it enforces is
     obeyed by the tree it leaves behind.
+- **2026-08-30 (PR-19 executed):** the import pipeline has a holdings-free end-to-end
+  test. `import_tests/` runs the real `opus_import` command line against a temporary tree
+  built from `tests/fixtures/mini_holdings/`, and the **Import Tests** job in
+  `run-tests.yml` runs it against a MySQL service container. Facts later PRs need:
+  - **PR-24 carries three things forward unchanged.** (a) The `Import Tests` context is a
+    new required-check candidate alongside the six existing ones -- rev 7.27(e) already
+    assigns the protection swap to PR-24. (b) The **pdsfile-rewrite install step** is in
+    every environment that installs or type-checks this package: the lint, unit, Import
+    Tests and docs jobs and the package job's wheel smoke in `run-tests.yml`, and the
+    self-hosted workflow's `pip install -e ".[dev]"`. It tracks the branch tip, not a SHA.
+    (c) **Before the first PyPI publish carrying the enabled `Pds4File.use_shelves_only()`
+    line, the `rms-pdsfile` floor in `[project]` dependencies has to move to the rewrite's
+    release**: a wheel declaring `>=0.0.18` with that line enabled does not work, because
+    0.0.18's empty-key branch returns False with no fall-through and `from_path` raises on
+    the first PDS4 existence check.
+  - **`pdsfile.*` is out of `ignore_missing_imports`, which closes #1479.** The rewrite
+    ships `py.typed`, so mypy strict now checks every pdsfile call site. The whole error
+    surface was **10 errors in 4 files** and all are fixed here: `viewset` reports "no view
+    set" as `False` rather than None, so a truthiness test leaves a `bool` in the type
+    (`obs_general.py`); `abspath` is `str | None` on a `PdsFile`, which two call sites had
+    to narrow; and one test's fake pdsfile needed a cast. Regenerate rather than trust that
+    count.
+  - **The fixture and the goldens, measured.** 24 volumes -- one per `BUNDLE_INFO` entry
+    with an instrument class, minus the one entry with no bundle in the holdings
+    (`cassini_iss_fring_mosaics_rsfrench2025`, recorded in `exclusions.tsv`). 371 files,
+    **4.96 MB raw / 673 KB packed**, 7,146 expected products, 193 shelf manifests; 144
+    golden tables, 5.9 MB. The 2026-08-26 estimate of ~475 KB raw was for one PDS3 volume
+    plus one PDS4 bundle at N=20; labels dominate and there are now 24 of them. **PR-19
+    therefore exceeds CodeRabbit's 100-file cap** and rev 7.2's wide-PR exception applies,
+    exactly as that note predicted.
+  - **Two things the import does that are not deterministic, and what the suite does about
+    them.** Both are real and neither is PR-19's to fix. (1) `do_param_info` asks the
+    backend which tables to describe and gets a **set**, so the ids it hands out follow a
+    string-hash order that Python randomizes per process: two identical imports give
+    `param_info` the same rows under different ids. The suite pins `PYTHONHASHSEED` in the
+    pipeline's subprocesses, which is a property of the harness rather than of the
+    pipeline. (2) `obs_general.preview_images` is `PdsViewSet.to_dict()`, and pdsfile
+    documents that its members come out "in the iteration order of a Python set, which is
+    not the order they were appended in and is not stable across processes" -- a set of
+    objects, so the hash seed does not settle it either. The golden serializer sorts that
+    one list, which is a **second normalization beyond the specification's timestamp-only
+    rule** and is named and justified where it is applied. Both would be better fixed at
+    the source: a sorted table list in `do_param_info`, and a sorted or ordered view set.
+  - **Four things about the holdings machine that a recorder run depends on.** (a) The
+    holdings sit on a **case-insensitive filesystem**: `OBSINDEX.tab` and `OBSINDEX.TAB`
+    are the same file there and different files in the repository, so the recorder takes a
+    table's name from its label's own `^` pointer rather than from the label's name with an
+    extension swapped. (b) The PDS4 shelf tools have to be pointed at a **bundle set**, not
+    at a bundle: pdsfile reports `uranus_occ_support` as a bundle set of its own, so naming
+    it directly makes the tools' driver expand it a second time and try to checksum the
+    directories inside it. (c) The tools are run with `--reinitialize`, and the tree the
+    recorder itself wrote is re-staged every run, because reusing the previous run's copy
+    builds shelves over files that are no longer the fixture's. (d) The recorder deletes
+    what it owns before it writes, so a volume that is no longer chosen disappears rather
+    than lingering.
+  - **The row-file check decides which index files reach `obs_files`, and it does not read
+    the rows.** `find_selected_row_key` asks whether an index's *shelf* carries the
+    observation's key; the key is not always the row's own file name (a Voyager occultation
+    index row for a calibration file carries the profile's key) and not always equal to it
+    (a Voyager image index is keyed by the image number while the observation's file name
+    carries a `_RAW` suffix, which pdsfile resolves by longest prefix). So the fixture reads
+    the production index shelf and keeps the rows that shelf maps the observations' keys to,
+    on top of the sampled rows -- and the same rule is what puts Hubble's `*_hstfiles` and
+    Voyager's `*_index` tables in the fixture at all: the import never reads them as
+    metadata, but it lists them among an observation's products.
+  - **Five claims in the PR-19 specification that reality contradicts**, none of which
+    changes what the design asks for. (1) The §4 statement that "production holdings carry
+    no sidecars either" is false -- every production info shelf has a `.py` sidecar beside
+    its `.pickle`. The instruction it justifies still holds and was verified directly: the
+    import never reaches pdsfile's null-key sidecar path, and the built tree's pickles alone
+    are sufficient. (2) §5's "crafted duplicate-opus-id pair" cannot be a duplicated index
+    row: `obs_general.opus_id` carries a `unique` key, so a second row with the same id
+    fails the insert before `--import-check-duplicate-id` is consulted. The case is instead
+    one volume imported **twice in a single `--do-all-import` invocation**, which is the
+    production situation the flag exists for (GO_0016/GO_0017 share observations) and the
+    only one that reaches `read_existing_import_opus_id`. (3) §2's PDS4 excerpt assumes a
+    bundle-level metadata directory; `cassini_uvis_solarocc_beckerjarmak2023` keeps its
+    index directly under its bundle set, and pdsfile then addresses each file there as a
+    bundle of its own, so the fixture mirrors the holdings' own layout below `metadata/`
+    rather than assuming `<bundle set>/<bundle>/`. (4) §2 expects `uranus_occ_support`
+    shelves in the fixture; pdsfile **raises** rather than naming a shelf for a file inside
+    a `_support` directory, so no manifest can make one answer, and those products are
+    recorded nowhere. The recorder reports every bundle it drops for that reason. (5) §5's
+    "re-importing a volume the database already holds must change nothing but timestamp
+    columns" is false, and cannot be made true: `import_util.find_max_table_id` hands out
+    ids from the largest already present **in either namespace**, and the perm-table delete
+    happens after the import tables are filled, so a re-imported bundle is renumbered above
+    everything else in the table. Measured on the fixture: every table keeps its exact row
+    count and every value outside `id` and `obs_general_id` is unchanged; the re-imported
+    volume's ids move (63 becomes 399, and so on). The assertion is therefore split -- a
+    table holding none of that bundle's rows must be byte-identical to its golden, ids
+    included, and a table holding them must hold the same rows once those two
+    server-numbered columns are dropped, with a third assertion that neither half is empty.
+    The split is *stronger* where it matters: the byte-identical half is exactly the mult
+    tables and the finalization tables, which is where the upsert lands, so the update half
+    of the upsert is still held to its ids.
+  - **The negative cases' crafted input is a recipe, not a copied table.**
+    `import_tests/fixtures/negative/ignore_errors.tsv` names the *registered type*, the row,
+    the column and the replacement, and the overlay is built from it at run time. A
+    checked-in copy of a subsetted index would name a volume that the recorder's own
+    selection rule chooses, and would go stale the day that choice changed.
+  - **The unit-coverage gate is live and measured at 75%.** `[tool.coverage.report]
+    fail_under` is what `pytest import_tests --cov` reaches, rounded down; the unit legs and
+    `scripts/run-all-checks.sh` stay `--cov`-free, so exactly one job measures and exactly
+    one number gates. Of the 1,396 functions under `src/opus_import/obs/`, **1,259 are
+    proven executed by the run**; the 137 in the whitelist are the 50 belonging to the type
+    with no bundle in the holdings, 79 base-class definitions every concrete class
+    overrides, and 8 branches the sampled rows do not reach. `codecov.yml`'s unflagged
+    project/patch statuses are gone: the integration upload carries the `integration` flag
+    with the 90% target and the new upload carries `import`, informational, because an
+    unflagged default measures the two uploads merged.
+  - **Recorded as a candidate, not fixed here:** `importdb/mysql.py`'s `create_table`
+    updates its own table-name cache *inside* its `if self.logger:` branch, so a connection
+    opened without a logger answers `table_exists` from a cache that never learned about the
+    table it just created. Every production call site passes a logger, which is why nothing
+    has hit it.
