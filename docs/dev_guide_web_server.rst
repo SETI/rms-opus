@@ -9,8 +9,10 @@ products directly off disk, and it starts the worker processes.
 
 This chapter gives a worked configuration for **nginx** -- with gunicorn, and with uWSGI
 -- and for **Apache with mod_wsgi**. They are worked examples rather than files to paste
-unread: the paths, the account name and the host name are yours, and every one of them is
-marked.
+unread. Throughout, ``opus`` is the account OPUS runs as, ``opus.example.org`` is the
+host name, ``/opus`` is the installation root, ``/pds`` is where the holdings are
+mounted, and ``/etc/opus/opus.toml`` is the configuration file; substitute your own for
+each.
 
 .. _dev_guide_web_server_contract:
 
@@ -40,15 +42,20 @@ two holdings roots. The import stores each file's path as ``holdings/...`` or
 ``pds4-holdings/...``, and the application prefixes it with the ``product_http_path``
 setting, so those two paths must resolve on whatever host that setting names. If products
 are served by a different host, point ``product_http_path`` at that host instead and omit
-these locations.
+these locations -- but note that
+:func:`~opus_app.apps.tools.file_utils.get_pds_preview_images` rewrites a PDS3 preview's
+``/holdings`` to ``/pds3-holdings`` when ``product_http_path`` names a ``googleapis``
+host, so a Google Cloud Storage bucket needs that third name instead.
 
 **5. The application answers at the vhost root.** :mod:`opus_app.urls` mounts every route
 twice -- at ``/`` and under ``/opus/`` -- so mounting the application at the root makes
 both work, and no prefix stripping is needed. The ``opus/`` prefix is there for the
 development server, which has nothing in front of it; the URL map's own comment marks it
-as such. Mounting the application under a sub-path works too, because the server strips
-that path before Django sees it, but the configurations below mount at the root, which is
-what ``public_url`` and ``product_http_path`` are written for.
+as such. Mounting the application under a sub-path works under ``mod_wsgi``, whose
+``WSGIScriptAlias`` sets ``SCRIPT_NAME`` and strips the prefix before Django sees it;
+under nginx neither ``proxy_pass`` nor ``uwsgi_pass`` does that for you, and you would
+have to set ``SCRIPT_NAME`` yourself. The configurations below all mount at the root,
+which is what ``public_url`` and ``product_http_path`` are written for.
 
 Two more, which are conventions rather than requirements:
 
@@ -88,7 +95,7 @@ process's own environment, which is exactly what the settings import needs.
     Environment=OPUS_CONFIG=/etc/opus/opus.toml
     Environment=DJANGO_SETTINGS_MODULE=opus_app.settings
 
-    ExecStart=/opus/opus_venv/bin/gunicorn \
+    ExecStart=/opus/src/rms-opus/opus_venv/bin/gunicorn \
         --workers 8 \
         --timeout 300 \
         --bind unix:/run/opus/opus.sock \
@@ -199,7 +206,7 @@ and gunicorn replaced by a uWSGI instance. **The environment variable is set wit
     [uwsgi]
     module = opus_app.wsgi:application
 
-    virtualenv = /opus/opus_venv
+    virtualenv = /opus/src/rms-opus/opus_venv
     chdir      = /opus
 
     env = OPUS_CONFIG=/etc/opus/opus.toml
@@ -213,9 +220,17 @@ and gunicorn replaced by a uWSGI instance. **The environment variable is set wit
     chmod-socket = 660
     uid = opus
     gid = opus
+    ; uWSGI binds the socket before it drops privileges, so without this the socket
+    ; stays root-owned and nginx gets a 502 on connect.
+    chown-socket = opus:www-data
 
     vacuum       = true
     die-on-term  = true
+
+Two things the gunicorn arrangement got from systemd have to be arranged here. ``/run/opus``
+is created by that unit's ``RuntimeDirectory=opus``; running uWSGI instead means either
+its own unit with the same line or a ``/etc/tmpfiles.d`` entry, since ``/run`` does not
+survive a reboot. And ``chown-socket`` is what lets nginx reach the socket at all.
 
 ``harakiri`` is uWSGI's request timeout and plays the role gunicorn's ``--timeout``
 plays above. ``touch-reload`` is worth adding if you want a file touch rather than a
@@ -244,13 +259,17 @@ daemon processes inherit from there::
     # /etc/apache2/envvars
     export OPUS_CONFIG=/etc/opus/opus.toml
 
-A server running several OPUS installations cannot share one such variable. Give each its
-own Apache instance, or give each a wrapper ``wsgi.py`` of its own that assigns
-``os.environ['OPUS_CONFIG']`` **before** importing :mod:`opus_app.wsgi`:
+A server running several OPUS installations cannot share one such variable. Give each
+its own Apache instance, or give each a wrapper module of its own that assigns
+``os.environ['OPUS_CONFIG']`` **before** importing :mod:`opus_app.wsgi`. Two things about
+that wrapper: the vhost's ``WSGIScriptAlias`` has to name **it** rather than ``wsgi.py``,
+and it must live somewhere the deploy chain does not touch -- ``_opus_setup_environment.sh``
+and ``deploy_new_code_only.sh`` both re-create ``<installation>/wsgi.py`` as a symlink on
+every deploy, so a hand-written file at that path does not survive one.
 
 .. code-block:: python
 
-    # /opus/src/rms-opus_other/wsgi_wrapper.py
+    # /etc/opus/other_wsgi.py -- outside every installation directory
     import os
 
     os.environ['OPUS_CONFIG'] = '/etc/opus/other.toml'
@@ -337,7 +356,7 @@ The deploy chain avoids that by writing a **symlink at a fixed path** and re-poi
 on every deploy, which is why the vhost above names ``/opus/src/rms-opus/wsgi.py`` rather
 than a path under ``site-packages``. To create one by hand::
 
-    OPUS_WSGI=$(/opus/opus_venv/bin/python -c \
+    OPUS_WSGI=$(/opus/src/rms-opus/opus_venv/bin/python -c \
       'import importlib.util; print(importlib.util.find_spec("opus_app.wsgi").origin)')
     ln -sfn "$OPUS_WSGI" /opus/src/rms-opus/wsgi.py
 
@@ -360,9 +379,12 @@ Checking it
 
 In order, because each check depends on the one before::
 
-    # The application starts and the configuration reaches it.
-    sudo -u opus OPUS_CONFIG=/etc/opus/opus.toml \
-        /opus/opus_venv/bin/gunicorn --bind 127.0.0.1:8001 opus_app.wsgi:application
+    # The application starts and the configuration reaches it. `env` is load-bearing:
+    # a default sudoers resets the environment and refuses to pass OPUS_CONFIG through.
+    # This one runs in the foreground, so give it a terminal of its own.
+    sudo -u opus env OPUS_CONFIG=/etc/opus/opus.toml \
+        /opus/src/rms-opus/opus_venv/bin/gunicorn \
+        --bind 127.0.0.1:8001 opus_app.wsgi:application
 
     # The web server proxies to it.
     curl -sI https://opus.example.org/ | head -1

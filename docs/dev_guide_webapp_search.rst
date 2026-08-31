@@ -7,8 +7,8 @@ The ``search`` App
 search form calls while a user types, the routines that turn a search URL into SQL, and
 the generated Django models for every OPUS table.
 
-Only the first is routed. The second is imported by nearly every other app, and is the
-reason this module is the largest in the project.
+Only the first is routed. The second is imported by nearly every other app, which is
+why this module is one of the two largest in the project.
 :ref:`dev_guide_webapp_search_flow` is the mechanism; this chapter is the code.
 
 The routes
@@ -331,7 +331,7 @@ The generated models
 
 ``src/opus_app/apps/search/models.py`` is **machine-written** by
 ``scripts/models/create_opus_models.sh`` from a populated database, and it is the largest
-file in the repository. It holds 231 model classes:
+Python file in the repository. It holds 231 model classes:
 
 * one per ``obs_`` table;
 * one per ``mult_`` table;

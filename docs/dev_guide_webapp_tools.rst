@@ -261,9 +261,10 @@ The shape of it
             +alias
             +render()
         }
-        class SQLIdentifierError {
-            ValueError
+        class ValueError {
+            <<builtin>>
         }
+        class SQLIdentifierError
 
         Select "1" *-- "many" FromSource : FROM
         FromSource "1" *-- "many" Join
@@ -275,6 +276,8 @@ The shape of it
         Select ..> Expr : columns, WHERE, GROUP BY, ORDER BY
         Join ..> Expr : ON
         JSONTable ..> Expr : source column
+        ValueError <|-- SQLIdentifierError
+        ValueError <|-- SQLIdentifierError
         Select ..> SQLIdentifierError : raises
 
 Reading it in three groups:
@@ -345,7 +348,8 @@ parameters its placeholders consume. Everything below returns one.
    * - :func:`~opus_app.apps.tools.sql_builder.parenthesize`,
        :func:`~opus_app.apps.tools.sql_builder.join_exprs`,
        :func:`~opus_app.apps.tools.sql_builder.combine_exprs`
-     - Grouping. ``join_exprs`` adds no parentheses; ``combine_exprs`` parenthesizes each
+     - Grouping. :func:`~opus_app.apps.tools.sql_builder.join_exprs` adds no parentheses;
+       :func:`~opus_app.apps.tools.sql_builder.combine_exprs` parenthesizes each
        operand first.
 
 The statement layer
@@ -353,10 +357,12 @@ The statement layer
 
 :class:`~opus_app.apps.tools.sql_builder.Select`
     A SELECT assembled from its parts, rendered in a fixed clause order: columns, FROM
-    with its joins, WHERE, GROUP BY, ORDER BY, LIMIT/OFFSET. ``add_from`` returns the
+    with its joins, WHERE, GROUP BY, ORDER BY, LIMIT/OFFSET.
+    :meth:`~opus_app.apps.tools.sql_builder.Select.add_from` returns the
     :class:`~opus_app.apps.tools.sql_builder.FromSource` rather than the statement, so
     that joins hang off the right source; everything else returns the statement for
-    chaining. ``build`` returns the SQL and its parameters.
+    chaining. :meth:`~opus_app.apps.tools.sql_builder.Select.build` returns the SQL and
+    its parameters.
 
 :class:`~opus_app.apps.tools.sql_builder.FromSource` and :class:`~opus_app.apps.tools.sql_builder.Join`
     One table source and the joins hanging off it. A statement may have more than one
@@ -387,7 +393,8 @@ caller whose SELECT is already rendered),
 :func:`~opus_app.apps.tools.sql_builder.update`.
 
 Two invariants in that list are deliberate. **A WHERE clause is required** by
-``delete_from`` and ``update``: there is no call site that empties a table, and making it
+:func:`~opus_app.apps.tools.sql_builder.delete_from` and
+:func:`~opus_app.apps.tools.sql_builder.update`: there is no call site that empties a table, and making it
 optional would let a caller emit one by leaving an argument out. And the cart's writes go
 through ``REPLACE INTO`` rather than a delete followed by an insert, because the cart
 table's unique key over the session and the observation turns a concurrent second write

@@ -3,11 +3,13 @@
 The Web Application: Theory of Operation
 ========================================
 
-:mod:`opus_app` is the Django project that serves the OPUS user interface and the public
-web API out of the database an import wrote. It **reads** that database and never writes
-an ``obs_`` table. What it does create is temporary: the per-search ``cache_*`` tables,
-a few short-lived tables the results and cart queries build, the ``cart`` rows a session
-selects, and the tables Django's own contrib apps own.
+:mod:`opus_app` is the Django project that serves the OPUS user interface and the
+public web API out of the database an import wrote. It **reads** that database and never
+writes an ``obs_`` table. What it does write is everything the *session* produces: the
+``user_searches`` row that gives a search its number and the ``cache_NNN`` table that
+holds its results, the ``cart`` rows a session selects, a few genuinely temporary tables
+the results and cart queries build, and the tables Django's own contrib apps own. Only
+an import removes the first two.
 
 This chapter is the *why*. The chapters after it are the *what*:
 :ref:`dev_guide_webapp_running` is how to run it, :ref:`dev_guide_webapp_tools` is the
@@ -309,7 +311,8 @@ Where to go next
     Running it, in development and under a WSGI server.
 
 :ref:`dev_guide_webapp_tools`
-    The shared machinery: ``api_view``, the SQL builder, the file lookups.
+    The shared machinery: :func:`~opus_app.apps.tools.app_utils.api_view`, the SQL
+    builder, the file lookups.
 
 :ref:`dev_guide_webapp_search`
     The search app, and the generated models.

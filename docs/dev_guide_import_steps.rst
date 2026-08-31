@@ -157,8 +157,9 @@ Two validations happen here rather than at the schema:
 * a ``pi_ranges`` naming an entry that is not in ``param_info_ranges.json`` fails it
   too.
 
-Every fault is collected before anything is written, so a failed build leaves the
-import table empty rather than half filled, and one run reports all of them.
+Nothing is written until every column has been read, so a failed build leaves the
+import table empty rather than half filled -- but the build stops at the **first** fault,
+so one run reports only that one.
 :func:`~opus_import.steps.do_param_info.do_param_info` copies to the permanent table
 only if the build succeeded, and drops the import table either way.
 
@@ -240,7 +241,7 @@ two generated groups. The order it emits is:
    ``obs_surface_geometry_name``, ``obs_surface_geometry``, each if it exists.
 3. One per ``obs_surface_geometry__<TARGET>`` table, labeled from the decoded target
    name.
-4. ``obs_ring_geometry``.
+4. ``obs_ring_geometry``, if it exists.
 5. One per mission table that exists, **generated** by looping
    ``MISSION_ID_TO_MISSION_TABLE_SFX``.
 6. One per instrument table that exists, **generated** by looping
@@ -319,7 +320,8 @@ Four checks, in this order:
 :func:`~opus_import.steps.do_validate.validate_min_max_order`
     For every ``X1``/``X2`` pair, reports rows where ``X2 < X1``, listing the first
     hundred OPUS IDs. A ``LONG`` field is skipped, because a longitude range wraps and
-    its low end legitimately exceeds its high end. A missing ``X2``, an absent
+    its low end legitimately exceeds its high end, and so is a column whose
+    ``param_info`` form type is NULL. A missing ``X2``, an absent
     ``param_info`` row, or more than one, is an error.
 
 :func:`~opus_import.steps.do_validate.validate_filter_wavelength_consistency`
@@ -346,11 +348,12 @@ copies them over, and :func:`~opus_import.steps.do_dictionary.do_dictionary` is 
 The step builds both import tables, copies them over the permanent ones only if both
 builds succeeded, and drops the import tables **both before and after**, so a failed
 build leaves nothing behind and the permanent tables keep what the previous run wrote.
-Contexts are built and copied before definitions in both directions, because
-``definitions`` has a foreign key onto ``contexts``.
+Contexts are built first and copied first, and ``definitions`` is dropped first and
+created last, because ``definitions`` has a foreign key onto ``contexts``.
 
-Both builders collect every fault before writing anything, so a broken schema produces a
-complete report and an untouched database. A failed dictionary import reports through
+The definitions builder collects every fault before writing anything; the contexts
+builder stops at the first malformed line. Either way nothing is written and the
+permanent tables keep what the previous run wrote. A failed dictionary import reports through
 the log and does **not** change the run's exit status.
 
 The four internal modules
@@ -495,7 +498,7 @@ to the permanent namespace.
 ``imp_mult_obs_general_planet_id``.
 
 **Caching, and its three lifetimes.** Every table is read once per bundle into the
-context's cache and written back at the end of the bundle, so importing an index of a
+context's cache and written back at the end of each index file, so importing an index of a
 hundred thousand rows does not query for the same enumeration a hundred thousand times.
 Three collections track it:
 
@@ -530,9 +533,10 @@ A new value is given ``max(existing ids) + 1``, or 0 in an empty table. A value 
 from a table whose values are pinned by ``mult_options`` is an error, and returns 0.
 
 **The derived sort order** is where a value's position in the search form comes from
-when the schema pins none. The rules, in order: a null-ish label sorts to the end
-(``NULL``, then ``N/A``, then ``NONE``, via ``zzz``/``zzy``/``zzx`` prefixes) unless the
-column has a unit, in which case the unit's own parser decides; a column with a unit
+when the schema pins none. The rules, in order: a null-ish label sorts to the end,
+keyed ``zzz`` for ``NULL``, ``zzy`` for ``N/A`` and ``zzx`` for ``NONE`` -- unless the
+column has a unit, in which case those three sort by their own text instead; a column
+with a unit
 sorts by the parsed number, zero-padded; a table whose labels are all numeric sorts
 numerically; ``Yes`` sorts before ``No`` and ``On`` before ``Off``; anything else sorts
 by its label.

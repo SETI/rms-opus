@@ -139,11 +139,19 @@ mission and volume-set classes hang off
 :class:`~opus_import.obs.obs_common_pds4.ObsCommonPDS4` and are drawn in
 :ref:`dev_guide_import_obs_classes`.
 
-"Abstract" here means *a class whose contract methods raise*
+"Abstract" here means *a class with a member that raises*
 :exc:`NotImplementedError`. Nothing in :mod:`opus_import.obs` inherits from
 :class:`abc.ABC` or uses :func:`abc.abstractmethod`; the stubs raise instead, which is
 what lets a table module supply a default for a question most instruments answer the
 same way while still failing loudly for one that has to answer it itself.
+
+**The diagram marks a class abstract where it *introduces* such a member**, not where it
+merely inherits one. By the second reading almost every class above is abstract, because
+:class:`~opus_import.obs.obs_base.ObsBase`'s eight raising members are inherited all the
+way down: none of these classes can be instantiated and asked for a row.
+:class:`~opus_import.obs.obs_general_pds4.ObsGeneralPDS4` is the clearest case -- it
+introduces nothing at all, and exists only to put the PDS4 base into a class's ancestry.
+The first class in any of these chains that can actually compute a row is a leaf.
 
 The five kinds of module
 ------------------------
@@ -496,9 +504,9 @@ Two rules are worth stating explicitly, because both are easy to get wrong:
   :data:`~opus_import.obs.field_types.FloatField` and
   :data:`~opus_import.obs.field_types.StrField` need no equivalent.
 
-Two keys of :class:`~opus_import.obs.field_types.MultField` are inert today: nothing
-reads ``tooltip`` -- a ``mult_`` table has no such column -- and no obs class passes
-either ``tooltip`` or ``aliases``, so both are None in every row the pipeline writes.
+Two keys of :class:`~opus_import.obs.field_types.MultField` are inert: nothing reads
+``tooltip`` -- a ``mult_`` table has no such column -- and no obs class passes either
+``tooltip`` or ``aliases``, so both are None in every row the pipeline writes.
 
 .. _dev_guide_import_obs_version_bases:
 

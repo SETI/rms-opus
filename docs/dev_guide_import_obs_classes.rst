@@ -16,6 +16,9 @@ PDS4 bundle.
 .. mermaid::
 
     classDiagram
+        class ObsBase {
+            <<abstract>>
+        }
         class ObsCommonPDS3 {
             <<abstract>>
             the nine PDS3 table modules
@@ -501,11 +504,13 @@ supplemental partition and count columns with an out-of-order warning, a seven-e
 mission-phase name table (which carries both spellings of one phase), the planet derived
 from that phase, and the note column.
 
-New Horizons bundles need :ref:`special ordering <dev_guide_import_running>`: a bundle
-set's calibrated ``2xxx`` bundle is imported *before* its raw ``1001`` one, so that the
-raw bundle is the one holding the primary file specification that ``rms-pdsfile``
-reports. :func:`~opus_import.import_util.yield_import_bundle_ids` reverses the order for
-that reason, and the ``2xxx`` volumes are registered as deliberately ignored.
+New Horizons is the one mission whose bundleset expansion is reordered:
+:func:`~opus_import.import_util.yield_import_bundle_ids` yields a bundleset's calibrated
+``2xxx`` bundle before its raw ``1001`` one, reversing the order the bundleset lists them
+in, so that the raw bundle is the one left holding the primary file specification
+``rms-pdsfile`` reports. **The reversal changes nothing today**, because the
+``NH...._2\d\d\d`` registry entry has no obs class and those bundles are never imported;
+it is there for the arrangement where they are.
 
 Leaf: ObsVolumeNHxxLOXxxx
 ~~~~~~~~~~~~~~~~~~~~~~~~~

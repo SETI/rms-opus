@@ -42,6 +42,7 @@ Adding an API endpoint
     from django.http import HttpRequest, HttpResponse
     from django.views.decorators.cache import never_cache
 
+    from opus_app.apps.results.views import get_search_results_chunk
     from opus_app.apps.tools.app_utils import (
         Http400Error,
         api_view,
@@ -58,10 +59,10 @@ Adding an API endpoint
 
         This is a PRIVATE API.
 
-        ```
-        Format: __api/myendpoint.json
-        Arguments: reqno=<N>
-        ```
+        ::
+
+            Format: __api/myendpoint.json
+            Arguments: reqno=<N>
 
         Parameters:
             request: The HTTP request, whose query string carries ``reqno``.

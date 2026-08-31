@@ -62,7 +62,8 @@ Under a WSGI server
 unset and builds ``application``; it does nothing to :data:`sys.path`, because the
 distribution is installed and importable.
 
-Point any WSGI server at ``opus_app.wsgi:application``. For a smoke test::
+Point any WSGI server at ``opus_app.wsgi:application``. For a smoke test -- with
+gunicorn installed alongside, since it is not an OPUS dependency::
 
     OPUS_CONFIG=/etc/opus/opus.toml gunicorn opus_app.wsgi:application
 
@@ -111,9 +112,11 @@ Caching, and clearing it
 ------------------------
 
 Install ``memcached`` and the ``pymemcache`` client to have the caching behave the way a
-server does. **Neither is a declared dependency**: :mod:`opus_app.settings` tries to
-import ``pymemcache``, then tries to connect to a local memcached, and falls back to
-Django's per-process local-memory cache if either fails. An installation that skips this
+server does. **Neither is a declared dependency**: :mod:`opus_app.settings` tries to import
+``pymemcache``, then tries to connect to a local memcached, and falls back to Django's
+per-process local-memory cache if the import fails or the connection is **refused**. Any
+other connection failure -- a timeout, a name that resolves oddly -- is not caught and
+stops the application at startup. An installation that skips this
 runs -- slowly, per process, and with the cache-flushing step below doing nothing at all.
 
 ::
@@ -138,6 +141,37 @@ That is only half of what an import requires, because the process-local caches
 :ref:`dev_guide_webapp_caching` describes are out of its reach.
 :ref:`dev_guide_deployment_after_import` is the full statement.
 
+.. _dev_guide_webapp_settings:
+
+The settings module
+-------------------
+
+:mod:`opus_app.settings` is where every value a deployment can vary arrives, and it is
+worth reading once end to end. It has three parts:
+
+**Django's own settings**, assigned from the configuration file: the secret key, the
+debug flag, the allowed hosts, the database connection, the static root, and the log
+levels. The database engine is chosen from the configured *brand* through a two-entry
+map, so the web application and the import pipeline cannot disagree about which database
+they are talking to.
+
+**Fixed application settings** that no deployment varies: the middleware chain, the
+installed apps, the template configuration, the storage backends, the session policy and
+the time zone.
+
+**The OPUS apps' own constants**, everything below the banner comment two-thirds of the
+way down: the default columns, widgets and sort order; the query types each field type
+allows; the four preview sizes; the paging and download limits; the archive formats; and
+the slugs that appear in a URL but are not database fields.
+
+Three details are easy to trip over. **Nothing here reads the environment** except
+``OPUS_CONFIG``, by way of :mod:`opus_config`, so there is no second source of truth.
+**Module-level helpers are lower-case on purpose**: Django treats every upper-case name
+in this module as a setting, and its only test is :meth:`str.isupper`, which a leading
+underscore does not defeat. And ``DEFAULT_AUTO_FIELD`` stays ``AutoField`` deliberately
+-- it governs the nineteen OPUS models that declare no primary key as well as the contrib
+tables, all of which already exist with a 32-bit ``AUTO_INCREMENT`` column.
+
 Logging
 -------
 
@@ -153,7 +187,9 @@ configuration puts every path it opens directly under ``/tmp``.
 Each OPUS app has its own logger entry, and each key **must be a prefix of the app
 modules' actual names** -- they call ``logging.getLogger(__name__)``, giving names like
 ``opus_app.apps.cart.views``. A key that prefixes no real logger silently stops that
-app's records reaching the log file.
+app's records reaching the log file. There are nine entries for eight apps: the ninth,
+``opus_app.apps.search.forms``, is already covered by the ``opus_app.apps.search``
+prefix and changes nothing.
 
 Setting ``log_api_calls`` to a level name logs every API call's entry and exit. It is
 false in every normal deployment.

@@ -66,8 +66,9 @@ The scripts
     Runs a complete import into a brand-new schema, which is the first half of bringing
     up a new database. It builds its own installation under a timestamped directory, so
     the import runs against the release being deployed rather than against whatever is
-    currently serving; then it dumps the finished database and loads it onto the Node's
-    other server. It runs detached and mails the log when it finishes.
+    currently serving; then, **on a host whose name begins** ``tools``, it dumps the
+    finished database and loads it onto the Node's other server. Anywhere else it
+    imports and stops. It runs detached and mails the log when it finishes.
 
 The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==3.23.0`` for a particular release, omitted for the newest.
@@ -142,8 +143,11 @@ Two validations run before a deploy touches anything:
   restrictive umask into a temporary name before renaming it into place, so the file is
   never briefly readable while it already holds the password.
 
-Both failures name the variable at fault, and both happen **before the deploy stops
-Apache**.
+Both failures name the variable at fault, but they happen at different moments. The
+missing-value check runs before the deploy stops Apache; the generator runs from the
+environment setup, which is sourced **after** it, so a value TOML cannot represent leaves
+Apache down until it is corrected. ``_opus_setup_environment.sh`` says so in its own
+comment.
 
 ``_write_opus_toml.sh`` is a separate program rather than a block inside the setup script
 so that it can be run on its own against a controlled environment and its output loaded

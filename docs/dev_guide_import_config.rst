@@ -186,8 +186,8 @@ with five keys:
 Nothing in ``BUNDLE_INFO`` maps a bundle-id *prefix* to an instrument: the regular
 expression selects the class directly.
 
-The registry today
-~~~~~~~~~~~~~~~~~~
+The registry
+~~~~~~~~~~~~
 
 Twenty-nine entries: twenty-five PDS3 and four PDS4, of which four have no
 ``instrument_class`` and are the bundles OPUS deliberately ignores.
@@ -441,13 +441,39 @@ why they survive with no entries.
     would read it is commented out, so **an entry added here has to be switched on as
     well as written.**
 
+.. _dev_guide_import_config_file:
+
 The configuration file
 ----------------------
 
-Everything above is checked-in Python. The other half of "what exists" is the
-installation's TOML file, which says where the holdings are and which database to
-write. :mod:`opus_config` reads it, :ref:`dev_guide_support` describes the loader, and
-:ref:`dev_guide_installation` describes writing one.
+Everything above is checked-in Python, the same on every installation. The other half of
+"what exists" is the installation's TOML file, which says where the holdings are and
+which database to write.
+
+:mod:`opus_config` is the loader, and it is deliberately strict.
+:func:`~opus_config.config.get_config` is the entry point; it reads the file
+:func:`~opus_config.config.config_path` resolves from ``OPUS_CONFIG`` and **caches the
+result for the life of the process**, so a test that loads a different configuration has
+to clear that cache. The file becomes four frozen dataclasses --
+:class:`~opus_config.config.DatabaseConfig`, :class:`~opus_config.config.PathsConfig`,
+:class:`~opus_config.config.DjangoConfig` and :class:`~opus_config.config.ImportConfig`
+-- so nothing downstream can mutate a setting, and every key is read through a typed
+accessor rather than by indexing a dictionary.
+
+Three properties are worth relying on:
+
+* **An unknown key is an error**, not something ignored. So is a missing required key,
+  and so is a value of the wrong type; each is reported as
+  :exc:`~opus_config.config.ConfigError` naming the table and the key at fault.
+* **A key with a default is optional and a key without one is required**, and the
+  distinction is in the accessor call rather than in a separate list.
+  :ref:`dev_guide_installation` tabulates every key and which it is.
+* **The brand is validated against** :data:`~opus_config.config.DATABASE_BRANDS`, which
+  is what lets both :func:`opus_import.importdb.get_db` and :mod:`opus_app.settings`
+  dispatch on it without re-checking.
+
+:ref:`dev_guide_support` describes the package alongside :mod:`opus_support`, and
+:ref:`dev_guide_installation` describes writing a file.
 
 API reference
 -------------

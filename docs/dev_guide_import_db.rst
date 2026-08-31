@@ -84,8 +84,9 @@ name.
 configured prefix for ``'import'`` and returns the name unchanged for ``'perm'`` and
 ``'all'``; with no prefix configured, the two namespaces are literally the same tables.
 :meth:`~opus_import.importdb.super.ImportDBSuper.convert_namespace_to_raw` is the
-inverse. ``'all'`` is accepted only where reading both makes sense --
-:func:`~opus_import.steps.do_django.drop_cache_tables` is the caller that uses it.
+inverse. ``'all'`` is accepted only where reading both makes sense.
+:func:`~opus_import.steps.do_django.drop_cache_tables` is the only step that uses it; the
+MySQL constructor also passes it when priming its table-name cache.
 
 Because every method converts the name itself, **no step module ever builds a prefixed
 name**. That is the property to preserve when adding one.
@@ -104,45 +105,45 @@ this is an abstract class by convention rather than through :mod:`abc`.
 
    * - Abstract member
      - Contract
-   * - ``quote_identifier(s)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.quote_identifier`\ ``(s)``
      - Return a name quoted for use as an identifier.
-   * - ``table_names(namespace, prefix=None)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_names`\ ``(namespace, prefix=None)``
      - The tables in a namespace, optionally filtered by one prefix or several. **An
        implementation must sort them**, because a caller handing out row ids while
        iterating this would otherwise produce a different database on a different
        machine.
-   * - ``table_info(namespace, raw_table_name)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_info`\ ``(namespace, raw_table_name)``
      - The table's columns as the database currently defines them, in the same shape a
        packaged schema has.
-   * - ``create_table(namespace, raw_table_name, schema, ignore_if_exists=True)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.create_table`\ ``(namespace, raw_table_name, schema, ignore_if_exists=True)``
      - Create a table from an OPUS table schema. Returns True if it created one, False
        if it was already there.
-   * - ``drop_table(namespace, raw_table_name, ignore_if_not_exists=True)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.drop_table`\ ``(namespace, raw_table_name, ignore_if_not_exists=True)``
      - Delete a table.
-   * - ``analyze_table(namespace, raw_table_name)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.analyze_table`\ ``(namespace, raw_table_name)``
      - Recompute the table's key distribution statistics.
-   * - ``insert_row`` / ``insert_rows``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.insert_row` / :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows`
      - Insert one row, or many.
-   * - ``update_row(namespace, raw_table_name, row, where, where_params=None)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.update_row`\ ``(namespace, raw_table_name, row, where, where_params=None)``
      - Assign new values to the rows a WHERE clause selects.
-   * - ``upsert_row`` / ``upsert_rows``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_row` / :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows`
      - Insert, updating any row whose key is already present. The key column is written
        on an insert and never assigned on an update.
-   * - ``delete_rows(namespace, raw_table_name, where=None, where_params=None)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.delete_rows`\ ``(namespace, raw_table_name, where=None, where_params=None)``
      - Delete the rows a WHERE clause selects.
-   * - ``copy_rows_between_namespaces(src, dest, raw_table_name, where=None, where_params=None)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.copy_rows_between_namespaces`\ ``(src, dest, raw_table_name, where=None, where_params=None)``
      - Copy one table's rows from one namespace to the same table in another. Both
        tables must have the same columns in the same order, which they do because both
        are created from the same OPUS table schema.
-   * - ``general_select(cmd, param_list=None)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.general_select`\ ``(cmd, param_list=None)``
      - Run a query the caller assembled and return every row.
-   * - ``find_column_max(namespace, raw_table_name, column_name)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.find_column_max`\ ``(namespace, raw_table_name, column_name)``
      - The largest value in a column.
    * - ``_execute_and_fetchall(cmd, func_name, param_list=None)``
      - Execute one query and return every row of its result.
 
 The eleven concrete members are the constructor, the two namespace converters and
-their two predicates, ``table_exists``, ``read_rows``, ``_execute``, the warning
+their two predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`, :meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
 collector ``_make_warning_handler``, and the ``_enter``/``_exit`` pair. The two
 converters do carry a ``raise NotImplementedError`` for a namespace value that is not
 one of the three, which is unreachable for a valid one.
@@ -183,9 +184,10 @@ from the schemas, from the configuration, from a bundle id -- fits that shape.
 **Values are always parameters**, including None, which the driver renders as SQL NULL.
 The DDL is the one exception: a column's default and its enum option list are formatted
 straight into the ``CREATE TABLE``, which is safe only because both come from the table
-schemas packaged with :mod:`opus_import` and never from input. Five statement builders
-that interpolate a caller's ``where`` fragment carry an explicit note saying so; each is
-for trusted callers, and only the values inside such a fragment are bound.
+schemas packaged with :mod:`opus_import` and never from input. Three statement builders
+here interpolate a caller's ``where`` fragment and carry an explicit note saying so, and a
+fourth does in the base class; each is for trusted callers, and only the values inside
+such a fragment are bound.
 
 **The upsert needs MySQL 8.0.19.** ``ON DUPLICATE KEY UPDATE`` has to name each row's
 new value indirectly, because one statement carries many rows, and the row alias MySQL
@@ -198,7 +200,7 @@ alias to differ from the table name, so a table called ``new`` gets the alias
 for this check); and the alias is emitted only alongside the clause that reads it,
 because a row of nothing but the key has nothing to assign.
 
-Both ``insert_rows`` and ``upsert_rows`` write in packets of 1000 rows.
+Both :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows` and :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows` write in packets of 1000 rows.
 
 **Connecting.** The constructor connects without naming a database and then issues
 ``USE``; an unknown-database error makes it **create the schema** and retry, which is
@@ -217,8 +219,8 @@ is not a simulation anything can be driven through.**
 The type mapping
 ~~~~~~~~~~~~~~~~
 
-``create_table`` is where a schema's ``field_type`` becomes a MySQL type, and
-``table_info`` is the reverse. :ref:`dev_guide_table_schemas` lists the mapping.
+:meth:`~opus_import.importdb.super.ImportDBSuper.create_table` is where a schema's ``field_type`` becomes a MySQL
+type, and :meth:`~opus_import.importdb.super.ImportDBSuper.table_info` is the reverse. :ref:`dev_guide_table_schemas` lists the mapping.
 An unrecognized type raises :exc:`NotImplementedError` rather than being guessed at, in
 both directions.
 
@@ -267,8 +269,9 @@ Bundle expansion and PDS table reading
     order: ids, bundleset names, and the mission and instrument shorthands. Every
     descriptor is validated as a PDS3 path and then as a PDS4 one, and every bad one is
     logged before the run exits, so one invocation reports all of them. A New Horizons
-    bundleset yields its calibrated bundle before its raw one, for the reason given in
-    :ref:`dev_guide_import_obs_classes`. Anything named by ``--exclude-bundles``, and
+    bundleset yields its calibrated bundle before its raw one; see
+    :ref:`dev_guide_import_obs_classes` for what that is for and why it changes nothing
+    today. Anything named by ``--exclude-bundles``, and
     any name containing a dot, is dropped.
 
 :func:`~opus_import.import_util.safe_pdstable_read`
@@ -304,6 +307,10 @@ Table names
 :func:`~opus_import.import_util.table_name_mult`
     ``mult_<table>_<column>``, both lowercased.
 
+:func:`~opus_import.import_util.table_name_param_info` and :func:`~opus_import.import_util.table_name_partables`
+    The two auxiliary tables' names, which are constants rather than computed. They exist
+    so that no step spells either name itself.
+
 :func:`~opus_import.import_util.encode_target_name` and :func:`~opus_import.import_util.decode_target_name`
     A target name is not a legal SQL identifier, so it is encoded: lowercased, with
     ``/`` becoming three underscores and a space becoming four. The decoder reverses the
@@ -318,6 +325,11 @@ Table names
 
 Schemas
 ~~~~~~~
+
+``TABLE_SCHEMA_DIR`` and ``DICTIONARY_DATA_DIR``
+    The two packaged data directories, as :mod:`importlib.resources` traversables. Every
+    read of a table schema or of the context tree goes through one of them, which is what
+    lets an installed OPUS find them without a checkout.
 
 :func:`~opus_import.import_util.table_schema_files`
     The packaged ``table_schemas`` entries whose file name matches a glob, **sorted by

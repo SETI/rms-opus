@@ -29,10 +29,9 @@ Linux wheel and is compiled during the install. On Debian or Ubuntu::
     sudo apt-get install pkg-config default-libmysqlclient-dev build-essential
 
 **memcached and its** ``pymemcache`` **client** -- strongly recommended, and **not a
-declared dependency**. :mod:`opus_app.settings` tries to import the client and then tries
-to connect, and falls back to Django's per-process local-memory cache if either fails.
-An installation that skips this step runs, slowly and per process, with the
-cache-flushing step of a deploy doing nothing at all::
+declared dependency**. An installation that skips this step runs, slowly and per process,
+with the cache-flushing step of a deploy doing nothing at all.
+:ref:`dev_guide_webapp_running` describes the fallback and its one sharp edge::
 
     sudo apt-get install memcached libmemcached-tools
     pip install pymemcache
@@ -335,9 +334,10 @@ By hand::
 :ref:`dev_guide_import_running` lists the others, and gives the smaller invocations worth
 doing first.
 
-Two bundle groups need an extra option, and the Node's wrapper supplies it: Galileo and
-New Horizons are imported with ``--import-check-duplicate-id``, because their bundles
-carry observations that appear in more than one.
+The Node's wrappers pass ``--import-check-duplicate-id`` for two bundle groups,
+Galileo and New Horizons, because their bundles carry observations that appear in more
+than one. The option's own help text names a third, COUVIS, which no wrapper passes it
+for; take the scripts as the record of what is actually run.
 
 When it finishes:
 
@@ -368,7 +368,9 @@ Four checks, in increasing order of what they prove::
     DJANGO_SETTINGS_MODULE=opus_app.settings \
     django-admin check
 
-    # 3. The application starts under a WSGI server.
+    # 3. The application starts under a WSGI server. gunicorn is not an OPUS
+    #    dependency -- install it for this check, or use whichever server you deploy.
+    python -m pip install gunicorn
     OPUS_CONFIG=/etc/opus/opus.toml gunicorn opus_app.wsgi:application
 
     # 4. It answers.

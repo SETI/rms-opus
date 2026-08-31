@@ -65,7 +65,7 @@ Two of the three globs are worth a word:
     Details tab.
 
 ``mult_tooltips*.json``
-    A shape the builder supports and **no file uses today**. Such a file would also
+    A shape the builder supports and **no file uses**. Such a file would also
     contribute a ``contexts`` row of its own, named ``MULT_<slug>`` from the file's own
     name, which is the naming
     :func:`~opus_app.apps.tools.dictionary.get_def_for_tooltip` recognizes as a mult

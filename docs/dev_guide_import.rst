@@ -107,8 +107,8 @@ Its fields fall into three groups:
 **Where the run currently is** -- the bundle, the 1-based index row number, and the
 primary file specification. These are what
 :class:`~opus_import.context.ImportLog` puts in front of every message, so a line read
-out of a log names the observation that produced it. The file specification is None for
-part of each row, because some bundles take it from the supplemental index.
+out of a log names the observation that produced it. The file specification is None at
+the top of each row and is filled in as soon as it has been computed.
 
 **What the run has accumulated** -- the caches described in
 :ref:`dev_guide_import_ids` and :ref:`dev_guide_import_steps_do_import_mult`, the
@@ -125,7 +125,15 @@ bundle**, while
 run**.
 
 Logging goes through :attr:`~opus_import.context.ImportContext.log`, an
-:class:`~opus_import.context.ImportLog` bound to the context. The step modules reach the
+:class:`~opus_import.context.ImportLog` bound to the context. It has seven methods: the
+four levels :meth:`~opus_import.context.ImportLog.error`,
+:meth:`~opus_import.context.ImportLog.warning`,
+:meth:`~opus_import.context.ImportLog.info` and
+:meth:`~opus_import.context.ImportLog.debug`; the two
+:meth:`~opus_import.context.ImportLog.nonrepeating_error` and
+:meth:`~opus_import.context.ImportLog.nonrepeating_warning` variants; and
+:meth:`~opus_import.context.ImportLog.unknown_target_name`, which reports a target the
+configuration does not describe and names the file to edit. The step modules reach the
 same operations through the ``log_*`` functions in :mod:`opus_import.import_util`, which
 take the context as their first argument; both spellings are one implementation.
 
@@ -287,8 +295,9 @@ whose name that rule cannot produce is a method that is never called.
 The computed value is then checked against what the schema declares, and **validation
 reports rather than raises**, so one bad row does not end the run:
 
-* a flag column's value is folded onto ``Yes``/``No`` or ``On``/``Off``; an
-  unrecognized spelling becomes NULL and logs an error;
+* a flag column's value is folded onto ``Yes``/``No`` or ``On``/``Off``; ``N/A``,
+  ``UNK`` and ``NULL`` become NULL quietly, and any other unrecognized spelling becomes
+  NULL and logs an error;
 * a ``charNNN`` column keeps a value of the right type -- an over-long string is
   truncated, a non-string becomes the empty string -- and logs an error either way;
 * a numeric column's value must parse, must not equal a ``val_sentinel``, and must lie
@@ -304,8 +313,10 @@ Finally, a column whose ``pi_form_type`` is a GROUP type has its value replaced 
 column holds several values and is written as a JSON array, with a missing value omitted
 rather than stored as null.
 
-The row is left on the metadata dictionary under ``<table_name>_row`` as well as
-returned, which is how a later table's field methods read what an earlier one computed.
+Each computed row is left on the metadata dictionary under ``<table_name>_row`` as well
+as returned -- the master loop in
+:func:`~opus_import.steps.do_import_index.import_one_index` does it -- which is how a
+later table's field methods read what an earlier one computed.
 
 **A field method's exception costs one field, not the run.**
 :func:`~opus_import.steps.do_import_obs.import_run_field_function` catches it, logs it
@@ -397,12 +408,10 @@ Invariants
 * **Units are the schema's business, not the field method's.** A field method returns a
   value in the column's default unit; :mod:`opus_support` is what converts to and from
   everything else, driven by the ``pi_form_type`` the schema declares.
-* **The primary file specification is what everything else hangs off.** It is what
-  finds an observation's row in the supplemental, geometry and inventory files, and it
-  is what the OPUS ID is derived from, so an obs class computes it before any of those
-  is looked up. A bundle whose obs class takes it from the supplemental index instead is
-  why :attr:`~opus_import.context.ImportContext.current_primary_filespec` is documented
-  as unknown for part of each row.
+* **The primary file specification must come from the primary index.** It is what
+  finds an observation's row in every other index file and what the OPUS ID is derived
+  from, so an obs class that took it from a supplemental index could not do either. Two
+  of the leaf classes say so in capitals, and none of the thirteen overrides breaks it.
 
 .. _dev_guide_import_errors:
 

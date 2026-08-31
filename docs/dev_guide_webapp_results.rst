@@ -163,6 +163,11 @@ What each handler returns
     A slug list to its display labels, with the unit appended. The cart app imports it
     too.
 
+Two private helpers build the SQL the app's own queries need:
+``_results_column_select`` turns a resolved column list into the SELECT terms and the
+tables they require joined, and ``_product_types_select`` builds the query behind both
+product-type endpoints.
+
 :mod:`opus_app.apps.results.templatetags.encode_value` supplies one template filter,
 :func:`~opus_app.apps.results.templatetags.encode_value.encode_value`, which turns a
 metadata value into the query-string form of an OPUS search URL, so that a link built
@@ -244,7 +249,9 @@ it.
 The ``cart`` app
 ----------------
 
-The one app that **writes**. A cart is the set of ``cart`` rows carrying one session id;
+The one app that writes rows a user can see. (The search app writes too --
+``user_searches`` and the ``cache_NNN`` tables -- but nothing a user selected.) A cart is
+the set of ``cart`` rows carrying one session id;
 a row whose ``recycled`` column is set is in the recycle bin -- still in the table,
 counted separately, and left out of the download totals and the archives themselves.
 
@@ -293,6 +300,16 @@ thing to read before changing any of them. The shape of it is:
 * ``addall`` **with** ``view=cart`` **and the recycle-bin flag** is the documented way to
   move everything out of the bin and back into the cart.
 
+Underneath the five actions sit four helpers: ``_add_to_cart_table`` and
+``_remove_from_cart_table`` are the single-observation writes, ``_edit_cart_addall``
+implements ``addall`` by reading the whole current view and adding every observation in
+it, and ``_edit_cart_range`` is below.
+
+Underneath the five actions sit four helpers: ``_add_to_cart_table`` and
+``_remove_from_cart_table`` are the single-observation writes, ``_edit_cart_addall``
+implements ``addall`` by reading the whole current view and adding every observation in
+it, and ``_edit_cart_range`` is below.
+
 :func:`~opus_app.apps.cart.views.api_reset_session` empties the cart -- or, with the
 recycle-bin flag, only the bin. Despite the name it deletes cart rows and does not touch
 the Django session.
@@ -307,13 +324,50 @@ browse list it uses the search's cache table; reading the cart it has to build a
 cache table of its own. The delete form explicitly carries the session id in its WHERE
 clause, so it cannot reach another user's cart.
 
+Reading the cart
+~~~~~~~~~~~~~~~~
+
+:func:`~opus_app.apps.cart.views.api_view_cart`
+    One page of the cart, in the same shape
+    :func:`~opus_app.apps.results.views.api_get_data_and_images` returns for the browse
+    grid, so the front end renders both with one code path. It reads through the same
+    paging engine in its cart mode -- joining the ``cart`` table directly rather than a
+    search's cache table -- and it can be asked for the recycle bin instead.
+
+:func:`~opus_app.apps.cart.views.api_cart_status`
+    The numbers the Selections panel shows: how many observations are in the cart and how
+    many in the recycle bin, and, when asked, the download summary from
+    ``_get_download_info`` -- the product types the cart offers and the file counts and
+    total sizes each would contribute. It is the endpoint the interface calls after every
+    cart edit, which is why the expensive half is optional.
+
+Reading the cart
+~~~~~~~~~~~~~~~~
+
+:func:`~opus_app.apps.cart.views.api_view_cart`
+    One page of the cart, in the same shape
+    :func:`~opus_app.apps.results.views.api_get_data_and_images` returns for the browse
+    grid, so the front end renders both with one code path. It reads through the same
+    paging engine in its cart mode -- joining the ``cart`` table directly rather than a
+    search's cache table -- and it can be asked for the recycle bin instead.
+
+:func:`~opus_app.apps.cart.views.api_cart_status`
+    The numbers the Selections panel shows: how many observations are in the cart and how
+    many in the recycle bin, and, when asked, the download summary from
+    ``_get_download_info`` -- the product types the cart offers and the file counts and
+    total sizes each would contribute. It is the endpoint the interface calls after every
+    cart edit, which is why the expensive half is optional.
+
 Downloads
 ~~~~~~~~~
 
 :func:`~opus_app.apps.cart.views.api_create_download` builds the archive. In order:
 
-1. Resolve the product types (``all`` by default, which also means current versions
-   only) and the observations -- one from the path, or the session's non-recycled cart.
+1. Resolve the product types and the observations -- one from the path, or the
+   session's non-recycled cart. ``types`` defaults to ``all``, which applies no version
+   filter at all, so the archive holds **every** version. Passing ``types`` **empty** is
+   what restricts it to the current version, which is the opposite of what the code
+   comment beside it says.
 2. Check the selection count against ``MAX_SELECTIONS_FOR_DATA_DOWNLOAD``, or
    ``MAX_SELECTIONS_FOR_URL_DOWNLOAD`` for a URL-only download.
 3. Resolve the files with
@@ -344,7 +398,8 @@ counts and total sizes over the **non-recycled** cart only. Sizes are totaled ov
 
 :func:`~opus_app.apps.cart.views.api_get_cart_csv` streams the cart as CSV, through
 ``_csv_helper``, which is a thin wrapper over the same
-paging engine with the recycle bin included and no limit.
+paging engine with the recycle bin included and no limit. ``_create_csv_file`` is the
+other half: it writes the metadata CSV that goes inside a download archive.
 
 The model
 ~~~~~~~~~

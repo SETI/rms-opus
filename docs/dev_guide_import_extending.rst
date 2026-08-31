@@ -97,20 +97,42 @@ saying which one to use.
         """
 
         # --- The contract ObsBase declares --------------------------------------
+        # Every method but a field_obs_* one carries a docstring; see
+        # dev_guide_conventions for the one standing exemption.
         @property
         def instrument_id(self) -> str | None:
+            """The OPUS instrument id.
+
+            Returns:
+                ``'MYINST'`` always; this volume set holds one instrument.
+            """
             return 'MYINST'
 
         @property
         def inst_host_id(self) -> str:
+            """The OPUS instrument host id.
+
+            Returns:
+                ``'MY'`` always.
+            """
             return 'MY'
 
         @property
         def mission_id(self) -> str:
+            """The OPUS mission id, which selects the obs_mission_* table.
+
+            Returns:
+                ``'MY'`` always.
+            """
             return 'MY'
 
         @property
         def primary_filespec(self) -> str | None:
+            """The path, relative to the holdings root, of this observation's file.
+
+            Returns:
+                The path, or None for an index row naming no data file.
+            """
             # This must be computable from the PRIMARY index alone, never from a
             # supplemental one: it is what finds the matching supplemental row, and
             # it is what the OPUS ID is derived from.
@@ -207,9 +229,9 @@ parse and format a value in it.
 1. **Add the unit** to the unit id's ``conversions``, in the order it should be offered
    to the user. **Order does not decide the default**: each unit id carries an explicit
    ``'default'`` key naming the unit its values are stored in, and
-   :func:`opus_support.units.get_default_unit` returns that. The two happen to agree for
-   every unit id today, which is exactly why inserting a new unit at the front will not
-   change the default and will not look like it failed.
+   :func:`opus_support.units.get_default_unit` returns that. The two agree for every
+   unit id, which is exactly why inserting a unit at the front will not change the
+   default and will not look like it failed.
 2. **Add tests.** :mod:`opus_support` carries a standing demand for 100% coverage, and a
    unit needs its parse and its format tested in both directions, including the values
    it rejects.
@@ -234,15 +256,15 @@ a matter of filling it in.
 1. **Implement the sixteen abstract members** of
    :class:`~opus_import.importdb.super.ImportDBSuper`, listed in
    :ref:`dev_guide_import_db_importdb`. Two of their contracts are not optional:
-   ``table_names`` must return its names **sorted**, or two imports of identical
+   :meth:`~opus_import.importdb.super.ImportDBSuper.table_names` must return its names **sorted**, or two imports of identical
    holdings will disagree about every row id; and every identifier must be validated
    before it is quoted, because quoting alone does not escape the quote character.
 2. **Add the branch** to :func:`opus_import.importdb.get_db`.
 3. **Add the engine** to the ``_db_engines`` map in :mod:`opus_app.settings`, so that
    the web application follows the same configured brand. The placeholder is already
    there.
-4. **Check the schema translation.** ``create_table`` and ``table_info`` are a matched
-   pair: the first turns a schema's ``field_type`` into the brand's SQL type and the
+4. **Check the schema translation.** :meth:`~opus_import.importdb.super.ImportDBSuper.create_table` and
+   :meth:`~opus_import.importdb.super.ImportDBSuper.table_info` are a matched pair: the first turns a schema's ``field_type`` into the brand's SQL type and the
    second turns it back. :ref:`dev_guide_table_schemas` lists the types a schema may
    name, and an unrecognized one must raise rather than be guessed at.
 

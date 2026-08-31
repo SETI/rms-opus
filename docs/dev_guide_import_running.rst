@@ -269,7 +269,8 @@ Logging and diagnostics
    * - ``--no-log-pdsfile``
      - Do not log ``rms-pdsfile``'s own output.
    * - ``--log-info-limit N``
-     - Stop after this many info messages. ``-1``, the default, means no limit.
+     - Suppress info messages past this many. The run continues; only the logging stops.
+       ``-1``, the default, means no limit.
    * - ``--log-debug-limit N``
      - The same for debug messages.
    * - ``--log-suppress-traceback``
@@ -421,10 +422,20 @@ into a new schema and switched over afterwards rather than in place.
     The fixed bundle list the integration suite runs against -- Cassini ISS, UVIS, VIMS
     and CIRS, Galileo, Voyager, Hubble, New Horizons, and the occultation bundle sets --
     followed by ``--cleanup-aux-tables``, ``--import-dictionary``, ``manage.py
-    migrate`` and ``--validate-perm``.
+    migrate`` and ``--validate-perm``. **It begins by erasing the permanent tables**
+    (``--drop-permanent-tables --scorched-earth``) and asks for confirmation first,
+    printing the schema so that the erase cannot be aimed at the wrong database.
 
 ``clone_database.sh``
     Copies a database.
+
+``find_unknown_warnings.sh``
+    Filters an import log down to the warnings no known pattern accounts for, which is
+    how a run's log is triaged.
+
+``_import_all_internal.sh``
+    The body ``import_all.sh`` runs once its confirmation has been given. It is the file
+    that records which bundle groups get ``--import-check-duplicate-id``.
 
 The runbook is in :ref:`dev_guide_deployment`; the short version is: import into a new
 schema, read ``ERRORS.log``, compare against the database being served, point a test
@@ -435,7 +446,7 @@ Authoring tools
 ---------------
 
 :mod:`opus_import.util` holds two programs that are run by hand while authoring a schema
-rather than during a run. Both do their work inside a ``main()`` behind an
+rather than during a run. Both do their work inside a ``main`` function behind an
 ``if __name__ == '__main__':`` guard, so importing either one -- which the documentation
 build does -- runs nothing and reaches no network.
 

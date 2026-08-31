@@ -181,7 +181,7 @@ OPUS ID
 Primary file specification
     The path, relative to the holdings root, of an observation's primary data file. It
     is what the OPUS ID is derived from and what every other index file is
-    cross-referenced on, so an obs class computes it from the row it is looking at. See
+    cross-referenced on, so it must be computable from the **primary** index alone. See
     :attr:`~opus_import.obs.obs_base.ObsBase.primary_filespec`.
 
 Obs class

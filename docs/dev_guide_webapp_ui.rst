@@ -250,8 +250,10 @@ The API guide redirect
 
 ``apiguide.pdf`` answers a 302 to the ``API_GUIDE_URL`` setting rather than serving a
 generated PDF, because the public API guide is published as documentation and is not
-built here. It is the one deliberate exception to the API-compatibility waiver in
-:ref:`dev_guide_conventions`: the URL resolves, and a test pins the redirect.
+built here. It is the one place where the compatibility waiver in
+:ref:`dev_guide_conventions` covers the URL but not the response: the entry point still
+resolves, and a test pins the redirect, but what comes back is a redirect rather than a
+document.
 
 The route's pattern keeps a capture group, so the set of URLs it matches is unchanged
 by the redirect -- and that has a consequence: Django's redirect view interpolates the
@@ -273,8 +275,9 @@ The table is written by :mod:`opus_import.steps.do_param_info` and is unmanaged 
 
 The methods fall into three groups.
 
-**Identity.** ``param_qualified_name`` is the ``<table>.<column>`` name that identifies
-the field across all the observation tables.
+**Identity.**
+:attr:`~opus_app.apps.paraminfo.models.ParamInfo.param_qualified_name` is the
+``<table>.<column>`` name that identifies the field across all the observation tables.
 
 **Labels.** :meth:`~opus_app.apps.paraminfo.models.ParamInfo.body_qualified_label` and
 :meth:`~opus_app.apps.paraminfo.models.ParamInfo.body_qualified_label_results` are the
@@ -402,9 +405,9 @@ One constraint runs through all of it: **the ``/static_media/`` prefix is hardco
 ``opus.js``, embedded in the golden API fixtures, and aliased in the production web
 server configuration. It cannot be changed by changing the setting alone.
 
-``slug_name_for_sfc_target`` in the import pipeline carries a matching warning: the
-surface geometry target slugs it builds are re-derived in ``utils.js``, so the two have to
-agree.
+:func:`~opus_import.import_util.slug_name_for_sfc_target` in the import pipeline
+carries a matching warning: the surface geometry target slugs it builds are re-derived in
+``utils.js``, so the two have to agree.
 
 API reference
 -------------
