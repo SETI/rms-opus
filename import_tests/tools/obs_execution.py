@@ -14,7 +14,6 @@ why.
 from __future__ import annotations
 
 import json
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -132,11 +131,6 @@ class Findings:
     needless: list[str]
     unknown: list[str]
 
-    @property
-    def is_clean(self) -> bool:
-        """Whether the check found nothing to report."""
-        return len(self.unexplained) + len(self.needless) + len(self.unknown) == 0
-
 
 def check(report: ExecutionReport, whitelist: list[str]) -> Findings:
     """Compare a coverage report with the whitelist, in every direction.
@@ -154,33 +148,3 @@ def check(report: ExecutionReport, whitelist: list[str]) -> Findings:
         needless=sorted(admitted & report.executed),
         unknown=sorted(admitted - report.known),
     )
-
-
-def main(argv: list[str] | None = None) -> int:
-    """Run the check as a program, for a job that gates on it.
-
-    Parameters:
-        argv: One optional argument, the report to read. Defaults to `DEFAULT_REPORT`.
-
-    Returns:
-        0 when every obs function either ran or is whitelisted with a reason, 1
-        otherwise.
-    """
-    arguments = argv if argv is not None else []
-    report_path = Path(arguments[0]) if len(arguments) > 0 else DEFAULT_REPORT
-    findings = check(
-        read_report(report_path), read_whitelist(fixture_layout.UNEXECUTED_METHODS_FILE)
-    )
-    if findings.is_clean:
-        return 0
-    for name in findings.unexplained:
-        print(f'never executed and not whitelisted: {name}')
-    for name in findings.needless:
-        print(f'whitelisted but executed: {name}')
-    for name in findings.unknown:
-        print(f'whitelisted but not in the report: {name}')
-    return 1
-
-
-if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
