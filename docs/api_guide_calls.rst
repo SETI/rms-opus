@@ -110,7 +110,7 @@ Example:
 ::
 
     {
-      "start_obs": 5
+      "start_obs": 5,
       "limit": 3,
       "count": 3,
       "available": 81,
@@ -646,6 +646,7 @@ Example (see :ref:`api/files/[opusid].json <filesopusidjson>` for more):
             "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
           ],
           [...]
+        }
       },
       [...]
     }
@@ -1034,7 +1035,7 @@ Examples:
       "limit": 2,
       "count": 2,
       "available": 3296,
-      "order": "time1,opusid"
+      "order": "time1,opusid",
       "data": [
         {
           "opusid": "co-iss-n1460962327",
@@ -1271,7 +1272,7 @@ The return value is an HTML description list containing a single item specifying
 
 * Retrieve the number of observations with Pan as the target in HTML format.
 
-  `<https://opus.pds-rings.seti.org/opus/api/meta/result_count.csv?target=Pan>`__
+  `<https://opus.pds-rings.seti.org/opus/api/meta/result_count.html?target=Pan>`__
 
   Return value:
 
@@ -1369,7 +1370,7 @@ Example:
 
 * Retrieve the number of results in HTML format broken down by ``planet`` for Hubble observations.
 
-  `<https://opus.pds-rings.seti.org/opus/api/meta/mults/planet.csv?mission=Hubble>`__
+  `<https://opus.pds-rings.seti.org/opus/api/meta/mults/planet.html?mission=Hubble>`__
 
   Return value:
 
@@ -1484,7 +1485,7 @@ Examples:
 
 * Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in CSV format.
 
-  `<https://opus.pds-rings.seti.org/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn&units=saturnradii>`__
+  `<https://opus.pds-rings.seti.org/opus/api/meta/range/endpoints/RINGGEOringradius1.csv?target=Saturn&units=saturnradii>`__
 
   Return value:
 
@@ -1881,7 +1882,8 @@ The return value is a JSON object containing this field:
    * - ``data``
      - An object containing information about all fields
 
-``data`` is an object indexed by ``fieldid`` containing:
+``data`` is an object indexed by the full category name. Each category is itself an
+object indexed by ``fieldid``, whose values contain:
 
 .. list-table::
    :header-rows: 1
@@ -2101,7 +2103,8 @@ The return value is a JSON object containing this field:
    * - ``data``
      - An object containing information about the requested field
 
-``data`` is an object indexed by ``fieldid`` containing:
+``data`` is an object indexed by the full category name. Each category is itself an
+object indexed by ``fieldid``, whose values contain:
 
 .. list-table::
    :header-rows: 1

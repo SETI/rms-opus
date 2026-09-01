@@ -6,8 +6,8 @@ OPUS ID Format
 ==============
 
 This document describes the format for OPUS IDs. OPUS IDs are character strings
-that unique identify a collection of products in OPUS. A single OPUS ID
-corresponds to a single thumbnail for previewing and is the smallest quanta of
+that uniquely identify a collection of products in OPUS. A single OPUS ID
+corresponds to a single thumbnail for previewing and is the smallest quantum of
 data available for searching or displaying of metadata.
 
 OPUS IDs should be short and concise as much as possible without losing
@@ -483,11 +483,11 @@ OPUS IDs for atmosphere occultations follow the format:
 * ``<doy>`` is the three-digit day-of-year (with leading zeroes if necessary).
 * ``<source>`` is an abbreviation for the name of the signal source.
 
-  * For stars, the star name is ``<3-letter-greek-prefix><3-letter-constellation>`` such as ``betper`` for beta Perseus (Algol). Other abbreviations can be used depending on the star. For example ``rleo`` is used for the variable star R Leonis. Stars that only have a catalog identifier can be abbreviated in any way deemed reasonable. For the PDS4 Uranus ground-based occultation bundles, that stars are identified using the short names defined in those bundles (e.g. ``u5``).
-  * For spacecraft sources, ``<source>`` can be defined as neccessary for that source.
+  * For stars, the star name is ``<3-letter-greek-prefix><3-letter-constellation>`` such as ``betper`` for beta Perseus (Algol). Other abbreviations can be used depending on the star. For example ``rleo`` is used for the variable star R Leonis. Stars that only have a catalog identifier can be abbreviated in any way deemed reasonable. For the PDS4 Uranus ground-based occultation bundles, the stars are identified using the short names defined in those bundles (e.g. ``u5``).
+  * For spacecraft sources, ``<source>`` can be defined as necessary for that source.
 
     * For the Cassini RSS occultations, ``<source>`` is defined as ``rev<orbitnum>c-<band>``, such as ``rev089c-k34``.
-    * For the Voyager RSS occultatoins, ``<source>`` is defined as ``<band>``, such as ``s63``.
+    * For the Voyager RSS occultations, ``<source>`` is defined as ``<band>``, such as ``s63``.
 * Ring only: ``<ringname>`` is the optional name of the ring covered by the occultation. If no ring name is specified, then more than one ring is covered.
 
   * For Uranus: ``alpha``, ``beta``, ``delta``, ``epsilon``, ``eta``, ``gamma``, ``lambda``, ``four``, ``five``, ``six``, or ``ringpl`` for the entire ring plane.
