@@ -14,44 +14,22 @@ defaults:
   run:
     shell: bash
 
-# The repository's default workflow token permission is write; no job here writes
-# anything back to GitHub, so all of them are narrowed to reading the repository.
+# The repository default is write; nothing here writes back to GitHub.
 permissions:
   contents: read
 
 env:
-  # OPUS has no default location for its configuration file, so every process
-  # that reads OPUS settings is given one. This dummy configuration (dummy
-  # credentials, paths under /tmp) is what every GitHub-hosted job runs against:
-  # they have neither PDS holdings nor a populated database. The path is relative
-  # to the checkout, which is each job's working directory.
+  # OPUS has no default configuration path, so every job is given one.
   OPUS_CONFIG: tests/fixtures/opus_ci.toml
 
 jobs:
   lint:
     name: Run Lint
     runs-on: ubuntu-latest
-    # Without this, a hung runner burns GitHub's 6-hour default before failing.
-    # The tools themselves run in well under a minute; the apt-get and pip steps
-    # are what take the time, and they are the network-dependent ones.
     timeout-minutes: 30
     env:
-      # The importable packages live under src/; the live-DB suites are in
-      # integration_tests/, the holdings-free import suite in import_tests/, the
-      # unit suite in tests/, the documentation build's own extensions in docs/,
-      # manage.py at the root.
-      # Vulture also scans vulture_whitelist.py so whitelisted names count as
-      # used; min-confidence/exclude come from [tool.vulture] in pyproject.toml.
-      # tests/ and docs/ are linted and vulture-scanned but never bandit-scanned.
       RUFF_PATHS: "src integration_tests import_tests tests docs manage.py"
-      # The type gate covers every tree the other tools scan, and no tree is
-      # silenced wholesale: [tool.mypy] has no ignore_errors list. That is the
-      # whole claim -- its exclude lists the non-source paths and
-      # ignore_missing_imports lists the untyped third-party packages. See
-      # [tool.mypy] in pyproject.toml for both, and for why each entry is there.
       MYPY_PATHS: "src integration_tests import_tests tests docs manage.py"
-      # import_tests/ is deliberately absent, like tests/: a test tree is not a
-      # bandit target in this repository.
       BANDIT_PATHS: "src integration_tests manage.py"
       VULTURE_PATHS: "src integration_tests import_tests tests docs manage.py vulture_whitelist.py"
     steps:
@@ -59,11 +37,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          # setuptools-scm derives the version from tags, which a shallow clone
-          # does not fetch; this job installs the package, so it needs them.
+          # setuptools-scm reads tags, which a shallow clone does not fetch.
           fetch-depth: 0
-          # Nothing here pushes or calls the GitHub API through git, so the token
-          # does not need to be left behind in .git/config.
           persist-credentials: false
 
       - name: Set up Python 3.13
@@ -72,32 +47,21 @@ jobs:
           python-version: 3.13
 
       - name: Install MySQL client headers
-        # mysqlclient is a runtime dependency and ships no Linux wheel, so the
-        # install below compiles it and needs the MySQL/MariaDB client
-        # development files.
+        # mysqlclient ships no Linux wheel, so it is compiled here.
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             pkg-config default-libmysqlclient-dev build-essential
 
       - name: Install package and dev dependencies
-        # mypy's django-stubs plugin imports opus_app.settings, so this job needs
-        # the package and its runtime dependencies rather than the lint tools on
-        # their own. Installing the dev extras also pins every tool in this job to
-        # the same versions scripts/run-all-checks.sh uses locally.
+        # The package itself, not just the tools: mypy's django-stubs plugin
+        # imports opus_app.settings.
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
       - name: Install the pdsfile rewrite
-        # The rms-pdsfile rewrite, from its branch tip, until it ships to PyPI.
-        # It is not a [project] dependency -- the published wheel declares the
-        # PyPI package -- so every environment that installs or type-checks this
-        # one installs it here. `opus_import` enables Pds4File.use_shelves_only(),
-        # and 0.0.18's empty-key branch returns False with no fall-through, so
-        # from_path raises there on the first PDS4 existence check. Tracking the
-        # tip rather than a frozen SHA is deliberate: it is behavior-identical to
-        # 0.0.18 by its own contract, and a lagging pin is the bigger risk.
+        # From the branch tip; temporary until that work is released.
         run: |
           python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
 
@@ -106,16 +70,9 @@ jobs:
           ruff check $RUFF_PATHS
 
       - name: Ruff (format)
-        # Unconditional, like every other check in this job, and deliberately not
-        # behind an enable flag: a skipped step reports success, so a guard that
-        # stopped matching would retire this gate behind a green check rather
-        # than a red one.
-        #
-        # A formatter's output is a property of its version: this compares the
-        # tree against whatever ruff the install step resolved, so a ruff whose
-        # style rules differ from the one that formatted the tree turns this red
-        # on code nobody edited. Reformatting under the newer ruff is the fix, in
-        # its own commit.
+        # A formatter's output is a property of its version, so a ruff whose style
+        # rules differ from the one that formatted the tree turns this red on code
+        # nobody edited. Reformatting under the newer ruff is the fix.
         run: |
           ruff format --check $RUFF_PATHS
 
@@ -128,11 +85,6 @@ jobs:
           vulture $VULTURE_PATHS
 
       - name: Mypy
-        # Strict over the whole repository, with no module silenced wholesale:
-        # [tool.mypy] has no ignore_errors list. What remains is its own
-        # configuration: its exclude, for paths that are not project source,
-        # and ignore_missing_imports, for third-party packages that ship no types.
-        # OPUS_CONFIG comes from the workflow-level env above.
         run: |
           # shellcheck disable=SC2086  # MYPY_PATHS is a path list; splitting is intended
           mypy $MYPY_PATHS
@@ -142,14 +94,8 @@ jobs:
           pymarkdown scan README.md CONTRIBUTING.md .cursor/ docs/
 
   test:
-    # Holdings-free unit tests. They need no database: the import suite that does
-    # is its own job below, with a MySQL service container of its own.
     name: Unit Tests (${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    # Without this, a hung runner burns GitHub's 6-hour default before failing
-    # (observed 2026-08-19: a 3.12 job wedged for 40 min against a ~1 min
-    # normal runtime while its 3.13 sibling passed). Includes the apt-get and
-    # pip install steps, which are the network-dependent ones.
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -160,8 +106,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          # setuptools-scm derives the version from tags, which a shallow
-          # clone does not fetch.
+          # setuptools-scm reads tags, which a shallow clone does not fetch.
           fetch-depth: 0
           persist-credentials: false
 
@@ -184,78 +129,38 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Install the pdsfile rewrite
-        # The rms-pdsfile rewrite, from its branch tip, until it ships to PyPI.
-        # It is not a [project] dependency -- the published wheel declares the
-        # PyPI package -- so every environment that installs or type-checks this
-        # one installs it here. `opus_import` enables Pds4File.use_shelves_only(),
-        # and 0.0.18's empty-key branch returns False with no fall-through, so
-        # from_path raises there on the first PDS4 existence check. Tracking the
-        # tip rather than a frozen SHA is deliberate: it is behavior-identical to
-        # 0.0.18 by its own contract, and a lagging pin is the bigger risk.
+        # From the branch tip; temporary until that work is released.
         run: |
           python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
 
       - name: Pytest
-        # testpaths (= tests/) and the strict options come from pyproject.toml.
         run: |
           pytest -n auto --dist loadscope
 
   import-tests:
-    # The holdings-free end-to-end test of the import pipeline: the checked-in
-    # mini-holdings fixture is built into a temporary tree, the real
-    # `opus_import` command line is run against it, and every table is compared
-    # with a recorded run. It is the fast check on the pipeline: roughly nine
-    # minutes on a GitHub-hosted runner with no archive behind it, against the
-    # ~32-minute self-hosted run over the real holdings. Re-derive both from the
-    # jobs of recent runs rather than trusting these figures.
-    #
-    # Which command establishes which gate:
-    #   * the import produced what the real holdings hold, and every table
-    #     matches its golden -> the first pytest call. Its exit status is the
-    #     gate for both, because the assertions are tests rather than log
-    #     greps -- but note the pipeline's own steps report failure through
-    #     ERRORS.log and still exit zero, which is why the suite reads the log.
-    #   * unit coverage is at or above the floor -> the same call, through
-    #     [tool.coverage.report] fail_under. This is the one job that measures
-    #     it and the one number that gates it.
-    #   * every obs function was executed rather than merely imported -> the
-    #     second pytest call, which reads the JSON report the first one wrote.
-    #     It is a separate call because that report does not exist until the
-    #     session that produces it has ended.
+    # The import pipeline end to end against the checked-in mini-holdings
+    # fixture. This is the one job that measures unit coverage.
     name: Import Tests
     runs-on: ubuntu-latest
-    # The import of two dozen sampled volumes plus the assertions is most of the
-    # job; the apt-get and pip steps are the network-dependent ones. The timeout is
-    # far above the observed spread so a slow runner does not fail the build.
     timeout-minutes: 60
     services:
       mysql:
         image: mysql:8.0
         env:
-          # The suite creates and drops a schema per run, which the official
-          # image grants only to root: MYSQL_USER is given privileges on one
-          # named database and nothing else.
+          # root, because the suite creates and drops a schema per run and
+          # MYSQL_USER would be granted rights on one named database only.
           MYSQL_ROOT_PASSWORD: opus_import_tests
         ports:
           - 3306:3306
-        # Without a health check the first step starts while the server is
-        # still initializing, which takes 10-30 seconds and makes the first
-        # connection a flaky required check rather than a real one.
+        # Without this the first connection races the server's startup.
         options: >-
           --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=12
     env:
-      # Where the suite reaches the service container. OPUS_CONFIG comes from the
-      # workflow-level env above, and pytest needs it here like everywhere else:
-      # pytest-django configures Django from it at session start. The
-      # configuration each pipeline subprocess reads is a different file, written
-      # per run by the suite itself and pointing at the schema and the built tree.
-      #
-      # 127.0.0.1 rather than localhost: MySQLdb reads localhost as a request
-      # for a Unix socket, which exists on a developer's machine and not beside
-      # a service container.
+      # 127.0.0.1 rather than localhost: MySQLdb reads localhost as a request for
+      # a Unix socket, which does not exist beside a service container.
       OPUS_TEST_DB_HOST: 127.0.0.1
       OPUS_TEST_DB_USER: root
       OPUS_TEST_DB_PASSWORD: opus_import_tests
@@ -264,8 +169,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          # setuptools-scm derives the version from tags, which a shallow clone
-          # does not fetch; this job installs the package.
+          # setuptools-scm reads tags, which a shallow clone does not fetch.
           fetch-depth: 0
           persist-credentials: false
 
@@ -288,21 +192,13 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Install the pdsfile rewrite
-        # The rms-pdsfile rewrite, from its branch tip, until it ships to PyPI. This
-        # job is the one that cannot work without it: the suite runs the
-        # pipeline with Pds4File.use_shelves_only() enabled, and 0.0.18 raises
-        # on the first PDS4 existence check under that flag.
+        # From the branch tip; temporary until that work is released.
         run: |
           python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
 
       - name: Pytest (import suite)
-        # Serial on purpose: the run is one long import followed by fast
-        # assertions, so xdist buys nothing, and a session-scoped fixture under
-        # -n would run the whole import once per worker into the same schema.
-        # The coverage scope is [tool.coverage.run]'s own source list in
-        # pyproject.toml, so a bare --cov is what keeps this job and the
-        # configuration from disagreeing. The JSON report is what the
-        # executed-functions check reads in the next step.
+        # Serial on purpose: a session-scoped fixture under -n would run the
+        # whole import once per worker into the same schema.
         run: |
           pytest import_tests \
             --ignore=import_tests/test_obs_execution.py \
@@ -310,8 +206,8 @@ jobs:
             --cov-report=xml:coverage.xml --cov-report=json:coverage.json
 
       - name: Every obs function executed
-        # A separate invocation, because it reads the report the run above
-        # wrote and that report does not exist until that session has ended.
+        # Separate, because it reads the report the run above writes, which does
+        # not exist until that session ends.
         run: |
           pytest import_tests/test_obs_execution.py
 
@@ -320,29 +216,21 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
-          # Its own flag, because this upload and the integration workflow's
-          # measure different trees with different configurations; codecov.yml
-          # gives each flag its own status and carries no unflagged default,
-          # which would otherwise measure the two of them merged.
+          # Flagged, so this and the integration upload are not merged.
           flags: import
           verbose: true
 
   docs:
-    # The Sphinx build. It imports every OPUS module to generate the API reference,
-    # which is why it installs the package rather than Sphinx on its own, and why it
-    # needs OPUS_CONFIG: importing opus_app.settings reads the configuration file.
+    # Autodoc imports every OPUS module, which is why this installs the package.
     name: Docs
     runs-on: ubuntu-latest
-    # The build itself takes a couple of minutes; the apt-get and pip steps take the
-    # rest, and they are the network-dependent ones.
     timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          # conf.py reads the distribution version from the installed metadata, which
-          # setuptools-scm derives from tags a shallow clone does not fetch.
+          # setuptools-scm reads tags, which a shallow clone does not fetch.
           fetch-depth: 0
           persist-credentials: false
 
@@ -365,38 +253,18 @@ jobs:
           python -m pip install -e ".[docs]"
 
       - name: Install the pdsfile rewrite
-        # The rms-pdsfile rewrite, from its branch tip, until it ships to PyPI.
-        # It is not a [project] dependency -- the published wheel declares the
-        # PyPI package -- so every environment that installs or type-checks this
-        # one installs it here. `opus_import` enables Pds4File.use_shelves_only(),
-        # and 0.0.18's empty-key branch returns False with no fall-through, so
-        # from_path raises there on the first PDS4 existence check. Tracking the
-        # tip rather than a frozen SHA is deliberate: it is behavior-identical to
-        # 0.0.18 by its own contract, and a lagging pin is the bigger risk.
+        # From the branch tip; temporary until that work is released.
         run: |
           python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
 
       - name: Sphinx
-        # -W turns every warning into an error and -n reports every cross-reference
-        # that does not resolve: both gates in one build, matching what
-        # scripts/run-all-checks.sh runs locally. OPUS_CONFIG comes from the
-        # workflow-level env above.
+        # -W makes warnings errors, -n reports unresolved cross-references.
         run: |
           sphinx-build -W -n -b html docs docs/_build
 
   package:
-    # The release path, minus the upload. publish_to_pypi.yml builds the
-    # distributions and validates them, then hands them to the PyPI publisher; that
-    # workflow runs only when a release is published, so without this job nothing
-    # would exercise the build or the metadata until release day -- and a packaging
-    # change that breaks either looks exactly like one that does not.
-    # This runs the same build and the same validation on every push, and then does
-    # what neither publish workflow can: installs the built wheel into a venv with
-    # no checkout in sight and runs the commands the distribution promises.
-    #
-    # What is still NOT covered here, deliberately and unavoidably: the upload step
-    # itself, the API tokens, and whatever PyPI decides about the metadata when it
-    # receives it. Those are only exercised by a real publish.
+    # The release path minus the upload, run on every push. The upload itself,
+    # the API tokens and PyPI's own verdict on the metadata are not covered.
     name: Package
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -405,36 +273,30 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          # setuptools-scm derives the version from tags, and the version is part
-          # of what is being validated here.
+          # setuptools-scm reads tags; the version is part of what is validated.
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python 3.12
-        # The version both publish workflows build with, so this job builds the
-        # same artifact they would.
+        # The version both publish workflows build with.
         uses: actions/setup-python@v6
         with:
           python-version: 3.12
 
       - name: Install MySQL client headers
-        # mysqlclient is a runtime dependency and ships no Linux wheel, so
-        # installing the built distribution below compiles it.
+        # mysqlclient ships no Linux wheel, so it is compiled here.
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             pkg-config default-libmysqlclient-dev build-essential
 
       - name: Build
-        # The same two commands publish_to_pypi.yml runs.
         run: |
           python -m pip install --upgrade pip
           python -m pip install --upgrade build && python -m build
 
       - name: Validate package
-        # `twine check --strict` is what publish_to_pypi.yml runs; --strict makes a
-        # rendering warning about the long description an error rather than a note
-        # nobody reads in a release log.
+        # --strict makes a long-description rendering warning an error.
         run: |
           python -m pip install twine pyroma
           python -m twine check --strict dist/*
@@ -448,9 +310,7 @@ jobs:
           python -m venv "$RUNNER_TEMP/clean"
           "$RUNNER_TEMP/clean/bin/pip" install --upgrade pip
           "$RUNNER_TEMP/clean/bin/pip" install dist/*.whl
-          # The same rms-pdsfile install every other environment makes: the wheel
-          # declares rms-pdsfile>=0.0.18, and the enabled Pds4File line does not
-          # work there.
+          # From the branch tip; temporary until that work is released.
           "$RUNNER_TEMP/clean/bin/pip" install \
             "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
           cd "$RUNNER_TEMP"
@@ -458,10 +318,8 @@ jobs:
           "$RUNNER_TEMP/clean/bin/opus_import" --help > /dev/null
           "$RUNNER_TEMP/clean/bin/opus_log_analyzer" --help > /dev/null
           "$RUNNER_TEMP/clean/bin/opus_error_analyzer" --help > /dev/null
-          # The package data the code reads at run time, resolved through
-          # importlib.resources from the installed distribution rather than from a
-          # source tree. A wheel that omits any of it installs and imports fine and
-          # fails on the first real run.
+          # A wheel missing package data installs and imports fine, then fails on
+          # the first real run.
           "$RUNNER_TEMP/clean/bin/python" - <<'PY'
           import importlib.resources as res
 

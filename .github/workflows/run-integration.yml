@@ -1,38 +1,18 @@
-# Holdings-dependent integration workflow. It runs on the RMS self-hosted Linux
-# runner because that is the only environment
-# with the real PDS3/PDS4 holdings and a MySQL server: it imports a fixed bundle
-# list into a fresh opus_test_db_<id> schema, then runs the golden-response API
-# suite, the live-database Django suites and the tests/opus_support +
-# tests/opus_app suites that reach the same source, as one session under the
-# integration coverage configuration.
+# Holdings-dependent integration workflow: it runs on the RMS self-hosted Linux
+# runner because that is the only environment with the real PDS3/PDS4 holdings
+# and a MySQL server.
 #
-# Which command establishes which gate -- because a step exiting 0 implies
-# nothing about the step before it and, in this chain, sometimes nothing about
-# itself:
-#   * the import ran, and neither the import nor the validation step logged an
-#     error -> scripts/automated_tests/opus_import_test_database.sh, called by
-#     opus_main_test.sh. It needs BOTH of its checks and neither is redundant.
-#     `opus_import --validate-perm` -- the last step in
-#     scripts/import/import_for_tests.sh -- reports every validation failure
-#     through the log and STILL EXITS ZERO (steps/do_validate.py raises nothing,
-#     and cli.py's main() docstring says so in as many words), so `set -e` cannot
-#     see a validation failure and the non-empty ERRORS.log test is the only
-#     thing that can. The converse hole is why the exit-status check joined it:
-#     `[ -s ERRORS.log ]` is also false for a MISSING file, so an import that
-#     died before logging once reported success.
-#     That one ERRORS.log covers every bundle, not just the last command run:
-#     cli.py asks for rotation='none', which pdslogger implements by skipping
-#     both its renaming and its unlinking branch and opening the file with
-#     logging.FileHandler(..., mode='a'), while opus_main_test.sh creates the
-#     log directory fresh under a new UNIQUE_ID each run. So the file starts
-#     empty and accumulates. Reading it as truncating would make the bundle
-#     imports look ungated, which is the frightening and wrong conclusion.
-#   * the suites passed -> the pytest call in
-#     scripts/automated_tests/opus_run_unittests_coverage.sh
-#   * coverage is 100% -> scripts/automated_tests/opus_check_coverage.sh, the
-#     "Check coverage level" step below. opus_main_test.sh does NOT call it: the
-#     check is deliberately after the codecov upload so a coverage failure still
-#     reports.
+# Two things about the gates here are not visible from the steps:
+#   * `opus_import --validate-perm` reports validation failures through the log
+#     and still exits zero, so a non-empty ERRORS.log is the only thing that
+#     catches one. `[ -s ERRORS.log ]` is false for a MISSING file too, so the
+#     exit-status check beside it catches an import that died before logging.
+#     Neither check covers the other; opus_import_test_database.sh needs both.
+#     The log is opened in append mode under a per-run directory, so it covers
+#     every bundle rather than the last command.
+#   * opus_main_test.sh does NOT apply the coverage gate. The "Check coverage
+#     level" step below does, after the codecov upload so a coverage failure
+#     still reports.
 name: Run Integration Tests
 run-name: "Run Integration Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
 
@@ -49,10 +29,8 @@ defaults:
   run:
     shell: bash
 
-# The repository's default workflow token permission is write; this job only
-# reads the repository, so it is narrowed here. codecov/codecov-action needs no
-# GitHub API access when it is given an upload token (its only GITHUB_TOKEN
-# consumer is an OIDC step that is inert unless use_oidc is set).
+# The repository default is write; this job only reads. codecov-action needs no
+# GitHub API access when it is given an upload token.
 permissions:
   contents: read
 
@@ -60,17 +38,12 @@ jobs:
   integration:
     name: Integration Tests
     runs-on: ${{ matrix.os }}
-    # Without this, a hung run occupies the self-hosted runner for GitHub's
-    # 6-hour default, blocking every other job queued for it. A full import +
-    # test cycle is ~32 min; 90 absorbs a slow import without masking a hang.
+    # A hung run would otherwise hold the self-hosted runner for six hours.
     timeout-minutes: 90
     strategy:
       matrix:
-        # One entry, which is what composes the required status check's name:
-        # "Integration Tests (self-hosted-linux, 3.12)". Only Linux runs this
-        # suite, because only the Linux self-hosted runner has the holdings and
-        # a MySQL server. The commented entries are the shape a Windows or MacOS
-        # runner would take if one were ever given both.
+        # The one entry composes the required check's name,
+        # "Integration Tests (self-hosted-linux, 3.12)".
         include:
           - os: self-hosted-linux
             python-version: "3.12"
@@ -84,23 +57,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          # setuptools-scm derives the version from tags, which the default
-          # shallow clone does not fetch: without this the runner installs
-          # rms-opus 0.1.dev1, the fallback. Nothing here gates on the version --
-          # no golden fixture embeds it, and the unit test asserts only its shape
-          # -- but the About page renders it and the static assets carry it as a
-          # cache-busting suffix, so this is the one place the whole stack runs
-          # together and it was running against a version that could not occur in
-          # production. The runner keeps its workspace between runs, so the full
-          # history is fetched once and updated incrementally after that.
+          # setuptools-scm reads tags, which a shallow clone does not fetch;
+          # without them the runner installs the 0.1.dev1 fallback version.
           fetch-depth: 0
-          # Nothing in this workflow pushes or reaches the GitHub API through
-          # git, so it never needs the token persisted. checkout's post step
-          # normally removes it, which leaves the window that matters here: a
-          # cancelled or crashed job skips that step, and this runner keeps its
-          # workspace between runs. (At v6 the credential lives in a file under
-          # RUNNER_TEMP that .git/config includes, not inline in .git/config as
-          # it did at v4 -- persisted either way.)
+          # This runner keeps its workspace between runs, so a cancelled job
+          # that skips checkout's cleanup would leave the token behind.
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -123,26 +84,14 @@ jobs:
           fi
           python -m pip install --upgrade pip
           python -m pip install wheel
-          # The same install command the GitHub-hosted lint and unit jobs run:
-          # both sides install the declared dependencies rather than a lock file.
-          # This runner's `venv` persists between runs and is not recreated with
-          # `--clear`, so pip keeps any installed version that still satisfies a
-          # requirement; the `pip freeze` below is what says which versions a run
-          # actually used.
-          # `-e` is what wires up src/, since opus_support and the rest are
-          # imported as installed packages rather than through a sys.path insert.
+          # This venv persists between runs and is not recreated with --clear, so
+          # pip keeps any version that still satisfies a requirement.
           python -m pip install -e ".[dev]"
-          # The pdsfile rewrite, from its branch tip, until it ships to PyPI.
-          # It is not a [project] dependency: the wheel this repository publishes
-          # declares the PyPI package. Every environment that installs or type-checks
-          # this package needs it, this one included, because `opus_import` enables
-          # Pds4File.use_shelves_only() and 0.0.18 has no filesystem fallback behind
-          # that flag -- from_path raises there on the first PDS4 existence check.
+          # From the branch tip; temporary until that work is released.
           python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
           echo
-          # The resolved tree, logged so that a failure caused by a new release of
-          # a dependency can be read off the run that first saw it -- which is the
-          # cost of declaring floors rather than pinning, paid deliberately.
+          # Which versions this run resolved, since the project declares floors
+          # rather than pins.
           python -m pip freeze
           echo
           scripts/automated_tests/opus_main_test.sh
@@ -153,11 +102,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
-          # Its own flag, because a second upload reaches this project from the
-          # GitHub-hosted Import Tests job and measures a different tree under a
-          # different coverage configuration. codecov.yml gives each flag its own
-          # status and carries no unflagged default, which would measure the two
-          # of them merged.
+          # Flagged, so this and the Import Tests upload are not merged.
           flags: integration
           verbose: true
 
