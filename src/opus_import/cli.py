@@ -685,9 +685,9 @@ def main() -> None:
         logger.close()
 
     # This top-level handler exists to log every import failure, including the
-    # ImportDBError the pipeline raises on any DB error. SystemExit and
-    # KeyboardInterrupt are intentionally left to propagate (the old bare `except:`
-    # wrongly swallowed them).
+    # ImportDBError the pipeline raises on any DB error. It catches Exception rather
+    # than BaseException deliberately: SystemExit and KeyboardInterrupt mean the run
+    # was stopped on purpose, which is not an import failure to log and report.
     except Exception:
         msg = 'Import failed with exception'
         if not args.log_suppress_traceback:

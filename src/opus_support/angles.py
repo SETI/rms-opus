@@ -253,8 +253,9 @@ def format_dms_hms(
     """Format a number as DMS or HMS or a single number as appropriate.
 
     Every argument but `val` is keyword-only, and `unit` and `numerical_format` are
-    required: the body indexes the format and asserts on the unit, so the defaults
-    of None they used to carry could never produce a result.
+    required rather than optional: the body branches on `unit` and asserts if it
+    recognizes none of the spellings, and it slices `numerical_format` as a string,
+    so neither has a meaningful absent value.
 
     Parameters:
         val: The angle in degrees, or in hours when `unit` asks for hours.

@@ -1,4 +1,4 @@
-# Holdings-dependent integration workflow, the successor of run-app-tests.yml. It
+# Holdings-dependent integration workflow. It
 # runs on the RMS self-hosted Linux runner because that is the only environment
 # with the real PDS3/PDS4 holdings and a MySQL server: it imports a fixed bundle
 # list into a fresh opus_test_db_<id> schema, then runs the golden-response API

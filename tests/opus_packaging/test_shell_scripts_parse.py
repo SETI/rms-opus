@@ -27,8 +27,8 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# Directories that hold no shell script of ours: build output, virtual environments,
-# git internals, and the archived design documents.
+# Directories that hold no shell script of ours: virtual environments, git internals,
+# build output and tool caches.
 SKIP_DIRECTORIES = {
     '.git',
     'venv',

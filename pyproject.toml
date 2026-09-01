@@ -128,11 +128,11 @@ dev = [
   # and a formatter's output is a property of its version: ruff's 2025 style
   # guide arrived in 0.9.0 and changed two things this repository contains a lot
   # of -- expressions inside f-strings gained spaces around their operators, and
-  # adjacent implicitly-concatenated strings are joined. Measured on this tree,
-  # 0.8.6 formats 29 files differently from every release from 0.9.0 onwards,
-  # which are byte-identical to each other, so a 0.8.x install fails the gate on
-  # code nobody has touched. Regenerate rather than trust that: format the tree
-  # under two versions and compare the results. This is a floor, not a cap --
+  # adjacent implicitly-concatenated strings are joined. Every release from 0.9.0
+  # onwards formats this tree identically; 0.8.x disagrees with all of them on
+  # dozens of files, so a 0.8.x install fails the gate on code nobody has touched.
+  # Measure rather than trust that: format the tree under a 0.8 and a 0.9+ ruff
+  # and compare the results. This is a floor, not a cap --
   # newer ruff is always allowed, and a future style guide is handled by
   # reformatting under it, in its own commit.
   "ruff>=0.9",
@@ -304,8 +304,10 @@ plugins = ["mypy_django_plugin.main"]
 mypy_path = "src:docs/_ext"
 explicit_package_bases = true
 exclude = [
-  # Standalone server benchmarking scripts, not part of the distribution. Every
-  # other tool's configuration excludes them too.
+  # Standalone server benchmarking scripts, not part of the distribution and not
+  # imported by anything in it. ruff, bandit and vulture exclude them by name too;
+  # pytest and coverage never reach them, because both select what they cover
+  # rather than what they skip.
   "perf_test/",
   # Sphinx's build output, which is git-ignored and holds nothing written here.
   "docs/_build/",
@@ -395,11 +397,15 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
 # PT011  - pytest.raises is too broad (RMS Node default rule set).
 # SIM105 - Use contextlib.suppress for suppressions (RMS Node default rule set).
 # SIM108 - Use ternary operator for simple if/else (RMS Node default rule set).
-# PT009/PT027 - self.assertEqual / self.assertRaises. The live-DB integration
-#   suite (integration_tests/apps_db_tests/*, integration_tests/test_api/*) is
-#   written against unittest.TestCase and stays that way, so these
-#   unittest->pytest-assertion rules have nothing to convert; PT018 and every
-#   other PT rule stay enforced.
+# PT009/PT027 - self.assertEqual / self.assertRaises. Every suite in this
+#   repository written against unittest.TestCase raises them, which is all of
+#   integration_tests/ and the two Django modules under tests/opus_app/ that
+#   moved out of it. Those suites stay unittest -- pytest-django manages a
+#   database for anything deriving from django.test.SimpleTestCase, which is
+#   exactly what the live-database suites must not have -- so these
+#   unittest->pytest-assertion rules have nothing to convert. Regenerate the
+#   distribution with `ruff check --select PT009,PT027` over RUFF_PATHS. PT018
+#   and every other PT rule stay enforced.
 # E501  - line too long. `ruff format` is what governs layout here, and E501's
 #   entire residue is tokens no formatter can split. Regenerate the measurement
 #   rather than trusting these numbers: run `ruff check --select E501` over
@@ -470,11 +476,11 @@ targets = ["src", "integration_tests", "manage.py"]
 skips = [
   # assert_used. These are not input validation: they are the narrowing assertions
   # that let mypy strict follow an invariant the code already relies on, plus a few
-  # long-standing invariant checks. Every package bandit scans holds some, so this
-  # is not a skip that covers only one tree, and a per-line `# nosec` on each would
-  # be hundreds of comments restating one fact. Trust no figure for how many there
-  # are; regenerate it with `skips` emptied and `--ignore-nosec`, which is the only
-  # way to see what this list is holding back:
+  # long-standing invariant checks. They are spread across the scanned trees rather
+  # than concentrated in one, and a per-line `# nosec` on each would be hundreds of
+  # comments restating one fact. Trust no figure for how many there are; regenerate
+  # it with `skips` emptied and `--ignore-nosec`, which is the only way to see what
+  # this list is holding back:
   #     bandit -c pyproject.toml -r src integration_tests manage.py \
   #            -f json -q --ignore-nosec
   # Python's -O strips asserts, and nothing here is deployed with -O; if that ever

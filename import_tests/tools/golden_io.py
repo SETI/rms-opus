@@ -71,11 +71,10 @@ _UNORDERED_JSON_SORT_KEY = 'url'
 #:
 #: **Empty, and the empty state is the point.** This is not the same kind of exclusion as
 #: the tables ``manage.py migrate`` creates, which the run measures for itself; these are
-#: judgement calls, and none currently survives scrutiny. ``definitions`` was excused
-#: while it restated a frozen 1.8 MB data file; with that file gone it holds 619 rows
-#: computed from the table schemas, the UI reads it for every tooltip, and 244 KB is a
-#: fair price for covering it (ruled by rfrench 2026-08-31, superseding the exclusion
-#: ruled the same day).
+#: judgement calls, and none currently survives scrutiny. The table that most invites one
+#: is ``definitions``, and it does not qualify: its 619 rows are computed from the table
+#: schemas rather than restating a checked-in file, the UI reads it for every tooltip,
+#: and 244 KB is a fair price for covering something a schema edit can silently change.
 #:
 #: The mechanism stays because the rules it carries are what make an exclusion safe to
 #: add. `import_tests.test_goldens` holds every entry to three: the table has to exist in
@@ -103,8 +102,8 @@ EXCLUDED_TABLES: dict[str, str] = {}
 #: holdings directory per regime; pdsfile numbers them ``holdings1``, ``holdings2`` when
 #: more than one is preloaded.
 #:
-#: Carrying it cost about a quarter of this table's golden -- 819,984 of 3,326,180 bytes
-#: -- to store a concatenation. Ruled by rfrench 2026-08-31.
+#: Storing it would cost about a quarter of this table's golden -- 819,984 bytes against
+#: 3,326,180 -- to record a concatenation the assertion reproduces for nothing.
 #:
 #: Nothing else in ``obs_files`` is a mechanical transform of the path. The four columns
 #: whose names invite the suspicion were measured rather than assumed: 62 to 83 logical

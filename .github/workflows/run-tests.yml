@@ -204,8 +204,9 @@ jobs:
     # The holdings-free end-to-end test of the import pipeline: the checked-in
     # mini-holdings fixture is built into a temporary tree, the real
     # `opus_import` command line is run against it, and every table is compared
-    # with a recorded run. Until this job existed the only test of the pipeline
-    # was the ~35-minute self-hosted run against the real archive.
+    # with a recorded run. It is the fast check on the pipeline -- about two
+    # minutes, on a GitHub-hosted runner with no archive behind it -- against the
+    # ~35-minute self-hosted run over the real holdings.
     #
     # Which command establishes which gate:
     #   * the import produced what the real holdings hold, and every table

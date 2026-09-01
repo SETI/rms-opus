@@ -1,9 +1,11 @@
 """The spacecraft-clock call sites that do not follow the common shape.
 
-Most of the 23 ``field_obs_mission_<mission>_spacecraft_clock_count*`` methods are a
-two-line wrapper over ``ObsBase._parse_sclk``, and `test_obs_sclk` covers that helper.
-These are the ones a reader would get wrong by assuming the common shape, so each is
-driven through its real field function here:
+Nearly every ``field_obs_*_spacecraft_clock_count*`` method reaches its mission's
+``_parse_*_sclk`` helper, and `test_obs_sclk` covers those helpers; regenerate that set
+by looking for the helper call across ``src/opus_import/obs``. What the helpers cannot
+cover is a site that does something around the call, and those are the ones a reader
+would get wrong by assuming the common shape. Each is driven through its real field
+function here:
 
 * COVIMS_8xxx count2 adds one to the parsed value, and the ``+1`` has to fall *after*
   the helper's None check rather than inside it;

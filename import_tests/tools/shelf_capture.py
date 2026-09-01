@@ -292,8 +292,8 @@ def run_shelf_tool(tool: str, target: Path, log_root: Path) -> None:
     """
     if shutil.which(tool) is None:
         raise FileNotFoundError(
-            f'{tool} is not on PATH. The PDS4 shelf builders are console scripts of the '
-            "rms-pdsfile rewrite, which that project's released version does not "
+            f'{tool} is not on PATH. The PDS4 shelf builders are console scripts of '
+            "the rms-pdsfile rewrite, which that project's released version does not "
             'provide: install '
             '"rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite" and re-run.'
         )

@@ -7542,8 +7542,10 @@ body; never rewrite or delete earlier notes.*
     Sphinx and pytest all take explicit path lists that never named them -- so the move
     needed no configuration change. **The path references inside this file were
     deliberately not updated**: the notes are append-only, and a document describing the
-    sequence as it ran should keep naming the paths that existed while it ran. Only
-    `CLAUDE.md` and `docs/dev_guide_layout.rst` referenced the old paths from outside.
+    sequence as it ran should keep naming the paths that existed while it ran. Outside
+    those two directories the old paths were named by `CLAUDE.md`,
+    `docs/dev_guide_layout.rst` and `tests/repo/test_pr_references.py`, the last of
+    which is deleted here rather than updated.
   - **ReadTheDocs is enabled and the API guide builds; `latest` 404s until this merge, and
     that is the expected state rather than a fault.** Verified directly rather than taken
     on report: the project exists (`app.readthedocs.org/api/v3/projects/rms-opus/`, created
@@ -7559,8 +7561,12 @@ body; never rewrite or delete earlier notes.*
     (`PT011` 13, `SIM105` 8, `SIM108` 28, `PT009` 832, `PT027` 89, `E501` 725); dropping
     any one of the six `ignore_missing_imports` entries makes the type check report the
     imports it was covering (`julian` 3, `pdfkit` 1, `pdslogger` 8, `pdsparser` 2,
-    `pdstable` 1, `rest_framework` 8); and the `B101` category skip holds back 323
-    findings across five packages, measured with `skips` emptied and `--ignore-nosec`.
+    `pdstable` 1, `rest_framework` 8); and the `B101` category skip holds back **321**
+    findings -- `opus_import` 195, `opus_app` 89, `opus_log_analyzer` 17, `opus_support`
+    16, `integration_tests/apps_db_tests` 4, and `opus_config` none -- measured with
+    `skips` emptied and `--ignore-nosec`. **Put that override inside `[tool.bandit]`**:
+    an earlier measurement here appended it past the end of the table, which bandit
+    ignores, and reported 323.
     **Regenerate rather than trusting those numbers** -- the commands are in the comments
     beside each entry. What did change is the comments: they justified entries by the
     sequence that produced them, which a reader of `pyproject.toml` cannot resolve.
@@ -7573,15 +7579,19 @@ body; never rewrite or delete earlier notes.*
     deferring it to a dead-code PR that is not coming. Deleted, along with their entry in
     the import-database chapter and the `Namespace` import they were the last users of.
     Vulture cannot see this class: an unused function is a 60% finding, below the gate.
-  - **#1476 is closed; all seven defects were checked against the running server or the
-    source, and two of the issue's own claims were wrong.** There is no `table_order` key
-    in an `api/fields` response -- it is an internal sort key, deleted before the response
-    is built -- and the `obs_file` count is four, not five. Generalizing the "two JSON
-    examples are invalid" item into a check that parses **every** literal block found a
-    third: the `api/download` products example was one closing brace short. 25 blocks
-    parse now. The `qtype` fix is the substantive one: `any` documented an **or** of its
-    two conditions where `get_range_query` builds an **and**, and an or admits ranges that
-    do not overlap at all.
+  - **#1476's seven defects are all fixed, checked against the running server or the
+    source, and two of the issue's own claims turned out wrong.** There is no
+    `table_order` key in an `api/fields` response -- it is an internal sort key, deleted
+    before the response is built -- and the `obs_file` count is four, not five.
+    Generalizing the "two JSON examples are invalid" item into a check that parses
+    **every** literal block found a third: the `api/files` products example was one
+    closing brace short. 25 blocks parse now. The `qtype` fix is the substantive one:
+    `any` documented an **or** of its two conditions where `get_range_query` builds an
+    **and**, and an or admits ranges that do not overlap at all. The same wrong text was
+    also live in `apps/help/faq.yaml`, which is served to users; it is corrected too, and
+    `integration_tests/test_api/responses/api_help_faq.html` regenerated through the real
+    endpoint -- a one-line fixture diff, verified by re-running the comparison afterwards.
+    (The issue itself stays open until this merge closes it.)
   - **#1477 is measured and NOT fixed; the measurement is the hand-off.** All 52 worked
     examples were fetched from production and compared: **13 agree, 27 differ, 12 cannot
     be compared whole** because they carry a `[...]` elision. The 27 are not one problem
@@ -7594,9 +7604,10 @@ body; never rewrite or delete earlier notes.*
     125566 -> 146513); a new `primarylid` member in PDS Constraints; a genuinely wrong key
     name, `opusid` where `api/images` and `api/image` return **`opus_id`** -- confirmed
     against this tree's own golden fixtures, so it is wrong for the shipped code and not
-    only for production; and `api/files/hst-11559-wfc3-ib4v19rp.json`, which production
-    answers with an **empty** `data` object, needing investigation before anything is
-    written down. **The trap for whoever picks this up: production runs `main`.** Until
+    only for production; and `api/files/hst-11559-wfc3-ib4v19rp.json`, where production
+    returns the two documented keys but with an **empty object under that OPUS ID**
+    rather than the product lists the guide shows, which needs investigating before
+    anything is written down. **The trap for whoever picks this up: production runs `main`.** Until
     this merge lands, capturing from it records the old code's behavior, and this branch
     changes error-path status codes and the `apiguide.pdf` route. Compare against
     `integration_tests/test_api/responses/`, which is what this tree actually returns, and

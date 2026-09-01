@@ -264,10 +264,10 @@ else:
 
 CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
-# Kept although django-debug-toolbar, whose configuration used to sit beside it,
-# is long gone: this is a Django setting in its own right, and it is what lets
-# django.template.context_processors.debug expose `debug` and `sql_queries` to a
-# template when DEBUG is on and the request comes from this machine.
+# A Django setting in its own right, and easy to mistake for debugging-tool
+# configuration: it is what lets django.template.context_processors.debug expose
+# `debug` and `sql_queries` to a template, which it does only when DEBUG is on and
+# the request comes from an address listed here.
 INTERNAL_IPS = ['127.0.0.1']
 
 

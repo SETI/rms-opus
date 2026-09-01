@@ -69,8 +69,8 @@ from .test_api.api_test_helper import go_live_target
 collect_ignore = ['test_perf']
 
 #: Environment variable that makes `test_result_counts` compare against the locally
-#: imported database instead of checking nothing. `manage.py
-#: api-internal-db-result-counts` was the verb it replaces.
+#: imported database. Unset, that module compares nothing at all, so this is what
+#: turns it into a test rather than a no-op.
 INTERNAL_DB_ENV_VAR = 'OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB'
 
 #: The marker that asks pytest-django to manage the database.

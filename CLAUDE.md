@@ -33,7 +33,7 @@ run against.
 
 ## Tests
 
-Four suites, selected by path:
+Three suites, selected by path:
 
 - `pytest` — the holdings-free unit suite (`tests/`), the default run.
 - `pytest import_tests` — the import pipeline end to end against the checked-in
@@ -41,10 +41,13 @@ Four suites, selected by path:
 - `pytest integration_tests` — the golden-response API suite against a populated
   database. Needs the terabyte holdings and a full import behind it, so it runs on
   the Node's own hardware rather than anywhere else.
-- `scripts/run-all-checks.sh` — ruff, mypy, pytest, pyroma, bandit, vulture,
-  Sphinx and PyMarkdown. Run this before proposing a change.
 
 `docs/dev_guide_testing.rst` says what each suite needs and how to run it.
+
+`scripts/run-all-checks.sh` runs the gates rather than a suite — ruff, mypy,
+pytest, pyroma, bandit, vulture, Sphinx and PyMarkdown. Run it before proposing a
+change; `--import-tests` adds the import suite, which it otherwise leaves out
+because that one needs a database.
 
 ## Standards
 
