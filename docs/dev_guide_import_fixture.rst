@@ -153,10 +153,10 @@ The goldens
     members come out in the iteration order of a Python set, which is not stable across
     processes. A third measure sits outside the goldens: the suite pins
     ``PYTHONHASHSEED`` in the pipeline's subprocesses, because several steps iterate sets
-    of strings. The one that used to matter most, ``do_param_info``, is now fixed at its
-    source -- the backend returns table names sorted -- after CI showed the hash-seed pin
-    alone was not enough, since that set is filled from a query with no ``ORDER BY`` and so
-    depends on insertion order as well. The view set would be better fixed at its source
+    of strings. A hash-seed pin is not sufficient on its own: ``do_param_info``'s table
+    set is filled from a query with no ``ORDER BY``, so its order depends on insertion
+    order too, and it is fixed at the source instead -- the backend returns table names
+    sorted. The view set would be better fixed at its source
     too, and neither is a property of the pipeline this suite should teach anybody to rely
     on.
 

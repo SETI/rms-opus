@@ -1,10 +1,10 @@
 """Pin the control-flow properties that let `ImportDBError` derive from `Exception`.
 
-`ImportDBError` used to derive from `BaseException`, so no ``except Exception:``
-handler in the pipeline could catch it and every database failure reached the top-level
-handler in `opus_import.cli`. Narrowing it to `Exception` is only safe while no
-``except Exception:`` handler sits between a database operation and that top-level
-handler.
+`ImportDBError` derives from `Exception`, so an ``except Exception:`` handler can
+catch it. That is only safe while no such handler sits between a database operation
+and the top-level handler in `opus_import.cli`, which is what logs a database failure
+and stops the run; one that swallowed an `ImportDBError` would let the import carry on
+against a database that had already failed.
 
 The handler that makes this load-bearing is in
 `opus_import.steps.do_import_obs.import_run_field_function`: it wraps the call to an

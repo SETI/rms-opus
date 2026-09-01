@@ -2,8 +2,9 @@
 
 The table schemas and the PDS dictionary sources are package data, found through
 importlib.resources rather than through a path relative to the caller. These tests pin
-that: the files resolve from any working directory, and they are in a built wheel, so an
-installed pipeline reads them out of site-packages with no checkout anywhere.
+that: every one of them resolves through the package, from a working directory that
+has nothing to do with it. Whether they are in a built wheel is a separate question,
+and the Package CI job answers it by installing one outside the checkout.
 """
 
 from pathlib import Path

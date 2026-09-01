@@ -1,5 +1,5 @@
-# Holdings-dependent integration workflow. It
-# runs on the RMS self-hosted Linux runner because that is the only environment
+# Holdings-dependent integration workflow. It runs on the RMS self-hosted Linux
+# runner because that is the only environment
 # with the real PDS3/PDS4 holdings and a MySQL server: it imports a fixed bundle
 # list into a fresh opus_test_db_<id> schema, then runs the golden-response API
 # suite, the live-database Django suites and the tests/opus_support +
@@ -66,19 +66,11 @@ jobs:
     timeout-minutes: 90
     strategy:
       matrix:
-        # Because we can run multiple imports at the same time
-        # under Linux, we can do our multi-Python-version test
-        # there, and then just run a single version under
-        # Windows and MacOS to make sure the code still works there.
-        #
-        # Windows: We can't efficiently run multiple Windows tests because
-        # a GitHub Windows runner can only run a single version
-        # of Python at a time and thus we don't get any
-        # parallelism.
-        #
-        # MacOS: Our current self-hosted runner is very slow with little
-        # memory and it would be prohibitive to run many versions. Also
-        # Python 3.8-3.10 does not currently work on MacOS.
+        # One entry, which is what composes the required status check's name:
+        # "Integration Tests (self-hosted-linux, 3.12)". Only Linux runs this
+        # suite, because only the Linux self-hosted runner has the holdings and
+        # a MySQL server. The commented entries are the shape a Windows or MacOS
+        # runner would take if one were ever given both.
         include:
           - os: self-hosted-linux
             python-version: "3.12"
@@ -93,7 +85,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm derives the version from tags, which the default
-          # shallow clone does not fetch: without this the runner installed
+          # shallow clone does not fetch: without this the runner installs
           # rms-opus 0.1.dev1, the fallback. Nothing here gates on the version --
           # no golden fixture embeds it, and the unit test asserts only its shape
           # -- but the About page renders it and the static assets carry it as a

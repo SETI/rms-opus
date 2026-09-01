@@ -73,7 +73,7 @@ def test_a_failed_filespec_conversion_returns_an_empty_list(
 def test_a_failed_filespec_conversion_can_be_extended_by_the_caller(
     failing_pdsfile: ImportContext,
 ) -> None:
-    """Reproduces the caller's exact use, which used to raise TypeError on None."""
+    """Reproduces the caller's exact use: a bare None here is a TypeError."""
     table_rows: dict[str, list[Any]] = {'obs_files': []}
 
     rows = do_import_index.get_opus_products_rows_for_filespec(

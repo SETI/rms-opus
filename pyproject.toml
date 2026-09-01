@@ -397,15 +397,17 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
 # PT011  - pytest.raises is too broad (RMS Node default rule set).
 # SIM105 - Use contextlib.suppress for suppressions (RMS Node default rule set).
 # SIM108 - Use ternary operator for simple if/else (RMS Node default rule set).
-# PT009/PT027 - self.assertEqual / self.assertRaises. Every suite in this
-#   repository written against unittest.TestCase raises them, which is all of
-#   integration_tests/ and the two Django modules under tests/opus_app/ that
-#   moved out of it. Those suites stay unittest -- pytest-django manages a
-#   database for anything deriving from django.test.SimpleTestCase, which is
-#   exactly what the live-database suites must not have -- so these
-#   unittest->pytest-assertion rules have nothing to convert. Regenerate the
-#   distribution with `ruff check --select PT009,PT027` over RUFF_PATHS. PT018
-#   and every other PT rule stay enforced.
+# PT009/PT027 - self.assertEqual / self.assertRaises. Every finding is inside a
+#   suite written against unittest.TestCase: integration_tests/, plus the two
+#   Django modules under tests/opus_app/ that moved out of it. Those suites are
+#   not being converted, and the live-database ones cannot be: they are plain
+#   unittest.TestCase rather than django.test.TestCase precisely so pytest-django
+#   never manages them, which is what keeps a test-database create and teardown
+#   away from the schema a real import populated (integration_tests/conftest.py
+#   states the whole rule). So these unittest->pytest-assertion rules have
+#   nothing to convert. Regenerate the distribution with
+#   `ruff check --select PT009,PT027` over RUFF_PATHS. PT018 and every other PT
+#   rule stay enforced.
 # E501  - line too long. `ruff format` is what governs layout here, and E501's
 #   entire residue is tokens no formatter can split. Regenerate the measurement
 #   rather than trusting these numbers: run `ruff check --select E501` over

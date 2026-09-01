@@ -11,10 +11,11 @@ function here:
   the helper's None check rather than inside it;
 * the two PDS4 sites parse ``str(raw).strip()``, and their error message names that
   stripped string rather than the raw column value;
-* both COCIRS_56xxx count2 guards read ``SPACECRAFT_CLOCK_STOP_COUNT``, and their
-  message says so. That guard sits *above* the parse, not in the call site, and
-  COCIRS_56xxx is also the only mission that logs a bad clock at warning level rather
-  than error -- which is the whole reason ``_parse_sclk`` takes a ``log_func``.
+* both COCIRS count2 guards -- COCIRS_01xxx's and COCIRS_56xxx's -- read
+  ``SPACECRAFT_CLOCK_STOP_COUNT``, and their message names that column rather than the
+  start count. That guard sits *above* the parse, not in the call site. COCIRS_56xxx is
+  also the only volume that reports a bad clock at warning level rather than error,
+  which is the whole reason ``_parse_sclk`` takes a ``log_func``.
 """
 
 from typing import Any
@@ -61,7 +62,7 @@ def _obs(cls: type[ObsBase], columns: dict[str, Any]) -> tuple[Any, list[str]]:
     return obs, logged
 
 
-# --- COVIMS_8xxx: the `+1` that moved out of the try -------------------------
+# --- COVIMS_8xxx: the `+1` that falls outside the None check -----------------
 
 
 def _covims_8xxx(start: str, stop: str) -> tuple[Any, list[str]]:
@@ -73,7 +74,7 @@ def _covims_8xxx(start: str, stop: str) -> tuple[Any, list[str]]:
 
 
 def test_covims_8xxx_count2_still_rounds_up() -> None:
-    """count2 is one second past the parsed stop count, as it was inside the try."""
+    """count2 is one second past the parsed stop count."""
     obs, logged = _covims_8xxx(GOOD_SCLK, '1/1294561200.000')
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count2() == (
@@ -158,9 +159,9 @@ COCIRS_IDS = ['COCIRS_01xxx', 'COCIRS_56xxx']
 def test_cocirs_count2_guard_names_the_stop_count(cls: type, level: str) -> None:
     """A badly formatted stop count is reported as STOP, not START.
 
-    Both count2 methods read SPACECRAFT_CLOCK_STOP_COUNT and reported
-    SPACECRAFT_CLOCK_START_COUNT, which sent an operator to the wrong column. The whole
-    line is asserted, so the level each volume reports at is pinned too.
+    Both count2 methods read SPACECRAFT_CLOCK_STOP_COUNT, so naming the start count
+    would send an operator to the wrong column. The whole line is asserted, so the
+    level each volume reports at is pinned too.
     """
     obs, logged = _obs(
         cls, {'SPACECRAFT_CLOCK_START_COUNT': GOOD_SCLK, 'SPACECRAFT_CLOCK_STOP_COUNT': 'nonsense'}
@@ -173,7 +174,7 @@ def test_cocirs_count2_guard_names_the_stop_count(cls: type, level: str) -> None
 
 @pytest.mark.parametrize(('cls', 'level'), COCIRS_GUARD_LEVEL, ids=COCIRS_IDS)
 def test_cocirs_count1_guard_still_names_the_start_count(cls: type, level: str) -> None:
-    """The count1 guard was already right and must stay that way."""
+    """The count1 guard names the start count, which is the column it reads."""
     obs, logged = _obs(cls, {'SPACECRAFT_CLOCK_START_COUNT': 'nonsense'})
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count1() is None

@@ -7608,7 +7608,8 @@ body; never rewrite or delete earlier notes.*
     - **One of the 27 was not drift and was fixed here**, which is the line to draw when
       the rest is picked up. The guide called the images responses' identifier `opusid`;
       `api/images` and `api/image` return **`opus_id`**, in two response-field tables and
-      four worked examples. That is a claim about the shipped code's contract, settled by
+      three worked examples -- four occurrences, one example carrying two. That is a
+      claim about the shipped code's contract, settled by
       `integration_tests/test_api/responses/` with no live server involved, so it belongs
       with #1476's class rather than with a stale capture. **The split to apply: fix what
       the goldens can settle, defer what only a live archive can.** **The trap for whoever picks this up: production runs `main`.** Until

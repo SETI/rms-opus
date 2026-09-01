@@ -495,8 +495,7 @@ MAX_CUM_DOWNLOAD_SIZE = 50 * 1024 * 1024 * 1024  # 50 gigs max cum downloads for
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
 # Where the public API guide is published. The Help menu opens it, and the
-# apiguide.pdf entry point -- which used to render a PDF of the guide from inside the
-# application -- redirects to it.
+# apiguide.pdf entry point redirects to it rather than serving a document of its own.
 API_GUIDE_URL = 'https://rms-opus.readthedocs.io/en/latest/api_guide.html'
 
 OPUS_FILE_VERSION = ''

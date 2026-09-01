@@ -102,8 +102,9 @@ EXCLUDED_TABLES: dict[str, str] = {}
 #: holdings directory per regime; pdsfile numbers them ``holdings1``, ``holdings2`` when
 #: more than one is preloaded.
 #:
-#: Storing it would cost about a quarter of this table's golden -- 819,984 bytes against
-#: 3,326,180 -- to record a concatenation the assertion reproduces for nothing.
+#: Storing it would add 819,984 bytes to this table's golden, taking it from 2,506,196
+#: to 3,326,180 -- a quarter of the larger figure -- to record a concatenation the
+#: assertion reproduces for nothing.
 #:
 #: Nothing else in ``obs_files`` is a mechanical transform of the path. The four columns
 #: whose names invite the suspicion were measured rather than assumed: 62 to 83 logical

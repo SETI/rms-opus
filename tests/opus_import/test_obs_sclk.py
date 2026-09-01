@@ -1,14 +1,13 @@
 """The shared spacecraft-clock helpers on the mission common classes.
 
-Twenty-three ``field_obs_mission_<mission>_spacecraft_clock_count*`` methods used to
-carry their own copy of the same try/except: parse, and on any exception log
-``Unable to parse <Mission> SCLK "<sclk>": <exc>`` and return None. They now call a
-``_parse_<mission>_sclk`` helper on their mission common class, which routes through
-`ObsBase._parse_sclk`.
+Almost every ``field_obs_mission_<mission>_spacecraft_clock_count*`` method delegates
+to a ``_parse_<mission>_sclk`` helper on its mission common class, each of which
+routes through `ObsBase._parse_sclk`: parse, and on any exception log
+``Unable to parse <Mission> SCLK "<sclk>": <exc>`` and return None.
 
-These tests pin what the field functions depend on: the converted value, the exact
+These tests pin what those field functions depend on: the converted value, the exact
 message text (it is user-visible in the import log and no golden fixture captures it),
-and that the two COCIRS_56xxx sites can still report at warning level.
+and that a caller can ask for warning level instead of error, which COCIRS_56xxx does.
 """
 
 from typing import Any
@@ -103,10 +102,9 @@ def test_a_bad_sclk_is_reported_and_returns_none(
 ) -> None:
     """A bad SCLK is one nonrepeating error naming the mission, the value and the cause.
 
-    The wrapper's whole format string is asserted, because it is the text the import log
-    shows an operator and it is what the 23 hand-written copies produced before this
-    helper existed. The reason for the failure is taken from the parser rather than
-    hard-coded, since that half is opus_support's message, not this helper's.
+    The wrapper's whole format string is asserted, because it is the text the import
+    log shows an operator. The reason for the failure is taken from the parser rather
+    than hard-coded, since that half is opus_support's message, not this helper's.
     """
     obs, logged = _recording_obs(cls, monkeypatch)
 
