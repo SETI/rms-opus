@@ -124,8 +124,8 @@ class LogReader:
         # declares IPv4 throughout. An IPv6 client address is stored here
         # regardless, which is a real limitation rather than an impossible case
         # -- see issue #1463. Resolving it means deciding what the analyzer
-        # should do with IPv6, which is behavior work and out of scope
-        # (plan rev 7.14), so the assumption is recorded rather than changed.
+        # should do with an IPv6 address, which changes what it reports, so the
+        # assumption is recorded here rather than changed in passing.
         host_ip = ipaddress.ip_address(info['host'])
         user = None if info['user'] == '-' else info['user']
         time_string = info['time']

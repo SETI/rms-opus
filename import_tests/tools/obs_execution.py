@@ -1,6 +1,6 @@
 """Prove every obs function was executed by the run, rather than merely imported.
 
-The obs layer is ~12,000 lines of field methods, and importing it and enumerating its
+The obs layer is almost entirely field methods, and importing it and enumerating its
 methods by introspection lights up almost all of it without calling any of them. Coverage
 attributes a function's ``def`` line to the enclosing module region, so a method that was
 only defined reports 0% in its own region and only a real call registers.

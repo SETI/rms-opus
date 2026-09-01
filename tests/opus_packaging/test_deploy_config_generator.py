@@ -146,12 +146,11 @@ def test_a_control_character_is_refused_before_anything_is_written(
 def test_an_unset_variable_stops_the_generator(tmp_path: Path, missing: str) -> None:
     """A variable the deploy environment forgot stops the run instead of emptying a field.
 
-    This is the failure the old chain did not have: its reader validated seven
-    variables and not ``OPUS_SECRET_KEY``, so an unset one reached opus.toml as an
-    empty string and Django ran with no secret key. The explicit ``[[ ! -v ]]`` loop is
-    what makes each one fatal *by name*; ``set -u`` alone would stop the run too, but
-    reporting ``!_toml_var: unbound variable`` -- this script's own loop variable rather
-    than the one the operator has to fix.
+    An unchecked one reaches opus.toml as an empty string, which loads perfectly well --
+    so Django would start with no secret key and nothing would say so. The explicit
+    ``[[ ! -v ]]`` loop is what makes each one fatal *by name*; ``set -u`` alone would
+    stop the run too, but reporting ``!_toml_var: unbound variable`` -- this script's own
+    loop variable rather than the one the operator has to fix.
     """
     env = dict(BASE_ENV)
     del env[missing]
@@ -172,9 +171,9 @@ def test_an_unset_variable_stops_the_generator(tmp_path: Path, missing: str) -> 
 def test_an_empty_variable_stops_the_generator(tmp_path: Path, empty: str) -> None:
     """A variable that is set but empty is refused as well as one that is unset.
 
-    Being set to nothing is the shape the old failure actually took -- a deploy.env
-    line present with nothing after the ``=`` -- and it writes a syntactically valid
-    file, so nothing downstream would object.
+    A deploy.env line present with nothing after the ``=`` is the likelier of the two
+    mistakes and the harder to see: it writes a syntactically valid file that the loader
+    accepts, so nothing downstream would object.
     """
     result = _generate(tmp_path, **{empty: ''})
     assert result.returncode == 1

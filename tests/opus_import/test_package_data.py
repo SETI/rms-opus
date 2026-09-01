@@ -1,9 +1,11 @@
 """Tests for locating the data files that ship inside `opus_import`.
 
-The table schemas and the PDS dictionary sources used to be found through a relative
-path and through settings pointing into a source checkout, so they were reachable only
-from one working directory. These tests pin the replacement: the files are package data,
-found through importlib.resources, wherever the process happens to be running.
+The table schemas and the PDS dictionary sources are package data, found through
+importlib.resources rather than through a path relative to the caller. These tests pin
+that: each lookup goes through the package rather than through a path relative to the
+caller, and one test drives that home by resolving a schema from an unrelated working
+directory. Whether the files are in a built wheel is a separate question, and the
+Package CI job answers it by installing one outside the checkout.
 """
 
 from pathlib import Path
@@ -84,10 +86,11 @@ def test_read_schema_for_table_returns_none_for_an_unknown_table() -> None:
 def test_schemas_are_found_from_any_working_directory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The schemas are package data, so they no longer have to be run from one directory.
+    """A schema resolves from a working directory unrelated to the package.
 
-    Before the pipeline became a package this lookup was a relative path, and running
-    from anywhere but its own source directory silently returned None.
+    The lookup goes through importlib.resources, so nothing about it depends on the
+    caller's location. A path-relative lookup would return None here rather than fail,
+    which is why this asserts on the result and not on an exception.
     """
     monkeypatch.chdir(tmp_path)
     assert import_util.read_schema_for_table(make_context(), 'obs_general') is not None

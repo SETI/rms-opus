@@ -471,8 +471,8 @@ class ToInfoMap:
                 text = file.read()
         else:
             # A missing timeout, so an unresponsive --api-host-url hangs the run.
-            # Filed as issue #1449; log-analyzer behavior is out of scope for this
-            # modernization (plan rev 7.14), so it is recorded rather than fixed.
+            # Filed as issue #1449. Adding one changes how a cron run fails, so it
+            # is recorded here rather than changed in passing.
             response = requests.get(url)  # nosec B113
             response.raise_for_status()
             text = response.text

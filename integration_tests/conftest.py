@@ -9,8 +9,8 @@ what that makes necessary.
 created.** pytest-django blocks database access for any test that has not asked for
 it, and nothing here asks: these are plain `unittest.TestCase` subclasses, which
 pytest collects natively and which pytest-django therefore does not manage. That is
-fixed by the plan rather than chosen here -- the suites read and write the freshly
-imported schema with no create, no teardown and no surrounding transaction.
+the lifecycle these suites require: they read and write the freshly imported schema
+with no create, no teardown and no surrounding transaction.
 
 **Asking pytest-django to manage the database is refused, and refused for the whole
 session rather than only for this tree.** `DATABASES['default']['TEST']['NAME']` is the
@@ -69,8 +69,8 @@ from .test_api.api_test_helper import go_live_target
 collect_ignore = ['test_perf']
 
 #: Environment variable that makes `test_result_counts` compare against the locally
-#: imported database instead of checking nothing. `manage.py
-#: api-internal-db-result-counts` was the verb it replaces.
+#: imported database. Unset, that module compares nothing at all, so this is what
+#: turns it into a test rather than a no-op.
 INTERNAL_DB_ENV_VAR = 'OPUS_TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB'
 
 #: The marker that asks pytest-django to manage the database.
@@ -102,7 +102,8 @@ FORBIDDEN_DB_FIXTURES = ('db', 'transactional_db', 'live_server', 'django_db_set
 #: ``opustest:``/``opus:`` prefix. Note where the failure lands: the warning is raised
 #: *inside* a view, so `api_view` catches it and answers HTTP 500 rather than letting
 #: it surface as a warning. A deployed installation's 31 characters of headroom are not
-#: much, so the hazard is real and is recorded in the plan's Execution notes.
+#: much, so the hazard is real: whoever picks it up should hash the key's tail rather
+#: than lengthen the limit.
 SUPPRESSED_WARNINGS = (
     'ignore:Cache key will cause errors if used with memcached'
     ':django.core.cache.backends.base.CacheKeyWarning',
@@ -211,9 +212,11 @@ def _live_database(django_db_blocker: DjangoDbBlocker) -> Iterator[None]:
     pytest-django replaces `BaseDatabaseWrapper.ensure_connection` with a raiser for
     anything that has not asked for a database, and nothing here asks: these are plain
     `unittest.TestCase` subclasses, so pytest-django's own unittest support -- which
-    unblocks for a `django.test.SimpleTestCase` and sets up a test database for it --
-    does not apply to them. Unblocking for the session rather than per test is what
-    leaves the schema exactly as the import pipeline wrote it.
+    keys on `django.test.SimpleTestCase` -- recognizes none of them and so does nothing
+    for them. (For a class it does recognize, it sets a database up only when that class
+    sets `databases`, which `SimpleTestCase` leaves empty.) Unblocking for the session
+    rather than per test is what leaves the schema exactly as the import pipeline wrote
+    it.
     """
     with django_db_blocker.unblock():
         yield

@@ -2,8 +2,8 @@
 set -e
 
 # A PEP 440 version specifier appended to the distribution name ("==3.23.0"),
-# or empty for the newest release. This used to name a git branch, back when the
-# chain built a checkout.
+# or empty for the newest release. The deploy installs rms-opus from PyPI, so
+# this selects a release rather than a source revision.
 export OPUS_VERSION_SPEC=${1:-}
 
 export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )

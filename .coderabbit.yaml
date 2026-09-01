@@ -12,19 +12,17 @@
 # request over its 100-file cap outright -- so a change of forty code files can go
 # unreviewed because five hundred data files travelled with it.
 #
-# This is permanent rather than a workaround for one pull request: it will be true of
-# every future fixture regeneration.
+# This holds for every regeneration of those directories, not for one occasion.
 reviews:
   # Review pull requests against every branch, present and future. The value is a regex,
   # and `.*` matches all of them; the default branch is reviewed either way.
   #
   # A wildcard rather than a list of names, because the failure this guards against is
-  # silent. Only the default branch is reviewed unless something here names the others, so
-  # the first version of this file -- which named a single branch -- turned review off for
-  # every pull request against the one branch this repository's work actually happens on,
-  # and the only sign was a skip message nobody was reading. Naming branches means every
-  # future long-lived branch has to remember to add itself here, and the day one forgets
-  # is the day its pull requests go unreviewed without saying so.
+  # silent. Only the default branch is reviewed unless something here names the others,
+  # and a branch missing from such a list has its pull requests skipped with no sign
+  # beyond a message nobody reads. Naming branches means every future long-lived branch
+  # has to remember to add itself, and the day one forgets is the day its pull requests
+  # go unreviewed without saying so.
   auto_review:
     base_branches:
       - ".*"

@@ -1017,7 +1017,7 @@ def test_no_field_method_raises_on_a_complete_observation(instrument_id: str) ->
     Swallowing exceptions here is what would make this whole layer unfalsifiable: a
     method that starts raising -- or a helper every method depends on, such as
     `opus_import.obs.obs_base.ObsBase._index_col` -- would otherwise just drop out of
-    the counts. Each fixture was completed until this reached zero, so a new raise means
+    the counts. The fixtures are complete enough that this is zero, so a raise means
     either the code changed or the fixture no longer describes the observation it
     claims to.
     """
@@ -1108,7 +1108,7 @@ def test_a_missing_index_column_is_reported_rather_than_crashing_the_bundle() ->
     `import_util.safe_column` returns None both when a column is absent from the table
     and when the mask marks it missing, so ``'1/' + count`` and ``bundle + '/' + path``
     raise `TypeError` and abort the whole bundle rather than reporting one bad
-    observation. All three predate this PR; the guards are what is new.
+    observation, so each site checks the value it read before building a string.
 
     The covims pair is the reason this test exists rather than a note. A guard *was*
     present, and its message named the missing-count case exactly -- but it sat after
@@ -1258,8 +1258,8 @@ def _yields_an_int(
             return True
         if name in _TYPE_PRESERVING_CALLS:
             # min/max/abs/round keep numpy numpy, so they are safe only if every
-            # argument is. This is what a coercion dropped from COUVIS's pixel-size
-            # helper slipped through when they were treated as safe outright.
+            # argument is. Treating them as safe outright lets a numpy value reach a
+            # column declared int, which is exactly what this scan exists to catch.
             return all(recurse(a) for a in value.args)
         return bool(name and (name in inductive or name.startswith('field_obs_')))
     if isinstance(value, ast.Subscript):
@@ -1339,8 +1339,9 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
 
     It covers every function whose annotation mentions `IntField`, not only the field
     methods, because a helper returning `tuple[IntField, IntField]` is where the value
-    is actually produced -- which is where the one gap the runtime check could not see
-    turned out to be, in COUVIS's pixel-size helper.
+    is actually produced. The runtime check reaches only the leaf classes in
+    `_MISSION_FIXTURES` -- 6 of the 25 -- so a helper in a class the fixture never
+    instantiates is seen only by this source scan.
     """
     inductive = set(_int_returning_functions())
     functions = []

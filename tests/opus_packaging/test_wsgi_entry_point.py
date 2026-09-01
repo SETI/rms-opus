@@ -8,10 +8,10 @@ a fixed path for the vhost to name.
 Resolving it must not *import* :mod:`opus_app.wsgi`. Importing it runs
 ``get_wsgi_application()``, which calls ``django.setup()``, which applies ``LOGGING``
 and opens the log file -- so asking for a path does real work and fails whenever the
-environment is not yet complete. That is not hypothetical: the first version of the
-deploy step imported the module, the import died on a log directory that did not exist
-yet, the command substitution returned an empty string, and ``ln`` was handed an empty
-target -- with Apache already stopped.
+environment is not yet complete. The deploy resolves this path *before* the log
+directory is guaranteed to exist, and an import that dies there fails quietly: the
+command substitution returns an empty string and ``ln`` is handed an empty target,
+with Apache already stopped.
 
 :func:`importlib.util.find_spec` is what the deploy uses instead. These tests pin the
 two properties that makes it depend on: that it finds the file, and that finding it

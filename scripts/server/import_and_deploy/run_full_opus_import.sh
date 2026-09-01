@@ -21,9 +21,9 @@ NOHUP_LOGFILE="$(mktemp "${TMPDIR:-/tmp}/opus_import.XXXXXXXX.log")" || {
 }
 export NOHUP_LOGFILE
 
-# The argument is forwarded the whole way down. It was not before -- this outer
-# script dropped it, so the inner script's ${1:-main} always took its default and a
-# branch named on the command line was silently ignored.
+# "$@" rather than a bare call: the version specifier has to reach the inner
+# script, which otherwise falls back to its own default and installs the newest
+# release whatever was named on the command line.
 nohup ${IMPORT_SCRIPT_DIR}/_full_opus_import_wrapper.sh "$@" > /dev/null &
 
 echo "*** IMPORT IS RUNNING ***"

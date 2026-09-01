@@ -312,11 +312,6 @@ Table names
 :func:`~opus_import.import_util.table_name_mult`
     ``mult_<table>_<column>``, both lowercased.
 
-:func:`~opus_import.import_util.table_name_param_info` and :func:`~opus_import.import_util.table_name_partables`
-    The two auxiliary tables' names, and the **only** ``table_name_*`` helpers that
-    namespace-convert -- which is why they alone take the context. **Neither has a
-    caller**, which the source records beside them.
-
 :func:`~opus_import.import_util.encode_target_name` and :func:`~opus_import.import_util.decode_target_name`
     A target name is not a legal SQL identifier, so it is encoded: lowercased, with
     ``/`` becoming three underscores and a space becoming four. The decoder reverses the

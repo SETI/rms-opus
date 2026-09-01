@@ -115,9 +115,9 @@ The goldens
     comparison.
 
     No table is excused today, and the list is empty on purpose rather than by omission.
-    ``definitions`` was excused while it restated a frozen 1.8 MB data file; with that file
-    gone it holds 619 rows computed from the table schemas, the UI reads it for every
-    tooltip, and 244 KB is a fair price for covering it. The mechanism stays, because the
+    ``definitions`` was excused while it restated a checked-in data file; with that file
+    gone it holds rows computed from the table schemas and the UI reads it for every
+    tooltip, so it is covered like any other table. The mechanism stays, because the
     rules it carries are what make an exclusion safe to add: an excused table has to exist
     in the run *and hold rows*, so an entry can neither outlive the table it excuses nor
     cover for one that quietly emptied; it must not also have a golden; and it has to carry
@@ -126,9 +126,8 @@ The goldens
     one place, so they cannot disagree about what is covered.
 
     One column is dropped, though. ``obs_files.url`` is ``holdings/`` or
-    ``pds4-holdings/`` followed by the logical path, on all 10,199 rows, and carrying it
-    cost about a quarter of the widest table's golden -- 819,984 bytes to store a
-    concatenation. It is dropped, and the concatenation is asserted against the database
+    ``pds4-holdings/`` followed by the logical path, on every row. It is dropped to save
+    space, and the concatenation is asserted against the database
     instead, where it costs nothing to keep: that assertion is not optional decoration,
     because the column is *this repository's* behavior and not just pdsfile's. pdsfile
     serves a file from an HTML root that begins with a slash; ``do_import_index`` stores
@@ -153,10 +152,10 @@ The goldens
     members come out in the iteration order of a Python set, which is not stable across
     processes. A third measure sits outside the goldens: the suite pins
     ``PYTHONHASHSEED`` in the pipeline's subprocesses, because several steps iterate sets
-    of strings. The one that used to matter most, ``do_param_info``, is now fixed at its
-    source -- the backend returns table names sorted -- after CI showed the hash-seed pin
-    alone was not enough, since that set is filled from a query with no ``ORDER BY`` and so
-    depends on insertion order as well. The view set would be better fixed at its source
+    of strings. A hash-seed pin is not sufficient on its own: ``do_param_info``'s table
+    set is filled from a query with no ``ORDER BY``, so its order depends on insertion
+    order too, and it is fixed at the source instead -- the backend returns table names
+    sorted. The view set would be better fixed at its source
     too, and neither is a property of the pipeline this suite should teach anybody to rely
     on.
 

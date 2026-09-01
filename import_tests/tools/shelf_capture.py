@@ -285,17 +285,8 @@ def run_shelf_tool(tool: str, target: Path, log_root: Path) -> None:
         log_root: The directory the tool writes its logs under. It is created.
 
     Raises:
-        FileNotFoundError: If the tool is not installed. The dependency floor still
-            admits a released rms-pdsfile, which ships none of these console scripts, so
-            this says what to install rather than failing on an opaque exec error.
         subprocess.CalledProcessError: If the tool reports a failure.
     """
-    if shutil.which(tool) is None:
-        raise FileNotFoundError(
-            f'{tool} is not on PATH. The PDS4 shelf builders are console scripts of the '
-            'pdsfile rewrite, which the released rms-pdsfile does not provide: install '
-            '"rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite" and re-run.'
-        )
     log_root.mkdir(parents=True, exist_ok=True)
     environment = dict(os.environ)
     environment['TZ'] = SHELF_TOOL_TZ

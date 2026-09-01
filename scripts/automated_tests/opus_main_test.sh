@@ -11,9 +11,9 @@
 #
 #     scripts/automated_tests/opus_check_coverage.sh
 #
-# yourself after this script if you are using it to reproduce CI locally. The
-# plan's Execution notes record this trap being met more than once, each time by
-# reading this script's exit status as the gate's verdict.
+# yourself after this script if you are using it to reproduce CI locally. Reading
+# this script's exit status as the coverage gate's verdict is the mistake to
+# avoid: a 99% run reaches the end of this script and exits 0.
 
 source ~/opus_runner_secrets
 if [ $? -ne 0 ]; then exit -1; fi

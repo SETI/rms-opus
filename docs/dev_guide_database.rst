@@ -1,5 +1,3 @@
-.. Ported from src/opus_import/docs/database_schema.md, which this page replaced.
-
 .. _dev_guide_database:
 
 The OPUS Database Schema
@@ -366,10 +364,10 @@ There is also a series of tables, one per body, containing the surface geometry 
 
 Other than the odd naming, these surface geometry tables behave exactly the same as any other ``obs_*`` table.
 
-The Special ``obs_file`` Table
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The Special ``obs_files`` Table
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. All of this information could be encoded in a single enormous JSON structure in the ``obs_general`` table, but for efficiency and historical reasons we break this information out into its own table, ``obs_file``. The ``obs_file`` table has a similar structure to other ``obs_*`` tables, but is unique in that it has a one-to-many relationship with OPUS IDs. In other words, with one row per downloadable file product, a single OPUS ID will likely have more than one row in this table. The ``obs_file`` table is only joined with ``obs_general`` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
+The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. ``obs_files`` holds one row per downloadable file product, so a single OPUS ID has as many rows as it has products. ``obs_general.opus_id`` is unique and ``obs_files.opus_id`` is a foreign key onto it, which is the one-to-many relationship a single ``obs_general`` row cannot represent and why this is its own table. Its structure otherwise resembles the other ``obs_*`` tables. It is only joined with ``obs_general`` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
 
 ::
 
@@ -489,7 +487,7 @@ The fields are:
 
 * ``tooltip``: This field is not used.
 * ``dict_context`` and ``dict_name``: The "context" and "name" used to look up the tooltip for this field in the dictionary when used in a search widget. A ``XXX2`` field will have ``NULL`` for these columns. For example, for ``right_asc1`` we have ``dict_context="OPUS_GENERAL"`` and ``dict_name="RIGHT_ASCENSION"`` while for ``right_asc2`` both fields are ``NULL.``
-* ``dict_context_results`` and ``dict_name_results``: The "context" and "name" used to look up the tooltip for this field in the dictionary when used to display metadata. For example, for ``right_asc1`` we have ``dict_context="OPUS_GENERAL"`` and ``dict_name="RIGHT_ASCENSION_MIN"`` while for ``right_asc2`` we have ``dict_context="OPUS_GENERAL"`` and ``dict_name="RIGHT_ASCENSION_MAX"``.
+* ``dict_context_results`` and ``dict_name_results``: The "context" and "name" used to look up the tooltip for this field in the dictionary when used to display metadata. For example, for ``right_asc1`` we have ``dict_context_results="OPUS_GENERAL"`` and ``dict_name_results="RIGHT_ASCENSION_MIN"`` while for ``right_asc2`` we have ``dict_context_results="OPUS_GENERAL"`` and ``dict_name_results="RIGHT_ASCENSION_MAX"``.
 * ``sub_heading``: The sub-category to use when the category is further divided. For example, in the ``Ring Geometry Constraints`` category each field is under a sub-heading such as ``Radius & Longitude`` or ``Edge-On Viewing Geometry``.
 * ``ranges``: A JSON field giving details of pre-programmed ranges that can be selected during searching, if any. For example, the ``Wavelength`` field has a number of pre-programmed options such as "Red" or "Violet".
 * ``field_hints1`` and ``field_hints2``: When ``ranges`` is specified, the grey text to display in the search widget to give a hint as to what can be typed. For example, for the ``Wavelength`` field this is "Wavelength or Color".

@@ -9,9 +9,10 @@ reads, and living here also puts them in the holdings-free run.
 What is worth pinning, and why:
 
 * **The `<!--NOSTRIP-->` escape hatch.** It is the only way a view can say "return my
-  content exactly as I wrote it", and until this suite existed the only thing
-  exercising it was one template. A template that stops using it should not silently
-  retire a documented behavior of the middleware.
+  content exactly as I wrote it". Nothing in the tree sends it, so these tests are the
+  only thing exercising it -- which is the argument for having them rather than against:
+  `docs/dev_guide_webapp_tools.rst` documents the hatch, and documented behavior that
+  nothing exercises is behavior that quietly stops working.
 * **That a response with no `Content-Type` raises.** The middleware's docstring says
   so, and the alternative reading -- that such a response passes through untouched --
   is what a reader would otherwise assume.
@@ -75,10 +76,9 @@ def test_a_response_without_a_content_type_raises() -> None:
 
     This pins current behaviour, it does not endorse it: a 304 carries no
     Content-Type, so one reaching this middleware raises rather than passing
-    through. The source has carried a commented-out status-code guard for that
-    case for years. Fixing it changes production response handling, which is out
-    of scope for a documentation PR -- issue #1475 tracks it, and this test is
-    what will fail, informatively, when it is fixed.
+    through. A commented-out status-code guard for that case sits in the source.
+    Issue #1475 tracks the fix; this test is what will fail, informatively, when
+    it lands.
     """
     response = HttpResponse(status=304)
     del response.headers['Content-Type']

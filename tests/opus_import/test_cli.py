@@ -1,9 +1,9 @@
 """Tests for the import pipeline's command-line surface.
 
-The pipeline used to be a script whose whole body, including the settings it read at
-import time, ran on import. These tests pin what replaced it: a parser that can be built
-without side effects, and an entry point that reads no settings until it has arguments to
-act on.
+Two properties, both of which a module-level parser or a module-level settings read
+would break: the parser can be built without side effects, so its shape is assertable
+without running an import, and the entry point reads no settings until it has arguments
+to act on, so `--help` works on a machine that has none.
 """
 
 import os
@@ -86,11 +86,11 @@ def _run_without_settings(directory: Path, *arguments: str) -> subprocess.Comple
 
 
 def test_help_works_without_a_configuration_file(tmp_path: Path) -> None:
-    """``--help`` runs with no settings anywhere, which the old script could not do.
+    """``--help`` runs with no settings anywhere.
 
-    The settings arrived through a module-level wildcard import that ran before argparse,
-    so asking for usage on a machine with no settings file failed. Runs in a subprocess
-    because the check is about what the process needs at startup.
+    `main()` loads the configuration after the arguments parse, so asking for usage
+    needs nothing but the package. Runs in a subprocess because the check is about what
+    the process requires at startup, which an in-process call cannot show.
     """
     result = _run_without_settings(tmp_path, '--help')
     assert result.returncode == 0, result.stderr

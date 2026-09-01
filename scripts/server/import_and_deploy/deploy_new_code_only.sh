@@ -20,8 +20,8 @@ if [[ $# > 1 ]]; then
     echo
     echo "  <version_spec>  a PEP 440 specifier appended to the distribution name,"
     echo "                  for example '==3.23.0'. Omit it to upgrade to the newest"
-    echo "                  release. (This argument used to name a git branch; the"
-    echo "                  deploy installs from PyPI now.)"
+    echo "                  release. The deploy installs rms-opus from PyPI, so this"
+    echo "                  selects a release rather than a source revision."
     exit 1
 fi
 

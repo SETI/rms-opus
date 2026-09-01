@@ -83,10 +83,10 @@ def test_create_import_contexts_table_names_the_bad_row_and_its_file(
 ) -> None:
     """A row without exactly three fields aborts the step, naming the file and the row.
 
-    The message used to be an f-string missing its ``f``, so it reported the literal
-    text ``Bad row in "{ctxfile}": {row}`` -- and the placeholder named a variable that
-    does not exist, so simply adding the prefix would have raised `NameError` on this
-    very path. Both halves are pinned here.
+    Both halves are pinned: that the message interpolates rather than printing its
+    placeholders literally, and that the names it interpolates are ones that exist. A
+    message naming a variable this scope does not bind raises `NameError` on the one
+    path that formats it, which is this one.
     """
     ctx, _db, logger = fake_pipeline
     contexts_file = _use_contexts_file(

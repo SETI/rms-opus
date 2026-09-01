@@ -135,9 +135,9 @@ Range Fields
 
 Range fields can be searched using the following query types:
 
-* **any**: The observation range overlaps at least some with the search range. In other words, either the observation maximum is greater than the search minimum, or the observation minimum is less than the search maximum. This option is used to request the widest possible set of observations that contain at least some of the range you are searching for. This is the default if no qtype is given.
-* **all**: The observation range is a strict superset of the search range. In other words, the observation minimum is less than the search minimum, and the observation maximum is greater than the search maximum. This option is used to ensure that an entire feature you are looking for (such as a crater) is visible in the observation.
-* **only**: The observation range is a strict subset of the search range. In other words, the observation minimum is greater than the search minimum, and the observation maximum is less than the search maximum. This option is used to tighly constrain your search to the smallest possible set of results.
+* **any**: The observation range overlaps at least some with the search range. In other words, the observation maximum is greater than or equal to the search minimum, and the observation minimum is less than or equal to the search maximum. This option is used to request the widest possible set of observations that contain at least some of the range you are searching for. This is the default if no qtype is given.
+* **all**: The observation range covers the search range. In other words, the observation minimum is less than or equal to the search minimum, and the observation maximum is greater than or equal to the search maximum. This option is used to ensure that an entire feature you are looking for (such as a crater) is visible in the observation.
+* **only**: The observation range lies within the search range. In other words, the observation minimum is greater than or equal to the search minimum, and the observation maximum is less than or equal to the search maximum. This option is used to tightly constrain your search to the smallest possible set of results.
 
 .. _units:
 

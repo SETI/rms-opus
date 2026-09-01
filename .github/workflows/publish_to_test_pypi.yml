@@ -4,9 +4,8 @@ run-name: Publish to Test PyPI triggered by ${{ github.ref_type }} ${{ github.re
 on:
   workflow_dispatch:
 
-# This workflow publishes with an API token (the `password` input below), not
-# with Trusted Publishing, so it needs no `id-token: write`. Adding a job here
-# that publishes via OIDC instead would have to grant it explicitly.
+# Publishes with an API token, not Trusted Publishing, so it needs no
+# `id-token: write`. Switching to OIDC would have to grant it.
 permissions:
   contents: read
 

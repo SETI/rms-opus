@@ -90,9 +90,9 @@ def test_every_pinned_presentation_column_is_written() -> None:
     """A row carries the label, the sort key, the display flag and the grouping pair.
 
     Writing only some of them would leave a schema edit half-applied, and the grouping
-    pair is the half that used to be dropped: the packaged
-    ``obs_general.instrument_id`` options put the ground-based telescopes in a named
-    group, which is exactly what an update that stopped at ``display`` would lose.
+    pair is the half most easily missed: the packaged ``obs_general.instrument_id``
+    options put the ground-based telescopes in a named group, which is exactly what an
+    update stopping at ``display`` would lose.
     """
     db, _logger = _run(['mult_obs_general_instrument_id'])
 

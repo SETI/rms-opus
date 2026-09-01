@@ -264,10 +264,10 @@ else:
 
 CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
-# Kept although django-debug-toolbar, whose configuration used to sit beside it,
-# is long gone: this is a Django setting in its own right, and it is what lets
-# django.template.context_processors.debug expose `debug` and `sql_queries` to a
-# template when DEBUG is on and the request comes from this machine.
+# A Django setting in its own right, and easy to mistake for debugging-tool
+# configuration: it is what lets django.template.context_processors.debug expose
+# `debug` and `sql_queries` to a template, which it does only when DEBUG is on and
+# the request comes from an address listed here.
 INTERNAL_IPS = ['127.0.0.1']
 
 
@@ -495,8 +495,7 @@ MAX_CUM_DOWNLOAD_SIZE = 50 * 1024 * 1024 * 1024  # 50 gigs max cum downloads for
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
 # Where the public API guide is published. The Help menu opens it, and the
-# apiguide.pdf entry point -- which used to render a PDF of the guide from inside the
-# application -- redirects to it.
+# apiguide.pdf entry point redirects to it rather than serving a document of its own.
 API_GUIDE_URL = 'https://rms-opus.readthedocs.io/en/latest/api_guide.html'
 
 OPUS_FILE_VERSION = ''

@@ -14,10 +14,9 @@ What is worth pinning here, and why:
   that decides what an OPUS API call returns when it goes wrong, so the mapping
   from `Http404` / `Http400Error` / any other exception to 404 / 400 / 500 is the
   whole contract.
-* **That the API-call record is closed on every one of those paths.** The
-  hand-written pairs this decorator replaces could not guarantee it, and a record
-  that is never closed leaks an entry in `_API_START_TIMES` for the life of the
-  process.
+* **That the API-call record is closed on every one of those paths**, including
+  both exception paths. A record that is never closed leaks an entry in
+  `_API_START_TIMES` for the life of the process.
 * **That neither error body can be made to carry markup.** The request path and the
   offending value both reach the page, and the 500 page is built as raw HTML rather
   than through a template, so it escapes for itself while the 400 page relies on the
@@ -386,8 +385,8 @@ class ApiViewTests(TestCase):
         http400_handler(self._request())
         boom_handler(self._request())
         # Every one of the four exits recorded its call, so nothing is left open.
-        # The hand-written pairs this replaces could not promise that: a raise
-        # past exit_api_call leaked the entry for the life of the process.
+        # A raise that got past exit_api_call would leak the entry for the life of
+        # the process, which is why the exception paths are driven here too.
         self.assertEqual({}, app_utils._API_START_TIMES)
 
     def test__exit_api_call_does_not_decode_a_binary_body(self) -> None:

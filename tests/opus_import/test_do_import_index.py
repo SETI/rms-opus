@@ -1,15 +1,14 @@
-"""Two latent defects in the per-index import, both pre-existing.
+"""Two properties of the per-index import that nothing else can catch.
 
-Neither was introduced by splitting `do_import.py`; both are byte-identical in
-`24ef9256`'s pre-split file. CodeRabbit found them because cutting a 1,782-line module
-into five made them legible. They are fixed here rather than deferred, because this PR
-rewrote the very lines they sit on.
-
-1. `get_opus_products_rows_for_filespec` returned a bare `None` when the filespec could
-   not be converted, while its only caller does
-   ``table_rows[table_name].extend(rows)`` -- so a recoverable, logged error became
-   ``TypeError: 'NoneType' object is not iterable`` and aborted the whole index import.
-2. The ``obs_surface_geometry`` guard tested one dictionary key and initialized another.
+1. `get_opus_products_rows_for_filespec` returns an empty list, never a bare `None`,
+   when the filespec cannot be converted. Its only caller does
+   ``table_rows[table_name].extend(rows)``, so a `None` would turn a recoverable,
+   logged error into ``TypeError: 'NoneType' object is not iterable`` and abort the
+   whole index import.
+2. Every ``table_rows`` guard initializes the key it tested. The
+   ``obs_surface_geometry`` one is unreachable at run time -- ``table_rows`` is
+   pre-populated with every name the loop can yield -- so this is asserted against the
+   source rather than against behavior; no test could reach it otherwise.
 """
 
 import ast
@@ -74,7 +73,7 @@ def test_a_failed_filespec_conversion_returns_an_empty_list(
 def test_a_failed_filespec_conversion_can_be_extended_by_the_caller(
     failing_pdsfile: ImportContext,
 ) -> None:
-    """Reproduces the caller's exact use, which used to raise TypeError on None."""
+    """Reproduces the caller's exact use: a bare None here is a TypeError."""
     table_rows: dict[str, list[Any]] = {'obs_files': []}
 
     rows = do_import_index.get_opus_products_rows_for_filespec(
@@ -88,15 +87,14 @@ def test_a_failed_filespec_conversion_can_be_extended_by_the_caller(
 def test_every_table_rows_guard_initializes_the_key_it_tested() -> None:
     """``if X not in table_rows`` must be followed by ``table_rows[X] = []``.
 
-    The ``obs_surface_geometry`` guard tested ``table_name`` and created
-    ``table_rows[new_table_name]``, so the append on the next line would have raised
-    `KeyError` -- and `new_table_name` is a leftover from an earlier loop that need not
-    even be bound, which would have raised `NameError` first.
+    Testing one key and initializing another makes the append on the next line a
+    `KeyError`, or a `NameError` first where the other name is a leftover from an
+    earlier loop that need not be bound at all.
 
-    The guard is unreachable today (``table_rows`` is pre-populated with every entry of
-    ``table_names_in_order`` before the row loop, and that loop only yields names from
-    the same list), which is exactly why the mistake survived: no test and no import run
-    can execute it. So this checks the source rather than the behavior. The other three
+    The ``obs_surface_geometry`` guard is unreachable (``table_rows`` is pre-populated
+    with every entry of ``table_names_in_order`` before the row loop, and that loop
+    only yields names from the same list), so no test and no import run can execute
+    it. That is why this checks the source rather than the behavior. The other three
     guards -- two for the derived ``obs_surface_geometry__<TARGET>`` names, which *are*
     reachable, and one for ``obs_files`` -- are held to the same rule.
     """

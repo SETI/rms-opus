@@ -375,19 +375,17 @@ def api_edit_cart(
     try:
         recycle_bin = int(recycle_bin_str)
     except (TypeError, ValueError):
-        # int() on the str-or-int this can hold raises only these two; the
-        # catch-all this replaces was needed by the fault injection that used to
-        # raise from inside the try, and a broader catch would report a genuine
-        # bug here as bad user input.
+        # int() on the str-or-int this can hold raises only these two, and the
+        # handler is narrowed to them deliberately: a broader catch would report a
+        # genuine bug here as bad user input.
         #
         # %r (not %s) so CR/LF in recycle_bin -- still the raw request string
         # when int() raised -- cannot forge extra log lines (error_analyzer parses
-        # these logs line-anchored). The same hazard remains wherever a bare
-        # request-supplied scalar is logged with %s; sweeping those is unassigned
-        # work, recorded in the plan's Execution notes rather than done here,
-        # because it is not part of #512. (%s of request.GET itself is already
-        # safe: QueryDict's str() is its repr(), which escapes control
-        # characters in the values.)
+        # these logs line-anchored). The same hazard exists wherever a bare
+        # request-supplied scalar is logged with %s, and %r everywhere is the cheap
+        # answer rather than an argument per site about whether a given scalar can
+        # hold request text. (%s of request.GET itself is already safe: QueryDict's
+        # str() is its repr(), which escapes control characters in the values.)
         log.error('api_edit_cart: Bad value for recyclebin %r: %r', recycle_bin_str, request.GET)
         raise Http400Error(http400_bad_recyclebin(recycle_bin_str, request)) from None
 

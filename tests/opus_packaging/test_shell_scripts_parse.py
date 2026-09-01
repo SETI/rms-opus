@@ -1,11 +1,12 @@
 """Tests that every shell script in the repository parses.
 
-This exists because a syntax error in a shell script is invisible until the script
-runs, and some of these scripts run only on a production server. ``_opus_import_
-volumes.sh`` carried one for months: a ``#`` comment placed inside a backslash-continued
-list ends the continuation, so ``bash -n`` failed, and ``_run_full_opus_import.sh`` --
-which sources it -- aborted before importing a single bundle. Nothing in CI noticed,
-because nothing in CI ran it. It is still broken on ``main``.
+A syntax error in a shell script is invisible until the script runs, and some of these
+scripts run only on a production server, where the first sign is a deploy that stops
+partway. The shape to watch for: a ``#`` comment placed inside a backslash-continued
+list ends the continuation, so the file no longer parses, and a script that ``source``s
+it under ``set -e`` dies at that point -- part way through a deploy, having already done
+whatever came before it. Only parsing every one of them catches that here rather than
+there.
 
 Two families are checked:
 
@@ -27,8 +28,8 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# Directories that hold no shell script of ours: build output, virtual environments,
-# git internals, and the working documents for the modernization.
+# Directories that hold no shell script of ours: virtual environments, git internals,
+# build output and tool caches.
 SKIP_DIRECTORIES = {
     '.git',
     'venv',
@@ -51,9 +52,9 @@ SKIP_DIRECTORIES = {
 # GitHub substitutes an expression's *value* into the script before bash ever sees it,
 # so replacing `${{ ... }}` with a placeholder is what models the shell that actually
 # runs. It is NOT because bash chokes on the raw form: every expression shape in these
-# workflows -- and every other one tried, including `fromJSON('{"a":1}').a` and
-# quote-bearing `format(...)` calls -- parses unchanged. So this substitution is
-# faithfulness, not a workaround, and removing it would not currently fail anything;
+# workflows parses unchanged, as do awkward ones like `fromJSON('{"a":1}').a` and
+# quote-bearing `format(...)` calls. So this substitution is faithfulness, not a
+# workaround, and removing it would not currently fail anything;
 # `test_expressions_are_substituted_before_parsing` is what keeps it from being removed
 # silently anyway.
 #
@@ -62,7 +63,7 @@ SKIP_DIRECTORIES = {
 # different check -- this one sees the template, never the value.
 # Non-greedy to the closing `}}` rather than `[^}]*`: an expression may contain a
 # brace of its own -- `${{ format('{0}', x) }}` is the common shape -- and the
-# character-class form stopped at the first one, leaving `${{` behind.
+# character-class form stops at the first one, leaving `${{` behind.
 GHA_EXPRESSION = re.compile(r'\$\{\{.*?\}\}', re.DOTALL)
 
 pytestmark = pytest.mark.skipif(
@@ -74,7 +75,7 @@ def _shell_files() -> list[Path]:
     """Every shell file in the tree, by rule: the suffix, or a shell shebang.
 
     A rule rather than a list, so a script added later is covered without anyone
-    remembering to add it here -- which is the failure that let the broken one live.
+    remembering to add it here: a script nothing enumerates is a script nothing parses.
     """
     found: list[Path] = []
     for path in REPO_ROOT.rglob('*'):
@@ -234,9 +235,9 @@ def test_some_workflow_run_blocks_were_found() -> None:
     """The extraction reaches every workflow, not merely some of them.
 
     A count alone is not enough: a glob narrowed to ``run-*.yml`` still returns 20-odd
-    blocks and would leave **both publish workflows** -- this PR's own subject --
-    unchecked while the suite stayed green. So the assertion is on the set of files
-    covered, which is what would actually change.
+    blocks and would leave **both publish workflows** unchecked while the suite stayed
+    green -- and those are the two nobody exercises until a release. So the assertion
+    is on the set of files covered, which is what would actually change.
     """
     assert {path.name for path in _workflow_files()} == {
         'run-tests.yml',

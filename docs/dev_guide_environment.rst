@@ -237,19 +237,6 @@ deliberately installs the built wheel instead of the project. No job installs fr
 lock file, so the integration job logs ``pip freeze``, which is where to look when a
 check that passed yesterday fails today.
 
-Every one of them then installs ``rms-pdsfile`` from the rewrite branch on top, and so
-does a development checkout::
-
-    pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
-
-This is interim, until the rewrite ships to PyPI, and it is deliberately not a
-``[project]`` dependency: the published wheel declares the PyPI package. It is needed
-everywhere because ``opus_import`` enables ``Pds4File.use_shelves_only()`` and the
-released ``rms-pdsfile`` has no filesystem fallback behind that flag -- under it,
-``from_path`` raises on the first PDS4 existence check. When the rewrite ships, the
-``rms-pdsfile`` floor in ``[project]`` dependencies moves to that release and this extra
-install goes away.
-
 Third-party actions are referenced by major tag -- ``actions/checkout@v6`` and the
 rest -- which is what ``.cursor/rules/environment.mdc`` asks for. The one exception
 is ``pypa/gh-action-pypi-publish@release/v1`` in the two publish workflows, a
