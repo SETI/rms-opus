@@ -115,9 +115,9 @@ The goldens
     comparison.
 
     No table is excused today, and the list is empty on purpose rather than by omission.
-    ``definitions`` was excused while it restated a frozen 1.8 MB data file; with that file
-    gone it holds 619 rows computed from the table schemas, the UI reads it for every
-    tooltip, and 244 KB is a fair price for covering it. The mechanism stays, because the
+    ``definitions`` was excused while it restated a checked-in data file; with that file
+    gone it holds rows computed from the table schemas and the UI reads it for every
+    tooltip, so it is covered like any other table. The mechanism stays, because the
     rules it carries are what make an exclusion safe to add: an excused table has to exist
     in the run *and hold rows*, so an entry can neither outlive the table it excuses nor
     cover for one that quietly emptied; it must not also have a golden; and it has to carry
@@ -126,9 +126,8 @@ The goldens
     one place, so they cannot disagree about what is covered.
 
     One column is dropped, though. ``obs_files.url`` is ``holdings/`` or
-    ``pds4-holdings/`` followed by the logical path, on all 10,199 rows. Storing it
-    would add 819,984 bytes to the largest golden, taking it from 2,506,196 to
-    3,326,180, to record a concatenation. It is dropped, and the concatenation is asserted against the database
+    ``pds4-holdings/`` followed by the logical path, on every row. It is dropped to save
+    space, and the concatenation is asserted against the database
     instead, where it costs nothing to keep: that assertion is not optional decoration,
     because the column is *this repository's* behavior and not just pdsfile's. pdsfile
     serves a file from an HTML root that begins with a slash; ``do_import_index`` stores

@@ -72,9 +72,9 @@ _UNORDERED_JSON_SORT_KEY = 'url'
 #: **Empty, and the empty state is the point.** This is not the same kind of exclusion as
 #: the tables ``manage.py migrate`` creates, which the run measures for itself; these are
 #: judgement calls, and none currently survives scrutiny. The table that most invites one
-#: is ``definitions``, and it does not qualify: its 619 rows are computed from the table
-#: schemas rather than restating a checked-in file, the UI reads it for every tooltip,
-#: and 244 KB is a fair price for covering something a schema edit can silently change.
+#: is ``definitions``, and it does not qualify: its rows are computed from the table
+#: schemas rather than restating a checked-in file, and the UI reads it for every
+#: tooltip, so a schema edit can change it silently.
 #:
 #: The mechanism stays because the rules it carries are what make an exclusion safe to
 #: add. `import_tests.test_goldens` holds every entry to three: the table has to exist in
@@ -93,7 +93,7 @@ EXCLUDED_TABLES: dict[str, str] = {}
 #: named here costs bytes and not coverage. Adding an entry without a derivation fails.
 #:
 #: ``obs_files.url`` is the whole list. It is ``holdings/`` or ``pds4-holdings/`` followed
-#: by the logical path, on all 10,199 rows of the recorded fixture, and it is worth being
+#: by the logical path, on every row of the recorded fixture, and it is worth being
 #: precise about whose behavior that is. pdsfile serves a file from ``html_root_`` + the
 #: logical path, but ``html_root_`` *begins* with a slash, and OPUS strips it --
 #: ``do_import_index`` stores ``file.url.strip('/')``. So the column is first-party
@@ -102,12 +102,11 @@ EXCLUDED_TABLES: dict[str, str] = {}
 #: holdings directory per regime; pdsfile numbers them ``holdings1``, ``holdings2`` when
 #: more than one is preloaded.
 #:
-#: Storing it would add 819,984 bytes to this table's golden, taking it from 2,506,196
-#: to 3,326,180 -- a quarter of the larger figure -- to record a concatenation the
-#: assertion reproduces for nothing.
+#: It is dropped to save space: storing it would record a concatenation the assertion
+#: reproduces for nothing.
 #:
 #: Nothing else in ``obs_files`` is a mechanical transform of the path. The four columns
-#: whose names invite the suspicion were measured rather than assumed: 62 to 83 logical
+#: whose names invite the suspicion were measured rather than assumed: some logical
 #: paths carry two or more different values of ``sort_order``, ``short_name``,
 #: ``full_name`` and ``product_order``, because one file serves several observations
 #: under different product classifications. The rest are shelf-fed values, which have one
