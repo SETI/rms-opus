@@ -249,6 +249,11 @@ evidence for giving a type a second representative.
 
     python -m import_tests.tools.make_mini_goldens
 
+It finds that server the way the suite does: the ``OPUS_TEST_DB_*`` variables when any of
+them is set, and the ``[database]`` table of the ``OPUS_CONFIG`` file otherwise, with
+``--host``, ``--user`` and ``--password`` overriding both. Sharing the rule is what keeps a
+golden recorded against the server it will later be checked against.
+
 It builds the tree, runs the whole pipeline, and refuses to write anything unless the run
 was clean: an empty ``ERRORS.log``, every warning whitelisted with no stale entries, and
 the expected-products assertion satisfied. A broken run can never be blessed. Its

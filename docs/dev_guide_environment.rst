@@ -92,9 +92,14 @@ Environment variables
      - The live-database suites, whose coverage gate has its own configuration.
      - Set to ``integration_tests/.coveragerc`` by
        ``scripts/automated_tests/opus_run_unittests_coverage.sh``.
+   * - ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER``, ``OPUS_TEST_DB_PASSWORD``
+     - ``pytest import_tests``, to name a MySQL server for the suite alone. Nothing
+       else reads them.
+     - None of the three. Read as a set: with none of them set, the suite takes the
+       host, user and password out of the ``OPUS_CONFIG`` file instead.
 
 ``tests/fixtures/opus_ci.toml`` is a checked-in configuration holding dummy
-credentials and paths under ``/tmp``. No database it names is ever connected to and no
+credentials and paths under ``/tmp``. No job connects to the database it names and no
 holdings are ever read, but it is not entirely inert: Django's logging configuration
 opens ``paths.opus_log_file`` for writing as :mod:`opus_app.settings` is imported, which
 is why every path in it that is opened sits directly under ``/tmp``. It exists so that a
