@@ -239,8 +239,7 @@ changes.
 Construction and attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``ObsBase(ctx, bundle=None, metadata=None)``. Four instance attributes plus two cache
-slots:
+``ObsBase(ctx, bundle=None, metadata=None)``. Its instance attributes and cache slots:
 
 .. list-table::
    :header-rows: 1
