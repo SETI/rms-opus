@@ -22,12 +22,11 @@ dependencies = [
   "qrcode",
   "regex",
   "requests",
-  # Floor, not a pin. rms-julian 3.0.1 built its date grammar with pyparsing's
-  # deprecated camelCase synonym `setParseAction`, so merely importing julian raised
-  # a DeprecationWarning -- which [tool.pytest.ini_options] filterwarnings turns into
-  # an error. Until this PR a lockfile pinned 3.0.1 and a named ignore covered the
-  # warning; with the lockfile gone nothing constrains the resolution, so the floor
-  # is what makes removing that ignore safe rather than lucky.
+  # rms-julian 3.0.1 built its date grammar with pyparsing's deprecated camelCase
+  # synonym `setParseAction`, so merely importing julian raised a DeprecationWarning
+  # -- which [tool.pytest.ini_options] filterwarnings turns into an error. Nothing
+  # else constrains which julian a resolve picks, so this floor is what lets
+  # filterwarnings hold no entry for it.
   "rms-julian>=3.0.2",
   "rms-pdsfile>=0.0.18",
   "rms-pdslogger",
@@ -130,12 +129,12 @@ dev = [
   # guide arrived in 0.9.0 and changed two things this repository contains a lot
   # of -- expressions inside f-strings gained spaces around their operators, and
   # adjacent implicitly-concatenated strings are joined. Measured on this tree,
-  # 0.8.6 formats 29 of the 189 reformatted files differently from every release
-  # from 0.9.0 onwards, which are byte-identical to each other; a 0.8.x install
-  # would therefore fail the gate on code nobody had touched. Regenerate rather
-  # than trust that: format the tree under two versions and compare the results.
-  # This is a floor, not a cap -- newer ruff is always allowed, and a future
-  # style guide is handled by reformatting under it, in its own commit.
+  # 0.8.6 formats 29 files differently from every release from 0.9.0 onwards,
+  # which are byte-identical to each other, so a 0.8.x install fails the gate on
+  # code nobody has touched. Regenerate rather than trust that: format the tree
+  # under two versions and compare the results. This is a floor, not a cap --
+  # newer ruff is always allowed, and a future style guide is handled by
+  # reformatting under it, in its own commit.
   "ruff>=0.9",
   "bandit[toml]>=1.8",
   "pyroma>=4.2",
@@ -211,7 +210,8 @@ namespaces = false
 # [tool.setuptools.packages.find] above keeps the data directories from becoming
 # importable packages. The
 # explicit entries below exist for the directories a *source* build would
-# otherwise leave out. Two categories were audited and deliberately kept:
+# otherwise leave out. Two categories are in the wheel deliberately, not by
+# oversight:
 #
 #   * The Django app's served static assets, including the four third-party trees
 #     .gitattributes marks linguist-vendored (static/{admin,coreui,cdn_fallback,
@@ -255,8 +255,10 @@ write_to = "src/opus_config/_version.py"
 [tool.coverage.run]
 branch = true
 parallel = true
-# Unit-coverage scope only (see plan §5a); the integration 100%-gate config is
-# integration_tests/.coveragerc, selected with COVERAGE_RCFILE.
+# Unit-coverage scope only. The integration suite's 100%-gate configuration is a
+# separate file, integration_tests/.coveragerc, selected with COVERAGE_RCFILE:
+# coverage.py ignores `include` once `source` is set, so one merged configuration
+# would silently corrupt one of the two gates.
 source = ["opus_support", "opus_config", "opus_import", "opus_log_analyzer"]
 omit = ["tests/*", "*/_version.py"]
 
@@ -303,7 +305,8 @@ plugins = ["mypy_django_plugin.main"]
 mypy_path = "src:docs/_ext"
 explicit_package_bases = true
 exclude = [
-  # Out of scope for this plan, like every other tool's configuration.
+  # Standalone server benchmarking scripts, not part of the distribution. Every
+  # other tool's configuration excludes them too.
   "perf_test/",
   # Sphinx's build output, which is git-ignored and holds nothing written here.
   "docs/_build/",
@@ -327,10 +330,10 @@ django_settings_module = "opus_app.settings"
 # Third-party packages that ship neither annotations nor a typeshed stub package.
 # Where typeshed has one, the stub distribution goes in the dev extras instead and the
 # package does not belong here -- that is a real check rather than a silenced one.
-# Every package the repository imports either has an entry here or is checked: with
-# the burn-down list gone there is nowhere left for an unannotated import to be
-# reported and ignored, so a new dependency without annotations shows up as
-# import-untyped on the first run and is answered here, deliberately.
+# Every package the repository imports either has an entry here or is checked, so a
+# new dependency without annotations shows up as import-untyped on its first run and
+# is answered here deliberately. Every entry is load-bearing: drop one and the
+# checker reports the imports it was covering.
 # `rest_framework` is here rather than in the dev extras because typeshed carries no
 # stub package for it: the stubs that exist are a separate third-party distribution
 # that re-types Django's own request and response classes, which would put a second
@@ -341,20 +344,18 @@ module = ["julian.*", "pdfkit.*", "pdslogger.*", "pdsparser.*",
           "pdstable.*", "rest_framework.*"]
 ignore_missing_imports = true
 
-# There is no type burn-down list: `strict = true` applies to the whole repository
-# and no module is silenced by an `ignore_errors` entry, because that list is empty.
-# **That is the whole of the claim.** Suppression has not vanished from this file and
-# nobody should read it that way: `exclude` above still holds the paths that are not
-# project source, and the `ignore_missing_imports` override above still covers the
-# third-party packages that ship neither annotations nor a typeshed stub. Read both
-# lists above rather than trusting a count here; each entry is documented where it
-# sits.
+# `strict = true` applies to every module, and no module is silenced wholesale:
+# there is no `ignore_errors` list anywhere in this file. **That is the whole of the
+# claim**, and suppression has not vanished from this file: `exclude` above holds the
+# paths that are not project source, and the `ignore_missing_imports` override above
+# covers the third-party packages that ship neither annotations nor a typeshed stub.
+# Read both lists above rather than trusting a count here; each entry is documented
+# where it sits.
 #
-# Nothing belongs here again. A tree that cannot pass the checker yet is not a
-# configuration problem: annotate it in the PR that owns it, or say at the site --
-# with the reason -- what the checker cannot see, which is what `# type: ignore[...]`
-# is for. `warn_unused_ignores` is on under `strict`, so each of those has to keep
-# earning its place.
+# A module that does not pass the checker is not a configuration problem: annotate
+# it, or say at the site -- with the reason -- what the checker cannot see, which is
+# what `# type: ignore[...]` is for. `warn_unused_ignores` is on under `strict`, so
+# each of those has to keep earning its place.
 
 [tool.ruff]
 target-version = "py312"
@@ -377,9 +378,7 @@ exclude = [
   # Meta classes carry no docstrings and are not expected to: the next
   # regeneration would delete them anyway, and nothing would read them if they
   # were there -- docs/_ext/opus_api_reference.py names this module in
-  # EXCLUDED_MODULES, so it is not in the API reference at all. This is a
-  # permanent exclusion like the two above, not a burn-down entry, and does not
-  # affect the per-file-ignores table.
+  # EXCLUDED_MODULES, so it is not in the API reference at all.
   "src/opus_app/apps/search/models.py",
 ]
 
@@ -392,27 +391,26 @@ quote-style = "single"
 # B = bugbear; SIM = simplify; C4 = comprehensions; A = builtins (no shadowing);
 # N = pep8-naming; PT = pytest-style; RUF = Ruff-specific (e.g. unused noqa).
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
-# Global (documented) ignores — NOT the per-file burn-down table.
-# PT011  - pytest.raises is too broad (template default).
-# SIM105 - Use contextlib.suppress for suppressions (template default).
-# SIM108 - Use ternary operator for simple if/else (template default).
+# Rules ignored everywhere, each for a reason that holds repository-wide. A rule
+# that fires on one file belongs behind a `# noqa` at that line instead.
+# PT011  - pytest.raises is too broad (RMS Node default rule set).
+# SIM105 - Use contextlib.suppress for suppressions (RMS Node default rule set).
+# SIM108 - Use ternary operator for simple if/else (RMS Node default rule set).
 # PT009/PT027 - self.assertEqual / self.assertRaises. The live-DB integration
-#   suite (integration_tests/apps_db_tests/*, integration_tests/test_api/*) stays
-#   unittest.TestCase permanently, so these unittest->pytest-assertion rules can
-#   never burn down and are ignored globally; PT018 and every other PT rule stay
-#   enforced.
-# E501  - line too long. Retired rather than burned down, because `ruff format` is
-#   what governs layout wherever it is applied, and E501's entire residue is tokens
-#   no formatter can split. Regenerate the measurement rather than trusting these
-#   numbers: empty the per-file-ignores table below and run `ruff check`, then run
-#   `ruff format` over the same paths and run it again. Measured that way at the
-#   time of writing (ruff 0.16.4): 1267 before formatting, 718 after, and 678 of
-#   those 718 are in integration_tests -- single URL query strings and PDS file
-#   paths inside the golden-response fixtures, each one literal with nothing to
-#   break at. Splitting them means 678 hand-edits to the suite that is this
-#   rewrite's primary safety net, in the implicit-string-concatenation defect class
-#   that once produced a fused 'cm^-1perpixel' alias. `line-length` stays 100 and
-#   still governs the formatter.
+#   suite (integration_tests/apps_db_tests/*, integration_tests/test_api/*) is
+#   written against unittest.TestCase and stays that way, so these
+#   unittest->pytest-assertion rules have nothing to convert; PT018 and every
+#   other PT rule stay enforced.
+# E501  - line too long. `ruff format` is what governs layout here, and E501's
+#   entire residue is tokens no formatter can split. Regenerate the measurement
+#   rather than trusting these numbers: run `ruff check --select E501` over
+#   RUFF_PATHS. Measured that way, 678 of the 725 findings are in
+#   integration_tests -- single URL query strings and PDS file paths inside the
+#   golden-response fixtures, each one literal with nothing to break at. Splitting
+#   them means hundreds of hand-edits to the suite that gates every change to the
+#   web application, in the implicit-string-concatenation defect class that
+#   produces a fused 'cm^-1perpixel' alias out of a missing comma. `line-length`
+#   stays 100 and still governs the formatter.
 extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -420,9 +418,9 @@ extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
 # an empty table means and all it means: the codes in `extend-ignore` above are
 # ignored globally, and `exclude` above lists the paths that are not project source.
 #
-# A new row is not the way to land code that does not pass. Fix the code, or suppress
-# the one rule on the one line with `# noqa: <CODE>` and the reason, which `RUF100`
-# then keeps honest by failing when it stops being needed.
+# A row here is not the way to land code that does not pass. Fix the code, or
+# suppress the one rule on the one line with `# noqa: <CODE>` and the reason, which
+# `RUF100` then keeps honest by failing when it stops being needed.
 
 [tool.pymarkdown.plugins.md013]
 # Line length (disable so README/CONTRIBUTING can use longer lines).
@@ -447,10 +445,10 @@ exclude_dirs = [
   "integration_tests/test_db_data",
   # Django's own vendored asset script, marked linguist-vendored in
   # .gitattributes. It is third-party code we do not edit, so its subprocess use
-  # is not ours to annotate; skipping it here is what retired the B404/B603
-  # category skips. Named exactly rather than excluding the whole static tree, so
-  # any Python placed there later is scanned rather than silently skipped -- the
-  # same choice [tool.mypy] exclude makes about this file.
+  # is not ours to annotate, and excluding the file is what keeps B404 and B603
+  # off the skip list below. Named exactly rather than excluding the whole static
+  # tree, so any Python placed there later is scanned rather than silently
+  # skipped -- the same choice [tool.mypy] exclude makes about this file.
   "src/opus_app/static/admin/js/compress.py",
 ]
 targets = ["src", "integration_tests", "manage.py"]
