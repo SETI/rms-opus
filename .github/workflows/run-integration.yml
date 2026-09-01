@@ -39,9 +39,9 @@ run-name: "Run Integration Tests: ${{ github.ref_type }} ${{ github.ref_name }} 
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ main, rewrite ]
+    branches: [ main ]
   push:
-    branches: [ main, rewrite ]
+    branches: [ main ]
   schedule:
     - cron: "00 11 * * *"  # 3am PST, 4am PDT
 
