@@ -87,14 +87,19 @@ for extraction both grew: `import_one_index` 540 → **612 lines at nesting dept
 `import_observation_table` 270 → **350 lines at depth 8**. `search/models.py` is still one
 709,805-character file (703,286 before).
 
-**The coverage gate does not reach the code the old critiques were worried about.** The suite exists;
-it does not execute the view layer or the import steps. Measured by the 2026-09-01 reviewers:
-`opus_app`'s nine view and helper modules hold **3,762 statements at 0%** under a plain `pytest`,
-and `opus_app` is not in `[tool.coverage.run] source` at all, so the GitHub-hosted Unit Tests job
-measures none of it. `opus_import`'s fast tier reaches 40%, with `do_import_index.py` at 3% and
-`do_import_obs.py` at 6% — the two functions above. The old apps critique's judgment that "current
-tests provide almost no coverage of actual functionality" is still true of everything that can run
-without the terabyte holdings.
+**No *fast* tier reaches the code the old critiques were worried about — but the gated slow tier
+covers it completely.** The app reviewer has withdrawn the original framing: `opus_app` is not
+untested. The self-hosted integration run holds `src/opus_app/apps/*` at **100% line and branch**,
+enforced at exactly 100% by `scripts/automated_tests/opus_check_coverage.sh` and green on this PR
+(run 33534739355: TOTAL 22,240 statements, 1,874 branches, 0 missed, 2,576 tests in 4m01s). What
+survives is narrower: the holdings-free `pytest` executes none of those 3,762 statements, and
+`opus_app` is not in `[tool.coverage.run] source`, so the GitHub-hosted Unit Tests job measures none
+of it — the view layer has no tier a contributor without the terabyte holdings can run, which is a
+feedback-loop constraint rather than a coverage gap. `opus_import`'s fast tier reaches 40%, with
+`do_import_index.py` at 3% and `do_import_obs.py` at 6% — the two functions above; that half of this
+item belongs to the import reviewer and is unchanged. The old apps critique's judgment that "current
+tests provide almost no coverage of actual functionality" is **not** carried forward for the
+application: it is false of the suite that gates it.
 
 **A set of small defects survived verbatim.** `_PARAMINFO_CACHE` is still unbounded
 (`search/views.py:1231`); `added = []` is still a list membership-tested per file
@@ -543,11 +548,35 @@ Ranked by consequence, combining what the modernization left open with what the 
 added. Items marked **(rediscovered)** were raised in February, survive at HEAD, and were found again
 independently in September.
 
-**Ships broken to anyone who installs as declared**
+**Ships a broken PDS4 import path, and an unreproducible type gate, to anyone who installs as
+declared**
 
-1. **`rms-pdsfile>=0.0.18` vs the `@rewrite` branch tip.** The type gate passes only against an
-   unreleased branch; `pip install -e ".[dev]"` followed by `scripts/run-all-checks.sh` fails; and
-   `obs_base.py:183-185` documents the opposite. Six CI steps and one docstring to reconcile.
+1. **`rms-pdsfile>=0.0.18` vs the `@rewrite` branch tip — two distinct failures, both on the declared
+   floor.**
+   *Runtime.* `opus_import` calls `Pds4File.use_shelves_only()` at `src/opus_import/cli.py:561` on
+   its default path — `--dont-use-shelves-only` is `store_true` with `default=False`
+   (`cli.py:120-124`) — so an ordinary run enables it. That the declared floor cannot serve that
+   call is corroborated structurally by the workflows themselves: six steps across `run-tests.yml`
+   and `run-integration.yml` replace `rms-pdsfile` with a branch tip before anything runs, and a CI
+   that could use the declared dependency would not need to replace it six times. So a PDS4 import
+   from a released dependency set fails at runtime, not merely at type-check time.
+   The mechanism was written down in the tree this report analyzes. At `2bfc2a0e` each
+   `Install the pdsfile rewrite` step read: *"`opus_import` enables `Pds4File.use_shelves_only()`,
+   and 0.0.18's empty-key branch returns False with no fall-through, so `from_path` raises there on
+   the first PDS4 existence check."* That is a **dated quotation, not a current one**: this PR's
+   workflow trim replaced every such block with the single line *"From the branch tip; temporary
+   until that work is released,"* keeping all six installs and dropping the explanation for them.
+   Two caveats, both deliberate. The mechanism is the project's own written statement rather than a
+   reproduction of mine — I had no environment with a released `rms-pdsfile` to run it against. And
+   with that explanation now gone from the workflows, the surviving record of *why* CI cannot use
+   the declared dependency is this report and the commit history, which is worth knowing before the
+   six install steps look like an arbitrary habit to whoever next tries to remove them.
+   *Development reproducibility.* Separately and additionally, no released `rms-pdsfile` ships
+   `py.typed`, so `pip install -e ".[dev]"` followed by `scripts/run-all-checks.sh` cannot reproduce
+   the green mypy gate — 20 `import-untyped` errors in 14 files. That is a type-check gap, not an
+   import failure, and the two should not be conflated.
+   The docstring that asserted the opposite was deleted in this PR by `67714dfc`; see the note in
+   §6.
 
 **Reachable by an unauthenticated caller**
 

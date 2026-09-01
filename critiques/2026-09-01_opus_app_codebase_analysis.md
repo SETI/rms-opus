@@ -26,11 +26,13 @@ justifies every floor and every skip and tells you the command that regenerates 
 figure, and `integration_tests/conftest.py` closes a database-destruction hazard with a
 session-wide collection hook and explains exactly why.
 
-Against that, three things dominate. **First, the view layer is untested by anything
-that can run without the PDS holdings**: `pytest` covers 0% of `search/views.py` (806
-statements), `ui/views.py` (890), `results/views.py` (754), `cart/views.py` (633),
-`metadata/views.py` (345), `help/views.py` (95), `search/forms.py` (57),
-`tools/file_utils.py` (145) and `tools/db_utils.py` (37) — 3,762 statements at zero.
+Against that, three things dominate. **First, the view layer has no database-free test
+tier**: the holdings-free `pytest` run executes none of it — 3,762 statements across nine
+view and helper modules — and `[tool.coverage.run] source` omits `opus_app`, so the
+GitHub-hosted jobs measure none of it either. The code is *not* untested: the self-hosted
+integration run holds `src/opus_app/apps/*` at **100% line and branch** under a gate that
+enforces exactly that (§4). What is missing is a tier a contributor without the PDS
+holdings can run.
 **Second, the view layer is where the structural debt lives**: `api_normalize_url` is
 1,028 lines with 197 branch nodes in one function, and five modules exceed the 1,000-line
 limit `.cursor/rules/python.mdc` §2 states as ALWAYS. **Third, several unauthenticated
@@ -42,8 +44,8 @@ that is not a bare identifier — but both were read rather than reproduced, so 
 in the confirmed count.)
 
 Top three priorities: close the query-string-to-500 paths and the `_PARAMINFO_CACHE`
-growth (§7); give the view layer holdings-free tests (§4); split `api_normalize_url` and
-`url_to_search_params` (§1).
+growth (§7); split `api_normalize_url` and `url_to_search_params` (§1); give the view
+layer holdings-free tests (§4).
 
 ---
 
@@ -328,40 +330,49 @@ growth (§7); give the view layer holdings-free tests (§4); split `api_normaliz
 
 ## 4. Testing
 
-- **Finding**: The holdings-free suite covers none of the view layer. **Evidence**
-  (measured: `OPUS_CONFIG=tests/fixtures/opus_ci.toml pytest --cov=opus_app
-  --cov=opus_log_analyzer`, 1,496 tests, 12 s):
+- **Finding**: The view layer has no database-free test tier — though it is fully covered
+  by the self-hosted one. **Evidence, both runs measured**: the holdings-free run
+  (`OPUS_CONFIG=tests/fixtures/opus_ci.toml pytest --cov=opus_app`, 1,496 tests, 12 s)
+  executes none of these modules; the integration run
+  (`scripts/automated_tests/opus_run_unittests_coverage.sh`, read from this PR's own
+  `pull_request` run 33534739355 — 2,576 tests, 4m01s) executes all of them completely.
 
-  | Module | Statements | Coverage |
-  |---|---:|---:|
-  | `apps/ui/views.py` | 890 | 0% |
-  | `apps/search/views.py` | 806 | 0% |
-  | `apps/results/views.py` | 754 | 0% |
-  | `apps/cart/views.py` | 633 | 0% |
-  | `apps/metadata/views.py` | 345 | 0% |
-  | `apps/tools/file_utils.py` | 145 | 0% |
-  | `apps/help/views.py` | 95 | 0% |
-  | `apps/search/forms.py` | 57 | 0% |
-  | `apps/tools/db_utils.py` | 37 | 0% |
-  | `apps/paraminfo/models.py` | 106 | 37% |
+  | Module | Stmts / branches | holdings-free | integration (gated) |
+  |---|---:|---:|---:|
+  | `apps/ui/views.py` | 890 / 414 | 0% | 100% |
+  | `apps/search/views.py` | 806 / 320 | 0% | 100% |
+  | `apps/results/views.py` | 754 / 310 | 0% | 100% |
+  | `apps/cart/views.py` | 633 / 200 | 0% | 100% |
+  | `apps/metadata/views.py` | 345 / 114 | 0% | 100% |
+  | `apps/tools/file_utils.py` | 145 / 76 | 0% | 100% |
+  | `apps/help/views.py` | 95 / 20 | 0% | 100% |
+  | `apps/search/forms.py` | 57 / 18 | 0% | 100% |
+  | `apps/tools/db_utils.py` | 37 / 8 | 0% | 100% |
+  | `apps/paraminfo/models.py` | 104 / 22 | 37% | 100% |
 
-  3,762 statements at zero. `tests/opus_app/` holds six files (1,627 lines) importing
+  3,762 statements at zero on the left; TOTAL 22,240 statements and 1,874 branches with
+  **0 missed** on the right. `scripts/automated_tests/opus_check_coverage.sh` enforces it
+  (`EXPECTED=100`, failing the job on anything less) as a workflow step after the codecov
+  upload, `codecov.yml` adds an `integration` flag at 90% project and patch, and
+  `run-integration.yml` triggers on `pull_request` and `push` to `main` plus a nightly
+  cron. The gate is green on this PR. Every module appears in the report with its full
+  statement count, so `include` is not silently omitting anything.
+
+  What is left is the asymmetry: `tests/opus_app/` holds six files (1,627 lines) importing
   only `opus_app.settings` and `opus_app.apps.tools.{app_utils, file_size,
-  opus_middleware, sql_builder}` — verified by grep. Reinforcing this,
-  `pyproject.toml:262` sets `[tool.coverage.run] source = ["opus_support",
-  "opus_config", "opus_import", "opus_log_analyzer"]`, which omits `opus_app`
-  altogether, so the GitHub-hosted **Unit Tests** job measures no `opus_app` coverage at
-  all. The only gate on this code is `integration_tests/`, which needs the terabyte
-  holdings and a completed import and therefore runs on the Node's own hardware
-  (`.github/workflows/run-integration.yml`, `runs-on: ${{ matrix.os }}` self-hosted, on
-  `pull_request`/`push` to `main` and a nightly cron). **Severity: high.** A change to a
-  view module gets ruff, mypy, bandit and vulture, and nothing that executes it, unless
-  the contributor has the holdings. **Suggestion**: Add a `tests/opus_app/` tier using
-  `RequestFactory` plus fakes for the three `ParamInfo`/`TableNames`/`Definitions`
-  lookups — that alone would cover `url_to_search_params`, `parse_order_slug`,
-  `get_param_info_by_slug`, `labels_for_slugs` and the whole `api_normalize_url` slug
-  machinery, which is where the input-validation bugs in §2 live. All four of those bugs
-  are reachable from a pure query string with no database row involved.
+  opus_middleware, sql_builder}` (verified by grep), and `pyproject.toml:262` sets
+  `[tool.coverage.run] source = ["opus_support", "opus_config", "opus_import",
+  "opus_log_analyzer"]`, which omits `opus_app` — a deliberate, documented split
+  (`docs/dev_guide_testing.rst:135-146`). **Severity: medium**, and it is a feedback-loop
+  constraint rather than a correctness risk: a contributor without the holdings and a
+  MySQL import gets ruff, mypy, bandit and vulture, and the only thing that executes the
+  views is a 31-minute self-hosted job. **Suggestion**: A `tests/opus_app/` tier using
+  `RequestFactory` plus fakes for the three `ParamInfo`/`TableNames`/`Definitions` lookups
+  would not raise coverage — that is already 100% — but it would bring
+  `url_to_search_params`, `parse_order_slug`, `get_param_info_by_slug` and
+  `labels_for_slugs` within reach of a laptop, and those are where the §2
+  input-validation defects live; all three 500 paths there are reachable from a pure
+  query string with no database row involved.
 
 - **Finding**: `src/opus_log_analyzer/` (4,158 lines) has effectively no tests.
   **Evidence**: `tests/opus_log_analyzer/test_log_analyzer.py` is 25 lines with one test
