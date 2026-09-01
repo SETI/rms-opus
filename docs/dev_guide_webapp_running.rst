@@ -162,7 +162,7 @@ Three details are easy to trip over. **Nothing here reads the environment** exce
 **Module-level helpers are lower-case on purpose**: Django treats every upper-case name
 in this module as a setting, and its only test is :meth:`str.isupper`, which a leading
 underscore does not defeat. And ``DEFAULT_AUTO_FIELD`` stays ``AutoField`` deliberately
--- it governs the nineteen OPUS models that declare no primary key as well as the contrib
+-- it governs the OPUS models that declare no primary key as well as the contrib
 tables, all of which already exist with a 32-bit ``AUTO_INCREMENT`` column.
 
 Logging

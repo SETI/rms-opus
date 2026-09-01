@@ -85,11 +85,11 @@ The shape of it
         class ObsSurfaceGeometryTarget { obs_surface_geometry__TARGET }
         class ObsCommonPDS3 {
             <<abstract>>
-            combines the nine PDS3 table modules
+            combines the PDS3 table modules
         }
         class ObsCommonPDS4 {
             <<abstract>>
-            combines the nine PDS4 table modules
+            combines the PDS4 table modules
         }
 
         ObsBase <|-- ObsBasePDS3
@@ -164,7 +164,7 @@ helpers that read a value out of a PDS index, and the mult builder.
 :mod:`opus_import.obs.obs_base_pds4` answer the questions a PDS version decides: where a
 file specification comes from, and what the time columns are called.
 
-**One module per OPUS table.** Nine of them, three with a ``_pds3``/``_pds4`` variant of
+**One module per OPUS table**, three of them with a ``_pds3``/``_pds4`` variant of
 their own.
 
 **Two assembly classes.** :class:`~opus_import.obs.obs_common_pds3.ObsCommonPDS3` and
@@ -312,8 +312,8 @@ class may read:
 The abstract contract
 ~~~~~~~~~~~~~~~~~~~~~
 
-These members raise :exc:`NotImplementedError`. Every one is answered somewhere between
-here and the leaf class.
+The members below raise :exc:`NotImplementedError`. Every one is answered somewhere
+between here and the leaf class.
 
 .. list-table::
    :header-rows: 1

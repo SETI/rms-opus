@@ -53,7 +53,7 @@ and the log locations all come from the configuration file, and the keys it uses
    * - ``[import] table_temp_prefix``
      - The import namespace's prefix, ``imp_`` by default.
 
-These options override configuration values for one run without editing the file:
+Configuration values can be overridden for one run without editing the file, with
 ``--override-db-schema``, ``--override-pds3-data-dir`` and ``--override-pds4-data-dir``.
 Importing into a schema other than the one being served is what
 ``--override-db-schema`` is for, and it is how a production import is done.

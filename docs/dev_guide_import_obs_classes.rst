@@ -133,8 +133,7 @@ Cassini
 -------
 
 More classes than any other mission, because Cassini contributes imaging and spectroscopy
-instruments plus ring-occultation volume sets and PDS4 bundles. Some are shared and the
-rest are leaves.
+instruments plus ring-occultation volume sets and PDS4 bundles.
 
 Shared: ObsCassiniCommon
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -446,10 +445,10 @@ Two members raise: the observation type, and the filter type.
 which is why the trigger and category rows for an ``HST``-prefixed instrument point at
 ``obs_mission_hubble`` and are not displayed separately.
 
-The five leaves
-~~~~~~~~~~~~~~~
+The leaves
+~~~~~~~~~~
 
-All five derive directly from the shared class and differ chiefly in how they decide
+All of them derive directly from the shared class and differ chiefly in how they decide
 "spectroscopic" and how they classify a filter.
 
 .. list-table::

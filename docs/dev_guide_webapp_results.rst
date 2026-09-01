@@ -176,7 +176,7 @@ around a value searches for that exact value.
 The ``metadata`` app
 --------------------
 
-What is *searchable*, rather than what was found. Three of its handlers are private
+What is *searchable*, rather than what was found. Some of its handlers are private
 wrappers that add a ``reqno`` echo. **The private ones are not themselves decorated**:
 each simply calls its public twin, which is where the
 :func:`~opus_app.apps.tools.app_utils.api_view` wrapping happens.

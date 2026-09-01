@@ -127,9 +127,9 @@ Slug and name helpers
 The error message texts
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Twenty-four functions, each returning one message. The ``http400_``, ``http404_`` and
-``http500_`` prefix records which status the message is raised with, and each takes the
-request -- or a path as a string, where no request is available.
+Each function here returns one message. The ``http400_``, ``http404_`` and
+``http500_`` prefix records which status the message is raised with, and each takes
+the request -- or a path as a string, where no request is available.
 
 They are here, rather than at the sites that raise them, so that the same fault reads the
 same way wherever it is found, and so that changing the wording is one edit.

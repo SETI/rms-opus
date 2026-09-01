@@ -3,10 +3,12 @@
 Import Configuration Data
 =========================
 
-A few modules and one package answer the question "what exists?": which missions,
-spacecraft and instruments OPUS knows, which bundles it can import and how, and which
-targets it can name. They are plain module-level constants -- the import reads them and
-never writes them -- and adding a mission, an instrument or a bundle means editing them.
+The modules :mod:`opus_import.config_data`, :mod:`opus_import.config_bundle_info` and
+:mod:`opus_import.instruments`, plus the :mod:`opus_import.config_targets` package, answer
+the question "what exists?": which missions, spacecraft and instruments OPUS knows, which
+bundles it can import and how, and which targets it can name. They are plain module-level
+constants -- the import reads them and never writes them -- and adding a mission, an
+instrument or a bundle means editing them.
 
 This chapter documents every one of them. :ref:`dev_guide_import_extending` is the
 recipe that puts them together.
@@ -49,7 +51,7 @@ The tables OPUS fills for each observation, **in the order it fills them**:
     obs_surface_geometry_name
     obs_surface_geometry__<TARGET>
 
-Three of the names carry a placeholder, substituted per bundle by
+Some of the names carry a placeholder, substituted per bundle by
 :func:`~opus_import.steps.do_import_tables.create_tables_for_import`:
 
 .. list-table::
@@ -94,9 +96,9 @@ consulting this list.
 The mission, host and instrument maps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Six dictionaries relate an id to everything derived from it. Together they decide which
-``obs_mission_*`` and ``obs_instrument_*`` tables exist, what those tables are called,
-and how the user interface labels them.
+These dictionaries relate an id to everything derived from it. Together they decide
+which ``obs_mission_*`` and ``obs_instrument_*`` tables exist, what those tables are
+called, and how the user interface labels them.
 
 .. list-table::
    :header-rows: 1
@@ -189,8 +191,9 @@ expression selects the class directly.
 The registry
 ~~~~~~~~~~~~
 
-One entry per bundle set, PDS3 and PDS4. The entries with no ``instrument_class`` are the
-bundles OPUS deliberately ignores.
+The entries are grouped PDS3 first, then PDS4. An entry's expression may cover several
+bundle sets, or split one where its volumes need different treatment. The entries with
+no ``instrument_class`` are the bundles OPUS deliberately ignores.
 
 .. list-table::
    :header-rows: 1
@@ -357,9 +360,9 @@ newly registered type cannot go untested (see :ref:`dev_guide_import_fixture`).
 opus_import.config_targets
 --------------------------
 
-Four tables describing every target OPUS can name, in one module each and re-exported
-from the package, so a consumer writes ``config_targets.TARGET_NAME_INFO`` without
-knowing which module it lives in.
+A table per kind of target fact, each in its own module and re-exported from the
+package, so a consumer writes ``config_targets.TARGET_NAME_INFO`` without knowing
+which module it lives in.
 
 ``TARGET_NAME_INFO`` (:mod:`opus_import.config_targets.target_name_info`)
     The master table: entries map a canonical, upper-case target name to a three-element

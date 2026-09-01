@@ -294,7 +294,7 @@ wide joins a search needs are built by :mod:`opus_app.apps.tools.sql_builder` in
 because they join a dynamically named cache table that has no model at all -- and
 because they are far clearer as SQL than as ORM expressions.
 
-Four tables have hand-written models elsewhere as well, in the app that owns them:
+Some tables have hand-written models elsewhere as well, in the app that owns them:
 :class:`~opus_app.apps.paraminfo.models.ParamInfo`,
 :class:`~opus_app.apps.cart.models.Cart`, and the two dictionary models in
 :mod:`opus_app.apps.tools.dictionary`. The generated file carries a ``ZZ``-prefixed
