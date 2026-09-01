@@ -1,62 +1,67 @@
-# Executor guide — `rewrite` branch
+# Working in rms-opus
 
-This branch is a multi-PR modernization of rms-opus, executed one PR at a time by an
-AI sub-agent with a fresh context per PR. **The complete, binding specification is
-`plans/2026-07-18_opus_modernization_plan.md`.** If you are executing a PR:
+Orientation for an AI coding assistant working in this repository. The developer
+documentation is the authority on everything below; this file exists so a fresh
+context knows where to look.
 
-1. Read `plans/2026-07-18_opus_modernization_plan.md` §1–§3, the §4 preamble, §4a (execution protocol), your assigned PR's
-   section, §5/§5a (CI), §6 (verification), and the Execution notes appendix. That is
-   your entire briefing; do not rely on any prior conversation.
-2. Execute **only** your assigned PR. Never start the next PR. PRs are strictly
-   sequential; your PR builds on the merged result of all earlier ones.
-3. Rules that override any other instinct:
-   - Both CI workflows must be green on your PR before you are done.
-   - Move PRs use strict move/modify commit separation: the move commit contains ONLY
-     `git mv` renames; rewrites follow in the next commit(s) of the same PR.
-   - Follow the plan's decision tables exactly; they exist so you never make a design
-     judgment call.
-   - **Stop-and-report:** if reality contradicts the plan (a claim is stale, a step is
-     impossible as written, a decision table misses a case), stop and report the
-     contradiction in the PR — do not improvise. Mechanical drift (moved line numbers,
-     changed counts) that doesn't change an instruction's meaning is not a
-     contradiction; note it and proceed.
-   - Record any fact later PRs need as a dated bullet in `plans/2026-07-18_opus_modernization_plan.md`'s "Execution notes"
-     appendix, amended in your own PR. Never edit the plan body or earlier notes.
-   - **NEVER poll. Wait with a single blocking call.** Every tool call re-uploads the whole
-     conversation, so a loop of "check, then check again" costs more on each iteration and
-     buys nothing — a real PR executor burned hundreds of no-op `echo waiting-ci` calls this
-     way. Waiting on CI, CodeRabbit, or any long job means **one** call that returns when the
-     thing is actually done: `gh pr checks <N> --watch` (or `gh run watch <id>`), or a
-     `run_in_background` command with an `until <condition>; do sleep 60; done` loop that
-     exits on the event and notifies you. Never issue repeated status calls, `echo`/`sleep`
-     turns, or "let me check again" cycles. See §4a's *Waiting without burning tokens*.
-4. Before opening the PR, run the **adversarial pre-PR review** (§4a): launch a fresh
-   opus-class sub-agent to review the full diff, address its findings, and repeat with a
-   new reviewer — up to **four churn-focused passes** (passes 2+ focus on what you changed
-   in response to the prior pass) until one comes back clean. If the fourth pass is still
-   not clean, **stop-and-report** why the reviews aren't converging instead of opening the
-   PR.
-5. Definition of done: an open PR against `rewrite` (never merge it yourself), titled with
-   its **phase letter + PR number** (e.g. `[Phase A · PR-01] feat: …`), with both
-   workflows green, a description covering what/why/testing evidence **and the adversarial
-   review summary**, plus any PR-specific artifacts the plan requires (e.g. PR-09's `_meta`
-   diff, PR-13's rule-annotated fixture diff, PR-21's content-parity checklist). After
-   opening, run the **post-PR CodeRabbit loop** (§4a): respond to every CodeRabbit comment
-   — fix the correct ones, reason-reject the rest — wait for it to settle, and re-trigger
-   with a `@coderabbitai review` comment in 10-minute increments if it's out of reviews.
-   Declare **ready to merge only once CI and CodeRabbit are both stable and green**; hand
-   the settled PR to the orchestrator to merge. **Wide-PR exception:** if CodeRabbit
-   hard-skips the PR because its changed-file count exceeds the 100-file cap (a structurally
-   wide PR like PR-01 or the move PRs — not rate-limiting), the skip is accepted, the §4a
-   adversarial review stands in its place, and you record the accepted skip + file count in
-   the PR description; the gate then needs only CI green. This applies only when the cap is
-   genuinely exceeded — never split or reshape a PR to dodge review.
-6. Conventional-commit titles (`feat:`/`fix:`/`refactor:`/`chore:`/`test:`/`docs:`…);
-   one logical change per commit.
+## What this is
 
-Repo facts an executor needs on day one: Python entry points and layout are described in
-`plans/2026-07-18_opus_modernization_plan.md` §2; configuration/secrets handling is `plans/2026-07-18_opus_modernization_plan.md` §3 (it changes at PR-08 —
-check the Execution notes for where the sequence currently stands); the coding standards
-are the `.cursor/rules/*.mdc` files (added in PR-01), with one repo-specific waiver:
-public web API backwards compatibility is preserved despite the rules' no-back-compat
-policy (see `plans/2026-07-18_opus_modernization_plan.md` §1 decisions table).
+rms-opus is OPUS, the search tool for the PDS Ring-Moon Systems Node. It is one
+pip-installable distribution containing an import pipeline that populates a MySQL
+database from PDS3/PDS4 holdings, and a Django web application serving the public
+OPUS API and UI.
+
+## Layout and entry points
+
+Everything importable lives under `src/`: `opus_config` (the TOML configuration
+loader), `opus_support` (unit, time, clock, angle and orbit conversions),
+`opus_import` (the import pipeline), `opus_log_analyzer` (the server log analyzer)
+and `opus_app` (the Django project). The three installed commands are
+`opus_import`, `opus_log_analyzer` and `opus_error_analyzer`; the first two also
+run as `python -m opus_import` and `python -m opus_log_analyzer`.
+
+`docs/dev_guide_layout.rst` annotates the whole tree. Build the documentation with
+`scripts/read-docs.sh`, or read it at <https://rms-opus.readthedocs.io>.
+
+## Configuration
+
+Every process reads one TOML file, located by the `OPUS_CONFIG` environment
+variable. There is no default path: an unset or empty variable is an error naming
+the variable. `opus.toml.template` is the file to copy and fill in;
+`tests/fixtures/opus_ci.toml` is the dummy configuration the holdings-free jobs
+run against.
+
+## Tests
+
+Four suites, selected by path:
+
+- `pytest` — the holdings-free unit suite (`tests/`), the default run.
+- `pytest import_tests` — the import pipeline end to end against the checked-in
+  mini-holdings fixture. Needs a reachable MySQL server; no PDS holdings.
+- `pytest integration_tests` — the golden-response API suite against a populated
+  database. Needs the terabyte holdings and a full import behind it, so it runs on
+  the Node's own hardware rather than anywhere else.
+- `scripts/run-all-checks.sh` — ruff, mypy, pytest, pyroma, bandit, vulture,
+  Sphinx and PyMarkdown. Run this before proposing a change.
+
+`docs/dev_guide_testing.rst` says what each suite needs and how to run it.
+
+## Standards
+
+The coding and documentation standards are the `.cursor/rules/*.mdc` files. Follow
+them. One repository-specific waiver: the public web API's behavior is preserved
+even where those rules forbid backwards compatibility, because external callers
+depend on it — see `docs/dev_guide_conventions.rst`. That waiver covers the public
+API only; internal code carries no compatibility shims.
+
+Two rules worth stating here because they are easy to violate while being helpful:
+a comment or docstring describes the code as it is now, never how it came to be;
+and a claim about the code that can be counted is either measured or not made —
+state the command that regenerates a set rather than writing the set out.
+
+## History
+
+`plans/archive/` and `critiques/archive/` hold the design documents behind the
+current tree and the reviews of them. They are a record of decisions already
+taken, not a specification of work to do, and nothing in them describes the
+software more accurately than the software and its documentation do.

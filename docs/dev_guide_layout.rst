@@ -30,10 +30,9 @@ directory has a chapter of its own, it is named beside it.
     │                             #   reporting them
     ├── codecov.yml, .readthedocs.yaml
     ├── README.md, CONTRIBUTING.md, LICENSE
-    ├── CLAUDE.md                 # the executor guide for this modernization branch;
-    │                             #   it names plans/ as the binding specification
-    ├── plans/, critiques/        # working documents for the modernization, not the
-    │                             #   software; removed when the branch merges
+    ├── CLAUDE.md                 # orientation for an AI coding assistant working here
+    ├── plans/archive/            # the design documents and the reviews of them behind
+    ├── critiques/archive/        #   the current tree; history, not a specification
     ├── .gitattributes            # marks the vendored asset trees linguist-vendored
     ├── .gitmodules, .vscode/     # submodule pins and editor settings
     ├── browserstack-logo-600x315.png   # used by the README's acknowledgment
