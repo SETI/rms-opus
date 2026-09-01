@@ -186,9 +186,9 @@ from the schemas, from the configuration, from a bundle id -- fits that shape.
 **Values are always parameters**, including None, which the driver renders as SQL NULL.
 The DDL is the one exception: a column's default and its enum option list are formatted
 straight into the ``CREATE TABLE``, which is safe only because both come from the table
-schemas packaged with :mod:`opus_import` and never from input. Three statement builders
-here interpolate a caller's ``where`` fragment and carry an explicit note saying so, and a
-fourth does in the base class; each is for trusted callers, and only the values inside
+schemas packaged with :mod:`opus_import` and never from input. Some statement builders
+here interpolate a caller's ``where`` fragment and carry an explicit note saying so, as
+does one in the base class; each is for trusted callers, and only the values inside
 such a fragment are bound.
 
 **The upsert needs MySQL 8.0.19.** ``ON DUPLICATE KEY UPDATE`` has to name each row's

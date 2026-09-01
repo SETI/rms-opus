@@ -285,7 +285,7 @@ and the observation is what makes the writes idempotent, and is why they are
 becomes a replacement rather than a duplicate.
 
 :func:`~opus_app.apps.cart.views.api_edit_cart`'s own docstring carries the authoritative
-state-transition table for the five actions crossed with the recycle-bin flag; it is the
+state-transition table for every action crossed with the recycle-bin flag; it is the
 thing to read before changing any of them. The shape of it is:
 
 * **Adding** anything moves it into the cart, whether it was absent or in the recycle
@@ -296,7 +296,7 @@ thing to read before changing any of them. The shape of it is:
 * ``addall`` **with** ``view=cart`` **and the recycle-bin flag** is the documented way to
   move everything out of the bin and back into the cart.
 
-Underneath the five actions sit four helpers: ``_add_to_cart_table`` and
+Underneath those actions sit the helpers: ``_add_to_cart_table`` and
 ``_remove_from_cart_table`` are the single-observation writes, ``_edit_cart_addall``
 implements ``addall`` by reading the whole current view and adding every observation in
 it, and ``_edit_cart_range`` is below.

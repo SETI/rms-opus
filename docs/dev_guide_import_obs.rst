@@ -348,7 +348,7 @@ between here and the leaf class.
      - a PDS-version base
      - The start and stop times in seconds TAI, or None.
 
-Three more members are declared here with a working default and are meant to be
+More members are declared here with a working default and are meant to be
 overridden where a bundle differs:
 
 * :attr:`~opus_import.obs.obs_base.ObsBase.phase_names` returns ``['']`` -- one
@@ -609,7 +609,7 @@ ObsTypeImage -- ``obs_type_image``
 
 An image's dimensions and its intensity levels. Everything but the three derived id
 columns defaults to None or to a null mult, because an observation that is not an image
-fills none of it. Three module constants give the number of distinct intensity levels a
+fills none of it. Module constants give the number of distinct intensity levels a
 detector of a given bit depth records: ``EIGHT_BIT_IMAGE_LEVELS``,
 ``TWELVE_BIT_IMAGE_LEVELS`` and ``SIXTEEN_BIT_IMAGE_LEVELS``.
 
@@ -627,7 +627,7 @@ wavenumbers in cm\ :sup:`-1`, and the module constant ``MICRONS_PER_CM`` (10000.
 the conversion: ``wavelength = MICRONS_PER_CM / wavenumber``, and a resolution converts
 as ``MICRONS_PER_CM * resolution / wavelength**2`` -- the square of the wavelength the
 resolution applies at, which is what the two conversion helpers divide by. The
-wavenumber columns default to the converted wavelengths, and four helpers derive a
+wavenumber columns default to the converted wavelengths, and further helpers derive a
 resolution from a full bandwidth or from the other system's resolution, so a subclass
 usually supplies only the two wavelength endpoints.
 

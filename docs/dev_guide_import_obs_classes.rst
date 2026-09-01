@@ -21,11 +21,11 @@ named ``obs_volume_*`` for a PDS3 volume set and ``obs_bundle_*`` for a PDS4 bun
         }
         class ObsCommonPDS3 {
             <<abstract>>
-            the nine PDS3 table modules
+            the PDS3 table modules
         }
         class ObsCommonPDS4 {
             <<abstract>>
-            the nine PDS4 table modules
+            the PDS4 table modules
         }
         class ObsCassiniCommon {
             <<abstract>>
