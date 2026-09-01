@@ -1,5 +1,5 @@
 # Coverage configuration for the holdings-dependent integration suite, which is
-# gated at 100% (plan §5a). It is deliberately separate from the unit-coverage
+# gated at 100%. It is deliberately separate from the unit-coverage
 # configuration in pyproject.toml: coverage.py ignores `include` whenever
 # `source` is set, so one merged config would silently corrupt one gate or the
 # other. Select it with COVERAGE_RCFILE=integration_tests/.coveragerc;

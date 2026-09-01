@@ -93,9 +93,9 @@ export DJANGO_SETTINGS_MODULE=opus_app.settings
 # find_spec locates the file WITHOUT importing it. Importing opus_app.wsgi runs
 # get_wsgi_application(), which calls django.setup() and opens the log file, so it
 # fails whenever the environment is not fully ready -- and this step runs before the
-# log directory is guaranteed to exist. That failure was silent in the worst way: the
-# command substitution returned empty, `ln` was handed an empty target, and the deploy
-# died here with Apache already stopped.
+# log directory is guaranteed to exist. Such a failure is silent in the worst way: the
+# command substitution returns empty, `ln` is handed an empty target, and the deploy
+# dies here with Apache already stopped. The guard below is what makes it loud.
 OPUS_WSGI_PATH=$(python -c \
     'import importlib.util; print(importlib.util.find_spec("opus_app.wsgi").origin)')
 if [[ -z ${OPUS_WSGI_PATH} || ! -f ${OPUS_WSGI_PATH} ]]; then

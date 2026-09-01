@@ -2055,8 +2055,9 @@ def _get_menu_labels(
     divs: QuerySet[TableNames] | list[TableNames | dict[str, str | bool]]
     # The misc ignore is for `table_name__in=triggered_tables`: get_triggered_tables
     # can return None, which Django's filter would reject at run time. That is a
-    # real unchecked-None defect, recorded in the Execution notes rather than
-    # guarded here, so the marker stands in for it rather than hiding it.
+    # real unchecked-None defect, and the marker stands in for it rather than
+    # hiding it -- adding a guard here changes what an unresolvable slug answers,
+    # which is a decision about the API's error contract, not an annotation.
     divs = TableNames.objects.filter(
         display='Y',  # type: ignore[misc]
         table_name__in=triggered_tables,

@@ -19,7 +19,7 @@ export OPUS_CONFIG="$(pwd)/opus.toml"
 
 # The integration suite's 100% coverage gate has its own configuration; without
 # this, coverage would pick up the unit-coverage settings in pyproject.toml, which
-# measure a different set of packages against a different gate (plan §5a). It is
+# measure a different set of packages against a different gate. It is
 # exported as well as passed to pytest below because the `coverage` commands after
 # the run read it too.
 export COVERAGE_RCFILE=integration_tests/.coveragerc

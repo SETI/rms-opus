@@ -1108,7 +1108,7 @@ def test_a_missing_index_column_is_reported_rather_than_crashing_the_bundle() ->
     `import_util.safe_column` returns None both when a column is absent from the table
     and when the mask marks it missing, so ``'1/' + count`` and ``bundle + '/' + path``
     raise `TypeError` and abort the whole bundle rather than reporting one bad
-    observation. All three predate this PR; the guards are what is new.
+    observation, so each site checks the value it read before building a string.
 
     The covims pair is the reason this test exists rather than a note. A guard *was*
     present, and its message named the missing-count case exactly -- but it sat after

@@ -21,12 +21,12 @@ echo YES | ./scripts/import/import_for_tests.sh "--log-debug-limit 0 --log-info-
 IMPORT_STATUS=$?
 # Check the import's own exit status, not just its error log. import_for_tests.sh runs
 # under `set -e`, so anything that stops it -- a missing interpreter, a failed bundle,
-# an aborted confirmation -- exits non-zero. Without this check the only gate was
-# `[ -s ERRORS.log ]` below, and a *missing* ERRORS.log is not `-s`: an import that died
-# before writing any log at all reported success, and this whole stage exited 0 having
-# imported nothing. Found when the venv was off a background shell's PATH, so
-# `python: command not found` killed the import and all three stages "completed"
-# inside the same wall-clock second.
+# an aborted confirmation -- exits non-zero. This check is not redundant with the
+# `[ -s ERRORS.log ]` test below, and neither covers the other's case: a *missing*
+# ERRORS.log is not `-s`, so an import that dies before writing any log at all --
+# a missing interpreter, say -- passes that test having imported nothing, while an
+# import that runs to completion and logs errors exits zero and is caught only by
+# the log test. Removing either one opens a hole that reports success.
 if [ $IMPORT_STATUS -ne 0 ]; then
     echo "*******************************************"
     echo "*** OPUS IMPORT FAILED (exit $IMPORT_STATUS) ***"

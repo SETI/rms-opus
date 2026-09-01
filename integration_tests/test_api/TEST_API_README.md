@@ -113,5 +113,4 @@ That configuration measures `src/opus_app/apps`, `integration_tests/test_api` an
 `src/opus_support`, and `tests/opus_support` and `tests/opus_app` are the directories
 under `tests/` holding tests that reach any of it -- which is why the run names all
 three. `COVERAGE_RCFILE` is what keeps coverage off the unit-coverage settings in
-`pyproject.toml`, which measure a different set of packages against a different gate
-(plan §5a).
+`pyproject.toml`, which measure a different set of packages against a different gate.

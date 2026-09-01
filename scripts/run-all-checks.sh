@@ -48,7 +48,7 @@
 #
 #   Per-check toggles (true/false). Each check runs only if both RUN_* and
 #   ENABLE_* are true (RUN_* from CLI or defaults below; ENABLE_* from env or
-#   the defaults block below). OPUS flips each default true in its owning PR:
+#   the defaults block below). Every ENABLE_* default is true here:
 #     ENABLE_RUFF_CHECK   (default: true)
 #     ENABLE_RUFF_FORMAT  (default: true)
 #     ENABLE_MYPY         (default: true)
@@ -100,11 +100,10 @@ SCOPE_SPECIFIED=false
 # Per-check defaults (override by exporting before invoking this script, or
 # permanently change here).
 #
-# OPUS check state: every check is on. `ruff format` owns layout everywhere
-# OPUS_RUFF_PATHS reaches, and mypy runs strict over the whole repository;
-# [tool.mypy]'s burn-down list is empty, while its exclude and
-# ignore_missing_imports carry the non-source paths and the untyped third-party
-# packages.
+# Every check is on. `ruff format` owns layout everywhere OPUS_RUFF_PATHS
+# reaches, and mypy runs strict over the whole repository: [tool.mypy] silences
+# no module wholesale, and its exclude and ignore_missing_imports carry the
+# non-source paths and the untyped third-party packages.
 : "${ENABLE_RUFF_CHECK:=true}"
 : "${ENABLE_RUFF_FORMAT:=true}"
 : "${ENABLE_MYPY:=true}"
@@ -126,7 +125,7 @@ SCOPE_SPECIFIED=false
 # live server.
 : "${OPUS_RUFF_PATHS:=src integration_tests import_tests tests docs manage.py}"
 # mypy covers the same trees, and integration_tests/ is checked strictly like
-# every other one: no tree carries a burn-down entry.
+# every other one: no tree is silenced wholesale.
 : "${OPUS_MYPY_PATHS:=src integration_tests import_tests tests docs manage.py}"
 : "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
 : "${OPUS_VULTURE_PATHS:=src integration_tests import_tests tests docs manage.py vulture_whitelist.py}"
@@ -432,7 +431,7 @@ run_code_checks() {
     if [ "$RUN_MYPY" = true ] && [ "$ENABLE_MYPY" = true ]; then
         print_info "Running mypy..."
         # The source root and the strict settings come from pyproject.toml, which
-        # carries no burn-down list; the paths match the CI lint job's MYPY_PATHS.
+        # silences no module wholesale; the paths match the CI lint job's MYPY_PATHS.
         # shellcheck disable=SC2086  # word-splitting of the path list is intended
         if python -m mypy $OPUS_MYPY_PATHS; then
             print_success "Mypy passed"

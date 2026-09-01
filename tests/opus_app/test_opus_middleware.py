@@ -76,9 +76,8 @@ def test_a_response_without_a_content_type_raises() -> None:
     This pins current behaviour, it does not endorse it: a 304 carries no
     Content-Type, so one reaching this middleware raises rather than passing
     through. The source has carried a commented-out status-code guard for that
-    case for years. Fixing it changes production response handling, which is out
-    of scope for a documentation PR -- issue #1475 tracks it, and this test is
-    what will fail, informatively, when it is fixed.
+    case for years. Issue #1475 tracks the fix; this test is what will fail,
+    informatively, when it lands.
     """
     response = HttpResponse(status=304)
     del response.headers['Content-Type']

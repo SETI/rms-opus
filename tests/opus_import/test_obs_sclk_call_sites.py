@@ -1,25 +1,18 @@
-"""The spacecraft-clock call sites that needed more than a mechanical rewrite.
+"""The spacecraft-clock call sites that do not follow the common shape.
 
-**Eighteen** of the 23 ``field_obs_mission_<mission>_spacecraft_clock_count*`` methods
-held a try/except identical modulo the mission name, and `test_obs_sclk` covers the
-helper they all now call. Of the remaining five, two are COCIRS_56xxx's, which differ
-only in logging at warning level (`test_obs_sclk` covers that through the helper's
-``log_func``), and **three** call sites had to be reshaped by hand when the try/except
-moved into the helper:
+Most of the 23 ``field_obs_mission_<mission>_spacecraft_clock_count*`` methods are a
+two-line wrapper over ``ObsBase._parse_sclk``, and `test_obs_sclk` covers that helper.
+These are the ones a reader would get wrong by assuming the common shape, so each is
+driven through its real field function here:
 
-* COVIMS_8xxx count2 computed ``parse_cassini_sclk(sc)+1`` *inside* the try, so the
-  ``+1`` had to move after the helper's None check;
-* the two PDS4 sites parse ``str(raw).strip()`` but named the unstripped ``raw`` in the
-  error message.
-
-A separate defect is covered here too, because it lives in the same methods: both COCIRS
-count2 guards reported a badly formatted ``SPACECRAFT_CLOCK_START_COUNT`` while reading
-``SPACECRAFT_CLOCK_STOP_COUNT``. That is in the guard *above* the try/except, not in the
-call site.
-
-The consolidation was verified by a differential probe against the pre-change tree, but
-a probe is ephemeral. These tests drive the real field functions so the reshaped sites
-stay pinned.
+* COVIMS_8xxx count2 adds one to the parsed value, and the ``+1`` has to fall *after*
+  the helper's None check rather than inside it;
+* the two PDS4 sites parse ``str(raw).strip()``, and their error message names that
+  stripped string rather than the raw column value;
+* both COCIRS_56xxx count2 guards read ``SPACECRAFT_CLOCK_STOP_COUNT``, and their
+  message says so. That guard sits *above* the parse, not in the call site, and
+  COCIRS_56xxx is also the only mission that logs a bad clock at warning level rather
+  than error -- which is the whole reason ``_parse_sclk`` takes a ``log_func``.
 """
 
 from typing import Any
@@ -122,7 +115,7 @@ def _fring_mosaics(start: Any, stop: Any) -> tuple[Any, list[str]]:
 
 
 def test_pds4_sclk_is_parsed_with_surrounding_whitespace_stripped() -> None:
-    """A padded column value parses, exactly as it did before the consolidation."""
+    """A padded column value parses: the PDS4 sites strip before parsing."""
     obs, logged = _fring_mosaics(f'  {GOOD_SCLK}  ', f'  {GOOD_SCLK}  ')
 
     assert obs.field_obs_mission_cassini_spacecraft_clock_count1() == (
@@ -134,8 +127,8 @@ def test_pds4_sclk_is_parsed_with_surrounding_whitespace_stripped() -> None:
 def test_pds4_bad_sclk_message_names_the_stripped_value() -> None:
     """The message quotes what was parsed, not the padded column value.
 
-    This is the single deliberate message change of the SCLK consolidation: the site
-    used to interpolate the raw column value while parsing ``str(raw).strip()``.
+    These two sites parse ``str(raw).strip()``, so quoting ``raw`` would show an
+    operator a value the parser never saw.
     """
     obs, logged = _fring_mosaics(f'  {BAD_SCLK}  ', None)
 

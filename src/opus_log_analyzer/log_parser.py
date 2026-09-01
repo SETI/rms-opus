@@ -105,9 +105,8 @@ class Session(NamedTuple):
         equals any other, including itself. `__hash__` is correct, which is what
         makes it damaging -- a set of sessions never de-duplicates.
         """
-        # Issue #1464 tracks the fix; log-analyzer behavior is out of scope for
-        # this modernization (plan rev 7.14), so it is recorded rather than
-        # changed.
+        # Issue #1464 tracks the fix. Correcting it changes what this analyzer
+        # reports, so it is recorded here rather than changed in passing.
         return isinstance(other, Session) and self.id == id  # type: ignore[comparison-overlap]
 
     def __repr__(self) -> str:

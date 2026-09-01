@@ -28,7 +28,7 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Directories that hold no shell script of ours: build output, virtual environments,
-# git internals, and the working documents for the modernization.
+# git internals, and the archived design documents.
 SKIP_DIRECTORIES = {
     '.git',
     'venv',
@@ -234,9 +234,9 @@ def test_some_workflow_run_blocks_were_found() -> None:
     """The extraction reaches every workflow, not merely some of them.
 
     A count alone is not enough: a glob narrowed to ``run-*.yml`` still returns 20-odd
-    blocks and would leave **both publish workflows** -- this PR's own subject --
-    unchecked while the suite stayed green. So the assertion is on the set of files
-    covered, which is what would actually change.
+    blocks and would leave **both publish workflows** unchecked while the suite stayed
+    green -- and those are the two nobody exercises until a release. So the assertion
+    is on the set of files covered, which is what would actually change.
     """
     assert {path.name for path in _workflow_files()} == {
         'run-tests.yml',

@@ -15,13 +15,12 @@
 # use only `message`, so `lineno` is unused but cannot be dropped without
 # breaking the callback signature.
 #
-# Measured at the configured scope, this entry currently suppresses nothing --
-# `vulture src integration_tests tests manage.py` is clean without it, because
-# tests/opus_import reads `node.lineno` off AST nodes and that marks the name as
-# used everywhere. It is kept rather than retired because that is
-# incidental coupling to an unrelated tree: `vulture src` alone still reports
-# both handlers, so a later PR that narrows the scan paths or rewrites those
-# tests would need it back. Re-check with `vulture src` before removing it.
+# At the configured scan paths this entry suppresses nothing on its own: the
+# whole-tree scan is clean without it, because tests/opus_import reads
+# `node.lineno` off AST nodes and that marks the name as used everywhere. That is
+# incidental coupling to an unrelated tree rather than a reason to drop the entry
+# -- `vulture src` alone still reports both handlers. Re-check with `vulture src`,
+# not with the configured paths, before removing it.
 lineno  # unused variable (warnings.showwarning callback)
 
 # `subprocess_coverage` is a pytest fixture requested by name and used for its effect

@@ -366,8 +366,8 @@ There is also a series of tables, one per body, containing the surface geometry 
 
 Other than the odd naming, these surface geometry tables behave exactly the same as any other ``obs_*`` table.
 
-The Special ``obs_file`` Table
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The Special ``obs_files`` Table
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. All of this information could be encoded in a single enormous JSON structure in the ``obs_general`` table, but for efficiency and historical reasons we break this information out into its own table, ``obs_file``. The ``obs_file`` table has a similar structure to other ``obs_*`` tables, but is unique in that it has a one-to-many relationship with OPUS IDs. In other words, with one row per downloadable file product, a single OPUS ID will likely have more than one row in this table. The ``obs_file`` table is only joined with ``obs_general`` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
 

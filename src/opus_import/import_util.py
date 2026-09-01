@@ -47,7 +47,6 @@ if TYPE_CHECKING:
     import pdslogger
 
     from opus_import.context import ImportContext
-    from opus_import.importdb.super import Namespace
 
 IndexRow = dict[str, Any]
 """One row of a PDS index table, keyed by column name."""
@@ -543,39 +542,6 @@ def table_name_mult(table_name: str, field_name: str) -> str:
         The table name, such as ``'mult_obs_general_planet_id'``.
     """
     return 'mult_' + table_name.lower() + '_' + field_name.lower()
-
-
-# These two have no caller anywhere in the repository, and could never have had one:
-# both read `impglobals.DATABASES`, an attribute that never existed (the global was
-# `DATABASE`), so either would have raised AttributeError on its first call. They are
-# threaded rather than deleted because deleting unused code belongs to the dead-code PR,
-# and the context spelling is what the name obviously meant.
-def table_name_param_info(ctx: ImportContext, namespace: Namespace) -> str:
-    """Return the name of the ``param_info`` table in a namespace.
-
-    Parameters:
-        ctx: The import run's context, for the open database.
-        namespace: The namespace to name the table in.
-
-    Returns:
-        The table name, prefixed if the namespace is the import one.
-    """
-    assert ctx.db is not None
-    return ctx.db.convert_raw_to_namespace(namespace, 'param_info')
-
-
-def table_name_partables(ctx: ImportContext, namespace: Namespace) -> str:
-    """Return the name of the ``partables`` table in a namespace.
-
-    Parameters:
-        ctx: The import run's context, for the open database.
-        namespace: The namespace to name the table in.
-
-    Returns:
-        The table name, prefixed if the namespace is the import one.
-    """
-    assert ctx.db is not None
-    return ctx.db.convert_raw_to_namespace(namespace, 'partables')
 
 
 def encode_target_name(target_name: str) -> str:

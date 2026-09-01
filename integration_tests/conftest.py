@@ -9,8 +9,8 @@ what that makes necessary.
 created.** pytest-django blocks database access for any test that has not asked for
 it, and nothing here asks: these are plain `unittest.TestCase` subclasses, which
 pytest collects natively and which pytest-django therefore does not manage. That is
-fixed by the plan rather than chosen here -- the suites read and write the freshly
-imported schema with no create, no teardown and no surrounding transaction.
+the lifecycle these suites require: they read and write the freshly imported schema
+with no create, no teardown and no surrounding transaction.
 
 **Asking pytest-django to manage the database is refused, and refused for the whole
 session rather than only for this tree.** `DATABASES['default']['TEST']['NAME']` is the
@@ -102,7 +102,8 @@ FORBIDDEN_DB_FIXTURES = ('db', 'transactional_db', 'live_server', 'django_db_set
 #: ``opustest:``/``opus:`` prefix. Note where the failure lands: the warning is raised
 #: *inside* a view, so `api_view` catches it and answers HTTP 500 rather than letting
 #: it surface as a warning. A deployed installation's 31 characters of headroom are not
-#: much, so the hazard is real and is recorded in the plan's Execution notes.
+#: much, so the hazard is real: whoever picks it up should hash the key's tail rather
+#: than lengthen the limit.
 SUPPRESSED_WARNINGS = (
     'ignore:Cache key will cause errors if used with memcached'
     ':django.core.cache.backends.base.CacheKeyWarning',

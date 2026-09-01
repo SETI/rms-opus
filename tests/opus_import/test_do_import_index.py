@@ -1,15 +1,14 @@
-"""Two latent defects in the per-index import, both pre-existing.
+"""Two properties of the per-index import that nothing else can catch.
 
-Neither was introduced by splitting `do_import.py`; both are byte-identical in
-`24ef9256`'s pre-split file. CodeRabbit found them because cutting a 1,782-line module
-into five made them legible. They are fixed here rather than deferred, because this PR
-rewrote the very lines they sit on.
-
-1. `get_opus_products_rows_for_filespec` returned a bare `None` when the filespec could
-   not be converted, while its only caller does
-   ``table_rows[table_name].extend(rows)`` -- so a recoverable, logged error became
-   ``TypeError: 'NoneType' object is not iterable`` and aborted the whole index import.
-2. The ``obs_surface_geometry`` guard tested one dictionary key and initialized another.
+1. `get_opus_products_rows_for_filespec` returns an empty list, never a bare `None`,
+   when the filespec cannot be converted. Its only caller does
+   ``table_rows[table_name].extend(rows)``, so a `None` would turn a recoverable,
+   logged error into ``TypeError: 'NoneType' object is not iterable`` and abort the
+   whole index import.
+2. Every ``table_rows`` guard initializes the key it tested. The
+   ``obs_surface_geometry`` one is unreachable at run time -- ``table_rows`` is
+   pre-populated with every name the loop can yield -- so this is asserted against the
+   source rather than against behavior; no test could reach it otherwise.
 """
 
 import ast

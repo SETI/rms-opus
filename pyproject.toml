@@ -296,10 +296,9 @@ plugins = ["mypy_django_plugin.main"]
 # opus_support.units) or the working directory (so tests/opus_import/test_cli.py is
 # tests.opus_import.test_cli). Both are load-bearing. The per-package test
 # directories carry no __init__.py, so without this a test module would be named
-# after its own file: the two test_package_data.py files would collide as one module
-# name, and the burn-down list below could not name a test package at all. It also
-# means mypy has to run from the repository root, which run-all-checks.sh and the
-# lint job both do.
+# after its own file, so the two test_package_data.py files would collide as one
+# module name. It also means mypy has to run from the repository root, which
+# run-all-checks.sh and the lint job both do.
 # `docs/_ext` is here so that the documentation build's own extensions are checked
 # like everything else, and so that the tests importing them resolve.
 mypy_path = "src:docs/_ext"
