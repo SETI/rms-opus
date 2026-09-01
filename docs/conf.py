@@ -240,13 +240,21 @@ nitpick_ignore_regex: list[tuple[str, str]] = []
 
 html_theme = 'sphinx_rtd_theme'
 html_title = f'rms-opus {release}'
-html_static_path: list[str] = []
+html_static_path: list[str] = ['_static']
+
+# Widen the theme's content column; see the comment in the stylesheet.
+html_css_files = ['custom.css']
 
 # -- Mermaid ------------------------------------------------------------------
 
 # Render diagrams in the browser rather than shelling out to a headless browser, so
 # the build needs nothing installed beyond the Python dependencies.
 mermaid_output_format = 'raw'
+
+# Pan and zoom is asked for per diagram, with the directive's `:zoom:` option, rather
+# than through the extension's global `mermaid_d3_zoom`. The global switch also puts d3
+# on every page Sphinx renders without a doctree: the viewcode pages, the general index
+# and the search page, none of which holds a diagram.
 
 # -- MyST ---------------------------------------------------------------------
 

@@ -15,9 +15,9 @@ literals rather than computed from the schema; see `Filling the column`_ below.
 The schemas ship inside the wheel and are read through :mod:`importlib.resources`, so
 an installed OPUS finds them without a checkout.
 
-Four files are not tables. Two of them are not even column lists --
+Some files are not tables. Two of them are not even column lists --
 ``param_info_ranges.json`` is a dictionary of range sets and
-``internal_def_product_types.json`` names no columns -- while the other two are
+``internal_def_product_types.json`` names no columns -- while the rest are
 perfectly good column lists that simply do not describe a table of their own:
 
 ``param_info_ranges.json``
@@ -206,7 +206,7 @@ dispatch on.
 Validating the value
 ~~~~~~~~~~~~~~~~~~~~
 
-**All four of these keys are honoured only on a numeric column** -- one whose
+**All four of these keys are honored only on a numeric column** -- one whose
 ``field_type`` starts with ``int``, ``uint`` or ``real``. Every one of them is read
 inside that single branch of
 :func:`opus_import.steps.do_import_obs.import_observation_table`, so putting
@@ -320,4 +320,9 @@ reason: the key is read everywhere else, so no key-level check can see it. See
 Adding a column
 ---------------
 
-See :ref:`dev_guide_extending`.
+See :ref:`dev_guide_extending_column`.
+
+API reference
+-------------
+
+:doc:`api_opus_import`

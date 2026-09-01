@@ -52,11 +52,10 @@ writing code:
   paths that are not project source, and ``ignore_missing_imports``, for the
   third-party packages that ship neither annotations nor a typeshed stub. Read the
   current contents of both out of ``[tool.mypy]``; each entry is documented where it
-  sits, and counting them here would only go stale. A tree that
-  cannot pass the checker is not a configuration problem: annotate it, or say at the
-  site -- with the reason -- what the checker cannot see, which is what
-  ``# type: ignore[...]`` is for. ``warn_unused_ignores`` is on, so each of those has
-  to keep earning its place.
+  sits, and counting them here would only go stale. A tree that cannot pass the checker is
+  not a configuration problem: annotate it, or say at the site -- with the reason -- what
+  the checker cannot see, which is what ``# type: ignore[...]`` is for.
+  ``warn_unused_ignores`` is on, so each of those has to keep earning its place.
 * **ruff's per-file-ignores table is empty**, and adding a row to it is not the way to
   land code that does not pass. Fix the code, or suppress the one rule on the one line
   with ``# noqa: <CODE>`` and the reason, which ``RUF100`` then keeps honest by

@@ -40,6 +40,11 @@ The ``dev`` extra installs the test suite's dependencies, every checking tool th
 repository gates on, and (through ``rms-opus[docs]``) Sphinx and its extensions, so
 one install covers everything below.
 
+This chapter is the **development** installation. Bringing up a server -- installing the
+released distribution from PyPI, writing a configuration file, creating a database and
+collecting the static files -- is :ref:`dev_guide_installation`, and putting a web server
+in front of it is :ref:`dev_guide_web_server`.
+
 Configuration
 -------------
 
@@ -122,8 +127,8 @@ A smoke test that needs neither holdings nor a database::
     opus_log_analyzer --help
     opus_error_analyzer --help
 
-**Both forms of every command.** The installation declares three console scripts --
-``opus_import``, ``opus_log_analyzer`` and ``opus_error_analyzer`` -- and each is
+**Both forms of every command.** The installation declares the console scripts
+``opus_import``, ``opus_log_analyzer`` and ``opus_error_analyzer``, and each is
 equivalent to a ``python -m`` invocation, because both reach the same ``main``:
 
 =========================  =========================================
@@ -198,7 +203,7 @@ Both trigger the same way: on a push or a pull request against the branches thei
 ``on:`` block names, on a daily schedule, and on demand through
 ``workflow_dispatch``. Read the branch list out of the workflow rather than from here.
 
-``run-tests.yml`` runs on GitHub-hosted runners and has five jobs: **Run Lint** (ruff,
+``run-tests.yml`` runs on GitHub-hosted runners. Its jobs are **Run Lint** (ruff,
 bandit, vulture, mypy, PyMarkdown), **Unit Tests** on Python 3.12 and 3.13, **Import
 Tests**, **Docs** (the same ``-W -n`` Sphinx build as above), and **Package**. None of
 them needs holdings; **Import Tests** is the only one that needs a database, and it

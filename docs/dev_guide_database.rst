@@ -634,7 +634,7 @@ The fields of ``user_searches`` are:
 * ``id``: A unique ID. This unique ID is also used to identify the particular associated ``cache_N`` table.
 * ``timestamp``: The date and time this row was last modified.
 
-Only if all four fields ``selections``, ``qtypes``, ``units``, and ``order`` match is a search considered to have been previously performed.
+Only if all of the fields ``selections``, ``qtypes``, ``units``, and ``order`` match is a search considered to have been previously performed.
 
 The ``cache_*`` tables each contain all of the results from one search. Each row represents one OPUS ID in the search results. The fields of ``cache_*`` are:
 

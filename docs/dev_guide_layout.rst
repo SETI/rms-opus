@@ -13,7 +13,8 @@ differs by package: :mod:`opus_import` uses :mod:`importlib.resources`, the log 
 loads its Jinja templates by package name, and the Django app's templates and static
 files are found by Django's own loaders.
 
-The tree below annotates the directories and files a developer works in.
+The tree below annotates the directories and files a developer works in. Where a
+directory has a chapter of its own, it is named beside it.
 
 ::
 
@@ -59,7 +60,8 @@ The tree below annotates the directories and files a developer works in.
     │   │   ├── steps/                    # the do_* steps; four do_import_* modules are
     │   │   │                             #   internals of do_import, not steps
     │   │   ├── table_schemas/            # package data: the JSON that defines every OPUS table
-    │   │   ├── dictionary_data/          # package data: the dictionary context tree
+    │   │   ├── dictionary_data/          # package data: contexts.csv, the dictionary's
+    │   │   │                             #   context tree
     │   │   └── util/                     # hand-run authoring tools, not part of a run
     │   ├── opus_app/             # the Django project
     │   │   ├── settings.py, urls.py, wsgi.py
@@ -117,3 +119,50 @@ Part of ``docs/`` is generated rather than written:
 ``scripts/models/create_opus_models.sh``, from a populated database -- but it *is*
 committed, because rebuilding it needs a database. It is excluded from ruff for the
 same reason, and a hand edit to it does not survive the next regeneration.
+:ref:`dev_guide_webapp_search_models` describes what it holds and how to regenerate it.
+
+Which chapter covers what
+-------------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 44 56
+
+   * - Directory
+     - Chapter
+   * - ``src/opus_import/`` -- the pipeline as a whole
+     - :ref:`dev_guide_import`, :ref:`dev_guide_import_running`
+   * - ``src/opus_import/config_*``, ``instruments.py``
+     - :ref:`dev_guide_import_config`
+   * - ``src/opus_import/steps/``
+     - :ref:`dev_guide_import_steps`
+   * - ``src/opus_import/obs/``
+     - :ref:`dev_guide_import_obs`, :ref:`dev_guide_import_obs_classes`
+   * - ``src/opus_import/importdb/``, ``import_util.py``
+     - :ref:`dev_guide_import_db`
+   * - ``src/opus_import/context.py``, ``cli.py``, ``util/``
+     - :ref:`dev_guide_import`, :ref:`dev_guide_import_running`
+   * - ``src/opus_import/table_schemas/``
+     - :ref:`dev_guide_table_schemas`
+   * - ``src/opus_import/dictionary_data/``
+     - :ref:`dev_guide_dictionary`
+   * - ``src/opus_app/`` -- the project as a whole
+     - :ref:`dev_guide_webapp`, :ref:`dev_guide_webapp_running`
+   * - ``src/opus_app/apps/tools/``
+     - :ref:`dev_guide_webapp_tools`
+   * - ``src/opus_app/apps/search/``
+     - :ref:`dev_guide_webapp_search`
+   * - ``src/opus_app/apps/{results,metadata,cart}/``
+     - :ref:`dev_guide_webapp_results`
+   * - ``src/opus_app/apps/{ui,help,paraminfo}/``, ``templates/``, ``static/``
+     - :ref:`dev_guide_webapp_ui`
+   * - ``src/opus_config/``, ``src/opus_support/``
+     - :ref:`dev_guide_support`
+   * - ``src/opus_log_analyzer/``
+     - :ref:`dev_guide_log_analyzer`
+   * - ``tests/``, ``import_tests/``, ``integration_tests/``
+     - :ref:`dev_guide_testing`, :ref:`dev_guide_import_fixture`
+   * - ``scripts/server/``
+     - :ref:`dev_guide_deployment`
+   * - ``.github/workflows/``
+     - :ref:`dev_guide_environment`

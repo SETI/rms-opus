@@ -145,7 +145,7 @@ dev = [
 docs = [
   "myst-parser",
   "sphinx>=7",
-  "sphinxcontrib-mermaid",
+  "sphinxcontrib-mermaid>=0.9.2",
   "sphinx-rtd-theme",
 ]
 
