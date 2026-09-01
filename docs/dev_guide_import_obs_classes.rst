@@ -14,6 +14,7 @@ class's file is named ``obs_volume_*`` for a PDS3 volume set and ``obs_bundle_*`
 PDS4 bundle.
 
 .. mermaid::
+    :zoom:
 
     classDiagram
         class ObsBase {

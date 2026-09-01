@@ -17,6 +17,7 @@ The order, and what forces it
 -----------------------------
 
 .. mermaid::
+    :zoom:
 
     flowchart TD
         C1[do_cart:<br/>create the empty cart table]

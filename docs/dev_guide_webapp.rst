@@ -23,6 +23,7 @@ The request lifecycle
 ---------------------
 
 .. mermaid::
+    :zoom:
 
     flowchart TD
         R([HTTP request]) --> M[MIDDLEWARE:<br/>cache update, gzip, common, session,<br/>auth, CSRF, messages, cache fetch,<br/>StripWhitespaceMiddleware]

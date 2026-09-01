@@ -220,6 +220,7 @@ The shape of it
 ~~~~~~~~~~~~~~~
 
 .. mermaid::
+    :zoom:
 
     classDiagram
         class Expr {

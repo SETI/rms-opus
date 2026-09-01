@@ -23,6 +23,7 @@ and :exc:`~opus_import.importdb.super.ImportDBError`, the one exception the laye
 raises. A failed database operation always aborts the import.
 
 .. mermaid::
+    :zoom:
 
     classDiagram
         class ImportDBSuper {

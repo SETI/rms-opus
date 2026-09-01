@@ -23,6 +23,7 @@ What a run produces
 An import run turns the index tables of a set of bundles into the whole OPUS database:
 
 .. mermaid::
+    :zoom:
 
     flowchart TD
         H[(PDS3 and PDS4 holdings:<br/>primary index, summary and<br/>supplemental index files, shelves)]

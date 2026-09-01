@@ -12,6 +12,7 @@ This is the one-page map. Read it before either subsystem's chapters:
 :ref:`dev_guide_import` for the pipeline, :ref:`dev_guide_webapp` for the application.
 
 .. mermaid::
+    :zoom:
 
     flowchart LR
         holdings[(PDS3 and PDS4 holdings)]
@@ -39,6 +40,7 @@ An import run turns one PDS index file into one row per observation in each of t
 that observation belongs to.
 
 .. mermaid::
+    :zoom:
 
     flowchart TD
         A[A bundle descriptor on the command line] --> B[config_bundle_info:<br/>which index files and which obs class]
@@ -103,6 +105,7 @@ view, and -- for anything that searches -- reaches the database through a cache 
 built once per distinct search.
 
 .. mermaid::
+    :zoom:
 
     flowchart TD
         R([HTTP request]) --> U[opus_app.urls:<br/>each app contributes its routes]

@@ -251,9 +251,9 @@ html_css_files = ['custom.css']
 # the build needs nothing installed beyond the Python dependencies.
 mermaid_output_format = 'raw'
 
-# Wrap every rendered diagram in a d3 pan/zoom surface, so a reader can drag and
-# scale the large class diagrams instead of squinting at a page-width image.
-mermaid_d3_zoom = True
+# Pan and zoom is asked for per diagram, with the directive's `:zoom:` option, rather
+# than through the extension's global `mermaid_d3_zoom`. The global switch injects d3
+# into every page in the tree, including the ones with no diagram on them.
 
 # -- MyST ---------------------------------------------------------------------
 
