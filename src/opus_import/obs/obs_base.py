@@ -180,9 +180,7 @@ class ObsBase:
         Returns:
             A ``Pds3File`` or ``Pds4File``, which is what supplies the OPUS id and the
             browse products. ``PdsFile`` is the base both derive from, so it is what
-            the two overrides have in common, and it is really checked: ``pdsfile``
-            ships ``py.typed``, so it carries no ``ignore_missing_imports`` entry and
-            every call on the returned object is type-checked.
+            the two overrides have in common.
 
         Raises:
             NotImplementedError: Always; a PDS-version subclass must override this.
