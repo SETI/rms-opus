@@ -182,7 +182,7 @@ HEAD except the docstring one, which is now a narrow, written-down exemption.
 | 8 | Entry point assumes a specific repo layout (Medium) | **Fixed** | Three console scripts; package data reached through `importlib.resources`, not `__file__`. |
 | 8 | `opus/import/README.md` is a scratchpad TODO list (Low) | **Fixed** | The file is gone. Its content — `apt-get` lines and a twelve-item TODO list, verified on `origin/main` — is replaced by eight `dev_guide_import*.rst` chapters. |
 | 8 | Good internal docs exist (`database_schema.md`, `opus_id_format.md`) (affirmation) | **Still true — carried forward** | Both files are gone from their old location; their content lives in `docs/dev_guide_database.rst` (the chapter the reviewer's suggestion to "cross-reference from README" now points at) and `docs/dev_guide_opus_id.rst` (533 lines). |
-| 9 | 13 TODO/TODOPDS4/XXX markers (High) | **Partially fixed** | 27 markers in `src/` repo-wide (5 `TODO`, 9 `TODOPDS4`, 16 `XXX`). The new import critique counts 13 in its own scope with `TODOPDS4` now functioning as a searchable category; the new app critique counts 8 unlinked `XXX` in `ui/views.py` alone. |
+| 9 | 13 TODO/TODOPDS4/XXX markers (High) | **Partially fixed** | **27 marker lines.** Rule, stated inline so the figure is checkable: *lines* under `src/` matching any of `TODO`, `FIXME`, `XXX` or `HACK`, restricted to Python source with `--include=*.py`. Breakdown, same units: 5 `TODO` + 9 `TODOPDS4` + 13 `XXX` = 27; `FIXME` and `HACK` are zero. Of the 13 `XXX` lines, three (`search/views.py:611`, `:639`, `:664`) use `XXX` as a slug placeholder — `# XXX=5 then they also say qtype-XXX=all` — not as a marker, so **24 lines carry a genuine marker**. The `--include=*.py` restriction is deliberate and load-bearing: sweeping every file type under `src/` gives 25 `XXX` lines and 11 `TODO` lines, but the additions are in the front end this report treats as deferred (§3), in four JSON table schemas where `XXX` is data (a NAIF-ID or MIPL-code placeholder inside a product definition), and in vendored third-party code — Django's bundled admin JavaScript and the tooltipster CDN fallback. `TODOPDS4` now functions as a searchable category (9 of the 27). Cross-checks hold: the new app critique's 8 unlinked `XXX` in `ui/views.py` is confirmed exactly, and the new import critique counts 13 within its own package scope. |
 | 9 | Five specific potential bugs (High) | **Fixed — 5 of 5** | Verified individually; see the executive summary. |
 | 9 | Pervasive magic numbers (Medium) | **Partially fixed** | `MICRONS_PER_CM = 10000.0` (`obs_wavelength.py:16`) and `EIGHT_/TWELVE_/SIXTEEN_BIT_IMAGE_LEVELS` (`obs_type_image.py:14-16`) exist and are imported across files. But `* 10000  # cm -> micron` still appears twice in `obs_volume_corss_8xxx.py:60,63`, and there is no shared constants module. |
 | 9 | README TODO list indicates deferred work (Medium) | **Fixed** | The list is gone with the file. |
@@ -455,13 +455,27 @@ everyone who installs the distribution as published, and it is the single strong
 remains." Its ancestor is the old import critique's §8 "dependencies not declared" — the same class
 of defect, recreated one level up.
 
-**2. Four unauthenticated query strings turn into HTTP 500s, and one public parameter does the
+> **[Note added after analysis.]** This report is a dated snapshot of `2bfc2a0e` and every citation
+> in it is anchored there. Two of this paragraph's anchors have since moved within the same pull
+> request that ships it. The `obs_base.py:183-185` docstring sentence quoted above was **deleted by
+> commit `67714dfc`**, so the "and a docstring asserts the opposite" half of this finding is fixed;
+> it is left standing as the record of what the two independent critiques found, not as an open
+> defect. The workflow line numbers were invalidated by commit `f91c6ec0`, which trimmed both files;
+> the six install steps themselves were deliberately kept as infrastructure, so the finding's
+> substance is unchanged — locate them with `grep -n "rms-pdsfile @ git" .github/workflows/*.yml`
+> rather than by line number. Note that a single-line `grep` for `pip install "rms-pdsfile` finds
+> only five: the sixth, in the Package job, is a line continuation. That is why this report says six
+> where the import critique says five.
+
+**2. Three unauthenticated query strings turn into HTTP 500s, and one public parameter does the
 opposite of what it documents** (app §2, High). `parse_order_slug(',')` raises `IndexError`
 (`search/views.py:2175`); `?=x` on any search endpoint raises `IndexError`
-(`search/views.py:1382`); `?hierarchical=x` on `__cart/download.json` is unguarded
-(`cart/views.py:729`); and `url_file_only = request.GET.get('urlonly', 0)` (`cart/views.py:569`)
-tests a raw query-string value for truth, so the documented spelling `urlonly=0` returns an archive
-with no data products. Each writes a full traceback through `log.exception`. The reviewer notes that
+(`search/views.py:1382`); and `?hierarchical=x` on `__cart/download.json` is unguarded
+(`cart/views.py:729`). Each of those three writes a full traceback through `log.exception`.
+Separately, `url_file_only = request.GET.get('urlonly', 0)` (`cart/views.py:569`) tests a raw
+query-string value for truth, so the documented spelling `urlonly=0` returns HTTP 200 carrying an
+archive with no data products — a wrong result rather than a 500, and one the golden suite pins
+(`test_cart_api.py:4054-4067`). The reviewer notes that
 `api_normalize_url` handles the empty order component correctly — the two parsers disagree about the
 same input.
 

@@ -18,20 +18,27 @@ command, named where it is not obvious; nothing is estimated.
 
 ## Summary
 
-This is a well-run codebase. Every automated gate the project sets for itself passes on this tree:
-`ruff check` and `ruff format --check` are clean over all 100 modules, `bandit` reports zero
-findings, `vulture` is clean, and `mypy --strict` over `src tests import_tests` (226 source files)
-produces **no error of any kind except one repeated `import-untyped` for `pdsfile`**. Every one of
-the 1,604 functions in scope carries complete parameter and return annotations, and every module
-and every class carries a docstring. The SQL layer validates every identifier against
-`\A[A-Za-z0-9_]+\Z` before backtick-quoting it and binds every value as a `%s` parameter; I could
-not construct an injection path through it. `opus_config` and `opus_support` are at **100%
-statement and branch coverage**, measured.
+This is a well-run codebase. The gates that do not depend on the installed environment all pass on
+this tree: `ruff check` and `ruff format --check` are clean over all 100 modules, `bandit` reports
+zero findings, and `vulture` is clean. The type gate is the one exception, and its result depends on
+which `rms-pdsfile` is installed — which is the first finding below. Against the **declared**
+dependency set (`rms-pdsfile>=0.0.18`, and 0.0.18 is what a fresh resolve installs), `mypy --strict`
+over `src tests import_tests` (226 source files) reports **20 errors in 14 files — every one of them
+`import-untyped` for `pdsfile`, and no other mypy error of any kind**. CI does not see them: every
+job replaces the declared dependency with an unreleased branch tip before `mypy` runs, and the lint
+job is green, so that build evidently carries the marker no release does. The distinction is worth
+stating rather than averaging: *the code* typechecks cleanly under `strict`, and what fails is the
+claim that it does so against the dependencies the distribution declares. Every one of the 1,604
+functions in scope carries complete parameter and return annotations, and every module and every
+class carries a docstring. The SQL layer validates every identifier against `\A[A-Za-z0-9_]+\Z`
+before backtick-quoting it and binds every value as a `%s` parameter; I could not construct an
+injection path through it. `opus_config` and `opus_support` are at **100% statement and branch
+coverage**, measured.
 
 Three things are worth acting on. First, the declared dependency on `rms-pdsfile>=0.0.18` is not
-what CI tests and does not typecheck: every CI job replaces it with an unpinned git branch tip, no
-PyPI release of that package ships `py.typed`, and a docstring in `obs_base.py` asserts as fact that
-it does. Second, the two functions that perform the actual import — `import_one_index` (612 lines)
+what CI tests and does not typecheck: every CI job replaces it with an unpinned git branch tip, and
+no PyPI release of that package ships `py.typed`, so the strict-mypy gate cannot be reproduced from
+the dependencies the distribution declares. Second, the two functions that perform the actual import — `import_one_index` (612 lines)
 and `import_observation_table` (350 lines) — are by a wide margin the largest and most deeply
 nested code in the tree and are the least covered by the fast test tier (3% and 6%); the pipeline's
 real coverage lives in a suite that needs a MySQL server, so a developer running the documented
@@ -250,33 +257,42 @@ retire it.
 
 ## 3. Types and static checks
 
-- **Finding (High): The declared `rms-pdsfile` dependency does not typecheck, and a docstring says
-  otherwise.** **Evidence, all measured:**
+- **Finding (High): The declared `rms-pdsfile` dependency does not typecheck.** **Evidence:** the
+  mypy run and the wheel inspection below were measured on the analyzed tree (`2bfc2a0e`); the
+  `pyproject.toml` and CI facts are re-verified at `67714dfc`, this PR's head, where the cited
+  `pyproject.toml` lines are unchanged.
   - `pyproject.toml:31` declares `rms-pdsfile>=0.0.18`, and `[[tool.mypy.overrides]]`
     (`pyproject.toml:343-346`) lists `julian`, `pdfkit`, `pdslogger`, `pdsparser`, `pdstable` and
     `rest_framework` — **not** `pdsfile`.
-  - `OPUS_CONFIG=... mypy src tests import_tests` on this tree reports **20 errors in 14 files, all
-    of them `import-untyped` for `pdsfile`** (8 of them in `src/opus_import/`). There is no other
-    mypy error of any kind.
-  - The installed `rms-pdsfile` is 0.0.18 — exactly the declared floor — and has no `py.typed`.
+  - With the declared dependency installed, `OPUS_CONFIG=... mypy src tests import_tests` reports
+    **20 errors in 14 files, all of them `import-untyped` for `pdsfile`** (8 of them in
+    `src/opus_import/`). There is no other mypy error of any kind, so this is the whole of the
+    difference between the declared environment and CI's.
+  - The installed `rms-pdsfile` was 0.0.18 — exactly the declared floor — and has no `py.typed`.
     I downloaded the current release, 0.1.2, and inspected the wheel: **also no `py.typed`.** No
-    published release satisfies the docstring's claim.
-  - Every CI job replaces the declared dependency: `.github/workflows/run-tests.yml:102,196,296,377`
-    and `run-integration.yml:141` each run
+    published release ships the marker.
+  - Every CI job replaces the declared dependency before the checks run:
+    `.github/workflows/run-tests.yml:66,134,197,258,315` and `run-integration.yml:91` each run
     `pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"` — an unpinned
-    branch tip — *after* `pip install -e ".[dev]"` and before `mypy` runs at line 138.
-  - `src/opus_import/obs/obs_base.py:183-185` states as fact: *"``pdsfile`` ships ``py.typed``, so
-    it carries no ``ignore_missing_imports`` entry and every call on the returned object is
-    type-checked."*
+    branch tip. In the lint job that install (line 66) sits between `pip install -e ".[dev]"`
+    (line 61) and `mypy $MYPY_PATHS` (line 90), which is why the gate is green there.
 
-  **Impact:** the type gate passes only against an unreleased branch. Anyone who installs the
-  distribution as declared gets a `pdsfile` that CI has never tested, and running the project's own
-  `scripts/run-all-checks.sh` against the declared dependency set fails. This is the exact failure
-  mode `pyproject.toml` already guards against elsewhere and explains at length — the `types-requests`
+  **Impact:** this is a development-reproducibility failure, not a runtime one — a missing
+  `py.typed` breaks a type check, not an import. The strict-mypy gate cannot be reproduced from the
+  dependencies the distribution declares: `pip install -e ".[dev]"` followed by
+  `scripts/run-all-checks.sh` fails on 20 errors CI never sees, and anyone installing the
+  distribution as declared gets a `pdsfile` build CI has not tested. This is the exact failure mode
+  `pyproject.toml` already guards against elsewhere and explains at length — the `types-requests`
   comment (lines 97–101) says the stubs exist *"so [that] the type gate [is] independent of which
   requests a resolve happens to pick."* **Suggestion:** either floor `rms-pdsfile` at the first
   release that ships `py.typed` (and pin CI to it rather than a branch), or add a `pdsfile.*` entry
-  to `[[tool.mypy.overrides]]` with the reason, and correct the `obs_base.py` docstring either way.
+  to `[[tool.mypy.overrides]]` with the reason.
+
+  **Record:** at the analyzed tree (`2bfc2a0e`), `src/opus_import/obs/obs_base.py:183-185`
+  additionally stated as fact that *"``pdsfile`` ships ``py.typed``, so it carries no
+  ``ignore_missing_imports`` entry and every call on the returned object is type-checked."* Commit
+  `67714dfc`, later in this same PR, deleted that sentence, and the docstring no longer makes the
+  claim. The four evidence items above are unaffected.
 
 - **Finding (Medium): 1,186 functions have no docstring, all of one kind.** `python.mdc` §6:
   *"ALWAYS include a docstring for every module, class, function, and method."* **Evidence:** an AST
@@ -836,10 +852,9 @@ before keeping, and I note where I graded a finding differently.)*
 
 1. **Reconcile `rms-pdsfile` between `pyproject.toml`, CI and the docstring** (§3, §8). This is the
    only finding that affects everyone who installs the distribution: the declared dependency does
-   not typecheck, no released version ships `py.typed`, five CI jobs replace it with a branch tip,
+   not typecheck, no released version ships `py.typed`, six CI jobs replace it with a branch tip,
    and `obs_base.py:183-185` asserts the opposite. Raise the floor to a `py.typed`-shipping release
-   and delete the override steps, or add the `[[tool.mypy.overrides]]` entry — and fix the docstring
-   either way.
+   and delete the override steps, or add the `[[tool.mypy.overrides]]` entry.
 
 2. **Break up `import_one_index` and `import_observation_table`, starting with the pieces that can
    be unit-tested without MySQL** (§1, §4). 612 and 350 lines at nesting depth 8, covered 3% and 6%

@@ -34,9 +34,12 @@ statements), `ui/views.py` (890), `results/views.py` (754), `cart/views.py` (633
 **Second, the view layer is where the structural debt lives**: `api_normalize_url` is
 1,028 lines with 197 branch nodes in one function, and five modules exceed the 1,000-line
 limit `.cursor/rules/python.mdc` §2 states as ALWAYS. **Third, several unauthenticated
-inputs reach code that is not defensive about them** — four confirmed paths turn a
-malformed query string into an HTTP 500, one public download parameter does the opposite
-of what it says, and a module-level cache grows without bound from attacker-chosen keys.
+inputs reach code that is not defensive about them** — three confirmed paths turn a
+malformed query string into an HTTP 500, one public download parameter returns HTTP 200
+with the wrong archive, and a module-level cache grows without bound from attacker-chosen
+keys. (§7 traces two further 500 paths — an oversized `?searchurl=`, and a `?__sessionid=`
+that is not a bare identifier — but both were read rather than reproduced, so neither is
+in the confirmed count.)
 
 Top three priorities: close the query-string-to-500 paths and the `_PARAMINFO_CACHE`
 growth (§7); give the view layer holdings-free tests (§4); split `api_normalize_url` and
