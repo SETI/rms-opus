@@ -53,7 +53,7 @@ and the log locations all come from the configuration file, and the keys it uses
    * - ``[import] table_temp_prefix``
      - The import namespace's prefix, ``imp_`` by default.
 
-Three options override configuration values for one run without editing the file:
+These options override configuration values for one run without editing the file:
 ``--override-db-schema``, ``--override-pds3-data-dir`` and ``--override-pds4-data-dir``.
 Importing into a schema other than the one being served is what
 ``--override-db-schema`` is for, and it is how a production import is done.
@@ -70,7 +70,7 @@ holdings roots, connects to the database, and exits having changed nothing.
 Aggregates
 ~~~~~~~~~~
 
-Four options are shorthands that turn several others on. They accumulate rather than
+Some options are shorthands that turn several others on. They accumulate rather than
 exclude one another, so giving two of them switches on the union.
 
 .. list-table::

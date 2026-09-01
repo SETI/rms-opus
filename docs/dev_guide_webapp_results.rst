@@ -3,7 +3,7 @@
 Reading a Search: the ``results``, ``metadata`` and ``cart`` Apps
 =================================================================
 
-Three apps read from a completed search. :mod:`opus_app.apps.results` returns what the
+The apps that read from a completed search: :mod:`opus_app.apps.results` returns what the
 search *found*; :mod:`opus_app.apps.metadata` describes what is *searchable* and how many
 observations match; :mod:`opus_app.apps.cart` holds what a session has *selected* and
 builds the downloads.
@@ -16,7 +16,7 @@ all three go through one paging routine.
 The ``results`` app
 -------------------
 
-Twelve routed handlers, all reading and none writing. Every one that pages through
+Every routed handler here reads and none writes, and every one that pages through
 observations goes through :func:`~opus_app.apps.results.views.get_search_results_chunk`.
 
 .. list-table::
@@ -176,9 +176,9 @@ around a value searches for that exact value.
 The ``metadata`` app
 --------------------
 
-What is *searchable*, rather than what was found. Eight routes served by seven
-handlers, three of which are private wrappers that add a ``reqno`` echo. **The private
-ones are not themselves decorated**: each simply calls its public twin, which is where the
+What is *searchable*, rather than what was found. Three of its handlers are private
+wrappers that add a ``reqno`` echo. **The private ones are not themselves decorated**:
+each simply calls its public twin, which is where the
 :func:`~opus_app.apps.tools.app_utils.api_view` wrapping happens.
 
 .. list-table::

@@ -3,7 +3,7 @@
 Import Configuration Data
 =========================
 
-Three modules and one package answer the question "what exists?": which missions,
+A few modules and one package answer the question "what exists?": which missions,
 spacecraft and instruments OPUS knows, which bundles it can import and how, and which
 targets it can name. They are plain module-level constants -- the import reads them and
 never writes them -- and adding a mission, an instrument or a bundle means editing them.
@@ -16,8 +16,8 @@ recipe that puts them together.
 opus_import.config_data
 -----------------------
 
-The names, ids and orderings shared across missions and instruments. Nine constants,
-all read-only.
+The names, ids and orderings shared across missions and instruments. Every constant here
+is read-only.
 
 ``GROUP_FORM_TYPES``
 ~~~~~~~~~~~~~~~~~~~~
@@ -84,9 +84,9 @@ a table nobody fills.
 ``VOLSETS_WITH_PREVIEWS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The 21 volume sets that have browse products: the four Cassini ISS and CIRS sets, the
-Cassini UVIS and VIMS sets, EBROCC, Galileo, the five Hubble sets, the two New
-Horizons sets, and the four Voyager ISS sets. **Nothing reads it.**
+The volume sets that have browse products: the Cassini ISS and CIRS sets, the Cassini UVIS
+and VIMS sets, EBROCC, Galileo, the Hubble sets, the New Horizons sets, and the Voyager
+ISS sets. **Nothing reads it.**
 :meth:`~opus_import.obs.obs_general.ObsGeneral.field_obs_general_preview_images` decides
 whether an observation has previews by asking ``rms-pdsfile`` for a view set, not by
 consulting this list.
@@ -117,11 +117,11 @@ and how the user interface labels them.
      - Spacecraft id to display name, which is where ``Voyager 1`` and ``Voyager 2``
        are distinguished.
    * - ``INSTRUMENT_ID_TO_MISSION_ID``
-     - Instrument id to mission id, 17 entries. **Membership here is what makes an
+     - Instrument id to mission id. **Membership here is what makes an
        instrument id legal**: :func:`~opus_import.import_util.table_name_obs_instrument`
        asserts it.
    * - ``INSTRUMENT_ID_TO_INSTRUMENT_NAME``
-     - Instrument id to display name, 16 entries. Its comment says it holds the keys of
+     - Instrument id to display name. Its comment says it holds the keys of
        the map above; it does not hold ``CORSS``, which has no
        ``obs_instrument_corss`` table -- everything Cassini RSS records that OPUS
        searches on is an ``obs_profile`` column. See
@@ -148,7 +148,7 @@ entry whose expression matches the **whole** bundle id.
 A bundle id matching no entry is one OPUS does not know, and importing it is an error.
 
 :class:`~opus_import.config_bundle_info.BundleInfo` is a :class:`~typing.TypedDict`
-with five keys:
+with these keys:
 
 .. list-table::
    :header-rows: 1
@@ -189,8 +189,8 @@ expression selects the class directly.
 The registry
 ~~~~~~~~~~~~
 
-Twenty-nine entries: twenty-five PDS3 and four PDS4, of which four have no
-``instrument_class`` and are the bundles OPUS deliberately ignores.
+One entry per bundle set, PDS3 and PDS4. The entries with no ``instrument_class`` are the
+bundles OPUS deliberately ignores.
 
 .. list-table::
    :header-rows: 1
@@ -362,8 +362,8 @@ from the package, so a consumer writes ``config_targets.TARGET_NAME_INFO`` witho
 knowing which module it lives in.
 
 ``TARGET_NAME_INFO`` (:mod:`opus_import.config_targets.target_name_info`)
-    The master table: 445 entries mapping a canonical, upper-case target name to a
-    three-element tuple.
+    The master table: entries map a canonical, upper-case target name to a three-element
+    tuple.
 
     .. list-table::
        :header-rows: 1
@@ -394,26 +394,24 @@ knowing which module it lives in.
     it becomes ``OTHER``.
 
 ``TARGET_NAME_MAPPING`` (:mod:`opus_import.config_targets.target_name_mapping`)
-    269 entries folding an instrument's own spelling onto a canonical name, so that
-    observations of one body are searchable under one name whichever mission took them.
-    It is applied first, before the lookup above: ``_get_target_info`` upper-cases the
-    label's value, maps it through this table, and only then looks it up. The entries are
-    grouped by the archive that needs them -- COCIRS, COISS, COUVIS, HST, GOSSI, New
-    Horizons, a miscellaneous group, and a large block of star names. ``'VEGA'`` maps to
+    Entries fold an instrument's own spelling onto a canonical name, so that observations
+    of one body are searchable under one name whichever mission took them. It is applied
+    first, before the lookup above: ``_get_target_info`` upper-cases the label's value,
+    maps it through this table, and only then looks it up. The entries are grouped by the
+    archive that needs them -- COCIRS, COISS, COUVIS, HST, GOSSI, New Horizons, a
+    miscellaneous group, and a large block of star names. ``'VEGA'`` maps to
     ``'ALF_LYR'``; ``'S_RINGS'`` maps to ``'S RINGS'``; ``'2003UB313'`` maps to
     ``'ERIS'``.
 
 ``PLANET_GROUP_MAPPING`` (:mod:`opus_import.config_targets.planet_group_mapping`)
-    Eleven entries mapping a planet id -- plus ``OTHER`` and None -- to the label and
-    sort key the search form groups targets under. ``_get_planet_group_info`` reads it,
-    and a target with no planet, or one the tables do not describe, is grouped under
-    ``OTHER``.
+    Entries map a planet id -- plus ``OTHER`` and None -- to the label and sort key the
+    search form groups targets under. ``_get_planet_group_info`` reads it, and a target
+    with no planet, or one the tables do not describe, is grouped under ``OTHER``.
 
 ``STAR_RA_DEC`` (:mod:`opus_import.config_targets.star_ra_dec`)
-    190 entries mapping a star name to its ``(right ascension, declination)`` in
-    degrees, J2000. It is checked in rather than fetched, so an import needs no network
-    access. ``_prof_ra_dec_helper`` reads it to give an occultation's source star a
-    position.
+    Entries map a star name to its ``(right ascension, declination)`` in degrees, J2000.
+    It is checked in rather than fetched, so an import needs no network access.
+    ``_prof_ra_dec_helper`` reads it to give an occultation's source star a position.
 
     :mod:`opus_import.util.retrieve_ra_dec` prints entries in this format; see
     :ref:`dev_guide_import_running` for the one rule about using its output.

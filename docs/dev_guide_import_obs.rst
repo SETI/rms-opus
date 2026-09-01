@@ -9,7 +9,7 @@ computes a column's value. One instance is created per bundle, and
 ``field_obs_<table>_<column>`` method once per column of each table the bundle fills.
 **Everything about the hierarchy exists to decide which class that call lands on.**
 
-This chapter covers the root, the PDS-version split, the nine table modules and the two
+This chapter covers the root, the PDS-version split, the table modules and the two
 assembly classes -- the parts every bundle shares.
 :ref:`dev_guide_import_obs_classes` covers the mission and volume-set classes above
 them.
@@ -148,8 +148,8 @@ same way while still failing loudly for one that has to answer it itself.
 
 **The diagram marks a class abstract where it *introduces* such a member**, not where it
 merely inherits one. By the second reading almost every class above is abstract, because
-:class:`~opus_import.obs.obs_base.ObsBase`'s eight raising members are inherited all the
-way down: none of these classes can be instantiated and asked for a row.
+:class:`~opus_import.obs.obs_base.ObsBase`'s raising members are inherited all the way
+down: none of these classes can be instantiated and asked for a row.
 :class:`~opus_import.obs.obs_general_pds4.ObsGeneralPDS4` is the clearest case -- it
 introduces nothing at all, and exists only to put the PDS4 base into a class's ancestry.
 The first class in any of these chains that can actually compute a row is a leaf.
@@ -168,9 +168,9 @@ file specification comes from, and what the time columns are called.
 their own.
 
 **Two assembly classes.** :class:`~opus_import.obs.obs_common_pds3.ObsCommonPDS3` and
-:class:`~opus_import.obs.obs_common_pds4.ObsCommonPDS4` combine all nine table modules
-so that a mission class names one base instead of nine. Neither introduces behavior of
-its own; each exists so that the order the nine are combined in is written down once.
+:class:`~opus_import.obs.obs_common_pds4.ObsCommonPDS4` combine every table module so that
+a mission class names one base instead of all of them. Neither introduces behavior of its
+own; each exists so that the order they are combined in is written down once.
 
 **One module per mission, and one per bundle or volume set.** These are
 :ref:`dev_guide_import_obs_classes`.
@@ -312,7 +312,7 @@ class may read:
 The abstract contract
 ~~~~~~~~~~~~~~~~~~~~~
 
-Eight members raise :exc:`NotImplementedError`. Every one is answered somewhere between
+These members raise :exc:`NotImplementedError`. Every one is answered somewhere between
 here and the leaf class.
 
 .. list-table::
@@ -538,7 +538,7 @@ The PDS-version bases
 The table modules
 -----------------
 
-Nine modules, one per OPUS table. Each holds that table's ``field_obs_*`` methods, and
+One module per OPUS table. Each holds that table's ``field_obs_*`` methods, and
 each method fills the schema column its name ends in. Per the project's coding
 conventions, a ``field_obs_*`` method carries no individual docstring -- each class says
 so once in its own -- because the authoritative statement of what one returns is its
@@ -637,10 +637,10 @@ ObsProfile -- ``obs_profile``
 :class:`opus_import.obs.obs_profile.ObsProfile`
 
 What an occultation profile records: its direction, its source, and its optical depth.
-Ten of its methods raise here, and both PDS-version variants
-(:class:`~opus_import.obs.obs_profile_pds3.ObsProfilePDS3` and
-:class:`~opus_import.obs.obs_profile_pds4.ObsProfilePDS4`) concretize all ten with
-empty defaults -- because the table has a row for *every* observation, so a bundle that
+Every field method beyond the standard identifiers raises here, and both PDS-version
+variants (:class:`~opus_import.obs.obs_profile_pds3.ObsProfilePDS3` and
+:class:`~opus_import.obs.obs_profile_pds4.ObsProfilePDS4`) concretize them all with empty
+defaults -- because the table has a row for *every* observation, so a bundle that
 is not an occultation must not be required to answer.
 
 Two helpers serve the occultation classes: ``_star_name_helper`` reads a star name out of
@@ -655,7 +655,7 @@ ObsRingGeometry -- ``obs_ring_geometry``
 :class:`opus_import.obs.obs_ring_geometry.ObsRingGeometry`
 
 Where the observation fell on a ring plane, and at what angles. It is the largest table
-module: 84 field methods, none abstract, almost all of them reading a column of the ring
+module, with no abstract methods and almost all of them reading a column of the ring
 geometry summary through ``_ring_geo_index_col``. They are grouped by radius and
 longitude, distance and resolution, observed lighting geometry, ring-center lighting
 geometry, edge-on viewing geometry, pole, image geometry and timing.
@@ -668,7 +668,7 @@ Two things in it are not a plain read:
   file's own ``..._WRT_NODE`` column first and fall back to the conversion, with a special
   case that keeps a 0--360 range as 0--360, because nothing else would make sense.
 * :meth:`~opus_import.obs.obs_ring_geometry.ObsRingGeometry.validate_ring_geo_fields`
-  reports a **gridless** value whose minimum and maximum disagree -- twelve column stems
+  reports a **gridless** value whose minimum and maximum disagree -- the column stems
   covering ring-center distance, the sub-solar and sub-observer longitudes, the
   ring-center angles and the two opening angles. It returns immediately when the
   bundle's ``temporal_camera`` flag is set, because such an observation legitimately
@@ -697,8 +697,8 @@ Surface geometry is three tables, because it answers three different questions.
     many-to-one mapping of rows to OPUS IDs.
 
 :class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` -- ``obs_surface_geometry__<TARGET>``
-    **Where the observation fell on one body's surface**: 62 field methods reading the
-    surface geometry summary row for the current target, grouped by planetographic and
+    **Where the observation fell on one body's surface**: field methods read the surface
+    geometry summary row for the current target, grouped by planetographic and
     planetocentric latitude, west longitude, distance and resolution, lighting geometry,
     pole and limb, image geometry and timing. The eight **east longitude** columns are
     computed rather than read, and are marked do-not-override: six are
@@ -706,7 +706,7 @@ Surface geometry is three tables, because it answers three different questions.
     west range as a 0--360 east range, since the formula would otherwise turn its 360 into
     0, and the two observer columns are the plain negation instead.
     :meth:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.validate_surface_geo_fields`
-    is the surface counterpart of the ring validator, over nine gridless stems.
+    is the surface counterpart of the ring validator, over its own gridless stems.
 
 .. _dev_guide_import_obs_target_template:
 
@@ -745,7 +745,7 @@ The assembly classes
 --------------------
 
 :class:`~opus_import.obs.obs_common_pds3.ObsCommonPDS3` and
-:class:`~opus_import.obs.obs_common_pds4.ObsCommonPDS4` each list the same nine table
+:class:`~opus_import.obs.obs_common_pds4.ObsCommonPDS4` each list the same table
 modules in the same order -- general, pds, type image, wavelength, profile, ring
 geometry, surface geometry, surface geometry name, surface geometry target -- differing
 only in the three PDS-version variants. That order is what decides which module wins

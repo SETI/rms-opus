@@ -3,10 +3,10 @@
 The Import Steps
 ================
 
-:mod:`opus_import.steps` holds thirteen modules. Nine of them are steps -- each driven
-by its own command-line option -- and four are the internals of the largest step,
-:mod:`~opus_import.steps.do_import`, which is big enough to live in five files. This
-chapter walks all thirteen.
+:mod:`opus_import.steps` holds the step modules. Most are steps -- each driven by its own
+command-line option -- and the rest are the internals of the largest step,
+:mod:`~opus_import.steps.do_import`, which is big enough to live in several files. This
+chapter walks them all.
 
 :ref:`dev_guide_import` gives the shape of a run; :ref:`dev_guide_import_running` gives
 the options. Nothing here is optional reading if you are changing the pipeline: the
@@ -90,7 +90,7 @@ opus_import.steps.do_import
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The observation import. Option: ``--import``, plus everything that implies it. It also
-owns the work for three options that are **not** steps of their own --
+owns the work for options that are **not** steps of their own --
 ``--drop-permanent-tables``, ``--delete-import-bundles`` and
 ``--analyze-permanent-tables`` -- because each has to happen at a particular point in
 this sequence.
@@ -138,7 +138,7 @@ opus_import.steps.do_param_info
 Builds ``param_info``, the table that tells the web application what the search form
 contains. Option: ``--create-param-info``.
 
-Three public functions:
+Its public functions:
 :func:`~opus_import.steps.do_param_info.create_import_param_info_table` builds the import
 table, :func:`~opus_import.steps.do_param_info.copy_param_info_from_import_to_permanent`
 copies it over, and :func:`~opus_import.steps.do_param_info.do_param_info` is the step
@@ -176,7 +176,7 @@ Builds ``partables``, which maps a value a user can search for onto the table of
 search parameters that value makes relevant -- choosing the Cassini mission reveals the
 Cassini mission table. Option: ``--create-partables``.
 
-Three public functions, in the same shape as
+Public functions, in the same shape as
 :mod:`~opus_import.steps.do_param_info`'s:
 :func:`~opus_import.steps.do_partables.create_import_partables_table`,
 :func:`~opus_import.steps.do_partables.copy_partables_from_import_to_permanent` and
@@ -223,7 +223,7 @@ opus_import.steps.do_table_names
 Builds ``table_names``, which names and orders the "Constraints" categories the search
 form and the Details tab are divided into. Option: ``--create-table-names``.
 
-Four public functions:
+Its public functions:
 :func:`~opus_import.steps.do_table_names.build_table_names_rows`,
 :func:`~opus_import.steps.do_table_names.create_import_table_names_table`,
 :func:`~opus_import.steps.do_table_names.copy_table_names_from_import_to_permanent` and
@@ -341,7 +341,7 @@ Fills ``contexts`` and ``definitions``, which is where every tooltip in the user
 interface comes from. Option: ``--import-dictionary``. It is the last thing a run does.
 :ref:`dev_guide_dictionary` describes the two tables and where their content comes from.
 
-Four public functions:
+Its public functions:
 :func:`~opus_import.steps.do_dictionary.create_import_contexts_table` and
 :func:`~opus_import.steps.do_dictionary.create_import_definitions_table` build the two
 import tables, :func:`~opus_import.steps.do_dictionary.copy_dictionary_from_import_to_permanent`
@@ -483,7 +483,7 @@ opus_import.steps.do_import_mult
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Reading, caching and writing the ``mult_`` tables that hold the enumerated values of
-the ``obs_`` columns. Five public functions:
+the ``obs_`` columns. Its public functions:
 :func:`~opus_import.steps.do_import_mult.read_or_create_mult_table` fetches one table
 into the run's cache, :func:`~opus_import.steps.do_import_mult.mult_table_lookup_id`
 finds an existing value's row id without adding one,

@@ -63,7 +63,7 @@ saying which one to use.
 
 1. **Add an entry to** ``BUNDLE_INFO`` **in**
    :mod:`opus_import.config_bundle_info`. :ref:`dev_guide_import_config_bundle_info`
-   describes all five keys. Put it where its regular expression will not be shadowed by
+   describes every key. Put it where its regular expression will not be shadowed by
    an earlier, broader one: :func:`~opus_import.steps.do_import_tables.lookup_vol_info`
    takes the **first** match.
 2. **Add the leaf class**, in ``src/opus_import/obs/obs_volume_<name>.py`` for a PDS3
@@ -253,7 +253,7 @@ The pipeline's database layer is written against an abstraction with room for a 
 brand, and :mod:`opus_import.importdb.postgresql` is the stub kept so that adding one is
 a matter of filling it in.
 
-1. **Implement the sixteen abstract members** of
+1. **Implement every abstract member** of
    :class:`~opus_import.importdb.super.ImportDBSuper`, listed in
    :ref:`dev_guide_import_db_importdb`. Two of their contracts are not optional:
    :meth:`~opus_import.importdb.super.ImportDBSuper.table_names` must return its names

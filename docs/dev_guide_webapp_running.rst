@@ -180,9 +180,9 @@ configuration puts every path it opens directly under ``/tmp``.
 Each OPUS app has its own logger entry, and each key **must be a prefix of the app
 modules' actual names** -- they call ``logging.getLogger(__name__)``, giving names like
 ``opus_app.apps.cart.views``. A key that prefixes no real logger silently stops that
-app's records reaching the log file. There are nine entries for eight apps: the ninth,
-``opus_app.apps.search.forms``, is already covered by the ``opus_app.apps.search``
-prefix and changes nothing.
+app's records reaching the log file. One entry is redundant:
+``opus_app.apps.search.forms`` is already covered by the ``opus_app.apps.search`` prefix
+and changes nothing.
 
 Setting ``log_api_calls`` to a level name logs every API call's entry and exit. It is
 false in every normal deployment.

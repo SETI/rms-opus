@@ -95,10 +95,10 @@ name**. That is the property to preserve when adding one.
 The abstract contract
 ~~~~~~~~~~~~~~~~~~~~~
 
-:class:`~opus_import.importdb.super.ImportDBSuper` declares 27 members. Eleven are
-implemented in the base class because they are the same for any brand; the other sixteen
-raise :exc:`NotImplementedError` and are what a brand supplies. Like the obs hierarchy,
-this is an abstract class by convention rather than through :mod:`abc`.
+:class:`~opus_import.importdb.super.ImportDBSuper` declares the whole database interface.
+Some members are implemented in the base class because they are the same for any brand;
+the rest raise :exc:`NotImplementedError` and are what a brand supplies. Like the obs
+hierarchy, this is an abstract class by convention rather than through :mod:`abc`.
 
 .. list-table::
    :header-rows: 1
@@ -143,7 +143,7 @@ this is an abstract class by convention rather than through :mod:`abc`.
    * - ``_execute_and_fetchall(cmd, func_name, param_list=None)``
      - Execute one query and return every row of its result.
 
-The eleven concrete members are the constructor, the two namespace converters and their
+The concrete members are the constructor, the two namespace converters and their
 two predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
 collector ``_make_warning_handler``, and the ``_enter``/``_exit`` pair. The two

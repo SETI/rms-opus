@@ -331,14 +331,14 @@ The generated models
 
 ``src/opus_app/apps/search/models.py`` is **machine-written** by
 ``scripts/models/create_opus_models.sh`` from a populated database, and it is the largest
-Python file in the repository. It holds 231 model classes:
+Python file in the repository. Its model classes are:
 
 * one per ``obs_`` table;
 * one per ``mult_`` table;
 * ``Partables``, ``TableNames`` and ``UserSearches``;
 * and a ``ZZ``-prefixed model for every other table the database happens to hold -- the
-  Django contrib tables, and the four OPUS tables that have hand-written models in the
-  apps that own them.
+  Django contrib tables, and the OPUS tables that have hand-written models in the apps
+  that own them.
 
 **The ``ZZ`` prefix is the generator's way of saying "a model exists for this table and
 nothing should use it."** The class name is otherwise the table name with each

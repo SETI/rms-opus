@@ -5,13 +5,12 @@ The Obs Classes, Mission by Mission
 
 Above the table modules of :ref:`dev_guide_import_obs` sit two more layers: **one class
 per mission**, for what an instrument's archives share, and **one class per volume set
-or bundle**, the leaf, which knows how one particular archive spells things. There are
-37 of them, and this chapter names every one.
+or bundle**, the leaf, which knows how one particular archive spells things. This chapter
+names every one of them.
 
-Twelve are shared classes that no ``BUNDLE_INFO`` entry names directly; twenty-five are
-leaves, and each is the ``instrument_class`` of exactly one registry entry. A leaf
-class's file is named ``obs_volume_*`` for a PDS3 volume set and ``obs_bundle_*`` for a
-PDS4 bundle.
+Some are shared classes that no ``BUNDLE_INFO`` entry names directly; the rest are leaves,
+and each is the ``instrument_class`` of exactly one registry entry. A leaf class's file is
+named ``obs_volume_*`` for a PDS3 volume set and ``obs_bundle_*`` for a PDS4 bundle.
 
 .. mermaid::
     :zoom:
@@ -133,9 +132,9 @@ Three naming traps, worth knowing before you go looking for a file:
 Cassini
 -------
 
-Fifteen classes -- more than any other mission, because Cassini contributes four
-imaging and spectroscopy instruments plus three ring-occultation volume sets and two
-PDS4 bundles. Five of them are shared and ten are leaves.
+More classes than any other mission, because Cassini contributes imaging and spectroscopy
+instruments plus ring-occultation volume sets and PDS4 bundles. Some are shared and the
+rest are leaves.
 
 Shared: ObsCassiniCommon
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -383,7 +382,7 @@ Leaf: ObsBundleCassiniUvisSolarOccBeckerJarmak
 :class:`opus_import.obs.obs_bundle_cassini_uvis_solarocc_beckerjarmak2023.ObsBundleCassiniUvisSolarOccBeckerJarmak`
 
 **cassini_uvis_solarocc_beckerjarmak2023** -- Cassini UVIS **solar** occultations of
-Saturn's rings, in PDS4. One of three classes with two bases, combining the PDS4
+Saturn's rings, in PDS4. One of the classes with two bases, combining the PDS4
 occultation machinery with the Cassini mission knowledge.
 
 The occultation type is solar and the source is the Sun. Right ascension and declination

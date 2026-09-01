@@ -3,11 +3,11 @@
 The Shared Machinery: the ``tools`` App
 =======================================
 
-:mod:`opus_app.apps.tools` is what the other seven apps share. It is a Django app so
+:mod:`opus_app.apps.tools` is what every other app shares. It is a Django app so
 that its two dictionary models are registered, but it routes no URLs and serves no
 pages: everything in it is called from somewhere else.
 
-Seven modules, each covered in full below.
+Each of its modules is covered in full below.
 
 .. list-table::
    :header-rows: 1

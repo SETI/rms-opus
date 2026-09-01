@@ -14,7 +14,7 @@ an import removes the first two.
 This chapter is the *why*. The chapters after it are the *what*:
 :ref:`dev_guide_webapp_running` is how to run it, :ref:`dev_guide_webapp_tools` is the
 machinery every app shares, :ref:`dev_guide_webapp_search`,
-:ref:`dev_guide_webapp_results` and :ref:`dev_guide_webapp_ui` walk the eight apps, and
+:ref:`dev_guide_webapp_results` and :ref:`dev_guide_webapp_ui` walk every app, and
 :ref:`dev_guide_webapp_extending` is how to add to them.
 
 .. _dev_guide_webapp_lifecycle:

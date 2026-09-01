@@ -3,7 +3,7 @@
 The Interface: the ``ui``, ``help`` and ``paraminfo`` Apps
 ==========================================================
 
-Three apps and a front end serve the page a user actually looks at.
+The apps and the front end that serve the page a user actually looks at:
 :mod:`opus_app.apps.ui` renders the single page and the calls that keep it current;
 :mod:`opus_app.apps.help` serves the help pages; :mod:`opus_app.apps.paraminfo` is the
 description of every field, which the other two render from. The JavaScript and CSS that
@@ -170,9 +170,9 @@ api_dummy
 
 :func:`opus_app.apps.ui.views.api_dummy`
 
-Returns an empty object. Three routes reach it: one for network performance testing, and
-two ``__fake/`` modal URLs so that the front end can record a user action in the web log
-without doing any work. The results app routes a fourth.
+Returns an empty object. Several routes reach it: one for network performance testing, and
+the ``__fake/`` modal URLs so that the front end can record a user action in the web log
+without doing any work. The results app routes another.
 
 opus_app.apps.ui.templatetags.multilines_template_tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

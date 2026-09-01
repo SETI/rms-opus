@@ -146,7 +146,7 @@ are always passed as parameters, and identifiers are validated before they are q
 :ref:`dev_guide_webapp_tools_sql_builder` says what that buys and where the two
 exceptions are.
 
-The eight Django apps are described across :ref:`dev_guide_webapp_tools`,
+The Django apps are described across :ref:`dev_guide_webapp_tools`,
 :ref:`dev_guide_webapp_search`, :ref:`dev_guide_webapp_results` and
 :ref:`dev_guide_webapp_ui`.
 

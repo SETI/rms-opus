@@ -167,7 +167,7 @@ in. Adding one is an entry there plus the corresponding library call in
 Adding an app
 -------------
 
-Rarely the right answer -- most new work belongs in one of the eight apps that exist --
+Rarely the right answer -- most new work belongs in one of the apps that exist --
 but the steps are:
 
 1. Create ``src/opus_app/apps/<name>/`` with an ``__init__.py`` carrying a one-line
