@@ -338,9 +338,10 @@ A run writes to five places:
    * - ``ERRORS.log`` in ``[paths] import_log_dir``
      - Every error. Appended to rather than rotated.
 
-Every message carries the bundle, index row number and primary file specification the
-run was on when it was produced, so a line read out of a log names the observation that
-caused it.
+Every message produced while a bundle is being imported carries the bundle, index row
+number and primary file specification the run was on when it was produced, so a line read
+out of a log names the observation that caused it. Messages from before the first bundle,
+and from the steps that run over the whole database, carry none of it.
 
 .. _dev_guide_import_verifying:
 
@@ -349,15 +350,16 @@ Verifying that a run succeeded
 
 **The exit status is not sufficient.** A non-zero status means the run stopped; a zero
 status does **not** mean it was clean. Several steps report failure through the log and
-still exit zero -- a failed dictionary import and every ``--validate-perm`` finding
-among them.
+still exit zero, among them a failed dictionary import and the ``--validate-perm`` checks.
 
-The check that matters is::
+The check that matters is, with ``<import_log_dir>`` standing for the directory that
+``[paths] import_log_dir`` names::
 
-    test ! -s "$IMPORT_LOG_DIR/ERRORS.log"
+    test ! -s <import_log_dir>/ERRORS.log
 
-Because ``ERRORS.log`` is appended to rather than rotated, truncate or move it before a
-run whose result you are going to judge this way.
+It is an error-level gate. Because ``ERRORS.log`` is appended to rather than rotated,
+truncate or move it before a run whose result you are going to judge this way, and read
+``WARNINGS.log`` too: ``--validate-perm`` reports some of what it finds below error level.
 
 ``WARNINGS.log`` is worth reading too, but a clean run can have warnings: an index that
 legitimately names files OPUS does not import produces one, and so does an observation

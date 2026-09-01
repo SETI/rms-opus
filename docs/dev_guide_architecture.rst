@@ -56,10 +56,10 @@ permanent tables only once the whole run has succeeded, which is the guarantee t
 rests on; the cart and cache tables are reset outside that protection.
 :ref:`dev_guide_import_two_namespaces` is the whole of it.
 
-The auxiliary tables come last because each needs the permanent tables to be there, but
-only ``param_info`` is really derived from what was imported -- ``table_names`` and
-``partables`` are generated from the configuration maps and the schemas, so a mission
-that was never imported still gets a row.
+The auxiliary tables are built after the permanent tables, but only ``param_info`` is
+derived from what was imported. ``table_names`` lists the permanent tables that actually
+exist, while ``partables`` walks the configuration maps alone, so a mission that was never
+imported still gets a ``partables`` row.
 
 :ref:`dev_guide_import_steps` states the order the steps run in, what forces each part of
 it, and what each auxiliary table is built from.

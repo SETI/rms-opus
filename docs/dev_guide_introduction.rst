@@ -98,12 +98,12 @@ than from the filesystem.
 
 Concretely, for one PDS3 volume or PDS4 bundle:
 
-**The primary index.** One row per observation.
-:mod:`opus_import.config_bundle_info` names the file to look for, and
-:mod:`opus_import.steps.do_import` searches the bundle's ``metadata`` directories --
-and, for PDS3, the volume's own ``INDEX``/``index`` directory -- for it. This is the
-spine of the import: the set of rows in the primary index is the set of observations
-OPUS will hold for that bundle.
+**The primary index.** One row per observation, or per group of observations where an
+instrument records several phases in one row. :mod:`opus_import.config_bundle_info` names
+the file to look for, and :mod:`opus_import.steps.do_import` searches the bundle's
+``metadata`` directories -- and, for PDS3, the volume's own ``INDEX``/``index`` directory
+-- for it. This is the spine of the import: every observation OPUS holds for that bundle
+comes from a row of this file.
 
 **The index's own label.** Read alongside the rows, because some instruments record
 per-file information as label keywords rather than as table columns.
