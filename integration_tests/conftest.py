@@ -212,8 +212,8 @@ def _live_database(django_db_blocker: DjangoDbBlocker) -> Iterator[None]:
     pytest-django replaces `BaseDatabaseWrapper.ensure_connection` with a raiser for
     anything that has not asked for a database, and nothing here asks: these are plain
     `unittest.TestCase` subclasses, so pytest-django's own unittest support -- which
-    unblocks for a `django.test.SimpleTestCase` and sets up a test database for it --
-    does not apply to them. Unblocking for the session rather than per test is what
+    keys on `django.test.SimpleTestCase` and acts only when the class sets `databases`
+    -- never looks at them. Unblocking for the session rather than per test is what
     leaves the schema exactly as the import pipeline wrote it.
     """
     with django_db_blocker.unblock():

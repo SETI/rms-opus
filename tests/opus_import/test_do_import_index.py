@@ -87,15 +87,14 @@ def test_a_failed_filespec_conversion_can_be_extended_by_the_caller(
 def test_every_table_rows_guard_initializes_the_key_it_tested() -> None:
     """``if X not in table_rows`` must be followed by ``table_rows[X] = []``.
 
-    The ``obs_surface_geometry`` guard tested ``table_name`` and created
-    ``table_rows[new_table_name]``, so the append on the next line would have raised
-    `KeyError` -- and `new_table_name` is a leftover from an earlier loop that need not
-    even be bound, which would have raised `NameError` first.
+    Testing one key and initializing another makes the append on the next line a
+    `KeyError`, or a `NameError` first where the other name is a leftover from an
+    earlier loop that need not be bound at all.
 
-    The guard is unreachable today (``table_rows`` is pre-populated with every entry of
-    ``table_names_in_order`` before the row loop, and that loop only yields names from
-    the same list), which is exactly why the mistake survived: no test and no import run
-    can execute it. So this checks the source rather than the behavior. The other three
+    The ``obs_surface_geometry`` guard is unreachable (``table_rows`` is pre-populated
+    with every entry of ``table_names_in_order`` before the row loop, and that loop
+    only yields names from the same list), so no test and no import run can execute
+    it. That is why this checks the source rather than the behavior. The other three
     guards -- two for the derived ``obs_surface_geometry__<TARGET>`` names, which *are*
     reachable, and one for ``obs_files`` -- are held to the same rule.
     """

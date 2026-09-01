@@ -126,9 +126,9 @@ The goldens
     one place, so they cannot disagree about what is covered.
 
     One column is dropped, though. ``obs_files.url`` is ``holdings/`` or
-    ``pds4-holdings/`` followed by the logical path, on all 10,199 rows, and carrying it
-    cost about a quarter of the widest table's golden -- 819,984 bytes to store a
-    concatenation. It is dropped, and the concatenation is asserted against the database
+    ``pds4-holdings/`` followed by the logical path, on all 10,199 rows, and storing it
+    would add 819,984 bytes to the largest golden, taking it from 2,506,196 to
+    3,326,180 -- to record a concatenation. It is dropped, and the concatenation is asserted against the database
     instead, where it costs nothing to keep: that assertion is not optional decoration,
     because the column is *this repository's* behavior and not just pdsfile's. pdsfile
     serves a file from an HTML root that begins with a slash; ``do_import_index`` stores

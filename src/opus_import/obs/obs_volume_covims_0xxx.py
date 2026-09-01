@@ -277,9 +277,9 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
             return None
         sc = self._fix_cassini_sclk('1/' + count)
         # Not None: `_fix_cassini_sclk` returns None only for a None input, and `count`
-        # was checked above. Asserting rather than re-checking is deliberate -- a guard
-        # here could never fire, and one that cannot fire tells a reader the case is
-        # handled.
+        # was checked above. Asserting rather than re-checking is deliberate: a guard
+        # here could never fire, and a guard that cannot fire tells a reader the case
+        # is reachable when it is not.
         assert sc is not None
         return self._parse_cassini_sclk(sc)
 

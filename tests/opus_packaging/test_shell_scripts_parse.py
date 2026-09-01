@@ -2,7 +2,7 @@
 
 This exists because a syntax error in a shell script is invisible until the script
 runs, and some of these scripts run only on a production server. ``_opus_import_
-volumes.sh`` carried one for months: a ``#`` comment placed inside a backslash-continued
+volumes.sh`` carried one: a ``#`` comment placed inside a backslash-continued
 list ends the continuation, so ``bash -n`` failed, and ``_run_full_opus_import.sh`` --
 which sources it -- aborted before importing a single bundle. Nothing in CI noticed,
 because nothing in CI ran it.
