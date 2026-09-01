@@ -7601,13 +7601,17 @@ body; never rewrite or delete earlier notes.*
     `Intended Target Name(s)`, `Observation Start Time` -> `Observation Start Time
     (YMDhms)`, `Volume ID` -> `Bundle/Volume ID`, `Data Set ID` -> `PDS3 Data Set ID`);
     result-count drift (Hubble Uranus 3395 -> 3410, Pluto 2051 -> 2459, ring-radius nulls
-    125566 -> 146513); a new `primarylid` member in PDS Constraints; a genuinely wrong key
-    name, `opusid` where `api/images` and `api/image` return **`opus_id`** -- confirmed
-    against this tree's own golden fixtures, so it is wrong for the shipped code and not
-    only for production; and `api/files/hst-11559-wfc3-ib4v19rp.json`, where production
-    returns the two documented keys but with an **empty object under that OPUS ID**
-    rather than the product lists the guide shows, which needs investigating before
-    anything is written down. **The trap for whoever picks this up: production runs `main`.** Until
+    125566 -> 146513); a new `primarylid` member in PDS Constraints; and
+    `api/files/hst-11559-wfc3-ib4v19rp.json`, where production returns the two documented
+    keys but with an **empty object under that OPUS ID** rather than the product lists
+    the guide shows, which needs investigating before anything is written down.
+    - **One of the 27 was not drift and was fixed here**, which is the line to draw when
+      the rest is picked up. The guide called the images responses' identifier `opusid`;
+      `api/images` and `api/image` return **`opus_id`**, in two response-field tables and
+      four worked examples. That is a claim about the shipped code's contract, settled by
+      `integration_tests/test_api/responses/` with no live server involved, so it belongs
+      with #1476's class rather than with a stale capture. **The split to apply: fix what
+      the goldens can settle, defer what only a live archive can.** **The trap for whoever picks this up: production runs `main`.** Until
     this merge lands, capturing from it records the old code's behavior, and this branch
     changes error-path status codes and the `apiguide.pdf` route. Compare against
     `integration_tests/test_api/responses/`, which is what this tree actually returns, and

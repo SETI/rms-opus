@@ -987,7 +987,7 @@ When all sizes are requested, ``data`` is an object containing a series of entri
 
    * - Field Name
      - Description
-   * - ``opusid``
+   * - ``opus_id``
      - OPUS ID of the observation
    * - ``<size>_alt_text``
      - Alternate text (image filename)
@@ -1007,7 +1007,7 @@ When one size is requested, ``data`` an object containing a single entry with th
 
    * - Field Name
      - Description
-   * - ``opusid``
+   * - ``opus_id``
      - OPUS ID of the observation
    * - ``alt_text``
      - Alternate text (image filename)
@@ -1038,7 +1038,7 @@ Examples:
       "order": "time1,opusid",
       "data": [
         {
-          "opusid": "co-iss-n1460962327",
+          "opus_id": "co-iss-n1460962327",
           "thumb_url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
           "thumb_alt_text": "N1460962327_1_thumb.jpg",
           "thumb_size_bytes": 864,
@@ -1071,7 +1071,7 @@ Examples:
       "order": "time1,opusid",
       "data": [
         {
-          "opusid": "co-iss-n1460962327",
+          "opus_id": "co-iss-n1460962327",
           "alt_text": "N1460962327_1_med.jpg",
           "size_bytes": 4971,
           "width": 512,
@@ -1079,7 +1079,7 @@ Examples:
           "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
         },
         {
-          "opusid": "co-iss-n1460962415",
+          "opus_id": "co-iss-n1460962415",
           "alt_text": "N1460962415_1_med.jpg",
           "size_bytes": 4991,
           "width": 512,
@@ -1100,7 +1100,7 @@ Examples:
     {
       "data": [
         {
-          "opusid": "vg-iss-2-s-c4360022",
+          "opus_id": "vg-iss-2-s-c4360022",
           "alt_text": "C4360022_full.jpg",
           "size_bytes": 24607,
           "width": 800,
