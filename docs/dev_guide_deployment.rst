@@ -34,7 +34,7 @@ that swapping databases is a link change rather than a copy:
         opus.toml                 # this installation's configuration, mode 0600
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
 
-Underneath the installation root the deploy chain also expects, or creates, five
+Underneath the installation root the deploy chain also expects, or creates, these
 directories: ``src/`` for the per-database installations above, ``opus_logs/`` for the
 web application's log, ``downloads/`` and ``manifests/`` for the cart archives, and
 ``static_media/`` for the collected static files.
@@ -73,7 +73,7 @@ The scripts
 The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==3.23.0`` for a particular release, omitted for the newest.
 
-``scripts/server/database/`` holds four scripts that dump a database from one of the two
+``scripts/server/database/`` holds the scripts that dump a database from one of the two
 servers and load it onto the other. ``scripts/import/clone_database.sh`` copies one
 database to another on the same server.
 
@@ -215,7 +215,7 @@ is possible -- see :ref:`dev_guide_import_two_namespaces`.
 The log analyzer cron jobs
 --------------------------
 
-``scripts/server/log_analyzer/`` holds three cron templates: a nightly update, an
+``scripts/server/log_analyzer/`` holds the cron templates: a nightly update, an
 end-of-month report, and a full refresh over a range of months. They are **templates**:
 each installation fills in the placeholders -- the virtual environment, the Apache log
 directory and its file prefix, and the web directory the reports are published to -- and

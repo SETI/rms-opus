@@ -15,9 +15,9 @@ literals rather than computed from the schema; see `Filling the column`_ below.
 The schemas ship inside the wheel and are read through :mod:`importlib.resources`, so
 an installed OPUS finds them without a checkout.
 
-Four files are not tables. Two of them are not even column lists --
+Some files are not tables. Two of them are not even column lists --
 ``param_info_ranges.json`` is a dictionary of range sets and
-``internal_def_product_types.json`` names no columns -- while the other two are
+``internal_def_product_types.json`` names no columns -- while the rest are
 perfectly good column lists that simply do not describe a table of their own:
 
 ``param_info_ranges.json``

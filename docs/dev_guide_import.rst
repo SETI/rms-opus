@@ -126,8 +126,8 @@ bundle**, while
 run**.
 
 Logging goes through :attr:`~opus_import.context.ImportContext.log`, an
-:class:`~opus_import.context.ImportLog` bound to the context. It has seven methods: the
-four levels :meth:`~opus_import.context.ImportLog.error`,
+:class:`~opus_import.context.ImportLog` bound to the context. Its methods are the four
+levels :meth:`~opus_import.context.ImportLog.error`,
 :meth:`~opus_import.context.ImportLog.warning`,
 :meth:`~opus_import.context.ImportLog.info` and
 :meth:`~opus_import.context.ImportLog.debug`; the two
@@ -409,7 +409,7 @@ Invariants
   everything else, driven by the ``pi_form_type`` the schema declares.
 * **The primary file specification must come from the primary index.** It is what
   finds an observation's row in every other index file and what the OPUS ID is derived
-  from, so an obs class that took it from a supplemental index could not do either. Nine
+  from, so an obs class that took it from a supplemental index could not do either. Many
   of the classes say so in capitals, and no override breaks it.
 
 .. _dev_guide_import_errors:

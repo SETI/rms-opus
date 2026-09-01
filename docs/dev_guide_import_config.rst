@@ -77,7 +77,7 @@ Some of the names carry a placeholder, substituted per bundle by
 A table whose schema file does not exist is skipped, which is how a bundle ends up
 with only the tables its instrument actually has columns in.
 
-Two helper functions build the substituted names:
+Helper functions build the substituted names:
 :func:`opus_import.import_util.table_name_obs_mission` and
 :func:`~opus_import.import_util.table_name_obs_instrument`. Both assert that the id
 they are given is in the maps below, so a typo fails immediately rather than producing
@@ -460,7 +460,7 @@ the last spelled ``import_`` because ``import`` is a keyword. Nothing downstream
 mutate a setting, and every key is read through a typed accessor rather than by indexing
 a dictionary.
 
-Three properties are worth relying on:
+Properties worth relying on:
 
 * **An unknown key is an error**, not something ignored. So is a missing required key,
   and so is a value of the wrong type; each is reported as

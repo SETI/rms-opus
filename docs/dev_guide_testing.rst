@@ -45,7 +45,7 @@ that mock time or share a fixture. The live-database suites are deliberately **n
 in parallel: they share one database and one of them drops the cache tables between
 tests.
 
-Three markers are declared, and every marker used anywhere has to be declared because
+These markers are declared, and every marker used anywhere has to be declared because
 ``--strict-markers`` is on: ``integration`` (applied to everything
 ``integration_tests/conftest.py`` collects), ``holdings`` (reads a product file out of the
 holdings, not just the database row naming it) and ``livetest`` (queries an OPUS server
