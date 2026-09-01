@@ -53,8 +53,8 @@ SKIP_DIRECTORIES = {
 # so replacing `${{ ... }}` with a placeholder is what models the shell that actually
 # runs. It is NOT because bash chokes on the raw form: every expression shape in these
 # workflows parses unchanged, as do awkward ones like `fromJSON('{"a":1}').a` and
-# quote-bearing `format(...)` calls. So this substitution is
-# faithfulness, not a workaround, and removing it would not currently fail anything;
+# quote-bearing `format(...)` calls. So this substitution is faithfulness, not a
+# workaround, and removing it would not currently fail anything;
 # `test_expressions_are_substituted_before_parsing` is what keeps it from being removed
 # silently anyway.
 #
@@ -63,7 +63,7 @@ SKIP_DIRECTORIES = {
 # different check -- this one sees the template, never the value.
 # Non-greedy to the closing `}}` rather than `[^}]*`: an expression may contain a
 # brace of its own -- `${{ format('{0}', x) }}` is the common shape -- and the
-# character-class form stopped at the first one, leaving `${{` behind.
+# character-class form stops at the first one, leaving `${{` behind.
 GHA_EXPRESSION = re.compile(r'\$\{\{.*?\}\}', re.DOTALL)
 
 pytestmark = pytest.mark.skipif(

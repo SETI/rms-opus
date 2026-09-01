@@ -1339,8 +1339,9 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
 
     It covers every function whose annotation mentions `IntField`, not only the field
     methods, because a helper returning `tuple[IntField, IntField]` is where the value
-    is actually produced -- and a helper is exactly what the runtime check cannot see,
-    since that drives field methods rather than the helpers beneath them.
+    is actually produced. The runtime check reaches only the leaf classes in
+    `_MISSION_FIXTURES` -- 6 of the 25 -- so a helper in a class the fixture never
+    instantiates is seen only by this source scan.
     """
     inductive = set(_int_returning_functions())
     functions = []
