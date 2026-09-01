@@ -9,9 +9,10 @@ reads, and living here also puts them in the holdings-free run.
 What is worth pinning, and why:
 
 * **The `<!--NOSTRIP-->` escape hatch.** It is the only way a view can say "return my
-  content exactly as I wrote it", and one template is all that uses it. A template
-  that stops using it should not silently retire a documented behavior of the
-  middleware, which is what these tests hold rather than the template.
+  content exactly as I wrote it". Nothing in the tree sends it, so these tests are the
+  only thing exercising it -- which is the argument for having them rather than against:
+  `docs/dev_guide_webapp_tools.rst` documents the hatch, and documented behavior that
+  nothing exercises is behavior that quietly stops working.
 * **That a response with no `Content-Type` raises.** The middleware's docstring says
   so, and the alternative reading -- that such a response passes through untouched --
   is what a reader would otherwise assume.

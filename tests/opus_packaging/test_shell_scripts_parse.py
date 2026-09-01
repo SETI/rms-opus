@@ -4,8 +4,9 @@ A syntax error in a shell script is invisible until the script runs, and some of
 scripts run only on a production server, where the first sign is a deploy that stops
 partway. The shape to watch for: a ``#`` comment placed inside a backslash-continued
 list ends the continuation, so the file no longer parses, and a script that ``source``s
-it dies before doing any work. Only parsing every one of them catches that here rather
-than there.
+it under ``set -e`` dies at that point -- part way through a deploy, having already done
+whatever came before it. Only parsing every one of them catches that here rather than
+there.
 
 Two families are checked:
 
@@ -51,8 +52,8 @@ SKIP_DIRECTORIES = {
 # GitHub substitutes an expression's *value* into the script before bash ever sees it,
 # so replacing `${{ ... }}` with a placeholder is what models the shell that actually
 # runs. It is NOT because bash chokes on the raw form: every expression shape in these
-# workflows -- and every other one tried, including `fromJSON('{"a":1}').a` and
-# quote-bearing `format(...)` calls -- parses unchanged. So this substitution is
+# workflows parses unchanged, as do awkward ones like `fromJSON('{"a":1}').a` and
+# quote-bearing `format(...)` calls. So this substitution is
 # faithfulness, not a workaround, and removing it would not currently fail anything;
 # `test_expressions_are_substituted_before_parsing` is what keeps it from being removed
 # silently anyway.
@@ -74,8 +75,7 @@ def _shell_files() -> list[Path]:
     """Every shell file in the tree, by rule: the suffix, or a shell shebang.
 
     A rule rather than a list, so a script added later is covered without anyone
-    remembering to add it here. A list is the failure mode this whole module exists
-    against: a script nothing enumerates is a script nothing parses.
+    remembering to add it here: a script nothing enumerates is a script nothing parses.
     """
     found: list[Path] = []
     for path in REPO_ROOT.rglob('*'):

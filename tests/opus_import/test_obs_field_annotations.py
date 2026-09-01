@@ -1339,8 +1339,8 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
 
     It covers every function whose annotation mentions `IntField`, not only the field
     methods, because a helper returning `tuple[IntField, IntField]` is where the value
-    is actually produced -- which is where the one gap the runtime check could not see
-    turned out to be, in COUVIS's pixel-size helper.
+    is actually produced -- and a helper is exactly what the runtime check cannot see,
+    since that drives field methods rather than the helpers beneath them.
     """
     inductive = set(_int_returning_functions())
     functions = []
