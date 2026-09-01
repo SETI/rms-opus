@@ -7530,3 +7530,104 @@ body; never rewrite or delete earlier notes.*
   rate limit. (3) The PR-19 spec snapshot `plans/2026-08-30_pr19_mini_holdings_fixture.md`
   is regenerated as-executed; the §12 "Executed and merged" paragraph lists every deviation
   between the reviewed spec and the merged tree.
+
+- **2026-08-31 (PR-24 executed):** `rewrite` merges to `main`. This is the last note; the
+  plan is archived with this PR and nothing after it reads these notes as a briefing.
+  - **The planning documents are ARCHIVED, not deleted, superseding the plan body.** The
+    PR-01 section says "the `plans/` and `critiques/` directories are deleted in PR-24".
+    rfrench's 2026-08-31 instruction replaces that: every document in both directories
+    moves into an `archive/` subdirectory of its own parent, in a commit containing only
+    `git mv` (11 files, all `R100`). Nothing scans either directory -- pymarkdown's scan
+    list is `README.md CONTRIBUTING.md .cursor/ docs/`, and ruff, mypy, bandit, vulture,
+    Sphinx and pytest all take explicit path lists that never named them -- so the move
+    needed no configuration change. **The path references inside this file were
+    deliberately not updated**: the notes are append-only, and a document describing the
+    sequence as it ran should keep naming the paths that existed while it ran. Only
+    `CLAUDE.md` and `docs/dev_guide_layout.rst` referenced the old paths from outside.
+  - **ReadTheDocs is enabled and the API guide builds; `latest` 404s until this merge, and
+    that is the expected state rather than a fault.** Verified directly rather than taken
+    on report: the project exists (`app.readthedocs.org/api/v3/projects/rms-opus/`, created
+    2026-08-27, public, `default_branch: main`, `default_version: latest`), and a pull
+    request build serves the guide -- `rms-opus--1488.org.readthedocs.build/en/1488/` and
+    its `api_guide.html` both answer 200. `rms-opus.readthedocs.io/en/latest/` answers 404
+    while resolving the project slug, because `latest` tracks `main` and `main` has no
+    `docs/` until this merge lands. The post-merge check in §6 is therefore to re-fetch
+    that URL, not to create anything.
+  - **The ratchets are finished, and every remaining exception was re-measured rather than
+    read.** Both burn-down tables are still empty. Of what is left, nothing came out,
+    because nothing is silencing nothing: each of the six global ruff ignores fires
+    (`PT011` 13, `SIM105` 8, `SIM108` 28, `PT009` 832, `PT027` 89, `E501` 725); dropping
+    any one of the six `ignore_missing_imports` entries makes the type check report the
+    imports it was covering (`julian` 3, `pdfkit` 1, `pdslogger` 8, `pdsparser` 2,
+    `pdstable` 1, `rest_framework` 8); and the `B101` category skip holds back 323
+    findings across five packages, measured with `skips` emptied and `--ignore-nosec`.
+    **Regenerate rather than trusting those numbers** -- the commands are in the comments
+    beside each entry. What did change is the comments: they justified entries by the
+    sequence that produced them, which a reader of `pyproject.toml` cannot resolve.
+  - **The pull-request-reference gate is deleted with `tests/repo/`**, as ruled. Nothing
+    replaces it. The rule it enforced is obeyed by the tree it leaves behind, and its
+    subject -- this plan's own numbering -- does not ship.
+  - **Two dead helpers went out with the comment that was keeping them.**
+    `import_util.table_name_param_info` and `table_name_partables` had no caller and could
+    never have had one, and the only thing preventing their removal was a comment
+    deferring it to a dead-code PR that is not coming. Deleted, along with their entry in
+    the import-database chapter and the `Namespace` import they were the last users of.
+    Vulture cannot see this class: an unused function is a 60% finding, below the gate.
+  - **#1476 is closed; all seven defects were checked against the running server or the
+    source, and two of the issue's own claims were wrong.** There is no `table_order` key
+    in an `api/fields` response -- it is an internal sort key, deleted before the response
+    is built -- and the `obs_file` count is four, not five. Generalizing the "two JSON
+    examples are invalid" item into a check that parses **every** literal block found a
+    third: the `api/download` products example was one closing brace short. 25 blocks
+    parse now. The `qtype` fix is the substantive one: `any` documented an **or** of its
+    two conditions where `get_range_query` builds an **and**, and an or admits ranges that
+    do not overlap at all.
+  - **#1477 is measured and NOT fixed; the measurement is the hand-off.** All 52 worked
+    examples were fetched from production and compared: **13 agree, 27 differ, 12 cannot
+    be compared whole** because they carry a `[...]` elision. The 27 are not one problem
+    and a bulk regeneration would be wrong. They are: four `api/download` examples that
+    show an archive's file listing rather than a response body, so they are not
+    comparable this way at all; field-label drift (`Intended Target Name` ->
+    `Intended Target Name(s)`, `Observation Start Time` -> `Observation Start Time
+    (YMDhms)`, `Volume ID` -> `Bundle/Volume ID`, `Data Set ID` -> `PDS3 Data Set ID`);
+    result-count drift (Hubble Uranus 3395 -> 3410, Pluto 2051 -> 2459, ring-radius nulls
+    125566 -> 146513); a new `primarylid` member in PDS Constraints; a genuinely wrong key
+    name, `opusid` where `api/images` and `api/image` return **`opus_id`** -- confirmed
+    against this tree's own golden fixtures, so it is wrong for the shipped code and not
+    only for production; and `api/files/hst-11559-wfc3-ib4v19rp.json`, which production
+    answers with an **empty** `data` object, needing investigation before anything is
+    written down. **The trap for whoever picks this up: production runs `main`.** Until
+    this merge lands, capturing from it records the old code's behavior, and this branch
+    changes error-path status codes and the `apiguide.pdf` route. Compare against
+    `integration_tests/test_api/responses/`, which is what this tree actually returns, and
+    re-fetch only the values the database supplies. The audit script is in the pull
+    request's testing evidence.
+  - **The branch-protection swap belongs to the merge, and the contexts were read off a
+    real run.** `main` still requires `Run Lint` and `Test OPUS (self-hosted-linux,
+    3.12)`; the second was retired when the integration workflow was renamed and **will
+    never report again**, so it blocks this pull request until the swap happens. The seven
+    contexts `rewrite` requires are the set `main` needs: `Run Lint`, `Integration Tests
+    (self-hosted-linux, 3.12)`, `Unit Tests (3.12)`, `Unit Tests (3.13)`, `Docs`,
+    `Package`, `Import Tests`. Regenerate rather than trusting that list:
+    `gh api repos/SETI/rms-opus/branches/rewrite/protection --jq
+    '.required_status_checks.checks'`, and confirm each name against
+    `gh api repos/SETI/rms-opus/commits/<sha>/check-runs --jq '.check_runs[].name'` on a
+    real run of this pull request.
+  - **The merge must not be a squash.** Every earlier pull request in this sequence was
+    squashed, and squashing this one would collapse the whole branch into a single commit
+    on `main` -- destroying the strict move/modify separation that exists so
+    `git log --follow` survives every rename, which is a decision the plan's §1 table
+    records and which no later reader could recover. `rewrite` is a strict descendant of
+    `main` (their merge base is `main`'s tip), so a merge commit or a fast-forward both
+    preserve it.
+  - **Nothing was published, and the stop point is exact.** No PyPI or Test PyPI upload, no
+    version tag, no GitHub Release, no publish workflow dispatched: rfrench's approval is
+    required and has not been given. The `Package` job exercises the whole release path
+    except the upload on every push. **Before the first publish**, the `rms-pdsfile` floor
+    in `[project]` dependencies has to move to the rewrite's release -- a wheel declaring
+    `>=0.0.18` with `Pds4File.use_shelves_only()` enabled does not work -- and that release
+    does not exist yet, so the first publish is blocked on it rather than on anything here.
+  - **Verification evidence.** `ruff check`, `ruff format --check`, `mypy` strict over
+    `src integration_tests import_tests tests docs manage.py` (255 files), `bandit`,
+    `vulture`, `pymarkdown`, a Sphinx build under `-W -n`, and the unit suite, all clean.
+    Re-measure rather than citing a count from here.
