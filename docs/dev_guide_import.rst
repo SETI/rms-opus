@@ -74,17 +74,20 @@ namespace** carries no prefix and is what the web application reads.
 a bare table name into one or the other, and no step module builds a prefixed name
 itself.
 
-A run writes only the import tables. It copies them over the permanent tables at the
-very end, and **only if nothing logged an error**
-(:func:`~opus_import.steps.do_import.do_import_steps` skips the copy otherwise, unless
-``--import-ignore-errors`` says to go ahead). This is the guarantee the whole design
-rests on: a failed import cannot leave the web application serving half a bundle of
-observation metadata.
+A run writes only the import tables. It copies them over the permanent tables at the very
+end, and **only if the import phase logged no error**: an error logged through the run's
+own log sets :attr:`~opus_import.context.ImportContext.import_has_bad_data`, and
+:func:`~opus_import.steps.do_import.do_import_steps` skips the copy, unless
+``--import-ignore-errors`` says to go ahead. This is the guarantee the whole design rests
+on: a failed import cannot leave the web application serving half a bundle of observation
+metadata.
 
 The protection covers the imported tables and no others. ``cart`` is created directly in
 the permanent namespace, and the ``cache_*`` and ``user_searches`` tables are dropped
 there outright, so a failed run can leave those already reset. They hold no imported
-data, which is why they are outside the copy.
+data, which is why they are outside the copy. ``--drop-permanent-tables`` with
+``--scorched-earth`` is outside it too: it deletes the permanent observation and mult
+tables before the import starts, ahead of any error gate.
 
 Because the import tables survive a failure, a run can be **resumed rather than
 restarted**: the per-step options let a second invocation redo only the part that

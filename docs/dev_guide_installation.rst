@@ -95,6 +95,10 @@ server, the import pipeline, and every management command.
     sudo install -m 600 -o opus -g opus opus.toml.template /etc/opus/opus.toml
     export OPUS_CONFIG=/etc/opus/opus.toml
 
+Then edit the copy: fill in every ``<PLACEHOLDER>``, and **set** ``debug = false`` -- the
+template ships it true, which is right for a development checkout and wrong for anything
+reachable from outside the machine.
+
 Four details in those four lines are load-bearing:
 
 * ``-f`` **on curl.** Without it curl exits 0 on a 404 and writes the error page into the
@@ -271,14 +275,8 @@ account OPUS runs as, before starting anything.**
 Creating the database
 ---------------------
 
-Two steps, and they create different things.
-
-**Django's own contrib tables** -- sessions, auth, content types, admin -- come from a
-migration::
-
-    OPUS_CONFIG=/etc/opus/opus.toml \
-    DJANGO_SETTINGS_MODULE=opus_app.settings \
-    django-admin migrate
+Two steps, and they create different things. **Run them in this order**: the import
+creates the schema, and the migration needs the schema to be there.
 
 **Every OPUS table comes from an import**, so there are no OPUS migrations to run and
 none to write::
@@ -286,12 +284,19 @@ none to write::
     OPUS_CONFIG=/etc/opus/opus.toml opus_import --do-it-all COISS_2002
 
 The schema itself needs no ``CREATE DATABASE``: the import pipeline creates it when the
-configured one does not exist.
+configured one does not exist, which is why nothing else can run before it.
 
 ``--do-it-all`` imports the named bundles, copies the result over the permanent tables,
 and rebuilds the auxiliary tables. Add ``--import-dictionary`` to load the tooltips,
 which no aggregate option implies. :ref:`dev_guide_import_running` is the full command
 line.
+
+**Django's own contrib tables** -- sessions, auth, content types, admin -- come from a
+migration::
+
+    OPUS_CONFIG=/etc/opus/opus.toml \
+    DJANGO_SETTINGS_MODULE=opus_app.settings \
+    django-admin migrate
 
 **Verify the import by reading** ``ERRORS.log``, not by checking the exit status.
 :ref:`dev_guide_import_verifying` says why.
@@ -368,17 +373,19 @@ Four checks, in increasing order of what they prove::
     opus_log_analyzer --help
     opus_error_analyzer --help
 
-    # 2. The configuration file parses and names a reachable database.
+    # 2. The configuration file parses and validates. Loading the settings is what
+    #    proves it; add --database default to open the connection as well.
     OPUS_CONFIG=/etc/opus/opus.toml \
     DJANGO_SETTINGS_MODULE=opus_app.settings \
-    django-admin check
+    django-admin check --database default
 
     # 3. The application starts under a WSGI server. gunicorn is not an OPUS
     #    dependency -- install it for this check, or use whichever server you deploy.
     python -m pip install gunicorn
     OPUS_CONFIG=/etc/opus/opus.toml gunicorn opus_app.wsgi:application
 
-    # 4. It answers.
+    # 4. It answers. 127.0.0.1 has to be in allowed_hosts, or Django replies 400
+    #    however well the application and the database are working.
     curl -s 'http://127.0.0.1:8000/api/meta/result_count.json?planet=Saturn'
 
 If the third fails on an import error rather than a configuration one, the usual cause is

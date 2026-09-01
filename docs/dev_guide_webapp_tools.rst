@@ -90,7 +90,9 @@ Request helpers
 
 :func:`~opus_app.apps.tools.app_utils.get_session_id`
     The session key, creating a session if there is none. It also honors a
-    ``__sessionid`` query parameter, which exists only for internal testing.
+    ``__sessionid`` query parameter, intended for internal testing -- but **nothing
+    restricts it to a test request**, so any caller can name the session a handler will
+    read and write.
 
 :func:`~opus_app.apps.tools.app_utils.get_reqno`
     The ``reqno`` a private handler echoes back, or None when it is absent, non-integer

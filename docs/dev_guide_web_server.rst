@@ -260,9 +260,13 @@ daemon processes inherit from there::
     # /etc/apache2/envvars
     export OPUS_CONFIG=/etc/opus/opus.toml
 
-A server running several OPUS installations cannot share one such variable. Give each
-its own Apache instance, or give each a wrapper module of its own that assigns
-``os.environ['OPUS_CONFIG']`` **before** importing :mod:`opus_app.wsgi`. Two things about
+A server running several OPUS installations cannot share one such variable. Give each its
+own Apache instance, or give each **its own** ``WSGIDaemonProcess`` and
+``WSGIProcessGroup`` **and** a wrapper module of its own that assigns
+``os.environ['OPUS_CONFIG']`` **before** importing :mod:`opus_app.wsgi`. The process group
+is not optional: :func:`~opus_config.config.get_config` caches one configuration per
+process, so two installations sharing a daemon process group both see whichever
+configuration was imported first, whatever their wrappers assign. Two things about
 that wrapper: the vhost's ``WSGIScriptAlias`` has to name **it** rather than ``wsgi.py``,
 and it must live somewhere the deploy chain does not touch -- ``_opus_setup_environment.sh``
 and ``deploy_new_code_only.sh`` both re-create ``<installation>/wsgi.py`` as a symlink on

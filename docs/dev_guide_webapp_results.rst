@@ -9,7 +9,8 @@ observations match; :mod:`opus_app.apps.cart` holds what a session has *selected
 builds the downloads.
 
 All three depend on the cache table :ref:`dev_guide_webapp_search_flow` describes, and
-all three go through one paging routine.
+every handler that returns a *page* of observations goes through one paging routine.
+``metadata`` counts and aggregates over that table instead, and never pages.
 
 .. _dev_guide_webapp_results_app:
 
@@ -210,8 +211,9 @@ each simply calls its public twin, which is where the
      - public
      - :func:`~opus_app.apps.metadata.views.api_get_fields`
 
-**The result count** is a row count over the cache table, cached in the Django cache
-under that table's name. :func:`~opus_app.apps.metadata.views.get_result_count_helper` is
+**The result count** is a row count over the cache table, cached in the Django cache under
+the installation's cache prefixes plus ``:resultcount:`` and that table's name.
+:func:`~opus_app.apps.metadata.views.get_result_count_helper` is
 the routine, and it returns the count, the table name and an error response, so that a
 caller that also needs the table does not resolve the search twice. The results and cart
 apps both use it.
