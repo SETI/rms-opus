@@ -463,9 +463,9 @@ of defect, recreated one level up.
 > defect. The workflow line numbers were invalidated by commit `f91c6ec0`, which trimmed both files;
 > the six install steps themselves were deliberately kept as infrastructure, so the finding's
 > substance is unchanged — locate them with `grep -n "rms-pdsfile @ git" .github/workflows/*.yml`
-> rather than by line number. Note that a single-line `grep` for `pip install "rms-pdsfile` finds
-> only five: the sixth, in the Package job, is a line continuation. That is why this report says six
-> where the import critique says five.
+> rather than by line number — and note that a single-line `grep` for `pip install "rms-pdsfile`
+> finds only five, because the sixth, in the `package` job, is split across a line continuation.
+> Six is the correct count.
 
 **2. Three unauthenticated query strings turn into HTTP 500s, and one public parameter does the
 opposite of what it documents** (app §2, High). `parse_order_slug(',')` raises `IndexError`
