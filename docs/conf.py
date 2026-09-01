@@ -252,8 +252,9 @@ html_css_files = ['custom.css']
 mermaid_output_format = 'raw'
 
 # Pan and zoom is asked for per diagram, with the directive's `:zoom:` option, rather
-# than through the extension's global `mermaid_d3_zoom`. The global switch injects d3
-# into every page in the tree, including the ones with no diagram on them.
+# than through the extension's global `mermaid_d3_zoom`. The global switch also puts d3
+# on every page Sphinx renders without a doctree: the viewcode pages, the general index
+# and the search page, none of which holds a diagram.
 
 # -- MyST ---------------------------------------------------------------------
 
