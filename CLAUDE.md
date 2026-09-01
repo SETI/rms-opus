@@ -26,10 +26,11 @@ run as `python -m opus_import` and `python -m opus_log_analyzer`.
 ## Configuration
 
 Every process reads one TOML file, located by the `OPUS_CONFIG` environment
-variable. There is no default path: an unset or empty variable is an error naming
-the variable. `opus.toml.template` is the file to copy and fill in;
+variable. The loader has no default path: an unset or empty variable is an error
+naming the variable. `opus.toml.template` is the file to copy and fill in;
 `tests/fixtures/opus_ci.toml` is the dummy configuration the holdings-free jobs
-run against.
+run against, and the one `docs/conf.py` falls back to so a documentation build
+works without the variable set.
 
 ## Tests
 

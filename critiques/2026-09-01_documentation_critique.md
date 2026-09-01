@@ -132,7 +132,7 @@ Every one is a `field_*` obs-field extractor in `src/opus_import/obs/` (48 files
 
 This is not private. The generator emits `:undoc-members:` (`docs/_ext/opus_api_reference.py:147`) and `EXCLUDED_MODULES` (`:68-76`) excludes only two `opus_app` modules — no `opus_import.obs` module is excluded. Verified in the rendered HTML: **1,185 `field_obs_*` entries appear on `api_opus_import.obs.html`**, each as a bare signature plus a return type and no description whatever, e.g.:
 
-```
+```text
 field_obs_ring_geometry_ring_radius1()  [source]
     Return type: float | None
 ```
@@ -169,7 +169,7 @@ The developer guide is honest about this package's standing (`docs/dev_guide_log
 The project's configured width is 100 (`pyproject.toml:363`, `[tool.ruff] line-length`); `doc_python.mdc` §4 names 90 as the common value. **14 docstrings exceed 100** (16 lines); **20 exceed 90** (25 lines, 12 files). `E501` is in `extend-ignore` (`pyproject.toml:422`), so nothing currently catches them. Widest: `src/opus_app/apps/metadata/views.py:788` at 147 characters, and `src/opus_app/apps/search/views.py:464` at 129 — both are example URLs inside `::` literal blocks with no natural break point, which is a fair excuse. The other 10 of the 14 are in `opus_log_analyzer/` and have no such excuse.
 
 **F2.6 — Low. Thin public docstrings.**
-60 one-line docstrings under 40 characters on public classes and functions, out of 701 public class-and-function docstrings; median public docstring length is 265 characters, so the tail is thin and the body is not. Most of the 60 are *complete for what they describe* — `src/opus_app/apps/tools/sql_builder.py:151` `count_star` saying `Return `COUNT(*)`.` tells a black-box tester everything. The genuinely under-specified ones are the `opus_log_analyzer` cases already named in F2.3. Also 7 thin module docstrings, six of them `urls.py` route files (e.g. `src/opus_app/apps/cart/urls.py` — `The routes of the cart API.`).
+60 one-line docstrings under 40 characters on public classes and functions, out of 701 public class-and-function docstrings; median public docstring length is 265 characters, so the tail is thin and the body is not. Most of the 60 are *complete for what they describe* — `src/opus_app/apps/tools/sql_builder.py:151` `count_star` saying "Return `COUNT(*)`." tells a black-box tester everything. The genuinely under-specified ones are the `opus_log_analyzer` cases already named in F2.3. Also 7 thin module docstrings, six of them `urls.py` route files (e.g. `src/opus_app/apps/cart/urls.py` — `The routes of the cart API.`).
 
 **F2.7 — Low. `Args:` in the test tree.**
 Outside the published API surface but inside the repository's own standard: five `Args:` sections in `tests/opus_import/_source_scan.py` at lines **31, 43, 56, 73, 104**. The only `Args:` sections in the repository.
