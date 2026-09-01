@@ -204,9 +204,10 @@ jobs:
     # The holdings-free end-to-end test of the import pipeline: the checked-in
     # mini-holdings fixture is built into a temporary tree, the real
     # `opus_import` command line is run against it, and every table is compared
-    # with a recorded run. It is the fast check on the pipeline: about ten minutes
-    # on a GitHub-hosted runner with no archive behind it, against the ~32-minute
-    # self-hosted run over the real holdings.
+    # with a recorded run. It is the fast check on the pipeline: roughly nine
+    # minutes on a GitHub-hosted runner with no archive behind it, against the
+    # ~32-minute self-hosted run over the real holdings. Re-derive both from the
+    # jobs of recent runs rather than trusting these figures.
     #
     # Which command establishes which gate:
     #   * the import produced what the real holdings hold, and every table
@@ -224,7 +225,8 @@ jobs:
     name: Import Tests
     runs-on: ubuntu-latest
     # The import of two dozen sampled volumes plus the assertions is most of the
-    # job's ten minutes; the apt-get and pip steps are the network-dependent ones.
+    # job; the apt-get and pip steps are the network-dependent ones. The timeout is
+    # far above the observed spread so a slow runner does not fail the build.
     timeout-minutes: 60
     services:
       mysql:

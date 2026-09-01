@@ -78,8 +78,8 @@ _IDENTIFIER_RE = re.compile(r'\A[A-Za-z0-9_]+\Z')
 #: means `binary_op` cannot be handed arbitrary SQL text through its operator.
 _BINARY_OPERATORS = frozenset(['=', '<', '<=', '>', '>=', '+', '-', 'LIKE', 'NOT LIKE', 'RLIKE'])
 
-#: How the items of a list are separated. No space, because that is what the
-#: queries this module replaced emitted and what the integration suite pins.
+#: How the items of a list are separated. No space, which is the exact SQL text the
+#: integration suite pins for every query built here.
 _SEPARATOR = ','
 
 #: The column definitions of a search cache table. Both the durable `cache_<n>`

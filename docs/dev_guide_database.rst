@@ -1,5 +1,3 @@
-.. Ported from src/opus_import/docs/database_schema.md, which this page replaced.
-
 .. _dev_guide_database:
 
 The OPUS Database Schema

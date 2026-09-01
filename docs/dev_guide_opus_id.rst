@@ -1,5 +1,3 @@
-.. Ported from src/opus_import/docs/opus_id_format.md, which this page replaced.
-
 .. _dev_guide_opus_id:
 
 OPUS ID Format

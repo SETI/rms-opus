@@ -1,11 +1,11 @@
 """Tests that every shell script in the repository parses.
 
-This exists because a syntax error in a shell script is invisible until the script
-runs, and some of these scripts run only on a production server. ``_opus_import_
-volumes.sh`` carried one: a ``#`` comment placed inside a backslash-continued
-list ends the continuation, so ``bash -n`` failed, and ``_run_full_opus_import.sh`` --
-which sources it -- aborted before importing a single bundle. Nothing in CI noticed,
-because nothing in CI ran it.
+A syntax error in a shell script is invisible until the script runs, and some of these
+scripts run only on a production server, where the first sign is a deploy that stops
+partway. The shape to watch for: a ``#`` comment placed inside a backslash-continued
+list ends the continuation, so the file no longer parses, and a script that ``source``s
+it dies before doing any work. Only parsing every one of them catches that here rather
+than there.
 
 Two families are checked:
 
@@ -74,7 +74,8 @@ def _shell_files() -> list[Path]:
     """Every shell file in the tree, by rule: the suffix, or a shell shebang.
 
     A rule rather than a list, so a script added later is covered without anyone
-    remembering to add it here -- which is the failure that let the broken one live.
+    remembering to add it here. A list is the failure mode this whole module exists
+    against: a script nothing enumerates is a script nothing parses.
     """
     found: list[Path] = []
     for path in REPO_ROOT.rglob('*'):

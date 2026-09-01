@@ -407,7 +407,7 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
 #   states the whole rule). So these unittest->pytest-assertion rules have
 #   nothing to convert. Regenerate the distribution with
 #   `ruff check --select PT009,PT027` over RUFF_PATHS. PT018 stays enforced, as
-#   does every PT rule this list does not name.
+#   does every other stable PT rule this list does not name.
 # E501  - line too long. `ruff format` is what governs layout here, and E501's
 #   entire residue is tokens no formatter can split. Regenerate the measurement
 #   rather than trusting these numbers: run `ruff check --select E501` over
