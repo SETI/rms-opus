@@ -64,6 +64,71 @@ application's log, ``import_logs/`` for one directory per import run, ``download
 ``manifests/`` for the cart archives, and ``static_media/`` for the collected static
 files.
 
+.. _user_guide_deployment_order:
+
+The order of operations
+-----------------------
+
+**From nothing**, on a machine with the prerequisites of
+:ref:`user_guide_installation_prereqs` and the holdings mounted::
+
+    # 1. An environment to run the chain's own commands from. This is not an
+    #    installation that serves anything; the chain builds those itself.
+    python3.12 -m venv /opt/opus/deploy_venv
+    source /opt/opus/deploy_venv/bin/activate
+    python -m pip install rms-opus
+
+    # 2. The chain, and its own configuration.
+    opus_deploy_scripts --directory /opt/opus/deploy
+    cd /opt/opus/deploy
+    install -d -m 700 secrets
+    install -m 600 deploy.env.template secrets/deploy.env
+    #    ... then fill in every <PLACEHOLDER> in secrets/deploy.env
+
+    # 3. The directories the chain does not create: cart archives, their manifests,
+    #    and the collected static files. The paths come from OPUS_DIR in deploy.env.
+    install -d -o opus -g opus /opt/opus/downloads /opt/opus/manifests /opt/opus/static_media
+
+    # 4. Import the holdings, under an installation of the release being deployed.
+    #    Hours to days. It runs detached and mails the log when it finishes.
+    ./import_and_deploy/run_full_opus_import.sh ==3.24.0
+
+    # 5. Read that log and ERRORS.log. The database it built is named by the
+    #    installation `import` now points at:
+    basename "$(readlink /opt/opus/import)"
+
+    # 6. Deploy it: build the installation that will serve, and switch to it.
+    ./import_and_deploy/deploy_new_code_and_database.sh opus3_20260902T031500_12345 ==3.24.0
+
+    # 7. Put a web server in front of /opt/opus/deployed/wsgi.py. Once, and never
+    #    again: every later deploy moves that symlink rather than the vhost.
+
+**Give steps 4 and 6 the same version specifier.** They install ``rms-opus``
+separately -- the import runs under its own installation and the site is served by
+another -- so leaving it off both means "the newest release" twice, which is two
+different releases if one is published in between.
+
+**Updating a running site** is one command, or two, and which it is depends on the
+release. When it changes nothing about the table schemas -- a bug-fix release -- the
+database it is already serving is still the right one::
+
+    cd /opt/opus/deploy
+    ./import_and_deploy/deploy_new_code_only.sh ==3.24.1
+
+When it does change them, the database has to be rebuilt under the new release first,
+and the two commands are the same pair as steps 4 and 6::
+
+    cd /opt/opus/deploy
+    ./import_and_deploy/run_full_opus_import.sh ==3.25.0
+    #    ... read the log, check ERRORS.log, compare row counts against the served
+    #    database, exercise the staged installation ...
+    ./import_and_deploy/deploy_new_code_and_database.sh opus3_20260915T020000_31337 ==3.25.0
+
+Either way the installation being replaced stays under ``staged/``, so going back is
+moving the ``deployed`` symlink onto it and restarting -- there is nothing to rebuild.
+Old installations are removed by hand, when the one after them has been trusted for a
+while.
+
 The scripts
 -----------
 

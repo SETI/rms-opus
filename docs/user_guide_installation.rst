@@ -58,7 +58,7 @@ Installing the distribution
     python -m pip install --upgrade pip
     python -m pip install rms-opus
 
-That installs the OPUS programs and everything they depend on. Five commands come with
+That installs the OPUS programs and everything they depend on. These commands come with
 it, and the rest of this guide uses them by name:
 
 .. list-table::
@@ -78,6 +78,9 @@ it, and the rest of this guide uses them by name:
    * - ``opus_manage``
      - Administers the web application -- creating its tables, gathering its static
        files, and checking that its configuration works.
+   * - ``opus_deploy_scripts``
+     - Writes out the server deploy chain, which is how a server is upgraded and how a
+       newly imported database is switched to. See :ref:`user_guide_deployment`.
    * - ``opus_log_analyzer``
      - Turns the web server's access logs into reports on how the site is being used.
    * - ``opus_error_analyzer``
