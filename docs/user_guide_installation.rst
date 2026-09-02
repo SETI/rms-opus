@@ -286,40 +286,48 @@ account OPUS runs as, before starting anything.**
 Creating the database
 ---------------------
 
-Two commands, and they create different tables. **Run them in this order**: the first
-creates the database, and the second needs it to be there.
+**There is no** ``CREATE DATABASE`` **step.** The import pipeline creates the schema when
+the one it is pointed at does not exist, and every table of observation metadata in it. So
+the database comes into being when an import runs, and the only question is which import
+that is.
 
-**First, import something.** Every table of observation metadata is created by the import
-pipeline, and so is the database itself -- there is no ``CREATE DATABASE`` step, because
-the pipeline creates the configured schema when it does not already exist. One small
-volume is enough to bring the database into being::
+On an installation that is going to serve the archive, that import is
+`The first full-holdings import`_ below. Nothing has to exist before it, and it is the
+same command whether the database is new or being rebuilt.
 
-    OPUS_CONFIG=/opt/opus/opus.toml opus_import --do-it-all COISS_2002
+**A one-volume import first is a check, not a step**, and it is the ten minutes worth
+spending before committing days to a run: it answers whether the configuration file, the
+holdings paths and the database credentials are all right. Point it at the same database
+the full import will build, and it leaves nothing behind -- the full import begins by
+erasing the permanent tables it finds there::
+
+    OPUS_CONFIG=/opt/opus/opus.toml \
+        opus_import --override-db-schema opus3_new --do-it-all COISS_2002
 
 ``--do-it-all`` imports the bundles named after it, copies the result over the permanent
-tables, and rebuilds the auxiliary tables. Add ``--import-dictionary`` to load the
-tooltips, which no aggregate option implies.
+tables, and rebuilds the auxiliary tables. A bundle is named by a *descriptor*, and
+several can be given, comma- or space-separated: a bundle id (``COISS_2002``), a whole
+bundleset (``COISS_2xxx``), one of the shorthands for a mission or an instrument
+(``CASSINI``, ``GALILEO``, ``HST``, ``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their
+relatives, matched without regard to case), or ``ALL``. ``opus_import --help`` lists every
+option and works without a configuration file; :ref:`dev_guide_import_running` is the
+complete reference.
 
-**What to name.** A bundle is named by a *descriptor*, and several can be given, comma-
-or space-separated: a single bundle id (``COISS_2002``), a whole bundleset
-(``COISS_2xxx``), one of the shorthands for a mission or an instrument (``CASSINI``,
-``GALILEO``, ``HST``, ``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their relatives,
-matched without regard to case), or ``ALL``, which stands for every bundleset OPUS
-imports. ``opus_import --help`` lists every option, and works without a configuration
-file; :ref:`dev_guide_import_running` is the complete reference.
-
-**Then create the web application's own tables.** A handful of tables belong to the
-application rather than to the archive -- the ones that track a visitor's session, and
-the logins for the administrative pages -- and the import does not create them. One
-command does, and it is safe to run again at any time::
-
-    OPUS_CONFIG=/opt/opus/opus.toml opus_manage migrate
-
-**Verify the import by reading** ``ERRORS.log`` **in the** ``[paths] import_log_dir``
+**Verify any import by reading** ``ERRORS.log`` **in the** ``[paths] import_log_dir``
 **directory, not by checking the exit status.** Several steps report a failure through
 the log and still exit zero, so a clean run is an empty ``ERRORS.log`` rather than a zero
 status; ``WARNINGS.log`` beside it is worth reading too.
 :ref:`dev_guide_import_verifying` is the longer account of what to look for.
+
+**The web application's own tables come after whichever import made the database.** A
+handful of tables belong to the application rather than to the archive -- the ones that
+track a visitor's session, and the logins for the administrative pages -- and no import
+creates them. One command does, and it is safe to run again at any time::
+
+    OPUS_CONFIG=/opt/opus/opus.toml opus_manage migrate
+
+``opus_manage`` has no ``--override-db-schema``: it uses whichever database the
+configuration file names, so give it a file naming the one the import built.
 
 .. _user_guide_installation_static:
 
