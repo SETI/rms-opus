@@ -100,6 +100,15 @@ builds an installation the web server cannot read. The scripts refuse rather tha
 that reach the switch. That account also needs ``sudo`` for three ``systemctl`` commands:
 the switch stops the web server, restarts the cache, and starts the web server again.
 
+An existing account does; this is an example of making one, on a system with
+``useradd``::
+
+    id opus || sudo useradd --system --create-home --shell /bin/bash opus
+
+``opus`` is the name this guide uses, and ``OPUS_USER`` in ``deploy.env`` is what says
+which account you actually chose. It needs a **shell**, because the deploys are run as
+it, and a **home directory**, because ``pip`` writes a cache into one.
+
 **A web server.** :ref:`user_guide_web_server` has worked configurations for Apache with
 ``mod_wsgi`` and for nginx in front of gunicorn or uWSGI. Under Apache, the deploy runs
 ``pip install mod-wsgi`` inside each installation it builds, which compiles against
@@ -113,12 +122,19 @@ computed against the old one. Install the **daemon** here; the scripts install i
 ``pymemcache`` client into every installation they build::
 
     sudo apt-get install memcached libmemcached-tools
-    # watch it while OPUS runs; memcstat is in libmemcached-tools, not memcached:
-    watch -n1 -d 'memcstat --servers localhost'
 
 Without memcached running, OPUS falls back to Django's per-process local-memory cache: it
 works, more slowly, and the cache-emptying step of a deploy has nothing shared to empty.
 :ref:`dev_guide_webapp_running` describes the fallback and its one sharp edge.
+
+Nothing else is needed to install it. **Later**, once the site is serving, this is how to
+watch the cache being used -- the counters once a second, with what changed highlighted,
+which is how you see requests being answered from it and a deploy emptying it::
+
+    watch -n1 -d 'memcstat --servers localhost'
+
+``memcstat`` comes from ``libmemcached-tools`` rather than from ``memcached``, which is
+why the install line above takes both packages.
 
 **wkhtmltopdf**, only for the help pages' PDF downloads. Every other page works without
 it, and nothing else in OPUS uses it. It has to be a build **with patched Qt**: the pages
@@ -147,11 +163,7 @@ Step 1: the environment the scripts come from
 The deploy scripts are part of ``rms-opus``, so installing them means installing the
 distribution once, by hand, into an environment of its own::
 
-    # The account OPUS runs as. It needs a shell and a home directory: the deploys
-    # are run as it, and pip writes a cache.
-    id opus || sudo useradd --system --create-home --shell /bin/bash opus
-
-    # The installation root has to exist and belong to that account. Everything
+    # The installation root has to exist and belong to the OPUS account. Everything
     # underneath it, the scripts create.
     sudo install -d -o opus -g opus -m 755 /opt/opus
 
@@ -163,8 +175,8 @@ distribution once, by hand, into an environment of its own::
     python -m pip install --upgrade pip
     python -m pip install "rms-opus==3.24.0"
 
-``opus`` there stands for whichever account you chose above, and ``3.24.0`` for the
-release you are deploying.
+``opus`` there is the account from the prerequisites, and ``3.24.0`` the release you are
+deploying.
 
 **This environment does not serve anything.** It exists so that the scripts have commands
 to run; the installations that serve and import are built by the scripts under

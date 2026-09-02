@@ -42,13 +42,23 @@ everything else the chain needs underneath it, it creates.
   FIRST, ONCE
 --------------------------------------------------------------------------------
 
-1. The installation root, and the environment these commands come from. The
-   root has to exist and belong to the OPUS account; everything underneath it,
-   the chain creates. The environment is not an installation that serves
-   anything -- the chain builds those itself. Its path goes into deploy.env
-   below as OPUS_DEPLOY_VENV, and every script activates it for itself
-   afterwards; this is the one time it is done by hand.
+1. The account, the installation root, and the environment these commands come
+   from.
 
+   The account is the one OPUS runs as and the one every script here has to be
+   run as; an existing one does, and this is an example of making one. It needs
+   a shell, because the deploys are run as it, and a home directory, because pip
+   writes a cache into one. OPUS_USER in deploy.env is what names it.
+
+   The root has to exist and belong to that account; everything underneath it,
+   the chain creates.
+
+   The environment is not an installation that serves anything -- the chain
+   builds those itself. Its path goes into deploy.env below as
+   OPUS_DEPLOY_VENV, and every script activates it for itself afterwards; this
+   is the one time it is done by hand.
+
+    id opus || sudo useradd --system --create-home --shell /bin/bash opus
     sudo install -d -o opus -g opus -m 755 /opt/opus
     sudo -u opus -i
     python3.12 -m venv /opt/opus/deploy_venv
