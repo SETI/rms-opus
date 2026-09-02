@@ -106,7 +106,9 @@ When ``create_session_info`` was passed ``uses_html=True``, the strings
 ``parse_log_entry`` returns may be ordinary strings or ``markupsafe.Markup`` -- a
 string already known to be safe to insert into HTML. Passing an object to ``Markup``
 converts it to text and marks it safe **without escaping**; ``Markup.escape`` is what
-escapes instead::
+escapes instead:
+
+.. code-block:: pycon
 
     >>> Markup('Hello, <em>World</em>!')
     Markup('Hello, <em>World</em>!')

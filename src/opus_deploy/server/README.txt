@@ -33,8 +33,9 @@ it with a single rename.
     /opt/opus/deployed -> staged/...            what the web server serves
     /opt/opus/import   -> staged/...            what an import is using
 
-/opt/opus there is the installation root, named by OPUS_DIR in
-secrets/deploy.env. Everything else the chain needs underneath it, it creates.
+/opt/opus there is only what the User Guide uses. The root is whatever OPUS_DIR
+in secrets/deploy.env says -- any directory the OPUS account owns -- and
+everything else the chain needs underneath it, it creates.
 
 
 --------------------------------------------------------------------------------

@@ -22,6 +22,13 @@ instead; it is shorter, and it installs from source.
 How a server is put together
 ----------------------------
 
+``/opt/opus`` throughout this guide is **the location it recommends, not one OPUS
+requires**: nothing in OPUS or in the scripts has a built-in path. The installation root
+is whatever ``OPUS_DIR`` in ``deploy.env`` says, the deploy directory is wherever you
+write the scripts out, and either can be anywhere the OPUS account can read and write --
+``/srv/opus``, ``/var/lib/opus``, a mounted volume. Substitute your own throughout, or
+keep these if you have no reason to prefer another.
+
 Two directories, and neither is inside the other's business.
 
 **The deploy directory** holds the scripts and the settings they read. It is written by
@@ -259,8 +266,8 @@ containing a space.
    * - Variable
      - Meaning
    * - ``OPUS_DIR``
-     - The installation root -- ``/opt/opus`` in this chapter. It has to exist; the
-       scripts create everything underneath it.
+     - The installation root: any directory the OPUS account owns, ``/opt/opus`` in this
+       chapter. It has to exist; the scripts create everything underneath it.
    * - ``OPUS_DEPLOY_VENV``
      - The environment from step 1, which the scripts' own commands come from. Every
        script activates it for itself. It is not one of the installations under
