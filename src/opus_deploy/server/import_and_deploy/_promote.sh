@@ -15,8 +15,9 @@
 # other for as long as it took to finish. Here they are one directory, and the
 # switch is one symlink.
 #
-# Inputs (exported by the caller): OPUS_DIR, and INSTALL_DIR naming the staged
-# installation to promote.
+# Inputs (exported by the caller): OPUS_DIR, INSTALL_DIR naming the staged
+# installation to promote, and the two service names _read_deploy_env.sh supplies,
+# OPUS_WEB_SERVICE and OPUS_CACHE_SERVICE.
 
 if [[ ! -v OPUS_DIR ]]; then
     echo "INTERNAL ERROR: OPUS_DIR undefined"
@@ -34,10 +35,12 @@ fi
 
 echo "Promoting ${INSTALL_DIR}"
 
-# Apache is stopped for the switch rather than across the whole deploy: everything
-# slow -- the virtualenv, the pip install, the migration, collectstatic -- has
-# already happened by the time this runs.
-sudo systemctl stop apache2
+# The workers are stopped for the switch rather than across the whole deploy:
+# everything slow -- the virtualenv, the pip install, the migration, collectstatic --
+# has already happened by the time this runs. They are stopped rather than restarted
+# afterwards because a worker that read the old installation's configuration would go
+# on answering from the old database until it was replaced.
+sudo systemctl stop "${OPUS_WEB_SERVICE}"
 
 # `ln -sfn` would do this in two steps, unlinking the old symlink before creating
 # the new one, and a deploy interrupted between them leaves no ${OPUS_DIR}/deployed
@@ -51,25 +54,28 @@ if ! ln -sfn "${INSTALL_DIR}" "${OPUS_DIR}/deployed.new" ||
    ! mv -Tf "${OPUS_DIR}/deployed.new" "${OPUS_DIR}/deployed"; then
     echo "ERROR: could not switch ${OPUS_DIR}/deployed to ${INSTALL_DIR}."
     echo "       Restarting what was running before."
-    sudo systemctl start apache2
+    sudo systemctl start "${OPUS_WEB_SERVICE}"
     exit 1
 fi
 
-# Restarting memcached is how the shared cache is emptied: it holds rendered results
-# and search results computed by the release that is being replaced, and a cache key
-# does not say which release wrote it. The process-local caches inside each worker go
-# with the workers Apache is about to start.
+# Restarting the cache service is how the shared cache is emptied: it holds rendered
+# results and search results computed by the release that is being replaced, and a
+# cache key does not say which release wrote it. The process-local caches inside each
+# worker go with the workers that are about to be started.
 #
 # Its failure is reported rather than fatal, because the caller runs under `set -e`
-# and stopping here would leave Apache down with the switch already made. An
-# installation with no memcached falls back to a per-worker cache, which the restart
-# below empties anyway.
-if ! sudo systemctl restart memcached; then
-    echo "WARNING: memcached did not restart. If this installation uses it, the"
-    echo "         shared cache still holds entries the previous release wrote."
+# and stopping here would leave the site down with the switch already made. An
+# installation with no shared cache falls back to a per-worker one, which the restart
+# below empties anyway, and says so by leaving OPUS_CACHE_SERVICE empty.
+if [[ -n ${OPUS_CACHE_SERVICE} ]]; then
+    if ! sudo systemctl restart "${OPUS_CACHE_SERVICE}"; then
+        echo "WARNING: ${OPUS_CACHE_SERVICE} did not restart. If this installation"
+        echo "         uses it, the shared cache still holds entries the previous"
+        echo "         release wrote."
+    fi
 fi
 
-sudo systemctl start apache2
+sudo systemctl start "${OPUS_WEB_SERVICE}"
 
 echo
 echo "Now serving: ${OPUS_DIR}/deployed -> $(readlink "${OPUS_DIR}/deployed")"

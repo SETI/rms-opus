@@ -26,10 +26,11 @@ The four tables mirror the file: ``database``, ``paths``, ``django`` and ``impor
 read into a frozen dataclass. Validation is explicit rather than best-effort -- an unknown
 key, a missing required key, a value of the wrong type, and a value outside the set a key
 allows are each reported with the table and the key at fault. The template documents
-every key and is the file to copy when configuring an installation:
+every key and is the file to copy when configuring a development installation:
 :mod:`opus_config.template` ships it inside the package and writes a copy out as the
-``opus_config_template`` command, and :ref:`user_guide_installation_configuring` walks
-through filling it in.
+``opus_config_template`` command, and :ref:`user_guide_installation_configuring`
+describes every key. A server does not copy it by hand -- the deploy scripts generate
+each installation's file from the server's own settings.
 
 :mod:`opus_config` also hosts ``_version.py``, which setuptools-scm writes at build time.
 Every other package asks :func:`importlib.metadata.version` for the distribution's version

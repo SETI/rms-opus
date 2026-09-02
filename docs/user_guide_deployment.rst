@@ -3,41 +3,26 @@
 Deployment and Operations
 =========================
 
-:ref:`user_guide_installation` brings an installation up by hand and
-:ref:`user_guide_web_server` puts a server in front of it. This chapter is what happens
-after that: the Node's own deploy chain, the two things that always have to happen when a
-database changes, the runbook for replacing one, and the cron jobs that keep the log
-reports current.
+:ref:`user_guide_installation` brings a server up from nothing with the deploy scripts,
+and :ref:`user_guide_web_server` puts a web server in front of it. This chapter is the
+running of it afterwards: what a deploy actually does, how a release is deployed onto a
+running site, the two things that always have to happen when a database changes, the
+runbook for replacing one, and the cron jobs that keep the log reports current.
+
+The scripts are the same ones the installation chapter wrote out with
+``opus_deploy_scripts``, in the deploy directory beside their ``secrets/deploy.env``.
+Paths below are relative to that directory, and ``/opt/opus`` stands for whatever
+``OPUS_DIR`` names.
 
 .. _deployment_server:
 
-The Node's production arrangement
----------------------------------
-
-The deploy chain is a set of shell scripts that ship inside the distribution.
-``opus_deploy_scripts`` writes them out::
-
-    opus_deploy_scripts --directory /opt/opus/deploy
-
-A plain-text ``README.txt`` is written with them, holding the same steps this chapter
-gives, so that the instructions are beside the scripts on the server -- readable there
-with ``less``, rather than only here.
-
-**Write them somewhere outside every OPUS installation, and run them from there.** A
-deploy installs a new ``rms-opus``, and these scripts are part of ``rms-opus``: a script
-running from inside the environment being replaced would be rewritten while bash was
-still reading it. The copy is also where the deploy's own configuration goes, in
-``secrets/deploy.env`` beside it, so credentials do not live in a directory a deploy
-replaces. Paths below are relative to that copy.
-
-Being part of the distribution, the chain also *changes* with it, so a copy is refreshed
-as part of deploying a new release rather than left where it was; see
-:ref:`the order of operations <user_guide_deployment_refresh>`.
+What a deploy does
+------------------
 
 **A deployed installation is not a checkout.** It is a directory holding a virtual
 environment with the released ``rms-opus`` distribution installed **from PyPI**, the
-``opus.toml`` that installation reads, and the ``wsgi.py`` symlink Apache points at.
-Nothing on the server builds from source, and nothing on the server needs a checkout.
+``opus.toml`` that installation reads, and the ``wsgi.py`` symlink the web server points
+at. Nothing on the server builds from source, and nothing on the server needs a checkout.
 
 **Every deploy builds a new installation and switches to it.** Nothing is ever upgraded
 in place, and two symbolic links say which installation is which:
@@ -48,7 +33,7 @@ in place, and two symbolic links say which installation is which:
         opus_venv/                # the virtual environment; rms-opus is installed here
         opus.toml                 # this installation's configuration, mode 0600
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
-    /opt/opus/deployed  -> staged/<database>_<timestamp>   # what Apache serves
+    /opt/opus/deployed  -> staged/<database>_<timestamp>   # what the web server serves
     /opt/opus/import    -> staged/<database>_<timestamp>   # what an import is using
 
 That shape is what makes a deploy safe to run against a live site, and it follows from
@@ -74,54 +59,17 @@ files.
 
 .. _user_guide_deployment_order:
 
-The order of operations
------------------------
+Deploying a release onto a running site
+---------------------------------------
 
-**From nothing**, on a machine with the prerequisites of
-:ref:`user_guide_installation_prereqs` and the holdings mounted::
-
-    # 1. The environment the chain's own commands come from. This is not an
-    #    installation that serves anything -- the chain builds those itself -- and its
-    #    path is what OPUS_DEPLOY_VENV names in deploy.env below. Every script
-    #    activates it for itself afterwards; this is the one time it is done by hand.
-    python3.12 -m venv /opt/opus/deploy_venv
-    source /opt/opus/deploy_venv/bin/activate
-    python -m pip install "rms-opus==3.24.0"
-
-    # 2. The chain, and its own configuration.
-    opus_deploy_scripts --directory /opt/opus/deploy
-    cd /opt/opus/deploy
-    install -d -m 700 secrets
-    install -m 600 deploy.env.template secrets/deploy.env
-    #    ... then fill in every <PLACEHOLDER> in secrets/deploy.env. OPUS_DIR is the
-    #    root everything else hangs off -- /opt/opus here -- and the scripts create
-    #    what they need underneath it: staged installations, the logs, the cart
-    #    archives and their manifests, and the collected static files.
-
-    # 3. Import the holdings, under an installation of the release being deployed.
-    #    Hours to days. It runs detached and mails the log when it finishes.
-    ./import_and_deploy/run_full_opus_import.sh ==3.24.0
-
-    # 4. Read that log and ERRORS.log. The database it built is named by the
-    #    installation `import` now points at:
-    basename "$(readlink /opt/opus/import)"
-
-    # 5. Deploy it: build the installation that will serve, and switch to it.
-    ./import_and_deploy/deploy_new_code_and_database.sh opus3_20260902T031500_12345 ==3.24.0
-
-    # 6. Put a web server in front of /opt/opus/deployed/wsgi.py. Once, and never
-    #    again: every later deploy moves that symlink rather than the vhost.
-
-**Give steps 3 and 5 the same version specifier.** They install ``rms-opus``
-separately -- the import runs under its own installation and the site is served by
-another -- so leaving it off both means "the newest release" twice, which is two
-different releases if one is published in between.
+Bringing a server up from nothing is :ref:`user_guide_installation`, in six steps ending
+with the first deploy. This is every deploy after that one.
 
 .. _user_guide_deployment_refresh:
 
-**Updating a running site starts with the scripts themselves.** They ship inside the
-distribution, so a copy on a server is one release's chain, and it changes between
-releases like anything else. One script brings it up to the release being deployed::
+**It starts with the scripts themselves.** They ship inside the distribution, so a copy on
+a server is one release's chain, and it changes between releases like anything else. One
+script brings it up to the release being deployed::
 
     cd /opt/opus/deploy
     ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
@@ -141,14 +89,19 @@ being served is still the right one::
     cd /opt/opus/deploy
     ./import_and_deploy/deploy_new_code_only.sh ==3.24.1
 
-When it does change them, the database has to be rebuilt under the new release first,
-and the two commands are the same pair as steps 3 and 5::
+When it does change them, the database has to be rebuilt under the new release first, and
+the two commands are the same pair as steps 4 and 5 of the installation chapter::
 
     cd /opt/opus/deploy
     ./import_and_deploy/run_full_opus_import.sh ==3.25.0
     #    ... read the log, check ERRORS.log, compare row counts against the served
     #    database, exercise the staged installation ...
     ./import_and_deploy/deploy_new_code_and_database.sh opus3_20260915T020000_31337 ==3.25.0
+
+**Give those two the same version specifier.** They install ``rms-opus`` separately --
+the import runs under its own installation and the site is served by another -- so
+leaving it off both means "the newest release" twice, which is two different releases if
+one is published in between.
 
 Either way the installation being replaced stays under ``staged/``, so going back is
 moving the ``deployed`` symlink onto it and restarting -- there is nothing to rebuild.
@@ -165,8 +118,9 @@ The scripts
     ``opus.toml``, ``wsgi.py`` symlink -- creates the application's own tables
     (``opus_manage migrate``), gathers the static files and rebuilds the dictionary and
     the auxiliary tables, and only then switches: the ``deployed`` symlink is moved onto
-    it, memcached is restarted, and Apache is started again. Apache is stopped for the
-    switch alone, not for the build.
+    it, the cache service is restarted, and the workers are started again. They are
+    stopped for the switch alone, not for the build. Which units those are comes from
+    ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
 
 ``deploy_new_code_only.sh [<version spec>]``
     **Only for a release that does not change the database schema** -- a bug-fix release
@@ -200,7 +154,8 @@ The scripts
     release being deployed rather than under whatever is serving, and the result is an
     installation a deploy can switch to. The import itself is ``opus_import_all``, the
     installed command, so the order the bundle sets are imported in comes from the
-    release rather than from these scripts. Then, **on a host whose name begins**
+    release rather than from these scripts.
+
     Then, if ``OPUS_PEER_DB_HOST`` names a second server, it dumps the finished database
     and loads it there; with no peer configured it imports and stops. It runs detached,
     and mails the log to ``OPUS_IMPORT_MAIL_TO`` if that names anyone.
@@ -233,98 +188,21 @@ separation is deliberate.
     holds everything about *this* server: where to install, which account to run as,
     which environment the chain's own commands come from, which database to connect to
     and as whom, where the PDS holdings are, what the site calls itself, and what to do
-    with a finished database. Nothing in the scripts assumes a value for any of it --
-    no host name, no URL, no path -- so the same chain runs on any server that fills
-    this file in. Every variable is required except the two marked optional:
-
-    .. list-table::
-       :header-rows: 1
-       :widths: 34 66
-
-       * - Variable
-         - Meaning
-       * - ``OPUS_DIR``
-         - The installation root, under which the chain creates everything else: the
-           staged installations, the logs, the cart archives and their manifests, and
-           the collected static files.
-       * - ``OPUS_DEPLOY_VENV``
-         - The virtual environment the chain's own commands come from -- the one
-           ``opus_deploy_scripts`` was run out of. Every script activates it for
-           itself, so a deploy runs the same way from a shell, from cron and under
-           ``nohup``. It is not one of the installations under ``staged/``: those are
-           what a deploy builds, and ``_opus_setup_environment.sh`` deactivates this
-           one before activating the installation it has just built.
-       * - ``OPUS_USER``
-         - The Unix account OPUS runs as, and the account every script here has to be
-           run as. Everything a deploy creates belongs to whoever ran it, including an
-           ``opus.toml`` at mode 0600, so a deploy run as anyone else -- root, most
-           easily -- builds an installation the web server cannot read. The reader
-           refuses rather than letting that reach the switch.
-       * - ``OPUS_DB_HOST``
-         - The MySQL server this installation connects to, usually ``localhost``.
-       * - ``OPUS_DB_USER``, ``OPUS_DB_PASSWORD``
-         - The MySQL account the import pipeline and the web application connect as.
-       * - ``OPUS_SECRET_KEY``
-         - Django's secret key for this server.
-       * - ``PDS3_HOLDINGS_DIR``, ``PDS4_HOLDINGS_DIR``
-         - The two holdings roots. The deploy checks that ``volumes/`` and ``bundles/``
-           exist under them.
-       * - ``LAST_BLOG_UPDATE_FILE``, ``NOTIFICATION_FILE``
-         - The two files of site content the interface displays.
-       * - ``OPUS_DEBUG``
-         - Django's ``DEBUG``, as the unquoted ``true`` or ``false`` TOML wants.
-           ``false`` on anything reachable from outside the machine; a staging server is
-           the case for ``true``.
-       * - ``OPUS_ALLOWED_HOSTS``
-         - Every name and address this installation answers to, separated by spaces.
-           Django refuses a request whose ``Host`` header is not among them, so a name a
-           proxy or a health check reaches it by belongs here as much as the public one,
-           and so do ``127.0.0.1`` and ``localhost``, which is how a smoke test from the
-           server itself arrives. The generator turns the list into the TOML array
-           ``allowed_hosts``.
-       * - ``OPUS_CACHE_PREFIX``
-         - The prefix on this installation's keys in the shared cache. Two installations
-           sharing one memcached need different prefixes, or each reads the other's
-           answers.
-       * - ``OPUS_PUBLIC_URL``, ``OPUS_PRODUCT_HTTP_PATH``, ``OPUS_VIEWMASTER_URL``,
-           ``OPUS_TAR_FILE_URL``
-         - What the site calls itself and where it serves things from. They appear in
-           what the API returns, so they are the URLs a user's browser has to be able to
-           reach rather than any internal address.
-       * - ``OPUS_DB_DUMP_DIR``
-         - Where ``mysqldump`` writes a finished database, and where the load reads it
-           back. On two servers that copy databases to each other, a directory both can
-           see.
-       * - ``OPUS_PEER_DB_HOST``
-         - *Optional.* The MySQL server a finished database is copied to. With a host
-           here, an import ends by dumping what it built and loading it there; empty,
-           the import stops when the database is built, which is what one server wants.
-       * - ``OPUS_IMPORT_MAIL_TO``
-         - *Optional.* Where to mail the log when an import finishes. An import runs for
-           days under ``nohup``, so the mail is how anyone finds out that it ended and
-           whether it ended well. Empty sends nothing and leaves the log where it was
-           written.
+    with a finished database. Nothing in the scripts assumes a value for any of it -- no
+    host name, no URL, no path, not even the name of the unit running the web server --
+    so the same chain runs on any server that fills this file in.
+    :ref:`user_guide_installation_deploy_env` is every variable in it.
 
 ``opus.toml``
     Read by the installed application and the import pipeline at run time.
     ``_write_opus_toml.sh`` **generates it** per installation from the values above, and
-    the deploy exports ``OPUS_CONFIG`` pointing at it. **On a Node server, do not
-    hand-write this file**: the next deploy overwrites it. Change ``deploy.env``
-    instead.
+    the deploy exports ``OPUS_CONFIG`` pointing at it. **Do not hand-write this file on a
+    server these scripts deploy**: the next deploy overwrites it. Change ``deploy.env``
+    instead. :ref:`user_guide_installation_configuring` says what each generated key
+    means.
 
-Installing the secrets file
+What is validated, and when
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Copy ``deploy.env.template`` into ``secrets/`` beside it, with the two commands the
-template gives at the top of itself, and then fill in every ``<PLACEHOLDER>``::
-
-    install -d -m 700 secrets
-    install -m 600 deploy.env.template secrets/deploy.env
-
-**Both modes are set as the thing is created rather than afterwards.** The scripts read
-this file with ``source``, i.e. they *run* it as shell code with the deploy user's
-privileges, so a directory left world-writable by a permissive umask would let another
-local account substitute code the deploy then executes. The directory is git-ignored.
 
 Two validations run before a deploy touches anything:
 
@@ -340,11 +218,12 @@ Two validations run before a deploy touches anything:
   never briefly readable while it already holds the password.
 
 Both failures name the variable at fault, but they happen at different moments. The
-missing-value check runs before the deploy stops Apache; the generator runs from
-``_opus_setup_environment.sh``, which is sourced **after** the stop, so a value TOML
-cannot represent leaves Apache down until it is corrected. That script's own comments
-record the same hazard for its other failure point, the :func:`importlib.util.find_spec`
-lookup that locates Apache's WSGI target.
+missing-value check runs at the very start of a deploy, before anything is built; the
+generator runs from ``_opus_setup_environment.sh``, part way through the build, so a
+value TOML cannot represent costs a build rather than an outage -- the switch has not
+happened, and the site is still serving what it was. That script's own comments record
+the same reasoning for its other failure point, the :func:`importlib.util.find_spec`
+lookup that locates the WSGI target the web server is pointed at.
 
 ``_write_opus_toml.sh`` is a separate program rather than a block inside the setup script
 so that it can be run on its own against a controlled environment and its output loaded
@@ -362,10 +241,12 @@ After **anything** that changes the database, and both are easy to forget:
 counts, range endpoints and product-type lists keyed by a search that now means something
 else::
 
-    OPUS_CONFIG=/opt/opus/opus.toml python -m opus_app.clear_django_cache
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/python -m opus_app.clear_django_cache
 
 That module configures the cache backend and calls ``clear()``, and does nothing else.
-Restarting memcached has the same effect, and is what the deploy scripts do.
+Restarting the cache service has the same effect, and is what a deploy does -- the unit
+``OPUS_CACHE_SERVICE`` names.
 
 **2. Every worker process has to be restarted**, because some caches are module-level
 dictionaries private to a process -- the ``param_info`` lookup in
@@ -392,10 +273,9 @@ what users see, so it is done deliberately.
    through the status, so an automated run gates on ``ERRORS.log`` being empty.
    :ref:`dev_guide_import_verifying` is the full check.
 3. **Compare the new database against the one being served.** Both are named before
-   anything is erased -- ``opus_import_all`` names the one it is about to build, and the
-   Node's ``import_all.sh`` wrapper also prints the one currently serving -- so that the
-   erase cannot be aimed at the wrong one. Neither prints row counts; comparing those is
-   a separate query you run yourself.
+   anything is erased: ``opus_import_all`` names the one it is about to build, and the
+   one being served is the ``schema`` line of ``deployed/opus.toml``. Neither prints row
+   counts; comparing those is a separate query you run yourself.
 4. **Exercise the new database before switching the public site to it.** The staged
    installation is a complete OPUS pointed at it, and naming its own ``opus.toml`` is
    what makes it read the new database rather than the served one::
@@ -407,7 +287,7 @@ what users see, so it is done deliberately.
    The public site goes on serving what it was serving throughout.
 5. **Switch over** with ``deploy_new_code_and_database.sh <that database>``. It builds
    the installation the public site will use, moves the ``deployed`` symlink onto it,
-   restarts memcached and starts Apache again -- and stops Apache only for that switch.
+   empties the cache and starts the workers again -- and stops them only for that switch.
 6. **Check the site, and keep the previous installation** until you are sure. It is still
    under ``staged/``, and going back to it is moving the same symlink.
 

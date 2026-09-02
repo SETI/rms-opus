@@ -52,7 +52,7 @@ fi
 mkdir -p ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 
-python3.12 -m venv opus_venv 2>&1
+${OPUS_PYTHON} -m venv opus_venv 2>&1
 
 # The deploy chain's own environment is active at this point, and everything after
 # this line -- opus_import, opus_manage, pip -- has to be this installation's rather
@@ -71,6 +71,16 @@ python -m pip install --upgrade pip 2>&1
 # with `-c constraints.txt`; the deploy does not maintain one, because the floors in
 # the distribution's own metadata are what this project supports.
 python -m pip install "rms-opus${OPUS_VERSION_SPEC:-}" 2>&1
+
+# The memcached client. It is not a dependency of the distribution -- OPUS runs
+# without it, on Django's per-process local-memory cache -- but a server wants the
+# shared one: it is what several worker processes answer from, and it is what the
+# switch at the end of a deploy empties by restarting memcached. Without this
+# package installed, that restart clears nothing, and each worker goes on answering
+# from its own memory. Installed per installation because that is where the
+# application imports it from, and it is only ever imported if memcached itself is
+# running.
+python -m pip install pymemcache 2>&1
 
 # What this installation says about itself -- its URLs, its debug flag, the hosts it
 # answers to, its cache prefix -- comes from deploy.env, which _read_deploy_env.sh has

@@ -12,9 +12,12 @@
 
 unset OPUS_DIR
 unset OPUS_DEPLOY_VENV
+unset OPUS_PYTHON
 unset OPUS_USER
 unset OPUS_DB_HOST
 unset OPUS_DB_DUMP_DIR
+unset OPUS_WEB_SERVICE
+unset OPUS_CACHE_SERVICE
 unset OPUS_PEER_DB_HOST
 unset OPUS_IMPORT_MAIL_TO
 unset OPUS_DEBUG
@@ -76,11 +79,26 @@ export OPUS_USER
 export OPUS_DB_HOST
 export OPUS_DB_DUMP_DIR
 # Optional, and so neither required nor refused above: with no second server there is
-# nothing to copy a database to. It is exported all the same, and unset before the
+# nothing to copy a database to. They are exported all the same, and unset before the
 # file is read, so a value left in the caller's environment cannot stand in for one
 # the file does not set.
 export OPUS_PEER_DB_HOST=${OPUS_PEER_DB_HOST:-}
 export OPUS_IMPORT_MAIL_TO=${OPUS_IMPORT_MAIL_TO:-}
+# The interpreter each installation's virtualenv is built with. Named rather than
+# assumed, because "python3" is whatever the machine calls its system Python and may
+# be older than OPUS supports; the default is the lowest version this release runs on,
+# so a server offering only a later one says which.
+export OPUS_PYTHON=${OPUS_PYTHON:-python3.12}
+# The systemd units the switch stops and starts around it: the one running the
+# application's workers, and the one holding the shared cache. Named rather than
+# assumed, because what serves OPUS is a choice -- Apache with mod_wsgi is one, a
+# gunicorn or uWSGI unit behind nginx is another -- and the unit that has to go down
+# for the switch is the one running the workers, whichever it is. An empty
+# OPUS_CACHE_SERVICE means there is no shared cache to empty.
+export OPUS_WEB_SERVICE=${OPUS_WEB_SERVICE:-apache2}
+# `-` rather than `:-`: for this one key an empty value is an answer -- there is no
+# shared cache to empty -- so only an absent line takes the default.
+export OPUS_CACHE_SERVICE=${OPUS_CACHE_SERVICE-memcached}
 export OPUS_DEBUG
 export OPUS_ALLOWED_HOSTS
 export OPUS_CACHE_PREFIX

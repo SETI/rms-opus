@@ -9,8 +9,9 @@ of an installed rms-opus. The file CHAIN_VERSION beside this one says which
 release they came from.
 
 This is the short version: what to run, in what order. The full account is the
-User Guide:
+User Guide -- bringing a server up, then running it:
 
+    https://rms-opus.readthedocs.io/en/latest/user_guide_installation.html
     https://rms-opus.readthedocs.io/en/latest/user_guide_deployment.html
 
 
@@ -40,11 +41,15 @@ secrets/deploy.env. Everything else the chain needs underneath it, it creates.
   FIRST, ONCE
 --------------------------------------------------------------------------------
 
-1. The environment these commands come from. It is not an installation that
-   serves anything -- the chain builds those itself. Its path goes into
-   deploy.env below as OPUS_DEPLOY_VENV, and every script activates it for
-   itself afterwards; this is the one time it is done by hand.
+1. The installation root, and the environment these commands come from. The
+   root has to exist and belong to the OPUS account; everything underneath it,
+   the chain creates. The environment is not an installation that serves
+   anything -- the chain builds those itself. Its path goes into deploy.env
+   below as OPUS_DEPLOY_VENV, and every script activates it for itself
+   afterwards; this is the one time it is done by hand.
 
+    sudo install -d -o opus -g opus -m 755 /opt/opus
+    sudo -u opus -i
     python3.12 -m venv /opt/opus/deploy_venv
     source /opt/opus/deploy_venv/bin/activate
     python -m pip install "rms-opus==3.24.0"
@@ -166,7 +171,9 @@ them has been trusted for a while.
   log_analyzer/                       Cron templates for the log-analyzer
                                       reports. Fill in the placeholders.
   deploy.env.template                 The contract for secrets/deploy.env.
-                                      Every variable in it is required.
+                                      Everything about this server is in it.
+                                      Every <PLACEHOLDER> has to be filled in;
+                                      the rest ship with usable defaults.
   CHAIN_VERSION                       The release these scripts came from.
 
 secrets/ is yours. Nothing that ships is written there, and updating these

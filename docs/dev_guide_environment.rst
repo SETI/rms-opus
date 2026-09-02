@@ -17,8 +17,9 @@ Prerequisites
 
 * **memcached**, if you want the web application's caching to behave the way a server
   does. It is not needed to run the tests.
-* **wkhtmltopdf**, only if you want the help pages' PDF downloads to work. Without it
-  every other page still renders.
+* **wkhtmltopdf**, only if you want the help pages' PDF downloads to work, and only a
+  build with patched Qt -- see :ref:`user_guide_installation_prereqs`. Without it every
+  other page still renders.
 * **The PDS holdings**, only to run a real import against the archive, or the
   integration suites that need the database such an import populates. Neither
   holdings-free suite touches them: ``tests/`` needs nothing, and ``import_tests/`` runs

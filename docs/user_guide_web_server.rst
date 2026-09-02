@@ -10,9 +10,8 @@ products directly off disk, and it starts the worker processes.
 This chapter gives a worked configuration for **nginx** -- with gunicorn, and with uWSGI
 -- and for **Apache with mod_wsgi**. They are worked examples rather than files to paste
 unread. Throughout, ``opus`` is the account OPUS runs as, ``opus.example.org`` is the
-host name, ``/opt/opus`` is the installation root, ``/pds`` is where the holdings are
-mounted, and ``/opt/opus/opus.toml`` is the configuration file; substitute your own for
-each.
+host name, ``/opt/opus`` is the installation root, and ``/pds`` is where the holdings are
+mounted; substitute your own for each.
 
 .. _user_guide_web_server_contract:
 
@@ -33,11 +32,11 @@ a **file** path, it is the installed ``wsgi.py``, inside the virtual environment
 is served. This is the single most common way a deployment fails, and each server
 arranges it differently -- see each section below.
 
-The examples below name ``/opt/opus/deployed/opus.toml``, because an installation the
-deploy chain built carries its own configuration and ``deployed`` is the symlink onto the
-one being served (:ref:`user_guide_deployment`). An installation put together by hand
-names whatever file :ref:`user_guide_installation_configuring` had you write; the path is
-the only difference.
+The examples below name ``/opt/opus/deployed/opus.toml``. Every installation the deploy
+scripts build carries its own generated configuration, and ``deployed`` is the symlink
+onto the one being served, so that path follows the site across deploys rather than
+naming any one installation. :ref:`user_guide_installation_configuring` says what is in
+that file.
 
 **3. Static files are served at** ``/static_media/``, from the directory ``static_root``
 names. The prefix is fixed; :ref:`dev_guide_webapp_static` says why.

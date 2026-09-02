@@ -201,8 +201,8 @@ template- and JavaScript-referenced asset to survive ``collectstatic`` first.
 Caching, and clearing it
 ------------------------
 
-:ref:`user_guide_installation_prereqs` says how to install ``memcached`` and its client,
-and why neither is a declared dependency. The behavior to know here is the fallback:
+:ref:`user_guide_installation_prereqs` says how a server installs ``memcached``, and why
+its client is not a declared dependency. The behavior to know here is the fallback:
 :mod:`opus_app.settings` decides at import time, and it decides **twice** -- whether
 ``pymemcache`` imports, and whether a connection to a local memcached succeeds -- falling
 back to Django's per-process local-memory cache if the import fails or the connection is

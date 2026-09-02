@@ -49,9 +49,16 @@ REQUIRED_KEYS = [
     'OPUS_DB_DUMP_DIR',
 ]
 
-# The one key that is optional: a server with no second server to copy a database to
-# leaves it empty, and the reader neither requires nor refuses it.
-OPTIONAL_KEYS = ['OPUS_PEER_DB_HOST', 'OPUS_IMPORT_MAIL_TO']
+# The keys that are optional: a server with no second server to copy a database to
+# leaves the first two empty, and the reader supplies a default for the rest. It
+# neither requires nor refuses any of them.
+OPTIONAL_KEYS = [
+    'OPUS_PEER_DB_HOST',
+    'OPUS_IMPORT_MAIL_TO',
+    'OPUS_PYTHON',
+    'OPUS_WEB_SERVICE',
+    'OPUS_CACHE_SERVICE',
+]
 
 pytestmark = pytest.mark.skipif(
     os.name != 'posix', reason='the deploy chain is bash, and runs only on the servers'
@@ -141,6 +148,34 @@ def test_the_optional_peer_host_may_be_empty(tmp_path: Path) -> None:
     """
     secrets = _make_environment(tmp_path, OPUS_PEER_DB_HOST='')
     result = _read(secrets, 'bash -c \'[[ -z "${OPUS_PEER_DB_HOST}" ]]\'')
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(
+    ('key', 'named', 'expected'),
+    [
+        ('OPUS_PYTHON', None, 'python3.12'),
+        ('OPUS_PYTHON', 'python3.13', 'python3.13'),
+        ('OPUS_WEB_SERVICE', None, 'apache2'),
+        ('OPUS_WEB_SERVICE', 'opus-gunicorn', 'opus-gunicorn'),
+        ('OPUS_CACHE_SERVICE', None, 'memcached'),
+        ('OPUS_CACHE_SERVICE', '', ''),
+    ],
+)
+def test_a_defaulted_key_may_be_left_out_or_named(
+    tmp_path: Path, key: str, named: str | None, expected: str
+) -> None:
+    """The keys with defaults may be absent, and a value in the file wins over the default.
+
+    Absence is the case that matters: these keys were added after servers had a
+    ``deploy.env``, so an existing one has to go on working. Naming one is what a
+    server that differs needs -- a later Python, a unit that is not called
+    ``apache2``, or no shared cache at all. The defaults are supplied here rather
+    than where they are used, so that every script sees the same value and an unset
+    variable can never reach ``systemctl`` as an empty argument.
+    """
+    secrets = _make_environment(tmp_path, **{key: named})
+    result = _read(secrets, f'bash -c \'[[ "${{{key}}}" == "{expected}" ]]\'')
     assert result.returncode == 0, result.stdout + result.stderr
 
 
