@@ -52,6 +52,29 @@ def test_the_readme_reads_in_a_terminal(tmp_path: Path) -> None:
     assert '\t' not in readme
 
 
+def test_every_file_of_the_chain_comes_out(tmp_path: Path) -> None:
+    """The whole tree, compared against the source rather than against a list here.
+
+    `EXPECTED_FILES` above is one file per directory, which is enough to catch a wheel
+    that ships only its top level and not enough to catch one file going missing --
+    and a chain missing one file is a deploy that stops on ``No such file or
+    directory`` part way through, since every entry point sources the helpers.
+
+    The comparison is against ``src/opus_deploy/server`` because that is what the
+    package-data globs in ``pyproject.toml`` are declared over: a file this walk finds
+    and ``write_scripts`` does not write is one those globs do not reach, which is the
+    other way a file is in the repository and in no wheel.
+    ``tests/opus_packaging/test_source_tree_is_tracked.py`` holds the first way.
+    """
+    source = Path(scripts.__file__).resolve().parent / scripts.TREE_NAME
+    expected = {path.relative_to(source) for path in source.rglob('*') if path.is_file()}
+
+    written = scripts.write_scripts(tmp_path)
+    got = {path.relative_to(tmp_path) for path in written} - {Path(scripts.VERSION_FILE)}
+
+    assert got == expected
+
+
 def test_the_copy_is_the_packaged_file(tmp_path: Path) -> None:
     """Byte for byte, so a copy cannot be a stale or rewritten version of the chain."""
     written = scripts.write_scripts(tmp_path)

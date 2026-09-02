@@ -17,13 +17,18 @@ nohup.out
 
 *venv*
 !scripts/*
+# ...which would otherwise swallow this script, whose name ends "_venv.sh". It ships
+# inside the wheel as part of the deploy chain, and an untracked file ships nowhere.
+!src/opus_deploy/server/import_and_deploy/_activate_deploy_venv.sh
 test_out*
 coverage_out*
 opus.toml
 opus.toml.tmp
 # The deploy chain's own configuration, holding a database password and the Django
-# secret key. scripts/server/deploy.env.template is the checked-in contract for it.
-scripts/server/secrets/
+# secret key. It is written on a server, in the directory opus_deploy_scripts wrote
+# the chain into, so this matches wherever a copy of that directory ends up here.
+# src/opus_deploy/server/deploy.env.template is the checked-in contract for it.
+secrets/deploy.env
 
 migrations/
 
