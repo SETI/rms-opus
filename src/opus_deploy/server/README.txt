@@ -58,7 +58,7 @@ everything else the chain needs underneath it, it creates.
    OPUS_DEPLOY_VENV, and every script activates it for itself afterwards; this
    is the one time it is done by hand.
 
-    id opus || sudo useradd --system --create-home --shell /bin/bash opus
+    sudo useradd --system --create-home --shell /bin/bash opus
     sudo install -d -o opus -g opus -m 755 /opt/opus
     sudo -u opus -i
     python3.12 -m venv /opt/opus/deploy_venv

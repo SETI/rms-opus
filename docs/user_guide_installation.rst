@@ -100,13 +100,16 @@ builds an installation the web server cannot read. The scripts refuse rather tha
 that reach the switch. That account also needs ``sudo`` for three ``systemctl`` commands:
 the switch stops the web server, restarts the cache, and starts the web server again.
 
-This is an example of making one, on a system with ``useradd``::
+This is an example of making one, on a system with ``useradd``, and of checking the
+result -- ``useradd`` says nothing at all when it succeeds::
 
-    id opus || sudo useradd --system --create-home --shell /bin/bash opus
+    sudo useradd --system --create-home --shell /bin/bash opus
+    id opus
 
 ``opus`` is the name this guide uses, and ``OPUS_USER`` in ``deploy.env`` is what says
 which account you actually chose. It needs a **shell**, because the deploys are run as
-it, and a **home directory**, because ``pip`` writes a cache into one.
+it, and a **home directory**, because ``pip`` writes a cache into one. An account that
+already exists is fine: ``useradd`` will say so and change nothing.
 
 **A web server.** :ref:`user_guide_web_server` has worked configurations for Apache with
 ``mod_wsgi`` and for nginx in front of gunicorn or uWSGI. Under Apache, the deploy runs
