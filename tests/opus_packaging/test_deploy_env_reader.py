@@ -28,6 +28,7 @@ TEMPLATE = SERVER_SCRIPTS / 'deploy.env.template'
 # line in the template -- or the reverse -- fails a test rather than a deploy.
 REQUIRED_KEYS = [
     'OPUS_DIR',
+    'OPUS_DEPLOY_VENV',
     'OPUS_DB_USER',
     'OPUS_DB_PASSWORD',
     'OPUS_SECRET_KEY',
@@ -57,6 +58,7 @@ def _make_environment(tmp_path: Path, **overrides: str | None) -> Path:
 
     values: dict[str, str | None] = {
         'OPUS_DIR': str(opus_dir),
+        'OPUS_DEPLOY_VENV': str(opus_dir / 'deploy_venv'),
         'OPUS_DB_USER': 'opus_user',
         'OPUS_DB_PASSWORD': 'a password',
         'OPUS_SECRET_KEY': 'a-secret-key',

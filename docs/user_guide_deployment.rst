@@ -76,8 +76,10 @@ The order of operations
 **From nothing**, on a machine with the prerequisites of
 :ref:`user_guide_installation_prereqs` and the holdings mounted::
 
-    # 1. An environment to run the chain's own commands from. This is not an
-    #    installation that serves anything; the chain builds those itself.
+    # 1. The environment the chain's own commands come from. This is not an
+    #    installation that serves anything -- the chain builds those itself -- and its
+    #    path is what OPUS_DEPLOY_VENV names in deploy.env below. Every script
+    #    activates it for itself afterwards; this is the one time it is done by hand.
     python3.12 -m venv /opt/opus/deploy_venv
     source /opt/opus/deploy_venv/bin/activate
     python -m pip install "rms-opus==3.24.0"
@@ -115,17 +117,18 @@ different releases if one is published in between.
 
 **Updating a running site starts with the scripts themselves.** They ship inside the
 distribution, so a copy on a server is one release's chain, and it changes between
-releases like anything else. Bring it up to the release being deployed first::
+releases like anything else. One script brings it up to the release being deployed::
 
-    source /opt/opus/deploy_venv/bin/activate
-    python -m pip install --upgrade "rms-opus==3.24.1"
-    opus_deploy_scripts --directory /opt/opus/deploy --force
+    cd /opt/opus/deploy
+    ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
 
-``--force`` replaces the scripts and rewrites ``CHAIN_VERSION``, the file recording
-which release they came from. It does not touch ``secrets/``, which is not part of what
-ships and so is not part of what is written. Every script prints that version as it
-starts and says so when it is deploying a different one, which is the check that this
-step was not forgotten.
+That upgrades ``rms-opus`` in the environment ``OPUS_DEPLOY_VENV`` names -- the one
+these commands come from, not any installation that serves anything -- and rewrites this
+directory from it, including ``CHAIN_VERSION``, the file recording which release the
+scripts came from. It never touches ``secrets/``, which is not part of what ships and so
+is not part of what is written. Every other script prints that version as it starts and
+says so when it is deploying a different one, which is the check that this step was not
+forgotten.
 
 Then the deploy itself is one command, or two, depending on the release. When it
 changes nothing about the table schemas -- a bug-fix release -- the database already
@@ -173,6 +176,14 @@ The scripts
     the two cases apart. When they did change, the deploy is an import under the new
     release followed by ``deploy_new_code_and_database.sh``.
 
+``update_deploy_scripts.sh [<version spec>]``
+    Brings this copy of the chain up to a release: it upgrades ``rms-opus`` in
+    ``OPUS_DEPLOY_VENV`` and rewrites the scripts from it. **The first command of every
+    upgrade**, before either deploy script. Its own body is a shell function called on
+    the last line, because it rewrites the file bash is reading: everything inside a
+    function is parsed before the call, so there is nothing left to read from the file
+    by the time it is replaced.
+
 ``run_full_opus_import.sh [<version spec>]``
     Runs a complete import into a brand-new database, which is the first half of
     deploying a release that changed the schemas. It builds an installation of that
@@ -205,9 +216,9 @@ separation is deliberate.
 
 ``secrets/deploy.env``
     **Shell syntax**, read by the scripts before any OPUS code exists on the machine. It
-    says where to install, which database credentials to use, where the PDS holdings are,
-    what Django's secret key is, and where the two site-content files live. Eight
-    variables, every one of them required:
+    says where to install, which environment the chain's own commands come from, which
+    database credentials to use, where the PDS holdings are, what Django's secret key is,
+    and where the two site-content files live. Every variable in it is required:
 
     .. list-table::
        :header-rows: 1
@@ -216,8 +227,16 @@ separation is deliberate.
        * - Variable
          - Meaning
        * - ``OPUS_DIR``
-         - The installation root, under which the chain expects or creates the five
-           directories listed above.
+         - The installation root, under which the chain creates everything else: the
+           staged installations, the logs, the cart archives and their manifests, and
+           the collected static files.
+       * - ``OPUS_DEPLOY_VENV``
+         - The virtual environment the chain's own commands come from -- the one
+           ``opus_deploy_scripts`` was run out of. Every script activates it for
+           itself, so a deploy runs the same way from a shell, from cron and under
+           ``nohup``. It is not one of the installations under ``staged/``: those are
+           what a deploy builds, and ``_opus_setup_environment.sh`` deactivates this
+           one before activating the installation it has just built.
        * - ``OPUS_DB_USER``, ``OPUS_DB_PASSWORD``
          - The MySQL account the import pipeline and the web application connect as.
        * - ``OPUS_SECRET_KEY``
@@ -251,7 +270,7 @@ local account substitute code the deploy then executes. The directory is git-ign
 
 Two validations run before a deploy touches anything:
 
-* ``_read_deploy_env.sh`` refuses to continue if any of the eight variables is missing,
+* ``_read_deploy_env.sh`` refuses to continue if any of those variables is missing,
   **empty**, or still the placeholder the template ships. Emptiness is refused as well as
   absence because nothing downstream objects to an empty value -- an empty secret key is
   a well-formed TOML string, and Django starts with no secret key.

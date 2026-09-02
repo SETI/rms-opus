@@ -43,6 +43,7 @@ export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
+source ${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh
 source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 
 export OPUS_LOG_DIR=${OPUS_DIR}/opus_logs

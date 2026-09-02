@@ -53,6 +53,14 @@ mkdir -p ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 cd ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 
 python3.12 -m venv opus_venv 2>&1
+
+# The deploy chain's own environment is active at this point, and everything after
+# this line -- opus_import, opus_manage, pip -- has to be this installation's rather
+# than that one's. Leaving both active would put two releases of the same console
+# scripts on PATH and settle it by ordering.
+if [[ -n ${VIRTUAL_ENV:-} ]] && type deactivate > /dev/null 2>&1; then
+    deactivate
+fi
 source opus_venv/bin/activate
 python -m pip install --upgrade pip 2>&1
 

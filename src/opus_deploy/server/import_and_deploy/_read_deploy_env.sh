@@ -11,6 +11,7 @@
 # fill it in. It holds a password and a secret key, so it should be mode 0600.
 
 unset OPUS_DIR
+unset OPUS_DEPLOY_VENV
 unset OPUS_DB_USER
 unset OPUS_DB_PASSWORD
 unset OPUS_SECRET_KEY
@@ -32,7 +33,7 @@ source ${SECRETS_DIR}/deploy.env
 # an empty OPUS_SECRET_KEY is a well-formed TOML string and Django starts with no
 # secret key.
 for _required in \
-    OPUS_DIR OPUS_DB_USER OPUS_DB_PASSWORD OPUS_SECRET_KEY \
+    OPUS_DIR OPUS_DEPLOY_VENV OPUS_DB_USER OPUS_DB_PASSWORD OPUS_SECRET_KEY \
     PDS3_HOLDINGS_DIR PDS4_HOLDINGS_DIR LAST_BLOG_UPDATE_FILE NOTIFICATION_FILE; do
     if [[ ! -v $_required ]]; then
         echo "$_required not defined in ${SECRETS_DIR}/deploy.env"
@@ -56,6 +57,7 @@ unset _required
 # Exported because _write_opus_toml.sh runs as its own process, which is what makes
 # it testable outside a deploy.
 export OPUS_DIR
+export OPUS_DEPLOY_VENV
 export OPUS_DB_USER
 export OPUS_DB_PASSWORD
 export OPUS_SECRET_KEY
