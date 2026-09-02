@@ -151,13 +151,15 @@ producing a plainer PDF. That is what a machine has to say for itself::
 package is the unpatched build. These are the binaries the Node runs, for Linux on
 x86-64::
 
+    cd /tmp
     wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
     tar xvf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
     sudo mv wkhtmltox/bin/wkhtmlto* /usr/bin/
 
-The glob takes ``wkhtmltoimage`` along with ``wkhtmltopdf``; they ship together, and the
-one the help pages call ends up on the path either way. 0.12.4 is the release the Node
-runs. The project is archived, so that releases page is a fixed list rather than a moving
+The download and the unpacked ``wkhtmltox/`` are left behind in ``/tmp``, which is where
+they can be deleted or ignored; only what was moved to ``/usr/bin`` is installed. The
+glob takes ``wkhtmltoimage`` along with ``wkhtmltopdf``; they ship together, and the one
+the help pages call ends up on the path either way. 0.12.4 is the release the Node runs. The project is archived, so that releases page is a fixed list rather than a moving
 one; a later release from it does as well, as long as ``--version`` says patched.
 
 **The PDS holdings**, mounted read-only. The import needs them to run at all; the web
