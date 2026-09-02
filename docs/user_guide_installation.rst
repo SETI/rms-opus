@@ -93,14 +93,6 @@ Linux wheel and is compiled during every install. On Debian or Ubuntu::
 
     sudo apt-get install pkg-config default-libmysqlclient-dev build-essential
 
-**git**, because one of OPUS's dependencies is installed from its repository rather than
-from PyPI: OPUS is developed against the ``rewrite`` branch of ``rms-pdsfile``, which is
-what reads the holdings, and ``pip`` clones it while installing. Every installation the
-deploy scripts build does this, so ``git`` is needed on the server and not only where a
-checkout is::
-
-    sudo apt-get install git
-
 **A Unix account for OPUS**, which the web server's workers run as and which every deploy
 script has to be run as. Everything a deploy creates belongs to whoever ran it, including
 an ``opus.toml`` at mode 0600, so a deploy run as anyone else -- root, most easily --

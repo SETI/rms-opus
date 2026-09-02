@@ -66,10 +66,7 @@ source opus_venv/bin/activate
 python -m pip install --upgrade pip 2>&1
 
 # The released distribution, from PyPI. OPUS_VERSION_SPEC pins a particular release
-# ("==3.23.0"); with it empty, pip takes the newest. One of the dependencies this
-# pulls in is not from PyPI -- rms-opus asks for the rewrite branch of rms-pdsfile by
-# its repository URL -- so this step needs git on the machine and a network path to
-# GitHub. To reproduce an installation
+# ("==3.23.0"); with it empty, pip takes the newest. To reproduce an installation
 # exactly, generate a constraints file from a known-good server --
 # `python -m pip freeze > constraints.txt` inside its opus_venv -- and pass it here
 # with `-c constraints.txt`; the deploy does not maintain one, because the floors in
