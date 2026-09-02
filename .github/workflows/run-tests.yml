@@ -316,6 +316,7 @@ jobs:
           cd "$RUNNER_TEMP"
           export OPUS_CONFIG="$GITHUB_WORKSPACE/tests/fixtures/opus_ci.toml"
           "$RUNNER_TEMP/clean/bin/opus_import" --help > /dev/null
+          "$RUNNER_TEMP/clean/bin/opus_import_all" --dry-run > /dev/null
           "$RUNNER_TEMP/clean/bin/opus_log_analyzer" --help > /dev/null
           "$RUNNER_TEMP/clean/bin/opus_error_analyzer" --help > /dev/null
           # Django's command line, configured from OPUS_CONFIG alone.

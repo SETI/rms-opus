@@ -25,6 +25,7 @@ import pytest
 # here; this mapping is the assertion, not a description of one.
 EXPECTED_SCRIPTS = {
     'opus_import': 'opus_import.cli:main',
+    'opus_import_all': 'opus_import.import_all:main',
     'opus_log_analyzer': 'opus_log_analyzer.log_analyzer:main',
     'opus_error_analyzer': 'opus_log_analyzer.error_analyzer:main',
     'opus_manage': 'opus_app.manage:main',

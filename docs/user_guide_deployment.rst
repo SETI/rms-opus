@@ -196,10 +196,11 @@ what users see, so it is done deliberately.
    ``--validate-perm`` and the dictionary import both report through the log rather than
    through the status, so an automated run gates on ``ERRORS.log`` being empty.
    :ref:`dev_guide_import_verifying` is the full check.
-3. **Compare the new database against the one being served.** ``import_all.sh`` prints
-   the name of each before it asks for confirmation, so that the erase cannot be aimed at
-   the wrong one; it prints no row counts, and comparing those is a separate query you run
-   yourself.
+3. **Compare the new database against the one being served.** Both are named before
+   anything is erased -- ``opus_import_all`` names the one it is about to build, and the
+   Node's ``import_all.sh`` wrapper also prints the one currently serving -- so that the
+   erase cannot be aimed at the wrong one. Neither prints row counts; comparing those is
+   a separate query you run yourself.
 4. **Point an installation at the new database and exercise it** before switching the
    public one over. That is what the per-database directory layout is for: a second
    installation with its own ``opus.toml`` can serve the new schema while the public one

@@ -72,6 +72,9 @@ it, and the rest of this guide uses them by name:
        configuring a server starts.
    * - ``opus_import``
      - The import pipeline: reads the PDS holdings and builds the OPUS database.
+   * - ``opus_import_all``
+     - Runs a whole full-holdings import: every bundle set, in order, and the steps
+       that finish the database.
    * - ``opus_manage``
      - Administers the web application -- creating its tables, gathering its static
        files, and checking that its configuration works.
@@ -336,55 +339,47 @@ The first full-holdings import
 ------------------------------
 
 A complete import is hours to days, and it is not one command: the bundle sets are
-imported in a particular order, two of them need an extra option, and the whole thing has
-to survive the terminal it was started from. **A pair of scripts in the repository does
-all of that, and they are what to use.** They are not in the installed distribution, so
-fetch a checkout on the machine that will run the import::
-
-    git clone https://github.com/SETI/rms-opus.git
-    cd rms-opus
-
-Then, with ``OPUS_CONFIG`` naming this installation's configuration file, and a name for
-the database to build::
+imported in a particular order, two of them need an extra option, and the database is
+finished by three more steps afterwards. **One installed command runs the whole
+sequence**::
 
     export OPUS_CONFIG=/opt/opus/opus.toml
-    ./scripts/import/import_all.sh opus3_new ""
+    opus_import_all --override-db-schema opus3_new
 
-``import_all.sh`` prints the database it is about to erase, requires you to type ``YES``,
-and then runs ``scripts/import/_import_all_internal.sh`` under ``nohup``, so the run
-survives the terminal it was started from; watch ``nohup.out`` for progress. (The second
-argument is required by the script and unused: it holds MySQL connection flags for the
-database-dump commands at the end of the second script, which are commented out.)
+It names the database it is about to erase and asks you to type ``YES``, then runs each
+step as its own ``opus_import`` process and stops at the first one that fails.
 
-**It imports into a database of its own**, the one named by the first argument, rather
-than the one being served: every command it runs carries ``--override-db-schema``, and a
-schema that does not exist is created. That is what makes the switchover a configuration
-change rather than a window of downtime.
+**It imports into a database of its own**, the one ``--override-db-schema`` names, rather than the one
+being served: every step it runs carries ``--override-db-schema``, and a schema that does
+not exist is created. That is what makes the switchover a configuration change rather than
+a window of downtime. Leave ``--override-db-schema`` out and it imports into the database the
+configuration file names, which on a serving installation is the one being served.
 
-**The second script is the record of what a full import is**, and it is worth reading
-before running it: every bundle set in a deliberate order -- Galileo and New Horizons
-first, because those two carry observations that appear in more than one bundle and so
-are imported with ``--import-check-duplicate-id``, then the rest in roughly decreasing
-order of how long they take -- with any failing step stopping the run. It finishes the
-database as well, rebuilding the auxiliary tables, loading the dictionary and running the
-validation, so there is nothing else to run against the new database except the web
-application's own tables::
+A run this long should outlive the terminal it was started from, and ``--yes`` is what
+answers the confirmation in advance::
 
-    # opus_manage has no --override-db-schema: it takes the database from the
-    # configuration file, so this one needs a file that names opus3_new. Run against
-    # the production configuration, it would add its tables to the database being
-    # served instead.
+    nohup opus_import_all --yes --override-db-schema opus3_new > import_run.log 2>&1 &
+
+**To see the sequence without running it**, ask for it::
+
+    opus_import_all --override-db-schema opus3_new --dry-run
+
+which prints every invocation in order: the erase, then Galileo and New Horizons -- the
+two bundle sets whose bundles carry observations that appear in more than one, so they are
+imported with ``--import-check-duplicate-id`` while the tables are still small -- then the
+rest in roughly decreasing order of how long each takes, and finally the three steps that
+finish the database: the auxiliary tables, the dictionary, and the validation. Any option
+this command does not recognize is passed to every ``opus_import`` invocation it makes.
+
+Because those three finishing steps are part of the sequence, the only thing left to run
+against the new database is the web application's own tables::
+
+    # opus_manage has no --override-db-schema: it takes the database from the configuration file,
+    # so this one needs a file that names opus3_new. Run against the production
+    # configuration, it would add its tables to the database being served instead.
     OPUS_CONFIG=/opt/opus/opus_new.toml opus_manage migrate
 
-``import_all.sh`` is written for the Ring-Moon Systems Node's own servers in two ways: it
-refuses to run on a host whose name is not ``tools`` or ``ringlet``, and it reads
-``/opus/src/rms-opus/opus.toml`` -- that Node's production installation -- to print which
-database is currently live. On any other machine, run ``_import_all_internal.sh``
-yourself, which carries neither::
-
-    nohup ./scripts/import/_import_all_internal.sh opus3_new "" > import_run.log 2>&1 &
-
-Either way, :ref:`user_guide_deployment_runbook` is what to do with the result: read
+Then :ref:`user_guide_deployment_runbook` is what to do with the result: read
 ``ERRORS.log``, compare the new database's row counts against the one being served,
 exercise it from a test installation, and only then switch over.
 

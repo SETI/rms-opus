@@ -153,11 +153,14 @@ The error analyzer names a module rather than a package because a package has on
 chains invoke, by name; ``tests/opus_packaging/test_console_scripts.py`` runs both
 forms of each and compares them.
 
-The fourth is ``opus_manage``, and it is not an OPUS program: it is Django's own
-management command line with the settings module already named, so that an installation
-needs nothing in its environment but ``OPUS_CONFIG``. It has no ``python -m`` form and no
-command line of its own -- its subcommands are Django's. In a checkout, ``manage.py`` is
-the same program.
+Three more have no ``python -m`` form. ``opus_manage`` is not an OPUS program at all:
+it is Django's own management command line with the settings module already named, so
+that an installation needs nothing in its environment but ``OPUS_CONFIG``, and in a
+checkout ``manage.py`` is the same program. ``opus_config_template`` writes the
+configuration template into the working directory. ``opus_import_all`` runs a full
+import: every bundle set in order, each as its own ``opus_import`` process, and the three
+steps that finish the database. All three exist because an installation has no checkout
+to run a script out of.
 
 Running the tests and the checks
 --------------------------------
