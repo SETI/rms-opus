@@ -121,7 +121,8 @@ every other argument is escaped first.
 Deployment
 ----------
 
-The cron templates in ``scripts/server/log_analyzer/`` are what runs the
+The cron templates in ``src/opus_deploy/server/log_analyzer/``, which
+``opus_deploy_scripts`` writes out, are what runs the
 analyzer on a server: a nightly update, a monthly report, and a full refresh. They are
 templates because each installation fills in its own paths; nothing substitutes or
 executes them automatically. See :ref:`user_guide_deployment`.

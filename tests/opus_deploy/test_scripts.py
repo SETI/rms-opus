@@ -1,0 +1,80 @@
+"""Tests for the command that writes the server deploy chain out of the installation.
+
+The chain is shell, and none of it can run here -- it stops a web server and installs
+distributions. What these pin is the part that is this project's rather than the
+operator's: that the chain really ships inside the wheel, that a copy comes out whole and
+runnable, and that a copy is never quietly written over one that may already hold an
+edited ``secrets/deploy.env`` beside it.
+"""
+
+import os
+import stat
+from pathlib import Path
+
+import pytest
+
+from opus_deploy import scripts
+
+#: One file from each directory of the chain, named so that a tree that ships only its
+#: top level fails rather than passing on the strength of one file.
+EXPECTED_FILES = (
+    Path('deploy.env.template'),
+    Path('import_and_deploy/deploy_new_code_and_database.sh'),
+    Path('import_and_deploy/_read_deploy_env.sh'),
+    Path('database/dump_db_from_tools.sh'),
+    Path('log_analyzer/run_log_analyzer_update.sh_template'),
+)
+
+
+def test_the_chain_ships_inside_the_distribution(tmp_path: Path) -> None:
+    """Every directory of it, not just the top: this is what package data gets wrong."""
+    scripts.write_scripts(tmp_path)
+
+    missing = [str(name) for name in EXPECTED_FILES if not (tmp_path / name).is_file()]
+    assert missing == []
+
+
+def test_the_copy_is_the_packaged_file(tmp_path: Path) -> None:
+    """Byte for byte, so a copy cannot be a stale or rewritten version of the chain."""
+    written = scripts.write_scripts(tmp_path)
+    reader = tmp_path / 'import_and_deploy' / '_read_deploy_env.sh'
+
+    assert reader in written
+    assert 'deploy.env' in reader.read_text(encoding='utf-8')
+
+
+def test_shell_scripts_come_out_executable(tmp_path: Path) -> None:
+    """A wheel does not carry the executable bit, so the command has to apply it.
+
+    Without this the copy is a directory of files the operator has to chmod before the
+    chain will run at all, and the first symptom is "permission denied" from a deploy.
+    """
+    scripts.write_scripts(tmp_path)
+
+    deploy = tmp_path / 'import_and_deploy' / 'deploy_new_code_and_database.sh'
+    template = tmp_path / 'deploy.env.template'
+    assert os.access(deploy, os.X_OK)
+    assert not stat.S_IMODE(template.stat().st_mode) & stat.S_IXUSR
+
+
+def test_an_existing_copy_is_not_replaced(tmp_path: Path) -> None:
+    """The operator's own edits, and the secrets beside them, are not this command's."""
+    scripts.write_scripts(tmp_path)
+    edited = tmp_path / 'deploy.env.template'
+    edited.write_text('mine', encoding='utf-8')
+
+    with pytest.raises(FileExistsError, match='already exists'):
+        scripts.write_scripts(tmp_path)
+
+    assert edited.read_text(encoding='utf-8') == 'mine'
+
+
+def test_force_replaces_it(tmp_path: Path) -> None:
+    """Which is how a copy is brought up to the version now installed."""
+    scripts.write_scripts(tmp_path)
+    edited = tmp_path / 'deploy.env.template'
+    edited.write_text('mine', encoding='utf-8')
+
+    scripts.write_scripts(tmp_path, force=True)
+
+    assert edited.read_text(encoding='utf-8') != 'mine'

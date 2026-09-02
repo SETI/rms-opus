@@ -80,11 +80,13 @@ Issues = "https://github.com/SETI/rms-opus/issues"
 # its own and no `python -m` form.
 #
 # `opus_config_template` writes the configuration template into the working
-# directory, for the same reason: an installation has no checkout to copy it from,
-# and `opus_import_all` is the full-holdings import sequence, which used to be a
-# shell script in the repository and so could not be run from an installation.
+# directory, for the same reason: an installation has no checkout to copy it from.
+# `opus_import_all` is the full-holdings import sequence and `opus_deploy_scripts`
+# writes out the server deploy chain, both of which used to be shell scripts in the
+# repository and so could not be run from an installation at all.
 opus_import = "opus_import.cli:main"
 opus_import_all = "opus_import.import_all:main"
+opus_deploy_scripts = "opus_deploy.scripts:main"
 opus_log_analyzer = "opus_log_analyzer.log_analyzer:main"
 opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
 opus_manage = "opus_app.manage:main"
@@ -245,13 +247,18 @@ namespaces = false
 #
 # `opus.toml.template` ships inside `opus_config` because an installation has no
 # checkout to copy it from: `opus_config_template` writes a copy of it into the
-# operator's working directory, which is the first step of configuring a server.
-# `scripts/server/deploy.env.template` is the one that stays out, because only the
-# Node's own deploy chain reads it and that chain runs from a checkout.
+# operator's working directory, which is the first step of configuring a server. The
+# server deploy chain ships for the same reason, inside `opus_deploy`, and
+# `opus_deploy_scripts` writes it out -- out rather than run in place, because a
+# deploy upgrades this distribution and would rewrite a script bash was reading.
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
 # The configuration template, written out by the `opus_config_template` command.
 "opus_config" = ["opus.toml.template"]
+# The server deploy chain, written out by the `opus_deploy_scripts` command: the
+# deploy scripts themselves, the database dump helpers, the log-analyzer cron
+# templates, and the deploy.env template they are all configured by.
+"opus_deploy" = ["server/*", "server/*/*"]
 # The import pipeline reads these at run time through importlib.resources, so they have
 # to be inside the wheel: the JSON schemas that define every OPUS table (plus the two
 # lists of values deliberately left unmapped), and the dictionary context tree that

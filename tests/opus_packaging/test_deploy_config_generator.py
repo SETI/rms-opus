@@ -1,6 +1,6 @@
 """Tests for the shell script that writes a server installation's ``opus.toml``.
 
-``scripts/server/import_and_deploy/_write_opus_toml.sh`` is the only part of the
+``opus_deploy/server/import_and_deploy/_write_opus_toml.sh`` is the only part of the
 deploy chain that can be exercised away from a server, and it is the part whose
 failures are silent: a mis-escaped password produces a file the loader rejects at
 startup, and an unset variable would otherwise produce a file the loader *accepts*,
@@ -26,7 +26,8 @@ from opus_config import ConfigError, load_config
 
 SCRIPT = (
     Path(__file__).resolve().parents[2]
-    / 'scripts'
+    / 'src'
+    / 'opus_deploy'
     / 'server'
     / 'import_and_deploy'
     / '_write_opus_toml.sh'

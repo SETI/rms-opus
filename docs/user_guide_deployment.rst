@@ -14,14 +14,22 @@ reports current.
 The Node's production arrangement
 ---------------------------------
 
-``scripts/server/import_and_deploy/`` holds the scripts that deploy a new database or a
-new release on the Node's servers.
+The deploy chain is a set of shell scripts that ship inside the distribution.
+``opus_deploy_scripts`` writes them out::
+
+    opus_deploy_scripts --directory /opt/opus/deploy
+
+**Write them somewhere outside every OPUS installation, and run them from there.** A
+deploy installs a new ``rms-opus``, and these scripts are part of ``rms-opus``: a script
+running from inside the environment being replaced would be rewritten while bash was
+still reading it. The copy is also where the deploy's own configuration goes, in
+``secrets/deploy.env`` beside it, so credentials do not live in a directory a deploy
+replaces. Paths below are relative to that copy.
 
 **A deployed installation is not a checkout.** It is a directory holding a virtual
 environment with the released ``rms-opus`` distribution installed **from PyPI**, the
 ``opus.toml`` that installation reads, and the ``wsgi.py`` symlink Apache points at.
-Nothing on the server builds from source. The one checkout a server keeps is the one
-holding these scripts, which is also where the deploy configuration lives.
+Nothing on the server builds from source, and nothing on the server needs a checkout.
 
 The layout makes the served directory a symbolic link to a per-database directory, so
 that swapping databases is a link change rather than a copy:
@@ -75,7 +83,7 @@ The scripts
 The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==3.23.0`` for a particular release, omitted for the newest.
 
-``scripts/server/database/`` holds the scripts that dump a database from one of the two
+``database/`` holds the scripts that dump a database from one of the two
 servers and load it onto the other. ``scripts/import/clone_database.sh`` copies one
 database to another on the same server.
 
@@ -87,7 +95,7 @@ Deploy configuration
 The deploy chain has its own configuration, separate from the application's, and the
 separation is deliberate.
 
-``scripts/server/secrets/deploy.env``
+``secrets/deploy.env``
     **Shell syntax**, read by the scripts before any OPUS code exists on the machine. It
     says where to install, which database credentials to use, where the PDS holdings are,
     what Django's secret key is, and where the two site-content files live. Eight
@@ -122,12 +130,11 @@ separation is deliberate.
 Installing the secrets file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Copy ``scripts/server/deploy.env.template`` into ``scripts/server/secrets/``, with the
-two commands the template gives at the top of itself, and then fill in every
-``<PLACEHOLDER>``::
+Copy ``deploy.env.template`` into ``secrets/`` beside it, with the two commands the
+template gives at the top of itself, and then fill in every ``<PLACEHOLDER>``::
 
-    install -d -m 700 scripts/server/secrets
-    install -m 600 scripts/server/deploy.env.template scripts/server/secrets/deploy.env
+    install -d -m 700 secrets
+    install -m 600 deploy.env.template secrets/deploy.env
 
 **Both modes are set as the thing is created rather than afterwards.** The scripts read
 this file with ``source``, i.e. they *run* it as shell code with the deploy user's
@@ -218,7 +225,7 @@ is possible -- see :ref:`dev_guide_import_two_namespaces`.
 The log analyzer cron jobs
 --------------------------
 
-``scripts/server/log_analyzer/`` holds the cron templates: a nightly update, an
+``log_analyzer/`` holds the cron templates: a nightly update, an
 end-of-month report, and a full refresh over a range of months. They are **templates**:
 each installation fills in the placeholders -- the virtual environment, the Apache log
 directory and its file prefix, and the web directory the reports are published to -- and

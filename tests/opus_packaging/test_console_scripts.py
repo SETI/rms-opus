@@ -30,6 +30,7 @@ EXPECTED_SCRIPTS = {
     'opus_error_analyzer': 'opus_log_analyzer.error_analyzer:main',
     'opus_manage': 'opus_app.manage:main',
     'opus_config_template': 'opus_config.template:main',
+    'opus_deploy_scripts': 'opus_deploy.scripts:main',
 }
 
 # The commands that parse their own command line with argparse, and so name themselves

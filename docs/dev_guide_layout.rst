@@ -73,6 +73,14 @@ directory has a chapter of its own, it is named beside it.
     │   │   ├── apps/{search,results,metadata,ui,cart,help,paraminfo,tools}/
     │   │   ├── templates/                # package data: the project-level templates
     │   │   └── static/                   # package data: the JavaScript, CSS and images
+    │   ├── opus_deploy/          # the server deploy chain, shipped so that a server
+    │   │                         #   needs no checkout; opus_deploy_scripts writes it
+    │   │                         #   out, and running it from inside an installation a
+    │   │                         #   deploy replaces is what that avoids
+    │   │   └── server/                   # package data: the deploy and database
+    │   │                                 #   scripts, the log-analyzer cron templates,
+    │   │                                 #   and deploy.env.template, the contract for
+    │   │                                 #   the secrets/deploy.env beside a copy
     │   └── opus_log_analyzer/    # the log analyzer
     │       ├── log_analyzer.py, error_analyzer.py   # its two programs
     │       ├── opus/                     # what only OPUS logs need
@@ -102,10 +110,7 @@ directory has a chapter of its own, it is named beside it.
     │   ├── automated_tests/      # what the self-hosted integration workflow runs
     │   ├── import/               # wrappers around the import pipeline
     │   ├── models/               # regenerates apps/search/models.py from the database
-    │   ├── releases/             # the version-tag flow
-    │   └── server/               # the pip-install deploy flow, database dumps and the
-    │                             #   log-analyzer cron templates; deploy.env.template is
-    │                             #   the contract for the git-ignored secrets/deploy.env
+    │   └── releases/             # the version-tag flow
     ├── docs/                     # this documentation
     │   └── _ext/                 # the two build-time generators, described below
     └── perf_test/                # a standalone performance experiment, outside every gate
@@ -168,7 +173,7 @@ Which chapter covers what
      - :ref:`dev_guide_log_analyzer`
    * - ``tests/``, ``import_tests/``, ``integration_tests/``
      - :ref:`dev_guide_testing`, :ref:`dev_guide_import_fixture`
-   * - ``scripts/server/``
+   * - ``src/opus_deploy/``
      - :ref:`user_guide_deployment`
    * - ``.github/workflows/``
      - :ref:`dev_guide_environment`

@@ -1,4 +1,4 @@
-"""Tests for the deploy chain's reader of ``scripts/server/secrets/deploy.env``.
+"""Tests for the deploy chain's reader of its own ``secrets/deploy.env``.
 
 ``_read_deploy_env.sh`` is what every server script sources before it does anything
 else, and it is the deploy's only chance to reject a bad environment *before* it stops
@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-SERVER_SCRIPTS = Path(__file__).resolve().parents[2] / 'scripts' / 'server'
+SERVER_SCRIPTS = Path(__file__).resolve().parents[2] / 'src' / 'opus_deploy' / 'server'
 READER = SERVER_SCRIPTS / 'import_and_deploy' / '_read_deploy_env.sh'
 TEMPLATE = SERVER_SCRIPTS / 'deploy.env.template'
 
