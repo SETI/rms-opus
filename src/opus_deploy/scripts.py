@@ -171,7 +171,7 @@ def main() -> None:
     print(f'Wrote {len(written)} files under {arguments.directory}')
     print(f'Deploy chain from rms-opus {importlib.metadata.version("rms-opus")}')
     print()
-    print(f'Start with {arguments.directory}/README.md: it is the steps, in order.')
+    print(f'Start with {arguments.directory}/README.txt: it is the steps, in order.')
     print(f'The first of them is copying {arguments.directory}/deploy.env.template to')
     print(f'{arguments.directory}/secrets/deploy.env, mode 600, and filling it in.')
 

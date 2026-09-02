@@ -19,8 +19,9 @@ The deploy chain is a set of shell scripts that ship inside the distribution.
 
     opus_deploy_scripts --directory /opt/opus/deploy
 
-A ``README.md`` is written with them, holding the same steps this chapter gives, so that
-the instructions are beside the scripts on the server rather than only here.
+A plain-text ``README.txt`` is written with them, holding the same steps this chapter
+gives, so that the instructions are beside the scripts on the server -- readable there
+with ``less``, rather than only here.
 
 **Write them somewhere outside every OPUS installation, and run them from there.** A
 deploy installs a new ``rms-opus``, and these scripts are part of ``rms-opus``: a script

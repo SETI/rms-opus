@@ -583,15 +583,12 @@ run_markdown_checks() {
     # shellcheck source=/dev/null
     source "$VENV/bin/activate"
 
-    print_info "Running PyMarkdown scan (docs/, .cursor/, root *.md, the deploy README)..."
+    print_info "Running PyMarkdown scan (docs/, .cursor/, root *.md)..."
     local scan_paths=()
     [ -d "docs/" ] && scan_paths+=("docs/")
     [ -d ".cursor/" ] && scan_paths+=(".cursor/")
     [ -f "README.md" ] && scan_paths+=("README.md")
     [ -f "CONTRIBUTING.md" ] && scan_paths+=("CONTRIBUTING.md")
-    # The one Markdown file that ships: opus_deploy_scripts writes it out beside the
-    # deploy chain, so it is read on servers rather than only in this repository.
-    [ -f "src/opus_deploy/server/README.md" ] && scan_paths+=("src/opus_deploy/server/README.md")
     if [ ${#scan_paths[@]} -eq 0 ]; then
         print_info "No Markdown files/directories found to scan"
         deactivate 2>/dev/null || true

@@ -19,7 +19,7 @@ from opus_deploy import scripts
 #: One file from each directory of the chain, named so that a tree that ships only its
 #: top level fails rather than passing on the strength of one file.
 EXPECTED_FILES = (
-    Path('README.md'),
+    Path('README.txt'),
     Path('deploy.env.template'),
     Path('import_and_deploy/deploy_new_code_and_database.sh'),
     Path('import_and_deploy/_read_deploy_env.sh'),
@@ -34,6 +34,22 @@ def test_the_chain_ships_inside_the_distribution(tmp_path: Path) -> None:
 
     missing = [str(name) for name in EXPECTED_FILES if not (tmp_path / name).is_file()]
     assert missing == []
+
+
+def test_the_readme_reads_in_a_terminal(tmp_path: Path) -> None:
+    """It is plain text, meant to be read on the server with ``less``.
+
+    Eighty columns is the width that survives a terminal nobody widened, and this file
+    is the one piece of documentation an operator reads where there is no browser. The
+    check is here because nothing else looks at it: it is not Markdown, so the Markdown
+    scan does not, and it ships, so a line that runs off the screen ships too.
+    """
+    scripts.write_scripts(tmp_path)
+    readme = (tmp_path / 'README.txt').read_text(encoding='utf-8')
+
+    too_wide = [line for line in readme.splitlines() if len(line) > 80]
+    assert too_wide == []
+    assert '\t' not in readme
 
 
 def test_the_copy_is_the_packaged_file(tmp_path: Path) -> None:
