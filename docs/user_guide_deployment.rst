@@ -19,6 +19,9 @@ The deploy chain is a set of shell scripts that ship inside the distribution.
 
     opus_deploy_scripts --directory /opt/opus/deploy
 
+A ``README.md`` is written with them, holding the same steps this chapter gives, so that
+the instructions are beside the scripts on the server rather than only here.
+
 **Write them somewhere outside every OPUS installation, and run them from there.** A
 deploy installs a new ``rms-opus``, and these scripts are part of ``rms-opus``: a script
 running from inside the environment being replaced would be rewritten while bash was
@@ -179,10 +182,15 @@ The scripts
 ``update_deploy_scripts.sh [<version spec>]``
     Brings this copy of the chain up to a release: it upgrades ``rms-opus`` in
     ``OPUS_DEPLOY_VENV`` and rewrites the scripts from it. **The first command of every
-    upgrade**, before either deploy script. Its own body is a shell function called on
-    the last line, because it rewrites the file bash is reading: everything inside a
-    function is parsed before the call, so there is nothing left to read from the file
-    by the time it is replaced.
+    upgrade**, before either deploy script.
+
+    It rewrites the file it is running from, which is safe because
+    ``opus_deploy_scripts`` replaces each file by renaming a new one over it rather than
+    truncating and refilling it: the running script's own file is unlinked from the
+    directory and read to its end by the process still holding it open. Truncating in
+    place is what would break it -- bash reads a script as it executes it, and would
+    resume at the offset it had reached inside the new text, which with a longer
+    replacement is a fragment of a line.
 
 ``run_full_opus_import.sh [<version spec>]``
     Runs a complete import into a brand-new database, which is the first half of

@@ -19,6 +19,7 @@ from opus_deploy import scripts
 #: One file from each directory of the chain, named so that a tree that ships only its
 #: top level fails rather than passing on the strength of one file.
 EXPECTED_FILES = (
+    Path('README.md'),
     Path('deploy.env.template'),
     Path('import_and_deploy/deploy_new_code_and_database.sh'),
     Path('import_and_deploy/_read_deploy_env.sh'),
@@ -76,6 +77,27 @@ def test_the_version_is_rewritten_by_a_refresh(tmp_path: Path) -> None:
     scripts.write_scripts(tmp_path, force=True)
 
     assert (tmp_path / scripts.VERSION_FILE).read_text(encoding='utf-8').strip() != '0.0.1'
+
+
+def test_a_refresh_replaces_files_rather_than_rewriting_them(tmp_path: Path) -> None:
+    """The file at each path is a new one, which is what makes a refresh safe to run.
+
+    ``update_deploy_scripts.sh`` refreshes the chain it is itself part of. Bash reads a
+    script as it executes it and resumes at the offset it had reached, so a file
+    truncated and filled again underneath it carries on inside the new text: measured,
+    with a longer replacement, bash dies on a fragment of it. Renaming a new file over
+    the old one leaves the running script's own file intact -- unlinked from the
+    directory, still open, still read to its end -- so this is the property to hold, and
+    a distinct inode is what says the rename happened.
+    """
+    scripts.write_scripts(tmp_path)
+    script = tmp_path / 'import_and_deploy' / 'update_deploy_scripts.sh'
+    before = script.stat().st_ino
+
+    scripts.write_scripts(tmp_path, force=True)
+
+    assert script.stat().st_ino != before
+    assert os.access(script, os.X_OK)
 
 
 def test_an_existing_copy_is_not_replaced(tmp_path: Path) -> None:

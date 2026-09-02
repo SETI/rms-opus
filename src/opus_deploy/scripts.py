@@ -45,6 +45,33 @@ DATA_MODE = 0o644
 SCRIPT_SUFFIX = '.sh'
 
 
+def _replace(target: Path, data: bytes, mode: int) -> None:
+    """Put bytes at a path, by renaming a temporary file over whatever is there.
+
+    Writing to the path directly would truncate the file and fill it again, and one of
+    the files this writes is a script that is running while it runs:
+    ``update_deploy_scripts.sh`` refreshes the chain it is part of. Bash reads a script
+    as it executes it and remembers where it had got to, so a file rewritten underneath
+    it carries on at that offset -- into whatever the new file has there. Measured: with
+    an in-place rewrite to a longer file, bash resumes inside the new text and dies on a
+    fragment of it.
+
+    A rename leaves the running script's own file intact. It is unlinked from the
+    directory, but the process holding it open goes on reading it to its end, and the
+    new file is what the next run sees. The mode is set on the temporary file rather
+    than afterwards, so the file at the path is never briefly non-executable.
+
+    Parameters:
+        target: Where the file goes.
+        data: Its contents.
+        mode: The permissions it ends up with.
+    """
+    temporary = target.with_name(f'.{target.name}.new')
+    temporary.write_bytes(data)
+    temporary.chmod(mode)
+    temporary.replace(target)
+
+
 def _packaged_tree() -> Traversable:
     """Return the packaged deploy chain.
 
@@ -81,8 +108,11 @@ def _copy_tree(source: Traversable, destination: Path, *, force: bool) -> list[P
             continue
         if target.exists() and not force:
             raise FileExistsError(f'{target} already exists; pass --force to replace it')
-        target.write_bytes(entry.read_bytes())
-        target.chmod(SCRIPT_MODE if target.name.endswith(SCRIPT_SUFFIX) else DATA_MODE)
+        _replace(
+            target,
+            entry.read_bytes(),
+            SCRIPT_MODE if target.name.endswith(SCRIPT_SUFFIX) else DATA_MODE,
+        )
         written.append(target)
     return written
 
@@ -104,8 +134,7 @@ def write_scripts(directory: Path, *, force: bool = False) -> list[Path]:
     """
     written = _copy_tree(_packaged_tree(), directory, force=force)
     stamp = directory / VERSION_FILE
-    stamp.write_text(f'{importlib.metadata.version("rms-opus")}\n', encoding='utf-8')
-    stamp.chmod(DATA_MODE)
+    _replace(stamp, f'{importlib.metadata.version("rms-opus")}\n'.encode(), DATA_MODE)
     return [*written, stamp]
 
 
@@ -142,11 +171,9 @@ def main() -> None:
     print(f'Wrote {len(written)} files under {arguments.directory}')
     print(f'Deploy chain from rms-opus {importlib.metadata.version("rms-opus")}')
     print()
-    print('Next:')
-    print(f'  1. Copy {arguments.directory}/deploy.env.template to')
-    print(f'     {arguments.directory}/secrets/deploy.env, mode 600, and fill it in.')
-    print(f'  2. Run {arguments.directory}/import_and_deploy/deploy_new_code_and_database.sh')
-    print('     from here, outside any OPUS installation.')
+    print(f'Start with {arguments.directory}/README.md: it is the steps, in order.')
+    print(f'The first of them is copying {arguments.directory}/deploy.env.template to')
+    print(f'{arguments.directory}/secrets/deploy.env, mode 600, and filling it in.')
 
 
 if __name__ == '__main__':  # pragma: no cover

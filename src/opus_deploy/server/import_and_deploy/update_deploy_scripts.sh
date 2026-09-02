@@ -16,11 +16,18 @@
 # this directory from it, ${SECRETS_DIR} excepted: secrets/ is not part of what ships,
 # so it is not part of what is written.
 #
-# The body is a function called on the last line, and that is not a style: this script
-# rewrites itself. Bash reads a script as it runs it, so a file replaced underneath it
-# resumes at a byte offset into different text. Everything inside a function is parsed
-# before the function is called, so by the time `opus_deploy_scripts` replaces this
-# file, bash has nothing left to read from it.
+# This script rewrites itself, and two things make that safe.
+#
+# `opus_deploy_scripts` replaces each file by renaming a new one over it rather than
+# by truncating and refilling it, so the file this bash is reading is untouched: it is
+# unlinked from the directory, and read to its end by the process that still holds it
+# open. That is what does the work. Without it, bash -- which reads a script as it
+# executes it, remembering where it had got to -- resumes at that offset inside the new
+# text; measured, with a longer replacement, on a fragment of it.
+#
+# The body being a function called on the last line is the second: everything inside a
+# function is parsed before the call, so a rewrite during the call has nothing left to
+# take from this file even if it were the same file.
 
 main() {
     set -e
