@@ -287,42 +287,21 @@ Creating the database
 ---------------------
 
 **There is no** ``CREATE DATABASE`` **step.** The import pipeline creates the schema when
-the one it is pointed at does not exist, and every table of observation metadata in it. So
-the database comes into being when an import runs, and the only question is which import
-that is.
+the one it is pointed at does not exist, along with every table of observation metadata in
+it. The database therefore comes into being when the import runs, and that import is
+`The first full-holdings import`_ below: nothing has to exist before it, and it is the same
+command whether the database is new or is being rebuilt.
 
-On an installation that is going to serve the archive, that import is
-`The first full-holdings import`_ below. Nothing has to exist before it, and it is the
-same command whether the database is new or being rebuilt.
-
-**A one-volume import first is a check, not a step**, and it is the ten minutes worth
-spending before committing days to a run: it answers whether the configuration file, the
-holdings paths and the database credentials are all right. Point it at the same database
-the full import will build, and it leaves nothing behind -- the full import begins by
-erasing the permanent tables it finds there::
-
-    OPUS_CONFIG=/opt/opus/opus.toml \
-        opus_import --override-db-schema opus3_new --do-it-all COISS_2002
-
-``--do-it-all`` imports the bundles named after it, copies the result over the permanent
-tables, and rebuilds the auxiliary tables. A bundle is named by a *descriptor*, and
-several can be given, comma- or space-separated: a bundle id (``COISS_2002``), a whole
-bundleset (``COISS_2xxx``), one of the shorthands for a mission or an instrument
-(``CASSINI``, ``GALILEO``, ``HST``, ``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their
-relatives, matched without regard to case), or ``ALL``. ``opus_import --help`` lists every
-option and works without a configuration file; :ref:`dev_guide_import_running` is the
-complete reference.
-
-**Verify any import by reading** ``ERRORS.log`` **in the** ``[paths] import_log_dir``
-**directory, not by checking the exit status.** Several steps report a failure through
-the log and still exit zero, so a clean run is an empty ``ERRORS.log`` rather than a zero
+**Verify an import by reading** ``ERRORS.log`` **in the** ``[paths] import_log_dir``
+**directory, not by checking the exit status.** Several steps report a failure through the
+log and still exit zero, so a clean run is an empty ``ERRORS.log`` rather than a zero
 status; ``WARNINGS.log`` beside it is worth reading too.
 :ref:`dev_guide_import_verifying` is the longer account of what to look for.
 
-**The web application's own tables come after whichever import made the database.** A
-handful of tables belong to the application rather than to the archive -- the ones that
-track a visitor's session, and the logins for the administrative pages -- and no import
-creates them. One command does, and it is safe to run again at any time::
+**The web application's own tables come after the import.** A handful of tables belong to
+the application rather than to the archive -- the ones that track a visitor's session, and
+the logins for the administrative pages -- and no import creates them. One command does,
+and it is safe to run again at any time::
 
     OPUS_CONFIG=/opt/opus/opus.toml opus_manage migrate
 
@@ -379,12 +358,25 @@ rest in roughly decreasing order of how long each takes, and finally the three s
 finish the database: the auxiliary tables, the dictionary, and the validation. Any option
 this command does not recognize is passed to every ``opus_import`` invocation it makes.
 
-Because those three finishing steps are part of the sequence, the only thing left to run
-against the new database is the web application's own tables::
+**To import only part of the archive** -- a site that wants Cassini and nothing else --
+use ``opus_import`` directly instead: ``opus_import --override-db-schema opus3_new
+--do-it-all CASSINI``. What it takes is a *descriptor*, and several can be given, comma-
+or space-separated: a bundle id (``COISS_2002``), a whole bundleset (``COISS_2xxx``), one
+of the shorthands for a mission or an instrument (``CASSINI``, ``GALILEO``, ``HST``,
+``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their relatives, matched without regard to
+case), or ``ALL``. A partial import needs the three finishing steps run afterwards --
+``--cleanup-aux-tables``, ``--import-dictionary`` and ``--validate-perm`` -- which
+``opus_import_all`` does for you and a direct invocation does not.
+``opus_import --help`` lists every option and works without a configuration file;
+:ref:`dev_guide_import_running` is the complete reference.
 
-    # opus_manage has no --override-db-schema: it takes the database from the configuration file,
-    # so this one needs a file that names opus3_new. Run against the production
-    # configuration, it would add its tables to the database being served instead.
+Because those three finishing steps are part of the sequence, the only thing left to run
+against a database ``opus_import_all`` built is the web application's own tables::
+
+    # opus_manage has no --override-db-schema. It takes the database from the
+    # configuration file, so this one needs a file that names opus3_new; run against
+    # the production configuration, it would add its tables to the database being
+    # served instead.
     OPUS_CONFIG=/opt/opus/opus_new.toml opus_manage migrate
 
 Then :ref:`user_guide_deployment_runbook` is what to do with the result: read
