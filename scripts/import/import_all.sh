@@ -38,7 +38,7 @@ echo "The current production database is:"
 # Deliberately the production installation's file rather than $OPUS_CONFIG: this is
 # the database being compared against the one named in $1, which is a different
 # installation. Reading $OPUS_CONFIG would print the same name twice.
-grep "^schema" /opus/src/rms-opus/opus.toml
+grep "^schema" /opus/deployed/opus.toml
 echo
 echo "About to ERASE and import to this database:" $1
 echo "and these import options:" "${@:2}"

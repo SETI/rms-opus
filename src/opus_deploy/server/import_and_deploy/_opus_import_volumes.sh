@@ -1,108 +1,46 @@
 # This file should only be used via "source"
 #
-# `opus_import` is the console script the installed distribution declares, found on
-# PATH through the activated virtualenv. There is no `cd` into a source tree here:
-# the pipeline is an installed package and locates its configuration through
-# OPUS_CONFIG, which _opus_setup_environment.sh exported.
+# Import every bundle set into the database this staged installation names.
+#
+# `opus_import_all` is the console script the installed distribution declares, found
+# on PATH through the activated virtualenv. It is the sequence itself -- the erase,
+# every bundle set in order, the auxiliary tables, the dictionary and the validation,
+# each as its own `opus_import` process, stopping at the first failure -- so the order
+# and the per-set options live in the release being installed rather than in a copy
+# here that could disagree with it.
+#
+# `--yes` answers the confirmation the command would otherwise ask for: this runs
+# under nohup, where nobody could, and the database it erases is the one this
+# installation just created for itself.
+#
+# There is no `cd` into a source tree here: the pipeline is an installed package and
+# locates its configuration through OPUS_CONFIG, which _opus_setup_environment.sh
+# exported.
 
 set +e
 
-echo "** DESTROY NEW DATABASE **"
+echo "** IMPORT ALL BUNDLE SETS **"
 echo
 echo "Start time:" `date`
 echo
-opus_import --drop-permanent-tables --scorched-earth > /dev/null 2>&1
+opus_import_all --yes
 if [ $? -ne 0 ]; then
-    cat ${OPUS_LOG_DIR}/ERRORS.log
-    exit -1
-fi
-echo
-
-# Start with volumes that require duplicate ID checks to make them run faster
-
-for VOLUME in \
-  GALILEO \
-  NEWHORIZONS
-do
-    echo "** IMPORT ${VOLUME} **"
-    echo
-    echo "Start time:" `date`
-    echo
-    opus_import --import-check-duplicate-id --do-all-import ${VOLUME} > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
+    if [ -f ${OPUS_LOG_DIR}/ERRORS.log ]; then
         cat ${OPUS_LOG_DIR}/ERRORS.log
-        exit -1
     fi
-    echo
-done
-
-# Other normal volumes, more or less in reverse order of time to import.
-#
-# cassini_iss_fring_mosaics_rsfrench2025 is deliberately absent from the list below;
-# it is disabled until its PDS4 shelf files exist. It cannot be commented out in
-# place: a `#` line in the middle of a backslash continuation ENDS the continuation,
-# which is a bash syntax error and made this entire script -- and with it the whole
-# server import chain that sources it -- fail to parse. `bash -n` on this file is the
-# check that catches it.
-
-for VOLUME in \
-  EBROCC \
-  uranus_occs_earthbased \
-  cassini_uvis_solarocc_beckerjarmak2023 \
-  COUVIS_8xxx \
-  COVIMS_8xxx \
-  CORSS_8xxx \
-  VOYAGER \
-  HST \
-  COCIRS \
-  COISS \
-  COUVIS_0xxx \
-  COVIMS_0xxx
-do
-    echo "** IMPORT ${VOLUME} **"
-    echo
-    echo "Start time:" `date`
-    echo
-    opus_import --do-all-import ${VOLUME} > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        cat ${OPUS_LOG_DIR}/ERRORS.log
-        exit -1
-    fi
-    echo
-done
-
-echo "** CREATE AUX TABLES **"
-echo
-echo "Start time:" `date`
-echo
-opus_import --cleanup-aux-tables > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
 fi
 echo
 
-echo "** IMPORT DICTIONARY **"
-echo
-echo "Start time:" `date`
-echo
-opus_import --import-dictionary > /dev/null 2>&1
-if [ $? -ne 0 ]; then
+# A run that reached the end still has to be read: several import steps report a
+# failure through the log and exit zero, so the log is the gate rather than the
+# status.
+if [ -s ${OPUS_LOG_DIR}/ERRORS.log ]; then
+    echo "** THE IMPORT LOGGED ERRORS **"
+    echo
     cat ${OPUS_LOG_DIR}/ERRORS.log
     exit -1
 fi
-echo
-
-echo "** VALIDATE TABLES **"
-echo
-echo "Start time:" `date`
-echo
-opus_import --validate-perm > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    cat ${OPUS_LOG_DIR}/ERRORS.log
-    exit -1
-fi
-echo
 
 set -e
 

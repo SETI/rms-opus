@@ -95,7 +95,7 @@ itself.
 
     Environment=OPUS_CONFIG=/opt/opus/opus.toml
 
-    ExecStart=/opt/opus/src/rms-opus/opus_venv/bin/gunicorn \
+    ExecStart=/opt/opus/deployed/opus_venv/bin/gunicorn \
         --workers 8 \
         --timeout 300 \
         --bind unix:/run/opus/opus.sock \
@@ -208,7 +208,7 @@ and gunicorn replaced by a uWSGI instance. **The environment variable is set wit
     [uwsgi]
     module = opus_app.wsgi:application
 
-    virtualenv = /opt/opus/src/rms-opus/opus_venv
+    virtualenv = /opt/opus/deployed/opus_venv
     chdir      = /opt/opus
 
     env = OPUS_CONFIG=/opt/opus/opus.toml
@@ -301,14 +301,14 @@ The vhost
         WSGIDaemonProcess opus \
             user=opus group=opus \
             processes=4 threads=2 \
-            python-home=/opt/opus/src/rms-opus/opus_venv
+            python-home=/opt/opus/deployed/opus_venv
         WSGIProcessGroup opus
         WSGIApplicationGroup %{GLOBAL}
 
         # The installed wsgi.py. See the note below about this path.
-        WSGIScriptAlias / /opt/opus/src/rms-opus/wsgi.py
+        WSGIScriptAlias / /opt/opus/deployed/wsgi.py
 
-        <Directory /opt/opus/src/rms-opus>
+        <Directory /opt/opus/deployed>
             <Files wsgi.py>
                 Require all granted
             </Files>
@@ -358,12 +358,12 @@ environment's ``site-packages``, whose path contains the Python minor version. *
 it directly means editing the vhost after every Python upgrade.**
 
 The deploy chain avoids that by writing a **symlink at a fixed path** and re-pointing it
-on every deploy, which is why the vhost above names ``/opt/opus/src/rms-opus/wsgi.py`` rather
+on every deploy, which is why the vhost above names ``/opt/opus/deployed/wsgi.py`` rather
 than a path under ``site-packages``. To create one by hand::
 
-    OPUS_WSGI=$(/opt/opus/src/rms-opus/opus_venv/bin/python -c \
+    OPUS_WSGI=$(/opt/opus/deployed/opus_venv/bin/python -c \
       'import importlib.util; print(importlib.util.find_spec("opus_app.wsgi").origin)')
-    ln -sfn "$OPUS_WSGI" /opt/opus/src/rms-opus/wsgi.py
+    ln -sfn "$OPUS_WSGI" /opt/opus/deployed/wsgi.py
 
 :func:`importlib.util.find_spec` locates the file **without importing it**. Importing
 :mod:`opus_app.wsgi` would build the application -- configuring Django and opening the log
@@ -389,7 +389,7 @@ another::
     # The application starts and the configuration reaches it. `env` is needed here:
     # a default sudoers resets the environment and refuses to pass OPUS_CONFIG through.
     sudo -u opus env OPUS_CONFIG=/opt/opus/opus.toml \
-        /opt/opus/src/rms-opus/opus_venv/bin/gunicorn \
+        /opt/opus/deployed/opus_venv/bin/gunicorn \
         --bind 127.0.0.1:8001 opus_app.wsgi:application
 
 Then, in a second terminal::

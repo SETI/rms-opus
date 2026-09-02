@@ -15,10 +15,16 @@ export DATABASE_SCRIPT_DIR=${SCRIPT_DIR}/database
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
 
 export DATETIMEPID="`date +%Y%m%dT%H%M%S`_$$"
-export OPUS_LOG_DIR=${OPUS_DIR}/import/${DATETIMEPID}/logs
-export OPUS_SRC_DIR=${OPUS_DIR}/import/${DATETIMEPID}/src
-export OPUS_DIR_NAME=rms-opus
 export OPUS_DB_NAME="opus3_${DATETIMEPID}"
+export OPUS_LOG_DIR=${OPUS_DIR}/import_logs/${DATETIMEPID}
+
+# The import runs under an installation of its own, built beside the one being
+# served and never touching it. That is not tidiness: a release that changes the
+# table schemas has to do the import itself, because the release now serving cannot
+# write a database the new one will read. The installation goes where a deploy would
+# find it, so that promoting the result afterwards is a switch rather than a rebuild.
+export OPUS_SRC_DIR=${OPUS_DIR}/staged
+export OPUS_DIR_NAME=${OPUS_DB_NAME}
 
 mkdir -p ${OPUS_LOG_DIR}/opus_logs
 mkdir -p ${OPUS_SRC_DIR}
@@ -52,6 +58,13 @@ echo
 echo "Start time:" `date`
 echo
 source ${IMPORT_SCRIPT_DIR}/_opus_setup_environment.sh
+
+# A stable name for the installation currently importing, so that its configuration
+# and its virtualenv can be found without knowing the timestamp. It is a symlink of
+# the same kind as ${OPUS_DIR}/deployed, and the two are what tell the staged
+# installations apart.
+ln -sfn ${OPUS_SRC_DIR}/${OPUS_DIR_NAME} ${OPUS_DIR}/import.new
+mv -Tf ${OPUS_DIR}/import.new ${OPUS_DIR}/import
 echo
 echo
 

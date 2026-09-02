@@ -3,6 +3,11 @@
 # Create one OPUS installation: a directory holding a virtualenv with the rms-opus
 # distribution installed from PyPI, and the opus.toml that installation reads.
 #
+# It is built under ${OPUS_DIR}/staged, beside whatever is being served, and nothing
+# here touches the running installation. What makes a staged installation the served
+# one is _promote.sh, and until that runs the site is unaffected by anything this
+# builds -- including a failure half way through it.
+#
 # There is no checkout here. The application, the import pipeline and the log
 # analyzer are all installed packages, and their programs are the console scripts
 # the distribution declares (opus_import, opus_log_analyzer, opus_error_analyzer,
@@ -85,9 +90,10 @@ export OPUS_CONFIG=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.toml
 
 # A stable path for Apache's WSGIScriptAlias. The application's wsgi module lives
 # inside the virtualenv's site-packages, whose path carries the Python minor
-# version; this symlink is what lets the vhost name a path that never changes:
+# version; this symlink is what lets the vhost name a path that never changes,
+# through the deployed symlink:
 #
-#     WSGIScriptAlias / ${OPUS_SRC_DIR}/rms-opus/wsgi.py
+#     WSGIScriptAlias / ${OPUS_DIR}/deployed/wsgi.py
 #
 # See docs/user_guide_deployment.rst for the whole vhost stanza.
 #
