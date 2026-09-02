@@ -140,11 +140,23 @@ why the install line above takes both packages.
 it, and nothing else in OPUS uses it. It has to be a build **with patched Qt**: the pages
 are rendered with a page-number footer, which is one of the features a build against the
 system Qt does not have, so a distribution package fails on the request rather than
-producing a plainer PDF. Check what a machine has, and install a patched build from the
-wkhtmltopdf project's own packages if the answer does not say so::
+producing a plainer PDF. That is what a machine has to say for itself::
 
     $ wkhtmltopdf --version
     wkhtmltopdf 0.12.4 (with patched qt)
+
+**Install it from the project's own release rather than from the distribution**, whose
+package is the unpatched build. These are the binaries the Node runs, for Linux on
+x86-64::
+
+    wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
+    tar xvf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
+    sudo mv wkhtmltox/bin/wkhtmlto* /usr/bin/
+
+The glob takes ``wkhtmltoimage`` along with ``wkhtmltopdf``; they ship together, and the
+one the help pages call ends up on the path either way. 0.12.4 is the release the Node
+runs. The project is archived, so that releases page is a fixed list rather than a moving
+one; a later release from it does as well, as long as ``--version`` says patched.
 
 **The PDS holdings**, mounted read-only. The import needs them to run at all; the web
 application needs them to serve product files. Both a PDS3 and a PDS4 root are
