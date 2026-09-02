@@ -12,8 +12,9 @@
 # analyzer are all installed packages, and their programs are the console scripts
 # the distribution declares (opus_import, opus_log_analyzer, opus_error_analyzer,
 # and opus_manage for Django's own management commands), so nothing in the chain
-# below needs a repository-relative path or a `cd` into a source tree. The only
-# checkout on the server is the one holding these scripts.
+# below needs a repository-relative path or a `cd` into a source tree. These scripts
+# were written out of an installed distribution by opus_deploy_scripts, so there is no
+# checkout on the server at all.
 #
 # Inputs (exported by the caller): OPUS_SRC_DIR, OPUS_DIR_NAME, OPUS_DB_NAME,
 # OPUS_LOG_DIR and everything _read_deploy_env.sh exports. OPUS_VERSION_SPEC is
@@ -123,7 +124,8 @@ export OPUS_CONFIG=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.toml
 #
 #     WSGIScriptAlias / ${OPUS_DIR}/deployed/wsgi.py
 #
-# See docs/user_guide_deployment.rst for the whole vhost stanza.
+# The whole vhost stanza is in the User Guide:
+# https://rms-opus.readthedocs.io/en/latest/user_guide_web_server.html
 #
 # find_spec locates the file WITHOUT importing it. Importing opus_app.wsgi runs
 # get_wsgi_application(), which calls django.setup() and opens the log file, so it

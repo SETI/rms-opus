@@ -1,14 +1,15 @@
 # This file should only be used via "source"
 #
-# Read scripts/server/secrets/deploy.env -- the deploy chain's own configuration,
-# which is a different thing from the application's opus.toml and is documented as
-# such. deploy.env holds the shell-level values these scripts need before any OPUS
-# code exists to read anything: where to install, which database credentials to use,
-# where the holdings are. opus.toml is what the installed application reads at run
-# time, and _write_opus_toml.sh generates it from these values.
+# Read secrets/deploy.env -- the deploy chain's own configuration, which is a
+# different thing from the application's opus.toml and is documented as such.
+# deploy.env holds the shell-level values these scripts need before any OPUS code
+# exists to read anything: where to install, which database credentials to use, where
+# the holdings are. opus.toml is what the installed application reads at run time,
+# and _write_opus_toml.sh generates it from these values.
 #
-# Copy scripts/server/deploy.env.template to scripts/server/secrets/deploy.env and
-# fill it in. It holds a password and a secret key, so it should be mode 0600.
+# Both files are relative to the directory opus_deploy_scripts wrote this chain into:
+# deploy.env.template at its top, the filled-in copy in secrets/ beside these scripts.
+# It holds a password and a secret key, so it should be mode 0600 in a 0700 directory.
 
 unset OPUS_DIR
 unset OPUS_DEPLOY_VENV
@@ -36,8 +37,17 @@ unset LAST_BLOG_UPDATE_FILE
 unset NOTIFICATION_FILE
 
 if [[ ! -r ${SECRETS_DIR}/deploy.env ]]; then
+    # The template is at the top of the chain, one level above secrets/, wherever
+    # opus_deploy_scripts wrote it. Both paths are printed rather than described,
+    # because this is the first thing a new installation gets wrong.
+    _chain_dir=$(dirname "${SECRETS_DIR}")
     echo "${SECRETS_DIR}/deploy.env is missing or unreadable."
-    echo "Copy scripts/server/deploy.env.template to it and fill it in."
+    echo "Copy the template beside these scripts into it, and fill it in:"
+    echo
+    echo "    install -d -m 700 \"${SECRETS_DIR}\""
+    echo "    install -m 600 \"${_chain_dir}/deploy.env.template\" \\"
+    echo "        \"${SECRETS_DIR}/deploy.env\""
+    echo
     exit 1
 fi
 source ${SECRETS_DIR}/deploy.env

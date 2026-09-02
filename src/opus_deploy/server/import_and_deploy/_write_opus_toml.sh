@@ -12,8 +12,8 @@
 # exercise is a production deploy is a generator nobody has checked.
 #
 # Every variable below must be exported by the caller. The deploy chain reads them
-# from scripts/server/secrets/deploy.env (see deploy.env.template) plus the values
-# _opus_setup_environment.sh derives per host.
+# from secrets/deploy.env beside these scripts (see deploy.env.template) plus the
+# values _opus_setup_environment.sh derives per installation.
 
 set -euo pipefail
 
