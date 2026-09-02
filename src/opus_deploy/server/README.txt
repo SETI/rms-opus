@@ -46,9 +46,9 @@ everything else the chain needs underneath it, it creates.
    from.
 
    The account is the one OPUS runs as and the one every script here has to be
-   run as; an existing one does, and this is an example of making one. It needs
-   a shell, because the deploys are run as it, and a home directory, because pip
-   writes a cache into one. OPUS_USER in deploy.env is what names it.
+   run as. The useradd line below is an example of making one. It needs a shell,
+   because the deploys are run as it, and a home directory, because pip writes a
+   cache into one. OPUS_USER in deploy.env is what names it.
 
    The root has to exist and belong to that account; everything underneath it,
    the chain creates.

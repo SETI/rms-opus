@@ -100,8 +100,7 @@ builds an installation the web server cannot read. The scripts refuse rather tha
 that reach the switch. That account also needs ``sudo`` for three ``systemctl`` commands:
 the switch stops the web server, restarts the cache, and starts the web server again.
 
-An existing account does; this is an example of making one, on a system with
-``useradd``::
+This is an example of making one, on a system with ``useradd``::
 
     id opus || sudo useradd --system --create-home --shell /bin/bash opus
 
