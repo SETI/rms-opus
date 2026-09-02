@@ -80,40 +80,27 @@ source ${IMPORT_SCRIPT_DIR}/_opus_import_volumes.sh
 echo
 echo
 
-if [[ ${HOSTNAME} =~ ^tools.*$ ]]; then
+# Copying the finished database to a second server, when deploy.env names one. With
+# OPUS_PEER_DB_HOST empty there is one server, and the import is done when the
+# database is built.
+if [[ -n ${OPUS_PEER_DB_HOST} ]]; then
     echo "================================"
     echo "=== DUMP DATABASE TO ARCHIVE ==="
     echo "================================"
     echo
     echo "Start time:" `date`
     echo
-    if [[ ${HOSTNAME} =~ ^tools(\.pds.*)?$ ]]; then
-        ${DATABASE_SCRIPT_DIR}/dump_db_from_tools.sh ${OPUS_DB_NAME}
-    else
-        ${DATABASE_SCRIPT_DIR}/dump_db_from_tools2.sh ${OPUS_DB_NAME}
-    fi
+    "${DATABASE_SCRIPT_DIR}/dump_db.sh" "${OPUS_DB_NAME}"
     echo
     echo
-fi
 
-if [[ ${HOSTNAME} =~ ^tools(\.pds.*)?$ ]]; then
-    echo "============================================"
-    echo "=== LOAD DATABASE ON TOOLS2 FROM ARCHIVE ==="
-    echo "============================================"
-    echo
-    echo "Start time:" `date`
-    echo
-    ${DATABASE_SCRIPT_DIR}/load_tools2_db_from_dump.sh ${OPUS_DB_NAME}
-    echo
-    echo
-elif [[ ${HOSTNAME} =~ ^tools2(\.pds.*)?$ ]]; then
     echo "==========================================="
-    echo "=== LOAD DATABASE ON TOOLS FROM ARCHIVE ==="
+    echo "=== LOAD DATABASE ON THE SECOND SERVER  ==="
     echo "==========================================="
     echo
     echo "Start time:" `date`
     echo
-    ${DATABASE_SCRIPT_DIR}/load_tools_db_from_dump.sh ${OPUS_DB_NAME}
+    "${DATABASE_SCRIPT_DIR}/load_db.sh" "${OPUS_DB_NAME}"
     echo
     echo
 fi

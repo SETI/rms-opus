@@ -37,6 +37,7 @@ SCRIPT = (
 # failure names the one variable that caused it.
 BASE_ENV = {
     'OPUS_DB_NAME': 'opus3_20260827T000000_1',
+    'OPUS_DB_HOST': 'localhost',
     'OPUS_DB_USER': 'opus_user',
     'OPUS_DB_PASSWORD': 'plain-password',
     'PDS3_HOLDINGS_DIR': '/pds/holdings',
@@ -47,6 +48,8 @@ BASE_ENV = {
     'NOTIFICATION_FILE': '/opus/data/notification.html',
     'OPUS_SECRET_KEY': 'a-secret-key',
     'OPUS_DEBUG': 'false',
+    'OPUS_ALLOWED_HOSTS': '127.0.0.1 localhost opus.example.org',
+    'OPUS_CACHE_PREFIX': 'production',
     'OPUS_PUBLIC_URL': 'https://opus.pds-rings.seti.org/',
     'OPUS_PRODUCT_HTTP_PATH': 'https://opus.pds-rings.seti.org/',
     'OPUS_VIEWMASTER_URL': 'https://pds-rings.seti.org/',
@@ -94,6 +97,25 @@ def test_the_generated_file_loads(tmp_path: Path) -> None:
     assert config.django.debug is False
     assert str(config.paths.pds3_holdings) == BASE_ENV['PDS3_HOLDINGS_DIR']
     assert str(config.paths.pds4_holdings) == BASE_ENV['PDS4_HOLDINGS_DIR']
+    assert config.database.host == BASE_ENV['OPUS_DB_HOST']
+    assert config.django.cache_server_prefix == BASE_ENV['OPUS_CACHE_PREFIX']
+    # The one value deploy.env holds as a list: a space-separated string there, a TOML
+    # array here, one quoted and escaped name per entry.
+    assert list(config.django.allowed_hosts) == BASE_ENV['OPUS_ALLOWED_HOSTS'].split()
+
+
+def test_one_allowed_host_still_produces_an_array(tmp_path: Path) -> None:
+    """The separator goes between entries, so a single name must not carry one.
+
+    A trailing comma inside a TOML array is legal, which is why this is worth a test:
+    the failure would be a stray empty string in ``allowed_hosts`` rather than a file
+    the loader rejects.
+    """
+    result = _generate(tmp_path, OPUS_ALLOWED_HOSTS='opus.example.org')
+    assert result.returncode == 0, result.stderr
+
+    hosts = load_config(tmp_path / 'opus.toml').django.allowed_hosts
+    assert list(hosts) == ['opus.example.org']
 
 
 def test_debug_true_reaches_the_loader_as_a_boolean(tmp_path: Path) -> None:

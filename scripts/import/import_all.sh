@@ -25,21 +25,33 @@ then
     echo 'Usage: scripts/import/import_all.sh <production_database_name> <other opus_import options>'
     exit 1
 fi
-if [[ ! `hostname` =~ "tools" && ! `hostname` =~ "ringlet" ]];
-then
-    echo "Please only run this script on tools.pds-rings.seti.org"
-    exit 1
+# A full import is days of work against the real holdings, so a machine can say which
+# hosts it may be started on. OPUS_IMPORT_HOSTS is a space-separated list of substrings
+# matched against the host name; with it unset there is no restriction, which is what a
+# machine that only ever does this deliberately wants.
+if [[ -n ${OPUS_IMPORT_HOSTS:-} ]]; then
+    allowed=false
+    for _host in ${OPUS_IMPORT_HOSTS}; do
+        if [[ `hostname` =~ ${_host} ]]; then allowed=true; fi
+    done
+    if [[ ${allowed} != true ]]; then
+        echo "`hostname` is not in OPUS_IMPORT_HOSTS (${OPUS_IMPORT_HOSTS})."
+        exit 1
+    fi
 fi
 echo "************************************************************"
 echo "***** About to import ALL PDS DATA into a new database *****"
 echo "************************************************************"
 echo
-echo "The current production database is:"
-# Deliberately the production installation's file rather than $OPUS_CONFIG: this is
-# the database being compared against the one named in $1, which is a different
-# installation. Reading $OPUS_CONFIG would print the same name twice.
-grep "^schema" /opus/deployed/opus.toml
-echo
+# The database currently being served, for comparison with the one about to be built.
+# It is a different installation from this one, so it is named by its own configuration
+# file: set OPUS_SERVED_CONFIG to it. Reading $OPUS_CONFIG instead would print the same
+# name twice, and hard-coding a path would name one server's layout.
+if [[ -n ${OPUS_SERVED_CONFIG:-} && -r ${OPUS_SERVED_CONFIG} ]]; then
+    echo "The database currently being served is:"
+    grep "^schema" "${OPUS_SERVED_CONFIG}"
+    echo
+fi
 echo "About to ERASE and import to this database:" $1
 echo "and these import options:" "${@:2}"
 echo "Note this should be the production-style name, not the dev-style name"

@@ -201,9 +201,9 @@ The scripts
     installation a deploy can switch to. The import itself is ``opus_import_all``, the
     installed command, so the order the bundle sets are imported in comes from the
     release rather than from these scripts. Then, **on a host whose name begins**
-    ``tools``, it dumps the finished database and loads it onto the Node's other server;
-    anywhere else it imports and stops. It runs detached and mails the log when it
-    finishes.
+    Then, if ``OPUS_PEER_DB_HOST`` names a second server, it dumps the finished database
+    and loads it there; with no peer configured it imports and stops. It runs detached,
+    and mails the log to ``OPUS_IMPORT_MAIL_TO`` if that names anyone.
 
     When it is done, the second half is ``deploy_new_code_and_database.sh <that
     database>`` **with the same version specifier this was given**: the two install
@@ -213,8 +213,11 @@ The scripts
 The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==3.23.0`` for a particular release, omitted for the newest.
 
-``database/`` holds the scripts that dump a database from one of the two
-servers and load it onto the other. ``scripts/import/clone_database.sh`` copies one
+``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
+a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from
+``OPUS_DB_HOST``, the second loads it into ``OPUS_PEER_DB_HOST``. Neither knows the name
+of any machine. ``run_full_opus_import.sh`` runs the pair at the end of an import when a
+peer is configured, and ``scripts/import/clone_database.sh`` in the repository copies one
 database to another on the same server.
 
 .. _user_guide_deployment_config:
@@ -227,9 +230,12 @@ separation is deliberate.
 
 ``secrets/deploy.env``
     **Shell syntax**, read by the scripts before any OPUS code exists on the machine. It
-    says where to install, which environment the chain's own commands come from, which
-    database credentials to use, where the PDS holdings are, what Django's secret key is,
-    and where the two site-content files live. Every variable in it is required:
+    holds everything about *this* server: where to install, which account to run as,
+    which environment the chain's own commands come from, which database to connect to
+    and as whom, where the PDS holdings are, what the site calls itself, and what to do
+    with a finished database. Nothing in the scripts assumes a value for any of it --
+    no host name, no URL, no path -- so the same chain runs on any server that fills
+    this file in. Every variable is required except the two marked optional:
 
     .. list-table::
        :header-rows: 1
@@ -248,6 +254,14 @@ separation is deliberate.
            ``nohup``. It is not one of the installations under ``staged/``: those are
            what a deploy builds, and ``_opus_setup_environment.sh`` deactivates this
            one before activating the installation it has just built.
+       * - ``OPUS_USER``
+         - The Unix account OPUS runs as, and the account every script here has to be
+           run as. Everything a deploy creates belongs to whoever ran it, including an
+           ``opus.toml`` at mode 0600, so a deploy run as anyone else -- root, most
+           easily -- builds an installation the web server cannot read. The reader
+           refuses rather than letting that reach the switch.
+       * - ``OPUS_DB_HOST``
+         - The MySQL server this installation connects to, usually ``localhost``.
        * - ``OPUS_DB_USER``, ``OPUS_DB_PASSWORD``
          - The MySQL account the import pipeline and the web application connect as.
        * - ``OPUS_SECRET_KEY``
@@ -257,6 +271,39 @@ separation is deliberate.
            exist under them.
        * - ``LAST_BLOG_UPDATE_FILE``, ``NOTIFICATION_FILE``
          - The two files of site content the interface displays.
+       * - ``OPUS_DEBUG``
+         - Django's ``DEBUG``, as the unquoted ``true`` or ``false`` TOML wants.
+           ``false`` on anything reachable from outside the machine; a staging server is
+           the case for ``true``.
+       * - ``OPUS_ALLOWED_HOSTS``
+         - Every name and address this installation answers to, separated by spaces.
+           Django refuses a request whose ``Host`` header is not among them, so a name a
+           proxy or a health check reaches it by belongs here as much as the public one,
+           and so do ``127.0.0.1`` and ``localhost``, which is how a smoke test from the
+           server itself arrives. The generator turns the list into the TOML array
+           ``allowed_hosts``.
+       * - ``OPUS_CACHE_PREFIX``
+         - The prefix on this installation's keys in the shared cache. Two installations
+           sharing one memcached need different prefixes, or each reads the other's
+           answers.
+       * - ``OPUS_PUBLIC_URL``, ``OPUS_PRODUCT_HTTP_PATH``, ``OPUS_VIEWMASTER_URL``,
+           ``OPUS_TAR_FILE_URL``
+         - What the site calls itself and where it serves things from. They appear in
+           what the API returns, so they are the URLs a user's browser has to be able to
+           reach rather than any internal address.
+       * - ``OPUS_DB_DUMP_DIR``
+         - Where ``mysqldump`` writes a finished database, and where the load reads it
+           back. On two servers that copy databases to each other, a directory both can
+           see.
+       * - ``OPUS_PEER_DB_HOST``
+         - *Optional.* The MySQL server a finished database is copied to. With a host
+           here, an import ends by dumping what it built and loading it there; empty,
+           the import stops when the database is built, which is what one server wants.
+       * - ``OPUS_IMPORT_MAIL_TO``
+         - *Optional.* Where to mail the log when an import finishes. An import runs for
+           days under ``nohup``, so the mail is how anyone finds out that it ended and
+           whether it ended well. Empty sends nothing and leaves the log where it was
+           written.
 
 ``opus.toml``
     Read by the installed application and the import pipeline at run time.
@@ -281,7 +328,9 @@ local account substitute code the deploy then executes. The directory is git-ign
 
 Two validations run before a deploy touches anything:
 
-* ``_read_deploy_env.sh`` refuses to continue if any of those variables is missing,
+* ``_read_deploy_env.sh`` refuses to continue when the account running the deploy is not
+  ``OPUS_USER``, naming both and the ``sudo -u`` that fixes it, and when ``OPUS_DEBUG``
+  is neither ``true`` nor ``false``. It also refuses if any required variable is missing,
   **empty**, or still the placeholder the template ships. Emptiness is refused as well as
   absence because nothing downstream objects to an empty value -- an empty secret key is
   a well-formed TOML string, and Django starts with no secret key.

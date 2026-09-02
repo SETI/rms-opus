@@ -6,4 +6,9 @@ else
     RESULT="FAILED"
 fi
 
-mail -s "OPUS import ${RESULT}" rfrench@seti.org < ${NOHUP_LOGFILE}
+# Who hears about it comes from deploy.env, which run_full_opus_import.sh read before
+# it detached this. With nobody named, the log stays where it was written and that is
+# the whole report.
+if [[ -n ${OPUS_IMPORT_MAIL_TO:-} ]]; then
+    mail -s "OPUS import ${RESULT}" "${OPUS_IMPORT_MAIL_TO}" < "${NOHUP_LOGFILE}"
+fi

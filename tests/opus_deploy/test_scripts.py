@@ -23,7 +23,7 @@ EXPECTED_FILES = (
     Path('deploy.env.template'),
     Path('import_and_deploy/deploy_new_code_and_database.sh'),
     Path('import_and_deploy/_read_deploy_env.sh'),
-    Path('database/dump_db_from_tools.sh'),
+    Path('database/dump_db.sh'),
     Path('log_analyzer/run_log_analyzer_update.sh_template'),
 )
 

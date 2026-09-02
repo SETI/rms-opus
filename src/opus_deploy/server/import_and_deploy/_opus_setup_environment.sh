@@ -72,20 +72,11 @@ python -m pip install --upgrade pip 2>&1
 # the distribution's own metadata are what this project supports.
 python -m pip install "rms-opus${OPUS_VERSION_SPEC:-}" 2>&1
 
-# Per-host application settings. Staging and production differ only in these.
-if [[ $HOSTNAME =~ ^staging.*$ ]]; then
-    export OPUS_DEBUG=true
-    export OPUS_PUBLIC_URL=http://staging.pds.seti.org/
-    export OPUS_PRODUCT_HTTP_PATH=http://staging.pds.seti.org/
-    export OPUS_VIEWMASTER_URL=http://staging.pds.seti.org/
-    export OPUS_TAR_FILE_URL=http://staging.pds.seti.org/downloads/
-else
-    export OPUS_DEBUG=false
-    export OPUS_PUBLIC_URL=https://opus.pds-rings.seti.org/
-    export OPUS_PRODUCT_HTTP_PATH=https://opus.pds-rings.seti.org/
-    export OPUS_VIEWMASTER_URL=https://pds-rings.seti.org/
-    export OPUS_TAR_FILE_URL=https://opus.pds-rings.seti.org/downloads/
-fi
+# What this installation says about itself -- its URLs, its debug flag, the hosts it
+# answers to, its cache prefix -- comes from deploy.env, which _read_deploy_env.sh has
+# already read and exported. Choosing them here, from the host name, is what this used
+# to do, and it meant every server's addresses were written into a script that ships to
+# every server.
 export OPUS_DB_NAME
 export OPUS_LOG_DIR
 

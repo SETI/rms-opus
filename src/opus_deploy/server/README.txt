@@ -61,6 +61,17 @@ secrets/deploy.env. Everything else the chain needs underneath it, it creates.
    That file is shell, it holds a database password and a secret key, and the
    scripts RUN it. Mode 0600 in a 0700 directory, set as each is created.
 
+   It holds everything about this server -- where to install, which account to
+   run as, which database, what the site calls itself, what to do with a
+   finished database. Nothing in these scripts assumes any of it, so the same
+   chain runs anywhere the file is filled in.
+
+   OPUS_USER is the account OPUS runs as, and every script below has to be run
+   as it: everything a deploy creates belongs to whoever ran it, including an
+   opus.toml at mode 0600, so a deploy run as anyone else builds an
+   installation the web server cannot read. The scripts refuse rather than
+   letting that reach the switch.
+
 
 --------------------------------------------------------------------------------
   BRINGING UP A SERVER
@@ -149,8 +160,9 @@ them has been trusted for a while.
                                       the version check, one installation, the
                                       import, and the switch.
 
-  database/                           Dump a database from one server and load
-                                      it onto the other.
+  database/                           dump_db.sh and load_db.sh: copy a finished
+                                      database to the server OPUS_PEER_DB_HOST
+                                      names, through OPUS_DB_DUMP_DIR.
   log_analyzer/                       Cron templates for the log-analyzer
                                       reports. Fill in the placeholders.
   deploy.env.template                 The contract for secrets/deploy.env.
