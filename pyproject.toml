@@ -28,7 +28,22 @@ dependencies = [
   # else constrains which julian a resolve picks, so this floor is what lets
   # filterwarnings hold no entry for it.
   "rms-julian>=3.0.2",
-  "rms-pdsfile>=0.0.18",
+  # OPUS is developed against the `rewrite` branch of rms-pdsfile, not against any
+  # release of it: the newest on PyPI is 0.1.2, and the branch describes itself as
+  # 0.1.3.dev<many> (`pip show rms-pdsfile` in a checkout says which). A version floor
+  # here would resolve to 0.1.2 and give a server an OPUS that cannot read the
+  # holdings the way this one does -- which is why the workflows in .github/ have
+  # been installing the branch by hand after installing this distribution.
+  #
+  # Declaring it here instead is what makes `pip install rms-opus` correct for
+  # everyone who is not a workflow: a server built by the deploy chain, and anyone
+  # installing from a checkout. It needs `git` on the machine doing the install.
+  #
+  # **This makes the distribution unpublishable to PyPI**, which rejects metadata
+  # carrying a direct reference. That is the trade being made until rms-pdsfile
+  # releases what OPUS needs; at that point this line becomes a floor naming that
+  # release, and the workflow steps go with it.
+  "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite",
   "rms-pdslogger",
   "rms-pdstable",
   "rms-translator",
