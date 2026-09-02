@@ -26,6 +26,10 @@ still reading it. The copy is also where the deploy's own configuration goes, in
 ``secrets/deploy.env`` beside it, so credentials do not live in a directory a deploy
 replaces. Paths below are relative to that copy.
 
+Being part of the distribution, the chain also *changes* with it, so a copy is refreshed
+as part of deploying a new release rather than left where it was; see
+:ref:`the order of operations <user_guide_deployment_refresh>`.
+
 **A deployed installation is not a checkout.** It is a directory holding a virtual
 environment with the released ``rms-opus`` distribution installed **from PyPI**, the
 ``opus.toml`` that installation reads, and the ``wsgi.py`` symlink Apache points at.
@@ -76,47 +80,62 @@ The order of operations
     #    installation that serves anything; the chain builds those itself.
     python3.12 -m venv /opt/opus/deploy_venv
     source /opt/opus/deploy_venv/bin/activate
-    python -m pip install rms-opus
+    python -m pip install "rms-opus==3.24.0"
 
     # 2. The chain, and its own configuration.
     opus_deploy_scripts --directory /opt/opus/deploy
     cd /opt/opus/deploy
     install -d -m 700 secrets
     install -m 600 deploy.env.template secrets/deploy.env
-    #    ... then fill in every <PLACEHOLDER> in secrets/deploy.env
+    #    ... then fill in every <PLACEHOLDER> in secrets/deploy.env. OPUS_DIR is the
+    #    root everything else hangs off -- /opt/opus here -- and the scripts create
+    #    what they need underneath it: staged installations, the logs, the cart
+    #    archives and their manifests, and the collected static files.
 
-    # 3. The directories the chain does not create: cart archives, their manifests,
-    #    and the collected static files. The paths come from OPUS_DIR in deploy.env.
-    install -d -o opus -g opus /opt/opus/downloads /opt/opus/manifests /opt/opus/static_media
-
-    # 4. Import the holdings, under an installation of the release being deployed.
+    # 3. Import the holdings, under an installation of the release being deployed.
     #    Hours to days. It runs detached and mails the log when it finishes.
     ./import_and_deploy/run_full_opus_import.sh ==3.24.0
 
-    # 5. Read that log and ERRORS.log. The database it built is named by the
+    # 4. Read that log and ERRORS.log. The database it built is named by the
     #    installation `import` now points at:
     basename "$(readlink /opt/opus/import)"
 
-    # 6. Deploy it: build the installation that will serve, and switch to it.
+    # 5. Deploy it: build the installation that will serve, and switch to it.
     ./import_and_deploy/deploy_new_code_and_database.sh opus3_20260902T031500_12345 ==3.24.0
 
-    # 7. Put a web server in front of /opt/opus/deployed/wsgi.py. Once, and never
+    # 6. Put a web server in front of /opt/opus/deployed/wsgi.py. Once, and never
     #    again: every later deploy moves that symlink rather than the vhost.
 
-**Give steps 4 and 6 the same version specifier.** They install ``rms-opus``
+**Give steps 3 and 5 the same version specifier.** They install ``rms-opus``
 separately -- the import runs under its own installation and the site is served by
 another -- so leaving it off both means "the newest release" twice, which is two
 different releases if one is published in between.
 
-**Updating a running site** is one command, or two, and which it is depends on the
-release. When it changes nothing about the table schemas -- a bug-fix release -- the
-database it is already serving is still the right one::
+.. _user_guide_deployment_refresh:
+
+**Updating a running site starts with the scripts themselves.** They ship inside the
+distribution, so a copy on a server is one release's chain, and it changes between
+releases like anything else. Bring it up to the release being deployed first::
+
+    source /opt/opus/deploy_venv/bin/activate
+    python -m pip install --upgrade "rms-opus==3.24.1"
+    opus_deploy_scripts --directory /opt/opus/deploy --force
+
+``--force`` replaces the scripts and rewrites ``CHAIN_VERSION``, the file recording
+which release they came from. It does not touch ``secrets/``, which is not part of what
+ships and so is not part of what is written. Every script prints that version as it
+starts and says so when it is deploying a different one, which is the check that this
+step was not forgotten.
+
+Then the deploy itself is one command, or two, depending on the release. When it
+changes nothing about the table schemas -- a bug-fix release -- the database already
+being served is still the right one::
 
     cd /opt/opus/deploy
     ./import_and_deploy/deploy_new_code_only.sh ==3.24.1
 
 When it does change them, the database has to be rebuilt under the new release first,
-and the two commands are the same pair as steps 4 and 6::
+and the two commands are the same pair as steps 3 and 5::
 
     cd /opt/opus/deploy
     ./import_and_deploy/run_full_opus_import.sh ==3.25.0

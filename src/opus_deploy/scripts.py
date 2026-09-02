@@ -20,6 +20,7 @@ with the copy rather than inside an installation that a deploy replaces.
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -29,6 +30,12 @@ if TYPE_CHECKING:
 
 #: The packaged directory this copies, and the name it is written under.
 TREE_NAME = 'server'
+
+#: The file recording which release a copy came out of, written beside the chain. The
+#: deploy scripts read it and object when it names a release other than the one being
+#: deployed: the chain changes between releases, so deploying one release with another
+#: release's scripts is how a step a release added goes missing.
+VERSION_FILE = 'CHAIN_VERSION'
 
 #: Mode for the shell scripts, and for everything else. A wheel does not carry the
 #: executable bit -- ``pip`` writes package data readable and no more -- so it is applied
@@ -81,19 +88,25 @@ def _copy_tree(source: Traversable, destination: Path, *, force: bool) -> list[P
 
 
 def write_scripts(directory: Path, *, force: bool = False) -> list[Path]:
-    """Write the whole deploy chain under a directory.
+    """Write the whole deploy chain under a directory, and stamp it with its release.
 
     Parameters:
         directory: Where the chain goes. It is created if it does not exist.
         force: Whether to replace files that are already there.
 
     Returns:
-        Every file written.
+        Every file written, the version stamp last. The stamp is written whenever the
+        copy succeeds, rather than refused like the rest: it describes the copy this
+        call just made, so an old one beside new scripts would be worse than none.
 
     Raises:
         FileExistsError: If a file is already there and `force` is False.
     """
-    return _copy_tree(_packaged_tree(), directory, force=force)
+    written = _copy_tree(_packaged_tree(), directory, force=force)
+    stamp = directory / VERSION_FILE
+    stamp.write_text(f'{importlib.metadata.version("rms-opus")}\n', encoding='utf-8')
+    stamp.chmod(DATA_MODE)
+    return [*written, stamp]
 
 
 def main() -> None:
@@ -127,6 +140,7 @@ def main() -> None:
         parser.exit(1, f'{parser.prog}: {err}\n')
 
     print(f'Wrote {len(written)} files under {arguments.directory}')
+    print(f'Deploy chain from rms-opus {importlib.metadata.version("rms-opus")}')
     print()
     print('Next:')
     print(f'  1. Copy {arguments.directory}/deploy.env.template to')

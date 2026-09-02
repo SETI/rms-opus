@@ -37,6 +37,11 @@ if [[ ! -v IMPORT_SCRIPT_DIR ]]; then
     exit 1
 fi
 
+if [[ ! -v OPUS_DIR ]]; then
+    echo "INTERNAL ERROR: OPUS_DIR undefined"
+    exit 1
+fi
+
 cd ${OPUS_SRC_DIR}
 
 if [[ -e ${OPUS_SRC_DIR}/${OPUS_DIR_NAME} ]]; then
@@ -75,6 +80,20 @@ else
 fi
 export OPUS_DB_NAME
 export OPUS_LOG_DIR
+
+# The directories the generated opus.toml names outside this installation. They belong
+# to the server rather than to any one installation -- every installation writes cart
+# archives and static files to the same places -- and they are created here because
+# this is what writes the configuration that names them. OPUS_DIR, from deploy.env, is
+# the only place any of these paths comes from.
+#
+# The application opens its log file as it starts, and builds a cart archive into
+# tar_dir on demand, so a directory missing here is a deploy that succeeds and a site
+# that fails later.
+mkdir -p ${OPUS_DIR}/opus_logs
+mkdir -p ${OPUS_DIR}/downloads
+mkdir -p ${OPUS_DIR}/manifests
+mkdir -p ${OPUS_DIR}/static_media
 
 ${IMPORT_SCRIPT_DIR}/_write_opus_toml.sh ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.toml
 

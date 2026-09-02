@@ -13,6 +13,7 @@ export SECRETS_DIR=${SCRIPT_DIR}/secrets
 export DATABASE_SCRIPT_DIR=${SCRIPT_DIR}/database
 
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
+source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 
 export DATETIMEPID="`date +%Y%m%dT%H%M%S`_$$"
 export OPUS_DB_NAME="opus3_${DATETIMEPID}"

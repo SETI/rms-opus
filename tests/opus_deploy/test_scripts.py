@@ -7,6 +7,7 @@ runnable, and that a copy is never quietly written over one that may already hol
 edited ``secrets/deploy.env`` beside it.
 """
 
+import importlib.metadata
 import os
 import stat
 from pathlib import Path
@@ -55,6 +56,26 @@ def test_shell_scripts_come_out_executable(tmp_path: Path) -> None:
     template = tmp_path / 'deploy.env.template'
     assert os.access(deploy, os.X_OK)
     assert not stat.S_IMODE(template.stat().st_mode) & stat.S_IXUSR
+
+
+def test_the_copy_records_the_release_it_came_from(tmp_path: Path) -> None:
+    """The deploy scripts read this file and object when it is not the release being
+    deployed, so a copy that carried no version could not be caught out of step."""
+    written = scripts.write_scripts(tmp_path)
+    stamp = tmp_path / scripts.VERSION_FILE
+
+    assert stamp in written
+    assert stamp.read_text(encoding='utf-8').strip() == importlib.metadata.version('rms-opus')
+
+
+def test_the_version_is_rewritten_by_a_refresh(tmp_path: Path) -> None:
+    """A refresh is what brings a copy up to the release being deployed, stamp included."""
+    scripts.write_scripts(tmp_path)
+    (tmp_path / scripts.VERSION_FILE).write_text('0.0.1\n', encoding='utf-8')
+
+    scripts.write_scripts(tmp_path, force=True)
+
+    assert (tmp_path / scripts.VERSION_FILE).read_text(encoding='utf-8').strip() != '0.0.1'
 
 
 def test_an_existing_copy_is_not_replaced(tmp_path: Path) -> None:
