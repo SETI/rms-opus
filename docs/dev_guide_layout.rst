@@ -162,7 +162,7 @@ Which chapter covers what
    * - ``src/opus_config/``
      - :ref:`dev_guide_config`
    * - ``src/opus_support/``
-     - :ref:`dev_guide_conversions`
+     - :ref:`dev_guide_opus_support`
    * - ``src/opus_log_analyzer/``
      - :ref:`dev_guide_log_analyzer`
    * - ``tests/``, ``import_tests/``, ``integration_tests/``

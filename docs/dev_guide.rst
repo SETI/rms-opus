@@ -26,7 +26,7 @@ holds the rest of its subject as pages beneath.
    dev_guide_import
    dev_guide_webapp
    dev_guide_config
-   dev_guide_conversions
+   dev_guide_opus_support
    dev_guide_testing
    dev_guide_log_analyzer
    dev_guide_server

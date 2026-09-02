@@ -49,7 +49,7 @@ The chapters are in reading order, and the order is deliberate:
 * **The web application** -- :ref:`dev_guide_webapp` and the pages under it, from how a
   request is served to how to add an app.
 * **The two shared packages** -- :ref:`dev_guide_config` is the file every OPUS process
-  is configured by, and :ref:`dev_guide_conversions` is what the two programs convert
+  is configured by, and :ref:`dev_guide_opus_support` is what the two programs convert
   values with so that they agree.
 * **Testing it, and the third program** -- :ref:`dev_guide_testing` covers the three
   suites and what each one needs, and :ref:`dev_guide_log_analyzer` the log analyzer.

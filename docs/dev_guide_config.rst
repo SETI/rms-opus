@@ -33,7 +33,7 @@ installation; :ref:`dev_guide_installation_configuring` walks through filling it
 Every other package asks :func:`importlib.metadata.version` for the distribution's version
 rather than carrying one.
 
-:ref:`dev_guide_conversions` is the other package that sits under both programs.
+:ref:`dev_guide_opus_support` is the other package that sits under both programs.
 
 API reference
 -------------

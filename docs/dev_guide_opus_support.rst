@@ -1,7 +1,7 @@
-.. _dev_guide_conversions:
+.. _dev_guide_opus_support:
 
-Unit, Time, Clock, Angle and Orbit Conversions
-==============================================
+The ``opus_support`` Module
+===========================
 
 :mod:`opus_support` holds the conversions the import pipeline and the web application
 both need. The import pipeline uses them to normalize what it reads out of a PDS
