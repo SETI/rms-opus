@@ -79,10 +79,12 @@ Environment variables
      - None. It is an error to leave it unset, except in the documentation build,
        whose ``conf.py`` falls back to ``tests/fixtures/opus_ci.toml``.
    * - ``DJANGO_SETTINGS_MODULE``
-     - Anything running Django outside ``manage.py``: ``django-admin``, a WSGI
-       server, ``mypy``.
-     - Set to ``opus_app.settings`` by ``manage.py``, by ``src/opus_app/wsgi.py``,
-       by ``pyproject.toml`` for pytest, and by ``docs/conf.py``.
+     - Bare ``django-admin``, and nothing else. Every other way of starting Django
+       here names the settings module itself.
+     - Set to ``opus_app.settings`` by ``opus_manage`` and ``manage.py`` (both through
+       :mod:`opus_app.manage`), by ``src/opus_app/wsgi.py``, by ``pyproject.toml`` for
+       pytest, and by ``docs/conf.py``. ``mypy`` reads it from ``[tool.django-stubs]``
+       in ``pyproject.toml`` instead.
    * - ``COVERAGE_RCFILE``
      - The live-database suites, whose coverage gate has its own configuration.
      - Set to ``integration_tests/.coveragerc`` by
@@ -108,6 +110,11 @@ Then open ``http://127.0.0.1:8000/opus/``. ``migrate`` creates only Django's ses
 auth, contenttypes and admin tables; every OPUS table is created by the import
 pipeline instead, so there are no OPUS migrations to run.
 
+``manage.py`` belongs to this checkout. An installation that has only the distribution
+runs the same commands as ``opus_manage migrate`` and ``opus_manage runserver``, which
+is the same program under another name;
+:ref:`dev_guide_webapp_command_line` gives all three forms and what each command does.
+
 **The import pipeline**::
 
     opus_import --help
@@ -127,9 +134,9 @@ A smoke test that needs neither holdings nor a database::
     opus_log_analyzer --help
     opus_error_analyzer --help
 
-**Both forms of every command.** The installation declares the console scripts
-``opus_import``, ``opus_log_analyzer`` and ``opus_error_analyzer``, and each is
-equivalent to a ``python -m`` invocation, because both reach the same ``main``:
+**Both forms of every command.** The installation declares four console scripts. Three
+of them are OPUS programs, and each is equivalent to a ``python -m`` invocation because
+both reach the same ``main``:
 
 =========================  =========================================
 Console script             Equivalent module form
@@ -143,6 +150,12 @@ The error analyzer names a module rather than a package because a package has on
 ``__main__`` and the log analyzer holds it. The console scripts are what the server
 chains invoke, by name; ``tests/opus_packaging/test_console_scripts.py`` runs both
 forms of each and compares them.
+
+The fourth is ``opus_manage``, and it is not an OPUS program: it is Django's own
+management command line with the settings module already named, so that an installation
+needs nothing in its environment but ``OPUS_CONFIG``. It has no ``python -m`` form and no
+command line of its own -- its subcommands are Django's. In a checkout, ``manage.py`` is
+the same program.
 
 Running the tests and the checks
 --------------------------------

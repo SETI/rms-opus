@@ -9,6 +9,12 @@ explains how the code is organized and how the pieces cooperate; the
 :ref:`Public Web API guide <api_guide>` is the manual for people who only want to
 query an OPUS server.
 
+Three chapters carry the bulk of it, and they are in the order a value moves: the
+database is what the import writes and what the web application reads, so
+:ref:`dev_guide_database` comes before :ref:`dev_guide_import`, which comes before
+:ref:`dev_guide_webapp`. Each of the three opens on a page naming what is under it, and
+holds the rest of its subject as pages beneath.
+
 .. toctree::
    :maxdepth: 2
 
@@ -17,26 +23,9 @@ query an OPUS server.
    dev_guide_environment
    dev_guide_testing
    dev_guide_architecture
-   dev_guide_import
-   dev_guide_import_running
-   dev_guide_import_config
-   dev_guide_import_steps
-   dev_guide_import_obs
-   dev_guide_import_obs_classes
-   dev_guide_import_db
-   dev_guide_import_fixture
-   dev_guide_import_extending
-   dev_guide_table_schemas
    dev_guide_database
-   dev_guide_opus_id
-   dev_guide_dictionary
+   dev_guide_import
    dev_guide_webapp
-   dev_guide_webapp_running
-   dev_guide_webapp_tools
-   dev_guide_webapp_search
-   dev_guide_webapp_results
-   dev_guide_webapp_ui
-   dev_guide_webapp_extending
    dev_guide_support
    dev_guide_log_analyzer
    dev_guide_installation

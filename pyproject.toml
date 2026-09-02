@@ -72,9 +72,16 @@ Issues = "https://github.com/SETI/rms-opus/issues"
 # `__main__` and the log analyzer holds it -- so `opus_error_analyzer` is the only
 # short way to run it. Both log-analyzer parsers set `prog` explicitly for the same
 # reason `opus_import.cli` does: argparse otherwise names the executed file.
+#
+# `opus_manage` is the fourth and is not an OPUS program at all: it is Django's own
+# management command line with the settings module already named, so that an
+# installation -- which has no manage.py, that being a checkout's file -- needs
+# OPUS_CONFIG in its environment and nothing else. It is Django's command surface, so
+# it has no argparse parser of its own and no `python -m` form.
 opus_import = "opus_import.cli:main"
 opus_log_analyzer = "opus_log_analyzer.log_analyzer:main"
 opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
+opus_manage = "opus_app.manage:main"
 
 [project.optional-dependencies]
 dev = [

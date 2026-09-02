@@ -8,7 +8,7 @@ command-line option -- and the rest are the internals of the largest step,
 :mod:`~opus_import.steps.do_import`, which is big enough to live in several files. This
 chapter walks them all.
 
-:ref:`dev_guide_import` gives the shape of a run; :ref:`dev_guide_import_running` gives
+:ref:`dev_guide_import_overview` gives the shape of a run; :ref:`dev_guide_import_running` gives
 the options. Nothing here is optional reading if you are changing the pipeline: the
 order the steps run in is forced by foreign keys and by what each one needs to already
 exist, and getting it wrong produces a database that looks fine and is not.

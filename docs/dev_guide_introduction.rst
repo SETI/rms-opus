@@ -41,14 +41,14 @@ The chapters are in reading order, and the order is deliberate:
   say where everything is.
 * **The whole system at once** -- :ref:`dev_guide_architecture` is the one-page map of
   the two programs and the database between them. Read it before either subsystem.
-* **The import pipeline** -- from :ref:`dev_guide_import` through
-  :ref:`dev_guide_import_extending`, covering how holdings become tables, how to run a
-  run, what each module does, how it is tested without holdings, and how to add to it.
-* **The database** -- :ref:`dev_guide_table_schemas`, :ref:`dev_guide_database`,
-  :ref:`dev_guide_opus_id` and :ref:`dev_guide_dictionary` describe the thing the two
-  programs share.
-* **The web application** -- from :ref:`dev_guide_webapp` through
-  :ref:`dev_guide_webapp_extending`.
+* **The import pipeline** -- :ref:`dev_guide_import` and the pages under it, covering
+  how holdings become tables, how to run a run, what each module does, how it is tested
+  without holdings, and how to add to it.
+* **The database** -- :ref:`dev_guide_database` and the pages under it describe the
+  thing the two programs share: the schema itself, the JSON every table is created from,
+  the OPUS ID, and the data dictionary.
+* **The web application** -- :ref:`dev_guide_webapp` and the pages under it, from how a
+  request is served to how to add an app.
 * **The shared packages and the log analyzer** -- :ref:`dev_guide_support` covers the
   two packages both programs depend on, and :ref:`dev_guide_log_analyzer` the third
   program.
@@ -70,7 +70,9 @@ database -- and two supporting packages:
 
 :mod:`opus_app`
     The Django project. It serves the OPUS user interface and the public web API out
-    of the database the import pipeline wrote. It runs under a WSGI server.
+    of the database the import pipeline wrote. It runs under a WSGI server, and its
+    management commands are run with ``opus_manage``, which is Django's own command
+    line with the settings module already named.
 
 :mod:`opus_config`
     The configuration loader. It reads the one TOML file an installation is

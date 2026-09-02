@@ -64,6 +64,9 @@ directory has a chapter of its own, it is named beside it.
     │   │   └── util/                     # hand-run authoring tools, not part of a run
     │   ├── opus_app/             # the Django project
     │   │   ├── settings.py, urls.py, wsgi.py
+    │   │   ├── manage.py                 # Django's management command line, installed
+    │   │   │                             #   as opus_manage; the checkout's manage.py
+    │   │   │                             #   calls it
     │   │   ├── clear_django_cache.py     # a deployment helper, run as a module
     │   │   ├── apps/{search,results,metadata,ui,cart,help,paraminfo,tools}/
     │   │   ├── templates/                # package data: the project-level templates

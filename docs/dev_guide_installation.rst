@@ -76,8 +76,8 @@ Nothing in the deploy chain maintains such a file; it is there for the case wher
 operations wants a reproducible install rather than the newest one.
 
 **An installed OPUS is not a checkout.** It has no ``manage.py``, no ``scripts/`` and no
-``opus.toml.template``; use ``django-admin`` with the environment set, and fetch the
-template as below.
+``opus.toml.template``; ``opus_manage`` is what runs Django's management commands here,
+and the template is fetched as below.
 
 .. _dev_guide_installation_configuring:
 
@@ -294,9 +294,7 @@ line.
 **Django's own contrib tables** -- sessions, auth, content types, admin -- come from a
 migration::
 
-    OPUS_CONFIG=/etc/opus/opus.toml \
-    DJANGO_SETTINGS_MODULE=opus_app.settings \
-    django-admin migrate
+    OPUS_CONFIG=/etc/opus/opus.toml opus_manage migrate
 
 **Verify the import by reading** ``ERRORS.log``, not by checking the exit status.
 :ref:`dev_guide_import_verifying` says why.
@@ -308,9 +306,7 @@ Collecting the static files
 
 ::
 
-    OPUS_CONFIG=/etc/opus/opus.toml \
-    DJANGO_SETTINGS_MODULE=opus_app.settings \
-    django-admin collectstatic --noinput
+    OPUS_CONFIG=/etc/opus/opus.toml opus_manage collectstatic --noinput
 
 :ref:`dev_guide_webapp_static` describes where they go, the difference between
 ``static_root`` and ``opus_static_root``, and why the public prefix is fixed.
@@ -349,11 +345,10 @@ When it finishes, three more commands complete the database::
 
     opus_import --override-db-schema opus3_new --import-dictionary
 
-    # django-admin has no --override-db-schema: it takes the schema from the
+    # opus_manage has no --override-db-schema: Django takes the schema from the
     # configuration file, so this one needs a file that names opus3_new. Running it
     # against the production configuration migrates the database being served.
-    OPUS_CONFIG=/etc/opus/opus_new.toml \
-    DJANGO_SETTINGS_MODULE=opus_app.settings django-admin migrate
+    OPUS_CONFIG=/etc/opus/opus_new.toml opus_manage migrate
 
     opus_import --override-db-schema opus3_new --validate-perm
 
@@ -375,9 +370,7 @@ Four checks, in increasing order of what they prove::
 
     # 2. The configuration file parses and validates. Loading the settings is what
     #    proves it; add --database default to open the connection as well.
-    OPUS_CONFIG=/etc/opus/opus.toml \
-    DJANGO_SETTINGS_MODULE=opus_app.settings \
-    django-admin check --database default
+    OPUS_CONFIG=/etc/opus/opus.toml opus_manage check --database default
 
     # 3. The application starts under a WSGI server. gunicorn is not an OPUS
     #    dependency -- install it for this check, or use whichever server you deploy.

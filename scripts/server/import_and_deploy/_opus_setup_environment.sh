@@ -5,9 +5,10 @@
 #
 # There is no checkout here. The application, the import pipeline and the log
 # analyzer are all installed packages, and their programs are the console scripts
-# the distribution declares (opus_import, opus_log_analyzer, opus_error_analyzer),
-# so nothing in the chain below needs a repository-relative path or a `cd` into a
-# source tree. The only checkout on the server is the one holding these scripts.
+# the distribution declares (opus_import, opus_log_analyzer, opus_error_analyzer,
+# and opus_manage for Django's own management commands), so nothing in the chain
+# below needs a repository-relative path or a `cd` into a source tree. The only
+# checkout on the server is the one holding these scripts.
 #
 # Inputs (exported by the caller): OPUS_SRC_DIR, OPUS_DIR_NAME, OPUS_DB_NAME,
 # OPUS_LOG_DIR and everything _read_deploy_env.sh exports. OPUS_VERSION_SPEC is
@@ -78,9 +79,9 @@ ${IMPORT_SCRIPT_DIR}/_write_opus_toml.sh ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.t
 # installations gives each one its own.
 export OPUS_CONFIG=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.toml
 
-# Django's own management commands need to know which settings module to use; the
-# installed distribution has no manage.py to imply it.
-export DJANGO_SETTINGS_MODULE=opus_app.settings
+# That is the whole environment. Django's management commands are run as
+# `opus_manage`, which names the settings module itself, so DJANGO_SETTINGS_MODULE
+# is nobody's to export here.
 
 # A stable path for Apache's WSGIScriptAlias. The application's wsgi module lives
 # inside the virtualenv's site-packages, whose path carries the Python minor

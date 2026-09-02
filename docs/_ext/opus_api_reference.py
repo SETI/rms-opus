@@ -72,7 +72,7 @@ EXCLUDED_MODULES = {
     'opus_app.apps.search.models': 'is machine-written by ``scripts/models/create_opus_models.sh`` from a '
     'populated database: one class per database table plus a nested ``Meta`` '
     'class each, none docstringed and none surviving the next regeneration. The '
-    'tables themselves are described in :doc:`dev_guide_database`',
+    'tables themselves are described in :doc:`dev_guide_database_schema`',
 }
 
 #: The name of the page listing the packages.

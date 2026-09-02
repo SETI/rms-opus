@@ -74,8 +74,10 @@ systemd owns the gunicorn process and its environment.
 The systemd unit
 ~~~~~~~~~~~~~~~~
 
-**This is where** ``OPUS_CONFIG`` **is set.** systemd's ``Environment=`` puts it in the
-process's own environment, which is exactly what the settings import needs.
+**This is where** ``OPUS_CONFIG`` **is set**, and it is the only variable to set:
+systemd's ``Environment=`` puts it in the process's own environment, which is exactly
+what the settings import needs, and :mod:`opus_app.wsgi` names the settings module
+itself.
 
 .. code-block:: ini
 
@@ -92,7 +94,6 @@ process's own environment, which is exactly what the settings import needs.
     WorkingDirectory=/opus
 
     Environment=OPUS_CONFIG=/etc/opus/opus.toml
-    Environment=DJANGO_SETTINGS_MODULE=opus_app.settings
 
     ExecStart=/opus/src/rms-opus/opus_venv/bin/gunicorn \
         --workers 8 \
@@ -211,7 +212,6 @@ and gunicorn replaced by a uWSGI instance. **The environment variable is set wit
     chdir      = /opus
 
     env = OPUS_CONFIG=/etc/opus/opus.toml
-    env = DJANGO_SETTINGS_MODULE=opus_app.settings
 
     master    = true
     processes = 8

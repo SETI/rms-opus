@@ -97,11 +97,12 @@ python manage.py migrate     # Django's own tables; OPUS's come from the import
 python manage.py runserver   # then open http://127.0.0.1:8000/opus/
 ```
 
-From a `pip install` there is no `manage.py`; `django-admin` does the same work:
+From a `pip install` there is no `manage.py`; `opus_manage` is the same program, and
+`OPUS_CONFIG` stays the only variable it needs:
 
 ```bash
-export DJANGO_SETTINGS_MODULE=opus_app.settings
-django-admin migrate
+opus_manage migrate
+opus_manage runserver
 ```
 
 Ask the public API how many Cassini ISS observations of Pan there are:

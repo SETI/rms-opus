@@ -79,11 +79,11 @@ ln -s ${OPUS_SRC_DIR}/${OPUS_DIR_NAME} ${OPUS_SRC_DIR}/rms-opus
 # and moves with the Python version. docs/dev_guide_deployment.rst has the stanza.
 
 # Django's contrib tables (sessions, auth, contenttypes, admin). The OPUS tables
-# are created from scratch by the import and have no migrations. django-admin
-# reads DJANGO_SETTINGS_MODULE and OPUS_CONFIG, both exported above; the installed
-# distribution ships no manage.py.
-django-admin migrate
-django-admin collectstatic --noinput
+# are created from scratch by the import and have no migrations. `opus_manage` is
+# Django's own command line with the settings module already named, so OPUS_CONFIG,
+# exported above, is all it needs; the installed distribution ships no manage.py.
+opus_manage migrate
+opus_manage collectstatic --noinput
 python -m opus_app.clear_django_cache
 
 opus_import --import-dictionary --cleanup-aux-tables

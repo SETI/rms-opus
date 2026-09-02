@@ -68,7 +68,6 @@ fi
 # has no default location for it, so every process this script starts is given
 # its path.
 export OPUS_CONFIG=${INSTALL_DIR}/opus.toml
-export DJANGO_SETTINGS_MODULE=opus_app.settings
 
 cd ${INSTALL_DIR}
 
@@ -103,8 +102,8 @@ echo "Installed rms-opus $(python -c 'import importlib.metadata as m; print(m.ve
 # reason it is not optional: this deploy upgrades to the newest release by default,
 # so it can cross a Django version that adds a contrib migration, and without this
 # the session and auth tables would silently stay behind.
-django-admin migrate
-django-admin collectstatic --noinput
+opus_manage migrate
+opus_manage collectstatic --noinput
 python -m opus_app.clear_django_cache
 
 opus_import --create-param-info --create-partables --create-table-names --import-dictionary

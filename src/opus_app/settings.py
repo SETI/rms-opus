@@ -4,8 +4,8 @@ Every value this deployment can vary -- credentials, hosts, paths, log levels an
 the fault-injection knobs -- comes from the TOML file named by `OPUS_CONFIG`,
 read once through `opus_config.get_config`; the rest are fixed application
 settings written out below. Nothing here reads the environment directly and
-there is no default configuration path. `django-admin` and the wsgi entry point both
-load this module, so a missing or invalid configuration file fails at startup
+there is no default configuration path. Every management command and the wsgi entry
+point load this module, so a missing or invalid configuration file fails at startup
 rather than at first request.
 """
 

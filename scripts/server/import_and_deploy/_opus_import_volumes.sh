@@ -110,10 +110,11 @@ echo "** MIGRATE **"
 echo
 echo "Start time:" `date`
 echo
-# Django's own contrib tables. `django-admin` rather than `manage.py`: there is no
-# checkout here and the wheel ships no manage.py, so the settings module is named by
-# DJANGO_SETTINGS_MODULE, which _opus_setup_environment.sh exported.
-django-admin migrate 2>&1
+# Django's own contrib tables. `opus_manage` rather than `manage.py`: there is no
+# checkout here and the wheel ships no manage.py. It is Django's own command line with
+# the settings module already named, so OPUS_CONFIG is all it needs from the
+# environment.
+opus_manage migrate 2>&1
 echo
 
 echo

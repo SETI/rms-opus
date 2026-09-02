@@ -7,7 +7,7 @@ The pipeline is one program with one command line. This chapter is the complete
 surface: what to set in the environment, every option, what a run prints, how to tell
 whether it worked, and what a small run and a full-holdings run each look like.
 
-:ref:`dev_guide_import` is the theory this chapter assumes.
+:ref:`dev_guide_import_overview` is the theory this chapter assumes.
 
 Invoking it
 -----------
