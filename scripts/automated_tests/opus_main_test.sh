@@ -31,8 +31,8 @@ if [[ -z ${TEST_ROOT+x} ]]; then
     echo "TEST_ROOT is not set"
     exit -1
 fi
-if [[ -z ${PDS_DROPBOX_ROOT+x} ]]; then
-    echo "PDS_DROPBOX_ROOT is not set"
+if [[ -z ${PDS_HOLDINGS_ROOT+x} ]]; then
+    echo "PDS_HOLDINGS_ROOT is not set"
     exit -1
 fi
 

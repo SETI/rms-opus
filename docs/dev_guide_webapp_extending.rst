@@ -146,7 +146,7 @@ side afterwards, and all three are operational rather than code:
 1. **Regenerate the models** if the column is in a new table:
    ``scripts/models/create_opus_models.sh``.
 2. **Restart the workers and clear the shared cache**, for the reasons
-   :ref:`dev_guide_deployment_after_import` gives.
+   :ref:`user_guide_deployment_after_import` gives.
 
 .. _dev_guide_webapp_extending_format:
 

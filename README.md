@@ -78,7 +78,7 @@ export OPUS_CONFIG=$PWD/opus.toml
 Running the import pipeline needs the PDS holdings mounted. `memcached` and its
 `pymemcache` client are optional and are not installed by `pip install rms-opus` --
 without them OPUS falls back to Django's per-process local-memory cache. The
-[deployment guide](https://rms-opus.readthedocs.io/en/latest/dev_guide_deployment.html)
+[deployment guide](https://rms-opus.readthedocs.io/en/latest/user_guide_deployment.html)
 covers both.
 
 ## Quick Start

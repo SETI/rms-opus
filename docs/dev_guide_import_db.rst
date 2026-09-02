@@ -196,7 +196,7 @@ new value indirectly, because one statement carries many rows, and the row alias
 8.0.19 added is how: ``AS new`` names the row being inserted, so ``new.col`` is that
 row's value for that column. The older ``VALUES(col)`` spelling is deprecated as of
 8.0.20. **This is what puts the server floor at 8.0.19**, which the README and
-:ref:`dev_guide_installation` both state. Two details guard the edges: MySQL requires the
+:ref:`user_guide_installation` both state. Two details guard the edges: MySQL requires the
 alias to differ from the table name, so a table called ``new`` gets the alias
 ``new_row`` instead (compared without regard to case, because MySQL folds identifiers
 for this check); and the alias is emitted only alongside the clause that reads it,

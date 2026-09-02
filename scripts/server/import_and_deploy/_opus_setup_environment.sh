@@ -89,7 +89,7 @@ export OPUS_CONFIG=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.toml
 #
 #     WSGIScriptAlias / ${OPUS_SRC_DIR}/rms-opus/wsgi.py
 #
-# See docs/dev_guide_deployment.rst for the whole vhost stanza.
+# See docs/user_guide_deployment.rst for the whole vhost stanza.
 #
 # find_spec locates the file WITHOUT importing it. Importing opus_app.wsgi runs
 # get_wsgi_application(), which calls django.setup() and opens the log file, so it

@@ -467,7 +467,7 @@ Properties worth relying on:
   :exc:`~opus_config.config.ConfigError` naming the table and the key at fault.
 * **A key with a default is optional and a key without one is required**, and the
   distinction is in the accessor call rather than in a separate list.
-  :ref:`dev_guide_installation` tabulates every key and which it is.
+  :ref:`user_guide_installation` tabulates every key and which it is.
 * **The brand is validated against** :data:`~opus_config.config.DATABASE_BRANDS`, so a
   consumer receives a value already known to be one of the two.
   :mod:`opus_app.settings` dispatches on it blind, through a two-entry map;
@@ -475,7 +475,7 @@ Properties worth relying on:
   not implement.
 
 :ref:`dev_guide_config` describes the package that reads it, and
-:ref:`dev_guide_installation` describes writing a file.
+:ref:`user_guide_installation` describes writing a file.
 
 API reference
 -------------

@@ -42,8 +42,8 @@ one install covers everything below.
 
 This chapter is the **development** installation. Bringing up a server -- installing the
 released distribution from PyPI, writing a configuration file, creating a database and
-collecting the static files -- is :ref:`dev_guide_installation`, and putting a web server
-in front of it is :ref:`dev_guide_web_server`.
+collecting the static files -- is :ref:`user_guide_installation`, and putting a web server
+in front of it is :ref:`user_guide_web_server`.
 
 Configuration
 -------------

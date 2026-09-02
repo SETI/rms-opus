@@ -76,7 +76,7 @@ ln -s ${OPUS_SRC_DIR}/${OPUS_DIR_NAME} ${OPUS_SRC_DIR}/rms-opus
 # Apache's vhost points at ${OPUS_SRC_DIR}/rms-opus/wsgi.py, the symlink
 # _opus_setup_environment.sh wrote into this installation. That path is stable
 # across deploys; the file it points at is inside the virtualenv's site-packages
-# and moves with the Python version. docs/dev_guide_deployment.rst has the stanza.
+# and moves with the Python version. docs/user_guide_deployment.rst has the stanza.
 
 # Django's contrib tables (sessions, auth, contenttypes, admin). The OPUS tables
 # are created from scratch by the import and have no migrations. `opus_manage` is

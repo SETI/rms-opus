@@ -53,8 +53,9 @@ The chapters are in reading order, and the order is deliberate:
   values with so that they agree.
 * **Testing it, and the third program** -- :ref:`dev_guide_testing` covers the three
   suites and what each one needs, and :ref:`dev_guide_log_analyzer` the log analyzer.
-* **Running a server** -- :ref:`dev_guide_server` and the pages under it: installing
-  one, fronting it with a web server, and operating it.
+* **Running a server** is not in this guide at all. :ref:`user_guide` is the separate
+  guide for that: installing OPUS, importing the holdings, putting a web server in front
+  of it, and operating it, without assuming anything about how OPUS is built.
 * **Working on it** -- :ref:`dev_guide_conventions` and
   :ref:`dev_guide_contributing`, then the generated :doc:`api_reference`.
 

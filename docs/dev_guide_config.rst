@@ -27,7 +27,7 @@ read into a frozen dataclass. Validation is explicit rather than best-effort -- 
 key, a missing required key, a value of the wrong type, and a value outside the set a key
 allows are each reported with the table and the key at fault. ``opus.toml.template`` in
 the repository root documents every key and is the file to copy when configuring an
-installation; :ref:`dev_guide_installation_configuring` walks through filling it in.
+installation; :ref:`user_guide_installation_configuring` walks through filling it in.
 
 :mod:`opus_config` also hosts ``_version.py``, which setuptools-scm writes at build time.
 Every other package asks :func:`importlib.metadata.version` for the distribution's version

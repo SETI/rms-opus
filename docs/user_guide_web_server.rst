@@ -1,4 +1,4 @@
-.. _dev_guide_web_server:
+.. _user_guide_web_server:
 
 Fronting OPUS with a Web Server
 ===============================
@@ -14,7 +14,7 @@ host name, ``/opus`` is the installation root, ``/pds`` is where the holdings ar
 mounted, and ``/etc/opus/opus.toml`` is the configuration file; substitute your own for
 each.
 
-.. _dev_guide_web_server_contract:
+.. _user_guide_web_server_contract:
 
 What the web server has to provide
 ----------------------------------
@@ -63,7 +63,7 @@ Two more, which are conventions rather than requirements:
 * ``allowed_hosts`` **has to name the host** the server passes through, or Django
   refuses the request.
 
-.. _dev_guide_web_server_nginx:
+.. _user_guide_web_server_nginx:
 
 nginx with gunicorn
 -------------------
@@ -184,7 +184,7 @@ Three notes on that block:
 * Serving ``/holdings/`` from nginx rather than through Django is the point of the
   exercise: those are the data files, and they are large.
 
-.. _dev_guide_web_server_uwsgi:
+.. _user_guide_web_server_uwsgi:
 
 nginx with uWSGI
 ----------------
@@ -237,7 +237,7 @@ survive a reboot. And ``chown-socket`` is what lets nginx reach the socket at al
 plays above. ``touch-reload`` is worth adding if you want a file touch rather than a
 service restart to recycle the workers after an import.
 
-.. _dev_guide_web_server_apache:
+.. _user_guide_web_server_apache:
 
 Apache with mod_wsgi
 --------------------
@@ -377,7 +377,7 @@ writes, and turns them into per-session reports of what users did. It is the onl
 consumer of these logs, and :ref:`dev_guide_log_analyzer` describes it. There is nothing
 equivalent for nginx's own log format.
 
-.. _dev_guide_web_server_checklist:
+.. _user_guide_web_server_checklist:
 
 Checking it
 -----------
@@ -432,15 +432,15 @@ Common failures and what they mean:
      - The proxy or server timeout is shorter than the archive takes to build.
    * - Results are stale after an import
      - The shared cache was not flushed, or the workers were not restarted. See
-       :ref:`dev_guide_deployment`.
+       :ref:`user_guide_deployment`.
 
 Where to go next
 ----------------
 
-:ref:`dev_guide_installation`
+:ref:`user_guide_installation`
     What has to exist before any of this.
 
-:ref:`dev_guide_deployment`
+:ref:`user_guide_deployment`
     The Node's deploy chain, and the runbook for replacing a database.
 
 API reference

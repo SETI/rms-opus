@@ -31,7 +31,7 @@ The environment
      - Needed for
    * - ``OPUS_CONFIG``
      - Everything but ``--help``. It names the installation's TOML file, and there is
-       **no default location**. See :ref:`dev_guide_installation` for how to write one.
+       **no default location**. See :ref:`user_guide_installation` for how to write one.
 
 The pipeline reads nothing else from the environment. The database, the holdings roots
 and the log locations all come from the configuration file, and the keys it uses are:
@@ -439,7 +439,7 @@ into a new schema and switched over afterwards rather than in place.
     The body ``import_all.sh`` runs once its confirmation has been given. It is the file
     that records which bundle groups get ``--import-check-duplicate-id``.
 
-The runbook is in :ref:`dev_guide_deployment`; the short version is: import into a new
+The runbook is in :ref:`user_guide_deployment`; the short version is: import into a new
 schema, read ``ERRORS.log``, compare against the database being served, point a test
 installation at the new one, then switch the public installation over, flush the shared
 cache and restart every worker process.

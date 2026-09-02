@@ -29,7 +29,6 @@ holds the rest of its subject as pages beneath.
    dev_guide_opus_support
    dev_guide_testing
    dev_guide_log_analyzer
-   dev_guide_server
    dev_guide_conventions
    dev_guide_contributing
    api_reference

@@ -40,7 +40,7 @@ the home page plus each app's own ``urls.py`` -- and mounts it at the site root 
 under the ``opus/`` prefix. So ``/api/data.json`` and ``/opus/api/data.json`` are the
 same view. The prefix exists because a development server has no web server in front of
 it to strip one; production is fronted by a web server instead (see
-:ref:`dev_guide_web_server`).
+:ref:`user_guide_web_server`).
 
 **2. One OPUS-authored middleware.** Everything in ``MIDDLEWARE`` but the last entry is
 Django's own. :class:`~opus_app.apps.tools.opus_middleware.StripWhitespaceMiddleware`

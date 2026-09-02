@@ -3,66 +3,84 @@
 Testing
 =======
 
-Three test suites, split by what each one needs rather than by marker, so that the split
-cannot be defeated by a test that forgets to declare itself:
+There are three test suites. They are split by **what each one needs to run**, rather than
+by a marker, so that the split cannot be defeated by a test that forgets to declare
+itself:
 
 ``tests/``
-    The holdings-free suite. It needs no database and no PDS files, and it is what
-    ``pytest`` alone runs, because ``testpaths`` in ``pyproject.toml`` names it.
+    The holdings-free suite. It needs no database and no PDS files. ``pytest`` with no
+    arguments runs this one and nothing else, because ``testpaths`` in ``pyproject.toml``
+    names it.
 
 ``import_tests/``
-    The end-to-end test of the import pipeline against the checked-in mini-holdings
-    fixture. It needs a MySQL server but no PDS files. See
-    :ref:`dev_guide_import_fixture` for what the fixture is and how it is regenerated.
+    The import pipeline, end to end, against a few megabytes of real archive metadata
+    checked into the repository. It needs a MySQL server, but no PDS holdings and no
+    database anyone prepared. :ref:`dev_guide_import_fixture` describes the fixture it
+    runs against.
 
 ``integration_tests/``
-    The suites that need a database an import has populated and, for some of them, the
-    holdings behind it. See `Running the integration suites`_.
+    What OPUS *answers*, checked against a database a real import has populated. It needs
+    that database, and some of its tests need the PDS holdings behind it, so it runs on a
+    machine at the Ring-Moon Systems Node.
 
-Only the first runs by default. The other two are asked for by name, which is what keeps
-``pytest`` fast and offline.
+The second and third are asked for by name. That is what keeps the everyday ``pytest``
+fast and offline.
 
-Running the tests
------------------
+.. _dev_guide_testing_opus_config:
+
+What every run needs first
+--------------------------
+
+**Set** ``OPUS_CONFIG`` **before running any of them**, including the suites that never
+touch a database::
+
+    export OPUS_CONFIG=$PWD/tests/fixtures/opus_ci.toml
+
+``tests/fixtures/opus_ci.toml`` is a checked-in dummy configuration: its credentials
+connect to nothing and the paths it names are under ``/tmp``. Point the variable at a real
+installation's file only when running the integration suite.
+
+It is needed for every run, and not only for the tests that use Django, because
+``pyproject.toml`` names ``opus_app.settings`` as the Django settings module for pytest.
+``pytest-django`` imports that module once when the session starts, and importing it reads
+the OPUS configuration file -- so a session that collects nothing but
+``tests/opus_support`` still reads it. Without the variable, pytest stops during startup
+with :exc:`~opus_config.config.ConfigError` naming it, before a single test runs.
+
+Running the holdings-free suite
+-------------------------------
 
 ::
 
-    pytest                                   # the holdings-free suite
+    pytest                                   # the whole suite
     pytest -n auto --dist loadscope          # the same, in parallel, as CI runs it
     pytest tests/opus_support/test_units.py  # one file
     pytest -k parse_form_type                # one test by name
-    pytest --cov --cov-fail-under=0          # with coverage; see the note below
-    pytest import_tests                      # the import pipeline, against MySQL
-    pytest integration_tests                 # the live-database suites, serially
 
-Every one of these needs ``OPUS_CONFIG`` set, because ``pytest-django`` configures Django
-from it at collection: ``OPUS_CONFIG=tests/fixtures/opus_ci.toml`` is the checked-in dummy
-configuration for anything that does not touch a real database, and
-``scripts/run-all-checks.sh`` sets it for you.
+It takes seconds, needs nothing installed but the ``dev`` extra, and is what to run while
+working on anything.
 
 ``--dist loadscope`` keeps each test module on one worker, which matters for the modules
-that mock time or share a fixture. The live-database suites are deliberately **not** run
-in parallel: they share one database and one of them drops the cache tables between
-tests.
+that mock time or share a fixture.
 
-Every marker used anywhere has to be declared, because ``--strict-markers`` is on; the
-declared markers are ``integration`` (applied to everything
-``integration_tests/conftest.py`` collects), ``holdings`` (reads a product file out of the
-holdings, not just the database row naming it) and ``livetest`` (queries an OPUS server
-outside this process).
+Warnings are errors here, so a third-party deprecation cannot rot unnoticed. Admitting one
+that cannot be fixed here means adding a narrowly-scoped ``filterwarnings`` entry to
+``pyproject.toml``, with a comment saying which package raises it and why.
 
-Warnings are errors. A third-party deprecation cannot rot unnoticed; adding a
-narrowly-scoped ``filterwarnings`` entry, with a comment, is the way to admit one that
-cannot be fixed here.
+Coverage is deliberately **not** measured by this suite; `Two coverage configurations`_
+says which run measures what, and why ``pytest --cov`` on its own needs
+``--cov-fail-under=0``.
 
 Running the import suite
 ------------------------
 
-``pytest import_tests`` needs a MySQL server and nothing else -- no holdings, no import.
+``pytest import_tests`` needs a MySQL server and nothing else -- no holdings, no import,
+no prepared database.
+
 It reads its credentials from ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER`` and
 ``OPUS_TEST_DB_PASSWORD``, defaulting to ``root`` with no password on ``127.0.0.1``. Each
 run creates schemas named ``opus_import_test_<pid>`` and drops every one of them when the
-session ends, pass or fail.
+session ends, pass or fail, so nothing is left on the server to clean up.
 
 It runs serially: the run is one long import followed by fast assertions, so ``-n`` buys
 nothing, and a session-scoped fixture under xdist would run the import once per worker
@@ -75,83 +93,139 @@ coverage costs about two and a half times that and takes two commands;
 
 .. _running-the-integration-suites:
 
-Running the integration suites
-------------------------------
+Running the integration suite
+-----------------------------
 
-These are the suites that prove what OPUS *answers*: the golden-response API tests, the
-live-database Django tests, and ``opus_support`` measured together with them. They need a
-database that a real import has populated, and some of them need the PDS holdings behind
-it.
+``integration_tests/`` is what proves that a change did not alter what OPUS returns. It
+holds the golden-response API tests, which compare every documented API call's answer byte
+for byte, and the live-database tests of the Django apps.
 
-**Not generally runnable.** The import reads the PDS3 and PDS4 holdings trees, which are
-terabytes on a machine at the Ring-Moon Systems Node. Without them you cannot populate the
-database, so you cannot run these suites; the holdings-free suites above are what a
-developer without that machine runs, and :ref:`dev_guide_import_fixture` is what covers
-the import pipeline for everyone else.
+**It needs a database that a real import has populated**, and a few of its tests need the
+PDS holdings behind that database as well. `Populating a database to run it against`_ is
+how to get one. With ``OPUS_CONFIG`` naming that installation's configuration file::
 
-With the holdings available, the chain is three steps and the scripts are the authority on
-each:
+    pytest integration_tests
 
-1. **A configuration file.** ``scripts/automated_tests/opus_setup_environment.sh`` writes
-   an ``opus.toml`` into the repository root, pointing at a per-run schema
-   ``opus_test_db_<id>``, at ``$PDS_DROPBOX_ROOT/holdings`` and
-   ``$PDS_DROPBOX_ROOT/pds4-holdings``, and at per-run log, download and data directories.
-   It refuses to write the file if any interpolated value holds a control character, which
-   TOML forbids inside a quoted string.
+**It is not generally runnable.** A real import reads the PDS3 and PDS4 holdings, which
+are terabytes on a machine at the Ring-Moon Systems Node; without them there is no
+database to run against. A developer working elsewhere runs the other two suites, and
+:ref:`dev_guide_import_fixture` is what covers the import pipeline for them.
 
-2. **An import.** ``scripts/import/import_for_tests.sh`` erases the permanent tables and
-   imports a fixed list of bundles -- Cassini ISS, UVIS, VIMS and CIRS, Galileo, Voyager,
-   Hubble, New Horizons, and the occultation bundle sets -- then runs
+It runs **serially**, deliberately: every test shares one database, and one of them drops
+the ``cache_*`` tables between tests, so ``-n`` would have workers pulling the ground out
+from under each other.
+
+Three markers describe what a test reaches for, and ``--strict-markers`` is on, so every
+one of them is declared in ``pyproject.toml``:
+
+``integration``
+    Applied by ``integration_tests/conftest.py`` to everything it collects.
+
+``holdings``
+    Reads a product file out of the holdings tree, not just the database row naming it.
+
+``livetest``
+    Queries an OPUS server outside this process, rather than the application in it.
+
+.. _dev_guide_testing_populating:
+
+Populating a database to run it against
+---------------------------------------
+
+Two ways, and they do the same work: **by hand**, which is what to use while developing
+and what shows what each step does, and **in one command**, which is what the self-hosted
+CI job runs. Both need the holdings, a MySQL server, and a checkout with the distribution
+installed.
+
+The scripts divide along the same line, which is why they are in two directories:
+``scripts/import/`` holds the wrappers a person runs and answers prompts from, and
+``scripts/automated_tests/`` holds the unattended chain, which calls those same wrappers
+with the prompts answered for it. Nothing is duplicated between them.
+
+By hand
+~~~~~~~
+
+1. **Write a configuration file** naming a test schema -- a name you will recognize as
+   disposable -- the holdings roots, and directories for logs, downloads and site data.
+   ``opus.toml.template`` in the repository root is the file to copy; set ``OPUS_CONFIG``
+   to it. :ref:`user_guide_installation_configuring` describes every key.
+
+2. **Import the test bundles**::
+
+       ./scripts/import/import_for_tests.sh
+
+   It prints the schema it is about to erase and asks for confirmation before doing
+   anything, which is the check that keeps it off a database you meant to keep. It then
+   imports a fixed list of bundle sets -- Cassini ISS, UVIS, VIMS and CIRS, Galileo,
+   Voyager, Hubble, New Horizons, and the occultation sets -- and finishes with
    ``--cleanup-aux-tables``, ``--import-dictionary``, ``manage.py migrate`` and
-   ``--validate-perm``. It asks for confirmation before erasing, and it reads
-   ``OPUS_CONFIG`` to find the database, printing the schema name so you can check it is a
-   test one before answering. ``scripts/automated_tests/opus_import_test_database.sh``
-   drives it non-interactively and gates on both the exit status and ``ERRORS.log``.
+   ``--validate-perm``. Read ``ERRORS.log`` afterwards rather than trusting the exit
+   status: several import steps report failure through the log and still exit zero.
 
-3. **The suites.** ``scripts/automated_tests/opus_run_unittests_coverage.sh`` runs
-   ``tests/opus_support``, ``tests/opus_app`` and ``integration_tests`` in **one serial
-   pytest invocation**, under ``COVERAGE_RCFILE=integration_tests/.coveragerc``. One run
-   rather than three because the coverage gate measures all of them together; serial
-   because they share one database and mutate it.
+3. **Run the suite**::
 
-Credentials and machine paths come from ``~/opus_runner_secrets``, which every one of
-those scripts sources and which is not in the repository: it sets ``OPUS_DB_USER``,
-``OPUS_DB_PASSWORD``, ``TEST_ROOT`` and ``PDS_DROPBOX_ROOT``, and each script exits rather
-than continue if one is missing.
+       pytest integration_tests
 
-``scripts/automated_tests/opus_main_test.sh`` runs the whole chain -- set up, import, test,
-then drop the schema and delete the temporary directories -- and is what the self-hosted
-``Run Integration Tests`` workflow invokes. **It is not the coverage gate**: it exits 0 on
-a run whose coverage is 99%. ``opus_run_unittests_coverage.sh`` only measures;
-``scripts/automated_tests/opus_check_coverage.sh`` is what fails a build below 100%, and
-the workflow runs it as a separate step so that a coverage failure still reaches codecov
-first. Reproducing CI locally means running it yourself afterwards.
+   To reproduce what CI measures rather than just what it asserts, run it the way
+   ``scripts/automated_tests/opus_run_unittests_coverage.sh`` does -- one serial
+   invocation of ``tests/opus_support``, ``tests/opus_app`` and ``integration_tests``
+   together, under ``COVERAGE_RCFILE=integration_tests/.coveragerc``. `Two coverage
+   configurations`_ says why all three are in one run.
+
+In one command
+~~~~~~~~~~~~~~
+
+::
+
+    ./scripts/automated_tests/opus_main_test.sh
+    ./scripts/automated_tests/opus_check_coverage.sh
+
+The first does the whole chain unattended: it makes a per-run directory, writes an
+``opus.toml`` naming a schema of its own (``opus_test_db_<id>``, from a timestamp), runs
+the import with the confirmation answered for it and gates on both the exit status and
+``ERRORS.log``, runs the three suites under the integration coverage configuration, then
+drops the schema and deletes the directories it made. Nothing it creates outlives it,
+which is why it is safe to run on a machine that has a real database on it.
+
+**It is not the coverage gate.** It exits 0 on a run whose coverage is 99%.
+``opus_check_coverage.sh`` is the gate, and the self-hosted workflow runs it as a separate
+step so that a coverage failure still reaches codecov first -- which is why reproducing CI
+locally means running the second command yourself.
+
+Both scripts read their machine's own settings from ``~/opus_runner_secrets``, a file that
+is not in the repository. It sets ``OPUS_DB_USER`` and ``OPUS_DB_PASSWORD``, ``TEST_ROOT``
+(where the per-run directories go) and ``PDS_HOLDINGS_ROOT`` (the directory holding
+``holdings`` and ``pds4-holdings``). Every script that needs one of them exits rather than
+continue if it is missing.
 
 Two coverage configurations
 ---------------------------
 
-**They measure different things**, which is why the plain ``pytest --cov`` invocation
-above passes ``--cov-fail-under=0``:
+**They measure different things**, and each is gated by exactly one command:
 
 * ``[tool.coverage]`` in ``pyproject.toml`` measures :mod:`opus_support`,
   :mod:`opus_config`, :mod:`opus_import` and :mod:`opus_log_analyzer` -- the Django
-  application is excluded. **Exactly one command measures it and exactly one number gates
-  it**: the ``Import Tests`` job runs ``pytest import_tests --cov``, and ``fail_under`` is
-  the floor that run has to stay at or above. Any other suite measured against this
-  configuration reaches far less of the four packages, which is why the invocation above
-  turns the gate off and why ``scripts/run-all-checks.sh`` runs no coverage at all.
+  application is not in it. The ``Import Tests`` job runs ``pytest import_tests --cov``,
+  and ``fail_under`` is the floor that one run has to stay at or above. Any other suite
+  measured against this configuration reaches far less of those four packages, which is
+  why a plain ``pytest --cov`` has to pass ``--cov-fail-under=0`` to mean anything.
 
 * ``integration_tests/.coveragerc`` measures ``src/opus_app/apps``,
-  ``integration_tests/test_api`` and ``src/opus_support``, and **is** gated, at 100%. It is
-  a separate file rather than a section of ``pyproject.toml`` because coverage.py ignores
-  ``include`` whenever ``source`` is set, so one merged configuration would silently
-  corrupt one gate or the other. Select it with ``COVERAGE_RCFILE``.
+  ``integration_tests/test_api`` and ``src/opus_support``, and is gated at **100%**. That
+  is why ``tests/opus_support``, ``tests/opus_app`` and ``integration_tests`` are run
+  together in one invocation: the gate measures what all three reach between them, so
+  dropping one deflates the figure rather than failing the run.
 
-Running the checks
-------------------
+It is a separate file rather than another section of ``pyproject.toml`` because
+coverage.py ignores ``include`` whenever ``source`` is set, so one merged configuration
+would silently corrupt one gate or the other. Select it with ``COVERAGE_RCFILE``.
 
-``scripts/run-all-checks.sh`` runs everything this repository gates on, in parallel by
-default::
+Running every check
+-------------------
+
+``scripts/run-all-checks.sh`` runs everything this repository gates on -- the tests and
+every other check -- in parallel by default. It sets ``OPUS_CONFIG`` to the checked-in
+dummy configuration itself, so a full run needs nothing but a checkout::
 
     ./scripts/run-all-checks.sh                 # everything
     ./scripts/run-all-checks.sh -c              # only the code checks
@@ -197,14 +271,14 @@ What it runs, and what each one is configured by:
      - ``pymarkdown scan``
      - ``[tool.pymarkdown.*]``
 
-It runs the holdings-free suite only, which is why a full run needs nothing but a
-checkout: every other check reads files.
+The tests it runs are the holdings-free suite alone; every other check reads files. The
+other two suites need a server or a database, so neither is in a default run.
 
 ``--import-tests`` adds the import suite to whatever else is running -- on its own, to the
-full run; alongside another ``--*`` flag, to that selection. It is opt-in and never part of
-a default run, because it is the one check that needs a reachable MySQL server and it takes
-about two minutes against the eighteen seconds everything else costs. It uses the bare
-form, without coverage, and reads ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER`` and
+full run; alongside another ``--*`` flag, to that selection. It is opt-in because it is the
+one check that needs a reachable MySQL server, and because it takes about two minutes
+against the eighteen seconds everything else costs. It uses the bare form, without
+coverage, and reads ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER`` and
 ``OPUS_TEST_DB_PASSWORD`` itself. A failure fails the script, like any other check.
 
 Each check has an ``ENABLE_*`` toggle at the top of the script, so one that is not yet

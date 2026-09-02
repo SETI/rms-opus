@@ -242,7 +242,7 @@ options set Letter paper, one-inch margins, a page-number footer, PDF bookmarks,
 print media queries.
 
 **This is why PDF generation is unavailable on a platform without ``wkhtmltopdf``**, and
-why :ref:`dev_guide_installation` lists it as optional: every other page works without
+why :ref:`user_guide_installation` lists it as optional: every other page works without
 it.
 
 The API guide redirect

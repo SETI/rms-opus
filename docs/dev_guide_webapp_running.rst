@@ -5,7 +5,7 @@ Running the Web Application
 
 The web application needs a database an import has already populated. Everything below
 assumes one; :ref:`dev_guide_import_running` is how to get one, and
-:ref:`dev_guide_installation` is how to bring up a server from nothing.
+:ref:`user_guide_installation` is how to bring up a server from nothing.
 
 The environment
 ---------------
@@ -31,7 +31,7 @@ Nothing else is read from the environment. The only :data:`os.environ` access in
 package is those two settings-module lines, in :mod:`opus_app.wsgi` and
 :mod:`opus_app.manage`; every value a deployment can vary -- credentials, hosts, paths,
 log levels, the fault-injection knobs -- comes from the configuration file, and
-:ref:`dev_guide_installation` tabulates every key.
+:ref:`user_guide_installation` tabulates every key.
 
 .. _dev_guide_webapp_command_line:
 
@@ -78,7 +78,7 @@ OPUS.
 ``runserver`` listens on ``127.0.0.1:8000`` unless told otherwise (``opus_manage
 runserver 0.0.0.0:8080``). It is Django's development server: single-process, restarting
 itself on every file change, and **not what serves the public site** -- that is a WSGI
-server behind nginx or Apache, described below and in :ref:`dev_guide_web_server`.
+server behind nginx or Apache, described below and in :ref:`user_guide_web_server`.
 
 Then open ``http://127.0.0.1:8000/opus/``, or ask the API a question directly::
 
@@ -159,7 +159,7 @@ gunicorn installed alongside, since it is not an OPUS dependency::
 
 **The one thing that has to be arranged is that ``OPUS_CONFIG`` reaches the worker
 process's environment.** It is read when the settings module is imported, which happens
-inside the worker, long before any request. :ref:`dev_guide_web_server` gives worked
+inside the worker, long before any request. :ref:`user_guide_web_server` gives worked
 configurations for nginx with gunicorn or uWSGI, and for Apache with ``mod_wsgi``,
 each of which arranges it differently.
 
@@ -201,7 +201,7 @@ template- and JavaScript-referenced asset to survive ``collectstatic`` first.
 Caching, and clearing it
 ------------------------
 
-:ref:`dev_guide_installation_prereqs` says how to install ``memcached`` and its client,
+:ref:`user_guide_installation_prereqs` says how to install ``memcached`` and its client,
 and why neither is a declared dependency. The behavior to know here is the fallback:
 :mod:`opus_app.settings` decides at import time, and it decides **twice** -- whether
 ``pymemcache`` imports, and whether a connection to a local memcached succeeds -- falling
@@ -220,7 +220,7 @@ and why the API reference leaves it out. Restarting memcached has the same effec
 
 That is only half of what an import requires, because the process-local caches
 :ref:`dev_guide_webapp_caching` describes are out of its reach.
-:ref:`dev_guide_deployment_after_import` is the full statement.
+:ref:`user_guide_deployment_after_import` is the full statement.
 
 .. _dev_guide_webapp_settings:
 
@@ -308,7 +308,7 @@ Running against a different database
 The database is named in the configuration file, so pointing an installation at a
 different one means a different configuration file and a different ``OPUS_CONFIG``. That
 is exactly how a server exercises a newly imported database before switching the public
-one over -- see the runbook in :ref:`dev_guide_deployment`.
+one over -- see the runbook in :ref:`user_guide_deployment`.
 
 A server running several OPUS installations gives each one its own file, its own
 ``OPUS_CONFIG``, its own database schema and its own ``cache_server_prefix``, which is

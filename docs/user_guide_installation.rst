@@ -1,17 +1,17 @@
-.. _dev_guide_installation:
+.. _user_guide_installation:
 
 Installing OPUS on a Server
 ===========================
 
 This chapter brings up a complete OPUS installation from nothing: the prerequisites, the
 distribution, the configuration file, the database, the static files, and a first import.
-:ref:`dev_guide_web_server` then puts a web server in front of it, and
-:ref:`dev_guide_deployment` describes operating it.
+:ref:`user_guide_web_server` then puts a web server in front of it, and
+:ref:`user_guide_deployment` describes operating it.
 
 For a **development checkout** rather than a server, read :ref:`dev_guide_environment`
 instead; it is shorter, and it installs from source.
 
-.. _dev_guide_installation_prereqs:
+.. _user_guide_installation_prereqs:
 
 Prerequisites
 -------------
@@ -46,7 +46,7 @@ needs them only to serve product files; the import needs them to run at all. Bot
 and a PDS4 root are configured, and the deploy chain checks that ``volumes/`` exists
 under the first and ``bundles/`` under the second.
 
-.. _dev_guide_installation_install:
+.. _user_guide_installation_install:
 
 Installing the distribution
 ---------------------------
@@ -79,7 +79,7 @@ operations wants a reproducible install rather than the newest one.
 ``opus.toml.template``; ``opus_manage`` is what runs Django's management commands here,
 and the template is fetched as below.
 
-.. _dev_guide_installation_configuring:
+.. _user_guide_installation_configuring:
 
 Writing the configuration file
 ------------------------------
@@ -120,7 +120,7 @@ it: an unknown key, a missing key, or a value of the wrong type is reported with
 table and the key at fault rather than failing later somewhere else. A misspelled key is
 an **error**, not something silently ignored.
 
-.. _dev_guide_installation_keys:
+.. _user_guide_installation_keys:
 
 Every configuration key
 -----------------------
@@ -270,7 +270,7 @@ Four tables. A key marked optional may be left out entirely.
 **Create every directory the** ``[paths]`` **section names, and make each writable by the
 account OPUS runs as, before starting anything.**
 
-.. _dev_guide_installation_database:
+.. _user_guide_installation_database:
 
 Creating the database
 ---------------------
@@ -286,20 +286,30 @@ none to write::
 The schema itself needs no ``CREATE DATABASE``: the import pipeline creates it when the
 configured one does not exist, which is why nothing else can run before it.
 
-``--do-it-all`` imports the named bundles, copies the result over the permanent tables,
-and rebuilds the auxiliary tables. Add ``--import-dictionary`` to load the tooltips,
-which no aggregate option implies. :ref:`dev_guide_import_running` is the full command
-line.
+``--do-it-all`` imports the bundles named after it, copies the result over the permanent
+tables, and rebuilds the auxiliary tables. Add ``--import-dictionary`` to load the
+tooltips, which no aggregate option implies.
+
+**What to name.** A bundle is named by a *descriptor*, and several can be given, comma-
+or space-separated: a single bundle id (``COISS_2002``), a whole bundleset
+(``COISS_2xxx``), one of the shorthands for a mission or an instrument (``CASSINI``,
+``GALILEO``, ``HST``, ``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their relatives,
+matched without regard to case), or ``ALL``, which stands for every bundleset OPUS
+imports. ``opus_import --help`` lists every option, and works without a configuration
+file; :ref:`dev_guide_import_running` is the complete reference.
 
 **Django's own contrib tables** -- sessions, auth, content types, admin -- come from a
 migration::
 
     OPUS_CONFIG=/etc/opus/opus.toml opus_manage migrate
 
-**Verify the import by reading** ``ERRORS.log``, not by checking the exit status.
-:ref:`dev_guide_import_verifying` says why.
+**Verify the import by reading** ``ERRORS.log`` **in the** ``[paths] import_log_dir``
+**directory, not by checking the exit status.** Several steps report a failure through
+the log and still exit zero, so a clean run is an empty ``ERRORS.log`` rather than a zero
+status; ``WARNINGS.log`` beside it is worth reading too.
+:ref:`dev_guide_import_verifying` is the longer account of what to look for.
 
-.. _dev_guide_installation_static:
+.. _user_guide_installation_static:
 
 Collecting the static files
 ---------------------------
@@ -311,7 +321,7 @@ Collecting the static files
 :ref:`dev_guide_webapp_static` describes where they go, the difference between
 ``static_root`` and ``opus_static_root``, and why the public prefix is fixed.
 
-.. _dev_guide_installation_full_import:
+.. _user_guide_installation_full_import:
 
 The first full-holdings import
 ------------------------------
@@ -352,11 +362,11 @@ When it finishes, three more commands complete the database::
 
     opus_import --override-db-schema opus3_new --validate-perm
 
-and then :ref:`dev_guide_deployment_runbook` is what to do with the result: read
+and then :ref:`user_guide_deployment_runbook` is what to do with the result: read
 ``ERRORS.log``, compare the new database's row counts against the one being served,
 exercise it from a test installation, and only then switch over.
 
-.. _dev_guide_installation_smoke:
+.. _user_guide_installation_smoke:
 
 Checking the installation
 -------------------------
@@ -382,15 +392,15 @@ Four checks, in increasing order of what they prove::
     curl -s 'http://127.0.0.1:8000/api/meta/result_count.json?planet=Saturn'
 
 If the third fails on an import error rather than a configuration one, the usual cause is
-that ``OPUS_CONFIG`` did not reach the process; see :ref:`dev_guide_web_server`.
+that ``OPUS_CONFIG`` did not reach the process; see :ref:`user_guide_web_server`.
 
 Where to go next
 ----------------
 
-:ref:`dev_guide_web_server`
+:ref:`user_guide_web_server`
     Putting nginx or Apache in front of it.
 
-:ref:`dev_guide_deployment`
+:ref:`user_guide_deployment`
     The Node's own deploy chain, and the runbook for replacing a database.
 
 :ref:`dev_guide_import_running`

@@ -124,7 +124,7 @@ Deployment
 The cron templates in ``scripts/server/log_analyzer/`` are what runs the
 analyzer on a server: a nightly update, a monthly report, and a full refresh. They are
 templates because each installation fills in its own paths; nothing substitutes or
-executes them automatically. See :ref:`dev_guide_deployment`.
+executes them automatically. See :ref:`user_guide_deployment`.
 
 Known defects
 -------------

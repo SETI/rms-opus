@@ -280,7 +280,7 @@ cache matter:
 * It caches **misses** as well as hits, so an unknown slug is cheap the second time.
 * It is **never cleared and never bounded**. There is no invalidation path anywhere in
   the repository, so a change to ``param_info`` needs the worker processes restarted; see
-  :ref:`dev_guide_deployment_after_import`.
+  :ref:`user_guide_deployment_after_import`.
 * It is a plain dictionary rather than an :func:`functools.lru_cache`, because several
   callers **mutate** the row they are given, so each needs its own copy.
 

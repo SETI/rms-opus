@@ -1,10 +1,10 @@
-.. _dev_guide_deployment:
+.. _user_guide_deployment:
 
 Deployment and Operations
 =========================
 
-:ref:`dev_guide_installation` brings an installation up by hand and
-:ref:`dev_guide_web_server` puts a server in front of it. This chapter is what happens
+:ref:`user_guide_installation` brings an installation up by hand and
+:ref:`user_guide_web_server` puts a server in front of it. This chapter is what happens
 after that: the Node's own deploy chain, the two things that always have to happen when a
 database changes, the runbook for replacing one, and the cron jobs that keep the log
 reports current.
@@ -77,7 +77,7 @@ distribution name -- ``==3.23.0`` for a particular release, omitted for the newe
 servers and load it onto the other. ``scripts/import/clone_database.sh`` copies one
 database to another on the same server.
 
-.. _dev_guide_deployment_config:
+.. _user_guide_deployment_config:
 
 Deploy configuration
 --------------------
@@ -155,7 +155,7 @@ so that it can be run on its own against a controlled environment and its output
 through :func:`opus_config.config.load_config` -- which is what its unit test does. A generator
 whose only exercise is a production deploy is a generator nobody has checked.
 
-.. _dev_guide_deployment_after_import:
+.. _user_guide_deployment_after_import:
 
 Two things that always have to happen
 -------------------------------------
@@ -178,7 +178,7 @@ dictionaries private to a process -- the ``param_info`` lookup in
 ``clear_django_cache`` included, so restarting the application is the only thing that
 clears them. See :ref:`dev_guide_webapp_caching`.
 
-.. _dev_guide_deployment_runbook:
+.. _user_guide_deployment_runbook:
 
 The import runbook
 ------------------
@@ -210,7 +210,7 @@ what users see, so it is done deliberately.
 only the part that failed, and the import tables survive a failure precisely so that this
 is possible -- see :ref:`dev_guide_import_two_namespaces`.
 
-.. _dev_guide_deployment_log_analyzer:
+.. _user_guide_deployment_log_analyzer:
 
 The log analyzer cron jobs
 --------------------------
@@ -240,7 +240,7 @@ loops the same command over each month of a year range. The reports they write a
 internal operator pages, not part of the public site. :ref:`dev_guide_log_analyzer`
 describes the program.
 
-.. _dev_guide_deployment_releasing:
+.. _user_guide_deployment_releasing:
 
 Releasing
 ---------
@@ -281,7 +281,7 @@ Operating checklist
    * - Reports look stale
      - The log-analyzer cron jobs. They are per-installation and are not deployed.
    * - Results look stale
-     - :ref:`dev_guide_deployment_after_import`.
+     - :ref:`user_guide_deployment_after_import`.
 
 API reference
 -------------

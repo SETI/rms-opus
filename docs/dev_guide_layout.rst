@@ -168,6 +168,6 @@ Which chapter covers what
    * - ``tests/``, ``import_tests/``, ``integration_tests/``
      - :ref:`dev_guide_testing`, :ref:`dev_guide_import_fixture`
    * - ``scripts/server/``
-     - :ref:`dev_guide_server`, :ref:`dev_guide_deployment`
+     - :ref:`user_guide_deployment`
    * - ``.github/workflows/``
      - :ref:`dev_guide_environment`
