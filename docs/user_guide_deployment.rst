@@ -156,9 +156,11 @@ The scripts
     installed command, so the order the bundle sets are imported in comes from the
     release rather than from these scripts.
 
-    Then, if ``OPUS_PEER_DB_HOST`` names a second server, it dumps the finished database
-    and loads it there; with no peer configured it imports and stops. It runs detached,
-    and mails the log to ``OPUS_IMPORT_MAIL_TO`` if that names anyone.
+    What happens to the database afterwards is what ``deploy.env`` asked for: with
+    ``OPUS_DB_DUMP_DIR`` empty the import ends when the database is built, which is
+    what a single server wants; with a directory it dumps into it; and with
+    ``OPUS_PEER_DB_HOST`` as well it loads that dump onto the second server. It runs
+    detached, and mails the log to ``OPUS_IMPORT_MAIL_TO`` if that names anyone.
 
     When it is done, the second half is ``deploy_new_code_and_database.sh <that
     database>`` **with the same version specifier this was given**: the two install
@@ -171,9 +173,10 @@ distribution name -- ``==3.23.0`` for a particular release, omitted for the newe
 ``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
 a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from
 ``OPUS_DB_HOST``, the second loads it into ``OPUS_PEER_DB_HOST``. Neither knows the name
-of any machine. ``run_full_opus_import.sh`` runs the pair at the end of an import when a
-peer is configured, and ``scripts/import/clone_database.sh`` in the repository copies one
-database to another on the same server.
+of any machine. ``run_full_opus_import.sh`` runs the first at the end of an import when
+``OPUS_DB_DUMP_DIR`` names a directory and the second as well when there is a peer, and
+``scripts/import/clone_database.sh`` in the repository copies one database to another on
+the same server.
 
 .. _user_guide_deployment_config:
 

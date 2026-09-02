@@ -61,7 +61,7 @@ for _required in \
     OPUS_DIR OPUS_DEPLOY_VENV OPUS_USER OPUS_DB_HOST OPUS_DB_USER OPUS_DB_PASSWORD \
     OPUS_SECRET_KEY PDS3_HOLDINGS_DIR PDS4_HOLDINGS_DIR LAST_BLOG_UPDATE_FILE \
     NOTIFICATION_FILE OPUS_DEBUG OPUS_ALLOWED_HOSTS OPUS_CACHE_PREFIX OPUS_PUBLIC_URL \
-    OPUS_PRODUCT_HTTP_PATH OPUS_VIEWMASTER_URL OPUS_TAR_FILE_URL OPUS_DB_DUMP_DIR; do
+    OPUS_PRODUCT_HTTP_PATH OPUS_VIEWMASTER_URL OPUS_TAR_FILE_URL; do
     if [[ ! -v $_required ]]; then
         echo "$_required not defined in ${SECRETS_DIR}/deploy.env"
         exit 1
@@ -87,11 +87,15 @@ export OPUS_DIR
 export OPUS_DEPLOY_VENV
 export OPUS_USER
 export OPUS_DB_HOST
-export OPUS_DB_DUMP_DIR
-# Optional, and so neither required nor refused above: with no second server there is
-# nothing to copy a database to. They are exported all the same, and unset before the
-# file is read, so a value left in the caller's environment cannot stand in for one
-# the file does not set.
+# Optional, and so neither required nor refused above: a server that keeps its database
+# to itself dumps nothing, copies nothing to a second server, and tells nobody. They
+# are exported all the same, and unset before the file is read, so a value left in the
+# caller's environment cannot stand in for one the file does not set.
+#
+# OPUS_DB_DUMP_DIR empty, or absent, means an import ends when the database is built:
+# a dump of the full holdings is tens of gigabytes and hours of writing, so it happens
+# because a server asked for it rather than by default.
+export OPUS_DB_DUMP_DIR=${OPUS_DB_DUMP_DIR:-}
 export OPUS_PEER_DB_HOST=${OPUS_PEER_DB_HOST:-}
 export OPUS_IMPORT_MAIL_TO=${OPUS_IMPORT_MAIL_TO:-}
 # The interpreter each installation's virtualenv is built with. Named rather than
@@ -123,6 +127,18 @@ export PDS3_HOLDINGS_DIR
 export PDS4_HOLDINGS_DIR
 export LAST_BLOG_UPDATE_FILE
 export NOTIFICATION_FILE
+
+# The one combination of those two that cannot do what it says. Loading a database onto
+# a second server means reading the dump the first one wrote, so a peer with nowhere to
+# dump to is a request that has to fail -- and it would fail at the end of an import
+# that has been running for days, having built the database it can no longer copy.
+if [[ -n ${OPUS_PEER_DB_HOST} && -z ${OPUS_DB_DUMP_DIR} ]]; then
+    echo "OPUS_PEER_DB_HOST names ${OPUS_PEER_DB_HOST}, but OPUS_DB_DUMP_DIR is empty"
+    echo "in ${SECRETS_DIR}/deploy.env. The load on the second server reads the dump"
+    echo "the first one writes, so copying a database needs somewhere to write it."
+    echo "Set OPUS_DB_DUMP_DIR, or clear OPUS_PEER_DB_HOST to keep the database here."
+    exit 1
+fi
 
 # TOML has no truthy strings: `debug = yes` is not a boolean, and the loader refuses
 # the file it lands in. Caught here, where the fix is one word in deploy.env, rather

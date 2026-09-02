@@ -80,10 +80,14 @@ source ${IMPORT_SCRIPT_DIR}/_opus_import_volumes.sh
 echo
 echo
 
-# Copying the finished database to a second server, when deploy.env names one. With
-# OPUS_PEER_DB_HOST empty there is one server, and the import is done when the
-# database is built.
-if [[ -n ${OPUS_PEER_DB_HOST} ]]; then
+# What happens to the finished database, which is whatever deploy.env asked for. With
+# OPUS_DB_DUMP_DIR empty the import is done when the database is built -- a dump of the
+# full holdings is tens of gigabytes and hours of writing, so it happens because a
+# server asked for it. With a directory but no peer, the dump is written and stays
+# there; with both, it is written and loaded onto the second server. A peer with no
+# directory cannot happen: _read_deploy_env.sh refuses that combination before any of
+# this runs.
+if [[ -n ${OPUS_DB_DUMP_DIR} ]]; then
     echo "================================"
     echo "=== DUMP DATABASE TO ARCHIVE ==="
     echo "================================"
@@ -94,15 +98,17 @@ if [[ -n ${OPUS_PEER_DB_HOST} ]]; then
     echo
     echo
 
-    echo "==========================================="
-    echo "=== LOAD DATABASE ON THE SECOND SERVER  ==="
-    echo "==========================================="
-    echo
-    echo "Start time:" `date`
-    echo
-    "${DATABASE_SCRIPT_DIR}/load_db.sh" "${OPUS_DB_NAME}"
-    echo
-    echo
+    if [[ -n ${OPUS_PEER_DB_HOST} ]]; then
+        echo "==========================================="
+        echo "=== LOAD DATABASE ON THE SECOND SERVER  ==="
+        echo "==========================================="
+        echo
+        echo "Start time:" `date`
+        echo
+        "${DATABASE_SCRIPT_DIR}/load_db.sh" "${OPUS_DB_NAME}"
+        echo
+        echo
+    fi
 fi
 
 echo "End time:" `date`

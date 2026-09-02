@@ -46,13 +46,13 @@ REQUIRED_KEYS = [
     'OPUS_PRODUCT_HTTP_PATH',
     'OPUS_VIEWMASTER_URL',
     'OPUS_TAR_FILE_URL',
-    'OPUS_DB_DUMP_DIR',
 ]
 
-# The keys that are optional: a server with no second server to copy a database to
-# leaves the first two empty, and the reader supplies a default for the rest. It
-# neither requires nor refuses any of them.
+# The keys that are optional: a server that keeps its database to itself and tells
+# nobody leaves the first three empty, and the reader supplies a default for the rest.
+# It neither requires nor refuses any of them.
 OPTIONAL_KEYS = [
+    'OPUS_DB_DUMP_DIR',
     'OPUS_PEER_DB_HOST',
     'OPUS_IMPORT_MAIL_TO',
     'OPUS_PYTHON',
@@ -140,15 +140,38 @@ def test_a_complete_environment_is_accepted_and_exported(tmp_path: Path) -> None
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_the_optional_peer_host_may_be_empty(tmp_path: Path) -> None:
-    """A server with nothing to copy a database to leaves it empty, and is accepted.
+@pytest.mark.parametrize('key', ['OPUS_PEER_DB_HOST', 'OPUS_DB_DUMP_DIR'])
+@pytest.mark.parametrize('value', ['', None])
+def test_a_server_that_keeps_its_database_may_say_nothing(
+    tmp_path: Path, key: str, value: str | None
+) -> None:
+    """Empty, or absent entirely, is an answer for the two that decide what a dump does.
 
-    Every other value is refused when empty, so this one has to be excused explicitly;
+    Every required value is refused when empty, so these have to be excused explicitly;
     without the exception a single-server installation could not be configured at all.
+    Absence is tested beside emptiness because the reader unsets both before it reads
+    the file, so a deploy.env that omits a line must not inherit one from the shell.
     """
-    secrets = _make_environment(tmp_path, OPUS_PEER_DB_HOST='')
-    result = _read(secrets, 'bash -c \'[[ -z "${OPUS_PEER_DB_HOST}" ]]\'')
+    secrets = _make_environment(tmp_path, **{key: value})
+    result = _read(secrets, f'bash -c \'[[ -z "${{{key}}}" ]]\'')
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_a_peer_with_nowhere_to_dump_is_refused(tmp_path: Path) -> None:
+    """The load reads the dump, so a peer without a dump directory cannot work.
+
+    Left to run, it would fail at the end of an import that had been going for days,
+    with the database built and no way to copy it -- so it is refused at the start,
+    naming both variables and both ways out.
+    """
+    secrets = _make_environment(
+        tmp_path, OPUS_PEER_DB_HOST='other.example.org', OPUS_DB_DUMP_DIR=''
+    )
+    result = _read(secrets)
+
+    assert result.returncode == 1
+    assert 'OPUS_DB_DUMP_DIR' in result.stdout
+    assert 'other.example.org' in result.stdout
 
 
 @pytest.mark.parametrize(

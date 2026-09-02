@@ -339,8 +339,11 @@ containing a space.
        rather than any internal address. The last one is joined directly to a file name
        and needs a trailing slash.
    * - ``OPUS_DB_DUMP_DIR``
-     - Where ``mysqldump`` writes a finished database, and where the load reads it back.
-       On two servers that copy databases to each other, a directory both can see.
+     - *Optional.* Where ``mysqldump`` writes a finished database, and where the load
+       reads it back. **Empty means an import does not dump at all** -- a dump of the
+       full holdings is tens of gigabytes and hours of writing, so it happens because
+       this names a directory. On two servers that copy databases to each other, a
+       directory both can see.
    * - ``OPUS_PYTHON``
      - *Has a default.* The Python each installation's virtualenv is built with,
        ``python3.12`` unless this names another. ``python3`` is whatever the machine
@@ -357,8 +360,10 @@ containing a space.
        is no shared cache, which skips the restart.
    * - ``OPUS_PEER_DB_HOST``
      - *Optional.* The MySQL server a finished database is copied to. With a host here,
-       an import ends by dumping what it built and loading it there; empty, the import
-       stops when the database is built, which is what one server wants.
+       an import ends by dumping what it built and loading it there; empty, the dump
+       stays where it was written. It needs ``OPUS_DB_DUMP_DIR``, because the load
+       reads what the dump wrote, and a peer with nowhere to dump to is refused before
+       the import rather than after it.
    * - ``OPUS_IMPORT_MAIL_TO``
      - *Optional.* Where to mail the log when an import finishes. Empty sends nothing
        and leaves the log where it was written.
