@@ -6,6 +6,8 @@ __pycache__
 *.bak
 *.*.bak
 temp*.*
+# ...which would otherwise swallow this module, whose name begins "temp".
+!src/opus_config/template.py
 *.marks
 *.wsgi
 *.log

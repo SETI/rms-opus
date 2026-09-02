@@ -56,12 +56,14 @@ server running several OPUS installations gives each one its own file and its ow
 
 ::
 
+    opus_config_template                          # writes ./opus.toml.template
     install -m 600 opus.toml.template opus.toml
     # fill in every <PLACEHOLDER>
     export OPUS_CONFIG=$PWD/opus.toml
 
-``opus.toml.template`` documents every key. :mod:`opus_config` validates the file as
-it reads it: an unknown key, a missing key, or a value of the wrong type is reported
+``opus_config_template`` is a console script the distribution installs; the template it
+writes ships inside :mod:`opus_config` and documents every key. :mod:`opus_config`
+validates the file as it reads it: an unknown key, a missing key, or a value of the wrong type is reported
 with the table and key at fault rather than failing later somewhere else.
 
 Environment variables

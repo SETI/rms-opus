@@ -6,7 +6,7 @@ and the top-level handler in `opus_import.cli`, which is what logs a database fa
 and stops the run; one that swallowed an `ImportDBError` would let the import carry on
 against a database that had already failed.
 
-The handler that makes this load-bearing is in
+The handler that makes this matter is in
 `opus_import.steps.do_import_obs.import_run_field_function`: it wraps the call to an
 ``obs`` field function and, on any exception, logs "field function failed" and lets the
 import *continue*. If a field function could ever reach the database, a database failure

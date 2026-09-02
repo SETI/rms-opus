@@ -58,26 +58,30 @@ Installing the distribution
     python -m pip install --upgrade pip
     python -m pip install rms-opus
 
-Dependencies are declared in ``pyproject.toml`` with **floors, not pins** -- only Django
-carries an upper bound, because 5.2 is the long-term-support release this application
-targets. There is no lock file: a fresh install resolves each dependency to its newest
-compatible release.
+That installs the OPUS programs and everything they depend on. Five commands come with
+it, and the rest of this guide uses them by name:
 
-To reproduce one installation exactly on another machine, generate a constraints file
-from a known-good one::
+.. list-table::
+   :header-rows: 1
+   :widths: 32 68
 
-    # on the known-good installation
-    python -m pip freeze > constraints.txt
+   * - Command
+     - What it does
+   * - ``opus_config_template``
+     - Writes the configuration template into the current directory, which is where
+       configuring a server starts.
+   * - ``opus_import``
+     - The import pipeline: reads the PDS holdings and builds the OPUS database.
+   * - ``opus_manage``
+     - Administers the web application -- creating its tables, gathering its static
+       files, and checking that its configuration works.
+   * - ``opus_log_analyzer``
+     - Turns the web server's access logs into reports on how the site is being used.
+   * - ``opus_error_analyzer``
+     - The same for the error log.
 
-    # on the new one
-    pip install rms-opus -c constraints.txt
-
-Nothing in the deploy chain maintains such a file; it is there for the case where
-operations wants a reproducible install rather than the newest one.
-
-**An installed OPUS is not a checkout.** It has no ``manage.py``, no ``scripts/`` and no
-``opus.toml.template``; ``opus_manage`` is what runs Django's management commands here,
-and the template is fetched as below.
+Every one of them, except ``opus_config_template``, needs ``OPUS_CONFIG`` set, which is
+the next step.
 
 .. _user_guide_installation_configuring:
 
@@ -88,37 +92,41 @@ OPUS reads one TOML file and **has no default location for it**. The ``OPUS_CONF
 environment variable must name it in the environment of **every** OPUS process: the WSGI
 server, the import pipeline, and every management command.
 
-::
+``opus_config_template`` writes a template to start from, with a comment on every key,
+into the directory you are standing in::
 
-    curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
-    sudo install -d -m 755 /etc/opus
-    sudo install -m 600 -o opus -g opus opus.toml.template /etc/opus/opus.toml
-    export OPUS_CONFIG=/etc/opus/opus.toml
+    opus_config_template
+    sudo install -d -m 755 /opt/opus
+    sudo install -m 600 -o opus -g opus opus.toml.template /opt/opus/opus.toml
+    export OPUS_CONFIG=/opt/opus/opus.toml
 
 Then edit the copy: fill in every ``<PLACEHOLDER>``, and **set** ``debug = false`` -- the
-template ships it true, which is right for a development checkout and wrong for anything
-reachable from outside the machine.
+template ships it true, which is right on a machine you are developing on and wrong for
+anything reachable from outside it.
 
-Four details in those four lines are load-bearing:
+Three details in those lines matter:
 
-* ``-f`` **on curl.** Without it curl exits 0 on a 404 and writes the error page into the
-  file the next line copies.
 * ``install`` **rather than** ``cp``. The mode is 0600 because the placeholders are about
-  to be replaced by a database password and a Django secret key, and ``cp`` would give
-  the file whatever the caller's umask allows -- world-readable under a default one.
+  to be replaced by a database password and a secret key, and ``cp`` would give the file
+  whatever the caller's umask allows -- world-readable under a default one.
 * ``-o opus``. A **root**-owned 0600 file is unreadable to the account OPUS runs as, so
   every command below would fail on the configuration it was handed rather than on
-  anything in it. ``opus`` here stands for whichever account the WSGI daemon and the
+  anything in it. ``opus`` here stands for whichever account the web application and the
   import pipeline run as; it has to exist first, because ``install -o`` fails on an
   unknown user rather than creating one. On a host with no such account, make one:
   ``sudo useradd --system --no-create-home opus``.
 * **Run everything below as that account** -- with ``sudo -u opus`` or equivalent. A 0600
   file is readable by exactly one user, which is the point of the mode.
 
-The template documents every key, and :mod:`opus_config` validates the file as it reads
-it: an unknown key, a missing key, or a value of the wrong type is reported with the
-table and the key at fault rather than failing later somewhere else. A misspelled key is
-an **error**, not something silently ignored.
+``/opt/opus`` is this guide's example location for an installation's own files -- the
+configuration, and the log, download and data directories the configuration names. Any
+directory the OPUS account can read works; substitute your own throughout.
+
+The template documents every key, and OPUS validates the file as it reads it: an unknown
+key, a missing key, or a value of the wrong type is reported with the table and the key
+at fault rather than failing later somewhere else. A misspelled key is an **error**, not
+something silently ignored. `The whole template`_ is reproduced at the end of this
+chapter.
 
 .. _user_guide_installation_keys:
 
@@ -275,16 +283,15 @@ account OPUS runs as, before starting anything.**
 Creating the database
 ---------------------
 
-Two steps, and they create different things. **Run them in this order**: the import
-creates the schema, and the migration needs the schema to be there.
+Two commands, and they create different tables. **Run them in this order**: the first
+creates the database, and the second needs it to be there.
 
-**Every OPUS table comes from an import**, so there are no OPUS migrations to run and
-none to write::
+**First, import something.** Every table of observation metadata is created by the import
+pipeline, and so is the database itself -- there is no ``CREATE DATABASE`` step, because
+the pipeline creates the configured schema when it does not already exist. One small
+volume is enough to bring the database into being::
 
-    OPUS_CONFIG=/etc/opus/opus.toml opus_import --do-it-all COISS_2002
-
-The schema itself needs no ``CREATE DATABASE``: the import pipeline creates it when the
-configured one does not exist, which is why nothing else can run before it.
+    OPUS_CONFIG=/opt/opus/opus.toml opus_import --do-it-all COISS_2002
 
 ``--do-it-all`` imports the bundles named after it, copies the result over the permanent
 tables, and rebuilds the auxiliary tables. Add ``--import-dictionary`` to load the
@@ -298,10 +305,12 @@ matched without regard to case), or ``ALL``, which stands for every bundleset OP
 imports. ``opus_import --help`` lists every option, and works without a configuration
 file; :ref:`dev_guide_import_running` is the complete reference.
 
-**Django's own contrib tables** -- sessions, auth, content types, admin -- come from a
-migration::
+**Then create the web application's own tables.** A handful of tables belong to the
+application rather than to the archive -- the ones that track a visitor's session, and
+the logins for the administrative pages -- and the import does not create them. One
+command does, and it is safe to run again at any time::
 
-    OPUS_CONFIG=/etc/opus/opus.toml opus_manage migrate
+    OPUS_CONFIG=/opt/opus/opus.toml opus_manage migrate
 
 **Verify the import by reading** ``ERRORS.log`` **in the** ``[paths] import_log_dir``
 **directory, not by checking the exit status.** Several steps report a failure through
@@ -316,7 +325,7 @@ Collecting the static files
 
 ::
 
-    OPUS_CONFIG=/etc/opus/opus.toml opus_manage collectstatic --noinput
+    OPUS_CONFIG=/opt/opus/opus.toml opus_manage collectstatic --noinput
 
 :ref:`dev_guide_webapp_static` describes where they go, the difference between
 ``static_root`` and ``opus_static_root``, and why the public prefix is fixed.
@@ -326,43 +335,56 @@ Collecting the static files
 The first full-holdings import
 ------------------------------
 
-A complete import is hours to days. Two things make it survivable:
+A complete import is hours to days, and it is not one command: the bundle sets are
+imported in a particular order, two of them need an extra option, and the whole thing has
+to survive the terminal it was started from. **A pair of scripts in the repository does
+all of that, and they are what to use.** They are not in the installed distribution, so
+fetch a checkout on the machine that will run the import::
 
-**Import into a new schema rather than the one being served.**
-``--override-db-schema`` points one run at a different schema without editing the
-configuration, and a schema that does not exist is created. That is what makes the
-switchover a configuration change rather than a window of downtime.
+    git clone https://github.com/SETI/rms-opus.git
+    cd rms-opus
 
-**Run it detached, and gate on the error log.** The Node's own wrapper,
-``scripts/import/import_all.sh``, does both: it prints the schema it is about to erase
-and requires the operator to type a confirmation, then runs the real work under ``nohup``.
-By hand::
+Then, with ``OPUS_CONFIG`` naming this installation's configuration file, and a name for
+the database to build::
 
-    export OPUS_CONFIG=/etc/opus/opus.toml
-    nohup opus_import --override-db-schema opus3_new --do-it-all ALL \
-        > /var/log/opus/import_run.log 2>&1 &
+    export OPUS_CONFIG=/opt/opus/opus.toml
+    ./scripts/import/import_all.sh opus3_new ""
 
-``ALL`` is the descriptor that expands to every bundleset OPUS imports;
-:ref:`dev_guide_import_running` lists the others, and gives the smaller invocations worth
-doing first.
+``import_all.sh`` prints the database it is about to erase, requires you to type ``YES``,
+and then runs ``scripts/import/_import_all_internal.sh`` under ``nohup``, so the run
+survives the terminal it was started from; watch ``nohup.out`` for progress. (The second
+argument is required by the script and unused: it holds MySQL connection flags for the
+database-dump commands at the end of the second script, which are commented out.)
 
-The Node's wrappers pass ``--import-check-duplicate-id`` for two bundle groups,
-Galileo and New Horizons, because their bundles carry observations that appear in more
-than one. The option's own help text names a third, COUVIS, which no wrapper passes it
-for; take the scripts as the record of what is actually run.
+**It imports into a database of its own**, the one named by the first argument, rather
+than the one being served: every command it runs carries ``--override-db-schema``, and a
+schema that does not exist is created. That is what makes the switchover a configuration
+change rather than a window of downtime.
 
-When it finishes, three more commands complete the database::
+**The second script is the record of what a full import is**, and it is worth reading
+before running it: every bundle set in a deliberate order -- Galileo and New Horizons
+first, because those two carry observations that appear in more than one bundle and so
+are imported with ``--import-check-duplicate-id``, then the rest in roughly decreasing
+order of how long they take -- with any failing step stopping the run. It finishes the
+database as well, rebuilding the auxiliary tables, loading the dictionary and running the
+validation, so there is nothing else to run against the new database except the web
+application's own tables::
 
-    opus_import --override-db-schema opus3_new --import-dictionary
+    # opus_manage has no --override-db-schema: it takes the database from the
+    # configuration file, so this one needs a file that names opus3_new. Run against
+    # the production configuration, it would add its tables to the database being
+    # served instead.
+    OPUS_CONFIG=/opt/opus/opus_new.toml opus_manage migrate
 
-    # opus_manage has no --override-db-schema: Django takes the schema from the
-    # configuration file, so this one needs a file that names opus3_new. Running it
-    # against the production configuration migrates the database being served.
-    OPUS_CONFIG=/etc/opus/opus_new.toml opus_manage migrate
+``import_all.sh`` is written for the Ring-Moon Systems Node's own servers in two ways: it
+refuses to run on a host whose name is not ``tools`` or ``ringlet``, and it reads
+``/opus/src/rms-opus/opus.toml`` -- that Node's production installation -- to print which
+database is currently live. On any other machine, run ``_import_all_internal.sh``
+yourself, which carries neither::
 
-    opus_import --override-db-schema opus3_new --validate-perm
+    nohup ./scripts/import/_import_all_internal.sh opus3_new "" > import_run.log 2>&1 &
 
-and then :ref:`user_guide_deployment_runbook` is what to do with the result: read
+Either way, :ref:`user_guide_deployment_runbook` is what to do with the result: read
 ``ERRORS.log``, compare the new database's row counts against the one being served,
 exercise it from a test installation, and only then switch over.
 
@@ -380,12 +402,12 @@ Four checks, in increasing order of what they prove::
 
     # 2. The configuration file parses and validates. Loading the settings is what
     #    proves it; add --database default to open the connection as well.
-    OPUS_CONFIG=/etc/opus/opus.toml opus_manage check --database default
+    OPUS_CONFIG=/opt/opus/opus.toml opus_manage check --database default
 
     # 3. The application starts under a WSGI server. gunicorn is not an OPUS
     #    dependency -- install it for this check, or use whichever server you deploy.
     python -m pip install gunicorn
-    OPUS_CONFIG=/etc/opus/opus.toml gunicorn opus_app.wsgi:application
+    OPUS_CONFIG=/opt/opus/opus.toml gunicorn opus_app.wsgi:application
 
     # 4. It answers. 127.0.0.1 has to be in allowed_hosts, or Django replies 400
     #    however well the application and the database are working.
@@ -405,6 +427,17 @@ Where to go next
 
 :ref:`dev_guide_import_running`
     Every import option.
+
+The whole template
+------------------
+
+This is what ``opus_config_template`` writes, reproduced here so that the file can be read
+before anything is installed. It is the same file, included from the distribution rather
+than retyped, so the two cannot drift.
+
+.. literalinclude:: ../src/opus_config/opus.toml.template
+   :language: toml
+   :caption: opus.toml.template
 
 API reference
 -------------

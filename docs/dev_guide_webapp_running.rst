@@ -47,7 +47,7 @@ needs a second environment variable.
 **From an installation** -- a ``pip install`` with no checkout anywhere -- the command is
 ``opus_manage``::
 
-    export OPUS_CONFIG=/etc/opus/opus.toml
+    export OPUS_CONFIG=/opt/opus/opus.toml
     opus_manage migrate
     opus_manage runserver
 
@@ -65,7 +65,7 @@ compares them.
 **With ``django-admin``**, if you would rather use Django's own command, name the settings
 module yourself::
 
-    OPUS_CONFIG=/etc/opus/opus.toml \
+    OPUS_CONFIG=/opt/opus/opus.toml \
     DJANGO_SETTINGS_MODULE=opus_app.settings \
     django-admin migrate
 
@@ -155,7 +155,7 @@ distribution is installed and importable.
 Point any WSGI server at ``opus_app.wsgi:application``. For a smoke test -- with
 gunicorn installed alongside, since it is not an OPUS dependency::
 
-    OPUS_CONFIG=/etc/opus/opus.toml gunicorn opus_app.wsgi:application
+    OPUS_CONFIG=/opt/opus/opus.toml gunicorn opus_app.wsgi:application
 
 **The one thing that has to be arranged is that ``OPUS_CONFIG`` reaches the worker
 process's environment.** It is read when the settings module is imported, which happens
@@ -177,7 +177,7 @@ A development installation serves them through Django's staticfiles app and need
 further step. A server gathers them into one directory that the web server serves
 directly::
 
-    OPUS_CONFIG=/etc/opus/opus.toml opus_manage collectstatic --noinput
+    OPUS_CONFIG=/opt/opus/opus.toml opus_manage collectstatic --noinput
 
 ``--noinput`` is what the deploy scripts pass: ``collectstatic`` asks for confirmation
 before overwriting, and a deploy has nobody to ask.
@@ -211,7 +211,7 @@ back to Django's per-process local-memory cache if the import fails or the conne
 
 Emptying the shared cache is one module::
 
-    OPUS_CONFIG=/etc/opus/opus.toml python -m opus_app.clear_django_cache
+    OPUS_CONFIG=/opt/opus/opus.toml python -m opus_app.clear_django_cache
 
 It imports ``CACHES`` from :mod:`opus_app.settings`, calls ``settings.configure()`` with
 only that setting -- so the app registry is never loaded -- and calls ``cache.clear()``.

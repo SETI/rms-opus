@@ -25,9 +25,11 @@ does not cache, which is what a test or a tool that has a path in hand uses.
 The four tables mirror the file: ``database``, ``paths``, ``django`` and ``import``, each
 read into a frozen dataclass. Validation is explicit rather than best-effort -- an unknown
 key, a missing required key, a value of the wrong type, and a value outside the set a key
-allows are each reported with the table and the key at fault. ``opus.toml.template`` in
-the repository root documents every key and is the file to copy when configuring an
-installation; :ref:`user_guide_installation_configuring` walks through filling it in.
+allows are each reported with the table and the key at fault. The template documents
+every key and is the file to copy when configuring an installation:
+:mod:`opus_config.template` ships it inside the package and writes a copy out as the
+``opus_config_template`` command, and :ref:`user_guide_installation_configuring` walks
+through filling it in.
 
 :mod:`opus_config` also hosts ``_version.py``, which setuptools-scm writes at build time.
 Every other package asks :func:`importlib.metadata.version` for the distribution's version

@@ -28,8 +28,8 @@ that swapping databases is a link change rather than a copy:
 
 ::
 
-    /opus/src/rms-opus            -> rms-opus_<database name>
-    /opus/src/rms-opus_<database name>/
+    /opt/opus/src/rms-opus            -> rms-opus_<database name>
+    /opt/opus/src/rms-opus_<database name>/
         opus_venv/                # the virtual environment; rms-opus is installed here
         opus.toml                 # this installation's configuration, mode 0600
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
@@ -46,15 +46,17 @@ The scripts
     A full deploy. It stops Apache and memcached, removes any existing installation
     directory for that database, builds a new one -- virtual environment, ``pip
     install``, generated ``opus.toml``, ``wsgi.py`` symlink -- moves the served link onto
-    it, then runs the migration, ``collectstatic``, the cache clear and the dictionary
-    and auxiliary-table rebuild, and starts memcached and Apache again.
+    it, then creates the application's own tables (``opus_manage migrate``), gathers
+    the static files, clears the cache, rebuilds the dictionary and the auxiliary
+    tables, and starts memcached and Apache again.
 
 ``deploy_new_code_only.sh [<version spec>]``
     Upgrades the existing installation **in place** with ``pip install --upgrade``,
     reusing its ``opus.toml``, because only a full deploy knows which database to name in
-    one. It re-points the ``wsgi.py`` symlink, runs the migration -- not optional, since
-    upgrading to the newest release can cross a Django version that adds a contrib
-    migration -- collects the static files, clears the cache, and rebuilds
+    one. It re-points the ``wsgi.py`` symlink and runs ``opus_manage migrate``, which is
+    not optional: upgrading to the newest release can cross a version of Django that
+    adds a table or a column of its own to the ones described above, and this is what
+    creates it. It then collects the static files, clears the cache, and rebuilds
     ``param_info``, ``partables``, ``table_names`` and the dictionary.
 
     **It refuses to run against anything that is not an installation this chain
@@ -166,7 +168,7 @@ After **anything** that changes the database, and both are easy to forget:
 counts, range endpoints and product-type lists keyed by a search that now means something
 else::
 
-    OPUS_CONFIG=/etc/opus/opus.toml python -m opus_app.clear_django_cache
+    OPUS_CONFIG=/opt/opus/opus.toml python -m opus_app.clear_django_cache
 
 That module configures the cache backend and calls ``clear()``, and does nothing else.
 Restarting memcached has the same effect, and is what the deploy scripts do.

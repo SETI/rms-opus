@@ -92,7 +92,7 @@ What the suite asserts
 
 Expected products, in both directions
     Every recorded product is an ``obs_files`` row and every ``obs_files`` row is a
-    recorded product. This is the load-bearing assertion, because a shelf gap fails
+    recorded product. This is the assertion the whole suite rests on, because a shelf gap fails
     silently rather than loudly: a key missing from a shelf that is present makes
     ``os_path_exists`` return False with no warning at all, so the candidate simply never
     existed and the import is quietly smaller. Nothing else in the run would show it.

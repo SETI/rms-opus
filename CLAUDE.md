@@ -18,9 +18,11 @@ loader), `opus_support` (unit, time, clock, angle and orbit conversions),
 `opus_import` (the import pipeline), `opus_log_analyzer` (the server log analyzer)
 and `opus_app` (the Django project). The installed commands are `opus_import`,
 `opus_log_analyzer` and `opus_error_analyzer`; the first two also run as
-`python -m opus_import` and `python -m opus_log_analyzer`. A fourth, `opus_manage`,
-is Django's own management command line with the settings module already named, so
-that an installation with no `manage.py` needs only `OPUS_CONFIG` in its environment.
+`python -m opus_import` and `python -m opus_log_analyzer`. Two more exist for an
+installation that has no checkout: `opus_manage` is Django's own management command
+line with the settings module already named, so only `OPUS_CONFIG` is needed in the
+environment, and `opus_config_template` writes `opus.toml.template` (which ships
+inside `opus_config`) into the working directory.
 
 `docs/dev_guide_layout.rst` annotates the whole tree. Build the documentation with
 `scripts/read-docs.sh`, or read it at <https://rms-opus.readthedocs.io>.
@@ -29,7 +31,8 @@ that an installation with no `manage.py` needs only `OPUS_CONFIG` in its environ
 
 Every process reads one TOML file, located by the `OPUS_CONFIG` environment
 variable. The loader has no default path: an unset or empty variable is an error
-naming the variable. `opus.toml.template` is the file to copy and fill in;
+naming the variable. The `opus_config_template` command writes out
+`opus.toml.template`, the file to copy and fill in;
 `tests/fixtures/opus_ci.toml` is the dummy configuration the holdings-free jobs
 run against, and the one `docs/conf.py` falls back to so a documentation build
 works without the variable set.

@@ -560,8 +560,7 @@ The methods fall into three groups:
   ``preview_images``. These are derived from the contract members above.
   ``preview_images`` is the interesting one: it asks ``rms-pdsfile`` for a view set
   through its ``viewset`` property and renders the result to JSON, and it honors
-  ``--import-ignore-missing-images`` and ``--import-fake-images``. **Its guard is
-  load-bearing**, because "no previews" reaches it in three different shapes: the
+  ``--import-ignore-missing-images`` and ``--import-fake-images``. **Its guard does real work**, because "no previews" reaches it in three different shapes: the
   property answers a miss with ``False`` rather than None, having converted it; a lookup
   that succeeds but finds nothing gives an *empty* view set, which is falsy and whose
   ``thumbnail`` raises rather than returning nothing; and the two exception branches set

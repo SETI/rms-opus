@@ -2,8 +2,8 @@
 
 Several tests in this package check the code by parsing it rather than by running it,
 which is the only way to reach the definitions no fixture can instantiate. That makes
-the traversal itself load-bearing: a scan that sees part of the tree still reports a
-clean result, so an incomplete traversal does not fail, it silently under-checks.
+the traversal itself something to get right: a scan that sees part of the tree still
+reports a clean result, so an incomplete traversal does not fail, it silently under-checks.
 
 Two ways to write one are wrong, neither announces itself, and both read naturally:
 

@@ -10,8 +10,8 @@ products directly off disk, and it starts the worker processes.
 This chapter gives a worked configuration for **nginx** -- with gunicorn, and with uWSGI
 -- and for **Apache with mod_wsgi**. They are worked examples rather than files to paste
 unread. Throughout, ``opus`` is the account OPUS runs as, ``opus.example.org`` is the
-host name, ``/opus`` is the installation root, ``/pds`` is where the holdings are
-mounted, and ``/etc/opus/opus.toml`` is the configuration file; substitute your own for
+host name, ``/opt/opus`` is the installation root, ``/pds`` is where the holdings are
+mounted, and ``/opt/opus/opus.toml`` is the configuration file; substitute your own for
 each.
 
 .. _user_guide_web_server_contract:
@@ -91,11 +91,11 @@ itself.
     User=opus
     Group=opus
     RuntimeDirectory=opus
-    WorkingDirectory=/opus
+    WorkingDirectory=/opt/opus
 
-    Environment=OPUS_CONFIG=/etc/opus/opus.toml
+    Environment=OPUS_CONFIG=/opt/opus/opus.toml
 
-    ExecStart=/opus/src/rms-opus/opus_venv/bin/gunicorn \
+    ExecStart=/opt/opus/src/rms-opus/opus_venv/bin/gunicorn \
         --workers 8 \
         --timeout 300 \
         --bind unix:/run/opus/opus.sock \
@@ -139,7 +139,7 @@ The nginx server block
         # The static files collectstatic gathered. The prefix is fixed; the
         # directory is the static_root from opus.toml.
         location /static_media/ {
-            alias /opus/static_media/;
+            alias /opt/opus/static_media/;
             access_log off;
             expires 30d;
         }
@@ -157,11 +157,11 @@ The nginx server block
 
         # Cart archives, written into tar_dir and named by tar_file_url.
         location /downloads/ {
-            alias /opus/downloads/;
+            alias /opt/opus/downloads/;
         }
 
         location = /robots.txt {
-            alias /opus/static_media/robots.txt;
+            alias /opt/opus/static_media/robots.txt;
         }
 
         location / {
@@ -208,10 +208,10 @@ and gunicorn replaced by a uWSGI instance. **The environment variable is set wit
     [uwsgi]
     module = opus_app.wsgi:application
 
-    virtualenv = /opus/src/rms-opus/opus_venv
-    chdir      = /opus
+    virtualenv = /opt/opus/src/rms-opus/opus_venv
+    chdir      = /opt/opus
 
-    env = OPUS_CONFIG=/etc/opus/opus.toml
+    env = OPUS_CONFIG=/opt/opus/opus.toml
 
     master    = true
     processes = 8
@@ -258,7 +258,7 @@ Ubuntu, ``apache2ctl`` sources ``/etc/apache2/envvars`` before starting the serv
 daemon processes inherit from there::
 
     # /etc/apache2/envvars
-    export OPUS_CONFIG=/etc/opus/opus.toml
+    export OPUS_CONFIG=/opt/opus/opus.toml
 
 A server running several OPUS installations cannot share one such variable. Give each its
 own Apache instance, or give each **its own** ``WSGIDaemonProcess`` and
@@ -274,10 +274,10 @@ every deploy, so a hand-written file at that path does not survive one.
 
 .. code-block:: python
 
-    # /etc/opus/other_wsgi.py -- outside every installation directory
+    # /opt/opus/other_wsgi.py -- outside every installation directory
     import os
 
-    os.environ['OPUS_CONFIG'] = '/etc/opus/other.toml'
+    os.environ['OPUS_CONFIG'] = '/opt/opus/other.toml'
 
     from opus_app.wsgi import application  # noqa: E402  (must follow the assignment)
 
@@ -301,22 +301,22 @@ The vhost
         WSGIDaemonProcess opus \
             user=opus group=opus \
             processes=4 threads=2 \
-            python-home=/opus/src/rms-opus/opus_venv
+            python-home=/opt/opus/src/rms-opus/opus_venv
         WSGIProcessGroup opus
         WSGIApplicationGroup %{GLOBAL}
 
         # The installed wsgi.py. See the note below about this path.
-        WSGIScriptAlias / /opus/src/rms-opus/wsgi.py
+        WSGIScriptAlias / /opt/opus/src/rms-opus/wsgi.py
 
-        <Directory /opus/src/rms-opus>
+        <Directory /opt/opus/src/rms-opus>
             <Files wsgi.py>
                 Require all granted
             </Files>
         </Directory>
 
         # The static files collectstatic gathered.
-        Alias /static_media/ /opus/static_media/
-        <Directory /opus/static_media>
+        Alias /static_media/ /opt/opus/static_media/
+        <Directory /opt/opus/static_media>
             Require all granted
             Options -Indexes
         </Directory>
@@ -334,8 +334,8 @@ The vhost
         </Directory>
 
         # Cart archives.
-        Alias /downloads/ /opus/downloads/
-        <Directory /opus/downloads>
+        Alias /downloads/ /opt/opus/downloads/
+        <Directory /opt/opus/downloads>
             Require all granted
             Options -Indexes
         </Directory>
@@ -358,12 +358,12 @@ environment's ``site-packages``, whose path contains the Python minor version. *
 it directly means editing the vhost after every Python upgrade.**
 
 The deploy chain avoids that by writing a **symlink at a fixed path** and re-pointing it
-on every deploy, which is why the vhost above names ``/opus/src/rms-opus/wsgi.py`` rather
+on every deploy, which is why the vhost above names ``/opt/opus/src/rms-opus/wsgi.py`` rather
 than a path under ``site-packages``. To create one by hand::
 
-    OPUS_WSGI=$(/opus/src/rms-opus/opus_venv/bin/python -c \
+    OPUS_WSGI=$(/opt/opus/src/rms-opus/opus_venv/bin/python -c \
       'import importlib.util; print(importlib.util.find_spec("opus_app.wsgi").origin)')
-    ln -sfn "$OPUS_WSGI" /opus/src/rms-opus/wsgi.py
+    ln -sfn "$OPUS_WSGI" /opt/opus/src/rms-opus/wsgi.py
 
 :func:`importlib.util.find_spec` locates the file **without importing it**. Importing
 :mod:`opus_app.wsgi` would build the application -- configuring Django and opening the log
@@ -386,10 +386,10 @@ In order, because each check depends on the one before. The first runs a server 
 the foreground and does not return, so give it a terminal of its own and run the rest in
 another::
 
-    # The application starts and the configuration reaches it. `env` is load-bearing:
+    # The application starts and the configuration reaches it. `env` is needed here:
     # a default sudoers resets the environment and refuses to pass OPUS_CONFIG through.
-    sudo -u opus env OPUS_CONFIG=/etc/opus/opus.toml \
-        /opus/src/rms-opus/opus_venv/bin/gunicorn \
+    sudo -u opus env OPUS_CONFIG=/opt/opus/opus.toml \
+        /opt/opus/src/rms-opus/opus_venv/bin/gunicorn \
         --bind 127.0.0.1:8001 opus_app.wsgi:application
 
 Then, in a second terminal::

@@ -73,15 +73,19 @@ Issues = "https://github.com/SETI/rms-opus/issues"
 # short way to run it. Both log-analyzer parsers set `prog` explicitly for the same
 # reason `opus_import.cli` does: argparse otherwise names the executed file.
 #
-# `opus_manage` is the fourth and is not an OPUS program at all: it is Django's own
-# management command line with the settings module already named, so that an
-# installation -- which has no manage.py, that being a checkout's file -- needs
-# OPUS_CONFIG in its environment and nothing else. It is Django's command surface, so
-# it has no argparse parser of its own and no `python -m` form.
+# `opus_manage` is not an OPUS program at all: it is Django's own management command
+# line with the settings module already named, so that an installation -- which has
+# no manage.py, that being a checkout's file -- needs OPUS_CONFIG in its environment
+# and nothing else. It is Django's command surface, so it has no argparse parser of
+# its own and no `python -m` form.
+#
+# `opus_config_template` writes the configuration template into the working
+# directory, for the same reason: an installation has no checkout to copy it from.
 opus_import = "opus_import.cli:main"
 opus_log_analyzer = "opus_log_analyzer.log_analyzer:main"
 opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
 opus_manage = "opus_app.manage:main"
+opus_config_template = "opus_config.template:main"
 
 [project.optional-dependencies]
 dev = [
@@ -236,13 +240,15 @@ namespaces = false
 #     is a few kilobytes against a wheel measured in megabytes; run the inventory
 #     command above if that ratio ever looks worth revisiting.
 #
-# `opus.toml.template` is deliberately NOT package data. It is repository
-# infrastructure like `scripts/server/deploy.env.template`: the deploy chain writes
-# opus.toml itself rather than copying the template, nothing in the code reads it,
-# and shipping it inside a package would make an operator extract it through
-# importlib.resources instead of opening a file.
+# `opus.toml.template` ships inside `opus_config` because an installation has no
+# checkout to copy it from: `opus_config_template` writes a copy of it into the
+# operator's working directory, which is the first step of configuring a server.
+# `scripts/server/deploy.env.template` is the one that stays out, because only the
+# Node's own deploy chain reads it and that chain runs from a checkout.
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
+# The configuration template, written out by the `opus_config_template` command.
+"opus_config" = ["opus.toml.template"]
 # The import pipeline reads these at run time through importlib.resources, so they have
 # to be inside the wheel: the JSON schemas that define every OPUS table (plus the two
 # lists of values deliberately left unmapped), and the dictionary context tree that
@@ -301,7 +307,7 @@ plugins = ["mypy_django_plugin.main"]
 # With explicit_package_bases, a module's name is taken from the first package base
 # that contains it: mypy_path's src/ (so src/opus_support/units.py is
 # opus_support.units) or the working directory (so tests/opus_import/test_cli.py is
-# tests.opus_import.test_cli). Both are load-bearing. The per-package test
+# tests.opus_import.test_cli). Both are needed. The per-package test
 # directories carry no __init__.py, so without this a test module would be named
 # after its own file, so the two test_package_data.py files would collide as one
 # module name. It also means mypy has to run from the repository root, which
@@ -340,7 +346,7 @@ django_settings_module = "opus_app.settings"
 # package does not belong here -- that is a real check rather than a silenced one.
 # Every package the repository imports either has an entry here or is checked, so a
 # new dependency without annotations shows up as import-untyped on its first run and
-# is answered here deliberately. Every entry is load-bearing: drop one and the
+# is answered here deliberately. No entry here is spare: drop one and the
 # checker reports the imports it was covering.
 # `rest_framework` is here rather than in the dev extras because typeshed carries no
 # stub package for it: the stubs that exist are a separate third-party distribution

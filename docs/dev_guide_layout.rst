@@ -24,7 +24,6 @@ directory has a chapter of its own, it is named beside it.
     │                             #   configuration of every tool: ruff, mypy, pytest,
     │                             #   coverage, bandit, vulture, pymarkdown,
     │                             #   setuptools-scm
-    ├── opus.toml.template        # the installation configuration file to copy and fill in
     ├── manage.py                 # Django's management command for this checkout; it
     │                             #   calls the same code the installed opus_manage runs
     ├── vulture_whitelist.py      # names vulture cannot see are used, so it stops
@@ -43,7 +42,9 @@ directory has a chapter of its own, it is named beside it.
     │   ├── run-integration.yml   # self-hosted: full import + golden-response API suite
     │   └── publish_to_pypi.yml, publish_to_test_pypi.yml
     ├── src/
-    │   ├── opus_config/          # the TOML configuration loader
+    │   ├── opus_config/          # the TOML configuration loader, and the
+    │   │                         #   opus.toml.template it writes out as
+    │   │                         #   the opus_config_template command
     │   ├── opus_support/         # unit, time, clock, angle and orbit conversions
     │   ├── opus_import/          # the import pipeline
     │   │   ├── cli.py, __main__.py       # the command-line surface

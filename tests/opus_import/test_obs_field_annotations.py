@@ -1191,7 +1191,7 @@ def test_an_integer_column_is_an_int_even_from_a_numpy_index(instrument_id: str)
     The fixtures hold plain Python numbers, which is why the layer above cannot see
     this: every integer column would still look like an `int`. Re-running the same
     sweep with every integer promoted to `numpy.int64` is what makes the conversion
-    load-bearing.
+    matter.
     """
     fixture = _MISSION_FIXTURES[instrument_id]
     numpy_fixture = {

@@ -130,7 +130,7 @@ suffix, for the two ends of a range; ``qtype-<slug>``, ``unit-<slug>`` and
 ``SLUGS_NOT_IN_DB`` setting -- the paging, view, download and session parameters -- is
 consumed and skipped.
 
-Four behaviors are load-bearing:
+Four of its behaviors are relied on elsewhere:
 
 * **``obs_pds.opus_id`` is rewritten to ``obs_general.opus_id``.** The user sees the OPUS
   ID under PDS Constraints, but searching it from the master table is far cheaper. The

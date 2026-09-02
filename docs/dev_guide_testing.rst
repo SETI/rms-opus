@@ -147,8 +147,8 @@ By hand
 
 1. **Write a configuration file** naming a test schema -- a name you will recognize as
    disposable -- the holdings roots, and directories for logs, downloads and site data.
-   ``opus.toml.template`` in the repository root is the file to copy; set ``OPUS_CONFIG``
-   to it. :ref:`user_guide_installation_configuring` describes every key.
+   ``opus_config_template`` writes the file to copy; set ``OPUS_CONFIG`` to your copy.
+   :ref:`user_guide_installation_configuring` describes every key.
 
 2. **Import the test bundles**::
 

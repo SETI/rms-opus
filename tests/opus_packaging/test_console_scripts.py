@@ -28,14 +28,19 @@ EXPECTED_SCRIPTS = {
     'opus_log_analyzer': 'opus_log_analyzer.log_analyzer:main',
     'opus_error_analyzer': 'opus_log_analyzer.error_analyzer:main',
     'opus_manage': 'opus_app.manage:main',
+    'opus_config_template': 'opus_config.template:main',
 }
 
-# The three that are OPUS programs with an argparse command line of their own, each
-# mapped to the ``python -m`` form documented as equivalent. The error analyzer names a
-# module rather than a package: a package has one ``__main__`` and the log analyzer holds
-# it. ``opus_manage`` is deliberately absent from this mapping -- it is Django's
-# management command line rather than a program of this project's, so it has neither an
-# argparse parser to name itself nor a ``python -m`` form; its own test is below.
+# The commands that parse their own command line with argparse, and so name themselves
+# in their usage line. ``opus_manage`` is deliberately absent: it is Django's management
+# command line rather than a program of this project's, and its own test is below.
+ARGPARSE_SCRIPTS = frozenset(EXPECTED_SCRIPTS) - {'opus_manage'}
+
+# The ``python -m`` form documented as equivalent to each of the three console scripts
+# that has one. The error analyzer names a module rather than a package: a package has
+# one ``__main__`` and the log analyzer holds it. The other two commands have no module
+# form -- ``opus_manage`` runs Django's own command line, and ``opus_config_template``
+# is one operation with nothing to run it through.
 PYTHON_M_EQUIVALENT = {
     'opus_import': 'opus_import',
     'opus_log_analyzer': 'opus_log_analyzer',
@@ -106,7 +111,7 @@ def test_console_script_target_resolves(name: str) -> None:
     assert callable(_console_scripts()[name].load())
 
 
-@pytest.mark.parametrize('name', sorted(PYTHON_M_EQUIVALENT))
+@pytest.mark.parametrize('name', sorted(ARGPARSE_SCRIPTS))
 def test_installed_command_runs_and_names_itself(name: str) -> None:
     """The installed command runs, and argparse reports the command's own name.
 

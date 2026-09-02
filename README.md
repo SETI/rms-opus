@@ -65,12 +65,10 @@ pip install rms-opus
 
 OPUS reads one TOML configuration file and has **no default location for it**: the
 `OPUS_CONFIG` environment variable must name the file in the environment of every OPUS
-process. `opus.toml.template` documents every key. It lives in the repository rather
-than in the installed package, so copy it out of a checkout, or fetch it -- with `-f`,
-so that a failed download stops rather than leaving the error page in the file:
+process. The installation writes the template to start from, with a comment on every key:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
+opus_config_template                          # writes ./opus.toml.template
 install -m 600 opus.toml.template opus.toml   # then fill in every <PLACEHOLDER>
 export OPUS_CONFIG=$PWD/opus.toml
 ```
