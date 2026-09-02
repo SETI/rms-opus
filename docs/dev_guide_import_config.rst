@@ -474,7 +474,7 @@ Properties worth relying on:
   :func:`opus_import.importdb.get_db` re-checks anyway and raises for anything it does
   not implement.
 
-:ref:`dev_guide_support` describes the package alongside :mod:`opus_support`, and
+:ref:`dev_guide_config` describes the package that reads it, and
 :ref:`dev_guide_installation` describes writing a file.
 
 API reference

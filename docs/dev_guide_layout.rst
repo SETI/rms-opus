@@ -19,13 +19,14 @@ directory has a chapter of its own, it is named beside it.
 ::
 
     rms-opus/
-    ├── pyproject.toml            # project metadata, every dependency, the three
-    │                             #   console scripts the distribution declares, and the
+    ├── pyproject.toml            # project metadata, every dependency, the console
+    │                             #   scripts the distribution declares, and the
     │                             #   configuration of every tool: ruff, mypy, pytest,
     │                             #   coverage, bandit, vulture, pymarkdown,
     │                             #   setuptools-scm
     ├── opus.toml.template        # the installation configuration file to copy and fill in
-    ├── manage.py                 # Django's management command, for development only
+    ├── manage.py                 # Django's management command for this checkout; it
+    │                             #   calls the same code the installed opus_manage runs
     ├── vulture_whitelist.py      # names vulture cannot see are used, so it stops
     │                             #   reporting them
     ├── codecov.yml, .readthedocs.yaml
@@ -158,13 +159,15 @@ Which chapter covers what
      - :ref:`dev_guide_webapp_results`
    * - ``src/opus_app/apps/{ui,help,paraminfo}/``, ``templates/``, ``static/``
      - :ref:`dev_guide_webapp_ui`
-   * - ``src/opus_config/``, ``src/opus_support/``
-     - :ref:`dev_guide_support`
+   * - ``src/opus_config/``
+     - :ref:`dev_guide_config`
+   * - ``src/opus_support/``
+     - :ref:`dev_guide_conversions`
    * - ``src/opus_log_analyzer/``
      - :ref:`dev_guide_log_analyzer`
    * - ``tests/``, ``import_tests/``, ``integration_tests/``
      - :ref:`dev_guide_testing`, :ref:`dev_guide_import_fixture`
    * - ``scripts/server/``
-     - :ref:`dev_guide_deployment`
+     - :ref:`dev_guide_server`, :ref:`dev_guide_deployment`
    * - ``.github/workflows/``
      - :ref:`dev_guide_environment`

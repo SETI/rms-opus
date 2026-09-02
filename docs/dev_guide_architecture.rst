@@ -200,8 +200,8 @@ The division of responsibility, in one table, because several questions turn on 
 Nothing in the pipeline imports :mod:`opus_app`, and nothing in the application imports
 :mod:`opus_import`. The two shared packages are what they agree through:
 :mod:`opus_config` for the installation's settings, and :mod:`opus_support` for the unit,
-time and angle conversions both have to perform identically. :ref:`dev_guide_support`
-describes both.
+time and angle conversions both have to perform identically. :ref:`dev_guide_config` and
+:ref:`dev_guide_conversions` describe them.
 
 API reference
 -------------

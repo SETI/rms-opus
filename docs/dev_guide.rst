@@ -21,16 +21,15 @@ holds the rest of its subject as pages beneath.
    dev_guide_introduction
    dev_guide_layout
    dev_guide_environment
-   dev_guide_testing
    dev_guide_architecture
    dev_guide_database
    dev_guide_import
    dev_guide_webapp
-   dev_guide_support
+   dev_guide_config
+   dev_guide_conversions
+   dev_guide_testing
    dev_guide_log_analyzer
-   dev_guide_installation
-   dev_guide_web_server
-   dev_guide_deployment
+   dev_guide_server
    dev_guide_conventions
    dev_guide_contributing
    api_reference

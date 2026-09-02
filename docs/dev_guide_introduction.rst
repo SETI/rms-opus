@@ -36,9 +36,8 @@ How to read it
 
 The chapters are in reading order, and the order is deliberate:
 
-* **Orientation** -- this chapter, :ref:`dev_guide_layout`,
-  :ref:`dev_guide_environment` and :ref:`dev_guide_testing` get a checkout working and
-  say where everything is.
+* **Orientation** -- this chapter, :ref:`dev_guide_layout` and
+  :ref:`dev_guide_environment` get a checkout working and say where everything is.
 * **The whole system at once** -- :ref:`dev_guide_architecture` is the one-page map of
   the two programs and the database between them. Read it before either subsystem.
 * **The import pipeline** -- :ref:`dev_guide_import` and the pages under it, covering
@@ -49,11 +48,13 @@ The chapters are in reading order, and the order is deliberate:
   the OPUS ID, and the data dictionary.
 * **The web application** -- :ref:`dev_guide_webapp` and the pages under it, from how a
   request is served to how to add an app.
-* **The shared packages and the log analyzer** -- :ref:`dev_guide_support` covers the
-  two packages both programs depend on, and :ref:`dev_guide_log_analyzer` the third
-  program.
-* **Installing and running a server** -- :ref:`dev_guide_installation`,
-  :ref:`dev_guide_web_server` and :ref:`dev_guide_deployment`.
+* **The two shared packages** -- :ref:`dev_guide_config` is the file every OPUS process
+  is configured by, and :ref:`dev_guide_conversions` is what the two programs convert
+  values with so that they agree.
+* **Testing it, and the third program** -- :ref:`dev_guide_testing` covers the three
+  suites and what each one needs, and :ref:`dev_guide_log_analyzer` the log analyzer.
+* **Running a server** -- :ref:`dev_guide_server` and the pages under it: installing
+  one, fronting it with a web server, and operating it.
 * **Working on it** -- :ref:`dev_guide_conventions` and
   :ref:`dev_guide_contributing`, then the generated :doc:`api_reference`.
 
