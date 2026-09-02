@@ -28,7 +28,7 @@ export OPUS_LOG_DIR=${OPUS_DIR}/import_logs/${DATETIMEPID}
 export OPUS_SRC_DIR=${OPUS_DIR}/staged
 export OPUS_DIR_NAME=${OPUS_DB_NAME}
 
-mkdir -p ${OPUS_LOG_DIR}/opus_logs
+mkdir -p ${OPUS_LOG_DIR}
 mkdir -p ${OPUS_SRC_DIR}
 
 HOSTNAME=`hostname`

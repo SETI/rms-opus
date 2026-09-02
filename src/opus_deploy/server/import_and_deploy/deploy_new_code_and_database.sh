@@ -55,9 +55,12 @@ export OPUS_SRC_DIR=${OPUS_DIR}/staged
 export OPUS_DIR_NAME=${OPUS_DB_NAME}_`date +%Y%m%dT%H%M%S`
 INSTALL_DIR=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 
-mkdir -p ${OPUS_LOG_DIR}/opus_logs
-if [ -f ${OPUS_LOG_DIR}/opus_logs/opus_log.txt ]; then
-    sudo chmod ug+w ${OPUS_LOG_DIR}/opus_logs/opus_log.txt
+mkdir -p ${OPUS_LOG_DIR}
+# The application's log outlives the installation that wrote it, so a file left by a
+# deploy that ran as another account is made writable again rather than being an
+# installation that starts and cannot log.
+if [ -f ${OPUS_LOG_DIR}/opus_log.txt ]; then
+    sudo chmod ug+w ${OPUS_LOG_DIR}/opus_log.txt
 fi
 mkdir -p ${OPUS_SRC_DIR}
 

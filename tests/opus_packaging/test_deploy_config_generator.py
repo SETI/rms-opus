@@ -104,6 +104,27 @@ def test_the_generated_file_loads(tmp_path: Path) -> None:
     assert list(config.django.allowed_hosts) == BASE_ENV['OPUS_ALLOWED_HOSTS'].split()
 
 
+def test_the_logs_go_where_the_deploy_makes_a_directory(tmp_path: Path) -> None:
+    """Every path built from ``OPUS_LOG_DIR`` is directly under it, not a level deeper.
+
+    The deploy scripts create ``OPUS_LOG_DIR`` and nothing below it, and the
+    application opens its log file as it starts rather than creating what is missing,
+    so a generated path one directory deeper than the deploy made is a site that
+    deploys cleanly and fails to start. It is also what the User Guide says these
+    files are: an earlier generator appended ``opus_logs/`` to a variable already
+    ending in ``opus_logs``, and the log landed in ``opus_logs/opus_logs/``.
+    """
+    result = _generate(tmp_path)
+    assert result.returncode == 0, result.stderr
+
+    config = load_config(tmp_path / 'opus.toml')
+    log_dir = BASE_ENV['OPUS_LOG_DIR']
+    assert Path(config.paths.opus_log_file).parent == Path(log_dir)
+    assert config.paths.import_log_dir == log_dir
+    assert Path(config.import_.log_file).parent == Path(log_dir)
+    assert Path(config.import_.debug_log_file).parent == Path(log_dir)
+
+
 def test_one_allowed_host_still_produces_an_array(tmp_path: Path) -> None:
     """The separator goes between entries, so a single name must not carry one.
 

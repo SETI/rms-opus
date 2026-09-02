@@ -116,7 +116,7 @@ password = "$(toml_escape "${OPUS_DB_PASSWORD}")"
 [paths]
 pds3_holdings = "$(toml_escape "${PDS3_HOLDINGS_DIR}")"
 pds4_holdings = "$(toml_escape "${PDS4_HOLDINGS_DIR}")"
-opus_log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_logs/opus_log.txt"
+opus_log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_log.txt"
 import_log_dir = "$(toml_escape "${OPUS_LOG_DIR}")"
 tar_dir = "$(toml_escape "${OPUS_DIR}")/downloads/"
 manifest_dir = "$(toml_escape "${OPUS_DIR}")/manifests/"

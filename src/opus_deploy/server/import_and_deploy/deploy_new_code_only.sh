@@ -70,7 +70,7 @@ export OPUS_SRC_DIR=${OPUS_DIR}/staged
 export OPUS_DIR_NAME=${OPUS_DB_NAME}_`date +%Y%m%dT%H%M%S`
 INSTALL_DIR=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
 
-mkdir -p ${OPUS_LOG_DIR}/opus_logs
+mkdir -p ${OPUS_LOG_DIR}
 mkdir -p ${OPUS_SRC_DIR}
 
 echo "Hostname:" ${HOSTNAME}
