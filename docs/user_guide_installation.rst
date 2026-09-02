@@ -99,8 +99,11 @@ environment variable must name it in the environment of **every** OPUS process: 
 server, the import pipeline, and every management command.
 
 ``opus_config_template`` writes a template to start from, with a comment on every key,
-into the directory you are standing in::
+into the directory you are standing in. The account OPUS will run as has to exist before
+the copy is made, because ``install -o`` fails on a user it does not know rather than
+creating one::
 
+    id opus || sudo useradd --system --no-create-home opus
     opus_config_template
     sudo install -d -m 755 /opt/opus
     sudo install -m 600 -o opus -g opus opus.toml.template /opt/opus/opus.toml
@@ -118,9 +121,7 @@ Three details in those lines matter:
 * ``-o opus``. A **root**-owned 0600 file is unreadable to the account OPUS runs as, so
   every command below would fail on the configuration it was handed rather than on
   anything in it. ``opus`` here stands for whichever account the web application and the
-  import pipeline run as; it has to exist first, because ``install -o`` fails on an
-  unknown user rather than creating one. On a host with no such account, make one:
-  ``sudo useradd --system --no-create-home opus``.
+  import pipeline run as, which is why the first line above makes sure it exists.
 * **Run everything below as that account** -- with ``sudo -u opus`` or equivalent. A 0600
   file is readable by exactly one user, which is the point of the mode.
 
@@ -359,7 +360,8 @@ two bundle sets whose bundles carry observations that appear in more than one, s
 imported with ``--import-check-duplicate-id`` while the tables are still small -- then the
 rest in roughly decreasing order of how long each takes, and finally the three steps that
 finish the database: the auxiliary tables, the dictionary, and the validation. Any option
-this command does not recognize is passed to every ``opus_import`` invocation it makes.
+this command does not recognize is passed to the invocations that import something, and
+not to those three, which import nothing and would reject an import option.
 
 **To import only part of the archive** -- a site that wants Cassini and nothing else --
 use ``opus_import`` directly instead: ``opus_import --override-db-schema opus3_new

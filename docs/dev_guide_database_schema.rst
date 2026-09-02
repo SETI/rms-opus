@@ -241,7 +241,7 @@ The fields are:
 * ``label``: The string to display in the UI.
 * ``disp_order``: A string that is used to sort the entries in the mult table so that they are displayed in a meaningful order. These strings do not have to have any intrinsic meaning, just be sortable.
 * ``display``: An indication of whether the value should be displayed or hidden in the UI. At this time all entries have a value of 'Y'.
-* ``grouping``: The name of the group this option belongs to. In the UI items in the same group will be collected together under a common, collasible header.
+* ``grouping``: The name of the group this option belongs to. In the UI items in the same group will be collected together under a common, collapsible header.
 * ``group_disp_order``: A string that is used to sort the names of the groups.
 * ``aliases``: A JSON-encoded list of strings representing alias names for this value, for example historical names for a target.
 * ``timestamp``: The date and time the entry was last modified.
@@ -302,7 +302,7 @@ As discussed earlier, the value stored in the main ``obs_*`` table corresponds t
     |         4 | Saturn |
     +-----------+--------+
 
-Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists, and more complicated SQL queries are requried to extract the contents of those lists and match them with the mult tables:
+Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists, and more complicated SQL queries are required to extract the contents of those lists and match them with the mult tables:
 
 ::
 

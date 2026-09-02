@@ -26,7 +26,7 @@ if [[ ! -v INSTALL_DIR ]]; then
     echo "INTERNAL ERROR: INSTALL_DIR undefined"
     exit 1
 fi
-if [[ ! -f ${INSTALL_DIR}/opus.toml || ! -e ${INSTALL_DIR}/wsgi.py ]]; then
+if [[ ! -f "${INSTALL_DIR}/opus.toml" || ! -e "${INSTALL_DIR}/wsgi.py" ]]; then
     echo "ERROR: ${INSTALL_DIR} is not a complete installation."
     echo "       Nothing has been switched; the running installation is untouched."
     exit 1
@@ -43,8 +43,17 @@ sudo systemctl stop apache2
 # the new one, and a deploy interrupted between them leaves no ${OPUS_DIR}/deployed
 # at all. Creating the new link under another name and renaming it over the old one
 # is a single rename(2), which either happens or does not.
-ln -sfn "${INSTALL_DIR}" "${OPUS_DIR}/deployed.new"
-mv -Tf "${OPUS_DIR}/deployed.new" "${OPUS_DIR}/deployed"
+#
+# If either step fails, the old symlink is still what it was, so the site can be put
+# back exactly as it was -- and it is, here, rather than left stopped by the caller's
+# `set -e` for the sake of an error message.
+if ! ln -sfn "${INSTALL_DIR}" "${OPUS_DIR}/deployed.new" ||
+   ! mv -Tf "${OPUS_DIR}/deployed.new" "${OPUS_DIR}/deployed"; then
+    echo "ERROR: could not switch ${OPUS_DIR}/deployed to ${INSTALL_DIR}."
+    echo "       Restarting what was running before."
+    sudo systemctl start apache2
+    exit 1
+fi
 
 # Restarting memcached is how the shared cache is emptied: it holds rendered results
 # and search results computed by the release that is being replaced, and a cache key
@@ -63,4 +72,4 @@ fi
 sudo systemctl start apache2
 
 echo
-echo "Now serving: ${OPUS_DIR}/deployed -> $(readlink ${OPUS_DIR}/deployed)"
+echo "Now serving: ${OPUS_DIR}/deployed -> $(readlink "${OPUS_DIR}/deployed")"

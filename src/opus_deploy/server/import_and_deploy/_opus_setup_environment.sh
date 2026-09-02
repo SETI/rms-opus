@@ -98,12 +98,12 @@ export OPUS_LOG_DIR
 # The application opens its log file as it starts, and builds a cart archive into
 # tar_dir on demand, so a directory missing here is a deploy that succeeds and a site
 # that fails later.
-mkdir -p ${OPUS_DIR}/opus_logs
-mkdir -p ${OPUS_DIR}/downloads
-mkdir -p ${OPUS_DIR}/manifests
-mkdir -p ${OPUS_DIR}/static_media
+mkdir -p "${OPUS_DIR}/opus_logs"
+mkdir -p "${OPUS_DIR}/downloads"
+mkdir -p "${OPUS_DIR}/manifests"
+mkdir -p "${OPUS_DIR}/static_media"
 
-${IMPORT_SCRIPT_DIR}/_write_opus_toml.sh ${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.toml
+"${IMPORT_SCRIPT_DIR}/_write_opus_toml.sh" "${OPUS_SRC_DIR}/${OPUS_DIR_NAME}/opus.toml"
 
 # The import pipeline and the web application are installed packages, so they locate
 # the configuration by this variable instead of by the directory they happen to be

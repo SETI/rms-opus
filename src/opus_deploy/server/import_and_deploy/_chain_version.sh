@@ -21,8 +21,8 @@
 # Inputs (exported by the caller): SCRIPT_DIR, and OPUS_VERSION_SPEC when one was
 # given on the command line.
 
-if [[ -f ${SCRIPT_DIR}/CHAIN_VERSION ]]; then
-    CHAIN_VERSION=$(cat ${SCRIPT_DIR}/CHAIN_VERSION)
+if [[ -f "${SCRIPT_DIR}/CHAIN_VERSION" ]]; then
+    CHAIN_VERSION=$(cat "${SCRIPT_DIR}/CHAIN_VERSION")
     echo "Deploy scripts: rms-opus ${CHAIN_VERSION} (${SCRIPT_DIR})"
 else
     CHAIN_VERSION=""
@@ -31,10 +31,12 @@ else
     echo "  release older than the one that started recording it."
 fi
 
-# Only a pinned release can be compared. With no specifier the deploy installs the
-# newest release, whose version is not known until pip has run, and warning about
-# something unknowable would train an operator to ignore the warning.
-if [[ -n ${OPUS_VERSION_SPEC:-} && ${OPUS_VERSION_SPEC} == ==* ]]; then
+# Only an exact pin can be compared. With no specifier the deploy installs the newest
+# release, whose version is not known until pip has run; with a prefix pin such as
+# `==3.24.*`, or any other kind of specifier, the release is equally unknown. Warning
+# about something unknowable would train an operator to ignore the warning, so those
+# cases say nothing.
+if [[ -n ${OPUS_VERSION_SPEC:-} && ${OPUS_VERSION_SPEC} == ==* && ${OPUS_VERSION_SPEC} != *"*"* ]]; then
     DEPLOYING_VERSION=${OPUS_VERSION_SPEC#==}
     if [[ -n ${CHAIN_VERSION} && ${CHAIN_VERSION} != ${DEPLOYING_VERSION} ]]; then
         echo
@@ -43,7 +45,7 @@ if [[ -n ${OPUS_VERSION_SPEC:-} && ${OPUS_VERSION_SPEC} == ==* ]]; then
         echo "***"
         echo "*** Refresh them first:"
         echo "***   python -m pip install --upgrade \"rms-opus==${DEPLOYING_VERSION}\""
-        echo "***   opus_deploy_scripts --directory ${SCRIPT_DIR} --force"
+        echo "***   opus_deploy_scripts --directory \"${SCRIPT_DIR}\" --force"
         echo
     fi
 fi

@@ -43,16 +43,16 @@ main() {
     local version_spec=${1:-}
 
     export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
+    export SCRIPT_DIR=$(dirname "${IMPORT_SCRIPT_DIR}")
     export SECRETS_DIR=${SCRIPT_DIR}/secrets
 
-    source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
-    source ${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh
+    source "${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh"
+    source "${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh"
 
     echo "*** Updating the deploy chain in ${SCRIPT_DIR} ***"
     echo
-    if [[ -f ${SCRIPT_DIR}/CHAIN_VERSION ]]; then
-        echo "From: rms-opus $(cat ${SCRIPT_DIR}/CHAIN_VERSION)"
+    if [[ -f "${SCRIPT_DIR}/CHAIN_VERSION" ]]; then
+        echo "From: rms-opus $(cat "${SCRIPT_DIR}/CHAIN_VERSION")"
     fi
     echo "To:   rms-opus ${version_spec:-(newest release)}"
     echo "In:   ${OPUS_DEPLOY_VENV}"
@@ -61,10 +61,10 @@ main() {
     python -m pip install --upgrade pip
     python -m pip install --upgrade "rms-opus${version_spec}"
 
-    opus_deploy_scripts --directory ${SCRIPT_DIR} --force
+    opus_deploy_scripts --directory "${SCRIPT_DIR}" --force
 
     echo
-    echo "*** The deploy chain is now rms-opus $(cat ${SCRIPT_DIR}/CHAIN_VERSION) ***"
+    echo "*** The deploy chain is now rms-opus $(cat "${SCRIPT_DIR}/CHAIN_VERSION") ***"
 }
 
 main "$@"

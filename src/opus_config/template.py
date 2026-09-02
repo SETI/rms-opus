@@ -46,15 +46,20 @@ def write_template(directory: Path, *, force: bool = False) -> Path:
         The path written.
 
     Raises:
-        FileExistsError: If the destination exists and `force` is False.
+        FileExistsError: If the destination exists and `force` is False. The refusal is
+            the open itself, in exclusive-create mode, rather than a test followed by a
+            write: between those two, something else can create the file this would then
+            have overwritten.
         NotADirectoryError: If `directory` is not a directory.
     """
     if not directory.is_dir():
         raise NotADirectoryError(f'{directory} is not a directory')
     destination = directory / TEMPLATE_NAME
-    if destination.exists() and not force:
-        raise FileExistsError(f'{destination} already exists; pass --force to replace it')
-    destination.write_text(template_text(), encoding='utf-8')
+    try:
+        with destination.open('w' if force else 'x', encoding='utf-8') as handle:
+            handle.write(template_text())
+    except FileExistsError:
+        raise FileExistsError(f'{destination} already exists; pass --force to replace it') from None
     return destination
 
 
@@ -88,7 +93,7 @@ def main() -> None:
     except (FileExistsError, NotADirectoryError, OSError) as err:
         parser.exit(1, f'{parser.prog}: {err}\n')
     print(f'Wrote {destination}')
-    print(f'Copy it with `install -m 600 {TEMPLATE_NAME} opus.toml`, fill in every')
+    print(f'Copy it with `install -m 600 {destination} opus.toml`, fill in every')
     print('<PLACEHOLDER>, and point OPUS_CONFIG at the copy.')
 
 

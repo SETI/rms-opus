@@ -113,9 +113,9 @@ takes ``opus_manage`` or ``python manage.py`` in front of it.
    * - Command
      - What it is for
    * - ``check``
-     - Loads the settings and every app and reports what Django objects to, without
-       touching the database. The fastest way to find out whether a configuration file
-       is usable at all.
+     - Loads the settings and every app and reports every error and warning Django's
+       own checks raise, without touching the database. The fastest way to find out
+       whether a configuration file is usable at all.
    * - ``migrate``
      - Creates Django's own contrib tables in the configured schema. Run once against a
        newly imported database, and again after an upgrade that crosses a Django release

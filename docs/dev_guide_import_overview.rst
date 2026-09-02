@@ -33,7 +33,7 @@ An import run turns the index tables of a set of bundles into the whole OPUS dat
         H --> BI
         BI --> OB
         OB --> IMP
-        IMP -->|only if the whole run succeeded| PERM
+        IMP -->|only if the import phase logged no error| PERM
         PERM --> AUX
         PERM -.-> SUP
 

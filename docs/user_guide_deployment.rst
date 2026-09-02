@@ -205,8 +205,10 @@ The scripts
     anywhere else it imports and stops. It runs detached and mails the log when it
     finishes.
 
-    When it is done, ``deploy_new_code_and_database.sh <that database>`` is the second
-    half.
+    When it is done, the second half is ``deploy_new_code_and_database.sh <that
+    database>`` **with the same version specifier this was given**: the two install
+    ``rms-opus`` separately, so leaving it off the second is how a release ends up
+    serving a database another release built.
 
 The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==3.23.0`` for a particular release, omitted for the newest.
@@ -346,9 +348,14 @@ what users see, so it is done deliberately.
    erase cannot be aimed at the wrong one. Neither prints row counts; comparing those is
    a separate query you run yourself.
 4. **Exercise the new database before switching the public site to it.** The staged
-   installation is a complete OPUS pointed at it: run it under a WSGI server of your own
-   on another port, or point a second web server at ``staged/<that database>/wsgi.py``,
-   while the public site goes on serving what it was serving.
+   installation is a complete OPUS pointed at it, and naming its own ``opus.toml`` is
+   what makes it read the new database rather than the served one::
+
+       OPUS_CONFIG=/opt/opus/staged/<that installation>/opus.toml \
+           /opt/opus/staged/<that installation>/opus_venv/bin/gunicorn \
+           --bind 127.0.0.1:8001 opus_app.wsgi:application
+
+   The public site goes on serving what it was serving throughout.
 5. **Switch over** with ``deploy_new_code_and_database.sh <that database>``. It builds
    the installation the public site will use, moves the ``deployed`` symlink onto it,
    restarts memcached and starts Apache again -- and stops Apache only for that switch.

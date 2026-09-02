@@ -5,9 +5,11 @@ The Web Application
 
 :mod:`opus_app` is the Django project that serves the OPUS user interface and the public
 web API out of the database an import wrote. It runs under a WSGI server behind nginx or
-Apache, it is configured by the same TOML file as everything else in OPUS, and it holds
-no metadata of its own: every value it returns was computed by
-:ref:`dev_guide_import` and stored in :ref:`dev_guide_database`.
+Apache, and it is configured by the same TOML file as everything else in OPUS. It holds
+no observation metadata of its own: every metadata value it returns was computed by
+:ref:`dev_guide_import` and stored in :ref:`dev_guide_database`. What it does write is
+what a session produces -- the search it ran, the results it cached, the cart it filled
+-- which :ref:`dev_guide_webapp_overview` describes.
 
 Its Django apps are ``search``, ``results``, ``metadata``, ``cart``, ``ui``, ``help`` and
 ``paraminfo``, over a ``tools`` app holding what they share, and they are documented

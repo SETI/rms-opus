@@ -16,14 +16,17 @@ OPUS API and UI.
 Everything importable lives under `src/`: `opus_config` (the TOML configuration
 loader), `opus_support` (unit, time, clock, angle and orbit conversions),
 `opus_import` (the import pipeline), `opus_log_analyzer` (the server log analyzer)
-and `opus_app` (the Django project). The installed commands are `opus_import`,
-`opus_log_analyzer` and `opus_error_analyzer`; the first two also run as
-`python -m opus_import` and `python -m opus_log_analyzer`. Three more exist so that an
-installation with no checkout can do everything a server needs: `opus_manage` is
-Django's own management command line with the settings module already named, so only
-`OPUS_CONFIG` is needed in the environment; `opus_config_template` writes
-`opus.toml.template` (which ships inside `opus_config`) into the working directory; and
-`opus_import_all` runs the full-holdings import sequence.
+and `opus_app` (the Django project), plus `opus_deploy` (the server deploy chain, which
+is shell shipped as package data). Three installed commands are OPUS programs, each with
+an equivalent module form: `opus_import` (`python -m opus_import`), `opus_log_analyzer`
+(`python -m opus_log_analyzer`) and `opus_error_analyzer`
+(`python -m opus_log_analyzer.error_analyzer`, a module rather than a package because a
+package has one `__main__`). Four more exist so that an installation with no checkout can
+do everything a server needs, and have no module form: `opus_manage` is Django's own
+management command line with the settings module already named, so only `OPUS_CONFIG` is
+needed in the environment; `opus_config_template` writes `opus.toml.template` (which
+ships inside `opus_config`) into the working directory; `opus_import_all` runs the
+full-holdings import sequence; and `opus_deploy_scripts` writes out the deploy chain.
 
 `docs/dev_guide_layout.rst` annotates the whole tree. Build the documentation with
 `scripts/read-docs.sh`, or read it at <https://rms-opus.readthedocs.io>.

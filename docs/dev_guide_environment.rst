@@ -136,9 +136,8 @@ A smoke test that needs neither holdings nor a database::
     opus_log_analyzer --help
     opus_error_analyzer --help
 
-**Both forms of every command.** The installation declares four console scripts. Three
-of them are OPUS programs, and each is equivalent to a ``python -m`` invocation because
-both reach the same ``main``:
+**Both forms of every command.** Three of the installed commands are OPUS programs, and
+each is equivalent to a ``python -m`` invocation because both reach the same ``main``:
 
 =========================  =========================================
 Console script             Equivalent module form
@@ -153,14 +152,15 @@ The error analyzer names a module rather than a package because a package has on
 chains invoke, by name; ``tests/opus_packaging/test_console_scripts.py`` runs both
 forms of each and compares them.
 
-Three more have no ``python -m`` form. ``opus_manage`` is not an OPUS program at all:
-it is Django's own management command line with the settings module already named, so
-that an installation needs nothing in its environment but ``OPUS_CONFIG``, and in a
-checkout ``manage.py`` is the same program. ``opus_config_template`` writes the
-configuration template into the working directory. ``opus_import_all`` runs a full
-import: every bundle set in order, each as its own ``opus_import`` process, and the three
-steps that finish the database. All three exist because an installation has no checkout
-to run a script out of.
+The rest have no ``python -m`` form, and all of them exist because an installation has no
+checkout to run a script out of. ``opus_manage`` is not an OPUS program at all: it is
+Django's own management command line with the settings module already named, so that an
+installation needs nothing in its environment but ``OPUS_CONFIG``, and in a checkout
+``manage.py`` is the same program. ``opus_config_template`` writes the configuration
+template into the working directory. ``opus_import_all`` runs a full import: every bundle
+set in order, each as its own ``opus_import`` process, and the three steps that finish the
+database. ``opus_deploy_scripts`` writes the server deploy chain out of the distribution;
+:ref:`user_guide_deployment` is what it is for.
 
 Running the tests and the checks
 --------------------------------

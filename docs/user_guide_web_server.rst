@@ -33,6 +33,12 @@ a **file** path, it is the installed ``wsgi.py``, inside the virtual environment
 is served. This is the single most common way a deployment fails, and each server
 arranges it differently -- see each section below.
 
+The examples below name ``/opt/opus/deployed/opus.toml``, because an installation the
+deploy chain built carries its own configuration and ``deployed`` is the symlink onto the
+one being served (:ref:`user_guide_deployment`). An installation put together by hand
+names whatever file :ref:`user_guide_installation_configuring` had you write; the path is
+the only difference.
+
 **3. Static files are served at** ``/static_media/``, from the directory ``static_root``
 names. The prefix is fixed; :ref:`dev_guide_webapp_static` says why.
 
@@ -93,7 +99,7 @@ itself.
     RuntimeDirectory=opus
     WorkingDirectory=/opt/opus
 
-    Environment=OPUS_CONFIG=/opt/opus/opus.toml
+    Environment=OPUS_CONFIG=/opt/opus/deployed/opus.toml
 
     ExecStart=/opt/opus/deployed/opus_venv/bin/gunicorn \
         --workers 8 \
@@ -211,7 +217,7 @@ and gunicorn replaced by a uWSGI instance. **The environment variable is set wit
     virtualenv = /opt/opus/deployed/opus_venv
     chdir      = /opt/opus
 
-    env = OPUS_CONFIG=/opt/opus/opus.toml
+    env = OPUS_CONFIG=/opt/opus/deployed/opus.toml
 
     master    = true
     processes = 8
@@ -258,7 +264,7 @@ Ubuntu, ``apache2ctl`` sources ``/etc/apache2/envvars`` before starting the serv
 daemon processes inherit from there::
 
     # /etc/apache2/envvars
-    export OPUS_CONFIG=/opt/opus/opus.toml
+    export OPUS_CONFIG=/opt/opus/deployed/opus.toml
 
 A server running several OPUS installations cannot share one such variable. Give each its
 own Apache instance, or give each **its own** ``WSGIDaemonProcess`` and
@@ -388,7 +394,7 @@ another::
 
     # The application starts and the configuration reaches it. `env` is needed here:
     # a default sudoers resets the environment and refuses to pass OPUS_CONFIG through.
-    sudo -u opus env OPUS_CONFIG=/opt/opus/opus.toml \
+    sudo -u opus env OPUS_CONFIG=/opt/opus/deployed/opus.toml \
         /opt/opus/deployed/opus_venv/bin/gunicorn \
         --bind 127.0.0.1:8001 opus_app.wsgi:application
 
