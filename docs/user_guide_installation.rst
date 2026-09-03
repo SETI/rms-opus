@@ -492,7 +492,8 @@ Four checks, in increasing order of what they prove::
 
     # 3. The application starts under a WSGI server. gunicorn is not an OPUS
     #    dependency -- install it into that installation for this check, or use
-    #    whichever server you deploy.
+    #    whichever server you deploy. Do not test this one in a web browser: it
+    #    serves no static files, so the interface will not work.
     /opt/opus/deployed/opus_venv/bin/python -m pip install gunicorn
     OPUS_CONFIG=/opt/opus/deployed/opus.toml \
         /opt/opus/deployed/opus_venv/bin/gunicorn --bind 127.0.0.1:8001 \
@@ -501,20 +502,6 @@ Four checks, in increasing order of what they prove::
     # 4. It answers, with data. 127.0.0.1 has to be in OPUS_ALLOWED_HOSTS, or Django
     #    replies 400 however well the application and the database are working.
     curl -s 'http://127.0.0.1:8001/api/meta/result_count.json?planet=Saturn'
-
-**Expect the interface to look broken under check 3**, and a screenful of these in the
-terminal if you open ``http://127.0.0.1:8001/opus/`` in a browser::
-
-    WARNING [django.request:253] Not Found: /static_media/css/opus.css
-    WARNING [django.request:253] Not Found: /static_media/js/opus.js
-    ... one per stylesheet, script and image
-
-Nothing is wrong. **gunicorn serves the application and nothing else**, and Django serves
-static files only under ``runserver`` with ``debug = true``, so until a web server maps
-``/static_media/`` onto the directory ``static_root`` names, those requests reach the
-application and 404. The files are there -- the deploy gathered them -- and check 4 asks
-for data rather than a page for exactly this reason. :ref:`user_guide_web_server` is what
-puts the alias in front, and :ref:`dev_guide_webapp_static` explains the fixed prefix.
 
 The same four checks run against a staged installation that is not deployed yet --
 substitute ``staged/<that installation>`` for ``deployed`` -- which is how a new database

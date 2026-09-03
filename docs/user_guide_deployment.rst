@@ -283,6 +283,8 @@ what users see, so it is done deliberately.
    installation is a complete OPUS pointed at it, and naming its own ``opus.toml`` is
    what makes it read the new database rather than the served one::
 
+       # Query it, do not browse it: this serves no static files, so the
+       # interface will not work.
        OPUS_CONFIG=/opt/opus/staged/<that installation>/opus.toml \
            /opt/opus/staged/<that installation>/opus_venv/bin/gunicorn \
            --bind 127.0.0.1:8001 opus_app.wsgi:application
