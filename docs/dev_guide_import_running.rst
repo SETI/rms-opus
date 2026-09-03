@@ -420,13 +420,14 @@ stopping at the first failure. ``opus_import_all --dry-run`` prints the whole se
 without running any of it, and :ref:`user_guide_installation_full_import` is the
 operator's account of it.
 
-``scripts/import/`` holds the wrappers the Node uses around that:
+``scripts/import/`` holds the wrappers the Ring-Moon Systems Node uses around that:
 
 ``import_all.sh``
-    A full production import on one of the Node's own servers. It refuses to run on any
+    A full production import on one of the Ring-Moon Systems Node's own servers. It
+    refuses to run on any
     other host, prints the database currently being served, asks for confirmation, and
     then puts ``opus_import_all --yes`` under ``nohup``. Everything it adds is specific
-    to the Node; the import itself is the installed command.
+    to the Ring-Moon Systems Node; the import itself is the installed command.
 
 ``import_for_tests.sh``
     The fixed bundle list the integration suite runs against -- Cassini ISS, UVIS, VIMS

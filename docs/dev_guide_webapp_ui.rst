@@ -136,7 +136,7 @@ and product type. The slow part -- the metadata table -- is fetched separately, 
 results app, which is the whole reason this handler exists.
 
 Each product type carries the tooltip its data-dictionary term supplies, and an index
-product gets a link into the Node's file browser.
+product gets a link into the Ring-Moon Systems Node's file browser.
 
 api_normalize_url
 ~~~~~~~~~~~~~~~~~

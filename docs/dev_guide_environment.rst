@@ -243,7 +243,8 @@ the release from being the first thing to discover a packaging change. What it c
 cover is the upload itself, the API tokens, and what PyPI makes of the metadata on
 receipt; only a real publish exercises those.
 
-``run-integration.yml`` runs on the Node's self-hosted runner, which has the real PDS
+``run-integration.yml`` runs on the Ring-Moon Systems Node's self-hosted runner, which
+has the real PDS
 holdings mounted. It imports a fixed set of bundles into a fresh database and then runs
 the golden-response API suite, the live-database Django suites, and
 ``tests/opus_support`` and ``tests/opus_app`` -- all in one session, because the 100%

@@ -15,7 +15,8 @@ run be continued by hand from the group that failed.
 
 **The run erases the permanent tables it is pointed at before it begins**, so it asks for
 confirmation first, naming the schema. ``--yes`` answers for a caller that has already
-asked -- which is what the Node's ``scripts/import/import_all.sh`` wrapper does before it
+asked -- which is what the Ring-Moon Systems Node's ``scripts/import/import_all.sh``
+wrapper does before it
 puts the run under ``nohup``.
 """
 

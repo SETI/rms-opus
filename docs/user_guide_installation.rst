@@ -148,7 +148,8 @@ producing a plainer PDF. That is what a machine has to say for itself::
     wkhtmltopdf 0.12.4 (with patched qt)
 
 **Install it from the project's own release rather than from the distribution**, whose
-package is the unpatched build. These are the binaries the Node runs, for Linux on
+package is the unpatched build. These are the binaries the Ring-Moon Systems Node runs,
+for Linux on
 x86-64::
 
     cd /tmp
@@ -159,10 +160,10 @@ x86-64::
 The download and the unpacked ``wkhtmltox/`` are left behind in ``/tmp``, which is where
 they can be deleted or ignored; only what was moved to ``/usr/bin`` is installed. The
 glob takes ``wkhtmltoimage`` along with ``wkhtmltopdf``; they ship together, and the one
-the help pages call ends up on the path either way. 0.12.4 is the release the Node
-runs; the project is archived, so that releases page is a fixed list rather than a
-moving one, and a later release from it does as well, as long as ``--version`` says
-patched.
+the help pages call ends up on the path either way. 0.12.4 is the release the Ring-Moon
+Systems Node runs; the project is archived, so that releases page is a fixed list
+rather than a moving one, and a later release from it does as well, as long as
+``--version`` says patched.
 
 **The PDS holdings**, mounted read-only. The import needs them to run at all; the web
 application needs them to serve product files. Both a PDS3 and a PDS4 root are
@@ -636,7 +637,8 @@ entirely.
      - The root URL data products are retrieved from.
    * - ``viewmaster_url``
      - yes
-     - The root URL of the Node's file browser, which the Details tab links into.
+     - The root URL of the Ring-Moon Systems Node's file browser, which the Details tab
+       links into.
    * - ``tar_file_url``
      - yes
      - The root URL zipped cart files are retrieved from. Joined directly to a file

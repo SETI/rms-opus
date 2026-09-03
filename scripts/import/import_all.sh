@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# A full-holdings import on one of the Node's servers.
+# A full-holdings import on one of the Ring-Moon Systems Node's servers.
 #
 # The sequence itself is `opus_import_all`, a command the distribution installs, so
 # it can be run anywhere OPUS is installed and needs no checkout:
@@ -8,7 +8,8 @@
 #     OPUS_CONFIG=/opt/opus/opus.toml opus_import_all --override-db-schema <database name>
 #
 # This wrapper adds only what is specific to running it here: the check that it is
-# one of the Node's servers, the banner naming the database currently being served,
+# one of the Ring-Moon Systems Node's servers, the banner naming the database currently
+# being served,
 # and nohup, so that a run measured in days survives the terminal it was started
 # from. `opus_import_all --yes` below is answering the confirmation this script has
 # already taken; the command would otherwise ask again, under nohup, where nobody

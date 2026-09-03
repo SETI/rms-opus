@@ -364,7 +364,8 @@ Operating checklist
      - ``run_full_opus_import.sh``, verify, then
        ``deploy_new_code_and_database.sh <name>``
    * - Change a credential or a path
-     - Edit ``deploy.env``, then run a deploy. Never edit ``opus.toml`` on a Node server.
+     - Edit ``deploy.env``, then run a deploy. Never edit ``opus.toml`` on a Ring-Moon
+       Systems Node server.
    * - Change a field label or a tooltip
      - Edit the table schema, re-run ``--update-mult-info`` or ``--import-dictionary``,
        clear the cache and restart the workers.

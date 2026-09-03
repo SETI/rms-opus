@@ -4,7 +4,8 @@ Introduction
 ============
 
 OPUS is the Outer Planets Unified Search tool of the Ring-Moon Systems Node of NASA's
-Planetary Data System. It lets a scientist search the Node's holdings by observation
+Planetary Data System. It lets a scientist search the Ring-Moon Systems Node's holdings
+by observation
 metadata -- when an observation was taken, what it was pointed at, what geometry it
 covers -- and then retrieve the data files that match.
 
@@ -66,7 +67,8 @@ What the distribution contains
 database -- and two supporting packages:
 
 :mod:`opus_import`
-    The import pipeline. It reads PDS3 volumes and PDS4 bundles out of the Node's
+    The import pipeline. It reads PDS3 volumes and PDS4 bundles out of the Ring-Moon
+    Systems Node's
     holdings, computes one row of metadata per observation, and writes the OPUS
     database. It runs as ``opus_import``, or equivalently ``python -m opus_import``.
 
@@ -247,7 +249,8 @@ The dependencies worth knowing about before reading any code:
 * **Django 5.2** -- the web application. OPUS uses Django's ORM only for reading;
   every OPUS table is created by the import pipeline rather than by a migration, and
   the heavier queries are assembled by :mod:`opus_app.apps.tools.sql_builder` instead.
-* **rms-pdsfile**, **rms-pdstable**, **rms-pdsparser** -- the Node's own libraries for
+* **rms-pdsfile**, **rms-pdstable**, **rms-pdsparser** -- the Ring-Moon Systems Node's
+  own libraries for
   finding files in the holdings and for reading PDS3 labels and index tables.
 * **rms-julian** -- time conversions, which :mod:`opus_support.time_parsing` builds on.
 * **mysqlclient** -- the MySQL driver. It has no Linux wheel, so installing OPUS

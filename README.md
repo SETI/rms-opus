@@ -17,7 +17,8 @@
 ## Introduction
 
 OPUS is the Outer Planets Unified Search tool of the Ring-Moon Systems Node of NASA's
-Planetary Data System. It lets a researcher search the Node's archive by what an
+Planetary Data System. It lets a researcher search the Ring-Moon Systems Node's
+archive by what an
 observation *is* -- when it was taken, what instrument took it, what it was pointed at,
 what ring or surface geometry it covers -- and then retrieve the matching data files.
 A public instance runs at [opus.pds-rings.seti.org](https://opus.pds-rings.seti.org).
@@ -25,7 +26,8 @@ A public instance runs at [opus.pds-rings.seti.org](https://opus.pds-rings.seti.
 This distribution holds everything that instance is made of: the pipeline that reads
 PDS3 volumes and PDS4 bundles and populates the search database, the Django application
 that serves the web interface and the public API, and the log analyzer that reports on
-how the site is used. It is published so that the Node can deploy it and so that the
+how the site is used. It is published so that the Ring-Moon Systems Node can deploy
+it and so that the
 software behind a public archive is inspectable, not because OPUS is a library to build
 on: the packages carry no API stability guarantees.
 

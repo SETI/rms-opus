@@ -247,7 +247,8 @@ service restart to recycle the workers after an import.
 Apache with mod_wsgi
 --------------------
 
-This is the Node's own arrangement. It differs from the two above in one important
+This is the Ring-Moon Systems Node's own arrangement. It differs from the two above in
+one important
 respect: **mod_wsgi has no directive for a per-process environment variable**, so
 ``OPUS_CONFIG`` has to reach the daemon process another way.
 
@@ -446,7 +447,7 @@ Where to go next
     What has to exist before any of this.
 
 :ref:`user_guide_deployment`
-    The Node's deploy chain, and the runbook for replacing a database.
+    The Ring-Moon Systems Node's deploy chain, and the runbook for replacing a database.
 
 API reference
 -------------

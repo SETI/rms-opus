@@ -50,7 +50,7 @@ Three suites, selected by path:
   mini-holdings fixture. Needs a reachable MySQL server; no PDS holdings.
 - `pytest integration_tests` — the golden-response API suite against a populated
   database. Needs the terabyte holdings and a full import behind it, so it runs on
-  the Node's own hardware rather than anywhere else.
+  the Ring-Moon Systems Node's own hardware rather than anywhere else.
 
 `docs/dev_guide_testing.rst` says what each suite needs and how to run it.
 
