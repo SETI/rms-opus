@@ -72,7 +72,7 @@ a server is one release's chain, and it changes between releases like anything e
 script brings it up to the release being deployed::
 
     cd /opt/opus/deploy
-    ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
+    ./import_and_deploy/update_deploy_scripts.sh ==<release>
 
 That upgrades ``rms-opus`` in the environment ``OPUS_DEPLOY_VENV`` names -- the one
 these commands come from, not any installation that serves anything -- and rewrites this
@@ -87,16 +87,16 @@ changes nothing about the table schemas -- a bug-fix release -- the database alr
 being served is still the right one::
 
     cd /opt/opus/deploy
-    ./import_and_deploy/deploy_new_code_only.sh ==3.24.1
+    ./import_and_deploy/deploy_new_code_only.sh ==<release>
 
 When it does change them, the database has to be rebuilt under the new release first, and
 the two commands are the same pair as steps 4 and 5 of the installation chapter::
 
     cd /opt/opus/deploy
-    ./import_and_deploy/run_full_opus_import.sh ==3.25.0
+    ./import_and_deploy/run_full_opus_import.sh ==<release>
     #    ... read the log, check ERRORS.log, compare row counts against the served
     #    database, exercise the staged installation ...
-    ./import_and_deploy/deploy_new_code_and_database.sh opus3_20260915T020000_31337 ==3.25.0
+    ./import_and_deploy/deploy_new_code_and_database.sh <database> ==<release>
 
 **Give those two the same version specifier.** They install ``rms-opus`` separately --
 the import runs under its own installation and the site is served by another -- so
@@ -168,7 +168,7 @@ The scripts
     serving a database another release built.
 
 The optional argument of all three is a **PEP 440 version specifier** appended to the
-distribution name -- ``==3.23.0`` for a particular release, omitted for the newest.
+distribution name -- ``==<release>`` for a particular release, omitted for the newest.
 
 ``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
 a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from
@@ -230,8 +230,8 @@ lookup that locates the WSGI target the web server is pointed at.
 
 ``_write_opus_toml.sh`` is a separate program rather than a block inside the setup script
 so that it can be run on its own against a controlled environment and its output loaded
-through :func:`opus_config.config.load_config` -- which is what its unit test does. A generator
-whose only exercise is a production deploy is a generator nobody has checked.
+through :func:`opus_config.config.load_config` -- which is what its unit test does. A
+generator whose only exercise is a production deploy is a generator nobody has checked.
 
 .. _user_guide_deployment_after_import:
 

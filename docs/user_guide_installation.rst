@@ -159,8 +159,10 @@ x86-64::
 The download and the unpacked ``wkhtmltox/`` are left behind in ``/tmp``, which is where
 they can be deleted or ignored; only what was moved to ``/usr/bin`` is installed. The
 glob takes ``wkhtmltoimage`` along with ``wkhtmltopdf``; they ship together, and the one
-the help pages call ends up on the path either way. 0.12.4 is the release the Node runs. The project is archived, so that releases page is a fixed list rather than a moving
-one; a later release from it does as well, as long as ``--version`` says patched.
+the help pages call ends up on the path either way. 0.12.4 is the release the Node
+runs; the project is archived, so that releases page is a fixed list rather than a
+moving one, and a later release from it does as well, as long as ``--version`` says
+patched.
 
 **The PDS holdings**, mounted read-only. The import needs them to run at all; the web
 application needs them to serve product files. Both a PDS3 and a PDS4 root are
@@ -189,10 +191,10 @@ distribution once, by hand, into an environment of its own::
     python3.12 -m venv /opt/opus/deploy_venv
     source /opt/opus/deploy_venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install "rms-opus==3.24.0"
+    python -m pip install "rms-opus==<release>"
 
-``opus`` there is the account from the prerequisites, and ``3.24.0`` the release you are
-deploying.
+``opus`` there is the account from the prerequisites, and ``<release>`` the release you
+are deploying.
 
 **This environment does not serve anything.** It exists so that the scripts have commands
 to run; the installations that serve and import are built by the scripts under
@@ -382,7 +384,7 @@ Step 4: the first import
 ::
 
     cd /opt/opus/deploy
-    ./import_and_deploy/run_full_opus_import.sh ==3.24.0
+    ./import_and_deploy/run_full_opus_import.sh ==<release>
 
 That one command builds an installation of that release under ``staged/``, points the
 ``import`` symlink at it, and imports the whole archive into a database of its own named
@@ -398,9 +400,10 @@ validation. The order lives in the release being installed rather than in the sc
 it cannot disagree with the code importing.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
-``==3.24.0`` for a particular release, omitted for the newest. Give this step and step 5
-the same one -- they install ``rms-opus`` separately, so leaving it off both means "the
-newest release" twice, which is two different releases if one is published in between.
+``==<release>`` for a particular release, omitted for the newest. Give this step and
+step 5 the same one -- they install ``rms-opus`` separately, so leaving it off both
+means "the newest release" twice, which is two different releases if one is published
+in between.
 
 **Read the log rather than the exit status.** Several import steps report a failure
 through the log and still exit zero, so a clean run is an empty ``ERRORS.log``::
@@ -424,7 +427,8 @@ then deploys the database that produced::
     # one the site actually serves from.
     opus_config_template
     install -m 600 opus.toml.template /opt/opus/partial.toml
-    # ... fill it in: schema = "opus3_cassini", and the same paths deploy.env names.
+    # ... fill it in: schema = "<database>", a name of your own, and the same paths
+    #     deploy.env names.
 
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --cleanup-aux-tables
@@ -432,7 +436,7 @@ then deploys the database that produced::
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate-perm
 
     # Then step 5 as usual, naming that database.
-    ./import_and_deploy/deploy_new_code_and_database.sh opus3_cassini ==3.24.0
+    ./import_and_deploy/deploy_new_code_and_database.sh <database> ==<release>
 
 What ``--do-it-all`` takes is a *descriptor*, and several can be given, comma- or
 space-separated: a bundle id (``COISS_2002``), a whole bundleset (``COISS_2xxx``), one of
@@ -450,7 +454,7 @@ Step 5: the first deploy
 
 ::
 
-    ./import_and_deploy/deploy_new_code_and_database.sh opus3_20260902T031500_12345 ==3.24.0
+    ./import_and_deploy/deploy_new_code_and_database.sh <database> ==<release>
 
 The argument is the database from step 4. This builds the installation that will serve --
 its own virtualenv, its own ``rms-opus``, a generated ``opus.toml`` naming that database,
