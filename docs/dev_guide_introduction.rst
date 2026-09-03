@@ -4,7 +4,8 @@ Introduction
 ============
 
 OPUS is the Outer Planets Unified Search tool of the Ring-Moon Systems Node of NASA's
-Planetary Data System. It lets a scientist search the Node's holdings by observation
+Planetary Data System. It lets a scientist search the Ring-Moon Systems Node's holdings
+by observation
 metadata -- when an observation was taken, what it was pointed at, what geometry it
 covers -- and then retrieve the data files that match.
 
@@ -36,24 +37,26 @@ How to read it
 
 The chapters are in reading order, and the order is deliberate:
 
-* **Orientation** -- this chapter, :ref:`dev_guide_layout`,
-  :ref:`dev_guide_environment` and :ref:`dev_guide_testing` get a checkout working and
-  say where everything is.
+* **Orientation** -- this chapter, :ref:`dev_guide_layout` and
+  :ref:`dev_guide_environment` get a checkout working and say where everything is.
 * **The whole system at once** -- :ref:`dev_guide_architecture` is the one-page map of
   the two programs and the database between them. Read it before either subsystem.
-* **The import pipeline** -- from :ref:`dev_guide_import` through
-  :ref:`dev_guide_import_extending`, covering how holdings become tables, how to run a
-  run, what each module does, how it is tested without holdings, and how to add to it.
-* **The database** -- :ref:`dev_guide_table_schemas`, :ref:`dev_guide_database`,
-  :ref:`dev_guide_opus_id` and :ref:`dev_guide_dictionary` describe the thing the two
-  programs share.
-* **The web application** -- from :ref:`dev_guide_webapp` through
-  :ref:`dev_guide_webapp_extending`.
-* **The shared packages and the log analyzer** -- :ref:`dev_guide_support` covers the
-  two packages both programs depend on, and :ref:`dev_guide_log_analyzer` the third
-  program.
-* **Installing and running a server** -- :ref:`dev_guide_installation`,
-  :ref:`dev_guide_web_server` and :ref:`dev_guide_deployment`.
+* **The import pipeline** -- :ref:`dev_guide_import` and the pages under it, covering
+  how holdings become tables, how to run a run, what each module does, how it is tested
+  without holdings, and how to add to it.
+* **The database** -- :ref:`dev_guide_database` and the pages under it describe the
+  thing the two programs share: the schema itself, the JSON every table is created from,
+  the OPUS ID, and the data dictionary.
+* **The web application** -- :ref:`dev_guide_webapp` and the pages under it, from how a
+  request is served to how to add an app.
+* **The two shared packages** -- :ref:`dev_guide_config` is the file every OPUS process
+  is configured by, and :ref:`dev_guide_opus_support` is what the two programs convert
+  values with so that they agree.
+* **Testing it, and the third program** -- :ref:`dev_guide_testing` covers the three
+  suites and what each one needs, and :ref:`dev_guide_log_analyzer` the log analyzer.
+* **Running a server** is not in this guide at all. :ref:`user_guide` is the separate
+  guide for that: installing OPUS, importing the holdings, putting a web server in front
+  of it, and operating it, without assuming anything about how OPUS is built.
 * **Working on it** -- :ref:`dev_guide_conventions` and
   :ref:`dev_guide_contributing`, then the generated :doc:`api_reference`.
 
@@ -64,13 +67,16 @@ What the distribution contains
 database -- and two supporting packages:
 
 :mod:`opus_import`
-    The import pipeline. It reads PDS3 volumes and PDS4 bundles out of the Node's
+    The import pipeline. It reads PDS3 volumes and PDS4 bundles out of the Ring-Moon
+    Systems Node's
     holdings, computes one row of metadata per observation, and writes the OPUS
     database. It runs as ``opus_import``, or equivalently ``python -m opus_import``.
 
 :mod:`opus_app`
     The Django project. It serves the OPUS user interface and the public web API out
-    of the database the import pipeline wrote. It runs under a WSGI server.
+    of the database the import pipeline wrote. It runs under a WSGI server, and its
+    management commands are run with ``opus_manage``, which is Django's own command
+    line with the settings module already named.
 
 :mod:`opus_config`
     The configuration loader. It reads the one TOML file an installation is
@@ -243,7 +249,8 @@ The dependencies worth knowing about before reading any code:
 * **Django 5.2** -- the web application. OPUS uses Django's ORM only for reading;
   every OPUS table is created by the import pipeline rather than by a migration, and
   the heavier queries are assembled by :mod:`opus_app.apps.tools.sql_builder` instead.
-* **rms-pdsfile**, **rms-pdstable**, **rms-pdsparser** -- the Node's own libraries for
+* **rms-pdsfile**, **rms-pdstable**, **rms-pdsparser** -- the Ring-Moon Systems Node's
+  own libraries for
   finding files in the holdings and for reading PDS3 labels and index tables.
 * **rms-julian** -- time conversions, which :mod:`opus_support.time_parsing` builds on.
 * **mysqlclient** -- the MySQL driver. It has no Linux wheel, so installing OPUS

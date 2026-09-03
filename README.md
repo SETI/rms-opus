@@ -17,7 +17,8 @@
 ## Introduction
 
 OPUS is the Outer Planets Unified Search tool of the Ring-Moon Systems Node of NASA's
-Planetary Data System. It lets a researcher search the Node's archive by what an
+Planetary Data System. It lets a researcher search the Ring-Moon Systems Node's
+archive by what an
 observation *is* -- when it was taken, what instrument took it, what it was pointed at,
 what ring or surface geometry it covers -- and then retrieve the matching data files.
 A public instance runs at [opus.pds-rings.seti.org](https://opus.pds-rings.seti.org).
@@ -25,7 +26,8 @@ A public instance runs at [opus.pds-rings.seti.org](https://opus.pds-rings.seti.
 This distribution holds everything that instance is made of: the pipeline that reads
 PDS3 volumes and PDS4 bundles and populates the search database, the Django application
 that serves the web interface and the public API, and the log analyzer that reports on
-how the site is used. It is published so that the Node can deploy it and so that the
+how the site is used. It is published so that the Ring-Moon Systems Node can deploy
+it and so that the
 software behind a public archive is inspectable, not because OPUS is a library to build
 on: the packages carry no API stability guarantees.
 
@@ -65,12 +67,10 @@ pip install rms-opus
 
 OPUS reads one TOML configuration file and has **no default location for it**: the
 `OPUS_CONFIG` environment variable must name the file in the environment of every OPUS
-process. `opus.toml.template` documents every key. It lives in the repository rather
-than in the installed package, so copy it out of a checkout, or fetch it -- with `-f`,
-so that a failed download stops rather than leaving the error page in the file:
+process. The installation writes the template to start from, with a comment on every key:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/SETI/rms-opus/main/opus.toml.template
+opus_config_template                          # writes ./opus.toml.template
 install -m 600 opus.toml.template opus.toml   # then fill in every <PLACEHOLDER>
 export OPUS_CONFIG=$PWD/opus.toml
 ```
@@ -78,7 +78,7 @@ export OPUS_CONFIG=$PWD/opus.toml
 Running the import pipeline needs the PDS holdings mounted. `memcached` and its
 `pymemcache` client are optional and are not installed by `pip install rms-opus` --
 without them OPUS falls back to Django's per-process local-memory cache. The
-[deployment guide](https://rms-opus.readthedocs.io/en/latest/dev_guide_deployment.html)
+[deployment guide](https://rms-opus.readthedocs.io/en/latest/user_guide_deployment.html)
 covers both.
 
 ## Quick Start
@@ -97,11 +97,12 @@ python manage.py migrate     # Django's own tables; OPUS's come from the import
 python manage.py runserver   # then open http://127.0.0.1:8000/opus/
 ```
 
-From a `pip install` there is no `manage.py`; `django-admin` does the same work:
+From a `pip install` there is no `manage.py`; `opus_manage` is the same program, and
+`OPUS_CONFIG` stays the only variable it needs:
 
 ```bash
-export DJANGO_SETTINGS_MODULE=opus_app.settings
-django-admin migrate
+opus_manage migrate
+opus_manage runserver
 ```
 
 Ask the public API how many Cassini ISS observations of Pan there are:

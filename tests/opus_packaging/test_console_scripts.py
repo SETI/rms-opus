@@ -25,18 +25,34 @@ import pytest
 # here; this mapping is the assertion, not a description of one.
 EXPECTED_SCRIPTS = {
     'opus_import': 'opus_import.cli:main',
+    'opus_import_all': 'opus_import.import_all:main',
     'opus_log_analyzer': 'opus_log_analyzer.log_analyzer:main',
     'opus_error_analyzer': 'opus_log_analyzer.error_analyzer:main',
+    'opus_manage': 'opus_app.manage:main',
+    'opus_config_template': 'opus_config.template:main',
+    'opus_deploy_scripts': 'opus_deploy.scripts:main',
 }
 
-# The ``python -m`` form documented as equivalent to each console script. The error
-# analyzer names a module rather than a package: a package has one ``__main__`` and the
-# log analyzer holds it.
+# The commands that parse their own command line with argparse, and so name themselves
+# in their usage line. ``opus_manage`` is deliberately absent: it is Django's management
+# command line rather than a program of this project's, and its own test is below.
+ARGPARSE_SCRIPTS = frozenset(EXPECTED_SCRIPTS) - {'opus_manage'}
+
+# The ``python -m`` form documented as equivalent to each of the three console scripts
+# that has one. The error analyzer names a module rather than a package: a package has
+# one ``__main__`` and the log analyzer holds it. The other two commands have no module
+# form -- ``opus_manage`` runs Django's own command line, and ``opus_config_template``
+# is one operation with nothing to run it through.
 PYTHON_M_EQUIVALENT = {
     'opus_import': 'opus_import',
     'opus_log_analyzer': 'opus_log_analyzer',
     'opus_error_analyzer': 'opus_log_analyzer.error_analyzer',
 }
+
+# The variable ``opus_manage`` exists so that nobody has to set. Django can be told its
+# settings module only through the environment, so a command that has to be given it by
+# hand is one an installation can get wrong.
+SETTINGS_ENV_VAR = 'DJANGO_SETTINGS_MODULE'
 
 
 def _console_scripts() -> dict[str, importlib.metadata.EntryPoint]:
@@ -59,15 +75,17 @@ def _installed_command(name: str) -> Path:
     pytest.fail(f'console script {name!r} is not installed in {bindir}')
 
 
-def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
+def _run(command: list[str], *, without: str | None = None) -> subprocess.CompletedProcess[str]:
     """Run a command to completion, capturing its output as text.
 
     The environment is inherited so that ``OPUS_CONFIG`` reaches the child, which every
-    process reading OPUS settings needs.
+    process reading OPUS settings needs. ``without`` names one variable to remove from
+    that copy, which is how a command is checked for not needing it.
     """
-    return subprocess.run(
-        command, capture_output=True, text=True, check=False, env=os.environ.copy()
-    )
+    environment = os.environ.copy()
+    if without is not None:
+        environment.pop(without, None)
+    return subprocess.run(command, capture_output=True, text=True, check=False, env=environment)
 
 
 def test_every_promised_console_script_is_declared() -> None:
@@ -95,7 +113,7 @@ def test_console_script_target_resolves(name: str) -> None:
     assert callable(_console_scripts()[name].load())
 
 
-@pytest.mark.parametrize('name', sorted(EXPECTED_SCRIPTS))
+@pytest.mark.parametrize('name', sorted(ARGPARSE_SCRIPTS))
 def test_installed_command_runs_and_names_itself(name: str) -> None:
     """The installed command runs, and argparse reports the command's own name.
 
@@ -108,7 +126,7 @@ def test_installed_command_runs_and_names_itself(name: str) -> None:
     assert result.stdout.startswith(f'usage: {name} ')
 
 
-@pytest.mark.parametrize('name', sorted(EXPECTED_SCRIPTS))
+@pytest.mark.parametrize('name', sorted(PYTHON_M_EQUIVALENT))
 def test_installed_command_and_python_m_form_agree(name: str) -> None:
     """Both documented ways of running a program produce the same command-line surface.
 
@@ -120,3 +138,34 @@ def test_installed_command_and_python_m_form_agree(name: str) -> None:
     module = _run([sys.executable, '-m', PYTHON_M_EQUIVALENT[name], '--help'])
     assert module.returncode == 0, module.stderr
     assert console.stdout == module.stdout
+
+
+def test_opus_manage_needs_no_settings_variable() -> None:
+    """``opus_manage`` configures Django itself, so ``OPUS_CONFIG`` is the only variable.
+
+    That is the whole reason the command exists: Django can be told its settings module
+    only through the environment, and an installed OPUS has no ``manage.py`` to imply it.
+    The variable is removed from the child's environment here because the suite's own
+    process has it set, so inheriting it would make this pass either way.
+
+    Listing the subcommands the installed apps contribute is what proves the settings
+    really were loaded: Django cannot populate the app registry without them.
+    """
+    result = _run([str(_installed_command('opus_manage')), 'help'], without=SETTINGS_ENV_VAR)
+    assert result.returncode == 0, result.stderr
+    assert "Type 'opus_manage help <subcommand>'" in result.stdout
+    assert 'migrate' in result.stdout
+
+
+def test_opus_manage_and_the_checkout_manage_py_are_one_program() -> None:
+    """The installed command and the checkout's ``manage.py`` run the same code.
+
+    They are documented as interchangeable, and they are only interchangeable because
+    ``manage.py`` calls this command's ``main``. Their help text is identical once each
+    has named itself, which is the difference the substitution below removes.
+    """
+    manage_py = Path(__file__).parents[2] / 'manage.py'
+    installed = _run([str(_installed_command('opus_manage')), 'help'], without=SETTINGS_ENV_VAR)
+    checkout = _run([sys.executable, str(manage_py), 'help'], without=SETTINGS_ENV_VAR)
+    assert checkout.returncode == 0, checkout.stderr
+    assert installed.stdout.replace('opus_manage', 'manage.py') == checkout.stdout

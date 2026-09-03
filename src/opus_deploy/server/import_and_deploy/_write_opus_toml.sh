@@ -12,8 +12,8 @@
 # exercise is a production deploy is a generator nobody has checked.
 #
 # Every variable below must be exported by the caller. The deploy chain reads them
-# from scripts/server/secrets/deploy.env (see deploy.env.template) plus the values
-# _opus_setup_environment.sh derives per host.
+# from secrets/deploy.env beside these scripts (see deploy.env.template) plus the
+# values _opus_setup_environment.sh derives per installation.
 
 set -euo pipefail
 
@@ -37,9 +37,10 @@ OUTPUT_PATH=$1
 # `!_toml_var: unbound variable`, naming this loop's own variable rather than the one
 # the operator has to fix, so the check is explicit and the message names the culprit.
 for _toml_var in \
-    OPUS_DB_NAME OPUS_DB_USER OPUS_DB_PASSWORD PDS3_HOLDINGS_DIR PDS4_HOLDINGS_DIR \
-    OPUS_LOG_DIR OPUS_DIR LAST_BLOG_UPDATE_FILE NOTIFICATION_FILE OPUS_SECRET_KEY \
-    OPUS_PUBLIC_URL OPUS_PRODUCT_HTTP_PATH OPUS_VIEWMASTER_URL OPUS_TAR_FILE_URL; do
+    OPUS_DB_NAME OPUS_DB_HOST OPUS_DB_USER OPUS_DB_PASSWORD PDS3_HOLDINGS_DIR \
+    PDS4_HOLDINGS_DIR OPUS_LOG_DIR OPUS_DIR LAST_BLOG_UPDATE_FILE NOTIFICATION_FILE \
+    OPUS_SECRET_KEY OPUS_ALLOWED_HOSTS OPUS_CACHE_PREFIX OPUS_PUBLIC_URL \
+    OPUS_PRODUCT_HTTP_PATH OPUS_VIEWMASTER_URL OPUS_TAR_FILE_URL; do
     if [[ ! -v $_toml_var ]]; then
         echo "ERROR: $_toml_var is not set in the deploy environment." >&2
         exit 1
@@ -89,12 +90,24 @@ toml_escape() {
 # its mode, so writing over a leftover temporary file would keep whatever permissions
 # that file had and the `umask 077` below would protect nothing -- the password and the
 # secret key would sit in a world-readable file until the `chmod 600` at the end.
+# OPUS_ALLOWED_HOSTS is a space-separated list in deploy.env and a TOML array here.
+# The expansion is deliberately unquoted: splitting on whitespace is what turns the
+# one into the other, and each name is escaped and quoted individually afterwards.
+toml_host_list() {
+    local host separator="" list=""
+    for host in ${OPUS_ALLOWED_HOSTS}; do
+        list+="${separator}\"$(toml_escape "${host}")\""
+        separator=", "
+    done
+    printf '%s' "${list}"
+}
+
 rm -f "${OUTPUT_PATH}.tmp"
 
 ( umask 077; cat > "${OUTPUT_PATH}.tmp" <<EOF
 [database]
 brand = "MySQL"
-host = "localhost"
+host = "$(toml_escape "${OPUS_DB_HOST}")"
 database = ""
 schema = "$(toml_escape "${OPUS_DB_NAME}")"
 user = "$(toml_escape "${OPUS_DB_USER}")"
@@ -103,7 +116,7 @@ password = "$(toml_escape "${OPUS_DB_PASSWORD}")"
 [paths]
 pds3_holdings = "$(toml_escape "${PDS3_HOLDINGS_DIR}")"
 pds4_holdings = "$(toml_escape "${PDS4_HOLDINGS_DIR}")"
-opus_log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_logs/opus_log.txt"
+opus_log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_log.txt"
 import_log_dir = "$(toml_escape "${OPUS_LOG_DIR}")"
 tar_dir = "$(toml_escape "${OPUS_DIR}")/downloads/"
 manifest_dir = "$(toml_escape "${OPUS_DIR}")/manifests/"
@@ -115,14 +128,8 @@ opus_static_root = "$(toml_escape "${OPUS_DIR}")/static_media"
 [django]
 secret_key = "$(toml_escape "${OPUS_SECRET_KEY}")"
 debug = ${OPUS_DEBUG}
-allowed_hosts = [
-    "127.0.0.1", "localhost",
-    "staging.pds.seti.org", "10.1.10.15",
-    "tools2.pds-rings.seti.org", "104.244.248.30", "tools2.pds.seti.org", "10.1.10.30",
-    "tools.pds-rings.seti.org", "104.244.248.20", "tools.pds.seti.org", "10.1.10.20",
-    "opus.pds-rings.seti.org", "104.244.248.40", "opus.pds.seti.org", "10.1.10.40",
-]
-cache_server_prefix = "production"
+allowed_hosts = [$(toml_host_list)]
+cache_server_prefix = "$(toml_escape "${OPUS_CACHE_PREFIX}")"
 public_url = "$(toml_escape "${OPUS_PUBLIC_URL}")"
 product_http_path = "$(toml_escape "${OPUS_PRODUCT_HTTP_PATH}")"
 viewmaster_url = "$(toml_escape "${OPUS_VIEWMASTER_URL}")"

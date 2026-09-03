@@ -17,8 +17,9 @@ Prerequisites
 
 * **memcached**, if you want the web application's caching to behave the way a server
   does. It is not needed to run the tests.
-* **wkhtmltopdf**, only if you want the help pages' PDF downloads to work. Without it
-  every other page still renders.
+* **wkhtmltopdf**, only if you want the help pages' PDF downloads to work, and only a
+  build with patched Qt -- see :ref:`user_guide_installation_prereqs`. Without it every
+  other page still renders.
 * **The PDS holdings**, only to run a real import against the archive, or the
   integration suites that need the database such an import populates. Neither
   holdings-free suite touches them: ``tests/`` needs nothing, and ``import_tests/`` runs
@@ -42,8 +43,8 @@ one install covers everything below.
 
 This chapter is the **development** installation. Bringing up a server -- installing the
 released distribution from PyPI, writing a configuration file, creating a database and
-collecting the static files -- is :ref:`dev_guide_installation`, and putting a web server
-in front of it is :ref:`dev_guide_web_server`.
+collecting the static files -- is :ref:`user_guide_installation`, and putting a web server
+in front of it is :ref:`user_guide_web_server`.
 
 Configuration
 -------------
@@ -56,12 +57,14 @@ server running several OPUS installations gives each one its own file and its ow
 
 ::
 
+    opus_config_template                          # writes ./opus.toml.template
     install -m 600 opus.toml.template opus.toml
     # fill in every <PLACEHOLDER>
     export OPUS_CONFIG=$PWD/opus.toml
 
-``opus.toml.template`` documents every key. :mod:`opus_config` validates the file as
-it reads it: an unknown key, a missing key, or a value of the wrong type is reported
+``opus_config_template`` is a console script the distribution installs; the template it
+writes ships inside :mod:`opus_config` and documents every key. :mod:`opus_config`
+validates the file as it reads it: an unknown key, a missing key, or a value of the wrong type is reported
 with the table and key at fault rather than failing later somewhere else.
 
 Environment variables
@@ -79,10 +82,12 @@ Environment variables
      - None. It is an error to leave it unset, except in the documentation build,
        whose ``conf.py`` falls back to ``tests/fixtures/opus_ci.toml``.
    * - ``DJANGO_SETTINGS_MODULE``
-     - Anything running Django outside ``manage.py``: ``django-admin``, a WSGI
-       server, ``mypy``.
-     - Set to ``opus_app.settings`` by ``manage.py``, by ``src/opus_app/wsgi.py``,
-       by ``pyproject.toml`` for pytest, and by ``docs/conf.py``.
+     - Bare ``django-admin``, and nothing else. Every other way of starting Django
+       here names the settings module itself.
+     - Set to ``opus_app.settings`` by ``opus_manage`` and ``manage.py`` (both through
+       :mod:`opus_app.manage`), by ``src/opus_app/wsgi.py``, by ``pyproject.toml`` for
+       pytest, and by ``docs/conf.py``. ``mypy`` reads it from ``[tool.django-stubs]``
+       in ``pyproject.toml`` instead.
    * - ``COVERAGE_RCFILE``
      - The live-database suites, whose coverage gate has its own configuration.
      - Set to ``integration_tests/.coveragerc`` by
@@ -108,6 +113,11 @@ Then open ``http://127.0.0.1:8000/opus/``. ``migrate`` creates only Django's ses
 auth, contenttypes and admin tables; every OPUS table is created by the import
 pipeline instead, so there are no OPUS migrations to run.
 
+``manage.py`` belongs to this checkout. An installation that has only the distribution
+runs the same commands as ``opus_manage migrate`` and ``opus_manage runserver``, which
+is the same program under another name;
+:ref:`dev_guide_webapp_command_line` gives all three forms and what each command does.
+
 **The import pipeline**::
 
     opus_import --help
@@ -127,9 +137,8 @@ A smoke test that needs neither holdings nor a database::
     opus_log_analyzer --help
     opus_error_analyzer --help
 
-**Both forms of every command.** The installation declares the console scripts
-``opus_import``, ``opus_log_analyzer`` and ``opus_error_analyzer``, and each is
-equivalent to a ``python -m`` invocation, because both reach the same ``main``:
+**Both forms of every command.** Three of the installed commands are OPUS programs, and
+each is equivalent to a ``python -m`` invocation because both reach the same ``main``:
 
 =========================  =========================================
 Console script             Equivalent module form
@@ -143,6 +152,16 @@ The error analyzer names a module rather than a package because a package has on
 ``__main__`` and the log analyzer holds it. The console scripts are what the server
 chains invoke, by name; ``tests/opus_packaging/test_console_scripts.py`` runs both
 forms of each and compares them.
+
+The rest have no ``python -m`` form, and all of them exist because an installation has no
+checkout to run a script out of. ``opus_manage`` is not an OPUS program at all: it is
+Django's own management command line with the settings module already named, so that an
+installation needs nothing in its environment but ``OPUS_CONFIG``, and in a checkout
+``manage.py`` is the same program. ``opus_config_template`` writes the configuration
+template into the working directory. ``opus_import_all`` runs a full import: every bundle
+set in order, each as its own ``opus_import`` process, and the three steps that finish the
+database. ``opus_deploy_scripts`` writes the server deploy chain out of the distribution;
+:ref:`user_guide_deployment` is what it is for.
 
 Running the tests and the checks
 --------------------------------
@@ -224,7 +243,8 @@ the release from being the first thing to discover a packaging change. What it c
 cover is the upload itself, the API tokens, and what PyPI makes of the metadata on
 receipt; only a real publish exercises those.
 
-``run-integration.yml`` runs on the Node's self-hosted runner, which has the real PDS
+``run-integration.yml`` runs on the Ring-Moon Systems Node's self-hosted runner, which
+has the real PDS
 holdings mounted. It imports a fixed set of bundles into a fresh database and then runs
 the golden-response API suite, the live-database Django suites, and
 ``tests/opus_support`` and ``tests/opus_app`` -- all in one session, because the 100%

@@ -106,7 +106,9 @@ When ``create_session_info`` was passed ``uses_html=True``, the strings
 ``parse_log_entry`` returns may be ordinary strings or ``markupsafe.Markup`` -- a
 string already known to be safe to insert into HTML. Passing an object to ``Markup``
 converts it to text and marks it safe **without escaping**; ``Markup.escape`` is what
-escapes instead::
+escapes instead:
+
+.. code-block:: pycon
 
     >>> Markup('Hello, <em>World</em>!')
     Markup('Hello, <em>World</em>!')
@@ -121,10 +123,11 @@ every other argument is escaped first.
 Deployment
 ----------
 
-The cron templates in ``scripts/server/log_analyzer/`` are what runs the
+The cron templates in ``src/opus_deploy/server/log_analyzer/``, which
+``opus_deploy_scripts`` writes out, are what runs the
 analyzer on a server: a nightly update, a monthly report, and a full refresh. They are
 templates because each installation fills in its own paths; nothing substitutes or
-executes them automatically. See :ref:`dev_guide_deployment`.
+executes them automatically. See :ref:`user_guide_deployment`.
 
 Known defects
 -------------

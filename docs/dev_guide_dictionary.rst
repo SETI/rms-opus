@@ -4,7 +4,7 @@ The Data Dictionary
 ===================
 
 Every tooltip the OPUS interface shows comes out of two database tables, ``contexts``
-and ``definitions``. :ref:`dev_guide_database` describes their columns; this chapter
+and ``definitions``. :ref:`dev_guide_database_schema` describes their columns; this page
 describes **where their contents come from** and how to add a term.
 
 Both are built by :mod:`opus_import.steps.do_dictionary`, under

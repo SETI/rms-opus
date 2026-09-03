@@ -6,6 +6,14 @@
 #                   example '==3.23.0'. Omit it to install the newest release.
 #
 export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+export SCRIPT_DIR=$(dirname "${IMPORT_SCRIPT_DIR}")
+export SECRETS_DIR="${SCRIPT_DIR}/secrets"
+
+# Read here as well as inside, so that a deploy.env that is missing something, or a
+# run started by the wrong account, is refused now rather than inside a detached
+# process whose only trace is a log file nobody is watching yet. It also supplies
+# OPUS_IMPORT_MAIL_TO, which the wrapper below needs after the import has ended.
+source "${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh"
 # mktemp rather than a $$-derived name: the PID is predictable and /tmp is
 # world-writable, so another local account can pre-create the path -- or a symlink at
 # it -- and _full_opus_import_wrapper.sh's redirection would then follow it. mktemp

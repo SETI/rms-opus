@@ -1,4 +1,4 @@
-"""Tests for the deploy chain's reader of ``scripts/server/secrets/deploy.env``.
+"""Tests for the deploy chain's reader of its own ``secrets/deploy.env``.
 
 ``_read_deploy_env.sh`` is what every server script sources before it does anything
 else, and it is the deploy's only chance to reject a bad environment *before* it stops
@@ -14,13 +14,14 @@ rather than re-implementing what it does.
 
 from __future__ import annotations
 
+import getpass
 import os
 import subprocess
 from pathlib import Path
 
 import pytest
 
-SERVER_SCRIPTS = Path(__file__).resolve().parents[2] / 'scripts' / 'server'
+SERVER_SCRIPTS = Path(__file__).resolve().parents[2] / 'src' / 'opus_deploy' / 'server'
 READER = SERVER_SCRIPTS / 'import_and_deploy' / '_read_deploy_env.sh'
 TEMPLATE = SERVER_SCRIPTS / 'deploy.env.template'
 
@@ -28,6 +29,9 @@ TEMPLATE = SERVER_SCRIPTS / 'deploy.env.template'
 # line in the template -- or the reverse -- fails a test rather than a deploy.
 REQUIRED_KEYS = [
     'OPUS_DIR',
+    'OPUS_DEPLOY_VENV',
+    'OPUS_USER',
+    'OPUS_DB_HOST',
     'OPUS_DB_USER',
     'OPUS_DB_PASSWORD',
     'OPUS_SECRET_KEY',
@@ -35,6 +39,25 @@ REQUIRED_KEYS = [
     'PDS4_HOLDINGS_DIR',
     'LAST_BLOG_UPDATE_FILE',
     'NOTIFICATION_FILE',
+    'OPUS_DEBUG',
+    'OPUS_ALLOWED_HOSTS',
+    'OPUS_CACHE_PREFIX',
+    'OPUS_PUBLIC_URL',
+    'OPUS_PRODUCT_HTTP_PATH',
+    'OPUS_VIEWMASTER_URL',
+    'OPUS_TAR_FILE_URL',
+]
+
+# The keys that are optional: a server that keeps its database to itself and tells
+# nobody leaves the first three empty, and the reader supplies a default for the rest.
+# It neither requires nor refuses any of them.
+OPTIONAL_KEYS = [
+    'OPUS_DB_DUMP_DIR',
+    'OPUS_PEER_DB_HOST',
+    'OPUS_IMPORT_MAIL_TO',
+    'OPUS_PYTHON',
+    'OPUS_WEB_SERVICE',
+    'OPUS_CACHE_SERVICE',
 ]
 
 pytestmark = pytest.mark.skipif(
@@ -57,6 +80,11 @@ def _make_environment(tmp_path: Path, **overrides: str | None) -> Path:
 
     values: dict[str, str | None] = {
         'OPUS_DIR': str(opus_dir),
+        'OPUS_DEPLOY_VENV': str(opus_dir / 'deploy_venv'),
+        # The account running the tests: the reader refuses to be sourced by anyone but
+        # the account deploy.env names, so this is what a valid file says here.
+        'OPUS_USER': getpass.getuser(),
+        'OPUS_DB_HOST': 'localhost',
         'OPUS_DB_USER': 'opus_user',
         'OPUS_DB_PASSWORD': 'a password',
         'OPUS_SECRET_KEY': 'a-secret-key',
@@ -64,6 +92,16 @@ def _make_environment(tmp_path: Path, **overrides: str | None) -> Path:
         'PDS4_HOLDINGS_DIR': str(pds4),
         'LAST_BLOG_UPDATE_FILE': str(opus_dir / 'last_update.txt'),
         'NOTIFICATION_FILE': str(opus_dir / 'notification.html'),
+        'OPUS_DEBUG': 'false',
+        'OPUS_ALLOWED_HOSTS': '127.0.0.1 localhost opus.example.org',
+        'OPUS_CACHE_PREFIX': 'production',
+        'OPUS_PUBLIC_URL': 'https://opus.example.org/',
+        'OPUS_PRODUCT_HTTP_PATH': 'https://opus.example.org/',
+        'OPUS_VIEWMASTER_URL': 'https://viewmaster.example.org/',
+        'OPUS_TAR_FILE_URL': 'https://opus.example.org/downloads/',
+        'OPUS_DB_DUMP_DIR': str(opus_dir / 'dumps'),
+        'OPUS_PEER_DB_HOST': '',
+        'OPUS_IMPORT_MAIL_TO': '',
     }
     values.update(overrides)
 
@@ -100,6 +138,96 @@ def test_a_complete_environment_is_accepted_and_exported(tmp_path: Path) -> None
     )
     result = _read(secrets, probe)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize('key', ['OPUS_PEER_DB_HOST', 'OPUS_DB_DUMP_DIR'])
+@pytest.mark.parametrize('value', ['', None])
+def test_a_server_that_keeps_its_database_may_say_nothing(
+    tmp_path: Path, key: str, value: str | None
+) -> None:
+    """Empty, or absent entirely, is an answer for the two that decide what a dump does.
+
+    Every required value is refused when empty, so these have to be excused explicitly;
+    without the exception a single-server installation could not be configured at all.
+    Absence is tested beside emptiness because the reader unsets both before it reads
+    the file, so a deploy.env that omits a line must not inherit one from the shell.
+    """
+    secrets = _make_environment(tmp_path, **{key: value})
+    result = _read(secrets, f'bash -c \'[[ -z "${{{key}}}" ]]\'')
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_a_peer_with_nowhere_to_dump_is_refused(tmp_path: Path) -> None:
+    """The load reads the dump, so a peer without a dump directory cannot work.
+
+    Left to run, it would fail at the end of an import that had been going for days,
+    with the database built and no way to copy it -- so it is refused at the start,
+    naming both variables and both ways out.
+    """
+    secrets = _make_environment(
+        tmp_path, OPUS_PEER_DB_HOST='other.example.org', OPUS_DB_DUMP_DIR=''
+    )
+    result = _read(secrets)
+
+    assert result.returncode == 1
+    assert 'OPUS_DB_DUMP_DIR' in result.stdout
+    assert 'other.example.org' in result.stdout
+
+
+@pytest.mark.parametrize(
+    ('key', 'named', 'expected'),
+    [
+        ('OPUS_PYTHON', None, 'python3.12'),
+        ('OPUS_PYTHON', 'python3.13', 'python3.13'),
+        ('OPUS_WEB_SERVICE', None, 'apache2'),
+        ('OPUS_WEB_SERVICE', 'opus-gunicorn', 'opus-gunicorn'),
+        ('OPUS_CACHE_SERVICE', None, 'memcached'),
+        ('OPUS_CACHE_SERVICE', '', ''),
+    ],
+)
+def test_a_defaulted_key_may_be_left_out_or_named(
+    tmp_path: Path, key: str, named: str | None, expected: str
+) -> None:
+    """The keys with defaults may be absent, and a value in the file wins over the default.
+
+    Absence is the case that matters: these keys were added after servers had a
+    ``deploy.env``, so an existing one has to go on working. Naming one is what a
+    server that differs needs -- a later Python, a unit that is not called
+    ``apache2``, or no shared cache at all. The defaults are supplied here rather
+    than where they are used, so that every script sees the same value and an unset
+    variable can never reach ``systemctl`` as an empty argument.
+    """
+    secrets = _make_environment(tmp_path, **{key: named})
+    result = _read(secrets, f'bash -c \'[[ "${{{key}}}" == "{expected}" ]]\'')
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_the_deploy_refuses_to_run_as_the_wrong_account(tmp_path: Path) -> None:
+    """Everything a deploy creates belongs to whoever ran it, including a 0600 file.
+
+    Run as anyone but the account the web server's workers run as, a deploy builds an
+    installation the site cannot read, and the symptom appears after the switch. The
+    refusal names both accounts and the way to run it again.
+    """
+    secrets = _make_environment(tmp_path, OPUS_USER='definitely-not-this-account')
+    result = _read(secrets)
+
+    assert result.returncode == 1
+    assert 'definitely-not-this-account' in result.stdout
+    assert getpass.getuser() in result.stdout
+
+
+@pytest.mark.parametrize('bad', ['True', 'yes', '1', ''])
+def test_a_non_boolean_debug_value_is_refused(tmp_path: Path, bad: str) -> None:
+    """``debug`` is a TOML boolean, and the reader is where that is worth saying.
+
+    The generator refuses one too, but by then a deploy has built a virtualenv and
+    installed a release; here it costs one word in deploy.env.
+    """
+    result = _read(_make_environment(tmp_path, OPUS_DEBUG=bad))
+
+    assert result.returncode == 1
+    assert 'OPUS_DEBUG' in result.stdout
 
 
 @pytest.mark.parametrize('key', REQUIRED_KEYS)
@@ -176,15 +304,17 @@ def test_a_holdings_root_without_its_subdirectory_is_refused(
     assert subdir in result.stdout
 
 
-def test_the_template_declares_exactly_the_keys_the_reader_requires() -> None:
+def test_the_template_declares_exactly_the_keys_the_reader_reads() -> None:
     """The shipped template and the reader agree on the contract.
 
     A key added to one and not the other is a deploy that fails on a server, and
-    nothing else compares the two files.
+    nothing else compares the two files. The optional key is part of the contract too:
+    the template has to offer it, or a single-server installation would have no way to
+    say so.
     """
     declared = {
         line.split('=', 1)[0]
         for line in TEMPLATE.read_text().splitlines()
         if line and not line.startswith('#') and '=' in line
     }
-    assert declared == set(REQUIRED_KEYS)
+    assert declared == set(REQUIRED_KEYS) | set(OPTIONAL_KEYS)

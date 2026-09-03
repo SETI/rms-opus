@@ -316,14 +316,23 @@ jobs:
           cd "$RUNNER_TEMP"
           export OPUS_CONFIG="$GITHUB_WORKSPACE/tests/fixtures/opus_ci.toml"
           "$RUNNER_TEMP/clean/bin/opus_import" --help > /dev/null
+          "$RUNNER_TEMP/clean/bin/opus_import_all" --dry-run > /dev/null
           "$RUNNER_TEMP/clean/bin/opus_log_analyzer" --help > /dev/null
           "$RUNNER_TEMP/clean/bin/opus_error_analyzer" --help > /dev/null
+          # Django's command line, configured from OPUS_CONFIG alone.
+          "$RUNNER_TEMP/clean/bin/opus_manage" help > /dev/null
+          # Run it rather than asking for --help: writing the file is what
+          # proves the template is in the wheel, and it is the first thing an
+          # operator configuring a server needs.
+          "$RUNNER_TEMP/clean/bin/opus_config_template" > /dev/null
+          grep -q '^#' opus.toml.template
           # A wheel missing package data installs and imports fine, then fails on
           # the first real run.
           "$RUNNER_TEMP/clean/bin/python" - <<'PY'
           import importlib.resources as res
 
           for package, name in [
+              ('opus_config', 'opus.toml.template'),
               ('opus_import.table_schemas', 'obs_general.json'),
               ('opus_import.dictionary_data', 'contexts.csv'),
               ('opus_log_analyzer.templates', 'log_analysis.html'),

@@ -153,8 +153,8 @@ The Django apps are described across :ref:`dev_guide_webapp_tools`,
 The database
 ------------
 
-:ref:`dev_guide_database` describes every table OPUS uses and what each column means. The
-two ideas to carry into any other chapter:
+:ref:`dev_guide_database_schema` describes every table OPUS uses and what each column
+means. The two ideas to carry into any other chapter:
 
 * An ``obs_*`` table corresponds one-for-one to a "Constraints" category in the user
   interface, and a row is one observation. ``obs_general`` is the master table: every
@@ -191,7 +191,7 @@ The division of responsibility, in one table, because several questions turn on 
      - the web application (reset by the import)
      - the web application
    * - Django's contrib tables
-     - ``django-admin migrate``
+     - ``opus_manage migrate``
      - Django
    * - ``search/models.py``
      - a script, from a populated database
@@ -200,8 +200,8 @@ The division of responsibility, in one table, because several questions turn on 
 Nothing in the pipeline imports :mod:`opus_app`, and nothing in the application imports
 :mod:`opus_import`. The two shared packages are what they agree through:
 :mod:`opus_config` for the installation's settings, and :mod:`opus_support` for the unit,
-time and angle conversions both have to perform identically. :ref:`dev_guide_support`
-describes both.
+time and angle conversions both have to perform identically. :ref:`dev_guide_config` and
+:ref:`dev_guide_opus_support` describe them.
 
 API reference
 -------------

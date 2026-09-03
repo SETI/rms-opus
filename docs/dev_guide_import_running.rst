@@ -7,7 +7,7 @@ The pipeline is one program with one command line. This chapter is the complete
 surface: what to set in the environment, every option, what a run prints, how to tell
 whether it worked, and what a small run and a full-holdings run each look like.
 
-:ref:`dev_guide_import` is the theory this chapter assumes.
+:ref:`dev_guide_import_overview` is the theory this chapter assumes.
 
 Invoking it
 -----------
@@ -31,7 +31,7 @@ The environment
      - Needed for
    * - ``OPUS_CONFIG``
      - Everything but ``--help``. It names the installation's TOML file, and there is
-       **no default location**. See :ref:`dev_guide_installation` for how to write one.
+       **no default location**. See :ref:`user_guide_installation` for how to write one.
 
 The pipeline reads nothing else from the environment. The database, the holdings roots
 and the log locations all come from the configuration file, and the keys it uses are:
@@ -413,12 +413,21 @@ A full-holdings run
 A complete import is hours to days and replaces everything a user sees, so it is done
 into a new schema and switched over afterwards rather than in place.
 
-``scripts/import/`` holds the wrappers the Node uses:
+The sequence itself is an installed command, :mod:`opus_import.import_all`, run as
+``opus_import_all``: the erase, the bundle sets in the order a full import takes them,
+and the three steps that finish the database, each as its own ``opus_import`` process,
+stopping at the first failure. ``opus_import_all --dry-run`` prints the whole sequence
+without running any of it, and :ref:`user_guide_installation_full_import` is the
+operator's account of it.
+
+``scripts/import/`` holds the wrappers the Ring-Moon Systems Node uses around that:
 
 ``import_all.sh``
-    A full production import. It prints the schema it is about to erase and asks for
-    confirmation before doing it, so that the erase cannot be aimed at the wrong
-    database. It prints no row counts; comparing those is a separate query.
+    A full production import on one of the Ring-Moon Systems Node's own servers. It
+    refuses to run on any
+    other host, prints the database currently being served, asks for confirmation, and
+    then puts ``opus_import_all --yes`` under ``nohup``. Everything it adds is specific
+    to the Ring-Moon Systems Node; the import itself is the installed command.
 
 ``import_for_tests.sh``
     The fixed bundle list the integration suite runs against -- Cassini ISS, UVIS, VIMS
@@ -435,11 +444,7 @@ into a new schema and switched over afterwards rather than in place.
     Filters an import log down to the warnings no known pattern accounts for, which is
     how a run's log is triaged.
 
-``_import_all_internal.sh``
-    The body ``import_all.sh`` runs once its confirmation has been given. It is the file
-    that records which bundle groups get ``--import-check-duplicate-id``.
-
-The runbook is in :ref:`dev_guide_deployment`; the short version is: import into a new
+The runbook is in :ref:`user_guide_deployment`; the short version is: import into a new
 schema, read ``ERRORS.log``, compare against the database being served, point a test
 installation at the new one, then switch the public installation over, flush the shared
 cache and restart every worker process.

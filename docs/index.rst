@@ -9,6 +9,7 @@ rms-opus
    :maxdepth: 2
    :caption: Contents
 
+   user_guide
    dev_guide
    api_guide
    api_reference

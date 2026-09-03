@@ -1,0 +1,179 @@
+# This file should only be used via "source"
+#
+# Read secrets/deploy.env -- the deploy chain's own configuration, which is a
+# different thing from the application's opus.toml and is documented as such.
+# deploy.env holds the shell-level values these scripts need before any OPUS code
+# exists to read anything: where to install, which database credentials to use, where
+# the holdings are. opus.toml is what the installed application reads at run time,
+# and _write_opus_toml.sh generates it from these values.
+#
+# Both files are relative to the directory opus_deploy_scripts wrote this chain into:
+# deploy.env.template at its top, the filled-in copy in secrets/ beside these scripts.
+# It holds a password and a secret key, so it should be mode 0600 in a 0700 directory.
+
+unset OPUS_DIR
+unset OPUS_DEPLOY_VENV
+unset OPUS_PYTHON
+unset OPUS_USER
+unset OPUS_DB_HOST
+unset OPUS_DB_DUMP_DIR
+unset OPUS_WEB_SERVICE
+unset OPUS_CACHE_SERVICE
+unset OPUS_PEER_DB_HOST
+unset OPUS_IMPORT_MAIL_TO
+unset OPUS_DEBUG
+unset OPUS_ALLOWED_HOSTS
+unset OPUS_CACHE_PREFIX
+unset OPUS_PUBLIC_URL
+unset OPUS_PRODUCT_HTTP_PATH
+unset OPUS_VIEWMASTER_URL
+unset OPUS_TAR_FILE_URL
+unset OPUS_DB_USER
+unset OPUS_DB_PASSWORD
+unset OPUS_SECRET_KEY
+unset PDS3_HOLDINGS_DIR
+unset PDS4_HOLDINGS_DIR
+unset LAST_BLOG_UPDATE_FILE
+unset NOTIFICATION_FILE
+
+if [[ ! -r ${SECRETS_DIR}/deploy.env ]]; then
+    # The template is at the top of the chain, one level above secrets/, wherever
+    # opus_deploy_scripts wrote it. Both paths are printed rather than described,
+    # because this is the first thing a new installation gets wrong.
+    _chain_dir=$(dirname "${SECRETS_DIR}")
+    echo "${SECRETS_DIR}/deploy.env is missing or unreadable."
+    echo "Copy the template beside these scripts into it, and fill it in:"
+    echo
+    echo "    install -d -m 700 \"${SECRETS_DIR}\""
+    echo "    install -m 600 \"${_chain_dir}/deploy.env.template\" \\"
+    echo "        \"${SECRETS_DIR}/deploy.env\""
+    echo
+    exit 1
+fi
+source ${SECRETS_DIR}/deploy.env
+
+# Every variable the chain needs, checked here rather than where it is used, so a
+# deploy fails before it stops Apache rather than half way through. Emptiness is
+# refused as well as absence, because nothing downstream objects to an empty value:
+# an empty OPUS_SECRET_KEY is a well-formed TOML string and Django starts with no
+# secret key.
+for _required in \
+    OPUS_DIR OPUS_DEPLOY_VENV OPUS_USER OPUS_DB_HOST OPUS_DB_USER OPUS_DB_PASSWORD \
+    OPUS_SECRET_KEY PDS3_HOLDINGS_DIR PDS4_HOLDINGS_DIR LAST_BLOG_UPDATE_FILE \
+    NOTIFICATION_FILE OPUS_DEBUG OPUS_ALLOWED_HOSTS OPUS_CACHE_PREFIX OPUS_PUBLIC_URL \
+    OPUS_PRODUCT_HTTP_PATH OPUS_VIEWMASTER_URL OPUS_TAR_FILE_URL; do
+    if [[ ! -v $_required ]]; then
+        echo "$_required not defined in ${SECRETS_DIR}/deploy.env"
+        exit 1
+    fi
+    if [[ -z ${!_required} ]]; then
+        echo "$_required is empty in ${SECRETS_DIR}/deploy.env"
+        exit 1
+    fi
+    # deploy.env.template ships every value as a quoted <PLACEHOLDER>, so a copy of
+    # it that was never filled in sources cleanly and would otherwise reach the
+    # generator as a plausible-looking path.
+    if [[ ${!_required} == \<*\> ]]; then
+        echo "$_required is still the <PLACEHOLDER> from deploy.env.template."
+        echo "Fill in ${SECRETS_DIR}/deploy.env."
+        exit 1
+    fi
+done
+unset _required
+
+# Exported because _write_opus_toml.sh runs as its own process, which is what makes
+# it testable outside a deploy.
+export OPUS_DIR
+export OPUS_DEPLOY_VENV
+export OPUS_USER
+export OPUS_DB_HOST
+# Optional, and so neither required nor refused above: a server that keeps its database
+# to itself dumps nothing, copies nothing to a second server, and tells nobody. They
+# are exported all the same, and unset before the file is read, so a value left in the
+# caller's environment cannot stand in for one the file does not set.
+#
+# OPUS_DB_DUMP_DIR empty, or absent, means an import ends when the database is built:
+# a dump of the full holdings is tens of gigabytes and hours of writing, so it happens
+# because a server asked for it rather than by default.
+export OPUS_DB_DUMP_DIR=${OPUS_DB_DUMP_DIR:-}
+export OPUS_PEER_DB_HOST=${OPUS_PEER_DB_HOST:-}
+export OPUS_IMPORT_MAIL_TO=${OPUS_IMPORT_MAIL_TO:-}
+# The interpreter each installation's virtualenv is built with. Named rather than
+# assumed, because "python3" is whatever the machine calls its system Python and may
+# be older than OPUS supports; the default is the lowest version this release runs on,
+# so a server offering only a later one says which.
+export OPUS_PYTHON=${OPUS_PYTHON:-python3.12}
+# The systemd units the switch stops and starts around it: the one running the
+# application's workers, and the one holding the shared cache. Named rather than
+# assumed, because what serves OPUS is a choice -- Apache with mod_wsgi is one, a
+# gunicorn or uWSGI unit behind nginx is another -- and the unit that has to go down
+# for the switch is the one running the workers, whichever it is. An empty
+# OPUS_CACHE_SERVICE means there is no shared cache to empty.
+export OPUS_WEB_SERVICE=${OPUS_WEB_SERVICE:-apache2}
+# `-` rather than `:-`: for this one key an empty value is an answer -- there is no
+# shared cache to empty -- so only an absent line takes the default.
+export OPUS_CACHE_SERVICE=${OPUS_CACHE_SERVICE-memcached}
+export OPUS_DEBUG
+export OPUS_ALLOWED_HOSTS
+export OPUS_CACHE_PREFIX
+export OPUS_PUBLIC_URL
+export OPUS_PRODUCT_HTTP_PATH
+export OPUS_VIEWMASTER_URL
+export OPUS_TAR_FILE_URL
+export OPUS_DB_USER
+export OPUS_DB_PASSWORD
+export OPUS_SECRET_KEY
+export PDS3_HOLDINGS_DIR
+export PDS4_HOLDINGS_DIR
+export LAST_BLOG_UPDATE_FILE
+export NOTIFICATION_FILE
+
+# The one combination of those two that cannot do what it says. Loading a database onto
+# a second server means reading the dump the first one wrote, so a peer with nowhere to
+# dump to is a request that has to fail -- and it would fail at the end of an import
+# that has been running for days, having built the database it can no longer copy.
+if [[ -n ${OPUS_PEER_DB_HOST} && -z ${OPUS_DB_DUMP_DIR} ]]; then
+    echo "OPUS_PEER_DB_HOST names ${OPUS_PEER_DB_HOST}, but OPUS_DB_DUMP_DIR is empty"
+    echo "in ${SECRETS_DIR}/deploy.env. The load on the second server reads the dump"
+    echo "the first one writes, so copying a database needs somewhere to write it."
+    echo "Set OPUS_DB_DUMP_DIR, or clear OPUS_PEER_DB_HOST to keep the database here."
+    exit 1
+fi
+
+# TOML has no truthy strings: `debug = yes` is not a boolean, and the loader refuses
+# the file it lands in. Caught here, where the fix is one word in deploy.env, rather
+# than at the end of a deploy.
+if [[ ${OPUS_DEBUG} != "true" && ${OPUS_DEBUG} != "false" ]]; then
+    echo "OPUS_DEBUG in ${SECRETS_DIR}/deploy.env must be 'true' or 'false',"
+    echo "not '${OPUS_DEBUG}'."
+    exit 1
+fi
+
+# Everything a deploy creates belongs to whoever runs it, and the opus.toml it writes
+# is mode 0600. Run as anyone but the account the web server's workers run as -- root,
+# most easily -- and the deploy succeeds, the switch happens, and the site then cannot
+# read its own configuration. Refusing here costs a re-run; finding out afterwards
+# costs an outage.
+if [[ $(id -un) != "${OPUS_USER}" ]]; then
+    echo "These scripts must run as ${OPUS_USER}, the account named by OPUS_USER in"
+    echo "${SECRETS_DIR}/deploy.env, and this is $(id -un)."
+    echo
+    echo "    sudo -u ${OPUS_USER} <the command you ran>"
+    echo
+    exit 1
+fi
+
+if [[ ! -d ${OPUS_DIR} ]]; then
+    echo "${OPUS_DIR} does not exist"
+    exit 1
+fi
+
+if [[ ! -d ${PDS3_HOLDINGS_DIR}/volumes ]]; then
+    echo "${PDS3_HOLDINGS_DIR}/volumes does not exist"
+    exit 1
+fi
+
+if [[ ! -d ${PDS4_HOLDINGS_DIR}/bundles ]]; then
+    echo "${PDS4_HOLDINGS_DIR}/bundles does not exist"
+    exit 1
+fi

@@ -1,6 +1,6 @@
 """The expected-products assertion: what the recorder saw is what the import stored.
 
-This is the load-bearing test of the suite, because a shelf gap fails silently rather
+This is the test the suite rests on, because a shelf gap fails silently rather
 than loudly. A shelf file that is missing makes the product skipped with a warning; a key
 missing from a shelf that is present makes ``os_path_exists`` return False with no
 warning at all, so the candidate simply never existed and the import is quietly smaller.

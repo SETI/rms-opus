@@ -1,4 +1,4 @@
-.. _dev_guide_web_server:
+.. _user_guide_web_server:
 
 Fronting OPUS with a Web Server
 ===============================
@@ -10,11 +10,10 @@ products directly off disk, and it starts the worker processes.
 This chapter gives a worked configuration for **nginx** -- with gunicorn, and with uWSGI
 -- and for **Apache with mod_wsgi**. They are worked examples rather than files to paste
 unread. Throughout, ``opus`` is the account OPUS runs as, ``opus.example.org`` is the
-host name, ``/opus`` is the installation root, ``/pds`` is where the holdings are
-mounted, and ``/etc/opus/opus.toml`` is the configuration file; substitute your own for
-each.
+host name, ``/opt/opus`` is the installation root, and ``/pds`` is where the holdings are
+mounted; substitute your own for each.
 
-.. _dev_guide_web_server_contract:
+.. _user_guide_web_server_contract:
 
 What the web server has to provide
 ----------------------------------
@@ -32,6 +31,12 @@ a **file** path, it is the installed ``wsgi.py``, inside the virtual environment
 :mod:`opus_app.settings` is imported, which happens inside the worker before any request
 is served. This is the single most common way a deployment fails, and each server
 arranges it differently -- see each section below.
+
+The examples below name ``/opt/opus/deployed/opus.toml``. Every installation the deploy
+scripts build carries its own generated configuration, and ``deployed`` is the symlink
+onto the one being served, so that path follows the site across deploys rather than
+naming any one installation. :ref:`user_guide_installation_configuring` says what is in
+that file.
 
 **3. Static files are served at** ``/static_media/``, from the directory ``static_root``
 names. The prefix is fixed; :ref:`dev_guide_webapp_static` says why.
@@ -63,7 +68,7 @@ Two more, which are conventions rather than requirements:
 * ``allowed_hosts`` **has to name the host** the server passes through, or Django
   refuses the request.
 
-.. _dev_guide_web_server_nginx:
+.. _user_guide_web_server_nginx:
 
 nginx with gunicorn
 -------------------
@@ -74,8 +79,10 @@ systemd owns the gunicorn process and its environment.
 The systemd unit
 ~~~~~~~~~~~~~~~~
 
-**This is where** ``OPUS_CONFIG`` **is set.** systemd's ``Environment=`` puts it in the
-process's own environment, which is exactly what the settings import needs.
+**This is where** ``OPUS_CONFIG`` **is set**, and it is the only variable to set:
+systemd's ``Environment=`` puts it in the process's own environment, which is exactly
+what the settings import needs, and :mod:`opus_app.wsgi` names the settings module
+itself.
 
 .. code-block:: ini
 
@@ -89,12 +96,11 @@ process's own environment, which is exactly what the settings import needs.
     User=opus
     Group=opus
     RuntimeDirectory=opus
-    WorkingDirectory=/opus
+    WorkingDirectory=/opt/opus
 
-    Environment=OPUS_CONFIG=/etc/opus/opus.toml
-    Environment=DJANGO_SETTINGS_MODULE=opus_app.settings
+    Environment=OPUS_CONFIG=/opt/opus/deployed/opus.toml
 
-    ExecStart=/opus/src/rms-opus/opus_venv/bin/gunicorn \
+    ExecStart=/opt/opus/deployed/opus_venv/bin/gunicorn \
         --workers 8 \
         --timeout 300 \
         --bind unix:/run/opus/opus.sock \
@@ -138,7 +144,7 @@ The nginx server block
         # The static files collectstatic gathered. The prefix is fixed; the
         # directory is the static_root from opus.toml.
         location /static_media/ {
-            alias /opus/static_media/;
+            alias /opt/opus/static_media/;
             access_log off;
             expires 30d;
         }
@@ -156,11 +162,11 @@ The nginx server block
 
         # Cart archives, written into tar_dir and named by tar_file_url.
         location /downloads/ {
-            alias /opus/downloads/;
+            alias /opt/opus/downloads/;
         }
 
         location = /robots.txt {
-            alias /opus/static_media/robots.txt;
+            alias /opt/opus/static_media/robots.txt;
         }
 
         location / {
@@ -183,7 +189,7 @@ Three notes on that block:
 * Serving ``/holdings/`` from nginx rather than through Django is the point of the
   exercise: those are the data files, and they are large.
 
-.. _dev_guide_web_server_uwsgi:
+.. _user_guide_web_server_uwsgi:
 
 nginx with uWSGI
 ----------------
@@ -207,11 +213,10 @@ and gunicorn replaced by a uWSGI instance. **The environment variable is set wit
     [uwsgi]
     module = opus_app.wsgi:application
 
-    virtualenv = /opus/src/rms-opus/opus_venv
-    chdir      = /opus
+    virtualenv = /opt/opus/deployed/opus_venv
+    chdir      = /opt/opus
 
-    env = OPUS_CONFIG=/etc/opus/opus.toml
-    env = DJANGO_SETTINGS_MODULE=opus_app.settings
+    env = OPUS_CONFIG=/opt/opus/deployed/opus.toml
 
     master    = true
     processes = 8
@@ -237,12 +242,13 @@ survive a reboot. And ``chown-socket`` is what lets nginx reach the socket at al
 plays above. ``touch-reload`` is worth adding if you want a file touch rather than a
 service restart to recycle the workers after an import.
 
-.. _dev_guide_web_server_apache:
+.. _user_guide_web_server_apache:
 
 Apache with mod_wsgi
 --------------------
 
-This is the Node's own arrangement. It differs from the two above in one important
+This is the Ring-Moon Systems Node's own arrangement. It differs from the two above in
+one important
 respect: **mod_wsgi has no directive for a per-process environment variable**, so
 ``OPUS_CONFIG`` has to reach the daemon process another way.
 
@@ -258,7 +264,7 @@ Ubuntu, ``apache2ctl`` sources ``/etc/apache2/envvars`` before starting the serv
 daemon processes inherit from there::
 
     # /etc/apache2/envvars
-    export OPUS_CONFIG=/etc/opus/opus.toml
+    export OPUS_CONFIG=/opt/opus/deployed/opus.toml
 
 A server running several OPUS installations cannot share one such variable. Give each its
 own Apache instance, or give each **its own** ``WSGIDaemonProcess`` and
@@ -274,10 +280,10 @@ every deploy, so a hand-written file at that path does not survive one.
 
 .. code-block:: python
 
-    # /etc/opus/other_wsgi.py -- outside every installation directory
+    # /opt/opus/other_wsgi.py -- outside every installation directory
     import os
 
-    os.environ['OPUS_CONFIG'] = '/etc/opus/other.toml'
+    os.environ['OPUS_CONFIG'] = '/opt/opus/other.toml'
 
     from opus_app.wsgi import application  # noqa: E402  (must follow the assignment)
 
@@ -301,22 +307,22 @@ The vhost
         WSGIDaemonProcess opus \
             user=opus group=opus \
             processes=4 threads=2 \
-            python-home=/opus/src/rms-opus/opus_venv
+            python-home=/opt/opus/deployed/opus_venv
         WSGIProcessGroup opus
         WSGIApplicationGroup %{GLOBAL}
 
         # The installed wsgi.py. See the note below about this path.
-        WSGIScriptAlias / /opus/src/rms-opus/wsgi.py
+        WSGIScriptAlias / /opt/opus/deployed/wsgi.py
 
-        <Directory /opus/src/rms-opus>
+        <Directory /opt/opus/deployed>
             <Files wsgi.py>
                 Require all granted
             </Files>
         </Directory>
 
         # The static files collectstatic gathered.
-        Alias /static_media/ /opus/static_media/
-        <Directory /opus/static_media>
+        Alias /static_media/ /opt/opus/static_media/
+        <Directory /opt/opus/static_media>
             Require all granted
             Options -Indexes
         </Directory>
@@ -334,8 +340,8 @@ The vhost
         </Directory>
 
         # Cart archives.
-        Alias /downloads/ /opus/downloads/
-        <Directory /opus/downloads>
+        Alias /downloads/ /opt/opus/downloads/
+        <Directory /opt/opus/downloads>
             Require all granted
             Options -Indexes
         </Directory>
@@ -358,12 +364,12 @@ environment's ``site-packages``, whose path contains the Python minor version. *
 it directly means editing the vhost after every Python upgrade.**
 
 The deploy chain avoids that by writing a **symlink at a fixed path** and re-pointing it
-on every deploy, which is why the vhost above names ``/opus/src/rms-opus/wsgi.py`` rather
+on every deploy, which is why the vhost above names ``/opt/opus/deployed/wsgi.py`` rather
 than a path under ``site-packages``. To create one by hand::
 
-    OPUS_WSGI=$(/opus/src/rms-opus/opus_venv/bin/python -c \
+    OPUS_WSGI=$(/opt/opus/deployed/opus_venv/bin/python -c \
       'import importlib.util; print(importlib.util.find_spec("opus_app.wsgi").origin)')
-    ln -sfn "$OPUS_WSGI" /opus/src/rms-opus/wsgi.py
+    ln -sfn "$OPUS_WSGI" /opt/opus/deployed/wsgi.py
 
 :func:`importlib.util.find_spec` locates the file **without importing it**. Importing
 :mod:`opus_app.wsgi` would build the application -- configuring Django and opening the log
@@ -377,7 +383,7 @@ writes, and turns them into per-session reports of what users did. It is the onl
 consumer of these logs, and :ref:`dev_guide_log_analyzer` describes it. There is nothing
 equivalent for nginx's own log format.
 
-.. _dev_guide_web_server_checklist:
+.. _user_guide_web_server_checklist:
 
 Checking it
 -----------
@@ -386,10 +392,10 @@ In order, because each check depends on the one before. The first runs a server 
 the foreground and does not return, so give it a terminal of its own and run the rest in
 another::
 
-    # The application starts and the configuration reaches it. `env` is load-bearing:
+    # The application starts and the configuration reaches it. `env` is needed here:
     # a default sudoers resets the environment and refuses to pass OPUS_CONFIG through.
-    sudo -u opus env OPUS_CONFIG=/etc/opus/opus.toml \
-        /opus/src/rms-opus/opus_venv/bin/gunicorn \
+    sudo -u opus env OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/gunicorn \
         --bind 127.0.0.1:8001 opus_app.wsgi:application
 
 Then, in a second terminal::
@@ -432,16 +438,16 @@ Common failures and what they mean:
      - The proxy or server timeout is shorter than the archive takes to build.
    * - Results are stale after an import
      - The shared cache was not flushed, or the workers were not restarted. See
-       :ref:`dev_guide_deployment`.
+       :ref:`user_guide_deployment`.
 
 Where to go next
 ----------------
 
-:ref:`dev_guide_installation`
+:ref:`user_guide_installation`
     What has to exist before any of this.
 
-:ref:`dev_guide_deployment`
-    The Node's deploy chain, and the runbook for replacing a database.
+:ref:`user_guide_deployment`
+    The Ring-Moon Systems Node's deploy chain, and the runbook for replacing a database.
 
 API reference
 -------------

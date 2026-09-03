@@ -102,6 +102,19 @@ exclude_patterns = [
 # and why each one cannot be linked.
 nitpicky = True
 
+# What a `::` literal block is highlighted as when it does not say. Sphinx's own
+# default is 'default', which lexes every such block as Python and only falls back to
+# no highlighting when the Python lexer produces an error token -- and shell hardly
+# ever does, because the lexer tokenizes rather than parses. So `sudo apt-get install
+# memcached` came out with Python colouring, as did directory trees and program
+# output; measured across docs/*.rst, 145 of the 154 bare literal blocks did.
+#
+# Nearly all of them are shell, trees or output, so the default here is the one that
+# is never wrong. A block that is worth colouring says what it is with an explicit
+# `.. code-block::`, which is also what makes the language visible to whoever edits
+# it next.
+highlight_language = 'text'
+
 # The README and CONTRIBUTING are included from partway down, after the badge block,
 # so the fragment MyST sees starts at the first section rather than at the title --
 # which MyST reports as headings starting at H2. The title is there, in the file,

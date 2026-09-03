@@ -19,13 +19,13 @@ directory has a chapter of its own, it is named beside it.
 ::
 
     rms-opus/
-    ├── pyproject.toml            # project metadata, every dependency, the three
-    │                             #   console scripts the distribution declares, and the
+    ├── pyproject.toml            # project metadata, every dependency, the console
+    │                             #   scripts the distribution declares, and the
     │                             #   configuration of every tool: ruff, mypy, pytest,
     │                             #   coverage, bandit, vulture, pymarkdown,
     │                             #   setuptools-scm
-    ├── opus.toml.template        # the installation configuration file to copy and fill in
-    ├── manage.py                 # Django's management command, for development only
+    ├── manage.py                 # Django's management command for this checkout; it
+    │                             #   calls the same code the installed opus_manage runs
     ├── vulture_whitelist.py      # names vulture cannot see are used, so it stops
     │                             #   reporting them
     ├── codecov.yml, .readthedocs.yaml
@@ -42,7 +42,9 @@ directory has a chapter of its own, it is named beside it.
     │   ├── run-integration.yml   # self-hosted: full import + golden-response API suite
     │   └── publish_to_pypi.yml, publish_to_test_pypi.yml
     ├── src/
-    │   ├── opus_config/          # the TOML configuration loader
+    │   ├── opus_config/          # the TOML configuration loader, and the
+    │   │                         #   opus.toml.template it writes out as
+    │   │                         #   the opus_config_template command
     │   ├── opus_support/         # unit, time, clock, angle and orbit conversions
     │   ├── opus_import/          # the import pipeline
     │   │   ├── cli.py, __main__.py       # the command-line surface
@@ -64,10 +66,21 @@ directory has a chapter of its own, it is named beside it.
     │   │   └── util/                     # hand-run authoring tools, not part of a run
     │   ├── opus_app/             # the Django project
     │   │   ├── settings.py, urls.py, wsgi.py
+    │   │   ├── manage.py                 # Django's management command line, installed
+    │   │   │                             #   as opus_manage; the checkout's manage.py
+    │   │   │                             #   calls it
     │   │   ├── clear_django_cache.py     # a deployment helper, run as a module
     │   │   ├── apps/{search,results,metadata,ui,cart,help,paraminfo,tools}/
     │   │   ├── templates/                # package data: the project-level templates
     │   │   └── static/                   # package data: the JavaScript, CSS and images
+    │   ├── opus_deploy/          # the server deploy chain, shipped so that a server
+    │   │                         #   needs no checkout; opus_deploy_scripts writes it
+    │   │                         #   out, and running it from inside an installation a
+    │   │                         #   deploy replaces is what that avoids
+    │   │   └── server/                   # package data: the deploy and database
+    │   │                                 #   scripts, the log-analyzer cron templates,
+    │   │                                 #   and deploy.env.template, the contract for
+    │   │                                 #   the secrets/deploy.env beside a copy
     │   └── opus_log_analyzer/    # the log analyzer
     │       ├── log_analyzer.py, error_analyzer.py   # its two programs
     │       ├── opus/                     # what only OPUS logs need
@@ -97,10 +110,7 @@ directory has a chapter of its own, it is named beside it.
     │   ├── automated_tests/      # what the self-hosted integration workflow runs
     │   ├── import/               # wrappers around the import pipeline
     │   ├── models/               # regenerates apps/search/models.py from the database
-    │   ├── releases/             # the version-tag flow
-    │   └── server/               # the pip-install deploy flow, database dumps and the
-    │                             #   log-analyzer cron templates; deploy.env.template is
-    │                             #   the contract for the git-ignored secrets/deploy.env
+    │   └── releases/             # the version-tag flow
     ├── docs/                     # this documentation
     │   └── _ext/                 # the two build-time generators, described below
     └── perf_test/                # a standalone performance experiment, outside every gate
@@ -155,13 +165,15 @@ Which chapter covers what
      - :ref:`dev_guide_webapp_results`
    * - ``src/opus_app/apps/{ui,help,paraminfo}/``, ``templates/``, ``static/``
      - :ref:`dev_guide_webapp_ui`
-   * - ``src/opus_config/``, ``src/opus_support/``
-     - :ref:`dev_guide_support`
+   * - ``src/opus_config/``
+     - :ref:`dev_guide_config`
+   * - ``src/opus_support/``
+     - :ref:`dev_guide_opus_support`
    * - ``src/opus_log_analyzer/``
      - :ref:`dev_guide_log_analyzer`
    * - ``tests/``, ``import_tests/``, ``integration_tests/``
      - :ref:`dev_guide_testing`, :ref:`dev_guide_import_fixture`
-   * - ``scripts/server/``
-     - :ref:`dev_guide_deployment`
+   * - ``src/opus_deploy/``
+     - :ref:`user_guide_deployment`
    * - ``.github/workflows/``
      - :ref:`dev_guide_environment`
