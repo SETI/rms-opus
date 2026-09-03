@@ -502,9 +502,23 @@ Four checks, in increasing order of what they prove::
     #    replies 400 however well the application and the database are working.
     curl -s 'http://127.0.0.1:8001/api/meta/result_count.json?planet=Saturn'
 
-The same four run against a staged installation that is not deployed yet -- substitute
-``staged/<that installation>`` for ``deployed`` -- which is how a new database is
-exercised before the public site is switched to it. See
+**Expect the interface to look broken under check 3**, and a screenful of these in the
+terminal if you open ``http://127.0.0.1:8001/opus/`` in a browser::
+
+    WARNING [django.request:253] Not Found: /static_media/css/opus.css
+    WARNING [django.request:253] Not Found: /static_media/js/opus.js
+    ... one per stylesheet, script and image
+
+Nothing is wrong. **gunicorn serves the application and nothing else**, and Django serves
+static files only under ``runserver`` with ``debug = true``, so until a web server maps
+``/static_media/`` onto the directory ``static_root`` names, those requests reach the
+application and 404. The files are there -- the deploy gathered them -- and check 4 asks
+for data rather than a page for exactly this reason. :ref:`user_guide_web_server` is what
+puts the alias in front, and :ref:`dev_guide_webapp_static` explains the fixed prefix.
+
+The same four checks run against a staged installation that is not deployed yet --
+substitute ``staged/<that installation>`` for ``deployed`` -- which is how a new database
+is exercised before the public site is switched to it. See
 :ref:`user_guide_deployment_runbook`.
 
 If the third fails on an import error rather than a configuration one, the usual cause is
