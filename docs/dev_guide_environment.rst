@@ -93,10 +93,11 @@ Environment variables
      - Set to ``integration_tests/.coveragerc`` by
        ``scripts/automated_tests/opus_run_unittests_coverage.sh``.
    * - ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER``, ``OPUS_TEST_DB_PASSWORD``
-     - ``pytest import_tests``, to name a MySQL server for the suite alone. Nothing
-       else reads them.
-     - None of the three. Read as a set: with none of them set, the suite takes the
-       host, user and password out of the ``OPUS_CONFIG`` file instead.
+     - ``pytest import_tests`` and the golden generator beside it
+       (``python -m import_tests.tools.make_mini_goldens``), to name a MySQL server for
+       the import suite alone. No OPUS program reads them.
+     - None of the three. Read as a set: with none of them set, both take the host,
+       user and password out of the ``OPUS_CONFIG`` file instead.
 
 ``tests/fixtures/opus_ci.toml`` is a checked-in configuration holding dummy
 credentials and paths under ``/tmp``. No job connects to the database it names and no
