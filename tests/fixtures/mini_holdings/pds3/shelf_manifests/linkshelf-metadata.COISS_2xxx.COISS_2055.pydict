@@ -1,0 +1,12 @@
+{
+    'COISS_2055_index.lbl': [(4, 'COISS_2055_index.tab', 'COISS_2055_index.tab')],
+    'COISS_2055_index.tab': 'COISS_2055_index.lbl',
+    'COISS_2055_inventory.csv': 'COISS_2055_inventory.lbl',
+    'COISS_2055_inventory.lbl': [(3, 'COISS_2055_inventory.csv', 'COISS_2055_inventory.csv')],
+    'COISS_2055_moon_summary.lbl': [(4, 'COISS_2055_moon_summary.tab', 'COISS_2055_moon_summary.tab')],
+    'COISS_2055_moon_summary.tab': 'COISS_2055_moon_summary.lbl',
+    'COISS_2055_ring_summary.lbl': [(4, 'COISS_2055_ring_summary.tab', 'COISS_2055_ring_summary.tab')],
+    'COISS_2055_ring_summary.tab': 'COISS_2055_ring_summary.lbl',
+    'COISS_2055_saturn_summary.lbl': [(4, 'COISS_2055_saturn_summary.tab', 'COISS_2055_saturn_summary.tab')],
+    'COISS_2055_saturn_summary.tab': 'COISS_2055_saturn_summary.lbl',
+}

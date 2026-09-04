@@ -1,0 +1,8 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	S	S	010	Y	\N	\N	\N
+1	X	X	020	Y	\N	\N	\N
+2	KA	Ka	030	Y	\N	\N	\N
+3	IR	IR	040	Y	\N	\N	\N
+4	VI	Visible	050	Y	\N	\N	\N
+5	UV	UV	060	Y	\N	\N	\N
+6	\N	N/A	070	Y	\N	\N	\N

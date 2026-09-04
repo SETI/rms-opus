@@ -1,0 +1,111 @@
+# Holdings-dependent integration workflow: it runs on the RMS self-hosted Linux
+# runner because that is the only environment with the real PDS3/PDS4 holdings
+# and a MySQL server.
+#
+# Two things about the gates here are not visible from the steps:
+#   * `opus_import --validate-perm` reports validation failures through the log
+#     and still exits zero, so a non-empty ERRORS.log is the only thing that
+#     catches one. `[ -s ERRORS.log ]` is false for a MISSING file too, so the
+#     exit-status check beside it catches an import that died before logging.
+#     Neither check covers the other; opus_import_test_database.sh needs both.
+#     The log is opened in append mode under a per-run directory, so it covers
+#     every bundle rather than the last command.
+#   * opus_main_test.sh does NOT apply the coverage gate. The "Check coverage
+#     level" step below does, after the codecov upload so a coverage failure
+#     still reports.
+name: Run Integration Tests
+run-name: "Run Integration Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: "00 11 * * *"  # 3am PST, 4am PDT
+
+defaults:
+  run:
+    shell: bash
+
+# The repository default is write; this job only reads. codecov-action needs no
+# GitHub API access when it is given an upload token.
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: Integration Tests
+    runs-on: ${{ matrix.os }}
+    # A hung run would otherwise hold the self-hosted runner for six hours.
+    timeout-minutes: 90
+    strategy:
+      matrix:
+        # The one entry composes the required check's name,
+        # "Integration Tests (self-hosted-linux, 3.12)".
+        include:
+          - os: self-hosted-linux
+            python-version: "3.12"
+          # - os: self-hosted-windows
+          #   python-version: "3.12"
+          # - os: self-hosted-macos
+          #   python-version: "3.12"
+      fail-fast: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm reads tags, which a shallow clone does not fetch;
+          # without them the runner installs the 0.1.dev1 fallback version.
+          fetch-depth: 0
+          # This runner keeps its workspace between runs, so a cancelled job
+          # that skips checkout's cleanup would leave the token behind.
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Test with coverage
+        # A self-hosted runner keeps its Python environment between runs, so each
+        # job builds a throwaway venv rather than installing into a shared one.
+        run: |
+          echo
+          env
+          echo
+          python -m venv venv
+          if [[ ${{ matrix.os }} == self-hosted-windows ]]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+          # This venv persists between runs and is not recreated with --clear, so
+          # pip keeps any version that still satisfies a requirement.
+          python -m pip install -e ".[dev]"
+          # From the branch tip; temporary until that work is released.
+          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
+          echo
+          # Which versions this run resolved, since the project declares floors
+          # rather than pins.
+          python -m pip freeze
+          echo
+          scripts/automated_tests/opus_main_test.sh
+
+      - name: Upload coverage report to codecov
+        uses: codecov/codecov-action@v5
+        if: matrix.os == 'self-hosted-linux' && matrix.python-version == '3.12'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          # Flagged, so this and the Import Tests upload are not merged.
+          flags: integration
+          verbose: true
+
+      - name: Check coverage level
+        run: |
+          scripts/automated_tests/opus_check_coverage.sh

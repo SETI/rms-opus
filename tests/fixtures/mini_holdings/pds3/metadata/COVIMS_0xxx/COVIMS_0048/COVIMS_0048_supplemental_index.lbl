@@ -1,0 +1,847 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+FILE_RECORDS                    = 20
+RECORD_BYTES                    = 988
+^SUPPLEMENTAL_INDEX_TABLE       = "COVIMS_0048_supplemental_index.tab"
+
+VOLUME_ID                       = COVIMS_0048
+PRODUCT_CREATION_TIME           = "2020-10-13T20:00:00"
+
+INSTRUMENT_HOST_NAME            = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID              = CO
+INSTRUMENT_NAME                 = "VISUAL AND INFRARED MAPPING SPECTROMETER"
+INSTRUMENT_ID                   = "VIMS"
+
+OBJECT                          = SUPPLEMENTAL_INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 20
+  ROW_BYTES                     = 988
+  COLUMNS                       = 62
+  INDEX_TYPE                    = SINGLE
+
+  DESCRIPTION                   = "This index supplements the file
+INDEX/INDEX.TAB found on each Cassini VIMS archive volume in the PDS. It
+contains a large set of useful parameter values that are not found in the
+default index, all collected from the PDS label files."
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 1
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 11
+    FORMAT                      = "A11"
+    DESCRIPTION                 = "The volume ID provides a unique identifier
+for a PDS data volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 2
+    NAME                        = FILE_SPECIFICATION_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 16
+    BYTES                       = 57
+    FORMAT                      = "A57"
+    DESCRIPTION                 = "The file specification name provides the
+full name of a file, including a path name, relative to the root directory of
+the PDS volume.
+
+This indicates the label file for each VIMS data product. The label file names
+end in '.lbl', whereas the associated data file names end in '.qub' instead."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 3
+    NAME                        = MISSION_PHASE_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 76
+    BYTES                       = 28
+    FORMAT                      = "A28"
+    DESCRIPTION                 = "Indicator of the phase of the mission of
+which this data is a part."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 4
+    NAME                        = PRODUCT_VERSION_TYPE
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 107
+    BYTES                       = 11
+    FORMAT                      = "A11"
+    DESCRIPTION                 = "Identifies the version of an individual
+data product. 'PRELIMLINARY' indicates missing data or other problems
+requiring attempts at regeneration prior to assignment as 'FINAL'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 5
+    NAME                        = FLIGHT_SOFTWARE_VERSION_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 121
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "Indicates version of instrument flight
+software used to acquire image."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 6
+    NAME                        = SOFTWARE_VERSION_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 127
+    BYTES                       = 20
+    FORMAT                      = "A20"
+    DESCRIPTION                 = "Ground software version used to generate
+this cube."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 7
+    NAME                        = TARGET_DESC
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 150
+    BYTES                       = 28
+    FORMAT                      = "A28"
+    DESCRIPTION                 = "A string assigned by the TL (in the IOI
+file) to describe the object/event being observed. (Comes from the TARGET_DESC
+keyword in the IOI file header.) "
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 8
+    NAME                        = IMAGE_OBSERVATION_TYPE_1
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 181
+    BYTES                       = 11
+    FORMAT                      = "A11"
+    DESCRIPTION                 = "The first of up to three values describing
+the purpose(s) of this image: 'SCIENCE', 'CALIBRATION', and/or 'ENGINEERING'.
+(Comes fromthe IMAGE_OBSERVATION_TYPE_* keywords in the IOI file parameter set
+description.)"
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 9
+    NAME                        = IMAGE_OBSERVATION_TYPE_2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 195
+    BYTES                       = 11
+    FORMAT                      = "A11"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The second of up to three values describing
+the purpose(s) of this image: 'SCIENCE', 'CALIBRATION', and/or 'ENGINEERING'.
+(Comes fromthe IMAGE_OBSERVATION_TYPE_* keywords in the IOI file parameter set
+description.) 'N/A', for 'not applicable', appears if only one observation
+type was provided."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 10
+    NAME                        = IMAGE_OBSERVATION_TYPE_3
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 209
+    BYTES                       = 11
+    FORMAT                      = "A11"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The third of up to three values describing
+the purpose(s) of this image: 'SCIENCE', 'CALIBRATION', and/or 'ENGINEERING'.
+(Comes fromthe IMAGE_OBSERVATION_TYPE_* keywords in the IOI file parameter set
+description.) 'N/A', for 'not applicable', appears if only one or two
+observation types were provided."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 11
+    NAME                        = NATIVE_START_TIME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 223
+    BYTES                       = 16
+    FORMAT                      = "A16"
+    DESCRIPTION                 = "Value of VIMS internal clock given in first
+transfer unit of this cube. This is the start of the first IR exposure of the
+first pixel. See Section 5 of document/dpsis.txt for a complete explanation.
+Time is given in the form seconds.ticks, where a tick is 1/15.959 msec."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 12
+    NAME                        = NATIVE_STOP_TIME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 242
+    BYTES                       = 16
+    FORMAT                      = "A16"
+    DESCRIPTION                 = "Calculated value of VIMS internal clock for
+the end of the IR exposure of the last pixel. Time is given in the form
+'seconds.ticks', where a tick is 1/15.959 msec."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 13
+    NAME                        = HOUSEKEEPING_CLOCK_COUNT
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 261
+    BYTES                       = 13
+    FORMAT                      = "A13"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "Spacecraft clock value of the time of
+collection of slow Housekeeping used for this label. Typically this is taken
+from the last (most recent) Housekeeping packet received before the end of the
+cube. Format: 'seconds.subRTIs'. 'N/A', for 'not applicable', if Housekeeping
+is unavailable."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 14
+    NAME                        = PRODUCT_CREATION_TIME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 277
+    BYTES                       = 17
+    FORMAT                      = "A17"
+    DESCRIPTION                 = "Time of creation of this cube on the
+ground. ASCII CCSDS format: 'yyyy-dddThh:mm:ss'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 15
+    NAME                        = COMMAND_FILE_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 297
+    BYTES                       = 41
+    FORMAT                      = "A41"
+    DESCRIPTION                 = "The name of the IOI file containing the
+observation description for this product, sent from the VIMS Team Lead to IO."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 16
+    NAME                        = COMMAND_SEQUENCE_NUMBER
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 340
+    BYTES                       = 3
+    FORMAT                      = "I3"
+    DESCRIPTION                 = "Numeric identifier for a sequence of
+commands sent to the spacecraft. Also known as 'trigger number'. (Comes from
+the TRIGGER_NUMBER keyword in the IOI file header.) Values are 1-255."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 17
+    NAME                        = EARTH_RECEIVED_START_TIME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 345
+    BYTES                       = 21
+    FORMAT                      = "A21"
+    DESCRIPTION                 = "Earth Received time of the earliest record
+containing valid data for this image.
+
+ASCII Consultative Committee on Space and Data Standards(CCSDS) format:
+'yyyy-dddThh:mm:ss.fff'. ('T' is a delimiter between date and time)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 18
+    NAME                        = EARTH_RECEIVED_STOP_TIME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 369
+    BYTES                       = 21
+    FORMAT                      = "A21"
+    DESCRIPTION                 = "Earth Received time of the latest record
+containing valid data for this image.
+
+ASCII Consultative Committee on Space and Data Standards(CCSDS) format:
+'yyyy-dddThh:mm:ss.fff'. ('T' is a delimiter between date and time)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 19
+    NAME                        = MISSING_PACKET_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 393
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "Indicator of whether the expected number of
+packets were received. There can be missing packets even when no missing
+pixels result. Values are 'YES' or'NO'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 20
+    NAME                        = DESCRIPTION
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 399
+    BYTES                       = 93
+    FORMAT                      = "A93"
+    DESCRIPTION                 = "Validation and quality information (up to
+255 characters) determined by ground analysis. Populated by IO telemetry
+processing, validation and reconciliation software to describe known
+limitations of this product."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 21
+    NAME                        = PARAMETER_SET_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 495
+    BYTES                       = 34
+    FORMAT                      = "A34"
+    DESCRIPTION                 = "String provided by Team Lead in the IOI
+file to identify the parameter set which produced this cube. (Comes from the
+SETUP_NAME keyword in the IOI file parameter set description.)
+
+Typically this will be the COMMAND_SEQUENCE_NUMBER with a counter character
+appended to the end. IO does not insure or check that this convention is
+followed."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 22
+    NAME                        = SEQUENCE_TITLE
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 532
+    BYTES                       = 29
+    FORMAT                      = "A29"
+    DESCRIPTION                 = "The name assigned by the Team Lead for an
+activity of which this observation is a part. (Comes from the SEQUENCE_TITLE
+keyword in the IOI file header.)"
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 23
+    NAME                        = TELEMETRY_FORMAT_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 564
+    BYTES                       = 10
+    FORMAT                      = "A10"
+    UNKNOWN_CONSTANT            = "UNK"
+    DESCRIPTION                 = "The telemetry mode used to send packetized
+data from the spacecraft to the ground."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 24
+    NAME                        = OVERWRITTEN_CHANNEL_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 577
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "A flag indicating whether spectral data was
+sacrificed in lieu of more precise timing information. Values are 'ON' or
+'OFF'.
+
+If set to 'ON', the observation time values are collected for each pixel and
+stored in the backplanes of the cube. The spectral data in channels 347-352
+will be set to the CORE_NULL value (-8192)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 25
+    NAME                        = INTERFRAME_DELAY_DURATION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 582
+    BYTES                       = 7
+    FORMAT                      = "F7.1"
+    UNIT                        = "milliseconds"
+    NOT_APPLICABLE_CONSTANT     = -999.
+    DESCRIPTION                 = "The duration of the delay between the end
+of one frame and the start of the next to allow time for mirror to return.
+
+-999.0 for Snapshot mode data."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 26
+    NAME                        = COMPRESSOR_ID
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 590
+    BYTES                       = 3
+    FORMAT                      = "I3"
+    NOT_APPLICABLE_CONSTANT     = -99
+    DESCRIPTION                 = "Identifies which of two identical
+compressors is used. Values are 1 or 2; -99 if the data is not compressed."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 27
+    NAME                        = INST_CMPRS_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 595
+    BYTES                       = 7
+    FORMAT                      = "A7"
+    DESCRIPTION                 = "The name of the compression algorithm used
+for this data, 'OMEGA' or 'NOTCOMP'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 28
+    NAME                        = INST_CMPRS_RATIO
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 604
+    BYTES                       = 11
+    FORMAT                      = "F11.6"
+    NOT_APPLICABLE_CONSTANT     = -999.
+    DESCRIPTION                 = "The compression factor achieved for this
+cube product; -999 if not compressed."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 29
+    NAME                        = DATA_BUFFER_STATE_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 617
+    BYTES                       = 8
+    FORMAT                      = "A8"
+    DESCRIPTION                 = "The state of the data buffer, 'ENABLED' or
+'DISABLED'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 30
+    NAME                        = INSTRUMENT_DATA_RATE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 627
+    BYTES                       = 11
+    FORMAT                      = "F11.6"
+    UNKNOWN_CONSTANT            = -999.
+    UNIT                        = "kilobytes/sec"
+    DESCRIPTION                 = "The rate at which data is tranferred from
+the instrument to the CDS (see Appendix D of documents/dpsis.txt). -999. if
+unknown."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 31
+    NAME                        = MISSING_PIXELS
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 639
+    BYTES                       = 7
+    FORMAT                      = "I7"
+    DESCRIPTION                 = "The number of pixels missing from the core
+of a cube. This indicates that the expected number of pixels (as determined by
+the commanded cube dimensions) did not arrive. The positions of these pixels
+are filled with CORE_NULL. Pixels purposefully set to CORE_NULL (e.g., due to
+time insertion) are not included in this total."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 32
+    NAME                        = IR_POWER_STATE_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 648
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "The power state of the IR channel, 'ON' or
+'OFF'; 'UNK' if unknown."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 33
+    NAME                        = VIS_POWER_STATE_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 654
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "The power state of the VIS channel, 'ON' or
+'OFF'.
+
+NOTE: When VIS power is OFF, bands 1-96 of the cube reconstructed on the
+ground are digitally padded to maintain consistent cube size. See
+BAND_BIN_ORIGINAL_BAND."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 34
+    NAME                        = IR_GAIN_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 660
+    BYTES                       = 4
+    FORMAT                      = "A4"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The gain state of the IR channel, 'LOW' or
+'HIGH'. 'N/A', for 'not applicable', if the IR channel is off."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 35
+    NAME                        = VIS_GAIN_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 667
+    BYTES                       = 4
+    FORMAT                      = "A4"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The gain state of the VIS channel, 'LOW' or
+'HIGH'. 'N/A', for 'not applicable', if the VIS channel is off."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 36
+    NAME                        = IR_BACKGROUND_SAMPLING_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 674
+    BYTES                       = 8
+    FORMAT                      = "A8"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The background sampling mode of the IR
+channel. With sampling turned on, one, two or four samples can be averaged for
+each background point, corresponding to values 'SINGLE', 'AVG2', and 'AVG4'.
+Additional possible values are 'NOBACK' if there is no background sampling,
+and 'N/A', for 'not applicable', if the IR channel is off."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 37
+    NAME                        = VIS_BACKGROUND_SAMPLING_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 685
+    BYTES                       = 8
+    FORMAT                      = "A8"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "This indicates whether background
+subtraction of normally acquired background values has been performed.
+Possible values are 'NORMAL' and 'ZEROSUB', where the latter is used to
+indicate that no background subtraction has been performed. If the VIS is
+powered off, 'N/A', for 'not applicable' is used."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 38
+    NAME                        = X_OFFSET
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 695
+    BYTES                       = 3
+    FORMAT                      = "I3"
+    DESCRIPTION                 = "The commanded mirror offset (in the X
+direction) within the IR normal-resolution field-of-view. For VIS and IR, the
+actual data collection area will differ when not in normal-resolution mode.
+For OCCULTATION mode, this is the single pixel being observed (the IR mirror
+is not moving). Values are 1-64, in units of normal-resolution pixels. For
+OCCULTATION mode only, 1-128 in units of high-resolution pixels."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 39
+    NAME                        = Z_OFFSET
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 699
+    BYTES                       = 3
+    FORMAT                      = "I3"
+    DESCRIPTION                 = "The commanded mirror offset (in the Z
+direction) within the IR normal-resolution field-of-view. For the VIS channel,
+the actual data collection area will differ when not in normal-resolution
+mode. For OCCULTATION mode, this is the single pixel being observed (the IR
+mirror is not moving). Valus are 1-64, in units of normal-resolution slices
+(or lines)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 40
+    NAME                        = OFFSET_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 704
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "Not defined in document/dpsis.txt. Values
+are 'ON' or 'OFF'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 41
+    NAME                        = SNAPSHOT_MODE_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 710
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "Indicates whether the data collection was
+determined by data volume or time duration. If 'ON', then data collection ends
+after one full transfer unit (one 'packed' product). If 'OFF', then data
+collection ends after the commanded duration has expired (possibly resulting
+in multiple products)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 42
+    NAME                        = PACKING_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 716
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    DESCRIPTION                 = "Indicates that it was necessary to pack
+multiple actual cubes in to this cube product due to their small size and lack
+o unique timing information. See Section 6 of document/dpsis.txt. LINE, POINT
+and OCCULTATION mode cubes are always packed. Values are 'ON' or 'OFF'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 43
+    NAME                        = IR_HIGH_RESOLUTION_DETECTOR_TEMPERATURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 721
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    NOT_APPLICABLE_CONSTANT     = -999.
+    UNIT                        = "Kelvin"
+    DESCRIPTION                 = "The detector temperature of the IR high
+resolution (small range) sensor, in degrees K; -999. if not applicable. The IR
+high resolution temperature comes from focal plane array (fpa) 1."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 44
+    NAME                        = IR_LOW_RESOLUTION_DETECTOR_TEMPERATURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 732
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    NOT_APPLICABLE_CONSTANT     = -999.
+    UNIT                        = "Kelvin"
+    DESCRIPTION                 = "The detector temperature of the IR low
+resolution (large range) sensor, in degrees K; -999. if not applicable. The IR
+low resolution temperature comes from focal plane array (fpa) 2."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 45
+    NAME                        = VIS_DETECTOR_TEMPERATURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 743
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    NOT_APPLICABLE_CONSTANT     = -999.
+    UNIT                        = "Kelvin"
+    DESCRIPTION                 = "The detector temperature of the VIS
+sensor, in degrees K; -999. if not applicable."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 46
+    NAME                        = IR_PRIMARY_OPTICS_TEMPERATURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 754
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    NOT_APPLICABLE_CONSTANT     = -999.
+    UNIT                        = "Kelvin"
+    DESCRIPTION                 = "The temperature of the IR primary optics,
+in degrees K; -999. if not applicable."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 47
+    NAME                        = IR_SECONDARY_OPTICS_TEMPERATURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 765
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    NOT_APPLICABLE_CONSTANT     = -999.
+    UNIT                        = "Kelvin"
+    DESCRIPTION                 = "The temperature of the IR secondary optics,
+in degrees K; -999. if not applicable."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 48
+    NAME                        = VIS_OPTICS_TEMPERATURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 776
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    NOT_APPLICABLE_CONSTANT     = -999.
+    UNIT                        = "Kelvin"
+    DESCRIPTION                 = "The temperature of the VIS optics, in
+degrees K; -999. if not applicable."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 49
+    NAME                        = BIAS_STATE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 788
+    BYTES                       = 4
+    FORMAT                      = "A4"
+    DESCRIPTION                 = "The bias state of the IR channel, 'LOW' or
+'HIGH'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 50
+    NAME                        = SCAN_MODE_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 795
+    BYTES                       = 5
+    FORMAT                      = "A5"
+    DESCRIPTION                 = "The scan directions which were enabled for
+the IR when acquiring this data. Possible values are 'BOTH', 'XONLY', 'YONLY',
+or 'NONE'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 51
+    NAME                        = SHUTTER_STATE_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 803
+    BYTES                       = 8
+    FORMAT                      = "A8"
+    DESCRIPTION                 = "The state of the IR shutter, 'ENABLED' or
+'DISABLED'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 52
+    NAME                        = INTEGRATION_DELAY_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 814
+    BYTES                       = 8
+    FORMAT                      = "A8"
+    DESCRIPTION                 = "This flag indicates whether the integration
+time for a rapidly acquired cube was extended by shrinking the pixel synch
+pulse. Also known as the 'pixel synch delay'. Values are 'ENABLED' or
+'DISABLED'.
+
+Enabling this delay is appropriate for those modes where the mirror movements
+stay within the same pixel. The integration will continue during 2 msec of
+the 3 msec mirror movement."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 53
+    NAME                        = INTERLINE_DELAY_DURATION
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 824
+    BYTES                       = 7
+    FORMAT                      = "F7.1"
+    UNIT                        = "milliseconds"
+    DESCRIPTION                 = "The duration of the delay between the end
+of one line and the start of the next IR line. It allows time for: 1) the IR
+mirror to return, 2) collection of background data and 3) the alignment of the
+exposure center times between the IR and VIS channels."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 54
+    NAME                        = BACKGROUND_SAMPLING_FREQUENCY
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 832
+    BYTES                       = 3
+    FORMAT                      = "I3"
+    NOT_APPLICABLE_CONSTANT     = 0
+    DESCRIPTION                 = "The number of lines between background
+samples: 1, 2, 4, 8, 16, 32, or 64. 0 if not applicable."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 55
+    NAME                        = IR_SPECTROMETER_INSTRUMENT_TEMPERATURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 836
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNKNOWN_CONSTANT            = -999.
+    UNIT                        = "Kelvin"
+    DESCRIPTION                 = "The temperature of the IR spectrometer
+body."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 56
+    NAME                        = IR_GRATING_INSTRUMENT_TEMPERATURE
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 847
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNKNOWN_CONSTANT            = -999.
+    UNIT                        = "Kelvin"
+    DESCRIPTION                 = "The temperature of the IR grating."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 57
+    NAME                        = FAST_HK_ITEM_NAME_1
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 859
+    BYTES                       = 27
+    FORMAT                      = "A27"
+    UNKNOWN_CONSTANT            = "UNK"
+    DESCRIPTION                 = "The first value in a multi-valued list
+containing up to four IR Housekeeping item names, which are recorded in the
+band suffixes (backplanes). If no IR Housekeeping items were selected for this
+cube, 'UNK' is used."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 58
+    NAME                        = FAST_HK_ITEM_NAME_2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 889
+    BYTES                       = 27
+    FORMAT                      = "A27"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The second value in a multi-valued list
+containing up to four IR Housekeeping item names, which are recorded in the
+band suffixes (backplanes). 'N/A', for 'not applicable', if there is only one
+item."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 59
+    NAME                        = FAST_HK_ITEM_NAME_3
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 919
+    BYTES                       = 27
+    FORMAT                      = "A27"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The third value in a multi-valued list
+containing up to four IR Housekeeping item names, which are recorded in the
+band suffixes (backplanes). 'N/A', for 'not applicable', if there are fewer
+than three items."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 60
+    NAME                        = FAST_HK_ITEM_NAME_4
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 949
+    BYTES                       = 27
+    FORMAT                      = "A27"
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The third value in a multi-valued list
+containing up to four IR Housekeeping item names, which are recorded in the
+band suffixes (backplanes). 'N/A', for 'not applicable', if there are fewer
+than four items."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 61
+    NAME                        = FAST_HK_PICKUP_RATE
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 978
+    BYTES                       = 3
+    FORMAT                      = "I3"
+    UNKNOWN_CONSTANT            = -99
+    DESCRIPTION                 = "The rate at which the IR Fast Housekeeping
+is collected (to be stored in the band suffix). If set to 0, housekeeping
+values will be collected at every pixel (every pixel of the backplane will
+have a value). If (n is) set from 1 to swath_length, housekeeping values will
+be collected every nth line (only the first pixel of every nth line of the
+backplane will have a value). If no IR Housekeeping items were selected for
+this cube, this keyword will have a value of -99.
+
+Values are 0 to SWATH_LENGTH. Values greater than 8 have not been success-
+fully tested (under analysis).
+          
+Example: If FAST_ HK_PICKUP_ RATE=4, Fast Housekeeping will be collected every
+fourth line."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 62
+    NAME                        = ANTIBLOOMING_STATE_FLAG
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 983
+    BYTES                       = 3
+    FORMAT                      = "A3"
+    UNKNOWN_CONSTANT            = "UNK"
+    DESCRIPTION                 = "The VIS channel Antiblooming mode, 'ON' or
+'OFF'. 'N/A', for 'not applicable', is used if the VIS channel is off."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = SUPPLEMENTAL_INDEX_TABLE
+END

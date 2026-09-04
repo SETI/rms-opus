@@ -1,0 +1,540 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rms-opus"
+dynamic = ["version"]
+description = "OPUS: the Outer Planets Unified Search tool for the PDS Ring-Moon Systems Node"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "django>=5.2,<6",
+  "jinja2",
+  "markupsafe",
+  "mysqlclient",
+  "numpy>=1.26",
+  "pdfkit",
+  "pillow>=10.1",
+  "pyparsing",
+  "pytz",
+  "pyyaml>=6.0.1",
+  "qrcode",
+  "regex",
+  "requests",
+  # rms-julian 3.0.1 built its date grammar with pyparsing's deprecated camelCase
+  # synonym `setParseAction`, so merely importing julian raised a DeprecationWarning
+  # -- which [tool.pytest.ini_options] filterwarnings turns into an error. Nothing
+  # else constrains which julian a resolve picks, so this floor is what lets
+  # filterwarnings hold no entry for it.
+  "rms-julian>=3.0.2",
+  "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite",
+  "rms-pdslogger",
+  "rms-pdstable",
+  "rms-translator",
+]
+license = {text = "Apache-2.0"}
+authors = [
+  {name = "Robert S. French", email = "rfrench@seti.org"}
+]
+maintainers = [
+  {name = "Robert S. French", email = "rfrench@seti.org"}
+]
+keywords = ["pds", "planetary", "astronomy", "rings", "search", "opus"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Natural Language :: English",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Utilities",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows"
+]
+
+[project.urls]
+Homepage = "https://github.com/SETI/rms-opus"
+Documentation = "https://rms-opus.readthedocs.io/en/latest"
+Repository = "https://github.com/SETI/rms-opus"
+Source = "https://github.com/SETI/rms-opus"
+Issues = "https://github.com/SETI/rms-opus/issues"
+
+[project.scripts]
+# The installed commands the server chains invoke by name. `python -m opus_import`
+# and `python -m opus_log_analyzer` keep working alongside them: each module's
+# `main()` is the shared entry point, so the two forms cannot drift.
+#
+# The error analyzer has no `python -m` package form -- a package has one
+# `__main__` and the log analyzer holds it -- so `opus_error_analyzer` is the only
+# short way to run it. Both log-analyzer parsers set `prog` explicitly for the same
+# reason `opus_import.cli` does: argparse otherwise names the executed file.
+#
+# `opus_manage` is not an OPUS program at all: it is Django's own management command
+# line with the settings module already named, so that an installation -- which has
+# no manage.py, that being a checkout's file -- needs OPUS_CONFIG in its environment
+# and nothing else. It is Django's command surface, so it has no argparse parser of
+# its own and no `python -m` form.
+#
+# `opus_config_template` writes the configuration template into the working
+# directory, for the same reason: an installation has no checkout to copy it from.
+# `opus_import_all` is the full-holdings import sequence and `opus_deploy_scripts`
+# writes out the server deploy chain, both of which used to be shell scripts in the
+# repository and so could not be run from an installation at all.
+opus_import = "opus_import.cli:main"
+opus_import_all = "opus_import.import_all:main"
+opus_deploy_scripts = "opus_deploy.scripts:main"
+opus_log_analyzer = "opus_log_analyzer.log_analyzer:main"
+opus_error_analyzer = "opus_log_analyzer.error_analyzer:main"
+opus_manage = "opus_app.manage:main"
+opus_config_template = "opus_config.template:main"
+
+[project.optional-dependencies]
+dev = [
+  "rms-opus",
+  # The floor is set by the executed-functions check in the mini-holdings suite, which
+  # reads the JSON report's per-function regions. Those arrived with JSON report format
+  # version 3, in 7.6.0 ("3: add region information (functions, classes)" in
+  # coverage/jsonreport.py); 7.5.x writes format 2, which has no regions in it at all.
+  "coverage>=7.6",
+  # mypy carries no bound of its own: django-stubs' `compatible-mypy` extra below
+  # pins it to the range that django-stubs' plugin supports, so the two cannot drift
+  # apart on an unpinned install, and a second bound here would only go stale.
+  "mypy",
+  # django-stubs types the Django app. Its plugin reads the settings module, so every
+  # job that runs mypy needs OPUS_CONFIG set.
+  "django-stubs[compatible-mypy]>=5.1",
+  # typeshed's stubs for mysqlclient, so the MySQL import backend is really checked
+  # rather than silenced by an ignore_missing_imports entry.
+  "types-mysqlclient",
+  # typeshed's stubs for requests, needed by opus_import/util/retrieve_ra_dec.py
+  # and opus_log_analyzer/opus/slug.py. requests ships py.typed only from 2.33, and
+  # nothing here floors it there, so the stubs are what makes the type gate
+  # independent of which requests a resolve happens to pick.
+  "types-requests",
+  # typeshed's stubs for pytz, which opus_log_analyzer/cronjob_utils.py imports
+  # to fix the cron reports' timezone.
+  "types-pytz",
+  # typeshed's stubs for regex, which apps/search/views.py uses for the
+  # user-supplied regular expressions a string search accepts.
+  "types-regex",
+  # typeshed's stubs for qrcode, which apps/help/views.py renders into the
+  # "How to Cite OPUS" page.
+  "types-qrcode",
+  # typeshed's stubs for docutils, whose node types docs/conf.py annotates its
+  # missing-reference handler with. Sphinx itself ships py.typed.
+  "types-docutils",
+  "pymarkdownlnt>=0.9.35",
+  # Floor set by CVE-2025-71176: pytest through 9.0.2 creates
+  # /tmp/pytest-of-<user> with predictable permissions, so a local user on a
+  # shared UNIX box can cause a denial of service or possibly gain privileges.
+  # This floor governs every environment that runs the suite -- the
+  # GitHub-hosted jobs, the self-hosted integration runner and developer
+  # installs -- because all three install `-e ".[dev]"`.
+  "pytest>=9.0.3",
+  "pytest-cov>=4.0",
+  "pytest-django>=4.5",
+  "pytest-xdist>=3.8.0",
+  "djangorestframework",
+  # Floor set by the formatter, not the linter. `ruff format --check` is a CI
+  # gate, so the tree has to agree with whichever ruff the environment resolved,
+  # and a formatter's output is a property of its version: ruff's 2025 style
+  # guide arrived in 0.9.0 and changed two things this repository contains a lot
+  # of -- expressions inside f-strings gained spaces around their operators, and
+  # adjacent implicitly-concatenated strings are joined. Every release from 0.9.0
+  # onwards formats this tree identically; 0.8.x disagrees with all of them on
+  # dozens of files, so a 0.8.x install fails the gate on code nobody has touched.
+  # Measure rather than trust that: format the tree under a 0.8 and a 0.9+ ruff
+  # and compare the results. This is a floor, not a cap --
+  # newer ruff is always allowed, and a future style guide is handled by
+  # reformatting under it, in its own commit.
+  "ruff>=0.9",
+  "bandit[toml]>=1.8",
+  "pyroma>=4.2",
+  "vulture>=2.14",
+  "rms-opus[docs]",
+]
+docs = [
+  "myst-parser",
+  "sphinx>=7",
+  "sphinxcontrib-mermaid>=0.9.2",
+  "sphinx-rtd-theme",
+]
+
+[tool.pytest.ini_options]
+# The default run is directory-scoped, not marker-filtered: `pytest` alone collects the
+# holdings-free unit suite and nothing else, so it never reaches integration_tests/,
+# which needs an imported database and the PDS holdings behind it. That tree is a
+# root-level sibling of this one precisely so this selection works; asking for it by
+# name (`pytest integration_tests`) is the only way to run it. Nothing is filtered out
+# of the default run with -m. That is a deliberate departure from the "exclude the
+# heavy tier with -m" advice in .cursor/rules/python_testing.mdc: here the heavy tier
+# is a whole directory rather than tests scattered through one, so selecting by path
+# says the same thing and cannot be defeated by a test that forgets its marker.
+testpaths = ["tests"]
+# pytest-django configures Django once per session, which is what lets a unittest.TestCase
+# under integration_tests/ reach the imported schema and what lets tests/opus_app/ import
+# the app's views. It reads the OPUS configuration through opus_app.settings, so every
+# pytest run needs OPUS_CONFIG set: tests/fixtures/opus_ci.toml for the holdings-free
+# suite (the GitHub-hosted workflow and scripts/run-all-checks.sh both set it), the real
+# installation's file for the integration suites.
+DJANGO_SETTINGS_MODULE = "opus_app.settings"
+# importlib import mode: the per-package test directories carry no __init__.py, and the
+# default "prepend" mode then requires test module basenames to be unique tree-wide.
+# tests/opus_import/test_package_data.py and tests/opus_log_analyzer/test_package_data.py
+# are exactly that collision, and both collect under this mode.
+addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib"]
+# --strict-markers is on, so every marker used anywhere has to be declared here.
+# integration_tests/conftest.py applies `integration` to everything it collects;
+# `holdings` and `livetest` are module-level pytestmarks on the one module each
+# describes. Nothing in tests/ is marked.
+markers = [
+  "integration: needs the OPUS database a full import populated (integration_tests/ only)",
+  "holdings: reads a product file out of the PDS holdings tree, not just the database row naming it",
+  "livetest: queries an OPUS server outside this process rather than the in-process application",
+]
+# Warnings are errors so a third-party deprecation cannot rot unnoticed.
+# There are no entries, and that is the claim: nothing this suite imports raises a
+# warning that has to be tolerated. A suppression that suppresses nothing is a claim
+# about the code that is false, so add a narrowly-scoped "default::"/"ignore::" entry
+# -- with a comment saying which package raises it and why it cannot be fixed -- only
+# for a warning coming from code this project does not control.
+filterwarnings = [
+  "error",
+]
+
+[tool.setuptools]
+[tool.setuptools.packages.find]
+where = ["src"]
+# Only directories with an __init__.py are packages. Without this, the data
+# directories inside opus_import (table_schemas, dictionary_data) would each be picked
+# up as a PEP 420 namespace package, making them importable and putting their contents
+# outside the package-data rules below.
+namespaces = false
+
+# Package-data audit. What ships in the wheel, and why -- re-derive the inventory
+# rather than trusting a description of it:
+#
+#     python -m build --wheel && python -c "import zipfile,sys; \
+#       print('\n'.join(zipfile.ZipFile(sys.argv[1]).namelist()))" dist/*.whl
+#
+# Everything inside a package directory that git tracks is included, because
+# setuptools-scm's file finder supplies the file list and `namespaces = false` in
+# [tool.setuptools.packages.find] above keeps the data directories from becoming
+# importable packages. The
+# explicit entries below exist for the directories a *source* build would
+# otherwise leave out. Two categories are in the wheel deliberately, not by
+# oversight:
+#
+#   * The Django app's served static assets, including the four third-party trees
+#     .gitattributes marks linguist-vendored (static/{admin,coreui,cdn_fallback,
+#     perfect-scrollbar}). They ship because `collectstatic` is what a deployed
+#     server runs to populate its static root, and a pip-deployed server has no
+#     checkout to collect them from: excluding them serves the site with no CSS or
+#     JavaScript. They are the largest single share of the wheel.
+#   * The per-directory README.md/README.txt files under the Django app. They are
+#     developer documentation that nothing reads at run time, and they are kept
+#     because the alternatives are worse, not because they earn their place:
+#     `exclude-package-data` matches per package, so a wildcard entry does not
+#     reach them (measured -- `"*" = ["README.md", "**/README.md"]` leaves every
+#     one of them in the wheel), and naming each package would be exactly the
+#     hand-maintained list of code sites this project does not write. Their total
+#     is a few kilobytes against a wheel measured in megabytes; run the inventory
+#     command above if that ratio ever looks worth revisiting.
+#
+# `opus.toml.template` ships inside `opus_config` because an installation has no
+# checkout to copy it from: `opus_config_template` writes a copy of it into the
+# operator's working directory, which is the first step of configuring a server. The
+# server deploy chain ships for the same reason, inside `opus_deploy`, and
+# `opus_deploy_scripts` writes it out -- out rather than run in place, because a
+# deploy upgrades this distribution and would rewrite a script bash was reading.
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+# The configuration template, written out by the `opus_config_template` command.
+"opus_config" = ["opus.toml.template"]
+# The server deploy chain, written out by the `opus_deploy_scripts` command: the
+# deploy scripts themselves, the database dump helpers, the log-analyzer cron
+# templates, and the deploy.env template they are all configured by.
+"opus_deploy" = ["server/*", "server/*/*"]
+# The import pipeline reads these at run time through importlib.resources, so they have
+# to be inside the wheel: the JSON schemas that define every OPUS table (plus the two
+# lists of values deliberately left unmapped), and the dictionary context tree that
+# `--import-dictionary` reads.
+"opus_import" = ["table_schemas/*", "dictionary_data/*"]
+# The log analyzer's Jinja report templates, loaded by package name (jinja2's
+# PackageLoader) rather than from the working directory, so an installed analyzer can
+# render HTML reports.
+"opus_log_analyzer" = ["templates/*"]
+
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+write_to = "src/opus_config/_version.py"
+
+# Tool configuration
+
+[tool.coverage.run]
+branch = true
+parallel = true
+# Unit-coverage scope only. The integration suite's 100%-gate configuration is a
+# separate file, integration_tests/.coveragerc, selected with COVERAGE_RCFILE:
+# coverage.py ignores `include` once `source` is set, so one merged configuration
+# would silently corrupt one of the two gates.
+source = ["opus_support", "opus_config", "opus_import", "opus_log_analyzer"]
+omit = ["tests/*", "*/_version.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise NotImplementedError",
+  # Never executed by construction: a TYPE_CHECKING block is False at run time,
+  # and an @overload stub is a signature declaration whose body is `...`. Kept in
+  # step with integration_tests/.coveragerc, which needs the same two.
+  "if TYPE_CHECKING:",
+  "@overload",
+]
+# The floor one command measures and one command gates: the Import Tests job's own
+# `pytest import_tests --cov`, which imports two dozen sampled volumes end to end
+# through every step of the pipeline. It is the run's own figure rounded down, not an
+# aspiration -- raising it means raising what that run reaches. Regenerate rather than
+# trust it: run that command and read the TOTAL line.
+#
+# That run measures 74.845%: 8,691 of 11,612 statements and branches, which is not the
+# `Stmts`/`Miss` pair the term report's left-hand columns show. pytest-cov compares that
+# figure with this floor directly, without rounding -- measured, by running the command
+# above at 74.845% against a floor of 75 and reading the failure it produced -- so the
+# floor is the measurement rounded down to a whole percent and the headroom is whatever
+# that rounding leaves.
+#
+# It moved down from 75.368% when `opus_import.import_all` and `opus_config.template`
+# were added. Those are 84 statements and branches of operator commands this run does not
+# execute: one runs a full-holdings import for days, the other writes a file. The
+# denominator grew while what the run reaches did not, and both modules are covered by
+# `tests/`, which this configuration does not measure. That is the only reason to move
+# this number down. A failure close to it otherwise is a real drop in what the run
+# reaches, most likely a pdsfile release changing which products exist, and the answer is
+# to find what stopped executing rather than to lower the floor again.
+fail_under = 74
+
+[tool.mypy]
+strict = true
+disallow_subclassing_any = false
+plugins = ["mypy_django_plugin.main"]
+# With explicit_package_bases, a module's name is taken from the first package base
+# that contains it: mypy_path's src/ (so src/opus_support/units.py is
+# opus_support.units) or the working directory (so tests/opus_import/test_cli.py is
+# tests.opus_import.test_cli). Both are needed. The per-package test
+# directories carry no __init__.py, so without this a test module would be named
+# after its own file, so the two test_package_data.py files would collide as one
+# module name. It also means mypy has to run from the repository root, which
+# run-all-checks.sh and the lint job both do.
+# `docs/_ext` is here so that the documentation build's own extensions are checked
+# like everything else, and so that the tests importing them resolve.
+mypy_path = "src:docs/_ext"
+explicit_package_bases = true
+exclude = [
+  # Standalone server benchmarking scripts, not part of the distribution and not
+  # imported by anything in it. ruff, bandit and vulture exclude them by name too;
+  # pytest and coverage never reach them, because both select what they cover
+  # rather than what they skip.
+  "perf_test/",
+  # Sphinx's build output, which is git-ignored and holds nothing written here.
+  "docs/_build/",
+  # Written by setuptools-scm at build time and git-ignored, so it is present only
+  # after an install and would make the checked set depend on that. Nothing imports it.
+  "src/opus_config/_version\\.py$",
+  # Django's own vendored asset script, marked linguist-vendored in
+  # .gitattributes. It is the only Python file under the Django app's served static
+  # assets, and it is named exactly rather than excluding that whole tree, so any
+  # Python placed there later is checked rather than silently skipped. (ruff
+  # excludes the whole assets directory instead.)
+  "src/opus_app/static/admin/js/compress\\.py$",
+]
+
+[tool.django-stubs]
+# django-stubs resolves model and settings types by importing the settings module, so
+# it needs OPUS_CONFIG set. run-all-checks.sh defaults it to tests/fixtures/opus_ci.toml
+# and run-tests.yml sets it for every job.
+django_settings_module = "opus_app.settings"
+
+# Third-party packages that ship neither annotations nor a typeshed stub package.
+# Where typeshed has one, the stub distribution goes in the dev extras instead and the
+# package does not belong here -- that is a real check rather than a silenced one.
+# Every package the repository imports either has an entry here or is checked, so a
+# new dependency without annotations shows up as import-untyped on its first run and
+# is answered here deliberately. No entry here is spare: drop one and the
+# checker reports the imports it was covering.
+# `rest_framework` is here rather than in the dev extras because typeshed carries no
+# stub package for it: the stubs that exist are a separate third-party distribution
+# that re-types Django's own request and response classes, which would put a second
+# opinion about them beside django-stubs for the sake of the one name the suite
+# imports (`RequestsClient`, used only on the live-server path).
+[[tool.mypy.overrides]]
+module = ["julian.*", "pdfkit.*", "pdslogger.*", "pdsparser.*",
+          "pdstable.*", "rest_framework.*"]
+ignore_missing_imports = true
+
+# `strict = true` applies to every module, and no module is silenced wholesale:
+# there is no `ignore_errors` list anywhere in this file. **That is the whole of the
+# claim**, and suppression has not vanished from this file: `exclude` above holds the
+# paths that are not project source, and the `ignore_missing_imports` override above
+# covers the third-party packages that ship neither annotations nor a typeshed stub.
+# Read both lists above rather than trusting a count here; each entry is documented
+# where it sits.
+#
+# A module that does not pass the checker is not a configuration problem: annotate
+# it, or say at the site -- with the reason -- what the checker cannot see, which is
+# what `# type: ignore[...]` is for. `warn_unused_ignores` is on under `strict`, so
+# each of those has to keep earning its place.
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [
+  "perf_test",
+  # Sphinx's build output. Nothing in it is written here.
+  "docs/_build",
+  # Written by setuptools-scm at build time and git-ignored; not our code.
+  "src/opus_config/_version.py",
+  # The Django app's served static assets (JS/CSS/images). The one Python file
+  # in there is Django's own vendored admin/js/compress.py, marked
+  # linguist-vendored in .gitattributes; it is an asset, not project source.
+  "src/opus_app/static",
+  # Machine-written by scripts/models/create_opus_models.sh (manage.py inspectdb
+  # plus a sed pipeline), so nothing hand-edited here survives the next
+  # regeneration. That script formats its own output with `ruff format`, which
+  # ruff applies to an explicitly named path regardless of this exclusion.
+  # Excluding it also means the 231 generated model classes and their nested
+  # Meta classes carry no docstrings and are not expected to: the next
+  # regeneration would delete them anyway, and nothing would read them if they
+  # were there -- docs/_ext/opus_api_reference.py names this module in
+  # EXCLUDED_MODULES, so it is not in the API reference at all.
+  "src/opus_app/apps/search/models.py",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+# Explicit rule set (recommended for library projects). Categories:
+# E, W = pycodestyle errors/warnings; F = Pyflakes; I = isort; UP = pyupgrade;
+# B = bugbear; SIM = simplify; C4 = comprehensions; A = builtins (no shadowing);
+# N = pep8-naming; PT = pytest-style; RUF = Ruff-specific (e.g. unused noqa).
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "A", "N", "PT", "RUF"]
+# Rules ignored everywhere, each for a reason that holds repository-wide. A rule
+# that fires on one file belongs behind a `# noqa` at that line instead.
+# PT011  - pytest.raises is too broad (RMS Node default rule set).
+# SIM105 - Use contextlib.suppress for suppressions (RMS Node default rule set).
+# SIM108 - Use ternary operator for simple if/else (RMS Node default rule set).
+# PT009/PT027 - self.assertEqual / self.assertRaises. Every finding is inside a
+#   suite written against unittest.TestCase: integration_tests/, plus the two
+#   Django modules under tests/opus_app/ that need no database. Those suites are
+#   not being converted, and the live-database ones cannot be: they are plain
+#   unittest.TestCase rather than django.test.TestCase precisely so pytest-django
+#   never manages them, which is what keeps a test-database create and teardown
+#   away from the schema a real import populated (integration_tests/conftest.py
+#   states the whole rule). So these unittest->pytest-assertion rules have
+#   nothing to convert. Regenerate the distribution with
+#   `ruff check --select PT009,PT027` over RUFF_PATHS. PT018 stays enforced, as
+#   does every other stable PT rule this list does not name.
+# E501  - line too long. `ruff format` is what governs layout here, and E501's
+#   entire residue is tokens no formatter can split. Regenerate the measurement
+#   rather than trusting these numbers: run `ruff check --select E501` over
+#   RUFF_PATHS. Measured that way, 678 of the 725 findings are in
+#   integration_tests -- single URL query strings and PDS file paths inside the
+#   golden-response fixtures, each one literal with nothing to break at. Splitting
+#   them means hundreds of hand-edits to the suite that gates every change to the
+#   web application, in the implicit-string-concatenation defect class that
+#   produces a fused 'cm^-1perpixel' alias out of a missing comma. `line-length`
+#   stays 100 and still governs the formatter.
+extend-ignore = ["PT011", "SIM105", "SIM108", "PT009", "PT027", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Empty. Every tree in RUFF_PATHS passes with no *per-file* exception. That is what
+# an empty table means and all it means: the codes in `extend-ignore` above are
+# ignored globally, and `exclude` above lists the paths that are not project source.
+#
+# A row here is not the way to land code that does not pass. Fix the code, or
+# suppress the one rule on the one line with `# noqa: <CODE>` and the reason, which
+# `RUF100` then keeps honest by failing when it stops being needed.
+
+[tool.pymarkdown.plugins.md013]
+# Line length (disable so README/CONTRIBUTING can use longer lines).
+enabled = false
+
+[tool.pymarkdown.plugins.md033]
+# Inline HTML (e.g. <br>) allowed in Markdown.
+enabled = false
+
+[tool.bandit]
+# Recurse the code trees; exclude the fixture- and live-server-driven suites
+# (integration_tests/{test_api,test_db_data,test_perf}) and the out-of-scope
+# perf_test/.
+# The packages are under src/, and `targets` below adds integration_tests/ and
+# manage.py; `tests/` is deliberately not a target.
+# Path-anchored so a same-named directory elsewhere in the tree cannot match by
+# accident. integration_tests/apps_db_tests is deliberately absent: the per-app suites
+# it holds are scanned.
+exclude_dirs = [
+  "perf_test", "venv", ".venv",
+  "integration_tests/test_api", "integration_tests/test_perf",
+  "integration_tests/test_db_data",
+  # Django's own vendored asset script, marked linguist-vendored in
+  # .gitattributes. It is third-party code we do not edit, so its subprocess use
+  # is not ours to annotate, and excluding the file is what keeps B404 and B603
+  # off the skip list below. Named exactly rather than excluding the whole static
+  # tree, so any Python placed there later is scanned rather than silently
+  # skipped -- the same choice [tool.mypy] exclude makes about this file.
+  "src/opus_app/static/admin/js/compress.py",
+]
+targets = ["src", "integration_tests", "manage.py"]
+# One entry, and it is the one that is irreducible: a category skip hides every
+# future instance of its rule as well as the ones it was written for. Everything
+# else is a per-line `# nosec <ID> - <reason>` at the statement it covers;
+# regenerate that set with `grep -rn "# nosec" src integration_tests manage.py`, and
+# re-derive what this list is holding back by emptying it and re-running bandit.
+# A skip that suppresses nothing is a claim about the code that is false, so a rule
+# that stops firing comes out of the list rather than being left in it.
+#
+# Expect bandit to log "nosec encountered (Bxxx), but no failed test on
+# file X:N" lines on a clean run. That is not a misplaced marker: bandit runs
+# each check against every candidate node, attaches a `# nosec` to the whole
+# statement's line range, and warns for each node in that range the check did
+# not fire on -- so a statement holding several string or call nodes emits one
+# warning per node that was fine. A bare `# nosec` silences the warnings by
+# suppressing every check on the line, which is worse, so the markers name their
+# test id and the warnings stand. The exit status is what gates.
+skips = [
+  # assert_used. These are not input validation: they are the narrowing assertions
+  # that let mypy strict follow an invariant the code already relies on, plus a few
+  # long-standing invariant checks. They are spread across the scanned trees rather
+  # than concentrated in one, and a per-line `# nosec` on each would be hundreds of
+  # comments restating one fact. Trust no figure for how many there are; regenerate
+  # it with `skips` emptied and `--ignore-nosec`, which is the only way to see what
+  # this list is holding back:
+  #     bandit -c pyproject.toml -r src integration_tests manage.py \
+  #            -f json -q --ignore-nosec
+  # Python's -O strips asserts, and nothing here is deployed with -O; if that ever
+  # changes, these become real checks and this skip has to be revisited rather than
+  # kept.
+  "B101",
+]
+
+# Genuine dead code is deleted, not suppressed; the irreducible false positives
+# live in vulture_whitelist.py (which is passed as an input path so its names
+# count as used), and that file is kept to the entries that can still be
+# justified one at a time. The same paths are also set via OPUS_VULTURE_PATHS
+# (run-all-checks.sh) and VULTURE_PATHS (run-tests.yml).
+# tests/ is scanned too: its own dead imports are caught, and names that only
+# the suite uses then count as used.
+[tool.vulture]
+paths = ["src", "integration_tests", "import_tests", "tests", "docs", "manage.py",
+         "vulture_whitelist.py"]
+# Vulture is invoked with relative paths, so a pattern needing a component before
+# the directory name would never match. These are written both ways for that
+# reason.
+exclude = ["*/perf_test/*", "perf_test/*", "*/docs/_build/*", "docs/_build/*"]
+min_confidence = 70

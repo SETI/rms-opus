@@ -1,0 +1,70 @@
+---
+description: Git, CI/CD (GitHub Actions), virtual environments, and tooling for development and publishing.
+alwaysApply: true
+---
+
+# Environment Best Practices
+
+## 1. Source Control
+
+- ALWAYS use **git** for all source code.
+- Commit early and often with meaningful messages (see `git_workflow.mdc`).
+
+## 2. CI/CD
+
+- ALWAYS use **GitHub Actions** for continuous integration and publishing.
+- The local check runner (`scripts/run-all-checks.sh`, Section 3) is the **single source of truth** for which checks the repository runs. CI/CD MUST run the same set of checks the script enables -- no more, no less -- so that the AI, CI/CD, and the script stay consistent. A typical set is lint (`ruff`), type-check (`mypy`), test (`pytest`), Markdown lint (`PyMarkdown`), and documentation build (`sphinx-build`); the repository's actual enabled set is whatever the script defines. If a check is not enabled in the script, CI/CD does not run it either.
+- Every PR MUST pass that set of checks before merge.
+- When the enabled set changes, change it in the script first, then bring CI/CD into step with it in the same change.
+- Pin action versions to a major tag (e.g., `actions/checkout@v6`) to balance stability and security updates.
+- Publishing to PyPI is triggered by creating a GitHub Release from a version tag on `main`.
+
+## 3. Local Check Runner
+
+Provide a single script (e.g. `scripts/run-all-checks.sh`) that runs the
+project's quality gates with one command, so contributors can reproduce the CI
+result locally before pushing. **This script is the single source of truth for
+which checks the repository runs.** The AI (when running checks) and the CI/CD
+pipeline (Section 2) MUST run exactly the set of gates the script enables; all
+three stay consistent, and the script is authoritative. A check that is not
+enabled in the script does not need to be run anywhere else.
+
+- **The maintainer decides which checks are enabled for a given repository, by
+  editing the script.** The script runs exactly the set of gates that repository
+  has opted into -- any of lint, format check, type check, unit tests,
+  slower/integration test tiers, documentation build, and Markdown lint. A
+  project omits a gate it does not use; do not assume a fixed toolset, and do
+  not run a gate the script leaves out.
+- Group the gates into selectable scopes (for example code vs. documentation
+  vs. Markdown) so a contributor can run a single scope while iterating, and
+  default to running the full set when no scope is requested.
+- Offer a parallel mode (faster) and a sequential mode (easier to read when
+  debugging a failure), and let slow or environment-dependent tiers (such as
+  integration tests requiring external data) be opted in with an explicit flag
+  rather than run by default.
+- Run inside the project virtual environment, exit non-zero if any gate fails,
+  and print a summary naming which gates failed.
+- Treat documentation warnings as errors in this script exactly as CI does (see
+  `doc_python`).
+
+## 4. Environment Isolation
+
+- ALWAYS use `python -m venv` (or `virtualenv`) to create an isolated virtual environment. Activate it before any `pip install`.
+- NEVER install project dependencies into the system Python.
+- Record the supported Python version range in `pyproject.toml` via `requires-python` (e.g., `>=3.10`).
+- Test across all supported Python versions in CI using a matrix strategy.
+
+## 5. Editor Settings (VSCode / Cursor)
+
+The repository includes `.vscode/settings.json` so all contributors get consistent formatting:
+
+- **Indent**: 4 spaces (no tabs).
+- **Trailing whitespace**: Trimmed on save.
+- **Final newline**: Exactly one newline at end of file; excess trailing blank lines removed on save.
+- **Line length**: Rulers at 80, 90, and 100 characters (max 100 enforced by Ruff).
+
+## 6. Secrets and Configuration
+
+- NEVER commit secrets, tokens, or credentials. Use environment variables or GitHub Secrets.
+- Use `.env` files for local development only; ensure `.env` is in `.gitignore`.
+- Validate required environment variables at startup with clear error messages.

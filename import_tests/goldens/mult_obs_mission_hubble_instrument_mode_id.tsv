@@ -1,0 +1,9 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	ACCUM	ACCUM	010	Y	\N	\N	\N
+1	MULTIACCUM	MULTIACCUM	020	Y	\N	\N	\N
+2	ACQ	ACQ	030	Y	\N	\N	\N
+3	ACQ/PEAK	ACQ/PEAK	040	Y	\N	\N	\N
+4	FULL	FULL	050	Y	\N	\N	\N
+5	AREA	AREA	060	Y	\N	\N	\N
+6	CCUM	CCUM	070	Y	\N	\N	\N
+7	TIME-TAG	TIME-TAG	080	Y	\N	\N	\N

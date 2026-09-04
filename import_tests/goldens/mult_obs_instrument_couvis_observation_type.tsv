@@ -1,0 +1,10 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	CALIB	CALIB	010	Y	\N	\N	\N
+1	UCSTAR	UCSTAR	020	Y	\N	\N	\N
+2	UFPSCAN	UFPSCAN	030	Y	\N	\N	\N
+3	UHDAC	UHDAC	040	Y	\N	\N	\N
+4	UHIGHSN	UHIGHSN	050	Y	\N	\N	\N
+5	UMAP	UMAP	060	Y	\N	\N	\N
+6	USCAN	USCAN	070	Y	\N	\N	\N
+7	USTARE	USTARE	080	Y	\N	\N	\N
+8	NONE	None	090	Y	\N	\N	\N

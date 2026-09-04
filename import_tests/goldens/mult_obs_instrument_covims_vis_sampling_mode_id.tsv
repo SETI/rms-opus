@@ -1,0 +1,5 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	HI-RES	Hi-Res	010	Y	\N	\N	\N
+1	NORMAL	Normal	020	Y	\N	\N	\N
+2	UNK	Unknown	030	Y	\N	\N	\N
+3	N/A	N/A	040	Y	\N	\N	\N

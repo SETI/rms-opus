@@ -1,0 +1,9 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	CLEAR	Clear	010	Y	\N	\N	\N
+1	VIOLET	Violet	020	Y	\N	\N	\N
+2	GREEN	Green	030	Y	\N	\N	\N
+3	RED	Red	040	Y	\N	\N	\N
+4	IR-7270	Methane [IR-7270]	050	Y	\N	\N	\N
+5	IR-7560	Methane Continuum [IR-7560]	060	Y	\N	\N	\N
+6	IR-8890	Methane [IR-8890]	070	Y	\N	\N	\N
+7	IR-9680	Infrared [IR-9680]	080	Y	\N	\N	\N

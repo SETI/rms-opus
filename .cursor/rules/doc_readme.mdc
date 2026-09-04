@@ -1,0 +1,64 @@
+---
+alwaysApply: false
+description: Format and completeness rules for the top-level README of a Python package, including badges, quickstart, and Sphinx inclusion.
+---
+
+# README
+
+The `README` is the project's front door: it renders on the code host and on
+the package index, and is included into the Sphinx documentation. Build on
+`doc_python` (prose conventions, change discipline). Because it is the most
+widely seen page, keep it accurate, scannable, and free of internal jargon.
+
+## 1. Format and Inclusion
+
+- Write the `README` in Markdown (`README.md`) so it renders on the code host
+  and the package index.
+- It MUST be includable into the Sphinx docs via `myst-parser` so the
+  introduction is authored once. Place a marker comment (for example
+  `<!-- start-after-point -->`) after the badge block; the documentation
+  includes everything **after** the marker, so the badges (host-only) never
+  leak into the rendered docs.
+- Keep one top-level `#` title (the project name). If a documentation linter
+  objects to multiple `#` headings created by the introduction section, scope
+  the disable to the file with a comment rather than restructuring headings.
+
+## 2. Required Sections (in order)
+
+1. **Title** — the project / distribution name.
+2. **Badges** — a grouped block of status badges, each linking to its source:
+   release version and date, CI/test status, documentation build status, code
+   coverage, package-index version / supported Python versions / downloads,
+   open & closed issues and pull requests, license, and repository activity.
+   Group related badges on adjacent lines.
+3. **Introduction** — 1-3 short paragraphs in plain prose: what the package
+   does, the problem it solves, and who it is for. No code-object jargon.
+4. **Features** — a bulleted list with bold lead-ins summarizing the main
+   capabilities at a glance.
+5. **Installation** — supported Python versions, prerequisites (system
+   dependencies, external data, required environment variables), and the
+   `pip install <dist-name>` line. Include any non-obvious setup as numbered
+   steps with copy-pasteable code blocks.
+6. **Quick Start** — the shortest path to a first useful result. For a library,
+   a minimal import-and-call snippet; for a package with a command-line
+   component, one concrete invocation per primary entry point. Every example
+   MUST be runnable as written, with placeholder paths clearly marked.
+7. **Documentation** — a link to the hosted documentation and a one-line note
+   on how to build the docs locally.
+8. **Contributing** — a link to the contribution guide.
+9. **License** — the license name linking to the license file.
+
+A package with no command-line component omits CLI invocations from Quick Start
+and shows API usage instead; everything else applies unchanged.
+
+## 3. Content Rules
+
+- The `README` is a summary and an entry point, NOT a manual. Do not document
+  every option or workflow here — link to the relevant user-guide page for full
+  references.
+- Every command-line program or primary API the package ships should be
+  mentioned at least once with a pointer to its detailed documentation.
+- Keep the badge block, supported-version statement, install command, and entry
+  points consistent with the packaging metadata and the user guide. When any of
+  these change, update the `README` in the same change (`doc_python` Section 7).
+- Verify all links (badges, documentation, contributing, license) resolve.

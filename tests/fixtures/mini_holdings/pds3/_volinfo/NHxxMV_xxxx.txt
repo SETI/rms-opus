@@ -1,0 +1,22 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+
+NHxxMV_xxxx                | New Horizons MVIC image collection                                                || 6.0 | 2023-04-13
+NHxxMV_xxxx/NHPCMV_1001    | New Horizons raw        MVIC images, cruise to Pluto,    2007-09-29 to 2015-07-15 || 2.0 | 2009-03-04 | NH-X-MVIC-2-PLUTOCRUISE-V1.0
+
+
+
+
+
+
+
+metadata/NHxxMV_xxxx/NHPCMV_1001  | Metadata for New Horizons        raw MVIC images, cruise to Pluto,    2007-09-29 to 2015-07-15 || 1.4 | 2025-06-09
+
+metadata/NHxxMV_xxxx_v1.0/NHPCMV_1001  | Metadata for New Horizons raw        MVIC images, cruise to Pluto,   2007-09-29 to 2015-07-15 || 1.0 | 2017-09-05
+
+metadata/NHxxMV_xxxx_v1.1/NHPCMV_1001  | Metadata for New Horizons        raw MVIC images, cruise to Pluto,   2007-09-29 to 2015-07-15 || 1.1 | 2018-04-29
+
+metadata/NHxxMV_xxxx_v1.2/NHPCMV_1001  | Metadata for New Horizons        raw MVIC images, cruise to Pluto,    2007-09-29 to 2015-07-15 || 1.2 | 2018-04-29
+
+metadata/NHxxMV_xxxx_v1.3/NHPCMV_1001  | Metadata for New Horizons        raw MVIC images, cruise to Pluto,    2007-09-29 to 2015-07-15 || 1.3 | 2024-08-18
+

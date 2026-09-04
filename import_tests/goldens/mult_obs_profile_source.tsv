@@ -1,0 +1,49 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	\N	N/A	zzyN/A	Y	\N	\N	\N
+1	CASSINI	Cassini	!Cassini	Y	\N	\N	\N
+2	KSI02_CET	Xi2 Cet	Xi2 Cet	Y	Stars	Stars	\N
+3	ALF_VIR	Alp Vir (Spica)	Alp Vir (Spica)	Y	Stars	Stars	\N
+4	ALF_LEO	Alp Leo (Regulus)	Alp Leo (Regulus)	Y	Stars	Stars	\N
+5	126_TAU	126 Tau	126 Tau	Y	Stars	Stars	\N
+6	SIG_SGR	Sig Sgr	Sig Sgr	Y	Stars	Stars	\N
+7	ALF_SCO	Alp Sco (Antares)	Alp Sco (Antares)	Y	Stars	Stars	\N
+8	ALF_ORI	Alp Ori (Betelgeuse)	Alp Ori (Betelgeuse)	Y	Stars	Stars	\N
+9	ALF_TAU	Alp Tau (Aldebaran)	Alp Tau (Aldebaran)	Y	Stars	Stars	\N
+10	DEL_VIR	Del Vir	Del Vir	Y	Stars	Stars	\N
+11	GAM_LUP	Gam Lup	Gam Lup	Y	Stars	Stars	\N
+12	MU_PSA	Mu PsA	Mu PsA	Y	Stars	Stars	\N
+13	GAM_PEG	Gam Peg	Gam Peg	Y	Stars	Stars	\N
+14	ALF_ARA	Alp Ara	Alp Ara	Y	Stars	Stars	\N
+15	ETA_LUP	Eta Lup	Eta Lup	Y	Stars	Stars	\N
+16	KAP_CEN	Kap Cen	Kap Cen	Y	Stars	Stars	\N
+17	DEL_PER	Del Per	Del Per	Y	Stars	Stars	\N
+18	GAM_GRU	Gam Gru	Gam Gru	Y	Stars	Stars	\N
+19	EPS_PSA	Eps PsA	Eps PsA	Y	Stars	Stars	\N
+20	CHI_CEN	Chi Cen	Chi Cen	Y	Stars	Stars	\N
+21	TET_ARA	The Ara	The Ara	Y	Stars	Stars	\N
+22	OMI_CET	Omi Cet	Omi Cet	Y	Stars	Stars	\N
+23	IRC_+10216	CW Leo (IRC +10216)	CW Leo (IRC +10216)	Y	Stars	Stars	\N
+24	ALF_AUR	Alp Aur (Capella)	Alp Aur (Capella)	Y	Stars	Stars	\N
+25	R_HYA	R Hya	R Hya	Y	Stars	Stars	\N
+26	R_LEO	R Leo	R Leo	Y	Stars	Stars	\N
+27	ALF_TRA	Alp TrA	Alp TrA	Y	Stars	Stars	\N
+28	R_CAS	R Cas	R Cas	Y	Stars	Stars	\N
+29	GAM_CRU	Gam Cru	Gam Cru	Y	Stars	Stars	\N
+30	BET_GRU	Bet Gru	Bet Gru	Y	Stars	Stars	\N
+31	RS_CNC	RS Cnc	RS Cnc	Y	Stars	Stars	\N
+32	EPS_MUS	Eps Mus	Eps Mus	Y	Stars	Stars	\N
+33	BET_PEG	Bet Peg	Bet Peg	Y	Stars	Stars	\N
+34	ALF_CMA	Alp CMa (Sirius)	Alp CMa (Sirius)	Y	Stars	Stars	\N
+35	ALF_CET	Alp Cet	Alp Cet	Y	Stars	Stars	\N
+36	13_LYR	13 Lyr (R Lyr)	13 Lyr (R Lyr)	Y	Stars	Stars	\N
+37	W_HYA	W Hya	W Hya	Y	Stars	Stars	\N
+38	MU_CEP	Mu Cep	Mu Cep	Y	Stars	Stars	\N
+39	28_SGR	28 Sgr	28 Sgr	Y	Stars	Stars	\N
+40	SIGMA SGR	Sigma Sgr	Sigma Sgr	Y	Stars	Stars	\N
+41	BETA PER	Beta Per	Beta Per	Y	Stars	Stars	\N
+42	DELTA SCO	Delta Sco	Delta Sco	Y	Stars	Stars	\N
+43	IOTA HER	Iota Her	Iota Her	Y	Stars	Stars	\N
+44	VOYAGER 1	Voyager 1	Voyager 1	Y	\N	\N	\N
+45	VOYAGER 2	Voyager 2	Voyager 2	Y	\N	\N	\N
+46	Sun	Sun	Sun	Y	\N	\N	\N
+47	HIPPARCOS_79085	Hipparcos 79085	Hipparcos 79085	Y	Stars	Stars	\N

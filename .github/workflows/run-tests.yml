@@ -1,0 +1,343 @@
+name: Run Tests
+run-name: "Run Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ github.triggering_actor }}"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: "55 10 * * *"  # 2:55am PST, 3:55am PDT
+
+defaults:
+  run:
+    shell: bash
+
+# The repository default is write; nothing here writes back to GitHub.
+permissions:
+  contents: read
+
+env:
+  # OPUS has no default configuration path, so every job is given one.
+  OPUS_CONFIG: tests/fixtures/opus_ci.toml
+
+jobs:
+  lint:
+    name: Run Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUFF_PATHS: "src integration_tests import_tests tests docs manage.py"
+      MYPY_PATHS: "src integration_tests import_tests tests docs manage.py"
+      BANDIT_PATHS: "src integration_tests manage.py"
+      VULTURE_PATHS: "src integration_tests import_tests tests docs manage.py vulture_whitelist.py"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm reads tags, which a shallow clone does not fetch.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+
+      - name: Install MySQL client headers
+        # mysqlclient ships no Linux wheel, so it is compiled here.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Install package and dev dependencies
+        # The package itself, not just the tools: mypy's django-stubs plugin
+        # imports opus_app.settings.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Install the pdsfile rewrite
+        # From the branch tip; temporary until that work is released.
+        run: |
+          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
+
+      - name: Ruff (lint)
+        run: |
+          ruff check $RUFF_PATHS
+
+      - name: Ruff (format)
+        # A formatter's output is a property of its version, so a ruff whose style
+        # rules differ from the one that formatted the tree turns this red on code
+        # nobody edited. Reformatting under the newer ruff is the fix.
+        run: |
+          ruff format --check $RUFF_PATHS
+
+      - name: Bandit
+        run: |
+          bandit -c pyproject.toml -r $BANDIT_PATHS -q
+
+      - name: Vulture
+        run: |
+          vulture $VULTURE_PATHS
+
+      - name: Mypy
+        run: |
+          # shellcheck disable=SC2086  # MYPY_PATHS is a path list; splitting is intended
+          mypy $MYPY_PATHS
+
+      - name: PyMarkdown
+        run: |
+          pymarkdown scan README.md CONTRIBUTING.md .cursor/ docs/
+
+  test:
+    name: Unit Tests (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm reads tags, which a shallow clone does not fetch.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install MySQL client headers
+        # mysqlclient is a runtime dependency and ships no Linux wheel, so it
+        # is compiled here and needs the MySQL/MariaDB client development files.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Install package and dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Install the pdsfile rewrite
+        # From the branch tip; temporary until that work is released.
+        run: |
+          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
+
+      - name: Pytest
+        run: |
+          pytest -n auto --dist loadscope
+
+  import-tests:
+    # The import pipeline end to end against the checked-in mini-holdings
+    # fixture. This is the one job that measures unit coverage.
+    name: Import Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          # root, because the suite creates and drops a schema per run and
+          # MYSQL_USER would be granted rights on one named database only.
+          MYSQL_ROOT_PASSWORD: opus_import_tests
+        ports:
+          - 3306:3306
+        # Without this the first connection races the server's startup.
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      # 127.0.0.1 rather than localhost: MySQLdb reads localhost as a request for
+      # a Unix socket, which does not exist beside a service container.
+      OPUS_TEST_DB_HOST: 127.0.0.1
+      OPUS_TEST_DB_USER: root
+      OPUS_TEST_DB_PASSWORD: opus_import_tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm reads tags, which a shallow clone does not fetch.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+
+      - name: Install MySQL client headers
+        # mysqlclient is a runtime dependency and ships no Linux wheel, so it
+        # is compiled here and needs the MySQL/MariaDB client development files.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Install package and dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Install the pdsfile rewrite
+        # From the branch tip; temporary until that work is released.
+        run: |
+          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
+
+      - name: Pytest (import suite)
+        # Serial on purpose: a session-scoped fixture under -n would run the
+        # whole import once per worker into the same schema.
+        run: |
+          pytest import_tests \
+            --ignore=import_tests/test_obs_execution.py \
+            --cov --cov-report=term-missing \
+            --cov-report=xml:coverage.xml --cov-report=json:coverage.json
+
+      - name: Every obs function executed
+        # Separate, because it reads the report the run above writes, which does
+        # not exist until that session ends.
+        run: |
+          pytest import_tests/test_obs_execution.py
+
+      - name: Upload coverage report to codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          # Flagged, so this and the integration upload are not merged.
+          flags: import
+          verbose: true
+
+  docs:
+    # Autodoc imports every OPUS module, which is why this installs the package.
+    name: Docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm reads tags, which a shallow clone does not fetch.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+
+      - name: Install MySQL client headers
+        # mysqlclient is a runtime dependency and ships no Linux wheel, so it is
+        # compiled here and needs the MySQL/MariaDB client development files.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Install package and docs dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[docs]"
+
+      - name: Install the pdsfile rewrite
+        # From the branch tip; temporary until that work is released.
+        run: |
+          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
+
+      - name: Sphinx
+        # -W makes warnings errors, -n reports unresolved cross-references.
+        run: |
+          sphinx-build -W -n -b html docs docs/_build
+
+  package:
+    # The release path minus the upload, run on every push. The upload itself,
+    # the API tokens and PyPI's own verdict on the metadata are not covered.
+    name: Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # setuptools-scm reads tags; the version is part of what is validated.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        # The version both publish workflows build with.
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+
+      - name: Install MySQL client headers
+        # mysqlclient ships no Linux wheel, so it is compiled here.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config default-libmysqlclient-dev build-essential
+
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build && python -m build
+
+      - name: Validate package
+        # --strict makes a long-description rendering warning an error.
+        run: |
+          python -m pip install twine pyroma
+          python -m twine check --strict dist/*
+          python -m pyroma .
+
+      - name: Install the wheel into a clean environment and run what it promises
+        # Run from a directory that is not the checkout: with the repository as the
+        # working directory, `import opus_import` resolves through src/ for the
+        # wrong reason and a wheel missing a package would still pass.
+        run: |
+          python -m venv "$RUNNER_TEMP/clean"
+          "$RUNNER_TEMP/clean/bin/pip" install --upgrade pip
+          "$RUNNER_TEMP/clean/bin/pip" install dist/*.whl
+          # From the branch tip; temporary until that work is released.
+          "$RUNNER_TEMP/clean/bin/pip" install \
+            "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
+          cd "$RUNNER_TEMP"
+          export OPUS_CONFIG="$GITHUB_WORKSPACE/tests/fixtures/opus_ci.toml"
+          "$RUNNER_TEMP/clean/bin/opus_import" --help > /dev/null
+          "$RUNNER_TEMP/clean/bin/opus_import_all" --dry-run > /dev/null
+          "$RUNNER_TEMP/clean/bin/opus_log_analyzer" --help > /dev/null
+          "$RUNNER_TEMP/clean/bin/opus_error_analyzer" --help > /dev/null
+          # Django's command line, configured from OPUS_CONFIG alone.
+          "$RUNNER_TEMP/clean/bin/opus_manage" help > /dev/null
+          # Run it rather than asking for --help: writing the file is what
+          # proves the template is in the wheel, and it is the first thing an
+          # operator configuring a server needs.
+          "$RUNNER_TEMP/clean/bin/opus_config_template" > /dev/null
+          grep -q '^#' opus.toml.template
+          # A wheel missing package data installs and imports fine, then fails on
+          # the first real run.
+          "$RUNNER_TEMP/clean/bin/python" - <<'PY'
+          import importlib.resources as res
+
+          for package, name in [
+              ('opus_config', 'opus.toml.template'),
+              ('opus_import.table_schemas', 'obs_general.json'),
+              ('opus_import.dictionary_data', 'contexts.csv'),
+              ('opus_log_analyzer.templates', 'log_analysis.html'),
+          ]:
+              assert res.files(package).joinpath(name).is_file(), f'{package}/{name} missing'
+          import opus_app.wsgi  # noqa: F401  -- what mod_wsgi imports on the server
+          print('package data and the wsgi entry point are present')
+          PY

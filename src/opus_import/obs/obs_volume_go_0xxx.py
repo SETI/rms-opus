@@ -1,0 +1,342 @@
+"""The obs class for GO_0xxx.
+
+Galileo SSI images. The index gives one pointing rather than a range, so the right
+ascension range is the camera's own field of view about it.
+"""
+
+from typing import cast
+
+import numpy as np
+
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField, as_int
+from opus_import.obs.obs_type_image import EIGHT_BIT_IMAGE_LEVELS
+from opus_import.obs.obs_volume_galileo_common import ObsVolumeGalileoCommon
+
+# GOSSI is 10.16 microRad / pixel and 800x800
+_GOSSI_FOV_RAD = 10.16e-6 * 800
+_GOSSI_FOV_RAD_DIAG = _GOSSI_FOV_RAD * np.sqrt(2)
+
+# Data from:
+#   Title: The Galileo Solid-State Imaging experiment
+#   Authors: Belton, M. J. S., Klaasen, K. P., Clary, M. C., Anderson, J. L.,
+#            Anger, C. D., Carr, M. H., ,
+#   Journal: Space Science Reviews (ISSN 0038-6308), vol. 60, no. 1-4, May 1992,
+#            p. 413-455.
+#   Bibliographic Code: 1992SSRv...60..413B
+# WL MIN/MAX are taken by eye-balling Fig. 3 of the above paper
+# Note that min/max are the FULL bandwidth, not just the FWHM
+# (WL MIN, WL MAX, EFFECTIVE WL)
+_GOSSI_FILTER_WAVELENGTHS = {
+    'CLEAR': (360, 1050, 611),
+    'VIOLET': (360, 440, 404),
+    'GREEN': (510, 610, 559),
+    'RED': (620, 730, 671),
+    'IR-7270': (725, 750, 734),
+    'IR-7560': (750, 790, 756),
+    'IR-8890': (870, 900, 887),
+    'IR-9680': (940, 1050, 986),
+}
+
+
+# GO_0016 has a bunch of SL9 observations that have the same primary filespec.
+# This causes problems because they map to the same opus id. We have fixed this
+# by creating a separate go_0016_sl9_index.tab file that summaries these by group,
+# replacing single scalar fields like IMAGE_TIME and SPACECRAFT_CLOCK_START_COUNT
+# with MINIMUM_* and MAXIMUM_* versions. We ignore the SL9 files in the main
+# index by returning a NULL opus id, and then handle them from the sl9_index by
+# looking to see where there is a <field> or MINIMUM/MAXIMUM_<field> in the index.
+# What a mess for only 13 observations...
+
+
+class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
+    """The Galileo SSI images of GO_0xxx.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
+    @property
+    def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``GOSSI``."""
+        return 'GOSSI'
+
+    @property
+    def inst_host_id(self) -> str:
+        """The OPUS instrument host id, ``GO``."""
+        return 'GO'
+
+    @property
+    def mission_id(self) -> str:
+        """The OPUS mission id, ``GO``."""
+        return 'GO'
+
+    @property
+    def primary_filespec(self) -> str | None:
+        """The path of this image's data file.
+
+        Computed from the primary index alone, for the reason
+        `opus_import.obs.obs_cassini_common.ObsCassiniCommon.primary_filespec` gives.
+
+        Returns:
+            The volume-prefixed path.
+        """
+        # Note it's very important that this can be calculated using ONLY
+        # the primary index, not the supplemental index!
+        # This is because this (and the subsequent creation of opus_id) is used
+        # to actually find the matching row in the supplemental index dictionary.
+        # Format: GO_0017/J0/OPNAV/C0347569700R.LBL
+        assert self.bundle is not None
+        return cast(str | None, self.bundle + '/' + self._index_col('FILE_SPECIFICATION_NAME'))
+
+    ################################
+    ### OVERRIDE FROM ObsGeneral ###
+    ################################
+
+    # We only have the center point for RA,DEC so derive the edges by using the
+    # FOV
+    def _gossi_ra_helper(self) -> tuple[FloatField, FloatField]:
+        """Return the right ascension range the camera's field of view covers.
+
+        The index gives the pointing as a single direction, so the range is the field of
+        view's diagonal about it, widened by the declination's convergence of meridians.
+
+        Returns:
+            The minimum and maximum right ascension in degrees, or ``(None, None)`` if the
+            index carries no pointing. A range that wraps past 360 degrees is returned in
+            the order that says so.
+        """
+        ra = self._index_col('RIGHT_ASCENSION')
+        dec = self._index_col('DECLINATION')
+        if ra is None or dec is None:
+            return None, None
+        delta = np.rad2deg(_GOSSI_FOV_RAD_DIAG / 2 / np.cos(np.deg2rad(dec)))
+        ra1 = (ra - delta) % 360
+        ra2 = (ra + delta) % 360
+        if ra2 < ra1:
+            ra1, ra2 = ra2, ra1
+        return ra1, ra2
+
+    def field_obs_general_right_asc1(self) -> FloatField:
+        ra = self._sky_geo_index_col('MINIMUM_RIGHT_ASCENSION')
+        if ra is not None:
+            return ra
+        return self._gossi_ra_helper()[0]
+
+    def field_obs_general_right_asc2(self) -> FloatField:
+        ra = self._sky_geo_index_col('MAXIMUM_RIGHT_ASCENSION')
+        if ra is not None:
+            return ra
+        return self._gossi_ra_helper()[1]
+
+    def field_obs_general_declination1(self) -> FloatField:
+        dec = self._sky_geo_index_col('MINIMUM_DECLINATION')
+        if dec is not None:
+            return dec
+        dec = self._index_col('DECLINATION')
+        if dec is None:
+            return None
+        return cast(FloatField, dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG / 2))
+
+    def field_obs_general_declination2(self) -> FloatField:
+        dec = self._sky_geo_index_col('MAXIMUM_DECLINATION')
+        if dec is not None:
+            return dec
+        dec = self._index_col('DECLINATION')
+        if dec is None:
+            return None
+        return cast(FloatField, dec + np.rad2deg(_GOSSI_FOV_RAD_DIAG / 2))
+
+    def field_obs_general_ring_obs_id(self) -> StrField:
+        if self._index_col('ORBIT_NUMBER') is None:
+            return None
+        if not self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
+            return None  # SL9 - they didn't exist before anyway
+        image_num = self._index_col('SPACECRAFT_CLOCK_START_COUNT').replace('.', '')
+        return cast(StrField, 'J_IMG_GO_SSI_' + image_num)
+
+    def field_obs_general_planet_id(self) -> MultFieldRet:
+        if self._index_col('ORBIT_NUMBER') is None:
+            return self._create_mult('OTH')
+        return self._create_mult('JUP')
+
+    # Normal volumes have START_TIME and STOP_TIME in the supplemental index.
+    # These are computed from the original IMAGE_TIME in the primary index,
+    # which is the midtime, by adding and subtracting half the exposure
+    # duration.
+    # SL9 has MINIMUM_IMAGE_TIME and MAXIMUM_IMAGE_TIME already computed for
+    # the range of images included in each observation. Those image times
+    # are probably the midtime, which is slightly incorrect in this case.
+    def field_obs_general_time1(self) -> FloatField:
+        time1 = self._time_from_index(column='MINIMUM_IMAGE_TIME')
+        if time1 is None:
+            time1 = self._time_from_supp_index(column='START_TIME')
+        return time1
+
+    def field_obs_general_time2(self) -> FloatField:
+        time1 = self.field_obs_general_time1()
+        time2 = self._time2_from_index(time1, column='MAXIMUM_IMAGE_TIME')
+        if time2 is None:
+            time2 = self._time2_from_supp_index(time1, column='STOP_TIME')
+        return time2
+
+    def field_obs_general_observation_duration(self) -> FloatField:
+        time1 = self.field_obs_general_time1()
+        time2 = self.field_obs_general_time2()
+        if time1 is None or time2 is None:
+            exposure = self._index_col('EXPOSURE_DURATION')
+            if exposure is None:
+                return None
+            return cast(FloatField, exposure / 1000)
+        return max(round(time2 - time1, 5), 0)
+
+    def field_obs_general_quantity(self) -> MultFieldRet:
+        return self._create_mult('REFLECT')
+
+    def field_obs_general_observation_type(self) -> MultFieldRet:
+        return self._create_mult('IMG')
+
+    ############################
+    ### OVERRIDE FROM ObsPds ###
+    ############################
+
+    def field_obs_pds_product_id(self) -> StrField:
+        s = self._index_col('FILE_SPECIFICATION_NAME')
+
+        return cast(StrField, s.rsplit('/', 1)[-1].replace('.LBL', ''))
+
+    def field_obs_pds_note(self) -> StrField:
+        return cast(StrField, self._index_col('PROCESSING_HISTORY_TEXT'))
+
+    ##################################
+    ### OVERRIDE FROM ObsTypeImage ###
+    ##################################
+
+    def field_obs_type_image_image_type_id(self) -> MultFieldRet:
+        return self._create_mult('FRAM')
+
+    def field_obs_type_image_duration(self) -> FloatField:
+        exposure = self._index_col('EXPOSURE_DURATION')
+        if exposure is None:
+            return self.field_obs_general_observation_duration()
+        return cast(FloatField, exposure / 1000)
+
+    def field_obs_type_image_levels(self) -> IntField:
+        return EIGHT_BIT_IMAGE_LEVELS
+
+    def field_obs_type_image_greater_pixel_size(self) -> IntField:
+        cutoff = self._supp_index_col('CUT_OUT_WINDOW')
+        if cutoff is None or cutoff[2] is None or cutoff[3] is None:
+            return 800
+        return as_int(max(cutoff[2], cutoff[3]))
+
+    def field_obs_type_image_lesser_pixel_size(self) -> IntField:
+        cutoff = self._supp_index_col('CUT_OUT_WINDOW')
+        if cutoff is None or cutoff[2] is None or cutoff[3] is None:
+            return 800
+        return as_int(min(cutoff[2], cutoff[3]))
+
+    ###################################
+    ### OVERRIDE FROM ObsWavelength ###
+    ###################################
+
+    def _gossi_wavelength_helper(self) -> tuple[int, int, int] | None:
+        """Look up this observation's filter wavelengths.
+
+        Returns:
+            The minimum, maximum and effective wavelength in nanometres, or None for a
+            filter this pipeline does not describe, which is logged as an error.
+        """
+        filter_name = self._index_col('FILTER_NAME')
+
+        if filter_name not in _GOSSI_FILTER_WAVELENGTHS:
+            self._log_nonrepeating_error(f'Unknown GOSSI filter name "{filter_name}"')
+            return None
+
+        return _GOSSI_FILTER_WAVELENGTHS[filter_name]
+
+    def field_obs_wavelength_wavelength1(self) -> FloatField:
+        wavelengths = self._gossi_wavelength_helper()
+        if wavelengths is None:
+            return None
+        return wavelengths[0] / 1000  # microns
+
+    def field_obs_wavelength_wavelength2(self) -> FloatField:
+        wavelengths = self._gossi_wavelength_helper()
+        if wavelengths is None:
+            return None
+        return wavelengths[1] / 1000  # microns
+
+    def field_obs_wavelength_wave_res1(self) -> FloatField:
+        return self._wave_res_from_full_bandwidth()
+
+    def field_obs_wavelength_wave_res2(self) -> FloatField:
+        return self.field_obs_wavelength_wave_res1()
+
+    def field_obs_wavelength_wave_no_res1(self) -> FloatField:
+        return self._wave_no_res_from_full_bandwidth()
+
+    def field_obs_wavelength_wave_no_res2(self) -> FloatField:
+        return self.field_obs_wavelength_wave_no_res1()
+
+    ############################################
+    ### OVERRIDE FROM ObsVolumeGalileoCommon ###
+    ############################################
+
+    def field_obs_mission_galileo_orbit_number(self) -> MultFieldRet:
+        orbit = self._index_col('ORBIT_NUMBER')
+        if orbit is None:
+            return self._create_mult(None)
+        return self._create_mult(str(orbit))
+
+    def field_obs_mission_galileo_spacecraft_clock_count1(self) -> FloatField:
+        sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
+        return self._parse_galileo_sclk(sc)
+
+    def field_obs_mission_galileo_spacecraft_clock_count2(self) -> FloatField:
+        sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
+        return self._parse_galileo_sclk(sc)
+
+    ##############################################
+    ### FIELD METHODS FOR obs_instrument_gossi ###
+    ##############################################
+
+    def field_obs_instrument_gossi_opus_id(self) -> StrField:
+        return self.opus_id
+
+    def field_obs_instrument_gossi_bundle_id(self) -> StrField:
+        return self.bundle
+
+    def field_obs_instrument_gossi_observation_id(self) -> StrField:
+        return cast(StrField, self._index_col('OBSERVATION_ID'))
+
+    def field_obs_instrument_gossi_image_id(self) -> StrField:
+        if self._col_in_index('IMAGE_ID'):
+            return cast(StrField, self._index_col('IMAGE_ID'))
+        min_id = self._index_col('MINIMUM_IMAGE_ID')
+        max_id = self._index_col('MAXIMUM_IMAGE_ID')
+        # For SL9, give the range MIN-MAX as a string
+        return f'{min_id}-{max_id}'
+
+    def field_obs_instrument_gossi_filter_name(self) -> MultFieldRet:
+        return self._create_mult(self._index_col('FILTER_NAME'))
+
+    def field_obs_instrument_gossi_filter_number(self) -> MultFieldRet:
+        # as_int because the labels declare this column ASCII_INTEGER, so it arrives as
+        # a numpy integer, which is not an `int`; see field_types.as_int.
+        return self._create_mult(as_int(self._index_col('FILTER_NUMBER')))
+
+    def field_obs_instrument_gossi_gain_mode_id(self) -> MultFieldRet:
+        return self._create_mult(self._index_col('GAIN_MODE_ID'))
+
+    def field_obs_instrument_gossi_frame_duration(self) -> MultFieldRet:
+        return self._create_mult(self._index_col('FRAME_DURATION'))
+
+    def field_obs_instrument_gossi_obstruction_id(self) -> MultFieldRet:
+        return self._create_mult(self._index_col('OBSTRUCTION_ID'))
+
+    def field_obs_instrument_gossi_compression_type(self) -> MultFieldRet:
+        return self._create_mult(self._index_col('COMPRESSION_TYPE'))

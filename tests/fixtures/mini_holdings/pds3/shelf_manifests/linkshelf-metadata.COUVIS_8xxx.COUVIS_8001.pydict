@@ -1,0 +1,6 @@
+{
+    'COUVIS_8001_index.lbl': [(4, 'COUVIS_8001_index.tab', 'COUVIS_8001_index.tab')],
+    'COUVIS_8001_index.tab': 'COUVIS_8001_index.lbl',
+    'COUVIS_8001_supplemental_index.lbl': [(4, 'COUVIS_8001_supplemental_index.tab', 'COUVIS_8001_supplemental_index.tab')],
+    'COUVIS_8001_supplemental_index.tab': 'COUVIS_8001_supplemental_index.lbl',
+}

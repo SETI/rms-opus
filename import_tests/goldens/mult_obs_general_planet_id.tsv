@@ -1,0 +1,10 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	VEN	Venus	010	Y	\N	\N	\N
+1	EAR	Earth	020	Y	\N	\N	\N
+2	MAR	Mars	030	Y	\N	\N	\N
+3	JUP	Jupiter	040	Y	\N	\N	\N
+4	SAT	Saturn	050	Y	\N	\N	\N
+5	URA	Uranus	060	Y	\N	\N	\N
+6	NEP	Neptune	070	Y	\N	\N	\N
+7	PLU	Pluto	080	Y	\N	\N	\N
+8	OTH	Other	090	Y	\N	\N	\N

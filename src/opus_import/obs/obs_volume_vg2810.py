@@ -1,0 +1,175 @@
+"""The obs class for VG_2810.
+
+Voyager ISS radial ring profiles, reconstructed from the images.
+"""
+
+from typing import cast
+
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.obs_volume_vg28xx import ObsVolumeVG28xx
+
+
+class ObsVolumeVG2810VGISS(ObsVolumeVG28xx):
+    """The Voyager ISS radial ring profiles of VG_2810.
+
+    Its ``field_obs_*`` methods each fill the schema column their name ends in,
+    declaring the type `opus_import.obs.field_types` gives that column.
+    """
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
+    @property
+    def instrument_id(self) -> str | None:
+        """The OPUS instrument id, ``VGISS``."""
+        return 'VGISS'
+
+    ################################
+    ### OVERRIDE FROM ObsGeneral ###
+    ################################
+
+    def field_obs_general_quantity(self) -> MultFieldRet:
+        return self._create_mult('REFLECT')
+
+    def field_obs_general_observation_type(self) -> MultFieldRet:
+        return self._create_mult('REF')
+
+    ################################
+    ### OVERRIDE FROM ObsProfile ###
+    ################################
+
+    def field_obs_profile_occ_type(self) -> MultFieldRet:
+        return self._create_mult('REF')
+
+    def field_obs_profile_quality_score(self) -> MultFieldRet:
+        return self._create_mult('GOOD')
+
+    def field_obs_profile_source(self) -> MultFieldRet:
+        return self._create_mult(None)
+
+    def field_obs_profile_host(self) -> MultFieldRet:
+        return self._create_mult(self._supp_index_col('RECEIVER_HOST_NAME').lower())
+
+    #####################################
+    ### OVERRIDE FROM ObsRingGeometry ###
+    #####################################
+
+    # Source: Sun, observer: Voyager. For both of the reflectance profiles,
+    # the Sun was illuminating the north side of the rings and Voyager was
+    # observing the rings from the south side. Thus the incidence/emission
+    # angles and the north-based incidence/emission angles will
+    # be the same.
+
+    # Ring elevation to Sun, same to opening angle except, it's positive if
+    # source is at north side of Jupiter, Saturn, and Neptune, and south side of
+    # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
+    # and north side of Uranus. In this volume, source is at north of Saturn,
+    # so ring elevation will be the same as opening angle.
+    def field_obs_ring_geometry_solar_ring_elevation1(self) -> FloatField:
+        return cast(FloatField, 90.0 - self._supp_index_col('INCIDENCE_ANGLE'))
+
+    def field_obs_ring_geometry_solar_ring_elevation2(self) -> FloatField:
+        return cast(FloatField, 90.0 - self._supp_index_col('INCIDENCE_ANGLE'))
+
+    # Ring elevation to observer, same to opening angle except, it's positive if
+    # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
+    # Uranus. Negative if observer is at south side of Jupiter, Saturn, and Neptune,
+    # and north side of Uranus. In this volume, observer is at the south of Saturn,
+    # so ring elevation will be the same as opening angle.
+    def field_obs_ring_geometry_observer_ring_elevation1(self) -> FloatField:
+        return cast(FloatField, 90.0 - self._supp_index_col('MAXIMUM_EMISSION_ANGLE'))
+
+    def field_obs_ring_geometry_observer_ring_elevation2(self) -> FloatField:
+        return cast(FloatField, 90.0 - self._supp_index_col('MINIMUM_EMISSION_ANGLE'))
+
+    def field_obs_ring_geometry_phase1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MINIMUM_PHASE_ANGLE'))
+
+    def field_obs_ring_geometry_phase2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MAXIMUM_PHASE_ANGLE'))
+
+    def field_obs_ring_geometry_incidence1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('INCIDENCE_ANGLE'))
+
+    def field_obs_ring_geometry_incidence2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('INCIDENCE_ANGLE'))
+
+    # Emission angle: the angle between the normal vector on the LIT side, to the
+    # direction where outgoing photons to the observer. 0-90 when observer is at the
+    # lit side of the ring, and 90-180 when it's at the dark side.
+    def field_obs_ring_geometry_emission1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MINIMUM_EMISSION_ANGLE'))
+
+    def field_obs_ring_geometry_emission2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MAXIMUM_EMISSION_ANGLE'))
+
+    def field_obs_ring_geometry_north_based_incidence1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('INCIDENCE_ANGLE'))
+
+    def field_obs_ring_geometry_north_based_incidence2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('INCIDENCE_ANGLE'))
+
+    def field_obs_ring_geometry_north_based_emission1(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MINIMUM_EMISSION_ANGLE'))
+
+    def field_obs_ring_geometry_north_based_emission2(self) -> FloatField:
+        return cast(FloatField, self._supp_index_col('MAXIMUM_EMISSION_ANGLE'))
+
+    # Opening angle to Sun: the angle between the ring surface to the direction
+    # where incoming photons from the source. Positive if source is at the north
+    # side of the ring, negative if it's at the south side. In this case, source
+    # is at the north side, so it's 90 - inc. For reference, if source is at the
+    # south side, then oa is - (90 - inc).
+    def field_obs_ring_geometry_solar_ring_opening_angle1(self) -> FloatField:
+        return cast(FloatField, 90.0 - self._supp_index_col('INCIDENCE_ANGLE'))
+
+    def field_obs_ring_geometry_solar_ring_opening_angle2(self) -> FloatField:
+        return cast(FloatField, 90.0 - self._supp_index_col('INCIDENCE_ANGLE'))
+
+    def field_obs_ring_geometry_observer_ring_opening_angle1(self) -> FloatField:
+        return cast(FloatField, 90.0 - self._supp_index_col('MAXIMUM_EMISSION_ANGLE'))
+
+    def field_obs_ring_geometry_observer_ring_opening_angle2(self) -> FloatField:
+        return cast(FloatField, 90.0 - self._supp_index_col('MINIMUM_EMISSION_ANGLE'))
+
+    ##############################################
+    ### FIELD METHODS FOR obs_instrument_vgiss ###
+    ##############################################
+
+    def field_obs_instrument_vgiss_opus_id(self) -> StrField:
+        return self.opus_id
+
+    def field_obs_instrument_vgiss_bundle_id(self) -> StrField:
+        return self.bundle
+
+    def field_obs_instrument_vgiss_image_id(self) -> StrField:
+        return 'N/A'
+
+    def field_obs_instrument_vgiss_scan_mode(self) -> MultFieldRet:
+        return self._create_mult(None)
+
+    def field_obs_instrument_vgiss_shutter_mode(self) -> MultFieldRet:
+        return self._create_mult(None)
+
+    def field_obs_instrument_vgiss_gain_mode(self) -> MultFieldRet:
+        return self._create_mult(None)
+
+    def field_obs_instrument_vgiss_edit_mode(self) -> MultFieldRet:
+        return self._create_mult(None)
+
+    def field_obs_instrument_vgiss_filter_name(self) -> MultFieldRet:
+        return self._create_mult('CLEAR')
+
+    def field_obs_instrument_vgiss_filter_number(self) -> MultFieldRet:
+        return self._create_mult(0)
+
+    def field_obs_instrument_vgiss_camera(self) -> MultFieldRet:
+        # Narrow angle camera
+        return self._create_mult(None)
+
+    def field_obs_instrument_vgiss_usable_lines(self) -> IntField:
+        return None
+
+    def field_obs_instrument_vgiss_usable_samples(self) -> IntField:
+        return None

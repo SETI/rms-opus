@@ -6,6 +6,8 @@ __pycache__
 *.bak
 *.*.bak
 temp*.*
+# ...which would otherwise swallow this module, whose name begins "temp".
+!src/opus_config/template.py
 *.marks
 *.wsgi
 *.log
@@ -13,17 +15,46 @@ logs
 log.txt
 nohup.out
 
-.vscode
 *venv*
 !scripts/*
+# ...which would otherwise swallow this script, whose name ends "_venv.sh". It ships
+# inside the wheel as part of the deploy chain, and an untracked file ships nowhere.
+!src/opus_deploy/server/import_and_deploy/_activate_deploy_venv.sh
 test_out*
 coverage_out*
-opus_secrets.py
+opus.toml
+opus.toml.tmp
+# The deploy chain's own configuration, holding a database password and the Django
+# secret key. It is written on a server, in the directory opus_deploy_scripts wrote
+# the chain into, so this matches wherever a copy of that directory ends up here.
+# src/opus_deploy/server/deploy.env.template is the checked-in contract for it.
+secrets/deploy.env
 
 migrations/
 
 .coverage
+# The parallel data files the pipeline's subprocesses write during the import suite,
+# which pytest-cov combines into .coverage at the end of the run.
+.coverage.*
 coverage.xml
+# The per-function report the import suite's executed-functions check reads.
+coverage.json
+coverage_report.txt
 htmlcov/
+# Written by the profiling recipe in integration_tests/test_api/TEST_API_README.md
+profile.out
 
-profile.txt
+
+# Packaging (setuptools-scm writes the version file at build time)
+build/
+dist/
+*.egg-info/
+src/opus_config/_version.py
+# Agent isolation worktrees (created by Claude Code; never part of the tree)
+.claude/worktrees/
+
+# Sphinx: the build output, and the pages docs/_ext/ writes before each build.
+docs/_build/
+docs/api_reference.rst
+docs/api_opus_*.rst
+docs/api_guide_fields_table.rst

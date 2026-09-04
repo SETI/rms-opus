@@ -1,0 +1,93 @@
+---
+alwaysApply: false
+description: Format, layout, and completeness rules for the end-user guide of a Python package, covering overview, configuration, and command-line program references.
+---
+
+# User Guide
+
+The user guide is the manual for people who **use** the package without reading
+its source: installing it, calling its API, and running its command-line
+programs. Build on `doc_python` (Sphinx, cross-references, prose, build
+discipline). Write for someone fluent in Python and the command line but
+unfamiliar with the package internals; never require the reader to read source
+code to accomplish a documented task.
+
+## 1. File Layout
+
+- Live under `docs/` in a dedicated `user_guide/` subdirectory as
+  reStructuredText, keeping the user manual self-contained and parallel to the
+  developer guide's own subdirectory.
+- A single landing page (e.g. `user_guide/user_guide.rst`) holds a 1-2 sentence
+  introduction and a `toctree` (`:maxdepth: 2`) listing the chapters. It
+  contains no other prose.
+- One chapter per major feature or, for packages with a command-line component,
+  one chapter per command-line program (or tightly related group). Name files
+  with a shared prefix (`user_guide_<topic>.rst`).
+- Put instrument-, platform-, or format-specific material that would clutter the
+  main chapters into clearly named appendix pages (`user_guide_appendix_*.rst`).
+- The landing page is reachable from the documentation root `toctree` (via its
+  subdirectory path, e.g. `user_guide/user_guide`).
+- Because the chapters live in a subdirectory, references to pages OUTSIDE it
+  (the introduction, the developer guide) must use absolute `:doc:` targets
+  (a leading `/`); references among the user-guide chapters themselves stay
+  relative.
+
+## 2. Required Content
+
+The guide as a whole MUST cover:
+
+- **Introduction / purpose** — what the package is for and the value it
+  delivers, stated before any mechanics.
+- **Overview** — the high-level workflow or pipeline: the main stages, how they
+  connect, and what the user gets out of each. A diagram helps when the flow has
+  more than two stages.
+- **Installation and setup** — supported Python versions, install commands
+  (`pip`, and `pipx` when command-line programs should be available
+  system-wide), prerequisites, required external data, and every environment
+  variable the package reads. Show the layout of any expected input/output
+  directory tree with a literal block.
+- **Configuration** — the full configuration model: where settings come from,
+  the precedence order when more than one source exists (command-line flag >
+  environment variable > config file > built-in default is the typical order),
+  the available settings grouped by purpose, and their defaults. If
+  configuration is large, give it its own chapter and cross-reference it.
+- **API usage** (for any importable surface) — the common workflows as runnable
+  snippets with expected results.
+- **Reference for every command-line program** — see Section 3.
+- **Examples** — realistic end-to-end examples for the common workflows, each as
+  a copy-pasteable code block.
+
+## 3. Documenting Command-Line Programs
+
+For EACH command-line program the package installs:
+
+- State its name, one-line purpose, and the basic invocation syntax in a code
+  block (e.g. `prog SUBJECT [options]`).
+- Document EVERY option, grouped into labeled subsections by purpose (input /
+  selection, output, processing, logging, miscellaneous). For each option give:
+  the exact flag and its argument placeholder, what it does, its default, and
+  any environment-variable or config-file equivalent it overrides.
+- Note positional vs. optional arguments, repeatable options, accepted value
+  sets (e.g. log levels), and case sensitivity.
+- Show at least one complete, runnable example invocation.
+- When a program consumes or emits a structured file (a queue/task description,
+  a results file), document that file's schema in the chapter that owns the
+  program.
+- If the package omits a command-line component entirely, skip this section;
+  document the equivalent API entry points under "API usage" instead.
+
+## 4. Style
+
+- Lead each chapter with purpose and context, then mechanics; explain *why*
+  before *how*.
+- Provide a code block for every command or API call shown; never make the
+  reader reconstruct an invocation from prose.
+- Cross-reference other chapters, configuration, and API objects per
+  `doc_python` Section 5 rather than duplicating their content.
+- State expected results: what the user should see, and what files are produced
+  and where.
+- Keep option lists, defaults, and supported-value sets in exact agreement with
+  the program's actual argument parser and the packaging metadata. When the code
+  changes, update the guide in the same change.
+- For step-by-step task walkthroughs that warrant their own article, follow
+  `doc_how_to` and link to it from the relevant chapter.

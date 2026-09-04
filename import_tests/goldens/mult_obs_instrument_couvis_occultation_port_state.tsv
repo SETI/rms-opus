@@ -1,0 +1,4 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	OPEN	Open	010	Y	\N	\N	\N
+1	CLOSED	Closed	020	Y	\N	\N	\N
+2	N/A	N/A	030	Y	\N	\N	\N

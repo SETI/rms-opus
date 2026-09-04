@@ -1,0 +1,15 @@
+{
+    '': (391648, 12, '2025-04-18 07:29:55.000000', '', (0, 0)),
+    'COCIRS_1101_cube_equi_index.lbl': (27076, 0, '2025-04-18 07:29:55.000000', '31d7dce0aeb8ef36caeceae1c3f2269f', (0, 0)),
+    'COCIRS_1101_cube_equi_index.tab': (101694, 0, '2021-10-03 03:24:28.000000', '38c4e5703be9f20d197e873fdf42ff88', (0, 0)),
+    'COCIRS_1101_cube_equi_supplemental_index.lbl': (9885, 0, '2025-04-14 12:57:15.000000', 'f25ec6d9ebd30d00cb418c526c500b86', (0, 0)),
+    'COCIRS_1101_cube_equi_supplemental_index.tab': (26724, 0, '2021-10-03 10:17:14.000000', 'a8fb48a7a0829c4627db7d3dcbffbf04', (0, 0)),
+    'COCIRS_1101_cube_point_index.lbl': (27129, 0, '2025-04-18 07:29:55.000000', 'c4b4c7f73dcbbabec1aae03ea321742d', (0, 0)),
+    'COCIRS_1101_cube_point_index.tab': (120637, 0, '2021-10-03 03:25:12.000000', 'c99f780fe4d2eb044272177b967adf74', (0, 0)),
+    'COCIRS_1101_cube_point_supplemental_index.lbl': (9886, 0, '2025-04-14 12:57:15.000000', '767c2769e4d2810cf7ecdbe6f0cd9b82', (0, 0)),
+    'COCIRS_1101_cube_point_supplemental_index.tab': (31702, 0, '2021-10-03 10:17:14.000000', '1119df95ea8980e0c8c17bbe6889d7a9', (0, 0)),
+    'COCIRS_1101_cube_ring_index.lbl': (22550, 0, '2025-04-14 12:57:15.000000', 'f81dc5f8d4571d656c43f41bc3efca8d', (0, 0)),
+    'COCIRS_1101_cube_ring_index.tab': (3436, 0, '2021-10-03 03:25:54.000000', '53678739f761c22b90c7018c60c2d1c7', (0, 0)),
+    'COCIRS_1101_cube_ring_supplemental_index.lbl': (9881, 0, '2025-04-14 12:57:15.000000', '6c65abc1948e4b711b97a41b5bc5ff68', (0, 0)),
+    'COCIRS_1101_cube_ring_supplemental_index.tab': (1048, 0, '2021-10-03 10:17:14.000000', 'e65c59604d1d1d017808d304b137f9f3', (0, 0)),
+}
