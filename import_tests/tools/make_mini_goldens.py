@@ -7,6 +7,10 @@ assertion satisfied. A broken run can never be blessed into the goldens.
 
     python -m import_tests.tools.make_mini_goldens
 
+``--host``, ``--user`` and ``--password`` name the server, and default to wherever
+`import_tests.tools.db_credentials` says the suite would look, so a golden is recorded
+against the server it will be checked against.
+
 Regenerating the fixture with `import_tests.tools.make_mini_holdings` comes first;
 regenerating the goldens comes second, and both diffs are reviewed.
 """
@@ -27,18 +31,11 @@ from import_tests.tools import (
     golden_io,
     run_logs,
 )
+from import_tests.tools.db_credentials import resolve_credentials
 from import_tests.tools.golden_io import DatabaseCredentials
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-#: Where the generator reads its database credentials from when the command line does
-#: not give them, which is the same place the suite reads them from.
-HOST_ENV_VAR = 'OPUS_TEST_DB_HOST'
-USER_ENV_VAR = 'OPUS_TEST_DB_USER'
-PASSWORD_ENV_VAR = 'OPUS_TEST_DB_PASSWORD'
-DEFAULT_HOST = '127.0.0.1'
-DEFAULT_USER = 'root'
 
 
 def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
@@ -48,15 +45,16 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         argv: The arguments, or None to read ``sys.argv``.
 
     Returns:
-        The parsed arguments.
+        The parsed arguments. The server defaults to the one the suite would use.
     """
+    server = resolve_credentials()
     parser = argparse.ArgumentParser(
         prog='make_mini_goldens',
         description='Record the expected database contents from a clean fixture run',
     )
-    parser.add_argument('--host', default=os.environ.get(HOST_ENV_VAR, DEFAULT_HOST))
-    parser.add_argument('--user', default=os.environ.get(USER_ENV_VAR, DEFAULT_USER))
-    parser.add_argument('--password', default=os.environ.get(PASSWORD_ENV_VAR, ''))
+    parser.add_argument('--host', default=server.host)
+    parser.add_argument('--user', default=server.user)
+    parser.add_argument('--password', default=server.password)
     parser.add_argument(
         '--seed-whitelist',
         action='store_true',

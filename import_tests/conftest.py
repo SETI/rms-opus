@@ -19,20 +19,12 @@ from typing import TYPE_CHECKING
 import pytest
 
 from import_tests.tools import build_run, fixture_layout, negative_cases
-from import_tests.tools.golden_io import DatabaseCredentials
+from import_tests.tools.db_credentials import resolve_credentials
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-#: Where the suite reads its database credentials from, and what it falls back to. The
-#: host is an address rather than ``localhost`` on purpose: MySQLdb reads ``localhost``
-#: as a request for a Unix socket, which exists on a developer's machine and not beside
-#: a CI service container.
-HOST_ENV_VAR = 'OPUS_TEST_DB_HOST'
-USER_ENV_VAR = 'OPUS_TEST_DB_USER'
-PASSWORD_ENV_VAR = 'OPUS_TEST_DB_PASSWORD'
-DEFAULT_HOST = '127.0.0.1'
-DEFAULT_USER = 'root'
+    from import_tests.tools.golden_io import DatabaseCredentials
 
 
 @pytest.fixture(scope='session')
@@ -40,13 +32,11 @@ def db_credentials() -> DatabaseCredentials:
     """Return how to reach the MySQL server the suite imports into.
 
     Returns:
-        The credentials, read from the environment.
+        The credentials the ``OPUS_TEST_DB_*`` variables name, or the ones the
+        ``OPUS_CONFIG`` file holds when they name none.
+        `import_tests.tools.db_credentials` is where that order is decided.
     """
-    return DatabaseCredentials(
-        host=os.environ.get(HOST_ENV_VAR, DEFAULT_HOST),
-        user=os.environ.get(USER_ENV_VAR, DEFAULT_USER),
-        password=os.environ.get(PASSWORD_ENV_VAR, ''),
-    )
+    return resolve_credentials()
 
 
 @pytest.fixture(scope='session')

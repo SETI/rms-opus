@@ -77,10 +77,25 @@ Running the import suite
 ``pytest import_tests`` needs a MySQL server and nothing else -- no holdings, no import,
 no prepared database.
 
-It reads its credentials from ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER`` and
-``OPUS_TEST_DB_PASSWORD``, defaulting to ``root`` with no password on ``127.0.0.1``. Each
-run creates schemas named ``opus_import_test_<pid>`` and drops every one of them when the
-session ends, pass or fail, so nothing is left on the server to clean up.
+It looks for that server in two places. ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER`` and
+``OPUS_TEST_DB_PASSWORD`` name one for the suite alone, and are read as a set: if any of
+the three is set, the environment is what describes the server, and the other two default
+to ``root`` with no password on ``127.0.0.1``. If none of them is set, the host, user and
+password come from the ``[database]`` table of the ``OPUS_CONFIG`` file -- which every run
+of the suite already has, since ``pytest-django`` configures Django from it at collection
+-- so a configuration that already names your own MySQL server needs no second set of
+variables.
+
+Only the host, user and password are taken from that file; the schema it names is never
+touched. Each run creates schemas named ``opus_import_test_<pid>`` and drops every one of
+them when the session ends, pass or fail, so nothing is left on the server to clean up.
+
+There is no third source, and no guessing between the two. With ``OPUS_CONFIG`` pointing
+at ``tests/fixtures/opus_ci.toml`` -- which is what ``scripts/run-all-checks.sh`` sets
+when you have not exported one -- the suite tries to connect as that dummy configuration's
+``opus_ci_user`` and fails rather than falling back to ``root``, and a file that cannot be
+read at all stops the session outright. Export a real configuration, or the three
+variables, to run against something else.
 
 It runs serially: the run is one long import followed by fast assertions, so ``-n`` buys
 nothing, and a session-scoped fixture under xdist would run the import once per worker
@@ -278,8 +293,10 @@ other two suites need a server or a database, so neither is in a default run.
 full run; alongside another ``--*`` flag, to that selection. It is opt-in because it is the
 one check that needs a reachable MySQL server, and because it takes about two minutes
 against the eighteen seconds everything else costs. It uses the bare form, without
-coverage, and reads ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER`` and
-``OPUS_TEST_DB_PASSWORD`` itself. A failure fails the script, like any other check.
+coverage, and finds its server itself, from ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER``
+and ``OPUS_TEST_DB_PASSWORD`` or, with none of those set, from the ``OPUS_CONFIG`` file --
+which this script points at ``tests/fixtures/opus_ci.toml`` unless you exported one, and
+that file's credentials are dummies. A failure fails the script, like any other check.
 
 Each check has an ``ENABLE_*`` toggle at the top of the script, so one that is not yet
 expected to pass can be switched off in one place rather than deleted.

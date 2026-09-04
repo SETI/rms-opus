@@ -35,8 +35,11 @@
 # Environment:
 #   VENV or VENV_PATH        Path to virtualenv (default: $PROJECT_ROOT/venv)
 #   OPUS_TEST_DB_HOST/_USER/_PASSWORD   Where --import-tests finds MySQL. The suite
-#                            reads them itself, defaulting to root with no password
-#                            on 127.0.0.1.
+#                            reads them itself, as a set: any one of them set makes
+#                            the environment the source and the others default to
+#                            root with no password on 127.0.0.1. With none of them
+#                            set it reads the OPUS_CONFIG file instead, which this
+#                            script points at the CI dummy unless you exported one.
 #   CLEANUP_GRACE_PERIOD     Seconds to wait for graceful shutdown (default: 5)
 #
 #   Pytest coverage minimum: configure fail_under in coverage config (e.g.
@@ -466,8 +469,10 @@ run_code_checks() {
 
     # The import suite, opt-in because it is the one check needing a server. The bare
     # form, no coverage: that is the everyday one and about two minutes, and the coverage
-    # form is two commands belonging to the Import Tests job. It reads
-    # OPUS_TEST_DB_HOST/_USER/_PASSWORD itself.
+    # form is two commands belonging to the Import Tests job. It finds its server itself,
+    # from OPUS_TEST_DB_HOST/_USER/_PASSWORD or, with none of those set, from the
+    # OPUS_CONFIG file -- which is the CI dummy above unless the caller exported one,
+    # and that file's credentials are dummies.
     if [ "$RUN_IMPORT_TESTS" = true ] && [ "$ENABLE_IMPORT_TESTS" = true ]; then
         print_info "Running pytest import_tests (needs a reachable MySQL)..."
         if python -m pytest -q import_tests; then
