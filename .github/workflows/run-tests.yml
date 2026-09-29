@@ -123,11 +123,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      - name: Install the pdsfile rewrite
-        # From the branch tip; temporary until that work is released.
-        run: |
-          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
-
       - name: Pytest
         run: |
           pytest -n auto --dist loadscope
@@ -186,11 +181,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      - name: Install the pdsfile rewrite
-        # From the branch tip; temporary until that work is released.
-        run: |
-          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
-
       - name: Pytest (import suite)
         # Serial on purpose: a session-scoped fixture under -n would run the
         # whole import once per worker into the same schema.
@@ -247,11 +237,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[docs]"
 
-      - name: Install the pdsfile rewrite
-        # From the branch tip; temporary until that work is released.
-        run: |
-          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
-
       - name: Sphinx
         # -W makes warnings errors, -n reports unresolved cross-references.
         run: |
@@ -305,9 +290,6 @@ jobs:
           python -m venv "$RUNNER_TEMP/clean"
           "$RUNNER_TEMP/clean/bin/pip" install --upgrade pip
           "$RUNNER_TEMP/clean/bin/pip" install dist/*.whl
-          # From the branch tip; temporary until that work is released.
-          "$RUNNER_TEMP/clean/bin/pip" install \
-            "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
           cd "$RUNNER_TEMP"
           export OPUS_CONFIG="$GITHUB_WORKSPACE/tests/fixtures/opus_ci.toml"
           "$RUNNER_TEMP/clean/bin/opus_import" --help > /dev/null
