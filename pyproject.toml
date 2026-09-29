@@ -28,7 +28,7 @@ dependencies = [
   # else constrains which julian a resolve picks, so this floor is what lets
   # filterwarnings hold no entry for it.
   "rms-julian>=3.0.2",
-  "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite",
+  "rms-pdsfile>=1.0.0",
   "rms-pdslogger",
   "rms-pdstable",
   "rms-translator",
