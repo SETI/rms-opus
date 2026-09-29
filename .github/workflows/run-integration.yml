@@ -87,8 +87,6 @@ jobs:
           # This venv persists between runs and is not recreated with --clear, so
           # pip keeps any version that still satisfies a requirement.
           python -m pip install -e ".[dev]"
-          # From the branch tip; temporary until that work is released.
-          python -m pip install "rms-pdsfile @ git+https://github.com/SETI/rms-pdsfile@rewrite"
           echo
           # Which versions this run resolved, since the project declares floors
           # rather than pins.
