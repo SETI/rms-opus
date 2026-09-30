@@ -1,0 +1,5 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	REFLECT	Reflectivity	010	Y	\N	\N	\N
+1	THERMAL	Thermal Emission	020	Y	\N	\N	\N
+2	OPDEPTH	Optical Depth	030	Y	\N	\N	\N
+3	EMISSION	Emission	040	Y	\N	\N	\N

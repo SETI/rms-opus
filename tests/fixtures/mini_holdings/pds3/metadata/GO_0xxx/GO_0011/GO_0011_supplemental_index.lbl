@@ -1,0 +1,314 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 306
+FILE_RECORDS                    = 20
+^SUPPLEMENTAL_INDEX_TABLE       = "GO_0011_supplemental_index.tab"
+
+VOLUME_ID                       = "GO_0011"
+PRODUCT_CREATION_TIME           = 2025-11-26T10:50:49
+
+MISSION_NAME                    = "GALILEO"
+INSTRUMENT_HOST_NAME            = "GALILEO"
+INSTRUMENT_HOST_ID              = "GLL"
+INSTRUMENT_NAME                 = "SOLID STATE IMAGER"
+INSTRUMENT_ID                   = "SSI"
+
+DATA_SET_ID                     = "GO-A/E-SSI-2-REDR-V1.1"
+
+OBJECT                          = SUPPLEMENTAL_INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 20
+  COLUMNS                       = 22
+  ROW_BYTES                     = 306
+  INDEX_TYPE                    = SINGLE
+  DESCRIPTION                   = "This index supplements the file
+INDEX/INDEX.TAB found on each Galileo SSI archive volume in the PDS. It
+contains a large set of useful parameter values that are not found in the
+default index, all collected from the PDS label files."
+
+  OBJECT                        = COLUMN
+    NAME                        = "VOLUME_ID"
+    COLUMN_NUMBER               = 1
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 7
+    FORMAT                      = A7
+    DESCRIPTION                 = "The volume ID provides a unique
+      for a PDS data volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "FILE_SPECIFICATION_NAME"
+    COLUMN_NUMBER               = 2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 12
+    BYTES                       = 32
+    FORMAT                      = A32
+    DESCRIPTION                 = "The full name of a file, including a path
+name, relative to a PDS volume. It excludes node or volume location. Example:
+E26/EUROPA/C0532836239R.LBL"
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "TELEMETRY_FORMAT_ID"
+    COLUMN_NUMBER               = 3
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 47
+    BYTES                       = 3
+    FORMAT                      = A3
+    DESCRIPTION                 = "Telemetry format, one of 'HCJ', 'HIM',
+'HIS', 'HMA', 'IM4', or 'IM8'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "PRODUCT_CREATION_TIME"
+    COLUMN_NUMBER               = 4
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 53
+    BYTES                       = 19
+    FORMAT                      = A19
+    NOT_APPLICABLE_CONSTANT     = "UNKNOWN"
+    DESCRIPTION                 = "The product creation time in
+'YYYY-MM-DDThh:mm:ss' format."
+  END_OBJECT                    = COLUMN
+
+
+  OBJECT                        = COLUMN
+    NAME                        = "CUT_OUT_WINDOW"
+    COLUMN_NUMBER               = 5
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 74
+    BYTES                       = 15
+    ITEMS                       = 4
+    ITEM_BYTES                  = 3
+    ITEM_OFFSET                 = 4
+    FORMAT                      = I3
+    NOT_APPLICABLE_CONSTANT     = -1
+    DESCRIPTION                 = "Galileo SSI images can be edited so that
+only an image area or CUT OUT WINDOW is compressed using Integer Cosine
+Transform, BARC, or Huffman compression and transmitted to Earth. The cut out -
+window element indicates the location and size of this image area as defined
+by four numbers: starting line, starting sample, number of lines, number of
+samples (the origin of the image coordinate system is at line, sample=1,1 for
+the upper-left corner with samples increasing to the right and lines
+increasing down)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "TRUTH_WINDOW"
+    COLUMN_NUMBER               = 6
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 90
+    BYTES                       = 15
+    ITEMS                       = 4
+    ITEM_BYTES                  = 3
+    ITEM_OFFSET                 = 4
+    FORMAT                      = I3
+    NOT_APPLICABLE_CONSTANT     = -1
+    DESCRIPTION                 = "The position of an up to 96x96 truth
+window defined as four numbers: starting line, starting sample, number of
+lines, number of samples (the origin of the image coordinate system is at
+line, sample=1,1 for the upper-left corner with samples increasing to the
+right and lines increasing down)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "LIGHT_FLOOD_STATE_FLAG"
+    COLUMN_NUMBER               = 7
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 107
+    BYTES                       = 3
+    FORMAT                      = A3
+    DESCRIPTION                 = "The mode ('ON' or 'OFF') of light flooding
+for an instrument."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "EXPOSURE_TYPE"
+    COLUMN_NUMBER               = 8
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 113
+    BYTES                       = 8
+    FORMAT                      = A8
+    DESCRIPTION                 = "The exposure setting on the camera,
+'NORMAL' or 'EXTENDED'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "INVERTED_CLOCK_STATE_FLAG"
+    COLUMN_NUMBER               = 9
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 124
+    BYTES                       = 12
+    FORMAT                      = A12
+    DESCRIPTION                 = "The parallel clock state, 'INVERTED' or
+'NOT INVERTED'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "ON_CHIP_MOSAIC_FLAG"
+    COLUMN_NUMBER               = 10
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 139
+    BYTES                       = 3
+    FORMAT                      = A3
+    NOT_APPLICABLE_CONSTANT     = "N"
+    DESCRIPTION                 = "A flag indicating whether on-chip
+mosaicking was performed, 'YES' or 'NO'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "INSTRUMENT_MODE_ID"
+    COLUMN_NUMBER               = 11
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 145
+    BYTES                       = 18
+    FORMAT                      = A18
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The instrument readout mode,
+'CONTIGUOUS READOUT' or 'SAMPLE READOUT'. Otherwise, the 'not applicable'
+constant 'N/A'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "HUFFMAN_TABLE_TYPE"
+    COLUMN_NUMBER               = 12
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 166
+    BYTES                       = 7
+    FORMAT                      = A7
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The table type used for Huffman
+compression, 'SKEWED' or 'UNIFORM'. If Huffman compression was not used, the
+'not applicable' constant 'N/A'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "ICT_DESPIKE_THRESHOLD"
+    COLUMN_NUMBER               = 13
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 175
+    BYTES                       = 3
+    FORMAT                      = I3
+    NOT_APPLICABLE_CONSTANT     = -1
+    DESCRIPTION                 = "Despike threshold for the Integer Cosine
+Transform (ICT). Despiking is used as a pre-processing step to the ICT in
+order to minimize the effects of radiation-induced noise on compression
+efficiency."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_VERSION_ID
+    COLUMN_NUMBER               = 14
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 179
+    BYTES                       = 1
+    FORMAT                      = I1
+    NOT_APPLICABLE_CONSTANT     = 0
+    DESCRIPTION                 = "The version number of the individual
+product within this data set."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "ICT_QUANTIZATION_STEP_SIZE"
+    COLUMN_NUMBER               = 15
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 181
+    BYTES                       = 3
+    FORMAT                      = I3
+    NOT_APPLICABLE_CONSTANT     = -1
+    DESCRIPTION                 = "The compression step size for the Integer
+Cosine Transform (ICT), i.e., the integer value by which the ICT transform is
+divided. The greater the step-size, the greater the data loss."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "ICT_ZIGZAG_PATTERN"
+    COLUMN_NUMBER               = 16
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 186
+    BYTES                       = 6
+    FORMAT                      = A6
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The zigzag pattern used to rearrange the
+Integer Cosine Transform (ICT), one of 'ZIGZAG' or 'ALT'. If ICT compression
+was not used, the 'not applicable' constant 'N/A'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = COMPRESSION_QUANTIZATION_TABLE_ID
+    COLUMN_NUMBER               = 17
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 195
+    BYTES                       = 7
+    FORMAT                      = A7
+    NOT_APPLICABLE_CONSTANT     = "N/A"
+    DESCRIPTION                 = "The 8X8 quantization matrix identifier
+for the Integer Cosine Transform. Valid values are 'UNIFORM', 'VG2', and
+'VG3'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "ENTROPY"
+    COLUMN_NUMBER               = 18
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 204
+    BYTES                       = 7
+    FORMAT                      = "F7.3"
+    DESCRIPTION                 = "The average entropy level (bits/pixel).
+Entropy is a measure of scene activity and it applies to the entire image. For
+the Galileo SSI flight images the entropy is defined as: H = - SUM (from j=
+-255 to j= +255) p(j) [log(2) p(j)] where p(j) is the probability that two
+horizontally adjacent pixels have a different j, where - 255 <= j <= 255."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "START_TIME"
+    COLUMN_NUMBER               = 19
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 213
+    BYTES                       = 26
+    FORMAT                      = A26
+    UNKNOWN_CONSTANT            = "UNK"
+    DESCRIPTION                 = "The start time of the image exposure as
+derived from the IMAGE_TIME (midtime) and exposure duration in the label. The
+format is YYYY-MM-DDThh:mm:ss.ffffff."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "STOP_TIME"
+    COLUMN_NUMBER               = 20
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 242
+    BYTES                       = 26
+    FORMAT                      = A26
+    UNKNOWN_CONSTANT            = "UNK"
+    DESCRIPTION                 = "The stop time of the image exposure as
+derived from the IMAGE_TIME (midtime) and exposure duration in the label. The
+format is YYYY-MM-DDThh:mm:ss.ffffff."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "SPACECRAFT_CLOCK_START_COUNT"
+    COLUMN_NUMBER               = 21
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 271
+    BYTES                       = 15
+    FORMAT                      = A15
+    DESCRIPTION                 = "The spacecraft clock at the time of shutter
+open. The format is RIM:MOD91:MOD10:MOD8."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "SPACECRAFT_CLOCK_STOP_COUNT"
+    COLUMN_NUMBER               = 22
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 289
+    BYTES                       = 15
+    FORMAT                      = A15
+    DESCRIPTION                 = "The spacecraft clock at the time of shutter
+close, rounded to the next tick. The format is RIM:MOD91:MOD10:MOD8."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = SUPPLEMENTAL_INDEX_TABLE
+END

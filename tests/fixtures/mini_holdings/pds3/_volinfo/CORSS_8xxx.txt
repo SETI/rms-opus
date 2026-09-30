@@ -1,0 +1,16 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any
+
+
+CORSS_8xxx               | Cassini RSS radio occultation profiles of Saturn's rings, 2005-2010 || 2.0 | 2019-05-03
+CORSS_8xxx/CORSS_8001    | Cassini RSS radio occultation profiles of Saturn's rings, 2005-2010 || 2.0 | 2019-05-03 | CO-SR-RSS-4/5-OCC-V2.0
+
+CORSS_8xxx_v1/CORSS_8001 | Cassini RSS radio occultation profiles of Saturn's rings, 2005-2008 || 0.2 | 2012-09-30 | CO-SR-RSS-4/5-OCC-V0.2
+
+metadata/CORSS_8xxx/CORSS_8001   | Cassini RSS radio occultation metadata for Saturn's rings, 2005-2010 || 1.3 | 2025-06-02
+
+metadata/CORSS_8xxx_v1.0/CORSS_8001   | Cassini RSS radio occultation metadata for Saturn's rings, 2005-2008 || 1.0 | 2020-04-06
+
+metadata/CORSS_8xxx_v1.1/CORSS_8001   | Cassini RSS radio occultation metadata for Saturn's rings, 2005-2010 || 1.1 | 2020-10-10
+
+metadata/CORSS_8xxx_v1.2/CORSS_8001   | Cassini RSS radio occultation metadata for Saturn's rings, 2005-2010 || 1.2 | 2020-11-05
+

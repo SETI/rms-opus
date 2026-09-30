@@ -1,0 +1,4 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	DISABLED	Disabled	010	Y	\N	\N	\N
+1	ENABLED	Enabled	020	Y	\N	\N	\N
+2	\N	N/A	030	Y	\N	\N	\N

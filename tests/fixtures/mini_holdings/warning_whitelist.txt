@@ -1,0 +1,33 @@
+# The warnings a clean run of the mini-holdings fixture is allowed to produce, one
+# regular expression per line, full-matched against the whole message with pdslogger's
+# timestamp, logger name, nesting depth and level stripped off.
+#
+# Every entry carries a comment above it saying why the warning is benign, and every
+# entry has to admit a warning the run actually produces: an entry that matches nothing
+# fails the suite, because this file's whole value is that each line was justified
+# against something someone saw. New entries are seeded from a run's own WARNINGS.log --
+# `python -m import_tests.tools.make_mini_goldens --seed-whitelist` prints the distinct
+# messages -- and admitted one at a time, never in a batch.
+
+# The suite imports into a schema of its own, which does not exist until the first
+# invocation asks for it.
+Created new database "opus_import_test_\d+"
+
+# The first invocation is `--drop-permanent-tables --scorched-earth`, which is how the
+# run starts from nothing. Saying so loudly is correct on a production database.
+\*\* DELETING ALL PERMANENT TABLES \*\*
+
+# Each bundle is its own `--do-all-import` invocation, so every one after the first
+# writes over permanent tables whose cart table this run never creates. The production
+# import script has the same shape, which is why the goldens encode it.
+Deleting bundles from perm tables but cart table not wiped
+
+# A Cassini ISS filter combination the polarization table does not describe. The import
+# stores CLEAR and says so; the value is right for the image, and the sampler picks rows
+# for filter diversity, so reaching one of these is the point rather than an accident.
+\[COISS_\d+ index row \d+ "[^"]*"\] Using CLEAR instead of polarized filter for unknown COISS filter combination \S+
+
+# Two Hubble observations of one filter disagree about that filter's wavelength bounds,
+# which the mult-table maintenance reports as it folds them into one row. The archive
+# says both, and OPUS keeps the first.
+"obs_wavelength\.\w+" has inconsistent values for obs_mission_hubble filter "[^"]*": .*

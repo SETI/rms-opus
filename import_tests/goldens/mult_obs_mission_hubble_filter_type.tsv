@@ -1,0 +1,9 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	LP	Long Pass	010	Y	\N	\N	\N
+1	X	Extremely Wide	020	Y	\N	\N	\N
+2	W	Broadband	030	Y	\N	\N	\N
+3	M	Medium Band	040	Y	\N	\N	\N
+4	N	Narrowband	050	Y	\N	\N	\N
+5	FR	Ramp	060	Y	\N	\N	\N
+6	SP	Spectroscopic	070	Y	\N	\N	\N
+7	OT	Other	080	Y	\N	\N	\N

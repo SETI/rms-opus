@@ -1,0 +1,12 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	1:1	1:1	010	Y	\N	\N	\N
+1	3:4	3:4	020	Y	\N	\N	\N
+2	2:3	2:3	030	Y	\N	\N	\N
+3	3:5	3:5	040	Y	\N	\N	\N
+4	1:2	1:2	050	Y	\N	\N	\N
+5	2:5	2:5	060	Y	\N	\N	\N
+6	1:3	1:3	070	Y	\N	\N	\N
+7	1:5	1:5	080	Y	\N	\N	\N
+8	1:10	1:10	090	Y	\N	\N	\N
+9	1:32	1:32	100	Y	\N	\N	\N
+10	\N	N/A	110	Y	\N	\N	\N

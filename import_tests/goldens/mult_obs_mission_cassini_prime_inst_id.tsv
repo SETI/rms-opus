@@ -1,0 +1,8 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	CIRS	CIRS	010	Y	\N	\N	\N
+1	ISS	ISS	020	Y	\N	\N	\N
+2	RSS	RSS	030	Y	\N	\N	\N
+3	UVIS	UVIS	040	Y	\N	\N	\N
+4	VIMS	VIMS	050	Y	\N	\N	\N
+5	OTHER	Other	060	Y	\N	\N	\N
+6	UNK	Unknown	070	Y	\N	\N	\N

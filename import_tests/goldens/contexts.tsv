@@ -1,0 +1,24 @@
+name	description	parent	id
+PSDD	NASA PDS Planetary Science Data Dictionary	NULL	1
+OPUS_GENERAL	OPUS General Constraints	PSDD	2
+OPUS_GENERAL_SEARCH	OPUS General Constraints	PSDD	3
+OPUS_PDS	OPUS PDS Constraints	PSDD	4
+OPUS_TYPE_IMAGE	OPUS Image Constraints	PSDD	5
+OPUS_WAVELENGTH	OPUS Wavelength Constraints	PSDD	6
+OPUS_PROFILE	OPUS Occultation/Reflectance Profiles Constraints	PSDD	7
+SURFACE_GEO	Surface Geometry	PSDD	8
+RING_GEO	Ring Geometry	PSDD	9
+CASSINI	Cassini Mission	OPUS_GENERAL	10
+COCIRS	Cassini Composite Infrared Spectrometer (CIRS)	CASSINI	11
+COISS	Cassini Imaging Science Subsystem (ISS)	CASSINI	12
+COUVIS	Cassini UltraViolet Imaging Spectrograph (UVIS)	CASSINI	13
+COVIMS	Cassini Visual and Infrared Mapping Spectrometer (VIMS)	CASSINI	14
+GALILEO	Galileo Mission	OPUS_GENERAL	15
+GOSSI	Galileo Solid State Imaging (SSI)	GALILEO	16
+HST	Hubble Space Telescope	OPUS_GENERAL	17
+VOYAGER	Voyager Mission	OPUS_GENERAL	18
+VGISS	Voyager Imaging Science Subsystem (ISS)	VOYAGER	19
+NEWHORIZONS	New Horizons Mission	OPUS_GENERAL	20
+NHLORRI	New Horizons Long-Range Reconnaissance Imager (LORRI)	NEWHORIZONS	21
+NHMVIC	New Horizons Multispectral Visible Imaging Camera (MVIC)	NEWHORIZONS	22
+OPUS_PRODUCT_TYPE	OPUS Product Types	NULL	23

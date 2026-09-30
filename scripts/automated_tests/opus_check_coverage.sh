@@ -1,6 +1,6 @@
 #!/bin/bash
-
-cd opus/application
+# Run from the repository root, where opus_run_unittests_coverage.sh left
+# coverage_report.txt.
 
 EXPECTED=100
 

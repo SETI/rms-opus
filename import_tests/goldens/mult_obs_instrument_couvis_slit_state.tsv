@@ -1,0 +1,5 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	HIGH_RESOLUTION	High Resolution	010	Y	\N	\N	\N
+1	LOW_RESOLUTION	Low Resolution	020	Y	\N	\N	\N
+2	OCCULTATION	Occultation	030	Y	\N	\N	\N
+3	NULL	N/A	040	Y	\N	\N	\N

@@ -1,0 +1,49 @@
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+# Set the OS, Python version and other tools you might need
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+  apt_packages:
+    # The documentation build imports every OPUS module to generate the API
+    # reference, so it installs the whole distribution -- and mysqlclient, a
+    # runtime dependency, ships no Linux wheel. Without these the pip install
+    # below fails while compiling it.
+    - pkg-config
+    - default-libmysqlclient-dev
+  jobs:
+    post_checkout:
+      # Read the Docs clones shallow, and setuptools-scm derives the version from
+      # the tags a shallow clone does not fetch -- so conf.py, which reads the
+      # version out of the installed metadata, would render a fallback development
+      # version in the page titles. The CI docs job sets fetch-depth: 0 for the
+      # same reason.
+      - git fetch --unshallow || true
+      - git fetch --tags || true
+
+# Build documentation in the "docs/" directory with Sphinx
+sphinx:
+  configuration: docs/conf.py
+  # The same gate the CI docs job and scripts/run-all-checks.sh apply: every
+  # warning is a failure. conf.py sets `nitpicky`, so an unresolved
+  # cross-reference is one of those warnings -- together they are `-W -n`.
+  fail_on_warning: true
+
+# Optionally build your docs in additional formats such as PDF and ePub
+# formats:
+#    - pdf
+#    - epub
+
+# Install package with docs extra (dependencies from pyproject.toml)
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs

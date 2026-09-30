@@ -1,0 +1,9 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any
+
+VGISS_6xxx            | Voyager Saturn image collection, raw and calibrated                           || 1.1 | 2014-01-31
+VGISS_6xxx/VGISS_6109 | Voyager 1 Saturn images 1980-10-29 to 1980-11-01 (SC clock 34500.01-34599.57) || 1.1 | 2014-01-31 | VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.1
+
+metadata/VGISS_6xxx/VGISS_6109   | Voyager 1 Saturn image metadata 1980-10-29 to 1980-11-01 (SC clock 34500.01-34599.57) || 1.1 | 2021-01-28
+
+metadata/VGISS_6xxx_v1.0/VGISS_6109   | Voyager 1 Saturn image metadata 1980-10-29 to 1980-11-01 (SC clock 34500.01-34599.57) || 1.0 | 2018-08-21
+

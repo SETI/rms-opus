@@ -1,0 +1,5 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	EUV	EUV	010	Y	\N	\N	\N
+1	FUV	FUV	020	Y	\N	\N	\N
+2	HDAC	HDAC	030	Y	\N	\N	\N
+3	HSP	HSP	040	Y	\N	\N	\N

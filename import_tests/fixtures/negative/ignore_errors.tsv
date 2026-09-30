@@ -1,0 +1,17 @@
+# The unknown-target case, which pins what --import-ignore-errors does when a PDS label
+# names a target the pipeline does not describe: the observation imports with its target
+# recorded as OTHER instead of being dropped. Without the flag the same row loses its
+# target entirely, so this is the one place the fallback runs at all.
+#
+# The type is named rather than the volume: which volume represents Galileo is the
+# recorder's choice, and naming it here would go stale the day that choice changes.
+# Galileo reads TARGET_NAME straight out of its primary index and takes the generic PDS3
+# path to the fallback, which is the path this case is about.
+#
+# The replacement has to fit the column the label defines, because every field after it
+# sits at a fixed offset; NOSUCHBODY is ten characters against TARGET_NAME's eleven.
+instrument_class	ObsVolumeGO0xxx
+operation	set_column
+row	0
+column	TARGET_NAME
+value	NOSUCHBODY

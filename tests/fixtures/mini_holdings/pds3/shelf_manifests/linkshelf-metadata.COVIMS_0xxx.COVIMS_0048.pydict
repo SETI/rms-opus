@@ -1,0 +1,14 @@
+{
+    'COVIMS_0048_index.lbl': [(7, 'COVIMS_0048_index.tab', 'COVIMS_0048_index.tab')],
+    'COVIMS_0048_index.tab': 'COVIMS_0048_index.lbl',
+    'COVIMS_0048_inventory.csv': 'COVIMS_0048_inventory.lbl',
+    'COVIMS_0048_inventory.lbl': [(3, 'COVIMS_0048_inventory.csv', 'COVIMS_0048_inventory.csv')],
+    'COVIMS_0048_moon_summary.lbl': [(4, 'COVIMS_0048_moon_summary.tab', 'COVIMS_0048_moon_summary.tab')],
+    'COVIMS_0048_moon_summary.tab': 'COVIMS_0048_moon_summary.lbl',
+    'COVIMS_0048_ring_summary.lbl': [(4, 'COVIMS_0048_ring_summary.tab', 'COVIMS_0048_ring_summary.tab')],
+    'COVIMS_0048_ring_summary.tab': 'COVIMS_0048_ring_summary.lbl',
+    'COVIMS_0048_saturn_summary.lbl': [(4, 'COVIMS_0048_saturn_summary.tab', 'COVIMS_0048_saturn_summary.tab')],
+    'COVIMS_0048_saturn_summary.tab': 'COVIMS_0048_saturn_summary.lbl',
+    'COVIMS_0048_supplemental_index.lbl': [(4, 'COVIMS_0048_supplemental_index.tab', 'COVIMS_0048_supplemental_index.tab'), (161, 'dpsis.txt', '../../../volumes/COVIMS_0xxx/COVIMS_0001/document/dpsis.txt'), (406, 'dpsis.txt', '../../../volumes/COVIMS_0xxx/COVIMS_0001/document/dpsis.txt'), (541, 'dpsis.txt', '../../../volumes/COVIMS_0xxx/COVIMS_0001/document/dpsis.txt'), (568, 'dpsis.txt', '../../../volumes/COVIMS_0xxx/COVIMS_0001/document/dpsis.txt')],
+    'COVIMS_0048_supplemental_index.tab': 'COVIMS_0048_supplemental_index.lbl',
+}

@@ -1,0 +1,12 @@
+{
+    'COUVIS_0031_index.lbl': [(4, 'COUVIS_0031_index.tab', 'COUVIS_0031_index.tab'), (6, 'COUVIS_0031_index.tab', 'COUVIS_0031_index.tab')],
+    'COUVIS_0031_index.tab': 'COUVIS_0031_index.lbl',
+    'COUVIS_0031_moon_summary.lbl': [(4, 'COUVIS_0031_moon_summary.tab', 'COUVIS_0031_moon_summary.tab')],
+    'COUVIS_0031_moon_summary.tab': 'COUVIS_0031_moon_summary.lbl',
+    'COUVIS_0031_ring_summary.lbl': [(4, 'COUVIS_0031_ring_summary.tab', 'COUVIS_0031_ring_summary.tab')],
+    'COUVIS_0031_ring_summary.tab': 'COUVIS_0031_ring_summary.lbl',
+    'COUVIS_0031_saturn_summary.lbl': [(4, 'COUVIS_0031_saturn_summary.tab', 'COUVIS_0031_saturn_summary.tab')],
+    'COUVIS_0031_saturn_summary.tab': 'COUVIS_0031_saturn_summary.lbl',
+    'COUVIS_0031_supplemental_index.lbl': [(4, 'COUVIS_0031_supplemental_index.tab', 'COUVIS_0031_supplemental_index.tab')],
+    'COUVIS_0031_supplemental_index.tab': 'COUVIS_0031_supplemental_index.lbl',
+}

@@ -1,0 +1,22 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+
+COUVIS_8xxx                  | Cassini UVIS occultation profiles of Saturn's rings, 2005-2017 || 2.1 | 2021-01-08
+COUVIS_8xxx/COUVIS_8001      | Cassini UVIS occultation profiles of Saturn's rings, 2005-2017 || 2.1 | 2021-01-08 | CO-SR-UVIS-HSP-2/4-OCC-V3.0
+
+COUVIS_8xxx_v2.1/COUVIS_8001 | Cassini UVIS occultation profiles of Saturn's rings, 2005-2017 || 2.1 | 2019-05-10 | CO-SR-UVIS-HSP-2/4-OCC-V2.1
+
+COUVIS_8xxx_v2.0/COUVIS_8001 | Cassini UVIS occultation profiles of Saturn's rings, 2005-2017 || 2.0 | 2019-05-03 | CO-SR-UVIS-HSP-2/4-OCC-V2.0
+
+COUVIS_8xxx_v1/COUVIS_8001   | Cassini UVIS occultation profiles of Saturn's rings, 2005-2008 || 0.3 | 2010-10-01 | CO-SR-UVIS-HSP-2/4-OCC-V0.3
+
+metadata/COUVIS_8xxx/COUVIS_8001       | Cassini UVIS ring occultation metadata             || 1.4 | 2025-06-01
+
+metadata/COUVIS_8xxx_v1.0/COUVIS_8001  | Cassini UVIS ring occultation metadata             || 1.0 | 2020-08-17
+
+metadata/COUVIS_8xxx_v1.1/COUVIS_8001  | Cassini UVIS ring occultation metadata             || 1.1 | 2020-10-10
+
+metadata/COUVIS_8xxx_v1.2/COUVIS_8001  | Cassini UVIS ring occultation metadata             || 1.2 | 2021-01-08
+
+metadata/COUVIS_8xxx/COUVIS_8001       | Cassini UVIS ring occultation metadata             || 1.3 | 2022-02-17
+

@@ -1,0 +1,120 @@
+---
+alwaysApply: false
+description: Format, layout, and completeness rules for the developer/contributor guide of a Python package, covering repository layout, class diagrams, per-module prose, and the API reference.
+---
+
+# Developer Guide
+
+The developer guide is the manual for people who **modify, extend, build, test,
+or release** the package. It explains how the code is organized, how the pieces
+cooperate, and how to work on it safely. Build on `doc_python` (Sphinx,
+cross-references, prose, build discipline). Assume a competent Python developer
+who is new to *this* codebase; favor architecture and contracts over restating
+what the code already says.
+
+## 1. File Layout
+
+- Live under `docs/` (commonly a `dev_guide/` subdirectory) as reStructuredText.
+- A single landing page (e.g. `dev_guide.rst`) holds a 1-2 sentence audience
+  statement and a `toctree` (deep `:maxdepth:`) listing the chapters in reading
+  order, ending with the API reference and the contribution guide.
+- Organize chapters by subsystem, plus cross-cutting chapters (introduction,
+  architecture/class hierarchy, extending, conventions). Name files with a
+  shared prefix (`dev_guide_<topic>.rst`).
+- The landing page is reachable from the documentation root `toctree`.
+
+## 2. Required Chapters
+
+- **Introduction** — who the guide is for, how it differs from the user guide,
+  and a package overview (what it does, the runtime and key dependencies).
+- **Repository layout** — an annotated directory tree (a `::` literal block)
+  with a one-line comment on each significant directory and top-level file,
+  and a statement of which part is the importable public package versus
+  supporting code.
+- **Environment setup** — how to get a working development checkout:
+    - Clone, virtual-environment creation, and an editable install with the dev
+      extras (`pip install -e ".[dev]"`).
+    - Every environment variable needed to run, test, or build, with defaults.
+    - How to run the package's entry points locally, including a smoke test.
+    - How to run the test suite: the default invocation, how to include slower
+      or integration tiers, parallel/CI-matching flags, running a single
+      file/test, and coverage. Note the test layout and any required markers.
+    - How to run linters, type checks, formatters, and the docs build, plus any
+      one-command wrapper that runs them all.
+    - The CI/CD pipeline (what runs on which trigger) and the release process.
+    - The contribution workflow, or a pointer to the contribution guide.
+- **Architecture / class hierarchy** — see Section 3.
+- **Per-subsystem chapters** — see Section 4.
+- **Extending the system** — see Section 5.
+- **Coding conventions** — the project's style and quality rules, or a pointer
+  to where they live.
+- **API reference** — see Section 6.
+
+## 3. Architecture and Class Diagrams
+
+- Include at least one **class diagram** (a Mermaid `classDiagram` or
+  equivalent) showing the principal classes, their key public members, and the
+  relationships between them (inheritance, composition, "produces"/"consumes").
+- Mark abstract classes and dataclasses; show the methods that define each
+  abstract contract.
+- Follow every diagram with narrative prose that walks each group of classes in
+  turn — a diagram alone is not documentation.
+- Cross-reference every class named in the narrative per `doc_python` Section 5.
+  Do NOT cross-reference inside the diagram block itself.
+- Keep the diagram in sync with the code: a renamed or removed class invalidates
+  the diagram and must be fixed in the same change.
+
+## 4. Per-Subsystem / Per-Module Prose
+
+Each subsystem chapter MUST give a reader enough to navigate and modify that
+code without reverse-engineering it. Include:
+
+- **Overview** — the subsystem's responsibility and how it fits the overall
+  flow, with a cross-reference to the module(s) it documents.
+- **Per-class / per-file description** — prose for each significant class or
+  module: its role, the abstract contract it defines or implements (list the
+  methods subclasses must provide and what each returns), notable attributes,
+  and how instances are created and used. Describe behavior and contracts, not a
+  line-by-line restatement of the source.
+- **Concrete subclasses / implementations** — enumerate the shipping
+  implementations of each abstract base and what distinguishes each.
+- **Important invariants** — thread-safety and concurrency constraints, caching
+  and shared mutable state, ordering requirements, and units/conventions for
+  any quantity that is easy to get wrong. State these explicitly where they
+  apply.
+- **API-reference pointer** — end the chapter with a link to the autodoc page(s)
+  for the subsystem.
+
+## 5. Extending the System
+
+- Provide a step-by-step recipe for each documented extension point (adding a
+  plugin, backend, subclass, data source, etc.): which base class to inherit,
+  which methods to implement and their contracts, where to put the file, and how
+  to register it so the package discovers it.
+- Include a minimal, correct code skeleton for each recipe in a
+  `.. code-block:: python` directive.
+- Cross-reference the relevant subsystem chapter and the base classes involved
+  rather than duplicating their contracts.
+
+## 6. API Reference
+
+- Generate the API reference from docstrings with `autodoc`; do not hand-write
+  API descriptions that will drift from the code.
+- Provide an API-reference landing page with a `toctree`, plus one page per
+  top-level package/subpackage. On each page use `automodule` directives with
+  `:members:`, `:undoc-members:`, and `:show-inheritance:` so the full public
+  surface (including as-yet-undocumented members) is visible.
+- Cover the entire importable public API: when a new public module is added,
+  add a corresponding API-reference entry in the same change, or it will be
+  silently absent from the rendered surface.
+- The quality of these pages is bounded by docstring quality (`doc_python`
+  Section 4); thin docstrings produce a thin API reference.
+
+## 7. Build Discipline
+
+The developer guide is the heaviest user of cross-references, autodoc, and
+diagrams, so it is the most prone to silent breakage. It MUST build clean under
+both `sphinx-build -W` (warnings as errors) and `sphinx-build -n` (nitpicky)
+per `doc_python` Section 6 before delivering — every cross-reference resolving,
+every `automodule` importing (mock heavy optional imports in `conf.py` rather
+than dropping modules from the reference), and every diagram rendering.

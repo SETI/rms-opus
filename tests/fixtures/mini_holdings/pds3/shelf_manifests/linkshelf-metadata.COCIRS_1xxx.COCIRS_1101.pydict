@@ -1,0 +1,14 @@
+{
+    'COCIRS_1101_cube_equi_index.lbl': [(9, 'COCIRS_1101_cube_equi_index.tab', 'COCIRS_1101_cube_equi_index.tab')],
+    'COCIRS_1101_cube_equi_index.tab': 'COCIRS_1101_cube_equi_index.lbl',
+    'COCIRS_1101_cube_equi_supplemental_index.lbl': [(4, 'COCIRS_1101_cube_equi_supplemental_index.tab', 'COCIRS_1101_cube_equi_supplemental_index.tab')],
+    'COCIRS_1101_cube_equi_supplemental_index.tab': 'COCIRS_1101_cube_equi_supplemental_index.lbl',
+    'COCIRS_1101_cube_point_index.lbl': [(9, 'COCIRS_1101_cube_point_index.tab', 'COCIRS_1101_cube_point_index.tab')],
+    'COCIRS_1101_cube_point_index.tab': 'COCIRS_1101_cube_point_index.lbl',
+    'COCIRS_1101_cube_point_supplemental_index.lbl': [(4, 'COCIRS_1101_cube_point_supplemental_index.tab', 'COCIRS_1101_cube_point_supplemental_index.tab')],
+    'COCIRS_1101_cube_point_supplemental_index.tab': 'COCIRS_1101_cube_point_supplemental_index.lbl',
+    'COCIRS_1101_cube_ring_index.lbl': [(9, 'COCIRS_1101_cube_ring_index.tab', 'COCIRS_1101_cube_ring_index.tab')],
+    'COCIRS_1101_cube_ring_index.tab': 'COCIRS_1101_cube_ring_index.lbl',
+    'COCIRS_1101_cube_ring_supplemental_index.lbl': [(4, 'COCIRS_1101_cube_ring_supplemental_index.tab', 'COCIRS_1101_cube_ring_supplemental_index.tab')],
+    'COCIRS_1101_cube_ring_supplemental_index.tab': 'COCIRS_1101_cube_ring_supplemental_index.lbl',
+}

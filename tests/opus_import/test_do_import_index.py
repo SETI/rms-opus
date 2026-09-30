@@ -1,0 +1,127 @@
+"""Two properties of the per-index import that nothing else can catch.
+
+1. `get_opus_products_rows_for_filespec` returns an empty list, never a bare `None`,
+   when the filespec cannot be converted. Its only caller does
+   ``table_rows[table_name].extend(rows)``, so a `None` would turn a recoverable,
+   logged error into ``TypeError: 'NoneType' object is not iterable`` and abort the
+   whole index import.
+2. Every ``table_rows`` guard initializes the key it tested. The
+   ``obs_surface_geometry`` one is unreachable at run time -- ``table_rows`` is
+   pre-populated with every name the loop can yield -- so this is asserted against the
+   source rather than against behavior; no test could reach it otherwise.
+"""
+
+import ast
+from pathlib import Path
+from typing import Any, Literal
+
+import pytest
+
+import opus_import.steps.do_import_index as do_import_index
+from opus_import.context import ImportContext
+
+from .conftest import make_context
+
+
+class _RejectingPdsFile:
+    """A `Pds3File`/`Pds4File` stand-in that rejects every filespec."""
+
+    @staticmethod
+    def from_filespec(filespec: str, **_kwargs: object) -> object:
+        """Reject every filespec; `**_kwargs` absorbs the real call's `fix_case`."""
+        raise ValueError(f'no such filespec: {filespec}')
+
+
+class _FailingPdsFile:
+    """Stands in for the `pdsfile` package, mirroring its two-level attribute path."""
+
+    class pds3file:  # noqa: N801 - mirrors the real module's name
+        Pds3File = _RejectingPdsFile
+
+    class pds4file:  # noqa: N801 - mirrors the real module's name
+        Pds4File = _RejectingPdsFile
+
+
+@pytest.fixture
+def failing_pdsfile(monkeypatch: pytest.MonkeyPatch) -> ImportContext:
+    """Make every filespec conversion fail, and return the context it reports through.
+
+    The error travels the real route -- `import_util.log_nonrepeating_error` to
+    `ImportLog` to the logger -- so the recorded message is the one an operator would
+    read in the import log.
+    """
+    monkeypatch.setattr(do_import_index, 'pdsfile', _FailingPdsFile)
+    return make_context()
+
+
+@pytest.mark.parametrize('pds_version', [3, 4])
+def test_a_failed_filespec_conversion_returns_an_empty_list(
+    pds_version: Literal[3, 4], failing_pdsfile: ImportContext
+) -> None:
+    """The result must be iterable: the caller extends its row list with it."""
+    rows = do_import_index.get_opus_products_rows_for_filespec(
+        failing_pdsfile, pds_version, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0', 'COISS_2002', 'COISS'
+    )
+
+    assert rows == []
+    assert failing_pdsfile.logger.messages_at('error') == [
+        'Failed to convert filespec "BOGUS/FILESPEC.LBL"'
+    ]
+    assert failing_pdsfile.import_has_bad_data is True
+
+
+def test_a_failed_filespec_conversion_can_be_extended_by_the_caller(
+    failing_pdsfile: ImportContext,
+) -> None:
+    """Reproduces the caller's exact use: a bare None here is a TypeError."""
+    table_rows: dict[str, list[Any]] = {'obs_files': []}
+
+    rows = do_import_index.get_opus_products_rows_for_filespec(
+        failing_pdsfile, 3, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0', 'COISS_2002', 'COISS'
+    )
+    table_rows['obs_files'].extend(rows)
+
+    assert table_rows == {'obs_files': []}
+
+
+def test_every_table_rows_guard_initializes_the_key_it_tested() -> None:
+    """``if X not in table_rows`` must be followed by ``table_rows[X] = []``.
+
+    Testing one key and initializing another makes the append on the next line a
+    `KeyError`, or a `NameError` first where the other name is a leftover from an
+    earlier loop that need not be bound at all.
+
+    The ``obs_surface_geometry`` guard is unreachable (``table_rows`` is pre-populated
+    with every entry of ``table_names_in_order`` before the row loop, and that loop
+    only yields names from the same list), so no test and no import run can execute
+    it. That is why this checks the source rather than the behavior. The other three
+    guards -- two for the derived ``obs_surface_geometry__<TARGET>`` names, which *are*
+    reachable, and one for ``obs_files`` -- are held to the same rule.
+    """
+    source = Path(do_import_index.__file__).read_text(encoding='utf-8')
+    tree = ast.parse(source)
+
+    guards = []
+    for node in ast.walk(tree):
+        # if <key> not in table_rows: table_rows[<key2>] = []
+        if not isinstance(node, ast.If) or not isinstance(node.test, ast.Compare):
+            continue
+        test = node.test
+        if not (len(test.ops) == 1 and isinstance(test.ops[0], ast.NotIn)):
+            continue
+        if not (
+            isinstance(test.comparators[0], ast.Name) and test.comparators[0].id == 'table_rows'
+        ):
+            continue
+        assigns = [stmt for stmt in node.body if isinstance(stmt, ast.Assign)]
+        assert assigns, f'line {node.lineno}: guard body assigns nothing'
+        target = assigns[0].targets[0]
+        assert isinstance(target, ast.Subscript), f'line {node.lineno}'
+        guards.append((node.lineno, ast.unparse(test.left), ast.unparse(target.slice)))
+
+    assert len(guards) == 4, f'expected 4 table_rows guards, found {guards}'
+    mismatched = [(line, tested, created) for line, tested, created in guards if tested != created]
+    assert mismatched == [], (
+        'a table_rows guard initializes a different key than it tested, so the append '
+        f'that follows it raises KeyError: {mismatched}'
+    )

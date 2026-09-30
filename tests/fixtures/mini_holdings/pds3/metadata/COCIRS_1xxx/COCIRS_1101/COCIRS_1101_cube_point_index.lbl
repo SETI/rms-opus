@@ -1,0 +1,649 @@
+PDS_VERSION_ID       = PDS3
+RECORD_TYPE          = FIXED_LENGTH
+RECORD_BYTES         = 997
+FILE_RECORDS         = 20
+DATA_SET_ID          = "CO-S-CIRS-2/3/4-TSDR-V3.2"
+SPACECRAFT_NAME      = "CASSINI ORBITER"
+SPACECRAFT_ID        = "CO"
+INSTRUMENT_NAME      = "COMPOSITE INFRARED SPECTROMETER"
+INSTRUMENT_ID        = "CIRS"
+^INDEX_TABLE         = "COCIRS_1101_cube_point_index.tab"
+
+OBJECT                 = INDEX_TABLE
+INTERCHANGE_FORMAT     = ASCII
+ROWS                   = 20
+ROW_BYTES              = 997
+COLUMNS                = 50
+INDEX_TYPE             = SINGLE
+INDEXED_FILE_NAME      = "DATA/CUBE/POINT_PERSPECTIVE/*.LBL"
+
+  OBJECT                   = COLUMN
+    NAME                   = VOLUME_ID
+    DATA_TYPE              = CHARACTER
+    COLUMN_NUMBER          = 1
+    START_BYTE             = 2
+    BYTES                  = 11
+    FORMAT                 = A11
+    DESCRIPTION            = "The volume containing this product."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = FILE_SPECIFICATION_NAME
+    DATA_TYPE              = CHARACTER
+    COLUMN_NUMBER          = 2
+    START_BYTE             = 16
+    BYTES                  = 73
+    FORMAT                 = A73
+    DESCRIPTION            = "Pathname to the detached label which identifies
+                             this data file."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = PRODUCT_ID
+    DATA_TYPE              = CHARACTER
+    COLUMN_NUMBER          = 3
+    START_BYTE             = 92
+    BYTES                  = 41
+    FORMAT                 = A41
+    DESCRIPTION            = "Unique identifier for each product. Usually
+                             derived from the base filename of the current
+                             product."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = START_TIME
+    DATA_TYPE              = TIME
+    COLUMN_NUMBER          = 4
+    START_BYTE             = 135
+    BYTES                  = 19
+    FORMAT                 = A19
+    DESCRIPTION            = "Value of the internal clock at the beginning of
+                             the observation. UTC time human readable
+                             format YYYY-MM-DDTHH:MM:SS"
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = STOP_TIME
+    DATA_TYPE              = TIME
+    COLUMN_NUMBER          = 5
+    START_BYTE             = 155
+    BYTES                  = 19
+    FORMAT                 = A19
+    DESCRIPTION            = "Value of the internal clock at the end of the
+                             observation. UTC time human readable format
+                             YYYY-MM-DDTHH:MM:SS"
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = SPACECRAFT_CLOCK_START_COUNT
+    DATA_TYPE              = CHARACTER
+    COLUMN_NUMBER          = 6
+    START_BYTE             = 176
+    BYTES                  = 16
+    FORMAT                 = A16
+    DESCRIPTION            = "Value of the internal clock at the beginning of
+                             the observation. The format uses a double
+                             precision encoding of the clock time in units
+                             of ticks since the spacecraft clock start."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = SPACECRAFT_CLOCK_STOP_COUNT
+    DATA_TYPE              = CHARACTER
+    COLUMN_NUMBER          = 7
+    START_BYTE             = 195
+    BYTES                  = 16
+    FORMAT                 = A16
+    DESCRIPTION            = "Value of the internal clock at the end of the
+                             observation. The format uses a double
+                             precision encoding of the clock time in units
+                             of ticks since the spacecraft clock start."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = PRODUCT_CREATION_TIME
+    DATA_TYPE              = TIME
+    COLUMN_NUMBER          = 8
+    START_BYTE             = 214
+    BYTES                  = 19
+    FORMAT                 = A19
+    DESCRIPTION            = "Product_Creation_Time"
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = OBSERVATION_ID
+    DATA_TYPE              = CHARACTER
+    COLUMN_NUMBER          = 9
+    START_BYTE             = 236
+    BYTES                  = 24
+    FORMAT                 = A24
+    DESCRIPTION            = "The name of the observation of which this
+                             product is part. This name is derived from the
+                             Predicted Events File (PEF)."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = FOCAL_PLANE
+    DATA_TYPE              = ASCII_INTEGER
+    COLUMN_NUMBER          = 10
+    START_BYTE             = 262
+    BYTES                  = 3
+    FORMAT                 = I2
+    DESCRIPTION            = "Focal plane used."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = TARGET_NAME
+    DATA_TYPE              = CHARACTER
+    COLUMN_NUMBER          = 11
+    START_BYTE             = 267
+    BYTES                  = 13
+    FORMAT                 = A13
+    DESCRIPTION            = "Target in the field of view."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = SCET_START
+    DATA_TYPE              = ASCII_INTEGER
+    COLUMN_NUMBER          = 12
+    START_BYTE             = 282
+    BYTES                  = 12
+    FORMAT                 = I11
+    DESCRIPTION            = "Value of internal clock at the beginning of the
+                             observation. Expressed in linux time (UT
+                             seconds since Jan 1st 1970)."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = SCET_END
+    DATA_TYPE              = ASCII_INTEGER
+    COLUMN_NUMBER          = 13
+    START_BYTE             = 295
+    BYTES                  = 12
+    FORMAT                 = I11
+    DESCRIPTION            = "Value of internal clock at the end of the
+                             observation. Expressed in linux time (UT
+                             seconds since Jan 1st 1970)."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BODY_ANGULAR_SEMIDIAMETER"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 14
+    START_BYTE             = 308
+    BYTES                  = 18
+    FORMAT                 = "F9.6"
+    DESCRIPTION            = "Mean value of the equatorial angular radius of
+                             the body as seen by the spacecraft. Unit is
+                             milliradians."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BODY_PHASE_ANGLE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 15
+    START_BYTE             = 327
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Mean value of the angle between the radial
+                             vector of the spacecraft and the radial vector
+                             of the Sun, from the center of the body. Unit
+                             is degrees."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SPACECRAFT_RANGE_BEGINNING"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 16
+    START_BYTE             = 346
+    BYTES                  = 18
+    FORMAT                 = "F12.1"
+    DESCRIPTION            = "Beginning value of the distance from the center
+                             of the body to the spacecraft. Unit is km."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SPACECRAFT_RANGE_MIDDLE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 17
+    START_BYTE             = 365
+    BYTES                  = 18
+    FORMAT                 = "F12.1"
+    DESCRIPTION            = "Middle value of the distance from the center of
+                             the body to the spacecraft. Unit is km."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SPACECRAFT_RANGE_END"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 18
+    START_BYTE             = 384
+    BYTES                  = 18
+    FORMAT                 = "F12.1"
+    DESCRIPTION            = "Ending value of the distance from the center of
+                             the body to the spacecraft. Unit is km."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LATITUDE_BEGINNING"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 19
+    START_BYTE             = 403
+    BYTES                  = 16
+    FORMAT                 = "F9.5"
+    DESCRIPTION            = "Beginning value of the planetographic latitude
+                             of the sub-solar point on the body. Unit is
+                             degrees north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LATITUDE_MIDDLE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 20
+    START_BYTE             = 420
+    BYTES                  = 16
+    FORMAT                 = "F9.5"
+    DESCRIPTION            = "Middle value of the planetographic latitude of
+                             the sub-solar point on the body. Unit is
+                             degrees north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LATITUDE_END"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 21
+    START_BYTE             = 437
+    BYTES                  = 16
+    FORMAT                 = "F9.5"
+    DESCRIPTION            = "Ending value of the planetographic latitude of
+                             the sub-solar point on the body. Unit is
+                             degrees north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LATITUDE_PC_BEGINNING"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 22
+    START_BYTE             = 454
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Beginning value of the planetocentric latitude
+                             of the sub-solar point on the body. Unit is
+                             degrees north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LATITUDE_PC_MIDDLE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 23
+    START_BYTE             = 473
+    BYTES                  = 18
+    FORMAT                 = "F9.5"
+    DESCRIPTION            = "Middle value of the planetocentric latitude of
+                             the sub-solar point on the body. Unit is
+                             degrees north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LATITUDE_PC_END"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 24
+    START_BYTE             = 492
+    BYTES                  = 18
+    FORMAT                 = "F9.5"
+    DESCRIPTION            = "Ending value of the planetocentric latitude of
+                             the sub-solar point on the body. Unit is
+                             degrees north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LONGITUDE_BEGINNING"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 25
+    START_BYTE             = 511
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Beginning value of the longitude of the
+                             sub-solar point on the body. Unit is degrees
+                             west."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 26
+    START_BYTE             = 530
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Middle value of the longitude of the sub-solar
+                             point on the body. Unit is degrees west."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SOLAR_LONGITUDE_END"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 27
+    START_BYTE             = 549
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Ending value of the longitude of the sub-solar
+                             point on the body. Unit is degrees west."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LATITUDE_BEGINNING"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 28
+    START_BYTE             = 568
+    BYTES                  = 16
+    FORMAT                 = "F11.7"
+    DESCRIPTION            = "Beginning value of the planetographic
+                             sub-spacecraft latitude in the IAU coordinate
+                             system defined for the body. Unit is degrees
+                             north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 29
+    START_BYTE             = 585
+    BYTES                  = 16
+    FORMAT                 = "F11.7"
+    DESCRIPTION            = "Middle value of the planetographic
+                             sub-spacecraft latitude in the IAU coordinate
+                             system defined for the body. Unit is degrees
+                             north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LATITUDE_END"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 30
+    START_BYTE             = 602
+    BYTES                  = 16
+    FORMAT                 = "F11.8"
+    DESCRIPTION            = "Ending value of the planetographic
+                             sub-spacecraft latitude in the IAU coordinate
+                             system defined for the body. Unit is degrees
+                             north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_BEGINNING"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 31
+    START_BYTE             = 619
+    BYTES                  = 18
+    FORMAT                 = "F10.7"
+    DESCRIPTION            = "Beginning value of the planetocentric
+                             sub-spacecraft latitude in the IAU coordinate
+                             system defined for the body. Unit is degrees
+                             north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 32
+    START_BYTE             = 638
+    BYTES                  = 18
+    FORMAT                 = "F10.7"
+    DESCRIPTION            = "Middle value of the planetocentric
+                             sub-spacecraft latitude in the IAU coordinate
+                             system defined for the body. Unit is degrees
+                             north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_END"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 33
+    START_BYTE             = 657
+    BYTES                  = 18
+    FORMAT                 = "F10.7"
+    DESCRIPTION            = "Ending value of the planetocentric
+                             sub-spacecraft latitude in the IAU coordinate
+                             system defined for the body. Unit is degrees
+                             north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LONGITUDE_BEGINNING"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 34
+    START_BYTE             = 676
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Beginning value of the sub-spacecraft longitude
+                             in the IAU coordinate system defined for the
+                             body. Unit is degrees west."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 35
+    START_BYTE             = 695
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Middle value of the sub-spacecraft longitude in
+                             the IAU coordinate system defined for the
+                             body. Unit is degrees west."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:BODY_SUB_SPACECRAFT_LONGITUDE_END"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 36
+    START_BYTE             = 714
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Ending value of the sub-spacecraft longitude in
+                             the IAU coordinate system defined for the
+                             body. Unit is degrees west."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BORESIGHT_DECLINATION"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 37
+    START_BYTE             = 733
+    BYTES                  = 18
+    FORMAT                 = "F10.6"
+    DESCRIPTION            = "Mean value of the declination of the boresight
+                             in the J2000 coordinate system. Unit is
+                             degrees."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BORESIGHT_LATITUDE_ZPD"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 38
+    START_BYTE             = 752
+    BYTES                  = 16
+    FORMAT                 = "F10.6"
+    DESCRIPTION            = "Mean value of the planetographic latitude of
+                             the boresight at the ZPD time. Unit is degrees
+                             north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BORESIGHT_LATITUDE_ZPD_PC"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 39
+    START_BYTE             = 769
+    BYTES                  = 18
+    FORMAT                 = "F10.6"
+    DESCRIPTION            = "Mean value of the planetocentric latitude of
+                             the boresight at the ZPD time. Unit is degrees
+                             north."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BORESIGHT_LOCAL_TIME"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 40
+    START_BYTE             = 788
+    BYTES                  = 18
+    FORMAT                 = "F9.6"
+    DESCRIPTION            = "Mean value of the local solar time in hours
+                             since midnight. Unit is fractional hours."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BORESIGHT_LONGITUDE_ZPD"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 41
+    START_BYTE             = 807
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Mean value of the longitude of the boresight at
+                             the ZPD time. Unit is degrees west."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BORESIGHT_RIGHT_ASCENSION"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 42
+    START_BYTE             = 826
+    BYTES                  = 18
+    FORMAT                 = "F8.4"
+    DESCRIPTION            = "Mean value of the right ascension of the
+                             boresight in the J2000 coordinate system. Unit
+                             is degrees."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BORESIGHT_SOLAR_PHASE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 43
+    START_BYTE             = 845
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Mean value of the angle between the direction
+                             vector of the Sun and the normal to the
+                             surface at the point at which the boresight
+                             intersects the surface. Unit is degrees."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_BORESIGHT_SOLAR_ZENITH"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 44
+    START_BYTE             = 864
+    BYTES                  = 18
+    FORMAT                 = "F8.4"
+    DESCRIPTION            = "Mean value of the angle between the direction
+                             vector of the Sun and the normal to the
+                             surface at the point at which the boresight
+                             intersects the surface. Unit is degrees."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:MEAN_EMISSION_ANGLE_FOV_AVERAGE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 45
+    START_BYTE             = 883
+    BYTES                  = 18
+    FORMAT                 = "F8.5"
+    DESCRIPTION            = "Mean value of the average of the values of the
+                             emission angle (angle between the surface
+                             normal and the spacecraft direction) over the
+                             field of view. Unit is degrees."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:FIRST_SAMPLE_CENTER"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 46
+    START_BYTE             = 902
+    BYTES                  = 18
+    FORMAT                 = "F11.7"
+    DESCRIPTION            = "Sample coordinate at the center of the first
+                             sample element."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:FIRST_LINE_CENTER"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 47
+    START_BYTE             = 921
+    BYTES                  = 18
+    FORMAT                 = "F12.9"
+    DESCRIPTION            = "Line coordinate at the center of the first line
+                             element."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:LAST_SAMPLE_CENTER"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 48
+    START_BYTE             = 940
+    BYTES                  = 18
+    FORMAT                 = "F10.6"
+    DESCRIPTION            = "Sample coordinate at the center of the last
+                             sample element."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:LAST_LINE_CENTER"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 49
+    START_BYTE             = 959
+    BYTES                  = 18
+    FORMAT                 = "F11.7"
+    DESCRIPTION            = "Line coordinate at the center of the last line
+                             element."
+  END_OBJECT               = COLUMN
+
+  OBJECT                   = COLUMN
+    NAME                   = "CSS:ANGULAR_SCALE"
+    DATA_TYPE              = ASCII_REAL
+    NOT_APPLICABLE_CONSTANT= -200.
+    COLUMN_NUMBER          = 50
+    START_BYTE             = 978
+    BYTES                  = 18
+    FORMAT                 = "F7.4"
+    DESCRIPTION            = "Grid spacing. Unit is milliradians/pixel."
+  END_OBJECT               = COLUMN
+
+
+END_OBJECT             = INDEX_TABLE
+END

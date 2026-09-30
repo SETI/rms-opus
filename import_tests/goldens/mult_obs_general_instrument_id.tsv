@@ -1,0 +1,41 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	COCIRS	Cassini CIRS	010	Y	\N	\N	\N
+1	COISS	Cassini ISS	020	Y	\N	\N	\N
+2	CORSS	Cassini RSS	030	Y	\N	\N	\N
+3	COUVIS	Cassini UVIS	040	Y	\N	\N	\N
+4	COVIMS	Cassini VIMS	050	Y	\N	\N	\N
+5	GOSSI	Galileo SSI	060	Y	\N	\N	\N
+6	VGISS	Voyager ISS	070	Y	\N	\N	\N
+7	VGPPS	Voyager PPS	080	Y	\N	\N	\N
+8	VGRSS	Voyager RSS	090	Y	\N	\N	\N
+9	VGUVS	Voyager UVS	100	Y	\N	\N	\N
+10	HSTACS	Hubble ACS	110	Y	\N	\N	\N
+11	hst.fos	Hubble FOS	120	Y	\N	\N	\N
+12	HSTNICMOS	Hubble NICMOS	130	Y	\N	\N	\N
+13	HSTSTIS	Hubble STIS	140	Y	\N	\N	\N
+14	HSTWFC3	Hubble WFC3	150	Y	\N	\N	\N
+15	HSTWFPC2	Hubble WFPC2	160	Y	\N	\N	\N
+16	NHLORRI	New Horizons LORRI	170	Y	\N	\N	\N
+17	NHMVIC	New Horizons MVIC	180	Y	\N	\N	\N
+108	caha-calar_alto.1m23	Caha Calar Alto 1.23m	1080	Y	Ground-based	010	\N
+124	ctio-cerro_tololo.smarts_1m50	Cerro Tololo SMARTS 1.5m	1240	Y	Ground-based	010	\N
+126	ctio-cerro_tololo.victorblanco_4m0	Cerro Tololo Victor Blanco 4m	1260	Y	Ground-based	010	\N
+132	eso-la_silla.1m04	ESO La Silla 1m	1320	Y	Ground-based	010	\N
+134	eso-la_silla.2m2	ESO La Silla 2.2m	1340	Y	Ground-based	010	\N
+135	eso-la_silla.3m6	ESO La Silla 3.6m	1350	Y	Ground-based	010	\N
+164	irtf-maunakea.3m2	IRTF 3.2m	1640	Y	Ground-based	010	\N
+172	kuiper-airborne.0m91	Kuiper Airborne Observatory 0.91m	1720	Y	Ground-based	010	\N
+173	las_campanas.ireneedupont_2m5	Las Campanas Irenee Dupont 2.5m	1730	Y	Ground-based	010	\N
+176	las_campanas.swope_1m0	Las Campanas Henrietta Swope 1.0m	1760	Y	Ground-based	010	\N
+187	lowell.perkins_warner1m83	Lowell Perkins 1.83m	1870	Y	Ground-based	010	\N
+202	maunakea.ukirt_3m8	UKIRT 3.8m	2360	Y	Ground-based	010	\N
+204	mcdonald.harlanjsmith_2m7	McDonald Harlan J Smith 2.7m	2040	Y	Ground-based	010	\N
+215	mount_stromlo.1m9	Mount Stromlo 1.9m	2150	Y	Ground-based	010	\N
+226	palomar.hale_5m08	Palomar Hale 5.08m	2260	Y	Ground-based	010	\N
+230	pic_du_midi.1m06	Pic du Midi 1.06m	2300	Y	Ground-based	010	\N
+231	pic_du_midi.bernardlyot_2m0	Pic du Midi Bernard Lyot 2.0m	2310	Y	Ground-based	010	\N
+232	saao.radcliffe_1m88	SAAO Radcliffe 1.88m	2320	Y	Ground-based	010	\N
+233	siding_spring.aat_3m9	SSO AAT 3.9m	2330	Y	Ground-based	010	\N
+234	siding_spring.anu_2m3	SSO ANU 2.3m	2340	Y	Ground-based	010	\N
+244	teide.carlossanchez_1m55	Teide Carlos Sanchez 1.55m	2350	Y	Ground-based	010	\N
+500	lick.nickel	Lick Anna L Nickel 1m	1810	Y	Ground-based	010	\N

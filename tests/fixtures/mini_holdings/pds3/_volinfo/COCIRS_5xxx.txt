@@ -1,0 +1,6 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any
+
+
+COCIRS_5xxx             | Cassini CIRS data, simplified formats, from 2010 calibration                              || 1.1 | 2011-11-17
+COCIRS_5xxx/COCIRS_5704 | Cassini CIRS data, re-formatted, 2007-04-01 to 2007-04-29 (SC clock 1554097510-1556567264) || 1.1 | 2011-11-17 | CO-S-CIRS-2/3/4-REFORMATTED-V1.1
+

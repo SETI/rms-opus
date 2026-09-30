@@ -1,0 +1,182 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+FILE_RECORDS                    = 20
+RECORD_BYTES                    = 358
+^SUPPLEMENTAL_INDEX_TABLE       = "CORSS_8001_supplemental_index.tab"
+
+VOLUME_ID                       = "CORSS_8001"
+PRODUCT_CREATION_TIME           = 2020-11-05T16:00:00
+
+INSTRUMENT_HOST_NAME            = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID              = "CO"
+INSTRUMENT_NAME                 = "RADIO SCIENCE SUBSYSTEM"
+INSTRUMENT_ID                   = "RSS"
+
+OBJECT                          = SUPPLEMENTAL_INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 20
+  ROW_BYTES                     = 358
+  COLUMNS                       = 14
+  INDEX_TYPE                    = SINGLE
+
+  DESCRIPTION                   = "This index supplements the file
+    index/index.tab found in the CORSS_8001 volume. It contains a small set
+    of useful parameter values that are not found in the default index
+    but exist in the PDS label files."
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 1
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 10
+    FORMAT                      = A10
+    DESCRIPTION                 = "The volume ID provides a unique identifier
+        for a PDS data volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 2
+    NAME                        = FILE_SPECIFICATION_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 15
+    BYTES                       = 90
+    FORMAT                      = A90
+    DESCRIPTION                 = "Name and path of the PDS label file
+      describing the particular file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 3
+    NAME                        = LOWEST_DETECTABLE_OPACITY
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 107
+    BYTES                       = 10
+    FORMAT                      = "F10.8"
+    DESCRIPTION                 = "The highest opacity detectable in the
+      occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 4
+    NAME                        = HIGHEST_DETECTABLE_OPACITY
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 118
+    BYTES                       = 10
+    FORMAT                      = "F10.8"
+    DESCRIPTION                 = "The highest opacity detectable in the
+      occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 5
+    NAME                        = DSN_STATION_NUMBER
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 129
+    BYTES                       = 2
+    FORMAT                      = I2
+    DESCRIPTION                 = "The number of the DSN station that received
+      the data for the occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 6
+    NAME                        = MISSION_PHASE_NAME
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 133
+    BYTES                       = 32
+    FORMAT                      = A32
+    DESCRIPTION                 = "Mission phase of which this occultation
+      is a part."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 7
+    NAME                        = SPACECRAFT_CLOCK_START_COUNT
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 168
+    BYTES                       = 16
+    FORMAT                      = A16
+    DESCRIPTION                 = "The seconds and subRTI portions of the
+      spacecraft clock at the beginning of the occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 8
+    NAME                        = SPACECRAFT_CLOCK_STOP_COUNT
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 187
+    BYTES                       = 16
+    FORMAT                      = A16
+    DESCRIPTION                 = "The seconds and subRTI portions of the
+      spacecraft clock at the end of the occultation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 9
+    NAME                        = SPACECRAFT_EVENT_START_TIME
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 206
+    BYTES                       = 21
+    FORMAT                      = A21
+    DESCRIPTION                 = "The time the photon left the spacecraft for
+      the earliest data for this occultation (UTC)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 10
+    NAME                        = SPACECRAFT_EVENT_STOP_TIME
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 230
+    BYTES                       = 21
+    FORMAT                      = A21
+    DESCRIPTION                 = "The time the photon left the spacecraft for
+      the latest data for this occultation (UTC)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 11
+    NAME                        = EARTH_RECEIVED_START_TIME
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 254
+    BYTES                       = 21
+    FORMAT                      = A21
+    DESCRIPTION                 = "Earth Received time of the earliest data for
+      this occultation (UTC)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 12
+    NAME                        = EARTH_RECEIVED_STOP_TIME
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 278
+    BYTES                       = 21
+    FORMAT                      = A21
+    DESCRIPTION                 = "Earth Received time of the latest data for
+      this occultation (UTC)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 13
+    NAME                        = OBSERVATION_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 302
+    BYTES                       = 32
+    FORMAT                      = A32
+    DESCRIPTION                 = "Name of observation of which this
+      occultation is a part."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 14
+    NAME                        = PRODUCT_CREATION_TIME
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 337
+    BYTES                       = 19
+    FORMAT                      = A19
+    DESCRIPTION                 = "Approximate UTC date and time when the PDS
+data product was created."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = SUPPLEMENTAL_INDEX_TABLE
+END

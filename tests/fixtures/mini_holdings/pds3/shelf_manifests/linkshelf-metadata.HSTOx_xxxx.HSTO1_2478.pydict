@@ -1,0 +1,6 @@
+{
+    'HSTO1_2478_hstfiles.lbl': [(4, 'HSTO1_2478_hstfiles.tab', 'HSTO1_2478_hstfiles.tab')],
+    'HSTO1_2478_hstfiles.tab': 'HSTO1_2478_hstfiles.lbl',
+    'HSTO1_2478_index.lbl': [(4, 'HSTO1_2478_index.tab', 'HSTO1_2478_index.tab')],
+    'HSTO1_2478_index.tab': 'HSTO1_2478_index.lbl',
+}

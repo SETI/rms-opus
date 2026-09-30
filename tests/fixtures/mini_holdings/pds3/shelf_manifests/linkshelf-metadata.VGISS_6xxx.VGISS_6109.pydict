@@ -1,0 +1,16 @@
+{
+    'VGISS_6109_index.lbl': [(4, 'VGISS_6109_index.tab', 'VGISS_6109_index.tab')],
+    'VGISS_6109_index.tab': 'VGISS_6109_index.lbl',
+    'VGISS_6109_inventory.csv': 'VGISS_6109_inventory.lbl',
+    'VGISS_6109_inventory.lbl': [(3, 'VGISS_6109_inventory.csv', 'VGISS_6109_inventory.csv')],
+    'VGISS_6109_moon_summary.lbl': [(4, 'VGISS_6109_moon_summary.tab', 'VGISS_6109_moon_summary.tab')],
+    'VGISS_6109_moon_summary.tab': 'VGISS_6109_moon_summary.lbl',
+    'VGISS_6109_raw_image_index.lbl': [(4, 'VGISS_6109_raw_image_index.tab', 'VGISS_6109_raw_image_index.tab')],
+    'VGISS_6109_raw_image_index.tab': 'VGISS_6109_raw_image_index.lbl',
+    'VGISS_6109_ring_summary.lbl': [(4, 'VGISS_6109_ring_summary.tab', 'VGISS_6109_ring_summary.tab')],
+    'VGISS_6109_ring_summary.tab': 'VGISS_6109_ring_summary.lbl',
+    'VGISS_6109_saturn_summary.lbl': [(4, 'VGISS_6109_saturn_summary.tab', 'VGISS_6109_saturn_summary.tab')],
+    'VGISS_6109_saturn_summary.tab': 'VGISS_6109_saturn_summary.lbl',
+    'VGISS_6109_supplemental_index.lbl': [(4, 'VGISS_6109_supplemental_index.tab', 'VGISS_6109_supplemental_index.tab')],
+    'VGISS_6109_supplemental_index.tab': 'VGISS_6109_supplemental_index.lbl',
+}

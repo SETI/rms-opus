@@ -1,0 +1,16 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+
+HSTIx_xxxx            | HST WFC3 placeholder volumes for OPUS queries                   || 1.2 | 2019-08-29
+HSTIx_xxxx/HSTI1_3631 | HST WFC3 images of the Jupiter system  2014-04-21 to 2014-04-21 || 1.0 | 2018-07-14 | HST-J-WFC3-5-ID13631-V1.0
+
+
+
+metadata/HSTIx_xxxx/HSTI1_3631   | HST WFC3 metadata for the Jupiter system  2014-04-21 to 2014-04-21 || 1.3 | 2025-06-09
+
+metadata/HSTIx_xxxx_v1.0/HSTI1_3631   | HST WFC3 metadata for the Jupiter system  2014-04-21 to 2014-04-21 || 1.0 | 2018-08-24
+
+metadata/HSTIx_xxxx_v1.1/HSTI1_3631   | HST WFC3 metadata for the Jupiter system  2014-04-21 to 2014-04-21 || 1.1 | 2019-09-03
+
+metadata/HSTIx_xxxx_v1.2/HSTI1_3631   | HST WFC3 metadata for the Jupiter system  2014-04-21 to 2014-04-21 || 1.2 | 2021-01-21
+

@@ -1,0 +1,4 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	LOSSLESS	Lossless	010	Y	\N	\N	\N
+1	LOSSY	Lossy	020	Y	\N	\N	\N
+2	NOTCOMP	Not Compressed	030	Y	\N	\N	\N

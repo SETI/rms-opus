@@ -1,0 +1,5 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	8_BIT	8_BIT	010	Y	\N	\N	\N
+1	SQRT_8	SQRT_8	020	Y	\N	\N	\N
+2	SQRT_9	SQRT_9	030	Y	\N	\N	\N
+3	NONE	None	040	Y	\N	\N	\N

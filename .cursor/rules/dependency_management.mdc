@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+description: Standards for declaring, installing, and maintaining Python project dependencies.
+---
+
+# Dependency Management
+
+## 1. Single Source of Truth
+
+- Declare ALL dependencies in **`pyproject.toml`** under `[project]` (PEP 621).
+- Do NOT maintain a separate hand-written `requirements.txt` for runtime dependencies. If a `requirements.txt` is kept, it should contain only `-e .` for backward compatibility.
+
+## 2. Dependency Groups
+
+| Group | Section | Install command | Purpose |
+|-------|---------|-----------------|---------|
+| **Runtime** | `[project].dependencies` | `pip install .` | Required for the package to function. |
+| **Dev** | `[project.optional-dependencies].dev` | `pip install -e ".[dev]"` | Testing, linting, type-checking, coverage. |
+| **Docs** | `[project.optional-dependencies].docs` | `pip install -e ".[docs]"` | Sphinx and documentation extensions. |
+
+## 3. Version Constraints
+
+- Specify **minimum** compatible versions for direct dependencies (e.g., `numpy>=2.2.0`).
+- Do NOT pin exact versions (`==`) in library projects; exact pinning belongs in lock files or application deployments.
+- For dev/docs dependencies, specify minimum versions to ensure consistent tool behavior across contributors.
+
+## 4. Adding or Updating Dependencies
+
+1. Add the dependency to the correct section in `pyproject.toml`.
+2. Run `pip install -e ".[dev]"` (or the relevant group) to verify installation.
+3. Run the full test suite and type-check to confirm compatibility.
+4. Commit the `pyproject.toml` change with a `build:` commit type.
+
+## 5. Security and Maintenance
+
+- Run `pip-audit` in CI to catch known vulnerabilities.
+- Enable automated dependency update tooling (Dependabot, Renovate).
+- Review update PRs for breaking changes before merging.
+- Periodically remove unused dependencies to reduce attack surface.
+
+## 6. Tooling Configuration
+
+Consolidate all tool configuration into `pyproject.toml` where supported:
+
+| Tool | Section |
+|------|---------|
+| pytest | `[tool.pytest.ini_options]` |
+| coverage | `[tool.coverage.run]`, `[tool.coverage.report]` |
+| mypy | `[tool.mypy]`, `[[tool.mypy.overrides]]` |
+| ruff | `[tool.ruff]`, `[tool.ruff.lint]` — use explicit `select = [...]` for E, F, W, I, UP, B, SIM, C4, A, N, PT, RUF (see python) |
+| setuptools_scm | `[tool.setuptools_scm]` |
+
+Do NOT create separate config files (`.coveragerc`, `.mypy.ini`, `.flake8`, `setup.cfg`) when the tool supports `pyproject.toml`.

@@ -1,0 +1,9 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	\N	N/A	zzyN/A	Y	\N	\N	\N
+1	UNASSIGNED	Unassigned	Unassigned	Y	\N	\N	\N
+2	POOR	Poor	Poor	Y	\N	\N	\N
+3	GOOD	Good	Good	Y	\N	\N	\N
+4	FAIR	Fair	Fair	Y	\N	\N	\N
+5	fair	Fair	Fair	Y	\N	\N	\N
+6	poor	Poor	Poor	Y	\N	\N	\N
+7	good	Good	Good	Y	\N	\N	\N

@@ -1,0 +1,270 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 260
+FILE_RECORDS                    = 45
+^INDEX_TABLE                    = "VG_2801_index.tab"
+
+VOLUME_ID                       = "VG_2801"
+DATA_SET_ID                     = "VG2-SR/UR/NR-PPS-2/4-OCC-V1.0"
+PRODUCT_CREATION_TIME           = 2025-04-18T07:11:47
+SPACECRAFT_NAME                 = "VOYAGER 2"
+SPACECRAFT_ID                   = VG2
+INSTRUMENT_NAME                 = "PHOTOPOLARIMETER SUBSYSTEM"
+INSTRUMENT_ID                   = PPS
+
+OBJECT                          = INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 45
+  COLUMNS                       = 18
+  ROW_BYTES                     = 260
+  INDEX_TYPE                    = SINGLE
+  DESCRIPTION                   = "This is a table of the files on
+this archive volume. There is one record per label file in the volume.
+The files indexed are those in the CALIB, EASYDATA, EDITDATA, FOVMAPS,
+GEOMETRY, IMAGES, JITTER, NOISDATA, RAWDATA, SORCDATA, SPICE, TRAJECT,
+and VECTORS directories."
+
+  OBJECT                        = COLUMN
+    NAME                        = VOLUME_ID
+    COLUMN_NUMBER               = 1
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 7
+    FORMAT                      = A7
+    DESCRIPTION                 = "The unique identifier for the PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FILE_SPECIFICATION_NAME
+    COLUMN_NUMBER               = 2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 12
+    BYTES                       = 29
+    FORMAT                      = A29
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Name and directory path of the PDS
+label file describing this particular file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_ID
+    COLUMN_NUMBER               = 3
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 44
+    BYTES                       = 21
+    FORMAT                      = A21
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "The product ID associated with the
+given file. This is typically the file name, sometimes with a
+directory name prepended to make it unique."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_TYPE
+    COLUMN_NUMBER               = 4
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 68
+    BYTES                       = 18
+    FORMAT                      = A18
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Product type of a given data file.
+Possible values are CALIBRATION_MODEL, EDITED_DATA, FOVMAP,
+FOOTPRINT_GEOMETRY, JITTER, NOISE_DATA, RING_PROFILE, RAW_DATA,
+SOURCE_DATA, SPICE_KERNEL, SUPPORT_IMAGE, TRAJECTORY, and
+VECTOR_GEOMETRY."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = OBJECT_TYPE
+    COLUMN_NUMBER               = 5
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 89
+    BYTES                       = 12
+    FORMAT                      = A12
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "The PDS object class of the major
+data product in the associated file. Possible values are DOCUMENT,
+IMAGE, SERIES, SPICE_KERNEL, TABLE, and TEXT."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INTERCHANGE_FORMAT
+    COLUMN_NUMBER               = 6
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 104
+    BYTES                       = 6
+    FORMAT                      = A6
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Interchange format for the file.
+Possible values are ASCII and BINARY."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_NAME
+    COLUMN_NUMBER               = 7
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 113
+    BYTES                       = 7
+    FORMAT                      = A7
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Name of the target for the data in
+the given file. Possible values are 'S RINGS', 'U RINGS', 'N RINGS',
+SATURN, URANUS, NEPTUNE, STAR, and 'N/A'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FEATURE_NAME
+    COLUMN_NUMBER               = 8
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 123
+    BYTES                       = 15
+    FORMAT                      = A15
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Name of the specific ring feature
+associated with a given file; RING_SYSTEM if the file is related to
+the planet's entire ring system."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STAR_NAME
+    COLUMN_NUMBER               = 9
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 141
+    BYTES                       = 9
+    FORMAT                      = A9
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Name of the star associated with
+the data in the given file. Possible values are 'ALPHA LYR', 'BETA
+PER', 'DELTA SCO', 'SIGMA SGR', MULTIPLE (if more than one star was
+observed), UNK, and N/A."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_OCCULTATION_DIRECTION
+    COLUMN_NUMBER               = 10
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 153
+    BYTES                       = 7
+    FORMAT                      = A7
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Direction of the stellar
+occultation relative to the ring plane for the data in the given file.
+Possible values are INGRESS, EGRESS, BOTH, and 'N/A'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = START_TIME
+    COLUMN_NUMBER               = 11
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 163
+    BYTES                       = 23
+    FORMAT                      = A23
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Observation start time associated
+with the data in the given file. Given in PDS date/time format
+('yyyy-mm-ddThh:mm:ss.sss')."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STOP_TIME
+    COLUMN_NUMBER               = 12
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 189
+    BYTES                       = 23
+    FORMAT                      = A23
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Observation stop time associated
+with the data in the given file. Given in PDS date/time format
+('yyyy-mm-ddThh:mm:ss.sss')."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_CLOCK_START_COUNT
+    COLUMN_NUMBER               = 13
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 215
+    BYTES                       = 12
+    FORMAT                      = A12
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Voyager FDS ('Flight Data System')
+count associated with the beginning of this file. The field
+format is 'hhhhh:mm:sss', specifying the FDS 'hours', 'minutes' and
+'seconds'. There are 60 FDS minutes (numbered 0-59) in an FDS hour.
+For the PPS instrument, there are 800 FDS seconds (numbered 1-800) in
+an FDS minute. An FDS hour equals 48 true minutes; an FDS minute
+equals 48 true seconds; an FDS second equals 0.06 true seconds. Each
+PPS record consists of 100 FDS seconds or 6 true seconds of data."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_CLOCK_STOP_COUNT
+    COLUMN_NUMBER               = 14
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 230
+    BYTES                       = 12
+    FORMAT                      = A12
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Voyager FDS ('Flight Data System')
+count associated with the end of this file. The field
+format is 'hhhhh:mm:sss', specifying the FDS 'hours', 'minutes' and
+'seconds'. There are 60 FDS minutes (numbered 0-59) in an FDS hour.
+For the PPS instrument, there are 800 FDS seconds (numbered 1-800) in
+an FDS minute. An FDS hour equals 48 true minutes; an FDS minute
+equals 48 true seconds; an FDS second equals 0.06 true seconds. Each
+PPS record consists of 100 FDS seconds or 6 true seconds of data."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SATURN_DELTA_SCO_FLAG
+    COLUMN_NUMBER               = 15
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 245
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether the given
+data file is relevant to the delta Sco occultation of Saturn's ring
+system. Possible values are Y and N."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = URANUS_SIGMA_SGR_FLAG
+    COLUMN_NUMBER               = 16
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 249
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether the given
+data file is relevant to the sigma Sgr occultation of Uranus' ring
+system. Possible values are Y and N."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = URANUS_BETA_PER_FLAG
+    COLUMN_NUMBER               = 17
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 253
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether the given
+data file is relevant to the beta Per occultation of Uranus' ring
+system. Possible values are Y and N."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = NEPTUNE_SIGMA_SGR_FLAG
+    COLUMN_NUMBER               = 18
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 257
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether the given
+data file is relevant to the sigma Sgr occultation of Neptune's ring
+system. Possible values are Y and N."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = INDEX_TABLE
+END

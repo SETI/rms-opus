@@ -1,0 +1,16 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+COISS_2xxx            | Cassini Saturn image collection                                                     || 1.0 | 2018-07-01
+COISS_2xxx/COISS_2055 | Cassini ISS Saturn images 2009-05-26 to 2009-06-30 (SC clock 1622025854-1625075053) || 1.0 | 2010-04-01 | CO-S-ISSNA/ISSWA-2-EDR-V1.0
+
+calibrated/COISS_2xxx/COISS_2055 | RMS-curated ISS calibrated images 2009-05-26 to 2009-06-30 (SC clock 1622025854-1625075053) || 3.0 | 2019-06-11
+
+calibrated/COISS_2xxx_v1/COISS_2055 | RMS-curated ISS calibrated images 2009-05-26 to 2009-06-30 (SC clock 1622025854-1625075053) || 1.0 | 2012-12-06
+
+calibrated/COISS_2xxx_v2/COISS_2055 | RMS-curated ISS calibrated images 2009-05-26 to 2009-06-30 (SC clock 1622025854-1625075053) || 2.0 | 2017-08-18
+
+metadata/COISS_2xxx/COISS_2055   | RMS-curated ISS image metadata 2009-05-26 to 2009-06-30 (SC clock 1622025854-1625075053) || 1.2 | 2021-01-19
+
+
+metadata/COISS_2xxx_v1.1/COISS_2055   | RMS-curated ISS image metadata 2009-05-26 to 2009-06-30 (SC clock 1622025854-1625075053) || 1.1 | 2019-11-19
+

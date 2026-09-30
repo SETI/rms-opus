@@ -1,0 +1,5 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	12BIT	12BIT	010	Y	\N	\N	\N
+1	8LSB	8LSB	020	Y	\N	\N	\N
+2	TABLE	TABLE	030	Y	\N	\N	\N
+3	\N	N/A	040	Y	\N	\N	\N

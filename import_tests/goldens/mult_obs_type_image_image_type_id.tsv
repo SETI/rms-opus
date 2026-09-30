@@ -1,0 +1,6 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	FRAM	Frame	010	Y	\N	\N	\N
+1	RAST	Raster Scan	020	Y	\N	\N	\N
+2	PUSH	Pushbroom	030	Y	\N	\N	\N
+3	MOSAIC	Mosaic	040	Y	\N	\N	\N
+4	\N	N/A	050	Y	\N	\N	\N

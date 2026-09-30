@@ -1,0 +1,8 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	SATURN-RINGS	Saturn-Rings	Saturn-Rings	Y	\N	\N	\N
+1	RHEA	Rhea	Rhea	Y	\N	\N	\N
+2	SATURN	Saturn	Saturn	Y	\N	\N	\N
+3	TITAN	Titan	Titan	Y	\N	\N	\N
+4	CONSTANT I/F	Constant I/F	Constant I/F	Y	\N	\N	\N
+5	STAR	Star	Star	Y	\N	\N	\N
+6	ENCELADUS	Enceladus	Enceladus	Y	\N	\N	\N

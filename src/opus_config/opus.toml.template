@@ -1,0 +1,140 @@
+################################################################################
+# Settings that are local to one installation of OPUS and must be set separately
+# for each installation and server.
+#
+# Copy this file, fill in every <PLACEHOLDER>, and point the OPUS_CONFIG
+# environment variable at the copy:
+#
+#     install -m 600 opus.toml.template opus.toml
+#     export OPUS_CONFIG=/absolute/path/to/opus.toml
+#
+# `install -m 600` rather than `cp`: the copy is about to hold a database password
+# and the Django secret key, and `cp` gives it whatever the caller's umask allows.
+# The copy also has to be readable by the account OPUS runs as, so create it as
+# that user rather than as root.
+#
+# OPUS has no default location for this file. A server running several OPUS
+# installations gives each one its own file and its own OPUS_CONFIG value.
+#
+# The schema is validated when the file is read: an unknown key, a missing key,
+# or a value of the wrong type is reported with the table and key that is wrong.
+################################################################################
+
+[database]
+
+# The brand of the back-end SQL database: "MySQL" or "PostgreSQL". Only MySQL is
+# implemented. Optional; the default is "MySQL".
+brand = "MySQL"
+
+# The host the OPUS and dictionary schemas live on. Usually "localhost".
+host = "<HOST_NAME>"
+
+# The database to connect to. MySQL ignores this and connects to `schema`
+# instead; PostgreSQL connects to this database. Optional; the default is "".
+database = ""
+
+# The namespace the OPUS tables live in: the database name under MySQL, the
+# schema name under PostgreSQL.
+schema = "<SCHEMA_NAME>"
+
+# The database user and password. This user needs most privileges, including
+# table creation and deletion.
+user = "<DB_USER>"
+password = "<DB_PASSWORD>"
+
+
+[paths]
+
+# The root directory of all PDS3 holdings. Under it are volumes, calibrated,
+# metadata, previews, and diagrams.
+pds3_holdings = "<PDS3_HOLDINGS_DIR>"
+
+# The root directory of all PDS4 holdings. Under it are bundles, metadata,
+# previews, and diagrams.
+pds4_holdings = "<PDS4_HOLDINGS_DIR>"
+
+# The file the web application logs to. Its directory must already exist.
+opus_log_file = "<OPUS_LOG_DIR>/opus_log.txt"
+
+# The directory the import pipeline writes its warning and error summaries to.
+import_log_dir = "<IMPORT_LOG_DIR>"
+
+# Where zipped cart files and their manifests are built. Both are joined
+# directly to a file name, so both need a TRAILING SLASH.
+tar_dir = "<TAR_FILE_DIR>/"
+manifest_dir = "<MANIFEST_FILE_DIR>/"
+
+# The file holding the date of the last blog update, and the file holding the
+# HTML of any short-term notification.
+last_blog_update_file = "<LAST_BLOG_UPDATE_FILE>"
+notification_file = "<NOTIFICATION_FILE>"
+
+# Where `manage.py collectstatic` gathers static files on a production server.
+# Optional, and commented out because a development installation never runs
+# collectstatic and wants Django's own default. Uncomment it on a server.
+# static_root = "<STATIC_ROOT>"
+
+# Where static files are served from. On a production server this is the same
+# directory as static_root; in a development installation it is usually
+# .../rms-opus/src/opus_app/static.
+opus_static_root = "<OPUS_STATIC_ROOT>"
+
+
+[django]
+
+# Django's secret key. It must be a unique, secret string. Generator tools are
+# available: https://www.google.com/search?q=django+secret+generator
+secret_key = "<SECRET_KEY>"
+
+# Django's DEBUG setting. NEVER deploy a production site with this true.
+debug = true
+
+# The hosts and IP addresses Django is permitted to serve.
+allowed_hosts = ["127.0.0.1", "localhost"]
+
+# The prefix added to every cache key, which is what lets several OPUS
+# installations share one memcached without colliding.
+cache_server_prefix = "<CACHE_SERVER_PREFIX>"
+
+# The public URL of this OPUS installation.
+public_url = "https://opus.pds-rings.seti.org/"
+
+# The root URL products are retrieved from, and the root URL of the viewmaster
+# file browser.
+product_http_path = "https://opus.pds-rings.seti.org/"
+viewmaster_url = "https://pds-rings.seti.org/"
+
+# The root URL zipped cart files are retrieved from. It is joined directly to a
+# file name, so it needs a TRAILING SLASH.
+tar_file_url = "<TAR_FILE_URL>/"
+
+# What level of message to log at each destination. Optional; the defaults are
+# the values below.
+log_file_level = "INFO"
+log_console_level = "INFO"
+log_django_level = "WARNING"
+
+# Log every API call at this level, or false to log none. Optional; the default
+# is false.
+log_api_calls = false
+
+# Fake a slow network by delaying every API response by this many milliseconds;
+# a negative value delays a random amount between 0 and its magnitude. Optional;
+# leaving it out delays nothing.
+# fake_api_delays = 100
+
+# The probability, from 0 to 1, of answering an API call with a fake HTTP 404 or
+# HTTP 500 error. Optional; the defaults are 0.
+fake_error404_probability = 0.0
+fake_error500_probability = 0.0
+
+
+[import]
+
+# The prefix of the temporary tables an import builds before copying them over
+# the permanent ones. Optional; the default is "imp_".
+table_temp_prefix = "imp_"
+
+# The log files the import pipeline writes. Their directory must already exist.
+log_file = "<IMPORT_LOG_DIR>/opus_import.log"
+debug_log_file = "<IMPORT_LOG_DIR>/opus_import_debug.log"

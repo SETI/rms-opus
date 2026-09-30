@@ -1,0 +1,5 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	I	Ingress	010	Y	\N	\N	\N
+1	E	Egress	020	Y	\N	\N	\N
+2	B	Both	030	Y	\N	\N	\N
+3	\N	N/A	040	Y	\N	\N	\N

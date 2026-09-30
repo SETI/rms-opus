@@ -1,0 +1,128 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 90
+FILE_RECORDS                    = 19
+^SKY_SUMMARY_TABLE             = "GO_0011_sky_summary.tab"
+
+VOLUME_ID                       = "GO_0011"
+PRODUCT_CREATION_TIME           = 2025-11-26T12:27:06
+
+MISSION_NAME                    = "GALILEO"
+INSTRUMENT_HOST_NAME            = "GALILEO"
+INSTRUMENT_HOST_ID              = "GLL"
+INSTRUMENT_NAME                 = "SOLID STATE IMAGER"
+INSTRUMENT_ID                   = "SSI"
+
+DATA_SET_ID                     = "GO-A/E-SSI-2-REDR-V1.1"
+
+OBJECT                          = SKY_SUMMARY_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 19
+  COLUMNS                       = 6
+  ROW_BYTES                     = 90
+  INDEX_TYPE                    = SINGLE
+  DESCRIPTION                   = "This index describes the pointing
+    geometry for the Galileo SSI image collection. The file contains one row
+    per image, indicating the ranges of J2000 right ascension and declination
+    sampled by the field of view.
+
+    This index describes the images found on volume GO_0011.
+
+    To accommodate pointing uncertainty, the Galileo SSI field of view has
+    been expanded on every side by a distance equivalent to 25 narrow-angle
+    pixels."
+
+  OBJECT                        = COLUMN
+    NAME                        = "VOLUME_ID"
+    COLUMN_NUMBER               = 1
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 7
+    FORMAT                      = A7
+    DESCRIPTION                 = "The unique identifier for the PDS3 data
+      volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "FILE_SPECIFICATION_NAME"
+    COLUMN_NUMBER               = 2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 12
+    BYTES                       = 32
+    FORMAT                      = A32
+    DESCRIPTION                 = "The full directory path to the data file's,
+      label, relative to the root directory of the PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "MINIMUM_RIGHT_ASCENSION"
+    COLUMN_NUMBER               = 3
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 46
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNIT                        = "deg"
+    VALID_MINIMUM               = 0.
+    VALID_MAXIMUM               = 360.
+    NULL_CONSTANT               = -999.
+    DESCRIPTION                 = "The minimum value for J2000 right
+      ascension within the field of view sampled by this observation.
+
+      For fields of view that cross 360 degrees, the tabulated minimum value
+      will be greater than the maximum, meaning that the range of right
+      ascension is from the 'minimum' value to 360 and then from zero to the
+      'maximum'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "MAXIMUM_RIGHT_ASCENSION"
+    COLUMN_NUMBER               = 4
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 57
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNIT                        = "deg"
+    VALID_MINIMUM               = 0.
+    VALID_MAXIMUM               = 360.
+    NULL_CONSTANT               = -999.
+    DESCRIPTION                 = "The maximum value for J2000 right
+      ascension within the field of view sampled by this observation.
+
+      For fields of view that cross 360 degrees, the tabulated minimum value
+      will be greater than the maximum, meaning that the range of right
+      ascension is from the 'minimum' value to 360 and then from zero to the
+      'maximum'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "MINIMUM_DECLINATION"
+    COLUMN_NUMBER               = 5
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 68
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNIT                        = "deg"
+    VALID_MINIMUM               = -90.
+    VALID_MAXIMUM               =  90.
+    NULL_CONSTANT               = -999.
+    DESCRIPTION                 = "The minimum value for J2000 declination
+      within the field of view sampled by the observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = "MAXIMUM_DECLINATION"
+    COLUMN_NUMBER               = 6
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 79
+    BYTES                       = 10
+    FORMAT                      = "F10.6"
+    UNIT                        = "deg"
+    VALID_MINIMUM               = -90.
+    VALID_MAXIMUM               =  90.
+    NULL_CONSTANT               = -999.
+    DESCRIPTION                 = "The maximum value for J2000 declination
+      within the field of view sampled by the observation."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = SKY_SUMMARY_TABLE
+END

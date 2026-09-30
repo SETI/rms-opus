@@ -1,0 +1,58 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = STREAM
+RECORD_BYTES                    = 54    /* max length including <CR><LF> */
+FILE_RECORDS                    = 19
+
+PRODUCT_CREATION_TIME           = 2025-11-26T12:27:06
+VOLUME_ID                       = "GO_0011"
+
+MISSION_NAME                    = "GALILEO"
+INSTRUMENT_HOST_NAME            = "GALILEO"
+INSTRUMENT_HOST_ID              = "GLL"
+INSTRUMENT_NAME                 = "SOLID STATE IMAGER"
+INSTRUMENT_ID                   = "SSI"
+
+DATA_SET_ID                     = "GO-A/E-SSI-2-REDR-V1.1"
+
+^INVENTORY_SPREADSHEET          = "GO_0011_inventory.csv"
+OBJECT                          = INVENTORY_SPREADSHEET
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 19
+  ROW_BYTES                     = 54    /* max length including <CR><LF> */
+  FIELDS                        = 3
+  FIELD_DELIMITER               = COMMA
+  INDEX_TYPE                    = SINGLE
+  DESCRIPTION                   = "This table identifies every body partially or fully
+    inside each image's field of view."
+
+  OBJECT                        = FIELD
+    FIELD_NUMBER                = 1
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    BYTES                       = 7
+    FORMAT                      = A7
+    DESCRIPTION                 = "The unique identifier for the PDS data volume."
+  END_OBJECT                    = FIELD
+
+  OBJECT                        = FIELD
+    FIELD_NUMBER                = 2
+    NAME                        = FILE_SPECIFICATION_NAME
+    DATA_TYPE                   = CHARACTER
+    BYTES                       = 32
+    FORMAT                      = A32
+    DESCRIPTION                 = "The full name of the raw image file, including the
+        directory path, relative to the root directory of the PDS volume."
+  END_OBJECT                    = FIELD
+
+  OBJECT                        = FIELD
+    FIELD_NUMBER                = 3
+    NAME                        = BODY_NAMES
+    DATA_TYPE                   = CHARACTER
+    BYTES                       = 5     /* max length */
+
+    DESCRIPTION                 = "The names of all the bodies estimated to be
+        partially or fully inside the field of view, separated by commas."
+  END_OBJECT                    = FIELD
+
+END_OBJECT                      = INVENTORY_SPREADSHEET
+END

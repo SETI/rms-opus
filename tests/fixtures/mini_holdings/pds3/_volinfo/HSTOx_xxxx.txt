@@ -1,0 +1,21 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+
+HSTOx_xxxx            | HST STIS placeholder volumes for OPUS queries                 || 1.3 | 2021-01-22
+HSTOx_xxxx/HSTO1_2478 | HST STIS data for the Saturn system  2012-04-28 to 2012-05-29 || 1.2 | 2019-03-01 | HST-S-STIS-5-ID12478-V1.2
+
+HSTOx_xxxx_v1.0/HSTO1_2478 | HST STIS data for the Saturn system  2012-04-28 to 2012-05-29 || 1.0 | 2017-07-25 | HST-S-STIS-5-ID12478-V1.0
+
+HSTOx_xxxx_v1.1/HSTO1_2478 | HST STIS data for the Saturn system  2012-04-28 to 2012-05-29 || 1.1 | 2018-03-25 | HST-S-STIS-5-ID12478-V1.1
+
+
+metadata/HSTOx_xxxx/HSTO1_2478   | HST STIS metadata for the Saturn system  2012-04-28 to 2012-05-29 || 1.4 | 2025-06-09
+
+metadata/HSTOx_xxxx_v1.0/HSTO1_2478   | HST STIS metadata for the Saturn system  2012-04-28 to 2012-05-29 || 1.0 | 2019-03-01
+
+metadata/HSTOx_xxxx_v1.1/HSTO1_2478   | HST STIS metadata for the Saturn system  2012-04-28 to 2012-05-29 || 1.1 | 2020-09-24
+
+metadata/HSTOx_xxxx_v1.2/HSTO1_2478   | HST STIS metadata for the Saturn system  2012-04-28 to 2012-05-29 || 1.2 | 2021-03-06
+
+metadata/HSTOx_xxxx_v1.3/HSTO1_2478   | HST STIS metadata for the Saturn system  2012-04-28 to 2012-05-29 || 1.3 | 2021-04-28
+

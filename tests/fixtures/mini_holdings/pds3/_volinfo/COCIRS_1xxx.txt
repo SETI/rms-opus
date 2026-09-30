@@ -1,0 +1,12 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+COCIRS_1xxx             | Cassini CIRS thermal infrared data: raw and calibrated v4.0, map cubes v2.0, 2010-2017 || 4.0 | 2018-07-01
+COCIRS_1xxx/COCIRS_1101 | Cassini CIRS Saturn data 2011-01-01 to 2011-01-31 (SC clock 1672548403-1675211497) || 4.0 | 2018-04-01 | CO-S-CIRS-2/3/4-TSDR-V4.0 | CO-S-CIRS-5-CUBES-V2.0
+
+COCIRS_1xxx_v3/COCIRS_1101 | Cassini CIRS Saturn data 2011-01-01 to 2011-01-31 (SC clock 1672548403-1675211497) || 3.0 | 2016-05-01 | CO-S-CIRS-2/3/4-TSDR-V3.2 | CO-S-CIRS-5-CUBES-V1.0
+
+
+metadata/COCIRS_1xxx/COCIRS_1101  | RMS-curated CIRS Saturn metadata 2011-01-01 to 2011-01-31 (SC clock 1672548403-1675211497) || 1.1 | 2025-06-01 |
+
+metadata/COCIRS_1xxx_v1.0/COCIRS_1101  | RMS-curated CIRS Saturn metadata 2011-01-01 to 2011-01-31 (SC clock 1672548403-1675211497) || 1.0 | 2021-10-03 |
+

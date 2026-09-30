@@ -1,0 +1,365 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 351
+FILE_RECORDS                    = 20
+^INDEX_TABLE                    = "COUVIS_8001_index.tab"
+
+VOLUME_ID                       = "COUVIS_8001"
+DATA_SET_ID                     = "CO-SR-UVIS-HSP-2/4-OCC-V3.0"
+PRODUCT_CREATION_TIME           = 2025-04-16T08:11:22
+INSTRUMENT_HOST_NAME            = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID              = CO
+INSTRUMENT_NAME                 = "ULTRAVIOLET IMAGING SPECTROGRAPH"
+INSTRUMENT_ID                   = UVIS
+
+OBJECT                          = INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 20
+  COLUMNS                       = 25
+  ROW_BYTES                     = 351
+  INDEX_TYPE                    = SINGLE
+  DESCRIPTION                   = "This is an index of the data
+files on this archive volume. There is one record per data file.
+The files indexed are those in the DATA directory."
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 1
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 11
+    FORMAT                      = A11
+    DESCRIPTION                 = "The volume ID provides a unique identifier
+      for a PDS data volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FILE_SPECIFICATION_NAME
+    COLUMN_NUMBER               = 2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 16
+    BYTES                       = 46
+    FORMAT                      = A46
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Name and directory path of the PDS
+label file describing this particular file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_ID
+    COLUMN_NUMBER               = 3
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 65
+    BYTES                       = 41
+    FORMAT                      = A41
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "The product ID associated with the
+given file. This is typically the file name."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = ORBIT_NUMBER
+    COLUMN_NUMBER               = 4
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 109
+    BYTES                       = 3
+    FORMAT                      = A3
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "The Cassini orbit number during
+which the observation was made."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = START_TIME
+    COLUMN_NUMBER               = 5
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 115
+    BYTES                       = 21
+    FORMAT                      = A21
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Midpoint time of the first
+    observation in the given data file. Given in PDS date/time format
+    ('yyyy-dddThh:mm:ss.sss')."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STOP_TIME
+    COLUMN_NUMBER               = 6
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 139
+    BYTES                       = 21
+    FORMAT                      = A21
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Midpoint time of the last
+    observation in the given data file. Given in PDS date/time format
+('yyyy-dddThh:mm:ss.sss')."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_PROFILE_DIRECTION
+    COLUMN_NUMBER               = 7
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 163
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Direction of the stellar occultation
+relative to the ring plane for the data in the given file. Possible values
+are I (INGRESS) or E (EGRESS)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_OCCULTATION_DIRECTION
+    COLUMN_NUMBER               = 8
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 167
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Direction of the stellar occultation
+occultation relative to the ring plane for the entire observation period.
+Possible values are I (INGRESS),  E (EGRESS), or B (BOTH)."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PLANETARY_OCCULTATION_FLAG
+    COLUMN_NUMBER               = 9
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 171
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether any portion
+of the observation the given data file involved an occultation of the
+planet. Possible values are Y and N."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STAR_NAME
+    COLUMN_NUMBER               = 10
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 175
+    BYTES                       = 10
+    FORMAT                      = A10
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Name of the star associated with
+the data in the given file. "
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_WAVELENGTH
+    COLUMN_NUMBER               = 11
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 187
+    BYTES                       = 5
+    FORMAT                      = "F5.1"
+    UNIT                        = "nm"
+    DESCRIPTION                 = "The minimum wavelength used
+in this observation in nanometers."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_WAVELENGTH
+    COLUMN_NUMBER               = 12
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 193
+    BYTES                       = 5
+    FORMAT                      = "F5.1"
+    UNIT                        = "nm"
+    DESCRIPTION                 = "The maximum wavelength used
+in this observation in nanometers."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_CLOCK_START_COUNT
+    COLUMN_NUMBER               = 13
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 200
+    BYTES                       = 16
+    FORMAT                      = A16
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "The Cassini spacecraft clock
+count at the beginning of the observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_CLOCK_STOP_COUNT
+    COLUMN_NUMBER               = 14
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 219
+    BYTES                       = 16
+    FORMAT                      = A16
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "The Cassini spacecraft clock
+count at the end of the observation."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_EVENT_START_TIME
+    COLUMN_NUMBER               = 15
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 238
+    BYTES                       = 21
+    FORMAT                      = A21
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Midpoint time of the first
+    observation in the given data file. Given in PDS date/time format
+    ('yyyy-dddThh:mm:ss.sss')."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_EVENT_STOP_TIME
+    COLUMN_NUMBER               = 16
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 262
+    BYTES                       = 21
+    FORMAT                      = A21
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Midpoint time of the last
+    observation in the given data file. Given in PDS date/time format
+('yyyy-dddThh:mm:ss.sss')."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = OBSERVED_RING_ELEVATION
+    COLUMN_NUMBER               = 17
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 285
+    BYTES                       = 5
+    FORMAT                      = "F5.1"
+    UNIT                        = "deg"
+    DESCRIPTION                 = "The angle measured at the
+intercept point, starting from the ring plane to the direction of a
+photon heading to the observer. This angle is positive on the side
+of the ring plane defined by positive angular momentum, and negative
+on the opposite side. Values range from -90 to +90 in units of
+degrees. Note: The direction of positive angular momentum points
+toward the IAU-defined north side of the ring plane for Saturn"
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = LIGHT_SOURCE_INCIDENCE_ANGLE
+    COLUMN_NUMBER               = 18
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 291
+    BYTES                       = 5
+    FORMAT                      = "F5.1"
+    UNIT                        = "deg"
+    DESCRIPTION                 = "The angle measured from the local
+surface normal vector to the direction of a photon arriving from the
+light source. For rings, the normal vector is that on the same side
+of the rings as the light source, so values always range between 0
+and 90 in units of degrees."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RADIAL_RESOLUTION
+    COLUMN_NUMBER               = 19
+    DATA_TYPE                   = ASCII_INTEGER
+    START_BYTE                  = 297
+    BYTES                       = 2
+    FORMAT                      = I2
+    UNIT                        = "km"
+    DESCRIPTION                 = "The radial resolution of the
+occultation profile. Values are either 1 or 10 km."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_RADIUS
+    COLUMN_NUMBER               = 20
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 300
+    BYTES                       = 9
+    FORMAT                      = "F9.2"
+    UNIT                        = "km"
+    DESCRIPTION                 = "The minimum(innermost) radial
+location of the ring system in this observation. Radii are measured
+from the center of the planet along the nominal ring plane."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_RADIUS
+    COLUMN_NUMBER               = 21
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 310
+    BYTES                       = 10
+    FORMAT                      = "F10.2"
+    UNIT                        = "km"
+    DESCRIPTION                 = "The maximum(outermost) radial
+location of the ring system in this observation. Radii are measured
+from the center of the planet along the nominal ring plane."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_RING_LONGITUDE
+    COLUMN_NUMBER               = 22
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 321
+    BYTES                       = 8
+    FORMAT                      = "F8.4"
+    UNIT                        = "deg"
+    DESCRIPTION                 = "The minimum inertial longitude of the
+ring in this observation. Measured relative to the prime meridian (the
+ascending node of the Saturn's invariable plane on the Earth's mean
+equator of J2000. Longitudes are measured in the direction of orbital
+motion along the planet's invariable plane to the ring's ascending node,
+and thence along the ring plane.
+Note: For areas that cross the prime meridian, the minimum ring
+longitude will have a value greater than the maximum ring longitude."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_RING_LONGITUDE
+    COLUMN_NUMBER               = 23
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 330
+    BYTES                       = 8
+    FORMAT                      = "F8.4"
+    UNIT                        = "deg"
+    DESCRIPTION                 = "The maximum inertial longitude of the
+ring in this observation. Measured relative to the prime meridian (the
+ascending node of the Saturn's invariable plane on the Earth's mean
+equator of J2000. Longitudes are measured in the direction of orbital
+motion along the planet's invariable plane to the ring's ascending node,
+and thence along the ring plane.
+Note: For areas that cross the prime meridian, the minimum ring
+longitude will have a value greater than the maximum ring longitude."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MINIMUM_OBSERVED_RING_AZIMUTH
+    COLUMN_NUMBER               = 24
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 339
+    BYTES                       = 5
+    FORMAT                      = "F5.1"
+    UNIT                        = "deg"
+    DESCRIPTION                 = "The minimum observed ring azimuth
+in this observation. Measured at a point in the ring plane, starting
+from the direction of a photon heading to the observer, and ending
+at the direction of a local radial vector. This angle is projected
+into the ring plane and measured in the prograde direction. Note
+that, as seen from the observer, it equals 90 degrees along the
+right ansa and 270 degrees along the left ansa. Values range from 0
+to 360 in units of degrees."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = MAXIMUM_OBSERVED_RING_AZIMUTH
+    COLUMN_NUMBER               = 25
+    DATA_TYPE                   = ASCII_REAL
+    START_BYTE                  = 345
+    BYTES                       = 5
+    FORMAT                      = "F5.1"
+    UNIT                        = "deg"
+    DESCRIPTION                 = "The maximum observed ring azimuth
+in this observation. Measured at a point in the ring plane, starting
+from the direction of a photon heading to the observer, and ending
+at the direction of a local radial vector. This angle is projected
+into the ring plane and measured in the prograde direction. Note
+that, as seen from the observer, it equals 90 degrees along the
+right ansa and 270 degrees along the left ansa. Values range from 0
+to 360 in units of degrees."
+  END_OBJECT                    = COLUMN
+END_OBJECT                      = INDEX_TABLE
+END

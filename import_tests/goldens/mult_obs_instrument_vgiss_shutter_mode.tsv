@@ -1,0 +1,9 @@
+id	value	label	disp_order	display	grouping	group_disp_order	aliases
+0	NAONLY	NAONLY	010	Y	\N	\N	\N
+1	WAONLY	WAONLY	020	Y	\N	\N	\N
+2	BOTSIM	BOTSIM	030	Y	\N	\N	\N
+3	BODARK	BODARK	040	Y	\N	\N	\N
+4	BOTALT	BOTALT	050	Y	\N	\N	\N
+5	BSIMAN	BSIMAN	060	Y	\N	\N	\N
+6	NOSHUT	NOSHUT	070	Y	\N	\N	\N
+7	\N	N/A	080	Y	\N	\N	\N

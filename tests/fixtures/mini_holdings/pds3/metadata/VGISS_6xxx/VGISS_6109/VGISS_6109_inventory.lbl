@@ -1,0 +1,34 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = STREAM
+
+^TEXT                           = "VGISS_6109_inventory.csv"
+
+VOLUME_ID                       = "VGISS_6109"
+DATA_SET_ID                     = "VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0"
+PRODUCT_CREATION_TIME           = 2021-01-28T20:00:00
+
+INSTRUMENT_HOST_NAME            = "VOYAGER 1"
+INSTRUMENT_HOST_ID              = VG1
+MISSION_PHASE_NAME              = "SATURN ENCOUNTER"
+INSTRUMENT_NAME                 = "IMAGING SCIENCE SUBSYSTEM"
+INSTRUMENT_ID                   = "ISS"
+
+OBJECT                          = TEXT
+  PUBLICATION_DATE              = 2021-01-28
+  NOTE                          = "Description of the contents of
+the Inventory table."
+END_OBJECT                      = TEXT
+END
+
+  DESCRIPTION OF THE INVENTORY TABLE
+  -----------------------------------------------------------------
+
+This table lists every target inside the instrument field of view. Each
+record in the table corresponds to a single data product. The fields in
+each record are separated by commas. The fields are:
+
+  Volume ID,
+  File specification path to the data product label file,
+  OPUS ID,
+  Target (this field recurs as many times as necessary).
+

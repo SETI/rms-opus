@@ -1,0 +1,171 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 249
+FILE_RECORDS                    = 2
+^INDEX_TABLE                    = "EBROCC_0001_index.tab"
+
+PRODUCT_CREATION_TIME           = 2025-04-16T10:54:30
+VOLUME_ID                       = "EBROCC_0001"
+TARGET_TYPE                     = RING
+TARGET_NAME                     = "S RINGS"
+FEATURE_NAME                    = "MAIN RINGS"
+OBSERVATION_TYPE                = "STELLAR OCCULTATION"
+STAR_NAME                       = "28 SGR"
+INCIDENCE_ANGLE                 = 64.627     /* DEGREES */
+
+OBJECT                          = INDEX_TABLE
+   INDEX_TYPE                   = SINGLE
+   INTERCHANGE_FORMAT           = ASCII
+   ROWS                         = 2
+   COLUMNS                      = 12
+   ROW_BYTES                    = 249
+
+   DESCRIPTION                  = "This is a table of the files on this
+    volume. There is one record per data file."
+
+  OBJECT                        = COLUMN
+    COLUMN_NUMBER               = 1
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 11
+    FORMAT                      = A11
+    DESCRIPTION                 = "The volume ID provides a unique identifier
+        for a PDS data volume."
+  END_OBJECT                    = COLUMN
+
+   OBJECT                       = COLUMN
+      NAME                      = FILE_SPECIFICATION_NAME
+      COLUMN_NUMBER             = 2
+      DATA_TYPE                 = CHARACTER
+      START_BYTE                = 16
+      BYTES                     = 40
+      FORMAT                    = A40
+      UNIT                      = 'N/A'
+      DESCRIPTION               = "Name and path of the PDS label file
+        describing the particular file"
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = PRODUCT_ID
+     COLUMN_NUMBER              = 3
+     DATA_TYPE                  = CHARACTER
+     START_BYTE                 = 59
+     BYTES                      = 25
+     FORMAT                     = A25
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "The permanent unique label assigned to
+        the data product."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = PRODUCT_TYPE
+     COLUMN_NUMBER              = 4
+     DATA_TYPE                  = CHARACTER
+     START_BYTE                 = 87
+     BYTES                      = 11
+     FORMAT                     = A11
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "Identifies the type of data product
+        within this data set."
+  END_OBJECT                    = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = PRODUCT_CREATION_TIME
+     COLUMN_NUMBER              = 5
+     DATA_TYPE                  = TIME
+     START_BYTE                 = 101
+     BYTES                      = 19
+     FORMAT                     = A19
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "The UTC date and time at which the data
+        product was created."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = OBJECT_TYPE
+     COLUMN_NUMBER              = 6
+     DATA_TYPE                  = CHARACTER
+     START_BYTE                 = 123
+     BYTES                      = 5
+     FORMAT                     = A5
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "Indicates the system specific
+        categorization of particular data object"
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = INTERCHANGE_FORMAT
+     COLUMN_NUMBER              = 7
+     DATA_TYPE                  = CHARACTER
+     START_BYTE                 = 131
+     BYTES                      = 6
+     FORMAT                     = A6
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "Format in which the data is stored."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = OCCULTATION_DIRECTION
+     COLUMN_NUMBER              = 8
+     DATA_TYPE                  = CHARACTER
+     START_BYTE                 = 140
+     BYTES                      = 7
+     FORMAT                     = A7
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "The OCCULTATION_DIRECTION indicates the
+        radial direction of a ring occultation track."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = RING_EVENT_START
+     COLUMN_NUMBER              = 9
+     DATA_TYPE                  = TIME
+     START_BYTE                 = 150
+     BYTES                      = 22
+     FORMAT                     = A22
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "UTC date and time measurements started
+        as referenced at the ring plane. Based on the observatory time but
+        corrected for light travel time."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = RING_EVENT_STOP
+     COLUMN_NUMBER              = 10
+     DATA_TYPE                  = TIME
+     START_BYTE                 = 175
+     BYTES                      = 22
+     FORMAT                     = A22
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "UTC date and time measurements stopped
+        as referenced at the ring plane. Based on the observatory time but
+        corrected for light travel time."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = START_TIME
+     COLUMN_NUMBER              = 11
+     DATA_TYPE                  = TIME
+     START_BYTE                 = 200
+     BYTES                      = 22
+     FORMAT                     = A22
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "UTC date and time measurements started
+        as referenced at the observatory."
+   END_OBJECT                   = COLUMN
+
+   OBJECT                       = COLUMN
+     NAME                       = STOP_TIME
+     COLUMN_NUMBER              = 12
+     DATA_TYPE                  = TIME
+     START_BYTE                 = 225
+     BYTES                      = 22
+     FORMAT                     = A22
+     UNIT                       = 'N/A'
+     DESCRIPTION                = "UTC date and time measurements ended
+        as referenced at the observatory."
+   END_OBJECT                   = COLUMN
+END_OBJECT                      = INDEX_TABLE
+
+END

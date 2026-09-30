@@ -1,0 +1,122 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+FILE_RECORDS                    = 138
+RECORD_BYTES                    = 133
+^TABLE                          = "HSTN0_7429_hstfiles.tab"
+
+DATA_SET_ID                     = "HST-U-NICMOS-5-ID7429-V1.0"
+VOLUME_ID                       = HSTN0_7429
+PRODUCT_CREATION_TIME           = 2021-01-21T23:00:00
+
+INSTRUMENT_HOST_NAME            = "HUBBLE SPACE TELESCOPE"
+INSTRUMENT_HOST_ID              = HST
+INSTRUMENT_NAME                 =
+          "NEAR INFRARED CAMERA AND MULTI-OBJECT SPECTROMETER"
+INSTRUMENT_ID                   = NICMOS
+
+DESCRIPTION                     = "This table lists all of the FITS files in
+the STScI archive for this data set, along with the associated PDS files in
+this archive."
+
+OBJECT                          = TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 138
+  ROW_BYTES                     = 133
+  COLUMNS                       = 7
+  INDEX_TYPE                    = SINGLE
+
+  OBJECT                        = COLUMN
+    NAME                        = VOLUME_ID
+    DATA_TYPE                   = CHARACTER
+    COLUMN_NUMBER               = 1
+    START_BYTE                  = 2
+    BYTES                       = 10
+    FORMAT                      = A10
+    DESCRIPTION                 = "A unique identifier for a data volume.
+Example: HSTU0_5167."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STSCI_GROUP_ID
+    COLUMN_NUMBER               = 2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 15
+    BYTES                       = 9
+    FORMAT                      = A9
+    DESCRIPTION                 = "An identifier for a particular group of
+data files in the STScI archive. You can retrieve the associated files from
+STScI by entering this ID into the box found on this page:
+    http://archive.stsci.edu/cgi-bin/dataset_lookup/
+This is the value of USER_PRODUCT_ID found in the PDS label files.
+"
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STSCI_FILE_NAME
+    COLUMN_NUMBER               = 3
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 27
+    BYTES                       = 18
+    FORMAT                      = A18
+    DESCRIPTION                 = "The name of a FITS file in the STScI
+archive."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FILE_SPECIFICATION_NAME
+    COLUMN_NUMBER               = 4
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 48
+    BYTES                       = 27
+    FORMAT                      = A27
+    DESCRIPTION                 = "The directory path and name of the label
+file for the PDS DOCUMENT object associated with this FITS file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = ASCII_FILE_NAME
+    COLUMN_NUMBER               = 5
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 78
+    BYTES                       = 13
+    FORMAT                      = A13
+    DESCRIPTION                 = "The name of this ASCII text file containing
+the FITS parameters from this file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = JPEG_FILE_NAME
+    COLUMN_NUMBER               = 6
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 94
+    BYTES                       = 17
+    FORMAT                      = A17
+    DESCRIPTION                 = "The name of a JPEG image showing the
+contents of this FITS file, or blank if no JPEG is provided. In this PDS data
+set, JPEGs are only provided for raw images (with file names matching
+'*_RAW.FITS'), calibrated images ('*_FLT.FITS') and 'drizzled' images
+('*_DRZ.FITS'). Drizzled files have been geometrically reprojected and can be
+mosaics of multiple images.
+
+The JPEG files in this data set have been enhanced in contrast to show the
+content of the image clearly. They are intended to provide a quick preview of
+the image content but are not recommended for use in scientific analysis."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TIFF_FILE_NAME
+    COLUMN_NUMBER               = 7
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 114
+    BYTES                       = 17
+    FORMAT                      = A17
+    DESCRIPTION                 = "The name of a TIFF image showing the
+contents of this FITS file, or blank if no TIFF is provided. In this PDS data
+set, TIFFs are only provided for raw images (with file names matching
+'*_RAW.FITS'). The TIFF images are unscaled and contain the full 16-bit
+precision of the original image."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = TABLE
+
+END

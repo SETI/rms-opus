@@ -1,0 +1,32 @@
+# Keep recorded data out of review, so that review reaches the code.
+#
+# Three directories hold generated data rather than written code: the mini-holdings
+# fixture is real PDS archive metadata subsetted by a recorder, and the goldens are a
+# serialized database, both rewritten wholesale by `python -m
+# import_tests.tools.make_mini_holdings` and `... make_mini_goldens`. Nobody edits them by
+# hand and there is nothing in them to review -- what makes them trustworthy is the two
+# generators and the assertions, which are code and are reviewed.
+#
+# Left in, they do active harm. A regeneration touches hundreds of files at once and
+# buries the handful of real code changes beside them, and CodeRabbit skips any pull
+# request over its 100-file cap outright -- so a change of forty code files can go
+# unreviewed because five hundred data files travelled with it.
+#
+# This holds for every regeneration of those directories, not for one occasion.
+reviews:
+  # Review pull requests against every branch, present and future. The value is a regex,
+  # and `.*` matches all of them; the default branch is reviewed either way.
+  #
+  # A wildcard rather than a list of names, because the failure this guards against is
+  # silent. Only the default branch is reviewed unless something here names the others,
+  # and a branch missing from such a list has its pull requests skipped with no sign
+  # beyond a message nobody reads. Naming branches means every future long-lived branch
+  # has to remember to add itself, and the day one forgets is the day its pull requests
+  # go unreviewed without saying so.
+  auto_review:
+    base_branches:
+      - ".*"
+  path_filters:
+    - "!tests/fixtures/mini_holdings/**"
+    - "!import_tests/goldens/**"
+    - "!import_tests/fixtures/**"

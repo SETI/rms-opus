@@ -1,0 +1,14 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any, or checksum
+
+
+HSTNx_xxxx            | HST NICMOS placeholder volumes for OPUS queries                   || 1.0 | 2018-07-14
+HSTNx_xxxx/HSTN0_7429 | HST NICMOS images of the Uranus  system  1997-07-28 to 1997-07-28 || 1.0 | 2017-12-20 | HST-U-NICMOS-5-ID7429-V1.0
+
+metadata/HSTNx_xxxx/HSTN0_7429    | HST NICMOS metadata for the Uranus  system  1997-07-28 to 1997-07-28 || 1.3 | 2025-06-09
+
+metadata/HSTNx_xxxx_v1.0/HSTN0_7429   | HST NICMOS metadata for the Uranus  system  1997-07-28 to 1997-07-28 || 1.0 | 2018-08-24
+
+metadata/HSTNx_xxxx_v1.1/HSTN0_7429   | HST NICMOS metadata for the Uranus  system  1997-07-28 to 1997-07-28 || 1.1 | 2020-10-11
+
+metadata/HSTNx_xxxx_v1.2/HSTN0_7429    | HST NICMOS metadata for the Uranus  system  1997-07-28 to 1997-07-28 || 1.2 | 2021-01-21
+

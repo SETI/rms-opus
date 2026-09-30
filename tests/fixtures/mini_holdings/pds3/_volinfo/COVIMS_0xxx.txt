@@ -1,0 +1,10 @@
+# volset or volset/volname | description | optional icon type | version ID | publication date | data set ID if any | additional data set IDs if any
+
+
+COVIMS_0xxx             | Cassini VIMS visual/near-IR cube collection                                                 || 1.0 | 2018-07-01
+COVIMS_0xxx/COVIMS_0048 | Cassini VIMS visual/near-IR cubes 2011-07-03 to 2011-09-14 (SC clock 1688392546-1694661424) || 1.0 | 2012-07-01 | CO-E/V/J/S-VIMS-2-QUBE-V1.0
+
+metadata/COVIMS_0xxx/COVIMS_0048  | Cassini VIMS metadata 2011-07-03 to 2011-09-14 (SC clock 1688392546-1694661424) || 1.2 | 2021-01-25
+
+
+metadata/COVIMS_0xxx_v1.1/COVIMS_0048  | Cassini VIMS metadata 2011-07-03 to 2011-09-14 (SC clock 1688392546-1694661424) || 1.1 | 2020-10-13

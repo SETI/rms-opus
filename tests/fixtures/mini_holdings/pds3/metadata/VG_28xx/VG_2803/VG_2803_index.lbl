@@ -1,0 +1,263 @@
+PDS_VERSION_ID                  = PDS3
+RECORD_TYPE                     = FIXED_LENGTH
+RECORD_BYTES                    = 281
+FILE_RECORDS                    = 42
+^INDEX_TABLE                    = "VG_2803_index.tab"
+
+VOLUME_ID                       = "VG_2803"
+DATA_SET_ID                     = "VG1/VG2-SR/UR-RSS-4-OCC-V1.0"
+INSTRUMENT_NAME                 = "RADIO SCIENCE SUBSYSTEM"
+PRODUCT_CREATION_TIME           = 2025-04-18T07:14:20
+
+OBJECT                          = INDEX_TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 42
+  COLUMNS                       = 19
+  ROW_BYTES                     = 281
+  INDEX_TYPE                    = SINGLE
+  DESCRIPTION                   = "This is a table of the data files on
+this volume. It contains one record per label file in the volume. The
+files indexed are those in the CALIB, EASYDATA, EDITDATA, GEOMETRY,
+LOWDATA, and SORCDATA subdirectories of directories S_RINGS and U_RINGS,
+plus those in the SPICE directory."
+
+  OBJECT                        = COLUMN
+    NAME                        = VOLUME_ID
+    COLUMN_NUMBER               = 1
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 2
+    BYTES                       = 7
+    FORMAT                      = A7
+    DESCRIPTION                 = "The unique identifier for the PDS volume."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FILE_SPECIFICATION_NAME
+    COLUMN_NUMBER               = 2
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 12
+    BYTES                       = 38
+    FORMAT                      = A38
+    DESCRIPTION                 = "Name and directory path of the PDS
+label file describing the particular file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_ID
+    COLUMN_NUMBER               = 3
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 53
+    BYTES                       = 21
+    FORMAT                      = A21
+    DESCRIPTION                 = "Product identifier. This is a
+unique identifier for every data product in the data set. It is
+equivalent to the name of the data file."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = PRODUCT_TYPE
+    COLUMN_NUMBER               = 4
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 77
+    BYTES                       = 18
+    FORMAT                      = A18
+    DESCRIPTION                 = "Product type of a given data file.
+Possible values are CALIBRATION_MODEL, DOCUMENTATION, EDITED_DATA,
+FOOTPRINT_GEOMETRY, LOW_DATA, RING_PROFILE, SIMULATED_DATA,
+SPICE_KERNEL and SOURCE_DATA."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = OBJECT_TYPE
+    COLUMN_NUMBER               = 5
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 98
+    BYTES                       = 12
+    FORMAT                      = A12
+    DESCRIPTION                 = "Type of PDS data object in the
+file. Possible values are FILE, SERIES, TABLE and TEXT."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INTERCHANGE_FORMAT
+    COLUMN_NUMBER               = 6
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 113
+    BYTES                       = 6
+    FORMAT                      = A6
+    DESCRIPTION                 = "Interchange format for the file.
+Possible values are ASCII and BINARY."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_NAME
+    COLUMN_NUMBER               = 7
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 122
+    BYTES                       = 9
+    FORMAT                      = A9
+    DESCRIPTION                 = "Identifier for the spacecraft.
+Possible values are 'VOYAGER 1' annd 'VOYAGER 2'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = INSTRUMENT_ID
+    COLUMN_NUMBER               = 8
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 134
+    BYTES                       = 8
+    FORMAT                      = A8
+    DESCRIPTION                 = "Identifier for the instrument.
+Possible values are RSS-VG1S for Voyager 1 at Saturn and RSS-VG2U for
+Voyager 2 at Uranus."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = TARGET_NAME
+    COLUMN_NUMBER               = 9
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 145
+    BYTES                       = 7
+    FORMAT                      = A7
+    DESCRIPTION                 = "Name of the target for the data
+in the given file or experiment. Possible values are 'S RINGS' and
+'U RINGS'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = FEATURE_NAME
+    COLUMN_NUMBER               = 10
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 155
+    BYTES                       = 16
+    FORMAT                      = A16
+    DESCRIPTION                 = "Name of the specific ring feature
+associated with a given file; 'RING SYSTEM' if the file is related to
+the planet's entire ring system. For simulated data, possible values
+are 'IMPULSE FUNCTION' and 'STEP FUNCTION'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = RING_OCCULTATION_DIRECTION
+    COLUMN_NUMBER               = 11
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 174
+    BYTES                       = 7
+    FORMAT                      = A7
+    DESCRIPTION                 = "Direction of the occultation point
+relative to the ring plane for the data in the given file. Possible
+values are INGRESS, EGRESS and 'N/A'."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = START_TIME
+    COLUMN_NUMBER               = 12
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 184
+    BYTES                       = 23
+    FORMAT                      = A23
+    DESCRIPTION                 = "Observation start time associated
+with the data in the given file. Given in PDS date/time format
+('yyyy-mm-ddThh:mm:ss.sss')."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = STOP_TIME
+    COLUMN_NUMBER               = 13
+    DATA_TYPE                   = TIME
+    START_BYTE                  = 210
+    BYTES                       = 23
+    FORMAT                      = A23
+    DESCRIPTION                 = "Observation stop time associated
+with the data in the given file. Given in PDS date/time format
+('yyyy-mm-ddThh:mm:ss.sss')."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_CLOCK_START_COUNT
+    COLUMN_NUMBER               = 14
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 236
+    BYTES                       = 12
+    FORMAT                      = A12
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Voyager FDS ('Flight Data System')
+count associated with the beginning of this file. The field format is
+'hhhhh:mm:sss', specifying the FDS 'hours', 'minutes' and 'seconds'.
+There are 60 FDS minutes (numbered 0-59) in an FDS hour. There are 800
+FDS seconds (numbered 1-800) in an FDS minute. An FDS hour equals 48
+true minutes; an FDS minute equals 48 true seconds; an FDS second
+equals 0.06 true seconds."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SPACECRAFT_CLOCK_STOP_COUNT
+    COLUMN_NUMBER               = 15
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 251
+    BYTES                       = 12
+    FORMAT                      = A12
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "Voyager FDS ('Flight Data System')
+count associated with the beginning of this file. The field format is
+'hhhhh:mm:sss', specifying the FDS 'hours', 'minutes' and 'seconds'.
+There are 60 FDS minutes (numbered 0-59) in an FDS hour. There are 800
+FDS seconds (numbered 1-800) in an FDS minute. An FDS hour equals 48
+true minutes; an FDS minute equals 48 true seconds; an FDS second
+equals 0.06 true seconds."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SATURN_XBAND_FLAG
+    COLUMN_NUMBER               = 16
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 266
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether the given
+data file is relevant to the Saturn X-band radio occultation. Possible
+values are Y and N."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = SATURN_SBAND_FLAG
+    COLUMN_NUMBER               = 17
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 270
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether the given
+data file is relevant to the Saturn S-band radio occultation. Possible
+values are Y and N."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = URANUS_XBAND_FLAG
+    COLUMN_NUMBER               = 18
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 274
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether the given
+data file is relevant to the Uranus X-band radio occultation. Possible
+values are Y and N."
+  END_OBJECT                    = COLUMN
+
+  OBJECT                        = COLUMN
+    NAME                        = URANUS_SBAND_FLAG
+    COLUMN_NUMBER               = 19
+    DATA_TYPE                   = CHARACTER
+    START_BYTE                  = 278
+    BYTES                       = 1
+    FORMAT                      = A1
+    UNIT                        = 'N/A'
+    DESCRIPTION                 = "A flag indicating whether the given
+data file is relevant to the Uranus S-band radio occultation. Possible
+values are Y and N."
+  END_OBJECT                    = COLUMN
+
+END_OBJECT                      = INDEX_TABLE
+END

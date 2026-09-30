@@ -1,0 +1,93 @@
+---
+description: Format and completeness rules for task-focused how-to articles that walk a user through a single workflow with prerequisites, steps, and troubleshooting.
+alwaysApply: false
+---
+
+# How-To Articles
+
+A how-to article walks a reader through ONE concrete task from start to finish.
+It complements the reference material in `doc_user_guide`: the user guide
+documents every option exhaustively, while a how-to picks one goal and shows the
+shortest correct path to it. Build on `doc_python` (prose conventions, build
+discipline). Where a how-to and the user guide describe the same workflow, keep
+them consistent and link between them rather than duplicating detail.
+
+## 1. Audience and Tone
+
+- Write for someone fluent in `pip` and the command line but unfamiliar with the
+  package internals.
+- Use clear, direct, action-oriented language; define domain-specific terms on
+  first use.
+- Focus on what the reader must do and what they should observe.
+
+## 2. Required Elements
+
+1. **Action-oriented title** — name the task as an action (e.g. "How To Export a
+   Report", not "Report Export Overview").
+2. **Brief introduction** — 1-3 sentences on the purpose and value of the task.
+3. **Prerequisites** — supported Python version, install command, and any
+   required data, environment variables, or prior configuration.
+4. **Numbered steps** — one action per step in logical order, each with the
+   exact API snippet or command-line invocation and a note of what the reader
+   should see after it.
+5. **Expected results** — a summary of the successful end state (output, files
+   created, side effects). Keep this consistent with the per-step observations.
+6. **Troubleshooting** — the common failure modes (import errors, missing data,
+   version or environment mismatches) and their fixes.
+7. **Related material** — next steps and links to the relevant user-guide
+   chapters or other how-to articles.
+
+## 3. Structure
+
+```markdown
+# How To [Action]
+
+[1-3 sentence introduction explaining purpose and value.]
+
+## Prerequisites
+
+- Python >= <version>
+- `pip install <dist-name>`
+- [Any required data, environment variables, or configuration]
+
+## Steps
+
+1. Import the module:
+   ```python
+   from package import SomeClass
+   ```
+2. [Action]. You should see [result].
+3. [Action].
+
+## Expected Results
+
+[Summary of the successful end state — output, files created, etc.]
+
+## Troubleshooting
+
+- **[Problem]**: [Solution].
+
+## Additional Information
+
+[Tips, performance notes, or links to related guides.]
+```
+
+## 4. Converting Technical Content
+
+When turning docstrings, test scripts, or internal notes into a how-to:
+
+1. Identify the user-facing feature or workflow.
+2. Determine the target audience (API user, command-line user, contributor).
+3. Extract the user actions from the technical steps.
+4. Translate internal terminology into user-facing language.
+5. Add runnable examples, expected output, and troubleshooting.
+
+## 5. Diagrams and Figures
+
+- **When to use**: multi-step workflows, data pipelines, or architecture that is
+  clearer as a visual.
+- **Placement**: inline, immediately after the relevant step or section.
+- **Format**: prefer text-based diagrams (e.g. Mermaid, rendered by Sphinx) for
+  process flows; use PNG/SVG for screenshots or data visualizations.
+- **Naming**: descriptive filenames (e.g. `export-pipeline.svg`), with alt text
+  for accessibility.

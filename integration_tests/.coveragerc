@@ -1,0 +1,35 @@
+# Coverage configuration for the holdings-dependent integration suite, which is
+# gated at 100%. It is deliberately separate from the unit-coverage
+# configuration in pyproject.toml: coverage.py ignores `include` whenever
+# `source` is set, so one merged config would silently corrupt one gate or the
+# other. Select it with COVERAGE_RCFILE=integration_tests/.coveragerc;
+# scripts/automated_tests/opus_run_unittests_coverage.sh exports that and also passes
+# it to pytest as --cov-config.
+#
+# The include patterns are relative to the working directory (the repository
+# root), which is where scripts/automated_tests/opus_run_unittests_coverage.sh runs
+# pytest from.
+[run]
+branch = True
+include =
+    src/opus_app/apps/*
+    integration_tests/test_api/*
+    src/opus_support/*
+omit =
+    integration_tests/test_api/api_test_helper.py
+    integration_tests/test_api/test_result_counts.py
+
+[html]
+Title = Coverage Report for OPUS Backend Tests
+
+[report]
+exclude_lines =
+  pragma: no cover
+  def __unicode__
+# A `if TYPE_CHECKING:` block and an `@overload` stub are both, by construction,
+# never executed: the first is False at run time and the second is a signature
+# declaration whose body is `...`. They are annotation machinery rather than
+# untested code, and excluding them here is what keeps the 100% gate meaningful
+# instead of pushing a `# pragma: no cover` onto every such block.
+  if TYPE_CHECKING:
+  @overload

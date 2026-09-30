@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+description: Security best practices for Python library development — secrets, dependencies, and defensive coding.
+---
+
+# Security Best Practices
+
+## 1. Secrets Management
+
+- NEVER commit secrets, API keys, tokens, passwords, or private keys to the repository.
+- Store secrets in environment variables or a dedicated secrets manager (e.g., GitHub Secrets, GCP Secret Manager).
+- Use `.env` files for local development ONLY. Ensure `.env` is listed in `.gitignore`.
+- If a secret is accidentally committed, rotate it immediately — deleting the commit is NOT sufficient.
+
+## 2. Dependency Security
+
+- Specify minimum compatible versions for direct dependencies (e.g., `numpy>=2.2.0`) in `pyproject.toml`.
+- Run `pip audit` regularly and in CI to detect known vulnerabilities.
+- Enable GitHub Dependabot for automated dependency update PRs.
+- Review changelogs and diffs before merging dependency updates.
+
+## 3. Input Validation
+
+- NEVER trust external input (function arguments from callers, file contents, environment variables, data from remote URLs).
+- Validate inputs at the public API boundary of the library. Raise clear `ValueError` or `TypeError` exceptions for invalid arguments.
+- For file paths, resolve to absolute paths and verify they remain within the expected directory (prevent path traversal).
+
+## 4. Safe Defaults
+
+- NEVER implement custom cryptography. Use standard algorithms via trusted libraries (`cryptography`, `hashlib`).
+- When the library downloads or reads external data, verify integrity (checksums, expected schemas) where feasible.
+- Do NOT embed credentials, default passwords, or example secrets in source code, tests, or documentation.
+
+## 5. Logging
+
+- NEVER log secrets, tokens, passwords, or full stack traces containing sensitive data.
+- Sanitize PII (personally identifiable information) before logging.
+
+## 6. Code Review Security Checklist
+
+When reviewing PRs, verify:
+
+- [ ] No secrets or credentials in code, config, or comments.
+- [ ] Public API inputs are validated with clear error messages.
+- [ ] New dependencies are from reputable sources and have no known CVEs.
+- [ ] File operations guard against path traversal.
+- [ ] Error messages do not leak internal file paths or sensitive data.
