@@ -154,8 +154,14 @@ napoleon_use_ivar = True
 
 # -- Intersphinx --------------------------------------------------------------
 
+# The standard library is linked at the version the docs job builds under, not at
+# `3`, which follows the newest release. A release that renames or drops a module
+# takes it out of that inventory, and every reference to the old name stops
+# resolving even though the supported Pythons still have it: 3.15 moved `cProfile`
+# to `profiling.tracing`, which is what turned this build red. Move the pin when the
+# docs job's Python moves.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
+    'python': ('https://docs.python.org/3.13', None),
     'django': (
         'https://docs.djangoproject.com/en/stable/',
         'https://docs.djangoproject.com/en/stable/_objects/',
