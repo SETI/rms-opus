@@ -34,7 +34,7 @@ jobs:
       VULTURE_PATHS: "src integration_tests import_tests tests docs manage.py vulture_whitelist.py"
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm reads tags, which a shallow clone does not fetch.
@@ -42,7 +42,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.13
 
@@ -95,10 +95,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14", "3.15"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm reads tags, which a shallow clone does not fetch.
@@ -106,7 +106,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -156,7 +156,7 @@ jobs:
       OPUS_TEST_DB_PASSWORD: opus_import_tests
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm reads tags, which a shallow clone does not fetch.
@@ -164,7 +164,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
 
@@ -197,7 +197,7 @@ jobs:
           pytest import_tests/test_obs_execution.py
 
       - name: Upload coverage report to codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
@@ -212,7 +212,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm reads tags, which a shallow clone does not fetch.
@@ -220,7 +220,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.13
 
@@ -250,7 +250,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # setuptools-scm reads tags; the version is part of what is validated.
@@ -259,7 +259,7 @@ jobs:
 
       - name: Set up Python 3.12
         # The version both publish workflows build with.
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
 
