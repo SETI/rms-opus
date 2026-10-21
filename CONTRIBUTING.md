@@ -65,7 +65,7 @@ We follow these standards for all code contributions:
 * **Type Hints**: Use type hints for all function parameters and return values
 * **Docstrings**: Document all classes and methods with docstrings following the Google style
 * **Testing**: Include unit tests for new functionality
-* **Compatibility**: Ensure compatibility with Python 3.10+
+* **Compatibility**: Ensure compatibility with Python 3.12+
 
 Example of a well-formatted function:
 

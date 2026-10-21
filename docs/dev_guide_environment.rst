@@ -6,7 +6,7 @@ Environment Setup
 Prerequisites
 -------------
 
-* **Python 3.12 or later**. The test matrix runs 3.12 and 3.13.
+* **Python 3.12 or later**. The test matrix runs 3.12 through 3.15.
 * **MySQL 8.0.19 or later**, with a user allowed to create and drop databases. The
   import pipeline creates every OPUS table itself, and writes its multi-row upserts
   with the ``AS new`` row alias that 8.0.19 added.
@@ -229,7 +229,7 @@ Both trigger the same way: on a push or a pull request against the branches thei
 ``workflow_dispatch``. Read the branch list out of the workflow rather than from here.
 
 ``run-tests.yml`` runs on GitHub-hosted runners. Its jobs are **Run Lint** (ruff,
-bandit, vulture, mypy, PyMarkdown), **Unit Tests** on Python 3.12 and 3.13, **Import
+bandit, vulture, mypy, PyMarkdown), **Unit Tests** on Python 3.12 through 3.15, **Import
 Tests**, **Docs** (the same ``-W -n`` Sphinx build as above), and **Package**. None of
 them needs holdings; **Import Tests** is the only one that needs a database, and it
 brings its own as a MySQL service container.
