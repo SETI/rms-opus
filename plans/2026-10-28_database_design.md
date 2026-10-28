@@ -67,10 +67,10 @@ column moves to a one-to-one `obs_preview(obs_general_id, bundle_id, preview_ima
 table only if the measured ratio of its storage to the table's data length exceeds one
 quarter; otherwise it stays. Every table the import writes per observation, the
 junction tables of §2.5 and `obs_preview` included, carries `bundle_id CHAR(75) NOT
-NULL` with `KEY (bundle_id)`, so the per-bundle delete, the duplicate OPUS id delete,
-and the incremental copy reach every table the same way, per table on `bundle_id`.
-`search_results` and `cart` also carry `obs_general_id` but are not imported: the
-import truncates them (§2.4, §3).
+NULL` with `KEY (bundle_id)`, so the per-bundle delete and the incremental copy reach
+every table the same way, per table on `bundle_id`; the duplicate OPUS id delete reaches
+them by the `obs_general_id` it resolves from `obs_general`. `search_results` and `cart`
+also carry `obs_general_id` but are not imported: the import truncates them (§2.4, §3).
 
 ### 2.2 The children
 
@@ -305,8 +305,12 @@ under `foreign_key_checks = 0`, indexes already present. Its closing `--cleanup-
 step (the last step of `import_all` and of the deploy scripts) resets `user_searches` and
 `search_results` and flushes the cache, as step 3 does, so no search built against the
 previous rows outlives the import; a bundle is never deleted from those two tables, only
-the whole set. Direct mode refuses to start on a schema that carries a version row or
-secondary indexes.
+the whole set. An incremental import into a schema that is being served is not atomic,
+today or here: between the first bundle delete and that closing reset, a request can
+build a search against a partial observation set and be served from it until the reset.
+The deploy scripts avoid this by importing into a schema that is not served and
+promoting it; the design adds no maintenance mode. Direct mode refuses to start on a
+schema that carries a version row or secondary indexes.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the unique keys are how duplicates
@@ -363,11 +367,13 @@ properties that make that true, and the one constraint:
   writer. Read-only aggregates over the permanent `obs_*` tables could use a replica.
 
 Sessions and the cart live in the per-import schema, so a deploy that switches schemas
-starts them empty, as it does today; a cart row is `(session_id, obs_general_id)`, and a
-re-import reassigns `obs_general_id`, so a cart cannot survive an import under this
-schema; keying it by
-`opus_id` in a schema that outlives imports would be a schema change and a product
-decision (`plans/2026-10-28_cloud_deployment_notes.md`, §4). That is the present
+starts them empty, as it does today. A cart row is `(session_id, obs_general_id)`; a full
+re-import reassigns every `obs_general_id`, and an incremental one deletes and re-adds
+its bundles' ids while `cart` is reset only when `--create-cart` runs (the import warns
+when it is not), so a cart row can outlive the observation it names and a cart cannot
+survive an import under this schema. Keying it by `opus_id` in a schema that outlives
+imports would be a schema change and a product decision
+(`plans/2026-10-28_cloud_deployment_notes.md`, §4). That is the present
 behavior, kept deliberately.
 
 Everything else a multi-host deployment would need is application and operations work,

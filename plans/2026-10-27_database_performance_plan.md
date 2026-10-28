@@ -1444,11 +1444,11 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   notes and the number stays, so the decision is reproducible.
 - **Changes:** `obs_preview(obs_general_id INT UNSIGNED PRIMARY KEY, bundle_id CHAR(75)
   NOT NULL, preview_images JSON)` with `KEY (bundle_id)` (every table with
-  `obs_general_id` carries it, `§D-2.2`, so the per-bundle delete and copy reach it per
-  table), a schema file, and a table-level foreign key added in finalization;
-  `obs_general` loses the column; the readers (`api_get_data_and_images` and whatever
-  `grep -rn preview_images src/opus_app --include=*.py` finds) join it; the import writes
-  it as one more child table through the existing per-table path.
+  `obs_general_id` that the import writes carries it, `§D-2.2`, so the per-bundle delete
+  and copy reach it per table), a schema file, and a table-level foreign key added in
+  finalization; `obs_general` loses the column; the readers (`api_get_data_and_images` and
+  whatever `grep -rn preview_images src/opus_app --include=*.py` finds) join it; the
+  import writes it as one more child table through the existing per-table path.
 - **Measurement:** `obs_general` data length; app-cold latency of every scenario that
   scans `obs_general` (the target search before PR-16, the mult counts, the
   triggered-tables `DISTINCT`). Target metric: app-cold target-search latency.
@@ -1468,8 +1468,9 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   confirms the set), and each gets a junction table: `obs_general_target_name(mult_id,
   obs_general_id, bundle_id, PRIMARY KEY (mult_id, obs_general_id), KEY (obs_general_id),
   KEY (bundle_id))` and `obs_general_target_class(...)` likewise (`bundle_id` because
-  every table with `obs_general_id` carries it, `§D-2.2`, so the per-bundle delete, the
-  duplicate OPUS id delete, and the incremental copy reach them per table), written by
+  every table the import writes per observation carries it, `§D-2.2`, so the per-bundle
+  delete and the incremental copy reach them per table; the duplicate OPUS id delete
+  reaches them by `obs_general_id`), written by
   the import beside the JSON column
   (which stays for the API's response rendering) from the resolved id lists (PR-05's parent
   emits the rows after mult resolution; a list that repeats an id writes one row). The
