@@ -97,7 +97,8 @@ a key column.
 
 ### 2.3 Surface geometry
 
-One physical table replaces the per-target tables and the selector table:
+One physical table replaces the per-target tables and the selector table (the shape
+#334 asks for):
 
 ```sql
 obs_surface_geometry_target(
@@ -171,14 +172,15 @@ warning. A row whose target is unknown is not written.
 **What a new target costs:** one mult row and its `table_names`, `partables`, and
 `param_info` rows, written by finalization. No table is created, no model is generated,
 nothing is redeployed; the worker restart that already follows every import refreshes
-the per-process category caches. `models.py` loses about a hundred classes.
+the per-process category caches. `models.py` loses about a hundred classes. Choosing a
+target in Select Metadata (#651) becomes a change to the user interface alone.
 
 `obs_surface_geometry`, the per-observation `target_list` text, keeps its shape.
 
 ### 2.4 Search results
 
 One permanent, unpartitioned table replaces the per-search `cache_NNN` tables and the
-per-page temporary tables:
+per-page temporary tables (#350 asks for their cleanup; nothing is left to clean up):
 
 ```sql
 search_results(

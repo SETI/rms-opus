@@ -76,10 +76,10 @@ architecture Phases 0 to 6 produced.
 | Golden suites | `import_tests` goldens and the `integration_tests` golden responses are the behavior-preservation gate. A PR that changes the schema regenerates the import goldens with `python -m import_tests.tools.make_mini_goldens` (`docs/dev_guide_import_fixture.rst`) and shows in its description that the diff is confined to the columns and tables it declared. The warning whitelist (`warning_whitelist.txt`, with `test_no_whitelist_entry_is_stale`) is part of the gate: a PR that removes a warning's cause removes its entry in the same PR. **API golden responses never change in this plan.** |
 | Surface geometry | One physical table, `obs_surface_geometry_target`, keyed `(target_name, obs_general_id)`, absorbs the per-target tables. The per-target **categories** (`obs_surface_geometry__<target>`), which the public API exposes in `api/categories` and in every `SURFACEGEO<target>_<field>` slug, and the selector category `obs_surface_geometry_name`, stay as **data** in `table_names`, `param_info`, and `partables`; the application resolves a category to the table plus an optional `target_name` filter through one function. A new target becomes a mult row and its category rows, written by the import; no table is created, no model is generated, nothing is redeployed (PR-13). |
 | Deploy | A schema-changing PR is marked **requires full re-import** in §4 and bumps `SCHEMA_VERSION`. The deploy chain already builds a new installation and schema under `staged/` and switches a symlink, so a re-import is the normal deploy. PR-07's schema version guard makes **both** deploy scripts refuse, before any `opus_import` step runs, when the served schema's row is absent or differs from the release's constant; the row itself is written only by an explicit finalization step and never overwritten. The deploy scripts run `sudo systemctl` and are the **operator's**; no PR runs them, and the rehearsal before the merge (PR-20) is the orchestrator's step on the Node. |
-| MySQL floor | Stays 8.0.19 (set by the `INSERT ... AS new` alias). `EXPLAIN ANALYZE` needs 8.0.18, the ngram parser 5.7; `innodb_ddl_threads` and `innodb_ddl_buffer_size` (8.0.27) and `innodb_redo_log_capacity` (8.0.30) are used when present, and the harness records the server version. |
+| MySQL floor | Stays 8.0.19 (set by the `INSERT ... AS new` alias). `EXPLAIN ANALYZE` needs 8.0.18, the ngram parser 5.7; `innodb_ddl_threads` and `innodb_ddl_buffer_size` (8.0.27) and `innodb_redo_log_capacity` (8.0.30) are used when present, and the harness records the server version. #1503 asks `importdb` for a server-version gate against this floor. |
 | Index pruning | The analysis's item 10, second half (dropping single-column indexes production never uses) needs a month of production index-usage statistics. Phase 5 documents how to collect it; the pruning PR is **deferred** until the data exists and is not numbered here. `obs_files` is the exception: PR-11 prunes its unread indexes from a code audit. |
 | Configuration keys | Every new `[import]`, `[django]`, or `[database]` key is added in all of: `opus_config/config.py` (the dataclass and its reader; `_TableReader.finish` rejects unknown keys), `opus_config/opus.toml.template`, the ``[django]``, ``[import]``, and ``[database]`` key tables in `docs/user_guide_installation.rst` and the configuration-key table in `docs/dev_guide_import_running.rst`, `tests/opus_config`, `tests/fixtures/opus_ci.toml`, and `import_tests/tools/build_run.write_opus_config`, which gains an `extra_import: dict[str, object]` parameter so a test session can set a key. Any PR adding a key does all of them. |
-| Schema entries | Beside column entries, a table schema (a JSON list) may carry table-level entries: `{"constraint": "..."}` (exists; appended raw by `create_table`, in both namespaces, always, and never considered by `add_secondary_indexes`), and from this plan `{"primary_key": [cols]}` and `{"unique": [cols]}` (PR-10), `{"key": [cols]}` (PR-12), `{"fulltext": [cols]}` (PR-18), and `{"foreign_key": {"columns": [...], "references": ["table", ...]}}` (PR-11). Every reader that iterates a schema's columns skips entries without `field_name` as it already skips `constraint`; PR-04's create-time key filter and PR-08's `add_secondary_indexes` read the same entries, so the two can never disagree. |
+| Schema entries | Beside column entries, a table schema (a JSON list) may carry table-level entries: `{"constraint": "..."}` (exists; appended raw by `create_table`, in both namespaces, always, and never considered by `add_secondary_indexes`), and from this plan `{"primary_key": [cols]}` and `{"unique": [cols]}` (PR-10), `{"key": [cols]}` (PR-12), `{"fulltext": [cols]}` (PR-18), and `{"foreign_key": {"columns": [...], "references": ["table", ...]}}` (PR-11). Every reader that iterates a schema's columns skips entries without `field_name` as it already skips `constraint`; PR-04's create-time key filter and PR-08's `add_secondary_indexes` read the same entries, so the two can never disagree. The static schema validator #1487 asks for, if written, accepts these table-level entries. |
 | Acceptance statistics | Medians and p95 only. Max is recorded, never judged. |
 
 ### Out of scope
@@ -487,6 +487,9 @@ as `item n`, and to the design document as `§D-n`.
     extra.
   - `opus_import --timing-json <path>` (§2.2) in `cli.py` and `do_import_steps`, writing
     one JSON object at exit; documented in `dev_guide_import_running.rst`'s option table.
+    The harness treats an import run as failed when its `ERRORS.log` is non-empty, not
+    only when the exit status is non-zero, because steps that log errors still exit 0
+    (#1516).
   - `build_run.run_pipeline_step`, `run_migrate`, `perform_run`, and `_migrate_and_diff`
     gain `python` and `repo_root` parameters, defaulting to today's values so
     `import_tests` is unchanged.
@@ -840,7 +843,7 @@ as `item n`, and to the design document as `§D-n`.
   themselves run `sudo` and are never run by a test or an executor).
 - **Requires full re-import:** yes (new table).
 
-**PR-08: feat: direct mode, building the permanent tables once on a fresh schema** (item 6, second half; `§C-3.3`; `§D-3`)
+**PR-08: feat: direct mode, building the permanent tables once on a fresh schema** (item 6, second half; `§C-3.3`; `§D-3`; closes #1253)
 
 - **Premise.** `import_prefix=None` does **not** alias the two namespaces:
   `ImportDBSuper._is_import_namespace` returns False for every table when the prefix is
@@ -939,6 +942,7 @@ as `item n`, and to the design document as `§D-n`.
   refuses with a message when short; otherwise it logs the estimate and proceeds. Each
   table's and each index's duration goes into `--timing-json`.
 - **Validation:** `--validate-perm` gains an orphan anti-join count per child table
+  (the direction #584 asks for: integrity checks in `--validate-perm`)
   (`LEFT JOIN obs_general ... WHERE obs_general.id IS NULL`), because finalization's
   foreign keys never validate existing rows.
 - **Callers:** `import_all.import_steps` adds `--import-direct` to its **bundle** steps
@@ -1002,8 +1006,17 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   `integration_tests/test_api/test_cart_api.py` (run by the self-hosted integration
   workflow) still pass.
 
-**PR-10: feat: one search_results table replaces the per-search cache tables** (item 13, the `search_results` half; `§C-4.1`; `§C-2.6`; `§D-2.4`)
+**PR-10: feat: one search_results table replaces the per-search cache tables** (item 13, the `search_results` half; `§C-4.1`; `§C-2.6`; `§D-2.4`; closes #350, #665, #1500)
 
+- **Issues:** #350 asks for a cleanup of old cache tables; after this PR no per-search
+  table exists and the import's truncate is the only removal. #665 asks for the count
+  without the table build; the count is stored at build time and read from
+  `user_searches` afterward, while the first request still waits for the build (the
+  background build it proposes is not adopted). #666 proposes `READ UNCOMMITTED` for the
+  build; not adopted, the build runs at the default isolation level and the concurrent
+  cold measurement reports its lock cost. #1500 (the search cache key can exceed
+  memcached's limit) is fixed here because the key sites are rewritten: the assembled
+  key tail is hashed to a fixed width.
 - **Changes:**
   - A permanent, **unpartitioned** table `search_results(search_id INT UNSIGNED NOT NULL,
     sort_order INT UNSIGNED NOT NULL, obs_general_id INT UNSIGNED NOT NULL, PRIMARY KEY
@@ -1158,7 +1171,12 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 - **Requires full re-import:** yes.
 - **Scale:** full scale.
 
-**PR-13: refactor: one surface geometry table, with the targets as data** (item 11; `§C-2.3`; `§D-2.3`)
+**PR-13: refactor: one surface geometry table, with the targets as data** (item 11; `§C-2.3`; `§D-2.3`; closes #334)
+
+- **Issues:** #334 asks for this table and names its two difficulties, the `partables`
+  rows and the selector widget's name; both are handled below. #651 (choosing a surface
+  geometry target in Select Metadata) becomes a user-interface change alone once every
+  target's categories exist as data.
 
 - **The problem, as the code has it.** Surface geometry is one table per target body,
   created from the template `table_schemas/obs_surface_geometry_target.json` at the end of
@@ -1484,7 +1502,11 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 - **Requires full re-import:** yes.
 - **Scale:** full scale.
 
-**PR-18: feat: indexed autocomplete** (item 18; `§C-4.3`; `§D-2.6`)
+**PR-18: feat: indexed autocomplete** (item 18; `§C-4.3`; `§D-2.6`; #1301)
+
+- **Issues:** #1301 reports autocomplete going silent once the typed OPUS id passes a
+  certain length; the acceptance repeats its steps against the full-scale schema and
+  records whether the index resolves it.
 
 - **Changes:** a `FULLTEXT ... WITH PARSER ngram` index on each string column
   `api_string_search_choices` searches (the executor derives the column list from the
@@ -1559,7 +1581,8 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 
 ### Phase P (optional, later): PostgreSQL to parity, then head to head
 
-Everything in this phase is deferred until the orchestrator opens it. It repeats the
+This phase is the investigation #352 asks for. Everything in it is deferred until the
+orchestrator opens it. It repeats the
 branch arrangement on `db-postgresql` off `main`, and its PRs are numbered `PR-P1` to
 `PR-P5`. The port is of the tree as Phase 6 leaves it: no `cache_*` tables, no temporary
 tables, children keyed on `obs_general_id`, one surface geometry table, junction tables,

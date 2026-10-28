@@ -5,7 +5,7 @@ database schema, to run OPUS with one database server and several stateless web 
 behind a load balancer that sends any request to any worker. The schema itself needs no
 change for that layout (`plans/2026-10-28_database_design.md`, §5). None of the items
 below is part of the database performance plan; this file exists so that they are not
-lost and are not mistaken for that plan's work.
+lost and are not mistaken for that plan's work. The port itself is #1199.
 
 **Date:** 2026-10-28. Each item names what the code does today, in the tree at
 `2179d937`, with the file, and what the multi-host layout would need. The plan's PR-00,
@@ -40,7 +40,9 @@ memcached.
   service. The `redis` backend needs the `redis` client as an optional extra.
 - Set `CACHES['default']['KEY_PREFIX']` from `cache_server_prefix`, the schema name, the
   schema version, and the release's version string, so the middleware's keys are scoped
-  too and two releases or two schemas never share an entry.
+  too and two releases or two schemas never share an entry. A longer prefix shortens the
+  margin #1500 measures against memcached's key limit; the plan's PR-10 hashes the key
+  tail to a fixed width.
 - Keep the flush on every deploy and after every reset of `user_searches` and
   `search_results` (trusted hits make a stale entry a wrong answer). `clear_django_cache`
   must gain the configured backend; today it configures `CACHES` alone and cannot reach a
@@ -68,7 +70,8 @@ there). `deploy_new_code_only.sh` rebuilds `param_info`, `partables`, and `table
 - A fleet promotion step that points every host at the new schema and restarts every
   worker, atomically from the browser's point of view (§4), then runs the warm-up once.
 - The in-place aux rebuild must not happen against a schema workers are serving; the
-  schema-per-import deploy already guarantees that, the code-only deploy does not.
+  schema-per-import deploy already guarantees that, the code-only deploy does not
+  (#1504 records the same hazard for the dictionary swap).
 - PR-14's warm-up warms the shared cache and the database, not each process's own
   copies; priming those in `wsgi.py` after PR-07's schema version check (or gunicorn
   `--preload`) would remove the per-process first-request cost.

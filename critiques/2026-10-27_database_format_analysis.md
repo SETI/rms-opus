@@ -373,7 +373,8 @@ belongs with the change.
 ## 5. Recommendations, in the order to do them
 
 Each entry says what it changes, what it costs, and what it unlocks. The parallelism
-wins are marked.
+wins are marked. Where an open issue asks for the same thing, its number follows the
+heading; several of the import entries also appear on the wishlist recorded in #1473.
 
 ### Import
 
@@ -414,8 +415,8 @@ wins are marked.
    server for the run. Re-enabling the checks does not scan existing rows, so a
    schema loaded this way is validated before it is served: an anti-join orphan count
    per child for the foreign keys, and the unique-key probe of `opus_id` for the
-   duplicates.
-6. **Copy tables in parallel, or stop copying.** The import-to-permanent copy is one
+   duplicates (#584 asks for the integrity checks to live in `--validate-perm`).
+6. **Copy tables in parallel, or stop copying** (#1253). The import-to-permanent copy is one
    independent `INSERT ... SELECT` per table after `obs_general`; a thread pool of
    connections does them concurrently. Better: the deploy chain already builds into a
    fresh schema and switches with a symlink, which provides the same "nothing the
@@ -439,7 +440,7 @@ wins are marked.
     `(right_asc, d_right_asc)`, and the ring-geometry longitude pairs, then prune the
     single-column indexes the production server says are unused** (§2.2). The pruning
     step is the one that needs a month of `performance_schema` data first.
-11. **Collapse surface geometry into one partitioned table** (§2.3). The largest
+11. **Collapse surface geometry into one partitioned table** (§2.3; #334). The largest
     schema change on the list and the one with the most moving parts (slugs,
     `partables`, `models.py`, the obs class template); do it after 8 and 10 have shown
     their effect so its payoff is measurable in isolation.
@@ -447,7 +448,7 @@ wins are marked.
 
 ### Web application
 
-13. **Replace per-search tables with `search_results`** (§4.1) and the per-page
+13. **Replace per-search tables with `search_results`** (§4.1; #350, #665) and the per-page
     temporary table with a derived table. Removes DDL from the request path, bounds
     the table count, and makes concurrent searches contend on row locks instead of
     dictionary locks. Store `result_count` in `user_searches` at build time.
@@ -465,7 +466,7 @@ wins are marked.
     imports; a finalization step can write them into a table the application reads
     instead of running `GROUP BY` over 1.4 million rows the first time each worker is
     asked.
-18. **`FULLTEXT` on the autocomplete columns** (§4.3).
+18. **`FULLTEXT` on the autocomplete columns** (§4.3; #1301).
 
 ### Server
 
@@ -474,7 +475,7 @@ wins are marked.
     parallelizes the clustered-index scans and `COUNT(*)` that the broad-search cache
     build and the empty-search count do.
 20. **If a bigger step is ever on the table, it is PostgreSQL, and the stub for it is
-    already in the tree.** Parallel query execution, partial and covering indexes, GIN
+    already in the tree** (#352). Parallel query execution, partial and covering indexes, GIN
     indexes on integer arrays (the natural type for `mult_list`), `COPY` for bulk load,
     and `UNLOGGED` tables for search results would address §2.2, §2.4, §3.3, and §4.1
     with features rather than workarounds. It is a large migration; it is listed here
