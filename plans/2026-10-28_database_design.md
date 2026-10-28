@@ -97,8 +97,8 @@ a key column.
 
 ### 2.3 Surface geometry
 
-One physical table replaces the per-target tables and the selector table (the shape
-#334 asks for):
+One physical table replaces the per-target tables and the selector table, which is the
+shape #334 asks for:
 
 ```sql
 obs_surface_geometry_target(
