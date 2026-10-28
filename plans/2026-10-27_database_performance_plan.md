@@ -1034,9 +1034,13 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
     of stale searches, which the import's truncate already provides. `user_searches` gains
     `result_count INT UNSIGNED NULL` and `results_built_at DATETIME NULL`.
   - `do_django.drop_cache_tables` becomes `reset_search_tables`: **create `user_searches`
-    and `search_results` if absent, then truncate both** (it runs before the import steps
-    and right after the scorched-earth drop, when neither table may exist), through the
-    brand class; the harness's state resets call the same function through the CLI
+    and `search_results` if absent, then truncate both**, through the brand class. It
+    keeps `drop_cache_tables`'s place in the `--cleanup-aux-tables` set, so it runs as
+    part of the closing step of every sequence (`import_all`, `import_for_tests.sh`, the
+    deploy scripts), after any copy, and a search built during an import does not
+    outlive it; it also runs right after the scorched-earth drop, when neither table
+    may exist, which is why it creates before it truncates. The harness's state resets
+    call the same function through the CLI
     (`--drop-cache-tables` keeps its name as an alias). `create_opus_models.sh`'s refusal
     on `cache_*` tables goes with the tables.
   - `get_user_query_table` is renamed `get_search_id` and returns `int | None`. Every
