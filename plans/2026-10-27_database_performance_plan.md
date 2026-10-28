@@ -1152,10 +1152,10 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   "d_right_asc"]}` and the `(declination1, declination2)` pair on `obs_general`; and the
   ring-geometry longitude pairs on `obs_ring_geometry` (every pair `(<col>, d_<col>)`
   where both are columns of `obs_ring_geometry.json`; `longitude_wrt_observer` is one).
-  **The angular pairs cannot be range-scanned:** `get_longitude_query` renders
-  `ABS(MOD(%s - col + 540., 360.) - 180.) <= %s` through `sql_builder.angular_separation`,
-  so their value is a narrower covering scan than the clustered row. **Add only; prune
-  nothing** (§1). PostgreSQL note: `INCLUDE (id)` and `NULLS FIRST`, and a `VACUUM` after load for
+  **The angular pairs cannot be range-scanned:** `get_longitude_query` renders `ABS(MOD(%s
+  - col + 540., 360.) - 180.) <= %s` through `sql_builder.angular_separation`, so their
+  value is a narrower covering scan than the clustered row. **Add only; prune nothing**
+  (§1). PostgreSQL note: `INCLUDE (id)` and `NULLS FIRST`, and a `VACUUM` after load for
   index-only scans.
 - **Measurement:** the plan of the empty-search build before and after; the acceptance
   shape is **a covering index scan with the sort in memory** (`Sort_merge_passes` zero
