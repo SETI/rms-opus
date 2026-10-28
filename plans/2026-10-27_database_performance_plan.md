@@ -1600,11 +1600,16 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
     WHERE expire_date > NOW()`, then `INSERT INTO <target>.cart (session_id,
     obs_general_id, opus_id, recycled, timestamp) SELECT c.session_id, n.id, c.opus_id,
     c.recycled, c.timestamp FROM <served>.cart c JOIN <target>.obs_general n ON
-    n.opus_id = c.opus_id`; the step logs the row counts copied and the cart rows
-    dropped (`COUNT(*)` of `<served>.cart` less the rows inserted). `cart.id` is
-    `AUTO_INCREMENT` and is not copied.
+    n.opus_id = c.opus_id`; the step truncates the two target tables first, so it is
+    idempotent and runs in either direction (a rollback is the promotion toward the
+    previous installation), and logs the row counts copied and the cart rows dropped
+    (`COUNT(*)` of `<served>.cart` less the rows inserted). `cart.id` is `AUTO_INCREMENT`
+    and is not copied.
   - `_promote.sh` runs that step between stopping the web service and switching the
-    symlink when `OPUS_PREVIOUS_DB_NAME` is set; `deploy_new_code_and_database.sh` sets
+    symlink when `OPUS_PREVIOUS_DB_NAME` is set. **If the step fails, `_promote.sh`
+    starts the web service again on the unchanged installation and exits non-zero,
+    exactly as its existing symlink-failure branch does**; nothing has switched, and the
+    shell-function test covers that branch; `deploy_new_code_and_database.sh` sets
     it from the served installation's `opus.toml` as `deploy_new_code_only.sh` already
     reads `OPUS_DB_NAME` (so a full-import deploy carries sessions and carts over too);
     `deploy_new_code_only.sh` leaves it unset (same schema, nothing to carry).

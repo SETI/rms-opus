@@ -113,9 +113,9 @@ that switches schemas starts them empty.
   A cache-backed session engine is not the remedy: carts are keyed by session id and would
   vanish on eviction.
 - The design's promotion carries sessions and carts into the new schema in the stopped
-  window (design §3.1), so a deploy no longer empties them. Keying the cart by `opus_id`
-  in a schema that outlives imports would remove that copy step; it is a schema change
-  left for later.
+  window (design §3, step 6), so a deploy no longer empties them. Keying the cart by
+  `(session_id, opus_id)` in a schema that outlives imports would remove that copy step;
+  it is a schema change left for later. The cart stays per session either way.
 
 ## 5. The database connection
 

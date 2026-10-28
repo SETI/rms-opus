@@ -298,6 +298,13 @@ writing an import-namespace copy and copying it:
 5. **The dictionary import, validation, and the version row.** Validation includes an
    orphan count per child, because finalization's foreign keys never validate existing
    rows.
+6. **Promotion**, for a full import and an incremental update alike: the web service
+   stops, the previous schema's sessions and carts are carried over into the new schema
+   (`django_session` rows whole, `cart` rows by `opus_id`, which `cart` already stores, to
+   the observation's new `obs_general_id`), the installation switches to the new schema,
+   and the web service starts. The carry-over truncates its two target tables first, so
+   it can run in either direction. If it fails, the web service is started again on the
+   unchanged installation and the deploy exits non-zero; nothing has switched.
 
 Direct mode refuses to start on a schema that carries a version row or secondary indexes.
 The import-namespace path (an import namespace created without secondary indexes or
@@ -326,10 +333,7 @@ update is built as a new schema and promoted whole, exactly as a full import is:
 3. **Steps 3 to 5 as for a full import:** aux tables, finalization, dictionary,
    validation, and the version row. `cart`, `user_searches`, and `search_results` are
    created empty.
-4. **Promotion** is today's: the web service stops, the installation switches to the new
-   schema, the web service starts. In the stopped window the previous schema's sessions
-   and carts are carried over: `django_session` rows whole, `cart` rows by `opus_id`,
-   which `cart` already stores, to the observation's new `obs_general_id`; a row whose
+4. **Promotion** is step 6: stop, carry over, switch, start. A cart row whose
    observation no longer exists is dropped and counted in the import log, and the
    browser is not told (a decision: the cart is shorter, the badge and the listing
    agree, and no table records what was dropped). `user_searches` and
@@ -337,8 +341,10 @@ update is built as a new schema and promoted whole, exactly as a full import is:
 
 The same clone with a bundle excluded and nothing imported drops it. The cost is one copy
 of the database per update, measured by the plan, and the disk for two schemas, which a
-full-import deploy needs already; the previous schema stays until the next update, so a
-rollback is a switch back.
+full-import deploy needs already. The previous schema stays until the next update, so a
+rollback is step 6 run toward it: the carry-over brings back the sessions and carts as
+they stand at that moment, and only a cart row for an observation the previous schema
+lacks is lost.
 
 **Why not in place, and why not a table swap.** Writing into the served schema is not
 atomic: between the first bundle delete and the closing reset a request can build a
@@ -402,13 +408,14 @@ properties that make that true, and the one constraint:
   writer. Every request that touches `search_results` or `user_searches` goes to the
   writer. Read-only aggregates over the permanent `obs_*` tables could use a replica.
 
-Sessions and the cart live in the per-import schema, and promotion carries them into the
-new schema while the web service is stopped (§3.1): session rows whole, cart rows by
-`opus_id` to the observation's new `obs_general_id`, dropping a row whose observation is
-gone. A cart therefore survives an update unless its observation vanished, and nothing
-of the previous schema is referenced afterward. Keying the cart by `opus_id` in a schema
-that outlives imports would remove the mapping step; it is a schema change left for
-later (`plans/2026-10-28_cloud_deployment_notes.md`, §4).
+Sessions and the cart live in the per-import schema, and every promotion, after a full
+import or an incremental update, carries them into the new schema while the web service
+is stopped (§3, step 6): session rows whole, cart rows by `opus_id` to the observation's
+new `obs_general_id`, dropping a row whose observation is gone. A cart therefore
+survives an update unless its observation vanished, and nothing of the previous schema
+is referenced afterward. Keying the cart by `(session_id, opus_id)` in a schema that
+outlives imports would remove the mapping step; it is a schema change left for later
+(`plans/2026-10-28_cloud_deployment_notes.md`, §4).
 
 Everything else a multi-host deployment would need is application and operations work,
 not schema: a shared cache with fully scoped keys, shared storage for cart downloads, the
