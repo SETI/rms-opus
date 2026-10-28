@@ -2,7 +2,7 @@
 
 Date: 2026-10-27. Scope: the MySQL schema the import pipeline creates from
 `src/opus_import/table_schemas/`, the way the pipeline writes it, and the way the web
-application reads it. This is a static analysis of the repository at `3bb85f74`: the
+application reads it. This is a static analysis of the repository at `2179d937`: the
 numbers below come from the schema files, the generated models, and the golden API
 responses, not from a running server. Every claim that could be measured on a populated
 database says so and names the query that would measure it.
@@ -185,9 +185,10 @@ Two fixes, either sufficient:
   ARRAY)))` lets `MEMBER OF`, `JSON_CONTAINS`, and `JSON_OVERLAPS` use the index. This
   is a one-line change to `create_table` for `mult_list` columns and a one-line change
   in `sql_builder.json_contains` to prefer `MEMBER OF`.
-- A junction table `obs_general_target (obs_general_id, target_id)` with primary key on
-  both columns. More conventional, indexable both ways, and the mult count becomes a
-  plain `GROUP BY` without `JSON_TABLE`. Costs a join on display.
+- A junction table `obs_general_target (target_id, obs_general_id)` with the primary key
+  on both columns, target first, and a second key on `obs_general_id` (a composite key
+  serves lookups by its leading column only). More conventional, and the mult count
+  becomes a plain `GROUP BY` without `JSON_TABLE`. Costs a join on display.
 
 ### 2.5 `preview_images` widens the master row
 
@@ -241,7 +242,7 @@ before surface geometry multiplies it by the number of bodies in view. `import_a
 runs the bundle sets in sequence, one `opus_import` subprocess each. Nothing overlaps.
 
 A `cProfile` of one mid-sized bundle (`python -m cProfile -o prof -m opus_import
---do-import <bundle>`) would confirm the split; the expectation from reading is that the
+--import <bundle>`) would confirm the split; the expectation from reading is that the
 database is idle most of the time and the Python interpreter is the bottleneck.
 
 ### 3.2 Three shared counters make concurrent imports unsafe
@@ -364,6 +365,10 @@ toward "no suggestions." A `FULLTEXT` index on the string columns that offer
 autocomplete (there are not many — `obs_pds.product_id`, `data_set_id`,
 `primary_filespec`, a few mission-specific ones) turns `contains` into
 `MATCH ... AGAINST` with an index, and `begins` already works with a prefix `LIKE`.
+The index must use the ngram parser: the default parser tokenizes by word, drops short
+and stop words, and matches a wildcard only at the start of a word, so it would lose
+choices the substring `LIKE` finds, and an equivalence test against today's results
+belongs with the change.
 
 ## 5. Recommendations, in the order to do them
 
@@ -373,16 +378,20 @@ wins are marked.
 ### Import
 
 1. **Allocate ids per bundle, not per process.** Give each bundle a fixed id block —
-   `bundle_number * 2^24 + row_number`, with the bundle number taken from the sorted
-   bundle list — or reserve a block atomically from a one-row `id_sequence` table
+   `bundle_number * 2^24 + row_number`, both zero-based, with the bundle number taken
+   from the sorted bundle list; `obs_general.id` is `uint4`, so this holds up to 256
+   bundles of up to 2^24 rows, and the import refuses a bundle list or a bundle beyond
+   those bounds — or reserve a block atomically from a one-row `id_sequence` table
    (`UPDATE id_sequence SET next = LAST_INSERT_ID(next + ?)`) at the start of each
-   bundle. Either is deterministic given the same bundle list. **Unlocks:** running N
-   `opus_import` processes on disjoint bundle sets at once.
+   bundle. The first is deterministic given the same bundle list; the second guarantees
+   uniqueness only, because blocks go out in lock-acquisition order. **Unlocks:** running
+   N `opus_import` processes on disjoint bundle sets at once.
 2. **Resolve mult values to ids in a single finalizer.** Workers write the *value
    string* (or a per-worker provisional id plus the string) into the import rows; a
    final serial step assigns ids in sorted-value order and rewrites the columns, or
    workers `INSERT IGNORE` values into the shared import `mult_` table and read back
-   the id MySQL's `AUTO_INCREMENT` assigned. The first keeps ids reproducible; the
+   the id by value; that needs a unique key on `value` (the template declares none
+   today) and a defined rule for the null value. The first keeps ids reproducible; the
    second is simpler. **Unlocks:** the same N-process import without the id collision
    in §3.2.
 3. **One import prefix per worker.** The namespace machinery exists
@@ -402,7 +411,10 @@ wins are marked.
    secondary indexes and add them after the load in one `ALTER TABLE ... ADD INDEX
    ..., ADD INDEX ...` statement (InnoDB sorts; 8.0.27+ builds in parallel with
    `innodb_ddl_threads`). Set `innodb_flush_log_at_trx_commit = 2` on the import
-   server for the run.
+   server for the run. Re-enabling the checks does not scan existing rows, so a
+   schema loaded this way is validated before it is served: an anti-join orphan count
+   per child for the foreign keys, and the unique-key probe of `opus_id` for the
+   duplicates.
 6. **Copy tables in parallel, or stop copying.** The import-to-permanent copy is one
    independent `INSERT ... SELECT` per table after `obs_general`; a thread pool of
    connections does them concurrently. Better: the deploy chain already builds into a

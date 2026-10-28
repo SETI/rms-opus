@@ -2,7 +2,7 @@
 
 **Scope:** the MySQL schema `opus_import` builds and `opus_app` serves, as the
 performance plan (`plans/2026-10-27_database_performance_plan.md`) leaves it, and the
-reasons for each departure from the schema in the tree at `3bb85f74`. The analysis that
+reasons for each departure from the schema in the tree at `2179d937`. The analysis that
 motivates it is `critiques/2026-10-27_database_format_analysis.md`. Nothing here is
 PostgreSQL-specific; the optional port described in the plan carries this same shape.
 
@@ -65,10 +65,12 @@ The two JSON list columns, `target_name` and `target_class`, stay for rendering 
 Searching and counting on them move to junction tables (§2.5). The `preview_images` JSON
 column moves to a one-to-one `obs_preview(obs_general_id, bundle_id, preview_images)`
 table only if the measured ratio of its storage to the table's data length exceeds one
-quarter; otherwise it stays. Every table with an `obs_general_id` column, the junction
-tables of §2.5 and `obs_preview` included, carries `bundle_id CHAR(75) NOT NULL` with
-`KEY (bundle_id)`, so the per-bundle delete, the duplicate OPUS id delete, and the
-incremental copy reach every table the same way, per table on `bundle_id`.
+quarter; otherwise it stays. Every table the import writes per observation, the
+junction tables of §2.5 and `obs_preview` included, carries `bundle_id CHAR(75) NOT
+NULL` with `KEY (bundle_id)`, so the per-bundle delete, the duplicate OPUS id delete,
+and the incremental copy reach every table the same way, per table on `bundle_id`.
+`search_results` and `cart` also carry `obs_general_id` but are not imported: the
+import truncates them (§2.4, §3).
 
 ### 2.2 The children
 
@@ -78,8 +80,9 @@ Every per-category `obs_*` table is keyed on the hub:
   row per observation, so the join key is the row locator and every child join is a
   unique lookup on the clustered index.
 - The foreign key on `opus_id` goes, and so does the column, along with the copied
-  `instrument_id`. One exception: `obs_pds.opus_id` stays as a plain keyed column because
-  it is the public `opusid` field every result page shows and an autocomplete column.
+  `instrument_id`. Two exceptions: `obs_pds.opus_id` stays as a plain keyed column
+  because it is the public `opusid` field every result page shows and an autocomplete
+  column, and `obs_files` keeps both columns (below).
 - `bundle_id` stays, with its key; the import deletes and copies by bundle.
 - The one foreign key, `obs_general_id → obs_general.id`, is declared at table level in
   the schema file and added in finalization, not at creation.
@@ -159,8 +162,11 @@ never the union of all.
 The import derives the target list from `SELECT DISTINCT target_name` over the data and
 writes the category rows with the same labels, order, and slugs as today. Rows are
 computed under the category name, so the per-target validation keeps running, and written
-to the one table. Two rows of one observation that resolve to the same target write one
-row, with a warning. A row whose target is unknown is not written.
+to the one table; on both the metadata-index and the inline path, the row's target
+string is resolved to its id in `mult_obs_surface_geometry_name_target_name` before the
+row is written. Two rows of one observation that resolve to the same target write one
+row, the first in the import's defined row order (the plan states the order), with a
+warning. A row whose target is unknown is not written.
 
 **What a new target costs:** one mult row and its `table_names`, `partables`, and
 `param_info` rows, written by finalization. No table is created, no model is generated,
@@ -280,7 +286,8 @@ writing an import-namespace copy and copying it:
    deleted from the permanent tables before it is written, so a rerun is clean, and an
    OPUS id already written by an earlier bundle is deleted and re-imported.
 3. **Aux tables** (`param_info`, `partables`, `table_names`) are regenerated, with the
-   surface geometry categories derived from the data.
+   surface geometry categories derived from the data; `user_searches` and
+   `search_results` are reset and the cache flush of §2.4 follows.
 4. **Finalization** builds, by sort: `FULLTEXT` keys first, each in its own statement
    (the first one rebuilds its table); then B-tree indexes concurrently across tables,
    grouped per table within a temporary-space budget; then foreign keys serially under
@@ -331,8 +338,8 @@ properties that make that true, and the one constraint:
 - **Every piece of per-user and per-search state is in the database.** The search
   registration (`user_searches`, whose unique key over the four hashes resolves a race
   between two workers registering the same search), the result rows and the stored count
-  (`search_results`, `user_searches`), the cart (`cart`, keyed by session id), and Django's
-  sessions (the database engine). A browser's next
+  (`search_results`, `user_searches`), the cart (`cart`, one row per `(session_id,
+  obs_general_id)`), and Django's sessions (the database engine). A browser's next
   request can land on any worker and see the same search, the same page, and the same
   cart.
 - **The search build serializes on a row lock inside a database transaction**; no worker
@@ -350,8 +357,9 @@ properties that make that true, and the one constraint:
   writer. Read-only aggregates over the permanent `obs_*` tables could use a replica.
 
 Sessions and the cart live in the per-import schema, so a deploy that switches schemas
-starts them empty, as it does today; a cart is keyed by `obs_general_id`, which a
-re-import reassigns, so a cart cannot survive an import under this schema; keying it by
+starts them empty, as it does today; a cart row is `(session_id, obs_general_id)`, and a
+re-import reassigns `obs_general_id`, so a cart cannot survive an import under this
+schema; keying it by
 `opus_id` in a schema that outlives imports would be a schema change and a product
 decision (`plans/2026-10-28_cloud_deployment_notes.md`, §4). That is the present
 behavior, kept deliberately.

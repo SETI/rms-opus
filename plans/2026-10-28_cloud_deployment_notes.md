@@ -8,7 +8,7 @@ below is part of the database performance plan; this file exists so that they ar
 lost and are not mistaken for that plan's work.
 
 **Date:** 2026-10-28. Each item names what the code does today, in the tree at
-`3bb85f74`, with the file, and what the multi-host layout would need. The plan's PR-00,
+`2179d937`, with the file, and what the multi-host layout would need. The plan's PR-00,
 PR-02, PR-03, PR-07, and PR-14 change some of the "Today" paragraphs; re-read them
 against the tree before acting on this file.
 
@@ -99,8 +99,11 @@ that switches schemas starts them empty.
 **Multi-host.**
 
 - During a rolling restart that mixes old and new workers, a browser alternates between
-  two schemas, is issued two session keys, and sees two carts. The switch must be atomic
-  per browser (all workers at once, or the load balancer flips the fleet in one step).
+  two schemas. A request that lands on the other schema finds no row for its cookie's
+  key; Django then deletes the cookie if the session stays empty, or issues a new key if
+  the request writes to the session, so the browser ends with a key and a cart specific
+  to each schema it touched. The switch must be atomic per browser (all workers at
+  once, or the load balancer flips the fleet in one step).
 - `SESSION_SAVE_EVERY_REQUEST = False` removes one write per request to the shared server.
   A cache-backed session engine is not the remedy: carts are keyed by session id and would
   vanish on eviction.
