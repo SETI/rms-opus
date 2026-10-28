@@ -330,7 +330,9 @@ update is built as a new schema and promoted whole, exactly as a full import is:
    schema, the web service starts. In the stopped window the previous schema's sessions
    and carts are carried over: `django_session` rows whole, `cart` rows by `opus_id`,
    which `cart` already stores, to the observation's new `obs_general_id`; a row whose
-   observation no longer exists is dropped and counted. `user_searches` and
+   observation no longer exists is dropped and counted in the import log, and the
+   browser is not told (a decision: the cart is shorter, the badge and the listing
+   agree, and no table records what was dropped). `user_searches` and
    `search_results` start empty and refill on demand; the warm-up runs after the start.
 
 The same clone with a bundle excluded and nothing imported drops it. The cost is one copy
