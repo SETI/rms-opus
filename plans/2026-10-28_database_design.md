@@ -299,18 +299,52 @@ writing an import-namespace copy and copying it:
    orphan count per child, because finalization's foreign keys never validate existing
    rows.
 
-An incremental import into a live schema keeps today's path: import namespace (created
-without secondary indexes or foreign keys, which nothing reads before the copy), copy
-under `foreign_key_checks = 0`, indexes already present. Its closing `--cleanup-aux-tables`
-step (the last step of `import_all` and of the deploy scripts) resets `user_searches` and
-`search_results` and flushes the cache, as step 3 does, so no search built against the
-previous rows outlives the import; a bundle is never deleted from those two tables, only
-the whole set. An incremental import into a schema that is being served is not atomic,
-today or here: between the first bundle delete and that closing reset, a request can
-build a search against a partial observation set and be served from it until the reset.
-The deploy scripts avoid this by importing into a schema that is not served and
-promoting it; the design adds no maintenance mode. Direct mode refuses to start on a
-schema that carries a version row or secondary indexes.
+Direct mode refuses to start on a schema that carries a version row or secondary indexes.
+The import-namespace path (an import namespace created without secondary indexes or
+foreign keys, a copy under `foreign_key_checks = 0`, indexes already present) stays for
+the test suites and for development; its closing `--cleanup-aux-tables` step resets
+`user_searches` and `search_results` and flushes the cache, as step 3 does. It is never
+run against a schema that is being served: it is not atomic, and §3.1 is how a served
+schema is updated.
+
+### 3.1 Incremental update
+
+An incremental update replaces a bundle with a new copy, adds a bundle, or drops one. A
+browser sees nothing of it until it is finished, and then sees all of it at once. The
+update is built as a new schema and promoted whole, exactly as a full import is:
+
+1. **Clone.** Direct mode, given `--clone-from-schema <served>`, creates the tables as
+   step 2 does (primary key, unique keys, the `bundle_id` key) and copies the served
+   schema's rows into them: every per-observation table with `INSERT INTO <new>.<t>
+   SELECT * FROM <served>.<t> WHERE bundle_id NOT IN (<the bundles being replaced or
+   dropped>)`, and every `mult_*` table whole, over the sibling connections, one table
+   per connection. Ids are preserved, so an unchanged observation keeps its
+   `obs_general_id` and its mult ids. The served schema is only read.
+2. **Import.** The replaced and added bundles are imported in direct mode as in step 2;
+   their rows take ids above the copied maximum, new mult values append, and a new
+   surface geometry target is a row, not a table (§2.3).
+3. **Steps 3 to 5 as for a full import:** aux tables, finalization, dictionary,
+   validation, and the version row. `cart`, `user_searches`, and `search_results` are
+   created empty.
+4. **Promotion** is today's: the web service stops, the installation switches to the new
+   schema, the web service starts. In the stopped window the previous schema's sessions
+   and carts are carried over: `django_session` rows whole, `cart` rows by `opus_id`,
+   which `cart` already stores, to the observation's new `obs_general_id`; a row whose
+   observation no longer exists is dropped and counted. `user_searches` and
+   `search_results` start empty and refill on demand; the warm-up runs after the start.
+
+The same clone with a bundle excluded and nothing imported drops it. The cost is one copy
+of the database per update, measured by the plan, and the disk for two schemas, which a
+full-import deploy needs already; the previous schema stays until the next update, so a
+rollback is a switch back.
+
+**Why not in place, and why not a table swap.** Writing into the served schema is not
+atomic: between the first bundle delete and the closing reset a request can build a
+search against a partial observation set and be served from it, and the workers'
+per-process caches go stale. A `RENAME TABLE` swap of staged copies inside the served
+schema is atomic for the names, but it needs the same full copy, still leaves the
+per-process caches stale until the restart the promotion does anyway, and leaves the old
+tables beside the new; it buys nothing over a new schema and a switch.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the unique keys are how duplicates
@@ -366,15 +400,13 @@ properties that make that true, and the one constraint:
   writer. Every request that touches `search_results` or `user_searches` goes to the
   writer. Read-only aggregates over the permanent `obs_*` tables could use a replica.
 
-Sessions and the cart live in the per-import schema, so a deploy that switches schemas
-starts them empty, as it does today. A cart row is `(session_id, obs_general_id)`; a full
-re-import reassigns every `obs_general_id`, and an incremental one deletes and re-adds
-its bundles' ids while `cart` is reset only when `--create-cart` runs (the import warns
-when it is not), so a cart row can outlive the observation it names and a cart cannot
-survive an import under this schema. Keying it by `opus_id` in a schema that outlives
-imports would be a schema change and a product decision
-(`plans/2026-10-28_cloud_deployment_notes.md`, §4). That is the present
-behavior, kept deliberately.
+Sessions and the cart live in the per-import schema, and promotion carries them into the
+new schema while the web service is stopped (§3.1): session rows whole, cart rows by
+`opus_id` to the observation's new `obs_general_id`, dropping a row whose observation is
+gone. A cart therefore survives an update unless its observation vanished, and nothing
+of the previous schema is referenced afterward. Keying the cart by `opus_id` in a schema
+that outlives imports would remove the mapping step; it is a schema change left for
+later (`plans/2026-10-28_cloud_deployment_notes.md`, §4).
 
 Everything else a multi-host deployment would need is application and operations work,
 not schema: a shared cache with fully scoped keys, shared storage for cart downloads, the

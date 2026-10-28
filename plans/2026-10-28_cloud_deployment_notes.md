@@ -68,7 +68,9 @@ there). `deploy_new_code_only.sh` rebuilds `param_info`, `partables`, and `table
 **Multi-host.**
 
 - A fleet promotion step that points every host at the new schema and restarts every
-  worker, atomically from the browser's point of view (§4), then runs the warm-up once.
+  worker, atomically from the browser's point of view (§4), then runs the warm-up once;
+  the session and cart carry-over of the design's §3.1 runs once in that step, not per
+  host.
 - The in-place aux rebuild must not happen against a schema workers are serving; the
   schema-per-import deploy already guarantees that, the code-only deploy does not
   (#1504 records the same hazard for the dictionary swap).
@@ -110,9 +112,10 @@ that switches schemas starts them empty.
 - `SESSION_SAVE_EVERY_REQUEST = False` removes one write per request to the shared server.
   A cache-backed session engine is not the remedy: carts are keyed by session id and would
   vanish on eviction.
-- A cart that survives an import would need keys by `opus_id` in a schema that outlives
-  imports. That is a schema change and a product decision; today's behavior (a deploy
-  empties carts) is kept.
+- The design's promotion carries sessions and carts into the new schema in the stopped
+  window (design §3.1), so a deploy no longer empties them. Keying the cart by `opus_id`
+  in a schema that outlives imports would remove that copy step; it is a schema change
+  left for later.
 
 ## 5. The database connection
 
