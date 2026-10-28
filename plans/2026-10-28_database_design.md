@@ -299,8 +299,12 @@ writing an import-namespace copy and copying it:
 
 An incremental import into a live schema keeps today's path: import namespace (created
 without secondary indexes or foreign keys, which nothing reads before the copy), copy
-under `foreign_key_checks = 0`, indexes already present. Direct mode refuses to start on a
-schema that carries a version row or secondary indexes.
+under `foreign_key_checks = 0`, indexes already present. Its closing `--cleanup-aux-tables`
+step (the last step of `import_all` and of the deploy scripts) resets `user_searches` and
+`search_results` and flushes the cache, as step 3 does, so no search built against the
+previous rows outlives the import; a bundle is never deleted from those two tables, only
+the whole set. Direct mode refuses to start on a schema that carries a version row or
+secondary indexes.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the unique keys are how duplicates
