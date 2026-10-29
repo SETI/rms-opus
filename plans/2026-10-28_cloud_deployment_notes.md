@@ -9,7 +9,7 @@ lost and are not mistaken for that plan's work. The port itself is #1199.
 
 **Date:** 2026-10-28. Each item names what the code does today, in the tree at
 `2179d937`, with the file, and what the multi-host layout would need. The plan's PR-00,
-PR-02, PR-03, PR-07, and PR-14 change some of the "Today" paragraphs; re-read them
+PR-02, PR-03, PR-07, and PR-15 change some of the "Today" paragraphs; re-read them
 against the tree before acting on this file.
 
 ---
@@ -59,7 +59,7 @@ are loaded at first use in each worker process and invalidated only by a restart
 (`docs/dev_guide_webapp_overview.rst`, the Caching section); `partables` and `table_names`
 are read per request until PR-03 caches them the same way. `_promote.sh` stops the web
 service, switches a local symlink, restarts the cache service, and starts the web service,
-all with `sudo systemctl`; it runs no warm-up (PR-14 adds `opus_manage warm_search`
+all with `sudo systemctl`; it runs no warm-up (PR-15 adds `opus_manage warm_search`
 there). `deploy_new_code_only.sh` rebuilds `param_info`, `partables`, and `table_names`
 **in the served schema while workers run**, dropping and recreating each
 (`src/opus_deploy/server/import_and_deploy/deploy_new_code_only.sh`; `do_param_info`,
@@ -74,7 +74,7 @@ there). `deploy_new_code_only.sh` rebuilds `param_info`, `partables`, and `table
 - The in-place aux rebuild must not happen against a schema workers are serving; the
   schema-per-import deploy already guarantees that, the code-only deploy does not
   (#1504 records the same hazard for the dictionary swap).
-- PR-14's warm-up warms the shared cache and the database, not each process's own
+- PR-15's warm-up warms the shared cache and the database, not each process's own
   copies; priming those in `wsgi.py` after PR-07's schema version check (or gunicorn
   `--preload`) would remove the per-process first-request cost.
 - Static files are collected per installation; a fleet wants a CDN or a collect on every

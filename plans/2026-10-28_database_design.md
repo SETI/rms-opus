@@ -21,7 +21,7 @@ lives in the database, so any worker can serve any request.
 
 ## 1. Motivations
 
-Four properties of the current schema drive the design.
+Five properties of the current schema drive the design.
 
 **Units of work are units of DDL.** A search creates a table, a page creates a temporary
 table, and the import creates a table for every target body it meets. DDL serializes on
@@ -45,6 +45,13 @@ exist because each target body got a table. Every one is a Django model class, s
 target the deployed code has never seen cannot be served until the models are regenerated
 and the application is redeployed. The design keeps the per-target *categories*, which
 the public API exposes, as data, and stores the rows in one table.
+
+**Lookup values are one table per column, ordered by a string.** Each enumerated column
+has its own `mult_` table and Django model. Its display order is a string computed once,
+when a value is first seen, so it depends on the order bundles were imported and sorts
+negative numbers wrongly, and a value whose observations are deleted stays in the search
+form. The design keeps one table with an integer rank recomputed at the end of every
+import, and removes values nothing references.
 
 ---
 
@@ -102,7 +109,7 @@ shape #334 asks for:
 
 ```sql
 obs_surface_geometry_target(
-  target_name     INT UNSIGNED NOT NULL,   -- id in mult_obs_surface_geometry_name_target_name
+  target_name     SMALLINT UNSIGNED NOT NULL,  -- mult id (§2.8)
   obs_general_id  INT UNSIGNED NOT NULL,
   bundle_id       CHAR(75)     NOT NULL,
   <every geometry column of the template>,
@@ -121,10 +128,10 @@ multiply the cold page reads by the mean number of targets per observation. The 
 join below is still a unique lookup, and the per-observation lookup is a covering dive on
 the secondary key, which also serves the foreign key and the per-observation delete.
 
-`target_name` is the id in the mult table that already exists for the selector field, so
-every target already has an id, a label, a display order, and a grouping there. The
-template declares that mult table's name in a `mult_table` key on the column, because
-the `mult_<table>_<field>` spelling would give the wrong name.
+`target_name` is the target's id within the selector's mult field,
+`obs_surface_geometry_name.target_name` (§2.8), so every target has an id, a label, a
+rank, and a grouping there. The template's column names that field with a `mult_field`
+key, because the column's own qualified name would name a different field.
 
 **The categories stay as data.** `table_names`, `param_info`, and `partables` keep one
 row per target (and per column, for `param_info`) with exactly today's names, labels,
@@ -163,11 +170,11 @@ never the union of all.
 The import derives the target list from `SELECT DISTINCT target_name` over the data and
 writes the category rows with the same labels, order, and slugs as today. Rows are
 computed under the category name, so the per-target validation keeps running, and written
-to the one table; on both the metadata-index and the inline path, the row's target
-string is resolved to its id in `mult_obs_surface_geometry_name_target_name` before the
-row is written. Two rows of one observation that resolve to the same target write one
-row, the first in the import's defined row order (the plan states the order), with a
-warning. A row whose target is unknown is not written.
+to the one table; on both the metadata-index and the inline path, the row's target string
+is resolved to its id in the selector's mult field before the row is written. Two rows of
+one observation that resolve to the same target write one row, the first in the import's
+defined row order (the plan states the order), with a warning. A row whose target is
+unknown is not written.
 
 **What a new target costs:** one mult row and its `table_names`, `partables`, and
 `param_info` rows, written by finalization. No table is created, no model is generated,
@@ -197,8 +204,11 @@ workers racing to register the same search safe) and gains `result_count` and
 `results_built_at`. A page is `sort_order BETWEEN a AND b` on the join, exact because
 `ROW_NUMBER()` is dense. The count is stored once. Partitioning is not used: `search_id`
 is the primary-key prefix, so every per-search read is one range regardless, and the
-import's truncate removes stale searches; `results_built_at` is the column a later
-janitor would key on.
+import's truncate removes stale searches. A `default_rank` column on `obs_general`,
+the position in the default sort, which would let the empty search page without a
+build, is evaluated on full-scale data at the end of the plan and added only if it
+measures a clear gain. `results_built_at` is the column a later janitor
+would key on.
 
 **The build runs once per search however many requests race for it.** Inside one
 transaction, the builder reads the search's own `user_searches` row `FOR UPDATE`; a
@@ -266,10 +276,62 @@ startup and serves 503 on a mismatch or a missing row; both deploy scripts check
 served schema's row before running any import or migration step. A half-built schema
 therefore cannot be served or promoted, and new code cannot stamp an old schema.
 
-### 2.8 What does not change
+### 2.8 Mult values
 
-The `mult_*` tables, `cart`, `partables`, `param_info` (its shape), the dictionary tables,
-and the public API's response bodies.
+One table holds every enumerated value, in place of one `mult_<table>_<column>` table per
+column:
+
+```sql
+mult_field(field_id       SMALLINT UNSIGNED PRIMARY KEY,
+           qualified_name VARCHAR(100) NOT NULL UNIQUE,  -- e.g. obs_general.planet_id
+           pinned         TINYINT NOT NULL)              -- the schema lists the choices
+mult_group(field_id       SMALLINT UNSIGNED NOT NULL,
+           grouping       VARCHAR(100) NOT NULL,
+           group_rank     SMALLINT UNSIGNED NOT NULL,
+           PRIMARY KEY (field_id, grouping))
+mult(field_id  SMALLINT UNSIGNED NOT NULL,
+     id        SMALLINT UNSIGNED NOT NULL,
+     value     VARCHAR(100) NULL,
+     label     VARCHAR(100) NOT NULL,
+     disp_rank SMALLINT UNSIGNED NOT NULL,
+     display   ENUM('Y','N') NOT NULL,
+     grouping  VARCHAR(100) NULL,
+     PRIMARY KEY (field_id, id),
+     UNIQUE KEY (field_id, value))
+```
+
+- **Ids are per field**, so an observation column holds a small id: `SMALLINT UNSIGNED` in
+  every mult column, the junction tables, and `obs_surface_geometry_target.target_name`,
+  provided the largest field fits, which the plan checks against real data first. A label
+  is a primary-key lookup, `JOIN mult AS m ON m.field_id = ? AND m.id = obs.column`. A
+  column can name another column's field with a `mult_field` key, as the surface geometry
+  table does for the selector (§2.3).
+- **`disp_rank` is a dense integer per field**, computed for the whole field at the end of
+  every import from typed values: pinned values first in their pinned order; then ordinary
+  values, numerically (through the column's unit when it has one) when every one parses
+  as a number and otherwise by case-folded label; then `Yes` and `On`; then `No` and
+  `Off`; then `None`, `N/A`, and `NULL`. Label and stored value break ties. The rank does
+  not depend on the order bundles were imported, sorts negative numbers correctly, and is
+  the same integer the search form and the counts sort by. Groups are ranked the same way
+  in `mult_group`.
+- **Values no observation references are deleted** at the end of every import, full or
+  incremental, except in a pinned field, whose list is the intended set of choices. The
+  search form therefore offers only values that return results.
+- A value keeps the label, display flag, and grouping it was first stored with; an import
+  that computes different ones logs a warning naming both.
+- **Search results sorted by a mult column are ordered by label text**, not by
+  `disp_rank`. That is the public API's ordering and stays as it is.
+- The `aliases` and `timestamp` columns of today's tables are not carried: nothing reads
+  them.
+
+A table of precomputed counts for the empty search, `mult_count_empty(field_id, mult_id,
+count)`, is evaluated on full-scale data at the end of the plan and is added only if it
+measures a clear gain over the post-deploy warm-up.
+
+### 2.9 What does not change
+
+`cart`, `partables`, `param_info` (its shape), the dictionary tables, and the public API's
+response bodies, including the order of results sorted by a mult column.
 
 ---
 
@@ -278,8 +340,8 @@ and the public API's response bodies.
 The import writes a fresh schema **directly**, in an explicit direct mode, instead of
 writing an import-namespace copy and copying it:
 
-1. **Scorched earth** drops the `obs_`, `mult_`, and `cart` tables and the
-   `schema_version` row.
+1. **Scorched earth** drops the `obs_` tables, the three mult tables, and `cart`, and
+   deletes the `schema_version` row.
 2. **Per bundle**, tables are created with their primary key, unique keys, and the
    `bundle_id` key only. Worker processes turn index rows into table rows; the parent
    process alone assigns ids, resolves mult values, and loads tab-separated text with
@@ -293,8 +355,10 @@ writing an import-namespace copy and copying it:
 4. **Finalization** builds, by sort: `FULLTEXT` keys first, each in its own statement
    (the first one rebuilds its table); then B-tree indexes concurrently across tables,
    grouped per table within a temporary-space budget; then foreign keys serially under
-   `foreign_key_checks = 0`; then `ANALYZE` with histograms on the range-searched columns.
-   The step is idempotent, comparing existing keys by kind and ordered columns.
+   `foreign_key_checks = 0`; then the mult step, which deletes values nothing references
+   and recomputes every rank (§2.8); then `ANALYZE` with histograms on the
+   range-searched columns. The step is idempotent, comparing existing keys by kind and
+   ordered columns.
 5. **The dictionary import, validation, and the version row.** Validation includes an
    orphan count per child, because finalization's foreign keys never validate existing
    rows.
@@ -324,8 +388,9 @@ update is built as a new schema and promoted whole, exactly as a full import is:
    step 2 does (primary key, unique keys, the `bundle_id` key) and copies the served
    schema's rows into them: every per-observation table with `INSERT INTO <new>.<t>
    SELECT * FROM <served>.<t> WHERE bundle_id NOT IN (<the bundles being replaced or
-   dropped>)`, and every `mult_*` table whole, over the sibling connections, one table
-   per connection. Ids are preserved, so an unchanged observation keeps its
+   dropped>)`, and the three mult tables whole, over the sibling connections, one table
+   per connection; values only the excluded bundles used are removed by finalization's
+   mult step. Ids are preserved, so an unchanged observation keeps its
    `obs_general_id` and its mult ids. The served schema is only read.
 2. **Import.** The replaced and added bundles are imported in direct mode as in step 2;
    their rows take ids above the copied maximum, new mult values append, and a new
@@ -372,7 +437,8 @@ surface.
   `obs_general_id` (a unique lookup each), with surface geometry categories aliased and
   filtered by target.
 - **The fan-out** (mult counts, range endpoints, triggered tables) joins `search_results`
-  the same way; mult counts on list columns group the junction table; surface geometry
+  the same way; mult counts on list columns group the junction table, and labels and
+  ranks come from `mult` by `(field_id, id)`; surface geometry
   categories for one observation are one query on `obs_surface_geometry_target` ordered by
   `table_names.disp_order`.
 - **Autocomplete** matches the ngram index and reads the stored count instead of counting.

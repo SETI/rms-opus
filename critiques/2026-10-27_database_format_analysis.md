@@ -209,8 +209,37 @@ preview_images)` and join it only in `api_get_data_and_images`.
 
 ### 2.6 Ninety tiny `mult_` tables and an unbounded number of `cache_` tables
 
-Each `mult_` table is a legitimate lookup table; ninety of them is untidy but harmless.
-The `cache_NNN` tables are not harmless: one real InnoDB table per distinct search,
+Each `mult_` table is a legitimate lookup table, but ninety copies of one shape
+(`table_schemas/mult_template.json`) share these problems:
+
+- **Two columns are dead.** Nothing reads `aliases`; no observation class supplies one
+  (`obs/field_types.py` says so), and the generated models omit it. Nothing reads
+  `timestamp`.
+- **`group_disp_order` describes a group but is stored on every row of it.** The widget
+  orders `distinct()` groups by it, so a group whose rows disagree is listed twice.
+- **`disp_order` is a string computed once, when a value is first seen**, by
+  `do_import_mult.update_mult_table`, from the values already present. The same data
+  imported in another bundle order can produce another widget order. Negative numbers
+  sort wrongly under both padded formats it uses:
+
+  ```text
+  unit columns   : -5, -10, 3, 10
+  plain numbers  : 3, -5, 10, -10
+  ```
+
+  The widget sorts the key in SQL under a case-insensitive collation, while
+  `api_get_mult_counts` sorts it in Python case-sensitively, so the two can disagree.
+  Ties have no tiebreaker, positions are forced with `zzz`, `zzy`, `zzx`, `zzAYes`, and
+  `zzBNo` prefixes and one `'!Cassini'`, and the absent-value rule is skipped for a
+  column with a unit.
+- **Values outlive their observations.** A bundle delete never touches the mult tables,
+  and a value that already exists keeps its first label when a later import computes
+  another. The search form lists every row with `display = 'Y'`, so it offers values no
+  observation has; selecting one returns nothing, and the counts, which group the data,
+  show nothing for it.
+- **Every mult id is a four-byte `int unsigned`** in every observation column.
+
+The `cache_NNN` tables are worse: one real InnoDB table per distinct search,
 never dropped until the next import. On a busy site that is tens of thousands of tables
 and `.ibd` files between deploys. Table count pressures `table_open_cache` and
 `table_definition_cache`, bloats the data dictionary, and makes `inspectdb`-style
@@ -481,6 +510,17 @@ heading; several of the import entries also appear on the wishlist recorded in #
     with features rather than workarounds. It is a large migration; it is listed here
     because every other recommendation on this list is also true of a PostgreSQL port,
     and nothing here depends on staying with MySQL except item 9's exact syntax.
+
+### Lookup values
+
+21. **One mult table with a computed display rank** (§2.6). Replace the per-column
+    tables with one keyed `(field, id)`, drop the dead columns, move the group order to
+    a group table, compute an integer display rank per field at the end of every import
+    from typed values, delete values nothing references except where the schema lists
+    the choices, and narrow the ids if the largest field allows. Results sorted by a
+    mult column keep sorting by label text. **Payoff:** a widget order that does not
+    depend on import order, a search form that offers only values with results, and
+    ninety fewer models.
 
 ## 6. What to measure first
 
