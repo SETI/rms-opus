@@ -1122,7 +1122,8 @@ bump nor the re-import (§1, Deploy).
     `IntegrityError` read-back stay; the unreachable `MultipleObjectsReturned` handler
     goes. The memcached key for the search's id is
     `CACHE_SERVER_PREFIX + CACHE_KEY_PREFIX + ':usersearchno:' + search_hash.hex()`,
-    and a test asserts its length under the test configuration. The model field is a `BinaryField`, as `inspectdb` generates it.
+    and a test asserts its length under the test configuration. The model field is a
+    `BinaryField`, as `inspectdb` generates it.
   - **The pruner, for #350.** `user_searches` gains `last_used_at DATETIME NOT NULL`,
     set at registration. It is refreshed at most once a day per search, so it adds no
     write per request: the memcached entry for a search holds its id and the day it was
