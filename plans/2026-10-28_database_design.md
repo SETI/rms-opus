@@ -70,14 +70,19 @@ gains composite keys for the query shapes that read it in order or by pair:
 
 The two JSON list columns, `target_name` and `target_class`, stay for rendering responses.
 Searching and counting on them move to junction tables (§2.5). The `preview_images` JSON
-column moves to a one-to-one `obs_preview(obs_general_id, bundle_id, preview_images)`
-table only if the measured ratio of its storage to the table's data length exceeds one
-quarter; otherwise it stays. Every table the import writes per observation, the
-junction tables of §2.5 and `obs_preview` included, carries `bundle_id CHAR(75) NOT
-NULL` with `KEY (bundle_id)`, so the per-bundle delete and the incremental copy reach
-every table the same way, per table on `bundle_id`; the duplicate OPUS id delete reaches
-them by the `obs_general_id` it resolves from `obs_general`. `search_results` and `cart`
-also carry `obs_general_id` but are not imported: the import truncates them (§2.4, §3).
+column moves to a one-to-one `obs_preview(obs_general_id, preview_images)` table only if
+the measured ratio of its storage to the table's data length exceeds one quarter;
+otherwise it stays.
+
+**`obs_general` is the only table that records an observation's bundle**, in
+`bundle_id` with its key. Every other table the import writes per observation (the
+children, the junction tables of §2.5, `obs_preview`, and the surface geometry table)
+reaches its bundle through `obs_general_id`, so the per-bundle delete, the incremental
+copy, and the clone of §3.1 join each table to `obs_general`'s bundle key, and the
+duplicate OPUS id delete uses the `obs_general_id` it resolves. One copy of the bundle
+cannot disagree with another, and no table carries a 75-character column and an index
+for the import's sake. `search_results` and `cart` also carry `obs_general_id` but are
+not imported: the import truncates them (§2.4, §3).
 
 ### 2.2 The children
 
@@ -87,10 +92,13 @@ Every per-category `obs_*` table is keyed on the hub:
   row per observation, so the join key is the row locator and every child join is a
   unique lookup on the clustered index.
 - The foreign key on `opus_id` goes, and so does the column, along with the copied
-  `instrument_id`. Two exceptions: `obs_pds.opus_id` stays as a plain keyed column
-  because it is the public `opusid` field every result page shows and an autocomplete
-  column, and `obs_files` keeps both columns (below).
-- `bundle_id` stays, with its key; the import deletes and copies by bundle.
+  `instrument_id`, and the copied `bundle_id`. Two exceptions: `obs_pds` keeps `opus_id`
+  and `bundle_id` as plain keyed columns because they are the public `opusid` and
+  `bundleid` fields, shown on result pages and searched, and `obs_files` keeps `opus_id`
+  and `instrument_id` (below).
+- A bundle's rows in a child are found by joining `obs_general` on `obs_general_id`
+  (§2.1); the join is a range on `obs_general`'s bundle key followed by primary-key
+  lookups in the child.
 - The one foreign key, `obs_general_id → obs_general.id`, is declared at table level in
   the schema file and added in finalization, not at creation.
 
@@ -111,11 +119,9 @@ shape #334 asks for:
 obs_surface_geometry_target(
   target_name     SMALLINT UNSIGNED NOT NULL,  -- mult id (§2.8)
   obs_general_id  INT UNSIGNED NOT NULL,
-  bundle_id       CHAR(75)     NOT NULL,
   <every geometry column of the template>,
   PRIMARY KEY (target_name, obs_general_id),
   KEY (obs_general_id),
-  KEY (bundle_id),
   KEY (target_name, <col>)  -- one per keyed column of the template
 )
 ```
@@ -199,16 +205,32 @@ search_results(
 )
 ```
 
-`user_searches` keeps its unique key over the four hashes (which is what makes two
-workers racing to register the same search safe) and gains `result_count` and
-`results_built_at`. A page is `sort_order BETWEEN a AND b` on the join, exact because
-`ROW_NUMBER()` is dense. The count is stored once. Partitioning is not used: `search_id`
-is the primary-key prefix, so every per-search read is one range regardless, and the
-import's truncate removes stale searches. A `default_rank` column on `obs_general`,
-the position in the default sort, which would let the empty search page without a
-build, is evaluated on full-scale data at the end of the plan and added only if it
-measures a clear gain. `results_built_at` is the column a later janitor
-would key on.
+`user_searches` holds one row per distinct search and nothing it does not use:
+
+```sql
+user_searches(
+  id               INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  search_hash      BINARY(32)   NOT NULL,  -- SHA-256 of the canonical search
+  result_count     INT UNSIGNED NULL,
+  results_built_at DATETIME     NULL,
+  UNIQUE KEY (search_hash)
+)
+```
+
+`search_hash` is one SHA-256 over the canonical selections, query types, units, and
+order, with `null` for an absent part, so two requests share a row exactly when they
+are the same search. The unique key is 32 bytes and is what makes two workers racing
+to register the same search safe: the loser's insert fails and it reads the winner's
+row. The memcached entry that maps a search to its id is keyed by the same hash in
+hexadecimal, so its key has a fixed length whatever the search.
+
+A page is `sort_order BETWEEN a AND b` on the join, exact because `ROW_NUMBER()` is
+dense. The count is stored once. Partitioning is not used: `search_id` is the primary-key
+prefix, so every per-search read is one range regardless, and the import's truncate
+removes stale searches. A `default_rank` column on `obs_general`, the position in the
+default sort, which would let the empty search page without a build, is evaluated on
+full-scale data at the end of the plan and added only if it measures a clear gain.
+`results_built_at` is the column a later janitor would key on.
 
 **The build runs once per search however many requests race for it.** Inside one
 transaction, the builder reads the search's own `user_searches` row `FOR UPDATE`; a
@@ -236,9 +258,9 @@ the same number of inserts, now into a shared table with a secondary unique inde
 cold build itself is expected no faster. The gains are no DDL in the request path, a
 bounded table count, the stored count, and one build per search under concurrency.
 
-If the measured re-sort number still warrants it, the set and the sort get separate keys
-in `user_searches`, so a re-sort of a built set reorders its ids instead of re-evaluating
-the predicate.
+If the measured re-sort number still warrants it, `user_searches` gains a second hash
+over the set alone, so a re-sort of a built set reorders its ids instead of
+re-evaluating the predicate.
 
 ### 2.5 Junction tables for the list columns
 
@@ -246,9 +268,8 @@ Each JSON list column on `obs_general` gets a junction table written by the impo
 the resolved mult ids:
 
 ```sql
-obs_general_target_name (mult_id, obs_general_id, bundle_id,
-                         PRIMARY KEY (mult_id, obs_general_id), KEY (obs_general_id),
-                         KEY (bundle_id))
+obs_general_target_name (mult_id, obs_general_id,
+                         PRIMARY KEY (mult_id, obs_general_id), KEY (obs_general_id))
 obs_general_target_class(the same shape)
 ```
 
@@ -342,13 +363,14 @@ writing an import-namespace copy and copying it:
 
 1. **Scorched earth** drops the `obs_` tables, the three mult tables, and `cart`, and
    deletes the `schema_version` row.
-2. **Per bundle**, tables are created with their primary key, unique keys, and the
-   `bundle_id` key only. Worker processes turn index rows into table rows; the parent
-   process alone assigns ids, resolves mult values, and loads tab-separated text with
-   `LOAD DATA LOCAL INFILE` in chunks of about 100,000 rows, failing on any skipped row or
-   warning (the statement would otherwise ignore duplicate keys silently). Each bundle is
-   deleted from the permanent tables before it is written, so a rerun is clean, and an
-   OPUS id already written by an earlier bundle is deleted and re-imported.
+2. **Per bundle**, tables are created with their primary key and unique keys only, and
+   `obs_general` with its bundle key too, which the per-bundle delete reads. Worker
+   processes turn index rows into table rows; the parent process alone assigns ids,
+   resolves mult values, and loads tab-separated text with `LOAD DATA LOCAL INFILE` in
+   chunks of about 100,000 rows, failing on any skipped row or warning (the statement
+   would otherwise ignore duplicate keys silently). Each bundle is deleted from the
+   permanent tables before it is written, so a rerun is clean, and an OPUS id already
+   written by an earlier bundle is deleted and re-imported.
 3. **Aux tables** (`param_info`, `partables`, `table_names`) are regenerated, with the
    surface geometry categories derived from the data; `user_searches` and
    `search_results` are reset and the cache flush of §2.4 follows.
@@ -385,10 +407,11 @@ browser sees nothing of it until it is finished, and then sees all of it at once
 update is built as a new schema and promoted whole, exactly as a full import is:
 
 1. **Clone.** Direct mode, given `--clone-from-schema <served>`, creates the tables as
-   step 2 does (primary key, unique keys, the `bundle_id` key) and copies the served
-   schema's rows into them: every per-observation table with `INSERT INTO <new>.<t>
-   SELECT * FROM <served>.<t> WHERE bundle_id NOT IN (<the bundles being replaced or
-   dropped>)`, and the three mult tables whole, over the sibling connections, one table
+   step 2 does and copies the served schema's rows into them: `obs_general` with
+   `WHERE bundle_id NOT IN (<the bundles being replaced or dropped>)`, every other
+   per-observation table with `WHERE obs_general_id NOT IN (SELECT id FROM
+   <served>.obs_general WHERE bundle_id IN (<the same bundles>))`, and the three mult
+   tables whole, over the sibling connections, one table
    per connection; values only the excluded bundles used are removed by finalization's
    mult step. Ids are preserved, so an unchanged observation keeps its
    `obs_general_id` and its mult ids. The served schema is only read.
@@ -427,9 +450,9 @@ surface.
 
 ## 4. How a request uses it
 
-- **Register the search.** Hash the selections, types, units, and order; insert the
-  `user_searches` row or read the existing one (the unique key resolves a race between
-  workers).
+- **Register the search.** Hash the selections, types, units, and order into one
+  `search_hash`; insert the `user_searches` row or read the existing one (the unique key
+  resolves a race between workers).
 - **Build if needed**, under the row lock (§2.4); otherwise read `result_count` and the
   rows that exist.
 - **A page** joins `obs_general` to `search_results` on `obs_general_id` with `search_id =
@@ -454,7 +477,7 @@ stateless web workers needs **no later schema change**. The
 properties that make that true, and the one constraint:
 
 - **Every piece of per-user and per-search state is in the database.** The search
-  registration (`user_searches`, whose unique key over the four hashes resolves a race
+  registration (`user_searches`, whose unique key on the search hash resolves a race
   between two workers registering the same search), the result rows and the stored count
   (`search_results`, `user_searches`), the cart (`cart`, one row per `(session_id,
   obs_general_id)`), and Django's sessions (the database engine). A browser's next

@@ -107,8 +107,10 @@ Consequences:
    every `INSERT ... SELECT` during the import-to-permanent copy.
 
 **Fix:** make `obs_general_id` the primary key of every child table (dropping `id`),
-keep one foreign key, and drop `opus_id` and `instrument_id` from the children. Keep
-`bundle_id` if the per-bundle delete is wanted, or replace it with `ON DELETE CASCADE`
+keep one foreign key, and drop `opus_id`, `instrument_id`, and `bundle_id` from the
+children, keeping only the copies `obs_pds` exposes as public fields. The per-bundle
+delete and copy then reach each child by joining `obs_general` on `obs_general_id`,
+a range on its bundle key followed by primary-key lookups, or by `ON DELETE CASCADE`
 from `obs_general` so one `DELETE` does all 123 tables. The child rows then sit in
 `obs_general` order, so the result-page join becomes a sequence of clustered lookups
 with good locality.
@@ -253,9 +255,8 @@ See §4.1 for the replacement; it is the single most valuable web-side change.
   search is two comparisons. Give the pair a composite index.
 - Times as ET doubles, clock counts as doubles: sortable, indexable, convertible on
   the way out.
-- `user_searches` keyed by four MD5 hashes with `'NONE'` sentinels, and the optimistic
-  insert that lets the unique key pick a winner. This is how to deduplicate under
-  concurrency.
+- The optimistic insert into `user_searches` that lets a unique key pick a winner. This
+  is how to deduplicate under concurrency.
 - `param_info`, `table_names`, and `partables` as data rather than code.
 - The `sql_builder` discipline — identifiers validated and quoted, values always bound.
 
@@ -320,7 +321,7 @@ machine" — is worth keeping, and every fix below keeps it.
 `get_user_query_table` runs `CREATE TABLE cache_NNN (...) SELECT obs_general.id FROM
 obs_general LEFT JOIN ... WHERE ... ORDER BY ...`. For a broad search this materializes
 a million-row table, builds a unique index on `id`, and sorts — that is the latency a
-user feels on the first keystroke of a search the site has not seen. Three properties
+user feels on the first keystroke of a search the site has not seen. Four properties
 make it worse than it needs to be:
 
 - The sort order is part of the search's identity (`order_hash` is in the unique key),
@@ -332,6 +333,13 @@ make it worse than it needs to be:
 - Every page view then runs `CREATE TEMPORARY TABLE temp_cache_NNN_<pid>_<time> AS
   SELECT sort_order, id FROM cache_NNN ORDER BY sort_order LIMIT ? OFFSET ?` and drops
   it. That is a second DDL statement per request on the busiest endpoint.
+- Registering the search costs more than it should. `user_searches` stores four
+  32-character hex MD5s with `'NONE'` sentinels, whose unique key spans up to 512 bytes
+  and is probed on every search, and four JSON texts that nothing reads. The memcached
+  key built from the four hashes measures 219 characters under the test configuration
+  against memcached's 250 (#1500). The `MultipleObjectsReturned` handler in
+  `set_user_search_number` is unreachable: the exception it names could only come from
+  the `get` inside its sibling `IntegrityError` handler.
 
 **Fix:** one table, no DDL in the request path.
 
@@ -457,11 +465,11 @@ heading; several of the import entries also appear on the wishlist recorded in #
 
 ### Schema
 
-8. **Rekey the child tables on `obs_general_id`** (§2.1): primary key, one foreign
-   key, drop `id`, `opus_id`, and `instrument_id` from children. Requires regenerating
-   `models.py` and touching `search_cache_join_condition`, `add_obs_table_joins`, and
-   the delete-by-bundle step. **Payoff:** every join in the application; the sort-page
-   join in particular.
+8. **Rekey the child tables on `obs_general_id`** (§2.1): primary key, one foreign key,
+   drop `id`, `opus_id`, `instrument_id`, and `bundle_id` from children. Requires
+   regenerating `models.py` and touching `search_cache_join_condition`,
+   `add_obs_table_joins`, and the delete-by-bundle step. **Payoff:** every join in the
+   application; the sort-page join in particular.
 9. **Multi-valued indexes on `mult_list` columns** (§2.4): one branch in
    `create_table`, `MEMBER OF` in `sql_builder`. **Payoff:** target searches stop
    scanning `obs_general`.
@@ -480,7 +488,8 @@ heading; several of the import entries also appear on the wishlist recorded in #
 13. **Replace per-search tables with `search_results`** (§4.1; #350, #665) and the per-page
     temporary table with a derived table. Removes DDL from the request path, bounds
     the table count, and makes concurrent searches contend on row locks instead of
-    dictionary locks. Store `result_count` in `user_searches` at build time.
+    dictionary locks. Store `result_count` in `user_searches` at build time, and key
+    the search on one fixed-width hash with nothing else stored (§4.1).
 14. **Separate the result set from its order** (§4.1, second paragraph), so re-sorting
     is a sort of ids rather than a re-search.
 15. **Run the workers for I/O, not CPU.** The handlers wait on MySQL; `gunicorn
