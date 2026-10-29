@@ -74,15 +74,16 @@ column moves to a one-to-one `obs_preview(obs_general_id, preview_images)` table
 the measured ratio of its storage to the table's data length exceeds one quarter;
 otherwise it stays.
 
-**`obs_general` is the only table that records an observation's bundle**, in
-`bundle_id` with its key. Every other table the import writes per observation (the
-children, the junction tables of §2.5, `obs_preview`, and the surface geometry table)
-reaches its bundle through `obs_general_id`, so the per-bundle delete, the incremental
-copy, and the clone of §3.1 join each table to `obs_general`'s bundle key, and the
-duplicate OPUS id delete uses the `obs_general_id` it resolves. One copy of the bundle
-cannot disagree with another, and no table carries a 75-character column and an index
-for the import's sake. `search_results` and `cart` also carry `obs_general_id` but are
-not imported: the import truncates them (§2.4, §3).
+**The import finds a bundle's rows through `obs_general` alone**, by its `bundle_id`
+key. `obs_pds` also stores `bundle_id`, because it is the public `bundleid` field (§2.2),
+and the import writes both from the same bundle; validation checks that they agree. Every
+other table the import writes per observation (the remaining children, the junction tables
+of §2.5, `obs_preview`, and the surface geometry table) reaches its bundle through
+`obs_general_id`, so the per-bundle delete, the incremental copy, and the seed of §3.1
+join each table to `obs_general`'s bundle key, and the duplicate OPUS id delete uses the
+`obs_general_id` it resolves. No table carries a 75-character column and an index for the
+import's sake. `search_results` and `cart` also carry `obs_general_id` but are not
+imported: the import truncates them (§2.4, §3).
 
 ### 2.2 The children
 
@@ -290,10 +291,12 @@ or `i`.
 
 ### 2.7 Schema version
 
-`schema_version(version INT UNSIGNED NOT NULL PRIMARY KEY)`, one row. It is written by an
-explicit final import step that writes only when the row is absent and refuses to
-overwrite a different value; scorched earth deletes it. The web application checks it at
-startup and serves 503 on a mismatch or a missing row; both deploy scripts check the
+`schema_version(version INT UNSIGNED NOT NULL PRIMARY KEY, state ENUM('ready',
+'appending') NOT NULL)`, one row. It is written, as `ready`, by an explicit final import
+step that writes only when the row is absent and refuses to overwrite a different value;
+scorched earth deletes it, and an append (§3) holds it at `appending` while it runs. The
+web application checks it at startup and serves 503 on a mismatch, a missing row, or a
+state other than `ready`; both deploy scripts check the
 served schema's row before running any import or migration step. A half-built schema
 therefore cannot be served or promoted, and new code cannot stamp an old schema.
 
@@ -379,8 +382,20 @@ response bodies, including the order of results sorted by a mult column.
 
 ## 3. How the schema is built
 
-The import writes a fresh schema **directly**, in an explicit direct mode, instead of
-writing an import-namespace copy and copying it:
+The import writes every table directly; there is no import namespace and no copy. What
+it does is chosen by the target schema's state, never by a command-line switch, and the
+import logs which it chose, for which schema and version:
+
+| Target schema | The import |
+|---|---|
+| No version row and no secondary indexes: empty, or a build still in progress | **builds**: steps 2 to 5 below |
+| A version row that matches the code, `ready` | **appends** (below) |
+| A version row that matches the code, `appending` | **resumes the append** |
+| A version row from another release | refuses, naming both versions |
+| No version row but secondary indexes: an interrupted finalization | refuses, naming scorched earth |
+
+A full import runs one invocation per bundle group, and every one after the first finds
+a build in progress and continues it.
 
 1. **Scorched earth** drops the `obs_` tables, the three mult tables, and `cart`, and
    deletes the `schema_version` row.
@@ -392,8 +407,10 @@ writing an import-namespace copy and copying it:
    would otherwise ignore duplicate keys silently). Each bundle is deleted from the
    permanent tables before it is written, so a rerun is clean, and an OPUS id already
    written by an earlier bundle is deleted and re-imported.
-3. **Aux tables** (`param_info`, `partables`, `table_names`) are regenerated, with the
-   surface geometry categories derived from the data; `user_searches` and
+3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the
+   surface geometry categories derived from the data, each into a shadow table that one
+   `RENAME TABLE` swaps in atomically, so no reader ever finds one missing or half
+   filled; `user_searches` and
    `search_results` are reset and the cache flush of §2.4 follows.
 4. **Finalization** builds, by sort: `FULLTEXT` keys first, each in its own statement
    (the first one rebuilds its table); then B-tree indexes concurrently across tables,
@@ -402,7 +419,8 @@ writing an import-namespace copy and copying it:
    and recomputes every rank (§2.8); then `ANALYZE` with histograms on the
    range-searched columns. The step is idempotent, comparing existing keys by kind and
    ordered columns.
-5. **The dictionary import, validation, and the version row.** Validation includes an
+5. **The dictionary import, validation, and the version row.** The dictionary's two
+   tables are swapped in the same way as the aux tables. Validation includes an
    orphan count per child, because finalization's foreign keys never validate existing
    rows.
 6. **Promotion**, for a full import and an incremental update alike: the web service
@@ -413,12 +431,15 @@ writing an import-namespace copy and copying it:
    it can run in either direction. If it fails, the web service is started again on the
    unchanged installation and the deploy exits non-zero; nothing has switched.
 
-Direct mode refuses to start on a schema that carries a version row or secondary indexes.
-The import-namespace path (an import namespace created without secondary indexes or
-foreign keys, a copy under `foreign_key_checks = 0`, indexes already present) stays for
-the test suites and for development; its closing `--cleanup-aux-tables` step resets
-`user_searches` and `search_results` and flushes the cache, as step 3 does. It is never
-run against a schema that is being served: it is not atomic, and §3.1 is how a served
+**Appending** adds or replaces bundles in a finalized schema that is not being served,
+the way a developer adds a bundle to a deployed database. The import first sets the
+version row's state to `appending`, so nothing serves or promotes the schema meanwhile.
+Each bundle is deleted and reloaded with the indexes and foreign keys in place; then every
+finalization step an append invalidates runs again (the mult step, the aux tables, the
+search-table reset with its cache flush, `ANALYZE`, and validation), and the state returns
+to `ready`. A failed append stays `appending`, and the next import resumes it; since each
+bundle is deleted before it is written, rerunning the same bundles is clean. An append is
+not atomic, so it is never run against a schema that is being served; §3.1 is how a served
 schema is updated.
 
 ### 3.1 Incremental update
@@ -427,17 +448,20 @@ An incremental update replaces a bundle with a new copy, adds a bundle, or drops
 browser sees nothing of it until it is finished, and then sees all of it at once. The
 update is built as a new schema and promoted whole, exactly as a full import is:
 
-1. **Clone.** Direct mode, given `--clone-from-schema <served>`, creates the tables as
-   step 2 does and copies the served schema's rows into them: `obs_general` with
-   `WHERE bundle_id NOT IN (<the bundles being replaced or dropped>)`, every other
+1. **Seed.** The import, given `--clone-from-schema <served>` on an empty target, creates
+   the tables as step 2 does and copies the served schema's rows into them, refusing when
+   the served schema's version differs from the code's: `obs_general` with `WHERE
+   bundle_id NOT IN (<the bundles being replaced, and those the existing
+   --delete-permanent-bundles names for dropping>)`, every other
    per-observation table with `WHERE obs_general_id NOT IN (SELECT id FROM
    <served>.obs_general WHERE bundle_id IN (<the same bundles>))`, and the three mult
    tables whole, over the sibling connections, one table
    per connection; values only the excluded bundles used are removed by finalization's
    mult step. Ids are preserved, so an unchanged observation keeps its
    `obs_general_id` and its mult ids. The served schema is only read.
-2. **Import.** The replaced and added bundles are imported in direct mode as in step 2;
-   their rows take ids above the copied maximum, new mult values append, and a new
+2. **Import.** The target has no version row yet, so the replaced and added bundles go
+   through the ordinary build of step 2, and finalization builds every index once, by
+   sort. Their rows take ids above the copied maximum, new mult values append, and a new
    surface geometry target is a row, not a table (§2.3).
 3. **Steps 3 to 5 as for a full import:** aux tables, finalization, dictionary,
    validation, and the version row. `cart`, `user_searches`, and `search_results` are
@@ -448,7 +472,7 @@ update is built as a new schema and promoted whole, exactly as a full import is:
    agree, and no table records what was dropped). `user_searches` and
    `search_results` start empty and refill on demand; the warm-up runs after the start.
 
-The same clone with a bundle excluded and nothing imported drops it. The cost is one copy
+The same seed with a bundle excluded and nothing imported drops it. The cost is one copy
 of the database per update, measured by the plan, and the disk for two schemas, which a
 full-import deploy needs already. The previous schema stays until the next update, so a
 rollback is step 6 run toward it: the carry-over brings back the sessions and carts as
@@ -456,12 +480,15 @@ they stand at that moment, and only a cart row for an observation the previous s
 lacks is lost.
 
 **Why not in place, and why not a table swap.** Writing into the served schema is not
-atomic: between the first bundle delete and the closing reset a request can build a
-search against a partial observation set and be served from it, and the workers'
-per-process caches go stale. A `RENAME TABLE` swap of staged copies inside the served
-schema is atomic for the names, but it needs the same full copy, still leaves the
-per-process caches stale until the restart the promotion does anyway, and leaves the old
-tables beside the new; it buys nothing over a new schema and a switch.
+atomic: between the first bundle delete and the closing reset a request can build a search
+against a partial observation set and be served from it, and the workers' per-process
+caches go stale. A `RENAME TABLE` swap of staged copies inside the served schema is atomic
+for the names, but it needs the same full copy, still leaves the per-process caches stale
+until the restart the promotion does anyway, and leaves the old tables beside the new; it
+buys nothing over a new schema and a switch. The aux and dictionary tables are different:
+they are small, rebuilt whole from the schema files, and read through per-process caches
+the restart refreshes, so the code-only deploy swaps them in place with one atomic `RENAME
+TABLE` rather than building a new schema for them.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the unique keys are how duplicates
