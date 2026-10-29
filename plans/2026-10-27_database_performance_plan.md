@@ -47,15 +47,16 @@ architecture Phases 0 to 6 produced.
   built once and indexed afterwards, behind a schema version guard (Phase 2).
 - DDL removed from the web request path, the child tables keyed on the join key, the
   default sort served by an index, one mult table with a computed display order and no
-  unused values, one surface geometry table, and the landing page warmed after every
-  deploy (Phase 3).
+  unused values, one surface geometry table, variable-width strings with ASCII
+  identifiers, and the landing page warmed after every deploy (Phase 3).
 - Indexes for the JSON list columns, re-sort without re-search, and indexed autocomplete,
   on MySQL (Phase 4).
 - Server configuration guidance measured against the working set (Phase 5).
 - Incremental updates (replace, add, or drop a bundle) built in a new schema and promoted
-  whole, with sessions and carts carried over (PR-21).
-- Two further options, a default-sort rank column and precomputed empty-search counts,
-  measured on full-scale data and implemented only if the numbers justify them (PR-22).
+  whole, with sessions and carts carried over (PR-22).
+- Three further options, a default-sort rank column, precomputed empty-search counts, and
+  a narrow facet table for mult counts, measured on full-scale data, reported, and
+  implemented only after the numbers are discussed (PR-23).
 - `db-perf` merged to `main` (Phase 6).
 - **Optionally, later:** a PostgreSQL backend for both halves at parity under the golden
   suites, a head-to-head measurement, and a recorded decision (Phase P).
@@ -74,18 +75,18 @@ architecture Phases 0 to 6 produced.
 | PostgreSQL | **Optional, last, and complete if done.** All PostgreSQL work is at the end and can be finished at a later time; when it is done it is a complete port, because a comparison built on the import alone or on hand-translated queries is meaningless without the production runtime (the SQL the Django views emit, the driver's parameter handling, the connection lifecycle, and the worker model). Phases 0 to 6 therefore change nothing about PostgreSQL, write no PostgreSQL code, and depend on nothing from Phase P; they keep the brand boundary (next row) so that Phase P has less to translate. |
 | Brand dispatch | SQL that differs by brand lives in exactly two places: `opus_import.importdb.<brand>` for the import and `opus_app.apps.tools.sql_builder` for the application, the latter dispatching on `connection.vendor`. Driver exceptions are classified in `opus_app.apps.tools.db_utils`, which is the only module that imports a driver's error types. Views and steps never test the brand or a driver error code themselves. A reviewer checks this with `grep -rn "connection\.vendor\|\.brand\b\|MySQLdb\|psycopg\|MYSQL_[A-Z_]*" src/opus_app/apps src/opus_import/steps --include=*.py`, which after Phase P should hit only those modules; today it hits the views' driver-code tests, which Phase P moves. Phases 0 to 6 add MySQL implementations behind these boundaries; where a PR knows what the PostgreSQL rendering will be, it says so in a one-line **PostgreSQL note** for Phase P and writes no code for it. |
 | Parallel import design | **Single writer, many computers.** Worker processes turn index rows into table rows and return them with chunk-relative ids; the parent process alone rebases ids, resolves mult values, writes to the database, and emits the log. This supersedes the analysis's items 1, 2, and 3 (per-bundle id blocks, a mult finalizer, per-worker namespaces): with one writer there is no shared counter to protect, and ids and logs stay identical to the serial run, so the golden suites keep comparing byte for byte. Running several `opus_import` processes against one schema at once remains unsupported, and `import_all` stays sequential; the parallelism is inside each invocation. |
-| Where indexes are built | Import-namespace tables carry no non-unique secondary index beyond `obs_general`'s `bundle_id` key (and, until PR-11, each child's `bundle_id` key and a plain key on each child's `opus_id`): nothing reads the others between creation and drop. On a fresh schema the permanent tables are written directly in an explicit **direct mode** (PR-08) and their non-unique secondary indexes and foreign keys are built once, by sort, in finalization. An incremental update is built the same way, in a new schema seeded from the served one and promoted whole (PR-21; `§D-3.1`); the import-namespace path (import namespace, copy, indexes already present) stays for the test suites and development and is never run against a served schema. |
+| Where indexes are built | Import-namespace tables carry no non-unique secondary index beyond `obs_general`'s `bundle_id` key (and, until PR-11, each child's `bundle_id` key and a plain key on each child's `opus_id`): nothing reads the others between creation and drop. On a fresh schema the permanent tables are written directly in an explicit **direct mode** (PR-08) and their non-unique secondary indexes and foreign keys are built once, by sort, in finalization. An incremental update is built the same way, in a new schema seeded from the served one and promoted whole (PR-22; `§D-3.1`); the import-namespace path (import namespace, copy, indexes already present) stays for the test suites and development and is never run against a served schema. |
 | Foreign keys | Child tables are created **without** foreign keys in both the import namespace and direct mode; finalization adds them, **serially and after every index build**, with `foreign_key_checks = 0` (which is what makes `ADD FOREIGN KEY` an in-place operation that does not re-check existing rows; each add takes an exclusive metadata lock on `obs_general`, so they never run concurrently with an `ALTER` on it). Because an unvalidated foreign key never catches orphans, `--validate-perm` gains an anti-join count per child. PostgreSQL note: `ADD CONSTRAINT ... NOT VALID` then `VALIDATE CONSTRAINT`. The permanent schema at the end of an import is unchanged. |
 | Unique checks | MySQL's `unique_checks=0` is **never** set: it lets InnoDB defer uniqueness, which is how the import catches duplicate OPUS ids. Primary and unique keys stay on every table during every load. |
 | Transactions in the import | Each bulk load is its own transaction, **chunked to about 100,000 rows** (a killed multi-gigabyte load rolls back slowly, and the server finishes the rollback after a restart). A one-commit-per-bundle design was considered and dropped. |
 | Golden suites | `import_tests` goldens and the `integration_tests` golden responses are the behavior-preservation gate. A PR that changes the schema regenerates the import goldens with `python -m import_tests.tools.make_mini_goldens` (`docs/dev_guide_import_fixture.rst`) and shows in its description that the diff is confined to the columns and tables it declared. The warning whitelist (`warning_whitelist.txt`, with `test_no_whitelist_entry_is_stale`) is part of the gate: a PR that removes a warning's cause removes its entry in the same PR. **API golden responses never change in this plan.** |
 | Surface geometry | One physical table, `obs_surface_geometry_target`, keyed `(target_name, obs_general_id)`, absorbs the per-target tables. The per-target **categories** (`obs_surface_geometry__<target>`), which the public API exposes in `api/categories` and in every `SURFACEGEO<target>_<field>` slug, and the selector category `obs_surface_geometry_name`, stay as **data** in `table_names`, `param_info`, and `partables`; the application resolves a category to the table plus an optional `target_name` filter through one function. A new target becomes a mult row and its category rows, written by the import; no table is created, no model is generated, nothing is redeployed (PR-14). |
-| Mult values | One `mult` table keyed `(field_id, id)` replaces the per-column `mult_` tables (PR-13). The display order is an integer rank that finalization recomputes for every field from typed values, so it never depends on import order; values no observation references are deleted in finalization except in fields whose schema lists the choices. **Search results sorted by a mult column sort by label text, and that never changes.** |
-| Deploy | A schema-changing PR is marked **requires full re-import** in §4 and bumps `SCHEMA_VERSION`. The deploy chain already builds a new installation and schema under `staged/` and switches a symlink, so a re-import is the normal deploy. PR-07's schema version guard makes **both** deploy scripts refuse, before any `opus_import` step runs, when the served schema's row is absent or differs from the release's constant; the row itself is written only by an explicit finalization step and never overwritten. An incremental update is a deploy of the same shape: `_run_incremental_update.sh` (PR-21) builds the new schema from the served one and `deploy_new_code_and_database.sh` promotes it. The deploy scripts run `sudo systemctl` and are the **operator's**; no PR runs them, and the rehearsal before the merge (PR-23) is the orchestrator's step on the Node. |
+| Mult values | One `mult` table keyed `(field_id, id)` replaces the per-column `mult_` tables (PR-13). The display order is an integer rank that finalization recomputes for every field from typed values, so it never depends on import order; values no observation references are deleted in finalization except in fields whose schema lists the choices. A value is renamed by a `mult_overrides` entry in its column's schema, applied without a re-import by the code-only deploy. **Search results sorted by a mult column sort by label text, and that never changes.** |
+| Deploy | A schema-changing PR is marked **requires full re-import** in §4 and bumps `SCHEMA_VERSION`. The deploy chain already builds a new installation and schema under `staged/` and switches a symlink, so a re-import is the normal deploy. PR-07's schema version guard makes **both** deploy scripts refuse, before any `opus_import` step runs, when the served schema's row is absent or differs from the release's constant; the row itself is written only by an explicit finalization step and never overwritten. An incremental update is a deploy of the same shape: `_run_incremental_update.sh` (PR-22) builds the new schema from the served one and `deploy_new_code_and_database.sh` promotes it. The deploy scripts run `sudo systemctl` and are the **operator's**; no PR runs them, and the rehearsal before the merge (PR-24) is the orchestrator's step on the Node. |
 | MySQL floor | Stays 8.0.19 (set by the `INSERT ... AS new` alias). `EXPLAIN ANALYZE` needs 8.0.18, the ngram parser 5.7; `innodb_ddl_threads` and `innodb_ddl_buffer_size` (8.0.27) and `innodb_redo_log_capacity` (8.0.30) are used when present, and the harness records the server version. #1503 asks `importdb` for a server-version gate against this floor. |
 | Index pruning | The analysis's item 10, second half (dropping single-column indexes production never uses) needs a month of production index-usage statistics. Phase 5 documents how to collect it; the pruning PR is **deferred** until the data exists and is not numbered here. `obs_files` is the exception: PR-11 prunes its unread indexes from a code audit. |
 | Configuration keys | Every new `[import]`, `[django]`, or `[database]` key is added in all of: `opus_config/config.py` (the dataclass and its reader; `_TableReader.finish` rejects unknown keys), `opus_config/opus.toml.template`, the ``[django]``, ``[import]``, and ``[database]`` key tables in `docs/user_guide_installation.rst` and the configuration-key table in `docs/dev_guide_import_running.rst`, `tests/opus_config`, `tests/fixtures/opus_ci.toml`, and `import_tests/tools/build_run.write_opus_config`, which gains an `extra_import: dict[str, object]` parameter so a test session can set a key. Any PR adding a key does all of them. |
-| Schema entries | Beside column entries, a table schema (a JSON list) may carry table-level entries: `{"constraint": "..."}` (exists; appended raw by `create_table`, in both namespaces, always, and never considered by `add_secondary_indexes`), and from this plan `{"primary_key": [cols]}` and `{"unique": [cols]}` (PR-10), `{"key": [cols]}` (PR-12), `{"fulltext": [cols]}` (PR-19), and `{"foreign_key": {"columns": [...], "references": ["table", ...]}}` (PR-11). Every reader that iterates a schema's columns skips entries without `field_name` as it already skips `constraint`; PR-04's create-time key filter and PR-08's `add_secondary_indexes` read the same entries, so the two can never disagree. The static schema validator #1487 asks for, if written, accepts these table-level entries. |
+| Schema entries | Beside column entries, a table schema (a JSON list) may carry table-level entries: `{"constraint": "..."}` (exists; appended raw by `create_table`, in both namespaces, always, and never considered by `add_secondary_indexes`), and from this plan `{"primary_key": [cols]}` and `{"unique": [cols]}` (PR-10), `{"key": [cols]}` (PR-12), `{"fulltext": [cols]}` (PR-20), and `{"foreign_key": {"columns": [...], "references": ["table", ...]}}` (PR-11). Every reader that iterates a schema's columns skips entries without `field_name` as it already skips `constraint`; PR-04's create-time key filter and PR-08's `add_secondary_indexes` read the same entries, so the two can never disagree. The static schema validator #1487 asks for, if written, accepts these table-level entries. |
 | Acceptance statistics | Medians and p95 only. Max is recorded, never judged. |
 
 ### Out of scope
@@ -200,7 +201,7 @@ with an exact `COUNT(*)` for the `mult_` tables, whose row count PR-13's id widt
 reads); index count per
 table (`information_schema.STATISTICS`); the average and total `JSON_STORAGE_SIZE` of
 `preview_images` and the ratio of its total to `obs_general`'s data length (the number
-PR-16's gate reads); the plan for every statement in `scenarios/queries.sql`, stored
+PR-17's gate reads); the plan for every statement in `scenarios/queries.sql`, stored
 whole: `EXPLAIN ANALYZE` and `EXPLAIN FORMAT=JSON`, with the executor-facing summary being
 the access type and actual rows per table, and for a write shape (`INSERT ... SELECT`,
 which `EXPLAIN ANALYZE` does not accept) the plan of its inner `SELECT`; and the
@@ -263,7 +264,7 @@ in these states:
 - **warm**: the same scenario run again.
 
 Db-cold is a pessimistic bound on what the first visitor after a deploy sees (a freshly
-finished import leaves its last-built indexes in the pool; PR-15 warms the landing path);
+finished import leaves its last-built indexes in the pool; PR-16 warms the landing path);
 app-cold and db-cold together are the bracket. The scenarios: the empty search (the
 landing page: default sort, no selections); a broad time-range search; a target search; a
 surface-geometry search for one target; the first, tenth, and last page of each; a re-sort
@@ -509,8 +510,8 @@ as `item n`, and to the design document as `§D-n`.
   - The gate path lists, the `benchmarks` extra, and `vulture_whitelist.py` per §2.1.
   - `queries.sql` captured per §2.2's `--dump-queries`.
 - **Measurement:** the baseline itself, both scales, three import runs and five web runs
-  per state, and the `preview_images` size and ratio (which decides PR-16; the number
-  goes in the Execution notes with the rule PR-16 states). The PR records which server
+  per state, and the `preview_images` size and ratio (which decides PR-17; the number
+  goes in the Execution notes with the rule PR-17 states). The PR records which server
   arrangement the full-scale machine allowed.
 - **Acceptance:** results committed as `before`; `compare.py` of two baseline sessions
   against each other shows every **median and p95** within its own spread, and that
@@ -788,7 +789,7 @@ as `item n`, and to the design document as `§D-n`.
   serially when told), which PR-08's finalization uses. `delete_bundle_from_obs_tables`
   keeps its order (children first, `obs_general` last) and stays serial. The copy is a
   no-op on every full import after PR-08 and matters for the import-namespace path only
-  (the test suites and development; PR-21 builds incremental updates in direct mode); the
+  (the test suites and development; PR-22 builds incremental updates in direct mode); the
   PR says so.
 - **Measurement:** the copy step's wall-clock on the incremental group of
   `import_full.toml` (§2.2). Target metric: copy step wall-clock on that group.
@@ -961,7 +962,7 @@ as `item n`, and to the design document as `§D-n`.
   keep the namespace path (the first imports the same bundle twice in one invocation, the
   second imports into a populated schema). An incremental `--do-all-import`
   without the flag keeps the namespace path with its indexes already present, for the
-  test suites; a production incremental update is PR-21's clone.
+  test suites; a production incremental update is PR-22's clone.
 - **Changes:** `cli.py`, `do_import.py`, `do_import_tables.py`, `do_validate.py`,
   `importdb` (`super.py`, `mysql.py`), `import_all.py`, `scripts/import/import_for_tests.sh`,
   `build_run`, the `do_import.py` docstring (a failed direct import leaves a partial
@@ -1098,7 +1099,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
     flushes the site's cache.
   - `get_result_count_helper` and **`api_string_search_choices`** read
     `user_searches.result_count` (the latter issues its own `count_rows` today; that call
-    goes, and PR-19 relies on it being gone). `create_table_from_select_sql` and
+    goes, and PR-20 relies on it being gone). `create_table_from_select_sql` and
     `CACHE_TABLE_COLUMN_DEFS` have no caller and go.
   - `dev_guide_database_schema.rst` and `dev_guide_webapp_search.rst` describe the table,
     the build, and the row lock.
@@ -1270,7 +1271,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
     1. In every field whose `pinned` is 0, delete the `mult` rows whose id no observation
        references: `SELECT DISTINCT <column>` over the column that holds the field (for
        `obs_surface_geometry_name.target_name`, `obs_surface_geometry_target.target_name`;
-       for the two `mult_list` columns, a `JSON_TABLE` over the list until PR-17 switches
+       for the two `mult_list` columns, a `JSON_TABLE` over the list until PR-18 switches
        it to the junction tables). A pinned field keeps every row, since its list is the
        intended set of choices. Groups left empty are deleted.
     2. Recompute `disp_rank` for every field, dense from 1, by sorting on a tuple: the
@@ -1280,8 +1281,23 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
        when it has a unit, otherwise `float`) when every ordinary value of the field parses,
        otherwise the case-folded label; then the label; then the stored value.
     3. Recompute `group_rank` the same way from the group pin and the case-folded group name.
-    `--update-mult-info` writes the pinned presentation and then recomputes the ranks of the
-    fields it touched.
+    `--update-mult-info` writes the pinned presentation and the overrides below, then
+    recomputes the ranks of the fields it touched.
+  - **Renaming without a re-import.** A column's schema entry may carry `mult_overrides`,
+    a list of objects `{"value": ..., "label": ..., "display": ..., "grouping": ...,
+    "pin": ...}` in which only `value` is required. Finalization applies them after
+    the import's rows and before the ranks, so an override always wins over a stored
+    or computed label; a value the field does not hold is reported and skipped. The
+    conflict warning above names `mult_overrides` as the remedy. `do_update_mult_info`
+    applies `mult_options` and `mult_overrides` alike, and `deploy_new_code_only.sh`
+    adds `--update-mult-info` to its `opus_import` line, so a rename is a release that
+    edits a schema file followed by a code-only deploy: the rows change in place in the
+    served schema, as the aux tables already do, and `_promote.sh`'s restarts of the
+    cache service and the web service make it visible. Ids never change, so no
+    observation row is touched. `docs/user_guide_deployment.rst` documents the
+    procedure. An `import_tests` case renames one value on a built schema through
+    `--update-mult-info` and asserts the new label, the unchanged id, and the
+    recomputed rank.
   - **Application.** One `Mult` model, with `MultField` and `MultGroup`, using Django's
     `CompositePrimaryKey`, replaces the ninety classes (`create_opus_models.sh`
     regenerates them; the composite-key handling is PR-14's). PR-03's caches key on
@@ -1517,7 +1533,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   subprocess** with the run's `OPUS_CONFIG` (pytest-django configures Django once per
   session from the session's own configuration, so an in-process client cannot point at
   the run's schema): `opus_manage shell -c` driving the test client with
-  the same `HTTP_HOST` rule as PR-15 to request `api/categories` for one of the
+  the same `HTTP_HOST` rule as PR-16 to request `api/categories` for one of the
   overlay's observations and a `SURFACEGEO<target>_planetographiclatitude1` search,
   asserting both succeed with no code regeneration.
 - **Measurement:** table count, `models.py` line count, import DDL count (from the SQL
@@ -1540,7 +1556,59 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 - **Requires full re-import:** yes.
 - **Scale:** full scale.
 
-**PR-15: feat: warm the landing page and its fan-out after a deploy** (item 17; `§C-4.2`; `§D-4`)
+**PR-15: refactor: column types: variable-width strings, ASCII identifiers, no unread columns** (item 22; `§C-2.7`; `§D-2.9`)
+
+- **The problem, as the code has it.** The observation schemas declare their strings as
+  fixed-width `CHAR` (`grep -ho '"field_type": "char[0-9]*"' src/opus_import/table_schemas/obs_*.json | sort | uniq -c`
+  lists the widths), and under `utf8mb4` InnoDB pads every `CHAR` value to its declared
+  width. No table or column declares a character set or collation (`create_table` sets
+  only `ENGINE=`), so every string is `utf8mb4_0900_ai_ci`, whose comparisons use
+  Unicode collation weights and whose filesort keys MySQL sizes at four bytes per
+  character; the default sort's `opus_id` tiebreak and every identifier join pay both.
+  Every observation table and several support tables carry a `timestamp` column with `ON
+  UPDATE CURRENT_TIMESTAMP` that nothing reads. `cart.session_id` is `char80` for
+  Django's 32-character session keys, and `cart`'s foreign key onto `obs_general`
+  restricts deletes, which is what makes an in-place bundle delete fail while a cart
+  names one of its observations.
+- **Changes:**
+  - **Strings.** A `varcharN` field type (the OPUS-to-MySQL type map and `table_info`
+    gain it) replaces every `charN` in the observation, template, and support schemas,
+    keeping `N`.
+  - **ASCII identifiers.** A column key `"field_charset": "ascii"` renders `CHARACTER SET
+    ascii COLLATE ascii_general_ci`, which is case-insensitive like today's collation. It
+    is set on `opus_id`, `bundle_id`, and `instrument_id` wherever they remain, and on
+    every column whose `pi_form_type` is `STRING` and whose full-scale values are all
+    ASCII (`SELECT COUNT(*) FROM <t> WHERE <col> <> CONVERT(<col> USING ascii)` is 0 on
+    the harness's full-scale schema); the PR lists the set with the query results.
+    `mult.value` and `mult.label`, the dictionary, and free text keep `utf8mb4`. A
+    non-ASCII value bound for an ASCII column fails the load through PR-04's warning
+    check, naming the column and the row, and a test plants one.
+  - **Ordering.** Case never matters, before or after. Rows that tie on every sort key have
+    no defined order, so their order may change. A sort on an identifier column may order
+    punctuation differently (`_` sorts after letters in ASCII and before them under the
+    current collation). The executor lists every API golden whose order changes, with the
+    reason, in one batch, and the orchestrator rules once.
+  - **Unread columns.** `timestamp` goes from every observation table, the template, and
+    each support table for which `grep -rn "timestamp" src/opus_app src/opus_import --include=*.py`
+    finds no reader; the PR lists each table and the evidence.
+  - **`cart`.** `session_id` becomes `VARCHAR(40)` with the ASCII character set, and the
+    foreign key onto `obs_general` becomes `ON DELETE CASCADE`, so an in-place bundle
+    delete on the import-namespace path removes the cart rows it orphans instead of
+    failing. Promotion's carry-over (PR-22) is unaffected.
+  - The generated models are regenerated; `docs/dev_guide_database_schema.rst` describes
+    the types and the character-set rule.
+- **Measurement:** data and index bytes per table before and after; the db-cold build of
+  the broad default-sort search with its `Sort_merge_passes` and
+  `Created_tmp_disk_tables` counters; the warm results page. Target metric: db-cold build
+  of the broad default-sort search.
+- **Acceptance:** §2.5, with the API-golden ruling above; a test asserts that an `opus_id`
+  lookup in mixed case still matches.
+- **Requires full re-import:** yes.
+- **Scale:** full scale.
+- **PostgreSQL note:** `VARCHAR` with the database's `C` or ICU case-insensitive
+  collation per column; `CHARACTER SET` has no column-level equivalent.
+
+**PR-16: feat: warm the landing page and its fan-out after a deploy** (item 17; `§C-4.2`; `§D-4`)
 
 - **Design.** The empty search with the default sort is the search every visitor issues,
   and its mult counts and range endpoints are one cold fan-out per deploy; after PR-10 the
@@ -1577,7 +1645,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   issues the expected requests through the test client and refuses under locmem.
 - **Scale:** full scale.
 
-**PR-16: refactor: move preview_images out of obs_general** (item 12; `§C-2.5`; `§D-2.1`)
+**PR-17: refactor: move preview_images out of obs_general** (item 12; `§C-2.5`; `§D-2.1`)
 
 - **Gate:** executed only if PR-00's full-scale `bench_db` recorded `preview_images`'s
   total `JSON_STORAGE_SIZE` as more than one quarter of `obs_general`'s data length. If
@@ -1590,7 +1658,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   --include=*.py` finds) join it; the import writes it as one more child table through the
   existing per-table path.
 - **Measurement:** `obs_general` data length; app-cold latency of every scenario that
-  scans `obs_general` (the target search before PR-17, the mult counts, the
+  scans `obs_general` (the target search before PR-18, the mult counts, the
   triggered-tables `DISTINCT`). Target metric: app-cold target-search latency.
 - **Acceptance:** §2.5.
 - **Requires full re-import:** yes.
@@ -1598,7 +1666,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 
 ### Phase 4: indexes for the list columns, re-sort, autocomplete
 
-**PR-17: feat: a junction table for the mult_list columns** (item 9; `§C-2.4`; `§D-2.5`)
+**PR-18: feat: a junction table for the mult_list columns** (item 9; `§C-2.4`; `§D-2.5`)
 
 - **Changes:** `sql_builder.list_contains_any(column, values)` replaces the
   `JSON_CONTAINS ... OR ...` chain in `construct_query_string` (one call for a
@@ -1627,9 +1695,9 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 - **Requires full re-import:** yes.
 - **Scale:** full scale.
 
-**PR-18: feat: separate the result set from its order** (item 14; `§C-4.1`; `§D-2.4`)
+**PR-19: feat: separate the result set from its order** (item 14; `§C-4.1`; `§D-2.4`)
 
-- **Gate:** opened only if PR-17's full-scale results still show the re-sort scenario
+- **Gate:** opened only if PR-18's full-scale results still show the re-sort scenario
   slower than the warm first page by more than the noise floor. The number decides.
 - **Changes:** `set_user_search_number` also hashes the selections, qtypes, and units
   alone into a **set** hash; `user_searches` gains `set_hash BINARY(32)` with a key,
@@ -1644,7 +1712,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 - **Requires full re-import:** yes.
 - **Scale:** full scale.
 
-**PR-19: feat: indexed autocomplete** (item 18; `§C-4.3`; `§D-2.6`; #1301)
+**PR-20: feat: indexed autocomplete** (item 18; `§C-4.3`; `§D-2.6`; #1301)
 
 - **Issues:** #1301 reports autocomplete going silent once the typed OPUS id passes a
   certain length; the acceptance repeats its steps against the full-scale schema and
@@ -1681,7 +1749,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 
 ### Phase 5: the server, the deploy, and two measured options
 
-**PR-20: docs: size the import and web servers from the measurements** (items 19 and 10, second half; `§C-2.2`; `§C-5`)
+**PR-21: docs: size the import and web servers from the measurements** (items 19 and 10, second half; `§C-2.2`; `§C-5`)
 
 - **Changes:** `docs/user_guide_*` gains a section that derives the buffer pool size from
   the schema total the harness records (the docs say how to read the number, not what it
@@ -1702,7 +1770,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   statistics statements. It is last before the merge so that it describes the schema the
   earlier phases produced.
 
-**PR-21: feat: incremental update built in a new schema and promoted whole** (`§D-3.1`)
+**PR-22: feat: incremental update built in a new schema and promoted whole** (`§D-3.1`)
 
 - **The problem, as the code has it.** An incremental import runs against the schema
   being served: `import_all` writes the bundles into the import namespace, then for each
@@ -1788,15 +1856,18 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
 - **PostgreSQL note:** cross-schema `INSERT ... SELECT` is the same statement with
   schema-qualified names; `search_path` is not involved.
 
-**PR-22: perf (gated): a default-sort rank column and precomputed empty-search counts** (item 17; `§C-4.1`; `§D-2.4`; `§D-2.8`)
+**PR-23: perf (gated): three options measured on real data, then discussed** (item 17; `§C-4.1`; `§D-2.4`; `§D-2.8`)
 
-- **Gate, decided per option on real data.** After every PR above has merged, the executor
-  prototypes each option on a scratch copy of the full-scale schema the harness builds from
-  the production holdings, with no application change merged, and records the numbers in
-  the Execution notes. An option is implemented only if its target metric's median
-  improves by more than twice the recorded noise floor and by at least 25 percent;
-  otherwise the orchestrator records "not implemented" with the number, and the option
-  stays out. If neither option passes, no PR is opened.
+- **Gate: measure, report, discuss, then decide.** After every PR above has merged, the
+  executor prototypes each option on a scratch copy of the full-scale schema the harness
+  builds from the production holdings, with no application change merged. It opens the
+  PR with a report only: per option, the target metric and the guarded metrics before
+  and after, against the recorded noise floor, with the prototype's cost in bytes, in
+  import time, and in code. Nothing is implemented until the discussion on the PR
+  decides which options go in; the orchestrator records the decision and its reason
+  for each option in the Execution notes, and the executor then implements exactly
+  the chosen ones on the same branch. If none is chosen, the PR closes with the report
+  committed under `benchmarks/results/`.
 - **Option 1: a default-sort rank on `obs_general`.** Prototype: `ALTER TABLE obs_general
   ADD COLUMN default_rank INT UNSIGNED, ADD KEY (default_rank)`, filled from
   `ROW_NUMBER() OVER (ORDER BY time1, opus_id)`. Measured against the unmodified schema:
@@ -1810,7 +1881,7 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   application branches on the empty search. `SCHEMA_VERSION` bumps.
 - **Option 2: precomputed empty-search mult counts.** Prototype: `mult_count_empty(field_id
   SMALLINT UNSIGNED, mult_id SMALLINT UNSIGNED, count INT UNSIGNED, PRIMARY KEY (field_id,
-  mult_id))`, filled once. Measured against PR-15's warm-up alone, both right after the
+  mult_id))`, filled once. Measured against PR-16's warm-up alone, both right after the
   warm-up and right after a cache flush: the db-cold and app-cold mult counts of the empty
   search for the default widgets and for one widget outside them. Target metric: app-cold
   empty-search mult count after a cache flush. If implemented: the table is created by a
@@ -1819,21 +1890,31 @@ with `scripts/models/create_opus_models.sh`, regenerates the import goldens with
   `api_get_mult_counts`'s own counting function with the empty selections; and the
   endpoint reads it for an empty search, counting as before when the field has no rows.
   `SCHEMA_VERSION` bumps.
+- **Option 3: a narrow facet table for mult counts.** Prototype: `obs_facet(obs_general_id
+  INT UNSIGNED PRIMARY KEY, <one SMALLINT column per mult_idx, flag_yesno, and flag_onoff
+  column, named by qualified name>)`, filled by one `INSERT ... SELECT` joining the hub
+  and the children. Measured against PR-13's schema: the app-cold mult counts of a broad
+  constrained search and of a selective one, for the default widgets and for a widget on
+  a child table, each counting from `obs_facet` joined to `search_results` instead of
+  from the child tables. Target metric: app-cold mult count of the broad constrained
+  search. If implemented: finalization writes the table after the mult step, the
+  counting function reads it for the columns it holds, and the list columns keep their
+  junction tables. `SCHEMA_VERSION` bumps.
 - **Changes, if implemented:** the schema file changes above, the finalization step or the
-  warm-up addition, the endpoint changes, `dev_guide_webapp_search.rst`, and PR-20's sizing
+  warm-up addition, the endpoint changes, `dev_guide_webapp_search.rst`, and PR-21's sizing
   numbers re-measured.
 - **Measurement:** the prototype numbers above, then the same scenarios on the implemented
   branch.
 - **Acceptance:** §2.5; API goldens unchanged.
-- **Requires full re-import:** yes, for either option.
+- **Requires full re-import:** yes, for any option.
 - **Scale:** full scale.
 
 ### Phase 6: merge
 
-**PR-23: Merge `db-perf` into `main`**
+**PR-24: Merge `db-perf` into `main`**
 
 - **Preconditions:** every PR above merged into `db-perf` or recorded as not executed
-  (PR-16, PR-18, and PR-22 are gated); a full integration run green on `db-perf`'s head;
+  (PR-17, PR-19, and PR-23 are gated); a full integration run green on `db-perf`'s head;
   `scripts/run-all-checks.sh` clean; and **the orchestrator's deploy rehearsal on the
   Node** with `deploy_new_code_and_database.sh` into a staged installation (the deploy
   scripts run `sudo`; this step is not the executor's), including the `warm_search` step,
@@ -1969,7 +2050,7 @@ MySQL suites unchanged as its regression check.
 - **Scale:** full scale.
 
 **PR-P5: Merge `db-postgresql` into `main`**, with the Phase 4 PostgreSQL items if the
-decision kept the brand, under the same preconditions as PR-23 (the deploy rehearsal being
+decision kept the brand, under the same preconditions as PR-24 (the deploy rehearsal being
 the orchestrator's).
 
 ---
@@ -1990,16 +2071,17 @@ the orchestrator's).
 | PR-12 | PR-11 | composite indexes are declared on the rekeyed schemas |
 | PR-13 | PR-00's number, PR-03, PR-08, PR-10 | the id width reads the row counts; the label caches are rewritten; the cleanup and ranks run in finalization; the table-level key forms |
 | PR-14 | PR-11, PR-12, PR-13 | the one table drops `opus_id` and `instrument_id` by PR-11's rule and declares its keys in PR-12's form |
-| PR-15 | PR-10 | warms a `search_results` search |
-| PR-16 | PR-00's number, PR-11 | gated on the measured ratio; a child table on the rekeyed pattern |
-| PR-17 | PR-05, PR-10, PR-13 | the parent emits junction rows from resolved ids; the mult count joins `search_results` |
-| PR-18 | PR-17's measurement | gated on the re-sort number |
-| PR-19 | PR-08, PR-10, PR-12 | `FULLTEXT` built in finalization; the `COUNT(*)` already gone; the table-level key form |
-| PR-20 | every PR above | describes the final schema |
-| PR-21 | PR-06, PR-08, PR-10, PR-13, PR-14, PR-15 | copies over sibling connections into direct mode's unindexed tables; needs the version row and the search-table reset; a new target is a row; the warm-up follows the switch |
-| PR-22 | every PR above | measured on the finished schema; option 2 extends PR-15's warm-up |
-| PR-23 | PR-20, PR-21, PR-22 | the merge |
-| PR-P1 | PR-23 | the port is of the merged tree |
+| PR-15 | PR-04, PR-11, PR-14 | the load's warning check rejects non-ASCII values; the columns are the rekeyed and merged tables' |
+| PR-16 | PR-10 | warms a `search_results` search |
+| PR-17 | PR-00's number, PR-11 | gated on the measured ratio; a child table on the rekeyed pattern |
+| PR-18 | PR-05, PR-10, PR-13 | the parent emits junction rows from resolved ids; the mult count joins `search_results` |
+| PR-19 | PR-18's measurement | gated on the re-sort number |
+| PR-20 | PR-08, PR-10, PR-12 | `FULLTEXT` built in finalization; the `COUNT(*)` already gone; the table-level key form |
+| PR-21 | every PR above | describes the final schema |
+| PR-22 | PR-06, PR-08, PR-10, PR-13, PR-14, PR-16 | copies over sibling connections into direct mode's unindexed tables; needs the version row and the search-table reset; a new target is a row; the warm-up follows the switch |
+| PR-23 | every PR above | measured on the finished schema; option 2 extends PR-16's warm-up; option 3 reads PR-13's ids |
+| PR-24 | PR-21, PR-22, PR-23 | the merge |
+| PR-P1 | PR-24 | the port is of the merged tree |
 | PR-P2 to PR-P5 | the previous | in order |
 
 ---
@@ -2012,7 +2094,7 @@ the orchestrator's).
 - **The computed display rank reorders a widget or an `api/mults` response.** That is
   the intent where today's key is wrong; PR-13 lists every changed golden with its
   reason, and the results order on a mult column is pinned unchanged.
-- **The clone copies the whole database on every incremental update.** PR-21 measures
+- **The clone copies the whole database on every incremental update.** PR-22 measures
   it against today's incremental copy on the same group; the copy runs over sibling
   connections and the indexes are built once afterward (PR-06, PR-08). If the clone
   dominates at full scale the number is reported and the update is still correct; no
@@ -2041,7 +2123,7 @@ the orchestrator's).
 - **Two workers build the same search.** The `FOR UPDATE` read on the search's own row
   serializes them inside the transaction, and a dead connection releases it by rollback.
   Several users requesting the same new broad search park their request slots for the
-  whole build; the concurrency scenario's shared half measures it, and PR-15's warm-up
+  whole build; the concurrency scenario's shared half measures it, and PR-16's warm-up
   removes the commonest case.
 - **PR-12 regresses a selective default-sort search.** The harness has the shape; the PR
   reports it; the orchestrator decides between a hint and dropping the index.
@@ -2067,18 +2149,18 @@ the orchestrator's).
 ## 7. Deferred and dropped
 
 - **Index pruning** (item 10, second half), except `obs_files` (PR-11): deferred until a
-  month of production index-usage data exists; PR-20 documents the collection.
+  month of production index-usage data exists; PR-21 documents the collection.
 - **Several `opus_import` processes against one schema** (items 1 to 3 as the analysis
   wrote them): superseded by the single-writer design (§1).
 - **The multi-valued JSON index** (item 9 as the analysis wrote it): the junction table
-  serves both the search and the count (PR-17).
+  serves both the search and the count (PR-18).
 - **Partitioning `search_results` or the surface geometry table** (item 11 as the analysis
   wrote it): not done (PR-10, PR-14); the reasons are in those PRs and in `§D-2.3` and
   `§D-2.4`.
 - **Prebuilding the empty search inside the import** (item 17 as the analysis wrote
-  it): replaced by PR-15's application-side warm-up; the import cannot compute the
+  it): replaced by PR-16's application-side warm-up; the import cannot compute the
   application's search hash without duplicating it. A precomputed empty-search counts
-  table, filled application-side, is PR-22's second option.
+  table, filled application-side, is PR-23's second option.
 - **Dynamic Django models for the per-target tables**: the fallback for PR-14, not the
   destination.
 - **A one-commit-per-bundle import transaction**: dropped (§1, Transactions).

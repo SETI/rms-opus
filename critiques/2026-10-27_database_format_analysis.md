@@ -249,7 +249,23 @@ tooling refuse to run (the models script checks for exactly this).
 
 See §4.1 for the replacement; it is the single most valuable web-side change.
 
-### 2.7 Things that are right and should stay
+### 2.7 Column types carry padding, unread columns, and a heavyweight collation
+
+- **Strings are fixed-width `CHAR`.** The observation schemas declare 24 `char50`, 23
+  `char75`, and 12 `char60` columns among others (`grep -ho '"field_type": "char[0-9]*"'
+  src/opus_import/table_schemas/obs_*.json | sort | uniq -c`), and under `utf8mb4` InnoDB
+  pads every `CHAR` value to its declared width.
+- **No character set or collation is declared** (`create_table` sets only `ENGINE=`), so
+  every string, identifiers included, uses the server default `utf8mb4_0900_ai_ci`. Its
+  comparisons use Unicode collation weights, and MySQL sizes its filesort keys at four
+  bytes per character, so the default sort's `opus_id` tiebreak carries a 200-byte key.
+- **A `timestamp` column with `ON UPDATE CURRENT_TIMESTAMP` sits in all 23 observation
+  schemas** and several support tables, and nothing reads it.
+- **`cart.session_id` is `char80`** for Django's 32-character session keys, and the cart's
+  foreign key onto `obs_general` restricts deletes, so an in-place bundle delete fails
+  while any cart names one of its observations.
+
+### 2.8 Things that are right and should stay
 
 - Storing a longitude's midpoint and half-span alongside its endpoints, so the wrap
   search is two comparisons. Give the pair a composite index.
@@ -527,9 +543,18 @@ heading; several of the import entries also appear on the wishlist recorded in #
     a group table, compute an integer display rank per field at the end of every import
     from typed values, delete values nothing references except where the schema lists
     the choices, and narrow the ids if the largest field allows. Results sorted by a
-    mult column keep sorting by label text. **Payoff:** a widget order that does not
+    mult column keep sorting by label text. A schema entry renames a value without a
+    re-import. **Payoff:** a widget order that does not
     depend on import order, a search form that offers only values with results, and
     ninety fewer models.
+
+### Columns
+
+22. **Variable-width strings, ASCII identifiers, no unread columns** (§2.7). `VARCHAR`
+    for every string; `ascii_general_ci` for identifier columns whose values are ASCII,
+    keeping lookups case-insensitive; drop the unread timestamps; size `cart.session_id`
+    to the session key and cascade its foreign key. **Payoff:** smaller rows and indexes,
+    and cheaper sorts and joins on identifiers.
 
 ## 6. What to measure first
 

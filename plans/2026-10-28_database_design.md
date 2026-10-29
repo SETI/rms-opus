@@ -340,16 +340,37 @@ mult(field_id  SMALLINT UNSIGNED NOT NULL,
   search form therefore offers only values that return results.
 - A value keeps the label, display flag, and grouping it was first stored with; an import
   that computes different ones logs a warning naming both.
+- **Renaming a value needs no re-import.** A column's schema entry may list
+  `mult_overrides`, each naming a value and any of its label, display flag, grouping,
+  and pin. Overrides win over stored and computed labels; finalization applies them in
+  every import, and the code-only deploy applies them to the served schema in place,
+  then restarts the cache and the workers. Ids never change, so no observation row is
+  touched.
 - **Search results sorted by a mult column are ordered by label text**, not by
   `disp_rank`. That is the public API's ordering and stays as it is.
 - The `aliases` and `timestamp` columns of today's tables are not carried: nothing reads
   them.
 
-A table of precomputed counts for the empty search, `mult_count_empty(field_id, mult_id,
-count)`, is evaluated on full-scale data at the end of the plan and is added only if it
-measures a clear gain over the post-deploy warm-up.
+Two tables are evaluated on full-scale data at the end of the plan, and are added only
+if the measurements, once discussed, justify them: `mult_count_empty(field_id, mult_id,
+count)`, the counts for the empty search; and `obs_facet`, one narrow row per
+observation holding every mult id, which a count over a large result set would scan
+instead of the child tables.
 
-### 2.9 What does not change
+### 2.9 Column types
+
+- **Strings are `VARCHAR`**, never padded `CHAR`.
+- **Identifier columns are ASCII with a case-insensitive collation**
+  (`ascii_general_ci`): `opus_id`, `bundle_id`, `instrument_id`, and the string-search
+  columns whose values are all ASCII. Comparisons are cheaper and sort keys a quarter
+  the size of `utf8mb4`'s. Case never matters in a lookup; rows that tie on every sort
+  key have no defined order. Labels, mult values, the dictionary, and free text stay
+  `utf8mb4`.
+- **No row timestamps.** Nothing reads them.
+- **`cart.session_id` fits Django's session key**, and the cart's foreign key cascades
+  a deleted observation's rows away.
+
+### 2.10 What does not change
 
 `cart`, `partables`, `param_info` (its shape), the dictionary tables, and the public API's
 response bodies, including the order of results sorted by a mult column.
