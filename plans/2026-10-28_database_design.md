@@ -394,7 +394,9 @@ instead of the child tables.
 ### 2.9 Column types
 
 - **Strings are `VARCHAR`**, never padded `CHAR`.
-- **Identifier columns are ASCII with a case-insensitive collation** (`ascii_general_ci`):
+- **Identifier columns are ASCII with a case-insensitive collation** (`ascii_general_ci`,
+  not a binary one: the `opusid` search field and the metadata URL take ids people type, and
+  case must never matter there):
   every `opus_id` and `bundle_id` column, in `cart` and `obs_files` as in the observation
   tables, `obs_files.instrument_id` (the only string `instrument_id`), and the
   string-search columns whose values are all ASCII, so a join between two of them compares
@@ -470,19 +472,22 @@ is an explicit step that the sequences run once at the end.
    the web service is started again on the unchanged installation and the deploy exits
    non-zero; nothing has switched.
 
-**Appending** adds or replaces bundles in a finalized schema that is not being served,
-the way a developer adds a bundle to a deployed database. The import first sets the
-version row's state to `appending` and records the bundles in `appending_bundles` and the
-time in `started_at`; new worker processes refuse the schema and the deploy scripts refuse
-to promote it, while workers already running are not stopped, which is why an append is
-only for a schema that is not being served. Each bundle is deleted and reloaded with the
-indexes and foreign keys in place; then every finalization step an append invalidates runs
-again (the mult step, the aux tables, the search-table reset with its cache flush,
-`ANALYZE`, and validation), and the state returns to `ready`. A failed append stays
-`appending`; the next import resumes the recorded bundles plus any it names, and since
-each bundle is deleted before it is written, the rerun is clean. An append is not atomic,
-so it is never run against a schema that is being served; §3.1 is how a served schema is
-updated.
+**Appending** adds or replaces bundles in a finalized schema that is not being served, the
+way a developer adds a bundle to a deployed database. It exists because the configuration
+names one schema: seeding a new schema for every iteration would mean editing the
+configuration each time, so the append keeps the schema name fixed and changes the rows in
+place. The import first sets the version row's state to `appending` and records the
+bundles in `appending_bundles` and the time in `started_at`; new worker processes refuse
+the schema and the deploy scripts refuse to promote it, while workers already running are
+not stopped, because the version check runs once per worker at startup and nowhere else,
+which is why an append is only for a schema that is not being served. Each bundle is
+deleted and reloaded with the indexes and foreign keys in place; then every finalization
+step an append invalidates runs again (the mult step, the aux tables, the search-table
+reset with its cache flush, `ANALYZE`, and validation), and the state returns to `ready`.
+A failed append stays `appending`; the next import resumes the recorded bundles plus any
+it names, and since each bundle is deleted before it is written, the rerun is clean. An
+append is not atomic, so it is never run against a schema that is being served; §3.1 is
+how a served schema is updated.
 
 ### 3.1 Incremental update
 
@@ -501,10 +506,14 @@ update is built as a new schema and promoted whole, exactly as a full import is:
    rows are not locked; values only the excluded bundles used are removed by
    finalization's mult step. Ids are preserved, so an unchanged observation keeps its
    `obs_general_id` and its mult ids. The served schema is only read.
-2. **Import.** The target has no version row yet, so the replaced and added bundles go
-   through the ordinary build of step 2, and finalization builds every index once, by
-   sort. Their rows take ids above the copied maximum, new mult values append, and a new
-   surface geometry target is a row, not a table (§2.3).
+2. **Import.** How the seeded tables are keyed depends on how much changes: when the
+   replaced bundles hold more `obs_general` rows than a measured fraction of the schema,
+   the seed creates bare tables and finalization builds every index once, by sort; below
+   it, the seed copies each table with its indexes in place and the bundles load with the
+   indexes up, so a small update rebuilds nothing. The target has no version row yet
+   either way, so the bundles go through the ordinary build of step 2. Their rows take ids
+   above the copied maximum, new mult values append, and a new surface geometry target is
+   a row, not a table (§2.3).
 3. **Steps 3 to 5 as for a full import:** aux tables, finalization, dictionary,
    validation, and the version row. `cart`, `user_searches`, and `search_results` are
    created empty.
