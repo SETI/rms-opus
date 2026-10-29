@@ -91,7 +91,7 @@ architecture Phases 0 to 6 produced.
 | MySQL floor | Stays 8.0.19 (set by the `INSERT ... AS new` alias). `EXPLAIN ANALYZE` needs 8.0.18, the ngram parser 5.7; `innodb_ddl_threads` and `innodb_ddl_buffer_size` (8.0.27) and `innodb_redo_log_capacity` (8.0.30) are used when present, and the harness records the server version. #1503 asks `importdb` for a server-version gate against this floor. |
 | Index pruning | The analysis's item 10, second half (dropping single-column indexes production never uses) needs a month of production index-usage statistics. Phase 5 documents how to collect it; the pruning PR is **deferred** until the data exists and is not numbered here. `obs_files` is the exception: PR-12 prunes its unread indexes from a code audit. |
 | Configuration keys | Every new `[import]`, `[django]`, or `[database]` key is added in all of: `opus_config/config.py` (the dataclass and its reader; `_TableReader.finish` rejects unknown keys), `opus_config/opus.toml.template`, the ``[django]``, ``[import]``, and ``[database]`` key tables in `docs/user_guide_installation.rst` and the configuration-key table in `docs/dev_guide_import_running.rst`, `tests/opus_config`, `tests/fixtures/opus_ci.toml`, and `import_tests/tools/build_run.write_opus_config`, which gains an `extra_import: dict[str, object]` parameter so a test session can set a key. Any PR adding a key does all of them. |
-| Schema entries | Beside column entries, a table schema (a JSON list) may carry table-level entries: `{"constraint": "..."}` (exists; appended raw by `create_table`, always, and never considered by `add_secondary_indexes`), and from this plan `{"primary_key": [cols]}` and `{"unique": [cols]}` (PR-11), `{"key": [cols]}` (PR-13), `{"fulltext": [cols]}` (PR-21), and `{"foreign_key": {"columns": [...], "references": ["table", ...]}}` (PR-12). Every reader that iterates a schema's columns skips entries without `field_name` as it already skips `constraint`; PR-07's create-time key filter and its `add_secondary_indexes` read the same entries, so the two can never disagree. The static schema validator #1487 asks for, if written, accepts these table-level entries. |
+| Schema entries | Beside column entries, a table schema (a JSON list) may carry table-level entries: `{"constraint": "..."}` (exists; appended raw by `create_table`, always, and never considered by `add_secondary_indexes`), and from this plan `{"primary_key": [cols]}` (PR-11), `{"unique": [cols]}` (PR-14), `{"key": [cols]}` (PR-13), `{"fulltext": [cols]}` (PR-21), and `{"foreign_key": {"columns": [...], "references": ["table", ...]}}` (PR-12). Every reader that iterates a schema's columns skips entries without `field_name` as it already skips `constraint`; PR-07's create-time key filter and its `add_secondary_indexes` read the same entries, so the two can never disagree. The static schema validator #1487 asks for, if written, accepts these table-level entries. |
 | Acceptance statistics | Medians and p95 only. Max is recorded, never judged. |
 
 ### Out of scope
@@ -1083,8 +1083,9 @@ bump nor the re-import (§1, Deploy).
 
 **PR-11: feat: one search_results table replaces the per-search cache tables** (item 13, the `search_results` half; `§C-4.1`; `§C-2.6`; `§D-2.4`; closes #350, #665, #1500)
 
-- **Issues:** #350 asks for a cleanup of old cache tables; after this PR no per-search
-  table exists and the import's truncate is the only removal. #665 asks for the count
+- **Issues:** #350 asks for a least-recently-used cleanup of old search and cart data;
+  after this PR no per-search table exists, and the pruner below removes old searches,
+  expired sessions, and their carts. #665 asks for the count
   without the table build; the count is stored at build time and read from
   `user_searches` afterward, while the first request still waits for the build (the
   background build it proposes is not adopted). #666 proposes `READ UNCOMMITTED` for the
@@ -1095,16 +1096,22 @@ bump nor the re-import (§1, Deploy).
 - **Changes:**
   - A permanent, **unpartitioned** table `search_results(search_id INT UNSIGNED NOT NULL,
     sort_order INT UNSIGNED NOT NULL, obs_general_id INT UNSIGNED NOT NULL, PRIMARY KEY
-    (search_id, sort_order), UNIQUE KEY (search_id, obs_general_id))` with a schema file
-    whose keys are the table-level entries `{"primary_key": ["search_id", "sort_order"]}`
-    and `{"unique": ["search_id", "obs_general_id"]}`, both introduced in this PR (§1,
-    Schema entries), created by `reset_search_tables` (below).
+    (search_id, sort_order))` with a schema file whose key is the table-level entry
+    `{"primary_key": ["search_id", "sort_order"]}`, introduced in this PR (§1, Schema
+    entries), created by `reset_search_tables` (below). **No secondary key:** paging,
+    counts, the fan-out, and cart ranges all read a search by position, so a second
+    `(search_id, obs_general_id)` key would grow every row and every build for no reader;
+    the measurement below reports the table's bytes per million rows. The build guarantees
+    uniqueness itself by selecting each `obs_general.id` once, which a test asserts on a
+    broad build with joined categories, and the executor confirms with `EXPLAIN` that
+    every fan-out query reads `search_results` by its primary key. If a plan turns out to
+    need the second key, the executor stops and reports rather than adding it.
     Partitioning is not used: `search_id` is the primary-key prefix, so every per-search
     read is one range regardless, and the only reason to partition would be O(1) removal
-    of stale searches, which the import's truncate already provides.
+    of stale searches, and the pruner below does that with chunked deletes.
   - **`user_searches` is rebuilt to what it is used for**: `id`, `search_hash BINARY(32)
-    NOT NULL` with a unique key, `result_count INT UNSIGNED NULL`, and `results_built_at
-    DATETIME NULL`. The four `*_json` columns (written, read by nothing), the four
+    NOT NULL` with a unique key, `result_count INT UNSIGNED NULL`, `results_built_at
+    DATETIME NULL`, and `last_used_at` (the pruner, below). The four `*_json` columns (written, read by nothing), the four
     `*_hash` columns with their `'NONE'` sentinels and four-column unique constraint, and
     `timestamp` go. `set_user_search_number` keeps building exactly the four strings it
     hashes today and computes `search_hash` as the SHA-256 of
@@ -1117,6 +1124,27 @@ bump nor the re-import (§1, Deploy).
     CACHE_KEY_PREFIX + ':usersearchno:' + search_hash.hex()`, and a test asserts its
     length under the test configuration. The model field is a `BinaryField`, as
     `inspectdb` generates it.
+  - **The pruner, for #350.** `user_searches` gains `last_used_at DATETIME NOT NULL`,
+    set at registration. It is refreshed at most once a day per search, so it adds no
+    write per request: the memcached entry for a search holds its id and the day it was
+    last stamped, and a hit on a later day issues one `UPDATE user_searches SET
+    last_used_at = NOW() WHERE id = %s` and rewrites the entry. A new management command,
+    `opus_manage prune --unused-days N` (default 30), then removes, in this order:
+    1. **Searches not used in N days.** For each, the `user_searches` row is deleted
+       first, so a request that arrives meanwhile registers the search afresh under a new
+       id; then its hash-keyed memcached entry; then its `search_results` rows, in chunks
+       of 100,000 by `search_id`. Ids are never reused within a schema, so the other cache
+       entries keyed by a pruned id are unreachable and age out without a flush. A cached
+       id whose `user_searches` row is missing is treated as a cache miss.
+    2. **Expired sessions**, through Django's own `clearsessions`.
+    3. **Cart rows whose session no longer exists**, with `DELETE c FROM cart AS c LEFT
+       JOIN django_session AS s ON s.session_key = c.session_id WHERE s.session_key IS
+       NULL`.
+    The command logs each count. Deleting rows does not shrink the tablespace, but InnoDB
+    reuses the freed pages, so a regular prune bounds the table's size. The operator
+    schedules it; `docs/user_guide_deployment.rst` gives a cron line, and nothing in the
+    deploy scripts runs it. The landing page and other searches in daily use are never
+    pruned, because their stamps stay current.
   - `do_django.drop_cache_tables` becomes `reset_search_tables`: **drop and re-create
     `user_searches` and `search_results` from their schema files**, through the brand class. It
     keeps `drop_cache_tables`'s place in the `--cleanup-aux-tables` set, so it runs as
@@ -1167,19 +1195,23 @@ bump nor the re-import (§1, Deploy).
   - `dev_guide_database_schema.rst` and `dev_guide_webapp_search.rst` describe the table,
     the build, and the row lock.
 - **Cost model, stated so the right metric is judged:** the build's dominant cost is the
-  same sort plus the same number of inserts, now into a shared table with a secondary
-  unique index; expect the cold build itself no faster and possibly slower. The gains are:
+  same sort plus the same number of inserts, now into a shared table with no secondary
+  index; expect the cold build itself no faster. The gains are:
   no DDL in the request path and no table-cache churn, a bounded table count, the stored
   count (which removes a `COUNT(*)` from the result-count and autocomplete paths), and one
   build per search under concurrency. Whether distinct new searches serialized on anything
   before this PR is **not asserted**; the concurrency scenario measures it.
 - **Measurement:** the concurrency scenario in all three states, cold latency of every
   search scenario (reported, not judged), the digests, and the table count after the web
-  scenarios (constant). Target metric: **p95 under 16 users, app-cold, distinct searches**,
-  with the shared-search half as the secondary.
+  scenarios (constant), the bytes of `search_results` per million rows, and the time to
+  prune a thousand planted searches (reported). Target metric: **p95 under 16 users,
+  app-cold, distinct searches**, with the shared-search half as the secondary.
 - **Acceptance:** §2.5; API goldens unchanged; a test that issues the same new search from
   two threads and asserts one build and two identical counts; a test that an exception
-  inside the build rolls back and leaves the row unbuilt; the harness's state resets updated to
+  inside the build rolls back and leaves the row unbuilt; a pruner test with planted
+  searches, sessions, and carts (an old search and its rows and cache entry gone, a
+  recent one kept, a cached id of a pruned search re-registering, an expired session
+  and its cart rows gone, a live one kept); the harness's state resets updated to
   `reset_search_tables`.
 - **Requires full re-import:** no; `SCHEMA_VERSION` is unchanged, since neither table is
   filled by the import (§1, Deploy).
@@ -1299,7 +1331,8 @@ bump nor the re-import (§1, Deploy).
 - **Changes:**
   - **Schema.** Three tables replace the template and its ninety tables, with schema files
     `mult_field.json`, `mult_group.json`, and `mult.json` using PR-11's table-level
-    `primary_key` and `unique` entries:
+    `primary_key` entry and a `{"unique": [cols]}` entry introduced here (§1, Schema
+    entries):
     `mult_field(field_id SMALLINT UNSIGNED PRIMARY KEY, qualified_name VARCHAR(100) NOT
     NULL UNIQUE, pinned TINYINT NOT NULL)`, where `pinned` is 1 for a column with
     `mult_options`; `mult_group(field_id, grouping VARCHAR(100) NOT NULL, group_rank
@@ -1712,9 +1745,10 @@ bump nor the re-import (§1, Deploy).
   - `opus_import --carry-over-sessions-from <served>`, run with the new schema as the
     target: `INSERT INTO <target>.django_session SELECT * FROM <served>.django_session
     WHERE expire_date > NOW()`, then `INSERT INTO <target>.cart (session_id,
-    obs_general_id, opus_id, recycled, timestamp) SELECT c.session_id, n.id, c.opus_id,
-    c.recycled, c.timestamp FROM <served>.cart c JOIN <target>.obs_general n ON
-    n.opus_id = c.opus_id`; the step truncates the two target tables first, so it is
+    obs_general_id, opus_id, recycled) SELECT c.session_id, n.id, c.opus_id, c.recycled
+    FROM <served>.cart c JOIN <target>.obs_general n ON n.opus_id = c.opus_id JOIN
+    <target>.django_session s ON s.session_key = c.session_id`, so a cart whose session
+    expired is not carried; the step truncates the two target tables first, so it is
     idempotent and runs in either direction (a rollback is the promotion toward the
     previous installation), and logs the row counts copied and the cart rows dropped
     (`COUNT(*)` of `<served>.cart` less the rows inserted). `cart.id` is `AUTO_INCREMENT`

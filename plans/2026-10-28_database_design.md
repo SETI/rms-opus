@@ -194,15 +194,14 @@ target in Select Metadata (#651) becomes a change to the user interface alone.
 ### 2.4 Search results
 
 One permanent, unpartitioned table replaces the per-search `cache_NNN` tables and the
-per-page temporary tables (#350 asks for their cleanup; nothing is left to clean up):
+per-page temporary tables:
 
 ```sql
 search_results(
   search_id       INT UNSIGNED NOT NULL,
   sort_order      INT UNSIGNED NOT NULL,
   obs_general_id  INT UNSIGNED NOT NULL,
-  PRIMARY KEY (search_id, sort_order),
-  UNIQUE KEY (search_id, obs_general_id)
+  PRIMARY KEY (search_id, sort_order)
 )
 ```
 
@@ -214,6 +213,7 @@ user_searches(
   search_hash      BINARY(32)   NOT NULL,  -- SHA-256 of the canonical search
   result_count     INT UNSIGNED NULL,
   results_built_at DATETIME     NULL,
+  last_used_at     DATETIME     NOT NULL,
   UNIQUE KEY (search_hash)
 )
 ```
@@ -227,11 +227,20 @@ hexadecimal, so its key has a fixed length whatever the search.
 
 A page is `sort_order BETWEEN a AND b` on the join, exact because `ROW_NUMBER()` is
 dense. The count is stored once. Partitioning is not used: `search_id` is the primary-key
-prefix, so every per-search read is one range regardless, and the import's truncate
-removes stale searches. A `default_rank` column on `obs_general`, the position in the
+prefix, so every per-search read is one range regardless. There is no second key:
+every reader reads a search by position, and the build selects each observation once.
+ A `default_rank` column on `obs_general`, the position in the
 default sort, which would let the empty search page without a build, is evaluated on
 full-scale data at the end of the plan and added only if it measures a clear gain.
-`results_built_at` is the column a later janitor would key on.
+
+**Old searches are pruned, least recently used first** (#350). `last_used_at` is
+refreshed at most once a day per search, from the cached entry, so it costs no write
+per request. A scheduled command deletes a search unused for a set number of days: its
+`user_searches` row first, so a new request registers it afresh, then its cache entry,
+then its result rows in chunks. Ids are never reused within a schema, so cache entries
+keyed by a pruned id are unreachable and age out. The same command removes expired
+sessions and the carts whose session is gone. InnoDB reuses the freed pages, so regular
+pruning bounds the table's size however long a schema is served.
 
 **The build runs once per search however many requests race for it.** Inside one
 transaction, the builder reads the search's own `user_searches` row `FOR UPDATE`; a
