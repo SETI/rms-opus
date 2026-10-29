@@ -83,7 +83,7 @@ of §2.5, `obs_preview`, and the surface geometry table) reaches its bundle thro
 join each table to `obs_general`'s bundle key, and the duplicate OPUS id delete uses the
 `obs_general_id` it resolves. No table carries a 75-character column and an index for the
 import's sake. `search_results` and `cart` also carry `obs_general_id` but are not
-imported: the import truncates them (§2.4, §3).
+imported: the import resets `search_results` (§2.4) and re-creates `cart` empty (§3).
 
 ### 2.2 The children
 
@@ -107,9 +107,9 @@ Every per-category `obs_*` table is keyed on the hub:
 
 `obs_files` is the one child with many rows per observation. It keeps its own `id`,
 `obs_general_id`, `opus_id` (the file logic reads by it), and `instrument_id`. Its
-secondary indexes are reduced to the columns the application filters or sorts on, from a
-code audit; it is the largest table by rows, and each unused index is a full extra copy of
-a key column.
+secondary indexes are `(opus_id, short_name, version_name)` for the file reads and
+`(obs_general_id)` for the download join, and nothing else; it is the largest table by
+rows, and each unused index is a full extra copy of a key column.
 
 ### 2.3 Surface geometry
 
@@ -123,7 +123,8 @@ obs_surface_geometry_target(
   <every geometry column of the template>,
   PRIMARY KEY (target_name, obs_general_id),
   KEY (obs_general_id),
-  KEY (target_name, <col>)  -- one per keyed column of the template
+    KEY (target_name, <col>)  -- one per keyed column of the template
+  KEY (target_name, <X1>, <X2>)  -- one per displayed range pair, index-only
 )
 ```
 
@@ -152,7 +153,9 @@ slugs, and display orders, so `api/categories` keeps returning
 | `target_name` | `NULL` | the target's mult id | `NULL` |
 
 The selector category `obs_surface_geometry_name` therefore survives as a row that points
-at the one table with no target filter. Its field keeps the qualified name
+at the one table with no target filter. Its predicate is a semi-join (`EXISTS` on
+`obs_surface_geometry_target` for the selected targets), never a join, so selecting several
+targets cannot duplicate an observation. Its field keeps the qualified name
 `obs_surface_geometry_name.target_name`, which the form, the trigger logic, the mult-table
 naming helper, the base-table list, and the menu code all spell out, and the mult table
 keeps its name. Nothing hard-coded moves.
@@ -180,8 +183,8 @@ computed under the category name, so the per-target validation keeps running, an
 to the one table; on both the metadata-index and the inline path, the row's target string
 is resolved to its id in the selector's mult field before the row is written. Two rows of
 one observation that resolve to the same target write one row, the first in the import's
-defined row order (the plan states the order), with a warning. A row whose target is
-unknown is not written.
+row order (sorted raw names on the summary-file path, file order on the inline path), with
+a warning. A row whose target is unknown is not written.
 
 **What a new target costs:** one mult row and its `table_names`, `partables`, and
 `param_info` rows, written by finalization. No table is created, no model is generated,
@@ -201,7 +204,8 @@ search_results(
   search_id       INT UNSIGNED NOT NULL,
   sort_order      INT UNSIGNED NOT NULL,
   obs_general_id  INT UNSIGNED NOT NULL,
-  PRIMARY KEY (search_id, sort_order)
+    PRIMARY KEY (search_id, sort_order),
+  UNIQUE KEY (search_id, obs_general_id)
 )
 ```
 
@@ -225,35 +229,42 @@ to register the same search safe: the loser's insert fails and it reads the winn
 row. The memcached entry that maps a search to its id is keyed by the same hash in
 hexadecimal, so its key has a fixed length whatever the search.
 
-A page is `sort_order BETWEEN a AND b` on the join, exact because `ROW_NUMBER()` is
-dense. The count is stored once. Partitioning is not used: `search_id` is the primary-key
-prefix, so every per-search read is one range regardless. There is no second key:
-every reader reads a search by position, and the build selects each observation once.
- A `default_rank` column on `obs_general`, the position in the
-default sort, which would let the empty search page without a build, is evaluated on
-full-scale data at the end of the plan and added only if it measures a clear gain.
+A page is `sort_order BETWEEN a AND b` on the join, exact because `ROW_NUMBER()` is dense.
+The count is stored once. Partitioning is not used: `search_id` is the primary-key prefix,
+so every per-search read is one range regardless. The unique key serves the cart's range
+editor, which resolves an observation's position within a search, and makes a join that
+duplicates an observation fail rather than repeat it on a page; every alias join in the
+build is one row per observation. A `default_rank` column on `obs_general`, the position
+in the default sort, which would let the empty search page without a build, is evaluated
+on full-scale data at the end of the plan and added only if it measures a clear gain.
 
 **Old searches are pruned, least recently used first** (#350). `last_used_at` is
-refreshed at most once a day per search, from the cached entry, so it costs no write
-per request. A scheduled command deletes a search unused for a set number of days: its
-`user_searches` row first, so a new request registers it afresh, then its cache entry,
-then its result rows in chunks. Ids are never reused within a schema, so cache entries
-keyed by a pruned id are unreachable and age out. The same command removes expired
-sessions and the carts whose session is gone. InnoDB reuses the freed pages, so regular
-pruning bounds the table's size however long a schema is served.
+refreshed at most once a day per search, from the cached entry, and skipped while the
+search is being built, so it costs no write per request and never waits on the row lock. A
+scheduled command deletes a search unused for a set number of days: its cache entry first,
+then its `user_searches` row, so a new request registers it afresh, then its result rows
+in chunks. Every request reads the search's count and build time from `user_searches` by
+primary key, so a cached id whose row is gone is a miss, not a short page; only the
+hash-to-id entry is cached, and ids are never reused within a schema. The same command
+removes expired sessions and the carts whose session is gone. InnoDB reuses the freed
+pages, so regular pruning bounds the table's size however long a schema is served.
 
-**The build runs once per search however many requests race for it.** Inside one
-transaction, the builder reads the search's own `user_searches` row `FOR UPDATE`; a
-second builder blocks on that row until the first commits, then sees `results_built_at`
-set and returns. If the row is unbuilt the builder inserts `SELECT ?, ROW_NUMBER() OVER
-(ORDER BY ...), obs_general.id FROM ...`, writes the count and the timestamp, and commits,
-which releases the lock. The transaction contains nothing before the locking read, and
-the result rows are read after it commits, so a `REPEATABLE READ` snapshot can never
-predate the build. A row lock is transaction-scoped: a worker that dies releases it with
-its rollback, it is the same statement on both brands, and it works through any
-connection pooling. The lock wait timeout is the session's `innodb_lock_wait_timeout`,
-set from `[django] search_build_timeout` (default 300 seconds) to exceed a broad cold
-build. A waiter whose wait times out ends its transaction and answers with the
+**The build runs once per search however many requests race for it.** Registration
+commits on its own first, because a failed duplicate insert holds a shared lock until its
+transaction ends. Then, inside one `READ COMMITTED` transaction, so the `INSERT ...
+SELECT` takes no shared locks on the rows it reads, the builder reads the search's own
+`user_searches` row `FOR UPDATE`; a second builder blocks on that row until the first
+commits, then sees `results_built_at` set and returns. If the row is unbuilt the builder
+inserts `SELECT ?, ROW_NUMBER() OVER (ORDER BY ...), obs_general.id FROM ...`, writes the
+count and the timestamp, and commits, which releases the lock. The transaction contains
+nothing before the locking read, and the result rows are read after it commits, so a
+`REPEATABLE READ` snapshot can never predate the build. A row lock is transaction-scoped:
+a worker that dies releases it with its rollback, it is the same statement on both brands,
+and it works through any connection pooling. The lock wait timeout is the session's
+`innodb_lock_wait_timeout`, set from `[django] search_build_timeout` (default 300 seconds)
+through the connection's `init_command`, long enough for a broad cold build and at least
+30 seconds below the web server's worker timeout, since a worker killed mid-build rolls
+the build back. A waiter whose wait times out ends its transaction and answers with the
 search-cache failure response; the build it waited on completes, and the next request
 finds it.
 
@@ -275,7 +286,8 @@ re-evaluating the predicate.
 ### 2.5 Junction tables for the list columns
 
 Each JSON list column on `obs_general` gets a junction table written by the import from
-the resolved mult ids:
+the resolved mult ids; both are children in the sense of §2.2, with the foreign key to
+`obs_general` added in finalization:
 
 ```sql
 obs_general_target_name (mult_id, obs_general_id,
@@ -290,8 +302,10 @@ multi-valued JSON index is not used: it would serve the search but not the count
 
 ### 2.6 Autocomplete
 
-The string columns the autocomplete endpoint searches get an ngram `FULLTEXT` key beside
-their B-tree, declared at table level in the schema. The query uses a quoted boolean
+The string columns the autocomplete endpoint searches whose declared width is 100
+characters or less get an ngram `FULLTEXT` key beside their B-tree, declared at table level
+in the schema; the longer columns, file paths and notes, keep `LIKE`, since an ngram index on
+them would outweigh the table. The query uses a quoted boolean
 `MATCH ... AGAINST` for the `contains` type and prefixes of two or more characters, and
 falls back to `LIKE` for one character, for the other types, and for any column where a
 fixture comparison shows the two disagree. The stopword filter is off for the session
@@ -301,13 +315,14 @@ or `i`.
 ### 2.7 Schema version
 
 `schema_version(version INT UNSIGNED NOT NULL PRIMARY KEY, state ENUM('ready',
-'appending') NOT NULL)`, one row. It is written, as `ready`, by an explicit final import
-step that writes only when the row is absent and refuses to overwrite a different value;
-scorched earth deletes it, and an append (§3) holds it at `appending` while it runs. The
-web application checks it at startup and serves 503 on a mismatch, a missing row, or a
-state other than `ready`; both deploy scripts check the
-served schema's row before running any import or migration step. A half-built schema
-therefore cannot be served or promoted, and new code cannot stamp an old schema.
+'appending') NOT NULL, appending_bundles JSON NULL, started_at DATETIME NULL)`, one row.
+It is written, as `ready`, by an explicit final import step that writes only when the row
+is absent and refuses to overwrite a different value; scorched earth deletes it, and an
+append (§3) holds it at `appending` while it runs. The web application checks it at
+startup and serves 503 on a mismatch, a missing row, or a state other than `ready`; both
+deploy scripts check the served schema's row before running any import or migration step.
+A half-built schema therefore cannot be served or promoted, and new code cannot stamp an
+old schema.
 
 ### 2.8 Mult values
 
@@ -321,11 +336,13 @@ mult_field(field_id       SMALLINT UNSIGNED PRIMARY KEY,
 mult_group(field_id       SMALLINT UNSIGNED NOT NULL,
            grouping       VARCHAR(100) NOT NULL,
            group_rank     SMALLINT UNSIGNED NOT NULL,
+                      group_pin      SMALLINT UNSIGNED NULL,
            PRIMARY KEY (field_id, grouping))
 mult(field_id  SMALLINT UNSIGNED NOT NULL,
-     id        SMALLINT UNSIGNED NOT NULL,
-     value     VARCHAR(100) NULL,
+     id        SMALLINT UNSIGNED NOT NULL,  -- from 1; 0 is never valid
+     value     VARCHAR(100) NOT NULL,       -- '' for the absent value
      label     VARCHAR(100) NOT NULL,
+     pin       SMALLINT UNSIGNED NULL,
      disp_rank SMALLINT UNSIGNED NOT NULL,
      display   ENUM('Y','N') NOT NULL,
      grouping  VARCHAR(100) NULL,
@@ -340,13 +357,18 @@ mult(field_id  SMALLINT UNSIGNED NOT NULL,
   column can name another column's field with a `mult_field` key, as the surface geometry
   table does for the selector (§2.3).
 - **`disp_rank` is a dense integer per field**, computed for the whole field at the end of
-  every import from typed values: pinned values first in their pinned order; then ordinary
-  values, numerically (through the column's unit when it has one) when every one parses
-  as a number and otherwise by case-folded label; then `Yes` and `On`; then `No` and
-  `Off`; then `None`, `N/A`, and `NULL`. Label and stored value break ties. The rank does
-  not depend on the order bundles were imported, sorts negative numbers correctly, and is
-  the same integer the search form and the counts sort by. Groups are ranked the same way
-  in `mult_group`.
+  every import from typed values: pinned values first in `pin` order (pins come from the
+  schema's option lists, from an observation class, or from `mult_overrides`); then
+  ordinary values, numerically (the stored value through the column's unit parser when it
+  has a unit, otherwise the label as a number) when every one parses and otherwise by
+  case-folded label; then `Yes` and `On`; then `No` and `Off`; then the absent-value
+  labels, compared case-folded, in the order `None`, `N/A`, `NULL`. Label and stored value
+  break ties. The rank does not depend on the order bundles were imported, sorts negative
+  numbers correctly, and is the same integer the search form and the counts sort by.
+  Groups are ranked in `mult_group` by `group_pin` then case-folded name, so the planet
+  groups keep their configured order. The absent value is stored as the empty string,
+  never NULL, because a unique key does not deduplicate NULLs; a value outside a pinned
+  field's list fails the bundle.
 - **Values no observation references are deleted** at the end of every import, full or
   incremental, except in a pinned field, whose list is the intended set of choices. The
   search form therefore offers only values that return results.
@@ -372,19 +394,22 @@ instead of the child tables.
 ### 2.9 Column types
 
 - **Strings are `VARCHAR`**, never padded `CHAR`.
-- **Identifier columns are ASCII with a case-insensitive collation**
-  (`ascii_general_ci`): `opus_id`, `bundle_id`, `instrument_id`, and the string-search
-  columns whose values are all ASCII. Comparisons are cheaper and sort keys a quarter
-  the size of `utf8mb4`'s. Case never matters in a lookup; rows that tie on every sort
-  key have no defined order. Labels, mult values, the dictionary, and free text stay
-  `utf8mb4`.
+- **Identifier columns are ASCII with a case-insensitive collation** (`ascii_general_ci`):
+  every `opus_id` and `bundle_id` column, in `cart` and `obs_files` as in the observation
+  tables, `obs_files.instrument_id` (the only string `instrument_id`), and the
+  string-search columns whose values are all ASCII, so a join between two of them compares
+  like with like. Comparisons are cheaper and sort keys a quarter the size of `utf8mb4`'s.
+  Case never matters in a lookup. Rows that tie on every sort key are ordered by
+  `obs_general.id`, appended as the final sort term, so every order is total. Labels, mult
+  values, the dictionary, and free text stay `utf8mb4`.
 - **No row timestamps.** Nothing reads them.
 - **`cart.session_id` fits Django's session key**, and the cart's foreign key cascades
   a deleted observation's rows away.
 
 ### 2.10 What does not change
 
-`cart`, `partables`, `param_info` (its shape), the dictionary tables, and the public API's
+The rows and columns of `partables`, `param_info`, and the dictionary tables (their string
+types and row timestamps follow §2.9), `cart` beyond what §2.9 states, and the public API's
 response bodies, including the order of results sorted by a mult column.
 
 ---
@@ -401,10 +426,11 @@ import logs which it chose, for which schema and version:
 | A version row that matches the code, `ready` | **appends** (below) |
 | A version row that matches the code, `appending` | **resumes the append** |
 | A version row from another release | refuses, naming both versions |
-| No version row but secondary indexes: an interrupted finalization | refuses, naming scorched earth |
+| No version row but secondary indexes: an interrupted finalization | refuses `--import`; a finalization-only invocation resumes it |
 
-A full import runs one invocation per bundle group, and every one after the first finds
-a build in progress and continues it.
+A full import runs one invocation per bundle group, and every one after the first finds a
+build in progress and continues it. The bundle steps are chosen by this state; finalization
+is an explicit step that the sequences run once at the end.
 
 1. **Scorched earth** drops the `obs_` tables, the three mult tables, and `cart`, and
    deletes the `schema_version` row.
@@ -416,11 +442,12 @@ a build in progress and continues it.
    would otherwise ignore duplicate keys silently). Each bundle is deleted from the
    permanent tables before it is written, so a rerun is clean, and an OPUS id already
    written by an earlier bundle is deleted and re-imported.
-3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the
-   surface geometry categories derived from the data, each into a shadow table that one
-   `RENAME TABLE` swaps in atomically, so no reader ever finds one missing or half
-   filled; `user_searches` and
-   `search_results` are reset and the cache flush of §2.4 follows.
+3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the surface
+   geometry categories derived from the data, each into a shadow table that one `RENAME
+   TABLE` swaps in atomically, so no reader ever finds one missing or half filled (the
+   swap connection sets a short `lock_wait_timeout` and retries, since the rename waits
+   for open transactions on those tables); `user_searches` and `search_results` are reset
+   and the cache flush of §2.4 follows.
 4. **Finalization** builds, by sort: `FULLTEXT` keys first, each in its own statement
    (the first one rebuilds its table); then B-tree indexes concurrently across tables,
    grouped per table within a temporary-space budget; then foreign keys serially under
@@ -428,28 +455,34 @@ a build in progress and continues it.
    and recomputes every rank (§2.8); then `ANALYZE` with histograms on the
    range-searched columns. The step is idempotent, comparing existing keys by kind and
    ordered columns.
-5. **The dictionary import, validation, and the version row.** The dictionary's two
-   tables are swapped in the same way as the aux tables. Validation includes an
-   orphan count per child, because finalization's foreign keys never validate existing
-   rows.
+5. **The dictionary import, validation, and the version row.** The dictionary's two tables
+   are swapped together in one statement, `definitions__new` created with its foreign key
+   pointing at `contexts__new`, so the key lands on the new `contexts`. Validation
+   includes an orphan count per child, because finalization's foreign keys never validate
+   existing rows.
 6. **Promotion**, for a full import and an incremental update alike: the web service
    stops, the previous schema's sessions and carts are carried over into the new schema
-   (`django_session` rows whole, `cart` rows by `opus_id`, which `cart` already stores, to
-   the observation's new `obs_general_id`), the installation switches to the new schema,
-   and the web service starts. The carry-over truncates its two target tables first, so
-   it can run in either direction. If it fails, the web service is started again on the
-   unchanged installation and the deploy exits non-zero; nothing has switched.
+   (unexpired `django_session` rows, and the `cart` rows of those sessions by `opus_id`,
+   which `cart` already stores, to the observation's new `obs_general_id`; a cart row
+   whose session expired or whose observation is gone is dropped and counted), the
+   installation switches to the new schema, and the web service starts. The carry-over
+   truncates its two target tables first, so it can run in either direction. If it fails,
+   the web service is started again on the unchanged installation and the deploy exits
+   non-zero; nothing has switched.
 
 **Appending** adds or replaces bundles in a finalized schema that is not being served,
 the way a developer adds a bundle to a deployed database. The import first sets the
-version row's state to `appending`, so nothing serves or promotes the schema meanwhile.
-Each bundle is deleted and reloaded with the indexes and foreign keys in place; then every
-finalization step an append invalidates runs again (the mult step, the aux tables, the
-search-table reset with its cache flush, `ANALYZE`, and validation), and the state returns
-to `ready`. A failed append stays `appending`, and the next import resumes it; since each
-bundle is deleted before it is written, rerunning the same bundles is clean. An append is
-not atomic, so it is never run against a schema that is being served; §3.1 is how a served
-schema is updated.
+version row's state to `appending` and records the bundles in `appending_bundles` and the
+time in `started_at`; new worker processes refuse the schema and the deploy scripts refuse
+to promote it, while workers already running are not stopped, which is why an append is
+only for a schema that is not being served. Each bundle is deleted and reloaded with the
+indexes and foreign keys in place; then every finalization step an append invalidates runs
+again (the mult step, the aux tables, the search-table reset with its cache flush,
+`ANALYZE`, and validation), and the state returns to `ready`. A failed append stays
+`appending`; the next import resumes the recorded bundles plus any it names, and since
+each bundle is deleted before it is written, the rerun is clean. An append is not atomic,
+so it is never run against a schema that is being served; §3.1 is how a served schema is
+updated.
 
 ### 3.1 Incremental update
 
@@ -461,12 +494,12 @@ update is built as a new schema and promoted whole, exactly as a full import is:
    the tables as step 2 does and copies the served schema's rows into them, refusing when
    the served schema's version differs from the code's: `obs_general` with `WHERE
    bundle_id NOT IN (<the bundles being replaced, and those the existing
-   --delete-permanent-bundles names for dropping>)`, every other
-   per-observation table with `WHERE obs_general_id NOT IN (SELECT id FROM
-   <served>.obs_general WHERE bundle_id IN (<the same bundles>))`, and the three mult
-   tables whole, over the sibling connections, one table
-   per connection; values only the excluded bundles used are removed by finalization's
-   mult step. Ids are preserved, so an unchanged observation keeps its
+   --delete-permanent-bundles names for dropping>)`, every other per-observation table
+   with `WHERE obs_general_id NOT IN (SELECT id FROM <served>.obs_general WHERE bundle_id
+   IN (<the same bundles>))`, and the three mult tables whole, over the sibling
+   connections, one table per connection, under `READ COMMITTED` so the served schema's
+   rows are not locked; values only the excluded bundles used are removed by
+   finalization's mult step. Ids are preserved, so an unchanged observation keeps its
    `obs_general_id` and its mult ids. The served schema is only read.
 2. **Import.** The target has no version row yet, so the replaced and added bundles go
    through the ordinary build of step 2, and finalization builds every index once, by
@@ -482,11 +515,11 @@ update is built as a new schema and promoted whole, exactly as a full import is:
    `search_results` start empty and refill on demand; the warm-up runs after the start.
 
 The same seed with a bundle excluded and nothing imported drops it. The cost is one copy
-of the database per update, measured by the plan, and the disk for two schemas, which a
-full-import deploy needs already. The previous schema stays until the next update, so a
-rollback is step 6 run toward it: the carry-over brings back the sessions and carts as
-they stand at that moment, and only a cart row for an observation the previous schema
-lacks is lost.
+of the database and one full index build per update, measured by the plan, and the disk
+for two schemas, which a full-import deploy needs already. The previous schema stays until
+the next update, so a rollback is step 6 run toward it: the carry-over brings back the
+sessions and carts as they stand at that moment, and only a cart row for an observation
+the previous schema lacks is lost.
 
 **Why not in place, and why not a table swap.** Writing into the served schema is not
 atomic: between the first bundle delete and the closing reset a request can build a search
@@ -555,13 +588,13 @@ properties that make that true, and the one constraint:
   writer. Read-only aggregates over the permanent `obs_*` tables could use a replica.
 
 Sessions and the cart live in the per-import schema, and every promotion, after a full
-import or an incremental update, carries them into the new schema while the web service
-is stopped (§3, step 6): session rows whole, cart rows by `opus_id` to the observation's
-new `obs_general_id`, dropping a row whose observation is gone. A cart therefore
-survives an update unless its observation vanished, and nothing of the previous schema
-is referenced afterward. Keying the cart by `(session_id, opus_id)` in a schema that
-outlives imports would remove the mapping step; it is a schema change left for later
-(`plans/2026-10-28_cloud_deployment_notes.md`, §4).
+import or an incremental update, carries them into the new schema while the web service is
+stopped (§3, step 6): session rows whole, cart rows by `opus_id` to the observation's new
+`obs_general_id`, dropping a row whose session expired or whose observation is gone. A
+cart therefore survives an update unless its observation vanished, and nothing of the
+previous schema is referenced afterward. Keying the cart by `(session_id, opus_id)` in a
+schema that outlives imports would remove the mapping step; it is a schema change left for
+later (`plans/2026-10-28_cloud_deployment_notes.md`, §4).
 
 Everything else a multi-host deployment would need is application and operations work,
 not schema: a shared cache with fully scoped keys, shared storage for cart downloads, the

@@ -9,8 +9,8 @@ lost and are not mistaken for that plan's work. The port itself is #1199.
 
 **Date:** 2026-10-28. Each item names what the code does today, in the tree at
 `2179d937`, with the file, and what the multi-host layout would need. The plan's PR-00,
-PR-02, PR-03, PR-05, and PR-17 change some of the "Today" paragraphs; re-read them
-against the tree before acting on this file.
+PR-02, PR-03, PR-05, PR-06, PR-11, PR-16, and PR-17 change some of the "Today" paragraphs;
+re-read them against the tree before acting on this file.
 
 ---
 

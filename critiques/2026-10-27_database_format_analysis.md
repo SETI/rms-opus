@@ -77,7 +77,9 @@ What is wrong is the key structure of the child tables. Every child table has:
 - its own `id` primary key, assigned by the importer and **used by nothing**
   (`dev_guide_database_schema.rst` says so explicitly);
 - a plain `KEY` on `obs_general_id`, which is the column every join uses;
-- `opus_id char(50)`, `bundle_id char(75)`, and (in eleven of the twenty-one children)
+- `opus_id char(50)`, `bundle_id char(75)`, and (in eleven of the twenty-one children: `grep -l '"field_name": "instrument_id"'
+  src/opus_import/table_schemas/obs_*.json | grep -v -e obs_general.json -e _target.json |
+  wc -l`)
   `instrument_id char(60)`, each duplicated from `obs_general`; the first two are
   indexed (`bundle_id` by its own key, `opus_id` by the index its foreign key
   creates), `instrument_id` is keyed only in `obs_general`;
@@ -94,10 +96,10 @@ Consequences:
    cannot know the relationship is 1:1. It therefore cannot eliminate a `LEFT JOIN`
    whose columns are not selected, and it must keep a "found one, keep looking" loop on
    every join.
-3. The three redundant string columns cost up to 185 bytes per row per table (the `char`
-   columns are stored variable-length under utf8mb4) plus two indexes per table. Over 123
-   tables (22 named plus 101 per-target) that is the single largest contributor to index
-   count outside surface geometry. The documented justification
+3. The three redundant string columns cost up to 185 bytes per row per table (InnoDB
+   reserves at least N bytes for a utf8mb4 `char(N)` and up to 4N) plus two indexes per
+   table. Over 123 tables (22 named plus 101 per-target) that is the single largest
+   contributor to index count outside surface geometry. The documented justification
    (`dev_guide_database_schema.rst`: "one can readily delete all metadata from a
    particular instrument without needing to join tables together") is not what the import
    relies on: its delete and copy steps filter on `bundle_id` alone, and only because they
@@ -120,7 +122,8 @@ with good locality.
 `dev_guide_database_schema.rst` states the policy: every metadata column gets an index
 until the 64-per-table limit forces exceptions. The schema format can only express
 **single-column** keys (`field_key` is per column; the `constraint` escape hatch exists
-but is used for three `UNIQUE` constraints and never for a composite index).
+but is used for three `UNIQUE` constraints (`grep -h '"constraint"'
+src/opus_import/table_schemas/*.json`) and never for a composite index).
 
 For the searches OPUS actually runs, single-column indexes on `double` columns are the
 wrong shape:
@@ -175,7 +178,7 @@ presentation layer over a `WHERE target_id = ?` clause.
 ### 2.4 `mult_list` columns are unindexed JSON
 
 `target_name` and `target_class` on `obs_general` are JSON arrays of mult ids, searched
-with `JSON_CONTAINS` and sorted on `JSON_EXTRACT(col, '$[0]')`. There is no index on
+with `JSON_CONTAINS` and sorted on `JSON_EXTRACT(col, "$[0]")`. There is no index on
 either, so **a search on target name — among the most common searches OPUS gets — is a
 full scan of `obs_general`**, 1.4 million rows. The mult-count query for these fields
 explodes the array with `JSON_TABLE` and joins the cache table, another full pass.
@@ -253,14 +256,15 @@ See §4.1 for the replacement; it is the single most valuable web-side change.
 
 - **Strings are fixed-width `CHAR`.** The observation schemas declare 24 `char50`, 23
   `char75`, and 12 `char60` columns among others (`grep -ho '"field_type": "char[0-9]*"'
-  src/opus_import/table_schemas/obs_*.json | sort | uniq -c`), and under `utf8mb4` InnoDB
-  pads every `CHAR` value to its declared width.
+  src/opus_import/table_schemas/obs_*.json | sort | uniq -c`), and InnoDB reserves at
+  least N bytes for a utf8mb4 `CHAR(N)`, up to 4N.
 - **No character set or collation is declared** (`create_table` sets only `ENGINE=`), so
   every string, identifiers included, uses the server default `utf8mb4_0900_ai_ci`. Its
   comparisons use Unicode collation weights, and MySQL sizes its filesort keys at four
   bytes per character, so the default sort's `opus_id` tiebreak carries a 200-byte key.
-- **A `timestamp` column with `ON UPDATE CURRENT_TIMESTAMP` sits in all 23 observation
-  schemas** and several support tables, and nothing reads it.
+- **A `timestamp` column with `ON UPDATE CURRENT_TIMESTAMP` sits in all 23 observation schemas** (`grep -L '"field_name": "timestamp"'
+  src/opus_import/table_schemas/*.json` names the three exceptions, none an observation
+  table) and several support tables, and nothing reads it.
 - **`cart.session_id` is `char80`** for Django's 32-character session keys, and the cart's
   foreign key onto `obs_general` restricts deletes, so an in-place bundle delete fails
   while any cart names one of its observations.
@@ -325,8 +329,9 @@ machine" — is worth keeping, and every fix below keeps it.
 - The permanent copy is `INSERT INTO obs_x SELECT * FROM imp_obs_x WHERE bundle_id = ?`,
   one table at a time, again into fully indexed tables with foreign keys on. A
   scorched-earth rebuild therefore inserts the whole database twice, serially.
-- `mult_table_lookup_id` is a linear scan of the mult table's rows for every value of
-  every row (`for entry in mult_table: if entry['value'] == val`). For target names
+- `update_mult_table` scans the mult table's rows linearly for every mult value of every
+  row (`for entry in mult_table: if entry['value'] == val`; `mult_table_lookup_id` repeats
+  the scan for `partables`). For target names
   that is hundreds of comparisons per observation. A `dict` keyed by value fixes it in
   five lines.
 
@@ -477,7 +482,7 @@ heading; several of the import entries also appear on the wishlist recorded in #
    Writing the permanent tables directly in a fresh schema, and keeping the `imp_`
    path only for incremental re-imports into a live schema, halves the write volume of
    a full rebuild.
-7. **Make `mult_table_lookup_id` a dictionary lookup.** Five lines, no risk.
+7. **Make `update_mult_table`'s value lookup a dictionary probe.** Five lines, no risk.
 
 ### Schema
 
@@ -526,8 +531,8 @@ heading; several of the import entries also appear on the wishlist recorded in #
 
 19. **Size the buffer pool to the working set** — `information_schema.TABLES` gives the
     number — and confirm `innodb_parallel_read_threads` is at its default or above; it
-    parallelizes the clustered-index scans and `COUNT(*)` that the broad-search cache
-    build and the empty-search count do.
+    parallelizes the clustered-index `COUNT(*)` the empty-search count does, and nothing
+    in the cache build.
 20. **If a bigger step is ever on the table, it is PostgreSQL, and the stub for it is
     already in the tree** (#352). Parallel query execution, partial and covering indexes, GIN
     indexes on integer arrays (the natural type for `mult_list`), `COPY` for bulk load,
@@ -563,7 +568,7 @@ from reasoned to demonstrated:
 
 1. `cProfile` of one bundle import (§3.1): the Python-versus-database split decides
    whether item 4 or item 5 comes first.
-2. `information_schema.TABLES` sizes per table (§2.5, §5.19): decides the buffer pool
+2. `information_schema.TABLES` sizes per table (§2.5, item 19): decides the buffer pool
    and whether `preview_images` matters.
 3. `sys.schema_unused_indexes` after a month (§2.2): decides which indexes go.
 4. The slow query log with `long_query_time = 1` for a week, grouped by statement
