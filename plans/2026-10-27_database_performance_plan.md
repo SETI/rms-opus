@@ -1111,19 +1111,18 @@ bump nor the re-import (§1, Deploy).
     of stale searches, and the pruner below does that with chunked deletes.
   - **`user_searches` is rebuilt to what it is used for**: `id`, `search_hash BINARY(32)
     NOT NULL` with a unique key, `result_count INT UNSIGNED NULL`, `results_built_at
-    DATETIME NULL`, and `last_used_at` (the pruner, below). The four `*_json` columns (written, read by nothing), the four
-    `*_hash` columns with their `'NONE'` sentinels and four-column unique constraint, and
-    `timestamp` go. `set_user_search_number` keeps building exactly the four strings it
-    hashes today and computes `search_hash` as the SHA-256 of
-    `json.dumps([selections_json, qtypes_json, units_json, order_json])`, with `None`
-    where today's code writes `'NONE'`, so two requests share a row exactly when
+    DATETIME NULL`, and `last_used_at` (the pruner, below). The four `*_json` columns
+    (written, read by nothing), the four `*_hash` columns with their `'NONE'` sentinels
+    and four-column unique constraint, and `timestamp` go. `set_user_search_number` keeps
+    building exactly the four strings it hashes today and computes `search_hash` as the
+    SHA-256 of `json.dumps([selections_json, qtypes_json, units_json, order_json])`, with
+    `None` where today's code writes `'NONE'`, so two requests share a row exactly when
     today's four hashes are equal; a unit test pins that over a table of request pairs,
     including absent and empty query types and units. The optimistic insert and its
     `IntegrityError` read-back stay; the unreachable `MultipleObjectsReturned` handler
-    goes. The memcached key for the search's id is `CACHE_SERVER_PREFIX +
-    CACHE_KEY_PREFIX + ':usersearchno:' + search_hash.hex()`, and a test asserts its
-    length under the test configuration. The model field is a `BinaryField`, as
-    `inspectdb` generates it.
+    goes. The memcached key for the search's id is `CACHE_SERVER_PREFIX + CACHE_KEY_PREFIX
+    + ':usersearchno:' + search_hash.hex()`, and a test asserts its length under the test
+    configuration. The model field is a `BinaryField`, as `inspectdb` generates it.
   - **The pruner, for #350.** `user_searches` gains `last_used_at DATETIME NOT NULL`,
     set at registration. It is refreshed at most once a day per search, so it adds no
     write per request: the memcached entry for a search holds its id and the day it was
