@@ -57,6 +57,109 @@ import, and removes values nothing references.
 
 ## 2. The schema
 
+The tables and how they relate. `obs_mission_x` and `obs_instrument_x` stand for the
+per-mission and per-instrument tables, which keep their shape apart from the key change
+of §2.2. Row counts and sizes are left out on purpose: the plan states a number only when
+its harness has measured it.
+
+```mermaid
+erDiagram
+  obs_general ||--o| obs_pds : "obs_general_id"
+  obs_general ||--o| obs_ring_geometry : "obs_general_id"
+  obs_general ||--o| obs_wavelength : "obs_general_id"
+  obs_general ||--o| obs_mission_x : "obs_general_id (one per mission)"
+  obs_general ||--o| obs_instrument_x : "obs_general_id (one per instrument)"
+  obs_general ||--o| obs_surface_geometry : "obs_general_id"
+  obs_general ||--o{ obs_surface_geometry_target : "obs_general_id"
+  obs_general ||--o{ obs_files : "obs_general_id"
+  obs_general ||--o{ obs_general_target_name : "obs_general_id"
+  obs_general ||--o{ obs_general_target_class : "obs_general_id"
+  obs_general ||--o| obs_preview : "obs_general_id (gated)"
+  mult_field ||--o{ mult : "field_id"
+  mult_field ||--o{ mult_group : "field_id"
+  mult ||--o{ obs_surface_geometry_target : "target_name = mult id"
+  mult ||--o{ table_names : "target_name (category rows)"
+  user_searches ||--o{ search_results : "search_id"
+  obs_general ||--o{ search_results : "obs_general_id"
+  table_names ||--o{ param_info : "category_name"
+  table_names ||--o{ partables : "partable"
+
+  obs_general {
+    uint id PK
+    char50 opus_id UK
+    char75 bundle_id "key; the per-bundle steps join on it"
+    real8 time1 "key (time1, opus_id)"
+    real8 right_asc "key (right_asc, d_right_asc)"
+    real8 declination1 "key (declination1, declination2)"
+    json target_name "mult_list, kept for rendering"
+    json target_class "mult_list, kept for rendering"
+  }
+  obs_pds {
+    uint obs_general_id PK "FK added in finalization"
+    char50 opus_id "public opusid field, plain key"
+    char75 bundle_id "public bundleid field, plain key"
+  }
+  obs_surface_geometry_target {
+    usmallint target_name PK "mult id; PK (target_name, obs_general_id)"
+    uint obs_general_id PK "key (obs_general_id)"
+    real8 planetographic_latitude1 "key (target_name, col) per keyed column"
+  }
+  obs_files {
+    uint id PK
+    uint obs_general_id FK
+    char50 opus_id "kept: file_utils reads it"
+    char60 instrument_id "kept"
+  }
+  obs_general_target_name {
+    usmallint mult_id PK "PK (mult_id, obs_general_id)"
+    uint obs_general_id PK "key (obs_general_id)"
+  }
+  search_results {
+    uint search_id PK "PK (search_id, sort_order)"
+    uint sort_order PK
+    uint obs_general_id "UK (search_id, obs_general_id); the cart range editor probes it"
+  }
+  user_searches {
+    uint id PK
+    binary32 search_hash UK "SHA-256 of the canonical search"
+    uint result_count
+    datetime results_built_at
+    datetime last_used_at "refreshed daily; the pruner reads it"
+  }
+  table_names {
+    char60 table_name "category name, as the API shows it"
+    char60 physical_table "NULL, or obs_surface_geometry_target"
+    uint target_name "NULL, or the target's mult id"
+  }
+  schema_version {
+    uint version PK
+    enum state "ready or appending"
+    json appending_bundles "set while appending"
+    datetime started_at
+  }
+  mult_field {
+    usmallint field_id PK
+    varchar100 qualified_name "UK; e.g. obs_general.planet_id"
+    tinyint pinned "the schema lists the choices"
+  }
+  mult {
+    usmallint field_id PK "PK (field_id, id)"
+    usmallint id PK
+    varchar100 value "UK (field_id, value); '' for absent, never NULL"
+    varchar100 label
+    usmallint pin "optional fixed position"
+    usmallint disp_rank "recomputed every import"
+    enum display
+    varchar100 grouping
+  }
+  mult_group {
+    usmallint field_id PK "PK (field_id, grouping)"
+    varchar100 grouping PK
+    usmallint group_pin
+    usmallint group_rank
+  }
+```
+
 ### 2.1 The hub
 
 `obs_general` keeps its shape: `id` is the primary key and `opus_id` the unique key. It
@@ -67,6 +170,9 @@ gains composite keys for the query shapes that read it in order or by pair:
 | `(time1, opus_id)` | the default sort; with the clustered key appended it covers `SELECT id ... ORDER BY time1, opus_id` |
 | `(right_asc, d_right_asc)` | the right ascension predicate, as a covering scan (the angular predicate is a modular expression and cannot be range-scanned) |
 | `(declination1, declination2)` | the declination predicate, as an index range on `declination1` with `declination2` read from the index |
+
+`obs_ring_geometry` gains the same kind of key, `(<col>, d_<col>)`, for each of its longitude
+pairs, a covering scan for the same modular predicate.
 
 The two JSON list columns, `target_name` and `target_class`, stay for rendering responses.
 Searching and counting on them move to junction tables (§2.5). The `preview_images` JSON
@@ -249,6 +355,20 @@ hash-to-id entry is cached, and ids are never reused within a schema. The same c
 removes expired sessions and the carts whose session is gone. InnoDB reuses the freed
 pages, so regular pruning bounds the table's size however long a schema is served.
 
+```sql
+SET innodb_lock_wait_timeout = <search_build_timeout>   -- from init_command
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+BEGIN
+  SELECT results_built_at FROM user_searches
+    WHERE id = ? FOR UPDATE      -- the serialization point
+  INSERT INTO search_results
+    SELECT ?, ROW_NUMBER() OVER (ORDER BY ..., obs_general.id), obs_general.id
+    FROM obs_general LEFT JOIN ...
+  UPDATE user_searches
+    SET result_count = ?, results_built_at = NOW()
+COMMIT                            -- releases the row lock
+```
+
 **The build runs once per search however many requests race for it.** Registration
 commits on its own first, because a failed duplicate insert holds a shared lock until its
 transaction ends. Then, inside one `READ COMMITTED` transaction, so the `INSERT ...
@@ -408,7 +528,26 @@ instead of the child tables.
 - **`cart.session_id` fits Django's session key**, and the cart's foreign key cascades
   a deleted observation's rows away.
 
-### 2.10 What does not change
+### 2.10 Key changes at a glance
+
+| Table | Key | Change | Why |
+|---|---|---|---|
+| `obs_general` | `(time1, opus_id)` | added | the default sort, covering with the primary key appended |
+| `obs_general` | `(right_asc, d_right_asc)`, `(declination1, declination2)` | added | a covering scan for the modular right ascension predicate; an index range for declination |
+| `obs_ring_geometry` | `(<col>, d_<col>)` per longitude pair | added | the same, for the ring longitude pairs |
+| every child `obs_*` | `PRIMARY KEY (obs_general_id)` | replaces `id` | the join key is the row locator; one unique lookup per child |
+| every child `obs_*` | `FOREIGN KEY (opus_id)`, the `bundle_id` key | removed | a second 50-character key checked on every write and never used for a join; bundles are found through `obs_general` |
+| every child `obs_*` | `FOREIGN KEY (obs_general_id)` | added in finalization | created without, added once, so the load pays no per-row check |
+| `obs_surface_geometry_target` | `PRIMARY KEY (target_name, obs_general_id)`, `KEY (obs_general_id)` | new | per-target locality; per-observation lookup as a covering dive |
+| `obs_surface_geometry_target` | `(target_name, <col>)` per keyed column, `(target_name, <X1>, <X2>)` per displayed range pair | replaces about a hundred `KEY (col)` per column | one tree per column instead of one per target per column; the range pairs index-only |
+| `obs_general_target_name`, `_class` | `PRIMARY KEY (mult_id, obs_general_id)`, `KEY (obs_general_id)` | new | semi-join for the search; grouped join for the counts |
+| `mult` | `PRIMARY KEY (field_id, id)`, `UNIQUE (field_id, value)` | replaces one table per column | a label is a primary-key lookup; one model instead of ninety |
+| `search_results` | `PRIMARY KEY (search_id, sort_order)`, `UNIQUE (search_id, obs_general_id)` | new | a page is one range; a position lookup is a probe |
+| `user_searches` | `UNIQUE (search_hash)` | replaces the four-hash constraint | one 32-byte key per registration |
+| autocomplete string columns | `FULLTEXT ... WITH PARSER ngram` | added | substring search without a scan; the B-tree stays |
+| `obs_files` | `(opus_id, short_name, version_name)`, `(obs_general_id)` | replace six single-column keys | the file reads and the download join, and nothing else |
+
+### 2.11 What does not change
 
 The rows and columns of `partables`, `param_info`, and the dictionary tables (their string
 types and row timestamps follow §2.9), `cart` beyond what §2.9 states, and the public API's
@@ -558,6 +697,20 @@ surface.
   ?` and `sort_order BETWEEN ? AND ?`, then LEFT JOINs each child category on
   `obs_general_id` (a unique lookup each), with surface geometry categories aliased and
   filtered by target.
+  For a Saturn surface geometry column the page reads:
+
+  ```sql
+  ... FROM obs_general
+  JOIN search_results r
+    ON r.obs_general_id = obs_general.id
+   AND r.search_id = ?
+   AND r.sort_order BETWEEN ? AND ?
+  LEFT JOIN obs_surface_geometry_target
+         AS obs_surface_geometry__saturn
+    ON obs_general.id = obs_surface_geometry__saturn.obs_general_id
+   AND obs_surface_geometry__saturn.target_name = ?
+  ```
+
 - **The fan-out** (mult counts, range endpoints, triggered tables) joins `search_results`
   the same way; mult counts on list columns group the junction table, and labels and
   ranks come from `mult` by `(field_id, id)`; surface geometry
