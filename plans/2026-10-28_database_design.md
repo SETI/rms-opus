@@ -129,7 +129,7 @@ erDiagram
     uint id PK
     binary32 search_hash UK "SHA-256 of the canonical search"
     uint result_count
-    datetime materialized_at
+    datetime results_built_at
     datetime last_used_at "refreshed daily; the pruner reads it"
   }
   table_names {
@@ -328,7 +328,7 @@ user_searches(
   id               INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   search_hash      BINARY(32)   NOT NULL,  -- SHA-256 of the canonical search
   result_count     INT UNSIGNED NULL,
-  materialized_at DATETIME     NULL,
+  results_built_at DATETIME     NULL,
   last_used_at     DATETIME     NOT NULL,
   UNIQUE KEY (search_hash)
 )
@@ -367,23 +367,23 @@ is served.
 SET innodb_lock_wait_timeout = <search_materialization_timeout>   -- from init_command
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 BEGIN
-  SELECT materialized_at FROM user_searches
+  SELECT results_built_at FROM user_searches
     WHERE id = ? FOR UPDATE      -- the serialization point
   INSERT INTO search_results
     SELECT ?, ROW_NUMBER() OVER (ORDER BY ..., obs_general.id), obs_general.id
     FROM obs_general LEFT JOIN ...
   UPDATE user_searches
-    SET result_count = ?, materialized_at = NOW()
+    SET result_count = ?, results_built_at = NOW()
 COMMIT                            -- releases the row lock
 ```
 
 **A search is materialized once however many requests race for it.** Registration
 commits on its own first, because a failed duplicate insert holds a shared lock until its
 transaction ends. Then, inside one `READ COMMITTED` transaction, so the `INSERT ...
-SELECT` takes no shared locks on the rows it reads, the materializing request reads the
-search's own `user_searches` row `FOR UPDATE`; a second materializing request blocks on
-that row until the first commits, then sees `materialized_at` set and returns. If the row
-is not yet materialized the materializing request inserts `SELECT ?, ROW_NUMBER() OVER
+SELECT` takes no shared locks on the rows it reads, the search builder reads the
+search's own `user_searches` row `FOR UPDATE`; a second search builder blocks on
+that row until the first commits, then sees `results_built_at` set and returns. If the row
+is not yet materialized the search builder inserts `SELECT ?, ROW_NUMBER() OVER
 (ORDER BY ...), obs_general.id FROM ...`, writes the count and the timestamp, and commits,
 which releases the lock. The transaction contains nothing before the locking read, and the
 result rows are read after it commits, so a `REPEATABLE READ` snapshot can never predate

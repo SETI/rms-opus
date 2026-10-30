@@ -1149,7 +1149,7 @@ bump nor the re-import (§1, Deploy).
     regardless, and the only reason to partition would be O(1) removal of stale searches,
     and the pruner below does that with chunked deletes.
   - **`user_searches` is rebuilt to what it is used for**: `id`, `search_hash BINARY(32)
-    NOT NULL` with a unique key, `result_count INT UNSIGNED NULL`, `materialized_at
+    NOT NULL` with a unique key, `result_count INT UNSIGNED NULL`, `results_built_at
     DATETIME NULL`, and `last_used_at` (the pruner, below). The four `*_json` columns
     (written, read by nothing), the four `*_hash` columns with their `'NONE'` sentinels
     and four-column unique constraint, and `timestamp` go. `set_user_search_number` keeps
@@ -1175,7 +1175,7 @@ bump nor the re-import (§1, Deploy).
        chunks of 100,000 by `search_id`. Ids are never reused within a schema, so the
        other cache entries keyed by a pruned id are unreachable and age out without a
        flush. The id-to-count cache entry goes: every request reads `result_count` and
-       `materialized_at` from `user_searches` by primary key, one row, and a missing row
+       `results_built_at` from `user_searches` by primary key, one row, and a missing row
        means the search is registered afresh.
     2. **Expired sessions**, through Django's own `clearsessions`.
     3. **Cart rows whose session no longer exists**, with `DELETE c FROM cart AS c LEFT
@@ -1211,10 +1211,10 @@ bump nor the re-import (§1, Deploy).
     locks on the rows it reads; the `FOR UPDATE` read still returns the latest committed
     row), with the session's `innodb_lock_wait_timeout` set to `[django]
     search_materialization_timeout` (default 300 seconds, longer than a broad cold
-    materialization): `SELECT materialized_at FROM user_searches WHERE id = %s FOR
-    UPDATE`. The row lock is the serialization point: a second materializing request
+    materialization): `SELECT results_built_at FROM user_searches WHERE id = %s FOR
+    UPDATE`. The row lock is the serialization point: a second search builder
     blocks on the same statement until the first commits, then reads the committed
-    `materialized_at` and returns. If it is set, return; else `INSERT INTO search_results
+    `results_built_at` and returns. If it is set, return; else `INSERT INTO search_results
     (search_id, sort_order, obs_general_id) SELECT %s, ROW_NUMBER() OVER (ORDER BY ...),
     obs_general.id FROM ...`, take `cursor.rowcount` as `result_count`, write both
     columns, commit (which releases the lock). A lock wait that times out raises;
