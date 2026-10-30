@@ -1,6 +1,6 @@
 # The OPUS database design
 
-**Scope:** the MySQL schema `opus_import` builds and `opus_app` serves, as the
+**Scope:** the MySQL schema `opus_import` fills and `opus_app` serves, as the
 performance plan (`plans/2026-10-27_database_performance_plan.md`) leaves it, and the
 reasons for each departure from the schema in the tree at `2179d937`. The analysis that
 motivates it is `critiques/2026-10-27_database_format_analysis.md`. Nothing here is
@@ -13,9 +13,15 @@ every other `obs_*` table hangs off it on the hub's integer id and nothing else.
 things that are tables today because of a data value or a unit of work become rows: a
 surface geometry target is a value in one table, not a table of its own; a search is a
 set of rows in one shared results table, not a table of its own; a page is a range of
-those rows, not a temporary table. Indexes are built once, after the load, by sort, and
+those rows, not a temporary table. Indexes are created once, after the load, by sort, and
 composite where a query shape needs one. Every piece of per-user and per-search state
 lives in the database, so any worker can serve any request.
+
+**Terms.** A search is **materialized** when its matching observations are written into
+`search_results` in sort order; later requests read those rows. An import into a schema
+with no version row is a **fresh import**, which creates the tables with only their
+primary and unique keys and builds the other indexes once at the end; an import into a
+finished schema is an **append**. An **index build** is the creation of secondary indexes.
 
 ---
 
@@ -33,7 +39,7 @@ design removes DDL from the request path entirely and from the import's inner lo
 row.** The import writes a bundle into import-namespace copies of the tables, then copies
 it into the permanent tables, and both sets carry every index the schema declares plus a
 foreign key on both `obs_general_id` and the 50-character `opus_id`. The design writes a
-fresh schema once, with only its primary and unique keys, and builds the rest afterward.
+fresh schema once, with only its primary and unique keys, and creates the rest afterward.
 
 **Nearly every column is its own index and no query shape has a composite one.** The
 default sort, the angular pairs, and the per-target searches each read more pages than a
@@ -123,7 +129,7 @@ erDiagram
     uint id PK
     binary32 search_hash UK "SHA-256 of the canonical search"
     uint result_count
-    datetime results_built_at
+    datetime materialized_at
     datetime last_used_at "refreshed daily; the pruner reads it"
   }
   table_names {
@@ -322,7 +328,7 @@ user_searches(
   id               INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   search_hash      BINARY(32)   NOT NULL,  -- SHA-256 of the canonical search
   result_count     INT UNSIGNED NULL,
-  results_built_at DATETIME     NULL,
+  materialized_at DATETIME     NULL,
   last_used_at     DATETIME     NOT NULL,
   UNIQUE KEY (search_hash)
 )
@@ -340,53 +346,56 @@ The count is stored once. Partitioning is not used: `search_id` is the primary-k
 so every per-search read is one range regardless. The unique key serves the cart's range
 editor, which resolves an observation's position within a search, and makes a join that
 duplicates an observation fail rather than repeat it on a page; every alias join in the
-build is one row per observation. A `default_rank` column on `obs_general`, the position
-in the default sort, which would let the empty search page without a build, is evaluated
-on full-scale data at the end of the plan and added only if it measures a clear gain.
+materialization is one row per observation. A `default_rank` column on `obs_general`, the
+position in the default sort, which would let the empty search page without a
+materialization, is evaluated on full-scale data at the end of the plan and added only if
+it measures a clear gain.
 
 **Old searches are pruned, least recently used first** (#350). `last_used_at` is
 refreshed at most once a day per search, from the cached entry, and skipped while the
-search is being built, so it costs no write per request and never waits on the row lock. A
-scheduled command deletes a search unused for a set number of days: its cache entry first,
-then its `user_searches` row, so a new request registers it afresh, then its result rows
-in chunks. Every request reads the search's count and build time from `user_searches` by
-primary key, so a cached id whose row is gone is a miss, not a short page; only the
-hash-to-id entry is cached, and ids are never reused within a schema. The same command
-removes expired sessions and the carts whose session is gone. InnoDB reuses the freed
-pages, so regular pruning bounds the table's size however long a schema is served.
+search is being materialized, so it costs no write per request and never waits on the row
+lock. A scheduled command deletes a search unused for a set number of days: its cache
+entry first, then its `user_searches` row, so a new request registers it afresh, then its
+result rows in chunks. Every request reads the search's count and materialization time
+from `user_searches` by primary key, so a cached id whose row is gone is a miss, not a
+short page; only the hash-to-id entry is cached, and ids are never reused within a schema.
+The same command removes expired sessions and the carts whose session is gone. InnoDB
+reuses the freed pages, so regular pruning bounds the table's size however long a schema
+is served.
 
 ```sql
-SET innodb_lock_wait_timeout = <search_build_timeout>   -- from init_command
+SET innodb_lock_wait_timeout = <search_materialization_timeout>   -- from init_command
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 BEGIN
-  SELECT results_built_at FROM user_searches
+  SELECT materialized_at FROM user_searches
     WHERE id = ? FOR UPDATE      -- the serialization point
   INSERT INTO search_results
     SELECT ?, ROW_NUMBER() OVER (ORDER BY ..., obs_general.id), obs_general.id
     FROM obs_general LEFT JOIN ...
   UPDATE user_searches
-    SET result_count = ?, results_built_at = NOW()
+    SET result_count = ?, materialized_at = NOW()
 COMMIT                            -- releases the row lock
 ```
 
-**The build runs once per search however many requests race for it.** Registration
+**A search is materialized once however many requests race for it.** Registration
 commits on its own first, because a failed duplicate insert holds a shared lock until its
 transaction ends. Then, inside one `READ COMMITTED` transaction, so the `INSERT ...
-SELECT` takes no shared locks on the rows it reads, the builder reads the search's own
-`user_searches` row `FOR UPDATE`; a second builder blocks on that row until the first
-commits, then sees `results_built_at` set and returns. If the row is unbuilt the builder
-inserts `SELECT ?, ROW_NUMBER() OVER (ORDER BY ...), obs_general.id FROM ...`, writes the
-count and the timestamp, and commits, which releases the lock. The transaction contains
-nothing before the locking read, and the result rows are read after it commits, so a
-`REPEATABLE READ` snapshot can never predate the build. A row lock is transaction-scoped:
-a worker that dies releases it with its rollback, it is the same statement on both brands,
-and it works through any connection pooling. The lock wait timeout is the session's
-`innodb_lock_wait_timeout`, set from `[django] search_build_timeout` (default 300 seconds)
-through the connection's `init_command`, long enough for a broad cold build and at least
-30 seconds below the web server's worker timeout, since a worker killed mid-build rolls
-the build back. A waiter whose wait times out ends its transaction and answers with the
-search-cache failure response; the build it waited on completes, and the next request
-finds it.
+SELECT` takes no shared locks on the rows it reads, the materializing request reads the
+search's own `user_searches` row `FOR UPDATE`; a second materializing request blocks on
+that row until the first commits, then sees `materialized_at` set and returns. If the row
+is not yet materialized the materializing request inserts `SELECT ?, ROW_NUMBER() OVER
+(ORDER BY ...), obs_general.id FROM ...`, writes the count and the timestamp, and commits,
+which releases the lock. The transaction contains nothing before the locking read, and the
+result rows are read after it commits, so a `REPEATABLE READ` snapshot can never predate
+the materialization. A row lock is transaction-scoped: a worker that dies releases it with
+its rollback, it is the same statement on both brands, and it works through any connection
+pooling. The lock wait timeout is the session's `innodb_lock_wait_timeout`, set from
+`[django] search_materialization_timeout` (default 300 seconds) through the connection's
+`init_command`, long enough for a broad cold materialization and at least 30 seconds below
+the web server's worker timeout, since a worker killed mid-materialization rolls the
+materialization back. A waiter whose wait times out ends its transaction and answers with
+the search-cache failure response; the materialization it waited on completes, and the
+next request finds it.
 
 The application's cache trusts its entries (a hash-to-id or id-to-count hit is not
 re-verified), so **every reset of these two tables is followed by a cache flush**: the
@@ -394,13 +403,14 @@ import's reset step runs the application's cache flush, the deploy restarts the 
 service after it, and the benchmark harness restarts the cache it owns. Without the flush, an
 entry that outlived a truncate would hand one search's rows to another once ids restart.
 
-The cost model is stated so the right thing is measured: the build is the same sort and
-the same number of inserts, now into a shared table with a secondary unique index, so the
-cold build itself is expected no faster. The gains are no DDL in the request path, a
-bounded table count, the stored count, and one build per search under concurrency.
+The cost model is stated so the right thing is measured: the materialization is the same
+sort and the same number of inserts, now into a shared table with a secondary unique
+index, so the cold materialization itself is expected no faster. The gains are no DDL in
+the request path, a bounded table count, the stored count, and one materialization per
+search under concurrency.
 
 If the measured re-sort number still warrants it, `user_searches` gains a second hash
-over the set alone, so a re-sort of a built set reorders its ids instead of
+over the set alone, so a re-sort of a materialized set reorders its ids instead of
 re-evaluating the predicate.
 
 ### 2.5 Junction tables for the list columns
@@ -441,7 +451,7 @@ is absent and refuses to overwrite a different value; scorched earth deletes it,
 append (§3) holds it at `appending` while it runs. The web application checks it at
 startup and serves 503 on a mismatch, a missing row, or a state other than `ready`; both
 deploy scripts check the served schema's row before running any import or migration step.
-A half-built schema therefore cannot be served or promoted, and new code cannot stamp an
+A half-imported schema therefore cannot be served or promoted, and new code cannot stamp an
 old schema.
 
 ### 2.8 Mult values
@@ -555,7 +565,7 @@ response bodies, including the order of results sorted by a mult column.
 
 ---
 
-## 3. How the schema is built
+## 3. How the schema is created
 
 The import writes every table directly; there is no import namespace and no copy. What
 it does is chosen by the target schema's state, never by a command-line switch, and the
@@ -563,15 +573,15 @@ import logs which it chose, for which schema and version:
 
 | Target schema | The import |
 |---|---|
-| No version row and no secondary indexes: empty, or a build still in progress | **builds**: steps 2 to 5 below |
+| No version row and no secondary indexes: empty, or a fresh import still in progress | **imports fresh**: steps 2 to 5 below |
 | A version row that matches the code, `ready` | **appends** (below) |
 | A version row that matches the code, `appending` | **resumes the append** |
 | A version row from another release | refuses, naming both versions |
 | No version row but secondary indexes: an interrupted finalization | refuses `--import`; a finalization-only invocation resumes it |
 
 A full import runs one invocation per bundle group, and every one after the first finds a
-build in progress and continues it. The bundle steps are chosen by this state; finalization
-is an explicit step that the sequences run once at the end.
+fresh import in progress and continues it. The bundle steps are chosen by this state;
+finalization is an explicit step that the sequences run once at the end.
 
 1. **Scorched earth** drops the `obs_` tables, the three mult tables, and `cart`, and
    deletes the `schema_version` row.
@@ -589,7 +599,7 @@ is an explicit step that the sequences run once at the end.
    swap connection sets a short `lock_wait_timeout` and retries, since the rename waits
    for open transactions on those tables); `user_searches` and `search_results` are reset
    and the cache flush of §2.4 follows.
-4. **Finalization** builds, by sort: `FULLTEXT` keys first, each in its own statement
+4. **Finalization** creates, by sort: `FULLTEXT` keys first, each in its own statement
    (the first one rebuilds its table); then B-tree indexes concurrently across tables,
    grouped per table within a temporary-space budget; then foreign keys serially under
    `foreign_key_checks = 0`; then the mult step, which deletes values nothing references
@@ -632,7 +642,7 @@ how a served schema is updated.
 
 An incremental update replaces a bundle with a new copy, adds a bundle, or drops one. A
 browser sees nothing of it until it is finished, and then sees all of it at once. The
-update is built as a new schema and promoted whole, exactly as a full import is:
+update is created as a new schema and promoted whole, exactly as a full import is:
 
 1. **Seed.** The import, given `--clone-from-schema <served>` on an empty target, creates
    the tables as step 2 does and copies the served schema's rows into them, refusing when
@@ -647,12 +657,12 @@ update is built as a new schema and promoted whole, exactly as a full import is:
    `obs_general_id` and its mult ids. The served schema is only read.
 2. **Import.** How the seeded tables are keyed depends on how much changes: when the
    replaced bundles hold more `obs_general` rows than a measured fraction of the schema,
-   the seed creates bare tables and finalization builds every index once, by sort; below
+   the seed creates bare tables and finalization creates every index once, by sort; below
    it, the seed copies each table with its indexes in place and the bundles load with the
    indexes up, so a small update rebuilds nothing. The target has no version row yet
-   either way, so the bundles go through the ordinary build of step 2. Their rows take ids
-   above the copied maximum, new mult values append, and a new surface geometry target is
-   a row, not a table (§2.3).
+   either way, so the bundles go through the ordinary fresh import of step 2. Their rows
+   take ids above the copied maximum, new mult values append, and a new surface geometry
+   target is a row, not a table (§2.3).
 3. **Steps 3 to 5 as for a full import:** aux tables, finalization, dictionary,
    validation, and the version row. `cart`, `user_searches`, and `search_results` are
    created empty.
@@ -670,15 +680,15 @@ sessions and carts as they stand at that moment, and only a cart row for an obse
 the previous schema lacks is lost.
 
 **Why not in place, and why not a table swap.** Writing into the served schema is not
-atomic: between the first bundle delete and the closing reset a request can build a search
-against a partial observation set and be served from it, and the workers' per-process
-caches go stale. A `RENAME TABLE` swap of staged copies inside the served schema is atomic
-for the names, but it needs the same full copy, still leaves the per-process caches stale
-until the restart the promotion does anyway, and leaves the old tables beside the new; it
-buys nothing over a new schema and a switch. The aux and dictionary tables are different:
-they are small, rebuilt whole from the schema files, and read through per-process caches
-the restart refreshes, so the code-only deploy swaps them in place with one atomic `RENAME
-TABLE` rather than building a new schema for them.
+atomic: between the first bundle delete and the closing reset a request can materialize a
+search against a partial observation set and be served from it, and the workers'
+per-process caches go stale. A `RENAME TABLE` swap of staged copies inside the served
+schema is atomic for the names, but it needs the same full copy, still leaves the
+per-process caches stale until the restart the promotion does anyway, and leaves the old
+tables beside the new; it buys nothing over a new schema and a switch. The aux and
+dictionary tables are different: they are small, rebuilt whole from the schema files, and
+read through per-process caches the restart refreshes, so the code-only deploy swaps them
+in place with one atomic `RENAME TABLE` rather than creating a new schema for them.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the unique keys are how duplicates
@@ -691,7 +701,7 @@ surface.
 - **Register the search.** Hash the selections, types, units, and order into one
   `search_hash`; insert the `user_searches` row or read the existing one (the unique key
   resolves a race between workers).
-- **Build if needed**, under the row lock (§2.4); otherwise read `result_count` and the
+- **Materialize if needed**, under the row lock (§2.4); otherwise read `result_count` and the
   rows that exist.
 - **A page** joins `obs_general` to `search_results` on `obs_general_id` with `search_id =
   ?` and `sort_order BETWEEN ? AND ?`, then LEFT JOINs each child category on
@@ -718,7 +728,7 @@ surface.
   `table_names.disp_order`.
 - **Autocomplete** matches the ngram index and reads the stored count instead of counting.
 - **After a deploy**, a management command issues the empty search and its fan-out through
-  the application's own code path, so the first visitor finds the landing page built.
+  the application's own code path, so the first visitor finds the landing page materialized.
 
 ---
 
@@ -735,9 +745,10 @@ properties that make that true, and the one constraint:
   obs_general_id)`), and Django's sessions (the database engine). A browser's next
   request can land on any worker and see the same search, the same page, and the same
   cart.
-- **The search build serializes on a row lock inside a database transaction**; no worker
-  holds anything across requests. The lock is released by rollback when a connection
-  dies, identical on both brands, and unaffected by connection pooling or proxies.
+- **The search materialization serializes on a row lock inside a database transaction**;
+  no worker holds anything across requests. The lock is released by rollback when a
+  connection dies, identical on both brands, and unaffected by connection pooling or
+  proxies.
 - **No table is worker-local.** The design adds none, and the per-search and per-page
   tables it removes (`cache_NNN`, the temporary slices) were the only ones created from a
   request.

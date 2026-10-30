@@ -20,7 +20,7 @@ re-read them against the tree before acting on this file.
 configuration is loaded, catching only a refused connection; `CACHES` is PyMemcache at
 that literal address with no expiry, or Django's local-memory cache per process when the
 probe fails (`src/opus_app/settings.py`, the probe near the top and the `CACHES` block).
-The application's own keys are `CACHE_SERVER_PREFIX + 'opus:<schema name>' + ...`, built
+The application's own keys are `CACHE_SERVER_PREFIX + 'opus:<schema name>' + ...`, assembled
 by hand at every `cache.get`/`cache.set` site, where `[django] cache_server_prefix` is the
 installation's prefix (its documented purpose is letting several installations share one
 memcached); the page-cache middleware (`UpdateCacheMiddleware`,
@@ -130,13 +130,14 @@ parameters and the default port. Each request opens and closes its own connectio
 - TLS settings for a managed service: a small addition to `[database]` and
   `DATABASES['OPTIONS']`. The port is PR-P1's `[database] port`, read into
   `DATABASES['PORT']`.
-- `max_connections` on the server must cover workers × processes × threads plus the
-  import and the warm-up. A connection proxy or transaction-mode pooler is compatible with
-  the design's search build, which locks the search's own row inside its transaction and
-  holds nothing across statements.
-- The load balancer's idle timeout bounds how long a request may wait for a build in
-  progress; `[django] search_build_timeout` should stay below it, or the front end answers
-  504 while the build completes and the next request finds it done.
+- `max_connections` on the server must cover workers × processes × threads plus the import
+  and the warm-up. A connection proxy or transaction-mode pooler is compatible with the
+  design's search materialization, which locks the search's own row inside its transaction
+  and holds nothing across statements.
+- The load balancer's idle timeout bounds how long a request may wait for a
+  materialization in progress; `[django] search_materialization_timeout` should stay below
+  it, or the front end answers 504 while the materialization completes and the next
+  request finds it done.
 - No read replica on the search path (`plans/2026-10-28_database_design.md`, §5).
 
 ## 6. Managed database services

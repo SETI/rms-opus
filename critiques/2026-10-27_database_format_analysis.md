@@ -357,7 +357,7 @@ make it worse than it needs to be:
 - Registering the search costs more than it should. `user_searches` stores four
   32-character hex MD5s with `'NONE'` sentinels, whose unique key spans up to 512 bytes
   and is probed on every search, and four JSON texts that nothing reads. The memcached
-  key built from the four hashes measures 219 characters under the test configuration
+  key assembled from the four hashes measures 219 characters under the test configuration
   against memcached's 250 (#1500). The `MultipleObjectsReturned` handler in
   `set_user_search_number` is unreachable: the exception it names could only come from
   the `get` inside its sibling `IntegrityError` handler.
@@ -380,13 +380,13 @@ SELECT ?, ROW_NUMBER() OVER (ORDER BY obs_general.time1, obs_general.opus_id), o
 
 `ROW_NUMBER()` (8.0) replaces the `AUTO_INCREMENT`-follows-`INSERT ... SELECT ... ORDER
 BY` behavior the current design depends on, which works but is not something the SQL
-standard promises. The page slice becomes a derived table — `JOIN (SELECT id,
-sort_order FROM search_results WHERE search_id = ? ORDER BY sort_order LIMIT ? OFFSET ?)
-AS page ON page.id = obs_general.id` — which MySQL materializes internally with no DDL.
-`user_searches` grows a `result_count` column written from `ROW_COUNT()` at build time,
-so the count endpoint never scans. Stale searches are deleted by `search_id` in a
-janitor, or — if partitioned by `search_id` range instead of hash — dropped a partition
-at a time.
+standard promises. The page slice becomes a derived table — `JOIN (SELECT id, sort_order
+FROM search_results WHERE search_id = ? ORDER BY sort_order LIMIT ? OFFSET ?) AS page ON
+page.id = obs_general.id` — which MySQL materializes internally with no DDL.
+`user_searches` grows a `result_count` column written from `ROW_COUNT()` when the search
+is materialized, so the count endpoint never scans. Stale searches are deleted by
+`search_id` in a janitor, or — if partitioned by `search_id` range instead of hash —
+dropped a partition at a time.
 
 A second, independent gain: separate the *set* from the *order*. Hash
 `selections + qtypes + units` to a result set, and `order` to a sort of that set. Re-sorting
@@ -476,7 +476,7 @@ heading; several of the import entries also appear on the wishlist recorded in #
    duplicates (#584 asks for the integrity checks to live in `--validate-perm`).
 6. **Copy tables in parallel, or stop copying** (#1253). The import-to-permanent copy is one
    independent `INSERT ... SELECT` per table after `obs_general`; a thread pool of
-   connections does them concurrently. Better: the deploy chain already builds into a
+   connections does them concurrently. Better: the deploy chain already imports into a
    fresh schema and switches with a symlink, which provides the same "nothing the
    public sees changes until the end" guarantee the two-namespace design exists for.
    Writing the permanent tables directly in a fresh schema, and keeping the `imp_`
@@ -506,11 +506,12 @@ heading; several of the import entries also appear on the wishlist recorded in #
 
 ### Web application
 
-13. **Replace per-search tables with `search_results`** (§4.1; #350, #665) and the per-page
-    temporary table with a derived table. Removes DDL from the request path, bounds
-    the table count, and makes concurrent searches contend on row locks instead of
-    dictionary locks. Store `result_count` in `user_searches` at build time, and key
-    the search on one fixed-width hash with nothing else stored (§4.1).
+13. **Replace per-search tables with `search_results`** (§4.1; #350, #665) and the
+    per-page temporary table with a derived table. Removes DDL from the request path,
+    bounds the table count, and makes concurrent searches contend on row locks instead of
+    dictionary locks. Store `result_count` in `user_searches` when the search is
+    materialized, and key the search on one fixed-width hash with nothing else stored
+    (§4.1).
 14. **Separate the result set from its order** (§4.1, second paragraph), so re-sorting
     is a sort of ids rather than a re-search.
 15. **Run the workers for I/O, not CPU.** The handlers wait on MySQL; `gunicorn
