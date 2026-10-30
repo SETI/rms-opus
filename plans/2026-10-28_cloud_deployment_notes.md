@@ -132,11 +132,11 @@ parameters and the default port. Each request opens and closes its own connectio
   `DATABASES['PORT']`.
 - `max_connections` on the server must cover workers × processes × threads plus the import
   and the warm-up. A connection proxy or transaction-mode pooler is compatible with the
-  design's search materialization, which locks the search's own row inside its transaction
+  design's search build, which locks the search's own row inside its transaction
   and holds nothing across statements.
 - The load balancer's idle timeout bounds how long a request may wait for a
-  materialization in progress; `[django] search_materialization_timeout` should stay below
-  it, or the front end answers 504 while the materialization completes and the next
+  search build in progress; `[django] search_build_timeout` should stay below
+  it, or the front end answers 504 while the search build completes and the next
   request finds it done.
 - No read replica on the search path (`plans/2026-10-28_database_design.md`, §5).
 

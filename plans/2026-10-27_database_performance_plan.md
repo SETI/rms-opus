@@ -75,7 +75,7 @@ architecture Phases 0 to 6 produced.
 | Scales | Two. **Fixture scale** is the checked-in mini-holdings on any machine with a database server, minutes. **Full scale** is the schema `scripts/import/import_for_tests.sh` imports from the Ring-Moon Systems Node's holdings; it is the database the API goldens are pinned to, and "a copy of production" is never used, because the goldens would not pass against it. The full-scale machine is any host that has the holdings and either room for a harness-owned database server (§2.2) or a database account with the grants §2.2 names, which the self-hosted integration runner already is; **no administrator access to it is assumed** (§2.2, §3). Every PR measures at fixture scale. PRs marked **full scale** in §4 must also be measured there before merge. |
 | Database server under test | **Preferred: a server the harness owns.** `bench_*` can start a `mysqld` from the generic MySQL tarball (a path under the executor's home, so no system profile confines it) with its own data directory, port, socket, and `my.cnf`, as it starts gunicorn and memcached; the tuning baseline (§2.4) is then applied in full, including the startup-only settings, and db-cold is an exact restart. **Fallback: a shared server** the executor's account has the §2.2 grants on, in which case the harness evicts what it can online, records what it could not, and labels the state. Both scales may use either; the result records which, and `compare.py` refuses to compare results that differ in it. |
 | Web server under test | The harness starts its own server for every web run, on both scales: gunicorn with `--worker-class gthread --workers 4 --threads 2 --worker-connections 2`, the same eight request slots as the Node's mod_wsgi arrangement (`docs/user_guide_web_server.rst`), with `--worker-connections 2` so a worker does not queue requests behind its two threads while another worker is idle. gunicorn imports the application at worker start where mod_wsgi does so on each process's first request; the result records `app_loading = "eager"`. The result records `server_model`. A run against an operator-started mod_wsgi is welcome and labeled as such; `compare.py` refuses to compare two results whose `server_model` differs. |
-| Deployment layout | The schema supports **one database server and any number of stateless web workers** with no later change (`§D-5`): every piece of per-user and per-search state lives in the database, the search's materialization serializes on a row lock in the database, and no PR adds a worker-local table or file. The application-level work a multi-host deployment would need (a shared cache, shared download storage, a fleet deploy step) is **not in this plan**; it is listed in `plans/2026-10-28_cloud_deployment_notes.md` for later. |
+| Deployment layout | The schema supports **one database server and any number of stateless web workers** with no later change (`§D-5`): every piece of per-user and per-search state lives in the database, the search build serializes on a row lock in the database, and no PR adds a worker-local table or file. The application-level work a multi-host deployment would need (a shared cache, shared download storage, a fleet deploy step) is **not in this plan**; it is listed in `plans/2026-10-28_cloud_deployment_notes.md` for later. |
 | PostgreSQL | **Optional, last, and complete if done.** All PostgreSQL work is at the end and can be finished at a later time; when it is done it is a complete port, because a comparison based on the import alone or on hand-translated queries is meaningless without the production runtime (the SQL the Django views emit, the driver's parameter handling, the connection lifecycle, and the worker model). Phases 0 to 6 therefore change nothing about PostgreSQL, write no PostgreSQL code, and depend on nothing from Phase P; they keep the brand boundary (next row) so that Phase P has less to translate. |
 | Brand dispatch | SQL that differs by brand lives in exactly two places: `opus_import.importdb.<brand>` for the import and `opus_app.apps.tools.sql_builder` for the application, the latter dispatching on `connection.vendor`. Driver exceptions are classified in `opus_app.apps.tools.db_utils`, which is the only module that imports a driver's error types. Views and steps never test the brand or a driver error code themselves. A reviewer checks this with `grep -rn "connection\.vendor\|\.brand\b\|MySQLdb\|psycopg\|MYSQL_[A-Z_]*" src/opus_app/apps src/opus_import/steps --include=*.py`, which after Phase P should hit only those modules; today it hits the views' driver-code tests, which Phase P moves. Phases 0 to 6 add MySQL implementations behind these boundaries; where a PR knows what the PostgreSQL rendering will be, it says so in a one-line **PostgreSQL note** for Phase P and writes no code for it. |
 | Parallel import design | **Single writer, many computers.** Worker processes turn index rows into table rows and return them with chunk-relative ids; the parent process alone rebases ids, resolves mult values, writes to the database, and emits the log. Items 1, 2, and 3 of the analysis (per-bundle id blocks, a mult finalizer, per-worker namespaces) are not done: with one writer there is no shared counter to protect, and ids and logs stay identical to the serial run, so the golden suites keep comparing byte for byte. Running several `opus_import` processes against one schema at once remains unsupported, and `import_all` stays sequential; the parallelism is inside each invocation. |
@@ -214,7 +214,7 @@ index-usage snapshot (`sys.schema_unused_indexes` and
 statement of each shape the analysis names, plus: a target search (the JSON list
 membership test), a broad time-range search, a **selective** default-sort search (a
 predicate matching under one percent of rows, sorted by the default order), the
-default-sort materialization of the empty search, one results page by offset, one mult
+default-sort search build of the empty search, one results page by offset, one mult
 count for a MULTIGROUP field, one range endpoint pair, one triggered-tables `DISTINCT`,
 one surface-geometry category lookup for one observation, one surface-geometry range
 search for one target, one autocomplete `LIKE`, and the result count. The blocks are what
@@ -1107,7 +1107,7 @@ bump nor the re-import (§1, Deploy).
   AND %s` predicate on the join to the cache table. `sort_order` is dense (a single
   `AUTO_INCREMENT` insert into a fresh table today; `ROW_NUMBER()` after PR-11), so the
   range is exact and the engine reads only the page's entries. `cart/views.py`'s
-  `_edit_cart_range` materializes the same kind of temporary table from the cart to resolve a
+  `_edit_cart_range` builds the same kind of temporary table from the cart to resolve a
   range; it moves to the same predicate over a `ROW_NUMBER()` derived table of the cart,
   and `create_table_as_select` (whose only callers are these two temporary ones) goes;
   `create_table_from_select_sql`, the non-temporary path `get_user_query_table` uses,
@@ -1125,10 +1125,10 @@ bump nor the re-import (§1, Deploy).
 - **Issues:** #350 asks for a least-recently-used cleanup of old search and cart data;
   after this PR no per-search table exists, and the pruner below removes old searches,
   expired sessions, and their carts. #665 asks for the count without the table
-  materialize; the count is stored at materialization time and read from `user_searches`
-  afterward, while the first request still waits for the materialization (the background
-  materialize it proposes is not adopted). #666 proposes `READ UNCOMMITTED` for the
-  materialization; not adopted, the materialization runs at the default isolation level
+  build; the count is stored at search build time and read from `user_searches`
+  afterward, while the first request still waits for the search build (the background
+  build it proposes is not adopted). #666 proposes `READ UNCOMMITTED` for the
+  search build; not adopted, the search build runs at the default isolation level
   and the concurrent cold measurement reports its lock cost. #1500 (the search cache key
   can exceed memcached's limit) is fixed here: the search's key becomes its fixed-width
   hash, and `api_string_search_choices`'s key, assembled the same way, is hashed to a
@@ -1153,7 +1153,7 @@ bump nor the re-import (§1, Deploy).
     DATETIME NULL`, and `last_used_at` (the pruner, below). The four `*_json` columns
     (written, read by nothing), the four `*_hash` columns with their `'NONE'` sentinels
     and four-column unique constraint, and `timestamp` go. `set_user_search_number` keeps
-    materializing exactly the four strings it hashes today and computes `search_hash` as the
+    building exactly the four strings it hashes today and computes `search_hash` as the
     SHA-256 of `json.dumps([selections_json, qtypes_json, units_json, order_json])`, with
     `None` where today's code writes `'NONE'`, so two requests share a row exactly when
     today's four hashes are equal; a unit test pins that over a table of request pairs,
@@ -1190,7 +1190,7 @@ bump nor the re-import (§1, Deploy).
     `user_searches` and `search_results` from their schema files**, through the brand class. It
     keeps `drop_cache_tables`'s place in the `--cleanup-aux-tables` set, so it runs as
     part of the closing step of every sequence (`import_all`, `import_for_tests.sh`, the
-    deploy scripts), and a search materialized during an import does not outlive it; this PR
+    deploy scripts), and a search built during an import does not outlive it; this PR
     adds it to `deploy_new_code_only.sh`, so a code-only release re-creates both tables
     in their new shape. The harness's state resets
     call the same function through the CLI
@@ -1198,20 +1198,20 @@ bump nor the re-import (§1, Deploy).
     on `cache_*` tables goes with the tables.
   - `get_user_query_table` is renamed `get_search_id` and returns `int | None`. Every
     consumer that took a table name (`search_cache_join_condition`, `add_from`,
-    `count_rows`, `column('sort_order', name)` in the cart, the Django cache keys materialized
+    `count_rows`, `column('sort_order', name)` in the cart, the Django cache keys built
     from the name) takes the id, and `sql_builder.search_results_source(search_id)`
     renders the filtered source (`search_results` with `WHERE search_id = %s`) for joins.
     `get_search_results_chunk`'s `BETWEEN` from PR-10 applies to `sort_order` of that
     source.
-  - **The materialize.** Registration (the insert or its read-back) commits on its own
+  - **The build.** Registration (the insert or its read-back) commits on its own
     first: a failed duplicate insert holds a shared lock on the index record until its
     transaction ends, and two losers inside one transaction would deadlock on the `FOR
     UPDATE`. Then, inside one `transaction.atomic()` opened with `SET TRANSACTION
     ISOLATION LEVEL READ COMMITTED` (so the `INSERT ... SELECT` takes no shared next-key
     locks on the rows it reads; the `FOR UPDATE` read still returns the latest committed
     row), with the session's `innodb_lock_wait_timeout` set to `[django]
-    search_materialization_timeout` (default 300 seconds, longer than a broad cold
-    materialization): `SELECT results_built_at FROM user_searches WHERE id = %s FOR
+    search_build_timeout` (default 300 seconds, longer than a broad cold
+    search build): `SELECT results_built_at FROM user_searches WHERE id = %s FOR
     UPDATE`. The row lock is the serialization point: a second search builder
     blocks on the same statement until the first commits, then reads the committed
     `results_built_at` and returns. If it is set, return; else `INSERT INTO search_results
@@ -1224,11 +1224,11 @@ bump nor the re-import (§1, Deploy).
     transaction-scoped, so a worker that dies releases it with its rollback, it needs no
     `finally`, it is the same statement on both brands (PostgreSQL note: `FOR UPDATE` with
     `SET LOCAL lock_timeout`), and it works through any connection pooling.
-  - **Timeouts.** `[django] search_materialization_timeout` is applied as
+  - **Timeouts.** `[django] search_build_timeout` is applied as
     `innodb_lock_wait_timeout` through `DATABASES['OPTIONS']['init_command']`, so it holds
     for every connection however it is pooled, and the docs require it to be at least 30
     seconds below the web server's worker timeout, because a worker killed
-    mid-materialization rolls the materialization back and the next waiter starts over.
+    partway through a search build rolls the search build back and the next waiter starts over.
   - **Every reset of the two tables is followed by a cache flush** (the cache trusts its
     entries: a hash-to-id or id-to-count entry that outlives a truncate would hand one
     search's rows to another once ids restart). Nothing in the import flushes the cache
@@ -1245,13 +1245,13 @@ bump nor the re-import (§1, Deploy).
     goes, and PR-21 relies on it being gone). `create_table_from_select_sql` and
     `CACHE_TABLE_COLUMN_DEFS` have no caller and go.
   - `dev_guide_database_schema.rst` and `dev_guide_webapp_search.rst` describe the table,
-    the materialization, and the row lock.
-- **Cost model, stated so the right metric is judged:** the materialization's dominant
+    the search build, and the row lock.
+- **Cost model, stated so the right metric is judged:** the search build's dominant
   cost is the same sort plus the same number of inserts, now into a shared table with one
-  secondary unique index; expect the cold materialization itself no faster. The gains are:
+  secondary unique index; expect the cold search build itself no faster. The gains are:
   no DDL in the request path and no table-cache churn, a bounded table count, the stored
   count (which removes a `COUNT(*)` from the result-count and autocomplete paths), and one
-  materialization per search under concurrency. Whether distinct new searches serialized
+  search build per search under concurrency. Whether distinct new searches serialized
   on anything before this PR is **not asserted**; the concurrency scenario measures it.
 - **Measurement:** the concurrency scenario in all three states, cold latency of every
   search scenario (reported, not judged), the digests, and the table count after the web
@@ -1260,8 +1260,8 @@ bump nor the re-import (§1, Deploy).
   app-cold, distinct searches**, with the shared-search half as the secondary.
 - **Acceptance:** §2.5; API goldens unchanged; in `integration_tests` (they need the
   database): a test that issues the same new search from two threads and asserts one
-  materialization and two identical counts; a test that an exception inside the
-  materialization rolls back and leaves the row not yet materialized; a pruner test with
+  search build and two identical counts; a test that an exception inside the
+  search build rolls back and leaves the row not yet built; a pruner test with
   planted searches, sessions, and carts (an old search and its rows and cache entry gone,
   a recent one kept, a cached id of a pruned search re-registering, an expired session and
   its cart rows gone, a live one kept); the harness's state resets updated to
@@ -1320,7 +1320,7 @@ bump nor the re-import (§1, Deploy).
     children ("the parent's id"), `golden_io.SURROGATE_ID_COLUMNS`,
     `dev_guide_database_schema.rst`.
 - **Measurement:** schema size, cold and warm latency of every search scenario and of the
-  page scenarios, the plan of the search's materialization (each child join a unique
+  page scenarios, the plan of the search build (each child join a unique
   lookup on the primary key), full-scale import wall-clock. Target metric: app-cold
   broad-search latency, with schema size as the secondary.
 - **Acceptance:** §2.5; API goldens unchanged (the `opusid` column and its autocomplete
@@ -1348,7 +1348,7 @@ bump nor the re-import (§1, Deploy).
   so their value is a narrower covering scan than the clustered row. **Add only; prune
   nothing** (§1). PostgreSQL note: `INCLUDE (id)` and `NULLS FIRST`, and a `VACUUM` after
   load for index-only scans.
-- **Measurement:** the plan of the empty search's materialization before and after; the
+- **Measurement:** the plan of the empty search build before and after; the
   acceptance shape is **a covering index scan with the sort in memory**
   (`Sort_merge_passes` zero for the statement), not the disappearance of the sort
   iterator, because MySQL probably still sorts for `ROW_NUMBER()` even when an index
@@ -1773,9 +1773,9 @@ bump nor the re-import (§1, Deploy).
   - The generated models are regenerated; `docs/dev_guide_database_schema.rst` describes
     the types and the character-set rule.
 - **Measurement:** data and index bytes per table before and after; the db-cold
-  materialization of the broad default-sort search with its `Sort_merge_passes` and
+  search build of the broad default-sort search with its `Sort_merge_passes` and
   `Created_tmp_disk_tables` counters; the warm results page. Target metric: db-cold
-  materialization of the broad default-sort search.
+  search build of the broad default-sort search.
 - **Acceptance:** §2.5, with the API-golden ruling above; a test asserts that an `opus_id`
   lookup in mixed case still matches.
 - **Requires full re-import:** yes.
@@ -1787,7 +1787,7 @@ bump nor the re-import (§1, Deploy).
 
 - **Design.** The empty search with the default sort is the search every visitor issues,
   and its mult counts and range endpoints are one cold fan-out per deploy; after PR-11 the
-  search is one `search_results` materialize and every fan-out result is memcached until the
+  search is one `search_results` build and every fan-out result is memcached until the
   next import. Rather than teaching the import to compute the application's search hash
   (it depends on `DEFAULT_SORT_ORDER`, `parse_order_slug`'s resolution through
   `param_info`, `sort_dictionary`, and `strip_numeric_suffix`, none of which the import can
@@ -1900,13 +1900,13 @@ bump nor the re-import (§1, Deploy).
 **PR-20: feat: separate the result set from its order** (item 14; `§C-4.1`; `§D-2.4`)
 
 - **Gate:** opened only if, in PR-19's full-scale `EXPLAIN ANALYZE` of the broad search's
-  materialize, the actual time of the outermost `Filter` iterator below the `Sort`, divided by
+  build, the actual time of the outermost `Filter` iterator below the `Sort`, divided by
   the `Sort`'s, exceeds one quarter, which is the share a set hash saves on a re-sort. The
   number decides.
 - **Changes:** `set_user_search_number` also hashes the selections, qtypes, and units
   alone into a **set** hash; `user_searches` gains `set_hash BINARY(32)` with a key,
   beside PR-11's `search_hash`, and `search_results` stays keyed by `search_id`; a re-sort
-  of a materialized set is `INSERT ... SELECT set's ids ORDER BY ...` joined to the sort
+  of a built set is `INSERT ... SELECT set's ids ORDER BY ...` joined to the sort
   columns rather than a re-evaluation of the `WHERE` clause. `result_count` belongs to the
   set. The new column needs no re-import and no `SCHEMA_VERSION` bump, since the import
   does not fill `user_searches` (§1, Deploy); the `opus_manage warm_search` command needs
@@ -1958,7 +1958,7 @@ bump nor the re-import (§1, Deploy).
 
 - **The problem, after PR-08.** The append updates a finalized schema in place, which is
   right for a database nobody is using and wrong for the served one: between the first
-  bundle delete and the end of the re-run finalization a request can materialize a search
+  bundle delete and the end of the re-run finalization a request can build a search
   against a partial observation set, and the workers' per-process caches are refreshed
   only by the restart. The full-import deploy avoids this by creating a new schema and
   promoting it, and this PR gives incremental updates the same shape without a full
@@ -2027,7 +2027,7 @@ bump nor the re-import (§1, Deploy).
 
 - **Gate: measure, report, discuss, then decide.** After every PR above has merged, the
   executor prototypes each option on a scratch copy of the full-scale schema the harness
-  materializes from the production holdings, with no application change merged. It opens the
+  builds from the production holdings, with no application change merged. It opens the
   PR with a report only: per option, the target metric and the guarded metrics before
   and after, against the recorded noise floor, with the prototype's cost in bytes, in
   import time, and in code. Nothing is implemented until the discussion on the PR
@@ -2039,11 +2039,11 @@ bump nor the re-import (§1, Deploy).
   ADD COLUMN default_rank INT UNSIGNED, ADD KEY (default_rank)`, filled from `ROW_NUMBER()
   OVER (ORDER BY time1, opus_id)`. Measured against the unmodified schema: the empty
   search's first and last pages in the default sort, read as `default_rank BETWEEN ? AND
-  ?` with no materialization into `search_results`, and the `search_results` materialize
+  ?` with no search build into `search_results`, and the `search_results` build
   of a broad constrained search ordered by `default_rank` instead of `(time1, opus_id)`.
   Target metric: db-cold first page of the empty search. If implemented:
   `obs_general.json` declares the column; finalization writes it after the B-tree
-  materializes, so a full import and an incremental update both renumber it; a search in
+  builds, so a full import and an incremental update both renumber it; a search in
   the default order sorts on it; and the empty search in the default order pages on it
   directly, the one place the application branches on the empty search. `SCHEMA_VERSION`
   bumps.
@@ -2102,7 +2102,7 @@ bump nor the re-import (§1, Deploy).
   - **Index pruning input.** The index-usage query an operator runs after a month of
     production uptime (`sys.schema_unused_indexes`) to produce the input for the deferred
     index-pruning PR. `src/opus_deploy/server/README.txt` points at the section.
-- **Measurement:** the range-search scenarios and the broad search's materialization with
+- **Measurement:** the range-search scenarios and the broad search build with
   and without the histograms, and the concurrency scenario at two, four, and eight threads
   per worker. Target metric: app-cold latency of the range searches.
 - **Acceptance:** §2.5; API goldens unchanged.
@@ -2202,8 +2202,8 @@ MySQL suites unchanged as its regression check.
   `Select.max_execution_time` (the `MAX_EXECUTION_TIME` hint) as `SET LOCAL
   statement_timeout` inside a `transaction.atomic()` it opens, and the fallback query that
   follows a `QueryCanceled` issued **outside** the failed `atomic()`; the
-  materialization's `FOR UPDATE` unchanged, with `SET LOCAL lock_timeout` for
-  `search_materialization_timeout`; `ORDER BY` terms carrying `NULLS FIRST` ascending and
+  search build's `FOR UPDATE` unchanged, with `SET LOCAL lock_timeout` for
+  `search_build_timeout`; `ORDER BY` terms carrying `NULLS FIRST` ascending and
   `NULLS LAST` descending; `ILIKE` for the string qtypes. **Driver errors:**
   `tools/db_utils.py` exposes `is_timeout_error(exc)` and `is_lock_timeout_error(exc)` and
   is the only module importing driver error types; the views' `MYSQL_*` constant tests
@@ -2240,8 +2240,8 @@ MySQL suites unchanged as its regression check.
 - **Measurement:** the full harness, full scale, both brands, per §2.4, both servers
   harness-owned; db-cold compared only if both are, else app-cold and warm only.
   **Expectation stated so the result can be read:** PostgreSQL 16 never uses a parallel
-  plan for `INSERT ... SELECT`, which is what materializing into `search_results` is, so
-  the broad search's materialization is expected near parity; read-only aggregates (mult
+  plan for `INSERT ... SELECT`, which is what a search build into `search_results` is, so
+  the broad search build is expected near parity; read-only aggregates (mult
   counts over a broad result set) are where parallel query can show; the import is
   expected near parity with foreign keys deferred on both brands.
 - **Deliverable:** a PR whose description is the comparison table and a one-page reading
@@ -2278,7 +2278,7 @@ the orchestrator's).
 | PR-17 | PR-11 | warms a `search_results` search; the carry-over edits the same `_promote.sh` region |
 | PR-18 | PR-07, PR-12, PR-16 | gated on its merge-base's ratio; a child table on the rekeyed pattern, its foreign key added in finalization |
 | PR-19 | PR-09, PR-11, PR-14 | the parent emits junction rows from resolved ids; the mult count joins `search_results`; PR-14's cleanup reads the junctions |
-| PR-20 | PR-19's measurement | gated on the predicate share of the broad search's materialization |
+| PR-20 | PR-19's measurement | gated on the predicate share of the broad search build |
 | PR-21 | PR-07, PR-11 | `FULLTEXT` keys are created by PR-07's `add_secondary_indexes`; the `COUNT(*)` is already gone |
 | PR-22 | PR-07, PR-08, PR-14, PR-15, PR-17 | the seed uses the fresh-import path and its sibling connections; the append is its baseline; a new target is a row; PR-17's carry-over moves the sessions |
 | PR-23 | every PR above | measured on the finished schema; option 2 extends PR-17's warm-up; option 3 reads PR-14's ids |
@@ -2325,10 +2325,10 @@ the orchestrator's).
 - **The inherited connection.** PR-09's initializer rule and a comment at the site.
 - **The start method.** `fork` is explicit; the import has no threads before the pool is
   created. Windows runs serially.
-- **Two workers materialize the same search.** The `FOR UPDATE` read on the search's own
+- **Two workers build the same search.** The `FOR UPDATE` read on the search's own
   row serializes them inside the transaction, and a dead connection releases it by
   rollback. Several users requesting the same new broad search park their request slots
-  for the whole materialization; the concurrency scenario's shared half measures it, and
+  for the whole search build; the concurrency scenario's shared half measures it, and
   PR-17's warm-up removes the commonest case.
 - **PR-13 regresses a selective default-sort search.** The harness has the shape; the PR
   reports it; the orchestrator decides between a hint and dropping the index.

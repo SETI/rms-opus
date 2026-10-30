@@ -17,8 +17,9 @@ those rows, not a temporary table. Indexes are created once, after the load, by 
 composite where a query shape needs one. Every piece of per-user and per-search state
 lives in the database, so any worker can serve any request.
 
-**Terms.** A search is **materialized** when its matching observations are written into
-`search_results` in sort order; later requests read those rows. An import into a schema
+**Terms.** A **search build** writes a search's matching observations into `search_results`
+in sort order, the first time the search is requested; later requests read those rows,
+and the request doing it is the **search builder**. An import into a schema
 with no version row is a **fresh import**, which creates the tables with only their
 primary and unique keys and builds the other indexes once at the end; an import into a
 finished schema is an **append**. An **index build** is the creation of secondary indexes.
@@ -346,17 +347,17 @@ The count is stored once. Partitioning is not used: `search_id` is the primary-k
 so every per-search read is one range regardless. The unique key serves the cart's range
 editor, which resolves an observation's position within a search, and makes a join that
 duplicates an observation fail rather than repeat it on a page; every alias join in the
-materialization is one row per observation. A `default_rank` column on `obs_general`, the
+search build is one row per observation. A `default_rank` column on `obs_general`, the
 position in the default sort, which would let the empty search page without a
-materialization, is evaluated on full-scale data at the end of the plan and added only if
+search build, is evaluated on full-scale data at the end of the plan and added only if
 it measures a clear gain.
 
 **Old searches are pruned, least recently used first** (#350). `last_used_at` is
 refreshed at most once a day per search, from the cached entry, and skipped while the
-search is being materialized, so it costs no write per request and never waits on the row
+search is being built, so it costs no write per request and never waits on the row
 lock. A scheduled command deletes a search unused for a set number of days: its cache
 entry first, then its `user_searches` row, so a new request registers it afresh, then its
-result rows in chunks. Every request reads the search's count and materialization time
+result rows in chunks. Every request reads the search's count and search build time
 from `user_searches` by primary key, so a cached id whose row is gone is a miss, not a
 short page; only the hash-to-id entry is cached, and ids are never reused within a schema.
 The same command removes expired sessions and the carts whose session is gone. InnoDB
@@ -364,7 +365,7 @@ reuses the freed pages, so regular pruning bounds the table's size however long 
 is served.
 
 ```sql
-SET innodb_lock_wait_timeout = <search_materialization_timeout>   -- from init_command
+SET innodb_lock_wait_timeout = <search_build_timeout>   -- from init_command
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 BEGIN
   SELECT results_built_at FROM user_searches
@@ -377,24 +378,24 @@ BEGIN
 COMMIT                            -- releases the row lock
 ```
 
-**A search is materialized once however many requests race for it.** Registration
+**A search is built once however many requests race for it.** Registration
 commits on its own first, because a failed duplicate insert holds a shared lock until its
 transaction ends. Then, inside one `READ COMMITTED` transaction, so the `INSERT ...
 SELECT` takes no shared locks on the rows it reads, the search builder reads the
 search's own `user_searches` row `FOR UPDATE`; a second search builder blocks on
 that row until the first commits, then sees `results_built_at` set and returns. If the row
-is not yet materialized the search builder inserts `SELECT ?, ROW_NUMBER() OVER
+is not yet built the search builder inserts `SELECT ?, ROW_NUMBER() OVER
 (ORDER BY ...), obs_general.id FROM ...`, writes the count and the timestamp, and commits,
 which releases the lock. The transaction contains nothing before the locking read, and the
 result rows are read after it commits, so a `REPEATABLE READ` snapshot can never predate
-the materialization. A row lock is transaction-scoped: a worker that dies releases it with
+the search build. A row lock is transaction-scoped: a worker that dies releases it with
 its rollback, it is the same statement on both brands, and it works through any connection
 pooling. The lock wait timeout is the session's `innodb_lock_wait_timeout`, set from
-`[django] search_materialization_timeout` (default 300 seconds) through the connection's
-`init_command`, long enough for a broad cold materialization and at least 30 seconds below
-the web server's worker timeout, since a worker killed mid-materialization rolls the
-materialization back. A waiter whose wait times out ends its transaction and answers with
-the search-cache failure response; the materialization it waited on completes, and the
+`[django] search_build_timeout` (default 300 seconds) through the connection's
+`init_command`, long enough for a broad cold search build and at least 30 seconds below
+the web server's worker timeout, since a worker killed partway through a search build rolls the
+search build back. A waiter whose wait times out ends its transaction and answers with
+the search-cache failure response; the search build it waited on completes, and the
 next request finds it.
 
 The application's cache trusts its entries (a hash-to-id or id-to-count hit is not
@@ -403,14 +404,14 @@ import's reset step runs the application's cache flush, the deploy restarts the 
 service after it, and the benchmark harness restarts the cache it owns. Without the flush, an
 entry that outlived a truncate would hand one search's rows to another once ids restart.
 
-The cost model is stated so the right thing is measured: the materialization is the same
+The cost model is stated so the right thing is measured: the search build is the same
 sort and the same number of inserts, now into a shared table with a secondary unique
-index, so the cold materialization itself is expected no faster. The gains are no DDL in
-the request path, a bounded table count, the stored count, and one materialization per
+index, so the cold search build itself is expected no faster. The gains are no DDL in
+the request path, a bounded table count, the stored count, and one search build per
 search under concurrency.
 
 If the measured re-sort number still warrants it, `user_searches` gains a second hash
-over the set alone, so a re-sort of a materialized set reorders its ids instead of
+over the set alone, so a re-sort of a built set reorders its ids instead of
 re-evaluating the predicate.
 
 ### 2.5 Junction tables for the list columns
@@ -680,7 +681,7 @@ sessions and carts as they stand at that moment, and only a cart row for an obse
 the previous schema lacks is lost.
 
 **Why not in place, and why not a table swap.** Writing into the served schema is not
-atomic: between the first bundle delete and the closing reset a request can materialize a
+atomic: between the first bundle delete and the closing reset a request can build a
 search against a partial observation set and be served from it, and the workers'
 per-process caches go stale. A `RENAME TABLE` swap of staged copies inside the served
 schema is atomic for the names, but it needs the same full copy, still leaves the
@@ -701,8 +702,8 @@ surface.
 - **Register the search.** Hash the selections, types, units, and order into one
   `search_hash`; insert the `user_searches` row or read the existing one (the unique key
   resolves a race between workers).
-- **Materialize if needed**, under the row lock (§2.4); otherwise read `result_count` and the
-  rows that exist.
+- **Run the search build if needed**, under the row lock (§2.4); otherwise read
+  `result_count` and the rows that exist.
 - **A page** joins `obs_general` to `search_results` on `obs_general_id` with `search_id =
   ?` and `sort_order BETWEEN ? AND ?`, then LEFT JOINs each child category on
   `obs_general_id` (a unique lookup each), with surface geometry categories aliased and
@@ -728,7 +729,7 @@ surface.
   `table_names.disp_order`.
 - **Autocomplete** matches the ngram index and reads the stored count instead of counting.
 - **After a deploy**, a management command issues the empty search and its fan-out through
-  the application's own code path, so the first visitor finds the landing page materialized.
+  the application's own code path, so the first visitor finds the landing page built.
 
 ---
 
@@ -745,7 +746,7 @@ properties that make that true, and the one constraint:
   obs_general_id)`), and Django's sessions (the database engine). A browser's next
   request can land on any worker and see the same search, the same page, and the same
   cart.
-- **The search materialization serializes on a row lock inside a database transaction**;
+- **The search build serializes on a row lock inside a database transaction**;
   no worker holds anything across requests. The lock is released by rollback when a
   connection dies, identical on both brands, and unaffected by connection pooling or
   proxies.

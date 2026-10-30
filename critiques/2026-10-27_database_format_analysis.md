@@ -340,7 +340,7 @@ machine" — is worth keeping, and every fix below keeps it.
 ### 4.1 A search is DDL
 
 `get_user_query_table` runs `CREATE TABLE cache_NNN (...) SELECT obs_general.id FROM
-obs_general LEFT JOIN ... WHERE ... ORDER BY ...`. For a broad search this materializes
+obs_general LEFT JOIN ... WHERE ... ORDER BY ...`. For a broad search this builds
 a million-row table, builds a unique index on `id`, and sorts — that is the latency a
 user feels on the first keystroke of a search the site has not seen. Four properties
 make it worse than it needs to be:
@@ -382,9 +382,9 @@ SELECT ?, ROW_NUMBER() OVER (ORDER BY obs_general.time1, obs_general.opus_id), o
 BY` behavior the current design depends on, which works but is not something the SQL
 standard promises. The page slice becomes a derived table — `JOIN (SELECT id, sort_order
 FROM search_results WHERE search_id = ? ORDER BY sort_order LIMIT ? OFFSET ?) AS page ON
-page.id = obs_general.id` — which MySQL materializes internally with no DDL.
+page.id = obs_general.id` — which MySQL builds internally with no DDL.
 `user_searches` grows a `result_count` column written from `ROW_COUNT()` when the search
-is materialized, so the count endpoint never scans. Stale searches are deleted by
+is built, so the count endpoint never scans. Stale searches are deleted by
 `search_id` in a janitor, or — if partitioned by `search_id` range instead of hash —
 dropped a partition at a time.
 
@@ -510,7 +510,7 @@ heading; several of the import entries also appear on the wishlist recorded in #
     per-page temporary table with a derived table. Removes DDL from the request path,
     bounds the table count, and makes concurrent searches contend on row locks instead of
     dictionary locks. Store `result_count` in `user_searches` when the search is
-    materialized, and key the search on one fixed-width hash with nothing else stored
+    built, and key the search on one fixed-width hash with nothing else stored
     (§4.1).
 14. **Separate the result set from its order** (§4.1, second paragraph), so re-sorting
     is a sort of ids rather than a re-search.
