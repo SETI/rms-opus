@@ -226,9 +226,11 @@ Every per-category `obs_*` table is keyed on the hub:
 
 Three tables have many rows per observation: the surface geometry table, one per target
 (§2.3); the junction tables, one per listed value (§2.5); and `obs_files`, one per file.
-It keeps its own `id`, `obs_general_id`, `opus_id` (the file logic reads by it), and
-`instrument_id`. Its secondary indexes are `(opus_id, short_name, version_name)` for the
-file reads and `(obs_general_id)` for the download join, and nothing else; it is the
+`obs_files` is keyed `(obs_general_id, file_number)`, the position of the file within its
+observation, which also keeps the order the file list is read in; it has no `id`. It keeps
+`opus_id` (the file logic reads by it) and `instrument_id`. Its one secondary index is
+`(opus_id, short_name, version_name)` for the file reads, with the download join served by
+the primary key; it is the
 largest table by rows, and each unused index is a full extra copy of a key column.
 
 ### 2.3 Surface geometry
@@ -360,19 +362,19 @@ search build, is evaluated on the complete holdings at the end of the plan and a
 it measures a clear gain.
 
 **Old searches are pruned, least recently used first, by size** (#350). A scheduled
-command removes searches until `search_results` holds no more than a configured number of
-rows, and every search unused for a set number of days in any case, so a busy server is
-pruned harder than a quiet one. `last_used_at` is
-refreshed at most once a day per search, from the cached entry, and skipped while the
-search is being built, so it costs no write per request and never waits on the row
-lock. For each search it deletes cache
-entry first, then its `user_searches` row, so a new request registers it afresh, then its
-result rows in chunks. Every request reads the search's count and search build time
-from `user_searches` by primary key, so a cached id whose row is gone is a miss, not a
-short page; only the hash-to-id entry is cached, and ids are never reused within a schema.
-The same command removes expired sessions and the carts whose session is gone. InnoDB
-reuses the freed pages, so regular pruning bounds the table's size however long a schema
-is served.
+command, which also reports the table's rows, its searches, and how many of each a prune
+would remove and leave, and can show that without removing anything, removes searches
+until `search_results` holds no more than a configured number of rows, and every search
+unused for a set number of days in any case, so a busy server is pruned harder than a
+quiet one. `last_used_at` is refreshed at most once a day per search, from the cached
+entry, and skipped while the search is being built, so it costs no write per request and
+never waits on the row lock. For each search it deletes cache entry first, then its
+`user_searches` row, so a new request registers it afresh, then its result rows in chunks.
+Every request reads the search's count and search build time from `user_searches` by
+primary key, so a cached id whose row is gone is a miss, not a short page; only the
+hash-to-id entry is cached, and ids are never reused within a schema. The same command
+removes expired sessions and the carts whose session is gone. InnoDB reuses the freed
+pages, so regular pruning bounds the table's size however long a schema is served.
 
 ```sql
 SET innodb_lock_wait_timeout = <search_build_timeout>   -- from init_command
@@ -516,11 +518,11 @@ mult(field_id  SMALLINT UNSIGNED NOT NULL,
 - A value keeps the label, display flag, and grouping it was first stored with; an import
   that computes different ones logs a warning naming both.
 - **Renaming a value needs no re-import.** A column's schema entry may list
-  `mult_overrides`, each naming a value and any of its label, display flag, grouping,
-  and pin. Overrides win over stored and computed labels; finalization applies them in
-  every import, and the code-only deploy applies them to the served schema in place,
-  then restarts the cache and the workers. Ids never change, so no observation row is
-  touched.
+  `mult_overrides`, each naming a value and any of its label, display flag, grouping, and
+  pin. Overrides win over stored and computed labels; finalization applies them in every
+  import, and the code-only deploy applies them to the served schema in place, beside
+  reloading the dictionary, then restarts the cache and the workers; it rebuilds no other
+  table. Ids never change, so no observation row is touched.
 - **Search results sorted by a mult column are ordered by label text**, not by
   `disp_rank`. That is the public API's ordering and stays as it is.
 - The `aliases` and `timestamp` columns of today's tables are not carried: nothing reads
@@ -566,7 +568,7 @@ instead of the child tables.
 | `search_results` | `PRIMARY KEY (search_id, sort_order)`, `UNIQUE (search_id, obs_general_id)` | new | a page is one range; a position lookup is a probe |
 | `user_searches` | `UNIQUE (search_hash)` | replaces the four-hash constraint | one 32-byte key per registration |
 | autocomplete string columns | `FULLTEXT ... WITH PARSER ngram` | added | substring search without a scan; the B-tree stays |
-| `obs_files` | `(opus_id, short_name, version_name)`, `(obs_general_id)` | replace six single-column keys | the file reads and the download join, and nothing else |
+| `obs_files` | `PRIMARY KEY (obs_general_id, file_number)`, `(opus_id, short_name, version_name)` | replace `id` and six single-column keys | the file list's order and the download join from the primary key; the file reads from the one secondary |
 
 ### 2.11 What does not change
 
@@ -604,12 +606,10 @@ finalization is an explicit step that the sequences run once at the end.
    warning (the statement would otherwise ignore duplicate keys silently). Each bundle is
    deleted from the permanent tables before it is written, so a rerun is clean, and an
    OPUS id already written by an earlier bundle is deleted and re-imported.
-3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the surface
-   geometry categories derived from the data, each into a shadow table that one `RENAME
-   TABLE` swaps in atomically, so no reader ever finds one missing or half filled (the
-   swap connection sets a short `lock_wait_timeout` and retries, since the rename waits
-   for open transactions on those tables); `user_searches` and `search_results` are reset
-   and the cache flush of §2.4 follows.
+3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt directly, with
+   the surface geometry categories derived from the data; an import never runs against a
+   served schema, so nothing reads them meanwhile, and no deploy rebuilds them;
+   `user_searches` and `search_results` are reset and the cache flush of §2.4 follows.
 4. **Finalization** creates, by sort: `FULLTEXT` keys first, each in its own statement
    (the first one rebuilds its table); then B-tree indexes concurrently across tables,
    grouped per table within a temporary-space budget; then foreign keys serially under
@@ -617,11 +617,12 @@ finalization is an explicit step that the sequences run once at the end.
    and recomputes every rank (§2.8); then `ANALYZE` with histograms on the
    range-searched columns. The step is idempotent, comparing existing keys by kind and
    ordered columns.
-5. **The dictionary import, validation, and the version row.** The dictionary's two tables
-   are swapped together in one statement, `definitions__new` created with its foreign key
-   pointing at `contexts__new`, so the key lands on the new `contexts`. Validation
-   includes an orphan count per child, because finalization's foreign keys never validate
-   existing rows.
+5. **The dictionary import, validation, and the version row.** The dictionary can also be
+   reloaded on its own into a served schema, which is what the code-only deploy does, so
+   its two tables are built beside the live ones and swapped together in one statement,
+   `definitions__new` created with its foreign key pointing at `contexts__new`, so the key
+   lands on the new `contexts`. Validation includes an orphan count per child, because
+   finalization's foreign keys never validate existing rows.
 6. **Promotion**, for a full import and an incremental update alike: the web service
    stops, the previous schema's sessions and carts are carried over into the new schema
    (unexpired `django_session` rows, and the `cart` rows of those sessions by `opus_id`,
@@ -651,15 +652,19 @@ how a served schema is updated.
 
 **Several processes at once.** Several `opus_import` processes, on one computer or
 several, may import into one schema at the same time. Each bundle is registered once, in
-`import_bundle(bundle_number, bundle_id)`, and its rows take ids `bundle_number × 2^23 + n`,
-so 512 bundles of up to 8,388,607 observations fit in `INT UNSIGNED`; `obs_files` ids are
-`BIGINT UNSIGNED` with blocks of `2^32`. Mult values carry a unique key, and a new value is
-inserted with `ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`, so two processes meeting
-the same value get the same id. When two bundles produce the same OPUS id, **the later
-bundle wins**: within one process the later bundle in import order replaces the earlier
-copy, and across processes the copy from the higher `bundle_number` is kept whatever the
-timing, with the probe locking the `opus_id` key so the two cannot interleave.
-Finalization runs once, after every process has finished.
+`import_bundle(bundle_number, bundle_id)`, and its observations take ids `bundle_number ×
+2^23 + n`, so 512 bundles of up to 8,388,607 observations fit in `INT UNSIGNED`. That is
+the only id the import allocates: every other table keys on `obs_general_id`. A process
+reads each bundle's number from the registry, registering the bundle if it is absent;
+registering the whole list in sorted order first makes the ids the same on every run, and
+a replaced bundle keeps its number. A new mult value takes the next id within its field
+under a lock on that field, and a duplicate-key error on `(field_id, value)` means another
+process added it first, so two processes meeting the same value get the same id. When two
+bundles produce the same OPUS id, **the later bundle wins**: within one process the later
+bundle in import order replaces the earlier copy, and across processes the copy from the
+higher `bundle_number` is kept whatever the timing, with the probe locking the `opus_id`
+key so the two cannot interleave. Finalization runs once, after every process has
+finished.
 
 ### 3.1 Incremental update
 
@@ -703,15 +708,15 @@ sessions and carts as they stand at that moment, and only a cart row for an obse
 the previous schema lacks is lost.
 
 **Why not in place, and why not a table swap.** Writing into the served schema is not
-atomic: between the first bundle delete and the closing reset a request can build a
-search against a partial observation set and be served from it, and the workers'
-per-process caches go stale. A `RENAME TABLE` swap of staged copies inside the served
-schema is atomic for the names, but it needs the same full copy, still leaves the
-per-process caches stale until the restart the promotion does anyway, and leaves the old
-tables beside the new; it buys nothing over a new schema and a switch. The aux and
-dictionary tables are different: they are small, rebuilt whole from the schema files, and
-read through per-process caches the restart refreshes, so the code-only deploy swaps them
-in place with one atomic `RENAME TABLE` rather than creating a new schema for them.
+atomic: between the first bundle delete and the closing reset a request can build a search
+against a partial observation set and be served from it, and the workers' per-process
+caches go stale. A `RENAME TABLE` swap of staged copies inside the served schema is atomic
+for the names, but it needs the same full copy, still leaves the per-process caches stale
+until the restart the promotion does anyway, and leaves the old tables beside the new; it
+buys nothing over a new schema and a switch. The dictionary is different: it is two small
+tables rebuilt whole from the schema files, reloaded on its own by the code-only deploy,
+so it is swapped in place with one atomic `RENAME TABLE` rather than given a new schema.
+The aux tables are never rebuilt in a served schema at all.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the unique keys are how duplicates

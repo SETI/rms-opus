@@ -9,7 +9,7 @@ lost and are not mistaken for that plan's work. The port itself is #1199.
 
 **Date:** 2026-10-28. Each item names what the code does today, in the tree at
 `2179d937`, with the file, and what the multi-host layout would need. The plan's PR-00,
-PR-02, PR-03, PR-05, PR-06, PR-12, PR-17, and PR-18 change some of the "Today" paragraphs;
+PR-02, PR-03, PR-05, PR-06, PR-11, PR-17, and PR-18 change some of the "Today" paragraphs;
 re-read them against the tree before acting on this file.
 
 ---
@@ -41,7 +41,7 @@ memcached.
 - Set `CACHES['default']['KEY_PREFIX']` from `cache_server_prefix`, the schema name, the
   schema version, and the release's version string, so the middleware's keys are scoped
   too and two releases or two schemas never share an entry. A longer prefix shortens the
-  margin #1500 measures against memcached's key limit; the plan's PR-12 hashes the key
+  margin #1500 measures against memcached's key limit; the plan's PR-11 hashes the key
   tail to a fixed width.
 - Keep the flush on every deploy and after every reset of `user_searches` and
   `search_results` (trusted hits make a stale entry a wrong answer). `clear_django_cache`
@@ -72,8 +72,8 @@ there). `deploy_new_code_only.sh` rebuilds `param_info`, `partables`, and `table
   the session and cart carry-over of the design's §3.1 runs once in that step, not per
   host.
 - The in-place aux rebuild must not happen against a schema workers are serving; the
-  schema-per-import deploy already guarantees that, the code-only deploy does not
-  (#1504 records the same hazard for the dictionary swap).
+  plan's PR-06 removes it from the code-only deploy, which then only reloads the dictionary
+  atomically and applies mult renames.
 - PR-18's warm-up warms the shared cache and the database, not each process's own
   copies; priming those in `wsgi.py` after PR-05's schema version check (or gunicorn
   `--preload`) would remove the per-process first-request cost.
