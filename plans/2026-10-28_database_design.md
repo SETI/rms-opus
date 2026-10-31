@@ -697,12 +697,14 @@ update is created as a new schema and promoted whole, exactly as a full import i
    `obs_general_id` and its mult ids. The served schema is only read.
 2. **Import.** How the seeded tables are keyed depends on how much changes: when the
    replaced bundles hold more `obs_general` rows than a measured fraction of the schema,
-   the seed creates bare tables and finalization creates every index once, by sort; below
-   it, the seed copies each table with its indexes in place and the bundles load with the
-   indexes up, so a small update rebuilds nothing. The target has no version row yet
-   either way, so the bundles go through the ordinary fresh import of step 2. Their rows
-   take ids above the copied maximum, new mult values append, and a new surface geometry
-   target is a row, not a table (§2.3).
+   the seed creates bare tables, the bundles go through the ordinary fresh import, and
+   finalization creates every index once, by sort; below it, the seed copies each table
+   with its indexes in place and ends by writing the version row in the `appending` state,
+   so the bundles go through the append path with the indexes up and a small update
+   rebuilds nothing. A re-imported bundle keeps its number and so its id block, which the
+   copy left empty; a new bundle takes the next number and so wins a duplicate `opus_id`
+   against every copied bundle. New mult values append, and a new surface geometry target
+   is a row, not a table (§2.3).
 3. **Steps 3 to 5 as for a full import:** aux tables, finalization, dictionary,
    validation, and the version row. `cart`, `user_searches`, and `search_results` are
    created empty.
@@ -713,11 +715,11 @@ update is created as a new schema and promoted whole, exactly as a full import i
    `search_results` start empty and refill on demand; the warm-up runs after the start.
 
 The same seed with a bundle excluded and nothing imported drops it. The cost is one copy
-of the database and one full index build per update, measured by the plan, and the disk
-for two schemas, which a full-import deploy needs already. The previous schema stays until
-the next update, so a rollback is step 6 run toward it: the carry-over brings back the
-sessions and carts as they stand at that moment, and only a cart row for an observation
-the previous schema lacks is lost.
+of the database per update, plus one full index build above the fraction, measured by the
+plan, and the disk for two schemas, which a full-import deploy needs already. The previous
+schema stays until the next update, so a rollback is step 6 run toward it: the carry-over
+brings back the sessions and carts as they stand at that moment, and only a cart row for
+an observation the previous schema lacks is lost.
 
 **Why not in place, and why not a table swap.** Writing into the served schema is not
 atomic: between the first bundle delete and the closing reset a request can build a search
