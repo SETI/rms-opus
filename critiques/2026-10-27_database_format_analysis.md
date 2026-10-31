@@ -437,9 +437,10 @@ heading; several of the import entries also appear on the wishlist recorded in #
 ### Import
 
 1. **Allocate ids per bundle, not per process.** Give each bundle a fixed id block —
-   `bundle_number * 2^24 + row_number`, both zero-based, with the bundle number taken
-   from the sorted bundle list; `obs_general.id` is `uint4`, so this holds up to 256
-   bundles of up to 2^24 rows, and the import refuses a bundle list or a bundle beyond
+   `bundle_number * 2^23 + row_number`, both zero-based, with the bundle number taken from a
+   registry filled in sorted order; `obs_general.id` is `uint4`, so this holds up to 512
+   bundles of up to 2^23 rows (a table with many rows per observation, such as `obs_files`,
+   needs a wider id), and the import refuses a bundle list or a bundle beyond
    those bounds — or reserve a block atomically from a one-row `id_sequence` table
    (`UPDATE id_sequence SET next = LAST_INSERT_ID(next + ?)`) at the start of each
    bundle. The first is deterministic given the same bundle list; the second guarantees
@@ -453,9 +454,11 @@ heading; several of the import entries also appear on the wishlist recorded in #
    today) and a defined rule for the null value. The first keeps ids reproducible; the
    second is simpler. **Unlocks:** the same N-process import without the id collision
    in §3.2.
-3. **One import prefix per worker.** The namespace machinery exists
-   (`import_prefix`); make it `imp_<worker>_` and teach the copy step to walk every
-   worker's namespace. **Unlocks:** item 1 and 2 without touching the step logic.
+3. **Write the permanent tables directly, and drop the import namespace.** The `imp_`
+   copies and the import-to-permanent copy exist to protect the permanent tables during an
+   import, which a separate schema per import already does; writing directly removes a
+   full second write of the database and leaves nothing for concurrent processes to
+   share but the tables themselves. **Unlocks:** items 1 and 2 with no namespace to divide.
 4. **Parallelize inside a bundle.** The per-row loop reads an immutable index row and
    writes to a dict; `multiprocessing.Pool.imap` over chunks of rows, each worker
    holding its own obs class instance, preserves row order and returns `(table_rows,
@@ -474,14 +477,14 @@ heading; several of the import entries also appear on the wishlist recorded in #
    schema loaded this way is validated before it is served: an anti-join orphan count
    per child for the foreign keys, and the unique-key probe of `opus_id` for the
    duplicates (#584 asks for the integrity checks to live in `--validate-perm`).
-6. **Copy tables in parallel, or stop copying** (#1253). The import-to-permanent copy is one
-   independent `INSERT ... SELECT` per table after `obs_general`; a thread pool of
-   connections does them concurrently. Better: the deploy chain already imports into a
-   fresh schema and switches with a symlink, which provides the same "nothing the
-   public sees changes until the end" guarantee the two-namespace design exists for.
-   Writing the permanent tables directly in a fresh schema, and keeping the `imp_`
-   path only for incremental re-imports into a live schema, halves the write volume of
-   a full rebuild.
+6. **Stop copying** (#1253): with item 3 there is no import-to-permanent copy at all. The
+   import-to-permanent copy is one independent `INSERT ... SELECT` per table after
+   `obs_general`; a thread pool of connections does them concurrently. Better: the deploy
+   chain already imports into a fresh schema and switches with a symlink, which provides
+   the same "nothing the public sees changes until the end" guarantee the two-namespace
+   design exists for. Writing the permanent tables directly in a fresh schema, and keeping
+   the `imp_` path only for incremental re-imports into a live schema, halves the write
+   volume of a full rebuild.
 7. **Make `update_mult_table`'s value lookup a dictionary probe.** Five lines, no risk.
 
 ### Schema
@@ -494,10 +497,11 @@ heading; several of the import entries also appear on the wishlist recorded in #
 9. **Multi-valued indexes on `mult_list` columns** (§2.4): one branch in
    `create_table`, `MEMBER OF` in `sql_builder`. **Payoff:** target searches stop
    scanning `obs_general`.
-10. **Let the schema declare composite indexes, add `(time1, opus_id)`,
-    `(right_asc, d_right_asc)`, and the ring-geometry longitude pairs, then prune the
-    single-column indexes the production server says are unused** (§2.2). The pruning
-    step is the one that needs a month of `performance_schema` data first.
+10. **Let the schema declare composite indexes, add `(time1, opus_id)`, `(right_asc,
+    d_right_asc)`, and the ring-geometry longitude pairs, drop the keys on columns nothing
+    searches, sorts, or joins on, and prune the remaining single-column keys only where
+    the production server says they are unused** (§2.2). The pruning step is the one that
+    needs a month of `performance_schema` data first.
 11. **Collapse surface geometry into one partitioned table** (§2.3; #334). The largest
     schema change on the list and the one with the most moving parts (slugs,
     `partables`, `models.py`, the obs class template); do it after 8 and 10 have shown

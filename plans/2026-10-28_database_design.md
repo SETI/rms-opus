@@ -181,6 +181,12 @@ gains composite keys for the query shapes that read it in order or by pair:
 `obs_ring_geometry` gains the same kind of key, `(<col>, d_<col>)`, for each of its longitude
 pairs, a covering scan for the same modular predicate.
 
+**Which columns keep a key.** Every column a search, sort, or join can use keeps its
+single-column key, beside the composites above. A column nothing searches, sorts, or joins
+on (neither searchable nor shown in results, and named by no code) loses its key, since
+it only costs writes. Pruning searchable keys that production never uses waits for a
+month of production index statistics.
+
 The two JSON list columns, `target_name` and `target_class`, stay for rendering responses.
 Searching and counting on them move to junction tables (§2.5). The `preview_images` JSON
 column moves to a one-to-one `obs_preview(obs_general_id, preview_images)` table only if
@@ -218,11 +224,12 @@ Every per-category `obs_*` table is keyed on the hub:
 
 `obs_ring_geometry` additionally gets a composite key per longitude pair.
 
-`obs_files` is the one child with many rows per observation. It keeps its own `id`,
-`obs_general_id`, `opus_id` (the file logic reads by it), and `instrument_id`. Its
-secondary indexes are `(opus_id, short_name, version_name)` for the file reads and
-`(obs_general_id)` for the download join, and nothing else; it is the largest table by
-rows, and each unused index is a full extra copy of a key column.
+Three tables have many rows per observation: the surface geometry table, one per target
+(§2.3); the junction tables, one per listed value (§2.5); and `obs_files`, one per file.
+It keeps its own `id`, `obs_general_id`, `opus_id` (the file logic reads by it), and
+`instrument_id`. Its secondary indexes are `(opus_id, short_name, version_name)` for the
+file reads and `(obs_general_id)` for the download join, and nothing else; it is the
+largest table by rows, and each unused index is a full extra copy of a key column.
 
 ### 2.3 Surface geometry
 
@@ -349,13 +356,16 @@ editor, which resolves an observation's position within a search, and makes a jo
 duplicates an observation fail rather than repeat it on a page; every alias join in the
 search build is one row per observation. A `default_rank` column on `obs_general`, the
 position in the default sort, which would let the empty search page without a
-search build, is evaluated on full-scale data at the end of the plan and added only if
+search build, is evaluated on the complete holdings at the end of the plan and added only if
 it measures a clear gain.
 
-**Old searches are pruned, least recently used first** (#350). `last_used_at` is
+**Old searches are pruned, least recently used first, by size** (#350). A scheduled
+command removes searches until `search_results` holds no more than a configured number of
+rows, and every search unused for a set number of days in any case, so a busy server is
+pruned harder than a quiet one. `last_used_at` is
 refreshed at most once a day per search, from the cached entry, and skipped while the
 search is being built, so it costs no write per request and never waits on the row
-lock. A scheduled command deletes a search unused for a set number of days: its cache
+lock. For each search it deletes cache
 entry first, then its `user_searches` row, so a new request registers it afresh, then its
 result rows in chunks. Every request reads the search's count and search build time
 from `user_searches` by primary key, so a cached id whose row is gone is a miss, not a
@@ -516,7 +526,7 @@ mult(field_id  SMALLINT UNSIGNED NOT NULL,
 - The `aliases` and `timestamp` columns of today's tables are not carried: nothing reads
   them.
 
-Two tables are evaluated on full-scale data at the end of the plan, and are added only
+Two tables are evaluated on the complete holdings at the end of the plan, and are added only
 if the measurements, once discussed, justify them: `mult_count_empty(field_id, mult_id,
 count)`, the counts for the empty search; and `obs_facet`, one narrow row per
 observation holding every mult id, which a count over a large result set would scan
@@ -588,12 +598,12 @@ finalization is an explicit step that the sequences run once at the end.
    deletes the `schema_version` row.
 2. **Per bundle**, tables are created with their primary key and unique keys only, and
    `obs_general` with its bundle key too, which the per-bundle delete reads. Worker
-   processes turn index rows into table rows; the parent process alone assigns ids,
-   resolves mult values, and loads tab-separated text with `LOAD DATA LOCAL INFILE` in
-   chunks of about 100,000 rows, failing on any skipped row or warning (the statement
-   would otherwise ignore duplicate keys silently). Each bundle is deleted from the
-   permanent tables before it is written, so a rerun is clean, and an OPUS id already
-   written by an earlier bundle is deleted and re-imported.
+   processes turn index rows into table rows; the parent process assigns ids from the
+   bundle's block (below), resolves mult values, and loads tab-separated text with `LOAD
+   DATA LOCAL INFILE` in chunks of about 100,000 rows, failing on any skipped row or
+   warning (the statement would otherwise ignore duplicate keys silently). Each bundle is
+   deleted from the permanent tables before it is written, so a rerun is clean, and an
+   OPUS id already written by an earlier bundle is deleted and re-imported.
 3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the surface
    geometry categories derived from the data, each into a shadow table that one `RENAME
    TABLE` swaps in atomically, so no reader ever finds one missing or half filled (the
@@ -638,6 +648,18 @@ A failed append stays `appending`; the next import resumes the recorded bundles 
 it names, and since each bundle is deleted before it is written, the rerun is clean. An
 append is not atomic, so it is never run against a schema that is being served; §3.1 is
 how a served schema is updated.
+
+**Several processes at once.** Several `opus_import` processes, on one computer or
+several, may import into one schema at the same time. Each bundle is registered once, in
+`import_bundle(bundle_number, bundle_id)`, and its rows take ids `bundle_number × 2^23 + n`,
+so 512 bundles of up to 8,388,607 observations fit in `INT UNSIGNED`; `obs_files` ids are
+`BIGINT UNSIGNED` with blocks of `2^32`. Mult values carry a unique key, and a new value is
+inserted with `ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`, so two processes meeting
+the same value get the same id. When two bundles produce the same OPUS id, **the later
+bundle wins**: within one process the later bundle in import order replaces the earlier
+copy, and across processes the copy from the higher `bundle_number` is kept whatever the
+timing, with the probe locking the `opus_id` key so the two cannot interleave.
+Finalization runs once, after every process has finished.
 
 ### 3.1 Incremental update
 

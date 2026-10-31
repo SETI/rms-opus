@@ -9,7 +9,7 @@ lost and are not mistaken for that plan's work. The port itself is #1199.
 
 **Date:** 2026-10-28. Each item names what the code does today, in the tree at
 `2179d937`, with the file, and what the multi-host layout would need. The plan's PR-00,
-PR-02, PR-03, PR-05, PR-06, PR-11, PR-16, and PR-17 change some of the "Today" paragraphs;
+PR-02, PR-03, PR-05, PR-06, PR-12, PR-17, and PR-18 change some of the "Today" paragraphs;
 re-read them against the tree before acting on this file.
 
 ---
@@ -36,12 +36,12 @@ defect is a host-local service with a silent per-process fallback, not the choic
 memcached.
 
 - Make the backend configurable (`[django] cache_backend` as `memcached`, `redis`, or
-  `locmem`, beside PR-00's `[django] cache_location`), pointing every host at one shared
+  `locmem`, with a `[django] cache_location` address), pointing every host at one shared
   service. The `redis` backend needs the `redis` client as an optional extra.
 - Set `CACHES['default']['KEY_PREFIX']` from `cache_server_prefix`, the schema name, the
   schema version, and the release's version string, so the middleware's keys are scoped
   too and two releases or two schemas never share an entry. A longer prefix shortens the
-  margin #1500 measures against memcached's key limit; the plan's PR-11 hashes the key
+  margin #1500 measures against memcached's key limit; the plan's PR-12 hashes the key
   tail to a fixed width.
 - Keep the flush on every deploy and after every reset of `user_searches` and
   `search_results` (trusted hits make a stale entry a wrong answer). `clear_django_cache`
@@ -59,7 +59,7 @@ are loaded at first use in each worker process and invalidated only by a restart
 (`docs/dev_guide_webapp_overview.rst`, the Caching section); `partables` and `table_names`
 are read per request until PR-03 caches them the same way. `_promote.sh` stops the web
 service, switches a local symlink, restarts the cache service, and starts the web service,
-all with `sudo systemctl`; it runs no warm-up (PR-17 adds `opus_manage warm_search`
+all with `sudo systemctl`; it runs no warm-up (PR-18 adds `opus_manage warm_search`
 there). `deploy_new_code_only.sh` rebuilds `param_info`, `partables`, and `table_names`
 **in the served schema while workers run**, dropping and recreating each
 (`src/opus_deploy/server/import_and_deploy/deploy_new_code_only.sh`; `do_param_info`,
@@ -74,7 +74,7 @@ there). `deploy_new_code_only.sh` rebuilds `param_info`, `partables`, and `table
 - The in-place aux rebuild must not happen against a schema workers are serving; the
   schema-per-import deploy already guarantees that, the code-only deploy does not
   (#1504 records the same hazard for the dictionary swap).
-- PR-17's warm-up warms the shared cache and the database, not each process's own
+- PR-18's warm-up warms the shared cache and the database, not each process's own
   copies; priming those in `wsgi.py` after PR-05's schema version check (or gunicorn
   `--preload`) would remove the per-process first-request cost.
 - Static files are collected per installation; a fleet wants a CDN or a collect on every
