@@ -437,19 +437,20 @@ heading; several of the import entries also appear on the wishlist recorded in #
 ### Import
 
 1. **Allocate ids per bundle, not per process.** Give each bundle a fixed id block —
-   `bundle_number * 2^23 + row_number`, both zero-based, with the bundle number taken from a
-   registry filled in sorted order; `obs_general.id` is `uint4`, so this holds up to 512
-   bundles of up to 2^23 rows (a table with many rows per observation, such as `obs_files`,
-   needs a wider id), and the import refuses a bundle list or a bundle beyond
-   those bounds — or reserve a block atomically from a one-row `id_sequence` table
-   (`UPDATE id_sequence SET next = LAST_INSERT_ID(next + ?)`) at the start of each
-   bundle. The first is deterministic given the same bundle list; the second guarantees
-   uniqueness only, because blocks go out in lock-acquisition order. **Unlocks:** running
-   N `opus_import` processes on disjoint bundle sets at once.
+   `bundle_number * 2^23 + row_number`, both zero-based, with the bundle number taken from
+   a registry filled in import order, so a later bundle always has the higher number;
+   `obs_general.id` is `uint4`, so this holds up to 512 bundles of up to 2^23 rows (with
+   the child tables keyed on `obs_general_id`, item 8, no other table needs an id), and
+   the import refuses a bundle list or a bundle beyond those bounds — or reserve a block
+   atomically from a one-row `id_sequence` table
+   (`UPDATE id_sequence SET next = LAST_INSERT_ID(next + ?)`) at the start of each bundle. The first is deterministic
+   given the same bundle list; the second guarantees uniqueness only, because blocks go
+   out in lock-acquisition order. **Unlocks:** running N `opus_import` processes on
+   disjoint bundle sets at once.
 2. **Resolve mult values to ids in a single finalizer.** Workers write the *value
    string* (or a per-worker provisional id plus the string) into the import rows; a
    final serial step assigns ids in sorted-value order and rewrites the columns, or
-   workers `INSERT IGNORE` values into the shared import `mult_` table and read back
+   workers `INSERT IGNORE` values into the shared `mult_` table and read back
    the id by value; that needs a unique key on `value` (the template declares none
    today) and a defined rule for the null value. The first keeps ids reproducible; the
    second is simpler. **Unlocks:** the same N-process import without the id collision
@@ -478,13 +479,11 @@ heading; several of the import entries also appear on the wishlist recorded in #
    per child for the foreign keys, and the unique-key probe of `opus_id` for the
    duplicates (#584 asks for the integrity checks to live in `--validate-perm`).
 6. **Stop copying** (#1253): with item 3 there is no import-to-permanent copy at all. The
-   import-to-permanent copy is one independent `INSERT ... SELECT` per table after
-   `obs_general`; a thread pool of connections does them concurrently. Better: the deploy
-   chain already imports into a fresh schema and switches with a symlink, which provides
-   the same "nothing the public sees changes until the end" guarantee the two-namespace
-   design exists for. Writing the permanent tables directly in a fresh schema, and keeping
-   the `imp_` path only for incremental re-imports into a live schema, halves the write
-   volume of a full rebuild.
+   deploy chain already imports into a fresh schema and switches with a symlink, which
+   provides the same "nothing the public sees changes until the end" guarantee the
+   two-namespace design exists for, and an incremental update can seed a new schema from
+   the served one and import into that, so no path needs the copy. Every row is then
+   written once instead of twice.
 7. **Make `update_mult_table`'s value lookup a dictionary probe.** Five lines, no risk.
 
 ### Schema
