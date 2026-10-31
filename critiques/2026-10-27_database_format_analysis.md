@@ -481,8 +481,8 @@ heading; several of the import entries also appear on the wishlist recorded in #
 6. **Stop copying** (#1253): with item 3 there is no import-to-permanent copy at all. The
    deploy chain already imports into a fresh schema and switches with a symlink, which
    provides the same "nothing the public sees changes until the end" guarantee the
-   two-namespace design exists for, and an incremental update can seed a new schema from
-   the served one and import into that, so no path needs the copy. Every row is then
+   two-namespace design exists for, and an incremental update can clone the served schema
+   into a new one and import into that, so no path needs the copy. Every row is then
    written once instead of twice.
 7. **Make `update_mult_table`'s value lookup a dictionary probe.** Five lines, no risk.
 
