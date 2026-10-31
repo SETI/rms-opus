@@ -521,8 +521,8 @@ mult(field_id  SMALLINT UNSIGNED NOT NULL,
   `mult_overrides`, each naming a value and any of its label, display flag, grouping, and
   pin. Overrides win over stored and computed labels; finalization applies them in every
   import, and the code-only deploy applies them to the served schema in place, beside
-  reloading the dictionary, then restarts the cache and the workers; it rebuilds no other
-  table. Ids never change, so no observation row is touched.
+  reloading `param_info` and the dictionary, then restarts the cache and the workers; it
+  rebuilds no other table. Ids never change, so no observation row is touched.
 - **Search results sorted by a mult column are ordered by label text**, not by
   `disp_rank`. That is the public API's ordering and stays as it is.
 - The `aliases` and `timestamp` columns of today's tables are not carried: nothing reads
@@ -606,9 +606,12 @@ finalization is an explicit step that the sequences run once at the end.
    warning (the statement would otherwise ignore duplicate keys silently). Each bundle is
    deleted from the permanent tables before it is written, so a rerun is clean, and an
    OPUS id already written by an earlier bundle is deleted and re-imported.
-3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt directly, with
-   the surface geometry categories derived from the data; an import never runs against a
-   served schema, so nothing reads them meanwhile, and no deploy rebuilds them;
+3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the surface
+   geometry categories derived from the data. `partables` and `table_names` come from the
+   imported data and are written directly, since an import never runs against a served
+   schema. `param_info` carries labels, tooltips, and display flags from the schema files,
+   which the code-only deploy reloads into a served schema, so it is built beside the live
+   table and swapped in with one atomic `RENAME TABLE`;
    `user_searches` and `search_results` are reset and the cache flush of §2.4 follows.
 4. **Finalization** creates, by sort: `FULLTEXT` keys first, each in its own statement
    (the first one rebuilds its table); then B-tree indexes concurrently across tables,
@@ -617,12 +620,12 @@ finalization is an explicit step that the sequences run once at the end.
    and recomputes every rank (§2.8); then `ANALYZE` with histograms on the
    range-searched columns. The step is idempotent, comparing existing keys by kind and
    ordered columns.
-5. **The dictionary import, validation, and the version row.** The dictionary can also be
-   reloaded on its own into a served schema, which is what the code-only deploy does, so
-   its two tables are built beside the live ones and swapped together in one statement,
-   `definitions__new` created with its foreign key pointing at `contexts__new`, so the key
-   lands on the new `contexts`. Validation includes an orphan count per child, because
-   finalization's foreign keys never validate existing rows.
+5. **The dictionary import, validation, and the version row.** The dictionary is reloaded
+   the same way as `param_info`, also by the code-only deploy: its two tables are built
+   beside the live ones and swapped together in one statement, `definitions__new` created
+   with its foreign key pointing at `contexts__new`, so the key lands on the new
+   `contexts`. Validation includes an orphan count per child, because finalization's
+   foreign keys never validate existing rows.
 6. **Promotion**, for a full import and an incremental update alike: the web service
    stops, the previous schema's sessions and carts are carried over into the new schema
    (unexpired `django_session` rows, and the `cart` rows of those sessions by `opus_id`,
@@ -663,8 +666,11 @@ process added it first, so two processes meeting the same value get the same id.
 bundles produce the same OPUS id, **the later bundle wins**: within one process the later
 bundle in import order replaces the earlier copy, and across processes the copy from the
 higher `bundle_number` is kept whatever the timing, with the probe locking the `opus_id`
-key so the two cannot interleave. Finalization runs once, after every process has
-finished.
+key so the two cannot interleave. In practice one computer runs `opus_import_all
+--prepare`, which registers every bundle; each computer then runs `opus_import_all --part
+K/N`, or names its bundle sets with `--sets`; and one computer runs `opus_import_all
+--finalize` when all have finished. With none of the three, `opus_import_all` runs them in
+sequence, as one import does today.
 
 ### 3.1 Incremental update
 
@@ -713,10 +719,11 @@ against a partial observation set and be served from it, and the workers' per-pr
 caches go stale. A `RENAME TABLE` swap of staged copies inside the served schema is atomic
 for the names, but it needs the same full copy, still leaves the per-process caches stale
 until the restart the promotion does anyway, and leaves the old tables beside the new; it
-buys nothing over a new schema and a switch. The dictionary is different: it is two small
-tables rebuilt whole from the schema files, reloaded on its own by the code-only deploy,
-so it is swapped in place with one atomic `RENAME TABLE` rather than given a new schema.
-The aux tables are never rebuilt in a served schema at all.
+buys nothing over a new schema and a switch. `param_info` and the dictionary are
+different: they are small, rebuilt whole from the schema files, and reloaded on their own
+by the code-only deploy, so each is swapped in place with one atomic `RENAME TABLE` rather
+than given a new schema. `partables` and `table_names` are never rebuilt in a served
+schema at all.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the unique keys are how duplicates

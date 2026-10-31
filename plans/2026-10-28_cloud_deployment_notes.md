@@ -72,8 +72,8 @@ there). `deploy_new_code_only.sh` rebuilds `param_info`, `partables`, and `table
   the session and cart carry-over of the design's §3.1 runs once in that step, not per
   host.
 - The in-place aux rebuild must not happen against a schema workers are serving; the
-  plan's PR-06 removes it from the code-only deploy, which then only reloads the dictionary
-  atomically and applies mult renames.
+  plan's PR-06 removes it from the code-only deploy, which then only reloads `param_info`
+  and the dictionary atomically and applies mult renames.
 - PR-18's warm-up warms the shared cache and the database, not each process's own
   copies; priming those in `wsgi.py` after PR-05's schema version check (or gunicorn
   `--preload`) would remove the per-process first-request cost.

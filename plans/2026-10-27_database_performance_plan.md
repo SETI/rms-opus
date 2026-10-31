@@ -722,32 +722,37 @@ as `item n`, and to the design document as `§D-n`.
   `--write-schema-version`, which every finalization sequence and the deploy chain run, and
   the import does not fill it.
 
-**PR-06: feat: reload the dictionary on its own and atomically, check the schema files statically, and stop the code-only deploy rebuilding the aux tables** (`§D-3`; #1504, #1487)
+**PR-06: feat: reload `param_info` and the dictionary atomically, check the schema files statically, and stop the code-only deploy rebuilding `partables` and `table_names`** (`§D-3`; #1504, #1487)
 
 - **The problem, as the code has it.** `deploy_new_code_only.sh` runs `opus_import
   --create-param-info --create-partables --create-table-names --import-dictionary` against
-  the served schema while its workers run. The three aux steps rebuild tables whose content
-  comes from the import's data, which a code-only release does not change, so rebuilding
-  them there adds nothing and drops each table for a moment. `do_dictionary` stages
-  `definitions` and `contexts` in the import namespace, then drops the permanent tables and
-  copies the rows in, which is the first item of #1504: between the drop and the end of the
-  copy the dictionary is missing or partly filled. Nothing checks the schema files as
-  documents (#1487), so a misspelled key or a dictionary reference with no definition
-  surfaces late or never.
+  the served schema while its workers run. `param_info` carries labels, tooltips, and
+  display flags from the schema files, which a code-only release can change, so rebuilding
+  it there is needed; but the rebuild drops the table for a moment. `partables` and
+  `table_names` come from the imported data and cannot change without an import, so
+  rebuilding them there adds nothing. `do_dictionary` stages `definitions` and `contexts`
+  in the import namespace, then drops the permanent tables and copies the rows in, which
+  is the first item of #1504: between the drop and the end of the copy the dictionary is
+  missing or partly filled. Nothing checks the schema files as documents (#1487), so a
+  misspelled key or a dictionary reference with no definition surfaces late or never.
 - **Changes:**
-  - **The dictionary reloads on its own, atomically.** `opus_import --import-dictionary`
-    builds `contexts__new` and `definitions__new` (its foreign key pointing at
-    `contexts__new`), fills them, and swaps both in with one `RENAME TABLE contexts TO
-    contexts__old, contexts__new TO contexts, definitions TO definitions__old,
-    definitions__new TO definitions`, which MySQL performs atomically and which carries the
-    foreign key onto the new `contexts`; then it drops the `__old` pair. A leftover `__new`
-    or `__old` pair from an interrupted run is dropped first. The swap connection sets a
-    short `lock_wait_timeout` and retries, since the rename waits for open transactions on
-    the two tables. This is the mechanism for reloading only the dictionary, on a served
-    schema or any other.
-  - **The code-only deploy stops rebuilding the aux tables.** `deploy_new_code_only.sh`'s
-    line becomes `opus_import --import-dictionary`; PR-14 adds `--update-mult-info` to it for
-    mult renames. The aux tables are rebuilt only by an import's finalization, which never
+  - **`param_info` and the dictionary reload on their own, atomically.**
+    `--create-param-info` builds `param_info__new`, fills it, and swaps it in with `RENAME
+    TABLE param_info TO param_info__old, param_info__new TO param_info`. `opus_import
+    --import-dictionary` builds `contexts__new` and `definitions__new` (its foreign key
+    pointing at `contexts__new`), fills them, and swaps both in with one `RENAME TABLE
+    contexts TO contexts__old, contexts__new TO contexts, definitions TO definitions__old,
+    definitions__new TO definitions`, which MySQL performs atomically and which carries
+    the foreign key onto the new `contexts`; then it drops the `__old` pair. A leftover
+    `__new` or `__old` pair from an interrupted run is dropped first. The swap connection
+    sets a short `lock_wait_timeout` and retries, since the rename waits for open
+    transactions on the two tables. These are the mechanisms for reloading only
+    `param_info` or only the dictionary, on a served schema or any other; both use one
+    helper, `swap_in(tables)`.
+  - **The code-only deploy stops rebuilding `partables` and `table_names`.**
+    `deploy_new_code_only.sh`'s line becomes `opus_import --create-param-info
+    --import-dictionary`; PR-14 adds `--update-mult-info` to it for mult renames.
+    `partables` and `table_names` are rebuilt only by an import's finalization, which never
     runs against a served schema, so they need no swap.
   - **A static schema validator (#1487)**, `tests/opus_import/test_table_schemas.py`, run in
     the DB-less unit suite: every column entry carries the keys its kind requires and no
@@ -764,8 +769,9 @@ as `item n`, and to the design document as `§D-n`.
   raising between the fill and the rename, and asserts the dictionary is intact and the
   next run succeeds; the validator itself.
 - **Measurement:** none beyond the fixture-scale wall-clock of `--import-dictionary`,
-  reported. **Target metric:** the structural criterion: the dictionary is never missing or
-  partly filled for a reader, and no deploy rebuilds a table it does not change.
+  reported. **Target metric:** the structural criterion: `param_info` and the dictionary
+  are never missing or partly filled for a reader, and no deploy rebuilds a table it
+  cannot change.
 - **Acceptance:** §2.5 with the structural criterion; goldens unchanged.
 - **Requires full re-import:** no.
 - **PostgreSQL note:** DDL is transactional, so the two `ALTER TABLE ... RENAME` pairs run in
@@ -844,11 +850,12 @@ as `item n`, and to the design document as `§D-n`.
   `create_cart`, and `drop_cache_tables` for it). **The finalization sequence** `cli.main`
   runs for the cleanup group, in this order, which later PRs extend in place: the key and
   foreign-key builds (this PR; `FULLTEXT` keys first from PR-22); the mult step (PR-14);
-  the aux tables, written directly; `reset_search_tables` and the cache flush (PR-11);
-  `ANALYZE`, with PR-25's histograms; then, as their own flags, `--import-dictionary`,
-  `--validate-perm`, and `--write-schema-version`. `analyze_all_tables` leaves
-  `do_import_steps` for this sequence, because today it runs before the aux tables exist.
-  The key build is idempotent: it skips keys and constraints that exist, read from
+  the aux tables (`partables` and `table_names` written directly, `param_info` swapped
+  in); `reset_search_tables` and the cache flush (PR-11); `ANALYZE`, with PR-25's
+  histograms; then, as their own flags, `--import-dictionary`, `--validate-perm`, and
+  `--write-schema-version`. `analyze_all_tables` leaves `do_import_steps` for this
+  sequence, because today it runs before the aux tables exist. The key build is
+  idempotent: it skips keys and constraints that exist, read from
   `information_schema.STATISTICS` and `REFERENTIAL_CONSTRAINTS` through the brand class,
   and **compares kind and ordered columns, never names**, because unnamed composite keys
   get server-assigned names (`time1_2`). It derives the key and foreign-key list from the
@@ -945,9 +952,9 @@ as `item n`, and to the design document as `§D-n`.
   bundles plus any it names, and because each bundle is deleted before it is written, the
   rerun is clean. `--import-ignore-errors` now means: finish the fresh import or the
   append, and write `ready`, even when bundles logged errors.
-- **The aux steps write their tables directly**: they run only inside an import, which
-  never targets a served schema, so each drops, re-creates, and fills its table without
-  staging; the dictionary keeps PR-06's swap.
+- **`partables` and `table_names` write directly**: they are rebuilt only inside an import,
+  which never targets a served schema, so each drops, re-creates, and fills its table
+  without staging; `param_info` and the dictionary keep PR-06's swap.
 - **Outside the dispatch.** `--update-mult-info`, the aux and dictionary steps,
   `--delete-permanent-bundles`, `--cleanup-aux-tables`, scorched earth, PR-18's
   `--carry-over-sessions-from`, and the deploy scripts' `opus_import` lines write no
@@ -1552,6 +1559,22 @@ bump nor the re-import (§1, Deploy).
     `opus_id` waits. The copy whose bundle has the higher `bundle_number`, the later bundle
     in the sorted list, is the one kept, whatever the timing: a process that finds an
     existing copy from a later bundle skips its own row and logs it at info level.
+  - **Running parts on several computers.** `opus_import_all` gains three steps, which it
+    runs in sequence on one computer when given none of them:
+
+    1. `opus_import_all --prepare`: scorched earth when asked for, then registration of
+       every bundle `DUPLICATE_ID_BUNDLE_SETS` and `BUNDLE_SETS` expand to, in sorted
+       order, in one transaction. Run once, on any computer.
+    2. `opus_import_all --part K/N`: imports the K-th of N parts of the bundle sets, with
+       the sets assigned to parts greedily so that the parts' sizes from the last
+       complete-scale run are as even as that makes them, and with no drop and no
+       finalization. Run on each computer, each with an `OPUS_CONFIG` naming the same
+       database server and schema and the same holdings. A part can instead be named
+       explicitly with `--sets COISS,COVIMS`, and plain `opus_import` still takes bundle
+       names or patterns as arguments.
+    3. `opus_import_all --finalize`: the finalization-only invocation, run once after
+       every part has finished.
+
   - **Finalization runs once**, after every process has finished, as a finalization-only
     invocation (`import_all` runs it; with processes on several computers the operator
     does). On the append path each process adds its bundles to `appending_bundles` under the
