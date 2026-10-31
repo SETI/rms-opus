@@ -661,7 +661,10 @@ tables, and its observations take ids `bundle_number ×
 2^23 + n`, so 512 bundles of up to 8,388,607 observations fit in `INT UNSIGNED`. That is
 the only id the import allocates: every other table keys on `obs_general_id`. A process
 reads each bundle's number from the registry, registering the bundle if it is absent;
-registering the whole list in sorted order first makes the ids the same on every run, and
+registration takes the same bundle descriptors as an import (bundle ids, bundle sets,
+and shorthands such as `ALL` and `CASSINI`) and numbers the bundles in import order, so
+registering the whole list first makes the ids the same on every run and the later bundle
+in import order has the higher number, and
 a replaced bundle keeps its number. A new mult value takes the next id within its field
 under a lock on that field, and a duplicate-key error on `(field_id, value)` means another
 process added it first, so two processes meeting the same value get the same id. When two

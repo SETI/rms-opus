@@ -1533,13 +1533,20 @@ bump nor the re-import (§1, Deploy).
     AUTO_INCREMENT PRIMARY KEY, bundle_id VARCHAR(75) NOT NULL UNIQUE)`, a table in the
     target schema beside the observation tables, created by the first registration,
     dropped by scorched earth, and copied whole by PR-23's seed so that bundle numbers and
-    ids carry over; it is filled by `opus_import --register-bundles <list>`, which
-    registers the bundles it is given in sorted order and leaves existing ones alone.
-    **How a process knows a bundle\'s number:** it reads it from `import_bundle` by
-    `bundle_id`, registering the bundle first if it is absent; registering the whole list
-    in sorted order before any process starts is what makes the numbers, and so the ids,
-    the same on every run. `import_all` and `import_for_tests.sh` register their whole
-    list first; a process that meets an unregistered bundle registers it itself.
+    ids carry over; it is filled by `opus_import --register-bundles <descriptors>`, which
+    takes exactly the bundle descriptors `opus_import` takes today (bundle ids, bundle
+    sets such as `COISS_2xxx`, the shorthands `ALL`, `CASSINI`, `COISS`, `VOYAGER`, `HST`,
+    and the rest, and `--exclude-bundles`), expands them through the same
+    `yield_import_bundle_ids`, and registers the bundles **in the order that yields them,
+    which is the import order**, leaving existing ones alone. **How a process knows a
+    bundle\'s number:** it reads it from `import_bundle` by `bundle_id`, registering the
+    bundle first if it is absent; registering the whole list in import order before any
+    process starts is what makes the numbers, and so the ids, the same on every run.
+    Import order, not sorted order, is what keeps today's rule that the later bundle wins:
+    New Horizons yields its calibrated `2xxx` bundle before its raw `1xxx` one so that the
+    raw bundle, imported second, holds the primary filespec, and a sorted registration
+    would reverse that. `import_all` and `import_for_tests.sh` register their whole list
+    first; a process that meets an unregistered bundle registers it itself.
   - **Ids from per-bundle blocks, for `obs_general` only.** Every other table keys on
     `obs_general_id` (PR-12), so `obs_general.id` is the only id the import allocates: a
     bundle's observations take `bundle_number × 2^23 + n`, `n` counting from 0 in index
@@ -1555,18 +1562,18 @@ bump nor the re-import (§1, Deploy).
     duplicate-key error on `(field_id, value)` means another process added the same value
     first, and its id is read back. PR-14's unique key and its empty-string absent value
     are what make this safe.
-  - **Duplicate OPUS ids across processes; the later bundle wins.** PR-07's per-chunk probe
-    runs as `SELECT ... FOR UPDATE` on `obs_general`'s `opus_id` key inside the chunk's
-    transaction, which also locks the absent keys, so a second process writing the same
-    `opus_id` waits. The copy whose bundle has the higher `bundle_number`, the later bundle
-    in the sorted list, is the one kept, whatever the timing: a process that finds an
+  - **Duplicate OPUS ids across processes; the later bundle wins.** PR-07's per-chunk
+    probe runs as `SELECT ... FOR UPDATE` on `obs_general`'s `opus_id` key inside the
+    chunk's transaction, which also locks the absent keys, so a second process writing the
+    same `opus_id` waits. The copy whose bundle has the higher `bundle_number`, the later
+    bundle in import order, is the one kept, whatever the timing: a process that finds an
     existing copy from a later bundle skips its own row and logs it at info level.
   - **Running parts on several computers.** `opus_import_all` gains three steps, which it
     runs in sequence on one computer when given none of them:
 
     1. `opus_import_all --prepare`: scorched earth when asked for, then registration of
-       every bundle `DUPLICATE_ID_BUNDLE_SETS` and `BUNDLE_SETS` expand to, in sorted
-       order, in one transaction. Run once, on any computer.
+       every bundle `DUPLICATE_ID_BUNDLE_SETS` and `BUNDLE_SETS` expand to, in the order
+       `import_all` imports them, in one transaction. Run once, on any computer.
     2. `opus_import_all --part K/N`: imports the K-th of N parts of the bundle sets, with
        the sets assigned to parts greedily so that the parts' sizes from the last
        complete-scale run are as even as that makes them, and with no drop and no
