@@ -596,7 +596,8 @@ A full import runs one invocation per bundle group, and every one after the firs
 fresh import in progress and continues it. The bundle steps are chosen by this state;
 finalization is an explicit step that the sequences run once at the end.
 
-1. **Scorched earth** drops the `obs_` tables, the three mult tables, and `cart`, and
+1. **Scorched earth** drops the `obs_` tables, the three mult tables, the bundle
+   registry, and `cart`, and
    deletes the `schema_version` row.
 2. **Per bundle**, tables are created with their primary key and unique keys only, and
    `obs_general` with its bundle key too, which the per-bundle delete reads. Worker
@@ -655,7 +656,8 @@ how a served schema is updated.
 
 **Several processes at once.** Several `opus_import` processes, on one computer or
 several, may import into one schema at the same time. Each bundle is registered once, in
-`import_bundle(bundle_number, bundle_id)`, and its observations take ids `bundle_number ×
+`import_bundle(bundle_number, bundle_id)`, a table in the same schema as the observation
+tables, and its observations take ids `bundle_number ×
 2^23 + n`, so 512 bundles of up to 8,388,607 observations fit in `INT UNSIGNED`. That is
 the only id the import allocates: every other table keys on `obs_general_id`. A process
 reads each bundle's number from the registry, registering the bundle if it is absent;
@@ -684,7 +686,8 @@ update is created as a new schema and promoted whole, exactly as a full import i
    bundle_id NOT IN (<the bundles being replaced, and those the existing
    --delete-permanent-bundles names for dropping>)`, every other per-observation table
    with `WHERE obs_general_id NOT IN (SELECT id FROM <served>.obs_general WHERE bundle_id
-   IN (<the same bundles>))`, and the three mult tables whole, over the sibling
+   IN (<the same bundles>))`, and the three mult tables and the bundle registry whole, so
+   every bundle keeps its number and every unchanged observation its id, over the sibling
    connections, one table per connection, under `READ COMMITTED` so the served schema's
    rows are not locked; values only the excluded bundles used are removed by
    finalization's mult step. Ids are preserved, so an unchanged observation keeps its
