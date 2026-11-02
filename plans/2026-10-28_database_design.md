@@ -668,14 +668,35 @@ in import order has the higher number, and
 a replaced bundle keeps its number. A new mult value takes the next id within its field
 under a lock on that field, and a duplicate-key error on `(field_id, value)` means another
 process added it first, so two processes meeting the same value get the same id. When two
-bundles produce the same OPUS id, **the later bundle wins**: within one process the later
-bundle in import order replaces the earlier copy, and across processes the copy from the
-higher `bundle_number` is kept whatever the timing, with the probe locking the `opus_id`
-key so the two cannot interleave. In practice one computer runs `opus_import_all
---prepare`, which registers every bundle; each computer then runs `opus_import_all --part
-K/N`, or names its bundle sets with `--sets`; and one computer runs `opus_import_all
---finalize` when all have finished. With none of the three, `opus_import_all` runs them in
-sequence, as one import does today.
+bundles produce the same OPUS id, **the later bundle wins**: within one process or across
+several, the copy from the higher `bundle_number` is kept whatever order the bundles are
+imported in, with the probe locking the `opus_id`
+key so the two cannot interleave.
+
+**The registry is also the work queue.** Bundles differ in size by orders of magnitude, so
+work is not split into fixed parts before the run; each bundle is a unit of work handed
+out at run time. Each registry row carries a size estimate (the row count its primary
+index labels declare, unknown for a bundle with none), a state (`pending`, `importing`,
+`done`, `failed`), the rows done so far, and the importer that claimed it. An **importer**
+is one `opus_import` process, with its own pool of workers, that repeatedly claims the
+largest pending bundle (unknown sizes first) with `FOR UPDATE SKIP LOCKED` and imports
+it, so large bundles start at once and small ones fill in at the end. Claim order changes
+nothing in the result, because ids and the duplicate rule both follow `bundle_number`,
+fixed at registration.
+
+**`opus_import_all` coordinates.** It registers every bundle, starts a number of
+importers on its computer with the workers asked for divided among them (one by default,
+so a plain import is sequential, and never more than a configured fraction of the cores,
+since the computer may also run the database server or serve other work), and tracks
+every importer on
+any computer through an `import_process` table, showing per importer its bundle and rows
+done and in total the bundles and rows remaining. Each importer holds a MySQL named lock
+for its life, so a dead importer is detected from any computer the moment its connection
+drops; its bundle's rows are deleted and the bundle is requeued, and a bundle lost twice
+is marked failed. When the queue is empty and no importer is alive, the coordinator
+finalizes, unless a bundle failed. `opus_import_all --join` on another computer adds
+importers to the same queue, a first Ctrl-C drains and a second aborts, and rerunning
+`opus_import_all` resumes from the bundles already done.
 
 ### 3.1 Incremental update
 

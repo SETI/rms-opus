@@ -306,7 +306,7 @@ substantive change the review loop forces:
 
 **Which PRs import twice.** A test-scale import is hours, so only a PR that changes what
 the import writes or how it writes it runs `bench_import` with both interpreters: PR-01,
-PR-04, PR-07, PR-08, PR-09, PR-15, PR-12, PR-14, PR-16, PR-17, PR-19, PR-20, and PR-23. A
+PR-04, PR-07, PR-08, PR-09, PR-15, PR-15a, PR-12, PR-14, PR-16, PR-17, PR-19, PR-20, and PR-23. A
 PR that only adds keys or statistics (PR-13, PR-22, PR-25) imports once with the base and
 then runs its own finalization step on a copy of that schema made by
 `bench_server.clone_schema`. A PR that changes no imported table (PR-02, PR-03, PR-05,
@@ -999,8 +999,14 @@ as `item n`, and to the design document as `§D-n`.
     explicitly `fork` on Linux and macOS (Python 3.14 changes the Linux default to
     `forkserver`, and `spawn`/`forkserver` would redo `Pds3File.preload(holdings)` in every
     worker); on Windows the pool is not available and `workers` is forced to 1 with a
-    logged notice. `workers` comes from `[import] workers` (default `min(8, os.cpu_count()
-    or 1)`; `1` means the in-process path with no pool). **The pool is created once per
+    logged notice. `workers` comes from `opus_import --workers N`, else from `[import]
+    workers`, whose default is 1: the import is sequential unless parallelism is asked
+    for, and `1` means the in-process path with no pool. **No request takes every core**,
+    since the database server, memcached, or another user may share the computer: N is
+    refused, naming the ceiling, above `max(1, floor(C × [import] cpu_fraction))`, where C
+    is the cores the process may run on (`len(os.sched_getaffinity(0))` where the platform
+    has it, else `os.cpu_count()`) and `cpu_fraction` defaults to 0.75 and must lie in
+    (0, 1]. **The pool is created once per
     index** (a COCIRS bundle has several index tables, and `metadata` is per index),
     after the index's `metadata`, `vol_info`, `table_schemas`, and the parsed `args` have
     been installed in a module-level global the forked workers inherit; **nothing is
@@ -1084,8 +1090,8 @@ as `item n`, and to the design document as `§D-n`.
   RSS. **Expected shape:** the curve flattens when the parent saturates and the serial
   pre-phase (pdstable reads of the index and summaries) bounds the index by Amdahl; a flat
   curve past four to six workers is the ceiling, not a bug, and the PR says where the
-  ceiling landed. Target metric: largest-bundle `--import` wall-clock at the default
-  worker count against `workers = 1`.
+  ceiling landed. Target metric: largest-bundle `--import` wall-clock at the best
+  measured worker count against `workers = 1`, the default.
 - **Acceptance:** §2.5; goldens unchanged; the determinism test passes; the warning
   whitelist unchanged.
 - **Scale:** test scale.
@@ -1529,16 +1535,23 @@ bump nor the re-import (§1, Deploy).
   the same ids.
 - **Changes:**
   - **A bundle registry.** `import_bundle(bundle_number SMALLINT UNSIGNED NOT NULL
-    AUTO_INCREMENT PRIMARY KEY, bundle_id VARCHAR(75) NOT NULL UNIQUE)`, a table in the
-    target schema beside the observation tables, created by the first registration,
+    AUTO_INCREMENT PRIMARY KEY, bundle_id VARCHAR(75) NOT NULL UNIQUE, size_estimate
+    BIGINT UNSIGNED NULL, state ENUM('pending','importing','done','failed') NOT NULL
+    DEFAULT 'pending', started_at DATETIME NULL, finished_at DATETIME NULL)`, a table in
+    the target schema beside the observation tables, created by the first registration,
     dropped by scorched earth, and copied whole by PR-23's schema clone so that bundle
-    numbers and ids carry over; it is filled by
+    numbers and ids carry over (the clone sets the bundles it leaves out, the ones being
+    replaced, back to `pending`); the state columns are the work queue below, and a plain
+    `opus_import` moves its own bundles through `importing` to `done` or `failed` the same
+    way, so the queue and a hand-run import agree on what is finished. It is filled by
     `opus_import --register-bundles <descriptors>`, which takes exactly the bundle
     descriptors `opus_import` takes today
     (bundle ids, bundle sets such as `COISS_2xxx`, the shorthands `ALL`, `CASSINI`,
     `COISS`, `VOYAGER`, `HST`, and the rest, and `--exclude-bundles`), expands them
     through the same `yield_import_bundle_ids`, and registers the bundles **in the order
-    that yields them, which is the import order**, leaving existing ones alone. **How a
+    that yields them, which is the import order**, leaving existing ones alone, each with
+    its `size_estimate`: the row count its primary index labels declare, or `NULL` for a
+    bundle with no primary index. **How a
     process knows a bundle's number:** it reads it from `import_bundle` by `bundle_id`,
     registering the bundle first if it is absent; registering the whole list in import
     order before any process starts is what makes the numbers, and so the ids, the same on
@@ -1562,44 +1575,163 @@ bump nor the re-import (§1, Deploy).
     duplicate-key error on `(field_id, value)` means another process added the same value
     first, and its id is read back. PR-14's unique key and its empty-string absent value
     are what make this safe.
-  - **Duplicate OPUS ids across processes; the later bundle wins.** PR-07's per-chunk
+  - **Duplicate OPUS ids in any import order; the later bundle wins.** PR-07's per-chunk
     probe runs as `SELECT ... FOR UPDATE` on `obs_general`'s `opus_id` key inside the
     chunk's transaction, which also locks the absent keys, so a second process writing the
     same `opus_id` waits. The copy whose bundle has the higher `bundle_number`, the later
-    bundle in import order, is the one kept, whatever the timing: a process that finds an
-    existing copy from a later bundle skips its own row and logs it at info level.
-  - **Running parts on several computers.** `opus_import_all` gains three steps, which it
-    runs in sequence on one computer when given none of them:
-
-    1. `opus_import_all --prepare`: scorched earth when asked for, then registration of
-       every bundle `DUPLICATE_ID_BUNDLE_SETS` and `BUNDLE_SETS` expand to, in the order
-       `import_all` imports them, in one transaction. Run once, on any computer.
-    2. `opus_import_all --part K/N`: imports the K-th of N parts of the bundle sets, with
-       the sets assigned to parts greedily so that the parts' sizes from the last
-       complete-scale run are as even as that makes them, and with no drop and no
-       finalization. Run on each computer, each with an `OPUS_CONFIG` naming the same
-       database server and schema and the same holdings. A part can instead be named
-       explicitly with `--sets COISS,COVIMS`, and plain `opus_import` still takes bundle
-       names or patterns as arguments.
-    3. `opus_import_all --finalize`: the finalization-only invocation, run once after
-       every part has finished.
-
-  - **Finalization runs once**, after every process has finished, as a finalization-only
-    invocation (`import_all` runs it; with processes on several computers the operator
-    does). On the append path each process adds its bundles to `appending_bundles` under the
-    version row's lock, and only the finalization-only invocation returns the state to
-    `ready`.
-  - **Goldens.** With one process, ids are the same on every run. With several, mult ids
+    bundle in import order, is the one kept, whatever the timing and whichever process:
+    a process that finds an existing copy from a later bundle skips its own row and logs it
+    at info level. This replaces PR-07's "the later import replaces the earlier copy"
+    within a single process too, because an importer imports largest first, not in import
+    order.
+  - **A work queue, not fixed parts.** Bundles differ in size by orders of magnitude, so
+    any split fixed before the run leaves processes idle while one finishes a large
+    bundle, and it cannot absorb computers of different speeds or a wrong size estimate.
+    The unit of work is one bundle, handed out at run time from the registry. An
+    **importer** is one `opus_import` process drawing from the queue, with its own PR-09
+    pool of `workers`; it loops: claim the largest pending bundle (`SELECT ... WHERE state
+    = 'pending' ORDER BY size_estimate IS NULL DESC, size_estimate DESC, bundle_number
+    LIMIT 1 FOR UPDATE SKIP LOCKED`, then `state = 'importing'` and `started_at`,
+    committed), import it with no drop and no finalization, mark it `done` with
+    `finished_at`, and claim the next, exiting when none is pending. A bundle whose import
+    raises is marked `failed`, its rows deleted, and the importer moves on; a failure is
+    not retried, since it would fail the same way. Largest first, with unknown sizes
+    treated as largest, starts the large bundles at once and leaves the small ones to fill
+    the gaps at the end, so the wall-clock floor is the largest bundle alone. `--sets
+    COISS,COVIMS` limits which bundles an importer claims (for a computer that holds only
+    some of the holdings), and plain `opus_import` still takes bundle names or patterns as
+    arguments. Claim order changes nothing in the result: ids come from bundle numbers,
+    and duplicate OPUS ids resolve by `bundle_number`, both fixed at registration.
+  - **`opus_import_all`'s steps.** Each runs alone when named; with none named,
+    `opus_import_all` runs prepare, one importer, and finalize in sequence on one
+    computer, as one import does today. PR-15a replaces that default with a coordinator.
+    1. `--prepare`: scorched earth when asked for, then registration of every bundle
+       `DUPLICATE_ID_BUNDLE_SETS` and `BUNDLE_SETS` expand to, in the order `import_all`
+       imports them, in one transaction.
+    2. `--importer [--sets ...] [--workers N]`: one importer, as above, which never prepares or
+       finalizes. Several, on one computer or several, each with an `OPUS_CONFIG` naming
+       the same database server and schema and the same holdings, draw from one queue.
+    3. `--finalize`: the finalization-only step, run once after every importer has
+       exited. It refuses, naming them, while any bundle is `pending`, `importing`, or
+       `failed`.
+    4. `--requeue <bundle ids>`: returns the named `failed` or `importing` bundles to
+       `pending`, after deleting their rows; naming an `importing` bundle is the
+       operator's statement that its importer is dead, which PR-15a detects instead.
+  - **Finalization runs once**, after every importer has finished, as the
+    finalization-only step. On the append path each importer adds its bundles to
+    `appending_bundles` under the version row's lock, and only the finalization-only step
+    returns the state to `ready`.
+  - **Goldens.** With one importer, ids are the same on every run. With several, mult ids
     depend on arrival order, so `golden_io` gains a mode that writes every mult column as
-    its value; a new `import_tests` case imports the fixture with one process and with three
-    into two schemas and asserts the two compare equal in that mode.
-  - Docs: `dev_guide_import_running.rst` (several processes, `--register-bundles`, and the
-    finalization-only step) and `user_guide_deployment.rst`.
-- **Measurement:** test-scale import wall-clock with one, two, and four processes on the
-  workstation, each importing a disjoint bundle set. Target metric: import wall-clock at the
-  process count the workstation's cores support.
+    its value; a new `import_tests` case imports the fixture with one importer and with
+    three `--importer` processes into two schemas and asserts the two compare equal in
+    that mode.
+  - Docs: `dev_guide_import_running.rst` (the steps, several importers,
+    `--register-bundles`, `--requeue`, and the finalization-only step) and
+    `user_guide_deployment.rst`.
+- **Measurement:** test-scale import wall-clock on the workstation with one importer,
+  before and after, so the locking the probe and the mult ids add is seen alone; then two
+  and four `--importer` processes started by the harness, with a fixed total of
+  `--workers` divided among them; each bundle's import time beside
+  its `size_estimate` so a poor estimate shows. Target metric: import wall-clock at four
+  importers.
 - **Acceptance:** §2.5; goldens equal in the mult-value mode; the duplicate test above.
 - **Requires full re-import:** yes (the id scheme).
+- **Scale:** test scale.
+
+**PR-15a: feat: `opus_import_all` divides the import among importers and tracks them** (`§D-3`)
+
+- **The problem.** PR-15's importers must be started, watched, and cleaned up by hand: the
+  operator chooses how many to run and how many PR-09 workers each gets, cannot see what
+  each is doing, and must notice a dead importer and requeue its bundle before
+  finalizing.
+- **Changes:**
+  - **Registry columns.** `import_bundle` gains `process_id INT UNSIGNED NULL` (the
+    importer that claimed it, set with `state = 'importing'`), `rows_done BIGINT UNSIGNED
+    NOT NULL DEFAULT 0` (advanced at each chunk commit), and `losses TINYINT UNSIGNED NOT
+    NULL DEFAULT 0`. `SCHEMA_VERSION` is bumped (PR-05).
+  - **The process table.** `import_process(process_id INT UNSIGNED NOT NULL
+    AUTO_INCREMENT PRIMARY KEY, host VARCHAR(255) NOT NULL, pid INT UNSIGNED NOT NULL,
+    log_path VARCHAR(1024) NOT NULL, started_at DATETIME NOT NULL, progress_at DATETIME
+    NOT NULL, state ENUM('running','exited','lost') NOT NULL)`, beside `import_bundle` and
+    with the same lifetime. An importer inserts its row at start and updates
+    `progress_at` with each `rows_done`, in the same commit. **Liveness is a MySQL named
+    lock, not a timeout:** an importer holds `GET_LOCK()` on a name built from the schema
+    and its `process_id` (hashed to fit the 64-character limit) on its own connection for
+    its whole life, so when the process dies, its connection closes and the lock frees,
+    and `IS_USED_LOCK()` answers whether it is alive from any computer. This needs no
+    heartbeat thread, which PR-09's forked pool must not inherit, and no guessed timeout
+    that a slow chunk could exceed. An importer that is alive but whose `progress_at` has
+    not moved for `[import] stall_warning_minutes` is reported as stalled, never killed.
+  - **`opus_import_all` coordinates.** With no step flag it is the **coordinator**:
+    1. **Prepare.** PR-15's `--prepare`. Registration leaves registered bundles alone, so
+       running `opus_import_all` again after an interruption resumes: done bundles stay
+       done.
+    2. **Divide.** `--workers N` is the total of PR-09 workers on this computer, from
+       `[import] workers` when not given, so the default is 1 and a plain
+       `opus_import_all` is one sequential importer, as today. N is refused above PR-09's
+       ceiling, so no request takes every core. It starts `--importers M` importers, M
+       capped at N, and divides N among them as evenly as integers allow (the first `N mod
+       M` take one more), so together they use exactly N. `--importers auto`, the
+       default, takes M from `[import] importers`, capped at N, whose default is set from
+       this PR's measurement and recorded with it. The log's first line states C, the
+       fraction, the ceiling, N, M, and the workers per importer.
+    3. **Track.** Every few seconds it reads `import_bundle` and `import_process`. On a
+       terminal it redraws a table, one line per running importer on any computer (host
+       and pid, bundle, `rows_done` of `size_estimate`, time in the bundle, time since
+       progress) under a totals line (bundles done, importing, pending, and failed; rows
+       done of the estimated total; elapsed; and a remaining-time estimate from the
+       observed row rate, labeled as an estimate); without a terminal it logs a line per
+       finished bundle and the totals line every `[import] status_interval_minutes`.
+    4. **Recover.** An importer is lost when its lock is free and its state is still
+       `running`: for its own importers the coordinator also sees the process exit at
+       once. A lost importer's row becomes `lost`; its bundle's rows are deleted, its
+       `losses` incremented, and it returns to `pending`, unless this is its second loss,
+       when it becomes `failed`, since a bundle that kills its importer twice (memory, a
+       crash in a native library) would loop. The coordinator starts a replacement for a
+       lost importer of its own while bundles are pending. Any coordinator, or `--status
+       --recover` from any computer, performs this recovery; it is idempotent, and it
+       locks the bundle's registry row and rechecks the importer's lock first, so two
+       coordinators cannot requeue one bundle twice. `--requeue` refuses an `importing`
+       bundle whose importer is alive.
+    5. **Finalize.** When no bundle is pending or importing and no importer anywhere is
+       alive, it runs the finalization-only step itself, unless a bundle failed, in which
+       case it exits non-zero naming each failed bundle with its importer's log path and
+       leaves the schema unfinalized; after the fix, `--requeue` and a rerun import only
+       those bundles.
+
+    **Interrupts.** The first Ctrl-C (SIGINT) drains: importers claim nothing new and
+    finish their current bundles, and the coordinator exits without finalizing. A second
+    aborts: each importer deletes its current bundle's rows and returns it to `pending`
+    before exiting. Either way a rerun resumes.
+
+    **Other computers.** `opus_import_all --join [--importers M]` on another computer,
+    with an `OPUS_CONFIG` naming the same database server and schema and the same
+    holdings, starts importers there with its own `--workers` (default 1) under that
+    computer's own ceiling, draws from the same queue, and tracks them the same
+    way, but never prepares or finalizes; the coordinator's table shows them, and it
+    waits for them before finalizing. A computer can join or leave mid-run. It replaces
+    PR-15's `--importer`, which goes. `opus_import_all --status [--watch]` prints the
+    coordinator's table from any computer, read-only. `--prepare` and `--finalize` remain
+    as single steps.
+  - **Tests.** An `import_tests` case kills one of three importers mid-bundle and asserts
+    that the coordinator requeues the bundle and the result compares equal, in PR-15's
+    mult-value mode, to the one-importer schema; a second asserts that a bundle lost
+    twice is `failed` and finalization does not run; a third interrupts twice and asserts
+    that a rerun resumes to the same result. Unit tests cover the division: the default
+    of one, N not divisible by M, M above N, a ceiling that floors to zero, and
+    `--workers` above the ceiling.
+  - Docs: `dev_guide_import_running.rst` (the coordinator, `--workers` and its ceiling, `--join`,
+    `--status`, interrupts and resuming) and `user_guide_deployment.rst`.
+- **Measurement:** test-scale import wall-clock on the workstation under the coordinator
+  for one, two, and four importers at one `--workers` total, the workstation's
+  ceiling, divided among them, so the pool-inside-a-bundle and the queue-across-bundles
+  trade against each other at a fixed total; with each importer's
+  idle time between its last bundle and the last importer's exit. The fastest
+  combination sets `[import] importers`'s default. Target metric: import wall-clock at
+  that total.
+- **Acceptance:** §2.5; the recovery, double-loss, and interrupt tests above.
+- **Requires full re-import:** yes (the registry's columns).
 - **Scale:** test scale.
 
 **PR-16: refactor: one surface geometry table, with the targets as data** (item 11; `§C-2.3`; `§D-2.3`; closes #334)
@@ -2389,6 +2521,7 @@ the orchestrator's).
 | PR-13 | PR-07, PR-12 | composite indexes are created by PR-07's finalization on the rekeyed schemas |
 | PR-14 | PR-03, PR-07, PR-08, PR-11 | the label caches are rewritten; the cleanup and ranks are a finalization step an append re-runs; the table-level key forms |
 | PR-15 | PR-07, PR-08, PR-09, PR-12, PR-14 | `obs_general.id` is the only id once PR-12 rekeys the children; mult ids rely on PR-14's unique key; the blocks replace the counters PR-09's parent rebases |
+| PR-15a | PR-09, PR-15 | coordinates PR-15's importers and divides `--workers` among their PR-09 pools under PR-09's ceiling |
 | PR-16 | PR-03, PR-09, PR-11, PR-12, PR-13, PR-14 | `resolve_category` uses PR-03's caches; PR-09's parent writes the rows; the one table follows PR-12's rule, PR-13's key form, and PR-14's ids |
 | PR-17 | PR-04, PR-12, PR-14, PR-16 | the load's warning check rejects non-ASCII values; mult labels stay `utf8mb4`; the columns are the rekeyed and merged tables' |
 | PR-18 | PR-11 | warms a `search_results` search; the carry-over edits the same `_promote.sh` region |
