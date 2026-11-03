@@ -539,11 +539,11 @@ mult(field_id  SMALLINT UNSIGNED NOT NULL,
 - The `aliases` and `timestamp` columns of today's tables are not carried: nothing reads
   them.
 
-Two tables are evaluated on the complete holdings at the end of the plan, and are added only
-if the measurements, once discussed, justify them: `mult_count_empty(field_id, mult_id,
-count)`, the counts for the empty search; and `obs_facet`, one narrow row per
+One table is evaluated on the complete holdings at the end of the plan, and is added only
+if the measurements, once discussed, justify it: `obs_facet`, one narrow row per
 observation holding every mult id, which a count over a large result set would scan
-instead of the child tables.
+instead of the child tables. The empty search's counts need no table: the post-deploy
+warm-up puts every mult field's counts in memcached.
 
 ### 2.9 Column types
 
@@ -614,7 +614,7 @@ finalization is an explicit step that the sequences run once at the end.
 2. **Per bundle**, tables are created with their primary key and unique keys only, and
    `obs_general` with its bundle key too, which the per-bundle delete reads. Worker
    processes turn index rows into table rows; the parent process assigns ids from the
-   bundle's block (below), resolves mult values, and loads tab-separated text with `LOAD
+   bundle's id range (below), resolves mult values, and loads tab-separated text with `LOAD
    DATA LOCAL INFILE` in chunks of about 100,000 rows, failing on any skipped row or
    warning (the statement would otherwise ignore duplicate keys silently). Each bundle is
    deleted from the permanent tables before it is written, so a rerun is clean. Nothing
@@ -673,8 +673,9 @@ how a served schema is updated.
 **Several processes at once.** Several `opus_import` processes, on one computer or
 several, may import into one schema at the same time. Each bundle is registered once, in
 `import_bundle(bundle_number, bundle_id)`, a table in the same schema as the observation
-tables, and its observations take ids `bundle_number ×
-2^23 + n`, so 512 bundles of up to 8,388,607 observations fit in `INT UNSIGNED`. That is
+tables, with an id range: registration, in import order, gives each bundle 100 times the
+row count its index label declares, starting where the previous bundle's range ends, so
+ids ascend in import order and are the same on every run. That is
 the only id the import allocates: every other table keys on `obs_general_id`. A process
 reads each bundle's number from the registry, registering the bundle if it is absent;
 registration takes the same bundle descriptors as an import (bundle ids, bundle sets,
@@ -685,17 +686,17 @@ a replaced bundle keeps its number. A new mult value takes the next id within it
 under a lock on that field, and a duplicate-key error on `(field_id, value)` means another
 process added it first, so two processes meeting the same value get the same id. When two
 bundles produce the same OPUS id, **the later bundle wins**: both copies load, and
-finalization's duplicate step keeps the higher id, which the blocks make the higher
+finalization's duplicate step keeps the higher id, which the ranges make the higher
 `bundle_number` whatever order the bundles are imported in. No process looks for
 duplicates or locks anything to avoid them.
 
 **The registry is also the work queue.** Bundles differ in size by orders of magnitude, so
 work is not split into fixed parts before the run; each bundle is a unit of work handed
 out at run time. Each registry row carries a size estimate (the row count its primary
-index labels declare, unknown for a bundle with none), a state (`pending`, `importing`,
+index labels declare; a bundle without one is refused at registration), a state (`pending`, `importing`,
 `done`, `failed`), the rows done so far, and the importer that claimed it. An **importer**
 is one `opus_import` process, with its own pool of workers, that repeatedly claims the
-largest pending bundle (unknown sizes first) with `FOR UPDATE SKIP LOCKED` and imports
+largest pending bundle with `FOR UPDATE SKIP LOCKED` and imports
 it, so large bundles start at once and small ones fill in at the end. Claim order changes
 nothing in the result, because ids and the duplicate rule both follow `bundle_number`,
 fixed at registration.
@@ -740,7 +741,7 @@ update is created as a new schema and promoted whole, exactly as a full import i
    each table with its indexes in place and ends by writing the version row in the
    `appending` state, so the bundles go through the append path with the indexes up and a
    small update rebuilds nothing. A re-imported bundle keeps its number and so its id
-   block, which the copy left empty; a new bundle takes the next number and so wins a
+   range, which the copy left empty; a new bundle takes the next number and so wins a
    duplicate `opus_id` against every copied bundle. New mult values append, and a new
    surface geometry target is a row, not a table (§2.3).
 3. **Steps 3 to 5 as for a full import:** aux tables, finalization, dictionary,
