@@ -48,8 +48,8 @@ architecture Phases 0 to 6 produced.
   fresh, directly, and indexed once at the end, a finalized one is appended to, and the aux and
   dictionary tables are swapped in atomically (Phase 2).
 - DDL removed from the web request path, the child tables keyed on the join key, the
-  default sort served by an index, one mult table with a computed display order and no
-  unused values, one surface geometry table, variable-width strings with ASCII
+  default sort served by an index, the keys production never read dropped, one mult
+  table with a computed display order and no unused values, one surface geometry table, variable-width strings with ASCII
   identifiers, and the landing page warmed after every deploy (Phase 3).
 - Indexes for the JSON list columns, re-sort without re-search, and indexed autocomplete,
   on MySQL (Phase 4).
@@ -86,20 +86,21 @@ architecture Phases 0 to 6 produced.
 | Foreign keys | Child tables are created **without** foreign keys; finalization adds them, **serially and after every index build**, with `foreign_key_checks = 0` (which is what makes `ADD FOREIGN KEY` an in-place operation that does not re-check existing rows; each add takes an exclusive metadata lock on `obs_general`, so they never run concurrently with an `ALTER` on it). Because an unvalidated foreign key never catches orphans, `--validate-perm` gains an anti-join count per child. An append loads with the foreign keys in place under `foreign_key_checks = 0`, and the same orphan count covers it. PostgreSQL note: `ADD CONSTRAINT ... NOT VALID` then `VALIDATE CONSTRAINT`. The permanent schema at the end of an import is unchanged. |
 | Unique checks | MySQL's `unique_checks=0` is **never** set: it lets InnoDB defer uniqueness, which is how the import catches duplicate OPUS ids. Primary and unique keys stay on every table during every load. |
 | Transactions in the import | Each bulk load is its own transaction, **chunked to about 100,000 rows** (a killed multi-gigabyte load rolls back slowly, and the server finishes the rollback after a restart). |
-| Golden suites | `import_tests` goldens and the `integration_tests` golden responses are the behavior-preservation gate. A PR that changes the schema regenerates the import goldens with `python -m import_tests.tools.make_mini_goldens` (`docs/dev_guide_import_fixture.rst`) and shows in its description that the diff is confined to the columns and tables it declared. The warning whitelist (`warning_whitelist.txt`, with `test_no_whitelist_entry_is_stale`) is part of the gate: a PR that removes a warning's cause removes its entry in the same PR. **API golden responses change only where a PR names the cause** (PR-14's display rank, PR-17's tie order and identifier collation) **and lists every changed golden with its reason for one ruling**; otherwise they never change. |
+| Golden suites | `import_tests` goldens and the `integration_tests` golden responses are the behavior-preservation gate. A PR that changes the schema regenerates the import goldens with `python -m import_tests.tools.make_mini_goldens` (`docs/dev_guide_import_fixture.rst`) and shows in its description that the diff is confined to the columns and tables it declared. The warning whitelist (`warning_whitelist.txt`, with `test_no_whitelist_entry_is_stale`) is part of the gate: a PR that removes a warning's cause removes its entry in the same PR. **API golden responses change only where a PR names the cause** (PR-13's removal of `ring_obs_id`, PR-14's display rank, PR-17's tie order and identifier collation) **and lists every changed golden with its reason for one ruling**; otherwise they never change. |
 | Surface geometry | One physical table, `obs_surface_geometry_target`, keyed `(target_name, obs_general_id)`, absorbs the per-target tables. The per-target **categories** (`obs_surface_geometry__<target>`), which the public API exposes in `api/categories` and in every `SURFACEGEO<target>_<field>` slug, and the selector category `obs_surface_geometry_name`, stay as **data** in `table_names`, `param_info`, and `partables`; the application resolves a category to the table plus an optional `target_name` filter through one function. A new target becomes a mult row and its category rows, written by the import; no table is created, no model is generated, nothing is redeployed (PR-16). |
 | Mult values | One `mult` table keyed `(field_id, id)` replaces the per-column `mult_` tables (PR-14). The display order is an integer rank that finalization recomputes for every field from typed values, so it never depends on import order; values no observation references are deleted in finalization except in fields whose schema lists the choices. A value is renamed by a `mult_overrides` entry in its column's schema, applied without a re-import by the code-only deploy. **Search results sorted by a mult column sort by label text, and that never changes.** |
 | Deploy | A schema-changing PR is marked **requires full re-import** in §4 and bumps `SCHEMA_VERSION`. The deploy chain already creates a new installation and schema under `staged/` and switches a symlink, so a re-import is the normal deploy. PR-05's schema version guard makes **both** deploy scripts refuse, before any `opus_import` step runs, when the served schema's row is absent or differs from the release's constant; the row itself is written only by an explicit finalization step and never overwritten. `SCHEMA_VERSION` covers the tables the import fills; the tables it only truncates (`user_searches` and `search_results`, re-created from their schema files by `reset_search_tables`, and PR-24's counts table if implemented, created by its own cleanup step and truncated by that reset), which both deploy scripts run, so a change to them needs no re-import. An incremental update is a deploy of the same shape: `_run_incremental_update.sh` (PR-23) clones the served schema into the new one and `deploy_new_code_and_database.sh` promotes it. The deploy scripts run `sudo systemctl` and are the **operator's**; no PR runs them, and the rehearsal before the merge (PR-26) is the orchestrator's step on the Node. |
 | MySQL floor | Stays 8.0.19 (set by the `INSERT ... AS new` alias). `EXPLAIN ANALYZE` needs 8.0.18, the ngram parser 5.7; `innodb_ddl_threads` and `innodb_ddl_buffer_size` (8.0.27) and `innodb_redo_log_capacity` (8.0.30) are used when present, and the harness records the server version. #1503 asks `importdb` for a server-version gate against this floor. |
-| Index pruning | The analysis's item 10, second half (dropping single-column indexes production never uses) needs a month of production index-usage statistics. Phase 5 documents how to collect it; the pruning PR is **deferred** until the data exists and is not numbered here. `obs_files` is the exception: PR-12 prunes its unread indexes from a code audit. |
+| Index pruning | The analysis's item 10, second half (dropping single-column indexes production never uses) is done from **production's index statistics**: `performance_schema.table_io_waits_summary_by_index_usage` on the production server for the 28 days from 2026-10-05 to 2026-11-02 (the counters run from the server's last start; no import ran, so every read is web traffic), against the schema imported on 2025-12-27. Of 31.2 GiB of secondary indexes on the permanent tables, 21.3 GiB were never read, chiefly 12.5 of `obs_files`'s 19.1, 3.6 of the per-target surface geometry tables' 4.0, and 1.7 of `obs_ring_geometry`'s 2.2. The mult-count keys on `obs_general` (`instrument_id`, `planet_id`, `mission_id`, `inst_host_id`) carried most of its index reads, and `obs_general`, `obs_pds`, and `obs_instrument_coiss` read the most rows by table scan. The same server's statement digests cannot show the searches: each per-search table's statements are separate digests, and they filled the digest table on the first day. **A key goes when production never read it**, or when it leads a composite key on the same table (MySQL serves anything the shorter key does from the composite), **unless the import or a code path the web traffic does not exercise needs it** (`obs_general.bundle_id`), a foreign key needs it, or it is an autocomplete column, whose prefix match reads it (a searchable column with the `STRING` form type). A column whose `1`/`2` partner keeps its key keeps its own, and a few are kept by choice (PR-13). PR-12 applies this to `obs_files` and the children, and PR-13 to the other single-column keys, with the list of those that stay; the surface geometry table keeps a key on every keyed template column (PR-16), as there are few of them. PR-25 documents re-collecting the statistics on the new schema. |
 | Configuration keys | Every new `[import]`, `[django]`, or `[database]` key is added in all of: `opus_config/config.py` (the dataclass and its reader; `_TableReader.finish` rejects unknown keys), `opus_config/opus.toml.template`, the ``[django]``, ``[import]``, and ``[database]`` key tables in `docs/user_guide_installation.rst` and the configuration-key table in `docs/dev_guide_import_running.rst`, `tests/opus_config`, `tests/fixtures/opus_ci.toml`, and `import_tests/tools/build_run.write_opus_config`, which gains an `extra_import: dict[str, object]` parameter so a test session can set a key. Any PR adding a key does all of them. |
 | Schema entries | Beside column entries, a table schema (a JSON list) may carry table-level entries: `{"constraint": "..."}` (exists; appended raw by `create_table`, always, and never considered by `add_secondary_indexes`), and from this plan `{"primary_key": [cols]}` and `{"unique": [cols]}` (PR-11), `{"key": [cols]}` (PR-13), `{"fulltext": [cols]}` (PR-22), and `{"foreign_key": {"columns": [...], "references": ["table", ...]}}` (PR-12). Every reader that iterates a schema's columns skips entries without `field_name` as it already skips `constraint`; PR-07's create-time key filter and its `add_secondary_indexes` read the same entries, so the two can never disagree. The static schema validator #1487 asks for, if written, accepts these table-level entries. |
 | Acceptance statistics | Medians and p95 only. Max is recorded, never judged. |
 
 ### Out of scope
 
-The JS/CSS frontend, the public API's response bodies, the log analyzer, and anything in
-`perf_test/` (a standalone server experiment outside every gate; the new harness does not
+The JS/CSS frontend, the public API's response bodies (except PR-13's removal of the
+`ringobsid` field), the log analyzer (except the one change that removal forces), and
+anything in `perf_test/` (a standalone server experiment outside every gate; the new harness does not
 extend it).
 
 ---
@@ -305,10 +306,12 @@ substantive change the review loop forces:
 6. In Phase P, steps 1 to 5 are run once per brand, and the PR description carries one
    table per brand.
 
-**Which PRs import twice.** A test-scale import is hours, so only a PR that changes what
-the import writes or how it writes it runs `bench_import` with both interpreters: PR-01,
-PR-04, PR-07, PR-08, PR-09, PR-15, PR-15a, PR-12, PR-14, PR-16, PR-17, PR-19, PR-20, and PR-23. A
-PR that only adds keys or statistics (PR-13, PR-22, PR-25) imports once with the base and
+**Which PRs import twice.** A test-scale import is minutes (§1, Scales), but a second
+one measures nothing for a PR that leaves the import alone and holds the workstation under
+the idle rule below, so only a PR that changes what the import writes or how it writes it
+runs `bench_import` with both interpreters: PR-01, PR-04, PR-07, PR-08, PR-09, PR-15,
+PR-15a, PR-12, PR-14, PR-16, PR-17, PR-19, PR-20, and PR-23. A PR that only adds keys or
+statistics (PR-13, PR-22, PR-25) imports once with the base and
 then runs its own finalization step on a copy of that schema made by
 `bench_server.clone_schema`. A PR that changes no imported table (PR-02, PR-03, PR-05,
 PR-06, PR-10, PR-11, PR-18, PR-21, PR-24's prototypes) imports once and runs both web
@@ -576,6 +579,13 @@ as `item n`, and to the design document as `§D-n`.
   labels for a result set in one query instead of one `objects.get` per row;
   `_valid_regex` keeps its server round trip but memoizes per pattern.
   `get_triggered_tables` reads `Partables` from the per-process cache on its cache misses.
+  The `definitions` rows load into a per-process dict keyed `(context, term)` the same
+  way, and the `Definitions.objects.get` sites `grep -rn "Definitions.objects.get"
+  src/opus_app` finds (the product-type tooltips and the dictionary) read it.
+- **Production evidence** (§1, Index pruning): the two most frequent statements the
+  production server recorded are the `table_names` lookup by name, which `ParamInfo`'s
+  label methods issue, and the `definitions` lookup by context and term, and a
+  `param_info` query with no usable index examined the most rows.
 - **Measurement:** the fan-out scenario, app-cold; the statement digest table before and
   after (the `partables`, `param_info`, and `mult_*` point-lookup digests should leave the
   top twenty). Target metric: app-cold p50 of the fan-out.
@@ -1161,6 +1171,9 @@ bump nor the re-import (§1, Deploy).
   can exceed memcached's limit) is fixed here: the search's key becomes its fixed-width
   hash, and `api_string_search_choices`'s key, assembled the same way, is hashed to a
   fixed width.
+- **Production evidence** (§1, Index pruning): every per-search table's statements are distinct digests, so on the production server they
+  filled the statement digest table on its first day and no search statement after that
+  could be inspected; with one shared table the digests describe the searches again.
 - **Changes:**
   - A permanent, **unpartitioned** table `search_results(search_id INT UNSIGNED NOT NULL,
     sort_order INT UNSIGNED NOT NULL, obs_general_id INT UNSIGNED NOT NULL, PRIMARY KEY
@@ -1308,6 +1321,10 @@ bump nor the re-import (§1, Deploy).
 
 **PR-12: refactor: key the child tables on obs_general_id, and prune obs_files** (item 8; `§C-2.1`; `§D-2.2`)
 
+- **Production evidence** (§1, Index pruning): of `obs_files`'s indexes only
+  `obs_general_id`, `opus_id`, and `short_name` were read, the last rarely, and the
+  children's `opus_id` and `bundle_id` keys were never read; the keys this PR keeps
+  serve the reads that were made.
 - **Changes:**
   - In every per-category `obs_*` schema except `obs_general`, `obs_files`,
     `obs_surface_geometry_name`, and the surface geometry template: `obs_general_id`
@@ -1370,15 +1387,16 @@ bump nor the re-import (§1, Deploy).
 - **Requires full re-import:** yes.
 - **Scale:** test scale.
 
-**PR-13: feat: composite indexes in the table schemas** (item 10, first half; `§C-2.2`; `§D-2.1`, `§D-2.2`)
+**PR-13: feat: composite indexes in the table schemas, the keys production never read dropped, and two obs_general columns removed** (item 10; `§C-2.2`; `§D-2.1`, `§D-2.2`)
 
 - **Changes:** the table-level entry `{"key": ["col1", "col2", ...]}` (§1, Schema
   entries); `create_table` renders it as `KEY (col1, col2)`, PR-07's
   `add_secondary_indexes` derives it like any other key, and every reader that iterates a
   schema's columns skips it as it skips `constraint` (the executor greps for
-  `'field_name'` reads and confirms each tolerates the entry). A column's own `field_key`
-  is untouched, so `time1` keeps its single index and every autocomplete column keeps its
-  B-tree. The dev guide describes the form; no validator exists today and none is written.
+  `'field_name'` reads and confirms each tolerates the entry). Adding a composite leaves a
+  column's own `field_key` alone; whether that key stays is the pruning rule's decision
+  below, and every autocomplete column (`pi_display: 1` with the `STRING` form type)
+  keeps its B-tree whatever the rule says, because PR-22's prefix match reads it. The dev guide describes the form; no validator exists today and none is written.
   Add `{"key": ["time1", "opus_id"]}` to `obs_general` (the default sort; with the primary
   key appended it covers `SELECT id ... ORDER BY time1, opus_id`); `{"key": ["right_asc",
   "d_right_asc"]}` and the `(declination1, declination2)` pair on `obs_general`; and the
@@ -1387,12 +1405,86 @@ bump nor the re-import (§1, Deploy).
   **The angular pairs cannot be range-scanned:** `get_longitude_query` renders
   `ABS(MOD(%s - col + 540., 360.) - 180.) <= %s`
   through `sql_builder.angular_separation`, so their value is a narrower covering scan
-  than the clustered row. **Add these; drop only keys nothing uses:** a column's
-  `field_key` goes when its `param_info` row is neither searchable (`pi_display` 0) nor
-  shown in results (`pi_display_results` 0) and no code names it (`grep -rn "<column>"
-  src/opus_app src/opus_import`); the PR lists each with the evidence. Keys on columns a
-  search, sort, or join can use stay until production index statistics say otherwise (§1,
-  Index pruning).
+  than the clustered row. **Add these, then drop by §1's Index pruning rule.** A
+  column's `field_key` goes when either holds, and the import and the named code paths
+  do not need it:
+  1. its `param_info` row is neither searchable (`pi_display` 0) nor shown in results
+     (`pi_display_results` 0) and no code names it (`grep -rn "<column>" src/opus_app
+     src/opus_import`);
+  2. production never read its key; or
+  3. it leads a composite key on the same table: `time1` beside `(time1, opus_id)`,
+     `right_asc` beside `(right_asc, d_right_asc)`, `declination1` beside
+     `(declination1, declination2)`, and each ring longitude beside its `(<col>,
+     d_<col>)`.
+
+  A column keeps its key, whatever production read, when it is an autocomplete column
+  (above), when the other column of its `1`/`2` pair keeps one, when the import or a code path the web traffic does not exercise reads by it
+  (the PR greps `src/opus_import` and the management commands for each key it drops), or
+  when a foreign key needs it; `obs_type_image.lesser_pixel_size` (beside
+  `greater_pixel_size`) and `obs_instrument_coiss.shutter_mode_id` are kept by choice.
+  Applied to production's statistics, these are the
+  single-column keys that stay beside each table's primary key, its unique keys, the
+  composites above, and PR-12's keys; every other single-column key on these tables goes,
+  and a table not listed (the other instrument tables) keeps none. `*` marks an
+  autocomplete column kept whatever production read, `†` a key the import needs, `‡` a
+  key kept for its pair partner or by choice:
+
+  | Table | Single-column keys that stay |
+  |---|---|
+  | `obs_general` | `bundle_id`†, `instrument_id`, `mission_id`, `inst_host_id`, `planet_id`, `time2`, `observation_duration`, `quantity`, `right_asc1`, `right_asc2`, `declination2` |
+  | `obs_pds` | `opus_id`*, `bundle_id`*, `data_set_id`*, `product_id`*, `primary_lid`*, `product_creation_time`, `primary_filespec`*, `note`* |
+  | `obs_type_image` | `image_type_id`, `duration`, `greater_pixel_size`, `lesser_pixel_size`‡ |
+  | `obs_wavelength` | `wavelength1`, `wavelength2`, `wave_res1`, `wave_res2`, `wave_no1`, `wave_no2`, `wave_no_res1`, `wave_no_res2`, `spec_size` |
+  | `obs_profile` | `occ_type`, `body_occ_flag`, `quality_score` |
+  | `obs_ring_geometry` | `ring_radius1`, `ring_radius2`, `range_to_ring_intercept1`, `range_to_ring_intercept2`‡, `ring_center_distance1`, `ring_center_distance2`, `resolution1`, `resolution2`, `projected_radial_resolution1`, `projected_radial_resolution2`‡, `phase1`, `phase2`, `ring_center_phase1`‡, `ring_center_phase2`, `ring_diameter_pixels` |
+  | `obs_mission_cassini` | `obs_name`*, `activity_name`*, `spacecraft_clock_count2`, `ert1`, `ert2`, `cassini_target_name` |
+  | `obs_mission_galileo` | `orbit_number` |
+  | `obs_mission_hubble` | `stsci_group_id`*, `hst_pi_name`*, `hst_target_name`* |
+  | `obs_mission_new_horizons` | `spacecraft_clock_count1`, `spacecraft_clock_count2`, `mission_phase` |
+  | `obs_mission_voyager` | `mission_phase_name` |
+  | `obs_instrument_coiss` | `data_conversion_type`, `compression_type`, `image_observation_type`, `missing_lines`, `shutter_state_id`, `shutter_mode_id`‡, `image_number`, `combined_filter` |
+  | `obs_instrument_gossi` | `observation_id`*, `filter_name` |
+
+  The PR confirms each dropped key against the code before dropping it, and a column the
+  plan renames keeps its row under the new name.
+- **Two `obs_general` columns go**, each with its schema entry, its `param_info` row, its
+  `ObsGeneral` model field, and its import goldens column:
+  - **`primary_filespec`** duplicates `obs_pds.primary_filespec`: both are filled from
+    the same value, and they match on every row of the import goldens. Its slug,
+    `**filespec`, is internal and the API never returns it, and its key was never read.
+    `field_obs_general_primary_filespec` goes from `obs/obs_general.py`; the import's own
+    `primary_filespec` attribute stays, since `obs_pds` and the preview images read it.
+    The one reader of the column, the detail view in `ui/views.py`, reads
+    `ObsPds.primary_filespec` instead.
+  - **`ring_obs_id`**, the old-format ring observation id, and **everything that accepts
+    or returns it**, a deliberate break of the public API, which
+    `docs/dev_guide_conventions.rst` otherwise preserves. `grep -rn -i
+    "ring_obs_id\|ringobsid" src tests import_tests integration_tests docs` finds every
+    site; the PR's description lists them. They are:
+    - the import's `field_obs_general_ring_obs_id` in `obs/obs_general.py` and every
+      override of it in `src/opus_import/obs/`, and its entries in
+      `tests/opus_import/fixtures/obs_field_values.json`;
+    - `is_old_format_ring_obs_id`, `convert_ring_obs_id_to_opus_id`, and
+      `http404_unknown_ring_obs_id` in `tools/app_utils.py`, their tests, and every call:
+      the results views, where an old-format id now gets the 404 any unknown OPUS id
+      gets, and `ui/views.py`'s URL normalization (the `ringobsid` search, column,
+      widget, sort, and detail cases, and the `ringobsid` exception to the searchable
+      check);
+    - `return_ringobsids` in `results/views.py` and the `ring_obs_id` key it adds to
+      every image in the `api/images` responses;
+    - the "or old RING_OBS_ID" wording in `static/js/detail.js`'s not-found message;
+    - the log analyzer's `ToInfoMap.__read_json` in `opus_log_analyzer/opus/slug.py`,
+      which asserts `api/fields.json` has a `ringobsid` entry and deletes it; it keeps
+      recording `ringobsid` as `opusid`'s old slug, because the logs it reads predate
+      the change;
+    - the `integration_tests` tests of `ringobsid` URL normalization, which go, and every
+      API golden response that carries the `ring_obs_id` key, regenerated without it and
+      listed in the PR (§1, Golden suites);
+    - the dev guides that name the column or the functions; the API guide's field table
+      is generated from `param_info` and loses the row by itself.
+
+    The inventory CSV's third column in `do_import_index.py` is an OPUS id, not this
+    field; its variable, `csv_ringobsid`, is renamed `csv_opus_id`.
   PostgreSQL note: `INCLUDE (id)` and
   `NULLS FIRST`, and a `VACUUM` after load for index-only scans.
 - **Measurement:** the plan of the empty search build before and after; the
@@ -1405,7 +1497,9 @@ bump nor the re-import (§1, Deploy).
   it and the orchestrator decides between an optimizer hint in `sql_builder` and dropping
   the index), app-cold latency of the broad default-sort search and its last page, schema
   index size. Target metric: app-cold empty-search latency.
-- **Acceptance:** §2.5; no regression on the selective shape beyond noise.
+- **Acceptance:** §2.5; no regression on the selective shape beyond noise; API goldens
+  change only by the `ring_obs_id` key, and the import goldens only by the two removed
+  columns and the dropped keys.
 - **Requires full re-import:** yes.
 - **Scale:** test scale.
 
@@ -1806,15 +1900,19 @@ bump nor the re-import (§1, Deploy).
     delete. `target_name` holds the target's id within the mult field
     **`obs_surface_geometry_name.target_name`**, the field the selector uses; the column
     declares it with PR-14's `mult_field` key, because the column's own qualified name
-    would name a different field. Composite `{"key": ["target_name", "<col>"]}` entries
-    replace the template's per-column `field_key: true`, one per keyed column, so a
-    per-target range search is one index range; and `{"key": ["target_name", "<X1>",
-    "<X2>"]}` for every two-column range pair the template displays (both columns
-    `pi_display: 1` with a `RANGE` form type), which makes those predicates index-only,
-    within InnoDB's 64-index cap (the template has 55 keyed columns: `grep -c
-    '"field_key": true' src/opus_import/table_schemas/obs_surface_geometry_target.json`);
-    the PR lists the pairs. `opus_id` and `instrument_id` are dropped from the table
-    (PR-12's rule); the obs module's methods for them go. **It absorbs
+    would name a different field. **Every keyed template column keeps a key**, whatever
+    production read (§1, Index pruning), as there are few of them; each becomes
+    `target_name`-first. `{"key": ["target_name", "<X1>", "<X2>"]}` is declared for every
+    two-column range pair the template displays (both columns `pi_display: 1` with a
+    `RANGE` form type), which makes those predicates index-only, and `{"key":
+    ["target_name", "<col>"]}` for every other column with `field_key: true` in the
+    template, except a pair's `X1`, which the pair's key serves; the per-column
+    `field_key` entries then go. Beside the primary key and `KEY (obs_general_id)`, the
+    pairs are `sub_solar_planetographic_latitude`, `sub_observer_planetographic_latitude`,
+    `sub_solar_planetocentric_latitude`, `sub_observer_planetocentric_latitude`,
+    `center_distance`, `center_resolution`, and `center_phase_angle`.
+
+    `opus_id` and `instrument_id` are dropped from the table (PR-12's rule); the obs module's methods for them go. **It absorbs
     `obs_surface_geometry_name`**, whose only content is the target.
     `obs_surface_geometry` (the per-observation `target_list` text) keeps its shape. The
     template keeps its name and its `<TARGET>`/`<SLUGTARGET>` placeholders in
@@ -2325,6 +2423,10 @@ bump nor the re-import (§1, Deploy).
   `reset_search_tables`; `opus_manage warm_search` fills it for every mult field through
   `api_get_mult_counts`'s own counting function with the empty selections; and the
   endpoint reads it for an empty search, counting as before when the field has no rows.
+- **Production evidence** (§1, Index pruning): the mult-count keys,
+  `obs_general`'s `instrument_id`, `planet_id`, `mission_id`, and `inst_host_id`,
+  carried most of `obs_general`'s index reads in production, which is the traffic
+  options 2 and 3 address.
 - **Option 3: a narrow facet table for mult counts.** Prototype: `obs_facet(obs_general_id
   INT UNSIGNED PRIMARY KEY, <one SMALLINT column per mult_idx, flag_yesno, and flag_onoff
   column, named by qualified name>)`, filled by one `INSERT ... SELECT` joining the hub
@@ -2345,7 +2447,7 @@ bump nor the re-import (§1, Deploy).
   import does not fill (§1, Deploy).
 - **Scale:** test scale.
 
-**PR-25: docs: size the import and web servers from the measurements, and add range-search histograms** (items 19 and 10, second half; `§C-2.2`; `§C-5`)
+**PR-25: docs: size the import and web servers from the measurements, and add range-search histograms** (item 19; `§C-2.2`; `§C-5`)
 
 - **Changes:**
   - **One home for server settings.** `docs/user_guide_*` gains a section that derives the
@@ -2367,9 +2469,14 @@ bump nor the re-import (§1, Deploy).
     sequence, after the aux tables exist, which an append re-runs (§1)) gains `ANALYZE
     TABLE ... UPDATE HISTOGRAM ON` for the columns the range searches use, derived from
     `param_info`'s `RANGE` form types, not hand-listed.
-  - **Index pruning input.** The index-usage query an operator runs after a month of
-    production uptime (`sys.schema_unused_indexes`) to produce the input for the deferred
-    index-pruning PR. `src/opus_deploy/server/README.txt` points at the section.
+  - **Re-collecting index statistics.** The index-usage query
+    (`performance_schema.table_io_waits_summary_by_index_usage`, with the index sizes
+    from `mysql.innodb_index_stats`) and the statement-digest query, for an operator to
+    run after a month of production uptime on the new schema, with how to read them: the window is the server's uptime, an import's keys read as zero, and the
+    digest table is trustworthy only when its overflow row (`DIGEST IS NULL`) holds few
+    statements, which `performance_schema_digests_size` bounds. The result is the input
+    for any later pruning, by §1's rule. `src/opus_deploy/server/README.txt` points at
+    the section.
 - **Measurement:** the range-search scenarios and the broad search build with
   and without the histograms, and the concurrency scenario at two, four, and eight threads
   per worker. Target metric: app-cold latency of the range searches.
@@ -2603,6 +2710,11 @@ the orchestrator's).
   PR-18's warm-up removes the commonest case.
 - **PR-13 regresses a selective default-sort search.** The harness has the shape; the PR
   reports it; the orchestrator decides between a hint and dropping the index.
+- **A pruned key was needed by a search the 28-day window did not contain.** The search
+  still answers, by a scan, so the cost is latency, not a wrong result. PR-25's
+  re-collection on the new schema shows the scan (`INDEX_NAME` `NULL` reads on the
+  column's table), and restoring the key is a schema-file entry for the next import, with
+  an `ALTER TABLE ... ADD KEY` on the served schema in the meantime.
 - **PR-16 misses a site that resolves a category.** The grep in its design is the rule;
   the API goldens for every surface geometry request, the widget golden, and the
   triggered-table lists are the test; the new-target fixture proves the property the PR
@@ -2621,8 +2733,6 @@ the orchestrator's).
 
 ## 7. Deferred and dropped
 
-- **Index pruning** (item 10, second half), except `obs_files` (PR-12): deferred until a
-  month of production index-usage data exists; PR-25 documents the collection.
 - **The multi-valued JSON index** (item 9 as the analysis wrote it): the junction table
   serves both the search and the count (PR-20).
 - **Partitioning `search_results` or the surface geometry table** (items 11 and 13 as the

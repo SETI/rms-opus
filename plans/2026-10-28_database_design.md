@@ -44,8 +44,10 @@ fresh schema once, with only its primary and unique keys, and creates the rest a
 
 **Nearly every column is its own index and no query shape has a composite one.** The
 default sort, the angular pairs, and the per-target searches each read more pages than a
-composite index would. The design adds the composites the measured shapes need and prunes
-nothing until production index-usage statistics exist.
+composite index would, and most single-column keys are never read: in 28 days of
+production traffic, 21.3 of the 31.2 GiB of secondary indexes on the permanent tables
+were not read once. The design adds the composites the measured shapes need and
+drops the keys production never read, keeping those the import needs.
 
 **Data values are table names.** About a hundred `obs_surface_geometry__<target>` tables
 exist because each target body got a table. Every one is a Django model class, so a
@@ -109,7 +111,7 @@ erDiagram
   obs_surface_geometry_target {
     usmallint target_name PK "mult id; PK (target_name, obs_general_id)"
     uint obs_general_id PK "key (obs_general_id)"
-    real8 planetographic_latitude1 "key (target_name, col) per keyed column"
+    real8 planetographic_latitude1 "key (target_name, col)"
   }
   obs_files {
     uint id PK
@@ -181,11 +183,18 @@ gains composite keys for the query shapes that read it in order or by pair:
 `obs_ring_geometry` gains the same kind of key, `(<col>, d_<col>)`, for each of its longitude
 pairs, a covering scan for the same modular predicate.
 
-**Which columns keep a key.** Every column a search, sort, or join can use keeps its
-single-column key, beside the composites above. A column nothing searches, sorts, or joins
-on (neither searchable nor shown in results, and named by no code) loses its key, since
-it only costs writes. Pruning searchable keys that production never uses waits for a
-month of production index statistics.
+**Which columns keep a key.** A single-column key costs a copy of its column and a write
+per row, so it stays only when something reads it. It goes when production never read it
+in 28 days of production index statistics (the plan's §1, Index pruning); when it leads a composite above (`time1`,
+`right_asc`, `declination1`, and each ring longitude), since the composite serves it; or
+when nothing can read it (neither searchable nor shown in results, and named by no code).
+It stays, whatever production shows, when the import or a code path the web traffic does
+not exercise reads by it (`obs_general.bundle_id` is the import's), when a foreign key
+needs it, on every autocomplete column, whose prefix match reads it, when the other column of its `1`/`2` pair keeps one, and on two columns kept by
+choice. Two `obs_general` columns go altogether: `primary_filespec`, which duplicates
+`obs_pds.primary_filespec`, and `ring_obs_id`, with the old-format ids the API accepted. The surface geometry table keeps a key on every keyed template column (§2.3). A search on a
+column without a key still answers, by a scan; the plan re-collects the statistics on
+the new schema to find any search that needs one back.
 
 The two JSON list columns, `target_name` and `target_class`, stay for rendering responses.
 Searching and counting on them move to junction tables (§2.5). The `preview_images` JSON
@@ -245,15 +254,16 @@ obs_surface_geometry_target(
   <every geometry column of the template>,
   PRIMARY KEY (target_name, obs_general_id),
   KEY (obs_general_id),
-    KEY (target_name, <col>)  -- one per keyed column of the template
-  KEY (target_name, <X1>, <X2>)  -- one per displayed range pair, index-only
+  KEY (target_name, <X1>, <X2>)  -- per displayed range pair
+  KEY (target_name, <col>)  -- per other keyed column
 )
 ```
 
 **Target first in the primary key**, so one target's rows are contiguous in the clustered
-index as they are in a per-target table today. A two-column range search (`X1 <= max AND
-X2 >= min`) uses the `(target_name, X1)` index and then probes the clustered row for
-`X2`; with the observation first, each observation's several targets would interleave and
+index as they are in a per-target table today. A search on a column with no key reads
+that target's rows of the clustered index, and a one-column range search on a keyed
+column uses its `(target_name, X)` index and then probes the clustered rows; with the
+observation first, each observation's several targets would interleave and
 multiply the cold page reads by the mean number of targets per observation. The alias
 join below is still a unique lookup, and the per-observation lookup is a covering dive on
 the secondary key, which also serves the foreign key and the per-observation delete.
@@ -562,7 +572,8 @@ instead of the child tables.
 | every child `obs_*` | `FOREIGN KEY (opus_id)`, the `bundle_id` key | removed | a second 50-character key checked on every write and never used for a join; bundles are found through `obs_general` |
 | every child `obs_*` | `FOREIGN KEY (obs_general_id)` | added in finalization | created without, added once, so the load pays no per-row check |
 | `obs_surface_geometry_target` | `PRIMARY KEY (target_name, obs_general_id)`, `KEY (obs_general_id)` | new | per-target locality; per-observation lookup as a covering dive |
-| `obs_surface_geometry_target` | `(target_name, <col>)` per keyed column, `(target_name, <X1>, <X2>)` per displayed range pair | replaces about a hundred `KEY (col)` per column | one tree per column instead of one per target per column; the range pairs index-only |
+| `obs_surface_geometry_target` | `(target_name, <X1>, <X2>)` per displayed range pair and `(target_name, <col>)` per other keyed column | replaces about a hundred `KEY (col)` per column | one tree per keyed column instead of one per target; the range pairs index-only |
+| every `obs_*` table | single-column keys production never read, and those leading a composite | removed | each was a full copy of its column written on every load and read by nothing; the import's keys stay |
 | `obs_general_target_name`, `_class` | `PRIMARY KEY (mult_id, obs_general_id)`, `KEY (obs_general_id)` | new | semi-join for the search; grouped join for the counts |
 | `mult` | `PRIMARY KEY (field_id, id)`, `UNIQUE (field_id, value)` | replaces one table per column | a label is a primary-key lookup; one model instead of ninety |
 | `search_results` | `PRIMARY KEY (search_id, sort_order)`, `UNIQUE (search_id, obs_general_id)` | new | a page is one range; a position lookup is a probe |
