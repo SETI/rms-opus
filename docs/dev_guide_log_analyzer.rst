@@ -41,10 +41,6 @@ cron jobs pass. :mod:`opus_log_analyzer.manifest` reads OPUS download manifests 
 summarizes what they contain -- it sits with the generic modules but is OPUS-specific,
 and its only importer is :mod:`opus_log_analyzer.opus.html_generator`.
 
-``--batch`` and ``--cronjob`` are the modes that work. The other three modes read an
-argument the parser never defines and fail before doing any work; they are recorded as
-known defects rather than fixed here.
-
 Writing a configuration
 -----------------------
 
@@ -73,9 +69,7 @@ The three methods that matter:
     base URL the report's links are built from.
 
 ``show_summary(sessions, output)``
-    Renders the summary the ``--summary`` mode asks for -- which is one of the three
-    modes that crash before reaching it, so this method is part of the contract but is
-    not reachable today. A :class:`~opus_log_analyzer.log_parser.Session` carries the
+    Renders the summary the ``--summary`` mode asks for. A :class:`~opus_log_analyzer.log_parser.Session` carries the
     client's address, the time the session started, its log entries, and the session
     info built for it.
 
@@ -128,17 +122,6 @@ The cron templates in ``src/opus_deploy/server/log_analyzer/``, which
 analyzer on a server: a nightly update, a monthly report, and a full refresh. They are
 templates because each installation fills in its own paths; nothing substitutes or
 executes them automatically. See :ref:`user_guide_deployment`.
-
-Known defects
--------------
-
-The log analyzer is not maintained to the same standard as the rest of OPUS, and its
-known defects are filed rather than fixed: issues
-`#1449 <https://github.com/SETI/rms-opus/issues/1449>`__,
-`#1450 <https://github.com/SETI/rms-opus/issues/1450>`__,
-`#1451 <https://github.com/SETI/rms-opus/issues/1451>`__ and
-`#1452 <https://github.com/SETI/rms-opus/issues/1452>`__ cover them. Read them before
-changing anything here; several of the surprises are already written down.
 
 API reference
 -------------
