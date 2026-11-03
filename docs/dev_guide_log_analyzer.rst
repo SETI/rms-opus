@@ -69,9 +69,10 @@ The three methods that matter:
     base URL the report's links are built from.
 
 ``show_summary(sessions, output)``
-    Renders the summary the ``--summary`` mode asks for. A :class:`~opus_log_analyzer.log_parser.Session` carries the
-    client's address, the time the session started, its log entries, and the session
-    info built for it.
+    Implements the ``--summary`` operation for the given ``sessions``, writing to
+    ``output``. A :class:`~opus_log_analyzer.log_parser.Session` carries the client's
+    address, the time the session started, its log entries, and the session info built
+    for it.
 
 Writing a session info
 ----------------------
