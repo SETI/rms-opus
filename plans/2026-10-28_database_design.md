@@ -95,7 +95,7 @@ erDiagram
 
   obs_general {
     uint id PK
-    char50 opus_id UK
+    char50 opus_id "plain key; the duplicate step keeps it unique"
     char75 bundle_id "key; the per-bundle steps join on it"
     real8 time1 "key (time1, opus_id)"
     real8 right_asc "key (right_asc, d_right_asc)"
@@ -111,11 +111,11 @@ erDiagram
   obs_surface_geometry_target {
     usmallint target_name PK "mult id; PK (target_name, obs_general_id)"
     uint obs_general_id PK "key (obs_general_id)"
-    real8 planetographic_latitude1 "key (target_name, col)"
+    real8 center_distance1 "key (target_name, center_distance1, center_distance2)"
   }
   obs_files {
-    uint id PK
-    uint obs_general_id FK
+    uint obs_general_id PK "PK (obs_general_id, file_number); FK added in finalization"
+    usmallint file_number PK "the file's position within its observation"
     char50 opus_id "kept: file_utils reads it"
     char60 instrument_id "kept"
   }
@@ -138,7 +138,7 @@ erDiagram
   table_names {
     char60 table_name "category name, as the API shows it"
     char60 physical_table "NULL, or obs_surface_geometry_target"
-    uint target_name "NULL, or the target's mult id"
+    usmallint target_name "NULL, or the target's mult id"
   }
   schema_version {
     uint version PK
@@ -255,7 +255,7 @@ obs_surface_geometry_target(
   <every geometry column of the template>,
   PRIMARY KEY (target_name, obs_general_id),
   KEY (obs_general_id),
-  KEY (target_name, <X1>, <X2>)  -- per displayed range pair
+  KEY (target_name, <X1>, <X2>)  -- per keyed, displayed range pair
   KEY (target_name, <col>)  -- per other keyed column
 )
 ```
@@ -573,7 +573,7 @@ warm-up puts every mult field's counts in memcached.
 | every child `obs_*` | `FOREIGN KEY (opus_id)`, the `bundle_id` key | removed | a second 50-character key checked on every write and never used for a join; bundles are found through `obs_general` |
 | every child `obs_*` | `FOREIGN KEY (obs_general_id)` | added in finalization | created without, added once, so the load pays no per-row check |
 | `obs_surface_geometry_target` | `PRIMARY KEY (target_name, obs_general_id)`, `KEY (obs_general_id)` | new | per-target locality; per-observation lookup as a covering dive |
-| `obs_surface_geometry_target` | `(target_name, <X1>, <X2>)` per displayed range pair and `(target_name, <col>)` per other keyed column | replaces about a hundred `KEY (col)` per column | one tree per keyed column instead of one per target; the range pairs index-only |
+| `obs_surface_geometry_target` | `(target_name, <X1>, <X2>)` per keyed, displayed range pair and `(target_name, <col>)` per other keyed column | replaces about a hundred `KEY (col)` per column | one tree per keyed column instead of one per target; the range pairs index-only |
 | every `obs_*` table | single-column keys production never read, and those leading a composite | removed | each was a full copy of its column written on every load and read by nothing; the import's keys stay |
 | `obs_general_target_name`, `_class` | `PRIMARY KEY (mult_id, obs_general_id)`, `KEY (obs_general_id)` | new | semi-join for the search; grouped join for the counts |
 | `mult` | `PRIMARY KEY (field_id, id)`, `UNIQUE (field_id, value)` | replaces one table per column | a label is a primary-key lookup; one model instead of ninety |
@@ -620,23 +620,23 @@ finalization is an explicit step that the sequences run once at the end.
    deleted from the permanent tables before it is written, so a rerun is clean. Nothing
    looks for duplicate OPUS ids while loading: two bundles' copies of one load side by
    side.
-3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the surface
+3. **Finalization** creates, by sort: `FULLTEXT` keys first, each in its own statement
+   (the first one rebuilds its table); then B-tree indexes concurrently across tables,
+   grouped per table within a temporary-space budget; then foreign keys serially under
+   `foreign_key_checks = 0`. The key build is idempotent, comparing existing keys by kind
+   and ordered columns. Then the **duplicate step**, which keeps the copy of each
+   duplicated OPUS id with the highest `obs_general.id` and deletes the others from every
+   table, logging each (a warning when both copies come from one bundle, which is a data
+   error); then the mult step, which deletes values nothing references and recomputes
+   every rank (§2.8).
+4. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the surface
    geometry categories derived from the data. `partables` and `table_names` come from the
    imported data and are written directly, since an import never runs against a served
    schema. `param_info` carries labels, tooltips, and display flags from the schema files,
    which the code-only deploy reloads into a served schema, so it is built beside the live
-   table and swapped in with one atomic `RENAME TABLE`;
-   `user_searches` and `search_results` are reset and the cache flush of §2.4 follows.
-4. **Finalization** creates, by sort: `FULLTEXT` keys first, each in its own statement
-   (the first one rebuilds its table); then B-tree indexes concurrently across tables,
-   grouped per table within a temporary-space budget; then foreign keys serially under
-   `foreign_key_checks = 0`; then the **duplicate step**, which keeps the copy of each
-   duplicated OPUS id with the highest `obs_general.id` and deletes the others from every
-   table, logging each (a warning when both copies come from one bundle, which is a data
-   error); then the mult step, which deletes values nothing references
-   and recomputes every rank (§2.8); then `ANALYZE` with histograms on the
-   range-searched columns. The step is idempotent, comparing existing keys by kind and
-   ordered columns.
+   table and swapped in with one atomic `RENAME TABLE`. Then `user_searches` and
+   `search_results` are reset and the cache flush of §2.4 follows, and `ANALYZE` runs with
+   histograms on the range-searched columns.
 5. **The dictionary import, validation, and the version row.** The dictionary is reloaded
    the same way as `param_info`, also by the code-only deploy: its two tables are built
    beside the live ones and swapped together in one statement, `definitions__new` created
@@ -663,12 +663,12 @@ the schema and the deploy scripts refuse to promote it, while workers already ru
 not stopped, because the version check runs once per worker at startup and nowhere else,
 which is why an append is only for a schema that is not being served. Each bundle is
 deleted and reloaded with the indexes and foreign keys in place; then every finalization
-step an append invalidates runs again (the mult step, the aux tables, the search-table
-reset with its cache flush, `ANALYZE`, and validation), and the state returns to `ready`.
-A failed append stays `appending`; the next import resumes the recorded bundles plus any
-it names, and since each bundle is deleted before it is written, the rerun is clean. An
-append is not atomic, so it is never run against a schema that is being served; §3.1 is
-how a served schema is updated.
+step an append invalidates runs again (the duplicate step, the mult step, the aux tables,
+the search-table reset with its cache flush, `ANALYZE`, and validation), and the state
+returns to `ready`. A failed append stays `appending`; the next import resumes the
+recorded bundles plus any it names, and since each bundle is deleted before it is written,
+the rerun is clean. An append is not atomic, so it is never run against a schema that is
+being served; §3.1 is how a served schema is updated.
 
 **Several processes at once.** Several `opus_import` processes, on one computer or
 several, may import into one schema at the same time. Each bundle is registered once, in
@@ -744,7 +744,7 @@ update is created as a new schema and promoted whole, exactly as a full import i
    range, which the copy left empty; a new bundle takes the next number and so wins a
    duplicate `opus_id` against every copied bundle. New mult values append, and a new
    surface geometry target is a row, not a table (§2.3).
-3. **Steps 3 to 5 as for a full import:** aux tables, finalization, dictionary,
+3. **Steps 3 to 5 as for a full import:** finalization, aux tables, dictionary,
    validation, and the version row. `cart`, `user_searches`, and `search_results` are
    created empty.
 4. **Promotion** is step 6: stop, carry over, switch, start. A cart row whose
