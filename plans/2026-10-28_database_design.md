@@ -171,7 +171,8 @@ erDiagram
 
 ### 2.1 The hub
 
-`obs_general` keeps its shape: `id` is the primary key and `opus_id` the unique key. It
+`obs_general` keeps its shape: `id` is the primary key, and `opus_id` has a plain key,
+because finalization, not a unique key, keeps OPUS ids unique (§3). It
 gains composite keys for the query shapes that read it in order or by pair:
 
 | Key | Serves |
@@ -208,8 +209,8 @@ and the import writes both from the same bundle; validation checks that they agr
 other table the import writes per observation (the remaining children, the junction tables
 of §2.5, `obs_preview`, and the surface geometry table) reaches its bundle through
 `obs_general_id`, so the per-bundle delete, the incremental copy, and the schema clone of
-§3.1 join each table to `obs_general`'s bundle key, and the duplicate OPUS id delete uses
-the `obs_general_id` it resolves. No table carries a 75-character column and an index for
+§3.1 join each table to `obs_general`'s bundle key, and the duplicate step deletes by
+`obs_general_id`. No table carries a 75-character column and an index for
 the import's sake. `search_results` and `cart` also carry `obs_general_id` but are not
 imported: the import resets `search_results` (§2.4) and re-creates `cart` empty (§3).
 
@@ -616,8 +617,9 @@ finalization is an explicit step that the sequences run once at the end.
    bundle's block (below), resolves mult values, and loads tab-separated text with `LOAD
    DATA LOCAL INFILE` in chunks of about 100,000 rows, failing on any skipped row or
    warning (the statement would otherwise ignore duplicate keys silently). Each bundle is
-   deleted from the permanent tables before it is written, so a rerun is clean, and an
-   OPUS id already written by an earlier bundle is deleted and re-imported.
+   deleted from the permanent tables before it is written, so a rerun is clean. Nothing
+   looks for duplicate OPUS ids while loading: two bundles' copies of one load side by
+   side.
 3. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the surface
    geometry categories derived from the data. `partables` and `table_names` come from the
    imported data and are written directly, since an import never runs against a served
@@ -628,7 +630,10 @@ finalization is an explicit step that the sequences run once at the end.
 4. **Finalization** creates, by sort: `FULLTEXT` keys first, each in its own statement
    (the first one rebuilds its table); then B-tree indexes concurrently across tables,
    grouped per table within a temporary-space budget; then foreign keys serially under
-   `foreign_key_checks = 0`; then the mult step, which deletes values nothing references
+   `foreign_key_checks = 0`; then the **duplicate step**, which keeps the copy of each
+   duplicated OPUS id with the highest `obs_general.id` and deletes the others from every
+   table, logging each (a warning when both copies come from one bundle, which is a data
+   error); then the mult step, which deletes values nothing references
    and recomputes every rank (§2.8); then `ANALYZE` with histograms on the
    range-searched columns. The step is idempotent, comparing existing keys by kind and
    ordered columns.
@@ -679,10 +684,10 @@ in import order has the higher number, and
 a replaced bundle keeps its number. A new mult value takes the next id within its field
 under a lock on that field, and a duplicate-key error on `(field_id, value)` means another
 process added it first, so two processes meeting the same value get the same id. When two
-bundles produce the same OPUS id, **the later bundle wins**: within one process or across
-several, the copy from the higher `bundle_number` is kept whatever order the bundles are
-imported in, with the probe locking the `opus_id`
-key so the two cannot interleave.
+bundles produce the same OPUS id, **the later bundle wins**: both copies load, and
+finalization's duplicate step keeps the higher id, which the blocks make the higher
+`bundle_number` whatever order the bundles are imported in. No process looks for
+duplicates or locks anything to avoid them.
 
 **The registry is also the work queue.** Bundles differ in size by orders of magnitude, so
 work is not split into fixed parts before the run; each bundle is a unit of work handed
@@ -767,8 +772,8 @@ than given a new schema. `partables` and `table_names` are never rebuilt in a se
 schema at all.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
-and continues. `unique_checks` is never changed: the unique keys are how duplicates
-surface.
+and continues. `unique_checks` is never changed: the primary and unique keys catch the
+duplicates they guard. Duplicate OPUS ids are the duplicate step's (§3).
 
 ---
 
