@@ -45,8 +45,8 @@ fresh schema once, with only its primary and unique keys, and creates the rest a
 **Nearly every column is its own index and no query shape has a composite one.** The
 default sort, the angular pairs, and the per-target searches each read more pages than a
 composite index would, and most single-column keys are never read: in 28 days of
-production traffic, 21.3 of the 31.2 GiB of secondary indexes on the permanent tables
-were not read once. The design adds the composites the measured shapes need and
+production traffic, most of the secondary-index bytes on the permanent tables belonged to
+keys that were not read once. The design adds the composites the measured shapes need and
 drops the keys production never read, keeping those the import needs.
 
 **Data values are table names.** About a hundred `obs_surface_geometry__<target>` tables
@@ -143,8 +143,6 @@ erDiagram
   schema_version {
     uint version PK
     enum state "ready or appending"
-    json appending_bundles "set while appending"
-    datetime started_at
   }
   mult_field {
     usmallint field_id PK
@@ -378,9 +376,11 @@ would remove and leave, and can show that without removing anything, removes sea
 until `search_results` holds no more than a configured number of rows, and every search
 unused for a set number of days in any case, so a busy server is pruned harder than a
 quiet one. `last_used_at` is refreshed at most once a day per search, from the cached
-entry, and skipped while the search is being built, so it costs no write per request and
-never waits on the row lock. For each search it deletes cache entry first, then its
-`user_searches` row, so a new request registers it afresh, then its result rows in chunks.
+entry, and skipped while the search is being built (the stamp reads its row `FOR UPDATE
+SKIP LOCKED` and updates it only when that returns the row, and the search build sets
+the stamp itself), so it costs no write per request and never waits on the row lock.
+For each search it deletes cache entry first, then its `user_searches` row, so a new
+request registers it afresh, then its result rows in chunks.
 Every request reads the search's count and search build time from `user_searches` by
 primary key, so a cached id whose row is gone is a miss, not a short page; only the
 hash-to-id entry is cached, and ids are never reused within a schema. The same command
@@ -394,10 +394,10 @@ BEGIN
   SELECT results_built_at FROM user_searches
     WHERE id = ? FOR UPDATE      -- the serialization point
   INSERT INTO search_results
-    SELECT ?, ROW_NUMBER() OVER (ORDER BY ..., obs_general.id), obs_general.id
+    SELECT ?, ROW_NUMBER() OVER (ORDER BY ...), obs_general.id
     FROM obs_general LEFT JOIN ...
   UPDATE user_searches
-    SET result_count = ?, results_built_at = NOW()
+    SET result_count = ?, results_built_at = NOW(), last_used_at = NOW()
 COMMIT                            -- releases the row lock
 ```
 
@@ -408,17 +408,18 @@ SELECT` takes no shared locks on the rows it reads, the search builder reads the
 search's own `user_searches` row `FOR UPDATE`; a second search builder blocks on
 that row until the first commits, then sees `results_built_at` set and returns. If the row
 is not yet built the search builder inserts `SELECT ?, ROW_NUMBER() OVER
-(ORDER BY ...), obs_general.id FROM ...`, writes the count and the timestamp, and commits,
+(ORDER BY ...), obs_general.id FROM ...`, writes the count and both timestamps, and commits,
 which releases the lock. The transaction contains nothing before the locking read, and the
 result rows are read after it commits, so a `REPEATABLE READ` snapshot can never predate
 the search build. A row lock is transaction-scoped: a worker that dies releases it with
 its rollback, it is the same statement on both brands, and it works through any connection
 pooling. The lock wait timeout is the session's `innodb_lock_wait_timeout`, set from
-`[django] search_build_timeout` (default 300 seconds) through the connection's
+`[django] search_build_timeout` (default 270 seconds) through the connection's
 `init_command`, long enough for a broad cold search build and at least 30 seconds below
-the web server's worker timeout, since a worker killed partway through a search build rolls the
-search build back. A waiter whose wait times out ends its transaction and answers with
-the search-cache failure response; the search build it waited on completes, and the
+the web server's worker timeout (300 seconds in every documented configuration), since
+a worker killed partway through a search build rolls the search build back. A waiter
+whose wait times out ends its transaction and answers with the search-cache failure
+response; the search build it waited on completes, and the
 next request finds it.
 
 The application's cache trusts its entries (a hash-to-id or id-to-count hit is not
@@ -469,7 +470,7 @@ or `i`.
 ### 2.7 Schema version
 
 `schema_version(version INT UNSIGNED NOT NULL PRIMARY KEY, state ENUM('ready',
-'appending') NOT NULL, appending_bundles JSON NULL, started_at DATETIME NULL)`, one row.
+'appending') NOT NULL)`, one row.
 It is written, as `ready`, by an explicit final import step that writes only when the row
 is absent and refuses to overwrite a different value; scorched earth deletes it, and an
 append (§3) holds it at `appending` while it runs. The web application checks it at
@@ -477,6 +478,9 @@ startup and serves 503 on a mismatch, a missing row, or a state other than `read
 deploy scripts check the served schema's row before running any import or migration step.
 A half-imported schema therefore cannot be served or promoted, and new code cannot stamp an
 old schema.
+The version covers every table the import creates, including `user_searches` and
+`search_results`, which it only re-creates: the code-only deploy leaves them in place, so
+a release that changes their columns is a full deploy.
 
 ### 2.8 Mult values
 
@@ -555,9 +559,8 @@ warm-up puts every mult field's counts in memcached.
   tables, `obs_files.instrument_id` (the only string `instrument_id`), and the
   string-search columns whose values are all ASCII, so a join between two of them compares
   like with like. Comparisons are cheaper and sort keys a quarter the size of `utf8mb4`'s.
-  Case never matters in a lookup. Rows that tie on every sort key are ordered by
-  `obs_general.id`, appended as the final sort term, so every order is total. Labels, mult
-  values, the dictionary, and free text stay `utf8mb4`.
+  Case never matters in a lookup. Labels, mult values, the dictionary, and free text
+  stay `utf8mb4`.
 - **No row timestamps.** Nothing reads them.
 - **`cart.session_id` fits Django's session key**, and the cart's foreign key cascades
   a deleted observation's rows away.
@@ -609,8 +612,9 @@ fresh import in progress and continues it. The bundle steps are chosen by this s
 finalization is an explicit step that the sequences run once at the end.
 
 1. **Scorched earth** drops the `obs_` tables, the three mult tables, the bundle
-   registry, and `cart`, and
-   deletes the `schema_version` row.
+   registry and the importer table, and `cart`, and
+   deletes the `schema_version` row. It runs only when asked for; without it, a rerun of
+   a full import resumes from the bundles already done.
 2. **Per bundle**, tables are created with their primary key and unique keys only, and
    `obs_general` with its bundle key too, which the per-bundle delete reads. Worker
    processes turn index rows into table rows; the parent process assigns ids from the
@@ -657,8 +661,9 @@ finalization is an explicit step that the sequences run once at the end.
 way a developer adds a bundle to a deployed database. It exists because the configuration
 names one schema: cloning into a new schema for every iteration would mean editing the
 configuration each time, so the append keeps the schema name fixed and changes the rows in
-place. The import first sets the version row's state to `appending` and records the
-bundles in `appending_bundles` and the time in `started_at`; new worker processes refuse
+place. The import first sets the version row's state to `appending` and marks the
+bundles `pending` in the bundle registry (below), which is the one record of what the
+append has still to do; new worker processes refuse
 the schema and the deploy scripts refuse to promote it, while workers already running are
 not stopped, because the version check runs once per worker at startup and nowhere else,
 which is why an append is only for a schema that is not being served. Each bundle is
@@ -666,9 +671,9 @@ deleted and reloaded with the indexes and foreign keys in place; then every fina
 step an append invalidates runs again (the duplicate step, the mult step, the aux tables,
 the search-table reset with its cache flush, `ANALYZE`, and validation), and the state
 returns to `ready`. A failed append stays `appending`; the next import resumes the
-recorded bundles plus any it names, and since each bundle is deleted before it is written,
-the rerun is clean. An append is not atomic, so it is never run against a schema that is
-being served; §3.1 is how a served schema is updated.
+bundles the registry shows unfinished plus any it names, and since each bundle is deleted
+before it is written, the rerun is clean. An append is not atomic, so it is never run
+against a schema that is being served; §3.1 is how a served schema is updated.
 
 **Several processes at once.** Several `opus_import` processes, on one computer or
 several, may import into one schema at the same time. Each bundle is registered once, in
@@ -685,10 +690,16 @@ in import order has the higher number, and
 a replaced bundle keeps its number. A new mult value takes the next id within its field
 under a lock on that field, and a duplicate-key error on `(field_id, value)` means another
 process added it first, so two processes meeting the same value get the same id. When two
-bundles produce the same OPUS id, **the later bundle wins**: both copies load, and
-finalization's duplicate step keeps the higher id, which the ranges make the higher
-`bundle_number` whatever order the bundles are imported in. No process looks for
-duplicates or locks anything to avoid them.
+bundles produce the same OPUS id, **the later-registered bundle wins**: both copies
+load, and finalization's duplicate step keeps the higher id, which the ranges make the
+higher `bundle_number` whatever order the bundles are imported in. On a full import that
+is the later bundle in import order; a re-imported bundle keeps its number, so it loses
+to every bundle registered after it. No process looks for duplicates or locks anything
+to avoid them. Registration itself is serialized by a named lock, and it writes the rows
+every process would otherwise race to create: one `mult_field` row per field, and the
+values of every field whose schema lists its choices. A process writes only the values
+it meets, and inserts a value group so that a row another process wrote first is left
+unchanged.
 
 **The registry is also the work queue.** Bundles differ in size by orders of magnitude, so
 work is not split into fixed parts before the run; each bundle is a unit of work handed
@@ -728,7 +739,9 @@ update is created as a new schema and promoted whole, exactly as a full import i
    (<the bundles being replaced, and those the existing --delete-permanent-bundles names
    for dropping>)`, every other per-observation table with `WHERE obs_general_id NOT IN
    (SELECT id FROM <served>.obs_general WHERE bundle_id IN (<the same bundles>))`, and the
-   three mult tables and the bundle registry whole, so every bundle keeps its number and
+   three mult tables whole, and the bundle registry with the dropped bundles' rows
+   deleted, the replaced ones set back to pending, and the importer tracking reset (the
+   importer table is created empty), so every bundle keeps its number and
    every unchanged observation its id, over the sibling connections, one table per
    connection, under `READ COMMITTED` so the served schema's rows are not locked; values
    only the excluded bundles used are removed by finalization's mult step. Ids are
