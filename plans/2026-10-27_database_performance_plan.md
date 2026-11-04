@@ -82,7 +82,7 @@ architecture Phases 0 to 6 produced.
 | Parallel import design | **Single writer, many computers.** Worker processes turn index rows into table rows and return them with chunk-relative ids; the parent process alone rebases ids, resolves mult values, writes to the database, and emits the log. Item 3 of the analysis (write the permanent tables directly and drop the import namespace) is PR-07's and PR-08's, so no process has tables of its own; items 1 and 2 (per-bundle id ranges, mult ids that concurrent writers cannot collide on) are PR-16's. Within one process: with one writer there is no shared counter to protect, and ids and logs stay identical to the serial run, so the golden suites keep comparing byte for byte. Several `opus_import` processes, on one computer or several, may also import into one schema at once (PR-16): ids come from per-bundle id ranges and mult values from a unique key, so no counter is shared. |
 | Import parallelism | **Every import parallelism setting defaults to 1**, because the computer doing the import may also run the database server: PR-07's `[import] index_workers`, PR-09's `[import] workers`, and PR-16a's `opus_import_all --workers` total. Parallelism is asked for by argument or key, never assumed. PR-09 adds the ceiling all of them obey, `max(1, floor(C × [import] cpu_fraction))`, with `[import] cpus` to state C instead of detecting it, and the value `"max"` for "the ceiling". **The CI scripts raise them:** every fixture session's main run sets `workers` and `index_workers` at `"max"`, with `cpus = 4` on a GitHub-hosted runner (ceiling 3) and `cpus = 8` anywhere else (ceiling 6) (PR-09), so the pool and concurrent-DDL paths are the ones the goldens exercise, and a local run exercises more of them; and `scripts/automated_tests/opus_setup_environment.sh`, which both the self-hosted integration job and the nightly staging tests run, writes `workers` and `index_workers` at `"max"` with `cpus = 32` under GitHub Actions (the self-hosted job) and `cpus = 16` otherwise (the nightly staging run). |
 | Where indexes are created | **One write path, chosen by the target schema's state, never by a switch** (PR-07, PR-08; `§D-3`). A schema with no version row is **imported fresh**: the observation and mult tables are created with only their primary and unique keys and the keys the per-bundle delete reads (`obs_general`'s bundle key, and `obs_general_id` on a table whose primary key does not start with it), every other table with all its keys, and finalization creates every other index and foreign key once, by sort. A finalized schema is **appended** to with its indexes in place. There is no import namespace after PR-08. An incremental update of the served schema clones it, less the changed bundles, into a new schema and imports into that (PR-23; `§D-3.1`). |
-| Append invalidation | Every finalization step declares whether an append invalidates it, and the `--finalize` that follows an append re-runs exactly those (PR-08); an append never finalizes by itself. At PR-08 they are PR-07's duplicate step, the aux tables, the cache-table drop (PR-11 turns it into the search-table reset and cache flush), `ANALYZE`, and validation; PR-14's mult step, PR-25's histograms, and PR-24's options, if implemented, add themselves. `--create-indexes` runs in every finalization and adds the keys the schema files declare and a table lacks; on an append of existing tables it finds nothing to do, and a table first created on the append path is keyed by that run. A PR that adds a finalization step adds an append test. |
+| Append invalidation | Every finalization step declares whether an append invalidates it, and the `--finalize` that follows an append re-runs exactly those (PR-08); an append never finalizes by itself (except under `--do-it-all`, which runs `--import` then `--finalize` in one invocation, PR-08). At PR-08 they are PR-07's duplicate step, the aux tables, the cache-table drop (PR-11 turns it into the search-table reset and cache flush), `ANALYZE`, and validation; PR-14's mult step, PR-25's histograms, and PR-24's options, if implemented, add themselves. `--create-indexes` runs in every finalization and adds the keys the schema files declare and a table lacks; on an append of existing tables it finds nothing to do, and a table first created on the append path is keyed by that run. A PR that adds a finalization step adds an append test. |
 | Foreign keys | Child tables are created **without** foreign keys; finalization adds them, **serially and after every index build**, with `foreign_key_checks = 0` (which is what makes `ADD FOREIGN KEY` an in-place operation that does not re-check existing rows; each add takes an exclusive metadata lock on `obs_general`, so they never run concurrently with an `ALTER` on it). Because an unvalidated foreign key never catches orphans, validation gains an anti-join count per child (PR-07). An append loads with the foreign keys in place under `foreign_key_checks = 0`, and the same orphan count covers it. InnoDB performs no cascade while the checks are off, so **the per-bundle delete and the duplicate step always run with `foreign_key_checks = 1`**, and `cart`'s cascade (PR-08) removes the cart rows they orphan; the orphan count covers `cart` too. PostgreSQL note: `ADD CONSTRAINT ... NOT VALID` then `VALIDATE CONSTRAINT`. The permanent schema at the end of an import is unchanged. |
 | Unique checks | MySQL's `unique_checks=0` is **never** set: it lets InnoDB skip uniqueness checks, and the primary and unique keys stay on every table during every load. **`obs_general.opus_id` has a plain key, not a unique one** (PR-07): duplicate OPUS ids load side by side, and one finalization step, the **duplicate step**, keeps the copy with the highest `obs_general.id` and deletes the others (PR-07). **Bundles that share OPUS ids (a calibrated bundle and its raw counterpart, for instance) are deleted and re-imported together**, so a deleted copy never needs to come back, and nothing records it. Ids follow import order on every path (counted up in PR-07 and PR-09, per-bundle ranges in `bundle_number` order from PR-16), so the later bundle wins (from PR-16, the later-registered one, so a re-imported bundle, which keeps its number, loses to any bundle registered after it), and no import, sequential, parallel, or concurrent, looks for duplicates while it loads. |
 | Transactions in the import | Each bulk load is its own transaction, **chunked to about 100,000 rows** (a killed multi-gigabyte load rolls back slowly, and the server finishes the rollback after a restart). |
@@ -1554,7 +1554,11 @@ as `item n`, and to the design document as `§D-n`.
   bundle and run on any state, as today, except that `--finalize` refuses an unfinished
   registry (above). Two of them delete observation rows:
   `--delete-bundles`, and `--finalize` through PR-07's duplicate step; neither changes the
-  version row.
+  version row. **`--delete-bundles` also deletes each named bundle's `import_bundle` row**
+  after its observation rows, so a failed bundle the operator drops no longer blocks
+  `--finalize` or `--write-schema-version`; an `import_tests` case runs a failing append
+  (`OPUS_IMPORT_FAULT=log_error:<bundle>`), then `--delete-bundles` of that bundle, then
+  the closing invocations, and asserts the schema ends `ready` without the bundle.
 - **Removal.** The import namespace and everything that serves it:
   - the six flags; `--import`'s "implies `--delete-import-bundles`"; and
     `--do-all-import`, whose remaining meaning is `--import`: every caller changes to
@@ -1631,7 +1635,7 @@ as `item n`, and to the design document as `§D-n`.
   - `--create-param-info`: `Rebuild the param_info table from the table schemas and swap it in atomically`
   - `--create-partables`: `Rebuild the partables table from the code's mission and instrument lists and the imported mult ids, and swap it in atomically`
   - `--create-table-names`: `Rebuild the table_names table from the code's list of categories and the imported tables, and swap it in atomically`
-  - `--delete-bundles`: `Delete the given bundles' rows from every observation table`
+  - `--delete-bundles`: `Delete the given bundles' rows from every observation table, and their bundle registry rows`
   - `--analyze-tables`: `Analyze every table (recompute its key distribution)`
   - `--validate`: `Validate the imported tables`
   - `--scorched-earth` and `--yes`: below.
@@ -2947,7 +2951,9 @@ once (§1, Deploy; §2.3).
     others held theirs, and that no importer exited while a bundle was pending. A bundle whose import
     raises or logs an error is marked `failed` (PR-08's rule; a queue importer never
     ignores errors: `--ignore-errors` is a debugging flag of a single `opus_import` run, and
-    neither `--join` nor the coordinator takes or passes it), its rows deleted, and the importer moves on; a failure is
+    neither `--join` nor the coordinator takes or passes it); a queue importer also deletes
+    its rows (a plain `opus_import` leaves them until the bundle is next imported, as in
+    PR-08), and the importer moves on; a failure is
     not retried, since it would fail the same way. Largest first starts the large bundles at once and leaves the small ones to fill
     the gaps at the end, so the wall-clock floor is the largest bundle alone. `--sets
     COISS,COVIMS` limits which bundles an importer claims (for a computer that holds only
@@ -3101,6 +3107,11 @@ once (§1, Deploy; §2.3).
       must return 1; and only then `COMMIT`. A reader at `READ COMMITTED` therefore never
       sees a committed `running` row whose lock has not been taken, and a process that dies
       before the commit leaves neither a row nor a lock.
+    - **A plain `opus_import` takes no lock and is not checked.** It has no
+      `import_process` row, so its bundles keep `process_id` NULL, and its chunk update
+      matches `process_id IS NULL` with no lock check; the main `import_tests` run, a plain
+      import, is the test that this path still works. Everything below applies to queue
+      importers only.
     - **The lock is checked at each chunk commit and before each claim.** Each chunk's
       transaction on the import connection carries its `rows_done` and `progress_at`
       updates, and its first statement is `UPDATE import_bundle SET rows_done = ... WHERE
@@ -3655,10 +3666,9 @@ once (§1, Deploy; §2.3).
     never reads it. A bundle is dropped from an update by copying it with the rest and then
     running `opus_import --delete-bundles <the bundles to drop>` on the new schema, an
     invocation distinct from the clone-and-import one, before the finalization sequence, so
-    the mult step and validation see the drop. From this PR `--delete-bundles` also deletes
-    each named bundle's `import_bundle` row after its observation rows, so a dropped bundle
-    is neither imported nor waited for; its help becomes exactly:
-    `Delete the given bundles' rows from every observation table, and their bundle registry rows`
+    the mult step and validation see the drop. `--delete-bundles` also deletes each named
+    bundle's `import_bundle` row (PR-08), so a dropped bundle is neither imported nor
+    waited for.
   - **The scripts are named after the full import's** (`run_full_opus_import.sh`,
     `_full_opus_import_wrapper.sh`, `_run_full_opus_import.sh`): the operator's
     `run_incremental_opus_update.sh`, its `_incremental_opus_update_wrapper.sh`, the

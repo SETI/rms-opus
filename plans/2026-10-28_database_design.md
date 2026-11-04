@@ -710,7 +710,8 @@ not stopped, because the version check runs once per worker at startup and nowhe
 which is why an append is only for a schema that is not being served. Each bundle is
 deleted, with the foreign key checks on so the cart's cascade runs, and reloaded with the
 indexes and foreign keys in place. The append invocation ends there, still `appending`; as
-after a fresh import, finalization is its own invocation, in which every finalization step
+after a fresh import, finalization is its own step, which a separate invocation runs
+(except under `--do-it-all`, which runs it after the import in the same invocation), in which every finalization step
 an append invalidates runs again (the duplicate step, the mult step, the aux tables, the search-table reset with
 its cache flush, `ANALYZE`, and validation), and last the version step returns the state
 to `ready`; no other step writes `ready`, and neither finalization nor the version step
