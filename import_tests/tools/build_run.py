@@ -316,6 +316,10 @@ secret_key = "mini-holdings-throwaway-key"
 debug = false
 allowed_hosts = ["127.0.0.1", "localhost", "testserver"]
 cache_server_prefix = "mini_holdings"
+# A port nothing listens on. The run's `manage.py migrate` imports the settings, whose
+# memcached probe would otherwise write to whichever memcached the machine runs on the
+# default port; refused, the settings fall back to the local-memory cache.
+cache_location = "127.0.0.1:1"
 public_url = "https://opus.invalid/"
 product_http_path = "https://opus.invalid/"
 viewmaster_url = "https://viewmaster.invalid/"

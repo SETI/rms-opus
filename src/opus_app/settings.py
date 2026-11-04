@@ -13,6 +13,12 @@ from pathlib import Path
 
 from opus_config import get_config
 
+_config = get_config()
+
+# The memcached server, as "host:port". The probe below and CACHES both read it, so
+# the server the probe found answering is the one the cache is pointed at.
+CACHE_LOCATION = _config.django.cache_location
+
 # Module-level helpers in this file are lower-case on purpose. Django treats every
 # upper-case name here as a setting, and its only test is str.isupper(), which a
 # leading underscore does not defeat: '_HAS_MEMCACHE'.isupper() is True, so the
@@ -24,8 +30,9 @@ _has_memcache = False
 try:  # pragma: no cover
     # An optional accelerator rather than a declared dependency: OPUS runs
     # without it, on Django's local-memory cache. It is not in the project's
-    # requirements and ships no stubs, so the checker cannot see it either.
-    import pymemcache  # type: ignore[import-not-found]
+    # requirements, only in the benchmarks extra, and it ships no stubs, so
+    # [tool.mypy] lets the import go unchecked whether or not it is installed.
+    import pymemcache
 
     _has_memcache = True
 except ImportError:  # pragma: no cover
@@ -34,7 +41,8 @@ except ImportError:  # pragma: no cover
 # Now check to see if memcached is actually running
 if _has_memcache:
     try:
-        _memcache_client = pymemcache.client.base.Client(('127.0.0.1', 11211))
+        _cache_host, _, _cache_port = CACHE_LOCATION.rpartition(':')
+        _memcache_client = pymemcache.client.base.Client((_cache_host, int(_cache_port)))
         _memcache_client.set('__test_key__', 'test_val')
     except ConnectionRefusedError:
         _has_memcache = False
@@ -55,8 +63,6 @@ BASE_DIR = Path(__file__).resolve().parent
 # location: importing this module without OPUS_CONFIG set raises ConfigError
 # rather than starting the site against another installation's settings.
 ################################################################################
-
-_config = get_config()
 
 # Django core.
 SECRET_KEY = _config.django.secret_key
@@ -250,7 +256,7 @@ if _has_memcache:  # pragma: no cover
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-            'LOCATION': '127.0.0.1:11211',
+            'LOCATION': CACHE_LOCATION,
             'TIMEOUT': None,
         },
     }

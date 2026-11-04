@@ -629,6 +629,11 @@ entirely.
      - yes
      - Prepended to every cache key, which is what lets several OPUS installations share
        one memcached without colliding.
+   * - ``cache_location``
+     - optional
+     - The memcached the web application caches in, as ``"host:port"``. Default
+       ``"127.0.0.1:11211"``, memcached's own port on the same machine. A generated file
+       never contains it.
    * - ``public_url``
      - yes
      - This installation's public URL, used by the citation page.

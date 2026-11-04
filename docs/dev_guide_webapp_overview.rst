@@ -252,7 +252,8 @@ Four layers, and they fail differently.
 **memcached**, through Django's cache framework, when it is available; Django's
 local-memory cache stands in when it is not. :mod:`opus_app.settings` decides at import
 time, and it decides *twice*: first whether ``pymemcache`` can be imported, then whether
-a connection to it can actually be made. Every key OPUS builds is
+a connection can actually be made to the memcached the configuration's ``[django]
+cache_location`` names. Every key OPUS builds is
 ``CACHE_SERVER_PREFIX + CACHE_KEY_PREFIX + ...``, where the first comes from the
 configuration and the second is ``'opus:'`` plus the database schema name -- which is
 what lets several OPUS installations share one memcached. Losing this cache costs speed
