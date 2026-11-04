@@ -200,8 +200,8 @@ and fails the run otherwise, so an invocation that wrote somewhere else (an impo
 namespace) or nowhere cannot pass as a measurement. The bundles an invocation imports are
 those its descriptors expand to, less every bundle OPUS deliberately skips, which
 `do_import.import_one_bundle` skips with the debug line `Ignoring import of <bundle>`
-(its `config_bundle_info.BUNDLE_INFO` entry has `instrument_class` None: the early
-`COCIRS_0xxx` volumes and `GO_0001`, which the `COCIRS` and `GALILEO` sets expand to); the
+(its `config_bundle_info.BUNDLE_INFO` entry has `instrument_class` None: for example `GO_0001` and the early `COCIRS_0xxx` volumes, which the `GALILEO` and
+`COCIRS` sets expand to; `grep -n "'instrument_class': None" src/opus_import/config_bundle_info.py` lists them all); the
 harness expands the descriptors with that side's own interpreter, through
 `import_util.yield_import_bundle_ids` and `do_import_tables.lookup_vol_info` (the same
 test PR-08 factors into `do_import_tables.opus_imports_bundle`, read directly so that it
@@ -1515,8 +1515,8 @@ as `item n`, and to the design document as `§D-n`.
   moves each through `importing` to `done` or `failed` as it goes. **A bundle OPUS skips
   is never registered**: `do_import.import_one_bundle` skips, with the debug line
   `Ignoring import of <bundle>`, every bundle whose `config_bundle_info.BUNDLE_INFO`
-  entry has `instrument_class` None (the early `COCIRS_0xxx` volumes and `GO_0001`, which
-  the `COCIRS` and `GALILEO` sets expand to); this PR factors that test into
+  entry has `instrument_class` None (for example `GO_0001` and the early `COCIRS_0xxx` volumes, which the `GALILEO` and
+  `COCIRS` sets expand to; `grep -n "'instrument_class': None" src/opus_import/config_bundle_info.py` lists them all); this PR factors that test into
   `do_import_tables.opus_imports_bundle(bundle_id) -> bool` (False exactly when the
   bundle's entry exists and has no instrument class), which the skip and registration
   both call, so no row is left that no import moves to `done`. A failed append leaves `appending`,
@@ -1700,7 +1700,11 @@ as `item n`, and to the design document as `§D-n`.
   and that neither opens the database.
 - **Tests.** `reimport_bundle` runs on the append path (the schema `perform_run` built
   already carries a version row, PR-05); `duplicate_id_run` stays on the fresh-import path
-  (PR-07). New `import_tests` cases: an append that replaces one bundle and adds one ends
+  (PR-07). **A failed bundle in these tests comes from a new test-only fault site,**
+  `OPUS_IMPORT_FAULT=log_error:<bundle>` (PR-06's variable), at which the import calls
+  `import_util.log_error` once inside that bundle and carries on, so the bundle logged an
+  error without raising; the failing run sets it and the rerun leaves it unset, and
+  `dev_guide_testing.rst` lists it with PR-06's sites. New `import_tests` cases: an append that replaces one bundle and adds one ends
   with goldens equal to a full fresh import of the same bundle set; an append that fails in
   its second bundle leaves `appending`, the web check refuses the schema, and a rerun
   resumes and ends `ready`; **an append that fails in its second bundle followed by the
@@ -2825,8 +2829,8 @@ once (§1, Deploy; §2.3).
     skips every bundle OPUS does not import, exactly as the import does**: a bundle whose
     `config_bundle_info.BUNDLE_INFO` entry (`do_import_tables.lookup_vol_info`) has
     `instrument_class` None, which `do_import.import_one_bundle` skips with the debug line
-    `Ignoring import of <bundle>` (the early `COCIRS_0xxx` volumes and `GO_0001`, which the
-    `COCIRS` and `GALILEO` sets of `import_all.BUNDLE_SETS` expand to), is logged at debug
+    `Ignoring import of <bundle>` (the set PR-08 names, for example `GO_0001` and the early `COCIRS_0xxx` volumes, which the `GALILEO` and
+    `COCIRS` sets expand to; `grep -n "'instrument_class': None" src/opus_import/config_bundle_info.py` lists them all), is logged at debug
     level as `Ignoring registration of <bundle>` and is not registered, as PR-08's minimal
     registry already skipped it. Of the bundles OPUS imports, one with no `BUNDLE_INFO`
     entry, no primary index label found, or a label that does not declare a row count is an
@@ -2941,8 +2945,9 @@ once (§1, Deploy; §2.3).
     (PR-06's fault variable), which makes each importer sleep five seconds after its claim
     commits; it asserts from the three logs that each importer claimed a bundle while the
     others held theirs, and that no importer exited while a bundle was pending. A bundle whose import
-    raises, or that logs errors without `--ignore-errors` (PR-08's rule), is marked
-    `failed`, its rows deleted, and the importer moves on; a failure is
+    raises or logs an error is marked `failed` (PR-08's rule; a queue importer never
+    ignores errors: `--ignore-errors` is a debugging flag of a single `opus_import` run, and
+    neither `--join` nor the coordinator takes or passes it), its rows deleted, and the importer moves on; a failure is
     not retried, since it would fail the same way. Largest first starts the large bundles at once and leaves the small ones to fill
     the gaps at the end, so the wall-clock floor is the largest bundle alone. `--sets
     COISS,COVIMS` limits which bundles an importer claims (for a computer that holds only
@@ -3550,7 +3555,7 @@ once (§1, Deploy; §2.3).
   packaging. `docs/user_guide_deployment.rst`'s paragraph on `database/` and
   `src/opus_deploy/server/README.txt`'s `database/` entry say that the load turns the
   stopword list off for its session and refuses a peer whose `ngram_token_size` is not 2,
-  and why.
+  and why. `load_db.sh`'s header comment says the same.
 - **Docs:** `dev_guide_database_schema.rst`, `dev_guide_table_schemas.rst` (the
   `fulltext` entry), `dev_guide_webapp_search.rst` (the query and its fallback),
   `user_guide_installation.rst` (`ngram_token_size` and `innodb_ft_enable_stopword`, for
@@ -3744,7 +3749,9 @@ once (§1, Deploy; §2.3).
     `OPUS_DB_DUMP_DIR` and `OPUS_PEER_DB_HOST` in `src/opus_deploy/server/deploy.env.template`
     (today "Both of these are used only by run_full_opus_import.sh") names both scripts;
     and `user_guide_installation.rst`'s rows for the two variables are checked and say
-    that an incremental update is copied too.
+    that an incremental update is copied too. The header comments of `src/opus_deploy/server/database/dump_db.sh` and `load_db.sh`,
+    which today say `run_full_opus_import.sh` runs them, say that both run scripts call
+    them through `copy_database_to_peer` (`_copy_database_to_peer.sh`).
   - Tests: `build_run` gains `clone_run(source_schema, reimport, drop)`, which imports
     the fixture fully into one schema, clones a second from it with one bundle re-imported
     and one dropped (the drop through its own `--delete-bundles` invocation, as the script
