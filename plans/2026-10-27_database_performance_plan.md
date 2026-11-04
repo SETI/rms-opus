@@ -4225,3 +4225,66 @@ the orchestrator's).
 
 Dated, naming the commit of this file they were written against, one bullet per fact.
 Nothing above this line is rewritten by an executor.
+
+### 2026-11-04, PR-00 (written against this file at b9409b94)
+
+- The harness's commands are `python -m benchmarks.bench_server`, `bench_import`,
+  `bench_db`, `bench_web` and `compare`, each run from the PR worktree's root;
+  `docs/dev_guide_benchmarks.rst` is the procedure. Every bench command takes `--scale`,
+  `--side`, `--pr`, `--session` and `--date` (pass the session's date explicitly, so a
+  session that crosses midnight keeps one file name), plus `--python` and `--repo-root`
+  naming the side.
+- The harness-owned server is the generic MySQL 8.0.46 tarball under `~/opt/mysql/`, with
+  `~/opt/mysql/lib/libaio.so.1` linked to Ubuntu 24.04's `libaio.so.1t64`, data root
+  `~/opus_bench/mysql`, socket only (no TCP listener), as
+  `benchmarks/scenarios/server.toml` names them. `memory_budget_gb = 24` there gives an 18
+  GiB buffer pool and a 14 GiB redo log; `tests/benchmarks/test_bench_server.py` checks
+  the rule. The harness's memcached is `web.toml`'s port 21211 with 1024 MB.
+- The holdings scales read `$PDS_DROPBOX_ROOT/holdings` and
+  `$PDS_DROPBOX_ROOT/pds4-holdings`; on the workstation `PDS_DROPBOX_ROOT` is the value
+  `~/opus_runner_secrets` sets.
+- Metric names a later PR judges: the import guards are `import.wall_s`,
+  `import.largest.import_s` and `import.peak_tree_pss_kb`; the schema guards
+  `db.schema.data_bytes` and `db.schema.index_bytes`; the web guards are the names
+  `benchmarks.compare.GUARD_PATTERNS` matches. A scenario's statements-executed count is
+  `web.<state>.<kind>.<search>.statements`, which `compare` reads to report rather than
+  judge a warm guard that executed nothing on either side.
+- `benchmarks/scenarios/import_complete.toml` names no `[largest]` bundle, so at complete
+  scale `import.largest.import_s` is the bundle with the most `obs_general` rows in that
+  run (`details.largest_bundle_named_by` is `rows`). Its groups expand, through the side's
+  own code, to the bundles `opus_import_all` imports; on 2026-11-04 the expansion with
+  this commit's interpreter (`benchmarks/side_probe.py expand`) gave 985 bundles over its
+  14 groups.
+- The test scale's selective search, `planet=Uranus` in `web.toml`, matched 171 of 29,752
+  `obs_general` rows in a test-scale import made on 2026-11-04 with the harness commit,
+  under the one-percent ceiling of §2.2.
+- `compare.py --floors` gives a floor to every metric any session holds; a metric some
+  session lacks is listed by the command and carries `missing_from` in the floors file,
+  and is never counted as agreeing.
+- The fixture and test floor sessions taken on 2026-11-04 do not count: the workstation
+  was not idle (one-minute load average 7 to 24 on the 30 CPUs the results record, from
+  other work) and the operator had not confirmed it, so §2.3's idle rule was not met.
+  Their result files were not committed. The floor sessions, and the floors file every later PR judges against,
+  are to be taken again on an idle workstation with the operator confirming each session;
+  the bullet naming the floors file is added then.
+- PR-00's complete-scale import, with its `bench_db` and `bench_web` runs, has not been
+  taken yet. PR-14 and PR-16 read its `db.table.mult_*.max_id` metrics, and PR-17 its
+  `ascii_columns` details.
+- `vulture_whitelist.py` gains no entry: each runner's `main` is called from its module's
+  `__main__` guard, so vulture sees every entry point used, and the whitelist holds only
+  names vulture cannot see used.
+- `import_tests.tools.build_run.write_opus_config` does not gain `extra_import` in PR-00:
+  PR-00's key is a `[django]` key, which `extra_import` would not set. `write_opus_config`
+  writes `cache_location = "127.0.0.1:1"` directly, as `tests/fixtures/opus_ci.toml` does,
+  so neither the import suite nor the unit suite reaches a memcached. The first PR that
+  adds an `[import]` key adds the parameter. `_write_opus_toml.sh` and
+  `opus_setup_environment.sh` keep the default and are unchanged.
+- `benchmarks/scenarios/queries.sql` is a test-scale capture by the harness before its
+  final commit; its blocks are the ones the final commit's capture records. It is
+  refreshed with `bench_db --dump-queries --commit-capture` at test scale, as the last
+  command of a session, under a session label of its own whose result file is not
+  committed, because the copy changes the checkout that later runs of the same label would
+  record.
+- `db-perf`'s protection should require the contexts `main` requires: `Run Lint`, `Unit
+  Tests (3.12)`, `Unit Tests (3.13)`, `Import Tests`, `Docs`, `Package`, and `Integration
+  Tests (self-hosted-linux, 3.12)`.
