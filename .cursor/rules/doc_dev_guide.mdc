@@ -50,6 +50,11 @@ what the code already says.
   to where they live.
 - **API reference** — see Section 6.
 
+The guide describes the software as it is. It MUST NOT contain issue or pull
+request numbers or links, known-defect or bug notes, deferred or planned
+changes, or references to design plans or critiques; bugs belong in the issue
+tracker.
+
 ## 3. Architecture and Class Diagrams
 
 - Include at least one **class diagram** (a Mermaid `classDiagram` or

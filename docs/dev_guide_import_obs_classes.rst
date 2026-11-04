@@ -179,7 +179,6 @@ What every Cassini instrument's PDS3 volumes share. Two things distinguish it:
   with a description mentioning rings, is really ``S RINGS``.
 * **Repairing spacecraft clock counts.** Three per-instrument fixes: CIRS omits the
   fractional part, and VIMS and UVIS write fractional parts that are not clock ticks.
-  The latter two cite the filed issue they answer.
 
 It fills the ``obs_instrument_coiss`` columns from the PDS3 label keywords, normalizing
 the order of the observation-type words and reporting a change in length as an error.
@@ -517,7 +516,7 @@ Two things follow. The reversal applies to the **whole** listing, not to each pa
 also reverses the relative order of the ``_1001`` bundles inside a bundleset -- and row
 ids depend on that order. And it fires only when a bundleset is expanded: every ``NH``
 shorthand instead names an explicit, hand-ordered list of ``_1001`` bundles, because that
-order matters for its own reason, which the source records against a filed issue.
+order matters for its own reason, which the source records.
 
 Leaf: ObsVolumeNHxxLOXxxx
 ~~~~~~~~~~~~~~~~~~~~~~~~~

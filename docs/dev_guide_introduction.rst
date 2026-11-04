@@ -260,5 +260,4 @@ The dependencies worth knowing about before reading any code:
   skipped on platforms that do not have it.
 
 The JavaScript and CSS front end is served as static assets with no build step. There
-is no bundler; introducing one is tracked separately as issue
-`#1436 <https://github.com/SETI/rms-opus/issues/1436>`__.
+is no bundler.

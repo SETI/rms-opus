@@ -56,7 +56,7 @@ directory has a chapter of its own, it is named beside it.
     │   │   ├── import_util.py            # helpers shared by the steps and the obs classes
     │   │   ├── importdb/                 # the SQL backend: super.py (the abstract base
     │   │   │                             #   both brands inherit), mysql.py, and the
-    │   │   │                             #   postgresql.py stub kept for a future one
+    │   │   │                             #   unimplemented postgresql.py stub
     │   │   ├── obs/                      # the obs_* class hierarchy, one row per observation
     │   │   ├── steps/                    # the do_* steps; four do_import_* modules are
     │   │   │                             #   internals of do_import, not steps

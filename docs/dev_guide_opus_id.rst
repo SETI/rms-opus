@@ -437,11 +437,7 @@ A few comments on the above:
 
 * In many cases, the PDS3 product filename was used for the OPUS ID because it
 
-  made mapping between OPUS ID and filename easy in PdsFile. This may eventually
-  cause problems when those datasets are converted to PDS4 and those filenames
-  change. We will have to make a determination at that point whether to continue
-  using the old PDS3-based OPUS IDs or take the hit (and break perma-links) and
-  reformat the OPUS IDs to match the PDS4 filenames.
+  made mapping between OPUS ID and filename easy in PdsFile.
 * In retrospect, we should've placed the camera after the image number for
 
   Cassini ISS to make sorting more meaningful.
