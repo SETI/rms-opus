@@ -1,0 +1,10 @@
+# Fixture scale: the checked-in mini-holdings import_tests uses, imported through
+# import_tests.tools.build_run.perform_run -- one invocation per fixture bundle, in the
+# bundle registry's order, then the finalization sequence. The tree is built from the
+# harness's own checkout for both sides, so both import the same data.
+
+scale = "fixture"
+
+# Import runs per side in a floor session, the default of --runs. An A/B passes the
+# count the run-count table in docs/dev_guide_benchmarks.rst gives it.
+runs = 3

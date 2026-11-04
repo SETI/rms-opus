@@ -4,9 +4,9 @@ run-name: "Run Tests: ${{ github.ref_type }} ${{ github.ref_name }} by ${{ githu
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ main ]
+    branches: [ main, db-perf ]
   push:
-    branches: [ main ]
+    branches: [ main, db-perf ]
   schedule:
     - cron: "55 10 * * *"  # 2:55am PST, 3:55am PDT
 
@@ -28,10 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      RUFF_PATHS: "src integration_tests import_tests tests docs manage.py"
-      MYPY_PATHS: "src integration_tests import_tests tests docs manage.py"
-      BANDIT_PATHS: "src integration_tests manage.py"
-      VULTURE_PATHS: "src integration_tests import_tests tests docs manage.py vulture_whitelist.py"
+      RUFF_PATHS: "src integration_tests import_tests tests benchmarks docs manage.py"
+      MYPY_PATHS: "src integration_tests import_tests tests benchmarks docs manage.py"
+      BANDIT_PATHS: "src integration_tests benchmarks manage.py"
+      VULTURE_PATHS: "src integration_tests import_tests tests benchmarks docs manage.py vulture_whitelist.py"
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -55,10 +55,11 @@ jobs:
 
       - name: Install package and dev dependencies
         # The package itself, not just the tools: mypy's django-stubs plugin
-        # imports opus_app.settings.
+        # imports opus_app.settings. The benchmarks extra is what benchmarks/ imports,
+        # so the checkers see the harness as it runs.
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -e ".[dev,benchmarks]"
 
       - name: Ruff (lint)
         run: |
@@ -86,7 +87,7 @@ jobs:
 
       - name: PyMarkdown
         run: |
-          pymarkdown scan README.md CONTRIBUTING.md .cursor/ docs/
+          pymarkdown scan README.md CONTRIBUTING.md benchmarks/README.md .cursor/ docs/
 
   test:
     name: Unit Tests (${{ matrix.python-version }})

@@ -126,6 +126,9 @@ dev = [
   # typeshed's stubs for qrcode, which apps/help/views.py renders into the
   # "How to Cite OPUS" page.
   "types-qrcode",
+  # typeshed's stubs for psutil, which benchmarks/monitor.py imports from the
+  # benchmarks extra.
+  "types-psutil",
   # typeshed's stubs for docutils, whose node types docs/conf.py annotates its
   # missing-reference handler with. Sphinx itself ships py.typed.
   "types-docutils",
@@ -158,6 +161,17 @@ dev = [
   "pyroma>=4.2",
   "vulture>=2.14",
   "rms-opus[docs]",
+]
+# What the benchmark harness (benchmarks/) runs with, beyond the dev tools: gunicorn
+# is the web server it starts, psutil lists the processes whose memory it samples,
+# and pymemcache is the memcached client the web application probes for and caches
+# through, without which the application falls back to its local-memory cache and the
+# harness refuses to run. The lint job installs it, so the checkers see the harness's
+# imports.
+benchmarks = [
+  "gunicorn>=23",
+  "psutil>=5.9",
+  "pymemcache>=4",
 ]
 docs = [
   "myst-parser",
@@ -374,9 +388,11 @@ django_settings_module = "opus_app.settings"
 # that re-types Django's own request and response classes, which would put a second
 # opinion about them beside django-stubs for the sake of the one name the suite
 # imports (`RequestsClient`, used only on the live-server path).
+# `pymemcache` is optional: only the benchmarks extra installs it, so the settings
+# module's import of it has to check the same whether it is present or not.
 [[tool.mypy.overrides]]
 module = ["julian.*", "pdfkit.*", "pdslogger.*", "pdsparser.*",
-          "pdstable.*", "rest_framework.*"]
+          "pdstable.*", "pymemcache.*", "rest_framework.*"]
 ignore_missing_imports = true
 
 # `strict = true` applies to every module, and no module is silenced wholesale:
@@ -475,8 +491,9 @@ enabled = false
 # Recurse the code trees; exclude the fixture- and live-server-driven suites
 # (integration_tests/{test_api,test_db_data,test_perf}) and the out-of-scope
 # perf_test/.
-# The packages are under src/, and `targets` below adds integration_tests/ and
-# manage.py; `tests/` is deliberately not a target.
+# The packages are under src/, and `targets` below adds integration_tests/, the
+# benchmark harness in benchmarks/, and manage.py; `tests/` is deliberately not a
+# target.
 # Path-anchored so a same-named directory elsewhere in the tree cannot match by
 # accident. integration_tests/apps_db_tests is deliberately absent: the per-app suites
 # it holds are scanned.
@@ -492,7 +509,7 @@ exclude_dirs = [
   # skipped -- the same choice [tool.mypy] exclude makes about this file.
   "src/opus_app/static/admin/js/compress.py",
 ]
-targets = ["src", "integration_tests", "manage.py"]
+targets = ["src", "integration_tests", "benchmarks", "manage.py"]
 # One entry, and it is the one that is irreducible: a category skip hides every
 # future instance of its rule as well as the ones it was written for. Everything
 # else is a per-line `# nosec <ID> - <reason>` at the statement it covers;
@@ -533,8 +550,8 @@ skips = [
 # tests/ is scanned too: its own dead imports are caught, and names that only
 # the suite uses then count as used.
 [tool.vulture]
-paths = ["src", "integration_tests", "import_tests", "tests", "docs", "manage.py",
-         "vulture_whitelist.py"]
+paths = ["src", "integration_tests", "import_tests", "tests", "benchmarks", "docs",
+         "manage.py", "vulture_whitelist.py"]
 # Vulture is invoked with relative paths, so a pattern needing a component before
 # the directory name would never match. These are written both ways for that
 # reason.

@@ -54,6 +54,11 @@ Three suites, selected by path:
 
 `docs/dev_guide_testing.rst` says what each suite needs and how to run it.
 
+Performance is measured by the benchmark harness in `benchmarks/`, which is not a test
+suite: it runs import, database and web measurements against servers it starts
+itself, and writes result files under `benchmarks/results/`, which are committed.
+`docs/dev_guide_benchmarks.rst` is its guide.
+
 `scripts/run-all-checks.sh` runs the gates rather than a suite — ruff, mypy,
 pytest, pyroma, bandit, vulture, Sphinx and PyMarkdown. Run it before proposing a
 change; `--import-tests` adds the import suite, which it otherwise leaves out

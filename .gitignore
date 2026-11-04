@@ -44,6 +44,11 @@ htmlcov/
 # Written by the profiling recipe in integration_tests/test_api/TEST_API_README.md
 profile.out
 
+# The benchmark harness's per-session raw logs, query captures and profiles. Its
+# results and floors under benchmarks/results/ are committed.
+benchmarks/scratch/
+benchmarks/**/*.prof
+
 
 # Packaging (setuptools-scm writes the version file at build time)
 build/

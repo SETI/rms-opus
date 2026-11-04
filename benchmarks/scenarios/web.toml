@@ -1,0 +1,166 @@
+# The web scenarios bench_web.py runs, and the servers it starts to run them.
+# benchmarks/web_scenarios.py says what each scenario kind expands to.
+
+[server]
+# gunicorn: gthread workers, with as many connections per worker as threads. Four
+# workers of two threads are the eight request slots of the mod_wsgi arrangement in
+# docs/user_guide_web_server.rst.
+port = 18321
+workers = 4
+threads = 2
+# The harness's own memcached, on a port of its own, with this much item memory.
+memcached_port = 21211
+memcached_mb = 1024
+
+# Web runs per side in a floor session, by scale: the default of --runs. An A/B passes
+# the count the run-count table in docs/dev_guide_benchmarks.rst gives it.
+[runs]
+fixture = 5
+test = 5
+complete = 3
+
+# The searches the scenarios act on, as query strings.
+[searches]
+# The landing page: no selections, the default sort.
+empty = ""
+# Most of the data, by observation time.
+broad = "time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00"
+# A predicate matching under one percent of the test scale's observations, in the
+# default sort.
+selective = "planet=Uranus"
+# A range on a child table, obs_ring_geometry, in kilometres.
+ring_radius = "RINGGEOringradius1=60000&RINGGEOringradius2=140000"
+# A target, which is a membership test on a list column.
+target = "target=Saturn"
+# One target's surface geometry.
+surface_geometry = "surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30"
+# The selections of the fan-out with selections: the broad time range and one mult.
+selected = "time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&planet=Saturn"
+
+# The observation each scale's categories, files and previews scenarios ask about: one
+# with surface geometry, which every scale's data holds. The complete scale holds the
+# test scale's.
+[observations]
+fixture = "co-iss-n1622025855"
+test = "co-iss-w1477654052"
+complete = "co-iss-w1477654052"
+
+# What a user-interface load fans out to: the default widgets' mult counts, the range
+# endpoints of the time widget, and the menu, which carries the triggered tables.
+[fanout]
+mult_widgets = ["instrument", "observationtype", "target"]
+range_slugs = ["time1"]
+
+# The order a re-sort asks for, in place of the default.
+[resort]
+order = "-time1,opusid"
+
+[[scenarios]]
+kind = "search"
+search = "empty"
+
+[[scenarios]]
+kind = "search"
+search = "broad"
+
+[[scenarios]]
+kind = "search"
+search = "selective"
+
+[[scenarios]]
+kind = "search"
+search = "ring_radius"
+
+[[scenarios]]
+kind = "search"
+search = "target"
+
+[[scenarios]]
+kind = "search"
+search = "surface_geometry"
+
+[[scenarios]]
+kind = "pages"
+search = "empty"
+
+[[scenarios]]
+kind = "pages"
+search = "broad"
+
+[[scenarios]]
+kind = "pages"
+search = "selective"
+
+[[scenarios]]
+kind = "pages"
+search = "ring_radius"
+
+[[scenarios]]
+kind = "pages"
+search = "target"
+
+[[scenarios]]
+kind = "pages"
+search = "surface_geometry"
+
+[[scenarios]]
+kind = "resort"
+search = "empty"
+
+[[scenarios]]
+kind = "resort"
+search = "broad"
+
+[[scenarios]]
+kind = "resort"
+search = "selective"
+
+[[scenarios]]
+kind = "resort"
+search = "ring_radius"
+
+[[scenarios]]
+kind = "resort"
+search = "target"
+
+[[scenarios]]
+kind = "resort"
+search = "surface_geometry"
+
+[[scenarios]]
+kind = "fanout"
+search = "empty"
+
+[[scenarios]]
+kind = "fanout"
+search = "selected"
+
+# A mult widget outside the defaults.
+[[scenarios]]
+kind = "widget"
+slug = "planet"
+
+[[scenarios]]
+kind = "categories"
+
+[[scenarios]]
+kind = "autocomplete"
+slug = "bundleid"
+prefixes = ["CO", "COISS_"]
+
+[[scenarios]]
+kind = "files"
+search = "broad"
+
+[[scenarios]]
+kind = "previews"
+search = "empty"
+
+# Many users at once, each with a session of its own: every user's fan-out for a search
+# of its own (the template's {i} is the user's number, so every search is new), then
+# every user's fan-out for one shared new search at the same moment. The distinct
+# searches start on a different day from the shared one, so none of them is it.
+[concurrency]
+users = 16
+shared = "selected"
+distinct = "time1=1980-01-02T00:00:{i:02d}&time2=2018-01-01T00:00:00&planet=Saturn"

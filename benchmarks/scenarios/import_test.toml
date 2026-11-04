@@ -1,0 +1,73 @@
+# Test scale: the bundle groups scripts/import/import_for_tests.sh imports, in its
+# order and with its options, from the Ring-Moon Systems Node's holdings. Each group is
+# one invocation of the bundle-import step. tests/benchmarks checks that the groups
+# agree with the script.
+
+scale = "test"
+
+# Import runs per side in a floor session, the default of --runs. An A/B passes the
+# count the run-count table in docs/dev_guide_benchmarks.rst gives it.
+runs = 3
+
+# The holdings roots. Environment variables are expanded when the harness runs, so
+# the file names no machine's layout.
+[holdings]
+pds3 = "$PDS_DROPBOX_ROOT/holdings"
+pds4 = "$PDS_DROPBOX_ROOT/pds4-holdings"
+
+# The scale's largest bundle, by obs_general rows. It is imported once more on its own
+# into a fresh schema, so its time is seen apart from the other bundles', and it is
+# the bundle the incremental group appends to a copy of the finished schema.
+[largest]
+bundle = "NHPELO_1001"
+alone = true
+incremental = true
+
+[[groups]]
+bundles = "COISS_2002,COISS_2008,COISS_2111"
+
+[[groups]]
+bundles = "COUVIS_0002"
+
+[[groups]]
+bundles = "COVIMS_0006"
+
+[[groups]]
+bundles = "COCIRS_5408"
+
+[[groups]]
+bundles = "GO_0016,GO_0017,GO_0018"
+options = ["--import-check-duplicate-id"]
+
+[[groups]]
+bundles = "VGISS_6210,VGISS_8201"
+
+[[groups]]
+bundles = "HSTI1_3667,HSTI1_1559,HSTJ0_9975,HSTJ1_1085,HSTN0_7181,HSTO0_7316,HSTU0_5642"
+
+[[groups]]
+bundles = "NHPELO_1001,NHLAMV_1001,NHJUMV_1001"
+
+[[groups]]
+bundles = "EBROCC_0001"
+
+[[groups]]
+bundles = "CORSS_8001"
+
+[[groups]]
+bundles = "COUVIS_8001"
+
+[[groups]]
+bundles = "COVIMS_8001"
+
+[[groups]]
+bundles = "VG_28xx"
+
+[[groups]]
+bundles = "COCIRS_0406,COCIRS_1003"
+
+[[groups]]
+bundles = "uranus_occ_u0_kao_91cm"
+
+[[groups]]
+bundles = "cassini_uvis_solarocc_beckerjarmak2023"
