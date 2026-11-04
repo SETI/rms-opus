@@ -6,6 +6,7 @@ without running an import, and the entry point reads no settings until it has ar
 to act on, so `--help` works on a machine that has none.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -16,6 +17,8 @@ import pytest
 import opus_import.__main__
 from opus_config import OPUS_CONFIG_ENV_VAR
 from opus_import import cli
+
+from .conftest import make_context
 
 
 def test_parser_defaults_to_doing_nothing() -> None:
@@ -104,3 +107,26 @@ def test_running_without_settings_reports_the_missing_variable(tmp_path: Path) -
     assert result.returncode != 0
     assert OPUS_CONFIG_ENV_VAR in result.stderr
     assert 'ConfigError' in result.stderr
+
+
+def test_parser_reads_the_timing_file_as_a_path() -> None:
+    """``--timing-json`` takes a path; without it no timing file is asked for."""
+    parser = cli._create_argument_parser()
+    assert parser.parse_args([]).timing_json is None
+    assert parser.parse_args(['--timing-json', 'out/t.json']).timing_json == Path('out/t.json')
+
+
+def test_step_timings_are_written_with_their_total(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The file holds every timed step plus ``total``, measured from the run's start."""
+    ctx = make_context()
+    ctx.step_timings.update({'import': 1.5, 'import_bundle:COISS_2002': 1.25})
+    monkeypatch.setattr('opus_import.cli.time.perf_counter', lambda: 107.0)
+    path = tmp_path / 'timings.json'
+    cli._write_step_timings(path, ctx, 100.0)
+    assert json.loads(path.read_text()) == {
+        'import': 1.5,
+        'import_bundle:COISS_2002': 1.25,
+        'total': 7.0,
+    }

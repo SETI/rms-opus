@@ -8,14 +8,18 @@ one ``opus_import.steps`` module), bundle selection, and logging.
 from __future__ import annotations
 
 import argparse
+import atexit
 import cProfile
 import io
+import json
 import logging
 import os
 import pstats
 import sys
+import time
 import traceback
 import warnings
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pdslogger
@@ -78,6 +82,19 @@ def _make_warning_handler(ctx: ImportContext) -> WarningHandler:
         ctx.python_warning_list.append(str(message))
 
     return handler
+
+
+def _write_step_timings(path: Path, ctx: ImportContext, started: float) -> None:
+    """Write the run's step timings, plus its total, as one JSON object.
+
+    Parameters:
+        path: The file to write. Its directory must exist.
+        ctx: The run's context, whose `ImportContext.step_timings` are written.
+        started: The `time.perf_counter` reading the run started at, from which the
+            ``total`` entry is computed.
+    """
+    timings = {**ctx.step_timings, 'total': time.perf_counter() - started}
+    path.write_text(json.dumps(timings, indent=1) + '\n', encoding='utf-8')
 
 
 def _create_argument_parser() -> argparse.ArgumentParser:
@@ -440,6 +457,14 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--profile', action='store_true', default=False, help='Do performance profiling'
     )
+    parser.add_argument(
+        '--timing-json',
+        type=Path,
+        default=None,
+        metavar='PATH',
+        help='When the run exits, write the wall-clock seconds of each step it ran to '
+        'this file, as one JSON object keyed by step name',
+    )
 
     return parser
 
@@ -512,6 +537,10 @@ def main() -> None:
         LOGNAME, limits={'info': args.log_info_limit, 'debug': args.log_debug_limit}
     )
     ctx = ImportContext(args=args, logger=logger)
+    if args.timing_json is not None:
+        # Registered rather than written in a finally block, because the run leaves
+        # through sys.exit from several places; atexit runs on every one of them.
+        atexit.register(_write_step_timings, args.timing_json, ctx, time.perf_counter())
 
     info_logfile = os.path.abspath(config.import_.log_file)
     debug_logfile = os.path.abspath(config.import_.debug_log_file)
@@ -615,9 +644,11 @@ def main() -> None:
             )
 
             if args.create_cart:
-                do_cart.create_cart(ctx)
+                with ctx.timed('create_cart'):
+                    do_cart.create_cart(ctx)
             if args.drop_cache_tables:
-                do_django.drop_cache_tables(ctx)
+                with ctx.timed('drop_cache_tables'):
+                    do_django.drop_cache_tables(ctx)
 
             logger.close()
 
@@ -634,11 +665,14 @@ def main() -> None:
             )
 
             if args.create_param_info:
-                do_param_info.do_param_info(ctx)
+                with ctx.timed('create_param_info'):
+                    do_param_info.do_param_info(ctx)
             if args.create_partables:
-                do_partables.do_partables(ctx)
+                with ctx.timed('create_partables'):
+                    do_partables.do_partables(ctx)
             if args.create_table_names:
-                do_table_names.do_table_names(ctx)
+                with ctx.timed('create_table_names'):
+                    do_table_names.do_table_names(ctx)
 
             logger.close()
 
@@ -648,12 +682,14 @@ def main() -> None:
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
 
-            do_update_mult_info.update_mult_info(ctx)
+            with ctx.timed('update_mult_info'):
+                do_update_mult_info.update_mult_info(ctx)
 
             logger.close()
 
         if args.validate_perm:
-            do_validate.do_validate(ctx, 'perm')
+            with ctx.timed('validate_perm'):
+                do_validate.do_validate(ctx, 'perm')
 
         if args.create_cart and ctx.try_cart_later:
             logger.open(
@@ -661,7 +697,8 @@ def main() -> None:
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
 
-            do_cart.create_cart(ctx)
+            with ctx.timed('create_cart'):
+                do_cart.create_cart(ctx)
 
             logger.close()
 
@@ -670,7 +707,8 @@ def main() -> None:
                 'Importing dictionary',
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
-            do_dictionary.do_dictionary(ctx)
+            with ctx.timed('import_dictionary'):
+                do_dictionary.do_dictionary(ctx)
             logger.close()
 
         if args.profile:

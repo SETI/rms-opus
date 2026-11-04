@@ -16,11 +16,14 @@ argument.
 
 from __future__ import annotations
 
+import contextlib
+import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import argparse
+    from collections.abc import Iterator
 
     import pdslogger
 
@@ -181,6 +184,8 @@ class ImportContext:
             table is read instead. Cleared once per run, not once per bundle.
         modified_mult_tables: The mult tables this bundle added values to, and which
             therefore have to be written back. Cleared for each bundle.
+        step_timings: Wall-clock seconds per step the run has timed with `timed`,
+            keyed by step name, which is what ``--timing-json`` writes out.
     """
 
     args: argparse.Namespace
@@ -204,8 +209,31 @@ class ImportContext:
     created_import_mult_tables: set[str] = field(default_factory=set)
     modified_mult_tables: set[str] = field(default_factory=set)
 
+    step_timings: dict[str, float] = field(default_factory=dict)
+
     log: ImportLog = field(init=False)
 
     def __post_init__(self) -> None:
         """Bind this context's `ImportLog`."""
         self.log = ImportLog(self)
+
+    @contextlib.contextmanager
+    def timed(self, step: str) -> Iterator[None]:
+        """Time the enclosed block and record it in `step_timings` under a step name.
+
+        The time is recorded when the block exits, whether it returns or raises, so a
+        step that failed still shows how long it ran. A step timed twice in one run
+        accumulates: its entry is the sum of the two.
+
+        Parameters:
+            step: The name the time is recorded under.
+
+        Yields:
+            Nothing; the block runs inside the timing.
+        """
+        started = time.perf_counter()
+        try:
+            yield
+        finally:
+            elapsed = time.perf_counter() - started
+            self.step_timings[step] = self.step_timings.get(step, 0.0) + elapsed

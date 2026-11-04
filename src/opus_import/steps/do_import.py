@@ -184,6 +184,11 @@ def do_import_steps(ctx: ImportContext) -> bool:
     ``--import-ignore-errors`` overrides that, and also keeps the run going past a
     bundle that failed.
 
+    Each phase that runs is timed into `ImportContext.step_timings` under its own name,
+    the bundle import and the copy also per bundle as ``import_bundle:<bundle>`` and
+    ``copy_bundle:<bundle>``. The names are the arguments of the ``ctx.timed`` calls
+    below; ``grep -n "ctx.timed(" src/opus_import`` lists every one.
+
     Parameters:
         ctx: The import run's context, whose per-run caches are reset here.
 
@@ -206,7 +211,8 @@ def do_import_steps(ctx: ImportContext) -> bool:
     old_imp_tables_dropped = False
     if ctx.args.drop_old_import_tables and not ctx.args.leave_old_import_tables:
         import_util.log_info(ctx, 'Deleting all old import tables')
-        do_import_tables.delete_all_obs_mult_tables(ctx, 'import')
+        with ctx.timed('drop_old_import_tables'):
+            do_import_tables.delete_all_obs_mult_tables(ctx, 'import')
         old_imp_tables_dropped = True
 
     # If --drop-permanent-tables AND --scorched-earth is given, delete
@@ -216,7 +222,8 @@ def do_import_steps(ctx: ImportContext) -> bool:
     old_perm_tables_dropped = False
     if ctx.args.drop_permanent_tables and ctx.args.scorched_earth:
         import_util.log_warning(ctx, '** DELETING ALL PERMANENT TABLES **')
-        do_import_tables.delete_all_obs_mult_tables(ctx, 'perm')
+        with ctx.timed('drop_permanent_tables'):
+            do_import_tables.delete_all_obs_mult_tables(ctx, 'perm')
         old_perm_tables_dropped = True
 
         # This must be done after the permanent tables were deleted, since
@@ -229,9 +236,11 @@ def do_import_steps(ctx: ImportContext) -> bool:
             )
 
             if ctx.args.create_cart:
-                do_cart.create_cart(ctx)
+                with ctx.timed('create_cart'):
+                    do_cart.create_cart(ctx)
             if ctx.args.drop_cache_tables:
-                do_django.drop_cache_tables(ctx)
+                with ctx.timed('drop_cache_tables'):
+                    do_django.drop_cache_tables(ctx)
 
             ctx.logger.close()
 
@@ -239,16 +248,20 @@ def do_import_steps(ctx: ImportContext) -> bool:
     # then do the new import
     if (ctx.args.do_import or ctx.args.delete_import_bundles) and not old_imp_tables_dropped:
         import_util.log_warning(ctx, 'Importing on top of previous import tables!')
-        for bundle_id in import_util.yield_import_bundle_ids(ctx):
-            do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'import')
+        with ctx.timed('delete_import_bundles'):
+            for bundle_id in import_util.yield_import_bundle_ids(ctx):
+                do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'import')
 
     if ctx.args.do_import:
-        for bundle_id in bundle_id_list:
-            if not import_one_bundle(ctx, bundle_id):
-                ctx.logger.log('fatal', f'Import of bundle {bundle_id} failed - Aborting')
-                ctx.import_has_bad_data = True
-                if not ctx.args.import_ignore_errors:
-                    break
+        with ctx.timed('import'):
+            for bundle_id in bundle_id_list:
+                with ctx.timed(f'import_bundle:{bundle_id}'):
+                    imported = import_one_bundle(ctx, bundle_id)
+                if not imported:
+                    ctx.logger.log('fatal', f'Import of bundle {bundle_id} failed - Aborting')
+                    ctx.import_has_bad_data = True
+                    if not ctx.args.import_ignore_errors:
+                        break
 
         if ctx.import_has_bad_data and not ctx.args.import_ignore_errors:
             ctx.logger.log('fatal', 'ERRORs found during import - aborting early')
@@ -277,38 +290,47 @@ def do_import_steps(ctx: ImportContext) -> bool:
                 import_util.log_warning(
                     ctx, 'Deleting bundles from perm tables but cart table not wiped'
                 )
-            for bundle_id in import_bundle_ids:
-                do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
+            with ctx.timed('delete_permanent_import_bundles'):
+                for bundle_id in import_bundle_ids:
+                    do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
 
     # If --delete-permanent-bundles is given, delete the given set of bundles
     # from the permanent tables.
     if ctx.args.delete_permanent_bundles:
-        for bundle_id in bundle_id_list:
-            do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
+        with ctx.timed('delete_permanent_bundles'):
+            for bundle_id in bundle_id_list:
+                do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
 
     # If --copy-import-to-permanent-tables is given, create obs and mult tables
     # as necessary, then copy the import tables to the permanent tables.
     if ctx.args.copy_import_to_permanent_tables:
-        for bundle_id in import_bundle_ids:
-            do_import_tables.create_tables_for_import(ctx, bundle_id, 'perm')
+        with ctx.timed('create_permanent_tables'):
+            for bundle_id in import_bundle_ids:
+                do_import_tables.create_tables_for_import(ctx, bundle_id, 'perm')
 
         import_util.log_info(ctx, 'Deleting duplicate opus_ids')
-        do_import_tables.delete_duplicate_opus_id_from_perm_tables(ctx)
+        with ctx.timed('delete_duplicate_opus_ids'):
+            do_import_tables.delete_duplicate_opus_id_from_perm_tables(ctx)
 
         import_util.log_info(ctx, 'Copying import mult tables to permanent')
-        do_import_mult.copy_mult_from_import_to_permanent(ctx)
+        with ctx.timed('copy_mult_tables'):
+            do_import_mult.copy_mult_from_import_to_permanent(ctx)
 
-        for bundle_id in import_bundle_ids:
-            do_import_tables.copy_bundle_from_import_to_permanent(ctx, bundle_id)
+        with ctx.timed('copy_to_permanent'):
+            for bundle_id in import_bundle_ids:
+                with ctx.timed(f'copy_bundle:{bundle_id}'):
+                    do_import_tables.copy_bundle_from_import_to_permanent(ctx, bundle_id)
 
     # If --drop-new-import-tables is given, delete the new import tables
     if ctx.args.drop_new_import_tables:
         import_util.log_info(ctx, 'Deleting all new import tables')
-        do_import_tables.delete_all_obs_mult_tables(ctx, 'import')
+        with ctx.timed('drop_new_import_tables'):
+            do_import_tables.delete_all_obs_mult_tables(ctx, 'import')
 
     # If --analyze-permanent-tables is given, analyze the permanent tables
     if ctx.args.analyze_permanent_tables:
         import_util.log_info(ctx, 'Analyzing all permanent tables')
-        do_import_tables.analyze_all_tables(ctx, 'perm')
+        with ctx.timed('analyze_permanent_tables'):
+            do_import_tables.analyze_all_tables(ctx, 'perm')
 
     return True

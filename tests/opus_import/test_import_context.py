@@ -393,3 +393,37 @@ def test_the_bundle_loop_clears_the_per_bundle_caches_and_not_the_per_run_one() 
     assert 'ctx.created_import_mult_tables' not in assigned['import_one_bundle']
 
     assert 'ctx.created_import_mult_tables' in assigned['do_import_steps']
+
+
+def test_a_timed_step_records_its_elapsed_time(
+    ctx: ImportContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The time between entering and leaving the block is stored under the step name."""
+    readings = iter([10.0, 12.5])
+    monkeypatch.setattr('opus_import.context.time.perf_counter', lambda: next(readings))
+    with ctx.timed('import'):
+        pass
+    assert ctx.step_timings == {'import': 2.5}
+
+
+def test_a_step_timed_twice_accumulates(
+    ctx: ImportContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two blocks under one name sum rather than the second replacing the first."""
+    readings = iter([0.0, 1.0, 5.0, 8.0])
+    monkeypatch.setattr('opus_import.context.time.perf_counter', lambda: next(readings))
+    for _ in range(2):
+        with ctx.timed('create_cart'):
+            pass
+    assert ctx.step_timings == {'create_cart': 4.0}
+
+
+def test_a_timed_step_that_raises_is_still_recorded(
+    ctx: ImportContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A failing step's time is kept, and its exception is not swallowed."""
+    readings = iter([3.0, 3.75])
+    monkeypatch.setattr('opus_import.context.time.perf_counter', lambda: next(readings))
+    with pytest.raises(RuntimeError, match='boom'), ctx.timed('validate_perm'):
+        raise RuntimeError('boom')
+    assert ctx.step_timings == {'validate_perm': 0.75}
