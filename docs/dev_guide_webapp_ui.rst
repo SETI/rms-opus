@@ -349,9 +349,7 @@ The front end
 
 ``src/opus_app/static/`` ships in the wheel and is served under ``/static_media/``.
 **There is no build step and no bundler**: the files are loaded as plain scripts and
-communicate through global namespace objects. Introducing a bundler is tracked
-separately as issue
-`#1436 <https://github.com/SETI/rms-opus/issues/1436>`__.
+communicate through global namespace objects.
 
 Thirteen JavaScript files under ``static/js/``, each owning one area of the interface:
 

@@ -643,7 +643,7 @@ The ``cache_*`` tables each contain all of the results from one search. Each row
 The ``contexts`` and ``definitions`` Tables
 -------------------------------------------
 
-OPUS supports a flexible database-based dictionary. Eventually this dictionary will be available through a website interface as a searchable glossary, but in the meantime it is used to supply tooltips for OPUS metadata fields. Each entry in the dictionary consists of a field name (e.g. ``PLANET_NAME``) and a context (e.g. ``OPUS_GENERAL_SEARCH``). It is possible for a field name to appear under multiple contexts. For example, a field such as ``EXPOSURE_TIME`` might mean something different in the ``COISS`` and ``COCIRS`` contexts. There are two database tables that support the dictionary.
+OPUS supports a flexible database-based dictionary. It is used to supply tooltips for OPUS metadata fields. Each entry in the dictionary consists of a field name (e.g. ``PLANET_NAME``) and a context (e.g. ``OPUS_GENERAL_SEARCH``). It is possible for a field name to appear under multiple contexts. For example, a field such as ``EXPOSURE_TIME`` might mean something different in the ``COISS`` and ``COCIRS`` contexts. There are two database tables that support the dictionary.
 
 The ``contexts`` table has the following schema:
 
