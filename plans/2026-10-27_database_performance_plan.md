@@ -89,7 +89,7 @@ architecture Phases 0 to 6 produced.
 | Golden suites | `import_tests` goldens and the `integration_tests` golden responses are the behavior-preservation gate. A PR that changes the schema regenerates the import goldens with `python -m import_tests.tools.make_mini_goldens` (`docs/dev_guide_import_fixture.rst`) and shows in its description that the diff is confined to the columns and tables it declared. The warning whitelist (`warning_whitelist.txt`, with `test_no_whitelist_entry_is_stale`) is part of the gate: a PR that removes a warning's cause removes its entry in the same PR. **API golden responses change only where a PR names the cause** (PR-13's removal of `ring_obs_id`, PR-14's display rank, PR-17's identifier collation) **and lists every changed golden with its reason for one ruling**; otherwise they never change. |
 | Surface geometry | One physical table, `obs_surface_geometry_target`, keyed `(target_name, obs_general_id)`, absorbs the per-target tables. The per-target **categories** (`obs_surface_geometry__<target>`), which the public API exposes in `api/categories` and in every `SURFACEGEO<target>_<field>` slug, and the selector category `obs_surface_geometry_name`, stay as **data** in `table_names`, `param_info`, and `partables`; the application resolves a category to the table plus an optional `target_name` filter through one function. A new target becomes a mult row and its category rows, written by the import; no table is created, no model is generated, nothing is redeployed (PR-15). |
 | Mult values | One `mult` table keyed `(field_id, id)` replaces the per-column `mult_` tables (PR-14). The display order is an integer rank that finalization recomputes for every field from typed values, so it never depends on import order; values no observation references are deleted in finalization except in fields whose schema lists the choices. A value is renamed by a `mult_overrides` entry in its column's schema, applied without a re-import by the code-only deploy. **Search results sorted by a mult column sort by label text, and that never changes.** |
-| Deploy | A schema-changing PR is marked **requires full re-import** in §4 and bumps `SCHEMA_VERSION`. The deploy chain already creates a new installation and schema under `staged/` and switches a symlink, so a re-import is the normal deploy. PR-05's schema version guard makes **both** deploy scripts refuse, before any `opus_import` step runs, when the served schema's row is absent or differs from the release's constant; the row's `version` is written only by the explicit step `--write-schema-version` and never overwritten, with one exception: PR-23's schema clone, in its indexed shape, writes the served schema's version with `state = 'appending'` so that the append path takes the update's bundles. **`--write-schema-version` is the only writer of `state = 'ready'`** (PR-05, PR-08): it runs last in every sequence, after validation, and changes `appending` to `ready` when the version matches. `SCHEMA_VERSION` covers the tables the import fills and the tables it only re-creates or truncates (`user_searches` and `search_results`, re-created from their schema files by `reset_search_tables`, and PR-24's counts table if implemented, created by its own finalization step and truncated by that reset), because the code-only deploy leaves those in place: a change to any of them is a re-import and a full deploy. The one table outside it is PR-16a's `import_process`, which needs no re-import: the import's coordinator creates it when absent, and nothing but the import reads it. An incremental update is a deploy of the same shape: `run_incremental_opus_update.sh` (PR-23) clones the served schema into the new one and `deploy_new_code_and_database.sh` promotes it. The deploy scripts run `sudo systemctl` and are the **operator's**; no PR runs them, and the rehearsal before the merge (PR-26) is the orchestrator's step on the Node. |
+| Deploy | A schema-changing PR is marked **requires full re-import** in §4 and bumps `SCHEMA_VERSION`. The deploy chain already creates a new installation and schema under `staged/` and switches a symlink, so a re-import is the normal deploy. PR-05's schema version guard makes **both** deploy scripts refuse, before any `opus_import` step runs, when the served schema's row is absent or differs from the release's constant; the row's `version` is written only by the explicit step `--write-schema-version` and never overwritten, with one exception: PR-23's schema clone, in its indexed shape, writes the served schema's version with `state = 'appending'` so that the append path takes the update's bundles. **`--write-schema-version` is the only writer of `state = 'ready'`** (PR-05, PR-08): it runs last in every sequence, after validation, and changes `appending` to `ready` when the version matches; from PR-08 it, and `--finalize`, refuse while any bundle in the registry is not `done`. `SCHEMA_VERSION` covers the tables the import fills and the tables it only re-creates or truncates (`user_searches` and `search_results`, re-created from their schema files by `reset_search_tables`, and PR-24's counts table if implemented, created by its own finalization step and truncated by that reset), because the code-only deploy leaves those in place: a change to any of them is a re-import and a full deploy. The one table outside it is PR-16a's `import_process`, which needs no re-import: the import's coordinator creates it when absent, and nothing but the import reads it. An incremental update is a deploy of the same shape: `run_incremental_opus_update.sh` (PR-23) clones the served schema into the new one and `deploy_new_code_and_database.sh` promotes it. The deploy scripts run `sudo systemctl` and are the **operator's**; no PR runs them, and the rehearsal before the merge (PR-26) is the orchestrator's step on the Node. |
 | MySQL floor | Stays 8.0.19 (set by the `INSERT ... AS new` alias). `EXPLAIN ANALYZE` needs 8.0.18, the ngram parser 5.7; `innodb_ddl_threads` and `innodb_ddl_buffer_size` (8.0.27) and `innodb_redo_log_capacity` (8.0.30) are used when present, and the harness records the server version. #1503 asks `importdb` for a server-version gate against this floor. |
 | Index pruning | The analysis's item 10, second half (dropping single-column indexes production never uses) is done from **production's index statistics**: `performance_schema.table_io_waits_summary_by_index_usage` on the production server for the 28 days from 2026-10-05 to 2026-11-02 (the counters run from the server's last start; no import ran, so every read is web traffic), against the schema imported on 2025-12-27. Most of the secondary-index bytes on the permanent tables were never read, chiefly on `obs_files`, the per-target surface geometry tables, and `obs_ring_geometry`. The mult-count keys on `obs_general` (`instrument_id`, `planet_id`, `mission_id`, `inst_host_id`) carried most of its index reads, and `obs_general`, `obs_pds`, and `obs_instrument_coiss` read the most rows by table scan. The same server's statement digests cannot show the searches: each per-search table's statements are separate digests, and they filled the digest table on the first day. **A key goes when production never read it**, or when it leads a composite key on the same table (MySQL serves anything the shorter key does from the composite), **unless the import or a code path the web traffic does not exercise needs it** (`obs_general.bundle_id`), a foreign key needs it, or it is an autocomplete column, whose prefix match reads it (a searchable column with the `STRING` form type). A column whose `1`/`2` partner keeps its key keeps its own, and a few are kept by choice (PR-13). PR-12 applies this to `obs_files` and the children, and PR-13 to the other single-column keys, with the list of those that stay; the surface geometry table keeps a key on every keyed template column (PR-15), as there are few of them. PR-25 documents re-collecting the statistics on the new schema. |
 | Configuration keys | Every new `[import]`, `[django]`, or `[database]` key is added in all of: `opus_config/config.py` (the dataclass and its reader; `_TableReader.finish` rejects unknown keys), `opus_config/opus.toml.template`, the ``[django]``, ``[import]``, and ``[database]`` key tables in `docs/user_guide_installation.rst`, for an `[import]` or `[database]` key the configuration-key table in `docs/dev_guide_import_running.rst` (a `[django]` key does not go there; `docs/dev_guide_webapp_running.rst` has no key table and gains none, the user guide's `[django]` table being the reference, and the developer-guide page that describes the behavior the key controls names it), `tests/opus_config`, `tests/fixtures/opus_ci.toml`, and `import_tests/tools/build_run.write_opus_config`, which gains an `extra_import: dict[str, object]` parameter so a test session can set a key. Three more files write an `opus.toml` of their own: `src/opus_deploy/server/import_and_deploy/_write_opus_toml.sh` (the deploy's), `scripts/automated_tests/opus_setup_environment.sh` (the integration and staging runs'), and `tests/opus_app/test_settings.py` (its fixture configuration); a new key goes in each of them only when that file needs a value other than the default, and a removed key goes from each, since `_TableReader.finish` would reject the file. `src/opus_deploy/server/deploy.env.template` holds deploy variables, not keys, and changes only when a new key's value comes from one. A PR removing a key removes it from every file `grep -rln '<key>' src scripts tests import_tests docs` finds. Any PR adding or removing a key does all of them. |
@@ -189,12 +189,24 @@ threaded through `perform_run` and `_migrate_and_diff` as well, so the base meas
 runs the base worktree's interpreter and code. `perform_run` also gains `drop_args`,
 `import_args`, `aux_args`, and `validate_args` parameters, each a `Sequence[str]`
 defaulting to the module constant of its step (`DROP_ARGS`, `IMPORT_ARGS`, `AUX_ARGS`,
-`VALIDATE_ARGS`): the harness passes each side's own arguments (below) and never reads
-those constants, which are the head's and would be wrong for the base. **After
+`VALIDATE_ARGS`), and from PR-05 a fifth, `version_args: Sequence[str] = VERSION_ARGS`
+(`VERSION_ARGS = ('--write-schema-version',)`), the version step, which an empty sequence
+skips: the harness passes each side's own arguments (below), an empty `version_args` for a
+side whose `--help` does not list `--write-schema-version`, and never reads those
+constants, which are the head's and would be wrong for the base. **After
 every bundle-import invocation** the harness asserts, on its own connection, that the
-permanent `obs_general` holds at least one row for every bundle the invocation named,
+permanent `obs_general` holds at least one row for every bundle the invocation imports,
 and fails the run otherwise, so an invocation that wrote somewhere else (an import
-namespace) or nowhere cannot pass as a measurement. The fixture scale uses
+namespace) or nowhere cannot pass as a measurement. The bundles an invocation imports are
+those its descriptors expand to, less every bundle OPUS deliberately skips, which
+`do_import.import_one_bundle` skips with the debug line `Ignoring import of <bundle>`
+(its `config_bundle_info.BUNDLE_INFO` entry has `instrument_class` None: the early
+`COCIRS_0xxx` volumes and `GO_0001`, which the `COCIRS` and `GALILEO` sets expand to); the
+harness expands the descriptors with that side's own interpreter, through
+`import_util.yield_import_bundle_ids` and `do_import_tables.lookup_vol_info` (the same
+test PR-08 factors into `do_import_tables.opus_imports_bundle`, read directly so that it
+runs on any side), and checks only the bundles whose entry has an instrument class. The
+fixture scale uses
 `build_run.perform_run`; the test scale does not (the holdings and the configuration
 already exist) and runs `run_pipeline_step` per group from `import_test.toml`, with the
 single largest bundle also run alone so that intra-bundle parallelism is visible
@@ -224,7 +236,8 @@ side lists a flag when its `--help`
 shows that exact option string as a whole token, so `--validate` is not found inside
 `--validate-perm`. Any later rename a PR makes is taught to the harness by that PR, with
 a rule of the same form. **A step the side does not have at all** (on a base before PR-05,
-`--write-schema-version`; on PR-26's base, which is PR-00, every step a later PR adds) is
+`--write-schema-version`, skipped through an empty `version_args`; on PR-26's base, which
+is PR-00, every step a later PR adds) is
 skipped on that side, named in the result's `skipped_steps` list, and printed by
 `compare.py` under its table; a step the other side's web run needs is run with that
 side's interpreter, as §2.3 says for the version row.
@@ -488,7 +501,12 @@ compares the head with itself (an incremental update against a full import, both
 head), so it imports with the head only. From PR-05 on, where a PR's code expects a newer
 `SCHEMA_VERSION` than the schema carries, the harness restamps the row itself
 (`bench_server.restamp_version`, which PR-05 adds and `clone_schema` then calls on every
-copy that has a version row), since `--write-schema-version` never overwrites a
+copy that has a version row, restamping it to the version of **the side that will use
+the copy**, never always the head's: the harness reads each side's `SCHEMA_VERSION` once
+per session through that side's interpreter, `python -c 'from opus_import.schema_version
+import SCHEMA_VERSION; print(SCHEMA_VERSION)'`, and passes it as `clone_schema`'s
+`version` argument, or None for a side before PR-05, which has no constant), since
+`--write-schema-version` never overwrites a
 different version; PR-05 itself, whose base schema has no version table, runs the head's
 `opus_import --write-schema-version` on the shared schema before the head's first web
 run.
@@ -770,7 +788,9 @@ as `item n`, and to the design document as `§D-n`.
     today's values so `import_tests` is unchanged. `drop_args` defaults to `DROP_ARGS`,
     today `('--drop-permanent-tables', '--scorched-earth')`, which PR-08 changes to
     `('--scorched-earth', '--yes')`; the harness never reads the constant and passes each
-    side's erase by §2.2's rule.
+    side's erase by §2.2's rule. PR-05 adds the fifth, `version_args` (default
+    `VERSION_ARGS`, `('--write-schema-version',)`; an empty sequence skips the step), and
+    the harness passes it the same way (§2.2).
   - `benchmarks/README.md`: a pointer to the dev guide and the **MySQL tuning baseline**
     (§2.4); `.gitignore` entries `benchmarks/**/*.prof` and `benchmarks/scratch/`, the
     scratch directory that holds every session's raw logs and query captures (§2.1).
@@ -1012,10 +1032,14 @@ as `item n`, and to the design document as `§D-n`.
   'appending'`, it **changes the state to `ready`**, logged at info level; when the row has
   the same version and `state = 'ready'`, it does nothing, logged at debug level; and when
   the row has a different version, it **refuses**: an error, logged, with the row left as
-  it is, so new code can never stamp an old schema. It runs last in every sequence, after
+  it is, so new code can never stamp an old schema. (PR-08 adds one more refusal, since
+  this PR has no bundle registry: the step writes no `ready`, neither inserting the row
+  nor changing `appending`, while any `import_bundle` row is not `done`.) It runs last in
+  every sequence, after
   validation. It is added as the last step of the finalization
   sequences in `import_all.py` (after `--validate-perm`), `import_for_tests.sh`,
-  `build_run.perform_run`, the harness's `import_test.toml` and §2.2 sequence (or every
+  `build_run.perform_run` (through its new `version_args` parameter, §2.2), the harness's
+  `import_test.toml` and §2.2 sequence (or every
   later test-scale web run gets 503), and so reaches the deploy chain's
   `_opus_import_volumes.sh` through `opus_import_all` (no separate line is added there),
   which then runs `opus_manage migrate`, so the row precedes the migration, which is
@@ -1062,8 +1086,15 @@ as `item n`, and to the design document as `§D-n`.
   (the `deploy_new_code_only.sh` entry) and in `src/opus_deploy/server/README.txt`
   ("UPDATING A RUNNING SERVER"), is rewritten: the database records its schema version, and
   both deploy scripts refuse a release whose version differs. **The harness:**
-  `bench_server.restamp_version(schema, version)`, and a last step in `clone_schema` that,
-  when the copy has a version row, restamps it to the head's `SCHEMA_VERSION` (§2.3).
+  `bench_server.restamp_version(schema, version)`, and a keyword-only parameter `version:
+  int | None` on `clone_schema`, with no default, so every call states it: its last step,
+  when the copy has a version row and `version` is not None, restamps the row to
+  `version`, the `SCHEMA_VERSION` of the side that will use the copy, which the harness
+  reads through that side's interpreter (§2.3); with None the row stays as copied.
+  `build_run.perform_run` gains `version_args: Sequence[str] = VERSION_ARGS`, with the
+  module constant `VERSION_ARGS = ('--write-schema-version',)`, run as the last step of
+  the sequence; an empty sequence skips the step, which is what the harness passes for a
+  side whose `--help` does not list the flag (§2.2).
 - **Measurement:** none; a correctness guard. The harness's `environment` records the
   version. The A/B imports once and runs both web servers against that schema (§2.3); the
   base creates no version table, so before the head's web run the harness runs the head's
@@ -1083,23 +1114,35 @@ as `item n`, and to the design document as `§D-n`.
   `--write-schema-version`, which every finalization sequence and the deploy chain run, and
   the import does not fill it.
 
-**PR-06: feat: reload `param_info` and the dictionary atomically, check the schema files statically, stop the code-only deploy rebuilding `partables` and `table_names`, and let it leave the database alone** (`§D-3`; #1504, #1487)
+**PR-06: feat: reload the aux tables and the dictionary atomically, check the schema files statically, and let the code-only deploy leave the database alone** (`§D-3`; #1504, #1487)
 
 - **The problem, as the code has it.** `deploy_new_code_only.sh` runs `opus_import
   --create-param-info --create-partables --create-table-names --import-dictionary` against
-  the served schema while its workers run. `param_info` carries labels, tooltips, and
-  display flags from the schema files, which a code-only release can change, so rebuilding
-  it there is needed; but the rebuild drops the table for a moment. `partables` and
-  `table_names` come from the imported data and cannot change without an import, so
-  rebuilding them there adds nothing. `do_dictionary` stages `definitions` and `contexts`
+  the served schema while its workers run. All three aux tables carry what the code says
+  as well as what the data holds, and a code-only release can change the code:
+  `param_info` carries labels, tooltips, and display flags from the schema files;
+  `table_names`' set of categories and their headings are written by hand in
+  `do_table_names.build_table_names_rows`, from literals and
+  `config_data.MISSION_ID_TO_MISSION_NAME` and `INSTRUMENT_ID_TO_INSTRUMENT_NAME` (its
+  module docstring says the set is written out by hand, not derived from the schemas);
+  and `partables`' triggers are built in `do_partables` from
+  `config_data.MISSION_ID_TO_MISSION_TABLE_SFX`, `INSTRUMENT_ID_TO_MISSION_ID`, and
+  `INST_HOST_ID_TO_MISSION_ID`, with each trigger value the mult id the data gives. So
+  rebuilding all three there is needed; but each rebuild drops its table for a moment
+  (today each is staged in the import namespace, then the permanent table is dropped,
+  re-created, and filled). `do_dictionary` stages `definitions` and `contexts`
   in the import namespace, then drops the permanent tables and copies the rows in, which
   is the first item of #1504: between the drop and the end of the copy the dictionary is
   missing or partly filled. Nothing checks the schema files as documents (#1487), so a
   misspelled key or a dictionary reference with no definition surfaces late or never.
 - **Changes:**
-  - **`param_info` and the dictionary reload on their own, atomically.**
+  - **The aux tables and the dictionary reload on their own, atomically.**
     `--create-param-info` builds `param_info__new`, fills it, and swaps it in with `RENAME
-    TABLE param_info TO param_info__old, param_info__new TO param_info`. `opus_import
+    TABLE param_info TO param_info__old, param_info__new TO param_info`, then drops
+    `param_info__old`; `--create-partables` and `--create-table-names` do the same with
+    `partables__new` and `partables__old`, and `table_names__new` and
+    `table_names__old`, each reading the observation and mult tables as today and
+    writing only its `__new` table before the swap. `opus_import
     --import-dictionary` builds `contexts__new` and `definitions__new` (its foreign key
     pointing at `contexts__new`), fills them, and swaps both in with one `RENAME TABLE
     contexts TO contexts__old, contexts__new TO contexts, definitions TO definitions__old,
@@ -1107,14 +1150,13 @@ as `item n`, and to the design document as `§D-n`.
     the foreign key onto the new `contexts`; then it drops the `__old` pair. A leftover
     `__new` or `__old` pair from an interrupted run is dropped first. The swap connection
     sets a short `lock_wait_timeout` and retries, since the rename waits for open
-    transactions on the two tables. These are the mechanisms for reloading only
-    `param_info` or only the dictionary, on a served schema or any other; both use one
-    helper, `swap_in(tables)`.
-  - **The code-only deploy stops rebuilding `partables` and `table_names`.**
-    `deploy_new_code_only.sh`'s line becomes `opus_import --create-param-info
-    --import-dictionary`; PR-14 adds `--update-mult-info` to it for mult renames.
-    `partables` and `table_names` are rebuilt only by an import's finalization, which never
-    runs against a served schema, so they need no swap.
+    transactions on the tables it names. These are the mechanisms for reloading any one
+    aux table or only the dictionary, on a served schema or any other, in an import's
+    finalization as in the code-only deploy; all four use one helper, `swap_in(tables)`.
+  - **The code-only deploy keeps rebuilding all three aux tables**, now through the
+    swap: `deploy_new_code_only.sh`'s line stays `opus_import --create-param-info
+    --create-partables --create-table-names --import-dictionary`; PR-14 adds
+    `--update-mult-info` to it for mult renames.
   - **`deploy_new_code_only.sh --no-database [<version_spec>]` deploys the code and writes
     nothing to the database**, for a release whose changes touch neither the import nor
     the schema files (the web application, its templates and static files, the docs).
@@ -1143,23 +1185,27 @@ as `item n`, and to the design document as `§D-n`.
     fixed in this PR or listed, with its issue, as a known exception the test names;
     `obs_instrument_couvis.json`'s misspelled `field_defalut` (#1506) is fixed here, to
     `field_default`.
-  - `docs/dev_guide_import_steps.rst` describes the dictionary reload, and
-    `user_guide_deployment.rst` says what the code-only deploy now does.
-- **Tests:** a `tests/opus_import` test of the rendered statements; an `import_tests` case
-  that sets the test-only environment variable `OPUS_IMPORT_FAULT=swap_in:definitions`,
-  raising between the fill and the rename, and asserts the dictionary is intact and the
-  next run succeeds; the validator itself. `OPUS_IMPORT_FAULT` is documented in
+  - `docs/dev_guide_import_steps.rst` describes the swap of each aux table and the
+    dictionary reload, and `user_guide_deployment.rst` says what the code-only deploy now
+    does.
+- **Tests:** a `tests/opus_import` test of the rendered statements for each of the four
+  swaps; `import_tests` cases that set the test-only environment variable
+  `OPUS_IMPORT_FAULT=swap_in:definitions`, and in turn `swap_in:param_info`,
+  `swap_in:partables`, and `swap_in:table_names`, raising between the fill and the rename,
+  and assert that the table or the dictionary is intact and the next run succeeds; an
+  `import_tests` case that runs the code-only deploy's `opus_import` line against a
+  finalized fixture schema and asserts that `param_info`, `partables`, and `table_names`
+  equal their import goldens afterward; the validator itself. `OPUS_IMPORT_FAULT` is documented in
   `dev_guide_testing.rst` beside the suite's other environment variables: its
   `<site>:<argument>` form, that the import reads it only at the fault sites the tests
   name, and that it is never set outside a test.
 - **Measurement:** none beyond the fixture-scale wall-clock of `--import-dictionary`,
-  reported. **Target metric:** the structural criterion: `param_info` and the dictionary
-  are never missing or partly filled for a reader, and no deploy rebuilds a table it
-  cannot change.
+  reported. **Target metric:** the structural criterion: `param_info`, `partables`,
+  `table_names`, and the dictionary are never missing or partly filled for a reader.
 - **Acceptance:** §2.5 with the structural criterion; goldens unchanged.
 - **Requires full re-import:** no.
-- **PostgreSQL note:** DDL is transactional, so the two `ALTER TABLE ... RENAME` pairs run in
-  one transaction for the same guarantee.
+- **PostgreSQL note:** DDL is transactional, so each swap's `ALTER TABLE ... RENAME`
+  statements run in one transaction for the same guarantee.
 
 **PR-07: feat: fresh import a schema directly, with its indexes created once at the end** (items 3 and 6; `§C-3.3`; `§D-3`; closes #1253, whose option becomes the default)
 
@@ -1278,8 +1324,8 @@ as `item n`, and to the design document as `§D-n`.
   it). **The finalization sequence** `cli.main`
   runs for the group, in this order, which later PRs extend in place: the key and
   foreign-key builds (this PR; `FULLTEXT` keys first from PR-22); the duplicate step (this
-  PR, above); the mult step (PR-14); the aux tables (`partables` and `table_names` written
-  directly, `param_info` swapped in); `reset_search_tables` and the cache flush (PR-11);
+  PR, above); the mult step (PR-14); the aux tables (each built beside the live table and
+  swapped in, PR-06); `reset_search_tables` and the cache flush (PR-11);
   `ANALYZE`, with PR-25's histograms; then, as their own flags, `--import-dictionary`,
   `--validate-perm`, and `--write-schema-version`. `analyze_all_tables` leaves
   `do_import_steps` for this sequence, because today it runs before the aux tables exist.
@@ -1439,12 +1485,18 @@ as `item n`, and to the design document as `§D-n`.
   their indexes and foreign keys in place, under `foreign_key_checks = 0` for the load and
   restoring 1 after it (validation's orphan count is the check, as for the fresh import).
   **The append never finalizes itself**: the invocation ends after its last bundle and
-  leaves `appending`, as the fresh import ends without finalizing. Finalization is always
-  its own invocations, in every sequence and on both paths: `--finalize` (the
+  leaves `appending`, as the fresh import ends without finalizing. Finalization runs only
+  when `--finalize` is asked for, and in every sequence the plan's scripts and tests run
+  it is its own invocations, on both paths: `--finalize` (the
   finalization group, in which every step that declares itself invalidated by an append,
   §1, Append invalidation, does its work and the others find nothing to do), then
   `--validate`, then `--write-schema-version`, which changes `appending` to `ready`
-  (PR-05); the append path never writes `ready` itself. `reimport_bundle` runs those
+  (PR-05); the append path never writes `ready` itself. **`--do-it-all` is the one
+  exception**, a convenience flag for a developer's small run: it expands to `--import`
+  and then `--finalize`, in that order, within one invocation (`--validate` and
+  `--write-schema-version` stay their own invocations after it), and its `--finalize`
+  obeys the refusal below, so a bundle that failed in its import stops it before any
+  finalization step runs. `reimport_bundle` runs those
   three invocations after its import, as `perform_run` does after the main run. Because
   `cart.obs_general_id` is a foreign key with `ON DELETE RESTRICT`
   (`ImportDBMySQL.create_table` renders every column-level foreign key that way), which
@@ -1453,27 +1505,54 @@ as `item n`, and to the design document as `§D-n`.
   foreign key to it with `"on_delete": "cascade"`, and extends PR-06's schema validator to
   accept the entry and check the member's values (PR-17 makes the other `cart` changes);
   the change to `cart.json` bumps `SCHEMA_VERSION`.
-- **The bundle registry, minimal.** The append's record of its work is a new table,
+- **The bundle registry, minimal.** The import's record of its work is a new table,
   `import_bundle(bundle_id VARCHAR(75) NOT NULL PRIMARY KEY, state
   ENUM('pending','importing','done','failed') NOT NULL)`, with a schema file and a golden,
-  created when absent by the append path with every key its schema declares (it is outside
-  PR-07's key filter). At its start the append sets every bundle it names to `pending`
-  (inserting the rows that are absent), and moves each through `importing` to `done` as it
-  goes. A failed append leaves `appending`, its bundle in progress `importing` and the rest
-  `pending`; the next import on the append path resumes every registered bundle that is not
-  `done`, plus any it names, and because each bundle is deleted before it is written, the
-  rerun is clean. PR-16 rebuilds this table into the full registry and work queue.
-  Scorched earth drops `import_bundle` by exact name (**Scorched earth**, below).
-  `--ignore-errors` (today's `--import-ignore-errors`, renamed below) now means: finish the
-  fresh import or the append, and run `--write-schema-version`, even when bundles logged
-  errors.
-- **`partables` and `table_names` write directly**: they are rebuilt only inside an import,
-  which never targets a served schema, so each drops, re-creates, and fills its table
-  without staging; `param_info` and the dictionary keep PR-06's swap.
+  created when absent, with every key its schema declares (it is outside PR-07's key
+  filter), by every invocation that imports bundles, **on both paths**, so that the
+  refusals below gate a fresh import as they gate an append. At its start the invocation
+  sets every bundle it imports to `pending` (inserting the rows that are absent), and
+  moves each through `importing` to `done` or `failed` as it goes. **A bundle OPUS skips
+  is never registered**: `do_import.import_one_bundle` skips, with the debug line
+  `Ignoring import of <bundle>`, every bundle whose `config_bundle_info.BUNDLE_INFO`
+  entry has `instrument_class` None (the early `COCIRS_0xxx` volumes and `GO_0001`, which
+  the `COCIRS` and `GALILEO` sets expand to); this PR factors that test into
+  `do_import_tables.opus_imports_bundle(bundle_id) -> bool` (False exactly when the
+  bundle's entry exists and has no instrument class), which the skip and registration
+  both call, so no row is left that no import moves to `done`. A failed append leaves `appending`,
+  its bundle in progress `importing` or `failed` and the rest `pending`; the next import
+  on the append path resumes every registered bundle that is not `done`, plus any it
+  names, and because each bundle is deleted before it is written, the rerun is clean. A
+  failed bundle's rows stay until it is next imported, which deletes them first. PR-16
+  rebuilds this table into the full registry and work queue. Scorched earth drops
+  `import_bundle` by exact name (**Scorched earth**, below).
+- **An unfinished registry is never finalized or stamped.** From this PR, **`--finalize`
+  refuses to run** (before its first step, so nothing is changed), and
+  **`--write-schema-version` refuses to write `ready`** (neither inserting the row nor
+  changing `appending` to `ready`, PR-05), while any `import_bundle` row is not `done`;
+  each refusal is a fatal error naming every such bundle with its state, and leaves the
+  version row as it is, so a failed append followed by its closing invocations stays
+  `appending`. With `import_bundle` absent, or every row `done`, both behave as before
+  (a fresh import's version step inserts the row as PR-05 states).
+- **What a bundle's errors do.** A bundle has errors when `import_one_bundle` returns False
+  or anything logs an error while it runs (`import_util.log_error` and the other sites that
+  set `ctx.import_has_bad_data`, which also set a new per-bundle flag,
+  `ImportContext.bundle_has_errors`, cleared at the start of each bundle). Without
+  `--ignore-errors` (today's `--import-ignore-errors`, renamed below), such a bundle is
+  marked `failed`, and the loop in `do_import_steps` otherwise behaves as today: it stops
+  at a bundle whose import returns False, leaving the bundles after it `pending`, and the
+  invocation exits with failure when any bundle had errors. With it, the bundle is marked
+  `done` despite its logged errors and the loop goes on, as today. The refusals above then gate finalization and
+  the version step: `--ignore-errors` is how a debugging run reaches `ready` with errors.
+- **The aux tables and the dictionary keep PR-06's swap**: `param_info`, `partables`, and
+  `table_names` are each built as `<table>__new` beside the live table and swapped in,
+  and the dictionary's pair together, in an import's finalization as in the code-only
+  deploy, which rebuilds all three on the served schema (PR-06).
 - **Outside the dispatch.** `--update-mult-info`, the aux and dictionary steps,
   `--delete-bundles`, `--finalize`, scorched earth, PR-18's
   `--carry-over-sessions-from`, and the deploy scripts' `opus_import` lines import no
-  bundle and run on any state, as today. Two of them delete observation rows:
+  bundle and run on any state, as today, except that `--finalize` refuses an unfinished
+  registry (above). Two of them delete observation rows:
   `--delete-bundles`, and `--finalize` through PR-07's duplicate step; neither changes the
   version row.
 - **Removal.** The import namespace and everything that serves it:
@@ -1547,11 +1626,11 @@ as `item n`, and to the design document as `§D-n`.
   comments on `cli.main`'s cart and cache cleanup say "the tables"). The help texts that
   named the namespace or the permanent tables become exactly these, each `help=` string
   in full:
-  - `--ignore-errors`: `Finish the fresh import or the append even when bundles log errors, through --write-schema-version, and substitute made-up values where a real one cannot be determined -- an unknown target name becomes OTHER rather than dropping the observation. The result is wrong on purpose; for debugging`
+  - `--ignore-errors`: `Mark a bundle done even when it logs errors, so that --finalize and --write-schema-version accept it, and substitute made-up values where a real one cannot be determined -- an unknown target name becomes OTHER rather than dropping the observation. The result is wrong on purpose; for debugging`
   - `--import`: `Import the given bundles; the target schema's state chooses a fresh import or an append`
   - `--create-param-info`: `Rebuild the param_info table from the table schemas and swap it in atomically`
-  - `--create-partables`: `Rebuild the partables table from the imported data`
-  - `--create-table-names`: `Rebuild the table_names table from the imported data`
+  - `--create-partables`: `Rebuild the partables table from the code's mission and instrument lists and the imported mult ids, and swap it in atomically`
+  - `--create-table-names`: `Rebuild the table_names table from the code's list of categories and the imported tables, and swap it in atomically`
   - `--delete-bundles`: `Delete the given bundles' rows from every observation table`
   - `--analyze-tables`: `Analyze every table (recompute its key distribution)`
   - `--validate`: `Validate the imported tables`
@@ -1570,7 +1649,8 @@ as `item n`, and to the design document as `§D-n`.
     `cache_` (the per-search tables, until PR-11);
   - **exact names:** `schema_version` (PR-05), `cart`, `import_bundle` (this PR),
     `param_info`, `partables`, `table_names`, `contexts`, `definitions`, `user_searches`,
-    and PR-06's swap leftovers `param_info__new`, `param_info__old`, `contexts__new`,
+    and PR-06's swap leftovers `param_info__new`, `param_info__old`, `partables__new`,
+    `partables__old`, `table_names__new`, `table_names__old`, `contexts__new`,
     `contexts__old`, `definitions__new`, and `definitions__old`. PR-11 adds
     `search_results` and removes the `cache_` prefix with the tables, PR-14 adds `mult`,
     and PR-16a adds `import_process`; any other PR that adds a table outside the prefixes
@@ -1623,10 +1703,21 @@ as `item n`, and to the design document as `§D-n`.
   (PR-07). New `import_tests` cases: an append that replaces one bundle and adds one ends
   with goldens equal to a full fresh import of the same bundle set; an append that fails in
   its second bundle leaves `appending`, the web check refuses the schema, and a rerun
-  resumes and ends `ready`; and the scorched-earth tests above.
+  resumes and ends `ready`; **an append that fails in its second bundle followed by the
+  closing invocations** (`--finalize`, `--validate`, `--write-schema-version`): `--finalize`
+  and `--write-schema-version` each refuse, naming the bundle and its state, and the schema
+  stays `appending`; a fresh import with a failed bundle whose `--write-schema-version`
+  refuses and inserts no row; the same failing append under `--ignore-errors`, whose
+  bundle is `done` and whose `--finalize` and `--write-schema-version` are not refused; a `tests/opus_import` test
+  that `do_import_tables.opus_imports_bundle` is False for `GO_0001` and `COCIRS_0101`
+  (real entries with no instrument class) and True for a bundle OPUS imports, and that
+  registration drops the first two; and
+  the scorched-earth tests above.
 - **Docs:** `dev_guide_import_running.rst` (the state table, the removed flags, the
   aggregates table and "A small run", whose `--do-import-finalization` example becomes
-  `--finalize`), every page the renames' grep finds, `dev_guide_import_steps.rst`,
+  `--finalize`, `--do-it-all` as the one flag that imports and finalizes in one
+  invocation, `--ignore-errors`, and the refusals of an unfinished registry), every page
+  the renames' grep finds, `dev_guide_import_steps.rst` (the registry and the refusals),
   `dev_guide_import_db.rst`,
   `dev_guide_table_schemas.rst` (the `foreign_key` entry and `on_delete`),
   `dev_guide_database_schema.rst` (`import_bundle`), `dev_guide_environment.rst`
@@ -1956,7 +2047,8 @@ once (§1, Deploy; §2.3).
     --reset-search-tables`, clearing the searches an operator built while exercising the
     staged installation. **`deploy_new_code_only.sh` does not reset them**: stored
     searches survive a code-only release, as the `cache_*` tables do today, and its line
-    stays as PR-06 set it. The two tables are covered by `SCHEMA_VERSION` (§1, Deploy),
+    stays as PR-06 left it, `opus_import --create-param-info --create-partables
+    --create-table-names --import-dictionary`, with no `--reset-search-tables`. The two tables are covered by `SCHEMA_VERSION` (§1, Deploy),
     so a release that changes either one's columns is a full deploy, never a code-only
     one. The harness's state resets run the same flag (§2.2). `create_opus_models.sh`'s refusal on `cache_*` tables goes with
     the tables, and so does the `cache_` prefix in PR-08's scorched-earth list, whose
@@ -1976,10 +2068,13 @@ once (§1, Deploy; §2.3).
     otherwise (`django/db/backends/mysql/base.py`, in the Django 5.2 this repository installs),
     and `settings.py` does not, so the `INSERT ... SELECT` takes no shared next-key locks on
     the rows it reads and the `FOR UPDATE` read returns the latest committed row; no `SET
-    TRANSACTION` is issued. A `tests/opus_app` test asserts that the connection reports
-    `read committed` (`connection.isolation_level`) and that the server agrees
-    (`SELECT @@transaction_isolation` is `READ-COMMITTED`), so a settings change that alters
-    it fails loudly. Then the search builder sets the session's `innodb_lock_wait_timeout` to
+    TRANSACTION` is issued. A `tests/opus_app` test, which like the rest of `tests/` has
+    no database (`docs/dev_guide_testing.rst`), calls `connection.get_connection_params()`,
+    which reads the settings without connecting, and asserts that
+    `connection.isolation_level` is then `read committed`; a test in the existing
+    `integration_tests/apps_db_tests/test_search.py`, which runs against a database,
+    asserts that the server agrees (`SELECT @@transaction_isolation` on Django's connection
+    is `READ-COMMITTED`). A settings change that alters it fails loudly. Then the search builder sets the session's `innodb_lock_wait_timeout` to
     `[django] search_build_timeout` (default 270 seconds, longer than a broad cold search
     build and 30 seconds below the 300-second worker timeout every example in
     `docs/user_guide_web_server.rst` uses), having read the value it replaces, and inside one
@@ -2041,7 +2136,7 @@ once (§1, Deploy; §2.3).
   prune a thousand planted searches (reported). Target metric: **p95 under 16 users,
   app-cold, distinct searches**, with the shared-search half as the secondary.
 - **Acceptance:** §2.5; API goldens unchanged; in `integration_tests` (they need the
-  database): a test that issues the same new search from two threads and asserts one
+  database): the server-side isolation test above; a test that issues the same new search from two threads and asserts one
   search build and two identical counts; a test that an exception inside the
   search build rolls back and leaves the row not yet built; a pruner test with
   planted searches, sessions, and carts (an old search and its rows and cache entry gone,
@@ -2375,7 +2470,10 @@ once (§1, Deploy; §2.3).
     or computed label; a value the field does not hold is reported and skipped. The
     conflict warning above names `mult_overrides` as the remedy. `do_update_mult_info`
     applies `mult_options` and `mult_overrides` alike, and `deploy_new_code_only.sh`
-    adds `--update-mult-info` to its `opus_import` line, so a rename is a release that
+    adds `--update-mult-info` to its `opus_import` line, which becomes exactly `opus_import
+    --create-param-info --create-partables --create-table-names --import-dictionary
+    --update-mult-info` (the rebuilt `partables` reads mult ids, which a rename never
+    changes, so the order of the steps does not matter), so a rename is a release that
     edits a schema file followed by a code-only deploy: the mult rows change in place in the
     served schema, and `_promote.sh`'s restarts of the
     cache service and the web service make it visible. Ids never change, so no
@@ -2528,7 +2626,15 @@ once (§1, Deploy; §2.3).
     sorts its own output and does not depend on it), slugs from `slug_name_for_sfc_target`
     as today (the JS `getSurfacegeoTargetSlug` mirrors it and is unchanged).
     `build_table_names_rows` emits the `obs_surface_geometry_name` row on the existence of
-    the **physical** table (today it tests the table it is named for). The spelling
+    the **physical** table (today it tests the table it is named for). **The code-only
+    deploy rebuilds these rows on the served schema** (PR-06: its line runs
+    `--create-param-info`, `--create-partables`, and `--create-table-names`, each built as
+    `<table>__new` and swapped in), and the derivation works there unchanged: it only reads
+    `obs_surface_geometry_target` and `mult`, which a finalized schema holds in agreement
+    (its mult step ran at the end of its import), and writes only the `__new` tables, so
+    the rebuilt category rows equal the ones the import's finalization wrote; PR-06's
+    `import_tests` case of the code-only deploy's line covers it on the fixture's surface
+    geometry targets. The spelling
     functions stay in `import_util`; the application never re-encodes a name, because
     `table_names` carries the id.
   - **Unknown targets and collisions.** A target not in `TARGET_NAME_INFO` is a NULL mult
@@ -2620,7 +2726,8 @@ once (§1, Deploy; §2.3).
     finalization; the executor confirms the generated class imports and that
     `query_table_for_opus_id` works with it.
   - **What a new target costs after this PR:** one mult row and its `table_names`,
-    `partables`, and `param_info` rows, all written by the import's finalization. No DDL
+    `partables`, and `param_info` rows, all written by the import's finalization (and
+    rewritten the same by any later code-only deploy). No DDL
     mid-import, no model, no `create_opus_models.sh`, no redeploy.
   - **Alternatives considered and not taken.** *Dynamic Django models* (an abstract base
     plus a factory on `LookupError` for `obs_surface_geometry__*`): one small PR with no
@@ -2714,9 +2821,16 @@ once (§1, Deploy; §2.3).
     that yields them, which is the import order**, leaving existing ones alone, each with
     its `size_estimate`: the row count its primary index labels declare (`ROWS` in a PDS3
     label, `<records>` in a PDS4 one), read from the label alone; the index table is never
-    opened for it, so registration reads one small file per bundle. A bundle with no
-    primary index, or whose label does not declare a row count, is an error: registration
-    refuses it, naming the bundle and the label, and registers nothing. **How a
+    opened for it, so registration reads one small file per bundle. **Registration first
+    skips every bundle OPUS does not import, exactly as the import does**: a bundle whose
+    `config_bundle_info.BUNDLE_INFO` entry (`do_import_tables.lookup_vol_info`) has
+    `instrument_class` None, which `do_import.import_one_bundle` skips with the debug line
+    `Ignoring import of <bundle>` (the early `COCIRS_0xxx` volumes and `GO_0001`, which the
+    `COCIRS` and `GALILEO` sets of `import_all.BUNDLE_SETS` expand to), is logged at debug
+    level as `Ignoring registration of <bundle>` and is not registered, as PR-08's minimal
+    registry already skipped it. Of the bundles OPUS imports, one with no `BUNDLE_INFO`
+    entry, no primary index label found, or a label that does not declare a row count is an
+    error: registration refuses it, naming the bundle and the label, and registers nothing. **How a
     process knows a bundle's number:** it reads it from `import_bundle` by `bundle_id`,
     registering the bundle first if it is absent; registering the whole list in import
     order before any process starts is what makes the numbers, and so the ids, the same on
@@ -2827,7 +2941,8 @@ once (§1, Deploy; §2.3).
     (PR-06's fault variable), which makes each importer sleep five seconds after its claim
     commits; it asserts from the three logs that each importer claimed a bundle while the
     others held theirs, and that no importer exited while a bundle was pending. A bundle whose import
-    raises is marked `failed`, its rows deleted, and the importer moves on; a failure is
+    raises, or that logs errors without `--ignore-errors` (PR-08's rule), is marked
+    `failed`, its rows deleted, and the importer moves on; a failure is
     not retried, since it would fail the same way. Largest first starts the large bundles at once and leaves the small ones to fill
     the gaps at the end, so the wall-clock floor is the largest bundle alone. `--sets
     COISS,COVIMS` limits which bundles an importer claims (for a computer that holds only
@@ -2850,8 +2965,12 @@ once (§1, Deploy; §2.3).
     3. `--finish`: the closing sequence, `opus_import --finalize`, then `opus_import
        --import-dictionary`, `opus_import --validate`, and `opus_import
        --write-schema-version`, each its own invocation as today, run once after every
-       importer has exited. It refuses, naming them, while any bundle is `pending`,
-       `importing`, or `failed`. It is named `--finish`, not `--finalize`, because it runs
+       importer has exited. Before running any of them it reads the registry and, while
+       any bundle is `pending`, `importing`, or `failed`, refuses with its own message:
+       each such bundle with its state, and, for a `failed` or `importing` one, that
+       `opus_import_all --requeue <bundle>` returns it to the queue. (`opus_import
+       --finalize` and `--write-schema-version` would refuse too, by PR-08's rule; this
+       is the coordinator's account of the same refusal, not a new rule.) It is named `--finish`, not `--finalize`, because it runs
        more than `opus_import --finalize` (the finalization group alone): the dictionary,
        validation, and the version row follow it. `opus_import --finalize` keeps its name.
     4. `--requeue <bundle ids>`: returns the named `failed` or `importing` bundles to
@@ -2897,11 +3016,10 @@ once (§1, Deploy; §2.3).
   - **Finalization runs once**, after every importer has finished, as `opus_import_all
     --finish`, and **`--write-schema-version`, its last invocation, is what
     returns the version row's state to `ready`** (PR-05); **no importer writes the version
-    row**. A `--join` importer never finalizes. A plain `opus_import --finalize` (PR-08's
-    separate ending, followed by `--validate` and `--write-schema-version`) refuses, as
-    `opus_import_all --finish` does, while any
-    registered bundle is `pending`, `importing`, or `failed`, leaving the state `appending`
-    and naming the bundles.
+    row**. A `--join` importer never finalizes. PR-08's refusals stand unchanged against
+    the rebuilt registry: a plain `opus_import --finalize`, and `--write-schema-version`,
+    refuse while any registered bundle is not `done`, naming the bundles and leaving the
+    version row as it is; this PR adds only `opus_import_all --finish`'s message (above).
   - **The registry stays the one record of an append in flight** (PR-08). On the append
     path, the run that names the bundles (a plain `opus_import`, or `opus_import
     --register-bundles` before several `--join` importers) sets the version row's `state =
@@ -2915,6 +3033,15 @@ once (§1, Deploy; §2.3).
     its value; a new `import_tests` case imports the fixture with one importer and with
     three `--join` processes into two schemas and asserts the two compare equal in
     that mode.
+  - **Tests of registration.** A `tests/opus_import` test passes registration's bundle
+    selection (the step before any label is read, built on PR-08's
+    `do_import_tables.opus_imports_bundle`) a list holding `GO_0001` and `COCIRS_0101`,
+    whose real `BUNDLE_INFO` entries have no instrument class, beside bundles OPUS imports,
+    and asserts that the two are dropped with `Ignoring registration of <bundle>` logged
+    and the others kept in order, so no holdings are needed; an `import_tests` case
+    registers the fixture's bundles and asserts that every row of `import_bundle` is a
+    bundle OPUS imports; and an `import_tests` case plants a primary index label with no
+    row count and asserts that registration refuses it and registers nothing.
   - Docs: `dev_guide_import_running.rst` (the steps, several importers,
     `--register-bundles`, `--requeue`, `--scorched-earth`, and `--finish`, distinguished
     from `opus_import --finalize`), `dev_guide_import_steps.rst` (the duplicate winner, and the append's record in
@@ -2951,14 +3078,46 @@ once (§1, Deploy; §2.3).
     recording-fake test gains the assertion), and not copied by PR-23's schema clone. The coordinator,
     `--join`, and `--status` create it with `CREATE TABLE IF NOT EXISTS` before first use,
     so a schema PR-16 built gains it on its next import, and nothing but the import reads
-    it (§1, Deploy). An importer inserts its row at start and updates
-    `progress_at` with each `rows_done`, in the same commit. **Liveness is a MySQL named
+    it (§1, Deploy). An importer updates `progress_at` with each `rows_done`, in the same
+    commit. **Liveness is a MySQL named
     lock, not a timeout:** an importer holds `GET_LOCK()` on the name PR-16's
-    `importdb.lock_name(schema, 'importer', process_id)` returns, on its own connection, for
+    `importdb.lock_name(schema, 'importer', process_id)` returns, on its own connection (the
+    **lock connection**, opened for this alone and never reconnected), for
     its whole life, so when the process dies, its connection closes and the lock frees,
     and `IS_USED_LOCK()` answers whether it is alive from any computer. This needs no
     heartbeat thread, which PR-09's forked pool must not inherit, and no guessed timeout
-    that a slow chunk could exceed. An importer that is alive but whose `progress_at` has
+    that a slow chunk could exceed.
+    - **Startup, in this order, on the lock connection:** `SET SESSION wait_timeout =
+      31536000` (a year, the server's maximum on Linux, so an idle lock connection is
+      never closed by the server while its importer is alive; `interactive_timeout` does
+      not apply, since the import's client does not connect as interactive); `INSERT INTO
+      import_process ...` with `state = 'running'`; `SELECT LAST_INSERT_ID()`, which is the
+      `process_id`; `SELECT GET_LOCK(<lock_name(schema, 'importer', process_id)>, 0)`, which
+      must return 1; and only then `COMMIT`. A reader at `READ COMMITTED` therefore never
+      sees a committed `running` row whose lock has not been taken, and a process that dies
+      before the commit leaves neither a row nor a lock.
+    - **The lock is checked at each chunk commit and before each claim.** Each chunk's
+      transaction on the import connection carries its `rows_done` and `progress_at`
+      updates, and its first statement is `UPDATE import_bundle SET rows_done = ... WHERE
+      bundle_number = %s AND state = 'importing' AND process_id = %s`, so it holds the
+      bundle's registry row until it ends; before its `COMMIT` the importer runs `SELECT
+      IS_USED_LOCK(<its lock name>) = CONNECTION_ID()` on the lock connection, which also
+      keeps that connection in use. The importer commits only when that returns 1 and the
+      `UPDATE` matched its row. Otherwise (the check returns 0 or NULL, or fails because
+      the lock connection is gone, or the row no longer names it) the importer has lost its
+      lock or its bundle: it rolls the chunk back, **aborts its bundle**, and exits
+      non-zero with a fatal error naming the lock. The abort, which a second interrupt
+      (below) also performs, deletes
+      the bundle's rows and returns it to `pending` **only while the registry row still
+      names this importer as `importing`**, checked by `SELECT ... FOR UPDATE` on that row
+      in the abort's transaction; if a coordinator's recovery has already requeued the
+      bundle (and another importer may hold it), the abort deletes nothing. Recovery
+      (below) takes the same row lock and rechecks the importer's lock first, so the two
+      never both act on one bundle, and a chunk can never be committed after the
+      recovery that would have deleted it. Before each claim the importer runs the same
+      check and exits, claiming nothing, when it fails.
+
+    An importer that is alive but whose `progress_at` has
     not moved for `[import] stall_warning_minutes` (default 30, per §1's
     configuration-key rule) is reported as stalled, never killed.
   - **`opus_import_all` coordinates.** With no step flag it is the **coordinator**:
@@ -3002,8 +3161,9 @@ once (§1, Deploy; §2.3).
 
     **Interrupts.** The first Ctrl-C (SIGINT) drains: importers claim nothing new and
     finish their current bundles, and the coordinator exits without finalizing. A second
-    aborts: each importer deletes its current bundle's rows and returns it to `pending`
-    before exiting. Either way a rerun resumes.
+    aborts: each importer aborts its current bundle as it does on a lost lock (above:
+    deleting the bundle's rows and returning it to `pending` while the registry row still
+    names it) before exiting. Either way a rerun resumes.
 
     **Other computers.** PR-16's `opus_import_all --join` gains `--importers M` (default
     1, so a bare `--join` is still PR-16's one importer): on another computer,
@@ -3023,7 +3183,22 @@ once (§1, Deploy; §2.3).
     that the coordinator requeues the bundle, and that the result compares equal, in PR-16's
     mult-value mode, to the one-importer schema; a second asserts that a bundle lost
     twice is `failed` and finalization does not run; a third interrupts twice and asserts
-    that a rerun resumes to the same result. Unit tests cover the division: the default
+    that a rerun resumes to the same result; a fourth starts one `--join` importer with
+    `chunk_rows = 5` and the new fault site `OPUS_IMPORT_FAULT=hold_after_chunk:5`, which
+    sleeps five seconds after the bundle's first chunk commits, and during the hold, so
+    mid-bundle, the test kills the importer's lock connection with `KILL
+    <IS_USED_LOCK(lock name)>` from its own connection, then asserts that the importer
+    exits non-zero naming the lost lock and that its bundle is `pending` with no
+    `obs_general` row (the first chunk's rows deleted by the abort, no later chunk
+    committed); and a fifth starts
+    an importer with the new fault site `OPUS_IMPORT_FAULT=hold_before_lock:5`, which
+    sleeps between the `import_process` insert and the `GET_LOCK`, and asserts that a
+    tracking pass (`opus_import_all --status`, and a direct `READ COMMITTED` read of
+    `import_process`) taken during the hold sees no row for the importer, and that one
+    taken after it sees the row with its lock held. A `tests/opus_import` test runs the
+    startup against a recording fake connection and asserts the statement order: `SET
+    SESSION wait_timeout = 31536000`, the insert, `SELECT LAST_INSERT_ID()`, `GET_LOCK`,
+    `COMMIT`. Unit tests cover the division: the default
     of one, N not divisible by M, M above N, a ceiling that floors to zero, and
     `--workers` above the ceiling.
   - Docs: `dev_guide_import_running.rst` (the coordinator, `--workers` and its ceiling, `--join`,
@@ -3352,9 +3527,34 @@ once (§1, Deploy; §2.3).
   today's `LIKE` path; a test compares them on the fixture schema for every autocomplete
   column and a differing column keeps `LIKE`, listed in the PR. PostgreSQL note: a
   `pg_trgm` GIN serves `LIKE '%x%'` and `ILIKE` with no query change.
+- **The second server's load builds the same indexes.** `_run_full_opus_import.sh` (and
+  from PR-23 the incremental update) ends, when `deploy.env` names `OPUS_DB_DUMP_DIR` and
+  `OPUS_PEER_DB_HOST`, by running `src/opus_deploy/server/database/dump_db.sh` and then
+  `load_db.sh`, which replays the `mysqldump` output on the peer: each `CREATE TABLE`
+  there declares the `FULLTEXT ... WITH PARSER ngram` keys, so the peer builds them under
+  the loading session's settings, and `mysqldump` sets neither of the two. So the load is
+  held to what this PR requires of the building session: **`load_db.sh` refuses, before
+  it creates the database, when the peer's `ngram_token_size` is not 2** (read with
+  `SELECT @@GLOBAL.ngram_token_size`), naming the setting, its value, and that it is
+  startup-only; and **it starts the load with `SET SESSION innodb_ft_enable_stopword =
+  OFF;`**, sent ahead of the dump on the same `mysql` session. The load moves into a
+  function, `load_dump <database> <dump file>`, in a new packaged file
+  `src/opus_deploy/server/database/_load_db_steps.sh`, which `load_db.sh` sources after
+  its argument and configuration checks and which, like PR-05's
+  `_check_schema_version.sh`, executes nothing at top level. A `tests/opus_deploy` test
+  sources it with a fake `mysql` on `PATH` that answers the `ngram_token_size` query and
+  records its arguments and standard input, and asserts: with 2, one `CREATE DATABASE`
+  and a load whose input is `SET SESSION innodb_ft_enable_stopword = OFF;` followed by
+  the dump's text unchanged; with 3, a non-zero return, the message, and no `CREATE
+  DATABASE` and no load. `tests/opus_deploy`'s `rglob` checks cover the new file's
+  packaging. `docs/user_guide_deployment.rst`'s paragraph on `database/` and
+  `src/opus_deploy/server/README.txt`'s `database/` entry say that the load turns the
+  stopword list off for its session and refuses a peer whose `ngram_token_size` is not 2,
+  and why.
 - **Docs:** `dev_guide_database_schema.rst`, `dev_guide_table_schemas.rst` (the
-  `fulltext` entry), `dev_guide_webapp_search.rst` (the query and its fallback), and
-  `user_guide_installation.rst` (`ngram_token_size` and `innodb_ft_enable_stopword`).
+  `fulltext` entry), `dev_guide_webapp_search.rst` (the query and its fallback),
+  `user_guide_installation.rst` (`ngram_token_size` and `innodb_ft_enable_stopword`, for
+  the import's server and the peer's), and the two pages the peer load names (above).
 - **Measurement:** autocomplete scenario latency, two- and six-letter prefixes, warm and
   app-cold; per request, which branch answered (the full search joined to the search's
   results, or the simple search without it), read from the statement digests the
@@ -3485,7 +3685,18 @@ once (§1, Deploy; §2.3).
        the indexed shape);
 
     then the same error-log check as `_opus_import_bundles.sh` (PR-16), on a log directory
-    that starts empty, and `opus_manage migrate`, as that file runs it. The operator then
+    that starts empty, and `opus_manage migrate`, as that file runs it; and then **the
+    same dump and peer load as `_run_full_opus_import.sh`**, gated on the same `deploy.env`
+    variables: when `OPUS_DB_DUMP_DIR` names a directory, `${DATABASE_SCRIPT_DIR}/dump_db.sh
+    <new db>`, and when `OPUS_PEER_DB_HOST` names a host as well, `load_db.sh <new db>`
+    after it (with PR-22's session setting and refusal), so a second server holds the
+    updated schema before either server promotes it. So that the two scripts cannot drift,
+    this PR moves that block out of `_run_full_opus_import.sh` into a function,
+    `copy_database_to_peer <database>`, in a new packaged file
+    `src/opus_deploy/server/import_and_deploy/_copy_database_to_peer.sh`, which executes
+    nothing at top level and which both `_run_full_opus_import.sh` and
+    `_run_incremental_opus_update.sh` source and call with the new schema's name, keeping
+    its banners and the comment above it. The operator then
     runs `deploy_new_code_and_database.sh <new db>` as after a full import, and PR-18's
     carry-over moves the sessions and carts.
     The script's logic (reading the served schema's name, building the invocations above
@@ -3497,7 +3708,12 @@ once (§1, Deploy; §2.3).
     bundle named both ways, which appears only in the import; the `--delete-bundles`
     invocation present only with `--drop` and always after the clone; `--finalize` run
     exactly once)
-    and that a non-empty error log fails it. `tests/opus_deploy`'s
+    and that a non-empty error log fails it. A second `tests/opus_deploy` test sources
+    `_copy_database_to_peer.sh` with `DATABASE_SCRIPT_DIR` pointing at a directory of
+    recording fakes for `dump_db.sh` and `load_db.sh`, and asserts the three cases: with
+    `OPUS_DB_DUMP_DIR` empty neither runs; with a directory and no `OPUS_PEER_DB_HOST`
+    only the dump runs; with both, the dump and then the load, each with the database it
+    was given. `tests/opus_deploy`'s
     `rglob` checks cover only the new files' packaging.
   - **The operator's command.** `_run_incremental_opus_update.sh` is internal, as
     `_run_full_opus_import.sh` is, and is not what an operator types.
@@ -3517,6 +3733,18 @@ once (§1, Deploy; §2.3).
     script in "The scripts" and a row in the "Operating checklist" table ("Update, add, or drop bundles of the served
     database": `run_incremental_opus_update.sh`, verify, then
     `deploy_new_code_and_database.sh <name>`).
+  - **The peer path, documented.** `docs/user_guide_deployment.rst`'s paragraph on
+    `database/` (which says `run_full_opus_import.sh` runs `dump_db.sh` and `load_db.sh`)
+    says that both `run_full_opus_import.sh` and `run_incremental_opus_update.sh` end with
+    them, by the same `deploy.env` variables, and the new "Operating checklist" row says
+    that with `OPUS_PEER_DB_HOST` set the second server receives the updated database
+    before the deploy; `src/opus_deploy/server/README.txt` says the same in its
+    `database/` entry and its "UPDATING A RUNNING SERVER" procedure, and its `_*.sh` entry
+    in "WHAT IS IN HERE" gains the copy to a second server; the comment above
+    `OPUS_DB_DUMP_DIR` and `OPUS_PEER_DB_HOST` in `src/opus_deploy/server/deploy.env.template`
+    (today "Both of these are used only by run_full_opus_import.sh") names both scripts;
+    and `user_guide_installation.rst`'s rows for the two variables are checked and say
+    that an incremental update is copied too.
   - Tests: `build_run` gains `clone_run(source_schema, reimport, drop)`, which imports
     the fixture fully into one schema, clones a second from it with one bundle re-imported
     and one dropped (the drop through its own `--delete-bundles` invocation, as the script
@@ -3856,7 +4084,7 @@ the orchestrator's).
 | PR-16a | PR-09, PR-16 | coordinates PR-16's importers and divides `--workers` among their PR-09 pools under PR-09's ceiling; its liveness lock relies on PR-09's initializer and PR-16's `lock_name` |
 | PR-17 | PR-04, PR-12, PR-14, PR-15 | the load's warning check rejects non-ASCII values; mult labels stay `utf8mb4`; the columns are the rekeyed and merged tables' |
 | PR-18 | PR-05, PR-07, PR-11 | warms a `search_results` search; its `_promote_steps.sh` follows PR-05's sourced-file pattern, and the deploy line it extends is the one PR-07 set; the carry-over edits the same `_promote.sh` region |
-| PR-19 | PR-07, PR-12, PR-17 | gated on its merge-base's ratio; a child table on the rekeyed pattern, its foreign key added in finalization |
+| PR-19 | PR-07, PR-12, PR-17 | gated on a prototype on clones of its merge-base's schema showing a db-cold gain on the target search beyond its floor; a child table on the rekeyed pattern, its foreign key added in finalization |
 | PR-20 | PR-09, PR-11, PR-12, PR-14 | the parent emits junction rows from resolved ids; the mult count joins `search_results`; the junction tables reach their bundle through `obs_general_id` (PR-12); PR-14's cleanup reads the junctions |
 | PR-21 | PR-11, PR-20's measurement | `user_searches` and `search_results` are PR-11's; gated on the predicate share of the broad search build |
 | PR-22 | PR-07, PR-11, PR-13 | `FULLTEXT` keys are created by PR-07's `add_secondary_indexes`; the `COUNT(*)` is already gone; the autocomplete columns keep the B-trees PR-13's rule leaves them |

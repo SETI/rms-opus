@@ -204,9 +204,11 @@ the new schema to find any search that needs one back.
 
 The two JSON list columns, `target_name` and `target_class`, stay for rendering responses.
 Searching and counting on them move to junction tables (§2.5). The `preview_images` JSON
-column moves to a one-to-one `obs_preview(obs_general_id, preview_images)` table only if
-the measured ratio of its storage to the table's data length exceeds one quarter;
-otherwise it stays.
+column moves to a one-to-one `obs_preview(obs_general_id, preview_images)` table only if a
+prototype on copies of the schema, one with the column dropped and the table rebuilt,
+shows a measured db-cold gain on the target search; otherwise it stays. Its share of the
+table's data length cannot decide it, because a large JSON value is stored off-page,
+where a scan of the other columns never reads it.
 
 **The import finds a bundle's rows through `obs_general` alone**, by its `bundle_id`
 key. `obs_pds` also stores `bundle_id`, because it is the public `bundleid` field (§2.2),
@@ -479,7 +481,9 @@ them would outweigh the table. The query uses a quoted boolean
 falls back to `LIKE` for one character, for the other types, and for any column where a
 fixture comparison shows the two disagree. The stopword filter is off for the session
 that builds the index, because the default list would drop every bigram containing `a`
-or `i`.
+or `i`, and the server's ngram token size must be 2. A second database server loaded
+from a dump of the finished schema builds the indexes again, so its load sets the same
+session setting and refuses a server whose token size is not 2.
 
 ### 2.7 Schema version
 
@@ -488,7 +492,11 @@ or `i`.
 It is written by an explicit step that every import sequence runs last, after
 validation, and that is the only writer of `ready`: it inserts the row as `ready` when it
 is absent, changes `appending` to `ready` when the version matches, and refuses to
-overwrite a different version. Scorched earth drops the table before any other, and an
+overwrite a different version. It also refuses to write `ready`, either way, while the
+bundle registry (§3) holds a bundle that is not `done`, and finalization refuses to run
+then too, each naming the bundles, so an import that failed part-way is never finalized
+or stamped; a bundle that logged errors is `failed` unless the import was told to
+ignore errors, which marks it `done`. Scorched earth drops the table before any other, and an
 append (§3) sets it to `appending` while it runs. The web application checks it at
 startup and serves 503 on a mismatch, a missing row, or a state other than `ready`; both
 deploy scripts check the served schema's row before running any import or migration step.
@@ -552,7 +560,7 @@ mult(field_id  SMALLINT UNSIGNED NOT NULL,
   `mult_overrides`, each naming a value and any of its label, display flag, grouping, and
   pin. Overrides win over stored and computed labels; finalization applies them in every
   import, and the code-only deploy applies them to the served schema in place, beside
-  reloading `param_info` and the dictionary, then restarts the cache and the workers; it
+  reloading the aux tables and the dictionary, then restarts the cache and the workers; it
   rebuilds no other table. Ids never change, so no observation row is touched.
 - **Search results sorted by a mult column are ordered by label text**, not by
   `disp_rank`. That is the public API's ordering and stays as it is.
@@ -646,7 +654,9 @@ finalization is an explicit step that the sequences run once at the end.
    bundle's id range (below), resolves mult values, and loads tab-separated text with `LOAD
    DATA LOCAL INFILE` in chunks of about 100,000 rows, failing on any skipped row or
    warning (the statement would otherwise ignore duplicate keys silently). Each bundle is
-   deleted from the permanent tables before it is written, so a rerun is clean. Nothing
+   deleted from the permanent tables before it is written, so a rerun is clean, and its
+   progress is recorded in the bundle registry (below), on a fresh import as on an
+   append. Nothing
    looks for duplicate OPUS ids while loading: two bundles' copies of one load side by
    side.
 3. **Finalization** creates, by sort: `FULLTEXT` keys first, each in its own statement
@@ -662,11 +672,13 @@ finalization is an explicit step that the sequences run once at the end.
    together, so a deleted copy never needs to come back, and nothing records it. Then the
    mult step, which deletes values nothing references and recomputes every rank (§2.8).
 4. **Aux tables** (`param_info`, `partables`, `table_names`) are rebuilt, with the surface
-   geometry categories derived from the data. `partables` and `table_names` come from the
-   imported data and are written directly, since an import never runs against a served
-   schema. `param_info` carries labels, tooltips, and display flags from the schema files,
-   which the code-only deploy reloads into a served schema, so it is built beside the live
-   table and swapped in with one atomic `RENAME TABLE`. Then `user_searches` and
+   geometry categories derived from the data. Each carries what the code says as well as
+   what the data holds: `param_info` the labels, tooltips, and display flags of the
+   schema files; `table_names` a set of categories and headings written in the code; and
+   `partables` triggers built from the code's mission and instrument lists. A code-only
+   release can change any of them, so the code-only deploy rebuilds all three in the
+   served schema, and each is built beside the live table and swapped in with one atomic
+   `RENAME TABLE`, in an import as in that deploy. Then `user_searches` and
    `search_results` are reset and the cache flush of §2.4 follows, and `ANALYZE` runs with
    histograms on the range-searched columns.
 5. **The dictionary import, validation, and the version row.** The dictionary is reloaded
@@ -701,7 +713,8 @@ indexes and foreign keys in place. The append invocation ends there, still `appe
 after a fresh import, finalization is its own invocation, in which every finalization step
 an append invalidates runs again (the duplicate step, the mult step, the aux tables, the search-table reset with
 its cache flush, `ANALYZE`, and validation), and last the version step returns the state
-to `ready`; no other step writes `ready`. A failed append stays `appending`; the next
+to `ready`; no other step writes `ready`, and neither finalization nor the version step
+runs while a bundle in the registry is not `done` (§2.7). A failed append stays `appending`; the next
 import resumes the bundles the registry shows unfinished plus any it names, and since each
 bundle is deleted before it is written, the rerun is clean. An append is not atomic, so it
 is never run against a schema that is being served; §3.1 is how a served schema is
@@ -743,7 +756,8 @@ unchanged.
 **The registry is also the work queue.** Bundles differ in size by orders of magnitude, so
 work is not split into fixed parts before the run; each bundle is a unit of work handed
 out at run time. Each registry row carries a size estimate (the row count its primary
-index labels declare; a bundle without one is refused at registration), a state (`pending`, `importing`,
+index labels declare; a bundle OPUS imports without one is refused at registration, and
+a bundle OPUS deliberately skips is not registered at all), a state (`pending`, `importing`,
 `done`, `failed`), the rows done so far, and the importer that claimed it. An **importer**
 is one `opus_import` process, with its own pool of workers, that repeatedly claims the
 largest pending bundle with `FOR UPDATE SKIP LOCKED`, reading one entry of the registry's
@@ -826,8 +840,8 @@ until the restart the promotion does anyway, and leaves the old tables beside th
 buys nothing over a new schema and a switch. `param_info` and the dictionary are
 different: they are small, rebuilt whole from the schema files, and reloaded on their own
 by the code-only deploy, so each is swapped in place with one atomic `RENAME TABLE` rather
-than given a new schema. `partables` and `table_names` are never rebuilt in a served
-schema at all.
+than given a new schema. `partables` and `table_names` are the same: the code-only deploy
+rebuilds them from the code and the served data, and swaps each in.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the primary and unique keys catch the
