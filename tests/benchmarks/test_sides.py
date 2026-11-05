@@ -1,10 +1,12 @@
 """The rule that spells each step of the measured sequence from a side's own help."""
 
+import subprocess  # nosec B404 - the test builds a scratch git repository
+import sys
 from pathlib import Path
 
 import pytest
 
-from benchmarks.sides import Spelling, listed_options
+from benchmarks.sides import Side, Spelling, listed_options
 from opus_import import cli
 
 #: Help text of a side from the harness's first commit's shape.
@@ -128,3 +130,34 @@ def test_an_invocation_is_named_by_its_role_on_either_side(
 ) -> None:
     """A step two sides spell differently gets one name, so their metrics line up."""
     assert Spelling.from_help(help_text).role(arguments) == expected
+
+
+def _git(root: Path, *arguments: str) -> None:
+    """Run git in a scratch repository, failing the test if it fails."""
+    subprocess.run(  # nosec B603 B607 - git, with the test's own arguments
+        ['git', '-C', str(root), *arguments],
+        check=True,
+        capture_output=True,
+    )
+
+
+@pytest.mark.parametrize(
+    ('path', 'dirty'),
+    [
+        ('src/new_module.py', True),
+        ('benchmarks/results/uncommitted.json', False),
+    ],
+)
+def test_only_an_untracked_file_under_src_makes_the_checkout_dirty(
+    tmp_path: Path, path: str, dirty: bool
+) -> None:
+    """The editable install imports a new file under src/; a stray result changes nothing."""
+    _git(tmp_path, 'init', '-q')
+    (tmp_path / 'README').write_text('x\n')
+    _git(tmp_path, 'add', 'README')
+    _git(tmp_path, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'x')
+    side = Side(Path(sys.executable), tmp_path)
+    assert side.environment()['git_dirty'] is False
+    (tmp_path / path).parent.mkdir(parents=True)
+    (tmp_path / path).write_text('x\n')
+    assert side.environment()['git_dirty'] is dirty

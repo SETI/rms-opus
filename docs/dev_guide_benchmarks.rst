@@ -207,7 +207,7 @@ the scenario's requests, each with the scenario's cookies, as many copies at a t
 the server has request slots, so that no one worker can take them all, until the served
 log shows that every worker has served every request of the scenario, and it refuses the
 run when fifty rounds do not get there. The concurrency scenario's requests are warmed
-the same way before its warm half. How many rounds and requests each warm-up took is in
+the same way before each half's warm repetition. How many rounds and requests each warm-up took is in
 the run's details.
 
 Per scenario and state the run records the wall-clock and each request's latency, the
@@ -216,7 +216,7 @@ the most total latency, the server's buffer-pool misses, connections, sort-merge
 and on-disk temporary tables, memcached's evictions, the schema's table count, and the
 workers' peak resident set. The concurrency scenario has many users, each with a session
 of its own, issue the fan-out at once, once with a search each and once with the same
-search; it records the latencies of every request, from which its 95th percentile is
+search, each half starting from its own reset; it records the latencies of every request, from which its 95th percentile is
 computed over all runs together.
 
 Before measuring, ``bench_web`` asks the side's settings, in the environment the workers
@@ -329,7 +329,7 @@ measure. Then::
     python -m benchmarks.compare benchmarks/results/<before>.json \
         benchmarks/results/<after>.json --floors-file benchmarks/results/<floors>.json
 
-prints every metric's medians, change, spreads, floor and verdict. ``compare`` refuses
+prints every metric's medians, change, spreads, maxima, floor and verdict. ``compare`` refuses
 two results whose server model, server ownership, cache backend or brand differ. Its
 module docstring defines the statistics: medians over runs, the spread as the range over
 the median, the change relative to the before median, and the verdict, which counts a

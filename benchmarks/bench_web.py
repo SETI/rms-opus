@@ -676,40 +676,40 @@ class WebBench:
             metrics[f'{prefix}.{timing.name}.latency_s'] = timing.latency_s
         return [(client, timing.url) for timing in timings]
 
-    def run_concurrency(
+    def run_concurrency_half(
         self,
         state: str,
         concurrency: Concurrency,
+        half: str,
         run: dict[str, Any],
-        clients: dict[str, list[Client]],
+        clients: list[Client],
     ) -> list[tuple[Client, str]]:
-        """Run both halves of the concurrency scenario once under a state.
+        """Run one half of the concurrency scenario once under a state.
 
         Parameters:
             state: The state it is recorded as.
             concurrency: The scenario.
+            half: ``distinct`` (a new search for each user) or ``shared`` (one new search
+                that every user asks for).
             run: The run to record into.
-            clients: Each half's users' clients, kept across the warm repetition.
+            clients: The half's users' clients, kept across the warm repetition.
 
         Returns:
-            Every request's client and URL as issued, both halves together.
+            Every request's client and URL as issued.
         """
-        issued: list[tuple[Client, str]] = []
-        halves = {
-            'distinct': [concurrency.distinct.format(i=i) for i in range(concurrency.users)],
-            'shared': [concurrency.shared] * concurrency.users,
-        }
-        for half, searches in halves.items():
-            prefix = f'web.{state}.concurrency.{half}'
-            before = self._scenario_start()
-            outcome = run_concurrency_half(clients[half], searches, concurrency.fanout)
-            self._scenario_end(prefix, run, before)
-            run['samples'][f'{prefix}.latency_s'] = outcome.latencies
-            run['metrics'][f'{prefix}.p95_s'] = p95(outcome.latencies)
-            run['metrics'][f'{prefix}.throughput_per_s'] = outcome.throughput_per_s
-            run['metrics'][f'{prefix}.errors'] = outcome.errors
-            issued.extend(outcome.issued)
-        return issued
+        if half == 'distinct':
+            searches = [concurrency.distinct.format(i=i) for i in range(concurrency.users)]
+        else:
+            searches = [concurrency.shared] * concurrency.users
+        prefix = f'web.{state}.concurrency.{half}'
+        before = self._scenario_start()
+        outcome = run_concurrency_half(clients, searches, concurrency.fanout)
+        self._scenario_end(prefix, run, before)
+        run['samples'][f'{prefix}.latency_s'] = outcome.latencies
+        run['metrics'][f'{prefix}.p95_s'] = p95(outcome.latencies)
+        run['metrics'][f'{prefix}.throughput_per_s'] = outcome.throughput_per_s
+        run['metrics'][f'{prefix}.errors'] = outcome.errors
+        return list(outcome.issued)
 
     def one_run(self) -> dict[str, Any]:
         """Make one run: the db-cold pass, then the app-cold pass.
@@ -735,17 +735,17 @@ class WebBench:
                 if state == 'app-cold':
                     warmups[f'web.warm.{scenario.name}'] = self.warm_up(issued)
                     self.run_scenario('warm', scenario, run, client)
-            if concurrency is not None:
+            if concurrency is None:
+                continue
+            # Each half starts cold, so neither is measured on what the other loaded.
+            for half in ('distinct', 'shared'):
                 self.reset(state)
                 self.require_cold()
-                clients = {
-                    half: [Client(base_url) for _ in range(concurrency.users)]
-                    for half in ('distinct', 'shared')
-                }
-                issued = self.run_concurrency(state, concurrency, run, clients)
+                clients = [Client(base_url) for _ in range(concurrency.users)]
+                issued = self.run_concurrency_half(state, concurrency, half, run, clients)
                 if state == 'app-cold':
-                    warmups['web.warm.concurrency'] = self.warm_up(issued)
-                    self.run_concurrency('warm', concurrency, run, clients)
+                    warmups[f'web.warm.concurrency.{half}'] = self.warm_up(issued)
+                    self.run_concurrency_half('warm', concurrency, half, run, clients)
         if self._cache_gets == 0:
             raise WebRunError(
                 'memcached answered no lookup in any scenario of the run: the application '

@@ -117,12 +117,16 @@ class Side:
 
         Returns:
             The commit, whether the checkout has uncommitted changes, and the
-            interpreter's version.
+            interpreter's version. An untracked file under ``src/`` counts as a
+            change, since the editable install imports it; one elsewhere does not, so
+            the harness's own uncommitted results leave the checkout clean.
         """
         version = self.run(['-c', 'import platform; print(platform.python_version())'])
+        changed = self.git('status', '--porcelain', '--untracked-files=no')
+        untracked_source = self.git('status', '--porcelain', '--untracked-files=all', '--', 'src')
         return {
             'git_sha': self.git('rev-parse', 'HEAD'),
-            'git_dirty': self.git('status', '--porcelain', '--untracked-files=no') != '',
+            'git_dirty': changed != '' or untracked_source != '',
             'python_version': version.stdout.strip(),
         }
 

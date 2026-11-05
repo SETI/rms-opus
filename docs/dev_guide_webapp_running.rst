@@ -208,8 +208,9 @@ its client is not a declared dependency. The behavior to know here is the fallba
 configuration's ``[django] cache_location`` (``127.0.0.1:11211`` unless it says
 otherwise) succeeds -- falling back to Django's per-process local-memory cache if the
 import fails or the connection is **refused**. The same address is the one ``CACHES``
-points Django's cache at, so the server the check found answering is the one used. Any other connection failure, a timeout or a name that resolves oddly, is
-**not caught** and stops the application at startup.
+points Django's cache at, so the server the check found answering is the one used. Any
+other connection failure, a timeout or a name that resolves oddly, is **not caught** and
+stops the application at startup.
 
 Emptying the shared cache is one module::
 

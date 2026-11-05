@@ -2,17 +2,18 @@
 
 ``python -m benchmarks.compare BEFORE.json AFTER.json [--floors-file FLOORS.json]
 [--target METRIC ...]`` prints a Markdown table with one row per metric either file
-holds: each side's median and spread, the change, the floor, the metric's role, and the
-verdict. It refuses two results whose ``server_model``, server ownership, cache backend
+holds: each side's median, spread and maximum, the change, the floor, the metric's
+role, and the verdict. A metric's p95 over its runs is its maximum, since a session has
+fewer than twenty runs, so the maximum column is its p95 too. It refuses two results whose ``server_model``, server ownership, cache backend
 or brand differ, because their numbers are not comparable.
 
 A metric's **role** decides whether it is judged. A **target** (``--target``) is judged
 on improving beyond its floor. A **guard** -- the metrics `GUARD_PATTERNS` matches: the
 full import's wall-clock, the largest bundle's ``--import`` time and the import's peak
 tree PSS, the schema's data and index bytes, the medians of the empty, broad and
-surface-geometry searches, of the empty search's first and last page and of the fan-out
-in the app-cold and warm states, of autocomplete in the app-cold state, and the
-concurrency scenario's p95 -- is judged on not regressing beyond its floor plus
+surface-geometry searches and of the fan-out in the app-cold and warm states, of the
+empty search's pages in the app-cold state, of its first and last page in the warm state,
+of autocomplete in the app-cold state, and the concurrency scenario's p95 -- is judged on not regressing beyond its floor plus
 `GUARD_MARGIN`; a warm guard whose scenario executed no statements on either side is
 reported instead, since it measured only a cache. Every other metric is **reported**,
 not judged; warm autocomplete is one of them, because Django's site cache answers it.
@@ -77,7 +78,10 @@ GUARD_MARGIN = 0.05
 COMPARED_KINDS = ('import', 'import_unfinalized', 'finalize', 'db', 'web')
 
 #: The guarded metrics, by name. The web ones are medians (each run's value of a
-#: scenario is its wall-clock, of a request its latency), except the concurrency p95.
+#: scenario is its wall-clock, of a request its latency), except the concurrency p95. A
+#: cold state is guarded on a scenario's wall-clock, never on one request's latency: a
+#: cold request's latency depends on whether an earlier request of the scenario reached
+#: the same worker.
 GUARD_PATTERNS = tuple(
     re.compile(pattern)
     for pattern in (
@@ -86,7 +90,8 @@ GUARD_PATTERNS = tuple(
         r'import\.peak_tree_pss_kb',
         r'db\.schema\.(data|index)_bytes',
         r'web\.(app-cold|warm)\.search\.(empty|broad|surface_geometry)\.wall_s',
-        r'web\.(app-cold|warm)\.pages\.empty\.page_(1|last)\.latency_s',
+        r'web\.app-cold\.pages\.empty\.wall_s',
+        r'web\.warm\.pages\.empty\.page_(1|last)\.latency_s',
         r'web\.(app-cold|warm)\.fanout\.[^.]+\.wall_s',
         r'web\.app-cold\.autocomplete\.[^.]+\.wall_s',
         r'web\.(app-cold|warm)\.concurrency\.(distinct|shared)\.p95_s',
@@ -362,8 +367,9 @@ def render(
         if name.startswith('web.warm.') and name.endswith('.statements')
     }
     lines = [
-        '| Metric | Before | After | Change | Spread (before / after) | Floor | Role | Verdict |',
-        '|---|---|---|---|---|---|---|---|',
+        '| Metric | Before | After | Change | Spread (before / after) | Max (before / after) '
+        '| Floor | Role | Verdict |',
+        '|---|---|---|---|---|---|---|---|---|',
     ]
     for name in sorted(set(mine) | set(theirs)):
         left, right = mine.get(name), theirs.get(name)
@@ -381,10 +387,14 @@ def render(
             f'{_percent(None if left is None else left.spread)} / '
             f'{_percent(None if right is None else right.spread)}'
         )
+        maxima = (
+            f'{_number(None if left is None else left.maximum)} / '
+            f'{_number(None if right is None else right.maximum)}'
+        )
         lines.append(
             f'| `{name}` | {_number(None if left is None else left.center)} | '
             f'{_number(None if right is None else right.center)} | {_percent(relative)} | '
-            f'{spreads} | {_percent(floor)} | {metric_role} | {judged} |'
+            f'{spreads} | {maxima} | {_percent(floor)} | {metric_role} | {judged} |'
         )
     ceiling = finalization_ceiling(before, after)
     if ceiling is not None:

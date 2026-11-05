@@ -4323,10 +4323,12 @@ Nothing above this line is rewritten by an executor.
 - `web.<state>.<scenario>.server.Innodb_buffer_pool_reads` is usually zero with an
   occasional non-zero run, so its median is zero and its spread, and so its floor, is
   infinite (`Infinity` in the floors file). It is diagnostic and never judged.
-- Before each floor session the harness waits up to fifteen minutes for the one-minute
-  load average to settle to 3 or below, since the previous session's own work raises
-  it, and does not start the session otherwise. The operator accepted this rule on
-  2026-11-04.
+- Before each floor session the operator's session driver, a shell loop outside the
+  harness, waits up to fifteen minutes for the one-minute load average to settle to 3
+  or below, since the previous session's own work raises it, and does not start the
+  session otherwise. The operator accepted this rule on 2026-11-04. The harness itself
+  waits for nothing; it records each run's one-minute load average at its start
+  (`load_average_1m`).
 
 ### 2026-11-05, PR-00 (written against this file at b9409b94)
 
@@ -4346,9 +4348,9 @@ Nothing above this line is rewritten by an executor.
   `2026-11-05_PR-00_before_{fixture,test}_mysql_{a,b,c}.json`, all measured at commit
   330e4a3a.
 - Three floor sessions were taken at each scale, since sessions a and b disagreed on some
-  metrics at both. The workstation's one-minute load average at each session's start was
-  1.85, 2.64 and 2.77 (fixture a, b, c) and 2.69, 2.81 and 2.72 (test a, b, c), and at
-  the start of the individual runs 1.8 to 9.0, raised by the harness's own work. The
+  metrics at both. Each session's first run started at a one-minute load average
+  (`load_average_1m`) of 1.78, 4.83 and 2.63 (fixture a, b, c) and 2.55, 2.81 and 2.66
+  (test a, b, c), and its runs at 1.77 to 9.00, raised by the harness's own work. The
   operator confirmed the workstation free for the whole job; Chrome had been closed and
   an IDrive backup was running throughout.
 - `benchmarks/scenarios/queries.sql` is the capture of 2026-11-05 from the test-scale

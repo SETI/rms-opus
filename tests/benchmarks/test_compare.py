@@ -122,7 +122,9 @@ def test_the_table_carries_medians_change_floor_role_and_verdict() -> None:
     before = _result([{'a_s': 10.0}, {'a_s': 10.0}, {'a_s': 10.0}])
     after = _result([{'a_s': 5.0}, {'a_s': 5.0}, {'a_s': 5.0}])
     table = compare.render(before, after, {'a_s': {'floor': 0.1}}, ['a_s'])
-    assert '| `a_s` | 10 | 5 | -50.0% | +0.0% / +0.0% | +10.0% | target | improved |' in table
+    assert (
+        '| `a_s` | 10 | 5 | -50.0% | +0.0% / +0.0% | 10 / 5 | +10.0% | target | improved |' in table
+    )
 
 
 def test_a_before_spread_larger_than_the_floor_replaces_it() -> None:
@@ -149,7 +151,9 @@ def test_a_metric_neither_target_nor_guard_is_reported_not_judged() -> None:
         ('db.schema.index_bytes', 'guard'),
         ('web.app-cold.search.empty.wall_s', 'guard'),
         ('web.warm.search.surface_geometry.wall_s', 'guard'),
-        ('web.app-cold.pages.empty.page_last.latency_s', 'guard'),
+        ('web.app-cold.pages.empty.wall_s', 'guard'),
+        ('web.app-cold.pages.empty.page_last.latency_s', 'reported'),
+        ('web.warm.pages.empty.page_last.latency_s', 'guard'),
         ('web.warm.fanout.selected.wall_s', 'guard'),
         ('web.app-cold.autocomplete.bundleid.wall_s', 'guard'),
         ('web.warm.autocomplete.bundleid.wall_s', 'reported'),
