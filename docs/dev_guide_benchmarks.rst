@@ -73,7 +73,13 @@ Three servers, all on the local machine:
   memory it names. It is started and stopped by each command that needs it.
 * **gunicorn**, running the side's web application with ``gthread`` workers, the
   worker and thread counts from ``web.toml``, and as many connections per worker as
-  threads. Each worker loads the application when it starts.
+  threads, with ``benchmarks/gunicorn_hooks.py`` as its configuration file. Each worker
+  loads the application when it starts, its URLconf included: Django otherwise imports
+  the URLconf, and with it every view module, on a process's first request, which would
+  charge a quarter of a second to whichever measured request happened to reach a worker
+  first. The same file has each worker write a line to a served log when it is ready and
+  after every request it serves, naming itself and the request, which is how the
+  harness knows which worker served what.
 
 Setting up a machine
 --------------------
@@ -181,7 +187,20 @@ an exact cold start), starting the application, and restarting memcached. In the
 **app-cold** pass each scenario is preceded by the same without the database restart,
 and is issued twice, the second time recorded as **warm**. The application is started
 without a request -- the harness waits until every worker has opened the application's
-log file -- because a request would fill the caches the reset has just emptied.
+log file and reported itself ready -- because a request would fill the caches the reset
+has just emptied. Every cold scenario therefore starts on workers that have served
+nothing, and the harness checks the served log to be sure before issuing it.
+
+gunicorn gives each connection to whichever worker accepts it first, so the second
+issue of a scenario does not reach the same workers as the first, and a worker meeting a
+request for the first time still pays that request's own first-use costs in its
+process. So before the warm repetition the harness **warms every worker**: it reissues
+the scenario's requests, each with the scenario's cookies, as many copies at a time as
+the server has request slots, so that no one worker can take them all, until the served
+log shows that every worker has served every request of the scenario, and it refuses the
+run when fifty rounds do not get there. The concurrency scenario's requests are warmed
+the same way before its warm half. How many rounds and requests each warm-up took is in
+the run's details.
 
 Per scenario and state the run records the wall-clock and each request's latency, the
 errors, the statements executed against the schema, the twenty statement shapes with
@@ -217,10 +236,20 @@ pool; the size of ``obs_general.preview_images``; and the per-index usage counte
 writes each request's statements to ``queries_<side>.sql`` in the session's scratch
 directory, and replays them at once on one connection: reads are planned with ``EXPLAIN
 ANALYZE`` five times and with ``EXPLAIN FORMAT=JSON``, statements that set connection
-state are executed, and other writes are never run. Each request's block gives two
-metrics, the sum of its statements' median times and of the rows they examined, so two
-sides' blocks are compared by the request that issued them however their statements
-differ; every statement's plans are kept whole in the run's details. A capture names the
+state are executed, and other writes are never run. The capture is taken from a
+gunicorn of one worker with one thread rather than ``web.toml``'s: the application loads
+some lookups into its process the first time a request needs them, and a thread its
+database connection's settings, so with several workers which request carries those
+statements would depend on which worker the request reached. With one, the same commit
+captures the same statements every time.
+
+Each request's block gives two metrics. ``time_s`` is the block's time, the sum of its
+planned statements' times; each statement is executed five times, so the block has five
+times, whose median is the metric and whose range over that median is its spread, with
+all five kept in the run's ``samples``. ``rows_examined`` is the sum of the rows its
+statements examined, which does not change between executions. Two sides' blocks are
+compared by the request that issued them however their statements differ, and every
+statement's plans are kept whole in the run's details. A capture names the
 tables of the commit and session that made it, so it is replayed only there.
 ``benchmarks/scenarios/queries.sql`` is a copy kept for a reader, written by
 ``--commit-capture``; nothing replays it.

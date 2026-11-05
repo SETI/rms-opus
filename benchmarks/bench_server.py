@@ -382,6 +382,13 @@ class MysqlServer:
         """
         pid = self.pid()
         if pid is None:
+            process = self._process
+            if process is not None and process.poll() is None:
+                # Started here but not yet answering, so there is no pid file to shut
+                # down by: SIGTERM is mysqld's own clean shutdown.
+                process.terminate()
+                process.wait(timeout=STOP_TIMEOUT_S)
+            self._process = None
             return
         finished = subprocess.run(  # nosec B603 - the tarball's mysqladmin
             [
@@ -416,9 +423,9 @@ class MysqlServer:
             This server, answering.
         """
         started_here = not self.is_running()
-        if started_here:
-            self.start()
         try:
+            if started_here:
+                self.start()
             yield self
         finally:
             if started_here:

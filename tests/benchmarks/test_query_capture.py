@@ -97,3 +97,16 @@ def test_access_types_are_read_from_every_table_in_the_plan() -> None:
         'cache_1': 'ALL',
         'obs_general': 'eq_ref',
     }
+
+
+def test_times_and_rows_in_exponent_notation_are_read() -> None:
+    """MySQL prints a very small time as ``952e-6``; that line still counts its rows."""
+    tree = (
+        '-> Nested loop inner join  (cost=0.7 rows=1) (actual time=0.00377..0.00386 rows=1 loops=1)\n'
+        '    -> Table scan on cache_15  (cost=0.35 rows=1) (actual time=952e-6..0.00126 rows=1 loops=1)\n'
+        '    -> Single-row index lookup on obs_general using PRIMARY (id=cache_15.id)  '
+        '(cost=0.35 rows=1) (actual time=0.00161..1.5e+3 rows=1.2e+3 loops=1)\n'
+    )
+    summary = query_capture.summarize_analyze(tree)
+    assert summary['tables'] == {'cache_15': 1.0, 'obs_general': 1200.0}
+    assert summary['rows_examined'] == 1201.0

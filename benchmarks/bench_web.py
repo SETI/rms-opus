@@ -9,8 +9,19 @@ preceded by the app-cold reset (the same, without the database restart) and is t
 issued twice: the first time recorded as app-cold, the second as **warm**.
 
 The application is started without a request: the harness waits until every worker has
-loaded it, because a request would fill the caches the reset has just emptied, and
-memcached is restarted after that so it starts every scenario empty.
+loaded it, its URLconf included (`benchmarks.gunicorn_hooks`), because a request would
+fill the caches the reset has just emptied, and memcached is restarted after that so it
+starts every scenario empty. Every worker therefore starts a cold scenario having served
+nothing, which the harness checks in the served log before issuing the scenario.
+
+gunicorn hands each connection to whichever worker accepts it, so a scenario issued
+twice in succession does not reach the same workers twice, and a worker meeting a
+request for the first time pays its own first-use costs. Before the warm repetition the
+harness therefore **warms every worker**: it reissues the scenario's requests, with the
+scenario's cookies, as many at a time as the server has request slots (so that no one
+worker can take them all), until the served log shows that every worker has served
+every one of them, and refuses the run if `WARMUP_MAX_ROUNDS` rounds do not get there.
+The concurrency scenario's users' requests are warmed the same way.
 
 Before anything is measured the harness asks the side's settings, in the same
 environment, which cache backend they chose, and **refuses to run** on Django's
@@ -25,6 +36,7 @@ Example, one side's web runs at fixture scale against the schema its import buil
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import contextlib
 import http.cookiejar
 import json
@@ -97,6 +109,9 @@ REQUEST_TIMEOUT_S = 3600.0
 #: The part of a cache backend's class path that marks Django's local-memory fallback.
 LOCMEM_MARKER = 'locmem'
 
+#: How many rounds the warm-up may take to have every worker serve every request.
+WARMUP_MAX_ROUNDS = 50
+
 
 class WebRunError(Exception):
     """Raised when a web run cannot be measured as asked."""
@@ -140,6 +155,17 @@ class Client:
         self.base_url = base_url
         self.jar = http.cookiejar.CookieJar()
         self._opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
+
+    def clone(self) -> Client:
+        """Return a new client holding a copy of this one's cookies.
+
+        Returns:
+            The client, which sends the same session cookie as this one.
+        """
+        copy = Client(self.base_url)
+        for cookie in self.jar:
+            copy.jar.set_cookie(cookie)
+        return copy
 
     def get(self, name: str, url: str) -> RequestTiming:
         """Issue one GET and read the whole response.
@@ -239,11 +265,13 @@ class ConcurrencyOutcome:
         latencies: Every request's latency.
         errors: How many requests failed.
         throughput_per_s: Requests per second, from the first start to the last end.
+        issued: Each request's client and URL, for the warm-up.
     """
 
     latencies: list[float] = field(default_factory=list)
     errors: int = 0
     throughput_per_s: float = 0.0
+    issued: list[tuple[Client, str]] = field(default_factory=list)
 
 
 def run_concurrency_half(
@@ -282,7 +310,96 @@ def run_concurrency_half(
         latencies=[timing.latency_s for timing in timings],
         errors=sum(1 for timing in timings if timing.failed),
         throughput_per_s=len(timings) / (last - first) if last > first else 0.0,
+        issued=[
+            (clients[position], timing.url)
+            for position, user_timings in enumerate(results)
+            for timing in user_timings
+        ],
     )
+
+
+def issue_concurrently(tasks: Sequence[tuple[Client, str]], concurrency: int) -> int:
+    """Issue requests, each from a copy of its client, so many at a time.
+
+    Parameters:
+        tasks: Each request's client, whose cookies it carries, and URL.
+        concurrency: How many are in flight at once.
+
+    Returns:
+        How many failed.
+    """
+    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+        timings = list(pool.map(lambda task: task[0].clone().get('warm-up', task[1]), tasks))
+    return sum(1 for timing in timings if timing.failed)
+
+
+def warm_every_worker(
+    issued: Sequence[tuple[Client, str]],
+    *,
+    workers: Sequence[int],
+    concurrency: int,
+    served_by: Callable[[], Mapping[str, set[int]]],
+    issue: Callable[[Sequence[tuple[Client, str]], int], int],
+) -> dict[str, int]:
+    """Reissue a scenario's requests until every worker has served every one of them.
+
+    Each round reissues each request some worker has not yet served, as many times as
+    `concurrency` and with its own client's cookies, `concurrency` at a time, then asks
+    again which workers have served what. With as many requests in flight as the server
+    has request slots, no worker can take them all.
+
+    Parameters:
+        issued: Each request's client and URL, as the scenario issued them.
+        workers: Every worker's process id.
+        concurrency: The server's request slots, workers times threads.
+        served_by: Returns which workers have served each path and query string.
+        issue: Issues requests, so many at a time, and returns how many failed
+            (`issue_concurrently`).
+
+    Returns:
+        The rounds it took and the requests it issued.
+
+    Raises:
+        WebRunError: If a warm-up request fails, or `WARMUP_MAX_ROUNDS` rounds leave a
+            request some worker has not served.
+    """
+    clients: dict[str, Client] = {}
+    for client, url in issued:
+        clients.setdefault(url, client)
+    requests = 0
+    rounds = 0
+    pending = unserved(list(clients), served_by(), workers)
+    while len(pending) > 0:
+        if rounds == WARMUP_MAX_ROUNDS:
+            raise WebRunError(
+                f'after {WARMUP_MAX_ROUNDS} warm-up rounds some worker has still not '
+                f'served {pending[:5]}'
+            )
+        tasks = [(clients[url], url) for url in pending for _ in range(concurrency)]
+        failed = issue(tasks, concurrency)
+        requests += len(tasks)
+        rounds += 1
+        if failed > 0:
+            raise WebRunError(f'{failed} warm-up requests failed')
+        pending = unserved(list(clients), served_by(), workers)
+    return {'rounds': rounds, 'requests': requests}
+
+
+def unserved(
+    urls: Sequence[str], served_by: Mapping[str, set[int]], workers: Sequence[int]
+) -> list[str]:
+    """Return the URLs some worker has not served yet.
+
+    Parameters:
+        urls: The URLs, relative to the server's root, as a client issues them.
+        served_by: The workers that served each path and query string.
+        workers: Every worker's process id.
+
+    Returns:
+        The URLs, in the order given, that at least one of the workers has not served.
+    """
+    every = set(workers)
+    return [url for url in urls if not every <= served_by.get(f'/{url}', set())]
 
 
 def reset_search_tables(
@@ -328,6 +445,7 @@ class WebBench:
         config: WebConfig,
         schema: str,
         holdings: tuple[Path, Path],
+        single_worker: bool = False,
     ) -> None:
         """Prepare the servers for one side; nothing is started.
 
@@ -340,6 +458,9 @@ class WebBench:
             config: ``web.toml``.
             schema: The schema to serve.
             holdings: The PDS3 and PDS4 holdings roots the application is given.
+            single_worker: Start gunicorn with one worker of one thread instead of
+                ``web.toml``'s, so that every request is served by the same process and
+                thread, as the query capture needs.
         """
         self.server = server
         self.memcached = memcached
@@ -364,10 +485,11 @@ class WebBench:
             repo_root=side.repo_root,
             env=self.env,
             port=config.server.port,
-            workers=config.server.workers,
-            threads=config.server.threads,
+            workers=1 if single_worker else config.server.workers,
+            threads=1 if single_worker else config.server.threads,
             log_dir=run_dir / 'gunicorn',
             app_log_file=run_dir / 'logs' / 'opus_log.txt',
+            served_log=run_dir / 'gunicorn' / 'served.log',
         )
         self._connection: Any = None
         self._cache_gets = 0
@@ -428,6 +550,35 @@ class WebBench:
             self.server.restart()
         self.gunicorn.start()
         self.memcached.restart()
+
+    def require_cold(self) -> None:
+        """Check that no worker has served a request since the application started.
+
+        Raises:
+            WebRunError: Naming what was served, if anything was.
+        """
+        served = self.gunicorn.served()
+        if len(served) > 0:
+            raise WebRunError(
+                f'a cold scenario would start on workers that have served {served[:5]}'
+            )
+
+    def warm_up(self, issued: Sequence[tuple[Client, str]]) -> dict[str, int]:
+        """Have every worker serve every request a scenario issued (`warm_every_worker`).
+
+        Parameters:
+            issued: Each request's client and URL, as the scenario issued them.
+
+        Returns:
+            The rounds it took and the requests it issued.
+        """
+        return warm_every_worker(
+            issued,
+            workers=self.gunicorn.worker_pids(),
+            concurrency=self.gunicorn.workers * self.gunicorn.threads,
+            served_by=self.gunicorn.served_by,
+            issue=issue_concurrently,
+        )
 
     def _scenario_start(self) -> tuple[dict[str, int], dict[str, str]]:
         """Snapshot the counters and empty the statement statistics before a scenario.
@@ -496,7 +647,7 @@ class WebBench:
 
     def run_scenario(
         self, state: str, scenario: Scenario, run: dict[str, Any], client: Client
-    ) -> None:
+    ) -> list[tuple[Client, str]]:
         """Issue one sequential scenario once and record it under a state.
 
         Parameters:
@@ -505,6 +656,9 @@ class WebBench:
             run: The run to record into.
             client: The scenario's client: a new one after a reset, the same one again
                 for the warm repetition, as a browser keeps its session.
+
+        Returns:
+            Each request's client and URL as issued, untimed ones included.
         """
         prefix = f'web.{state}.{scenario.name}'
         before = self._scenario_start()
@@ -520,6 +674,7 @@ class WebBench:
         metrics[f'{prefix}.errors'] = sum(1 for timing in timings if timing.failed)
         for timing in timed:
             metrics[f'{prefix}.{timing.name}.latency_s'] = timing.latency_s
+        return [(client, timing.url) for timing in timings]
 
     def run_concurrency(
         self,
@@ -527,7 +682,7 @@ class WebBench:
         concurrency: Concurrency,
         run: dict[str, Any],
         clients: dict[str, list[Client]],
-    ) -> None:
+    ) -> list[tuple[Client, str]]:
         """Run both halves of the concurrency scenario once under a state.
 
         Parameters:
@@ -535,7 +690,11 @@ class WebBench:
             concurrency: The scenario.
             run: The run to record into.
             clients: Each half's users' clients, kept across the warm repetition.
+
+        Returns:
+            Every request's client and URL as issued, both halves together.
         """
+        issued: list[tuple[Client, str]] = []
         halves = {
             'distinct': [concurrency.distinct.format(i=i) for i in range(concurrency.users)],
             'shared': [concurrency.shared] * concurrency.users,
@@ -549,6 +708,8 @@ class WebBench:
             run['metrics'][f'{prefix}.p95_s'] = p95(outcome.latencies)
             run['metrics'][f'{prefix}.throughput_per_s'] = outcome.throughput_per_s
             run['metrics'][f'{prefix}.errors'] = outcome.errors
+            issued.extend(outcome.issued)
+        return issued
 
     def one_run(self) -> dict[str, Any]:
         """Make one run: the db-cold pass, then the app-cold pass.
@@ -563,22 +724,27 @@ class WebBench:
         self._cache_gets = 0
         base_url = self.gunicorn.base_url
         concurrency = self.config.concurrency
+        warmups = run['details'].setdefault('warmup', {})
         for state in ('db-cold', 'app-cold'):
             for scenario in self.config.scenarios:
                 self.reset(state)
+                self.require_cold()
                 # One cookie jar per scenario, emptied only by the reset.
                 client = Client(base_url)
-                self.run_scenario(state, scenario, run, client)
+                issued = self.run_scenario(state, scenario, run, client)
                 if state == 'app-cold':
+                    warmups[f'web.warm.{scenario.name}'] = self.warm_up(issued)
                     self.run_scenario('warm', scenario, run, client)
             if concurrency is not None:
                 self.reset(state)
+                self.require_cold()
                 clients = {
                     half: [Client(base_url) for _ in range(concurrency.users)]
                     for half in ('distinct', 'shared')
                 }
-                self.run_concurrency(state, concurrency, run, clients)
+                issued = self.run_concurrency(state, concurrency, run, clients)
                 if state == 'app-cold':
+                    warmups['web.warm.concurrency'] = self.warm_up(issued)
                     self.run_concurrency('warm', concurrency, run, clients)
         if self._cache_gets == 0:
             raise WebRunError(

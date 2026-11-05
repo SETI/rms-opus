@@ -53,9 +53,12 @@ _STATEMENT = '-- statement: connection '
 #: The general log's command types that carry a statement.
 STATEMENT_COMMANDS = ('Query', 'Execute')
 
+#: A number as ``EXPLAIN ANALYZE`` prints one: in decimal, or in exponent notation for
+#: the very small and very large (``952e-6``, ``1.2e+6``).
+_NUMBER = r'\d+(?:\.\d*)?(?:e[+-]?\d+)?'
 _ANALYZE_LINE = re.compile(
-    r'-> (?P<what>.*?)\s+\(cost=[^)]*\)?.*?\(actual time=(?P<first>[\d.]+)\.\.(?P<last>[\d.]+) '
-    r'rows=(?P<rows>[\d.e+]+) loops=(?P<loops>\d+)\)'
+    rf'-> (?P<what>.*?)\s+\(cost=[^)]*\)?.*?\(actual time=(?P<first>{_NUMBER})\.\.'
+    rf'(?P<last>{_NUMBER}) rows=(?P<rows>{_NUMBER}) loops=(?P<loops>\d+)\)'
 )
 _ON_TABLE = re.compile(r'\bon (?P<table>\w+)')
 _INNER_SELECT = re.compile(r'\b(SELECT|WITH)\b', re.IGNORECASE)
@@ -297,8 +300,9 @@ def _plan_read(connection: Any, text: str) -> dict[str, Any]:
         text: The ``SELECT``.
 
     Returns:
-        The median and spread of the wall-clock, the top iterator's rows, the rows
-        examined, each table's access type and rows, and both plans whole.
+        Every execution's wall-clock in order, their median and spread, the top
+        iterator's rows, the rows examined, each table's access type and rows, and both
+        plans whole.
     """
     times = []
     analyzed = ''
@@ -310,6 +314,7 @@ def _plan_read(connection: Any, text: str) -> dict[str, Any]:
     middle = statistics.median(times)
     summary = summarize_analyze(analyzed)
     return {
+        'times_s': times,
         'median_s': middle,
         'spread': (max(times) - min(times)) / middle if middle > 0 else 0.0,
         'top_rows': summary['top_rows'],

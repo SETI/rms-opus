@@ -16,8 +16,13 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from benchmarks.gunicorn_hooks import READY, SERVED_LOG_ENV
+
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+#: The gunicorn configuration file every side's application is started with.
+GUNICORN_HOOKS = Path(__file__).resolve().parent / 'gunicorn_hooks.py'
 
 #: How long a server may take to come up or go down before the harness gives up.
 START_TIMEOUT_S = 600.0
@@ -172,6 +177,7 @@ class GunicornServer:
         threads: int,
         log_dir: Path,
         app_log_file: Path,
+        served_log: Path,
     ) -> None:
         """Describe the server; nothing is started.
 
@@ -186,6 +192,8 @@ class GunicornServer:
             app_log_file: The application's log file, which a worker opens when its
                 Django setup configures logging; that is how a worker is known to have
                 loaded the application.
+            served_log: The file `GUNICORN_HOOKS` writes each worker's readiness and
+                every request it serves to, emptied at each start.
         """
         self.python = python
         self.repo_root = repo_root
@@ -195,6 +203,7 @@ class GunicornServer:
         self.threads = threads
         self.log_dir = log_dir
         self.app_log_file = app_log_file
+        self.served_log = served_log
         self._process: subprocess.Popen[bytes] | None = None
         self._no_control_socket: bool | None = None
 
@@ -241,12 +250,55 @@ class GunicornServer:
                         return True
         return False
 
+    def _served_lines(self) -> list[tuple[int, str]]:
+        """Return the served log's lines since the last start, as written.
+
+        Returns:
+            One worker process id and its text (`READY`, or a request's path and query
+            string) per line, in the order they were written.
+        """
+        if not self.served_log.exists():
+            return []
+        lines = []
+        for line in self.served_log.read_text(encoding='utf-8', errors='replace').splitlines():
+            pid, separator, text = line.partition('\t')
+            if separator != '' and pid.isdigit():
+                lines.append((int(pid), text))
+        return lines
+
+    def served(self) -> list[tuple[int, str]]:
+        """Return every request the current workers have served since the last start.
+
+        Returns:
+            The serving worker's process id and the request's path and query string,
+            in the order served.
+        """
+        return [(pid, text) for pid, text in self._served_lines() if text != READY]
+
+    def served_by(self) -> dict[str, set[int]]:
+        """Return which workers have served each path and query string since the start.
+
+        Returns:
+            The process ids of the workers that served it, by path and query string.
+        """
+        by_uri: dict[str, set[int]] = {}
+        for pid, uri in self.served():
+            by_uri.setdefault(uri, set()).add(pid)
+        return by_uri
+
     def _ready(self) -> bool:
-        """Return whether every worker has loaded the application and the port listens."""
+        """Return whether every worker has loaded the application and the port listens.
+
+        A worker counts once it has the application's log file open and has written
+        `READY` to the served log, which it does after importing the URLconf.
+        """
         if self._process is not None and self._process.poll() is not None:
             raise ServerError(f'gunicorn exited {self._process.returncode}; see {self.log_dir}')
         pids = self.worker_pids()
         if len(pids) != self.workers or not all(self._loaded(pid) for pid in pids):
+            return False
+        ready = {pid for pid, text in self._served_lines() if text == READY}
+        if not set(pids) <= ready:
             return False
         try:
             with socket.create_connection(('127.0.0.1', self.port), 1):
@@ -278,13 +330,17 @@ class GunicornServer:
         """Start gunicorn and wait until every worker has loaded the application.
 
         No request is sent: a request would touch the caches the reset has just
-        emptied.
+        emptied. The application is started with `GUNICORN_HOOKS` as gunicorn's
+        configuration file, which imports the URLconf in each worker before it serves
+        anything and records what each worker serves in the served log.
 
         Raises:
             ServerError: If gunicorn exits or never becomes ready.
         """
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.app_log_file.parent.mkdir(parents=True, exist_ok=True)
+        self.served_log.parent.mkdir(parents=True, exist_ok=True)
+        self.served_log.unlink(missing_ok=True)
         arguments = [
             str(self.python),
             '-m',
@@ -303,13 +359,15 @@ class GunicornServer:
             '3600',
             '--error-logfile',
             str(self.log_dir / 'gunicorn_error.log'),
+            '--config',
+            str(GUNICORN_HOOKS),
             *self._control_socket_options(),
             'opus_app.wsgi:application',
         ]
         self._process = subprocess.Popen(  # nosec B603 - the side's gunicorn
             arguments,
             cwd=self.repo_root,
-            env=self.env,
+            env={**self.env, SERVED_LOG_ENV: str(self.served_log)},
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

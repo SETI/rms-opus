@@ -348,3 +348,15 @@ def test_a_metric_one_session_lacks_still_gets_a_floor() -> None:
     assert entry['missing_from'] == [1]
     assert entry['agree'] is False
     assert entry['noisy'] is False
+
+
+def test_a_metric_with_its_executions_in_samples_is_summarized_over_them() -> None:
+    """A plan time's spread is over its executions, not over its one run."""
+    content = _result(
+        [{'db.plan.x.time_s': 2.0}],
+        samples=[{'db.plan.x.time_s': [1.0, 2.0, 3.0, 2.0, 2.0]}],
+    )
+    summary = compare.summarize(content)['db.plan.x.time_s']
+    assert summary.values == (1.0, 2.0, 3.0, 2.0, 2.0)
+    assert summary.center == 2.0
+    assert summary.spread == 1.0

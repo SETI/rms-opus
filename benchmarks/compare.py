@@ -30,6 +30,9 @@ metric any session holds gets a floor.
 
 The statistics are these. A metric's value in one run is one number; its median is
 over the runs; its **spread** is the range of the runs' values divided by their median.
+A metric whose runs also keep several executions' values under its own name in their
+``samples`` -- a plan time, whose statements are each executed five times in one run --
+takes its median and spread over those executions instead.
 The concurrency scenario's p95 is computed once over every latency of all the runs
 pooled, and its spread is the range of the per-run p95s divided by that pooled figure.
 The **change** is ``(after - before) / before``. The **floor** of a metric is the
@@ -149,6 +152,13 @@ def summarize(content: Mapping[str, Any]) -> dict[str, MetricSummary]:
                 0.0 if high == low else (high - low) / center if center > 0 else math.inf
             )
             summaries[name] = MetricSummary(tuple(values), center, pooled_spread)
+        elif name in pools and len(pools[name]) > 0:
+            # A metric whose runs keep every execution's value under its own name, as a
+            # plan time does, is summarized over those executions.
+            executions = pools[name]
+            summaries[name] = MetricSummary(
+                tuple(executions), median(executions), spread(executions)
+            )
         else:
             summaries[name] = MetricSummary(tuple(values), median(values), spread(values))
     return summaries

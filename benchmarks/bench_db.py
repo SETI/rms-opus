@@ -13,7 +13,10 @@ index-usage snapshot.
 
 ``--dump-queries`` captures the statements each web scenario's requests issue against
 this side's own schema (`benchmarks.query_capture`) into the session's scratch
-directory, and replays them at once, planning each one. ``--commit-capture`` also
+directory, and replays them at once, planning each one (`plan_metrics`). The capture is
+served by one gunicorn worker with one thread, so that the lookups the application
+loads into a process or a thread on first use are captured with the same requests every
+time. ``--commit-capture`` also
 copies the capture to ``scenarios/queries.sql``, the committed copy for a reader.
 
 ``--ascii-columns`` counts, for every column whose form type is ``STRING``, the values
@@ -62,6 +65,7 @@ from benchmarks.results import (
     append_runs,
     host_environment,
     make_label,
+    median,
     new_run,
     scenario_hash,
 )
@@ -70,7 +74,7 @@ from benchmarks.web_scenarios import Request, Scenario, load_web_config
 from import_tests.tools import build_run
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
 #: The committed copy of the newest capture, for a reader; nothing replays it.
 COMMITTED_CAPTURE = SCENARIOS_DIR / 'queries.sql'
@@ -275,6 +279,52 @@ def dump_queries(bench: WebBench, capture: Path) -> list[query_capture.Block]:
     return blocks
 
 
+def plan_metrics(
+    entries: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, float], dict[str, list[float]]]:
+    """Turn a replay's planned statements into one time and one row count per block.
+
+    A block is compared with the other side's by its tag, never by statement, since the
+    two sides may issue different statements for the same request. Its time in one
+    execution is the sum of its planned statements' times in that execution, so the
+    block has as many times as each statement was executed, and its metric is their
+    median, with every execution's time kept in the run's samples under the metric's
+    name (`benchmarks.compare` takes the spread from them). Its rows examined are the
+    sum of its statements', which do not change from one execution to the next.
+
+    Parameters:
+        entries: What `benchmarks.query_capture.replay` returned.
+
+    Returns:
+        The metrics ``db.plan.<tag>.time_s`` and ``db.plan.<tag>.rows_examined``, and
+        the samples: each block's time in every execution, under its time metric's name.
+    """
+    times: dict[str, list[float]] = {}
+    rows: dict[str, float] = {}
+    for entry in entries:
+        plan = entry.get('plan')
+        if plan is None:
+            continue
+        name = f'db.plan.{entry["tag"]}'
+        executions = [float(value) for value in plan['times_s']]
+        if name in times:
+            if len(times[name]) != len(executions):
+                raise ValueError(f'{name}: statements were executed different numbers of times')
+            times[name] = [
+                total + value for total, value in zip(times[name], executions, strict=True)
+            ]
+        else:
+            times[name] = executions
+        rows[name] = rows.get(name, 0.0) + float(plan['rows_examined'])
+    metrics: dict[str, float] = {}
+    samples: dict[str, list[float]] = {}
+    for name, values in times.items():
+        metrics[f'{name}.time_s'] = median(values)
+        samples[f'{name}.time_s'] = values
+        metrics[f'{name}.rows_examined'] = rows[name]
+    return metrics, samples
+
+
 def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     """Read the command line.
 
@@ -450,6 +500,7 @@ def _dump_and_replay(
         config=config,
         schema=schema,
         holdings=holdings,
+        single_worker=True,
     )
     capture = label.scratch_dir / f'queries_{label.side}.sql'
     memcached.start()
@@ -463,18 +514,11 @@ def _dump_and_replay(
         entries = query_capture.replay(connection, blocks)
     run['details']['plans'] = entries
     run['details']['capture'] = str(capture)
+    run['details']['capture_server_model'] = bench.gunicorn.server_model
     run['details']['web_scenario_hash'] = scenario_hash([config.path])
-    # A block is compared with the other side's by its tag, never by statement: the
-    # two sides may issue different statements for the same request.
-    metrics = run['metrics']
-    for entry in entries:
-        plan = entry.get('plan')
-        if plan is not None:
-            name = f'db.plan.{entry["tag"]}'
-            metrics[f'{name}.median_s'] = metrics.get(f'{name}.median_s', 0.0) + plan['median_s']
-            metrics[f'{name}.rows_examined'] = (
-                metrics.get(f'{name}.rows_examined', 0.0) + plan['rows_examined']
-            )
+    block_metrics, block_samples = plan_metrics(entries)
+    run['metrics'].update(block_metrics)
+    run['samples'].update(block_samples)
     if commit_capture:
         shutil.copyfile(capture, COMMITTED_CAPTURE)
 
