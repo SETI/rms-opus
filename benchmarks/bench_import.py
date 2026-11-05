@@ -33,6 +33,13 @@ pages and the redo the runs before it left, and a session's later runs would be 
 than its first by their position alone. Each run's details record the restarts and how
 long each took (``server_restarts``).
 
+At fixture and test scale the timed runs are preceded by one **warm-up import** of the
+scale's bundles, without finalization, recorded as kind ``import_warmup`` and never
+compared. The server reads its own files with ``O_DIRECT``, but the import reads the
+holdings through the operating system's page cache, so without it a session's first run
+would read them from disk and the rest from memory. The complete scale's holdings do not
+fit in the page cache, so its runs have no warm-up.
+
 A run fails, and records nothing, when an invocation exits non-zero, when a bundle
 import leaves a bundle without a row in the permanent ``obs_general`` (or, in the
 incremental group, without new rows), or when the run's ``ERRORS.log`` is not empty at
@@ -331,11 +338,11 @@ class ImportBench:
         if len(self.spelling.write_schema_version) > 0:
             self._invoke(monitor, config_file, [*self.spelling.write_schema_version, *timing])
 
-    def run_fixture(self, index: int, *, finalize: bool = True) -> tuple[dict[str, Any], str]:
+    def run_fixture(self, index: int | str, *, finalize: bool = True) -> tuple[dict[str, Any], str]:
         """Import the fixture through `build_run.perform_run`.
 
         Parameters:
-            index: The run's index.
+            index: The run's index, or ``warmup``.
             finalize: False to stop after the bundle imports.
 
         Returns:
@@ -376,12 +383,12 @@ class ImportBench:
         return run, schema
 
     def run_holdings(
-        self, index: int, *, profile: bool, finalize: bool = True
+        self, index: int | str, *, profile: bool, finalize: bool = True
     ) -> tuple[dict[str, Any], str]:
         """Import a holdings scale's groups, then the extra test-scale groups.
 
         Parameters:
-            index: The run's index.
+            index: The run's index, or ``warmup``.
             profile: Whether to profile each bundle-import invocation with cProfile.
             finalize: False to stop after the bundle imports, skipping the extra groups.
 
@@ -423,6 +430,26 @@ class ImportBench:
             self._incremental(run, index, schema)
         return run, schema
 
+    def warm_up(self) -> dict[str, Any]:
+        """Import the scale's bundles once, untimed, so the timed runs read warm holdings.
+
+        The server reads its own files with ``O_DIRECT``, so every run starts on a cold
+        buffer pool, but the import reads the holdings through the operating system's
+        page cache. Without this the session's first run would read them from disk and
+        its later runs from memory, by an amount set by whatever the computer did before
+        the session.
+
+        Returns:
+            The run, of kind ``import_warmup``, which is recorded but never compared.
+        """
+        if self.label.scale == 'fixture':
+            run, schema = self.run_fixture('warmup', finalize=False)
+        else:
+            run, schema = self.run_holdings('warmup', profile=False, finalize=False)
+        drop_schema(self.server, schema)
+        run['kind'] = 'import_warmup'
+        return run
+
     def run_finalize_only(self, source: str) -> tuple[dict[str, Any], str]:
         """Copy an unfinalized schema into one of the side's own, and finalize the copy.
 
@@ -446,7 +473,7 @@ class ImportBench:
         run['details']['source_schema'] = source
         return run, schema
 
-    def _largest_alone(self, run: dict[str, Any], index: int) -> None:
+    def _largest_alone(self, run: dict[str, Any], index: int | str) -> None:
         """Import the largest bundle alone into a fresh schema, and record it.
 
         Parameters:
@@ -471,7 +498,7 @@ class ImportBench:
         run['details']['largest_alone'] = monitor.summary()
         drop_schema(self.server, schema)
 
-    def _incremental(self, run: dict[str, Any], index: int, source: str) -> None:
+    def _incremental(self, run: dict[str, Any], index: int | str, source: str) -> None:
         """Append the largest bundle to a copy of the finished schema, and finalize.
 
         The copy already holds the bundle, so the usual check that it has rows would
@@ -643,6 +670,12 @@ def top_functions(profile: Path) -> list[dict[str, Any]]:
     return entries[:PROFILE_TOP]
 
 
+#: The scales whose holdings fit in the page cache, so a session's import runs are
+#: preceded by one untimed warm-up import (`ImportBench.warm_up`). The complete scale's
+#: do not fit, so each of its runs reads them from disk alike.
+WARMED_SCALES = ('fixture', 'test')
+
+
 def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     """Read the command line, and refuse combinations that measure nothing coherent.
 
@@ -761,6 +794,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         finalize = not args.stop_before_finalization
         count = scenario.runs if args.runs is None else args.runs
         existing = _existing_import_runs(label)
+        if args.scale in WARMED_SCALES:
+            path = append_runs(label, environment, [bench.warm_up()])
+            sys.stdout.write(f'warm-up import recorded in {path}\n')
         for offset in range(count):
             index = existing + offset + 1
             if args.scale == 'fixture':

@@ -4411,3 +4411,14 @@ Nothing above this line is rewritten by an executor.
   `innodb_io_capacity` and `innodb_io_capacity_max`, sized from a measurement of the
   device. Changing the harness's value changes the baseline, so the floors would then be
   retaken.
+- The floor sessions were retaken after the pre-PR review, which found that the
+  concurrency scenario's shared half started on what its distinct half had loaded (each
+  half now starts from its own reset) and that the app-cold page guards were per-request
+  latencies (they are now the scenario's wall-clock). The first retaken fixture session,
+  started after the complete-scale import and some hours idle, took 7.5 s over its first
+  run's largest bundle against about 2.7 s in its other runs, which set that guard's
+  floor at 1.72: the import reads the holdings through the page cache, which the
+  complete-scale import had emptied of the fixture's files, while the server reads with
+  `O_DIRECT`. `bench_import` now makes one untimed warm-up import, without finalization,
+  before the timed runs at fixture and test scale, recorded as kind `import_warmup` and
+  never compared. That session was not committed.

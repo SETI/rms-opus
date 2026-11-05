@@ -164,6 +164,15 @@ the dirty pages and the redo the runs before it left, and a session's later runs
 be slower than its first by their position alone. The run's details record each
 restart and how long it took (``server_restarts``).
 
+At fixture and test scale the timed runs are preceded by one **warm-up import** of the
+scale's bundles, without finalization, recorded in the result file as a run of kind
+``import_warmup`` and never compared. The server reads its own files with ``O_DIRECT``,
+so every run starts on a cold buffer pool, but the import reads the holdings through the
+operating system's page cache: without the warm-up, a session's first run would read
+them from disk and its later runs from memory, by an amount that depends on what the
+computer did before the session. The complete scale's holdings do not fit in the page
+cache, so each of its runs reads them from disk alike, and it has no warm-up.
+
 Each invocation's wall-clock and memory are recorded -- each process's peak resident set
 and the peak, over once-a-second samples, of the process tree's summed proportional set
 size -- with the step timings the invocation writes through ``--timing-json``
