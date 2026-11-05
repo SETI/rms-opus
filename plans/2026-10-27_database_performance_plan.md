@@ -4327,3 +4327,30 @@ Nothing above this line is rewritten by an executor.
   load average to settle to 3 or below, since the previous session's own work raises
   it, and does not start the session otherwise. The operator accepted this rule on
   2026-11-04.
+
+### 2026-11-05, PR-00 (written against this file at b9409b94)
+
+- The test-scale floor sessions of 2026-11-04 showed every session's third import run
+  much slower than its first two (`import.wall_s` 656, 493 and 516 s against about 386 s)
+  with identical server counters, which gave `import.wall_s` a test-scale floor of 0.70.
+  The cause was the server state each run inherited on the same mysqld: the dirty pages
+  and redo the earlier runs left. `bench_import` now restarts the owned server cleanly
+  before every timed import (each run, the largest bundle alone, and the incremental
+  group's append), and records the restarts in the run's `server_restarts` detail. A
+  three-run test-scale experiment with the restarts, on 2026-11-05, gave 385.6, 385.7 and
+  385.8 s, so the cause was InnoDB's flushing, not the disk; no disk settle step was
+  needed. Those sessions and the experiment were not committed.
+- The floors every later PR is judged against at fixture and test scale are
+  `benchmarks/results/2026-11-05_PR-00_floors_fixture_mysql.json` and
+  `benchmarks/results/2026-11-05_PR-00_floors_test_mysql.json`, from the sessions
+  `2026-11-05_PR-00_before_{fixture,test}_mysql_{a,b,c}.json`, all measured at commit
+  330e4a3a.
+- Three floor sessions were taken at each scale, since sessions a and b disagreed on some
+  metrics at both. The workstation's one-minute load average at each session's start was
+  1.85, 2.64 and 2.77 (fixture a, b, c) and 2.69, 2.81 and 2.72 (test a, b, c), and at
+  the start of the individual runs 1.8 to 9.0, raised by the harness's own work. The
+  operator confirmed the workstation free for the whole job; Chrome had been closed and
+  an IDrive backup was running throughout.
+- `benchmarks/scenarios/queries.sql` is the capture of 2026-11-05 from the test-scale
+  schema of session c, taken under the session label `capture`, whose result file was not
+  committed.
