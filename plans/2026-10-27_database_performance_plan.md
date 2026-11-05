@@ -4354,3 +4354,58 @@ Nothing above this line is rewritten by an executor.
 - `benchmarks/scenarios/queries.sql` is the capture of 2026-11-05 from the test-scale
   schema of session c, taken under the session label `capture`, whose result file was not
   committed.
+- PR-00's complete-scale measurement is
+  `benchmarks/results/2026-11-05_PR-00_before_complete_mysql_a.json`: one import from
+  `import_complete.toml`, then `bench_db` with `--dump-queries --ascii-columns`, then one
+  `bench_web` run (each state once), measured at commit 1a1e607f (the harness of
+  330e4a3a) on 2026-11-05, starting at a one-minute load average of 1.5. The import ran
+  without error and left `ERRORS.log` empty. Its `import.wall_s` was 18,235 s, of which
+  17,620 s were the bundle imports and 613 s the finalization sequence; the tree's peak
+  PSS was 3,065,038 KiB; the filesystem holding the server's data root went from 1.1 TB
+  to 961 GB free.
+- At complete scale the import holds 985 bundles (`details.bundle_count`) and 1,627,081
+  `obs_general` rows. The bundle with the most rows is COVIMS_0003, with 50,123
+  (`import.largest.obs_general_rows`); its `--import` took 287 s
+  (`import.largest.import_s`).
+- The complete-scale schema's data is 45,287,538,688 bytes and its indexes
+  37,900,828,672 bytes (`db.schema.data_bytes`, `db.schema.index_bytes`), over 230
+  tables, with no `FULLTEXT` tablespaces; schema to buffer pool is 4.30
+  (`db.schema.total_to_buffer_pool`), so the app-cold state reads from disk as well as
+  db-cold. `obs_files` alone is 34,070 MiB of data and 23,159 MiB of indexes, with
+  50,647,642 rows. Every table's bytes, rows and index count are the
+  `db.table.<table>.{data_bytes,index_bytes,rows,index_count}` metrics of the file's `db`
+  run; `python -c "import json; m=[r for r in json.load(open('benchmarks/results/2026-11-05_PR-00_before_complete_mysql_a.json'))['runs'] if r['kind']=='db'][0]['metrics']; print({k: v for k, v in m.items() if k.startswith('db.table.')})"`
+  prints them.
+- Each mult table's `MAX(id)` is its `db.table.mult_<...>.max_id` metric in the same run,
+  printed by the command above. The largest are 500 (`mult_obs_general_instrument_id`
+  and `mult_obs_profile_host`), then 295 (`mult_obs_mission_cassini_rev_no`) and 207
+  (`mult_obs_general_target_name`); every mult table's `MAX(id)` fits a `SMALLINT`.
+- The non-ASCII column set PR-17 reads is empty at complete scale: `bench_db
+  --ascii-columns` counted no non-ASCII value in any of the 19 columns whose
+  `pi_form_type` is `STRING` (`details.ascii_columns` of the `db` run).
+- `obs_general.preview_images` averages 642 bytes (`JSON_STORAGE_SIZE`), 1,045,117,748
+  bytes in all, 0.47 of `obs_general`'s data length (`details.preview_images`).
+- Because every timed import starts on a freshly restarted server, a test-scale import
+  measures the server's burst write capacity: the buffer pool and the redo log absorb the
+  run's writes, about 6 GB per run (`import.server.Innodb_data_written`). A
+  complete-scale import, which wrote 350 GB, spends nearly all its time at the sustained
+  write rate. The third runs of 2026-11-04 showed that rate is already below what one
+  importer writes, at this tuning baseline. PR-09, PR-16 and PR-16a raise the import's
+  write rate, so in addition to the judged (restarted) runs, each reports its after side
+  under sustained writes: three test-scale imports back to back on one server with no
+  restart between them, giving the third run's `import.wall_s` beside the first's. The
+  first of those PRs adds the `bench_import` option that skips the restarts.
+- PR-04, the first PR that changes the write path, adds write-pressure counters to every
+  import run's server metrics: the largest checkpoint age the run reached
+  (`Innodb_redo_log_current_lsn` less `Innodb_redo_log_checkpoint_lsn`), sampled
+  alongside the memory samples, and the deltas of `Innodb_buffer_pool_wait_free`,
+  `Innodb_buffer_pool_pages_flushed`, `Innodb_os_log_written` and `Innodb_data_written`.
+  These let a reader see whether a run reached the sustained write limit.
+- The tuning baseline sets `innodb_io_capacity` to 1000, with `innodb_io_capacity_max` at
+  2000, the MySQL documentation's figure for an ordinary SSD. At 16 KiB pages that caps
+  background flushing at roughly 16 to 32 MB/s, well under what the workstation's NVMe
+  drive sustains. It is the likely reason one importer outruns the sustained rate; this
+  has not been measured. PR-25's server-settings page should also cover
+  `innodb_io_capacity` and `innodb_io_capacity_max`, sized from a measurement of the
+  device. Changing the harness's value changes the baseline, so the floors would then be
+  retaken.
