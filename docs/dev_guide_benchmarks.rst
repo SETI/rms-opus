@@ -156,6 +156,14 @@ scenario file's groups. At test scale the run goes on to import the scenario's l
 bundle alone into a fresh schema, and to time the **incremental group**: a copy of the
 finished schema, the largest bundle imported into it, and the finalization sequence.
 
+Every timed import starts on a **freshly restarted server**: before each run, before the
+largest bundle's import alone, and between the incremental group's copy and its append,
+the harness shuts the owned MySQL server down cleanly, which writes out every dirty page
+and checkpoints the redo log, and starts it again. Without that, each run would inherit
+the dirty pages and the redo the runs before it left, and a session's later runs would
+be slower than its first by their position alone. The run's details record each
+restart and how long it took (``server_restarts``).
+
 Each invocation's wall-clock and memory are recorded -- each process's peak resident set
 and the peak, over once-a-second samples, of the process tree's summed proportional set
 size -- with the step timings the invocation writes through ``--timing-json``

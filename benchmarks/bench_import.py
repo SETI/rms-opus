@@ -25,6 +25,14 @@ finalization sequence on it. `benchmarks.compare` then holds the two sides'
 finalization times to the ceiling the comparison applies in place of the import
 guards.
 
+Every timed import starts on a **freshly restarted server**: the owned mysqld is shut
+down cleanly, which flushes its dirty pages and checkpoints its redo log, and started
+again, before each full run, before the largest bundle's import alone, and between the
+incremental group's copy and its append. Otherwise each run would inherit the dirty
+pages and the redo the runs before it left, and a session's later runs would be slower
+than its first by their position alone. Each run's details record the restarts and how
+long each took (``server_restarts``).
+
 A run fails, and records nothing, when an invocation exits non-zero, when a bundle
 import leaves a bundle without a row in the permanent ``obs_general`` (or, in the
 incremental group, without new rows), or when the run's ``ERRORS.log`` is not empty at
@@ -45,6 +53,7 @@ import pstats
 import shutil
 import subprocess  # nosec B404 - the harness runs the side's import
 import sys
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -165,6 +174,22 @@ class ImportBench:
         """
         label = self.label
         return f'bench_{label.scale}_{label.side}_{label.session}_{index}{suffix}'
+
+    def fresh_server(self, run: dict[str, Any], before: str) -> None:
+        """Restart the owned server cleanly before a timed import, and record it.
+
+        A clean shutdown flushes every dirty page and checkpoints the redo log, so the
+        import that follows starts from the same server state as every other.
+
+        Parameters:
+            run: The result run, whose ``server_restarts`` detail gains the restart's
+                wall-clock under `before`.
+            before: What the restart precedes: ``run``, ``largest_alone``,
+                ``incremental`` or ``finalize``.
+        """
+        started = time.perf_counter()
+        self.server.restart()
+        run['details'].setdefault('server_restarts', {})[before] = time.perf_counter() - started
 
     def _monitor(self, schema: str, timing_file: Path, config_file: Path) -> InvocationMonitor:
         """Return a monitor for one run into one schema.
@@ -330,6 +355,7 @@ class ImportBench:
         monitor.expect_groups(bundles)
         credentials = DatabaseCredentials(host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
         run = new_run('import' if finalize else 'import_unfinalized')
+        self.fresh_server(run, 'run')
         before = self._status()
         build_run.perform_run(
             run_dir,
@@ -372,6 +398,7 @@ class ImportBench:
         kind = 'import_profile' if profile else 'import'
         run = new_run(kind if finalize else 'import_unfinalized')
         profiles: dict[str, Any] = {}
+        self.fresh_server(run, 'run')
         before = self._status()
         self._invoke(monitor, config_file, [*self.spelling.erase, *timing])
         for position, group in enumerate(scenario.groups):
@@ -410,6 +437,7 @@ class ImportBench:
         run_dir = self.label.scratch_dir / 'finalize'
         config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
         run = new_run('finalize')
+        self.fresh_server(run, 'finalize')
         before = self._status()
         self._finalization(monitor, config_file, timing)
         require_empty_errors_log(errors_log, at_end=True)
@@ -433,6 +461,7 @@ class ImportBench:
         config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
         monitor.expect_groups([bundle])
         monitor.expand_groups()
+        self.fresh_server(run, 'largest_alone')
         self._invoke(monitor, config_file, [*self.spelling.erase, *timing])
         self._invoke(monitor, config_file, [self.spelling.bundle_import, *timing, bundle])
         require_empty_errors_log(errors_log, at_end=True)
@@ -467,6 +496,7 @@ class ImportBench:
         monitor.expect_groups([bundle])
         monitor.expand_groups()
         before_id = self._largest_id(schema, bundle)
+        self.fresh_server(run, 'incremental')
         self._invoke(monitor, config_file, [self.spelling.bundle_import, *timing, bundle])
         after_id = self._largest_id(schema, bundle)
         if after_id <= before_id:
