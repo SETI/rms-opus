@@ -85,7 +85,7 @@ architecture Phases 0 to 6 produced.
 | Append invalidation | Every finalization step declares whether an append invalidates it, and the `--finalize` that follows an append re-runs exactly those (PR-08); an append never finalizes by itself (except under `--do-it-all`, which runs `--import` then `--finalize` in one invocation, PR-08). At PR-08 they are PR-07's duplicate step, the aux tables, the cache-table drop (PR-11 turns it into the search-table reset and cache flush), `ANALYZE`, and validation; PR-14's mult step, PR-25's histograms, and PR-24's options, if implemented, add themselves. `--create-indexes` runs in every finalization and adds the keys the schema files declare and a table lacks; on an append of existing tables it finds nothing to do, and a table first created on the append path is keyed by that run. A PR that adds a finalization step adds an append test. |
 | Foreign keys | Child tables are created **without** foreign keys; finalization adds them, **serially and after every index build**, with `foreign_key_checks = 0` (which is what makes `ADD FOREIGN KEY` an in-place operation that does not re-check existing rows; each add takes an exclusive metadata lock on `obs_general`, so they never run concurrently with an `ALTER` on it). Because an unvalidated foreign key never catches orphans, validation gains an anti-join count per child (PR-07). An append loads with the foreign keys in place under `foreign_key_checks = 0`, and the same orphan count covers it. InnoDB performs no cascade while the checks are off, so **the per-bundle delete and the duplicate step always run with `foreign_key_checks = 1`**, and `cart`'s cascade (PR-08) removes the cart rows they orphan; the orphan count covers `cart` too. PostgreSQL note: `ADD CONSTRAINT ... NOT VALID` then `VALIDATE CONSTRAINT`. The permanent schema at the end of an import is unchanged. |
 | Unique checks | MySQL's `unique_checks=0` is **never** set: it lets InnoDB skip uniqueness checks, and the primary and unique keys stay on every table during every load. **`obs_general.opus_id` has a plain key, not a unique one** (PR-07): duplicate OPUS ids load side by side, and one finalization step, the **duplicate step**, keeps the copy with the highest `obs_general.id` and deletes the others (PR-07). **Bundles that share OPUS ids (a calibrated bundle and its raw counterpart, for instance) are deleted and re-imported together**, so a deleted copy never needs to come back, and nothing records it. Ids follow import order on every path (counted up in PR-07 and PR-09, per-bundle ranges in `bundle_number` order from PR-16), so the later bundle wins (from PR-16, the later-registered one, so a re-imported bundle, which keeps its number, loses to any bundle registered after it), and no import, sequential, parallel, or concurrent, looks for duplicates while it loads. |
-| Transactions in the import | Each bulk load is its own transaction, **chunked to about 100,000 rows** (a killed multi-gigabyte load rolls back slowly, and the server finishes the rollback after a restart). |
+| Transactions in the import | Each bulk load is its own transaction, **chunked to `[import] transaction_rows` rows, default 100,000** (PR-04), because a killed multi-gigabyte load rolls back slowly and the server finishes the rollback after a restart. The import's chunked bundle delete uses the same key. An operator lowers it for shorter transactions and less undo per transaction, or raises it for fewer statements and commits. |
 | Golden suites | `import_tests` goldens and the `integration_tests` golden responses are the behavior-preservation gate. A PR that changes the schema regenerates the import goldens with `python -m import_tests.tools.make_mini_goldens` (`docs/dev_guide_import_fixture.rst`) and shows in its description that the diff is confined to the columns and tables it declared. The warning whitelist (`warning_whitelist.txt`, with `test_no_whitelist_entry_is_stale`) is part of the gate: a PR that removes a warning's cause removes its entry in the same PR. **API golden responses change only where a PR names the cause** (PR-13's removal of `ring_obs_id`, PR-14's display rank, PR-17's identifier collation) **and lists every changed golden with its reason for one ruling**; otherwise they never change. |
 | Surface geometry | One physical table, `obs_surface_geometry_target`, keyed `(target_name, obs_general_id)`, absorbs the per-target tables. The per-target **categories** (`obs_surface_geometry__<target>`), which the public API exposes in `api/categories` and in every `SURFACEGEO<target>_<field>` slug, and the selector category `obs_surface_geometry_name`, stay as **data** in `table_names`, `param_info`, and `partables`; the application resolves a category to the table plus an optional `target_name` filter through one function. A new target becomes a mult row and its category rows, written by the import; no table is created, no model is generated, nothing is redeployed (PR-15). |
 | Mult values | One `mult` table keyed `(field_id, id)` replaces the per-column `mult_` tables (PR-14). The display order is an integer rank that finalization recomputes for every field from typed values, so it never depends on import order; values no observation references are deleted in finalization except in fields whose schema lists the choices. A value is renamed by a `mult_overrides` entry in its column's schema, applied without a re-import by the code-only deploy. **Search results sorted by a mult column sort by label text, and that never changes.** |
@@ -949,7 +949,8 @@ as `item n`, and to the design document as `§D-n`.
     never reads the file; never CSV) to a file under `[import] scratch_dir` and issues
     `LOAD DATA LOCAL INFILE ... INTO TABLE ... CHARACTER SET utf8mb4 (col, ...)` (the
     statement interprets the file in `character_set_database` and ignores `SET NAMES`, so
-    the clause is required), **in chunks of about 100,000 rows** (§1, Transactions).
+    the clause is required), **in chunks of `[import] transaction_rows` rows** (default
+    100,000; §1, Transactions).
     **Memory:** rows are appended to the table's scratch file as they are produced and
     never held as a list for the load, so the client's memory does not grow with the chunk
     size; the server holds one chunk's undo in its transaction. The harness's peak-PSS
@@ -983,6 +984,13 @@ as `item n`, and to the design document as `§D-n`.
     `tempfile`; a test-scale file is gigabytes, so the docs say to point it at disk when
     the system default is memory-backed) and `[import] bulk_load`, per §1's
     configuration-key rule; `importdb.get_db` gains the parameter.
+  - `[import] transaction_rows`, per the same rule: a positive integer, default 100000
+    (the reader rejects zero, a negative number, and a non-integer), the most rows one
+    bulk load, or one chunk of PR-08's bundle delete, writes in one transaction. Its
+    rows in the key tables say what lowering it buys (a shorter rollback when a load is
+    killed, less undo held per transaction) and what it costs (more statements and
+    commits). It is distinct from PR-09's `[import] chunk_rows`, which counts index rows
+    per worker task.
   - `SET sql_log_bin = 0` on the import connection at connect when the server has the
     binary log on; if the grant is missing the import logs one **info** line naming
     `--skip-log-bin` and continues. Documented in `user_guide_installation.rst`'s
@@ -1002,7 +1010,13 @@ as `item n`, and to the design document as `§D-n`.
   the rendering pin are the `import_tests` test above, plus one that loads a duplicate key
   and one that loads a truncated value and assert the raise. The fallback path is
   exercised by one `import_tests` session with `bulk_load = false` (through
-  `write_opus_config(extra_import=...)`).
+  `write_opus_config(extra_import=...)`). No table load reaches 100,000 rows at fixture or
+  test scale, so the import suite's main session sets `transaction_rows` to a small
+  value (as PR-09 sets `chunk_rows = 5`) through `write_opus_config(extra_import=...)`,
+  so that every golden run splits its loads across several transactions; the goldens are
+  the check that the split changes nothing. A `tests/opus_import` case asserts that a load
+  of N rows issues N divided by `transaction_rows`, rounded up, `LOAD DATA` statements,
+  and checks each one's info string.
 - **Measurement:** fixture-scale and test-scale `--import` step wall-clock and
   `Innodb_data_written`, with the single-bundle timing separated. Target metric: `--import`
   wall-clock for the largest bundle.
@@ -1261,8 +1275,8 @@ as `item n`, and to the design document as `§D-n`.
   `create_tables_for_import(..., 'perm')`, `delete_duplicate_opus_id_from_perm_tables`,
   the copy, `copy_mult_from_import_to_permanent`, and the drop-new-import-tables step.
   **Added at the start of each bundle:** `delete_bundle_from_obs_tables(ctx, bundle_id,
-  'perm')`, in chunks of 100,000 `obs_general.id` values (§1, Transactions), so a rerun is
-  clean. The
+  'perm')`, in chunks of `[import] transaction_rows` `obs_general.id` values (§1,
+  Transactions), so a rerun is clean. The
   warning "Deleting bundles from perm tables but cart table not wiped" no longer arises
   on the fixture's golden path, so its `warning_whitelist.txt` entry is removed in this
   PR, per §1, Golden suites.
