@@ -4288,3 +4288,42 @@ Nothing above this line is rewritten by an executor.
 - `db-perf`'s protection should require the contexts `main` requires: `Run Lint`, `Unit
   Tests (3.12)`, `Unit Tests (3.13)`, `Import Tests`, `Docs`, `Package`, and `Integration
   Tests (self-hosted-linux, 3.12)`.
+- The fixture floor sessions taken on the afternoon of 2026-11-04 exposed three harness
+  defects, fixed in the PR's `fix(benchmarks)` commit; those sessions' results were not
+  committed either.
+- Defect one: warm latencies were bimodal (warm `categories` about 11 ms or about 265 ms)
+  because Django imports its URLconf, and with it every view module, on a worker
+  process's first request, and gunicorn hands a connection to whichever worker accepts
+  it. The harness now starts every side's gunicorn with `benchmarks/gunicorn_hooks.py`
+  as its configuration file: `post_worker_init` imports the URLconf and `post_request`
+  writes which worker served each request to a served log. From that log the harness
+  checks that every cold scenario starts on workers that have served nothing, and before
+  each warm repetition it reissues the scenario's requests, workers times threads at a
+  time, until every worker has served every one of them.
+- Because `post_worker_init` loads the URLconf eagerly, app-cold and db-cold exclude the
+  URLconf import (about 250 ms per worker on the fixture), as they already excluded the
+  application import (`app_loading = "eager"`). The operator accepted this on
+  2026-11-04.
+- Defect two: every `db.plan` metric had a spread of zero, because `bench_db` recorded one
+  value per run (the sum of its statements' medians). A block's time in each of its five
+  executions is now kept in the run's `samples`, the metric is `db.plan.<tag>.time_s`,
+  and `compare` takes its median and spread over the executions.
+- Defect three: `rows_examined` differed between sessions on identical data, for two
+  reasons. The application loads lookups (`param_info`, mult labels, a thread's
+  connection settings) into a process or thread on first use, so which captured request
+  carried those statements depended on the worker that served it; the capture is now
+  served by one gunicorn worker with one thread. And the `EXPLAIN ANALYZE` parser skipped
+  every iterator line whose time or row count MySQL printed in exponent notation
+  (`952e-6`); it now reads them.
+- A cold state's per-request metrics carry genuine spread: a request pays the
+  application's lazy per-process lookups or not depending on whether an earlier request
+  of the same scenario reached the same worker. Cold states are judged on the scenario's
+  wall-clock (`web.<state>.<scenario>.wall_s`), not on its per-request latencies.
+  The operator accepted this on 2026-11-04.
+- `web.<state>.<scenario>.server.Innodb_buffer_pool_reads` is usually zero with an
+  occasional non-zero run, so its median is zero and its spread, and so its floor, is
+  infinite (`Infinity` in the floors file). It is diagnostic and never judged.
+- Before each floor session the harness waits up to fifteen minutes for the one-minute
+  load average to settle to 3 or below, since the previous session's own work raises
+  it, and does not start the session otherwise. The operator accepted this rule on
+  2026-11-04.
