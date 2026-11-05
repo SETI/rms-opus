@@ -989,8 +989,8 @@ as `item n`, and to the design document as `§D-n`.
     bulk load, or one chunk of PR-08's bundle delete, writes in one transaction. Its
     rows in the key tables say what lowering it buys (a shorter rollback when a load is
     killed, less undo held per transaction) and what it costs (more statements and
-    commits). It is distinct from PR-09's `[import] chunk_rows`, which counts index rows
-    per worker task.
+    commits). It is distinct from PR-09's `[import] worker_rows`, which counts index
+    rows per worker task.
   - `SET sql_log_bin = 0` on the import connection at connect when the server has the
     binary log on; if the grant is missing the import logs one **info** line naming
     `--skip-log-bin` and continues. Documented in `user_guide_installation.rst`'s
@@ -1012,7 +1012,7 @@ as `item n`, and to the design document as `§D-n`.
   exercised by one `import_tests` session with `bulk_load = false` (through
   `write_opus_config(extra_import=...)`). No table load reaches 100,000 rows at fixture or
   test scale, so the import suite's main session sets `transaction_rows` to a small
-  value (as PR-09 sets `chunk_rows = 5`) through `write_opus_config(extra_import=...)`,
+  value (as PR-09 sets `worker_rows = 5`) through `write_opus_config(extra_import=...)`,
   so that every golden run splits its loads across several transactions; the goldens are
   the check that the split changes nothing. A `tests/opus_import` case asserts that a load
   of N rows issues N divided by `transaction_rows`, rounded up, `LOAD DATA` statements,
@@ -1795,9 +1795,9 @@ as `item n`, and to the design document as `§D-n`.
     after the index's `metadata`, `vol_info`, `table_schemas`, and the parsed `args` have
     been installed in a module-level global the forked workers inherit; **nothing is
     pickled per task but a `(start, end)` row range**. **Small-index fallback:** when the
-    index has fewer rows than `chunk_rows` the loop runs in-process as if `workers = 1`.
+    index has fewer rows than `worker_rows` the loop runs in-process as if `workers = 1`.
     The fixture's index tables are about twenty rows, so the fixture sessions set
-    `chunk_rows = 5` (through `write_opus_config(extra_import=...)`) so that the pool path
+    `worker_rows = 5` (through `write_opus_config(extra_import=...)`) so that the pool path
     is what the goldens exercise.
   - **The inherited connections.** A forked worker inherits every MySQL socket the parent
     has open (the import's connection, any sibling, and from PR-16a the importer's
@@ -1817,11 +1817,16 @@ as `item n`, and to the design document as `§D-n`.
     has no pool. The worker's own `ctx.db` is `None`. Pool
     workers exit by `os._exit`, so only the initializer matters, and the PR says so in a
     comment on the initializer. A test in `import_tests` starts an import with `workers = 3`
-    and `chunk_rows = 5` as a subprocess, waits until its pool workers exist (the
+    and `worker_rows = 5` as a subprocess, waits until its pool workers exist (the
     process's children, read from `/proc`; the test runs on Linux only), kills the parent with `SIGKILL`, and asserts that
     no worker survives within five seconds and that the server's `PROCESSLIST` holds no
     session of that run; PR-16a's kill test builds on it.
-  - **Chunk size.** `[import] chunk_rows`, default 500 index rows.
+  - **Task size.** `[import] worker_rows`, per §1's configuration-key rule: a positive
+    integer, default 500 (the reader rejects zero, a negative number, and a
+    non-integer), the index rows one worker task covers. Its rows in the key tables say
+    what it trades: smaller tasks keep every worker busy closer to the end of an index,
+    larger ones spend less on per-task overhead. It is distinct from PR-04's
+    `[import] transaction_rows`, which counts table rows per database transaction.
   - **What a worker computes.** For each index row in its range, exactly what the serial
     loop computes today for that row, through the same `import_observation_table` calls,
     with three substitutions: ids come from a chunk-local counter per table starting at
@@ -1881,9 +1886,9 @@ as `item n`, and to the design document as `§D-n`.
     The harness records the tree's peak PSS, which counts a shared page once, and each
     process's `VmHWM` (§2.2), and the PR reports both.
 - **Determinism test:** `import_tests` imports one bundle with `workers = 1` and `workers =
-  3` (both with `chunk_rows = 5`) into two schemas and asserts the dumped tables and the
+  3` (both with `worker_rows = 5`) into two schemas and asserts the dumped tables and the
   logs (timestamps stripped) are identical. The fixture suite's main run uses `workers =
-  "max"`, `index_workers = "max"` (replacing PR-07's `2`), and `chunk_rows = 5`, so the pool path is the golden
+  "max"`, `index_workers = "max"` (replacing PR-07's `2`), and `worker_rows = 5`, so the pool path is the golden
   path; the negative-case runs use `workers = 1`. **Every fixture session states its
   host size** through `write_opus_config(extra_import=...)`: `import_tests/conftest.py`
   sets `cpus = 4` when the `RUNNER_ENVIRONMENT` environment variable is `github-hosted`
@@ -3077,9 +3082,13 @@ once (§1, Deploy; §2.3).
   and four `--join` processes started by the harness, with a fixed total of
   `--workers` divided among them; each bundle's import time beside
   its `size_estimate` so a poor estimate shows; the wall-clock of registering every bundle
-  of the complete holdings, which reads only their labels. Target metric: import
-  wall-clock at four importers, judged against the merge-base's one-process import at
-  the same total `--workers`.
+  of the complete holdings, which reads only their labels; and the four-importer import
+  once more with `[import] transaction_rows = 1000`, so most test-scale table loads split
+  into several transactions, reported beside the default run (no test-scale load reaches
+  the default 100,000, so this is the only measurement of split loads under concurrent
+  writers before the complete-scale import relies on them; reported, not judged). Target
+  metric: import wall-clock at four importers, judged against the merge-base's
+  one-process import at the same total `--workers`.
 - **Acceptance:** §2.5; goldens equal in the mult-value mode.
 - **Requires full re-import:** yes (the id scheme, the rebuilt registry, and
   `mult_field.last_id`).
@@ -3206,7 +3215,7 @@ once (§1, Deploy; §2.3).
     coordinator's table from any computer, read-only. `--prepare` and `--finish` remain
     as single steps.
   - **Tests.** An `import_tests` case kills one of three importers mid-bundle, with
-    `SIGKILL` while its PR-09 pool is running (each importer at `workers = 2` and `chunk_rows
+    `SIGKILL` while its PR-09 pool is running (each importer at `workers = 2` and `worker_rows
     = 5`, so the pool's forked workers exist when it dies), and asserts that the importer's
     lock is free within five seconds (PR-09's initializer closed the workers' inherited
     descriptors and set their parent-death signal, so no worker keeps the session alive),
@@ -3214,7 +3223,7 @@ once (§1, Deploy; §2.3).
     mult-value mode, to the one-importer schema; a second asserts that a bundle lost
     twice is `failed` and finalization does not run; a third interrupts twice and asserts
     that a rerun resumes to the same result; a fourth starts one `--join` importer with
-    `chunk_rows = 5` and the new fault site `OPUS_IMPORT_FAULT=hold_after_chunk:5`, which
+    `worker_rows = 5` and the new fault site `OPUS_IMPORT_FAULT=hold_after_chunk:5`, which
     sleeps five seconds after the bundle's first chunk commits, and during the hold, so
     mid-bundle, the test kills the importer's lock connection with `KILL
     <IS_USED_LOCK(lock name)>` from its own connection, then asserts that the importer
