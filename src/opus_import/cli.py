@@ -488,7 +488,11 @@ def main() -> None:
     """
     command_list = sys.argv[1:]
 
-    args = _create_argument_parser().parse_args(command_list)
+    parser = _create_argument_parser()
+    args = parser.parse_args(command_list)
+    if args.timing_json is not None and not args.timing_json.parent.is_dir():
+        # The file is written at exit, too late for its failure to change the exit status.
+        parser.error(f'--timing-json: the directory {args.timing_json.parent} does not exist')
 
     if args.do_it_all:
         args.drop_old_import_tables = True

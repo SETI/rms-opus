@@ -116,6 +116,13 @@ def test_parser_reads_the_timing_file_as_a_path() -> None:
     assert parser.parse_args(['--timing-json', 'out/t.json']).timing_json == Path('out/t.json')
 
 
+def test_a_timing_file_in_a_missing_directory_is_refused_at_once(tmp_path: Path) -> None:
+    """The file is written at exit, so a directory it cannot be written in fails up front."""
+    result = _run_without_settings(tmp_path, '--timing-json', 'missing/t.json', '--validate-perm')
+    assert result.returncode == 2
+    assert '--timing-json: the directory missing does not exist' in result.stderr
+
+
 def test_step_timings_are_written_with_their_total(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
