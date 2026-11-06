@@ -1,5 +1,9 @@
 """Questions the harness asks a side's own code, run by that side's interpreter.
 
+A side is one of the two versions of OPUS an A/B compares -- the before side, the commit
+a change starts from, or the after side, the commit with the change -- as a checkout of
+that commit and a virtual environment with the checkout installed (`benchmarks.sides`).
+
 The harness always runs from the PR's checkout, but what a side imports, which settings
 it starts with, and which bundles an import descriptor stands for are properties of
 that side's code. So the harness runs this file as a script with the side's interpreter

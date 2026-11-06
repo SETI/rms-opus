@@ -1,10 +1,21 @@
-"""One side of an A/B: its interpreter, its checkout, and how its CLI spells each step.
+"""The code being measured: one side of an A/B, and how its CLI spells each step.
 
-The harness runs from the PR's checkout and measures any commit from its own first on,
-so the import's options are read from each side's ``opus_import --help`` once per
-command, and each step is spelled by a fixed rule (`Spelling.from_help`). A side lists
-an option when its help shows that exact option string as a whole token, so
-``--validate`` is not found inside ``--validate-perm``.
+A comparison measures two versions of OPUS on the same machine, holdings and scenarios:
+the **before** side, the commit a change starts from, and the **after** side, the commit
+with the change. Each side is a checkout of its commit together with a virtual
+environment that has that checkout installed, named on every bench command by
+``--python`` (the environment's interpreter) and ``--repo-root`` (the checkout). One
+command measures one side; `benchmarks.compare` then sets the two result files against
+each other. A floor session measures one side, the before side, several times over.
+
+The harness itself always runs from the PR's checkout, but everything it measures --
+the import, the web application, the settings they start with -- runs as the side's
+own programs, in the side's checkout, with the side's interpreter (`Side.run`). That
+lets it measure any commit from its own first on, including ones whose command line
+differs from the PR's, so the import's options are read from each side's ``opus_import
+--help`` once per command, and each step is spelled by a fixed rule
+(`Spelling.from_help`). A side lists an option when its help shows that exact option
+string as a whole token, so ``--validate`` is not found inside ``--validate-perm``.
 """
 
 from __future__ import annotations
