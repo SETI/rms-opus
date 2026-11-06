@@ -312,12 +312,13 @@ def test_three_sessions_that_still_disagree_mark_the_metric_noisy() -> None:
 def test_the_floors_file_is_named_for_its_pr_scale_and_brand(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The floors file sits beside the sessions, named as the layout says."""
+    """The floors file is written to the floors directory, named as the layout says."""
     monkeypatch.setattr(compare, 'FLOORS_DIR', tmp_path)
     paths = []
     for session, value in (('a', 1.0), ('b', 3.0)):
         path = tmp_path / f'2026-11-03_PR-00_before_fixture_mysql_{session}.json'
-        path.write_text(json.dumps(_result([{'a_s': value}])))
+        environment = {'git_sha': 'a', 'git_dirty': False}
+        path.write_text(json.dumps(_result([{'a_s': value}], environment=environment)))
         paths.append(path)
     output, disagreeing = compare.write_floors(paths)
     assert output == tmp_path / '2026-11-03_PR-00_floors_fixture_mysql.json'
@@ -462,8 +463,13 @@ def test_a_floor_session_given_twice_is_refused(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     'second',
-    [{'git_sha': 'b', 'git_dirty': False}, {'git_sha': 'a', 'git_dirty': True}],
-    ids=['another-commit', 'dirty-checkout'],
+    [
+        {'git_sha': 'b', 'git_dirty': False},
+        {'git_sha': 'a', 'git_dirty': True},
+        {'git_dirty': False},
+        {'git_sha': 'a'},
+    ],
+    ids=['another-commit', 'dirty-checkout', 'no-commit', 'no-clean-status'],
 )
 def test_floor_sessions_of_more_than_one_clean_commit_are_refused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, second: dict[str, Any]
@@ -477,6 +483,23 @@ def test_floor_sessions_of_more_than_one_clean_commit_are_refused(
             {'git_sha': 'a', 'git_dirty': False},
         ),
         _write_session(tmp_path / '2026-11-03_PR-00_before_fixture_mysql_b.json', 1.0, second),
+    ]
+    with pytest.raises(ResultError, match='one clean commit'):
+        compare.write_floors(paths)
+
+
+def test_floor_sessions_that_record_no_commit_are_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Sessions that agree only in naming no commit could be of any two commits."""
+    monkeypatch.setattr(compare, 'FLOORS_DIR', tmp_path)
+    paths = [
+        _write_session(
+            tmp_path / f'2026-11-03_PR-00_before_fixture_mysql_{session}.json',
+            1.0,
+            {'git_dirty': False},
+        )
+        for session in 'ab'
     ]
     with pytest.raises(ResultError, match='one clean commit'):
         compare.write_floors(paths)

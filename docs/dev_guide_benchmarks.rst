@@ -443,10 +443,10 @@ copies instead: the base imports once with ``--stop-before-finalization``, and e
 side runs ``bench_import --finalize-only --reuse-schema <that schema>``, which copies it
 into a schema of the side's own and runs that side's finalization sequence on the copy;
 the side's result file then names the copy, which its ``bench_db`` and ``bench_web``
-measure. Then::
+measure. Then, with the shell variables ``before`` and ``after`` naming the two sides'
+result files and ``floors`` the floors file of their scale in ``benchmarks/floors/``::
 
-    python -m benchmarks.compare <results>/<before>.json <results>/<after>.json \
-        --floors-file benchmarks/floors/<floors>.json
+    python -m benchmarks.compare "$before" "$after" --floors-file "$floors"
 
 prints every metric's medians, change, spreads, maxima, floor (as a fraction and in the
 metric's units) and verdict. ``compare`` refuses two results whose server model, server

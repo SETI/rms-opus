@@ -646,7 +646,8 @@ def write_floors(paths: Sequence[Path]) -> tuple[Path, list[str]]:
     for session in sessions[1:]:
         check_comparable(sessions[0], session)
     commits = {session['environment'].get('git_sha') for session in sessions}
-    if len(commits) != 1 or any(session['environment'].get('git_dirty') for session in sessions):
+    clean = all(session['environment'].get('git_dirty') is False for session in sessions)
+    if len(commits) != 1 or not all(isinstance(sha, str) and sha for sha in commits) or not clean:
         # Floor sessions measure one commit's noise; two commits' difference is not noise.
         raise ResultError(
             f'floor sessions must all be of one clean commit, not {sorted(map(str, commits))}'
