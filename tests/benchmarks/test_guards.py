@@ -7,7 +7,7 @@ import pytest
 
 from benchmarks import bench_web, import_scenarios
 from benchmarks.bench_web import RequestTiming, WebBench, WebRunError
-from benchmarks.monitor import InvocationMonitor, RunFailedError
+from benchmarks.monitor import InvocationMonitor, RunFailedError, _MemorySampler
 from benchmarks.sides import Spelling
 from import_tests.tools.build_run import StepResult
 
@@ -98,8 +98,13 @@ def test_an_absent_or_empty_errors_log_passes(tmp_path: Path, content: str | Non
     assert (path.read_text() if path.exists() else None) == content
 
 
-def _monitor() -> InvocationMonitor:
-    """Return a monitor that needs no server, for checks that stop before connecting."""
+def _monitor(monkeypatch: pytest.MonkeyPatch) -> InvocationMonitor:
+    """Return a monitor that needs no server, for checks that stop before connecting.
+
+    Its memory sampler takes no samples, since psutil, which a sample needs, comes with
+    the benchmarks extra and the unit suite runs without it.
+    """
+    monkeypatch.setattr(_MemorySampler, '_sample', lambda self: None)
     return InvocationMonitor(
         server=None,  # type: ignore[arg-type]  # never reached by these checks
         schema='bench_x',
@@ -110,21 +115,24 @@ def _monitor() -> InvocationMonitor:
     )
 
 
-def test_an_invocation_that_exits_non_zero_fails_the_run() -> None:
+def test_an_invocation_that_exits_non_zero_fails_the_run(monkeypatch: pytest.MonkeyPatch) -> None:
     """A stopped step is a failed run, whatever its log says."""
-    monitor = _monitor()
+    monitor = _monitor(monkeypatch)
     monitor.step_started(['--validate-perm'])
     with pytest.raises(RunFailedError, match='`validate` exited 255'):
         monitor.step_finished(StepResult(('--validate-perm',), 255, '', 'boom'))
 
 
-def test_a_bundle_group_that_was_not_announced_is_refused() -> None:
+def test_a_bundle_group_that_was_not_announced_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
     """Every group must be expanded up front, so its bundles can be checked after."""
-    monitor = _monitor()
+    monitor = _monitor(monkeypatch)
     monitor.expect_groups(['COISS_2002'])
     monitor.step_started(['--do-all-import', 'COISS_2002'])
     with pytest.raises(RunFailedError, match="'COISS_2008' was not announced"):
         monitor.step_started(['--do-all-import', 'COISS_2008'])
+    # Finish the announced group's step, which stops its sampler before the stub goes.
+    with pytest.raises(RunFailedError, match='exited 1'):
+        monitor.step_finished(StepResult(('--do-all-import', 'COISS_2002'), 1, '', ''))
 
 
 def test_result_count_reads_the_count_from_its_response() -> None:
