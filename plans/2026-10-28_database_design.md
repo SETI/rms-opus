@@ -652,7 +652,8 @@ finalization is an explicit step that the sequences run once at the end.
    Every other table is created with all its keys. Worker
    processes turn index rows into table rows; the parent process assigns ids from the
    bundle's id range (below), resolves mult values, and loads tab-separated text with `LOAD
-   DATA LOCAL INFILE` in chunks of about 100,000 rows, failing on any skipped row or
+   DATA LOCAL INFILE` in chunks of `[import] transaction_rows` rows (default 100,000),
+   failing on any skipped row or
    warning (the statement would otherwise ignore duplicate keys silently). Each bundle is
    deleted from the permanent tables before it is written, so a rerun is clean, and its
    progress is recorded in the bundle registry (below), on a fresh import as on an
