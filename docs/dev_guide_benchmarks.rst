@@ -448,10 +448,11 @@ side runs ``bench_import --finalize-only --reuse-schema <that schema>``, which c
 into a schema of the side's own and runs that side's finalization sequence on the copy;
 the side's result file then names the copy, which its ``bench_db`` and ``bench_web``
 measure. Then, with the shell variables ``before`` and ``after`` naming the two sides'
-result files and ``floors`` the floors file of their scale, all in the results
-directory::
+result files, ``floors`` the floors file of their scale, all in the results directory,
+and ``target`` the metric the change sets out to improve (``--target`` may be given more
+than once; a metric not named is only reported or guarded, never judged improved)::
 
-    python -m benchmarks.compare "$before" "$after" --floors-file "$floors"
+    python -m benchmarks.compare "$before" "$after" --floors-file "$floors" --target "$target"
 
 prints each metric's medians, change, spreads, maxima, floor (as a fraction and in the
 metric's units) and verdict, for every target and guard, every metric only one side

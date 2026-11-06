@@ -228,5 +228,25 @@ def test_the_results_root_is_read_from_server_toml_and_expanded(
         results.results_root(config)
 
 
+@pytest.mark.parametrize(
+    ('content', 'message'),
+    [
+        (None, 'cannot read the results directory'),
+        ('[results\n', 'cannot read the results directory'),
+        ('[server]\n', 'has no \\[results\\] root'),
+    ],
+    ids=['missing', 'invalid', 'no-root'],
+)
+def test_an_unusable_server_toml_is_a_result_error(
+    tmp_path: Path, content: str | None, message: str
+) -> None:
+    """A missing, malformed or incomplete file says what is wrong with it."""
+    config = tmp_path / 'server.toml'
+    if content is not None:
+        config.write_text(content, encoding='utf-8')
+    with pytest.raises(ResultError, match=message):
+        results.results_root(config)
+
+
 def test_the_results_directory_is_outside_the_repository() -> None:
     assert not results.RESULTS_DIR.is_relative_to(results.REPO_ROOT)

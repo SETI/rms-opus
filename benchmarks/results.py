@@ -93,10 +93,16 @@ def results_root(path: Path = SERVER_TOML) -> Path:
         The directory, with ``~`` and environment variables expanded.
 
     Raises:
-        ResultError: If it names an environment variable that is not set.
+        ResultError: If the file cannot be read or parsed, lacks ``[results] root``, or
+            the root names an environment variable that is not set.
     """
-    with path.open('rb') as stream:
-        value = str(tomllib.load(stream)['results']['root'])
+    try:
+        with path.open('rb') as stream:
+            value = str(tomllib.load(stream)['results']['root'])
+    except (OSError, tomllib.TOMLDecodeError) as error:
+        raise ResultError(f'cannot read the results directory from {path}: {error}') from error
+    except (KeyError, TypeError) as error:
+        raise ResultError(f'{path} has no [results] root') from error
     expanded = os.path.expandvars(os.path.expanduser(value))
     if '$' in expanded:
         raise ResultError(f'{value!r} names an environment variable that is not set')
