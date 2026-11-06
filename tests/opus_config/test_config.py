@@ -316,6 +316,10 @@ def test_load_config_accepts_a_whole_number_probability(
             '[django] \'cache_location\' must be "host:port"',
         ),
         (
+            adding('django', 'cache_location', '"127.0.0.1:\u00b2"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
             adding('django', 'cache_location', '"127.0.0.1:0"'),
             '[django] \'cache_location\' must be "host:port"',
         ),
@@ -350,6 +354,7 @@ def test_load_config_accepts_a_whole_number_probability(
         'cache-location-without-a-host',
         'cache-location-port-not-a-number',
         'cache-location-port-too-large',
+        'cache-location-port-not-ascii-digits',
         'cache-location-port-zero',
         'one-unknown-key',
         'two-unknown-keys',

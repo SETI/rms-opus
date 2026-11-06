@@ -462,7 +462,9 @@ class _TableReader:
         """
         value = self.read_str(key, default=default)
         host, separator, port = value.rpartition(':')
-        if separator == '' or host == '' or not port.isdigit() or not 0 < int(port) < 65536:
+        # isdigit alone accepts digits int() rejects, such as superscripts.
+        valid_port = port.isascii() and port.isdigit() and 0 < int(port) < 65536
+        if separator == '' or host == '' or not valid_port:
             self._fail(f'{key!r} must be "host:port" with a port from 1 to 65535, not {value!r}')
         return value
 
