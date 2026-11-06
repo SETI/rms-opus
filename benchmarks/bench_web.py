@@ -77,7 +77,7 @@ from benchmarks.results import (
     p95,
     scenario_hash,
 )
-from benchmarks.sides import Side, SideError, Spelling
+from benchmarks.sides import Side, SideError, Spelling, require_no_pythonpath
 from benchmarks.web_scenarios import (
     PAGE_LIMIT,
     Concurrency,
@@ -811,6 +811,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         argv: The arguments, or None for the command line's.
     """
     args = _parse_arguments(argv)
+    require_no_pythonpath()
     server_config, memcached_binary = load_server_config()
     reexec_with_socket(
         server_config, 'benchmarks.bench_web', sys.argv[1:] if argv is None else argv

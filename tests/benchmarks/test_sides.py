@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.sides import Side, Spelling, listed_options
+from benchmarks.sides import Side, SideError, Spelling, listed_options, require_no_pythonpath
 from opus_import import cli
 
 #: Help text of a side from the harness's first commit's shape.
@@ -161,3 +161,11 @@ def test_only_an_untracked_file_under_src_makes_the_checkout_dirty(
     (tmp_path / path).parent.mkdir(parents=True)
     (tmp_path / path).write_text('x\n')
     assert side.environment()['git_dirty'] is dirty
+
+
+def test_a_set_pythonpath_is_refused() -> None:
+    """Both sides would import the checkout it names, whatever commit each records."""
+    with pytest.raises(SideError, match='unset PYTHONPATH'):
+        require_no_pythonpath({'PYTHONPATH': '/some/checkout/src'})
+    require_no_pythonpath({'PYTHONPATH': ''})
+    require_no_pythonpath({})

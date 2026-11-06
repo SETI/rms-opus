@@ -222,7 +222,9 @@ Each command measures one **side** -- the code installed in one virtual environm
 from one checkout -- named by ``--python`` (the environment's interpreter) and
 ``--repo-root`` (the checkout). The harness itself always runs from the checkout being
 changed, and asks each side's own ``opus_import --help`` how that side spells each step
-of the sequence, so it measures older commits as well as its own.
+of the sequence, so it measures older commits as well as its own. Every command refuses
+to run with ``PYTHONPATH`` set, since everything it starts would import from there
+rather than from the side's checkout.
 
 Every command takes the same label options, which name the result file it writes:
 ``--scale``, ``--side`` (``before`` for the base, ``after`` for the change),

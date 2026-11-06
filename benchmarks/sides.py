@@ -21,6 +21,7 @@ string as a whole token, so ``--validate`` is not found inside ``--validate-perm
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess  # nosec B404 - the harness runs the side's own programs
 from dataclasses import dataclass
@@ -42,6 +43,25 @@ _OPTION_TOKEN = re.compile(r'(?<![\w-])--[A-Za-z0-9][A-Za-z0-9-]*(?![\w-])')
 
 class SideError(Exception):
     """Raised when a side's interpreter cannot answer what the harness asks it."""
+
+
+def require_no_pythonpath(environment: Mapping[str, str] | None = None) -> None:
+    """Refuse to measure while ``PYTHONPATH`` is set.
+
+    Every process the harness runs inherits its environment, so a ``PYTHONPATH`` naming
+    some checkout would have both sides import that checkout's code while recording
+    their own commits; and the side probe, run in isolated mode, would not see it,
+    so the probe and the measured processes would disagree.
+
+    Parameters:
+        environment: The environment to check; this process's own when None.
+
+    Raises:
+        SideError: If ``PYTHONPATH`` is set and not empty.
+    """
+    value = (os.environ if environment is None else environment).get('PYTHONPATH', '')
+    if value != '':
+        raise SideError(f'unset PYTHONPATH ({value!r}): each side must import its own checkout')
 
 
 @dataclass(frozen=True)

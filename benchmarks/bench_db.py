@@ -70,7 +70,7 @@ from benchmarks.results import (
     new_run,
     scenario_hash,
 )
-from benchmarks.sides import Side, Spelling
+from benchmarks.sides import Side, Spelling, require_no_pythonpath
 from benchmarks.web_scenarios import Request, Scenario, load_web_config
 from import_tests.tools import build_run
 
@@ -390,6 +390,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         argv: The arguments, or None for the command line's.
     """
     args = _parse_arguments(argv)
+    require_no_pythonpath()
     if args.commit_capture and not args.dump_queries:
         raise SystemExit('--commit-capture copies the capture --dump-queries makes; give both')
     if args.commit_capture and args.repo_root.resolve() != REPO_ROOT:

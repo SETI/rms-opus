@@ -100,7 +100,7 @@ from benchmarks.results import (
     new_run,
     scenario_hash,
 )
-from benchmarks.sides import Side, Spelling
+from benchmarks.sides import Side, Spelling, require_no_pythonpath
 from import_tests.tools import build_run
 from import_tests.tools.golden_io import DatabaseCredentials
 
@@ -748,6 +748,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         argv: The arguments, or None for the command line's.
     """
     args = _parse_arguments(argv)
+    require_no_pythonpath()
     config, _ = load_server_config()
     reexec_with_socket(config, 'benchmarks.bench_import', sys.argv[1:] if argv is None else argv)
     server = MysqlServer(config)
