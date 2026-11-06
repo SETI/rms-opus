@@ -41,8 +41,7 @@ architecture Phases 0 to 6 produced.
 
 - A benchmark harness and a recorded **baseline** of import, database, and web
   measurements, taken before any change (Phase 0).
-- The import's Python hot spots and the web application's cheap round trips removed
-  (Phase 1).
+- The web application's cheap round trips removed (Phase 1).
 - The import made **parallel** and its write path made **bulk**, behind a schema version
   guard, with **one write path** chosen by the target schema's state: a schema is imported
   fresh, directly, and indexed once at the end, a finalized one is appended to, and the aux and
@@ -116,7 +115,6 @@ binaries the `benchmarks` extra installs or that are already present.
 ```text
 benchmarks/
 ├── README.md                    # pointer to docs/dev_guide_benchmarks.rst
-├── micro/                       # micro-benchmarks (PR-01), writing the same JSON result shape
 ├── __init__.py
 ├── bench_import.py              # times one import run step by step
 ├── bench_db.py                  # schema statistics, plans, index usage
@@ -487,7 +485,7 @@ substantive change the review loop forces:
 **Which PRs import twice.** A test-scale import is minutes (§1, Scales), but a second
 one measures nothing for a PR that leaves the import alone and holds the workstation under
 the idle rule below, so only a PR that changes what the import writes or how it writes it
-runs `bench_import` with both interpreters: PR-01, PR-04, PR-07, PR-08, PR-09, PR-12,
+runs `bench_import` with both interpreters: PR-04, PR-07, PR-08, PR-09, PR-12,
 PR-13 (finalization's key build only adds keys, so a copy of the base could show neither
 the keys it drops nor the columns it removes), PR-14, PR-15, PR-16, PR-16a, PR-17, PR-19,
 PR-20, and PR-24 when option 1 is implemented (its `default_rank` column is declared in
@@ -520,8 +518,8 @@ run.
 
 **A target with no recorded floor.** The floors cover every metric the floor sessions
 measured (§2.6), which include every scenario in §2.2 (the selective search among them).
-A target metric they did not measure (PR-01's micro-benchmark, PR-16's and PR-16a's
-multi-importer imports, PR-23's incremental update) has none, so the executor runs the
+A target metric they did not measure (PR-16's and PR-16a's multi-importer imports,
+PR-23's incremental update) has none, so the executor runs the
 before side (for PR-23, the full import it is compared with) **three times** in its
 session, and the spread of those three runs (§2.6) is the floor the target is judged
 against. PR-21's gate compares two `bench_db` blocks, each run five times (§2.2), and
@@ -851,36 +849,12 @@ as `item n`, and to the design document as `§D-n`.
 
 ### Phase 1: the cheap wins
 
-**PR-01: perf: the import's Python hot spots** (item 7; `§C-3.3`)
+**PR-01: dropped; its changes are PR-14's** (item 7; `§C-3.3`)
 
-- **Changes:**
-  - `do_import_mult.update_mult_table` (the per-row path; `mult_table_lookup_id` is called
-    only from `do_partables.py` and is not the hot spot) probes a `dict[str | None,
-    MultRow]` keyed exactly as its scan compares (`str(val)`, with `None` preserved),
-    tracks the table's max id, and caches the `all_numeric` flag, all held beside the row
-    list in `ctx.mult_table_cache`, whose type in `context.py` changes;
-    `read_or_create_mult_table` creates them once, and both `update_mult_table` and
-    `mult_table_lookup_id` use them.
-  - `ImportContext.logged_import_errors` and `logged_import_warnings` become sets, which
-    `ImportLog.nonrepeating_error` and `nonrepeating_warning` test and add to; nothing reads
-    them in order (`grep -rn "logged_import_" src/opus_import` finds only `context.py`).
-  - `do_import_obs.import_run_field_function` caches the **unbound function** per
-    `(type(obj), func_name)`, taken from the class with `getattr(type(obj), name, None)`,
-    and calls it with the instance; a missing method is cached as `None`. A bound method
-    must not be cached: `instrument_obj` is created per index and in
-    `create_tables_for_import`, and a cached bound method would read the first instance's
-    `_metadata` forever.
-  - No behavior change; the goldens are the proof.
-- **Measurement:** fixture-scale import wall-clock and the cProfile top twenty before and
-  after, plus `benchmarks/micro/mult_lookup.py` (a 10,000-value mult table and a million
-  lookups), since the fixture's mult tables are too small to show the scan. The
-  micro-benchmark runs with each side's interpreter and **builds its table through that
-  side's own `update_mult_table`** (10,000 distinct values, then the lookups), never
-  constructing `ctx.mult_table_cache` itself, so each side's cache has the type that
-  side's `context.py` declares (the base's list of rows, the head's structures). Target
-  metric: cumulative time in `update_mult_table` on the micro-benchmark, with the
-  `nonrepeating_*` functions and `import_run_field_function` as secondaries.
-- **Acceptance:** §2.5; goldens and the warning whitelist unchanged.
+The mult tables are too small for a scan of one to cost anything measurable: the largest
+at complete scale holds 296 rows (Execution notes). The value-to-row dictionary and the
+logged-message sets are made by PR-14, which rewrites the code they belong to; the
+field-function cache is not made at all (§7).
 
 **PR-02: perf: persistent database connections and threaded workers** (item 15; `§C-4.2`; `§D-5`)
 
@@ -2403,7 +2377,7 @@ once (§1, Deploy; §2.3).
 - **Requires full re-import:** yes.
 - **Scale:** test scale.
 
-**PR-14: refactor: one mult table, with a computed display rank** (item 21; `§C-2.6`; `§D-2.8`)
+**PR-14: refactor: one mult table, with a computed display rank** (items 7 and 21; `§C-3.3`; `§C-2.6`; `§D-2.8`)
 
 - **The problem, as the code has it.** Every enumerated column has its own
   `mult_<table>_<column>` table, all of one shape (`table_schemas/mult_template.json`),
@@ -2466,8 +2440,17 @@ once (§1, Deploy; §2.3).
     `group_disp_order=group_info['disp_order']` callers in `obs_general.py` and
     `obs_surface_geometry_name.py` pass `group_pin`, with `planet_group_mapping.py`'s
     `disp_order` strings rewritten as integers by the same script as the `mult_options`
-    lists. The `aliases` and `tooltip` keys leave the field shape in `obs/field_types.py`
-    and `_create_mult`. The 55 `mult_options` lists (`grep -o '"mult_options"'
+    lists. The import's per-field cache (`ctx.mult_table_cache`, whose type in
+    `context.py` changes) holds each field's rows beside a `dict` from value to row, the
+    first row of a value where two share one, keyed exactly as the stored value compares
+    (the absent value being the empty string), and the field's highest id, both kept
+    current as rows are added; `update_mult_table` and `mult_table_lookup_id` probe the
+    dictionary rather than scanning the rows, so a lookup's cost never grows with the
+    field, nor with the one table if a later change loads it whole.
+    `ImportContext.logged_import_errors` and `logged_import_warnings` become sets, which
+    `ImportLog.nonrepeating_error` and `nonrepeating_warning` test and add to; nothing
+    reads them in order. The `aliases` and `tooltip` keys leave the field shape in
+    `obs/field_types.py` and `_create_mult`. The 55 `mult_options` lists (`grep -o '"mult_options"'
     src/opus_import/table_schemas/*.json | wc -l`) state their order element as an integer
     (`'010'` becomes `10`), rewritten once by a script committed with the PR, and the
     reader rejects a string.
@@ -2933,9 +2916,9 @@ once (§1, Deploy; §2.3).
     ever left unused, so the ids are those the serial import assigns. PR-14's unique key and
     its empty-string absent value are what make this safe. The value is written when it is
     assigned, and the per-bundle upsert of every cached mult row (`dump_import_mult_tables`)
-    goes. **PR-01's cached max id goes too**: a process's own maximum is wrong as soon as
-    another process adds a value to the field, so the next id comes only from the counter.
-    PR-01's value-to-row dictionary stays: no value is deleted or given another id before
+    goes. **PR-14's cached highest id goes too**: a process's own maximum is wrong as soon
+    as another process adds a value to the field, so the next id comes only from the
+    counter. PR-14's value-to-row dictionary stays: no value is deleted or given another id before
     finalization, so a hit is always right, and a miss falls through to the insert. A
     `mult_group` row, which an importer writes when it first meets a group, is inserted
     with `INSERT ... ON DUPLICATE KEY UPDATE field_id = field_id`, a no-op on a row another
@@ -4107,13 +4090,13 @@ the orchestrator's).
 
 | PR | Depends on | Why |
 |---|---|---|
-| PR-01 to PR-03 | PR-00 | the harness is the proof |
+| PR-02 and PR-03 | PR-00 | the harness is the proof |
 | PR-04 | PR-00 | measures the write path |
 | PR-05 | PR-00 | first schema change; every later schema PR bumps its constant; PR-07 dispatches on its row |
 | PR-06 | PR-00 | the fresh-import path must not drop a staging table the aux steps use |
 | PR-07 | PR-04, PR-05, PR-06 | loads through PR-04's loader, dispatches on the version row, and leaves the aux steps to the swap |
 | PR-08 | PR-07 | completes PR-07's dispatch and removes the path it superseded |
-| PR-09 | PR-01, PR-04, PR-07, PR-08 | the parent resolves mults through PR-01's structures, and writes through PR-04's loader on the single write path |
+| PR-09 | PR-04, PR-07, PR-08 | the parent writes through PR-04's loader on the single write path |
 | PR-10 | PR-00 | smallest web change; needs no new table |
 | PR-11 | PR-05, PR-07, PR-10 | the guard exists; it extends the deploy line PR-07 sets; its table-level keys go through PR-07's filter; paging is already range-based |
 | PR-12 | PR-05, PR-07, PR-09, PR-11 | the keep set and the finalization foreign keys are PR-07's; `instrument_id` comes from PR-09's parent; the same join helpers as PR-11 |
@@ -4212,6 +4195,10 @@ the orchestrator's).
 ---
 
 ## 7. Deferred and dropped
+
+- **Caching the field functions' lookup** (part of item 7 as the analysis wrote it): the
+  lookup costs about 58 ns a call more than a cached one, about 33 s of a complete
+  import; the measurement is in the Execution notes.
 
 - **The multi-valued JSON index** (item 9 as the analysis wrote it): the junction table
   serves both the search and the count (PR-20).
@@ -4499,3 +4486,21 @@ Nothing above this line is rewritten by an executor.
   back to a simpler query. Both were zero in every PR-00 session. By default `compare.py`
   leaves out the reported metrics that changed by no more than their floor, with a
   count, since most of the rows were exact counts that did not move; `--all` keeps them.
+- At the operator's direction (2026-11-06), PR-01 is dropped. It no longer caches the
+  field function `do_import_obs.import_run_field_function` looks up: timed on
+  `ObsVolumeCOISS12xxx` (nineteen classes deep, 249 field functions), the lookup took
+  197 ns a call and the cached form 139 ns, of which building the method's name is 82 ns,
+  since CPython already caches attribute lookups on a class; PR-00's complete-scale import
+  makes at most about 560 million calls (1,627,081 observations at about 220 columns, and
+  2,425,875 per-target surface geometry rows at 85), so the cache would save about 33 s of
+  18,235 s. Its mult dictionary was built and measured with a micro-benchmark that builds
+  a table of 10,000 values through each side's `update_mult_table` and looks them up a
+  million times under cProfile (results `2026-11-06_PR-01_{before,after}_fixture_mysql_a.json`,
+  three runs a side, alternated): cumulative time in `update_mult_table` fell from 57.6 s
+  to 0.80 s. But PR-00's complete-scale `bench_db` shows the largest of the 90 mult tables
+  at 296 rows (`mult_obs_mission_cassini_rev_no`; `target_name` 208), six over 100 and
+  none over 1,000, 1,845 rows in all; at real sizes a lookup saved 1.6 µs at 300 values,
+  0.5 µs at 100 and nothing at 20, a few seconds of a complete import. The dictionary and
+  the logged-message sets move to PR-14, which rewrites `update_mult_table`, where the
+  dictionary keeps a lookup's cost flat should the one table be loaded whole; the
+  micro-benchmark is not kept.
