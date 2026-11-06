@@ -4364,8 +4364,8 @@ Nothing above this line is rewritten by an executor.
 - The floors every later PR is judged against at fixture and test scale are
   `2026-11-05_PR-00_floors_fixture_mysql.json` and
   `2026-11-05_PR-00_floors_test_mysql.json` in the operator's results directory, computed with the rules of
-  24f15dc2 from the sessions `2026-11-05_PR-00_before_{fixture,test}_mysql_{d,e,f}.json`,
-  all measured at commit 0ff69bf9. The sessions a, b and c of the same day, measured at
+  1d5564f2 from the sessions `2026-11-05_PR-00_before_{fixture,test}_mysql_{d,e,f}.json`,
+  all measured at commit 3ea8815d. The sessions a, b and c of the same day, measured at
   330e4a3a, were superseded by the pre-PR review's fixes below.
 - Three floor sessions were taken at each scale, since sessions d and e disagreed on some
   metrics at both. Each session's first run, its warm-up import, started at a one-minute
@@ -4380,7 +4380,7 @@ Nothing above this line is rewritten by an executor.
 - PR-00's complete-scale measurement is
   `2026-11-05_PR-00_before_complete_mysql_a.json` in the operator's results directory: one import from
   `import_complete.toml`, then `bench_db` with `--dump-queries --ascii-columns`, then one
-  `bench_web` run (each state once), measured at commit c99ebd9f (the harness of
+  `bench_web` run (each state once), measured at commit d4fd56af (the harness of
   330e4a3a) on 2026-11-05, starting at a one-minute load average of 1.5. Its
   concurrency scenario ran both halves after one reset, as the harness did before the
   pre-PR review, so its shared half started partly warm; the complete scale is reported,
@@ -4473,15 +4473,17 @@ Nothing above this line is rewritten by an executor.
   notes above.
 - The branch's history was rewritten on 2026-11-05 to drop the result files from every
   commit, so the result files record the commits' earlier SHAs, with identical trees:
-  0ff69bf9 was 4c27db2b (the floor sessions), c99ebd9f was 1a1e607f (the complete-scale
-  run), and 24f15dc2 was df028cb1.
+  3ea8815d was 4c27db2b (the floor sessions), d4fd56af was 1a1e607f (the complete-scale
+  run), and 1d5564f2 was df028cb1. These are the SHAs after the second rewrite, below.
 - The complete-scale non-ASCII count above compared each value with its ASCII conversion
   under the column's collation, which can equal a character to its replacement (a
   fullwidth question mark to `?`). `bench_db --ascii-columns` now compares bytes. Recounted
   that way on 2026-11-06 against the same schema (`bench_complete_before_a_1`, with
-  `benchmarks.bench_db.ascii_columns` at e7c4229f), the set is still empty: no
+  `benchmarks.bench_db.ascii_columns` at 1cf07e28), the set is still empty: no
   non-ASCII value in any of the 19 columns. The same comparison flags `café` and a
   fullwidth question mark on that server, so the count is not vacuous.
 - At the operator's direction (2026-11-06), the floors files are not committed either.
   `compare.py --floors` writes them into the results directory beside the sessions they
-  come from, where PR-00's two are kept with its seven result files.
+  come from, where PR-00's two are kept with its seven result files. The branch's history
+  was rewritten again that day to drop the floors files from every commit, which changed
+  the SHA of every commit from d4fd56af on; the SHAs in these notes are the rewritten ones.
