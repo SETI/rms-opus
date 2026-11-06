@@ -145,13 +145,13 @@ def _git(root: Path, *arguments: str) -> None:
     ('path', 'dirty'),
     [
         ('src/new_module.py', True),
-        ('benchmarks/floors/uncommitted.json', False),
+        ('docs/notes.txt', False),
     ],
 )
 def test_only_an_untracked_file_under_src_makes_the_checkout_dirty(
     tmp_path: Path, path: str, dirty: bool
 ) -> None:
-    """The editable install imports a new file under src/; a stray result changes nothing."""
+    """The editable install imports a new file under src/; a stray file elsewhere does not."""
     _git(tmp_path, 'init', '-q')
     (tmp_path / 'README').write_text('x\n')
     _git(tmp_path, 'add', 'README')

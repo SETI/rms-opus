@@ -39,7 +39,7 @@ architecture Phases 0 to 6 produced.
 
 ### What this plan delivers
 
-- A benchmark harness and a committed **baseline** of import, database, and web
+- A benchmark harness and a recorded **baseline** of import, database, and web
   measurements, taken before any change (Phase 0).
 - The import's Python hot spots and the web application's cheap round trips removed
   (Phase 1).
@@ -130,12 +130,11 @@ benchmarks/
 │   ├── queries.sql              # the last capture, for a reader; each A/B side captures its own (§2.2)
 │   ├── my.cnf.template          # the harness-owned server's configuration, from the tuning baseline
 │   └── web.toml                 # the request scenarios
-├── scratch/                     # per session: raw logs, .prof files, query captures; not committed
-└── floors/
-    └── YYYY-MM-DD_PR-nn_floors_{fixture,test,complete}_{mysql,postgresql}.json
+└── scratch/                     # per session: raw logs, .prof files, query captures; not committed
 
 <results root>/                  # [results] root in scenarios/server.toml; outside the repository
-└── YYYY-MM-DD_PR-nn_{before,after}_{fixture,test,complete}_{mysql,postgresql}_<session>.json
+├── YYYY-MM-DD_PR-nn_{before,after}_{fixture,test,complete}_{mysql,postgresql}_<session>.json
+└── YYYY-MM-DD_PR-nn_floors_{fixture,test,complete}_{mysql,postgresql}.json
 ```
 
 `<session>` is a short label the executor chooses (`a`, `b`, `rerun1`) so that two
@@ -148,9 +147,9 @@ adding it to `RUFF_PATHS`, `MYPY_PATHS`, `BANDIT_PATHS`, and `VULTURE_PATHS` in
 `pyproject.toml`; `benchmarks/README.md` joins the PyMarkdown scan list in both places.
 The runners' entry points go in `vulture_whitelist.py`. The directory is outside the
 default pytest run; `tests/benchmarks/` unit-tests `compare.py`'s table rendering, the
-scenario loaders, and the result-file schema. Only the floors files are committed. Result
-files go to the results directory named by `[results] root` in `scenarios/server.toml`,
-outside the repository, because most of a result file is diagnostics (every captured
+scenario loaders, and the result-file schema. Neither result files nor floors files are
+committed. Both go to the results directory named by `[results] root` in
+`scenarios/server.toml`, outside the repository: most of a result file is diagnostics (every captured
 statement's plan, each scenario's top statements, the index-usage snapshot) that run to
 megabytes and that a reader regenerates from the commit the file names; everything under `benchmarks/scratch/` (the session's scratch directory,
 `benchmarks/scratch/<session>/`, which holds the raw logs, the `.prof` files, and the
@@ -663,7 +662,7 @@ jitter. A floor is recorded for **every
 metric the sessions produce**, at each scale, judged or not (the ring-radius, selective,
 files-API, detail-page, categories, target-search, and re-sort scenarios, db-cold
 included, as much as §2.5's list), by `compare.py --floors <session files>`, which writes
-the committed floors file (§2.1); the Execution notes name it.
+the floors file into the results directory (§2.1); the Execution notes name it.
 
 **When floors are taken.** PR-00 takes them, at fixture and test scale, on its own
 commit, and every later PR judges against that floors file; no later PR retakes them at
@@ -684,7 +683,8 @@ there and are not repeated here). The rules that bind every executor:
 - **Input contract:** this file, the single PR number to execute, the analysis and the
   design document it cites, and repository access. The sub-agent reads §1 to §3, its own
   PR section, the preamble of its phase, every other PR section its own cites, §5 to §7,
-  the Execution notes, and the committed floors file it judges against (§2.6), and
+  the Execution notes, and the floors file it judges against (§2.6), from the operator's
+  results directory, and
   relies on no prior conversation.
 - **What the orchestrator provides**, and nothing more: push access to `SETI/rms-opus`
   and the ability to open PRs against `db-perf`; a development machine with Python 3.12 or
@@ -701,8 +701,8 @@ there and are not repeated here). The rules that bind every executor:
   deploy chain's scripts (`_promote.sh`, `deploy_new_code_only.sh`,
   `deploy_new_code_and_database.sh`) run `sudo` and are never run by an executor; a PR
   that changes them tests the changed shell function in isolation.
-- **State lives in artifacts:** the tree, merged PR descriptions, the committed benchmark
-  results, and the **Execution notes** appendix at the bottom of this file, amended in the
+- **State lives in artifacts:** the tree, merged PR descriptions, the benchmark results
+  and floors files in the operator's results directory, and the **Execution notes** appendix at the bottom of this file, amended in the
   same PR (dated, naming the commit of this file, one bullet per fact, never rewriting the plan
   body). Where this plan makes a claim about the code that turns out stale, the executor
   records the correction there. The Phase P decision, if Phase P runs, is recorded there
@@ -777,7 +777,7 @@ as `item n`, and to the design document as `§D-n`.
 **PR-00: feat: benchmark harness and baseline measurements** (items 12 and 19; `§C-6`)
 
 - **Goal:** create `db-perf`, implement §2, take the first `before` results at both
-  scales, and commit the floors files computed from them.
+  scales, and write the floors files computed from them.
 - **Changes:**
   - **First:** `db-perf` is created from `main`, which already carries this plan, the design
     document, and the analysis (§1, Branch);
@@ -833,7 +833,7 @@ as `item n`, and to the design document as `§D-n`.
   Execution notes as the set PR-17 reads
   (a `bench_db --ascii-columns` option, which runs at any scale).
 - **Acceptance:** `before` results from the floor sessions at the fixture and test scales
-  (two, or three where they disagree), and the committed floors file `compare.py
+  (two, or three where they disagree), and the floors file `compare.py
   --floors` writes from them, with a floor for **every** metric the sessions produced
   (§2.6); the Execution notes name the file as the floors every later PR is judged
   against at fixture and test scale. No application code changes beyond `--timing-json`, the `build_run`
@@ -3968,7 +3968,7 @@ once (§1, Deploy; §2.3).
   before/after table at the fixture and test scales from one A/B session (§2.3) with the
   PR-00 commit as the base and `db-perf`'s head as the head, side by side; and one
   complete-scale import from `import_complete.toml` at the head, with `bench_db`,
-  `bench_web`, and a timed `opus_manage warm_search`, set beside PR-00's committed
+  `bench_web`, and a timed `opus_manage warm_search`, set beside PR-00's
   complete-scale results in a table labeled **historical**, since results from different
   days are not a comparison (§1, A/B discipline).
 - **After the merge:** the orchestrator cuts the release per the repository's release
@@ -4362,8 +4362,8 @@ Nothing above this line is rewritten by an executor.
   385.8 s, so the cause was InnoDB's flushing, not the disk; no disk settle step was
   needed. Those sessions and the experiment were not committed.
 - The floors every later PR is judged against at fixture and test scale are
-  `benchmarks/floors/2026-11-05_PR-00_floors_fixture_mysql.json` and
-  `benchmarks/floors/2026-11-05_PR-00_floors_test_mysql.json`, computed with the rules of
+  `2026-11-05_PR-00_floors_fixture_mysql.json` and
+  `2026-11-05_PR-00_floors_test_mysql.json` in the operator's results directory, computed with the rules of
   24f15dc2 from the sessions `2026-11-05_PR-00_before_{fixture,test}_mysql_{d,e,f}.json`,
   all measured at commit 0ff69bf9. The sessions a, b and c of the same day, measured at
   330e4a3a, were superseded by the pre-PR review's fixes below.
@@ -4482,3 +4482,6 @@ Nothing above this line is rewritten by an executor.
   `benchmarks.bench_db.ascii_columns` at e7c4229f), the set is still empty: no
   non-ASCII value in any of the 19 columns. The same comparison flags `café` and a
   fullwidth question mark on that server, so the count is not vacuous.
+- At the operator's direction (2026-11-06), the floors files are not committed either.
+  `compare.py --floors` writes them into the results directory beside the sessions they
+  come from, where PR-00's two are kept with its seven result files.

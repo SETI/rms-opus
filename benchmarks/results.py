@@ -9,8 +9,8 @@ and its content is ``{"format": 1, "environment": {...}, "runs": [...]}``. Every
 command appends its runs to the file of the label it was given, so one file ends up
 holding the label's imports, its database statistics and its web runs. Result files
 live in the results directory, ``[results] root`` in ``scenarios/server.toml``, outside
-the repository; only the floors files `benchmarks.compare` writes from them, under
-``benchmarks/floors/``, are committed.
+the repository, beside the floors files `benchmarks.compare` writes from them; none of
+them is committed.
 
 A run is ``{"kind", "index", "started_at", "load_average_1m", "metrics", "samples",
 "details"}``. ``metrics`` maps a metric name to one number for that run; ``samples``
@@ -45,7 +45,6 @@ if TYPE_CHECKING:
 BENCHMARKS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = BENCHMARKS_DIR.parent
 SCENARIOS_DIR = BENCHMARKS_DIR / 'scenarios'
-FLOORS_DIR = BENCHMARKS_DIR / 'floors'
 SCRATCH_DIR = BENCHMARKS_DIR / 'scratch'
 
 #: The file naming the directories the harness keeps outside the repository.

@@ -56,7 +56,8 @@ Three suites, selected by path:
 
 Performance is measured by the benchmark harness in `benchmarks/`, which is not a test
 suite: it runs import, database and web measurements against servers it starts
-itself, and writes result files under `benchmarks/results/`, which are committed.
+itself, and writes result files to a directory outside the repository, named by
+`[results] root` in `benchmarks/scenarios/server.toml`.
 `docs/dev_guide_benchmarks.rst` is its guide.
 
 `scripts/run-all-checks.sh` runs the gates rather than a suite — ruff, mypy,

@@ -4,9 +4,8 @@ Run from a checkout's root, as ``python -m benchmarks.<command>``. The commands 
 `benchmarks.bench_server` (the MySQL server, memcached and gunicorn the harness owns),
 `benchmarks.bench_import`, `benchmarks.bench_db`, `benchmarks.bench_web`, and
 `benchmarks.compare`. Every measurement lands in a result file in the results
-directory, ``[results] root`` in ``scenarios/server.toml``, outside the repository; the
-floors files `benchmarks.compare` writes go under ``benchmarks/floors/``, the only
-results committed; raw logs, profiles and query captures go under
-``benchmarks/scratch/``, which is not committed. ``docs/dev_guide_benchmarks.rst`` is the
-guide.
+directory, ``[results] root`` in ``scenarios/server.toml``, outside the repository, as
+do the floors files `benchmarks.compare` writes; raw logs, profiles and query captures
+go under ``benchmarks/scratch/``, which is not committed. ``docs/dev_guide_benchmarks.rst``
+is the guide.
 """

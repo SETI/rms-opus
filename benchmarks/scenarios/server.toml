@@ -26,6 +26,6 @@ io_capacity = 1000
 binary = "memcached"
 
 [results]
-# Holds every result file the bench commands write, one per label. Only the floors
-# files, under benchmarks/floors/, are committed.
+# Holds every result file the bench commands write, one per label, and the floors
+# files benchmarks.compare writes from them. None of them is committed.
 root = "~/opus_bench/results"

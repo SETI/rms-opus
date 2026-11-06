@@ -106,8 +106,6 @@ directory has a chapter of its own, it is named beside it.
     ├── benchmarks/               # the benchmark harness: import, database and web
     │   │                         #   measurements on servers it starts itself
     │   ├── scenarios/            # what is measured, and the owned servers' settings
-    │   ├── floors/               # the committed floors files; result files live outside
-    │   │                         #   the repository
     │   └── scratch/              # each session's raw logs and captures; not committed
     ├── scripts/
     │   ├── run-all-checks.sh     # every check this repository gates on, in one command
