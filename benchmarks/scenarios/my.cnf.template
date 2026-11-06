@@ -1,6 +1,6 @@
 # The harness-owned MySQL server's configuration: the tuning baseline in
-# benchmarks/README.md. bench_server.py fills in the bracketed names; each sized value's
-# rule is stated beside it and in the README's table.
+# docs/dev_guide_benchmarks.rst. bench_server.py fills in the bracketed names; each sized
+# value's rule is stated beside it and in the guide's table.
 [mysqld]
 basedir = {basedir}
 datadir = {datadir}
@@ -27,7 +27,7 @@ innodb_buffer_pool_load_at_startup = OFF
 innodb_buffer_pool_dump_at_shutdown = OFF
 innodb_flush_method = O_DIRECT
 
-# Sized from the memory budget in server.toml (rules in benchmarks/README.md).
+# Sized from the memory budget in server.toml (rules in docs/dev_guide_benchmarks.rst).
 innodb_buffer_pool_size = {buffer_pool_size}
 innodb_buffer_pool_chunk_size = {buffer_pool_chunk_size}
 innodb_buffer_pool_instances = 1

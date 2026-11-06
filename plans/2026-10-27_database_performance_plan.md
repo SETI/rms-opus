@@ -115,7 +115,7 @@ binaries the `benchmarks` extra installs or that are already present.
 
 ```text
 benchmarks/
-├── README.md                    # pointer to docs/dev_guide_benchmarks.rst, plus the tuning baseline
+├── README.md                    # pointer to docs/dev_guide_benchmarks.rst
 ├── micro/                       # micro-benchmarks (PR-01), writing the same JSON result shape
 ├── __init__.py
 ├── bench_import.py              # times one import run step by step
@@ -527,7 +527,7 @@ operator the workstation is free. The recorded load average is how a reviewer ch
 
 ### 2.4 The tuning baseline, and the head-to-head procedure (Phase P only)
 
-PR-00 writes a **tuning baseline** into `benchmarks/README.md` and `my.cnf.template`: a
+PR-00 writes a **tuning baseline** into `docs/dev_guide_benchmarks.rst` and `my.cnf.template`: a
 short table of setting, rule, and the documentation page the rule comes from, derived from
 the machine's memory and core count by the rules MySQL's own documentation gives, naming
 at least `innodb_buffer_pool_size`, `innodb_buffer_pool_chunk_size`,
@@ -806,11 +806,10 @@ as `item n`, and to the design document as `§D-n`.
     side's erase by §2.2's rule. PR-05 adds the fifth, `version_args` (default
     `VERSION_ARGS`, `('--write-schema-version',)`; an empty sequence skips the step), and
     the harness passes it the same way (§2.2).
-  - `benchmarks/README.md`: a pointer to the dev guide and the **MySQL tuning baseline**
-    (§2.4); `.gitignore` entries `benchmarks/**/*.prof` and `benchmarks/scratch/`, the
+  - `benchmarks/README.md`: a pointer to the dev guide; `.gitignore` entries `benchmarks/**/*.prof` and `benchmarks/scratch/`, the
     scratch directory that holds every session's raw logs and query captures (§2.1).
   - `docs/dev_guide_benchmarks.rst`: how to run the harness, read a result, take an A/B,
-    start the owned server, and the idle rule of §2.3; listed in the `docs/dev_guide.rst`
+    start the owned server, the **MySQL tuning baseline** (§2.4), and the idle rule of §2.3; listed in the `docs/dev_guide.rst`
     toctree after `dev_guide_testing` (the Sphinx gate builds with `-W -n`, so an orphan
     page fails it) and linked from `dev_guide_testing.rst`; `benchmarks/` added to the
     tree in `docs/dev_guide_layout.rst`. A sentence in `CLAUDE.md`'s Tests section naming
@@ -4015,8 +4014,8 @@ MySQL suites unchanged as its regression check.
     and `bench_db` gain their PostgreSQL branches (`pg_stat_database` counters,
     `pg_table_size`, `pg_indexes_size`, `pg_indexes`, `EXPLAIN (ANALYZE, BUFFERS, FORMAT
     JSON)` **inside a transaction that is rolled back**, `pg_stat_user_indexes`,
-    `pg_stat_statements` when preloaded); `benchmarks/README.md` gains the PostgreSQL
-    tuning baseline (§2.4).
+    `pg_stat_statements` when preloaded); `docs/dev_guide_benchmarks.rst` gains the
+    PostgreSQL tuning baseline (§2.4).
   - Every sentence saying MySQL is the only brand is rewritten (§3); the views' driver
     error-code tests move behind `db_utils` predicates (PR-P2 completes this).
 - **Tests:** `tests/opus_import/test_importdb_postgresql.py` mirrors the MySQL unit tests;
