@@ -225,8 +225,9 @@ the most total latency, the server's buffer-pool misses, connections, sort-merge
 and on-disk temporary tables, memcached's evictions, the schema's table count, and the
 workers' peak resident set. The concurrency scenario has many users, each with a session
 of its own, issue the fan-out at once, once with a search each and once with the same
-search, each half starting from its own reset; it records the latencies of every request, from which its 95th percentile is
-computed over all runs together.
+search, each half starting from its own reset. It records the latencies of every
+request, from which its 95th percentile is computed over all runs together, less the
+runs whose own 95th percentile is an outlier (below).
 
 Before measuring, ``bench_web`` asks the side's settings, in the environment the workers
 run in, which cache they chose: it refuses to run on the local-memory fallback or on a

@@ -425,3 +425,14 @@ def test_the_table_s_floor_counts_the_jitter() -> None:
     floors = {'web.t.wall_s': {'floor': 0.0, 'floor_abs': 0.0}}
     table = compare.render(before, after, floors, ['web.t.wall_s'], {'web': 0.010})
     assert '| +50.0% (0.01) | target | not improved |' in table
+
+
+def test_a_run_whose_p95_is_an_outlier_is_left_out_of_the_pool() -> None:
+    """One run with a slow tail would otherwise set the pooled p95 of the whole session."""
+    name = 'web.warm.concurrency.shared'
+    per_run = [1.0, 1.1, 0.95, 1.05, 9.0]
+    pools = [{f'{name}.latency_s': [value] * 20} for value in per_run]
+    runs = [{f'{name}.p95_s': value} for value in per_run]
+    summary = compare.summarize(_result(runs, samples=pools))[f'{name}.p95_s']
+    assert summary.center == 1.1
+    assert summary.spread == pytest.approx(0.15 / 1.1)

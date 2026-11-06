@@ -37,9 +37,9 @@ the median, which every run still enters, is barely moved by one such run, so it
 not set the noise either. A metric whose runs also keep several executions' values
 under its own name in their ``samples`` -- a plan time, whose statements are each
 executed five times in one run -- takes its median and spread over those executions
-instead. The concurrency scenario's p95 is computed once over every latency of all the
-runs pooled, and its spread is the range of the per-run p95s, outliers left out, divided
-by that pooled figure. Session medians are never left out: the range of several
+instead. The concurrency scenario's p95 is computed once over the latencies of all the
+runs pooled, less those of a run whose own p95 is an outlier, and its spread is the range
+of the per-run p95s, outliers left out, divided by that pooled figure. Session medians are never left out: the range of several
 sessions' medians covers all of them.
 The **change** is ``(after - before) / before``. The **floor** of a metric is the
 floors file's ``floor``, or its absolute noise over the before median where that is
@@ -165,18 +165,30 @@ def summarize(content: Mapping[str, Any]) -> dict[str, MetricSummary]:
     """
     per_metric: dict[str, list[float]] = {}
     pools: dict[str, list[float]] = {}
+    # Each pooled p95's per-run values beside the latencies of the same run.
+    per_run_pools: dict[str, list[tuple[float, list[float]]]] = {}
     for run in content['runs']:
         if run['kind'] not in COMPARED_KINDS:
             continue
         for name, value in run['metrics'].items():
             per_metric.setdefault(name, []).append(float(value))
+            pool_name = name.removesuffix(_P95_SUFFIX) + _SAMPLES_SUFFIX
+            if name.endswith(_P95_SUFFIX) and pool_name in run['samples']:
+                latencies = [float(latency) for latency in run['samples'][pool_name]]
+                per_run_pools.setdefault(name, []).append((float(value), latencies))
         for name, values in run['samples'].items():
             pools.setdefault(name, []).extend(float(value) for value in values)
     summaries = {}
     for name, values in per_metric.items():
-        pool_name = name.removesuffix(_P95_SUFFIX) + _SAMPLES_SUFFIX
-        if name.endswith(_P95_SUFFIX) and pool_name in pools and len(pools[pool_name]) > 0:
-            center = p95(pools[pool_name])
+        runs = per_run_pools.get(name, [])
+        if len(runs) > 0 and any(len(latencies) > 0 for _, latencies in runs):
+            # A run whose own p95 is an outlier would dominate the pooled tail, so its
+            # latencies are left out of the pool as its p95 is left out of the spread.
+            kept = without_outliers([run_p95 for run_p95, _ in runs])
+            pool = [
+                latency for run_p95, latencies in runs if run_p95 in kept for latency in latencies
+            ]
+            center = p95(pool)
             summaries[name] = MetricSummary(tuple(values), center, run_spread(values, center))
         elif name in pools and len(pools[name]) > 0:
             # A metric whose runs keep every execution's value under its own name, as a

@@ -617,8 +617,9 @@ per-run values; a single-request scenario's value is that request's latency. Per
 latencies are reported as the median over runs of each request. The **concurrency
 scenario** differs: its **p95** is computed once over every request latency of that half
 of the scenario (distinct or shared) in that state, **pooled across all of the side's
-runs**, never as a median of per-run p95s; its per-run p95 is kept for the spread below,
-and its throughput is requests per second per run, median over runs. An import metric's
+runs**, never as a median of per-run p95s, less the latencies of a run whose own p95 is
+an outlier (Spread, below); its per-run p95 is kept for the spread below, and its
+throughput is requests per second per run, median over runs. An import metric's
 value is its wall-clock (or bytes, or peak PSS) per run.
 
 **Spread.** A metric's spread in one session is the range of its per-run values (maximum
@@ -4437,7 +4438,8 @@ Nothing above this line is rewritten by an executor.
   before the timed runs at fixture and test scale, recorded as kind `import_warmup` and
   never compared. That session was not committed.
 - At the operator's direction (2026-11-05), a session's spread leaves out outlying runs
-  (§2.6, Spread). The retaken sessions showed single runs setting floors: one test-scale
+  (§2.6, Spread), and the concurrency scenario's pooled p95 leaves out the latencies of a
+  run whose own p95 is an outlier. The retaken sessions showed single runs setting floors: one test-scale
   import run of 425 s among runs of 384 to 389 s gave `import.wall_s` a floor of 0.107,
   and one app-cold empty search of 0.87 s among runs of about 0.19 s gave
   `web.app-cold.search.empty.wall_s` a floor of 3.55. `compare` implements the rule
