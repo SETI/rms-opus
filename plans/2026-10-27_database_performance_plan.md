@@ -4359,24 +4359,29 @@ Nothing above this line is rewritten by an executor.
   needed. Those sessions and the experiment were not committed.
 - The floors every later PR is judged against at fixture and test scale are
   `benchmarks/results/2026-11-05_PR-00_floors_fixture_mysql.json` and
-  `benchmarks/results/2026-11-05_PR-00_floors_test_mysql.json`, from the sessions
-  `2026-11-05_PR-00_before_{fixture,test}_mysql_{a,b,c}.json`, all measured at commit
-  330e4a3a.
-- Three floor sessions were taken at each scale, since sessions a and b disagreed on some
-  metrics at both. Each session's first run started at a one-minute load average
-  (`load_average_1m`) of 1.78, 4.83 and 2.63 (fixture a, b, c) and 2.55, 2.81 and 2.66
-  (test a, b, c), and its runs at 1.77 to 9.00, raised by the harness's own work. The
-  operator confirmed the workstation free for the whole job; Chrome had been closed and
-  an IDrive backup was running throughout.
+  `benchmarks/results/2026-11-05_PR-00_floors_test_mysql.json`, computed with the rules of
+  df028cb1 from the sessions `2026-11-05_PR-00_before_{fixture,test}_mysql_{d,e,f}.json`,
+  all measured at commit 4c27db2b. The sessions a, b and c of the same day, measured at
+  330e4a3a, were superseded by the pre-PR review's fixes below and removed from
+  `benchmarks/results/`.
+- Three floor sessions were taken at each scale, since sessions d and e disagreed on some
+  metrics at both. Each session's first run, its warm-up import, started at a one-minute
+  load average (`load_average_1m`) of 2.80, 2.70 and 2.67 (fixture d, e, f) and 2.76,
+  2.73 and 2.42 (test d, e, f), and its runs at 1.59 to 10.75, raised by the harness's
+  own work. The operator confirmed the workstation free for the whole job, and judged the
+  IDrive backup that ran throughout no concern; another Claude session, working in a
+  different repository, also ran builds at times.
 - `benchmarks/scenarios/queries.sql` is the capture of 2026-11-05 from the test-scale
-  schema of session c, taken under the session label `capture`, whose result file was not
-  committed.
+  schema of session c (commit 330e4a3a), taken under the session label `capture`, whose
+  result file was not committed.
 - PR-00's complete-scale measurement is
   `benchmarks/results/2026-11-05_PR-00_before_complete_mysql_a.json`: one import from
   `import_complete.toml`, then `bench_db` with `--dump-queries --ascii-columns`, then one
   `bench_web` run (each state once), measured at commit 1a1e607f (the harness of
-  330e4a3a) on 2026-11-05, starting at a one-minute load average of 1.5. The import ran
-  without error and left `ERRORS.log` empty. Its `import.wall_s` was 18,235 s, of which
+  330e4a3a) on 2026-11-05, starting at a one-minute load average of 1.5. Its
+  concurrency scenario ran both halves after one reset, as the harness did before the
+  pre-PR review, so its shared half started partly warm; the complete scale is reported,
+  never judged. The import ran without error and left `ERRORS.log` empty. Its `import.wall_s` was 18,235 s, of which
   17,620 s were the bundle imports and 613 s the finalization sequence; the tree's peak
   PSS was 3,065,038 KiB; the filesystem holding the server's data root went from 1.1 TB
   to 961 GB free.
@@ -4448,8 +4453,9 @@ Nothing above this line is rewritten by an executor.
 - At the operator's direction (2026-11-05), each floor is also kept in seconds (or the
   metric's units), and each family's jitter is recorded (§2.6, Change and Noise floors).
   Measured on the retaken sessions, a time metric's run-to-run range in seconds grows
-  slowly with its size while its fraction collapses: about 5 ms (21 percent) for medians
-  of 10 to 50 ms against about 30 ms (1 percent) for medians of 1 to 10 s. So a fraction
+  slowly with its size while its fraction collapses: a median of 3 to 5 ms (14 to 23
+  percent) for medians of 10 to 50 ms against 23 to 28 ms (about 1 percent) for medians
+  of 1 to 10 s, over the d, e and f sessions at the two scales. So a fraction
   overstated the noise of a small median, set most of the session disagreements, and
   would understate it after a PR shrank a large one. The families' jitters differ by two
   orders of magnitude (web requests against planned statements), so they are kept apart.
