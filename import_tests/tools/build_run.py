@@ -25,7 +25,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import coverage
 
@@ -64,6 +64,13 @@ IMPORT_ARGS = ('--do-all-import',)
 AUX_ARGS = ('--cleanup-aux-tables',)
 DICTIONARY_ARGS = ('--import-dictionary',)
 VALIDATE_ARGS = ('--validate-perm',)
+
+#: The Django migration's command line after the interpreter, run in the checkout.
+MIGRATE_ARGS = ('manage.py', 'migrate')
+
+#: The interpreter a step runs with unless the caller names another: this process's own,
+#: so the code under test is the checkout this suite was started from.
+THIS_PYTHON = Path(sys.executable)
 
 #: The log file names the pipeline's warning and error handlers write under the run's
 #: log directory. The run's real gate is what these hold, not the exit status.
@@ -316,6 +323,10 @@ secret_key = "mini-holdings-throwaway-key"
 debug = false
 allowed_hosts = ["127.0.0.1", "localhost", "testserver"]
 cache_server_prefix = "mini_holdings"
+# A port nothing listens on. The run's `manage.py migrate` imports the settings, whose
+# memcached probe would otherwise write to whichever memcached the machine runs on the
+# default port; refused, the settings fall back to the local-memory cache.
+cache_location = "127.0.0.1:1"
 public_url = "https://opus.invalid/"
 product_http_path = "https://opus.invalid/"
 viewmaster_url = "https://viewmaster.invalid/"
@@ -398,19 +409,51 @@ def run_environment(config_file: Path) -> dict[str, str]:
         directory for nobody to combine.
     """
     environment = dict(os.environ)
-    environment[CONFIG_ENV_VAR] = str(config_file)
+    # Absolute, since the subprocess may run in another checkout.
+    environment[CONFIG_ENV_VAR] = str(config_file.resolve())
     environment[HASH_SEED_ENV_VAR] = HASH_SEED
     if coverage.Coverage.current() is not None:
         environment[COVERAGE_ENV_VAR] = str(fixture_layout.REPO_ROOT / 'pyproject.toml')
     return environment
 
 
-def run_pipeline_step(config_file: Path, arguments: Sequence[str]) -> StepResult:
+class StepObserver(Protocol):
+    """Something told about each invocation `perform_run` makes, as it makes it.
+
+    The benchmark harness is the one implementation: it times each invocation and
+    samples its memory between the two calls, and checks the database after each one.
+    """
+
+    def step_started(self, arguments: Sequence[str]) -> None:
+        """Hear that an invocation is about to start.
+
+        Parameters:
+            arguments: The invocation's command line after the interpreter.
+        """
+
+    def step_finished(self, result: StepResult) -> None:
+        """Hear that an invocation has finished.
+
+        Parameters:
+            result: What the invocation did.
+        """
+
+
+def run_pipeline_step(
+    config_file: Path,
+    arguments: Sequence[str],
+    *,
+    python: Path = THIS_PYTHON,
+    repo_root: Path = fixture_layout.REPO_ROOT,
+) -> StepResult:
     """Run one ``opus_import`` invocation against a built tree.
 
     Parameters:
         config_file: The run's configuration file.
         arguments: The command-line arguments after ``python -m opus_import``.
+        python: The interpreter to run it with, which decides whose ``opus_import``
+            runs: the default is this process's own.
+        repo_root: The checkout to run it in, as its working directory.
 
     Returns:
         What the invocation did. The status is not the gate -- several steps report
@@ -418,8 +461,8 @@ def run_pipeline_step(config_file: Path, arguments: Sequence[str]) -> StepResult
         step that stopped before it logged anything leaves the log silent.
     """
     finished = subprocess.run(
-        [sys.executable, '-m', 'opus_import', *arguments],
-        cwd=fixture_layout.REPO_ROOT,
+        [str(python), '-m', 'opus_import', *arguments],
+        cwd=repo_root,
         env=run_environment(config_file),
         capture_output=True,
         text=True,
@@ -433,19 +476,28 @@ def run_pipeline_step(config_file: Path, arguments: Sequence[str]) -> StepResult
     )
 
 
-def run_migrate(config_file: Path) -> StepResult:
+def run_migrate(
+    config_file: Path,
+    *,
+    python: Path = THIS_PYTHON,
+    repo_root: Path = fixture_layout.REPO_ROOT,
+) -> StepResult:
     """Create Django's own contrib tables in the run's schema.
 
     Parameters:
         config_file: The run's configuration file.
+        python: The interpreter to run ``manage.py`` with; the default is this
+            process's own.
+        repo_root: The checkout whose ``manage.py`` runs, which is also the working
+            directory.
 
     Returns:
         What the invocation did.
     """
-    arguments = ['manage.py', 'migrate']
+    arguments = list(MIGRATE_ARGS)
     finished = subprocess.run(
-        [sys.executable, *arguments],
-        cwd=fixture_layout.REPO_ROOT,
+        [str(python), *arguments],
+        cwd=repo_root,
         env=run_environment(config_file),
         capture_output=True,
         text=True,
@@ -468,6 +520,14 @@ def perform_run(
     bundle_groups: Sequence[Sequence[str]] | None = None,
     extra_import_args: Iterable[str] = (),
     finalize: bool = True,
+    python: Path = THIS_PYTHON,
+    repo_root: Path = fixture_layout.REPO_ROOT,
+    drop_args: Sequence[str] = DROP_ARGS,
+    import_args: Sequence[str] = IMPORT_ARGS,
+    aux_args: Sequence[str] = AUX_ARGS,
+    dictionary_args: Sequence[str] = DICTIONARY_ARGS,
+    validate_args: Sequence[str] = VALIDATE_ARGS,
+    observer: StepObserver | None = None,
 ) -> ImportRun:
     """Build a tree and run the pipeline against it -- the whole sequence unless
     `finalize` says otherwise.
@@ -496,11 +556,23 @@ def perform_run(
             negative assertions read exist without any of the four, and none of those
             assertions reads a table only a later step creates. A run that stops early
             leaves `ImportRun.django_tables` empty, so it can never be goldened.
+        python: The interpreter every invocation runs with; the default is this
+            process's own.
+        repo_root: The checkout every invocation runs in.
+        drop_args: The erase that starts the sequence.
+        import_args: The options of each bundle-import invocation, before
+            `extra_import_args` and the bundles.
+        aux_args: The step that builds the auxiliary tables after the imports.
+        dictionary_args: The step that imports the dictionary.
+        validate_args: The validation that ends the sequence.
+        observer: Told about each invocation as it starts and as it finishes, the
+            migration included, or None.
 
     Returns:
         The completed run.
     """
-    paths = RunPaths.under(root)
+    # Absolute, since every invocation runs in repo_root rather than the caller's directory.
+    paths = RunPaths.under(root.resolve())
     build_holdings_tree(paths, overlay=overlay)
     write_opus_config(paths, schema, credentials)
 
@@ -509,24 +581,44 @@ def perform_run(
         paths=paths, schema=schema, bundles=[bundle for group in groups for bundle in group]
     )
 
-    run.steps.append(run_pipeline_step(paths.config_file, DROP_ARGS))
+    extra = tuple(extra_import_args)
+
+    def step(arguments: Sequence[str]) -> None:
+        """Run one ``opus_import`` invocation of the sequence and record it.
+
+        Parameters:
+            arguments: Its command line after ``python -m opus_import``.
+        """
+        if observer is not None:
+            observer.step_started(arguments)
+        result = run_pipeline_step(paths.config_file, arguments, python=python, repo_root=repo_root)
+        run.steps.append(result)
+        if observer is not None:
+            observer.step_finished(result)
+
+    step(drop_args)
     for group in groups:
-        run.steps.append(
-            run_pipeline_step(
-                paths.config_file, [*IMPORT_ARGS, *extra_import_args, ','.join(group)]
-            )
-        )
+        step([*import_args, *extra, ','.join(group)])
     if not finalize:
         return run
-    run.steps.append(run_pipeline_step(paths.config_file, AUX_ARGS))
-    run.steps.append(run_pipeline_step(paths.config_file, DICTIONARY_ARGS))
-    run.django_tables = _migrate_and_diff(paths, schema, credentials, run)
-    run.steps.append(run_pipeline_step(paths.config_file, VALIDATE_ARGS))
+    step(aux_args)
+    step(dictionary_args)
+    run.django_tables = _migrate_and_diff(
+        paths, schema, credentials, run, python=python, repo_root=repo_root, observer=observer
+    )
+    step(validate_args)
     return run
 
 
 def _migrate_and_diff(
-    paths: RunPaths, schema: str, credentials: DatabaseCredentials, run: ImportRun
+    paths: RunPaths,
+    schema: str,
+    credentials: DatabaseCredentials,
+    run: ImportRun,
+    *,
+    python: Path = THIS_PYTHON,
+    repo_root: Path = fixture_layout.REPO_ROOT,
+    observer: StepObserver | None = None,
 ) -> frozenset[str]:
     """Run the Django migration and report exactly which tables it created.
 
@@ -539,12 +631,20 @@ def _migrate_and_diff(
         schema: The schema being imported into.
         credentials: How to reach the database server.
         run: The run being performed, which the migration is recorded on.
+        python: The interpreter to run ``manage.py`` with.
+        repo_root: The checkout whose ``manage.py`` runs.
+        observer: Told about the migration as it starts and as it finishes, or None.
 
     Returns:
         The table names ``manage.py migrate`` added.
     """
     before = golden_io.list_tables(credentials, schema)
-    run.steps.append(run_migrate(paths.config_file))
+    if observer is not None:
+        observer.step_started(MIGRATE_ARGS)
+    result = run_migrate(paths.config_file, python=python, repo_root=repo_root)
+    run.steps.append(result)
+    if observer is not None:
+        observer.step_finished(result)
     after = golden_io.list_tables(credentials, schema)
     return frozenset(after) - frozenset(before)
 

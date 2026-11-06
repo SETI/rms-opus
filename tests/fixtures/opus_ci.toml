@@ -40,6 +40,10 @@ secret_key = "opus-ci-not-a-real-secret-key"
 debug = false
 allowed_hosts = ["127.0.0.1", "localhost", "testserver"]
 cache_server_prefix = "opus_ci"
+# A port nothing listens on, so the settings' memcached probe is refused and the
+# application runs on its local-memory cache wherever the suite runs, rather than
+# writing into whichever memcached the machine happens to have on its default port.
+cache_location = "127.0.0.1:1"
 public_url = "https://opus.pds-rings.seti.org/"
 product_http_path = "https://opus.pds-rings.seti.org/"
 viewmaster_url = "https://pds-rings.seti.org/"

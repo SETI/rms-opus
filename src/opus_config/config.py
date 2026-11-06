@@ -70,6 +70,9 @@ DATABASE_BRANDS = ('MySQL', 'PostgreSQL')
 #: DeprecationWarning, which the unit suite turns into an error.
 LOG_LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
 
+#: The memcached server `DjangoConfig.cache_location` names when the file does not.
+DEFAULT_CACHE_LOCATION = '127.0.0.1:11211'
+
 #: Names of the tables a configuration file must contain, in file order.
 TABLE_NAMES = ('database', 'paths', 'django', 'import')
 
@@ -149,6 +152,9 @@ class DjangoConfig:
         allowed_hosts: Host names and addresses Django is permitted to serve.
         cache_server_prefix: Prefix for every memcached key, which lets several
             installations share one memcached without colliding.
+        cache_location: The memcached server the web application uses, as
+            ``host:port``. The default is ``127.0.0.1:11211``, memcached's own port on
+            the same machine.
         public_url: Public URL of this OPUS installation.
         product_http_path: Root URL products are retrieved from.
         viewmaster_url: Root URL of the viewmaster file browser.
@@ -170,6 +176,7 @@ class DjangoConfig:
     debug: bool
     allowed_hosts: tuple[str, ...]
     cache_server_prefix: str
+    cache_location: str
     public_url: str
     product_http_path: str
     viewmaster_url: str
@@ -437,6 +444,30 @@ class _TableReader:
             self._fail(f'{key!r} must be a number, not {type(value).__name__}')
         return float(value)
 
+    def read_host_port(self, key: str, *, default: Any = _REQUIRED) -> str:
+        """Read a ``host:port`` network address.
+
+        Parameters:
+            key: The key to read.
+            default: Value to use when the key is absent; by default the key is
+                required.
+
+        Returns:
+            The address, exactly as written in the file.
+
+        Raises:
+            ConfigError: If the key is missing and has no default, its value is not a
+                string, or the string is not a non-empty host, a colon, and a port
+                number from 1 to 65535.
+        """
+        value = self.read_str(key, default=default)
+        host, separator, port = value.rpartition(':')
+        # isdigit alone accepts digits int() rejects, such as superscripts.
+        valid_port = port.isascii() and port.isdigit() and 0 < int(port) < 65536
+        if separator == '' or host == '' or not valid_port:
+            self._fail(f'{key!r} must be "host:port" with a port from 1 to 65535, not {value!r}')
+        return value
+
     def read_str_tuple(self, key: str) -> tuple[str, ...]:
         """Read an array of strings.
 
@@ -546,6 +577,7 @@ def _read_django(source: Path, values: dict[str, Any]) -> DjangoConfig:
         debug=table.read_bool('debug'),
         allowed_hosts=table.read_str_tuple('allowed_hosts'),
         cache_server_prefix=table.read_str('cache_server_prefix'),
+        cache_location=table.read_host_port('cache_location', default=DEFAULT_CACHE_LOCATION),
         public_url=table.read_str('public_url'),
         product_http_path=table.read_str('product_http_path'),
         viewmaster_url=table.read_str('viewmaster_url'),

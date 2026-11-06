@@ -26,6 +26,10 @@ itself:
 The second and third are asked for by name. That is what keeps the everyday ``pytest``
 fast and offline.
 
+Measuring how fast the import and the web application are is not a test suite: it is
+the benchmark harness under ``benchmarks/``, which :ref:`dev_guide_benchmarks` describes.
+Its own code is unit-tested under ``tests/benchmarks/`` like everything else.
+
 .. _dev_guide_testing_opus_config:
 
 What every run needs first

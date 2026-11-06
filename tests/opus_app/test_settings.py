@@ -48,6 +48,7 @@ secret_key = "django-secret-key"
 debug = true
 allowed_hosts = ["django-allowed-host-1", "django-allowed-host-2"]
 cache_server_prefix = "django-cache-server-prefix"
+cache_location = "127.0.0.1:2"
 public_url = "https://django-public-url.example.org/"
 product_http_path = "https://django-product-http-path.example.org/"
 viewmaster_url = "https://django-viewmaster-url.example.org/"
@@ -81,6 +82,7 @@ EXPECTED_SETTINGS = {
     'PDS4_DATA_DIR': '/paths/pds4-holdings',
     'OPUS_STATIC_ROOT': '/paths/opus-static-root',
     'CACHE_SERVER_PREFIX': 'django-cache-server-prefix',
+    'CACHE_LOCATION': '127.0.0.1:2',
     'PUBLIC_OPUS_URL': 'https://django-public-url.example.org/',
     'PRODUCT_HTTP_PATH': 'https://django-product-http-path.example.org/',
     'VIEWMASTER_ROOT_PATH': 'https://django-viewmaster-url.example.org/',
@@ -208,6 +210,56 @@ def test_settings_omit_static_root_when_the_file_does(tmp_path: Path) -> None:
     result = _import_settings(path, tmp_path, 'STATIC_ROOT')
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout) == {'STATIC_ROOT': None}
+
+
+#: A stand-in for the ``pymemcache`` package: a client that records the address it was
+#: built with and accepts every write, so the settings take their memcached branch
+#: without a memcached running.
+_STUB_PYMEMCACHE = {
+    'pymemcache/__init__.py': 'from pymemcache import client\n',
+    'pymemcache/client/__init__.py': 'from pymemcache.client import base\n',
+    'pymemcache/client/base.py': (
+        'class Client:\n'
+        '    def __init__(self, server):\n'
+        '        self.server = server\n'
+        '    def set(self, key, value):\n'
+        '        return True\n'
+    ),
+}
+
+_DUMP_CACHE = (
+    'import json; import opus_app.settings as settings; '
+    'print(json.dumps({"caches": settings.CACHES, '
+    '"probed": list(settings._memcache_client.server)}))'
+)
+
+
+def test_cache_location_reaches_the_probe_and_caches(distinct_config: Path, tmp_path: Path) -> None:
+    """The configured memcached is the one probed and the one Django's cache uses.
+
+    A stub client stands in for ``pymemcache``, so the memcached branch is taken
+    whether or not the real package or a memcached is present.
+    """
+    stub_root = tmp_path / 'stub'
+    for relative, text in _STUB_PYMEMCACHE.items():
+        path = stub_root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+    env = dict(os.environ)
+    env[OPUS_CONFIG_ENV_VAR] = str(distinct_config)
+    env['PYTHONPATH'] = os.pathsep.join([str(stub_root), env.get('PYTHONPATH', '')])
+    result = subprocess.run(
+        [sys.executable, '-c', _DUMP_CACHE],
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+        env=env,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    dumped = json.loads(result.stdout)
+    assert dumped['probed'] == ['127.0.0.1', 2]
+    assert dumped['caches']['default']['LOCATION'] == '127.0.0.1:2'
 
 
 def test_settings_require_the_configuration_variable(tmp_path: Path) -> None:

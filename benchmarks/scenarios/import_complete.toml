@@ -1,0 +1,59 @@
+# Complete scale: every bundle set in the holdings, in the order opus_import_all
+# imports them (opus_import.import_all), with its options. Each group is one invocation
+# of the bundle-import step. tests/benchmarks checks that the groups agree with
+# opus_import.import_all.
+
+scale = "complete"
+
+# Import runs per side, the default of --runs (docs/dev_guide_benchmarks.rst has the
+# run counts).
+runs = 1
+
+# The holdings roots. Environment variables are expanded when the harness runs.
+[holdings]
+pds3 = "$PDS_DROPBOX_ROOT/holdings"
+pds4 = "$PDS_DROPBOX_ROOT/pds4-holdings"
+
+[[groups]]
+bundles = "GALILEO"
+options = ["--import-check-duplicate-id"]
+
+[[groups]]
+bundles = "NEWHORIZONS"
+options = ["--import-check-duplicate-id"]
+
+[[groups]]
+bundles = "EBROCC"
+
+[[groups]]
+bundles = "uranus_occs_earthbased"
+
+[[groups]]
+bundles = "cassini_uvis_solarocc_beckerjarmak2023"
+
+[[groups]]
+bundles = "COUVIS_8xxx"
+
+[[groups]]
+bundles = "COVIMS_8xxx"
+
+[[groups]]
+bundles = "CORSS_8xxx"
+
+[[groups]]
+bundles = "VOYAGER"
+
+[[groups]]
+bundles = "HST"
+
+[[groups]]
+bundles = "COCIRS"
+
+[[groups]]
+bundles = "COISS"
+
+[[groups]]
+bundles = "COUVIS_0xxx"
+
+[[groups]]
+bundles = "COVIMS_0xxx"

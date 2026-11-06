@@ -278,6 +278,17 @@ Logging and diagnostics
    * - ``--profile``
      - Run under :mod:`cProfile` and log the cumulative statistics and callers at the
        end.
+   * - ``--timing-json PATH``
+     - When the run exits normally or through ``sys.exit`` (not when a signal kills it),
+       write one JSON object to ``PATH`` mapping each step the run performed to its
+       wall-clock seconds, plus ``total``. The steps are named as
+       :meth:`~opus_import.context.ImportContext.timed` records them: each phase of
+       :func:`~opus_import.steps.do_import.do_import_steps`, ``import_bundle:<bundle>``
+       and ``copy_bundle:<bundle>`` for each bundle, and the auxiliary, validation, cart
+       and dictionary steps under their option's name with underscores for dashes
+       (``create_param_info``, ``validate_perm``); ``grep -n "ctx.timed("
+       src/opus_import`` lists every name. The benchmark harness
+       (:ref:`dev_guide_benchmarks`) reads it; nothing else does.
 
 .. _dev_guide_import_what_a_run_does:
 

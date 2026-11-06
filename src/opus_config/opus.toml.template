@@ -96,6 +96,10 @@ allowed_hosts = ["127.0.0.1", "localhost"]
 # installations share one memcached without colliding.
 cache_server_prefix = "<CACHE_SERVER_PREFIX>"
 
+# The memcached server the web application caches in, as "host:port". Optional;
+# the default is the value below, memcached's own port on this machine.
+cache_location = "127.0.0.1:11211"
+
 # The public URL of this OPUS installation.
 public_url = "https://opus.pds-rings.seti.org/"
 

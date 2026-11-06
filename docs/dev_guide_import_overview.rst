@@ -113,8 +113,9 @@ the top of each row and is filled in as soon as it has been computed.
 **What the run has accumulated** -- the caches described in
 :ref:`dev_guide_import_ids` and :ref:`dev_guide_import_steps_do_import_mult`, the
 records of which non-repeating messages have already been logged, the Python warnings
-collected since they were last reported, and
-:attr:`~opus_import.context.ImportContext.import_has_bad_data`.
+collected since they were last reported, the wall-clock of each step timed so far
+(:attr:`~opus_import.context.ImportContext.step_timings`, which ``--timing-json``
+writes), and :attr:`~opus_import.context.ImportContext.import_has_bad_data`.
 
 Three of those have different lifetimes, and mixing them up is a real bug:
 :attr:`~opus_import.context.ImportContext.max_table_id_cache`,

@@ -4,8 +4,8 @@ Repository Layout
 =================
 
 The importable distribution is everything under ``src/``. Everything else --
-``tests/``, ``import_tests/``, ``integration_tests/``, ``scripts/``, ``docs/``,
-``perf_test/`` and the root files -- is supporting code that is not installed, with two
+``tests/``, ``import_tests/``, ``integration_tests/``, ``benchmarks/``, ``scripts/``,
+``docs/``, ``perf_test/`` and the root files -- is supporting code that is not installed, with two
 deliberate exceptions: ``manage.py`` at the root is a development convenience, and the
 package data inside ``src/`` (table schemas, dictionary sources, templates, static
 assets) ships in the wheel because the code reads it at run time. How it is found
@@ -103,6 +103,10 @@ directory has a chapter of its own, it is named beside it.
     │   ├── test_api/             # the golden-response API suite
     │   ├── apps_db_tests/        # the per-app database tests
     │   └── test_db_data/, test_perf/
+    ├── benchmarks/               # the benchmark harness: import, database and web
+    │   │                         #   measurements on servers it starts itself
+    │   ├── scenarios/            # what is measured, and the owned servers' settings
+    │   └── scratch/              # each session's raw logs and captures; not committed
     ├── scripts/
     │   ├── run-all-checks.sh     # every check this repository gates on, in one command
     │   ├── read-docs.sh          # builds the docs with -W -n and opens the HTML index;
@@ -173,6 +177,8 @@ Which chapter covers what
      - :ref:`dev_guide_log_analyzer`
    * - ``tests/``, ``import_tests/``, ``integration_tests/``
      - :ref:`dev_guide_testing`, :ref:`dev_guide_import_fixture`
+   * - ``benchmarks/``
+     - :ref:`dev_guide_benchmarks`
    * - ``src/opus_deploy/``
      - :ref:`user_guide_deployment`
    * - ``.github/workflows/``

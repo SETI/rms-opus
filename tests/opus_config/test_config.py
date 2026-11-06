@@ -183,6 +183,7 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('django.fake_api_delays', None),
         ('django.fake_error404_probability', 0.0),
         ('django.fake_error500_probability', 0.0),
+        ('django.cache_location', '127.0.0.1:11211'),
         ('import_.table_temp_prefix', 'imp_'),
     ],
 )
@@ -205,6 +206,7 @@ def test_load_config_defaults_every_optional_key(
         ('django', 'log_api_calls', '"debug"', 'DEBUG'),
         ('django', 'fake_error404_probability', '0.25', 0.25),
         ('django', 'log_console_level', '"CRITICAL"', 'CRITICAL'),
+        ('django', 'cache_location', '"cache.example.org:21211"', 'cache.example.org:21211'),
     ],
 )
 def test_load_config_reads_an_optional_key_that_is_written(
@@ -297,6 +299,31 @@ def test_load_config_accepts_a_whole_number_probability(
             "[django] 'fake_error404_probability' must be a number, not str",
         ),
         (
+            adding('django', 'cache_location', '"127.0.0.1"'),
+            '[django] \'cache_location\' must be "host:port" with a port from 1 to 65535, '
+            "not '127.0.0.1'",
+        ),
+        (
+            adding('django', 'cache_location', '":11211"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:memcached"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:65536"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:\u00b2"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:0"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
             adding('database', 'hostname', '"localhost"'),
             "[database] has unknown key(s): 'hostname'",
         ),
@@ -323,6 +350,12 @@ def test_load_config_accepts_a_whole_number_probability(
         'delay-given-a-boolean',
         'probability-given-a-boolean',
         'probability-given-a-string',
+        'cache-location-without-a-port',
+        'cache-location-without-a-host',
+        'cache-location-port-not-a-number',
+        'cache-location-port-too-large',
+        'cache-location-port-not-ascii-digits',
+        'cache-location-port-zero',
         'one-unknown-key',
         'two-unknown-keys',
     ],

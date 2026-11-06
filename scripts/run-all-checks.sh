@@ -68,7 +68,7 @@
 #             bandit, vulture (see ENABLE_* above)
 #   Sphinx:   make -C docs html (docs/Makefile passes -W and -n: warnings are
 #             errors, and every unresolved cross-reference is a warning)
-#   Markdown: pymarkdown scan docs/ .cursor/ README.md CONTRIBUTING.md
+#   Markdown: pymarkdown scan docs/ .cursor/ README.md CONTRIBUTING.md benchmarks/README.md
 #
 # Exit codes:
 #   0 - All requested checks passed
@@ -120,18 +120,18 @@ SCOPE_SPECIFIED=false
 
 # The importable packages live under src/, with the live-DB suites in
 # integration_tests/, the holdings-free import suite in import_tests/, the unit
-# suite in tests/, the documentation build's own extensions in docs/ and
-# manage.py at the root.
+# suite in tests/, the benchmark harness in benchmarks/, the documentation
+# build's own extensions in docs/ and manage.py at the root.
 # Vulture scans the same code trees plus vulture_whitelist.py (so whitelisted
 # names count as used); min-confidence/exclude come from [tool.vulture]. Bandit
 # skips tests/ and import_tests/ but does scan integration_tests/, which drives a
 # live server.
-: "${OPUS_RUFF_PATHS:=src integration_tests import_tests tests docs manage.py}"
+: "${OPUS_RUFF_PATHS:=src integration_tests import_tests tests benchmarks docs manage.py}"
 # mypy covers the same trees, and integration_tests/ is checked strictly like
 # every other one: no tree is silenced wholesale.
-: "${OPUS_MYPY_PATHS:=src integration_tests import_tests tests docs manage.py}"
-: "${OPUS_BANDIT_PATHS:=src integration_tests manage.py}"
-: "${OPUS_VULTURE_PATHS:=src integration_tests import_tests tests docs manage.py vulture_whitelist.py}"
+: "${OPUS_MYPY_PATHS:=src integration_tests import_tests tests benchmarks docs manage.py}"
+: "${OPUS_BANDIT_PATHS:=src integration_tests benchmarks manage.py}"
+: "${OPUS_VULTURE_PATHS:=src integration_tests import_tests tests benchmarks docs manage.py vulture_whitelist.py}"
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -588,12 +588,13 @@ run_markdown_checks() {
     # shellcheck source=/dev/null
     source "$VENV/bin/activate"
 
-    print_info "Running PyMarkdown scan (docs/, .cursor/, root *.md)..."
+    print_info "Running PyMarkdown scan (docs/, .cursor/, root *.md, benchmarks/README.md)..."
     local scan_paths=()
     [ -d "docs/" ] && scan_paths+=("docs/")
     [ -d ".cursor/" ] && scan_paths+=(".cursor/")
     [ -f "README.md" ] && scan_paths+=("README.md")
     [ -f "CONTRIBUTING.md" ] && scan_paths+=("CONTRIBUTING.md")
+    [ -f "benchmarks/README.md" ] && scan_paths+=("benchmarks/README.md")
     if [ ${#scan_paths[@]} -eq 0 ]; then
         print_info "No Markdown files/directories found to scan"
         deactivate 2>/dev/null || true

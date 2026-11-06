@@ -39,10 +39,9 @@ architecture Phases 0 to 6 produced.
 
 ### What this plan delivers
 
-- A benchmark harness and a committed **baseline** of import, database, and web
+- A benchmark harness and a recorded **baseline** of import, database, and web
   measurements, taken before any change (Phase 0).
-- The import's Python hot spots and the web application's cheap round trips removed
-  (Phase 1).
+- The web application's cheap round trips removed (Phase 1).
 - The import made **parallel** and its write path made **bulk**, behind a schema version
   guard, with **one write path** chosen by the target schema's state: a schema is imported
   fresh, directly, and indexed once at the end, a finalized one is appended to, and the aux and
@@ -70,7 +69,7 @@ architecture Phases 0 to 6 produced.
 | Topic | Decision |
 |---|---|
 | Branch | **Sequential PRs on one integration branch, stacked.** PR-00 creates `db-perf` from `main`, **which already carries this plan, the design document, and the analysis** (merged to `main` in their own documentation PR), so that the Execution notes can be amended in later PRs; every PR in Phases 0 to 5 branches from `db-perf` and targets `db-perf`; PR-(N+1) starts from `db-perf` after PR-N has merged into it, so every A/B's merge-base is the previous PR's result. `db-perf` carries the same protection as `main` and both workflows trigger on it from PR-00. **`main` is merged into `db-perf` only between PRs**, by the orchestrator, recorded in the Execution notes; the next PR's `before` run then measures the merged base, so the merge never hides inside an A/B. Phase 6 merges `db-perf` to `main` once and moves the plan and critiques to `plans/archive/` and `critiques/archive/` per `CLAUDE.md`. `main` stays deployable throughout, as it did during the modernization (`plans/archive/2026-07-18_opus_modernization_plan.md`, the `rewrite` branch). Phase P, if run, repeats the arrangement on `db-postgresql`. |
-| Measurement | **No performance claim enters a PR description, the dev guide, or this plan unless the benchmark harness produced it**, with the JSON result committed under `benchmarks/results/`. This is the repository's "measured or not made" rule applied to timing. |
+| Measurement | **No performance claim enters a PR description, the dev guide, or this plan unless the benchmark harness produced it**, with the comparison table in the PR description naming the result files it came from, which the harness keeps in its results directory outside the repository (§2.1). This is the repository's "measured or not made" rule applied to timing. |
 | A/B discipline | Before and after are measured **in one session on one machine**, base and head checked out side by side as git worktrees and installed into separate virtual environments. The two sides' runs alternate (§2.3). The run counts, the statistics, and the noise floors are §2.6's. Medians are compared, with the spread. A number from a different machine or a different day is not a comparison. |
 | Scales | Three. **Fixture scale** is the checked-in mini-holdings `import_tests` uses, minutes. **Test scale** is the bundle subset `scripts/import/import_for_tests.sh` imports from the Ring-Moon Systems Node's holdings, about ten minutes; it is the database the API goldens are pinned to, and "a copy of production" is never used, because the goldens would not pass against it. **Complete scale** is every bundle in the holdings, about twelve hours, and is used only where a number must come from all the data: PR-00's baseline, PR-24's options, and the merge's final comparison (PR-26); PR-25, PR-17, and PR-14 read those runs' results instead of importing again. All three run on the workstation (§1, Where the plan runs), which needs the holdings and room for a harness-owned database server (§2.2); **no administrator access to it is assumed** (§2.2, §3). Every PR measures at fixture scale. PRs marked **test scale** in §4 must also be measured there before merge. |
 | Where the plan runs | **A personal workstation, never a production server.** The harness owns everything it measures there: its MySQL server, memcached, and gunicorn. No shared server is ever used. |
@@ -115,8 +114,7 @@ binaries the `benchmarks` extra installs or that are already present.
 
 ```text
 benchmarks/
-├── README.md                    # pointer to docs/dev_guide_benchmarks.rst, plus the tuning baseline
-├── micro/                       # micro-benchmarks (PR-01), writing the same JSON result shape
+├── README.md                    # pointer to docs/dev_guide_benchmarks.rst
 ├── __init__.py
 ├── bench_import.py              # times one import run step by step
 ├── bench_db.py                  # schema statistics, plans, index usage
@@ -130,10 +128,11 @@ benchmarks/
 │   ├── queries.sql              # the last capture, for a reader; each A/B side captures its own (§2.2)
 │   ├── my.cnf.template          # the harness-owned server's configuration, from the tuning baseline
 │   └── web.toml                 # the request scenarios
-├── scratch/                     # per session: raw logs, .prof files, query captures; not committed
-└── results/
-    ├── YYYY-MM-DD_PR-nn_{before,after}_{fixture,test,complete}_{mysql,postgresql}_<session>.json
-    └── YYYY-MM-DD_PR-nn_floors_{fixture,test,complete}_{mysql,postgresql}.json
+└── scratch/                     # per session: raw logs, .prof files, query captures; not committed
+
+<results root>/                  # [results] root in scenarios/server.toml; outside the repository
+├── YYYY-MM-DD_PR-nn_{before,after}_{fixture,test,complete}_{mysql,postgresql}_<session>.json
+└── YYYY-MM-DD_PR-nn_floors_{fixture,test,complete}_{mysql,postgresql}.json
 ```
 
 `<session>` is a short label the executor chooses (`a`, `b`, `rerun1`) so that two
@@ -146,8 +145,11 @@ adding it to `RUFF_PATHS`, `MYPY_PATHS`, `BANDIT_PATHS`, and `VULTURE_PATHS` in
 `pyproject.toml`; `benchmarks/README.md` joins the PyMarkdown scan list in both places.
 The runners' entry points go in `vulture_whitelist.py`. The directory is outside the
 default pytest run; `tests/benchmarks/` unit-tests `compare.py`'s table rendering, the
-scenario loaders, and the result-file schema. Results and floors files are committed;
-everything under `benchmarks/scratch/` (the session's scratch directory,
+scenario loaders, and the result-file schema. Neither result files nor floors files are
+committed. Both go to the results directory named by `[results] root` in
+`scenarios/server.toml`, outside the repository: most of a result file is diagnostics (every captured
+statement's plan, each scenario's top statements, the index-usage snapshot) that run to
+megabytes and that a reader regenerates from the commit the file names; everything under `benchmarks/scratch/` (the session's scratch directory,
 `benchmarks/scratch/<session>/`, which holds the raw logs, the `.prof` files, and the
 query captures) is not (PR-00 adds the `.gitignore` entries `benchmarks/scratch/` and
 `benchmarks/**/*.prof`). The harness-owned server's data directory and the memcached it
@@ -334,8 +336,9 @@ on the workstation is the system `memcached` service, and restarting that needs 
 harness starts its own `memcached` on a private port (`memcached_port` in `web.toml`) with
 a stated memory size (`memcached_mb` in `web.toml`, passed as `-m`), writes that address
 into the `OPUS_CONFIG` it writes, and **resets it by stopping and starting it**. It
-records the server's `limit_maxbytes` (from `stats`) in the environment and the delta of
-its `evictions` per scenario, so a scenario that overflowed the cache is visible.
+records the server's `limit_maxbytes` (from `stats`) in the environment and checks the
+delta of its `evictions` per scenario: a scenario that overflowed the cache fails the
+run.
 `pymemcache` is not a dependency of the application today, so the `benchmarks` extra
 includes it, and the harness **refuses to run** when the settings report the locmem
 fallback. The harness client sends `Connection: close` on every request, because gthread
@@ -406,11 +409,12 @@ approximate (the owned server sets 4096), and with each shape its `SUM_SORT_MERG
 and `SUM_CREATED_TMP_DISK_TABLES`. Per scenario it also records the deltas of
 `Innodb_buffer_pool_reads` (the buffer misses), `Connections` (the connections the server
 accepted), `Sort_merge_passes`, `Created_tmp_disk_tables`, and
-`Max_execution_time_exceeded`; the **statements executed** against the application's
+`Max_execution_time_exceeded`, and fails the run on a scenario in which a request failed
+(a failed request usually answers sooner than a served one); the **statements executed** against the application's
 schema (the sum of `COUNT_STAR` over the digest rows whose `SCHEMA_NAME` is that schema;
 the harness's own connection names no default schema, so its statements are not counted),
-per state, so that a scenario answered entirely from a cache shows as zero; the
-memcached `evictions` delta; the schema's table count after the scenario; and the peak
+per state, so that a scenario answered entirely from a cache shows as zero; the schema's
+table count after the scenario; and the peak
 resident set (`VmHWM`) of each gunicorn worker (the web memory guard, §2.5). **Two caches
 answer requests before a view's own code:** Django's site cache (`UpdateCacheMiddleware`
 and `FetchFromCacheMiddleware` in `settings.MIDDLEWARE`, keyed by URL, for
@@ -464,10 +468,11 @@ substantive change the review loop forces:
    from PR-05 on, before each side's server starts, the harness restamps the version row
    to that side's `SCHEMA_VERSION` with `bench_server.restamp_version`, since the two
    sides' web checks expect different versions whenever the PR bumps it. Results land in
-   `benchmarks/results/` of the PR worktree, the base's labeled `before` and the head's
-   `after`.
+   the results directory (§2.1), the base's labeled `before` and the head's `after`.
 4. `compare.py before.json after.json` renders the table the PR description carries:
-   every metric, before, after, the change, the spread, and the floor (§2.6). A change
+   before, after, the change, the spread, and the floor (§2.6) of every target and guard,
+   every metric only one side holds, and every other metric whose change exceeds its
+   floor, with a count of the rows left out (`--all` keeps them). A change
    within the floor is reported as **within noise**, not as an improvement.
 5. For a PR marked **test scale**, steps 2 to 4 again on the test-scale machine, with the
    `test` scale in the file name and the import from `import_test.toml`, at §2.6's
@@ -480,7 +485,7 @@ substantive change the review loop forces:
 **Which PRs import twice.** A test-scale import is minutes (§1, Scales), but a second
 one measures nothing for a PR that leaves the import alone and holds the workstation under
 the idle rule below, so only a PR that changes what the import writes or how it writes it
-runs `bench_import` with both interpreters: PR-01, PR-04, PR-07, PR-08, PR-09, PR-12,
+runs `bench_import` with both interpreters: PR-04, PR-07, PR-08, PR-09, PR-12,
 PR-13 (finalization's key build only adds keys, so a copy of the base could show neither
 the keys it drops nor the columns it removes), PR-14, PR-15, PR-16, PR-16a, PR-17, PR-19,
 PR-20, and PR-24 when option 1 is implemented (its `default_rank` column is declared in
@@ -513,8 +518,8 @@ run.
 
 **A target with no recorded floor.** The floors cover every metric the floor sessions
 measured (§2.6), which include every scenario in §2.2 (the selective search among them).
-A target metric they did not measure (PR-01's micro-benchmark, PR-16's and PR-16a's
-multi-importer imports, PR-23's incremental update) has none, so the executor runs the
+A target metric they did not measure (PR-16's and PR-16a's multi-importer imports,
+PR-23's incremental update) has none, so the executor runs the
 before side (for PR-23, the full import it is compared with) **three times** in its
 session, and the spread of those three runs (§2.6) is the floor the target is judged
 against. PR-21's gate compares two `bench_db` blocks, each run five times (§2.2), and
@@ -527,7 +532,7 @@ operator the workstation is free. The recorded load average is how a reviewer ch
 
 ### 2.4 The tuning baseline, and the head-to-head procedure (Phase P only)
 
-PR-00 writes a **tuning baseline** into `benchmarks/README.md` and `my.cnf.template`: a
+PR-00 writes a **tuning baseline** into `docs/dev_guide_benchmarks.rst` and `my.cnf.template`: a
 short table of setting, rule, and the documentation page the rule comes from, derived from
 the machine's memory and core count by the rules MySQL's own documentation gives, naming
 at least `innodb_buffer_pool_size`, `innodb_buffer_pool_chunk_size`,
@@ -617,18 +622,28 @@ per-run values; a single-request scenario's value is that request's latency. Per
 latencies are reported as the median over runs of each request. The **concurrency
 scenario** differs: its **p95** is computed once over every request latency of that half
 of the scenario (distinct or shared) in that state, **pooled across all of the side's
-runs**, never as a median of per-run p95s; its per-run p95 is kept for the spread below,
-and its throughput is requests per second per run, median over runs. An import metric's
+runs**, never as a median of per-run p95s, less the latencies of a run whose own p95 is
+an outlier (Spread, below); its per-run p95 is kept for the spread below, and its
+throughput is requests per second per run, median over runs. An import metric's
 value is its wall-clock (or bytes, or peak PSS) per run.
 
 **Spread.** A metric's spread in one session is the range of its per-run values (maximum
 less minimum) divided by their median, so it is a fraction; for the concurrency p95 it is
-the range of the per-run p95s divided by the pooled p95.
+the range of the per-run p95s divided by the pooled p95. The range leaves out an
+**outlying run**, one more than three robust standard deviations (1.4826 times the median
+absolute deviation) from the session's median; the median is still over every run, which
+one such run barely moves. Fewer than three runs, or runs more than half of which equal the
+median, have no outliers. The range of several sessions' medians below never leaves one
+out.
 
 **Change.** A metric's change is (after median − before median) / before median. It is an
 **improvement beyond noise** when its magnitude exceeds the floor in the improving
 direction, and a **regression beyond a guard** when it exceeds the floor plus 0.05 in the
-worsening direction.
+worsening direction. The floor a change is judged against is the larger of the floors
+file's fraction and the metric's **absolute noise** divided by the before median: its
+floor in its own units (below) or, for a time metric, its family's jitter where that is
+larger. Small times scatter by a roughly fixed amount whatever their size, so a fraction
+measured on one median does not carry over to a much smaller one.
 
 **Noise floors, for every metric.** A **floor session** runs the full harness on one
 commit at the floor-session counts above, at fixture and test scale. Two floor sessions are
@@ -640,16 +655,21 @@ the larger spread. Where they disagree, the executor checks the recorded load av
 the idle rule, then takes a **third** floor session, and the floor becomes the largest of
 the three spreads and the range of all three medians divided by their median; no session
 is set aside. A metric whose three sessions still disagree by the same test is marked
-**noisy** in the floors file, and a PR judging it says so. A floor is recorded for **every
+**noisy** in the floors file, and a PR judging it says so. Each floor is also recorded in
+the metric's own units: the widest range of a session's runs, outliers left out, or the
+range of the session medians, whichever is larger. Each family of metrics (import, db,
+web) has a **jitter**, the median of its time metrics' floors in seconds, which the floors
+file records; sessions also agree on a time metric whose medians lie within its family's
+jitter. A floor is recorded for **every
 metric the sessions produce**, at each scale, judged or not (the ring-radius, selective,
 files-API, detail-page, categories, target-search, and re-sort scenarios, db-cold
 included, as much as §2.5's list), by `compare.py --floors <session files>`, which writes
-the committed floors file (§2.1); the Execution notes name it.
+the floors file into the results directory (§2.1); the Execution notes name it.
 
 **When floors are taken.** PR-00 takes them, at fixture and test scale, on its own
 commit, and every later PR judges against that floors file; no later PR retakes them at
 those scales. A floor is a fraction of its metric's median, so it carries over as the
-medians change. **A PR whose own before-side runs show a spread larger than the floor for
+medians change, except where the median shrinks until the absolute noise is the larger. **A PR whose own before-side runs show a spread larger than the floor for
 a metric** judges that metric against that spread instead: the spread, as defined above,
 of the before side's runs of the metric in the PR's own session. PR-24 takes its own
 floors at complete scale. A target with no floor at all is §2.3's case.
@@ -665,7 +685,8 @@ there and are not repeated here). The rules that bind every executor:
 - **Input contract:** this file, the single PR number to execute, the analysis and the
   design document it cites, and repository access. The sub-agent reads §1 to §3, its own
   PR section, the preamble of its phase, every other PR section its own cites, §5 to §7,
-  the Execution notes, and the committed floors file it judges against (§2.6), and
+  the Execution notes, and the floors file it judges against (§2.6), from the operator's
+  results directory, and
   relies on no prior conversation.
 - **What the orchestrator provides**, and nothing more: push access to `SETI/rms-opus`
   and the ability to open PRs against `db-perf`; a development machine with Python 3.12 or
@@ -682,8 +703,8 @@ there and are not repeated here). The rules that bind every executor:
   deploy chain's scripts (`_promote.sh`, `deploy_new_code_only.sh`,
   `deploy_new_code_and_database.sh`) run `sudo` and are never run by an executor; a PR
   that changes them tests the changed shell function in isolation.
-- **State lives in artifacts:** the tree, merged PR descriptions, the committed benchmark
-  results, and the **Execution notes** appendix at the bottom of this file, amended in the
+- **State lives in artifacts:** the tree, merged PR descriptions, the benchmark results
+  and floors files in the operator's results directory, and the **Execution notes** appendix at the bottom of this file, amended in the
   same PR (dated, naming the commit of this file, one bullet per fact, never rewriting the plan
   body). Where this plan makes a claim about the code that turns out stale, the executor
   records the correction there. The Phase P decision, if Phase P runs, is recorded there
@@ -757,8 +778,8 @@ as `item n`, and to the design document as `§D-n`.
 
 **PR-00: feat: benchmark harness and baseline measurements** (items 12 and 19; `§C-6`)
 
-- **Goal:** create `db-perf`, implement §2, and commit the first `before` results at both
-  scales.
+- **Goal:** create `db-perf`, implement §2, take the first `before` results at both
+  scales, and write the floors files computed from them.
 - **Changes:**
   - **First:** `db-perf` is created from `main`, which already carries this plan, the design
     document, and the analysis (§1, Branch);
@@ -791,11 +812,10 @@ as `item n`, and to the design document as `§D-n`.
     side's erase by §2.2's rule. PR-05 adds the fifth, `version_args` (default
     `VERSION_ARGS`, `('--write-schema-version',)`; an empty sequence skips the step), and
     the harness passes it the same way (§2.2).
-  - `benchmarks/README.md`: a pointer to the dev guide and the **MySQL tuning baseline**
-    (§2.4); `.gitignore` entries `benchmarks/**/*.prof` and `benchmarks/scratch/`, the
+  - `benchmarks/README.md`: a pointer to the dev guide; `.gitignore` entries `benchmarks/**/*.prof` and `benchmarks/scratch/`, the
     scratch directory that holds every session's raw logs and query captures (§2.1).
   - `docs/dev_guide_benchmarks.rst`: how to run the harness, read a result, take an A/B,
-    start the owned server, and the idle rule of §2.3; listed in the `docs/dev_guide.rst`
+    start the owned server, the **MySQL tuning baseline** (§2.4), and the idle rule of §2.3; listed in the `docs/dev_guide.rst`
     toctree after `dev_guide_testing` (the Sphinx gate builds with `-W -n`, so an orphan
     page fails it) and linked from `dev_guide_testing.rst`; `benchmarks/` added to the
     tree in `docs/dev_guide_layout.rst`. A sentence in `CLAUDE.md`'s Tests section naming
@@ -810,10 +830,12 @@ as `item n`, and to the design document as `§D-n`.
   and each mult table's `MAX(id)` (PR-14 and PR-16 read them); the `preview_images` size
   and ratio, recorded for reference; and,
   for every column whose `pi_form_type` is `STRING`, `SELECT COUNT(*) FROM <t> WHERE
-  <col> <> CONVERT(<col> USING ascii)`, committed with the results as the set PR-17 reads
+  CAST(<col> AS BINARY) <> CAST(CONVERT(<col> USING ascii) AS BINARY)` (bytes, since the
+  column's collation can equal a character to its converted form), recorded in the
+  Execution notes as the set PR-17 reads
   (a `bench_db --ascii-columns` option, which runs at any scale).
-- **Acceptance:** results committed as `before`, from the floor sessions at the fixture
-  and test scales (two, or three where they disagree), and the floors file `compare.py
+- **Acceptance:** `before` results from the floor sessions at the fixture and test scales
+  (two, or three where they disagree), and the floors file `compare.py
   --floors` writes from them, with a floor for **every** metric the sessions produced
   (§2.6); the Execution notes name the file as the floors every later PR is judged
   against at fixture and test scale. No application code changes beyond `--timing-json`, the `build_run`
@@ -827,36 +849,12 @@ as `item n`, and to the design document as `§D-n`.
 
 ### Phase 1: the cheap wins
 
-**PR-01: perf: the import's Python hot spots** (item 7; `§C-3.3`)
+**PR-01: dropped; its changes are PR-14's** (item 7; `§C-3.3`)
 
-- **Changes:**
-  - `do_import_mult.update_mult_table` (the per-row path; `mult_table_lookup_id` is called
-    only from `do_partables.py` and is not the hot spot) probes a `dict[str | None,
-    MultRow]` keyed exactly as its scan compares (`str(val)`, with `None` preserved),
-    tracks the table's max id, and caches the `all_numeric` flag, all held beside the row
-    list in `ctx.mult_table_cache`, whose type in `context.py` changes;
-    `read_or_create_mult_table` creates them once, and both `update_mult_table` and
-    `mult_table_lookup_id` use them.
-  - `ImportContext.logged_import_errors` and `logged_import_warnings` become sets, which
-    `ImportLog.nonrepeating_error` and `nonrepeating_warning` test and add to; nothing reads
-    them in order (`grep -rn "logged_import_" src/opus_import` finds only `context.py`).
-  - `do_import_obs.import_run_field_function` caches the **unbound function** per
-    `(type(obj), func_name)`, taken from the class with `getattr(type(obj), name, None)`,
-    and calls it with the instance; a missing method is cached as `None`. A bound method
-    must not be cached: `instrument_obj` is created per index and in
-    `create_tables_for_import`, and a cached bound method would read the first instance's
-    `_metadata` forever.
-  - No behavior change; the goldens are the proof.
-- **Measurement:** fixture-scale import wall-clock and the cProfile top twenty before and
-  after, plus `benchmarks/micro/mult_lookup.py` (a 10,000-value mult table and a million
-  lookups), since the fixture's mult tables are too small to show the scan. The
-  micro-benchmark runs with each side's interpreter and **builds its table through that
-  side's own `update_mult_table`** (10,000 distinct values, then the lookups), never
-  constructing `ctx.mult_table_cache` itself, so each side's cache has the type that
-  side's `context.py` declares (the base's list of rows, the head's structures). Target
-  metric: cumulative time in `update_mult_table` on the micro-benchmark, with the
-  `nonrepeating_*` functions and `import_run_field_function` as secondaries.
-- **Acceptance:** §2.5; goldens and the warning whitelist unchanged.
+The mult tables are too small for a scan of one to cost anything measurable: the largest
+at complete scale holds 296 rows (Execution notes). The value-to-row dictionary and the
+logged-message sets are made by PR-14, which rewrites the code they belong to; the
+field-function cache is not made at all (§7).
 
 **PR-02: perf: persistent database connections and threaded workers** (item 15; `§C-4.2`; `§D-5`)
 
@@ -2398,7 +2396,7 @@ once (§1, Deploy; §2.3).
 - **Requires full re-import:** yes.
 - **Scale:** test scale.
 
-**PR-14: refactor: one mult table, with a computed display rank** (item 21; `§C-2.6`; `§D-2.8`)
+**PR-14: refactor: one mult table, with a computed display rank** (items 7 and 21; `§C-3.3`; `§C-2.6`; `§D-2.8`)
 
 - **The problem, as the code has it.** Every enumerated column has its own
   `mult_<table>_<column>` table, all of one shape (`table_schemas/mult_template.json`),
@@ -2461,8 +2459,17 @@ once (§1, Deploy; §2.3).
     `group_disp_order=group_info['disp_order']` callers in `obs_general.py` and
     `obs_surface_geometry_name.py` pass `group_pin`, with `planet_group_mapping.py`'s
     `disp_order` strings rewritten as integers by the same script as the `mult_options`
-    lists. The `aliases` and `tooltip` keys leave the field shape in `obs/field_types.py`
-    and `_create_mult`. The 55 `mult_options` lists (`grep -o '"mult_options"'
+    lists. The import's per-field cache (`ctx.mult_table_cache`, whose type in
+    `context.py` changes) holds each field's rows beside a `dict` from value to row, the
+    first row of a value where two share one, keyed exactly as the stored value compares
+    (the absent value being the empty string), and the field's highest id, both kept
+    current as rows are added; `update_mult_table` and `mult_table_lookup_id` probe the
+    dictionary rather than scanning the rows, so a lookup's cost never grows with the
+    field, nor with the one table if a later change loads it whole.
+    `ImportContext.logged_import_errors` and `logged_import_warnings` become sets, which
+    `ImportLog.nonrepeating_error` and `nonrepeating_warning` test and add to; nothing
+    reads them in order. The `aliases` and `tooltip` keys leave the field shape in
+    `obs/field_types.py` and `_create_mult`. The 55 `mult_options` lists (`grep -o '"mult_options"'
     src/opus_import/table_schemas/*.json | wc -l`) state their order element as an integer
     (`'010'` becomes `10`), rewritten once by a script committed with the PR, and the
     reader rejects a string.
@@ -2928,9 +2935,9 @@ once (§1, Deploy; §2.3).
     ever left unused, so the ids are those the serial import assigns. PR-14's unique key and
     its empty-string absent value are what make this safe. The value is written when it is
     assigned, and the per-bundle upsert of every cached mult row (`dump_import_mult_tables`)
-    goes. **PR-01's cached max id goes too**: a process's own maximum is wrong as soon as
-    another process adds a value to the field, so the next id comes only from the counter.
-    PR-01's value-to-row dictionary stays: no value is deleted or given another id before
+    goes. **PR-14's cached highest id goes too**: a process's own maximum is wrong as soon
+    as another process adds a value to the field, so the next id comes only from the
+    counter. PR-14's value-to-row dictionary stays: no value is deleted or given another id before
     finalization, so a hit is always right, and a miss falls through to the insert. A
     `mult_group` row, which an importer writes when it first meets a group, is inserted
     with `INSERT ... ON DUPLICATE KEY UPDATE field_id = field_id`, a no-op on a row another
@@ -3836,8 +3843,7 @@ once (§1, Deploy; §2.3).
   import time, and in code. Nothing is implemented until the discussion on the PR decides
   which options go in; the orchestrator records the decision and its reason for each
   option in the Execution notes, and the executor then implements exactly the chosen ones
-  on the same branch. If none is chosen, the PR closes with the report committed under
-  `benchmarks/results/`.
+  on the same branch. If none is chosen, the PR closes with the report in its description.
 - **Option 1: a default-sort rank on `obs_general`.** Prototype: `ALTER TABLE obs_general
   ADD COLUMN default_rank INT UNSIGNED, ADD KEY (default_rank)`, filled from `ROW_NUMBER()
   OVER (ORDER BY time1, opus_id)`. Probe shapes, on the prototype copy: the empty
@@ -3972,7 +3978,7 @@ once (§1, Deploy; §2.3).
   before/after table at the fixture and test scales from one A/B session (§2.3) with the
   PR-00 commit as the base and `db-perf`'s head as the head, side by side; and one
   complete-scale import from `import_complete.toml` at the head, with `bench_db`,
-  `bench_web`, and a timed `opus_manage warm_search`, set beside PR-00's committed
+  `bench_web`, and a timed `opus_manage warm_search`, set beside PR-00's
   complete-scale results in a table labeled **historical**, since results from different
   days are not a comparison (§1, A/B discipline).
 - **After the merge:** the orchestrator cuts the release per the repository's release
@@ -4023,8 +4029,8 @@ MySQL suites unchanged as its regression check.
     and `bench_db` gain their PostgreSQL branches (`pg_stat_database` counters,
     `pg_table_size`, `pg_indexes_size`, `pg_indexes`, `EXPLAIN (ANALYZE, BUFFERS, FORMAT
     JSON)` **inside a transaction that is rolled back**, `pg_stat_user_indexes`,
-    `pg_stat_statements` when preloaded); `benchmarks/README.md` gains the PostgreSQL
-    tuning baseline (§2.4).
+    `pg_stat_statements` when preloaded); `docs/dev_guide_benchmarks.rst` gains the
+    PostgreSQL tuning baseline (§2.4).
   - Every sentence saying MySQL is the only brand is rewritten (§3); the views' driver
     error-code tests move behind `db_utils` predicates (PR-P2 completes this).
 - **Tests:** `tests/opus_import/test_importdb_postgresql.py` mirrors the MySQL unit tests;
@@ -4107,13 +4113,13 @@ the orchestrator's).
 
 | PR | Depends on | Why |
 |---|---|---|
-| PR-01 to PR-03 | PR-00 | the harness is the proof |
+| PR-02 and PR-03 | PR-00 | the harness is the proof |
 | PR-04 | PR-00 | measures the write path |
 | PR-05 | PR-00 | first schema change; every later schema PR bumps its constant; PR-07 dispatches on its row |
 | PR-06 | PR-00 | the fresh-import path must not drop a staging table the aux steps use |
 | PR-07 | PR-04, PR-05, PR-06 | loads through PR-04's loader, dispatches on the version row, and leaves the aux steps to the swap |
 | PR-08 | PR-07 | completes PR-07's dispatch and removes the path it superseded |
-| PR-09 | PR-01, PR-04, PR-07, PR-08 | the parent resolves mults through PR-01's structures, and writes through PR-04's loader on the single write path |
+| PR-09 | PR-04, PR-07, PR-08 | the parent writes through PR-04's loader on the single write path |
 | PR-10 | PR-00 | smallest web change; needs no new table |
 | PR-11 | PR-05, PR-07, PR-10 | the guard exists; it extends the deploy line PR-07 sets; its table-level keys go through PR-07's filter; paging is already range-based |
 | PR-12 | PR-05, PR-07, PR-09, PR-11 | the keep set and the finalization foreign keys are PR-07's; `instrument_id` comes from PR-09's parent; the same join helpers as PR-11 |
@@ -4213,6 +4219,10 @@ the orchestrator's).
 
 ## 7. Deferred and dropped
 
+- **Caching the field functions' lookup** (part of item 7 as the analysis wrote it): the
+  lookup costs about 58 ns a call more than a cached one, about 33 s of a complete
+  import; the measurement is in the Execution notes.
+
 - **The multi-valued JSON index** (item 9 as the analysis wrote it): the junction table
   serves both the search and the count (PR-20).
 - **Partitioning `search_results` or the surface geometry table** (items 11 and 13 as the
@@ -4248,3 +4258,272 @@ the orchestrator's).
 
 Dated, naming the commit of this file they were written against, one bullet per fact.
 Nothing above this line is rewritten by an executor.
+
+### 2026-11-04, PR-00 (written against this file at b9409b94)
+
+- The harness's commands are `python -m benchmarks.bench_server`, `bench_import`,
+  `bench_db`, `bench_web` and `compare`, each run from the PR worktree's root;
+  `docs/dev_guide_benchmarks.rst` is the procedure. Every bench command takes `--scale`,
+  `--side`, `--pr`, `--session` and `--date` (pass the session's date explicitly, so a
+  session that crosses midnight keeps one file name), plus `--python` and `--repo-root`
+  naming the side.
+- The harness-owned server is the generic MySQL 8.0.46 tarball under `~/opt/mysql/`, with
+  `~/opt/mysql/lib/libaio.so.1` linked to Ubuntu 24.04's `libaio.so.1t64`, data root
+  `~/opus_bench/mysql`, socket only (no TCP listener), as
+  `benchmarks/scenarios/server.toml` names them. `memory_budget_gb = 24` there gives an 18
+  GiB buffer pool and a 14 GiB redo log; `tests/benchmarks/test_bench_server.py` checks
+  the rule. The harness's memcached is `web.toml`'s port 21211 with 1024 MB.
+- The holdings scales read `$PDS_DROPBOX_ROOT/holdings` and
+  `$PDS_DROPBOX_ROOT/pds4-holdings`; on the workstation `PDS_DROPBOX_ROOT` is the value
+  `~/opus_runner_secrets` sets.
+- Metric names a later PR judges: the import guards are `import.wall_s`,
+  `import.largest.import_s` and `import.peak_tree_pss_kb`; the schema guards
+  `db.schema.data_bytes` and `db.schema.index_bytes`; the web guards are the names
+  `benchmarks.compare.GUARD_PATTERNS` matches. A scenario's statements-executed count is
+  `web.<state>.<kind>.<search>.statements`, which `compare` reads to report rather than
+  judge a warm guard that executed nothing on either side.
+- `benchmarks/scenarios/import_complete.toml` names no `[largest]` bundle, so at complete
+  scale `import.largest.import_s` is the bundle with the most `obs_general` rows in that
+  run (`details.largest_bundle_named_by` is `rows`). Its groups expand, through the side's
+  own code, to the bundles `opus_import_all` imports; on 2026-11-04 the expansion with
+  this commit's interpreter (`benchmarks/side_probe.py expand`) gave 985 bundles over its
+  14 groups.
+- The test scale's selective search, `planet=Uranus` in `web.toml`, matched 171 of 29,752
+  `obs_general` rows in a test-scale import made on 2026-11-04 with the harness commit,
+  under the one-percent ceiling of §2.2.
+- `compare.py --floors` gives a floor to every metric any session holds; a metric some
+  session lacks is listed by the command and carries `missing_from` in the floors file,
+  and is never counted as agreeing.
+- The fixture and test floor sessions taken on 2026-11-04 do not count: the workstation
+  was not idle (one-minute load average 7 to 24 on the 30 CPUs the results record, from
+  other work) and the operator had not confirmed it, so §2.3's idle rule was not met.
+  Their result files were not committed. The floor sessions, and the floors file every later PR judges against,
+  are to be taken again on an idle workstation with the operator confirming each session;
+  the bullet naming the floors file is added then.
+- PR-00's complete-scale import, with its `bench_db` and `bench_web` runs, has not been
+  taken yet. PR-14 and PR-16 read its `db.table.mult_*.max_id` metrics, and PR-17 its
+  `ascii_columns` details.
+- `vulture_whitelist.py` gains no entry: each runner's `main` is called from its module's
+  `__main__` guard, so vulture sees every entry point used, and the whitelist holds only
+  names vulture cannot see used.
+- `import_tests.tools.build_run.write_opus_config` does not gain `extra_import` in PR-00:
+  PR-00's key is a `[django]` key, which `extra_import` would not set. `write_opus_config`
+  writes `cache_location = "127.0.0.1:1"` directly, as `tests/fixtures/opus_ci.toml` does,
+  so neither the import suite nor the unit suite reaches a memcached. The first PR that
+  adds an `[import]` key adds the parameter. `_write_opus_toml.sh` and
+  `opus_setup_environment.sh` keep the default and are unchanged.
+- `benchmarks/scenarios/queries.sql` is a test-scale capture by the harness before its
+  final commit; its blocks are the ones the final commit's capture records. It is
+  refreshed with `bench_db --dump-queries --commit-capture` at test scale, as the last
+  command of a session, under a session label of its own whose result file is not
+  committed, because the copy changes the checkout that later runs of the same label would
+  record.
+- `db-perf`'s protection should require the contexts `main` requires: `Run Lint`, `Unit
+  Tests (3.12)`, `Unit Tests (3.13)`, `Import Tests`, `Docs`, `Package`, and `Integration
+  Tests (self-hosted-linux, 3.12)`.
+- The fixture floor sessions taken on the afternoon of 2026-11-04 exposed three harness
+  defects, fixed in the PR's `fix(benchmarks)` commit; those sessions' results were not
+  committed either.
+- Defect one: warm latencies were bimodal (warm `categories` about 11 ms or about 265 ms)
+  because Django imports its URLconf, and with it every view module, on a worker
+  process's first request, and gunicorn hands a connection to whichever worker accepts
+  it. The harness now starts every side's gunicorn with `benchmarks/gunicorn_hooks.py`
+  as its configuration file: `post_worker_init` imports the URLconf and `post_request`
+  writes which worker served each request to a served log. From that log the harness
+  checks that every cold scenario starts on workers that have served nothing, and before
+  each warm repetition it reissues the scenario's requests, workers times threads at a
+  time, until every worker has served every one of them.
+- Because `post_worker_init` loads the URLconf eagerly, app-cold and db-cold exclude the
+  URLconf import (about 250 ms per worker on the fixture), as they already excluded the
+  application import (`app_loading = "eager"`). The operator accepted this on
+  2026-11-04.
+- Defect two: every `db.plan` metric had a spread of zero, because `bench_db` recorded one
+  value per run (the sum of its statements' medians). A block's time in each of its five
+  executions is now kept in the run's `samples`, the metric is `db.plan.<tag>.time_s`,
+  and `compare` takes its median and spread over the executions.
+- Defect three: `rows_examined` differed between sessions on identical data, for two
+  reasons. The application loads lookups (`param_info`, mult labels, a thread's
+  connection settings) into a process or thread on first use, so which captured request
+  carried those statements depended on the worker that served it; the capture is now
+  served by one gunicorn worker with one thread. And the `EXPLAIN ANALYZE` parser skipped
+  every iterator line whose time or row count MySQL printed in exponent notation
+  (`952e-6`); it now reads them.
+- A cold state's per-request metrics carry genuine spread: a request pays the
+  application's lazy per-process lookups or not depending on whether an earlier request
+  of the same scenario reached the same worker. Cold states are judged on the scenario's
+  wall-clock (`web.<state>.<scenario>.wall_s`), not on its per-request latencies.
+  The operator accepted this on 2026-11-04.
+- `web.<state>.<scenario>.server.Innodb_buffer_pool_reads` is usually zero with an
+  occasional non-zero run, so its median is zero and its spread, and so its floor, is
+  infinite (`Infinity` in the floors file). It is diagnostic and never judged.
+- Before each floor session the operator's session driver, a shell loop outside the
+  harness, waits up to fifteen minutes for the one-minute load average to settle to 3
+  or below, since the previous session's own work raises it, and does not start the
+  session otherwise. The operator accepted this rule on 2026-11-04. The harness itself
+  waits for nothing; it records each run's one-minute load average at its start
+  (`load_average_1m`).
+
+### 2026-11-05, PR-00 (written against this file at b9409b94)
+
+- The test-scale floor sessions of 2026-11-04 showed every session's third import run
+  much slower than its first two (`import.wall_s` 656, 493 and 516 s against about 386 s)
+  with identical server counters, which gave `import.wall_s` a test-scale floor of 0.70.
+  The cause was the server state each run inherited on the same mysqld: the dirty pages
+  and redo the earlier runs left. `bench_import` now restarts the owned server cleanly
+  before every timed import (each run, the largest bundle alone, and the incremental
+  group's append), and records the restarts in the run's `server_restarts` detail. A
+  three-run test-scale experiment with the restarts, on 2026-11-05, gave 385.6, 385.7 and
+  385.8 s, so the cause was InnoDB's flushing, not the disk; no disk settle step was
+  needed. Those sessions and the experiment were not committed.
+- The floors every later PR is judged against at fixture and test scale are
+  `2026-11-05_PR-00_floors_fixture_mysql.json` and
+  `2026-11-05_PR-00_floors_test_mysql.json` in the operator's results directory, computed with the rules of
+  1d5564f2 from the sessions `2026-11-05_PR-00_before_{fixture,test}_mysql_{d,e,f}.json`,
+  all measured at commit 3ea8815d. The sessions a, b and c of the same day, measured at
+  330e4a3a, were superseded by the pre-PR review's fixes below.
+- Three floor sessions were taken at each scale, since sessions d and e disagreed on some
+  metrics at both. Each session's first run, its warm-up import, started at a one-minute
+  load average (`load_average_1m`) of 2.80, 2.70 and 2.67 (fixture d, e, f) and 2.76,
+  2.73 and 2.42 (test d, e, f), and its runs at 1.59 to 10.75, raised by the harness's
+  own work. The operator confirmed the workstation free for the whole job, and judged the
+  IDrive backup that ran throughout no concern; another Claude session, working in a
+  different repository, also ran builds at times.
+- `benchmarks/scenarios/queries.sql` is the capture of 2026-11-05 from the test-scale
+  schema of session c (commit 330e4a3a), taken under the session label `capture`, whose
+  result file was not committed.
+- PR-00's complete-scale measurement is
+  `2026-11-05_PR-00_before_complete_mysql_a.json` in the operator's results directory: one import from
+  `import_complete.toml`, then `bench_db` with `--dump-queries --ascii-columns`, then one
+  `bench_web` run (each state once), measured at commit d4fd56af (the harness of
+  330e4a3a) on 2026-11-05, starting at a one-minute load average of 1.5. Its
+  concurrency scenario ran both halves after one reset, as the harness did before the
+  pre-PR review, so its shared half started partly warm; the complete scale is reported,
+  never judged. The import ran without error and left `ERRORS.log` empty. Its `import.wall_s` was 18,235 s, of which
+  17,620 s were the bundle imports and 613 s the finalization sequence; the tree's peak
+  PSS was 3,065,038 KiB; the filesystem holding the server's data root went from 1.1 TB
+  to 961 GB free.
+- At complete scale the import holds 985 bundles (`details.bundle_count`) and 1,627,081
+  `obs_general` rows. The bundle with the most rows is COVIMS_0003, with 50,123
+  (`import.largest.obs_general_rows`); its `--import` took 287 s
+  (`import.largest.import_s`).
+- The complete-scale schema's data is 45,287,538,688 bytes and its indexes
+  37,900,828,672 bytes (`db.schema.data_bytes`, `db.schema.index_bytes`), over 230
+  tables, with no `FULLTEXT` tablespaces; schema to buffer pool is 4.30
+  (`db.schema.total_to_buffer_pool`), so the app-cold state reads from disk as well as
+  db-cold. `obs_files` alone is 34,070 MiB of data and 23,159 MiB of indexes, with
+  50,647,642 rows. Every table's bytes, rows and index count are the
+  `db.table.<table>.{data_bytes,index_bytes,rows,index_count}` metrics of the file's `db`
+  run; `python -c "import json; from benchmarks.results import RESULTS_DIR; m=[r for r in json.load(open(RESULTS_DIR / '2026-11-05_PR-00_before_complete_mysql_a.json'))['runs'] if r['kind']=='db'][0]['metrics']; print({k: v for k, v in m.items() if k.startswith('db.table.')})"`
+  prints them, on the operator's workstation.
+- Each mult table's `MAX(id)` is its `db.table.mult_<...>.max_id` metric in the same run,
+  printed by the command above. The largest are 500 (`mult_obs_general_instrument_id`
+  and `mult_obs_profile_host`), then 295 (`mult_obs_mission_cassini_rev_no`) and 207
+  (`mult_obs_general_target_name`); every mult table's `MAX(id)` fits a `SMALLINT`.
+- The non-ASCII column set PR-17 reads is empty at complete scale: `bench_db
+  --ascii-columns` counted no non-ASCII value in any of the 19 columns whose
+  `pi_form_type` is `STRING` (`details.ascii_columns` of the `db` run).
+- `obs_general.preview_images` averages 642 bytes (`JSON_STORAGE_SIZE`), 1,045,117,748
+  bytes in all, 0.47 of `obs_general`'s data length (`details.preview_images`).
+- Because every timed import starts on a freshly restarted server, a test-scale import
+  measures the server's burst write capacity: the buffer pool and the redo log absorb the
+  run's writes, about 6 GB per run (`import.server.Innodb_data_written`). A
+  complete-scale import, which wrote 350 GB, spends nearly all its time at the sustained
+  write rate. The third runs of 2026-11-04 showed that rate is already below what one
+  importer writes, at this tuning baseline. PR-09, PR-16 and PR-16a raise the import's
+  write rate, so in addition to the judged (restarted) runs, each reports its after side
+  under sustained writes: three test-scale imports back to back on one server with no
+  restart between them, giving the third run's `import.wall_s` beside the first's. The
+  first of those PRs adds the `bench_import` option that skips the restarts.
+- PR-04, the first PR that changes the write path, adds write-pressure counters to every
+  import run's server metrics: the largest checkpoint age the run reached
+  (`Innodb_redo_log_current_lsn` less `Innodb_redo_log_checkpoint_lsn`), sampled
+  alongside the memory samples, and the deltas of `Innodb_buffer_pool_wait_free`,
+  `Innodb_buffer_pool_pages_flushed`, `Innodb_os_log_written` and `Innodb_data_written`.
+  These let a reader see whether a run reached the sustained write limit.
+- The tuning baseline sets `innodb_io_capacity` to 1000, with `innodb_io_capacity_max` at
+  2000, the MySQL documentation's figure for an ordinary SSD. At 16 KiB pages that caps
+  background flushing at roughly 16 to 32 MB/s, well under what the workstation's NVMe
+  drive sustains. It is the likely reason one importer outruns the sustained rate; this
+  has not been measured. PR-25's server-settings page should also cover
+  `innodb_io_capacity` and `innodb_io_capacity_max`, sized from a measurement of the
+  device. Changing the harness's value changes the baseline, so the floors would then be
+  retaken.
+- The floor sessions were retaken after the pre-PR review, which found that the
+  concurrency scenario's shared half started on what its distinct half had loaded (each
+  half now starts from its own reset) and that the app-cold page guards were per-request
+  latencies (they are now the scenario's wall-clock). The first retaken fixture session,
+  started after the complete-scale import and some hours idle, took 7.5 s over its first
+  run's largest bundle against about 2.7 s in its other runs, which set that guard's
+  floor at 1.72: the import reads the holdings through the page cache, which the
+  complete-scale import had emptied of the fixture's files, while the server reads with
+  `O_DIRECT`. `bench_import` now makes one untimed warm-up import, without finalization,
+  before the timed runs at fixture and test scale, recorded as kind `import_warmup` and
+  never compared. That session was not committed.
+- At the operator's direction (2026-11-05), a session's spread leaves out outlying runs
+  (§2.6, Spread), and the concurrency scenario's pooled p95 leaves out the latencies of a
+  run whose own p95 is an outlier. The retaken sessions showed single runs setting floors: one test-scale
+  import run of 425 s among runs of 384 to 389 s gave `import.wall_s` a floor of 0.107,
+  and one app-cold empty search of 0.87 s among runs of about 0.19 s gave
+  `web.app-cold.search.empty.wall_s` a floor of 3.55. `compare` implements the rule
+  (`benchmarks.results.without_outliers`), and the floors file records each session's
+  count of left-out runs per metric (`outliers`).
+- At the operator's direction (2026-11-05), each floor is also kept in seconds (or the
+  metric's units), and each family's jitter is recorded (§2.6, Change and Noise floors).
+  Measured on the retaken sessions, a time metric's run-to-run range in seconds grows
+  slowly with its size while its fraction collapses: a median of 3 to 5 ms (14 to 23
+  percent) for medians of 10 to 50 ms against 23 to 28 ms (about 1 percent) for medians
+  of 1 to 10 s, over the d, e and f sessions at the two scales. So a fraction
+  overstated the noise of a small median, set most of the session disagreements, and
+  would understate it after a PR shrank a large one. The families' jitters differ by two
+  orders of magnitude (web requests against planned statements), so they are kept apart.
+- At the operator's direction (2026-11-05), result files are no longer committed; only the
+  floors files are, under `benchmarks/floors/` (§1, Measurement; §2.1). A result file
+  ran to 6.5 to 7.7 MB, about nine tenths of it diagnostics: the plan text of every
+  captured statement (3.4 MB of a test-scale file), each web run's top statements (0.5 MB
+  a run) and the index-usage snapshot (0.4 MB), against about 0.5 MB of metrics. The
+  harness writes them to `[results] root` in `benchmarks/scenarios/server.toml`
+  (`~/opus_bench/results`), where PR-00's seven files are kept on the operator's
+  workstation. The facts later PRs read from the complete-scale file are recorded in the
+  notes above.
+- The branch's history was rewritten on 2026-11-05 to drop the result files from every
+  commit, so the result files record the commits' earlier SHAs, with identical trees:
+  3ea8815d was 4c27db2b (the floor sessions), d4fd56af was 1a1e607f (the complete-scale
+  run), and 1d5564f2 was df028cb1. These are the SHAs after the second rewrite, below.
+- The complete-scale non-ASCII count above compared each value with its ASCII conversion
+  under the column's collation, which can equal a character to its replacement (a
+  fullwidth question mark to `?`). `bench_db --ascii-columns` now compares bytes. Recounted
+  that way on 2026-11-06 against the same schema (`bench_complete_before_a_1`, with
+  `benchmarks.bench_db.ascii_columns` at 1cf07e28), the set is still empty: no
+  non-ASCII value in any of the 19 columns. The same comparison flags `café` and a
+  fullwidth question mark on that server, so the count is not vacuous.
+- At the operator's direction (2026-11-06), the floors files are not committed either.
+  `compare.py --floors` writes them into the results directory beside the sessions they
+  come from, where PR-00's two are kept with its seven result files. The branch's history
+  was rewritten again that day to drop the floors files from every commit, which changed
+  the SHA of every commit from d4fd56af on; the SHAs in these notes are the rewritten ones.
+- At the operator's direction (2026-11-06), a web scenario in which a request fails or
+  memcached evicts anything fails the run, instead of recording an `errors` and a
+  `memcached_evictions` metric: a failed request usually answers sooner than a served
+  one, so a broken scenario would have timed as faster. `Max_execution_time_exceeded`
+  stays a recorded counter, since the application sets the limit on purpose and falls
+  back to a simpler query. Both were zero in every PR-00 session. By default `compare.py`
+  leaves out the reported metrics that changed by no more than their floor, with a
+  count, since most of the rows were exact counts that did not move; `--all` keeps them.
+- At the operator's direction (2026-11-06), PR-01 is dropped. It no longer caches the
+  field function `do_import_obs.import_run_field_function` looks up: timed on
+  `ObsVolumeCOISS12xxx` (nineteen classes deep, 249 field functions), the lookup took
+  197 ns a call and the cached form 139 ns, of which building the method's name is 82 ns,
+  since CPython already caches attribute lookups on a class; PR-00's complete-scale import
+  makes at most about 560 million calls (1,627,081 observations at about 220 columns, and
+  2,425,875 per-target surface geometry rows at 85), so the cache would save about 33 s of
+  18,235 s. Its mult dictionary was built and measured with a micro-benchmark that builds
+  a table of 10,000 values through each side's `update_mult_table` and looks them up a
+  million times under cProfile (results `2026-11-06_PR-01_{before,after}_fixture_mysql_a.json`,
+  three runs a side, alternated): cumulative time in `update_mult_table` fell from 57.6 s
+  to 0.80 s. But PR-00's complete-scale `bench_db` shows the largest of the 90 mult tables
+  at 296 rows (`mult_obs_mission_cassini_rev_no`; `target_name` 208), six over 100 and
+  none over 1,000, 1,845 rows in all; at real sizes a lookup saved 1.6 µs at 300 values,
+  0.5 µs at 100 and nothing at 20, a few seconds of a complete import. The dictionary and
+  the logged-message sets move to PR-14, which rewrites `update_mult_table`, where the
+  dictionary keeps a lookup's cost flat should the one table be loaded whole; the
+  micro-benchmark is not kept.

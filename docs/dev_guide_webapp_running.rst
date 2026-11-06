@@ -204,10 +204,13 @@ Caching, and clearing it
 :ref:`user_guide_installation_prereqs` says how a server installs ``memcached``, and why
 its client is not a declared dependency. The behavior to know here is the fallback:
 :mod:`opus_app.settings` decides at import time, and it decides **twice** -- whether
-``pymemcache`` imports, and whether a connection to a local memcached succeeds -- falling
-back to Django's per-process local-memory cache if the import fails or the connection is
-**refused**. Any other connection failure, a timeout or a name that resolves oddly, is
-**not caught** and stops the application at startup.
+``pymemcache`` imports, and whether a connection to the memcached named by the
+configuration's ``[django] cache_location`` (``127.0.0.1:11211`` unless it says
+otherwise) succeeds -- falling back to Django's per-process local-memory cache if the
+import fails or the connection is **refused**. The same address is the one ``CACHES``
+points Django's cache at, so the server the check found answering is the one used. Any
+other connection failure, a timeout or a name that resolves oddly, is **not caught** and
+stops the application at startup.
 
 Emptying the shared cache is one module::
 
