@@ -4516,8 +4516,10 @@ Nothing above this line is rewritten by an executor.
   to another host, where every request would pay the TLS connection and its round trips.
   The first page's warm latency at test scale is 17.9 ms against an effective floor of
   12.9 ms (the web jitter), so a latency target could not be met by any saving under that.
-- PR-02's thread-safety audit (`grep -rnE '^_[A-Z_]+(\s*:[^=]+)?\s*=\s*(\{|\[|dict\(|set\()|^\s+global _' src/opus_app --include=*.py`)
-  finds four module-level mutables. `_API_CALL_NUMBER` in `tools/app_utils.py` was not
+- PR-02's thread-safety audit (`grep -rnE '^_[A-Z_]+(\s*:[^=]+)?\s*=\s*(\{|\[|dict\(|set\()|^\s+global _' src/opus_app --include=*.py`,
+  run at f3702ae2, PR-02's base) finds four module-level mutables; at PR-02's head it
+  finds three, since the counter that replaces the fourth, `_API_CALL_NUMBERS` (an
+  `itertools.count`), matches neither pattern. `_API_CALL_NUMBER` in `tools/app_utils.py` was not
   safe: `enter_api_call` incremented it and read it back as separate steps, so two
   threads could take one number, and one call's start time overwrite another's; with the
   interpreter switching threads as often as it can, eight threads entering 2,000 calls
@@ -4529,3 +4531,10 @@ Nothing above this line is rewritten by an executor.
   would compute, so a race costs one repeated query and no wrong answer; the
   `ParamInfo` objects the second holds are returned as copies wherever a caller changes
   one (`results/views.py`'s referred slugs, which ask for the `col` form).
+- A kept connection also keeps every temporary table a request made on it. The search
+  results chunk (`results/views.get_search_results_chunk`) and the cart's range editor
+  (`cart/views._edit_cart_range`) each build one and dropped it only on their success
+  path; an unknown column slug, a range endpoint not in the cart, or a database error
+  returned before the drop, which a connection closed at the end of the request had
+  cleaned up. PR-02 drops both in a `finally` through `db_utils.drop_temporary_table`,
+  with `DROP TEMPORARY TABLE IF EXISTS`.

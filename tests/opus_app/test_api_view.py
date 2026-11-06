@@ -394,7 +394,9 @@ class ApiViewTests(TestCase):
     def test__concurrent_api_calls_get_distinct_numbers(self) -> None:
         "[test_api_view.py] enter_api_call: threads never share a call number"
         numbers: list[list[int]] = [[] for _ in range(8)]
-        start = threading.Barrier(len(numbers))
+        # A timeout, so a thread that never starts breaks the barrier rather than
+        # leaving the others waiting forever.
+        start = threading.Barrier(len(numbers), timeout=30)
 
         def enter_many(position: int) -> None:
             """Enter many calls at once with the other threads, keeping the numbers."""

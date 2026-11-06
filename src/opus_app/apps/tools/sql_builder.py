@@ -600,9 +600,9 @@ def create_table_as_select(
     )
 
 
-def drop_table(table_name: str) -> str:
-    """Return the SQL of a DROP TABLE."""
-    return f'DROP TABLE {quote_identifier(table_name)}'
+def drop_temporary_table_if_exists(table_name: str) -> str:
+    """Return the SQL that drops a temporary table, doing nothing if there is none."""
+    return f'DROP TEMPORARY TABLE IF EXISTS {quote_identifier(table_name)}'
 
 
 def count_rows(table_name: str) -> str:
