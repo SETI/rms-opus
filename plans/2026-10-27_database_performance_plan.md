@@ -4362,8 +4362,8 @@ Nothing above this line is rewritten by an executor.
 - The floors every later PR is judged against at fixture and test scale are
   `benchmarks/floors/2026-11-05_PR-00_floors_fixture_mysql.json` and
   `benchmarks/floors/2026-11-05_PR-00_floors_test_mysql.json`, computed with the rules of
-  df028cb1 from the sessions `2026-11-05_PR-00_before_{fixture,test}_mysql_{d,e,f}.json`,
-  all measured at commit 4c27db2b. The sessions a, b and c of the same day, measured at
+  24f15dc2 from the sessions `2026-11-05_PR-00_before_{fixture,test}_mysql_{d,e,f}.json`,
+  all measured at commit 0ff69bf9. The sessions a, b and c of the same day, measured at
   330e4a3a, were superseded by the pre-PR review's fixes below.
 - Three floor sessions were taken at each scale, since sessions d and e disagreed on some
   metrics at both. Each session's first run, its warm-up import, started at a one-minute
@@ -4378,7 +4378,7 @@ Nothing above this line is rewritten by an executor.
 - PR-00's complete-scale measurement is
   `2026-11-05_PR-00_before_complete_mysql_a.json` in the operator's results directory: one import from
   `import_complete.toml`, then `bench_db` with `--dump-queries --ascii-columns`, then one
-  `bench_web` run (each state once), measured at commit 1a1e607f (the harness of
+  `bench_web` run (each state once), measured at commit c99ebd9f (the harness of
   330e4a3a) on 2026-11-05, starting at a one-minute load average of 1.5. Its
   concurrency scenario ran both halves after one reset, as the harness did before the
   pre-PR review, so its shared half started partly warm; the complete scale is reported,
@@ -4469,3 +4469,7 @@ Nothing above this line is rewritten by an executor.
   (`~/opus_bench/results`), where PR-00's seven files are kept on the operator's
   workstation. The facts later PRs read from the complete-scale file are recorded in the
   notes above.
+- The branch's history was rewritten on 2026-11-05 to drop the result files from every
+  commit, so the result files record the commits' earlier SHAs, with identical trees:
+  0ff69bf9 was 4c27db2b (the floor sessions), c99ebd9f was 1a1e607f (the complete-scale
+  run), and 24f15dc2 was df028cb1.
