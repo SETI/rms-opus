@@ -131,6 +131,7 @@ def test_every_invocation_uses_the_given_interpreter_steps_and_checkout(
         drop_args=('--erase',),
         import_args=('--load', '--timing-json', 't.json'),
         aux_args=('--finish',),
+        dictionary_args=('--dictionary', '--timing-json', 't.json'),
         validate_args=('--check',),
     )
     assert recorder.runs == [
@@ -138,7 +139,7 @@ def test_every_invocation_uses_the_given_interpreter_steps_and_checkout(
         ('opus_import', ('--load', '--timing-json', 't.json', 'A_0001'), python, repo_root),
         ('opus_import', ('--load', '--timing-json', 't.json', 'B_0001'), python, repo_root),
         ('opus_import', ('--finish',), python, repo_root),
-        ('opus_import', build_run.DICTIONARY_ARGS, python, repo_root),
+        ('opus_import', ('--dictionary', '--timing-json', 't.json'), python, repo_root),
         ('migrate', build_run.MIGRATE_ARGS, python, repo_root),
         ('opus_import', ('--check',), python, repo_root),
     ]
@@ -166,3 +167,12 @@ def test_a_run_stopped_after_the_imports_tells_the_observer_of_nothing_more(
         ('started', (*build_run.IMPORT_ARGS, 'A_0001')),
         ('started', (*build_run.IMPORT_ARGS, 'B_0001')),
     ]
+
+
+def test_a_relative_configuration_reaches_a_subprocess_as_absolute(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The subprocess runs in another checkout, so a relative path would name another file."""
+    monkeypatch.chdir(tmp_path)
+    environment = build_run.run_environment(Path('opus.toml'))
+    assert environment[build_run.CONFIG_ENV_VAR] == str(tmp_path.resolve() / 'opus.toml')

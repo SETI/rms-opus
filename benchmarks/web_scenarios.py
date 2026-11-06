@@ -54,6 +54,12 @@ WEB_TOML = SCENARIOS_DIR / 'web.toml'
 #: The page size every paged request asks for.
 PAGE_LIMIT = 100
 
+#: The scenario kinds named for, and built on, one of the named searches.
+SEARCH_KINDS = ('search', 'pages', 'resort', 'fanout', 'files', 'previews')
+
+#: The scenario kinds that ask about the scale's observation.
+OBSERVATION_KINDS = ('categories', 'files', 'previews')
+
 
 class ScenarioError(Exception):
     """Raised when ``web.toml`` is inconsistent."""
@@ -209,13 +215,18 @@ def _expand(
         The scenario.
 
     Raises:
-        ScenarioError: If the entry names an unknown kind or search.
+        ScenarioError: If the entry names an unknown kind or search, lacks the search its
+            kind needs, or needs an observation the scale does not name.
     """
     kind = entry['kind']
     requests: tuple[Request, ...]
     search_name = entry.get('search')
     if search_name is not None and search_name not in searches:
         raise ScenarioError(f'scenario {entry} names the unknown search {search_name!r}')
+    if search_name is None and kind in SEARCH_KINDS:
+        raise ScenarioError(f'scenario {entry} names no search')
+    if opus_id == '' and kind in OBSERVATION_KINDS:
+        raise ScenarioError(f"scenario {entry} needs this scale's [observations] entry")
     search = searches[search_name] if search_name is not None else ''
     limit = f'limit={PAGE_LIMIT}'
     if kind == 'search':
@@ -302,6 +313,11 @@ def load_web_config(path: Path = WEB_TOML, *, scale: str = 'test') -> WebConfig:
     duplicates = sorted({name for name in names if names.count(name) > 1})
     if len(duplicates) > 0:
         raise ScenarioError(f'{path}: scenario names used twice: {duplicates}')
+    for scenario in scenarios:
+        # A request's name is its metric's, so two of one name would overwrite each other.
+        requests = [request.name for request in scenario.requests]
+        if len(set(requests)) != len(requests):
+            raise ScenarioError(f'{path}: {scenario.name} names two requests alike: {requests}')
     concurrency = None
     if 'concurrency' in raw:
         entry = raw['concurrency']

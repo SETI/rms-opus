@@ -436,3 +436,116 @@ def test_a_run_whose_p95_is_an_outlier_is_left_out_of_the_pool() -> None:
     summary = compare.summarize(_result(runs, samples=pools))[f'{name}.p95_s']
     assert summary.center == 1.1
     assert summary.spread == pytest.approx(0.15 / 1.1)
+
+
+def test_a_metric_two_of_three_sessions_hold_does_not_agree() -> None:
+    """A session that lacks the metric leaves its agreement unmeasured."""
+    sessions = [_result([{'a_s': 1.0}, {'a_s': 1.0}]) for _ in range(2)]
+    sessions.append(_result([{'b_s': 1.0}, {'b_s': 1.0}]))
+    entry = compare.floors_from_sessions(sessions)['a_s']
+    assert entry['agree'] is False
+    assert entry['missing_from'] == [2]
+
+
+def _write_session(path: Path, value: float, environment: dict[str, Any]) -> Path:
+    """Write one floor session holding one metric."""
+    path.write_text(json.dumps(_result([{'a_s': value}], environment=environment)))
+    return path
+
+
+def test_a_floor_session_given_twice_is_refused(tmp_path: Path) -> None:
+    """The same file twice would measure no between-session range at all."""
+    path = _write_session(tmp_path / '2026-11-03_PR-00_before_fixture_mysql_a.json', 1.0, {})
+    with pytest.raises(ResultError, match='given twice'):
+        compare.write_floors([path, tmp_path / '.' / path.name])
+
+
+@pytest.mark.parametrize(
+    'second',
+    [{'git_sha': 'b', 'git_dirty': False}, {'git_sha': 'a', 'git_dirty': True}],
+    ids=['another-commit', 'dirty-checkout'],
+)
+def test_floor_sessions_of_more_than_one_clean_commit_are_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, second: dict[str, Any]
+) -> None:
+    """Two commits' difference is a change, not noise."""
+    monkeypatch.setattr(compare, 'FLOORS_DIR', tmp_path)
+    paths = [
+        _write_session(
+            tmp_path / '2026-11-03_PR-00_before_fixture_mysql_a.json',
+            1.0,
+            {'git_sha': 'a', 'git_dirty': False},
+        ),
+        _write_session(tmp_path / '2026-11-03_PR-00_before_fixture_mysql_b.json', 1.0, second),
+    ]
+    with pytest.raises(ResultError, match='one clean commit'):
+        compare.write_floors(paths)
+
+
+@pytest.mark.parametrize(
+    ('names', 'floors', 'message'),
+    [
+        (
+            (
+                '2026-11-03_PR-01_before_fixture_mysql_a.json',
+                '2026-11-03_PR-01_after_test_mysql_a.json',
+            ),
+            None,
+            'different scales',
+        ),
+        (
+            (
+                '2026-11-03_PR-01_after_test_mysql_a.json',
+                '2026-11-03_PR-01_before_test_mysql_a.json',
+            ),
+            None,
+            'is the before side',
+        ),
+        (
+            (
+                '2026-11-03_PR-01_before_test_mysql_a.json',
+                '2026-11-03_PR-01_after_test_mysql_a.json',
+            ),
+            {'scale': 'fixture', 'brand': 'mysql'},
+            'the floors file is of fixture mysql',
+        ),
+    ],
+    ids=['two-scales', 'reversed', 'floors-of-another-scale'],
+)
+def test_a_comparison_of_files_that_do_not_belong_together_is_refused(
+    names: tuple[str, str], floors: dict[str, str] | None, message: str
+) -> None:
+    """Mixed scales, a reversed pair, or another scale's floors would misjudge every metric."""
+    with pytest.raises(ResultError, match=message):
+        compare.check_labels(Path(names[0]), Path(names[1]), floors)
+
+
+def test_a_pooled_p95_missing_one_run_s_latencies_is_refused() -> None:
+    """A run left out of the pool would be left out of the guard unseen."""
+    content = _result(
+        [{'web.c.p95_s': 0.2}, {'web.c.p95_s': 0.9}],
+        samples=[{'web.c.latency_s': [0.1, 0.2]}, {}],
+    )
+    with pytest.raises(ResultError, match='lacks its latencies'):
+        compare.summarize(content)
+
+
+def test_a_target_neither_result_holds_is_refused() -> None:
+    """A misspelt target would otherwise vanish from the table."""
+    with pytest.raises(ResultError, match='target metric'):
+        compare.render(_result([{'a_s': 1.0}]), _result([{'a_s': 1.0}]), None, ['a_ss'])
+
+
+def test_the_import_guards_are_reported_where_the_ceiling_replaces_them() -> None:
+    """A clone-measured change is held to the ceiling, not to the import guards."""
+    before, after = _clone_measured(90.0, 10.0, 11.0)
+    for content, value in ((before, 100.0), (after, 200.0)):
+        for run in content['runs']:
+            if run['kind'] == 'finalize':
+                run['metrics']['import.peak_tree_pss_kb'] = value
+    row = next(
+        line
+        for line in compare.render(before, after, None).splitlines()
+        if '`import.peak_tree_pss_kb`' in line
+    )
+    assert row.endswith('| reported | reported |')

@@ -231,11 +231,18 @@ def validate_result(content: object, source: str) -> None:
         for key in ('kind', 'index', 'metrics', 'samples', 'details'):
             if key not in run:
                 raise ResultError(f'{where} has no {key!r}')
-        if not all(isinstance(value, (int, float)) for value in run['metrics'].values()):
-            raise ResultError(f'{where}: every metric must be a number')
+        if not isinstance(run['metrics'], dict) or not isinstance(run['samples'], dict):
+            raise ResultError(f'{where}: "metrics" and "samples" must be objects')
+        if not all(_is_finite_number(value) for value in run['metrics'].values()):
+            raise ResultError(f'{where}: every metric must be a finite number')
         for name, values in run['samples'].items():
-            if not isinstance(values, list):
-                raise ResultError(f'{where}: sample {name!r} must be a list')
+            if not isinstance(values, list) or not all(map(_is_finite_number, values)):
+                raise ResultError(f'{where}: sample {name!r} must be a list of finite numbers')
+
+
+def _is_finite_number(value: object) -> bool:
+    """Say whether a parsed JSON value is a finite number (JSON's NaN is not one)."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
 def merge_environment(existing: dict[str, Any], update: dict[str, Any], source: str) -> None:
@@ -456,7 +463,7 @@ def without_outliers(values: Sequence[float]) -> list[float]:
 
     A run is an outlier when it lies more than `OUTLIER_SIGMAS` robust standard
     deviations (`MAD_TO_SIGMA` times the median absolute deviation) from the median.
-    Fewer than three runs, or runs at least half of which equal the median, have no
+    Fewer than three runs, or runs more than half of which equal the median, have no
     outliers.
 
     Parameters:

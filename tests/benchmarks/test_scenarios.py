@@ -142,6 +142,34 @@ def test_an_unknown_search_is_refused(tmp_path: Path) -> None:
         web_scenarios.load_web_config(path)
 
 
+_SERVER = (
+    '[server]\nport = 1\nworkers = 1\nthreads = 1\nmemcached_port = 2\nmemcached_mb = 1\n'
+    '[runs]\nfixture = 1\n[searches]\nempty = ""\n'
+)
+
+
+@pytest.mark.parametrize(
+    ('scenarios', 'message'),
+    [
+        ('[[scenarios]]\nkind = "pages"\n', 'names no search'),
+        ('[[scenarios]]\nkind = "categories"\n', r'needs this scale\'s \[observations\]'),
+        (
+            '[[scenarios]]\nkind = "autocomplete"\nslug = "bundleid"\nprefixes = ["CO", "VG"]\n',
+            'names two requests alike',
+        ),
+    ],
+    ids=['pages-without-search', 'categories-without-observation', 'same-length-prefixes'],
+)
+def test_a_scenario_that_cannot_be_measured_is_refused(
+    tmp_path: Path, scenarios: str, message: str
+) -> None:
+    """A scenario whose requests would fail, or overwrite each other's metric, fails at load."""
+    path = tmp_path / 'web.toml'
+    path.write_text(_SERVER + scenarios)
+    with pytest.raises(ScenarioError, match=message):
+        web_scenarios.load_web_config(path, scale='fixture')
+
+
 def test_the_written_configuration_is_one_opus_reads(tmp_path: Path) -> None:
     """Every key the harness writes is one the loader accepts, cache location included."""
     path = bench_server.write_opus_config(

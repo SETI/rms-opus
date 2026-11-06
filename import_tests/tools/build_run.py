@@ -409,7 +409,8 @@ def run_environment(config_file: Path) -> dict[str, str]:
         directory for nobody to combine.
     """
     environment = dict(os.environ)
-    environment[CONFIG_ENV_VAR] = str(config_file)
+    # Absolute, since the subprocess may run in another checkout.
+    environment[CONFIG_ENV_VAR] = str(config_file.resolve())
     environment[HASH_SEED_ENV_VAR] = HASH_SEED
     if coverage.Coverage.current() is not None:
         environment[COVERAGE_ENV_VAR] = str(fixture_layout.REPO_ROOT / 'pyproject.toml')
@@ -524,6 +525,7 @@ def perform_run(
     drop_args: Sequence[str] = DROP_ARGS,
     import_args: Sequence[str] = IMPORT_ARGS,
     aux_args: Sequence[str] = AUX_ARGS,
+    dictionary_args: Sequence[str] = DICTIONARY_ARGS,
     validate_args: Sequence[str] = VALIDATE_ARGS,
     observer: StepObserver | None = None,
 ) -> ImportRun:
@@ -561,6 +563,7 @@ def perform_run(
         import_args: The options of each bundle-import invocation, before
             `extra_import_args` and the bundles.
         aux_args: The step that builds the auxiliary tables after the imports.
+        dictionary_args: The step that imports the dictionary.
         validate_args: The validation that ends the sequence.
         observer: Told about each invocation as it starts and as it finishes, the
             migration included, or None.
@@ -568,7 +571,8 @@ def perform_run(
     Returns:
         The completed run.
     """
-    paths = RunPaths.under(root)
+    # Absolute, since every invocation runs in repo_root rather than the caller's directory.
+    paths = RunPaths.under(root.resolve())
     build_holdings_tree(paths, overlay=overlay)
     write_opus_config(paths, schema, credentials)
 
@@ -598,7 +602,7 @@ def perform_run(
     if not finalize:
         return run
     step(aux_args)
-    step(DICTIONARY_ARGS)
+    step(dictionary_args)
     run.django_tables = _migrate_and_diff(
         paths, schema, credentials, run, python=python, repo_root=repo_root, observer=observer
     )

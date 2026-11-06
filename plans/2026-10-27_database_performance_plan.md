@@ -631,7 +631,7 @@ less minimum) divided by their median, so it is a fraction; for the concurrency 
 the range of the per-run p95s divided by the pooled p95. The range leaves out an
 **outlying run**, one more than three robust standard deviations (1.4826 times the median
 absolute deviation) from the session's median; the median is still over every run, which
-one such run barely moves. Fewer than three runs, or runs at least half of which equal the
+one such run barely moves. Fewer than three runs, or runs more than half of which equal the
 median, have no outliers. The range of several sessions' medians below never leaves one
 out.
 
@@ -828,7 +828,9 @@ as `item n`, and to the design document as `§D-n`.
   and each mult table's `MAX(id)` (PR-14 and PR-16 read them); the `preview_images` size
   and ratio, recorded for reference; and,
   for every column whose `pi_form_type` is `STRING`, `SELECT COUNT(*) FROM <t> WHERE
-  <col> <> CONVERT(<col> USING ascii)`, recorded in the Execution notes as the set PR-17 reads
+  CAST(<col> AS BINARY) <> CAST(CONVERT(<col> USING ascii) AS BINARY)` (bytes, since the
+  column's collation can equal a character to its converted form), recorded in the
+  Execution notes as the set PR-17 reads
   (a `bench_db --ascii-columns` option, which runs at any scale).
 - **Acceptance:** `before` results from the floor sessions at the fixture and test scales
   (two, or three where they disagree), and the committed floors file `compare.py
@@ -4473,3 +4475,7 @@ Nothing above this line is rewritten by an executor.
   commit, so the result files record the commits' earlier SHAs, with identical trees:
   0ff69bf9 was 4c27db2b (the floor sessions), c99ebd9f was 1a1e607f (the complete-scale
   run), and 24f15dc2 was df028cb1.
+- The complete-scale non-ASCII count above compared each value with its ASCII conversion
+  under the column's collation, which can equal a character to its replacement (a
+  fullwidth question mark to `?`). `bench_db --ascii-columns` now compares bytes; the
+  empty set is to be recounted that way before PR-17 relies on it.

@@ -56,12 +56,17 @@ STATEMENT_COMMANDS = ('Query', 'Execute')
 #: A number as ``EXPLAIN ANALYZE`` prints one: in decimal, or in exponent notation for
 #: the very small and very large (``952e-6``, ``1.2e+6``).
 _NUMBER = r'\d+(?:\.\d*)?(?:e[+-]?\d+)?'
+#: One iterator of an ``EXPLAIN ANALYZE`` tree. Its cost estimate is optional: MySQL
+#: prints none for some iterators, such as ``Count rows in <table>``.
 _ANALYZE_LINE = re.compile(
-    rf'-> (?P<what>.*?)\s+\(cost=[^)]*\)?.*?\(actual time=(?P<first>{_NUMBER})\.\.'
+    rf'-> (?P<what>.*?)\s+(?:\(cost=[^)]*\)\s+)?\(actual time=(?P<first>{_NUMBER})\.\.'
     rf'(?P<last>{_NUMBER}) rows=(?P<rows>{_NUMBER}) loops=(?P<loops>\d+)\)'
 )
 _ON_TABLE = re.compile(r'\bon (?P<table>\w+)')
 _INNER_SELECT = re.compile(r'\b(SELECT|WITH)\b', re.IGNORECASE)
+#: A quoted string or identifier: single- or double-quoted with backslash escapes and
+#: doubled quotes, or backquoted with doubled backquotes.
+_QUOTED = re.compile(r"'(?:[^'\\]|\\.|'')*'|\"(?:[^\"\\]|\\.|\"\")*\"|`(?:[^`]|``)*`", re.DOTALL)
 
 
 class ReplayError(Exception):
@@ -193,6 +198,19 @@ def read_capture(path: Path) -> list[Block]:
     return blocks
 
 
+def _keyword_outside_quotes(text: str) -> re.Match[str] | None:
+    """Find the first ``SELECT`` or ``WITH`` that is not inside a quoted string or name.
+
+    Parameters:
+        text: A statement.
+
+    Returns:
+        The match, whose offsets are the statement's own, or None.
+    """
+    masked = _QUOTED.sub(lambda quoted: ' ' * len(quoted.group()), text)
+    return _INNER_SELECT.search(masked)
+
+
 def classify(text: str) -> str:
     """Say how a statement is replayed.
 
@@ -213,10 +231,10 @@ def classify(text: str) -> str:
     if first in {'SET', 'USE'} or (first == 'DROP' and second == 'TEMPORARY'):
         return 'execute'
     if first == 'CREATE' and second == 'TEMPORARY':
-        return 'create_temporary_select' if _INNER_SELECT.search(text) else 'execute'
+        return 'create_temporary_select' if _keyword_outside_quotes(text) else 'execute'
     if first in {'SELECT', 'WITH', 'TABLE', '(SELECT'}:
         return 'read'
-    if first in {'INSERT', 'REPLACE', 'CREATE'} and _INNER_SELECT.search(text):
+    if first in {'INSERT', 'REPLACE', 'CREATE'} and _keyword_outside_quotes(text):
         return 'write_select'
     if first in {'INSERT', 'REPLACE', 'UPDATE', 'DELETE'}:
         return 'write'
@@ -232,7 +250,7 @@ def inner_select(text: str) -> str:
     Returns:
         The statement from its first ``SELECT`` or ``WITH`` keyword on.
     """
-    match = _INNER_SELECT.search(text)
+    match = _keyword_outside_quotes(text)
     assert match is not None
     return text[match.start() :]
 

@@ -112,9 +112,8 @@ def redo_log_capacity(budget_bytes: int) -> int:
         budget_bytes: The memory treated as the server's.
 
     Returns:
-        100 MiB up to 2 GiB; ``round(0.5 * GB) * 0.5`` GiB up to 4 GiB, rounding halves
-        up;
-        ``round(0.75 * GB) * 0.5`` GiB up to 10.66 GiB; ``round(0.5625 * GB)`` GiB up to
+        100 MiB below 2 GiB; ``round(0.5 * GB) * 0.5`` GiB from 2 GiB up to 4 GiB,
+        rounding halves up; ``round(0.75 * GB) * 0.5`` GiB up to 10.66 GiB; ``round(0.5625 * GB)`` GiB up to
         170.66 GiB; and 128 GiB above, where GB is the budget in GiB.
     """
     gb = budget_bytes / GIB
@@ -216,10 +215,12 @@ def load_server_config(path: Path = SERVER_TOML) -> tuple[MysqlConfig, str]:
         path: The file.
 
     Returns:
-        The MySQL server's configuration and the memcached binary.
+        The MySQL server's configuration and the memcached binary: a bare name, which
+        is looked up on ``PATH``, or an expanded path.
 
     Raises:
-        ServerError: If the socket path would be too long for mysqld.
+        ServerError: If the socket path would be too long for mysqld, or a path names an
+            environment variable that is not set.
     """
     with path.open('rb') as stream:
         raw = tomllib.load(stream)
@@ -234,7 +235,11 @@ def load_server_config(path: Path = SERVER_TOML) -> tuple[MysqlConfig, str]:
     )
     if len(str(config.socket).encode()) >= MAX_SOCKET_PATH:
         raise ServerError(f'the socket path {config.socket} is {MAX_SOCKET_PATH} bytes or more')
-    return config, str(raw['memcached']['binary'])
+    binary = str(raw['memcached']['binary'])
+    # A bare name is looked up on PATH; anything else is a path, expanded like the others.
+    if '/' in binary or binary.startswith(('~', '$')):
+        binary = str(expand_path(binary))
+    return config, binary
 
 
 class MysqlServer:
@@ -638,8 +643,9 @@ def clone_schema(server: MysqlServer, source: str, target: str, *, connections: 
     Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
     keys and foreign keys (``CREATE TABLE ... LIKE`` does not copy foreign keys), with
     ``foreign_key_checks`` off so that tables may be created and filled in any order;
-    then its rows are copied with ``INSERT ... SELECT``. The copies run over several
-    connections at once. The target is dropped first if it exists.
+    then its rows are copied with ``INSERT ... SELECT``, naming the stored columns only,
+    since MySQL computes a generated column and refuses a value for one. The copies run
+    over several connections at once. The target is dropped first if it exists.
 
     Parameters:
         server: The owned server.
@@ -685,10 +691,20 @@ def clone_schema(server: MysqlServer, source: str, target: str, *, connections: 
         """
         with contextlib.closing(server.connect()) as sibling:
             query(sibling, 'SET SESSION foreign_key_checks = 0')
+            columns = ', '.join(
+                quote_identifier(str(row[0]))
+                for row in query(
+                    sibling,
+                    'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s '
+                    "AND TABLE_NAME = %s AND GENERATION_EXPRESSION = '' "
+                    'ORDER BY ORDINAL_POSITION',
+                    [source, table],
+                )
+            )
             query(
                 sibling,
-                f'INSERT INTO {quote_identifier(target)}.{quote_identifier(table)} '  # nosec B608 - quoted identifiers
-                f'SELECT * FROM {quote_identifier(source)}.{quote_identifier(table)}',
+                f'INSERT INTO {quote_identifier(target)}.{quote_identifier(table)} ({columns}) '  # nosec B608 - quoted identifiers
+                f'SELECT {columns} FROM {quote_identifier(source)}.{quote_identifier(table)}',
             )
 
     with ThreadPoolExecutor(max_workers=max(1, connections)) as pool:

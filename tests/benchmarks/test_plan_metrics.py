@@ -2,7 +2,7 @@
 
 import pytest
 
-from benchmarks.bench_db import plan_metrics
+from benchmarks.bench_db import like_literal, plan_metrics
 
 
 def _read(tag: str, times: list[float], rows: float) -> dict[str, object]:
@@ -39,3 +39,8 @@ def test_statements_executed_unequally_are_refused() -> None:
     """Execution by execution sums need the same number of executions throughout."""
     with pytest.raises(ValueError, match='different numbers of times'):
         plan_metrics([_read('x/y', [1.0, 2.0], 1.0), _read('x/y', [1.0], 1.0)])
+
+
+def test_a_like_literal_matches_only_itself() -> None:
+    """A schema name's underscores are not wildcards in the FULLTEXT tablespace match."""
+    assert like_literal('bench_x%1\\') == 'bench\\_x\\%1\\\\'

@@ -20,9 +20,12 @@ not judged; warm autocomplete is one of them, because Django's site cache answer
 
 When both results hold a finalization of a copy (a change measured on clones), a line
 under the table holds the two finalizations to the ceiling that replaces the import
-guards: the after side's finalization may take at most `CEILING_FRACTION` of the before
-side's full import (its bundle imports plus its finalization) longer than the before
-side's.
+guards, which are then reported rather than judged: the after side's finalization may
+take at most `CEILING_FRACTION` of the before side's full import (its bundle imports
+plus its finalization) longer than the before side's.
+
+A comparison refuses two files of different scales, an after file given before a before
+file, a target metric neither file holds, and a floors file of another scale or brand.
 
 ``python -m benchmarks.compare --floors SESSION.json SESSION.json [SESSION.json]``
 writes the floors file of the sessions' scale and brand into ``benchmarks/floors/``,
@@ -162,6 +165,9 @@ def summarize(content: Mapping[str, Any]) -> dict[str, MetricSummary]:
 
     Returns:
         Each metric's summary, by name.
+
+    Raises:
+        ResultError: If a pooled p95 has latencies in some of its runs but not all.
     """
     per_metric: dict[str, list[float]] = {}
     pools: dict[str, list[float]] = {}
@@ -181,7 +187,12 @@ def summarize(content: Mapping[str, Any]) -> dict[str, MetricSummary]:
     summaries = {}
     for name, values in per_metric.items():
         runs = per_run_pools.get(name, [])
-        if len(runs) > 0 and any(len(latencies) > 0 for _, latencies in runs):
+        if len(runs) > 0 and (
+            len(runs) != len(values) or any(len(latencies) == 0 for _, latencies in runs)
+        ):
+            # A run left out of the pool would be left out of the pooled p95 unseen.
+            raise ResultError(f'{name}: a run holding it lacks its latencies')
+        if len(runs) > 0:
             # A run whose own p95 is an outlier would dominate the pooled tail, so its
             # latencies are left out of the pool as its p95 is left out of the spread.
             kept = without_outliers([run_p95 for run_p95, _ in runs])
@@ -312,7 +323,13 @@ def verdict(metric: str, relative: float | None, floor: float | None) -> str:
     return 'within noise'
 
 
-def role(metric: str, targets: Sequence[str], warm_statements: Mapping[str, float]) -> str:
+def role(
+    metric: str,
+    targets: Sequence[str],
+    warm_statements: Mapping[str, float],
+    *,
+    import_guards: bool = True,
+) -> str:
     """Say whether a metric is judged, and how.
 
     Parameters:
@@ -320,12 +337,15 @@ def role(metric: str, targets: Sequence[str], warm_statements: Mapping[str, floa
         targets: The metrics named as the change's targets.
         warm_statements: The larger of the two sides' median statements-executed count of
             each warm scenario, by the scenario's metric prefix (``web.warm.<scenario>``).
+        import_guards: False where the finalization ceiling replaces the import guards.
 
     Returns:
         ``target``, ``guard``, or ``reported``.
     """
     if metric in targets:
         return 'target'
+    if not import_guards and metric.startswith('import.'):
+        return 'reported'
     if not any(pattern.fullmatch(metric) for pattern in GUARD_PATTERNS):
         return 'reported'
     if metric.startswith('web.warm.'):
@@ -454,9 +474,16 @@ def render(
     Returns:
         The Markdown table; then the finalization ceiling, where it applies; then the
         steps each side skipped.
+
+    Raises:
+        ResultError: If the results are not comparable, or neither holds a target.
     """
     check_comparable(before, after)
     mine, theirs = summarize(before), summarize(after)
+    absent = [target for target in targets if target not in mine and target not in theirs]
+    if len(absent) > 0:
+        raise ResultError(f'neither result holds the target metric(s) {absent}')
+    ceiling = finalization_ceiling(before, after)
     warm_statements = {
         name.removesuffix('.statements'): max(mine[name].center, theirs[name].center)
         for name in set(mine) & set(theirs)
@@ -477,7 +504,7 @@ def render(
             )
         if left is not None and len(left.values) > 1:
             floor = left.spread if floor is None else max(floor, left.spread)
-        metric_role = role(name, targets, warm_statements)
+        metric_role = role(name, targets, warm_statements, import_guards=ceiling is None)
         judged = '-'
         if left is not None and right is not None:
             judged = judgement(metric_role, verdict(name, relative, floor))
@@ -494,7 +521,6 @@ def render(
             f'{_number(None if right is None else right.center)} | {_percent(relative)} | '
             f'{spreads} | {maxima} | {_floor_cell(floor, left)} | {metric_role} | {judged} |'
         )
-    ceiling = finalization_ceiling(before, after)
     if ceiling is not None:
         outcome = 'within the ceiling' if ceiling['within'] else 'beyond the ceiling'
         lines.append('')
@@ -557,7 +583,7 @@ def floors_from_sessions(sessions: Sequence[Mapping[str, Any]]) -> dict[str, dic
         if is_time(name):
             noise = max(noise, jitter.get(name.split('.')[0], 0.0))
         between = max(entry['medians']) - min(entry['medians'])
-        agree = len(holding) >= 2 and between <= noise
+        agree = len(holding) >= 2 and len(holding) == len(summaries) and between <= noise
         entry['agree'] = agree
         entry['noisy'] = len(holding) >= 3 and not agree
     return floors
@@ -598,11 +624,14 @@ def write_floors(paths: Sequence[Path]) -> tuple[Path, list[str]]:
         only one session holds among them).
 
     Raises:
-        ResultError: If there are not two or three files, or they differ in PR, side,
-            scale or brand, or are not comparable.
+        ResultError: If there are not two or three distinct files, or they differ in PR,
+            side, scale or brand, or are not comparable, or were not all measured on one
+            clean commit.
     """
     if len(paths) not in (2, 3):
         raise ResultError('a floor needs two sessions, or three where two disagree')
+    if len({path.resolve() for path in paths}) != len(paths):
+        raise ResultError('a floor session was given twice')
     labels = [parse_label(path.name) for path in paths]
     first = labels[0]
     for label in labels[1:]:
@@ -616,6 +645,12 @@ def write_floors(paths: Sequence[Path]) -> tuple[Path, list[str]]:
     sessions = [load_result(path) for path in paths]
     for session in sessions[1:]:
         check_comparable(sessions[0], session)
+    commits = {session['environment'].get('git_sha') for session in sessions}
+    if len(commits) != 1 or any(session['environment'].get('git_dirty') for session in sessions):
+        # Floor sessions measure one commit's noise; two commits' difference is not noise.
+        raise ResultError(
+            f'floor sessions must all be of one clean commit, not {sorted(map(str, commits))}'
+        )
     floors = floors_from_sessions(sessions)
     for entry in floors.values():
         entry['missing_from'] = [paths[position].name for position in entry['missing_from']]
@@ -631,6 +666,33 @@ def write_floors(paths: Sequence[Path]) -> tuple[Path, list[str]]:
     }
     output.write_text(json.dumps(content, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     return output, [name for name, entry in floors.items() if not entry['agree']]
+
+
+def check_labels(before: Path, after: Path, floors: Mapping[str, Any] | None) -> None:
+    """Refuse a comparison whose file names or floors file do not belong together.
+
+    Parameters:
+        before: The before result file.
+        after: The after result file.
+        floors: The floors file's content, or None.
+
+    Raises:
+        ResultError: If the two files are of different scales, the after file comes
+            first, or the floors file is of another scale or brand.
+    """
+    first, second = parse_label(before.name), parse_label(after.name)
+    if first.scale != second.scale:
+        raise ResultError(f'{before.name} and {after.name} are of different scales')
+    if (first.side, second.side) == ('after', 'before'):
+        raise ResultError(f'{after.name} is the before side; give it first')
+    if floors is not None and (floors.get('scale'), floors.get('brand')) != (
+        first.scale,
+        first.brand,
+    ):
+        raise ResultError(
+            f'the floors file is of {floors.get("scale")} {floors.get("brand")}, '
+            f'not {first.scale} {first.brand}'
+        )
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -676,9 +738,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         parser.error('a comparison takes exactly two result files, before then after')
     floors = None
     jitter = None
+    content = None
     if args.floors_file is not None:
         content = json.loads(args.floors_file.read_text(encoding='utf-8'))
         floors, jitter = content['floors'], content['jitter']
+    check_labels(args.results[0], args.results[1], content)
     before, after = (load_result(path) for path in args.results)
     sys.stdout.write(render(before, after, floors, args.target, jitter))
 

@@ -29,13 +29,22 @@ def test_the_buffer_pool_follows_the_dedicated_server_rule(budget: int, expected
     ('budget', 'expected'),
     [
         (1 * GIB, 100 * MIB),
+        (2 * GIB, 512 * MIB),
         (3 * GIB, 1 * GIB),
         (6 * GIB, 2560 * MIB),
         (8 * GIB, 3 * GIB),
         (24 * GIB, 14 * GIB),
         (256 * GIB, 128 * GIB),
     ],
-    ids=['below-2g', '2g-to-4g', 'half-rounds-up', '4g-to-10g', '10g-to-170g', 'above-170g'],
+    ids=[
+        'below-2g',
+        'at-2g',
+        '2g-to-4g',
+        'half-rounds-up',
+        '4g-to-10g',
+        '10g-to-170g',
+        'above-170g',
+    ],
 )
 def test_the_redo_log_follows_the_dedicated_server_rule(budget: int, expected: int) -> None:
     """Each band of the documented table gives its capacity."""
@@ -106,6 +115,20 @@ def test_the_configured_paths_expand_the_home_directory(
     assert config.data_root == (tmp_path / 'd').resolve()
     assert config.library_dir == (tmp_path / 'lib').resolve()
     assert binary == 'memcached'
+
+
+def test_a_memcached_path_expands_the_home_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A memcached binary given as a path is expanded; a bare name is left for PATH."""
+    monkeypatch.setenv('HOME', str(tmp_path))
+    path = tmp_path / 'server.toml'
+    path.write_text(
+        '[mysql]\nbasedir = "~/mysql"\nlibrary_dir = ""\ndata_root = "~/d"\n'
+        'memory_budget_gb = 1\nio_capacity = 200\n[memcached]\nbinary = "~/bin/memcached"\n'
+    )
+    _, binary = bench_server.load_server_config(path)
+    assert binary == str((tmp_path / 'bin' / 'memcached').resolve())
 
 
 def test_the_counters_move_by_their_difference() -> None:

@@ -136,10 +136,32 @@ def test_a_pinned_environment_entry_cannot_change_within_a_file(
                     }
                 ],
             },
-            'every metric must be a number',
+            'every metric must be a finite number',
+        ),
+        (
+            {'format': 1, 'environment': {}, 'runs': [{**_run(), 'metrics': {'x': math.nan}}]},
+            'every metric must be a finite number',
+        ),
+        (
+            {'format': 1, 'environment': {}, 'runs': [{**_run(), 'metrics': [1.0]}]},
+            '"metrics" and "samples" must be objects',
+        ),
+        (
+            {'format': 1, 'environment': {}, 'runs': [{**_run(), 'samples': {'a': ['x']}}]},
+            "sample 'a' must be a list of finite numbers",
         ),
     ],
-    ids=['not-object', 'format', 'environment', 'runs', 'run-key', 'metric-type'],
+    ids=[
+        'not-object',
+        'format',
+        'environment',
+        'runs',
+        'run-key',
+        'metric-type',
+        'metric-nan',
+        'metrics-container',
+        'sample-type',
+    ],
 )
 def test_a_malformed_result_is_refused(content: object, message: str) -> None:
     """The schema is checked on every read and write, naming what is wrong."""
@@ -178,8 +200,9 @@ def test_a_result_names_no_machines_directories(
         ([100.0, 101.0, 103.0], [100.0, 101.0, 103.0]),
         ([10.0, 10.0, 10.0, 12.0, 10.0], [10.0, 10.0, 10.0, 12.0, 10.0]),
         ([1.0, 9.0], [1.0, 9.0]),
+        ([1.0, 2.0, 2.0, 100.0], [1.0, 2.0, 2.0]),
     ],
-    ids=['slow-import', 'slow-request', 'ordinary', 'mostly-equal', 'two-runs'],
+    ids=['slow-import', 'slow-request', 'ordinary', 'mostly-equal', 'two-runs', 'half-equal'],
 )
 def test_an_outlying_run_is_left_out(values: list[float], kept: list[float]) -> None:
     """Only a run far beyond the others' scatter goes; two runs, or a tie, keep all."""

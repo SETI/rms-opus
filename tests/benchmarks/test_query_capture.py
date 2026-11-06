@@ -32,6 +32,12 @@ ANALYZE_TREE = """\
         ('INSERT INTO cache_1 (id) SELECT id FROM obs_general', 'write_select'),
         ('CREATE TABLE cache_1 AS SELECT id FROM obs_general', 'write_select'),
         ("INSERT INTO user_searches (selections_json) VALUES ('{}')", 'write'),
+        (
+            'INSERT INTO user_searches (selections_json) VALUES '
+            r"""('{\"obs_general.target_name\": [\"select with\"]}')""",
+            'write',
+        ),
+        ('INSERT INTO `select` (`with`) VALUES ("it\'s a ""select""")', 'write'),
         ("UPDATE django_session SET expire_date = NOW() WHERE session_key = 'x'", 'write'),
         ('CREATE TABLE cache_1 (id INT)', 'record'),
         ('DROP TABLE cache_1', 'record'),
@@ -110,3 +116,30 @@ def test_times_and_rows_in_exponent_notation_are_read() -> None:
     summary = query_capture.summarize_analyze(tree)
     assert summary['tables'] == {'cache_15': 1.0, 'obs_general': 1200.0}
     assert summary['rows_examined'] == 1201.0
+
+
+def test_an_iterator_without_a_cost_estimate_is_read() -> None:
+    """MySQL prints no cost for some iterators; the top one still gives the rows returned."""
+    tree = (
+        '-> Count rows in cache_1  (actual time=0.05..0.05 rows=1 loops=1)\n'
+        '-> Table scan on cache_1  (cost=1.1 rows=8) (actual time=0.01..0.02 rows=8 loops=1)\n'
+    )
+    summary = query_capture.summarize_analyze(tree)
+    assert summary['top_rows'] == 1.0
+    assert summary['top_last_row_ms'] == 0.05
+    assert summary['tables'] == {'cache_1': 8.0}
+
+
+def test_a_single_iterator_without_a_cost_estimate_is_not_empty() -> None:
+    """One cost-free iterator is the whole tree, not an empty one."""
+    summary = query_capture.summarize_analyze(
+        '-> Table scan on <temporary>  (actual time=6.3..6.3 rows=8 loops=1)'
+    )
+    assert summary['top_rows'] == 8.0
+    assert summary['top_last_row_ms'] == 6.3
+
+
+def test_a_write_select_after_a_quoted_keyword_is_planned_from_its_select() -> None:
+    """A keyword inside a quoted value does not start the planned SELECT."""
+    text = "INSERT INTO cache_1 (note, id) SELECT 'with select', id FROM obs_general"
+    assert query_capture.inner_select(text) == "SELECT 'with select', id FROM obs_general"

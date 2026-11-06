@@ -52,6 +52,7 @@ from benchmarks.bench_web import (
     Client,
     RequestTiming,
     WebBench,
+    WebRunError,
     reset_search_tables,
     run_sequence,
     side_schema,
@@ -135,9 +136,23 @@ def fulltext_bytes(connection: Any, schema: str) -> int:
         connection,
         'SELECT COALESCE(SUM(ALLOCATED_SIZE), 0) FROM information_schema.INNODB_TABLESPACES '
         'WHERE NAME LIKE %s',
-        [f'{schema}/fts\\_%'],
+        [f'{like_literal(schema)}/fts\\_%'],
     )
     return int(rows[0][0])
+
+
+def like_literal(text: str) -> str:
+    """Escape a string so that a ``LIKE`` pattern matches it literally.
+
+    Parameters:
+        text: The string, such as a schema name, whose ``_`` would otherwise match any
+            character.
+
+    Returns:
+        The string with ``\\``, ``%`` and ``_`` escaped by MySQL's default escape
+        character.
+    """
+    return text.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
 
 def preview_images(connection: Any, schema: str, obs_general_data_bytes: int) -> dict[str, float]:
@@ -227,7 +242,10 @@ def ascii_columns(connection: Any, schema: str) -> dict[str, int]:
         name = quote_identifier(str(column))
         count = query(
             connection,
-            f'SELECT COUNT(*) FROM {qualified} WHERE {name} <> CONVERT({name} USING ascii)',  # nosec B608 - quoted identifiers
+            # Compared as bytes: under the column's collation a character can equal the
+            # '?' or the ASCII letter it converts to (a fullwidth question mark does).
+            f'SELECT COUNT(*) FROM {qualified} WHERE CAST({name} AS BINARY) <> '  # nosec B608 - quoted identifiers
+            f'CAST(CONVERT({name} USING ascii) AS BINARY)',
         )[0][0]
         counts[f'{table}.{column}'] = int(count)
     return counts
@@ -262,14 +280,15 @@ def dump_queries(bench: WebBench, capture: Path) -> list[query_capture.Block]:
             ) -> RequestTiming:
                 """Capture the statements one request issues, as one block."""
                 responses: list[RequestTiming] = []
+                tag = f'{scenario.name}/{request.name}'
                 blocks.append(
                     query_capture.capture_block(
-                        connection,
-                        f'{scenario.name}/{request.name}',
-                        url,
-                        lambda: responses.append(issue()),
+                        connection, tag, url, lambda: responses.append(issue())
                     )
                 )
+                if responses[0].failed:
+                    # A failed request's statements are not the scenario's.
+                    raise WebRunError(f'{tag}: {url} answered {responses[0].status}')
                 return responses[0]
 
             run_sequence(Client(bench.gunicorn.base_url), scenario, around=around)
@@ -371,6 +390,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         argv: The arguments, or None for the command line's.
     """
     args = _parse_arguments(argv)
+    if args.commit_capture and not args.dump_queries:
+        raise SystemExit('--commit-capture copies the capture --dump-queries makes; give both')
     if args.commit_capture and args.repo_root.resolve() != REPO_ROOT:
         # The committed capture is this checkout's own SQL; another side's would be
         # committed under this commit's name.

@@ -375,6 +375,7 @@ class ImportBench:
             drop_args=[*self.spelling.erase, *timing],
             import_args=[self.spelling.bundle_import, *timing],
             aux_args=[self.spelling.finalize, *timing],
+            dictionary_args=[*build_run.DICTIONARY_ARGS, *timing],
             validate_args=[self.spelling.validate, *timing],
             observer=monitor,
         )

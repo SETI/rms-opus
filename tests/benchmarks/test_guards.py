@@ -135,6 +135,26 @@ def test_a_bundle_group_that_was_not_announced_is_refused(monkeypatch: pytest.Mo
         monitor.step_finished(StepResult(('--do-all-import', 'COISS_2002'), 1, '', ''))
 
 
+def test_an_invocation_asked_for_timings_that_wrote_none_fails_the_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A missing timing file would silently leave the run's phases out."""
+    monkeypatch.setattr(_MemorySampler, '_sample', lambda self: None)
+    timing = tmp_path / 'timing.json'
+    monitor = InvocationMonitor(
+        server=None,  # type: ignore[arg-type]  # never reached by this check
+        schema='bench_x',
+        spelling=Spelling.from_help('--validate-perm --timing-json'),
+        expand=lambda groups: [[group] for group in groups],
+        timing_file=timing,
+        excluded_pids=set,
+    )
+    arguments = ['--validate-perm', '--timing-json', str(timing)]
+    monitor.step_started(arguments)
+    with pytest.raises(RunFailedError, match='asked for its timings and wrote none'):
+        monitor.step_finished(StepResult(tuple(arguments), 0, '', ''))
+
+
 def test_result_count_reads_the_count_from_its_response() -> None:
     """The last page of a pages scenario comes from this count."""
     timing = RequestTiming('build', 'u', 0.0, 0.1, 200, b'{"data": [{"result_count": 1234}]}')

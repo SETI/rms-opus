@@ -244,8 +244,9 @@ class InvocationMonitor:
             result: What the invocation did.
 
         Raises:
-            RunFailedError: If it exited non-zero, or it imported bundles and
-                ``obs_general`` has no row for one of them.
+            RunFailedError: If it exited non-zero, it was asked for its timings and wrote
+                none, or it imported bundles and ``obs_general`` has no row for one of
+                them.
         """
         wall = time.perf_counter() - self._started
         record, sampler = self._current, self._sampler
@@ -264,6 +265,9 @@ class InvocationMonitor:
             raise RunFailedError(
                 f'`{record.name}` exited {result.returncode}:\n{result.stderr[-4000:]}'
             )
+        asked = self._timing_file is not None and str(self._timing_file) in result.arguments
+        if asked and len(record.timings) == 0:
+            raise RunFailedError(f'`{record.name}` was asked for its timings and wrote none')
         if self.is_bundle_import(result.arguments):
             self.check_bundles_landed(record.bundles)
 

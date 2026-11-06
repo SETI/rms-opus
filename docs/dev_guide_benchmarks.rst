@@ -118,7 +118,7 @@ checks one budget in each band of the documented tables.
      - One pool, so the cold-start state is one thing
      - `17.8.3.1 Configuring InnoDB Buffer Pool Size <https://dev.mysql.com/doc/refman/8.0/en/innodb-buffer-pool-resize.html>`__
    * - ``innodb_redo_log_capacity``
-     - 100 MiB up to 2 GiB of budget; ``round(0.5 × GB) × 0.5`` GiB up to 4; ``round(0.75 × GB) × 0.5`` GiB up to 10.66; ``round(0.5625 × GB)`` GiB up to 170.66; 128 GiB above
+     - 100 MiB below 2 GiB of budget; ``round(0.5 × GB) × 0.5`` GiB up to 4; ``round(0.75 × GB) × 0.5`` GiB up to 10.66; ``round(0.5625 × GB)`` GiB up to 170.66; 128 GiB above
      - ``innodb_dedicated_server``'s automatic redo log capacity (8.0.30 and later)
      - `17.8.12 Enabling Automatic InnoDB Configuration for a Dedicated MySQL Server <https://dev.mysql.com/doc/refman/8.0/en/innodb-dedicated-server.html>`__, Table 17.9
    * - ``innodb_flush_method``
@@ -149,6 +149,14 @@ checks one budget in each band of the documented tables.
      - ``ON``
      - A bulk loader may use ``LOAD DATA LOCAL INFILE``
      - `Server System Variables <https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_local_infile>`__
+   * - ``skip-networking``
+     - set
+     - No TCP listener: the harness and everything it runs connect through the socket
+     - `Server System Variables <https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_skip_networking>`__
+   * - ``mysqlx``
+     - ``OFF``
+     - No X Protocol listener either
+     - `X Plugin Options and Variables <https://dev.mysql.com/doc/refman/8.0/en/x-plugin-options-system-variables.html#option_mysqld_mysqlx>`__
    * - ``skip-log-bin``
      - set
      - No binary log; ``log_bin = OFF`` would instead name a log file ``OFF``
@@ -166,9 +174,10 @@ checks one budget in each band of the documented tables.
      - No buffer pool carried across a restart
      - `17.8.3.6 Saving and Restoring the Buffer Pool State <https://dev.mysql.com/doc/refman/8.0/en/innodb-preload-buffer-pool.html>`__
 
-Every other setting is the server's default, and every result records the values the
-running server reports for the settings above and a few more (``RECORDED_SETTINGS`` in
-``bench_server.py``).
+The template also names the server's paths (``basedir``, ``datadir``, ``socket``,
+``pid-file`` and ``log-error``), which ``bench_server.py`` fills in. Every other setting
+is the server's default, and every result records the values the running server reports
+for the settings above and a few more (``RECORDED_SETTINGS`` in ``bench_server.py``).
 
 Setting up a machine
 --------------------
@@ -348,7 +357,8 @@ gunicorn of one worker with one thread rather than ``web.toml``'s: the applicati
 some lookups into its process the first time a request needs them, and a thread its
 database connection's settings, so with several workers which request carries those
 statements would depend on which worker the request reached. With one, the same commit
-captures the same statements every time.
+captures the same statements every time. A request that fails stops the capture, since
+its statements are not the scenario's.
 
 Each request's block gives two metrics. ``time_s`` is the block's time, the sum of its
 planned statements' times; each statement is executed five times, so the block has five
@@ -438,7 +448,9 @@ measure. Then::
 
 prints every metric's medians, change, spreads, maxima, floor (as a fraction and in the
 metric's units) and verdict. ``compare`` refuses two results whose server model, server
-ownership, cache backend or brand differ. Its module docstring defines the statistics:
+ownership, cache backend or brand differ, two of different scales, the after file given
+first, a target neither file holds, and a floors file of another scale or brand. Its
+module docstring defines the statistics:
 medians over runs, the spread as the range over the median, the change relative to the
 before median, and the verdict, which counts a change as an improvement only beyond the
 floor and as a regression only beyond the floor plus five percentage points.
@@ -447,13 +459,14 @@ A spread leaves out an **outlying run**: one more than three robust standard dev
 (1.4826 times the median absolute deviation) from its session's median. The median every
 comparison is made on is barely moved by one such run, so the run does not set the noise
 either; the median itself is still taken over every run. Fewer than three runs, or runs
-at least half of which equal the median, have no outliers, and session medians are never
+more than half of which equal the median, have no outliers, and session medians are never
 left out.
 
 Noise floors
 ------------
 
-A **floor session** runs the full harness on one commit. Two are taken at a scale, and
+A **floor session** runs the full harness on one commit, with no changes in the
+checkout, and ``compare`` refuses sessions of different commits. Two are taken at a scale, and
 ``python -m benchmarks.compare --floors <session files>`` writes that scale's floors
 file into ``benchmarks/floors/`` and names the metrics the two disagree on; where they disagree, check the recorded
 load averages, take a third, and run the command again over all three. A metric's floor
