@@ -73,6 +73,9 @@ LOG_LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
 #: The memcached server `DjangoConfig.cache_location` names when the file does not.
 DEFAULT_CACHE_LOCATION = '127.0.0.1:11211'
 
+#: Seconds a worker thread keeps its database connection open when the file does not say.
+DEFAULT_CONN_MAX_AGE = 300
+
 #: Names of the tables a configuration file must contain, in file order.
 TABLE_NAMES = ('database', 'paths', 'django', 'import')
 
@@ -155,6 +158,12 @@ class DjangoConfig:
         cache_location: The memcached server the web application uses, as
             ``host:port``. The default is ``127.0.0.1:11211``, memcached's own port on
             the same machine.
+        conn_max_age: Seconds each worker thread keeps its database connection open
+            across requests, Django's ``CONN_MAX_AGE``; 0 opens and closes one for every
+            request. The default is 300.
+        conn_health_checks: Whether a kept connection is checked before a request
+            reuses it, and replaced if the server has dropped it, Django's
+            ``CONN_HEALTH_CHECKS``. The default is true.
         public_url: Public URL of this OPUS installation.
         product_http_path: Root URL products are retrieved from.
         viewmaster_url: Root URL of the viewmaster file browser.
@@ -177,6 +186,8 @@ class DjangoConfig:
     allowed_hosts: tuple[str, ...]
     cache_server_prefix: str
     cache_location: str
+    conn_max_age: int
+    conn_health_checks: bool
     public_url: str
     product_http_path: str
     viewmaster_url: str
@@ -403,6 +414,30 @@ class _TableReader:
             f'not {type(value).__name__}'
         )
 
+    def read_int(self, key: str, *, default: Any = _REQUIRED, minimum: int | None = None) -> int:
+        """Read a whole number.
+
+        Parameters:
+            key: The key to read.
+            default: Value to use when the key is absent; by default the key is
+                required.
+            minimum: The smallest value allowed, or None for no bound.
+
+        Returns:
+            The number.
+
+        Raises:
+            ConfigError: If the key is missing and has no default, its value is not a
+                whole number, or it is below ``minimum``. A boolean is rejected even
+                though Python counts one as an integer.
+        """
+        value = self._take(key, default)
+        if isinstance(value, bool) or not isinstance(value, int):
+            self._fail(f'{key!r} must be a whole number, not {type(value).__name__}')
+        if minimum is not None and value < minimum:
+            self._fail(f'{key!r} must be at least {minimum}, not {value}')
+        return value
+
     def read_optional_int(self, key: str) -> int | None:
         """Read a whole number that may be left out of the file.
 
@@ -578,6 +613,8 @@ def _read_django(source: Path, values: dict[str, Any]) -> DjangoConfig:
         allowed_hosts=table.read_str_tuple('allowed_hosts'),
         cache_server_prefix=table.read_str('cache_server_prefix'),
         cache_location=table.read_host_port('cache_location', default=DEFAULT_CACHE_LOCATION),
+        conn_max_age=table.read_int('conn_max_age', default=DEFAULT_CONN_MAX_AGE, minimum=0),
+        conn_health_checks=table.read_bool('conn_health_checks', default=True),
         public_url=table.read_str('public_url'),
         product_http_path=table.read_str('product_http_path'),
         viewmaster_url=table.read_str('viewmaster_url'),

@@ -39,6 +39,8 @@ What is worth pinning here, and why:
 """
 
 import logging
+import sys
+import threading
 from unittest import TestCase
 
 from django.conf import settings
@@ -388,6 +390,34 @@ class ApiViewTests(TestCase):
         # A raise that got past exit_api_call would leak the entry for the life of
         # the process, which is why the exception paths are driven here too.
         self.assertEqual({}, app_utils._API_START_TIMES)
+
+    def test__concurrent_api_calls_get_distinct_numbers(self) -> None:
+        "[test_api_view.py] enter_api_call: threads never share a call number"
+        numbers: list[list[int]] = [[] for _ in range(8)]
+        start = threading.Barrier(len(numbers))
+
+        def enter_many(position: int) -> None:
+            """Enter many calls at once with the other threads, keeping the numbers."""
+            start.wait()
+            for _ in range(2000):
+                numbers[position].append(app_utils.enter_api_call('t', None))
+
+        threads = [threading.Thread(target=enter_many, args=(i,)) for i in range(len(numbers))]
+        # Switch threads as often as the interpreter allows, so an unguarded
+        # read-increment-write is interrupted in the middle within these calls.
+        interval = sys.getswitchinterval()
+        sys.setswitchinterval(1e-6)
+        try:
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        finally:
+            sys.setswitchinterval(interval)
+        every = [number for chunk in numbers for number in chunk]
+        for number in every:
+            app_utils.exit_api_call(number, None)
+        self.assertEqual(len(every), len(set(every)))
 
     def test__exit_api_call_does_not_decode_a_binary_body(self) -> None:
         "[test_api_view.py] exit_api_call: an archive is not decoded to log 240 chars"

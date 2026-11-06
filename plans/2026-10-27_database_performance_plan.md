@@ -4516,3 +4516,16 @@ Nothing above this line is rewritten by an executor.
   to another host, where every request would pay the TLS connection and its round trips.
   The first page's warm latency at test scale is 17.9 ms against an effective floor of
   12.9 ms (the web jitter), so a latency target could not be met by any saving under that.
+- PR-02's thread-safety audit (`grep -rnE '^_[A-Z_]+(\s*:[^=]+)?\s*=\s*(\{|\[|dict\(|set\()|^\s+global _' src/opus_app --include=*.py`)
+  finds four module-level mutables. `_API_CALL_NUMBER` in `tools/app_utils.py` was not
+  safe: `enter_api_call` incremented it and read it back as separate steps, so two
+  threads could take one number, and one call's start time overwrite another's; with the
+  interpreter switching threads as often as it can, eight threads entering 2,000 calls
+  each always produced duplicates. The numbers now come from one `itertools.count`,
+  whose `next()` the GIL does not interrupt, and a test drives the eight threads.
+  `_API_START_TIMES` is then keyed by numbers no two calls share, and each call removes
+  only its own entry. `_PRETTY_MULT_CACHE` in `tools/db_utils.py` and `_PARAMINFO_CACHE`
+  in `search/views.py` are only ever added to, each key always with the value any thread
+  would compute, so a race costs one repeated query and no wrong answer; the
+  `ParamInfo` objects the second holds are returned as copies wherever a caller changes
+  one (`results/views.py`'s referred slugs, which ask for the `col` form).

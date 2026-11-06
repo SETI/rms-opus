@@ -634,6 +634,16 @@ entirely.
      - The memcached the web application caches in, as ``"host:port"``. Default
        ``"127.0.0.1:11211"``, memcached's own port on the same machine. A generated file
        never contains it.
+   * - ``conn_max_age``
+     - optional
+     - How many seconds each web worker thread keeps its database connection open across
+       requests. Default ``300``; ``0`` opens and closes a connection for every request.
+       A database on another host is where this matters most, since every new connection
+       there costs network round trips and, under TLS, a handshake.
+   * - ``conn_health_checks``
+     - optional
+     - Whether a kept database connection is checked before a request reuses it, and
+       replaced if the server has dropped it. Default ``true``.
    * - ``public_url``
      - yes
      - This installation's public URL, used by the citation page.

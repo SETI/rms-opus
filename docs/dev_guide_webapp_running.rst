@@ -235,7 +235,10 @@ worth reading once end to end. It has three parts:
 
 **Django's own settings**, assigned from the configuration file: the secret key, the
 debug flag, the allowed hosts, the database connection, the static root, and the log
-levels. The database engine is chosen from the configured *brand* through a two-entry
+levels. Each worker thread keeps its database connection across requests for
+``[django] conn_max_age`` seconds, checking it before reuse when ``[django]
+conn_health_checks`` is true, so a request opens a connection only when its thread has
+none or the server dropped the one it had. The database engine is chosen from the configured *brand* through a two-entry
 map, so the web application and the import pipeline cannot disagree about which database
 they are talking to.
 

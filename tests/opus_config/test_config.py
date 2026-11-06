@@ -184,6 +184,8 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('django.fake_error404_probability', 0.0),
         ('django.fake_error500_probability', 0.0),
         ('django.cache_location', '127.0.0.1:11211'),
+        ('django.conn_max_age', 300),
+        ('django.conn_health_checks', True),
         ('import_.table_temp_prefix', 'imp_'),
     ],
 )
@@ -207,6 +209,8 @@ def test_load_config_defaults_every_optional_key(
         ('django', 'fake_error404_probability', '0.25', 0.25),
         ('django', 'log_console_level', '"CRITICAL"', 'CRITICAL'),
         ('django', 'cache_location', '"cache.example.org:21211"', 'cache.example.org:21211'),
+        ('django', 'conn_max_age', '0', 0),
+        ('django', 'conn_health_checks', 'false', False),
     ],
 )
 def test_load_config_reads_an_optional_key_that_is_written(
@@ -299,6 +303,22 @@ def test_load_config_accepts_a_whole_number_probability(
             "[django] 'fake_error404_probability' must be a number, not str",
         ),
         (
+            adding('django', 'conn_max_age', '-1'),
+            "[django] 'conn_max_age' must be at least 0, not -1",
+        ),
+        (
+            adding('django', 'conn_max_age', '"300"'),
+            "[django] 'conn_max_age' must be a whole number, not str",
+        ),
+        (
+            adding('django', 'conn_max_age', 'true'),
+            "[django] 'conn_max_age' must be a whole number, not bool",
+        ),
+        (
+            adding('django', 'conn_health_checks', '"yes"'),
+            "[django] 'conn_health_checks' must be true or false, not str",
+        ),
+        (
             adding('django', 'cache_location', '"127.0.0.1"'),
             '[django] \'cache_location\' must be "host:port" with a port from 1 to 65535, '
             "not '127.0.0.1'",
@@ -350,6 +370,10 @@ def test_load_config_accepts_a_whole_number_probability(
         'delay-given-a-boolean',
         'probability-given-a-boolean',
         'probability-given-a-string',
+        'connection-lifetime-negative',
+        'connection-lifetime-given-a-string',
+        'connection-lifetime-given-a-boolean',
+        'health-checks-given-a-string',
         'cache-location-without-a-port',
         'cache-location-without-a-host',
         'cache-location-port-not-a-number',
