@@ -4477,5 +4477,8 @@ Nothing above this line is rewritten by an executor.
   run), and 24f15dc2 was df028cb1.
 - The complete-scale non-ASCII count above compared each value with its ASCII conversion
   under the column's collation, which can equal a character to its replacement (a
-  fullwidth question mark to `?`). `bench_db --ascii-columns` now compares bytes; the
-  empty set is to be recounted that way before PR-17 relies on it.
+  fullwidth question mark to `?`). `bench_db --ascii-columns` now compares bytes. Recounted
+  that way on 2026-11-06 against the same schema (`bench_complete_before_a_1`, with
+  `benchmarks.bench_db.ascii_columns` at e7c4229f), the set is still empty: no
+  non-ASCII value in any of the 19 columns. The same comparison flags `café` and a
+  fullwidth question mark on that server, so the count is not vacuous.
