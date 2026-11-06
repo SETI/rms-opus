@@ -25,7 +25,7 @@ side's full import (its bundle imports plus its finalization) longer than the be
 side's.
 
 ``python -m benchmarks.compare --floors SESSION.json SESSION.json [SESSION.json]``
-writes the floors file of the sessions' scale and brand into ``benchmarks/results/``,
+writes the floors file of the sessions' scale and brand into ``benchmarks/floors/``,
 and lists the metrics the sessions disagree on and those some session lacks. Every
 metric any session holds gets a floor.
 
@@ -71,7 +71,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from benchmarks.results import (
-    RESULTS_DIR,
+    FLOORS_DIR,
     ResultError,
     higher_is_better,
     load_result,
@@ -619,7 +619,8 @@ def write_floors(paths: Sequence[Path]) -> tuple[Path, list[str]]:
     floors = floors_from_sessions(sessions)
     for entry in floors.values():
         entry['missing_from'] = [paths[position].name for position in entry['missing_from']]
-    output = RESULTS_DIR / f'{first.date}_{first.pr}_floors_{first.scale}_{first.brand}.json'
+    FLOORS_DIR.mkdir(parents=True, exist_ok=True)
+    output = FLOORS_DIR / f'{first.date}_{first.pr}_floors_{first.scale}_{first.brand}.json'
     content = {
         'format': 2,
         'scale': first.scale,

@@ -191,3 +191,19 @@ def test_a_run_spread_leaves_the_outlier_out_but_keeps_the_median() -> None:
     assert results.run_spread([384.0, 425.2, 385.9]) == pytest.approx(1.9 / 385.9)
     assert results.run_spread([1.0, 2.0, 3.0]) == pytest.approx(1.0)
     assert results.run_spread([1.0, 2.0, 3.0], center=4.0) == pytest.approx(0.5)
+
+
+def test_the_results_root_is_read_from_server_toml_and_expanded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = tmp_path / 'server.toml'
+    config.write_text('[results]\nroot = "$BENCH_TEST_ROOT/results"\n', encoding='utf-8')
+    monkeypatch.setenv('BENCH_TEST_ROOT', str(tmp_path))
+    assert results.results_root(config) == (tmp_path / 'results').resolve()
+    monkeypatch.delenv('BENCH_TEST_ROOT')
+    with pytest.raises(ResultError, match='not set'):
+        results.results_root(config)
+
+
+def test_the_results_directory_is_outside_the_repository() -> None:
+    assert not results.RESULTS_DIR.is_relative_to(results.REPO_ROOT)

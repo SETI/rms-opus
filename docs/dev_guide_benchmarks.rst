@@ -364,7 +364,7 @@ tables of the commit and session that made it, so it is replayed only there.
 Result files
 ------------
 
-Everything a command measures goes into ``benchmarks/results/``, one file per label::
+Everything a command measures goes into the **results directory**, one file per label::
 
     <date>_<tag>_<side>_<scale>_mysql_<session>.json
 
@@ -376,6 +376,14 @@ another commit or server to a file. Each run records its kind (``import``, ``db`
 A metric's name says which way is better: one ending in ``_per_s`` is better higher,
 every other is better lower. Raw logs, profiles and query captures go under
 ``benchmarks/scratch/<session>/``, which is not committed.
+
+The results directory is ``[results] root`` in ``benchmarks/scenarios/server.toml``,
+outside the repository like the servers' directories. Result files are never committed:
+most of a file is diagnostics -- every captured statement's plan, each scenario's top
+statements, the index-usage snapshot -- that a reader can regenerate from the commit it
+names. What is committed is each scale's floors file, under ``benchmarks/floors/``,
+and the comparison table a change's description carries, which names the result files
+it came from.
 
 Comparing two sides
 -------------------
@@ -425,8 +433,8 @@ into a schema of the side's own and runs that side's finalization sequence on th
 the side's result file then names the copy, which its ``bench_db`` and ``bench_web``
 measure. Then::
 
-    python -m benchmarks.compare benchmarks/results/<before>.json \
-        benchmarks/results/<after>.json --floors-file benchmarks/results/<floors>.json
+    python -m benchmarks.compare <results>/<before>.json <results>/<after>.json \
+        --floors-file benchmarks/floors/<floors>.json
 
 prints every metric's medians, change, spreads, maxima, floor (as a fraction and in the
 metric's units) and verdict. ``compare`` refuses two results whose server model, server
@@ -447,7 +455,7 @@ Noise floors
 
 A **floor session** runs the full harness on one commit. Two are taken at a scale, and
 ``python -m benchmarks.compare --floors <session files>`` writes that scale's floors
-file and names the metrics the two disagree on; where they disagree, check the recorded
+file into ``benchmarks/floors/`` and names the metrics the two disagree on; where they disagree, check the recorded
 load averages, take a third, and run the command again over all three. A metric's floor
 is the largest of the sessions' spreads and of the range of their medians over the
 median of those medians, a fraction of the metric's median; a metric three sessions

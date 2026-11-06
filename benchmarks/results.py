@@ -7,7 +7,10 @@ A **result file** holds one label's measurements: one side of one A/B (``before`
 
 and its content is ``{"format": 1, "environment": {...}, "runs": [...]}``. Every bench
 command appends its runs to the file of the label it was given, so one file ends up
-holding the label's imports, its database statistics and its web runs.
+holding the label's imports, its database statistics and its web runs. Result files
+live in the results directory, ``[results] root`` in ``scenarios/server.toml``, outside
+the repository; only the floors files `benchmarks.compare` writes from them, under
+``benchmarks/floors/``, are committed.
 
 A run is ``{"kind", "index", "started_at", "load_average_1m", "metrics", "samples",
 "details"}``. ``metrics`` maps a metric name to one number for that run; ``samples``
@@ -30,6 +33,7 @@ import platform
 import re
 import socket
 import statistics
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -41,8 +45,11 @@ if TYPE_CHECKING:
 BENCHMARKS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = BENCHMARKS_DIR.parent
 SCENARIOS_DIR = BENCHMARKS_DIR / 'scenarios'
-RESULTS_DIR = BENCHMARKS_DIR / 'results'
+FLOORS_DIR = BENCHMARKS_DIR / 'floors'
 SCRATCH_DIR = BENCHMARKS_DIR / 'scratch'
+
+#: The file naming the directories the harness keeps outside the repository.
+SERVER_TOML = SCENARIOS_DIR / 'server.toml'
 
 #: The version of the result-file layout this module writes and reads.
 FORMAT_VERSION = 1
@@ -75,6 +82,30 @@ _RESULT_NAME = re.compile(
 
 class ResultError(Exception):
     """Raised when a result file is malformed, mislabeled, or would mix two labels."""
+
+
+def results_root(path: Path = SERVER_TOML) -> Path:
+    """Read where the result files live: ``[results] root`` in ``server.toml``.
+
+    Parameters:
+        path: The file.
+
+    Returns:
+        The directory, with ``~`` and environment variables expanded.
+
+    Raises:
+        ResultError: If it names an environment variable that is not set.
+    """
+    with path.open('rb') as stream:
+        value = str(tomllib.load(stream)['results']['root'])
+    expanded = os.path.expandvars(os.path.expanduser(value))
+    if '$' in expanded:
+        raise ResultError(f'{value!r} names an environment variable that is not set')
+    return Path(expanded).resolve()
+
+
+#: Where every result file is written and looked up.
+RESULTS_DIR = results_root()
 
 
 @dataclass(frozen=True)

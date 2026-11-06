@@ -313,7 +313,7 @@ def test_the_floors_file_is_named_for_its_pr_scale_and_brand(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The floors file sits beside the sessions, named as the layout says."""
-    monkeypatch.setattr(compare, 'RESULTS_DIR', tmp_path)
+    monkeypatch.setattr(compare, 'FLOORS_DIR', tmp_path)
     paths = []
     for session, value in (('a', 1.0), ('b', 3.0)):
         path = tmp_path / f'2026-11-03_PR-00_before_fixture_mysql_{session}.json'

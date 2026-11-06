@@ -145,7 +145,7 @@ def _git(root: Path, *arguments: str) -> None:
     ('path', 'dirty'),
     [
         ('src/new_module.py', True),
-        ('benchmarks/results/uncommitted.json', False),
+        ('benchmarks/floors/uncommitted.json', False),
     ],
 )
 def test_only_an_untracked_file_under_src_makes_the_checkout_dirty(

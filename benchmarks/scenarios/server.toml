@@ -1,6 +1,6 @@
-# The servers the harness owns. Every path is expanded at run time ("~" is the home
-# directory of whoever runs the harness), and every directory named here is outside
-# the repository.
+# The servers the harness owns, and where it keeps its result files. Every path is
+# expanded at run time ("~" is the home directory of whoever runs the harness), and
+# every directory named here is outside the repository.
 
 [mysql]
 # The unpacked MySQL generic Linux tarball; bin/mysqld under it is what runs.
@@ -24,3 +24,8 @@ io_capacity = 1000
 # The memcached binary, a path or a name looked up on PATH; the harness starts its own
 # on web.toml's port and never touches one it did not start.
 binary = "memcached"
+
+[results]
+# Holds every result file the bench commands write, one per label. Only the floors
+# files, under benchmarks/floors/, are committed.
+root = "~/opus_bench/results"

@@ -70,7 +70,7 @@ architecture Phases 0 to 6 produced.
 | Topic | Decision |
 |---|---|
 | Branch | **Sequential PRs on one integration branch, stacked.** PR-00 creates `db-perf` from `main`, **which already carries this plan, the design document, and the analysis** (merged to `main` in their own documentation PR), so that the Execution notes can be amended in later PRs; every PR in Phases 0 to 5 branches from `db-perf` and targets `db-perf`; PR-(N+1) starts from `db-perf` after PR-N has merged into it, so every A/B's merge-base is the previous PR's result. `db-perf` carries the same protection as `main` and both workflows trigger on it from PR-00. **`main` is merged into `db-perf` only between PRs**, by the orchestrator, recorded in the Execution notes; the next PR's `before` run then measures the merged base, so the merge never hides inside an A/B. Phase 6 merges `db-perf` to `main` once and moves the plan and critiques to `plans/archive/` and `critiques/archive/` per `CLAUDE.md`. `main` stays deployable throughout, as it did during the modernization (`plans/archive/2026-07-18_opus_modernization_plan.md`, the `rewrite` branch). Phase P, if run, repeats the arrangement on `db-postgresql`. |
-| Measurement | **No performance claim enters a PR description, the dev guide, or this plan unless the benchmark harness produced it**, with the JSON result committed under `benchmarks/results/`. This is the repository's "measured or not made" rule applied to timing. |
+| Measurement | **No performance claim enters a PR description, the dev guide, or this plan unless the benchmark harness produced it**, with the comparison table in the PR description naming the result files it came from, which the harness keeps in its results directory outside the repository (§2.1). This is the repository's "measured or not made" rule applied to timing. |
 | A/B discipline | Before and after are measured **in one session on one machine**, base and head checked out side by side as git worktrees and installed into separate virtual environments. The two sides' runs alternate (§2.3). The run counts, the statistics, and the noise floors are §2.6's. Medians are compared, with the spread. A number from a different machine or a different day is not a comparison. |
 | Scales | Three. **Fixture scale** is the checked-in mini-holdings `import_tests` uses, minutes. **Test scale** is the bundle subset `scripts/import/import_for_tests.sh` imports from the Ring-Moon Systems Node's holdings, about ten minutes; it is the database the API goldens are pinned to, and "a copy of production" is never used, because the goldens would not pass against it. **Complete scale** is every bundle in the holdings, about twelve hours, and is used only where a number must come from all the data: PR-00's baseline, PR-24's options, and the merge's final comparison (PR-26); PR-25, PR-17, and PR-14 read those runs' results instead of importing again. All three run on the workstation (§1, Where the plan runs), which needs the holdings and room for a harness-owned database server (§2.2); **no administrator access to it is assumed** (§2.2, §3). Every PR measures at fixture scale. PRs marked **test scale** in §4 must also be measured there before merge. |
 | Where the plan runs | **A personal workstation, never a production server.** The harness owns everything it measures there: its MySQL server, memcached, and gunicorn. No shared server is ever used. |
@@ -131,9 +131,11 @@ benchmarks/
 │   ├── my.cnf.template          # the harness-owned server's configuration, from the tuning baseline
 │   └── web.toml                 # the request scenarios
 ├── scratch/                     # per session: raw logs, .prof files, query captures; not committed
-└── results/
-    ├── YYYY-MM-DD_PR-nn_{before,after}_{fixture,test,complete}_{mysql,postgresql}_<session>.json
+└── floors/
     └── YYYY-MM-DD_PR-nn_floors_{fixture,test,complete}_{mysql,postgresql}.json
+
+<results root>/                  # [results] root in scenarios/server.toml; outside the repository
+└── YYYY-MM-DD_PR-nn_{before,after}_{fixture,test,complete}_{mysql,postgresql}_<session>.json
 ```
 
 `<session>` is a short label the executor chooses (`a`, `b`, `rerun1`) so that two
@@ -146,8 +148,11 @@ adding it to `RUFF_PATHS`, `MYPY_PATHS`, `BANDIT_PATHS`, and `VULTURE_PATHS` in
 `pyproject.toml`; `benchmarks/README.md` joins the PyMarkdown scan list in both places.
 The runners' entry points go in `vulture_whitelist.py`. The directory is outside the
 default pytest run; `tests/benchmarks/` unit-tests `compare.py`'s table rendering, the
-scenario loaders, and the result-file schema. Results and floors files are committed;
-everything under `benchmarks/scratch/` (the session's scratch directory,
+scenario loaders, and the result-file schema. Only the floors files are committed. Result
+files go to the results directory named by `[results] root` in `scenarios/server.toml`,
+outside the repository, because most of a result file is diagnostics (every captured
+statement's plan, each scenario's top statements, the index-usage snapshot) that run to
+megabytes and that a reader regenerates from the commit the file names; everything under `benchmarks/scratch/` (the session's scratch directory,
 `benchmarks/scratch/<session>/`, which holds the raw logs, the `.prof` files, and the
 query captures) is not (PR-00 adds the `.gitignore` entries `benchmarks/scratch/` and
 `benchmarks/**/*.prof`). The harness-owned server's data directory and the memcached it
@@ -464,8 +469,7 @@ substantive change the review loop forces:
    from PR-05 on, before each side's server starts, the harness restamps the version row
    to that side's `SCHEMA_VERSION` with `bench_server.restamp_version`, since the two
    sides' web checks expect different versions whenever the PR bumps it. Results land in
-   `benchmarks/results/` of the PR worktree, the base's labeled `before` and the head's
-   `after`.
+   the results directory (§2.1), the base's labeled `before` and the head's `after`.
 4. `compare.py before.json after.json` renders the table the PR description carries:
    every metric, before, after, the change, the spread, and the floor (§2.6). A change
    within the floor is reported as **within noise**, not as an improvement.
@@ -772,8 +776,8 @@ as `item n`, and to the design document as `§D-n`.
 
 **PR-00: feat: benchmark harness and baseline measurements** (items 12 and 19; `§C-6`)
 
-- **Goal:** create `db-perf`, implement §2, and commit the first `before` results at both
-  scales.
+- **Goal:** create `db-perf`, implement §2, take the first `before` results at both
+  scales, and commit the floors files computed from them.
 - **Changes:**
   - **First:** `db-perf` is created from `main`, which already carries this plan, the design
     document, and the analysis (§1, Branch);
@@ -824,10 +828,10 @@ as `item n`, and to the design document as `§D-n`.
   and each mult table's `MAX(id)` (PR-14 and PR-16 read them); the `preview_images` size
   and ratio, recorded for reference; and,
   for every column whose `pi_form_type` is `STRING`, `SELECT COUNT(*) FROM <t> WHERE
-  <col> <> CONVERT(<col> USING ascii)`, committed with the results as the set PR-17 reads
+  <col> <> CONVERT(<col> USING ascii)`, recorded in the Execution notes as the set PR-17 reads
   (a `bench_db --ascii-columns` option, which runs at any scale).
-- **Acceptance:** results committed as `before`, from the floor sessions at the fixture
-  and test scales (two, or three where they disagree), and the floors file `compare.py
+- **Acceptance:** `before` results from the floor sessions at the fixture and test scales
+  (two, or three where they disagree), and the committed floors file `compare.py
   --floors` writes from them, with a floor for **every** metric the sessions produced
   (§2.6); the Execution notes name the file as the floors every later PR is judged
   against at fixture and test scale. No application code changes beyond `--timing-json`, the `build_run`
@@ -3827,8 +3831,7 @@ once (§1, Deploy; §2.3).
   import time, and in code. Nothing is implemented until the discussion on the PR decides
   which options go in; the orchestrator records the decision and its reason for each
   option in the Execution notes, and the executor then implements exactly the chosen ones
-  on the same branch. If none is chosen, the PR closes with the report committed under
-  `benchmarks/results/`.
+  on the same branch. If none is chosen, the PR closes with the report in its description.
 - **Option 1: a default-sort rank on `obs_general`.** Prototype: `ALTER TABLE obs_general
   ADD COLUMN default_rank INT UNSIGNED, ADD KEY (default_rank)`, filled from `ROW_NUMBER()
   OVER (ORDER BY time1, opus_id)`. Probe shapes, on the prototype copy: the empty
@@ -4357,12 +4360,11 @@ Nothing above this line is rewritten by an executor.
   385.8 s, so the cause was InnoDB's flushing, not the disk; no disk settle step was
   needed. Those sessions and the experiment were not committed.
 - The floors every later PR is judged against at fixture and test scale are
-  `benchmarks/results/2026-11-05_PR-00_floors_fixture_mysql.json` and
-  `benchmarks/results/2026-11-05_PR-00_floors_test_mysql.json`, computed with the rules of
+  `benchmarks/floors/2026-11-05_PR-00_floors_fixture_mysql.json` and
+  `benchmarks/floors/2026-11-05_PR-00_floors_test_mysql.json`, computed with the rules of
   df028cb1 from the sessions `2026-11-05_PR-00_before_{fixture,test}_mysql_{d,e,f}.json`,
   all measured at commit 4c27db2b. The sessions a, b and c of the same day, measured at
-  330e4a3a, were superseded by the pre-PR review's fixes below and removed from
-  `benchmarks/results/`.
+  330e4a3a, were superseded by the pre-PR review's fixes below.
 - Three floor sessions were taken at each scale, since sessions d and e disagreed on some
   metrics at both. Each session's first run, its warm-up import, started at a one-minute
   load average (`load_average_1m`) of 2.80, 2.70 and 2.67 (fixture d, e, f) and 2.76,
@@ -4374,7 +4376,7 @@ Nothing above this line is rewritten by an executor.
   schema of session c (commit 330e4a3a), taken under the session label `capture`, whose
   result file was not committed.
 - PR-00's complete-scale measurement is
-  `benchmarks/results/2026-11-05_PR-00_before_complete_mysql_a.json`: one import from
+  `2026-11-05_PR-00_before_complete_mysql_a.json` in the operator's results directory: one import from
   `import_complete.toml`, then `bench_db` with `--dump-queries --ascii-columns`, then one
   `bench_web` run (each state once), measured at commit 1a1e607f (the harness of
   330e4a3a) on 2026-11-05, starting at a one-minute load average of 1.5. Its
@@ -4395,8 +4397,8 @@ Nothing above this line is rewritten by an executor.
   db-cold. `obs_files` alone is 34,070 MiB of data and 23,159 MiB of indexes, with
   50,647,642 rows. Every table's bytes, rows and index count are the
   `db.table.<table>.{data_bytes,index_bytes,rows,index_count}` metrics of the file's `db`
-  run; `python -c "import json; m=[r for r in json.load(open('benchmarks/results/2026-11-05_PR-00_before_complete_mysql_a.json'))['runs'] if r['kind']=='db'][0]['metrics']; print({k: v for k, v in m.items() if k.startswith('db.table.')})"`
-  prints them.
+  run; `python -c "import json; from benchmarks.results import RESULTS_DIR; m=[r for r in json.load(open(RESULTS_DIR / '2026-11-05_PR-00_before_complete_mysql_a.json'))['runs'] if r['kind']=='db'][0]['metrics']; print({k: v for k, v in m.items() if k.startswith('db.table.')})"`
+  prints them, on the operator's workstation.
 - Each mult table's `MAX(id)` is its `db.table.mult_<...>.max_id` metric in the same run,
   printed by the command above. The largest are 500 (`mult_obs_general_instrument_id`
   and `mult_obs_profile_host`), then 295 (`mult_obs_mission_cassini_rev_no`) and 207
@@ -4458,3 +4460,12 @@ Nothing above this line is rewritten by an executor.
   overstated the noise of a small median, set most of the session disagreements, and
   would understate it after a PR shrank a large one. The families' jitters differ by two
   orders of magnitude (web requests against planned statements), so they are kept apart.
+- At the operator's direction (2026-11-05), result files are no longer committed; only the
+  floors files are, under `benchmarks/floors/` (§1, Measurement; §2.1). A result file
+  ran to 6.5 to 7.7 MB, about nine tenths of it diagnostics: the plan text of every
+  captured statement (3.4 MB of a test-scale file), each web run's top statements (0.5 MB
+  a run) and the index-usage snapshot (0.4 MB), against about 0.5 MB of metrics. The
+  harness writes them to `[results] root` in `benchmarks/scenarios/server.toml`
+  (`~/opus_bench/results`), where PR-00's seven files are kept on the operator's
+  workstation. The facts later PRs read from the complete-scale file are recorded in the
+  notes above.
