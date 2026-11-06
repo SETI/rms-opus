@@ -338,8 +338,9 @@ on the workstation is the system `memcached` service, and restarting that needs 
 harness starts its own `memcached` on a private port (`memcached_port` in `web.toml`) with
 a stated memory size (`memcached_mb` in `web.toml`, passed as `-m`), writes that address
 into the `OPUS_CONFIG` it writes, and **resets it by stopping and starting it**. It
-records the server's `limit_maxbytes` (from `stats`) in the environment and the delta of
-its `evictions` per scenario, so a scenario that overflowed the cache is visible.
+records the server's `limit_maxbytes` (from `stats`) in the environment and checks the
+delta of its `evictions` per scenario: a scenario that overflowed the cache fails the
+run.
 `pymemcache` is not a dependency of the application today, so the `benchmarks` extra
 includes it, and the harness **refuses to run** when the settings report the locmem
 fallback. The harness client sends `Connection: close` on every request, because gthread
@@ -410,11 +411,12 @@ approximate (the owned server sets 4096), and with each shape its `SUM_SORT_MERG
 and `SUM_CREATED_TMP_DISK_TABLES`. Per scenario it also records the deltas of
 `Innodb_buffer_pool_reads` (the buffer misses), `Connections` (the connections the server
 accepted), `Sort_merge_passes`, `Created_tmp_disk_tables`, and
-`Max_execution_time_exceeded`; the **statements executed** against the application's
+`Max_execution_time_exceeded`, and fails the run on a scenario in which a request failed
+(a failed request usually answers sooner than a served one); the **statements executed** against the application's
 schema (the sum of `COUNT_STAR` over the digest rows whose `SCHEMA_NAME` is that schema;
 the harness's own connection names no default schema, so its statements are not counted),
-per state, so that a scenario answered entirely from a cache shows as zero; the
-memcached `evictions` delta; the schema's table count after the scenario; and the peak
+per state, so that a scenario answered entirely from a cache shows as zero; the schema's
+table count after the scenario; and the peak
 resident set (`VmHWM`) of each gunicorn worker (the web memory guard, §2.5). **Two caches
 answer requests before a view's own code:** Django's site cache (`UpdateCacheMiddleware`
 and `FetchFromCacheMiddleware` in `settings.MIDDLEWARE`, keyed by URL, for
@@ -470,7 +472,9 @@ substantive change the review loop forces:
    sides' web checks expect different versions whenever the PR bumps it. Results land in
    the results directory (§2.1), the base's labeled `before` and the head's `after`.
 4. `compare.py before.json after.json` renders the table the PR description carries:
-   every metric, before, after, the change, the spread, and the floor (§2.6). A change
+   before, after, the change, the spread, and the floor (§2.6) of every target and guard,
+   every metric only one side holds, and every other metric whose change exceeds its
+   floor, with a count of the rows left out (`--all` keeps them). A change
    within the floor is reported as **within noise**, not as an improvement.
 5. For a PR marked **test scale**, steps 2 to 4 again on the test-scale machine, with the
    `test` scale in the file name and the import from `import_test.toml`, at §2.6's
@@ -4487,3 +4491,11 @@ Nothing above this line is rewritten by an executor.
   come from, where PR-00's two are kept with its seven result files. The branch's history
   was rewritten again that day to drop the floors files from every commit, which changed
   the SHA of every commit from d4fd56af on; the SHAs in these notes are the rewritten ones.
+- At the operator's direction (2026-11-06), a web scenario in which a request fails or
+  memcached evicts anything fails the run, instead of recording an `errors` and a
+  `memcached_evictions` metric: a failed request usually answers sooner than a served
+  one, so a broken scenario would have timed as faster. `Max_execution_time_exceeded`
+  stays a recorded counter, since the application sets the limit on purpose and falls
+  back to a simpler query. Both were zero in every PR-00 session. By default `compare.py`
+  leaves out the reported metrics that changed by no more than their floor, with a
+  count, since most of the rows were exact counts that did not move; `--all` keeps them.

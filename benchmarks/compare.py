@@ -1,8 +1,11 @@
 """Render two result files as a before/after table, or write the floors from sessions.
 
 ``python -m benchmarks.compare BEFORE.json AFTER.json [--floors-file FLOORS.json]
-[--target METRIC ...]`` prints a Markdown table with one row per metric either file
-holds: each side's median, spread and maximum, the change, the floor (as a fraction and
+[--target METRIC ...] [--all]`` prints a Markdown table with a row for every target and
+guard, every metric only one file holds, and every reported metric whose change is
+larger than its floor (or, with ``--all``, every metric either file holds), and under
+it how many reported metrics it left out. A row holds each side's median, spread and
+maximum, the change, the floor (as a fraction and
 in the metric's units at the before median), the metric's role, and the verdict. A metric's p95 over its runs is its maximum, since a session has
 fewer than twenty runs, so the maximum column is its p95 too. It refuses two results whose ``server_model``, server ownership, cache backend
 or brand differ, because their numbers are not comparable.
@@ -461,6 +464,8 @@ def render(
     floors: Mapping[str, Any] | None,
     targets: Sequence[str] = (),
     jitter: Mapping[str, float] | None = None,
+    *,
+    everything: bool = False,
 ) -> str:
     """Render the before/after table.
 
@@ -470,10 +475,12 @@ def render(
         floors: The floors file's ``floors`` table, or None.
         targets: The change's target metrics.
         jitter: The floors file's ``jitter``, by family.
+        everything: Whether to keep the rows of reported metrics that changed by no more
+            than their floor, which are otherwise left out.
 
     Returns:
-        The Markdown table; then the finalization ceiling, where it applies; then the
-        steps each side skipped.
+        The Markdown table; then how many rows it left out; then the finalization
+        ceiling, where it applies; then the steps each side skipped.
 
     Raises:
         ResultError: If the results are not comparable, or neither holds a target.
@@ -494,6 +501,7 @@ def render(
         '| Floor | Role | Verdict |',
         '|---|---|---|---|---|---|---|---|---|',
     ]
+    left_out = 0
     for name in sorted(set(mine) | set(theirs)):
         left, right = mine.get(name), theirs.get(name)
         relative = None if left is None or right is None else change(left.center, right.center)
@@ -505,6 +513,17 @@ def render(
         if left is not None and len(left.values) > 1:
             floor = left.spread if floor is None else max(floor, left.spread)
         metric_role = role(name, targets, warm_statements, import_guards=ceiling is None)
+        if (
+            not everything
+            and metric_role == 'reported'
+            and relative is not None
+            and floor is not None
+            and abs(relative) <= floor
+        ):
+            # A reported metric that moved no more than its noise says nothing about the
+            # change; an exact count's floor is zero, so any change to one is kept.
+            left_out += 1
+            continue
         judged = '-'
         if left is not None and right is not None:
             judged = judgement(metric_role, verdict(name, relative, floor))
@@ -520,6 +539,12 @@ def render(
             f'| `{name}` | {_number(None if left is None else left.center)} | '
             f'{_number(None if right is None else right.center)} | {_percent(relative)} | '
             f'{spreads} | {maxima} | {_floor_cell(floor, left)} | {metric_role} | {judged} |'
+        )
+    if left_out > 0:
+        lines.append('')
+        lines.append(
+            f'{left_out} reported metrics that changed by no more than their floor are left '
+            'out; --all shows them.'
         )
     if ceiling is not None:
         outcome = 'within the ceiling' if ceiling['within'] else 'beyond the ceiling'
@@ -718,6 +743,12 @@ def main(argv: Sequence[str] | None = None) -> None:
         metavar='METRIC',
         help='a metric the change sets out to improve; may be given more than once',
     )
+    parser.add_argument(
+        '--all',
+        action='store_true',
+        dest='everything',
+        help='also show the reported metrics that changed by no more than their floor',
+    )
     args = parser.parse_args(argv)
     if args.floors:
         output, disagreeing = write_floors(args.results)
@@ -745,7 +776,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         floors, jitter = content['floors'], content['jitter']
     check_labels(args.results[0], args.results[1], content)
     before, after = (load_result(path) for path in args.results)
-    sys.stdout.write(render(before, after, floors, args.target, jitter))
+    sys.stdout.write(render(before, after, floors, args.target, jitter, everything=args.everything))
 
 
 if __name__ == '__main__':

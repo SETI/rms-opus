@@ -320,10 +320,15 @@ the same way before each half's warm repetition. How many rounds and requests ea
 the run's details.
 
 Per scenario and state the run records the wall-clock and each request's latency, the
-errors, the statements executed against the schema, the twenty statement shapes with
-the most total latency, the server's buffer-pool misses, connections, sort-merge passes
-and on-disk temporary tables, memcached's evictions, the schema's table count, and the
-workers' peak resident set. The concurrency scenario has many users, each with a session
+statements executed against the schema, the twenty statement shapes with the most total
+latency, the server's buffer-pool misses, connections, sort-merge passes, on-disk
+temporary tables and statements stopped at the execution time limit, the schema's table
+count, and the workers' peak resident set. A scenario in which a request fails, or
+memcached evicts anything, fails the run: a failed request usually answers sooner than a
+served one, so a broken scenario would time as faster, and an eviction means
+``memcached_mb`` in ``web.toml`` is too small for the cache state being measured. A
+statement stopped at the time limit is recorded rather than refused, since the
+application sets that limit on purpose and falls back to a simpler query. The concurrency scenario has many users, each with a session
 of its own, issue the fan-out at once, once with a search each and once with the same
 search, each half starting from its own reset. It records the latencies of every
 request, from which its 95th percentile is computed over all runs together, less the
@@ -448,8 +453,10 @@ directory::
 
     python -m benchmarks.compare "$before" "$after" --floors-file "$floors"
 
-prints every metric's medians, change, spreads, maxima, floor (as a fraction and in the
-metric's units) and verdict. ``compare`` refuses two results whose server model, server
+prints each metric's medians, change, spreads, maxima, floor (as a fraction and in the
+metric's units) and verdict, for every target and guard, every metric only one side
+holds, and every other metric whose change is larger than its floor; it says how many it
+left out, and ``--all`` prints them too. ``compare`` refuses two results whose server model, server
 ownership, cache backend or brand differ, two of different scales, the after file given
 first, a target neither file holds, and a floors file of another scale or brand. Its
 module docstring defines the statistics:

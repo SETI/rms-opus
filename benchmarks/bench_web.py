@@ -263,13 +263,13 @@ class ConcurrencyOutcome:
 
     Attributes:
         latencies: Every request's latency.
-        errors: How many requests failed.
+        failed: The requests that failed.
         throughput_per_s: Requests per second, from the first start to the last end.
         issued: Each request's client and URL, for the warm-up.
     """
 
     latencies: list[float] = field(default_factory=list)
-    errors: int = 0
+    failed: list[RequestTiming] = field(default_factory=list)
     throughput_per_s: float = 0.0
     issued: list[tuple[Client, str]] = field(default_factory=list)
 
@@ -285,7 +285,7 @@ def run_concurrency_half(
         fanout: The fan-out's requests, with ``{search}`` for the search.
 
     Returns:
-        The latencies, errors and throughput of every user's requests together.
+        The latencies, failures and throughput of every user's requests together.
     """
     barrier = threading.Barrier(len(searches))
     results: list[list[RequestTiming]] = [[] for _ in searches]
@@ -308,7 +308,7 @@ def run_concurrency_half(
     last = max(timing.started + timing.latency_s for timing in timings)
     return ConcurrencyOutcome(
         latencies=[timing.latency_s for timing in timings],
-        errors=sum(1 for timing in timings if timing.failed),
+        failed=[timing for timing in timings if timing.failed],
         throughput_per_s=len(timings) / (last - first) if last > first else 0.0,
         issued=[
             (clients[position], timing.url)
@@ -316,6 +316,34 @@ def run_concurrency_half(
             for timing in user_timings
         ],
     )
+
+
+def require_clean_scenario(prefix: str, failed: Sequence[RequestTiming], evictions: int) -> None:
+    """Refuse a scenario whose timings did not measure the work it asks for.
+
+    A failed request usually answers sooner than a served one, so a change that broke a
+    scenario would time as faster; an eviction means the harness memcached was too small
+    for the scenario, so its cache state was not the one the run sets out to measure.
+
+    Parameters:
+        prefix: The scenario's metric prefix, ``web.<state>.<scenario>``.
+        failed: The scenario's requests that failed.
+        evictions: The memcached evictions during the scenario.
+
+    Raises:
+        WebRunError: If any request failed or memcached evicted anything.
+    """
+    if len(failed) > 0:
+        first = failed[0]
+        raise WebRunError(
+            f'{prefix}: {len(failed)} request(s) failed; the first, {first.name} '
+            f'({first.url}), answered {first.status or "nothing"}'
+        )
+    if evictions > 0:
+        raise WebRunError(
+            f'{prefix}: memcached evicted {evictions} item(s); raise memcached_mb in '
+            'web.toml so the scenario fits'
+        )
 
 
 def issue_concurrently(tasks: Sequence[tuple[Client, str]], concurrency: int) -> int:
@@ -591,13 +619,17 @@ class WebBench:
 
     def _scenario_end(
         self, prefix: str, run: dict[str, Any], before: tuple[dict[str, int], dict[str, str]]
-    ) -> None:
+    ) -> int:
         """Record what the server, memcached and workers did during a scenario.
 
         Parameters:
             prefix: The scenario's metric prefix, ``web.<state>.<scenario>``.
             run: The run to record into.
             before: What `_scenario_start` returned.
+
+        Returns:
+            The memcached evictions during the scenario, which `require_clean_scenario`
+            checks rather than the run recording them.
         """
         metrics = run['metrics']
         after = global_status(self.connection)
@@ -636,14 +668,12 @@ class WebBench:
         )
         metrics[f'{prefix}.table_count'] = int(tables[0][0])
         stats = self.memcached.stats()
-        metrics[f'{prefix}.memcached_evictions'] = int(stats['evictions']) - int(
-            before[1]['evictions']
-        )
         self._cache_gets += int(stats['cmd_get']) - int(before[1]['cmd_get'])
         metrics[f'{prefix}.worker_peak_rss_kb'] = max(
             (read_kb(Path(f'/proc/{pid}/status'), 'VmHWM') for pid in self.gunicorn.worker_pids()),
             default=0,
         )
+        return int(stats['evictions']) - int(before[1]['evictions'])
 
     def run_scenario(
         self, state: str, scenario: Scenario, run: dict[str, Any], client: Client
@@ -659,11 +689,16 @@ class WebBench:
 
         Returns:
             Each request's client and URL as issued, untimed ones included.
+
+        Raises:
+            WebRunError: If a request failed or memcached evicted anything
+                (`require_clean_scenario`).
         """
         prefix = f'web.{state}.{scenario.name}'
         before = self._scenario_start()
         timings = run_sequence(client, scenario)
-        self._scenario_end(prefix, run, before)
+        evictions = self._scenario_end(prefix, run, before)
+        require_clean_scenario(prefix, [timing for timing in timings if timing.failed], evictions)
         timed = [
             timing
             for timing, request in zip(timings, scenario.requests, strict=True)
@@ -671,7 +706,6 @@ class WebBench:
         ]
         metrics = run['metrics']
         metrics[f'{prefix}.wall_s'] = (timed[-1].started + timed[-1].latency_s) - timed[0].started
-        metrics[f'{prefix}.errors'] = sum(1 for timing in timings if timing.failed)
         for timing in timed:
             metrics[f'{prefix}.{timing.name}.latency_s'] = timing.latency_s
         return [(client, timing.url) for timing in timings]
@@ -696,6 +730,10 @@ class WebBench:
 
         Returns:
             Every request's client and URL as issued.
+
+        Raises:
+            WebRunError: If a request failed or memcached evicted anything
+                (`require_clean_scenario`).
         """
         if half == 'distinct':
             searches = [concurrency.distinct.format(i=i) for i in range(concurrency.users)]
@@ -704,11 +742,11 @@ class WebBench:
         prefix = f'web.{state}.concurrency.{half}'
         before = self._scenario_start()
         outcome = run_concurrency_half(clients, searches, concurrency.fanout)
-        self._scenario_end(prefix, run, before)
+        evictions = self._scenario_end(prefix, run, before)
+        require_clean_scenario(prefix, outcome.failed, evictions)
         run['samples'][f'{prefix}.latency_s'] = outcome.latencies
         run['metrics'][f'{prefix}.p95_s'] = p95(outcome.latencies)
         run['metrics'][f'{prefix}.throughput_per_s'] = outcome.throughput_per_s
-        run['metrics'][f'{prefix}.errors'] = outcome.errors
         return list(outcome.issued)
 
     def one_run(self) -> dict[str, Any]:
@@ -718,7 +756,8 @@ class WebBench:
             The result run.
 
         Raises:
-            WebRunError: If memcached answered no lookup in any scenario of the run.
+            WebRunError: If a scenario's request failed or memcached evicted anything
+                during it, or if memcached answered no lookup in any scenario of the run.
         """
         run = new_run('web')
         self._cache_gets = 0

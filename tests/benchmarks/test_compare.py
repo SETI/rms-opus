@@ -261,6 +261,30 @@ def test_results_without_a_finalization_of_a_copy_have_no_ceiling() -> None:
     assert compare.finalization_ceiling(_result([{'a_s': 1.0}]), _result([{'a_s': 1.0}])) is None
 
 
+def test_a_reported_metric_within_its_floor_is_left_out_unless_all_is_asked() -> None:
+    """The table keeps targets, guards and real changes; --all keeps every row."""
+    before = _result([{'a_s': 10.0, 'b_s': 10.0, 'n': 20.0}] * 2)
+    after = _result([{'a_s': 10.5, 'b_s': 5.0, 'n': 21.0}] * 2)
+    floors = {name: {'floor': 0.1, 'floor_abs': 0.0} for name in ('a_s', 'b_s')}
+    floors['n'] = {'floor': 0.0, 'floor_abs': 0.0}
+    table = compare.render(before, after, floors)
+    assert '`a_s`' not in table
+    assert '`b_s`' in table
+    assert '`n`' in table
+    assert '1 reported metrics that changed by no more than their floor are left out' in table
+    full = compare.render(before, after, floors, everything=True)
+    assert '`a_s`' in full
+    assert 'left out' not in full
+
+
+def test_a_target_within_its_floor_is_kept() -> None:
+    """A target is always shown, improved or not."""
+    before = _result([{'a_s': 10.0}] * 2)
+    after = _result([{'a_s': 10.0}] * 2)
+    table = compare.render(before, after, {'a_s': {'floor': 0.1, 'floor_abs': 0.0}}, ['a_s'])
+    assert '| target | not improved |' in table
+
+
 def test_a_metric_on_one_side_only_is_listed_unjudged() -> None:
     """A metric only one side measured shows a dash where the other side would be."""
     table = compare.render(_result([{'a_s': 1.0}]), _result([{'b_s': 1.0}]), None)

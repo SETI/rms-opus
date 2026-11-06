@@ -166,3 +166,30 @@ def test_a_failed_result_count_is_not_read() -> None:
     timing = RequestTiming('build', 'u', 0.0, 0.1, 500, b'')
     with pytest.raises(WebRunError, match='answered 500'):
         bench_web.result_count(timing)
+
+
+def test_a_scenario_with_a_failed_request_fails_the_run() -> None:
+    """A failed request answers sooner than a served one, so it would time as faster."""
+    failed = [RequestTiming('build', 'u', 0.0, 0.01, 500)]
+    with pytest.raises(
+        WebRunError, match=r'1 request\(s\) failed; the first, build \(u\), answered 500'
+    ):
+        bench_web.require_clean_scenario('web.warm.search.empty', failed, 0)
+
+
+def test_a_request_with_no_response_is_named_as_answering_nothing() -> None:
+    """A status of zero is no response at all."""
+    failed = [RequestTiming('build', 'u', 0.0, 0.01, 0)]
+    with pytest.raises(WebRunError, match='answered nothing'):
+        bench_web.require_clean_scenario('web.warm.search.empty', failed, 0)
+
+
+def test_a_scenario_that_evicted_from_memcached_fails_the_run() -> None:
+    """An eviction means the cache state was not the one being measured."""
+    with pytest.raises(WebRunError, match='memcached evicted 3 item'):
+        bench_web.require_clean_scenario('web.warm.search.empty', [], 3)
+
+
+def test_a_clean_scenario_passes() -> None:
+    """No failures and no evictions is a scenario measured as asked."""
+    bench_web.require_clean_scenario('web.warm.search.empty', [], 0)
