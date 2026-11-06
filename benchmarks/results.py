@@ -411,6 +411,63 @@ def spread(values: Sequence[float]) -> float:
     return (high - low) / abs(middle)
 
 
+#: How far from a session's median, in robust standard deviations, a run may lie and
+#: still count toward the session's spread (`without_outliers`).
+OUTLIER_SIGMAS = 3.0
+
+#: The median absolute deviation times this estimates a normal distribution's standard
+#: deviation.
+MAD_TO_SIGMA = 1.4826
+
+
+def without_outliers(values: Sequence[float]) -> list[float]:
+    """Return a session's runs less those that lie far from the rest.
+
+    A run is an outlier when it lies more than `OUTLIER_SIGMAS` robust standard
+    deviations (`MAD_TO_SIGMA` times the median absolute deviation) from the median.
+    Fewer than three runs, or runs at least half of which equal the median, have no
+    outliers.
+
+    Parameters:
+        values: The per-run values.
+
+    Returns:
+        The values kept, in their order.
+    """
+    if len(values) < 3:
+        return list(values)
+    middle = median(values)
+    deviation = median([abs(value - middle) for value in values])
+    if deviation == 0:
+        return list(values)
+    limit = OUTLIER_SIGMAS * MAD_TO_SIGMA * deviation
+    return [value for value in values if abs(value - middle) <= limit]
+
+
+def run_spread(values: Sequence[float], center: float | None = None) -> float:
+    """Return a metric's spread within one session, its outlying runs left out.
+
+    The range of the runs `without_outliers` keeps, divided by ``center``. A session is
+    judged on its median, which one outlying run barely moves, so the run does not set
+    the noise either.
+
+    Parameters:
+        values: The per-run values.
+        center: What the range is a fraction of; the median of every value when None.
+
+    Returns:
+        A fraction, with `spread`'s zero and infinity cases.
+    """
+    kept = without_outliers(values)
+    low, high = min(kept), max(kept)
+    middle = median(values) if center is None else center
+    if high == low:
+        return 0.0
+    if middle == 0:
+        return math.inf
+    return (high - low) / abs(middle)
+
+
 def p95(values: Sequence[float]) -> float:
     """Return the 95th percentile by the nearest-rank rule.
 

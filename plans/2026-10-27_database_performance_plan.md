@@ -623,12 +623,21 @@ value is its wall-clock (or bytes, or peak PSS) per run.
 
 **Spread.** A metric's spread in one session is the range of its per-run values (maximum
 less minimum) divided by their median, so it is a fraction; for the concurrency p95 it is
-the range of the per-run p95s divided by the pooled p95.
+the range of the per-run p95s divided by the pooled p95. The range leaves out an
+**outlying run**, one more than three robust standard deviations (1.4826 times the median
+absolute deviation) from the session's median; the median is still over every run, which
+one such run barely moves. Fewer than three runs, or runs at least half of which equal the
+median, have no outliers. The range of several sessions' medians below never leaves one
+out.
 
 **Change.** A metric's change is (after median − before median) / before median. It is an
 **improvement beyond noise** when its magnitude exceeds the floor in the improving
 direction, and a **regression beyond a guard** when it exceeds the floor plus 0.05 in the
-worsening direction.
+worsening direction. The floor a change is judged against is the larger of the floors
+file's fraction and the metric's **absolute noise** divided by the before median: its
+floor in its own units (below) or, for a time metric, its family's jitter where that is
+larger. Small times scatter by a roughly fixed amount whatever their size, so a fraction
+measured on one median does not carry over to a much smaller one.
 
 **Noise floors, for every metric.** A **floor session** runs the full harness on one
 commit at the floor-session counts above, at fixture and test scale. Two floor sessions are
@@ -640,7 +649,12 @@ the larger spread. Where they disagree, the executor checks the recorded load av
 the idle rule, then takes a **third** floor session, and the floor becomes the largest of
 the three spreads and the range of all three medians divided by their median; no session
 is set aside. A metric whose three sessions still disagree by the same test is marked
-**noisy** in the floors file, and a PR judging it says so. A floor is recorded for **every
+**noisy** in the floors file, and a PR judging it says so. Each floor is also recorded in
+the metric's own units: the widest range of a session's runs, outliers left out, or the
+range of the session medians, whichever is larger. Each family of metrics (import, db,
+web) has a **jitter**, the median of its time metrics' floors in seconds, which the floors
+file records; sessions also agree on a time metric whose medians lie within its family's
+jitter. A floor is recorded for **every
 metric the sessions produce**, at each scale, judged or not (the ring-radius, selective,
 files-API, detail-page, categories, target-search, and re-sort scenarios, db-cold
 included, as much as §2.5's list), by `compare.py --floors <session files>`, which writes
@@ -649,7 +663,7 @@ the committed floors file (§2.1); the Execution notes name it.
 **When floors are taken.** PR-00 takes them, at fixture and test scale, on its own
 commit, and every later PR judges against that floors file; no later PR retakes them at
 those scales. A floor is a fraction of its metric's median, so it carries over as the
-medians change. **A PR whose own before-side runs show a spread larger than the floor for
+medians change, except where the median shrinks until the absolute noise is the larger. **A PR whose own before-side runs show a spread larger than the floor for
 a metric** judges that metric against that spread instead: the spread, as defined above,
 of the before side's runs of the metric in the PR's own session. PR-24 takes its own
 floors at complete scale. A target with no floor at all is §2.3's case.
@@ -4422,3 +4436,18 @@ Nothing above this line is rewritten by an executor.
   `O_DIRECT`. `bench_import` now makes one untimed warm-up import, without finalization,
   before the timed runs at fixture and test scale, recorded as kind `import_warmup` and
   never compared. That session was not committed.
+- At the operator's direction (2026-11-05), a session's spread leaves out outlying runs
+  (§2.6, Spread). The retaken sessions showed single runs setting floors: one test-scale
+  import run of 425 s among runs of 384 to 389 s gave `import.wall_s` a floor of 0.107,
+  and one app-cold empty search of 0.87 s among runs of about 0.19 s gave
+  `web.app-cold.search.empty.wall_s` a floor of 3.55. `compare` implements the rule
+  (`benchmarks.results.without_outliers`), and the floors file records each session's
+  count of left-out runs per metric (`outliers`).
+- At the operator's direction (2026-11-05), each floor is also kept in seconds (or the
+  metric's units), and each family's jitter is recorded (§2.6, Change and Noise floors).
+  Measured on the retaken sessions, a time metric's run-to-run range in seconds grows
+  slowly with its size while its fraction collapses: about 5 ms (21 percent) for medians
+  of 10 to 50 ms against about 30 ms (1 percent) for medians of 1 to 10 s. So a fraction
+  overstated the noise of a small median, set most of the session disagreements, and
+  would understate it after a PR shrank a large one. The families' jitters differ by two
+  orders of magnitude (web requests against planned statements), so they are kept apart.

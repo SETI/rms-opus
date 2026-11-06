@@ -2,8 +2,8 @@
 
 ``python -m benchmarks.compare BEFORE.json AFTER.json [--floors-file FLOORS.json]
 [--target METRIC ...]`` prints a Markdown table with one row per metric either file
-holds: each side's median, spread and maximum, the change, the floor, the metric's
-role, and the verdict. A metric's p95 over its runs is its maximum, since a session has
+holds: each side's median, spread and maximum, the change, the floor (as a fraction and
+in the metric's units at the before median), the metric's role, and the verdict. A metric's p95 over its runs is its maximum, since a session has
 fewer than twenty runs, so the maximum column is its p95 too. It refuses two results whose ``server_model``, server ownership, cache backend
 or brand differ, because their numbers are not comparable.
 
@@ -30,20 +30,33 @@ and lists the metrics the sessions disagree on and those some session lacks. Eve
 metric any session holds gets a floor.
 
 The statistics are these. A metric's value in one run is one number; its median is
-over the runs; its **spread** is the range of the runs' values divided by their median.
-A metric whose runs also keep several executions' values under its own name in their
-``samples`` -- a plan time, whose statements are each executed five times in one run --
-takes its median and spread over those executions instead.
-The concurrency scenario's p95 is computed once over every latency of all the runs
-pooled, and its spread is the range of the per-run p95s divided by that pooled figure.
+over the runs; its **spread** is the range of the runs' values divided by their median,
+leaving out an **outlying run**, one more than `benchmarks.results.OUTLIER_SIGMAS`
+robust standard deviations from the median (`benchmarks.results.without_outliers`):
+the median, which every run still enters, is barely moved by one such run, so it does
+not set the noise either. A metric whose runs also keep several executions' values
+under its own name in their ``samples`` -- a plan time, whose statements are each
+executed five times in one run -- takes its median and spread over those executions
+instead. The concurrency scenario's p95 is computed once over every latency of all the
+runs pooled, and its spread is the range of the per-run p95s, outliers left out, divided
+by that pooled figure. Session medians are never left out: the range of several
+sessions' medians covers all of them.
 The **change** is ``(after - before) / before``. The **floor** of a metric is the
-floors file's, or the before side's own spread where that is larger, or the before
-side's spread alone where there is no floors file. A change beyond the floor in the
+floors file's ``floor``, or its absolute noise over the before median where that is
+larger (`effective_floor`), or the before side's own spread where that is larger
+still, or the before side's spread alone where there is no floors file. The absolute
+noise is the metric's ``floor_abs``, in its own units, or for a time metric its
+family's **jitter** where that is larger: small times scatter by a roughly fixed
+amount whatever their size, so a fraction measured on one median does not carry over
+to a much smaller one. A change beyond the floor in the
 better direction is an **improvement**; beyond the floor plus `GUARD_MARGIN` in the
 worse direction it is a **regression**; anything else is **within noise**. Several
 sessions' floor is the largest of their spreads and of the range of their medians over
-the median of their medians; they **agree** on a metric when that range is no larger
-than their largest spread, and a metric three sessions still disagree on is **noisy**.
+the median of their medians, and its ``floor_abs`` the same in the metric's units; they
+**agree** on a metric when their medians lie within the widest range of a session's
+runs, or for a time metric within its family's jitter where that is larger, and a
+metric three sessions still disagree on is **noisy**. A family's jitter is the median
+``floor_abs`` of its time metrics (`family_jitter`).
 """
 
 from __future__ import annotations
@@ -65,7 +78,9 @@ from benchmarks.results import (
     median,
     p95,
     parse_label,
+    run_spread,
     spread,
+    without_outliers,
 )
 
 if TYPE_CHECKING:
@@ -105,6 +120,10 @@ CEILING_FRACTION = 0.10
 #: Environment entries two compared results must share.
 MATCHING_ENVIRONMENT_KEYS = ('server_model', 'server_owned', 'cache_backend', 'brand')
 
+#: The metric families whose time metrics share a jitter: each family's is the median of
+#: its time metrics' absolute floors (`family_jitter`).
+JITTER_FAMILIES = ('import', 'db', 'web')
+
 _P95_SUFFIX = '.p95_s'
 _SAMPLES_SUFFIX = '.latency_s'
 
@@ -127,6 +146,12 @@ class MetricSummary:
     def maximum(self) -> float:
         """The largest per-run value."""
         return max(self.values)
+
+    @property
+    def noise(self) -> float:
+        """The range of the per-run values, outliers left out, in the metric's units."""
+        kept = without_outliers(self.values)
+        return max(kept) - min(kept)
 
 
 def summarize(content: Mapping[str, Any]) -> dict[str, MetricSummary]:
@@ -152,20 +177,16 @@ def summarize(content: Mapping[str, Any]) -> dict[str, MetricSummary]:
         pool_name = name.removesuffix(_P95_SUFFIX) + _SAMPLES_SUFFIX
         if name.endswith(_P95_SUFFIX) and pool_name in pools and len(pools[pool_name]) > 0:
             center = p95(pools[pool_name])
-            low, high = min(values), max(values)
-            pooled_spread = (
-                0.0 if high == low else (high - low) / center if center > 0 else math.inf
-            )
-            summaries[name] = MetricSummary(tuple(values), center, pooled_spread)
+            summaries[name] = MetricSummary(tuple(values), center, run_spread(values, center))
         elif name in pools and len(pools[name]) > 0:
             # A metric whose runs keep every execution's value under its own name, as a
             # plan time does, is summarized over those executions.
             executions = pools[name]
             summaries[name] = MetricSummary(
-                tuple(executions), median(executions), spread(executions)
+                tuple(executions), median(executions), run_spread(executions)
             )
         else:
-            summaries[name] = MetricSummary(tuple(values), median(values), spread(values))
+            summaries[name] = MetricSummary(tuple(values), median(values), run_spread(values))
     return summaries
 
 
@@ -199,6 +220,60 @@ def change(before: float, after: float) -> float | None:
     if before == 0:
         return 0.0 if after == 0 else None
     return (after - before) / abs(before)
+
+
+def is_time(metric: str) -> bool:
+    """Say whether a metric is a time in seconds, not a rate or a count.
+
+    Parameters:
+        metric: The metric.
+
+    Returns:
+        True for a name ending ``_s`` that is not a per-second rate.
+    """
+    return metric.endswith('_s') and not metric.endswith('_per_s')
+
+
+def absolute_noise(metric: str, entry: Mapping[str, Any], jitter: Mapping[str, float]) -> float:
+    """Return the noise a metric's change must exceed, in the metric's units.
+
+    Parameters:
+        metric: The metric.
+        entry: Its floors-file entry.
+        jitter: The floors file's ``jitter``, by family.
+
+    Returns:
+        The entry's ``floor_abs``, or for a time metric its family's jitter where that is
+        larger.
+    """
+    noise = float(entry['floor_abs'])
+    if is_time(metric):
+        noise = max(noise, float(jitter.get(metric.split('.')[0], 0.0)))
+    return noise
+
+
+def effective_floor(
+    metric: str,
+    entry: Mapping[str, Any],
+    jitter: Mapping[str, float],
+    before: float,
+) -> float:
+    """Return a metric's floor as a fraction of the before side's median.
+
+    Parameters:
+        metric: The metric.
+        entry: Its floors-file entry.
+        jitter: The floors file's ``jitter``, by family.
+        before: The before side's median.
+
+    Returns:
+        The larger of the entry's ``floor`` and its `absolute_noise` over ``before``; the
+        ``floor`` alone when ``before`` is zero.
+    """
+    floor = float(entry['floor'])
+    if before == 0:
+        return floor
+    return max(floor, absolute_noise(metric, entry, jitter) / abs(before))
 
 
 def verdict(metric: str, relative: float | None, floor: float | None) -> str:
@@ -341,11 +416,19 @@ def _percent(value: float | None) -> str:
     return f'{100 * value:+.1f}%'
 
 
+def _floor_cell(floor: float | None, before: MetricSummary | None) -> str:
+    """Format a floor as a fraction and, where there is a before median, in its units."""
+    if floor is None or before is None or math.isinf(floor):
+        return _percent(floor)
+    return f'{_percent(floor)} ({_number(floor * abs(before.center))})'
+
+
 def render(
     before: Mapping[str, Any],
     after: Mapping[str, Any],
     floors: Mapping[str, Any] | None,
     targets: Sequence[str] = (),
+    jitter: Mapping[str, float] | None = None,
 ) -> str:
     """Render the before/after table.
 
@@ -354,6 +437,7 @@ def render(
         after: The after result.
         floors: The floors file's ``floors`` table, or None.
         targets: The change's target metrics.
+        jitter: The floors file's ``jitter``, by family.
 
     Returns:
         The Markdown table; then the finalization ceiling, where it applies; then the
@@ -376,7 +460,9 @@ def render(
         relative = None if left is None or right is None else change(left.center, right.center)
         floor = None
         if floors is not None and name in floors:
-            floor = float(floors[name]['floor'])
+            floor = effective_floor(
+                name, floors[name], {} if jitter is None else jitter, left.center if left else 0.0
+            )
         if left is not None and len(left.values) > 1:
             floor = left.spread if floor is None else max(floor, left.spread)
         metric_role = role(name, targets, warm_statements)
@@ -394,7 +480,7 @@ def render(
         lines.append(
             f'| `{name}` | {_number(None if left is None else left.center)} | '
             f'{_number(None if right is None else right.center)} | {_percent(relative)} | '
-            f'{spreads} | {maxima} | {_percent(floor)} | {metric_role} | {judged} |'
+            f'{spreads} | {maxima} | {_floor_cell(floor, left)} | {metric_role} | {judged} |'
         )
     ceiling = finalization_ceiling(before, after)
     if ceiling is not None:
@@ -421,33 +507,72 @@ def floors_from_sessions(sessions: Sequence[Mapping[str, Any]]) -> dict[str, dic
         sessions: The sessions' result files, all of one scale and brand.
 
     Returns:
-        Per metric: its ``floor``, the ``spreads`` and ``medians`` of the sessions that
-        hold it, the positions of the sessions that do not (``missing_from``), whether
-        those sessions ``agree``, and whether it is ``noisy`` (three sessions that
-        still disagree). A metric only some sessions hold still gets a floor, from the
-        sessions that hold it; held by one session alone, its floor is that session's
-        spread, and it is never counted as agreeing.
+        Per metric: its ``floor``, a fraction (the largest session spread, or the range
+        of the session medians over their median); its ``floor_abs``, the same noise in
+        the metric's units (the widest range of a session's runs, outliers left out, or
+        the range of the session medians); the ``spreads`` and ``medians`` of the
+        sessions that hold it; how many runs each left out of its spread as
+        ``outliers``; the positions of the sessions that do not (``missing_from``);
+        whether those sessions ``agree`` (their medians lie within the widest range of a
+        session's runs or, for a time metric, its family's `family_jitter` where that is
+        larger); and whether it is ``noisy`` (three sessions that still disagree). A
+        metric only some sessions hold still gets a floor, from the sessions that hold
+        it; held by one session alone, its floor is that session's spread, and it is
+        never counted as agreeing.
     """
     summaries = [summarize(session) for session in sessions]
-    floors = {}
+    floors: dict[str, dict[str, Any]] = {}
     for name in sorted(set().union(*summaries)):
         holding = [summary[name] for summary in summaries if name in summary]
         centers = [entry.center for entry in holding]
         spreads = [entry.spread for entry in holding]
-        between = spread(centers)
-        largest = max(spreads)
-        agree = len(holding) >= 2 and between <= largest
         floors[name] = {
-            'floor': max(largest, between),
+            'floor': max(max(spreads), spread(centers)),
+            'floor_abs': max(max(entry.noise for entry in holding), max(centers) - min(centers)),
             'spreads': spreads,
+            'outliers': [
+                len(entry.values) - len(without_outliers(entry.values)) for entry in holding
+            ],
             'medians': centers,
             'missing_from': [
                 position for position, summary in enumerate(summaries) if name not in summary
             ],
-            'agree': agree,
-            'noisy': len(holding) >= 3 and not agree,
         }
+    jitter = family_jitter(floors)
+    for name, entry in floors.items():
+        holding = [summary[name] for summary in summaries if name in summary]
+        noise = max(entry.noise for entry in holding)
+        if is_time(name):
+            noise = max(noise, jitter.get(name.split('.')[0], 0.0))
+        between = max(entry['medians']) - min(entry['medians'])
+        agree = len(holding) >= 2 and between <= noise
+        entry['agree'] = agree
+        entry['noisy'] = len(holding) >= 3 and not agree
     return floors
+
+
+def family_jitter(floors: Mapping[str, Mapping[str, Any]]) -> dict[str, float]:
+    """Return each family's jitter: the median absolute floor of its time metrics.
+
+    Small times scatter by a roughly fixed amount whatever their size, so a fraction of a
+    small median understates what a change must exceed; the jitter is that amount.
+
+    Parameters:
+        floors: A floors table, each entry with its ``floor_abs``.
+
+    Returns:
+        Per family in `JITTER_FAMILIES` that has time metrics, the jitter in seconds.
+    """
+    jitter = {}
+    for family in JITTER_FAMILIES:
+        values = [
+            float(entry['floor_abs'])
+            for name, entry in floors.items()
+            if name.split('.')[0] == family and is_time(name)
+        ]
+        if len(values) > 0:
+            jitter[family] = median(values)
+    return jitter
 
 
 def write_floors(paths: Sequence[Path]) -> tuple[Path, list[str]]:
@@ -484,10 +609,11 @@ def write_floors(paths: Sequence[Path]) -> tuple[Path, list[str]]:
         entry['missing_from'] = [paths[position].name for position in entry['missing_from']]
     output = RESULTS_DIR / f'{first.date}_{first.pr}_floors_{first.scale}_{first.brand}.json'
     content = {
-        'format': 1,
+        'format': 2,
         'scale': first.scale,
         'brand': first.brand,
         'sessions': [path.name for path in paths],
+        'jitter': family_jitter(floors),
         'floors': floors,
     }
     output.write_text(json.dumps(content, indent=1, sort_keys=True) + '\n', encoding='utf-8')
@@ -536,10 +662,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     if len(args.results) != 2:
         parser.error('a comparison takes exactly two result files, before then after')
     floors = None
+    jitter = None
     if args.floors_file is not None:
-        floors = json.loads(args.floors_file.read_text(encoding='utf-8'))['floors']
+        content = json.loads(args.floors_file.read_text(encoding='utf-8'))
+        floors, jitter = content['floors'], content['jitter']
     before, after = (load_result(path) for path in args.results)
-    sys.stdout.write(render(before, after, floors, args.target))
+    sys.stdout.write(render(before, after, floors, args.target, jitter))
 
 
 if __name__ == '__main__':

@@ -338,12 +338,19 @@ measure. Then::
     python -m benchmarks.compare benchmarks/results/<before>.json \
         benchmarks/results/<after>.json --floors-file benchmarks/results/<floors>.json
 
-prints every metric's medians, change, spreads, maxima, floor and verdict. ``compare`` refuses
-two results whose server model, server ownership, cache backend or brand differ. Its
-module docstring defines the statistics: medians over runs, the spread as the range over
-the median, the change relative to the before median, and the verdict, which counts a
-change as an improvement only beyond the floor and as a regression only beyond the floor
-plus five percentage points.
+prints every metric's medians, change, spreads, maxima, floor (as a fraction and in the
+metric's units) and verdict. ``compare`` refuses two results whose server model, server
+ownership, cache backend or brand differ. Its module docstring defines the statistics:
+medians over runs, the spread as the range over the median, the change relative to the
+before median, and the verdict, which counts a change as an improvement only beyond the
+floor and as a regression only beyond the floor plus five percentage points.
+
+A spread leaves out an **outlying run**: one more than three robust standard deviations
+(1.4826 times the median absolute deviation) from its session's median. The median every
+comparison is made on is barely moved by one such run, so the run does not set the noise
+either; the median itself is still taken over every run. Fewer than three runs, or runs
+at least half of which equal the median, have no outliers, and session medians are never
+left out.
 
 Noise floors
 ------------
@@ -354,10 +361,22 @@ file and names the metrics the two disagree on; where they disagree, check the r
 load averages, take a third, and run the command again over all three. A metric's floor
 is the largest of the sessions' spreads and of the range of their medians over the
 median of those medians, a fraction of the metric's median; a metric three sessions
-still disagree on is marked noisy. Every metric any session recorded gets a floor, and
+still disagree on is marked noisy. The file records how many runs each session left out
+of its spread as outliers.
+
+Each floor is also kept in the metric's own units (``floor_abs``): the widest range of a
+session's runs, outliers left out, or the range of the session medians. Small times
+scatter by a roughly fixed amount whatever their size -- a few milliseconds of scheduling
+on a web request, a fraction of a millisecond on a planned statement -- so a fraction
+measured on one median does not carry over to a much smaller one. The file records each
+family's **jitter** (``import``, ``db`` and ``web``): the median ``floor_abs`` of its
+time metrics. Sessions agree on a metric when their medians lie within the widest range
+of a session's runs or, for a time metric, within its family's jitter where that is
+larger. Every metric any session recorded gets a floor, and
 one that some session lacks is listed, with the sessions that lack it named in the
-file. A later comparison judges a metric against its floor, or against the before
-side's own spread where that is larger.
+file. A later comparison judges a metric against the largest of its floor, its absolute
+noise (``floor_abs``, or for a time metric its family's jitter where that is larger)
+over the before median, and the before side's own spread.
 
 The idle rule
 -------------

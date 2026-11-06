@@ -168,3 +168,26 @@ def test_a_result_names_no_machines_directories(
     details = json.loads(path.read_text())['runs'][0]['details']
     assert details['arguments'] == ['--timing-json', 'benchmarks/t.json']
     assert details['holdings'] == {'pds3': '~/data/holdings'}
+
+
+@pytest.mark.parametrize(
+    ('values', 'kept'),
+    [
+        ([384.0, 425.2, 385.9], [384.0, 385.9]),
+        ([0.19, 0.87, 0.22, 0.19, 0.18], [0.19, 0.22, 0.19, 0.18]),
+        ([100.0, 101.0, 103.0], [100.0, 101.0, 103.0]),
+        ([10.0, 10.0, 10.0, 12.0, 10.0], [10.0, 10.0, 10.0, 12.0, 10.0]),
+        ([1.0, 9.0], [1.0, 9.0]),
+    ],
+    ids=['slow-import', 'slow-request', 'ordinary', 'mostly-equal', 'two-runs'],
+)
+def test_an_outlying_run_is_left_out(values: list[float], kept: list[float]) -> None:
+    """Only a run far beyond the others' scatter goes; two runs, or a tie, keep all."""
+    assert results.without_outliers(values) == kept
+
+
+def test_a_run_spread_leaves_the_outlier_out_but_keeps_the_median() -> None:
+    """The range is over the kept runs; the median it divides by is over every run."""
+    assert results.run_spread([384.0, 425.2, 385.9]) == pytest.approx(1.9 / 385.9)
+    assert results.run_spread([1.0, 2.0, 3.0]) == pytest.approx(1.0)
+    assert results.run_spread([1.0, 2.0, 3.0], center=4.0) == pytest.approx(0.5)

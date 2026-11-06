@@ -121,9 +121,10 @@ def test_the_table_carries_medians_change_floor_role_and_verdict() -> None:
     """A target row is judged against the floors file where it has the metric."""
     before = _result([{'a_s': 10.0}, {'a_s': 10.0}, {'a_s': 10.0}])
     after = _result([{'a_s': 5.0}, {'a_s': 5.0}, {'a_s': 5.0}])
-    table = compare.render(before, after, {'a_s': {'floor': 0.1}}, ['a_s'])
+    table = compare.render(before, after, {'a_s': {'floor': 0.1, 'floor_abs': 0.0}}, ['a_s'])
     assert (
-        '| `a_s` | 10 | 5 | -50.0% | +0.0% / +0.0% | 10 / 5 | +10.0% | target | improved |' in table
+        '| `a_s` | 10 | 5 | -50.0% | +0.0% / +0.0% | 10 / 5 | +10.0% (1) | target | improved |'
+        in table
     )
 
 
@@ -131,8 +132,8 @@ def test_a_before_spread_larger_than_the_floor_replaces_it() -> None:
     """A noisy session judges against its own spread, not the recorded floor."""
     before = _result([{'a_s': 8.0}, {'a_s': 10.0}, {'a_s': 12.0}])
     after = _result([{'a_s': 7.0}, {'a_s': 7.0}, {'a_s': 7.0}])
-    table = compare.render(before, after, {'a_s': {'floor': 0.1}}, ['a_s'])
-    assert '| +40.0% | target | not improved |' in table
+    table = compare.render(before, after, {'a_s': {'floor': 0.1, 'floor_abs': 0.0}}, ['a_s'])
+    assert '| +40.0% (4) | target | not improved |' in table
 
 
 def test_a_metric_neither_target_nor_guard_is_reported_not_judged() -> None:
@@ -364,3 +365,63 @@ def test_a_metric_with_its_executions_in_samples_is_summarized_over_them() -> No
     assert summary.values == (1.0, 2.0, 3.0, 2.0, 2.0)
     assert summary.center == 2.0
     assert summary.spread == 1.0
+
+
+def test_one_outlying_run_sets_neither_a_spread_nor_a_floor() -> None:
+    """A slow run among steady ones is listed as an outlier and leaves the floor alone."""
+    steady = _result([{'a_s': 384.0}, {'a_s': 425.2}, {'a_s': 385.9}])
+    other = _result([{'a_s': 388.7}, {'a_s': 386.7}, {'a_s': 387.6}])
+    assert compare.summarize(steady)['a_s'].spread == pytest.approx(1.9 / 385.9)
+    entry = compare.floors_from_sessions([steady, other])['a_s']
+    assert entry['outliers'] == [1, 0]
+    assert entry['floor'] == pytest.approx(2.0 / 387.6)
+
+
+def test_a_small_time_is_judged_against_its_family_s_jitter() -> None:
+    """A 20 ms request's few milliseconds of jitter are noise, whatever its fraction."""
+    entry = {'floor': 0.05, 'floor_abs': 0.001}
+    jitter = {'web': 0.010}
+    assert compare.effective_floor('web.warm.x.wall_s', entry, jitter, 0.020) == 0.5
+    assert compare.effective_floor('web.warm.x.wall_s', entry, jitter, 10.0) == 0.05
+    assert compare.effective_floor('web.warm.x.statements', entry, jitter, 0.020) == 0.05
+    assert compare.effective_floor('web.warm.x.wall_s', entry, jitter, 0.0) == 0.05
+
+
+def test_a_family_s_jitter_is_the_median_absolute_floor_of_its_times() -> None:
+    """Counts, rates and metrics outside the families have no say in it."""
+    floors = {
+        'web.a.wall_s': {'floor_abs': 0.002},
+        'web.b.wall_s': {'floor_abs': 0.010},
+        'web.c.wall_s': {'floor_abs': 0.030},
+        'web.c.throughput_per_s': {'floor_abs': 50.0},
+        'web.c.statements': {'floor_abs': 7.0},
+        'db.plan.x.time_s': {'floor_abs': 0.0002},
+        'other_s': {'floor_abs': 9.0},
+    }
+    assert compare.family_jitter(floors) == {'web': 0.010, 'db': 0.0002}
+
+
+def test_sessions_whose_medians_differ_by_less_than_the_jitter_agree() -> None:
+    """Tiny steady times in two sessions a few milliseconds apart are not a disagreement."""
+
+    def session(base: float) -> dict[str, Any]:
+        runs = [
+            {'web.t.wall_s': base, 'web.big.wall_s': 1.0 + 0.02 * i, 'web.mid.wall_s': 0.5}
+            for i in range(3)
+        ]
+        return _result(runs)
+
+    floors = compare.floors_from_sessions([session(0.010), session(0.014)])
+    entry = floors['web.t.wall_s']
+    assert entry['floor_abs'] == pytest.approx(0.004)
+    assert entry['spreads'] == [0.0, 0.0]
+    assert entry['agree'] is True
+
+
+def test_the_table_s_floor_counts_the_jitter() -> None:
+    """A change of a few milliseconds on a small request is within noise."""
+    before = _result([{'web.t.wall_s': 0.020}] * 3)
+    after = _result([{'web.t.wall_s': 0.026}] * 3)
+    floors = {'web.t.wall_s': {'floor': 0.0, 'floor_abs': 0.0}}
+    table = compare.render(before, after, floors, ['web.t.wall_s'], {'web': 0.010})
+    assert '| +50.0% (0.01) | target | not improved |' in table
