@@ -641,12 +641,19 @@ def drop_schema(server: MysqlServer, schema: str) -> None:
         query(connection, f'DROP DATABASE IF EXISTS {quote_identifier(schema)}')
 
 
+#: The only version-row state a side serves, and the only one the harness restamps. The
+#: harness reads it from the schema as text rather than importing a side's code, so it
+#: repeats the value.
+SCHEMA_ROW_READY_STATE = 'ready'
+
+
 def restamp_version(server: MysqlServer, schema: str, version: int) -> str | None:
-    """Set the version in a schema's version row, leaving its state alone.
+    """Set the version in a finished schema's version row, leaving its state alone.
 
     The import's own step never overwrites a different version, so where a side's code
     expects another version than the schema it is given carries, the harness sets the
-    row itself.
+    row itself. Only a ``ready`` row is changed: a schema an import or an append is still
+    writing keeps the version that import will finish it under.
 
     Parameters:
         server: The owned server.
@@ -657,6 +664,9 @@ def restamp_version(server: MysqlServer, schema: str, version: int) -> str | Non
     Returns:
         The row's state, or None when the schema has no ``schema_version`` table or the
         table is empty.
+
+    Raises:
+        ServerError: If the table holds more than one row, which no side would serve.
     """
     with contextlib.closing(server.connect()) as connection:
         exists = query(
@@ -671,8 +681,15 @@ def restamp_version(server: MysqlServer, schema: str, version: int) -> str | Non
         states = query(connection, f'SELECT state FROM {table}')  # nosec B608 - quoted identifier
         if len(states) == 0:
             return None
-        query(connection, f'UPDATE {table} SET version = %s', [version])  # nosec B608 - quoted identifier
-        return str(states[0][0])
+        if len(states) > 1:
+            raise ServerError(
+                f'schema {schema} has {len(states)} schema_version rows, not one; no side '
+                'would serve it'
+            )
+        state = str(states[0][0])
+        if state == SCHEMA_ROW_READY_STATE:
+            query(connection, f'UPDATE {table} SET version = %s', [version])  # nosec B608 - quoted identifier
+        return state
 
 
 def clone_schema(

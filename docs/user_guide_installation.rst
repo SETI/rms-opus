@@ -452,13 +452,14 @@ then deploys the database that produced::
     # ... fill it in: schema = "<database>", a name of your own, and the same paths
     #     deploy.env names.
 
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --cleanup-aux-tables
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --import-dictionary
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate-perm
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --write-schema-version
-
-    # Then step 5 as usual, naming that database.
+    # Each command runs only if the one before it succeeded, so a failed step stops
+    # here rather than leaving a database marked ready and deployed. The last line is
+    # step 5 as usual, naming that database.
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --cleanup-aux-tables &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --import-dictionary &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate-perm &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --write-schema-version &&
     ./import_and_deploy/deploy_new_code_and_database.sh <database> ==<release>
 
 What ``--do-it-all`` takes is a *descriptor*, and several can be given, comma- or

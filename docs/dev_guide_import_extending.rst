@@ -42,8 +42,9 @@ Adding a metadata column
    ``pi_dict_name`` name the data-dictionary term whose text becomes the tooltip, and
    ``definition`` carries the text itself. See :ref:`dev_guide_dictionary`.
 5. **Import a bundle and look at the error log.** A column with no ``param_info`` row is
-   invisible; a column whose field method returns the wrong shape is reported by
-   ``--validate-perm`` in the error log, and the step then exits with failure.
+   invisible, which ``--validate-perm`` reports. A value of the wrong type is reported
+   as the bundle is imported (:mod:`~opus_import.steps.do_import_obs`), not by
+   validation, which reads only what was stored.
 
 .. code-block:: python
 

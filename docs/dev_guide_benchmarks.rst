@@ -354,13 +354,16 @@ runs whose own 95th percentile is an outlier (below).
 Before starting a side's server, ``bench_web`` gives the schema the version row that
 side's web application checks for: it sets the row's version to the side's
 ``SCHEMA_VERSION``, read through the side's interpreter, or, on a schema with no row, runs
-the side's ``opus_import --write-schema-version``. A row whose state is not ``ready`` is
-refused rather than changed, since only a finished import may set it. Two sides that
-serve one schema
-expect different versions whenever the change raises it. A side whose code has no
-version checks nothing and is left alone. ``bench_server.clone_schema`` sets a copied
-row the same way, to the version of the side that will use the copy. ``bench_db``'s
-query capture does the same before it starts its server.
+the side's ``opus_import --write-schema-version``. Only a ``ready`` row is restamped
+(``bench_server.restamp_version``): a row in any other state keeps its version, which the
+import still writing the schema will finish it under, and ``bench_web`` refuses to serve
+it, since only a finished import may set ``ready``. A table holding more than one row is
+refused before anything is written. Two sides that serve one schema expect different
+versions whenever the change raises it. A side whose code has no version checks nothing
+and is left alone. ``bench_server.clone_schema`` restamps a copied ``ready`` row the same
+way, to the version of the side that will use the copy, and copies any other row as it
+is. ``bench_db``'s query capture stamps its schema as ``bench_web`` does before it starts
+its server.
 
 Before measuring, ``bench_web`` asks the side's settings, in the environment the workers
 run in, which cache they chose: it refuses to run on the local-memory fallback or on a

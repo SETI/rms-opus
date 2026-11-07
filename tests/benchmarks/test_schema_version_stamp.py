@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 
 from benchmarks import bench_server, bench_web
+from benchmarks.app_servers import ServerError
 from benchmarks.bench_web import WebRunError, stamp_schema_version
 from benchmarks.sides import Side, SideError, Spelling
 from opus_import.schema_version import SCHEMA_VERSION
@@ -163,3 +164,58 @@ def test_an_unfinished_schema_is_refused_not_marked_ready(
     with pytest.raises(WebRunError, match="'appending', not 'ready'"):
         _stamp(monkeypatch, tmp_path, side, state='appending')
     assert side.ran == []
+
+
+class _VersionRowServer:
+    """A server whose one schema has a version table holding `states`."""
+
+    def __init__(self, states: list[str]) -> None:
+        self.states = states
+        self.statements: list[str] = []
+
+    def connect(self) -> _VersionRowServer:
+        return self
+
+    def cursor(self) -> _VersionRowServer:
+        return self
+
+    def close(self) -> None:
+        return None
+
+    def execute(self, statement: str, parameters: Any) -> None:
+        self.statements.append(statement)
+        if 'information_schema' in statement:
+            self._rows: list[tuple[Any, ...]] = [(1,)]
+        elif statement.startswith('SELECT state'):
+            self._rows = [(state,) for state in self.states]
+        else:
+            self._rows = []
+
+    def fetchall(self) -> list[tuple[Any, ...]]:
+        return self._rows
+
+    def updated(self) -> bool:
+        """Return whether the version was written."""
+        return any(statement.startswith('UPDATE') for statement in self.statements)
+
+
+def test_a_ready_row_is_restamped() -> None:
+    """The one row a side serves takes the side's version."""
+    server = _VersionRowServer(['ready'])
+    assert bench_server.restamp_version(server, 'shared', 5) == 'ready'  # type: ignore[arg-type]
+    assert server.updated()
+
+
+def test_an_unfinished_row_keeps_its_version() -> None:
+    """The import still writing the schema finishes it under the version it began with."""
+    server = _VersionRowServer(['appending'])
+    assert bench_server.restamp_version(server, 'shared', 5) == 'appending'  # type: ignore[arg-type]
+    assert not server.updated()
+
+
+def test_two_rows_are_refused_before_anything_is_written() -> None:
+    """No side would serve the schema, so the harness says so rather than restamping it."""
+    server = _VersionRowServer(['ready', 'ready'])
+    with pytest.raises(ServerError, match='2 schema_version rows'):
+        bench_server.restamp_version(server, 'shared', 5)  # type: ignore[arg-type]
+    assert not server.updated()

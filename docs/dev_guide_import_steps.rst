@@ -165,7 +165,9 @@ Nothing is written until every column has been read, so a failed build leaves th
 import table empty rather than half filled -- but the build stops at the **first** fault,
 so one run reports only that one.
 :func:`~opus_import.steps.do_param_info.do_param_info` copies to the permanent table
-only if the build succeeded, and drops the import table either way.
+only if the build succeeded, and drops the import table either way. A failed build keeps
+the invocation from marking the schema ready and makes it exit with failure, as a
+validation failure does (:ref:`dev_guide_import_steps_do_validate`).
 
 This step must follow the import, because which permanent ``obs_`` tables exist is what
 decides which schemas it reads.
@@ -362,8 +364,9 @@ created last, because ``definitions`` has a foreign key onto ``contexts``.
 
 The definitions builder collects every fault before writing anything; the contexts
 builder stops at the first malformed line. Either way nothing is written and the
-permanent tables keep what the previous run wrote. A failed dictionary import reports through
-the log and does **not** change the run's exit status.
+permanent tables keep what the previous run wrote. A failed dictionary import is logged,
+keeps the invocation from marking the schema ready, and makes it exit with failure, as a
+validation failure does (:ref:`dev_guide_import_steps_do_validate`).
 
 .. _dev_guide_import_steps_do_schema_version:
 

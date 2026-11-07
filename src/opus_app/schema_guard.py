@@ -100,19 +100,29 @@ class _SchemaVersionGate:
     application, and the check is not made again. So a worker that loaded before the
     schema was finished serves it once ``opus_import --write-schema-version`` has run,
     without a reload, and a refused worker costs the database one small query a request.
+
+    One request checks at a time. A request that arrives while another is checking does
+    not wait for it -- a read stalled on an unresponsive database would otherwise hold
+    every thread of the worker -- but is answered 503 at once with what the last check
+    found.
     """
 
-    def __init__(self, application: WsgiApplication, read: SchemaVersionReader) -> None:
+    #: What the last check found when the database could not be read.
+    UNREADABLE = 'the database could not be read'
+
+    def __init__(self, application: WsgiApplication, read: SchemaVersionReader, found: str) -> None:
         """Hold the application until the check passes.
 
         Parameters:
             application: The Django application.
             read: What reads the version rows.
+            found: What the check made as the application loaded found wrong.
         """
         self._application = application
         self._read = read
         self._passed = False
         self._lock = threading.Lock()
+        self._last_found = found
 
     def _problem(self) -> str | None:
         """Make the check once.
@@ -126,7 +136,7 @@ class _SchemaVersionGate:
             # The driver's message names the account, so it goes to the log rather than
             # into a public response.
             _LOG.warning('The schema version row could not be read (%s)', error)
-            return 'the database could not be read'
+            return self.UNREADABLE
 
     def __call__(self, environ: dict[str, Any], start_response: Callable[..., Any]) -> Any:
         """Serve one request.
@@ -139,12 +149,17 @@ class _SchemaVersionGate:
             The application's response once the check passes, else the 503's.
         """
         if not self._passed:
-            with self._lock:
+            if not self._lock.acquire(blocking=False):
+                return schema_refused_application(self._last_found)(environ, start_response)
+            try:
                 if not self._passed:
                     found = self._problem()
                     if found is not None:
+                        self._last_found = found
                         return schema_refused_application(found)(environ, start_response)
                     self._passed = True
+            finally:
+                self._lock.release()
         return self._application(environ, start_response)
 
 
@@ -170,8 +185,8 @@ def guard_schema_version(
         _LOG.warning(
             'The schema version row could not be read (%s); each request will try again', error
         )
-        return _SchemaVersionGate(application, read)
+        return _SchemaVersionGate(application, read, _SchemaVersionGate.UNREADABLE)
     if found is None:
         return application
     _LOG.warning('Refusing to serve the schema: %s', found)
-    return _SchemaVersionGate(application, read)
+    return _SchemaVersionGate(application, read, found)

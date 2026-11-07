@@ -95,9 +95,9 @@ leaves nothing behind.
 The copy order is the reverse of the drop order, for the foreign key: ``definitions`` is
 dropped first and created last.
 
-**A failed dictionary import does not change the run's exit status.** It reports through
-the log, like :mod:`~opus_import.steps.do_validate`; see
-:ref:`dev_guide_import_verifying`.
+**A failed dictionary import stops the schema being marked ready.** It is logged, and the
+invocation exits with failure once its other steps have run, so ``opus_import_all`` stops
+before its version step; see :ref:`dev_guide_import_verifying`.
 
 Adding a term
 -------------

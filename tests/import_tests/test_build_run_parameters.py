@@ -26,13 +26,15 @@ class _Recorder:
         """Start with nothing recorded."""
         self.runs: list[tuple[str, tuple[str, ...], Path, Path]] = []
         self.events: list[tuple[str, tuple[str, ...]]] = []
+        self.failing: set[tuple[str, ...]] = set()
 
     def pipeline_step(
         self, config_file: Path, arguments: Sequence[str], *, python: Path, repo_root: Path
     ) -> StepResult:
         """Record an ``opus_import`` invocation."""
         self.runs.append(('opus_import', tuple(arguments), python, repo_root))
-        return StepResult(tuple(arguments), 0, '', '')
+        status = 1 if tuple(arguments) in self.failing else 0
+        return StepResult(tuple(arguments), status, '', '')
 
     def migrate(self, config_file: Path, *, python: Path, repo_root: Path) -> StepResult:
         """Record the migration."""
@@ -160,6 +162,19 @@ def test_an_empty_version_step_is_skipped(tmp_path: Path, recorder: _Recorder) -
     """A side whose import has no version step ends the sequence with its validation."""
     _perform(tmp_path, version_args=())
     assert recorder.runs[-1][1] == build_run.VALIDATE_ARGS
+
+
+@pytest.mark.parametrize(
+    'failing', [build_run.AUX_ARGS, build_run.DICTIONARY_ARGS, build_run.VALIDATE_ARGS]
+)
+def test_a_failed_finishing_step_skips_the_version_step(
+    tmp_path: Path, recorder: _Recorder, failing: tuple[str, ...]
+) -> None:
+    """As ``opus_import_all`` stops there, the schema is left without a ready row."""
+    recorder.failing.add(failing)
+    _perform(tmp_path)
+    assert recorder.runs[-1][1] == build_run.VALIDATE_ARGS
+    assert build_run.VERSION_ARGS not in [arguments for _, arguments, _, _ in recorder.runs]
 
 
 def test_the_observer_hears_each_invocation_start_and_finish_in_order(

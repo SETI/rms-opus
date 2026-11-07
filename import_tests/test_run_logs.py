@@ -68,8 +68,8 @@ def test_no_pipeline_step_stopped(main_run: ImportRun) -> None:
 def test_no_errors_were_logged(main_run: ImportRun) -> None:
     """The run logged nothing at error level.
 
-    The exit status cannot stand in for this: several steps, the dictionary import among
-    them, log a failure and still exit zero.
+    The exit status cannot stand in for this: several steps log a failure and still exit
+    zero.
     """
     assert run_logs.distinct(run_logs.read_messages(main_run.paths.errors_log)) == []
 

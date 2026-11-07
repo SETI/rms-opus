@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 import pytest
 from django.db import OperationalError
 
 from opus_app import schema_guard
-from opus_import.schema_version import SCHEMA_STATE_APPENDING, SCHEMA_STATE_READY, SCHEMA_VERSION
+from opus_import.schema_version import (
+    SCHEMA_STATE_APPENDING,
+    SCHEMA_STATE_READY,
+    SCHEMA_VERSION,
+    SCHEMA_VERSION_TABLE,
+)
 
 #: What the stand-in application answers.
 _SERVED = [b'served']
@@ -193,3 +199,32 @@ def test_read_rows_closes_the_connection_however_it_ends(
     else:
         assert schema_guard.read_schema_version_rows() == expected
     assert fake.closed == 1
+
+
+def test_a_request_during_a_stalled_check_is_refused_without_waiting() -> None:
+    """One stuck read holds one thread; the others are answered 503 at once."""
+    reading = threading.Event()
+    release = threading.Event()
+    answers: list[list[tuple[Any, ...]]] = [[], [(SCHEMA_VERSION, SCHEMA_STATE_READY)]]
+
+    def read() -> list[tuple[Any, ...]]:
+        rows = answers.pop(0)
+        if len(answers) == 0:
+            reading.set()
+            assert release.wait(5)
+        return rows
+
+    guarded = schema_guard.guard_schema_version(_application, read)
+    stalled: list[tuple[str, bytes]] = []
+    thread = threading.Thread(target=lambda: stalled.append(_call(guarded)))
+    thread.start()
+    assert reading.wait(5)
+
+    status, body = _call(guarded)
+    assert status == schema_guard.SCHEMA_REFUSED_STATUS
+    assert f'no {SCHEMA_VERSION_TABLE} row'.encode() in body
+
+    release.set()
+    thread.join(5)
+    assert stalled == [('200 OK', b'served')]
+    assert _call(guarded) == ('200 OK', b'served')

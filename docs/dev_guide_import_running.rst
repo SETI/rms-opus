@@ -256,8 +256,8 @@ Auxiliary tables and other steps
    * - ``--drop-cache-tables``
      - Drop the ``cache_*`` tables and clear ``user_searches``.
    * - ``--validate-perm``
-     - Validate the permanent tables. **It reports through the log rather than through
-       the exit status.**
+     - Validate the permanent tables. A check that logs an error keeps the invocation
+       from marking the schema ready, and makes it exit with failure.
    * - ``--import-dictionary``
      - Rebuild ``contexts`` and ``definitions`` from scratch. It runs after every step
        above.
@@ -376,8 +376,9 @@ Verifying that a run succeeded
 
 **The exit status is not sufficient.** A non-zero status means the run stopped; a zero
 status does **not** mean it was clean. Several steps report failure through the log and
-still exit zero, among them a failed dictionary import. ``--validate-perm`` is not one of
-them: an error it logs makes the invocation exit with failure.
+still exit zero. Three are not among them: a failed ``--create-param-info``,
+``--import-dictionary`` or ``--validate-perm`` makes the invocation exit with failure and
+keeps it from marking the schema ready.
 
 The check that matters is, with ``<import_log_dir>`` standing for the directory that
 ``[paths] import_log_dir`` names::

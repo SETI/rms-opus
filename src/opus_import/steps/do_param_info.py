@@ -149,7 +149,7 @@ def copy_param_info_from_import_to_permanent(ctx: ImportContext) -> None:
     db.copy_rows_between_namespaces('import', 'perm', 'param_info')
 
 
-def do_param_info(ctx: ImportContext) -> None:
+def do_param_info(ctx: ImportContext) -> bool:
     """Rebuild the permanent ``param_info`` table, driven by ``--create-param-info``.
 
     The import table is dropped either way, so a failed build leaves nothing behind; a
@@ -157,8 +157,13 @@ def do_param_info(ctx: ImportContext) -> None:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+
+    Returns:
+        True if the table was rebuilt, False if the build failed, having logged why.
     """
-    if create_import_param_info_table(ctx):
+    built = create_import_param_info_table(ctx)
+    if built:
         copy_param_info_from_import_to_permanent(ctx)
     assert ctx.db is not None
     ctx.db.drop_table('import', 'param_info')
+    return built

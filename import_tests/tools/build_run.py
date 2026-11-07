@@ -635,7 +635,9 @@ def perform_run(
         dictionary_args: The step that imports the dictionary.
         validate_args: The validation that follows the migration.
         version_args: The step that writes the schema version row, last; empty to skip
-            it, for an interpreter whose import does not have it.
+            it, for an interpreter whose import does not have it. It is skipped too when
+            a finishing step before it exited with failure, as ``opus_import_all`` stops
+            there.
         observer: Told about each invocation as it starts and as it finishes, the
             migration included, or None.
 
@@ -672,13 +674,16 @@ def perform_run(
         step([*import_args, *extra, ','.join(group)])
     if not finalize:
         return run
+    finishing_started = len(run.steps)
     step(aux_args)
     step(dictionary_args)
     run.django_tables = _migrate_and_diff(
         paths, schema, credentials, run, python=python, repo_root=repo_root, observer=observer
     )
     step(validate_args)
-    if len(version_args) > 0:
+    # As opus_import_all does: a finishing step that failed leaves the schema unmarked.
+    finishing_failed = any(result.returncode != 0 for result in run.steps[finishing_started:])
+    if len(version_args) > 0 and not finishing_failed:
         step(version_args)
     return run
 

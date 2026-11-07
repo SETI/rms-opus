@@ -300,10 +300,10 @@ what users see, so it is done deliberately.
    database named for the moment it started, and ``import`` pointed at the installation
    doing the work. Neither the database being served nor the installation serving it is
    touched, which is what makes every step after this one reversible.
-2. **Read the error log.** The import's own exit status is not the whole story:
-   the dictionary import reports through the log rather than through the status, so an
-   automated run gates on ``ERRORS.log`` being empty. A validation error does stop the
-   run, before the schema is marked ready.
+2. **Read the error log.** The import's own exit status is not the whole story: several
+   steps report a failure through the log rather than through the status, so an
+   automated run gates on ``ERRORS.log`` being empty. A failed ``param_info`` build,
+   dictionary import or validation does stop the run, before the schema is marked ready.
    :ref:`dev_guide_import_verifying` is the full check.
 3. **Compare the new database against the one being served.** Both are named before
    anything is erased: ``opus_import_all`` names the one it is about to build, and the

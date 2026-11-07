@@ -53,6 +53,7 @@ from typing import TYPE_CHECKING, Any
 
 from benchmarks.app_servers import GunicornServer, MemcachedServer, ServerError
 from benchmarks.bench_server import (
+    SCHEMA_ROW_READY_STATE,
     MysqlServer,
     counter_deltas,
     global_status,
@@ -92,9 +93,6 @@ from import_tests.tools import build_run
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-#: The only version-row state a side's web application serves. The harness reads it from
-#: the schema as text rather than importing a side's code, so it repeats the value.
-READY_STATE = 'ready'
 
 #: The server counters whose movement over each scenario a web result records.
 SCENARIO_COUNTERS = (
@@ -519,9 +517,9 @@ def stamp_schema_version(
                 f'the side is schema version {version} but its import has no --write-schema-version'
             )
         run_import_step(side, spelling.write_schema_version, env, errors_log)
-    elif state != READY_STATE:
+    elif state != SCHEMA_ROW_READY_STATE:
         raise WebRunError(
-            f"schema {schema}'s version row is {state!r}, not {READY_STATE!r}: an import or "
+            f"schema {schema}'s version row is {state!r}, not {SCHEMA_ROW_READY_STATE!r}: an import or "
             "append to it did not finish, and the side's application would answer every "
             'request 503'
         )

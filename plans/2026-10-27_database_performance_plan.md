@@ -4684,14 +4684,20 @@ Nothing above this line is rewritten by an executor.
   changed.
 - `--write-schema-version` exits non-zero when it refuses, as well as logging the error,
   so `opus_import_all` and any script running it stops there.
-- A validation failure gates `ready`, which the section does not say. `do_validate` returns
-  whether any check logged an error. When one did, the invocation does not run
-  `--write-schema-version` even if asked, logging an error instead, and exits with
-  failure after its other steps, so `opus_import_all`, which runs each finishing step
-  as its own invocation, stops before the version step. `--import-ignore-errors`
-  overrides both. Without this, a schema that failed validation was marked `ready` and
+- A failed finishing step gates `ready`, which the section does not say. `do_validate`,
+  `do_param_info` and `do_dictionary` return whether they succeeded. When one failed, the
+  invocation does not run `--write-schema-version` even if asked, logging an error
+  instead, and exits with failure after its other steps, so `opus_import_all`, which runs
+  each finishing step as its own invocation, stops before the version step, and
+  `build_run.perform_run` skips it. `--import-ignore-errors` overrides both. Without
+  this, a schema that failed validation or lost its dictionary was marked `ready` and
   served. The review of the PR found it. PR-07's bundle-error gate is the same rule for
   the import's own errors.
+- The web application's re-check runs one request at a time, and a request arriving
+  while another checks is refused at once with the last check's reason rather than
+  waiting, so a read stalled on an unresponsive database holds one thread, not the
+  worker. The harness restamps only a single `ready` row: a row in another state keeps
+  its version, and two rows are refused.
 - The web application reads the row as `opus_app.wsgi` loads, as the section says, and
   serves Django's application itself when the row is right. When it is not, or the
   database cannot be read, the stub repeats the check on each request, answering 503
