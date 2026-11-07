@@ -89,6 +89,12 @@ being served is still the right one::
     cd /opt/opus/deploy
     ./import_and_deploy/deploy_new_code_only.sh ==<release>
 
+When the release changes neither the import nor the table schemas -- only the web
+application, its templates and static files, or the documentation -- ``--no-database``
+deploys it without writing to the database at all::
+
+    ./import_and_deploy/deploy_new_code_only.sh --no-database ==<release>
+
 When it does change them, the database has to be rebuilt under the new release first, and
 the two commands are the same pair as steps 4 and 5 of the installation chapter::
 
@@ -122,12 +128,29 @@ The scripts
     stopped for the switch alone, not for the build. Which units those are comes from
     ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
 
-``deploy_new_code_only.sh [<version spec>]``
+``deploy_new_code_only.sh [--no-database] [<version spec>]``
     **Only for a release that does not change the database schema** -- a bug-fix release
     against the database already being served. It reads the database name out of the
     installation currently deployed, builds a new installation at the new release naming
     that same database, runs the same migration, static-file and description-table steps,
     and switches to it the same way. It does not upgrade anything in place.
+
+    The description-table step rebuilds ``param_info``, ``partables``, ``table_names`` and
+    the dictionary from the new release, so a release that changed a label, a tooltip or
+    a category describes itself. Each table is built beside the live one and swapped in
+    with one atomic rename, so the workers still serving the old release never find one
+    missing or partly filled.
+
+    ``--no-database`` writes nothing to the database: it skips Django's migrations and
+    the description-table step, and still installs the release, collects its static
+    files and switches to it. It is for a release that changes neither the import nor
+    the table schemas -- the web application, its templates and static files, the
+    documentation. Whether a release is one of those is your call, from its release
+    notes, as whether it changed the schema is. It still makes the schema version check,
+    which only reads, and it refuses a release for which Django has a migration to apply
+    (``opus_manage migrate --check``), naming the plain code-only deploy as the one to
+    run, so a release that crosses a Django version with a new contrib migration cannot
+    skip it unnoticed.
 
     The database records its schema version, and the script refuses, before writing
     anything, a release whose version differs (:ref:`user_guide_deployment_schema_version`).
@@ -390,6 +413,8 @@ Operating checklist
      - What to do
    * - Deploy a new release, same database
      - ``deploy_new_code_only.sh ==<version>``
+   * - Deploy a release that touches neither the import nor the schemas
+     - ``deploy_new_code_only.sh --no-database ==<version>``
    * - Deploy a new database
      - ``run_full_opus_import.sh``, verify, then
        ``deploy_new_code_and_database.sh <name>``

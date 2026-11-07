@@ -55,6 +55,62 @@ if TYPE_CHECKING:
 
 ERR_UNKNOWN_DATABASE = 1049
 
+#: The SQL type each fixed ``field_type`` of a table schema renders as. Two more forms
+#: are rendered by `create_table` itself: a width type (`MYSQL_WIDTH_FIELD_TYPE`), and
+#: ``enum``, whose values come from the column's ``field_enum_options``.
+MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
+    'int1': 'tinyint',
+    'int2': 'smallint',
+    'int3': 'mediumint',
+    'int4': 'int',
+    'int8': 'bigint',
+    'uint1': 'tinyint unsigned',
+    'uint2': 'smallint unsigned',
+    'uint3': 'mediumint unsigned',
+    'uint4': 'int unsigned',
+    'uint8': 'bigint unsigned',
+    'real4': 'float',
+    'real8': 'double',
+    'text': 'text',
+    'mult_list': 'JSON',
+    'json': 'JSON',
+    # A flag and a mult index both hold the id of a mult table row.
+    'flag_yesno': 'int unsigned',
+    'flag_onoff': 'int unsigned',
+    'mult_idx': 'int unsigned',
+    'timestamp': 'timestamp',
+    'datetime': 'datetime',
+}
+
+#: A ``field_type`` that names a character type and its width, such as ``char12`` or
+#: ``varchar255``: the type, then the width.
+MYSQL_WIDTH_FIELD_TYPE = re.compile(r'(char|varchar)([1-9][0-9]*)')
+
+#: The ``field_type`` whose values a column lists in ``field_enum_options``.
+MYSQL_ENUM_FIELD_TYPE = 'enum'
+
+
+def is_renderable_field_type(field_type: str) -> bool:
+    """Return whether `ImportDBMySQL.create_table` can render a ``field_type``.
+
+    Parameters:
+        field_type: The value of a column's ``field_type``.
+
+    Returns:
+        True for a key of `MYSQL_FIELD_TYPE_SQL`, a `MYSQL_WIDTH_FIELD_TYPE` or
+        `MYSQL_ENUM_FIELD_TYPE`.
+    """
+    return (
+        field_type in MYSQL_FIELD_TYPE_SQL
+        or MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type) is not None
+        or field_type == MYSQL_ENUM_FIELD_TYPE
+    )
+
+
+#: The server's "lock wait timeout exceeded", which a statement fails with when it waited
+#: ``lock_wait_timeout`` seconds for a table another session holds.
+ERR_LOCK_WAIT_TIMEOUT = 1205
+
 #: The errors that mean the server or the connection refuses ``LOAD DATA LOCAL INFILE``:
 #: the server's "not allowed" (1148) and "loading local data is disabled" (3948), and the
 #: client library's own refusal of the server's file request (2068).
@@ -705,6 +761,85 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
             self._table_info_cache.clear()
 
+    def rename_tables_atomically(
+        self,
+        namespace: Namespace,
+        renames: Sequence[tuple[str, str]],
+        *,
+        lock_wait_timeout_s: int,
+        attempts: int,
+    ) -> None:
+        """Rename several tables with one ``RENAME TABLE``, which MySQL applies atomically.
+
+        A foreign key follows the table it references through a rename, and a key name the
+        server generated from the old table name is renamed with it.
+
+        Each attempt runs with the session's ``lock_wait_timeout`` lowered to
+        ``lock_wait_timeout_s``, so a rename waiting behind a reader's transaction does not
+        in turn hold up every reader queued behind it for the server's default of a year.
+        A timed-out attempt is logged at info level and tried again; the session's own
+        value is restored afterwards.
+
+        Parameters:
+            namespace: The namespace holding every table named.
+            renames: ``(from, to)`` raw table names, in the order they apply.
+            lock_wait_timeout_s: How long one attempt waits for the tables' locks.
+            attempts: How many times to try before the wait is a failure.
+
+        Raises:
+            ImportDBError: If the server rejects the statement, or every attempt timed out.
+        """
+        with self._operation('rename_tables_atomically'):
+            q = self.quote_identifier
+            pairs = [
+                (
+                    self.convert_raw_to_namespace(namespace, old),
+                    self.convert_raw_to_namespace(namespace, new),
+                )
+                for old, new in renames
+            ]
+            cmd = 'RENAME TABLE ' + ', '.join(f'{q(old)} TO {q(new)}' for old, new in pairs)
+            if self.read_only:
+                self._execute(cmd, mutates=True)
+                if self.logger:
+                    self.logger.log('debug', f'[SIM] Renamed tables: {cmd}')
+                return
+
+            previous = self._execute_and_fetchall(
+                'SELECT @@SESSION.lock_wait_timeout', 'rename_tables_atomically'
+            )[0][0]
+            self._execute('SET SESSION lock_wait_timeout = %s', [lock_wait_timeout_s])
+            try:
+                for attempt in range(1, attempts + 1):
+                    try:
+                        self._execute(cmd, mutates=True)
+                        break
+                    except MySQLdb.Error as e:
+                        if e.args and e.args[0] == ERR_LOCK_WAIT_TIMEOUT and attempt < attempts:
+                            if self.logger:
+                                self.logger.log(
+                                    'info',
+                                    f'  RENAME TABLE waited {lock_wait_timeout_s} s for a lock '
+                                    f'(attempt {attempt} of {attempts}); trying again',
+                                )
+                            continue
+                        if self.logger:
+                            self.logger.log('fatal', f'Failed in RENAME TABLE: {e}')
+                        raise ImportDBError(e) from e
+            finally:
+                self._execute('SET SESSION lock_wait_timeout = %s', [previous])
+
+            if self.logger:
+                self.logger.log('debug', f'Renamed tables: {cmd}')
+            assert self._table_names is not None
+            for old, new in pairs:
+                if old in self._table_names:
+                    self._table_names.remove(old)
+                else:
+                    self._table_names.remove(old.lower())
+                self._table_names.add(new)
+            self._table_info_cache.clear()
+
     def create_table(
         self,
         namespace: Namespace,
@@ -756,55 +891,15 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 field_type = column['field_type']
 
                 cmd += f'  {self.quote_identifier(field_name)} '
-                if field_type == 'int1':
-                    cmd += 'tinyint'
-                elif field_type == 'int2':
-                    cmd += 'smallint'
-                elif field_type == 'int3':
-                    cmd += 'mediumint'
-                elif field_type == 'int4':
-                    cmd += 'int'
-                elif field_type == 'int8':
-                    cmd += 'bigint'
-
-                elif field_type == 'uint1':
-                    cmd += 'tinyint unsigned'
-                elif field_type == 'uint2':
-                    cmd += 'smallint unsigned'
-                elif field_type == 'uint3':
-                    cmd += 'mediumint unsigned'
-                elif field_type == 'uint4':
-                    cmd += 'int unsigned'
-                elif field_type == 'uint8':
-                    cmd += 'bigint unsigned'
-
-                elif field_type == 'real4':
-                    cmd += 'float'
-                elif field_type == 'real8':
-                    cmd += 'double'
-
-                elif field_type[:4] == 'char':
-                    cmd += 'char(' + field_type[4:] + ')'
-                elif field_type[:7] == 'varchar':
-                    cmd += 'varchar(' + field_type[7:] + ')'
-                elif field_type == 'text':
-                    cmd += 'text'
-                elif field_type in ('mult_list', 'json'):
-                    cmd += 'JSON'
-                elif field_type == 'enum':
+                width_type = MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type)
+                if field_type in MYSQL_FIELD_TYPE_SQL:
+                    cmd += MYSQL_FIELD_TYPE_SQL[field_type]
+                elif width_type is not None:
+                    cmd += f'{width_type[1]}({width_type[2]})'
+                elif field_type == MYSQL_ENUM_FIELD_TYPE:
                     enum_str = column.get('field_enum_options', None)
                     assert enum_str, (raw_table_name, column)
                     cmd += f'enum({enum_str})'
-                elif (
-                    field_type == 'flag_yesno'
-                    or field_type == 'flag_onoff'
-                    or field_type == 'mult_idx'
-                ):
-                    cmd += 'int unsigned'  # Index for mult table
-                elif field_type == 'timestamp':
-                    cmd += 'timestamp'
-                elif field_type == 'datetime':
-                    cmd += 'datetime'
                 else:
                     raise NotImplementedError(field_type)
 

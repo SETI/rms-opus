@@ -105,6 +105,14 @@ It runs serially: the run is one long import followed by fast assertions, so ``-
 nothing, and a session-scoped fixture under xdist would run the import once per worker
 into the same schema.
 
+``OPUS_IMPORT_FAULT`` is set by the suite itself, in the environment of an
+``opus_import`` process it starts, to make the import fail on purpose at a named point
+and prove it recovers. Its form is ``<site>:<argument>``
+(:mod:`opus_import.import_fault`); the import reads it only at the sites that ask for it,
+and each site decides what its argument selects. The one site is ``swap_in``, between
+the fill of a rebuilt table and the rename that swaps it in, and its argument is a table:
+``swap_in:definitions`` stops the dictionary's swap. Never set it outside a test.
+
 That plain form is the everyday one -- about two minutes, no coverage, with the three
 executed-functions tests skipping because the report they read is not there. Measuring
 coverage costs about two and a half times that and takes two commands;

@@ -22,14 +22,7 @@ class _FakeDatabase:
     """An `importdb` stand-in that records the calls the step makes."""
 
     def __init__(self) -> None:
-        self.created_tables: list[str] = []
         self.inserted: list[tuple[str, list[dict[str, Any]]]] = []
-
-    def create_table(
-        self, namespace: str, table_name: str, schema: Any, ignore_if_exists: bool = True
-    ) -> bool:
-        self.created_tables.append(table_name)
-        return True
 
     def insert_rows(self, namespace: str, table_name: str, rows: list[dict[str, Any]]) -> None:
         self.inserted.append((table_name, rows))
@@ -52,7 +45,7 @@ def _use_contexts_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, contents
     return contexts_file
 
 
-def test_create_import_contexts_table_reads_every_row(
+def test_fill_contexts_reads_every_row(
     fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -61,12 +54,11 @@ def test_create_import_contexts_table_reads_every_row(
     ctx, db, logger = fake_pipeline
     _use_contexts_file(monkeypatch, tmp_path, 'COISS,Cassini ISS,NULL\nCOVIMS,Cassini VIMS,NULL\n')
 
-    assert do_dictionary.create_import_contexts_table(ctx) is True
+    assert do_dictionary.fill_contexts(ctx, 'contexts__new') is True
 
-    assert db.created_tables == ['contexts']
     assert db.inserted == [
         (
-            'contexts',
+            'contexts__new',
             [
                 {'name': 'COISS', 'description': 'Cassini ISS', 'parent': 'NULL'},
                 {'name': 'COVIMS', 'description': 'Cassini VIMS', 'parent': 'NULL'},
@@ -76,7 +68,7 @@ def test_create_import_contexts_table_reads_every_row(
     assert logger.messages_at('error') == []
 
 
-def test_create_import_contexts_table_names_the_bad_row_and_its_file(
+def test_fill_contexts_names_the_bad_row_and_its_file(
     fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -93,7 +85,7 @@ def test_create_import_contexts_table_names_the_bad_row_and_its_file(
         monkeypatch, tmp_path, 'COISS,Cassini ISS,NULL\nCOVIMS,Cassini VIMS,NULL,EXTRA\n'
     )
 
-    assert do_dictionary.create_import_contexts_table(ctx) is False
+    assert do_dictionary.fill_contexts(ctx, 'contexts__new') is False
 
     errors = logger.messages_at('error')
     assert len(errors) == 1
@@ -102,7 +94,7 @@ def test_create_import_contexts_table_names_the_bad_row_and_its_file(
     assert '{' not in errors[0]
 
 
-def test_create_import_contexts_table_inserts_nothing_when_a_row_is_bad(
+def test_fill_contexts_inserts_nothing_when_a_row_is_bad(
     fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -111,11 +103,11 @@ def test_create_import_contexts_table_inserts_nothing_when_a_row_is_bad(
     ctx, db, _logger = fake_pipeline
     _use_contexts_file(monkeypatch, tmp_path, 'ONLY_TWO,FIELDS\n')
 
-    assert do_dictionary.create_import_contexts_table(ctx) is False
+    assert do_dictionary.fill_contexts(ctx, 'contexts__new') is False
     assert db.inserted == []
 
 
-def test_create_import_contexts_table_reports_an_unreadable_file(
+def test_fill_contexts_reports_an_unreadable_file(
     fake_pipeline: tuple[ImportContext, _FakeDatabase, RecordingLogger],
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -124,7 +116,7 @@ def test_create_import_contexts_table_reports_an_unreadable_file(
     ctx, _db, logger = fake_pipeline
     monkeypatch.setattr(import_util, 'DICTIONARY_DATA_DIR', tmp_path)
 
-    assert do_dictionary.create_import_contexts_table(ctx) is False
+    assert do_dictionary.fill_contexts(ctx, 'contexts__new') is False
 
     errors = logger.messages_at('error')
     assert len(errors) == 1
@@ -141,9 +133,9 @@ def test_packaged_contexts_file_has_three_fields_in_every_row(
     """
     ctx, db, logger = fake_pipeline
 
-    assert do_dictionary.create_import_contexts_table(ctx) is True
+    assert do_dictionary.fill_contexts(ctx, 'contexts__new') is True
 
     assert logger.messages_at('error') == []
     table_name, rows = db.inserted[0]
-    assert table_name == 'contexts'
+    assert table_name == 'contexts__new'
     assert len(rows) > 0

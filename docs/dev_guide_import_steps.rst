@@ -133,6 +133,43 @@ In order:
 described in :ref:`dev_guide_import_per_bundle`. It resets the per-bundle caches, looks
 the bundle up in ``BUNDLE_INFO``, finds the primary index files and imports each one.
 
+.. _dev_guide_import_steps_table_swap:
+
+Rebuilding a table by swap: opus_import.table_swap
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The three auxiliary tables and the dictionary are rebuilt on a schema the web application
+may be serving -- the code-only deploy rebuilds all of them on the live database -- so
+none of them is ever dropped and refilled in place. Each step builds its table as
+``<table>__new`` in the permanent namespace, fills it while the live table goes on
+answering, and swaps it in with one ``RENAME TABLE`` that moves the live table aside to
+``<table>__old`` and the new one into its place. MySQL applies the whole statement
+atomically, so a reader finds each table as it was or as it now is, never missing and
+never partly filled. The ``__old`` table is dropped afterwards.
+
+:func:`~opus_import.table_swap.rebuild_tables_by_swap` is the one entry point. It takes a
+set of tables, parents first, and a fill function, and:
+
+1. drops any ``__new`` or ``__old`` table an interrupted rebuild of the same set left,
+   children before parents;
+2. creates every ``__new`` table, empty, from its packaged schema, with any foreign key
+   from one table of the set to another pointed at the other's ``__new`` table;
+3. calls the fill, which writes every row into the ``__new`` tables. A fill that returns
+   False drops them again and leaves the live tables as they were;
+4. swaps the whole set in with one rename
+   (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.rename_tables_atomically`), then
+   drops the ``__old`` tables.
+
+The dictionary is the set that needs step 2: ``contexts`` and ``definitions`` swap
+together, and the foreign key from ``definitions__new`` onto ``contexts__new`` follows
+the rename onto the live ``contexts``. The key name the server generated follows it too.
+
+The rename waits for any transaction open on the tables it names. Each attempt lowers
+the session's ``lock_wait_timeout`` to ``SWAP_LOCK_WAIT_TIMEOUT_S`` seconds, so a rename
+queued behind a long reader does not in turn hold up every reader queued behind it; a
+timed-out attempt is logged at info level and tried again, up to
+``SWAP_RENAME_ATTEMPTS`` times, and the session's own value is restored afterwards.
+
 .. _dev_guide_import_steps_do_param_info:
 
 opus_import.steps.do_param_info
@@ -141,11 +178,10 @@ opus_import.steps.do_param_info
 Builds ``param_info``, the table that tells the web application what the search form
 contains. Option: ``--create-param-info``.
 
-Its public functions:
-:func:`~opus_import.steps.do_param_info.create_import_param_info_table` builds the import
-table, :func:`~opus_import.steps.do_param_info.copy_param_info_from_import_to_permanent`
-copies it over, and :func:`~opus_import.steps.do_param_info.do_param_info` is the step
-that runs both.
+Its public functions: :func:`~opus_import.steps.do_param_info.fill_param_info` writes
+the rows into ``param_info__new``, and :func:`~opus_import.steps.do_param_info.do_param_info`
+is the step, which rebuilds the table by swap
+(:ref:`dev_guide_import_steps_table_swap`).
 
 One row per column that carries a ``pi_category_name``, read out of the **packaged
 schema** of every permanent ``obs_`` table. A column with no ``param_info`` row is
@@ -161,13 +197,12 @@ Two validations happen here rather than at the schema:
 * a ``pi_ranges`` naming an entry that is not in ``param_info_ranges.json`` fails it
   too.
 
-Nothing is written until every column has been read, so a failed build leaves the
-import table empty rather than half filled -- but the build stops at the **first** fault,
-so one run reports only that one.
-:func:`~opus_import.steps.do_param_info.do_param_info` copies to the permanent table
-only if the build succeeded, and drops the import table either way. A failed build keeps
-the invocation from marking the schema ready and makes it exit with failure, as a
-validation failure does (:ref:`dev_guide_import_steps_do_validate`).
+Nothing is written until every column has been read, so a failed build leaves
+``param_info__new`` empty rather than half filled -- but the build stops at the **first**
+fault, so one run reports only that one. A failed build is not swapped in: the live table
+keeps what the previous run wrote. A failed build also keeps the invocation from marking the
+schema ready and makes it exit with failure, as a validation failure does
+(:ref:`dev_guide_import_steps_do_validate`).
 
 This step must follow the import, because which permanent ``obs_`` tables exist is what
 decides which schemas it reads.
@@ -182,8 +217,7 @@ search parameters that value makes relevant -- choosing the Cassini mission reve
 Cassini mission table. Option: ``--create-partables``.
 
 Its public functions, in the same shape as :mod:`~opus_import.steps.do_param_info`'s:
-:func:`~opus_import.steps.do_partables.create_import_partables_table`,
-:func:`~opus_import.steps.do_partables.copy_partables_from_import_to_permanent` and
+:func:`~opus_import.steps.do_partables.fill_partables` and
 :func:`~opus_import.steps.do_partables.do_partables`.
 
 A row is ``(trigger_tab, trigger_col, trigger_val, partable)``. The rows are
@@ -229,8 +263,7 @@ form and the Details tab are divided into. Option: ``--create-table-names``.
 
 Its public functions:
 :func:`~opus_import.steps.do_table_names.build_table_names_rows`,
-:func:`~opus_import.steps.do_table_names.create_import_table_names_table`,
-:func:`~opus_import.steps.do_table_names.copy_table_names_from_import_to_permanent` and
+:func:`~opus_import.steps.do_table_names.fill_table_names` and
 :func:`~opus_import.steps.do_table_names.do_table_names`.
 
 :func:`~opus_import.steps.do_table_names.build_table_names_rows` is the authority on
@@ -352,16 +385,16 @@ after it.
 :ref:`dev_guide_dictionary` describes the two tables and where their content comes from.
 
 Its public functions:
-:func:`~opus_import.steps.do_dictionary.create_import_contexts_table` and
-:func:`~opus_import.steps.do_dictionary.create_import_definitions_table` build the two
-import tables, :func:`~opus_import.steps.do_dictionary.copy_dictionary_from_import_to_permanent`
-copies them over, and :func:`~opus_import.steps.do_dictionary.do_dictionary` is the step.
+:func:`~opus_import.steps.do_dictionary.fill_contexts` and
+:func:`~opus_import.steps.do_dictionary.fill_definitions` fill ``contexts__new`` and
+``definitions__new``, and :func:`~opus_import.steps.do_dictionary.do_dictionary` is the
+step.
 
-The step builds both import tables, copies them over the permanent ones only if both
-builds succeeded, and drops the import tables **both before and after**, so a failed
-build leaves nothing behind and the permanent tables keep what the previous run wrote.
-Contexts are built first and copied first, and ``definitions`` is dropped first and
-created last, because ``definitions`` has a foreign key onto ``contexts``.
+The step rebuilds the two tables as one set by swap
+(:ref:`dev_guide_import_steps_table_swap`): both are filled before either is swapped in,
+and one rename swaps both, so a reader never finds the dictionary missing, partly filled
+or with one table new and the other old. The definitions fill also writes the mult
+tooltip contexts into ``contexts__new``, which is why the two fill functions share it.
 
 The definitions builder collects every fault before writing anything; the contexts
 builder stops at the first malformed line. Either way nothing is written and the

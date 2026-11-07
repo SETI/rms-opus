@@ -304,18 +304,48 @@ is.
     deleting a key from a schema is a change to the definition of the database rather
     than documentation work. Do not add either to a new column.
 
-``field_defalut``
-    A misspelling of ``field_default``, on one column. It changes nothing today,
-    because a missing ``field_default`` already means SQL ``NULL`` and that column's
-    value is ``null`` -- but a non-null default written under this spelling would be
-    ignored without complaint.
-
 ``definition_results``
     Reported by the recipe and nonetheless read, for the reason given above.
 
 The ``data_source`` entries in ``obs_files.json`` are unread too, for a different
 reason: the key is read everywhere else, so no key-level check can see it. See
 `Filling the column`_.
+
+.. _dev_guide_table_schemas_checks:
+
+Checking the schemas
+--------------------
+
+``tests/opus_import/test_table_schemas.py``, in the database-free unit suite, reads every
+packaged schema whole and checks what the import and the web application assume of it,
+so a mistake fails the suite rather than an import, or a tooltip nobody sees. An entry is
+one of four kinds, told apart by its keys -- a column (``field_name``), a link
+(``pi_referred_slug``), a definition with no column (``definition`` and no
+``field_name``), or a table-level ``{"constraint": "..."}`` -- and the checks are:
+
+* **No object names a key twice.** JSON allows it and Python's reader keeps the last
+  value without a word, so a key written twice is a value silently ignored. The files
+  are read with a loader that refuses it.
+* Each entry carries exactly the keys of its kind: a column only the keys above, at
+  least ``field_name`` and ``field_type``; a link and a definition exactly theirs.
+* Every ``field_type`` is one ``create_table`` renders. The renderer and the test read
+  the same constants, ``MYSQL_FIELD_TYPE_SQL`` and ``MYSQL_WIDTH_FIELD_TYPE`` in
+  :mod:`opus_import.importdb.mysql`, so the two cannot disagree. An ``enum`` column, and
+  only one, carries ``field_enum_options``.
+* Every ``field_key`` is one ``create_table`` renders, and a foreign key, and only a
+  foreign key, names its table and column. The flags are booleans.
+* A column with a ``param_info`` row carries the keys that step reads without a default;
+  its ``pi_form_type`` names a unit :mod:`opus_support` knows, and its ``pi_ranges`` an
+  entry of ``param_info_ranges.json``.
+* Every ``mult_options`` row has the seven values of
+  :class:`~opus_import.import_util.MultOption`, typed as it says, with distinct ids.
+* Every definition has a term and a context, no two share both, every context is one
+  ``contexts.csv`` defines, and every ``pi_dict_name`` and ``pi_dict_context`` pair a
+  column names, for the search form or the results, resolves to a definition the
+  dictionary step creates.
+
+A schema change that breaks one of these fails here first. A new key or a new
+table-level entry is added to the test in the same change that adds it to a schema.
 
 Adding a column
 ---------------

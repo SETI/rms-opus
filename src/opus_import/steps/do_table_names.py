@@ -9,13 +9,16 @@ order a user sees.
 table added to `opus_import.config_data` needs a row adding here too or it will have no
 section. ``obs_files`` is deliberately absent: it holds one row per file rather than per
 observation and users never search it.
+
+The table is built beside the live one and swapped in (`opus_import.table_swap`), so the
+step can run on a schema that is being served.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from opus_import import config_data, import_util
+from opus_import import config_data, import_util, table_swap
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -188,54 +191,31 @@ def build_table_names_rows(
     return rows
 
 
-def create_import_table_names_table(ctx: ImportContext) -> None:
-    """Fill the import ``table_names`` table from the permanent tables that exist.
+def fill_table_names(ctx: ImportContext, new_table: str) -> bool:
+    """Fill an empty ``table_names`` table from the permanent tables that exist.
 
     The rows and their order come from `build_table_names_rows`; this function only
     asks the database which tables are there and writes what it gets back.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+        new_table: The permanent table to fill, already created from ``table_names``'s
+            schema.
+
+    Returns:
+        True; every row is built from what the permanent tables hold.
     """
     db = ctx.db
     assert db is not None
-    logger = ctx.logger
-
-    logger.log('info', 'Creating new import table_names table')
-    table_names_schema = import_util.read_schema_for_table(ctx, 'table_names')
-    # table_names.json is packaged with opus_import, so the schema is always found.
-    assert table_names_schema is not None
-    # Start from scratch
-    db.drop_table('import', 'table_names')
-    db.create_table('import', 'table_names', table_names_schema, ignore_if_exists=False)
+    ctx.logger.log('info', f'Filling {new_table}')
 
     rows = build_table_names_rows(
-        lambda table_name: db.table_exists('perm', table_name),
+        lambda name: db.table_exists('perm', name),
         db.table_names('perm', prefix='obs_surface_geometry__'),
     )
 
-    db.insert_rows('import', 'table_names', rows)
-
-
-def copy_table_names_from_import_to_permanent(ctx: ImportContext) -> None:
-    """Replace the permanent ``table_names`` table with the import one.
-
-    Parameters:
-        ctx: The import run's context, for the open database and the logger.
-    """
-    db = ctx.db
-    assert db is not None
-    logger = ctx.logger
-
-    logger.log('info', 'Copying table_names table from import to permanent')
-    # Start from scratch
-    table_names_schema = import_util.read_schema_for_table(ctx, 'table_names')
-    # table_names.json is packaged with opus_import, so the schema is always found.
-    assert table_names_schema is not None
-    db.drop_table('perm', 'table_names')
-    db.create_table('perm', 'table_names', table_names_schema, ignore_if_exists=False)
-
-    db.copy_rows_between_namespaces('import', 'perm', 'table_names')
+    db.insert_rows('perm', new_table, rows)
+    return True
 
 
 def do_table_names(ctx: ImportContext) -> None:
@@ -244,7 +224,5 @@ def do_table_names(ctx: ImportContext) -> None:
     Parameters:
         ctx: The import run's context, for the open database and the logger.
     """
-    create_import_table_names_table(ctx)
-    copy_table_names_from_import_to_permanent(ctx)
-    assert ctx.db is not None
-    ctx.db.drop_table('import', 'table_names')
+    new_name = table_swap.swap_new_name('table_names')
+    table_swap.rebuild_tables_by_swap(ctx, ['table_names'], lambda: fill_table_names(ctx, new_name))

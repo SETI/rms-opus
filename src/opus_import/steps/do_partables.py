@@ -10,13 +10,16 @@ Most triggers name a ``mult_`` table row id, because that is what the correspond
 ``obs_general`` column holds. Surface geometry targets are the exception: their trigger
 value is the target name itself, since the web side compares the user's search text to
 it directly.
+
+The table is built beside the live one and swapped in (`opus_import.table_swap`), so the
+step can run on a schema that is being served.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from opus_import import config_data, import_util
+from opus_import import config_data, import_util, table_swap
 from opus_import.steps.do_import_mult import mult_table_lookup_id
 
 if TYPE_CHECKING:
@@ -43,8 +46,8 @@ def _lookup_table_column(
     return None
 
 
-def create_import_partables_table(ctx: ImportContext) -> None:
-    """Fill the import ``partables`` table with every trigger OPUS knows.
+def fill_partables(ctx: ImportContext, new_table: str) -> bool:
+    """Fill an empty ``partables`` table with every trigger OPUS knows.
 
     One row per mission, per instrument and per instrument host, each keyed by the
     ``mult_`` id of the corresponding ``obs_general`` value, plus one per surface
@@ -54,18 +57,17 @@ def create_import_partables_table(ctx: ImportContext) -> None:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+        new_table: The permanent table to fill, already created from ``partables``'s
+            schema.
+
+    Returns:
+        True; every row is built from what the permanent tables hold.
     """
     db = ctx.db
     assert db is not None
     logger = ctx.logger
 
-    logger.log('info', 'Creating new import partables table')
-    partables_schema = import_util.read_schema_for_table(ctx, 'partables')
-    # partables.json is packaged with opus_import, so the schema is always found.
-    assert partables_schema is not None
-    # Start from scratch
-    db.drop_table('import', 'partables')
-    db.create_table('import', 'partables', partables_schema, ignore_if_exists=False)
+    logger.log('info', f'Filling {new_table}')
 
     # We use the entries in data_config to determine the first part of what
     # goes into partables.
@@ -158,28 +160,8 @@ def create_import_partables_table(ctx: ImportContext) -> None:
         }
         rows.append(entry)
 
-    db.insert_rows('import', 'partables', rows)
-
-
-def copy_partables_from_import_to_permanent(ctx: ImportContext) -> None:
-    """Replace the permanent ``partables`` table with the import one.
-
-    Parameters:
-        ctx: The import run's context, for the open database and the logger.
-    """
-    db = ctx.db
-    assert db is not None
-    logger = ctx.logger
-
-    logger.log('info', 'Copying partables table from import to permanent')
-    # Start from scratch
-    partables_schema = import_util.read_schema_for_table(ctx, 'partables')
-    # partables.json is packaged with opus_import, so the schema is always found.
-    assert partables_schema is not None
-    db.drop_table('perm', 'partables')
-    db.create_table('perm', 'partables', partables_schema, ignore_if_exists=False)
-
-    db.copy_rows_between_namespaces('import', 'perm', 'partables')
+    db.insert_rows('perm', new_table, rows)
+    return True
 
 
 def do_partables(ctx: ImportContext) -> None:
@@ -188,7 +170,5 @@ def do_partables(ctx: ImportContext) -> None:
     Parameters:
         ctx: The import run's context, for the open database and the logger.
     """
-    create_import_partables_table(ctx)
-    copy_partables_from_import_to_permanent(ctx)
-    assert ctx.db is not None
-    ctx.db.drop_table('import', 'partables')
+    new_name = table_swap.swap_new_name('partables')
+    table_swap.rebuild_tables_by_swap(ctx, ['partables'], lambda: fill_partables(ctx, new_name))

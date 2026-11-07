@@ -136,6 +136,16 @@ Then the deploy itself, and which one it is depends on the release.
 
     ./import_and_deploy/deploy_new_code_only.sh ==3.24.1
 
+  * The release changes neither the import nor the table schemas -- only the
+    web application, its templates and static files, or the docs. Nothing need
+    be written to the database:
+
+    ./import_and_deploy/deploy_new_code_only.sh --no-database ==3.24.1
+
+    It skips Django's migrations and the rebuild of param_info, partables,
+    table_names and the dictionary, and refuses if Django has a migration to
+    apply.
+
   * The release DOES change it. The database has to be rebuilt under the new
     release first, which is steps 3 to 5 again:
 
