@@ -436,11 +436,13 @@ class MysqlServer:
             if started_here:
                 self.stop()
 
-    def connect(self, schema: str | None = None) -> Any:
+    def connect(self, schema: str | None = None, *, read_timeout: int | None = None) -> Any:
         """Open a connection as root through the socket, in autocommit mode.
 
         Parameters:
             schema: The default schema, or None for none.
+            read_timeout: The seconds a read may wait before it fails, or None to wait as
+                long as it takes.
 
         Returns:
             A MySQLdb connection.
@@ -448,6 +450,8 @@ class MysqlServer:
         kwargs: dict[str, Any] = {}
         if schema is not None:
             kwargs['db'] = schema
+        if read_timeout is not None:
+            kwargs['read_timeout'] = read_timeout
         return MySQLdb.connect(
             unix_socket=str(self.config.socket),
             user=DB_USER,

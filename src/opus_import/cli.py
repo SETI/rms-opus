@@ -628,6 +628,9 @@ def main() -> None:
                 logger=logger,
                 import_prefix=config.import_.table_temp_prefix,
                 read_only=args.read_only,
+                bulk_load=config.import_.bulk_load,
+                scratch_dir=config.import_.scratch_dir,
+                transaction_rows=config.import_.transaction_rows,
             )
         except importdb.ImportDBError:
             sys.exit(-1)

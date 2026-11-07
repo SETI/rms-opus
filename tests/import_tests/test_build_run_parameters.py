@@ -16,6 +16,7 @@ from import_tests.tools import build_run, golden_io
 from import_tests.tools.build_run import StepResult
 from import_tests.tools.fixture_layout import REPO_ROOT
 from import_tests.tools.golden_io import DatabaseCredentials
+from opus_config import load_config
 
 
 class _Recorder:
@@ -52,7 +53,9 @@ def recorder(monkeypatch: pytest.MonkeyPatch) -> _Recorder:
     """Replace everything `perform_run` reaches outside this process."""
     recorder = _Recorder()
     monkeypatch.setattr(build_run, 'build_holdings_tree', lambda paths, overlay=None: None)
-    monkeypatch.setattr(build_run, 'write_opus_config', lambda paths, schema, credentials: None)
+    monkeypatch.setattr(
+        build_run, 'write_opus_config', lambda paths, schema, credentials, extra_import=None: None
+    )
     monkeypatch.setattr(build_run, 'run_pipeline_step', recorder.pipeline_step)
     monkeypatch.setattr(build_run, 'run_migrate', recorder.migrate)
     monkeypatch.setattr(golden_io, 'list_tables', lambda credentials, schema: [])
@@ -176,3 +179,47 @@ def test_a_relative_configuration_reaches_a_subprocess_as_absolute(
     monkeypatch.chdir(tmp_path)
     environment = build_run.run_environment(Path('opus.toml'))
     assert environment[build_run.CONFIG_ENV_VAR] == str(tmp_path.resolve() / 'opus.toml')
+
+
+def test_extra_import_keys_reach_the_configuration(tmp_path: Path) -> None:
+    """A session's `extra_import` keys are in the file the pipeline loads, with their types."""
+    paths = build_run.RunPaths.under(tmp_path)
+    build_run.write_opus_config(
+        paths,
+        'schema',
+        DatabaseCredentials('h', 'u', 'p'),
+        extra_import={'transaction_rows': 5, 'bulk_load': False, 'scratch_dir': '/scratch/a"b'},
+    )
+
+    config = load_config(paths.config_file).import_
+    assert (config.transaction_rows, config.bulk_load, config.scratch_dir) == (
+        5,
+        False,
+        '/scratch/a"b',
+    )
+
+
+def test_a_newline_in_a_value_survives_the_configuration(tmp_path: Path) -> None:
+    """A control character is escaped rather than breaking the file."""
+    paths = build_run.RunPaths.under(tmp_path)
+    build_run.write_opus_config(
+        paths,
+        'schema',
+        DatabaseCredentials('h', 'u', 'p'),
+        extra_import={'scratch_dir': '/scratch/a\nb\tc\\d\x7f'},
+    )
+    assert load_config(paths.config_file).import_.scratch_dir == '/scratch/a\nb\tc\\d\x7f'
+
+
+def test_perform_run_hands_extra_import_to_the_configuration(
+    tmp_path: Path, recorder: _Recorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A session's keys reach the file its pipeline reads, not just the writer's tests."""
+    written: list[object] = []
+    monkeypatch.setattr(
+        build_run,
+        'write_opus_config',
+        lambda paths, schema, credentials, extra_import=None: written.append(extra_import),
+    )
+    _perform(tmp_path, extra_import={'transaction_rows': 7})
+    assert written == [{'transaction_rows': 7}]

@@ -76,6 +76,9 @@ DEFAULT_CACHE_LOCATION = '127.0.0.1:11211'
 #: Seconds a worker thread keeps its database connection open when the file does not say.
 DEFAULT_CONN_MAX_AGE = 300
 
+#: The most rows one bulk load writes in one transaction when the file does not say.
+DEFAULT_TRANSACTION_ROWS = 100_000
+
 #: Names of the tables a configuration file must contain, in file order.
 TABLE_NAMES = ('database', 'paths', 'django', 'import')
 
@@ -210,11 +213,22 @@ class ImportConfig:
             copying them over the permanent ones.
         log_file: File the pipeline writes its information-level log to.
         debug_log_file: File the pipeline writes its debug-level log to.
+        bulk_load: Whether observation rows are written with ``LOAD DATA LOCAL
+            INFILE`` from a scratch file, rather than with ``INSERT`` statements. The
+            default is true; the import falls back to ``INSERT`` statements on its own
+            when the server refuses local files.
+        scratch_dir: Directory the bulk load writes its scratch files in, or None for
+            the system temporary directory.
+        transaction_rows: The most rows one bulk load writes in one transaction. The
+            default is 100,000.
     """
 
     table_temp_prefix: str
     log_file: str
     debug_log_file: str
+    bulk_load: bool
+    scratch_dir: str | None
+    transaction_rows: int
 
 
 @dataclass(frozen=True)
@@ -642,13 +656,19 @@ def _read_import(source: Path, values: dict[str, Any]) -> ImportConfig:
         The validated import configuration.
 
     Raises:
-        ConfigError: If any key is missing, of the wrong type, or unknown.
+        ConfigError: If any key is missing, of the wrong type, below its minimum, or
+            unknown.
     """
     table = _TableReader(source, 'import', values)
     config = ImportConfig(
         table_temp_prefix=table.read_str('table_temp_prefix', default='imp_'),
         log_file=table.read_str('log_file'),
         debug_log_file=table.read_str('debug_log_file'),
+        bulk_load=table.read_bool('bulk_load', default=True),
+        scratch_dir=table.read_optional_str('scratch_dir'),
+        transaction_rows=table.read_int(
+            'transaction_rows', default=DEFAULT_TRANSACTION_ROWS, minimum=1
+        ),
     )
     table.finish()
     return config

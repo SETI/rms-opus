@@ -52,6 +52,11 @@ and the log locations all come from the configuration file, and the keys it uses
      - The run's own info and debug logs.
    * - ``[import] table_temp_prefix``
      - The import namespace's prefix, ``imp_`` by default.
+   * - ``[import] bulk_load``, ``scratch_dir``, ``transaction_rows``
+     - How the observation rows are written: whether with ``LOAD DATA LOCAL INFILE``
+       (true by default), where its scratch files go (the system temporary directory by
+       default), and the most rows to a transaction (100,000 by default). See
+       :ref:`dev_guide_import_db_bulk_load`.
 
 Configuration values can be overridden for one run without editing the file, with
 ``--override-db-schema``, ``--override-pds3-data-dir`` and ``--override-pds4-data-dir``.

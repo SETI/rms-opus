@@ -277,6 +277,23 @@ Each invocation's wall-clock and memory are recorded -- each process's peak resi
 and the peak, over once-a-second samples, of the process tree's summed proportional set
 size -- with the step timings the invocation writes through ``--timing-json``
 (:ref:`dev_guide_import_running`), and the server's counters over the run.
+
+Some of those counters show whether a run reached the server's **sustained write limit**:
+the bytes written to data files and to the redo log, the pages flushed, and the waits for
+a free buffer-pool page (``Innodb_data_written``, ``Innodb_os_log_written``,
+``Innodb_buffer_pool_pages_flushed`` and ``Innodb_buffer_pool_wait_free``, each as
+``import.server.<counter>``). Beside them, ``import.server.peak_checkpoint_age_bytes`` is
+the largest checkpoint age the server reached -- ``Innodb_redo_log_current_lsn`` less
+``Innodb_redo_log_checkpoint_lsn``, sampled on the memory samples' beat -- which nears
+``innodb_redo_log_capacity`` when the server is holding writes back to flush; a server
+older than 8.0.30 reports neither number, and the metric is left out.
+
+Every invocation's import log names the **bulk-load path** it took
+(:ref:`dev_guide_import_db_bulk_load`). A run's details list the paths its logs name
+(``bulk_load_paths``), and the result's environment records as ``bulk_load_path`` every
+path any of the file's runs took, warm-up included, each once. A run whose import names
+none counts as ``insert_rows packets``, the path every import took before the bulk load
+existed, so a session whose runs took different paths shows both.
 ``--profile`` runs the holdings scales' bundle imports under :mod:`cProfile` and keeps
 the twenty functions with the highest cumulative time; a profiled run is recorded
 apart from the timed ones and never compared. ``--reuse-schema NAME`` imports nothing
