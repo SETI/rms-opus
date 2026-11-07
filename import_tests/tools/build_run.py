@@ -64,6 +64,7 @@ IMPORT_ARGS = ('--do-all-import',)
 AUX_ARGS = ('--cleanup-aux-tables',)
 DICTIONARY_ARGS = ('--import-dictionary',)
 VALIDATE_ARGS = ('--validate-perm',)
+VERSION_ARGS = ('--write-schema-version',)
 
 #: The Django migration's command line after the interpreter, run in the checkout.
 MIGRATE_ARGS = ('manage.py', 'migrate')
@@ -591,6 +592,7 @@ def perform_run(
     aux_args: Sequence[str] = AUX_ARGS,
     dictionary_args: Sequence[str] = DICTIONARY_ARGS,
     validate_args: Sequence[str] = VALIDATE_ARGS,
+    version_args: Sequence[str] = VERSION_ARGS,
     observer: StepObserver | None = None,
 ) -> ImportRun:
     """Build a tree and run the pipeline against it -- the whole sequence unless
@@ -598,7 +600,7 @@ def perform_run(
 
     The sequence is the one the integration import script runs: drop everything, import
     each bundle on its own, clean up the auxiliary tables, import the dictionary,
-    migrate Django's tables, validate. Importing one bundle per invocation is what
+    migrate Django's tables, validate, write the schema version row. Importing one bundle per invocation is what
     produces the on-top-of-previous-import warnings the whitelist expects, and it fixes
     the order row ids are handed out in, which the goldens encode.
 
@@ -614,14 +616,15 @@ def perform_run(
         extra_import_args: Arguments added to each ``--do-all-import`` invocation.
         extra_import: Further ``[import]`` configuration keys every invocation reads
             (`write_opus_config`), or None for none.
-        finalize: Whether to run the four steps after the imports -- the auxiliary
-            tables, the dictionary, the Django migration and the validation. True is the
-            production sequence and what the main run uses. False stops after the
-            imports, which is all a negative case needs: ``--do-all-import`` already
-            copies to the permanent tables, so ``obs_general`` and the mult tables the
-            negative assertions read exist without any of the four, and none of those
-            assertions reads a table only a later step creates. A run that stops early
-            leaves `ImportRun.django_tables` empty, so it can never be goldened.
+        finalize: Whether to run the steps after the imports -- the auxiliary tables,
+            the dictionary, the Django migration, the validation and the schema version.
+            True is the production sequence and what the main run uses. False stops
+            after the imports, which is all a negative case needs: ``--do-all-import``
+            already copies to the permanent tables, so ``obs_general`` and the mult
+            tables the negative assertions read exist without any of the later steps,
+            and none of those assertions reads a table only a later step creates. A run
+            that stops early leaves `ImportRun.django_tables` empty, so it can never be
+            goldened.
         python: The interpreter every invocation runs with; the default is this
             process's own.
         repo_root: The checkout every invocation runs in.
@@ -630,7 +633,11 @@ def perform_run(
             `extra_import_args` and the bundles.
         aux_args: The step that builds the auxiliary tables after the imports.
         dictionary_args: The step that imports the dictionary.
-        validate_args: The validation that ends the sequence.
+        validate_args: The validation that follows the migration.
+        version_args: The step that writes the schema version row, last; empty to skip
+            it, for an interpreter whose import does not have it. It is skipped too when
+            any invocation before it exited with failure, as ``opus_import_all`` stops
+            there.
         observer: Told about each invocation as it starts and as it finishes, the
             migration included, or None.
 
@@ -673,6 +680,10 @@ def perform_run(
         paths, schema, credentials, run, python=python, repo_root=repo_root, observer=observer
     )
     step(validate_args)
+    # As opus_import_all does: any step that failed leaves the schema unmarked.
+    failed = any(result.returncode != 0 for result in run.steps)
+    if len(version_args) > 0 and not failed:
+        step(version_args)
     return run
 
 

@@ -174,7 +174,9 @@ with a ``[SIM]`` marker instead of running it. A read-only run's bulk loads take
 ``INSERT`` path, so they write no scratch file, and it leaves ``local_infile`` and
 ``sql_log_bin`` alone; it sets the session's ``sql_mode`` as every connection does. Log
 messages branch on the flag too, so a
-dropped table reads as ``[SIM] Dropped table`` rather than ``Dropped table``.
+dropped table reads as ``[SIM] Dropped table`` rather than ``Dropped table``. A
+read-only run against a schema the server does not have fails as it connects rather
+than creating the schema.
 
 Warnings
 ~~~~~~~~
@@ -232,7 +234,9 @@ Both :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows` and
 
 **Connecting.** The constructor connects without naming a database and then issues
 ``USE``; an unknown-database error makes it **create the schema** and retry, which is
-why an import into a new schema needs no ``CREATE DATABASE`` first. It then primes a
+why an import into a new schema needs no ``CREATE DATABASE`` first. A read-only
+connection never creates it: an unknown database fails the run, with a fatal message
+naming the schema. It then primes a
 cache of every table name, reads the server version, and sets a strict SQL mode --
 failing the run if it cannot. Last, it sets the session up for the import's writes:
 it chooses the bulk-load path (below), and where the server keeps a binary log it issues

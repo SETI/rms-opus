@@ -36,6 +36,7 @@ from opus_import.steps import (
     do_import,
     do_param_info,
     do_partables,
+    do_schema_version,
     do_table_names,
     do_update_mult_info,
     do_validate,
@@ -411,6 +412,15 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         help='Import the dictionary and contexts from scratch',
     )
 
+    parser.add_argument(
+        '--write-schema-version',
+        action='store_true',
+        default=False,
+        help="""Mark the schema finished under this release's schema version, the last
+                step of every sequence that finishes a database; implied by nothing.
+                Refuses, exiting non-zero, when the schema holds another version""",
+    )
+
     # Arguments about bundle selection
     parser.add_argument(
         'bundles',
@@ -480,11 +490,14 @@ def main() -> None:
     Raises:
         SystemExit: With a non-zero status, logged first, when the arguments are
             contradictory, a bundle descriptor is bad, the database connection fails,
-            the observation import fails, or an exception reaches the top-level handler.
+            the observation import fails, ``--write-schema-version`` refuses, an
+            exception reaches the top-level handler, or -- unless
+            ``--import-ignore-errors`` -- ``--create-param-info``,
+            ``--import-dictionary`` or ``--validate-perm`` failed, after the
+            invocation's other steps have run.
             **A non-zero status means the run stopped, not that a zero status means it
-            was clean:** several steps report failure through the log and leave the
-            status zero, a failed dictionary import and every validation error among
-            them. Read ``ERRORS.log`` to judge whether a run was clean.
+            was clean:** other steps report failure through the log and leave the
+            status zero. Read ``ERRORS.log`` to judge whether a run was clean.
     """
     command_list = sys.argv[1:]
 
@@ -662,6 +675,13 @@ def main() -> None:
         if not do_import.do_import_steps(ctx):
             sys.exit(-1)
 
+        # The finishing steps that failed in this invocation. Any failure keeps it from
+        # marking the schema ready, and makes it exit with failure once its other steps
+        # have run, so opus_import_all, which runs each finishing step as its own
+        # invocation, stops before its --write-schema-version. --import-ignore-errors
+        # overrides both, for a debugging run.
+        failed_steps: list[str] = []
+
         # This MUST be done after the permanent tables are created, since they
         # are used to determine what goes into the param_info table.
 
@@ -673,7 +693,8 @@ def main() -> None:
 
             if args.create_param_info:
                 with ctx.timed('create_param_info'):
-                    do_param_info.do_param_info(ctx)
+                    if not do_param_info.do_param_info(ctx):
+                        failed_steps.append('--create-param-info')
             if args.create_partables:
                 with ctx.timed('create_partables'):
                     do_partables.do_partables(ctx)
@@ -696,7 +717,8 @@ def main() -> None:
 
         if args.validate_perm:
             with ctx.timed('validate_perm'):
-                do_validate.do_validate(ctx, 'perm')
+                if not do_validate.do_validate(ctx, 'perm'):
+                    failed_steps.append('--validate-perm')
 
         if args.create_cart and ctx.try_cart_later:
             logger.open(
@@ -715,8 +737,25 @@ def main() -> None:
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
             with ctx.timed('import_dictionary'):
-                do_dictionary.do_dictionary(ctx)
+                if not do_dictionary.do_dictionary(ctx):
+                    failed_steps.append('--import-dictionary')
             logger.close()
+
+        failure_refuses = len(failed_steps) > 0 and not args.import_ignore_errors
+
+        # Last, after validation, because the row is what makes the schema servable.
+        if args.write_schema_version:
+            if failure_refuses:
+                import_util.log_error(
+                    ctx,
+                    f'{", ".join(failed_steps)} failed, so the schema is not marked ready; '
+                    '--import-ignore-errors marks it ready regardless',
+                )
+                sys.exit(-1)
+            with ctx.timed('write_schema_version'):
+                written = do_schema_version.write_schema_version(ctx)
+            if not written:
+                sys.exit(-1)
 
         if args.profile:
             pr.disable()
@@ -728,6 +767,8 @@ def main() -> None:
             logger.info('Profile results:\n%s', s.getvalue())
 
         logger.close()
+        if failure_refuses:
+            sys.exit(-1)
 
     # This top-level handler logs the import failures that reach it, including an
     # ImportDBError raised from the pipeline. It catches Exception rather than

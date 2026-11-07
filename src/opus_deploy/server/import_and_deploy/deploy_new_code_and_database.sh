@@ -85,6 +85,15 @@ sudo echo
 # Everything from here to the switch happens beside the running installation, which
 # goes on serving.
 source ${IMPORT_SCRIPT_DIR}/_opus_setup_environment.sh
+
+# Before anything writes to the database: it must be one this release imported and
+# finished, its schema_version row holding the release's version in the ready state.
+source ${IMPORT_SCRIPT_DIR}/_check_schema_version.sh
+if ! check_schema_version; then
+    echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+    exit 1
+fi
+
 pip install mod-wsgi
 
 # Django's contrib tables (sessions, auth, contenttypes, admin). The OPUS tables

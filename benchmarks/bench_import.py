@@ -186,6 +186,11 @@ class ImportBench:
         self.scenario = scenario
         self.cache_location = cache_location
 
+    @functools.cached_property
+    def schema_version(self) -> int | None:
+        """The side's ``SCHEMA_VERSION``, read once through its interpreter, or None."""
+        return self.side.schema_version()
+
     def schema_name(self, index: int | str, suffix: str = '') -> str:
         """Return the schema of one run.
 
@@ -397,6 +402,11 @@ class ImportBench:
             aux_args=[self.spelling.finalize, *timing],
             dictionary_args=[*build_run.DICTIONARY_ARGS, *timing],
             validate_args=[self.spelling.validate, *timing],
+            version_args=(
+                [*self.spelling.write_schema_version, *timing]
+                if len(self.spelling.write_schema_version) > 0
+                else []
+            ),
             observer=monitor,
         )
         require_empty_errors_log(paths.errors_log, at_end=True)
@@ -488,7 +498,7 @@ class ImportBench:
             The result run, of kind ``finalize``, and the copy it finalized.
         """
         schema = self.schema_name('finalized')
-        clone_s = clone_schema(self.server, source, schema)
+        clone_s = clone_schema(self.server, source, schema, version=self.schema_version)
         run_dir = self.label.scratch_dir / 'finalize'
         config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
         run = new_run('finalize')
@@ -552,7 +562,7 @@ class ImportBench:
         bundle = self.scenario.largest
         assert bundle is not None
         schema = self.schema_name(index, '_incremental')
-        clone_s = clone_schema(self.server, source, schema)
+        clone_s = clone_schema(self.server, source, schema, version=self.schema_version)
         run_dir = self.label.scratch_dir / f'import_{index}_incremental'
         config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
         monitor.expect_groups([bundle])
@@ -880,7 +890,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         'import_scenario_hash': scenario_hash([scenario.path]),
         'import_start_method': DEFAULT_START_METHOD,
         'bulk_load_path': DEFAULT_BULK_LOAD_PATH,
-        'schema_version': None,
     }
     with server.running():
         environment.update(server_environment(server))
@@ -893,7 +902,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 if args.clone:
                     schema = bench.schema_name('clone')
                     run['metrics']['import.clone_s'] = clone_schema(
-                        server, args.reuse_schema, schema
+                        server, args.reuse_schema, schema, version=bench.schema_version
                     )
                 run['details'] = {'reused_schema': args.reuse_schema, 'schema': schema}
             environment['schema'] = schema

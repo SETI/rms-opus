@@ -188,7 +188,7 @@ def copy_dictionary_from_import_to_permanent(ctx: ImportContext) -> None:
     db.copy_rows_between_namespaces('import', 'perm', 'definitions')
 
 
-def do_dictionary(ctx: ImportContext) -> None:
+def do_dictionary(ctx: ImportContext) -> bool:
     """Rebuild the permanent dictionary tables, driven by ``--import-dictionary``.
 
     The import tables are dropped both before and after, so a failed build leaves
@@ -196,13 +196,18 @@ def do_dictionary(ctx: ImportContext) -> None:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+
+    Returns:
+        True if both tables were rebuilt, False if a build failed, having logged why.
     """
     db = ctx.db
     assert db is not None
     # Contexts has to come first because of a foreign key
     db.drop_table('import', 'definitions')
     db.drop_table('import', 'contexts')
-    if create_import_contexts_table(ctx) and create_import_definitions_table(ctx):
+    built = create_import_contexts_table(ctx) and create_import_definitions_table(ctx)
+    if built:
         copy_dictionary_from_import_to_permanent(ctx)
     db.drop_table('import', 'definitions')
     db.drop_table('import', 'contexts')
+    return built

@@ -416,8 +416,9 @@ A full-holdings import is **hours to days**. What it runs is ``opus_import_all``
 installed command: every bundle set in order -- Galileo and New Horizons first, while the
 tables are small, because their bundles carry observations that appear in more than one
 -- then the rest in roughly decreasing order of how long each takes, and finally the
-three steps that finish the database, the auxiliary tables, the dictionary and the
-validation. The order lives in the release being installed rather than in the scripts, so
+four steps that finish the database, the auxiliary tables, the dictionary, the
+validation and the schema version row the web application checks for
+(:ref:`user_guide_deployment_schema_version`). The order lives in the release being installed rather than in the scripts, so
 it cannot disagree with the code importing.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
@@ -451,20 +452,23 @@ then deploys the database that produced::
     # ... fill it in: schema = "<database>", a name of your own, and the same paths
     #     deploy.env names.
 
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --cleanup-aux-tables
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --import-dictionary
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate-perm
-
-    # Then step 5 as usual, naming that database.
+    # Each command runs only if the one before it succeeded, so a failed step stops
+    # here rather than leaving a database marked ready and deployed. The last line is
+    # step 5 as usual, naming that database.
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --cleanup-aux-tables &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --import-dictionary &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate-perm &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --write-schema-version &&
     ./import_and_deploy/deploy_new_code_and_database.sh <database> ==<release>
 
 What ``--do-it-all`` takes is a *descriptor*, and several can be given, comma- or
 space-separated: a bundle id (``COISS_2002``), a whole bundleset (``COISS_2xxx``), one of
 the shorthands for a mission or an instrument (``CASSINI``, ``GALILEO``, ``HST``,
 ``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their relatives, matched without regard to
-case), or ``ALL``. The three steps after it are what finishes a database, and a direct
-invocation is the one path that does not run them for you. ``opus_import --help`` lists
+case), or ``ALL``. The four steps after it are what finishes a database, the last of
+them what lets the web application serve it, and a direct invocation is the one path
+that does not run them for you. ``opus_import --help`` lists
 every option and works without a configuration file; :ref:`dev_guide_import_running` is
 the complete reference.
 

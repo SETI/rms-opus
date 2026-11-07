@@ -129,10 +129,10 @@ The scripts
     that same database, runs the same migration, static-file and description-table steps,
     and switches to it the same way. It does not upgrade anything in place.
 
-    Whether a release changed the schemas is the operator's call, from the release notes:
-    a database carries no record of the release that wrote it, so nothing here can tell
-    the two cases apart. When they did change, the deploy is an import under the new
-    release followed by ``deploy_new_code_and_database.sh``.
+    The database records its schema version, and the script refuses, before writing
+    anything, a release whose version differs (:ref:`user_guide_deployment_schema_version`).
+    When the schemas did change, the deploy is an import under the new release followed
+    by ``deploy_new_code_and_database.sh``.
 
 ``update_deploy_scripts.sh [<version spec>]``
     Brings this copy of the chain up to a release: it upgrades ``rms-opus`` in
@@ -177,6 +177,36 @@ of any machine. ``run_full_opus_import.sh`` runs the first at the end of an impo
 ``OPUS_DB_DUMP_DIR`` names a directory and the second as well when there is a peer, and
 ``scripts/import/clone_database.sh`` in the repository copies one database to another on
 the same server.
+
+.. _user_guide_deployment_schema_version:
+
+The schema version check
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+A finished database records which generation of the table schemas imported it, in a
+one-row ``schema_version`` table holding a version and a state. The import's last step,
+``opus_import --write-schema-version``, writes it: ``opus_import_all`` runs it after
+validation, and only when validation logged no error, so a database
+``run_full_opus_import.sh`` built cleanly has it. Each release carries
+its own version, and the web application serves a database only when the row holds that
+version in the ``ready`` state. For any other database it answers every request with a
+503 whose text names the remedy.
+
+Both deploy scripts make the same check right after building the new installation,
+before ``opus_manage`` or ``opus_import`` touches the database, and stop there when it
+fails. Nothing has been written to the database at that point, and the installation
+being served is untouched:
+
+* **No row**: no release finished the database. Re-import it under the release. If this
+  release imported it and only the last step is missing, run ``opus_import
+  --write-schema-version`` against it.
+* **Another version**: a different release imported it. Re-import it under this release
+  and deploy it with ``deploy_new_code_and_database.sh``.
+* **A state other than** ``ready``: an import or an append is still writing to it, or
+  stopped part way. Finish it, ending with ``opus_import --write-schema-version``.
+
+``--write-schema-version`` never changes a version a database already records, so a
+release cannot claim a database another release imported.
 
 .. _user_guide_deployment_config:
 
@@ -270,9 +300,10 @@ what users see, so it is done deliberately.
    database named for the moment it started, and ``import`` pointed at the installation
    doing the work. Neither the database being served nor the installation serving it is
    touched, which is what makes every step after this one reversible.
-2. **Read the error log.** The import's own exit status is not the whole story:
-   ``--validate-perm`` and the dictionary import both report through the log rather than
-   through the status, so an automated run gates on ``ERRORS.log`` being empty.
+2. **Read the error log.** The import's own exit status is not the whole story: several
+   steps report a failure through the log rather than through the status, so an
+   automated run gates on ``ERRORS.log`` being empty. A failed ``param_info`` build,
+   dictionary import or validation does stop the run, before the schema is marked ready.
    :ref:`dev_guide_import_verifying` is the full check.
 3. **Compare the new database against the one being served.** Both are named before
    anything is erased: ``opus_import_all`` names the one it is about to build, and the

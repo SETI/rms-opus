@@ -4661,3 +4661,69 @@ Nothing above this line is rewritten by an executor.
 - The call site's rows are the lists `import_one_index` already builds, one per table, so
   `bulk_load_rows` writes each chunk's file from that list without copying it, rather than
   appending each row as it is produced. Making the rows a stream is PR-09's change.
+
+### 2026-11-07, PR-05 (written against this file at 8513d904)
+
+- PR-05's measurement, at fixture scale: the base imported once (commit 8513d904) into
+  `bench_fixture_before_a_1`, and both sides served that schema, five web runs a side,
+  alternated before, after, before, after, then after, before, after, before, after,
+  before; the head measured at db533757. Every web guard held. The first four runs (one
+  a side twice) showed `web.app-cold.search.broad.wall_s` as regressed, set by one run
+  of 151 ms against others of 40 to 75 ms on both sides, so the count was raised to the
+  five §2.6 gives. The result files are `2026-11-07_PR-05_{before,after}_fixture_mysql_a.json`
+  in the operator's results directory; their environments record `schema_version` as
+  null and 1.
+- The harness's rule is general rather than a step for PR-05 alone: before a side's
+  server starts (`bench_web`, and `bench_db`'s query capture), `stamp_schema_version`
+  restamps the schema's row to that side's `SCHEMA_VERSION`, and where the schema has no
+  row it runs that side's own `--write-schema-version`. The head's first web run of the
+  measurement above wrote the shared schema's row that way. A side whose code has no
+  `SCHEMA_VERSION` checks nothing and is left alone.
+- `benchmarks/scenarios/import_test.toml` names bundle groups only, and the harness's
+  finalization already ran `--write-schema-version` for a side that lists it, so neither
+  changed.
+- `--write-schema-version` exits non-zero when it refuses, as well as logging the error,
+  so `opus_import_all` and any script running it stops there.
+- A failed finishing step gates `ready`, which the section does not say. `do_validate`,
+  `do_param_info` and `do_dictionary` return whether they succeeded. When one failed, the
+  invocation does not run `--write-schema-version` even if asked, logging an error
+  instead, and exits with failure after its other steps, so `opus_import_all`, which runs
+  each finishing step as its own invocation, stops before the version step, and
+  `build_run.perform_run` skips it. `--import-ignore-errors` overrides both. Without
+  this, a schema that failed validation or lost its dictionary was marked `ready` and
+  served. The review of the PR found it. PR-07's bundle-error gate is the same rule for
+  the import's own errors.
+- The web application's re-check runs one request at a time, and a request arriving
+  while another checks is refused at once with the last check's reason rather than
+  waiting, so a read stalled on an unresponsive database holds one thread, not the
+  worker. The harness restamps only a single `ready` row: a row in another state keeps
+  its version, and two rows are refused.
+- The web application reads the row as `opus_app.wsgi` loads, as the section says, and
+  serves Django's application itself when the row is right. When it is not, or the
+  database cannot be read, the stub repeats the check on each request, answering 503
+  until a check passes, and then serves the application without checking again. A
+  stub that refused for good would have needed a reload of every worker after
+  `--write-schema-version`, and would have turned a database briefly down while mod_wsgi
+  loaded into an outage until a restart; the CI package job also imports
+  `opus_app.wsgi` with no database. The review of the PR asked for the recheck. The 503
+  body leaves out the driver's message, which names the account; the log has it.
+- The deploy check judges the row with the web application's own rule rather than a
+  copy of it in bash: its one `python -c` line prints what
+  `opus_import.schema_version.served_schema_version_problem()` returns, which is
+  `schema_version_problem` of the served schema's rows, and the shell refuses when that
+  is not empty. The function imports `opus_config` and `opus_import.importdb` only when
+  called.
+- A read-only connection no longer creates an absent schema. `ImportDBMySQL`'s
+  constructor answered an unknown database with `CREATE DATABASE` whatever the flag, so
+  `--read-only`, and the deploy check's read-only connection, against a schema the
+  server lacked left an empty schema behind. A read-only connection now fails as it
+  connects, with a fatal message naming the schema; the deploy check refuses with
+  "cannot read the schema_version row". The defect predates this plan; the review of
+  PR-04 found it, and PR-05 fixes it because its deploy check opens that connection.
+- The database the Ring-Moon Systems Node serves has no version row until this release
+  imports one, so the first deploy of this release refuses it. A database another
+  release with the same table schemas imported (this one changes none) is finished with
+  `opus_import --write-schema-version` under the new installation's configuration.
+- PR-05 was branched from `db-perf` at 8513d904, before PR-04 merged, and rebased onto
+  `db-perf` after it (15afebd6). The measurement above is of the branch before the
+  rebase; PR-04 changes how the import writes, not what the web application serves.

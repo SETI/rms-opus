@@ -155,6 +155,8 @@ class ImportDBMySQL(ImportDBSuper):
     ) -> None:
         """Open the connection to a MySQL server, creating the schema if it is absent.
 
+        A read-only connection never creates the schema: an absent one is an error.
+
         The parameters are `ImportDBSuper`'s, and ``db_name`` is ignored: MySQL has no
         level above the schema. Once connected, the session is set up for the import's
         writes (`_prepare_import_session`).
@@ -163,7 +165,7 @@ class ImportDBMySQL(ImportDBSuper):
             db_hostname: The MySQL server's host name.
             db_name: Unused.
             db_schema: The schema (MySQL database) holding the OPUS tables. It is
-                created if the server does not already have it.
+                created if the server does not already have it, unless ``read_only``.
             db_user: The user to connect as.
             db_password: That user's password.
             mult_form_types: The ``param_info`` form types that have a ``mult_`` table,
@@ -181,7 +183,8 @@ class ImportDBMySQL(ImportDBSuper):
 
         Raises:
             ImportDBError: If the server cannot be reached, the schema can be neither
-                used nor created, or the session's SQL mode cannot be set.
+                used nor created, the schema is absent on a read-only connection, or the
+                session's SQL mode cannot be set.
             ValueError: If `transaction_rows` is less than 1, before anything connects.
         """
         super().__init__(
@@ -248,6 +251,14 @@ class ImportDBMySQL(ImportDBSuper):
                     self._execute(cmd)
                 except MySQLdb.Error as e:
                     err_code = e.args[0] if e.args else None
+                    if err_code == ERR_UNKNOWN_DATABASE and self.read_only:
+                        message = (
+                            f'Database "{self.db_schema}" does not exist, and a read-only '
+                            'run does not create it'
+                        )
+                        if self.logger:
+                            self.logger.log('fatal', message)
+                        raise ImportDBError(message) from e
                     if err_code == ERR_UNKNOWN_DATABASE:
                         try:
                             cmd = f'CREATE DATABASE {self.quote_identifier(self.db_schema)}'

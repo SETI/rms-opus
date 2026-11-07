@@ -2,7 +2,7 @@
 
 A full-holdings import is not one command. The bundle sets are imported one group at a
 time, in a deliberate order; two of them need an extra option; and the database is
-finished afterwards by three more steps. That sequence used to live in a shell script in
+finished afterwards by four more steps. That sequence used to live in a shell script in
 the repository, which meant an installed OPUS could not run it. It lives here instead, so
 that ``opus_import_all`` is available wherever the distribution is installed::
 
@@ -50,9 +50,15 @@ BUNDLE_SETS = (
 )
 
 #: What finishes the database once every bundle set is in it. They are the auxiliary
-#: tables that describe the search form, the dictionary the tooltips come from, and the
-#: validation that reads the result back. None of them names a bundle.
-FINALIZATION_OPTIONS = ('--cleanup-aux-tables', '--import-dictionary', '--validate-perm')
+#: tables that describe the search form, the dictionary the tooltips come from, the
+#: validation that reads the result back, and the schema version row that lets the web
+#: application serve the result, which comes last. None of them names a bundle.
+FINALIZATION_OPTIONS = (
+    '--cleanup-aux-tables',
+    '--import-dictionary',
+    '--validate-perm',
+    '--write-schema-version',
+)
 
 #: What the run does before it imports anything, which is to drop the permanent tables,
 #: including the ones no bundle set being imported would otherwise replace.
@@ -138,7 +144,7 @@ def main() -> None:
         epilog='Any other option is passed to every opus_import invocation this runs.',
     )
     # Named exactly as the pipeline names it, and not passed through: an option this
-    # parser did not recognize would reach the import steps and not the three that
+    # parser did not recognize would reach the import steps and not the ones that
     # finish the database, which would finish a different database from the one just
     # imported.
     parser.add_argument(

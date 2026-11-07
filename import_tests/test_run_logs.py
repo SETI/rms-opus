@@ -1,8 +1,7 @@
 """The run's real gate is its log, not its exit status.
 
-``--validate-perm`` reports every validation failure through the logger and still exits
-zero, and so do several other steps, so a run is judged by what it wrote to
-``ERRORS.log`` and ``WARNINGS.log``. Every warning has to be admitted by a checked-in
+Several steps report a failure through the logger and still exit zero, so a run is judged
+by what it wrote to ``ERRORS.log`` and ``WARNINGS.log``. Every warning has to be admitted by a checked-in
 whitelist entry carrying a comment saying why it is benign, and an entry that admits
 nothing is itself a defect -- a whitelist's whole value is that every line was justified
 against a warning someone actually saw.
@@ -69,8 +68,8 @@ def test_no_pipeline_step_stopped(main_run: ImportRun) -> None:
 def test_no_errors_were_logged(main_run: ImportRun) -> None:
     """The run logged nothing at error level.
 
-    The exit status cannot stand in for this: the validation step raises nothing and its
-    return value is discarded, so a validation failure leaves a zero status behind.
+    The exit status cannot stand in for this: several steps log a failure and still exit
+    zero.
     """
     assert run_logs.distinct(run_logs.read_messages(main_run.paths.errors_log)) == []
 
