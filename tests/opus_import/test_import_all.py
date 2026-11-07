@@ -46,9 +46,12 @@ def test_the_sequence_starts_by_dropping_and_ends_by_validating() -> None:
     assert [step[-1] for step in steps[3 : 3 + len(import_all.BUNDLE_SETS)]] == list(
         import_all.BUNDLE_SETS
     )
-    finishing = len(import_all.FINALIZATION_OPTIONS)
-    assert [step[0] for step in steps[-finishing:]] == list(import_all.FINALIZATION_OPTIONS)
-    assert steps[-1][0] == '--write-schema-version'
+    assert [step[0] for step in steps[3 + len(import_all.BUNDLE_SETS) :]] == [
+        '--cleanup-aux-tables',
+        '--import-dictionary',
+        '--validate-perm',
+        '--write-schema-version',
+    ]
 
 
 def test_every_bundle_set_is_imported_once() -> None:

@@ -92,6 +92,10 @@ from import_tests.tools import build_run
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
+#: The only version-row state a side's web application serves. The harness reads it from
+#: the schema as text rather than importing a side's code, so it repeats the value.
+READY_STATE = 'ready'
+
 #: The server counters whose movement over each scenario a web result records.
 SCENARIO_COUNTERS = (
     'Innodb_buffer_pool_reads',
@@ -501,18 +505,26 @@ def stamp_schema_version(
         and whose schema is left as it is.
 
     Raises:
-        WebRunError: If the side has a version but no step that writes the row, or the
-            step fails.
+        WebRunError: If the side has a version but no step that writes the row, the step
+            fails, or the row's state is not ``ready``, which the harness does not
+            change, since only a finished import may set it.
     """
     version = side.schema_version()
     if version is None:
         return None
-    if not restamp_version(server, schema, version):
+    state = restamp_version(server, schema, version)
+    if state is None:
         if len(spelling.write_schema_version) == 0:
             raise WebRunError(
                 f'the side is schema version {version} but its import has no --write-schema-version'
             )
         run_import_step(side, spelling.write_schema_version, env, errors_log)
+    elif state != READY_STATE:
+        raise WebRunError(
+            f"schema {schema}'s version row is {state!r}, not {READY_STATE!r}: an import or "
+            "append to it did not finish, and the side's application would answer every "
+            'request 503'
+        )
     return version
 
 

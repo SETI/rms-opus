@@ -2,9 +2,10 @@
 
 The main run's golden covers the row a finished import writes. These tests need a schema
 whose row they can change, so they share one of their own: a single bundle imported and
-not finished, then taken through the steps one by one, in the order the tests below run.
-Each step is a real ``opus_import`` invocation, and its log directory is its own, since a
-refusal here is meant to log an error.
+not finished. Each test puts the version table in the state it needs before it runs, so
+any of them runs alone. The erase, which leaves nothing for the others, has a schema of
+its own. Each step is a real ``opus_import`` invocation, and its log directory is its
+own, since a refusal here is meant to log an error.
 """
 
 from __future__ import annotations
@@ -32,6 +33,17 @@ _OTHER_VERSION = SCHEMA_VERSION + 1000
 #: Loads the WSGI entry point as a web server would, and prints what it would call.
 _LOAD_WSGI = 'import opus_app.wsgi as w; print(type(w.application).__name__)'
 
+#: Loads the WSGI entry point and serves it one request, printing the status, then the
+#: body on the following lines.
+_SERVE_ONE = (
+    'import opus_app.wsgi as w\n'
+    'statuses = []\n'
+    "body = b''.join(w.application({'REQUEST_METHOD': 'GET', 'PATH_INFO': '/'}, "
+    'lambda status, headers: statuses.append(status)))\n'
+    'print(statuses[0])\n'
+    'print(body.decode())\n'
+)
+
 #: What `_LOAD_WSGI` prints when the entry point serves Django.
 _DJANGO_HANDLER = 'WSGIHandler'
 
@@ -51,6 +63,27 @@ def unfinished_run(
     root = tmp_path_factory.mktemp('mini_holdings_schema_version')
     bundle = negative_cases.bundle_for_class(negative_cases.DUPLICATE_ID_INSTRUMENT_CLASS)
     schema = fixture_layout.schema_name(os.getpid(), _CASE)
+    created_schemas.append(schema)
+    return build_run.perform_run(
+        root, schema, db_credentials, bundle_groups=[[bundle]], finalize=False
+    )
+
+
+@pytest.fixture(scope='module')
+def erase_run(
+    tmp_path_factory: pytest.TempPathFactory,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    subprocess_coverage: None,
+) -> build_run.ImportRun:
+    """Import one bundle into a schema of its own, for the erase to empty.
+
+    Returns:
+        The run.
+    """
+    root = tmp_path_factory.mktemp('mini_holdings_schema_version_erase')
+    bundle = negative_cases.bundle_for_class(negative_cases.DUPLICATE_ID_INSTRUMENT_CLASS)
+    schema = fixture_layout.schema_name(os.getpid(), f'{_CASE}_erase')
     created_schemas.append(schema)
     return build_run.perform_run(
         root, schema, db_credentials, bundle_groups=[[bundle]], finalize=False
@@ -134,6 +167,58 @@ def _wsgi_application(run: build_run.ImportRun) -> str:
     return finished.stdout.strip().splitlines()[-1]
 
 
+def _serve_one(run: build_run.ImportRun) -> tuple[str, str]:
+    """Load the entry point against the run's schema, in a process, and make one request.
+
+    Parameters:
+        run: The run.
+
+    Returns:
+        The response's status and body.
+    """
+    finished = subprocess.run(  # nosec B603 - this interpreter and a fixed program
+        [sys.executable, '-c', _SERVE_ONE],
+        env=build_run.run_environment(run.paths.config_file),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    status, _, body = finished.stdout.partition('\n')
+    return status, body
+
+
+def _no_table(credentials: DatabaseCredentials, schema: str) -> None:
+    """Drop the schema's version table, if it has one.
+
+    Parameters:
+        credentials: How to reach the server.
+        schema: The schema.
+    """
+    _query(credentials, schema, f'DROP TABLE IF EXISTS {TABLE_NAME}')
+
+
+def _row(
+    run: build_run.ImportRun, credentials: DatabaseCredentials, version: int, state: str
+) -> None:
+    """Give the schema exactly one version row.
+
+    Parameters:
+        run: The run.
+        credentials: How to reach the server.
+        version: The row's version.
+        state: The row's state.
+    """
+    _no_table(credentials, run.schema)
+    assert _step(run, *build_run.VERSION_ARGS).returncode == 0
+    _query(
+        credentials,
+        run.schema,
+        f'UPDATE {TABLE_NAME} SET version = %s, state = %s',
+        version,
+        state,
+    )
+
+
 def _errors(run: build_run.ImportRun) -> str:
     """Return what the run's error log holds so far.
 
@@ -151,30 +236,37 @@ def test_the_finishing_steps_alone_write_no_row(
     unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
     """``--cleanup-aux-tables`` and ``--import-dictionary`` leave the schema unservable."""
+    _no_table(db_credentials, unfinished_run.schema)
     for step in (build_run.AUX_ARGS, build_run.DICTIONARY_ARGS, build_run.VALIDATE_ARGS):
         assert _step(unfinished_run, *step).returncode == 0
     assert _rows(db_credentials, unfinished_run.schema) is None
 
 
 def test_the_web_application_refuses_a_schema_with_no_row(
-    unfinished_run: build_run.ImportRun,
+    unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
-    """The entry point serves the 503 stub rather than Django."""
-    assert _wsgi_application(unfinished_run) != _DJANGO_HANDLER
+    """The entry point answers 503, naming the missing row and the remedy."""
+    _no_table(db_credentials, unfinished_run.schema)
+    status, body = _serve_one(unfinished_run)
+    assert status.startswith('503')
+    assert f'no {TABLE_NAME} row' in body
+    assert 'opus_import --write-schema-version' in body
 
 
 def test_the_step_writes_this_version_ready(
     unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
     """With no table, the step creates it and inserts the release's version, ``ready``."""
+    _no_table(db_credentials, unfinished_run.schema)
     assert _step(unfinished_run, *build_run.VERSION_ARGS).returncode == 0
     assert _rows(db_credentials, unfinished_run.schema) == [(SCHEMA_VERSION, STATE_READY)]
 
 
 def test_the_web_application_serves_a_finished_schema(
-    unfinished_run: build_run.ImportRun,
+    unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
     """Once the row is written, the entry point is Django's own application."""
+    _row(unfinished_run, db_credentials, SCHEMA_VERSION, STATE_READY)
     assert _wsgi_application(unfinished_run) == _DJANGO_HANDLER
 
 
@@ -182,6 +274,7 @@ def test_running_it_again_changes_nothing(
     unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
     """A finished schema stays as it is."""
+    _row(unfinished_run, db_credentials, SCHEMA_VERSION, STATE_READY)
     assert _step(unfinished_run, *build_run.VERSION_ARGS).returncode == 0
     assert _rows(db_credentials, unfinished_run.schema) == [(SCHEMA_VERSION, STATE_READY)]
 
@@ -191,7 +284,7 @@ def test_an_appending_row_of_this_version_becomes_ready(
 ) -> None:
     """The step is the only writer of ``ready``, and it finishes an append."""
     schema = unfinished_run.schema
-    _query(db_credentials, schema, f'UPDATE {TABLE_NAME} SET state = %s', STATE_APPENDING)
+    _row(unfinished_run, db_credentials, SCHEMA_VERSION, STATE_APPENDING)
     assert _step(unfinished_run, *build_run.VERSION_ARGS).returncode == 0
     assert _rows(db_credentials, schema) == [(SCHEMA_VERSION, STATE_READY)]
 
@@ -201,7 +294,7 @@ def test_another_version_is_refused_and_left_alone(
 ) -> None:
     """A schema another release imported is never restamped."""
     schema = unfinished_run.schema
-    _query(db_credentials, schema, f'UPDATE {TABLE_NAME} SET version = %s', _OTHER_VERSION)
+    _row(unfinished_run, db_credentials, _OTHER_VERSION, STATE_READY)
     logged = len(_errors(unfinished_run))
     result = _step(unfinished_run, *build_run.VERSION_ARGS)
     assert result.returncode != 0
@@ -210,8 +303,9 @@ def test_another_version_is_refused_and_left_alone(
 
 
 def test_the_erase_drops_the_table(
-    unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
+    erase_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
     """``--drop-permanent-tables --scorched-earth`` leaves no version row behind."""
-    assert _step(unfinished_run, *build_run.DROP_ARGS).returncode == 0
-    assert _rows(db_credentials, unfinished_run.schema) is None
+    _row(erase_run, db_credentials, SCHEMA_VERSION, STATE_READY)
+    assert _step(erase_run, *build_run.DROP_ARGS).returncode == 0
+    assert _rows(db_credentials, erase_run.schema) is None

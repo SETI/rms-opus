@@ -220,3 +220,11 @@ def test_the_module_imports_neither_django_nor_the_configuration() -> None:
         check=True,
     )
     assert finished.stdout.strip() == '[]'
+
+
+def test_a_state_neither_ready_nor_appending_is_refused() -> None:
+    """A row the step did not write is not taken for a finished schema."""
+    written, db, logger = _write([(SCHEMA_VERSION, '')])
+    assert not written
+    assert db.rows == [(SCHEMA_VERSION, '')]
+    assert len(logger.messages_at('error')) == 1

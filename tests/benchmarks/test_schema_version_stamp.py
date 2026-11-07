@@ -82,7 +82,7 @@ def _stamp(
     tmp_path: Path,
     side: _VersionedSide,
     *,
-    has_row: bool,
+    state: str | None,
     help_text: str = _NEW_HELP,
 ) -> tuple[int | None, list[tuple[str, int]]]:
     """Stamp a schema for `side`, with `restamp_version` recorded.
@@ -91,7 +91,7 @@ def _stamp(
         monkeypatch: The fixture.
         tmp_path: A scratch directory.
         side: The side.
-        has_row: Whether the schema already has a version row.
+        state: The state of the schema's version row, or None for no row.
         help_text: The side's ``opus_import --help``.
 
     Returns:
@@ -99,9 +99,9 @@ def _stamp(
     """
     restamped: list[tuple[str, int]] = []
 
-    def restamp(server: Any, schema: str, version: int) -> bool:
+    def restamp(server: Any, schema: str, version: int) -> str | None:
         restamped.append((schema, version))
-        return has_row
+        return state
 
     monkeypatch.setattr(bench_web, 'restamp_version', restamp)
     version = stamp_schema_version(
@@ -120,7 +120,7 @@ def test_a_row_is_restamped_to_the_sides_version(
 ) -> None:
     """Two sides serving one schema each see their own version."""
     side = _VersionedSide(5)
-    version, restamped = _stamp(monkeypatch, tmp_path, side, has_row=True)
+    version, restamped = _stamp(monkeypatch, tmp_path, side, state='ready')
     assert version == 5
     assert restamped == [('shared', 5)]
     assert side.ran == []
@@ -131,7 +131,7 @@ def test_a_schema_with_no_row_gets_one_from_the_sides_own_step(
 ) -> None:
     """A schema an earlier import built has no row until the side's step writes it."""
     side = _VersionedSide(5)
-    _, restamped = _stamp(monkeypatch, tmp_path, side, has_row=False)
+    _, restamped = _stamp(monkeypatch, tmp_path, side, state=None)
     assert restamped == [('shared', 5)]
     assert side.ran == [['-m', 'opus_import', '--write-schema-version']]
 
@@ -141,7 +141,7 @@ def test_a_side_with_no_version_leaves_the_schema_alone(
 ) -> None:
     """Code before the version checks nothing, so nothing is written for it."""
     side = _VersionedSide(None)
-    version, restamped = _stamp(monkeypatch, tmp_path, side, has_row=False, help_text=_OLD_HELP)
+    version, restamped = _stamp(monkeypatch, tmp_path, side, state=None, help_text=_OLD_HELP)
     assert version is None
     assert restamped == []
     assert side.ran == []
@@ -152,4 +152,14 @@ def test_a_version_without_the_step_is_an_error(
 ) -> None:
     """A side that checks a row but cannot write one would serve only 503s."""
     with pytest.raises(WebRunError, match='no --write-schema-version'):
-        _stamp(monkeypatch, tmp_path, _VersionedSide(5), has_row=False, help_text=_OLD_HELP)
+        _stamp(monkeypatch, tmp_path, _VersionedSide(5), state=None, help_text=_OLD_HELP)
+
+
+def test_an_unfinished_schema_is_refused_not_marked_ready(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Only a finished import may set ``ready``; the harness says what is wrong instead."""
+    side = _VersionedSide(5)
+    with pytest.raises(WebRunError, match="'appending', not 'ready'"):
+        _stamp(monkeypatch, tmp_path, side, state='appending')
+    assert side.ran == []
