@@ -4707,6 +4707,6 @@ Nothing above this line is rewritten by an executor.
   imports one, so the first deploy of this release refuses it. A database another
   release with the same table schemas imported (this one changes none) is finished with
   `opus_import --write-schema-version` under the new installation's configuration.
-- PR-05 was branched from `db-perf` at 8513d904, before PR-04 merged. Both change
-  `build_run.perform_run`, `tests/import_tests/test_build_run_parameters.py` and these
-  notes, so the second of the two to merge rebases onto the first.
+- PR-05 was branched from `db-perf` at 8513d904, before PR-04 merged, and rebased onto
+  `db-perf` after it (15afebd6). The measurement above is of the branch before the
+  rebase; PR-04 changes how the import writes, not what the web application serves.
