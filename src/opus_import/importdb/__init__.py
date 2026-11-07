@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from opus_config.config import DEFAULT_TRANSACTION_ROWS
 from opus_import.importdb.mysql import ImportDBMySQL
 from opus_import.importdb.super import ImportDBError
 
@@ -39,6 +40,9 @@ def get_db(
     import_prefix: str | None = None,
     logger: pdslogger.PdsLogger | None = None,
     read_only: bool = False,
+    bulk_load: bool = True,
+    scratch_dir: str | None = None,
+    transaction_rows: int = DEFAULT_TRANSACTION_ROWS,
 ) -> ImportDBSuper:
     """Open a database of the named brand.
 
@@ -58,6 +62,12 @@ def get_db(
         logger: Where to report progress, statements and warnings, or None to report
             nothing.
         read_only: True to log every mutating statement instead of executing it.
+        bulk_load: Whether rows may be bulk loaded from a scratch file, the
+            configuration's ``[import] bulk_load``.
+        scratch_dir: The directory the scratch files go in, or None for the system
+            temporary directory; the configuration's ``[import] scratch_dir``.
+        transaction_rows: The most rows one bulk load writes in one transaction; the
+            configuration's ``[import] transaction_rows``.
 
     Returns:
         An open connection to the database, ready for the pipeline to use.
@@ -77,6 +87,9 @@ def get_db(
             import_prefix=import_prefix,
             logger=logger,
             read_only=read_only,
+            bulk_load=bulk_load,
+            scratch_dir=scratch_dir,
+            transaction_rows=transaction_rows,
         )
     # if db_brand.upper() == 'POSTGRESQL':
     #     return ImportDBPostgreSQL(db_hostname, db_name, db_schema,

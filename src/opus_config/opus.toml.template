@@ -151,3 +151,21 @@ table_temp_prefix = "imp_"
 # The log files the import pipeline writes. Their directory must already exist.
 log_file = "<IMPORT_LOG_DIR>/opus_import.log"
 debug_log_file = "<IMPORT_LOG_DIR>/opus_import_debug.log"
+
+# Whether observation rows are written with LOAD DATA LOCAL INFILE from a scratch
+# file, much the faster way, rather than with INSERT statements. The import falls back
+# to INSERT statements on its own, and says so in its log, when the server refuses
+# local files. Optional; the default is the value below.
+bulk_load = true
+
+# The directory the bulk load writes its scratch files in. A load of a large table
+# writes gigabytes, so point this at disk if the system temporary directory is
+# memory-backed (a tmpfs). Optional; leaving it out uses the system temporary
+# directory.
+# scratch_dir = "/var/tmp/opus_import"
+
+# The most rows one bulk load writes in one transaction. Lower it for shorter
+# transactions, which roll back faster when an import is killed, and less undo held
+# by the server; raise it for fewer statements and commits. Optional; the default is
+# the value below.
+transaction_rows = 100000

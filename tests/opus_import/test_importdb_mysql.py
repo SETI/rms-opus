@@ -11,10 +11,17 @@ this backend rather than nearly true. The identifier tests below cover the other
 of that property, the names that cannot travel as parameters at all.
 """
 
+from __future__ import annotations
+
+import json
+import re
+import warnings
+from pathlib import Path
 from typing import Any
 
 import pytest
 
+import opus_import
 from opus_import.importdb.super import ImportDBError, ImportDBSuper
 
 # mysqlclient is a runtime dependency, but `importdb/mysql.py` guards its own import so
@@ -22,7 +29,12 @@ from opus_import.importdb.super import ImportDBError, ImportDBSuper
 # collection in an environment that does not have the driver.
 MySQLdb = pytest.importorskip('MySQLdb')
 
-from opus_import.importdb.mysql import ImportDBMySQL  # noqa: E402 - follows the skip
+from opus_import.importdb.mysql import (  # noqa: E402 - follows the skip
+    BULK_LOAD_PATH_FILE,
+    BULK_LOAD_PATH_INSERT,
+    ImportDBMySQL,
+    load_data_text,
+)
 
 
 class _RecordingDB(ImportDBMySQL):
@@ -288,9 +300,9 @@ def test_where_clause_values_travel_as_parameters(db: _RecordingDB) -> None:
 
 def test_a_where_clause_with_no_parameters_passes_none(db: _RecordingDB) -> None:
     """An empty parameter list would make MySQLdb interpolate, so pass None."""
-    db.delete_rows('perm', 'obs_general')
+    db.delete_rows('perm', 'obs_general', '`id` > 0')
 
-    assert db.executed == [('DELETE FROM `obs_general`', None)]
+    assert db.executed == [('DELETE FROM `obs_general` WHERE `id` > 0', None)]
 
 
 def test_update_row_parameterizes_the_set_values_and_the_where(db: _RecordingDB) -> None:
@@ -348,7 +360,7 @@ class _FailingDB(_RecordingDB):
 @pytest.mark.parametrize(
     ('method', 'args'),
     [
-        ('delete_rows', ('import', 'obs_general')),
+        ('delete_rows', ('import', 'obs_general', '`id`=%s', [1])),
         ('copy_rows_between_namespaces', ('import', 'perm', 'obs_general')),
         ('upsert_rows', ('import', 'mult_x', 'id', [{'id': 0, 'value': 'a'}])),
     ],
@@ -368,3 +380,455 @@ def test_a_failed_statement_becomes_an_import_db_error(method: str, args: tuple[
 
     assert "Table 'x' doesn't exist" in str(excinfo.value)
     assert isinstance(excinfo.value.__cause__, MySQLdb.Error)
+
+
+# ---------------------------------------------------------------------------
+# Operations are exception-safe
+# ---------------------------------------------------------------------------
+
+
+def test_a_failed_operation_restores_the_warning_handler_and_the_stack() -> None:
+    """A raise inside an operation still runs `_exit`.
+
+    `_enter` installs a process-wide `warnings.showwarning` when a logger is set, and
+    left installed it would swallow every later warning in the process.
+    """
+
+    class _Logger:
+        def log(self, level: str, message: str) -> None:
+            pass
+
+    db = _FailingDB()
+    db.logger = _Logger()
+    before = warnings.showwarning
+
+    with pytest.raises(ImportDBError):
+        db.delete_rows('import', 'obs_general', '`id`=%s', [1])
+
+    assert warnings.showwarning is before
+    assert db._enter_stack == []
+
+
+def test_create_table_records_the_table_without_a_logger(db: _RecordingDB) -> None:
+    """The table-name cache learns of a new table whether or not anything is logged.
+
+    Without that, `table_exists` would answer False for the table just created, and a
+    second `create_table` would ask the server to create it again.
+    """
+    # What ImportDBMySQL.__init__ sets after connecting, which _RecordingDB skips.
+    db._table_names = set()
+    db._table_info_cache = {}
+    db.default_engine = 'INNODB'
+
+    db.create_table('import', 'cart', [{'field_name': 'id', 'field_type': 'uint4'}])
+
+    assert db.table_exists('import', 'cart')
+    assert db.create_table('import', 'cart', [{'field_name': 'id', 'field_type': 'uint4'}]) is False
+
+
+def test_a_server_error_with_one_argument_is_reported() -> None:
+    """An error carrying only a message is reported as itself, not as an IndexError."""
+
+    class _OneArgumentDB(_RecordingDB):
+        def _execute(
+            self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
+        ) -> None:
+            raise MySQLdb.Error('lost connection')
+
+    messages: list[str] = []
+
+    class _Logger:
+        def log(self, level: str, message: str) -> None:
+            messages.append(message)
+
+    db = _OneArgumentDB()
+    db.logger = _Logger()
+
+    with pytest.raises(ImportDBError, match='lost connection'):
+        db.delete_rows('import', 'obs_general', '`id`=%s', [1])
+
+    assert messages == ['Failed to delete rows from "imp_obs_general": lost connection']
+
+
+def test_delete_rows_refuses_a_missing_where_clause(db: _RecordingDB) -> None:
+    """No clause means nothing is deleted, rather than every row."""
+    with pytest.raises(ImportDBError, match='needs a WHERE clause or all_rows=True'):
+        db.delete_rows('perm', 'obs_general')
+    with pytest.raises(ImportDBError, match='needs a WHERE clause or all_rows=True'):
+        db.delete_rows('perm', 'obs_general', '')
+
+    assert db.executed == []
+
+
+def test_delete_rows_refuses_a_where_clause_with_all_rows(db: _RecordingDB) -> None:
+    """Asking for every row and for some of them at once is a caller's mistake."""
+    with pytest.raises(ImportDBError, match='and not both'):
+        db.delete_rows('perm', 'obs_general', '`id`=%s', [1], all_rows=True)
+
+    assert db.executed == []
+
+
+def test_delete_rows_deletes_every_row_when_asked(db: _RecordingDB) -> None:
+    """`all_rows=True` is the one way to empty a table."""
+    db.delete_rows('perm', 'obs_general', all_rows=True)
+
+    assert db.executed == [('DELETE FROM `obs_general`', None)]
+
+
+# ---------------------------------------------------------------------------
+# The bulk load's text
+# ---------------------------------------------------------------------------
+
+# One value per field type the packaged schemas use, with the text the load reads it
+# from. `char<N>` and `varchar<N>` stand for every width. The set of types is
+# regenerated by
+#     grep -ho '"field_type": "[a-z_0-9]*"' src/opus_import/table_schemas/*.json | sort -u
+# and `test_every_schema_field_type_has_a_case` fails when a schema gains a type with no
+# case here.
+_FIELD_TYPE_CASES: dict[str, tuple[Any, str]] = {
+    'char': ('COISS_2002', 'COISS_2002'),
+    'varchar': ('co-iss-n1460960653', 'co-iss-n1460960653'),
+    'text': ('a\tb\nc\\d\re\0f', 'a\\tb\\nc\\\\d\\re\\0f'),
+    'datetime': ('2026-11-06 12:34:56', '2026-11-06 12:34:56'),
+    'timestamp': ('2026-11-06 12:34:56', '2026-11-06 12:34:56'),
+    'enum': ('Y', 'Y'),
+    'flag_onoff': (1, '1'),
+    'flag_yesno': (0, '0'),
+    'int1': (-128, '-128'),
+    'int2': (-32768, '-32768'),
+    'int4': (-2147483648, '-2147483648'),
+    'uint2': (65535, '65535'),
+    'uint4': (4294967295, '4294967295'),
+    'mult_idx': (17, '17'),
+    'real4': (0.1, '0.1'),
+    'real8': (1.7976931348623157e308, '1.7976931348623157e+308'),
+    'json': ('{"a": "tab\\there"}', '{"a": "tab\\\\there"}'),
+    'mult_list': ('["SATURN", "S RINGS"]', '["SATURN", "S RINGS"]'),
+}
+
+
+def _schema_field_types() -> set[str]:
+    """Return every field type the packaged schemas use, widths folded away."""
+    schema_dir = Path(opus_import.__file__).parent / 'table_schemas'
+    types: set[str] = set()
+    for path in schema_dir.glob('*.json'):
+        for entry in json.loads(path.read_text(encoding='utf-8')):
+            if 'field_type' in entry:
+                types.add(re.sub(r'^(var)?char\d+$', r'\1char', entry['field_type']))
+    return types
+
+
+def test_every_schema_field_type_has_a_case() -> None:
+    """A field type added to a schema needs a case below before it can be trusted."""
+    assert _schema_field_types() == set(_FIELD_TYPE_CASES)
+
+
+@pytest.mark.parametrize('field_type', sorted(_FIELD_TYPE_CASES))
+def test_load_data_text_renders_each_field_type(field_type: str) -> None:
+    """Each type's value becomes the text LOAD DATA reads back as that value."""
+    value, text = _FIELD_TYPE_CASES[field_type]
+    assert load_data_text(value) == text
+
+
+@pytest.mark.parametrize(
+    ('value', 'text'),
+    [
+        (None, '\\N'),
+        ('', ''),
+        ('\\N', '\\\\N'),
+        ('NULL', 'NULL'),
+        (True, '1'),
+        (False, '0'),
+        (-0.0, '-0.0'),
+        (1e-300, '1e-300'),
+        (12345678901234567890, '12345678901234567890'),
+        ('Saturn°', 'Saturn°'),
+    ],
+    ids=[
+        'none-is-null',
+        'empty-string-is-not-null',
+        'backslash-n-string-is-not-null',
+        'the-word-null-is-text',
+        'true',
+        'false',
+        'negative-zero',
+        'tiny-float',
+        'big-integer',
+        'non-ascii',
+    ],
+)
+def test_load_data_text_renders_the_edge_cases(value: Any, text: str) -> None:
+    """NULL, the empty string and a string spelling NULL stay three different things."""
+    assert load_data_text(value) == text
+
+
+def test_load_data_text_renders_a_float_subclass_as_a_float() -> None:
+    """A float subclass is written as the double it holds, not as its own repr."""
+
+    class _Tagged(float):
+        def __repr__(self) -> str:
+            return f'_Tagged({float(self)})'
+
+    assert load_data_text(_Tagged(0.25)) == '0.25'
+
+
+def test_load_data_text_refuses_bytes() -> None:
+    """No OPUS column holds bytes, and the text has no faithful rendering for them."""
+    with pytest.raises(TypeError, match='bytes'):
+        load_data_text(b'\x00')
+
+
+# ---------------------------------------------------------------------------
+# The bulk load
+# ---------------------------------------------------------------------------
+
+
+class _FakeCursor:
+    """A cursor whose only query result is the connection's first warning."""
+
+    def __init__(self, conn: _FakeConnection) -> None:
+        self._conn = conn
+
+    def __enter__(self) -> _FakeCursor:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def fetchone(self) -> tuple[str, int, str] | None:
+        return self._conn.first_warning
+
+
+class _FakeConnection:
+    """The parts of a MySQLdb connection a bulk load uses."""
+
+    def __init__(self) -> None:
+        self.info_text: str | None = None
+        self.first_warning: tuple[str, int, str] | None = None
+        self.commits = 0
+        self.rollbacks = 0
+
+    def cursor(self) -> _FakeCursor:
+        return _FakeCursor(self)
+
+    def info(self) -> str | None:
+        return self.info_text
+
+    def commit(self) -> None:
+        self.commits += 1
+
+    def rollback(self) -> None:
+        self.rollbacks += 1
+
+
+def _counts(records: int, skipped: int = 0, warning_count: int = 0) -> str:
+    """Return the info string the server sends after a load."""
+    return f'Records: {records}  Deleted: 0  Skipped: {skipped}  Warnings: {warning_count}'
+
+
+class _LoadingDB(_RecordingDB):
+    """A recording backend whose LOAD DATA statements read the scratch file they name.
+
+    Each load records the file's path and lines, and answers with the counts `report`
+    returns for those lines -- by default, every line read and nothing skipped.
+    """
+
+    def __init__(
+        self,
+        scratch_dir: Path,
+        transaction_rows: int = 100_000,
+        report: Any = None,
+        refuse_at: int | None = None,
+    ) -> None:
+        super().__init__()
+        self.scratch_dir = str(scratch_dir)
+        self.transaction_rows = transaction_rows
+        self.bulk_load_path = BULK_LOAD_PATH_FILE
+        self.conn = _FakeConnection()
+        self.loads: list[tuple[str, list[str]]] = []
+        self._report = report or (lambda lines: _counts(len(lines)))
+        self._refuse_at = refuse_at
+
+    def _execute(
+        self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
+    ) -> None:
+        super()._execute(cmd, param_list, cur, mutates)
+        if cmd.startswith('LOAD DATA'):
+            path = param_list[0]
+            lines = Path(path).read_text(encoding='utf-8').split('\n')
+            assert lines[-1] == ''
+            self.loads.append((path, lines[:-1]))
+            if self._refuse_at is not None and len(self.loads) > self._refuse_at:
+                raise MySQLdb.OperationalError(3948, 'Loading local data is disabled')
+            self.conn.info_text = self._report(lines[:-1])
+
+
+def _obs_rows(count: int) -> list[dict[str, Any]]:
+    return [{'id': n, 'opus_id': f'co-iss-{n}', 'note': None} for n in range(count)]
+
+
+def _statements(db: _RecordingDB, prefix: str) -> list[tuple[str, list[Any] | None]]:
+    return [entry for entry in db.executed if entry[0].startswith(prefix)]
+
+
+@pytest.mark.parametrize(
+    ('row_count', 'transaction_rows', 'loads'),
+    [(1, 3, 1), (3, 3, 1), (4, 3, 2), (7, 3, 3), (9, 3, 3), (5, 1, 5), (5, 100_000, 1)],
+)
+def test_bulk_load_issues_one_load_per_chunk(
+    tmp_path: Path, row_count: int, transaction_rows: int, loads: int
+) -> None:
+    """N rows take N divided by transaction_rows, rounded up, loads, each committed."""
+    db = _LoadingDB(tmp_path, transaction_rows=transaction_rows)
+
+    db.bulk_load_rows('import', 'obs_general', _obs_rows(row_count))
+
+    assert len(db.loads) == loads
+    assert [len(lines) for _, lines in db.loads] == [
+        min(transaction_rows, row_count - start) for start in range(0, row_count, transaction_rows)
+    ]
+    assert db.conn.commits == loads
+    assert db.conn.rollbacks == 0
+
+
+def test_bulk_load_names_the_table_columns_and_character_set(tmp_path: Path) -> None:
+    """The statement loads the namespaced table, in sorted column order, as utf8mb4."""
+    db = _LoadingDB(tmp_path)
+
+    db.bulk_load_rows('import', 'obs_general', _obs_rows(2))
+
+    [(cmd, params)] = _statements(db, 'LOAD DATA')
+    assert cmd == (
+        'LOAD DATA LOCAL INFILE %s INTO TABLE `imp_obs_general` CHARACTER SET utf8mb4 '
+        "FIELDS TERMINATED BY '\\t' ESCAPED BY '\\\\' LINES TERMINATED BY '\\n' "
+        '(`id`,`note`,`opus_id`)'
+    )
+    assert params == [db.loads[0][0]]
+    assert db.loads[0][1] == ['0\t\\N\tco-iss-0', '1\t\\N\tco-iss-1']
+
+
+def test_bulk_load_files_are_unique_and_removed(tmp_path: Path) -> None:
+    """Two loaders sharing a scratch directory never share a file, and leave none behind."""
+    first = _LoadingDB(tmp_path, transaction_rows=2)
+    second = _LoadingDB(tmp_path, transaction_rows=2)
+
+    first.bulk_load_rows('import', 'obs_general', _obs_rows(5))
+    second.bulk_load_rows('import', 'obs_general', _obs_rows(5))
+
+    paths = [path for db in (first, second) for path, _ in db.loads]
+    assert len(paths) == 6
+    assert len(set(paths)) == 6
+    assert all(Path(path).parent == tmp_path for path in paths)
+    assert all(Path(path).name.startswith('imp_obs_general_') for path in paths)
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    ('report', 'warning', 'message'),
+    [
+        (lambda lines: _counts(len(lines) - 1), None, '1 rows read of 2, 0 skipped, 0 warnings'),
+        (
+            lambda lines: _counts(len(lines), skipped=1, warning_count=1),
+            ('Warning', 1062, "Duplicate entry '1' for key 'obs_general.PRIMARY'"),
+            "1 skipped, 1 warnings; the first: Duplicate entry '1'",
+        ),
+        (
+            lambda lines: _counts(len(lines), warning_count=1),
+            ('Warning', 1265, "Data truncated for column 'opus_id' at row 2"),
+            "0 skipped, 1 warnings; the first: Data truncated for column 'opus_id'",
+        ),
+        (lambda lines: None, None, 'the server reported no counts for the load (None)'),
+    ],
+    ids=['rows-missing', 'duplicate-key', 'truncated-value', 'no-counts'],
+)
+def test_a_load_that_loses_or_changes_a_row_raises(
+    tmp_path: Path, report: Any, warning: tuple[str, int, str] | None, message: str
+) -> None:
+    """A skipped row, a warning or a short count rolls the chunk back and raises."""
+    db = _LoadingDB(tmp_path, report=report)
+    db.conn.first_warning = warning
+
+    with pytest.raises(ImportDBError, match=re.escape(message)):
+        db.bulk_load_rows('import', 'obs_general', _obs_rows(2))
+
+    assert db.conn.rollbacks == 1
+    assert db.conn.commits == 0
+    assert list(tmp_path.iterdir()) == []
+    assert db._enter_stack == []
+    asked = _statements(db, 'SHOW WARNINGS')
+    assert asked == ([('SHOW WARNINGS LIMIT 1', None)] if warning is not None else [])
+
+
+def test_a_load_stops_at_the_first_bad_chunk(tmp_path: Path) -> None:
+    """The chunks before the bad one stay committed, and none after it is loaded."""
+    db = _LoadingDB(
+        tmp_path,
+        transaction_rows=2,
+        report=lambda lines: _counts(len(lines), skipped=int(lines[0].startswith('2\t'))),
+    )
+
+    with pytest.raises(ImportDBError, match='1 skipped'):
+        db.bulk_load_rows('import', 'obs_general', _obs_rows(6))
+
+    assert len(db.loads) == 2
+    assert (db.conn.commits, db.conn.rollbacks) == (1, 1)
+
+
+def test_a_refused_load_falls_back_to_insert_statements(tmp_path: Path) -> None:
+    """A refused file sends that chunk and every later one through `insert_rows`."""
+    db = _LoadingDB(tmp_path, transaction_rows=2, refuse_at=1)
+
+    db.bulk_load_rows('import', 'obs_general', _obs_rows(5))
+    db.bulk_load_rows('import', 'obs_general', _obs_rows(1))
+
+    assert db.bulk_load_path == BULK_LOAD_PATH_INSERT
+    assert len(db.loads) == 2
+    inserts = _statements(db, 'INSERT INTO')
+    assert len(inserts) == 2
+    # Rows 2 to 4 of the first call, then the second call's row.
+    assert inserts[0][1] == [2, None, 'co-iss-2', 3, None, 'co-iss-3', 4, None, 'co-iss-4']
+    assert inserts[1][1] == [0, None, 'co-iss-0']
+    assert (db.conn.commits, db.conn.rollbacks) == (1, 1)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_any_other_load_failure_raises(tmp_path: Path) -> None:
+    """A server error that is not a refusal is an ordinary failure."""
+
+    class _BrokenDB(_LoadingDB):
+        def _execute(
+            self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
+        ) -> None:
+            if cmd.startswith('LOAD DATA'):
+                raise MySQLdb.OperationalError(1146, "Table 'x' doesn't exist")
+            super()._execute(cmd, param_list, cur, mutates)
+
+    db = _BrokenDB(tmp_path)
+
+    with pytest.raises(ImportDBError, match="Table 'x' doesn't exist"):
+        db.bulk_load_rows('import', 'obs_general', _obs_rows(1))
+
+    assert db.bulk_load_path == BULK_LOAD_PATH_FILE
+    assert db.conn.rollbacks == 1
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_the_insert_path_writes_insert_statements(tmp_path: Path) -> None:
+    """With local files refused from the start, no scratch file is ever written."""
+    db = _LoadingDB(tmp_path)
+    db.bulk_load_path = BULK_LOAD_PATH_INSERT
+
+    db.bulk_load_rows('import', 'obs_general', _obs_rows(3))
+
+    assert db.loads == []
+    assert len(_statements(db, 'INSERT INTO')) == 1
+
+
+def test_an_empty_load_does_nothing(tmp_path: Path) -> None:
+    """No rows, no file, no statement."""
+    db = _LoadingDB(tmp_path)
+
+    db.bulk_load_rows('import', 'obs_general', [])
+
+    assert db.executed == []
+    assert list(tmp_path.iterdir()) == []

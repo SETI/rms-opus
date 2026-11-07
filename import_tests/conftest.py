@@ -26,6 +26,15 @@ if TYPE_CHECKING:
 
     from import_tests.tools.golden_io import DatabaseCredentials
 
+#: The main run's ``[import] transaction_rows``. No table of the fixture reaches the
+#: default's 100,000 rows, so a small value is what makes every load in the run split
+#: across several transactions; the goldens are then the check that splitting changes
+#: nothing. Prime, so chunk boundaries fall at different places in different tables.
+MAIN_RUN_TRANSACTION_ROWS = 7
+
+#: The schema-name suffix of the session that writes with ``INSERT`` statements.
+INSERT_PATH_CASE = 'insert_path'
+
 
 @pytest.fixture(scope='session')
 def db_credentials() -> DatabaseCredentials:
@@ -78,13 +87,49 @@ def main_run(
 ) -> build_run.ImportRun:
     """Import the whole fixture once, and hand every test the finished run.
 
+    Its loads are split into `MAIN_RUN_TRANSACTION_ROWS`-row transactions.
+
     Returns:
         The completed run, whose logs and schema the assertions read.
     """
     schema = fixture_layout.schema_name(os.getpid())
     created_schemas.append(schema)
     root = tmp_path_factory.mktemp('mini_holdings_main')
-    return build_run.perform_run(root, schema, db_credentials)
+    return build_run.perform_run(
+        root,
+        schema,
+        db_credentials,
+        extra_import={'transaction_rows': MAIN_RUN_TRANSACTION_ROWS},
+    )
+
+
+@pytest.fixture(scope='session')
+def insert_path_run(
+    tmp_path_factory: pytest.TempPathFactory,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    subprocess_coverage: None,
+) -> build_run.ImportRun:
+    """Import one bundle with ``[import] bulk_load = false``.
+
+    That is the path an import takes when the server refuses local files, and the only
+    run that exercises it on a server that accepts them.
+
+    Returns:
+        The completed run, in a schema and a log directory of its own.
+    """
+    root = tmp_path_factory.mktemp('mini_holdings_insert_path')
+    bundle = negative_cases.bundle_for_class(negative_cases.DUPLICATE_ID_INSTRUMENT_CLASS)
+    schema = fixture_layout.schema_name(os.getpid(), INSERT_PATH_CASE)
+    created_schemas.append(schema)
+    return build_run.perform_run(
+        root,
+        schema,
+        db_credentials,
+        bundle_groups=[[bundle]],
+        extra_import={'bulk_load': False},
+        finalize=False,
+    )
 
 
 @pytest.fixture(scope='session')

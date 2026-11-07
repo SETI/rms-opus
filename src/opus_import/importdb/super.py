@@ -8,19 +8,22 @@ supply raises `NotImplementedError`.
 
 Two behaviors are implemented here rather than per brand, because they are the same for
 any brand: `ImportDBSuper.convert_raw_to_namespace` and its inverse map a table's raw
-name to the namespace it is being used in, and the ``_enter``/``_exit`` pair collects the
+name to the namespace it is being used in, and `ImportDBSuper._operation` collects the
 Python warnings a database operation emits so they are reported together with the
 statements that produced them.
 """
 
 from __future__ import annotations
 
+import contextlib
 import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal
 
+from opus_config.config import DEFAULT_TRANSACTION_ROWS
+
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
+    from collections.abc import Collection, Iterator, Sequence
     from typing import TextIO
 
     import pdslogger
@@ -73,6 +76,12 @@ class ImportDBSuper:
             assigned here, because opening it is the subclass's job and there is no
             connection before that.
         log_sql: True to log every statement and its parameters at debug level.
+        bulk_load: Whether `bulk_load_rows` may load from a scratch file, as the
+            configuration's ``[import] bulk_load`` says. A brand that finds the server
+            refusing it writes ``INSERT`` statements instead.
+        scratch_dir: The directory the bulk load's scratch files go in, or None for the
+            system temporary directory.
+        transaction_rows: The most rows one bulk load writes in one transaction.
         tables_created: The tables created through this instance, in creation order,
             so a caller can post-process the ones an import run made. A read-only run
             records the tables it would have created.
@@ -93,6 +102,9 @@ class ImportDBSuper:
         import_prefix: str | None = None,
         logger: pdslogger.PdsLogger | None = None,
         read_only: bool = False,
+        bulk_load: bool = True,
+        scratch_dir: str | None = None,
+        transaction_rows: int = DEFAULT_TRANSACTION_ROWS,
     ) -> None:
         """Record what a connection needs, without opening one.
 
@@ -112,6 +124,10 @@ class ImportDBSuper:
                 since there would be nowhere to report the warnings.
             read_only: True to log every mutating statement instead of executing it.
                 Reads still run.
+            bulk_load: Whether `bulk_load_rows` may load from a scratch file.
+            scratch_dir: The directory the bulk load's scratch files go in, or None for
+                the system temporary directory.
+            transaction_rows: The most rows one bulk load writes in one transaction.
         """
         self.log_sql = False
 
@@ -124,6 +140,9 @@ class ImportDBSuper:
         self.logger = logger
         self.read_only = read_only
         self._mult_form_types = [] if mult_form_types is None else mult_form_types
+        self.bulk_load = bulk_load
+        self.scratch_dir = scratch_dir
+        self.transaction_rows = transaction_rows
 
         self.tables_created: list[str] = []
 
@@ -304,6 +323,25 @@ class ImportDBSuper:
 
         return _warning_handler
 
+    @contextlib.contextmanager
+    def _operation(self, func_name: str) -> Iterator[None]:
+        """Run the body of a database operation between `_enter` and `_exit`.
+
+        `_exit` runs however the body ends, so an operation that raises still pops the
+        nesting stack and puts back the warning handler `_enter` installed.
+
+        Parameters:
+            func_name: The calling method's name.
+
+        Yields:
+            Nothing; the body runs inside.
+        """
+        self._enter(func_name)
+        try:
+            yield
+        finally:
+            self._exit()
+
     def _enter(self, func_name: str) -> None:
         """Begin a database operation, starting warning collection at the outermost one.
 
@@ -394,9 +432,8 @@ class ImportDBSuper:
             True if a table of that name exists, matched without regard to case, because
             table names are case-sensitive on some operating systems and not others.
         """
-        self._enter('table_exists')
-        table_names = [x.lower() for x in self.table_names(namespace)]
-        self._exit()
+        with self._operation('table_exists'):
+            table_names = [x.lower() for x in self.table_names(namespace)]
         return table_name.lower() in table_names
 
     def table_info(self, namespace: Namespace, raw_table_name: str) -> list[SchemaColumn]:
@@ -489,24 +526,22 @@ class ImportDBSuper:
         Returns:
             One tuple per row, with the values in ``column_names`` order.
         """
-        self._enter('read_rows')
+        with self._operation('read_rows'):
+            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+            q = self.quote_identifier
+            columns = ','.join([q(c) for c in column_names])
 
-        q = self.quote_identifier
-        columns = ','.join([q(c) for c in column_names])
-
-        # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$). The
-        # caller's `where` fragment is appended verbatim below and is not
-        # validated; only the values inside it are bound, through where_params.
-        # This method is for trusted callers.
-        cmd = f'SELECT {columns} FROM {q(table_name)}'  # nosec B608
-        if where:
-            cmd += f' WHERE {where}'
-        res = self._execute_and_fetchall(
-            cmd, 'read_rows', list(where_params) if where_params else None
-        )
-        self._exit()
+            # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$). The
+            # caller's `where` fragment is appended verbatim below and is not
+            # validated; only the values inside it are bound, through where_params.
+            # This method is for trusted callers.
+            cmd = f'SELECT {columns} FROM {q(table_name)}'  # nosec B608
+            if where:
+                cmd += f' WHERE {where}'
+            res = self._execute_and_fetchall(
+                cmd, 'read_rows', list(where_params) if where_params else None
+            )
         return res
 
     def insert_row(self, namespace: Namespace, raw_table_name: str, row: DBRow) -> None:
@@ -534,6 +569,25 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::insert_rows must be overridden')
+
+    def bulk_load_rows(
+        self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]
+    ) -> None:
+        """Write many rows the fastest way the server allows.
+
+        A brand loads them from a scratch file where the server accepts one, at most
+        `transaction_rows` rows to a transaction, and checks after each load that every
+        row arrived unchanged; otherwise it writes them as `insert_rows` does.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            rows: The rows to write. Every row must have the same columns.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::bulk_load_rows must be overridden')
 
     def update_row(
         self,
@@ -598,15 +652,19 @@ class ImportDBSuper:
         raw_table_name: str,
         where: str | None = None,
         where_params: Sequence[Any] | None = None,
+        *,
+        all_rows: bool = False,
     ) -> None:
-        """Delete the rows a WHERE clause selects.
+        """Delete the rows a WHERE clause selects, or every row when asked to.
 
         Parameters:
             namespace: The namespace holding the table.
             raw_table_name: The table, without its namespace prefix.
-            where: The WHERE clause, or None to delete every row. Any value it compares
-                against must be a `%s` placeholder, never text.
+            where: The WHERE clause. Any value it compares against must be a `%s`
+                placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
+            all_rows: True to delete every row, which is the only way to; ``where`` must
+                then be None.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.

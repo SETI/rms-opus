@@ -958,6 +958,12 @@ field-function cache is not made at all (§7).
     never held as a list for the load, so the client's memory does not grow with the chunk
     size; the server holds one chunk's undo in its transaction. The harness's peak-PSS
     figure for the import's process tree (§2.2) is the check.
+    **Scratch file names.** Each load's file is created by `tempfile.mkstemp(dir=scratch_dir,
+    prefix=f'{table_name}_')`, so two `opus_import` processes sharing a `scratch_dir` (the
+    system temporary directory by default; PR-16 runs several against one schema) never
+    write or load each other's file, and is deleted once its load has finished or failed.
+    A name derived from the table alone would let one process load another's half-written
+    file, and the record-count check would not catch it if the counts happened to match.
   - **Error semantics.** `LOAD DATA LOCAL` behaves as if `IGNORE` were given: duplicate-key
     rows are skipped, and data-interpretation errors become warnings even under
     `STRICT_ALL_TABLES`. After every load the implementation reads the connection's info
@@ -1019,7 +1025,9 @@ field-function cache is not made at all (§7).
   so that every golden run splits its loads across several transactions; the goldens are
   the check that the split changes nothing. A `tests/opus_import` case asserts that a load
   of N rows issues N divided by `transaction_rows`, rounded up, `LOAD DATA` statements,
-  and checks each one's info string.
+  and checks each one's info string. Another asserts that two loaders given one
+  `scratch_dir` and the same table never open the same file, and that no file remains
+  after a load that succeeds or raises.
 - **Measurement:** fixture-scale and test-scale `--import` step wall-clock and
   `Innodb_data_written`, with the single-bundle timing separated. Target metric: `--import`
   wall-clock for the largest bundle.

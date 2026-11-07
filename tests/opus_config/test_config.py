@@ -187,6 +187,9 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('django.conn_max_age', 300),
         ('django.conn_health_checks', True),
         ('import_.table_temp_prefix', 'imp_'),
+        ('import_.bulk_load', True),
+        ('import_.scratch_dir', None),
+        ('import_.transaction_rows', 100_000),
     ],
 )
 def test_load_config_defaults_every_optional_key(
@@ -211,6 +214,9 @@ def test_load_config_defaults_every_optional_key(
         ('django', 'cache_location', '"cache.example.org:21211"', 'cache.example.org:21211'),
         ('django', 'conn_max_age', '0', 0),
         ('django', 'conn_health_checks', 'false', False),
+        ('import', 'bulk_load', 'false', False),
+        ('import', 'scratch_dir', '"/scratch/opus"', '/scratch/opus'),
+        ('import', 'transaction_rows', '5', 5),
     ],
 )
 def test_load_config_reads_an_optional_key_that_is_written(
@@ -218,7 +224,9 @@ def test_load_config_reads_an_optional_key_that_is_written(
 ) -> None:
     """Each optional key is honored when the file does supply it."""
     config = load_config(write_config(adding(table, key, written)))
-    assert getattr(getattr(config, table), key) == expected
+    # The [import] table's attribute carries a trailing underscore, `import` being a keyword.
+    attribute = 'import_' if table == 'import' else table
+    assert getattr(getattr(config, attribute), key) == expected
 
 
 @pytest.mark.parametrize(
@@ -315,6 +323,26 @@ def test_load_config_accepts_a_whole_number_probability(
             "[django] 'conn_max_age' must be a whole number, not bool",
         ),
         (
+            adding('import', 'transaction_rows', '0'),
+            "[import] 'transaction_rows' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'transaction_rows', '-5'),
+            "[import] 'transaction_rows' must be at least 1, not -5",
+        ),
+        (
+            adding('import', 'transaction_rows', '1.5'),
+            "[import] 'transaction_rows' must be a whole number, not float",
+        ),
+        (
+            adding('import', 'bulk_load', '"yes"'),
+            "[import] 'bulk_load' must be true or false, not str",
+        ),
+        (
+            adding('import', 'scratch_dir', '5'),
+            "[import] 'scratch_dir' must be a string, not int",
+        ),
+        (
             adding('django', 'conn_health_checks', '"yes"'),
             "[django] 'conn_health_checks' must be true or false, not str",
         ),
@@ -373,6 +401,11 @@ def test_load_config_accepts_a_whole_number_probability(
         'connection-lifetime-negative',
         'connection-lifetime-given-a-string',
         'connection-lifetime-given-a-boolean',
+        'transaction-rows-zero',
+        'transaction-rows-negative',
+        'transaction-rows-not-whole',
+        'bulk-load-given-a-string',
+        'scratch-dir-given-a-number',
         'health-checks-given-a-string',
         'cache-location-without-a-port',
         'cache-location-without-a-host',
