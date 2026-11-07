@@ -839,3 +839,40 @@ def test_a_transaction_size_below_one_is_refused_before_connecting(rows: int) ->
     """A direct caller's bad size would otherwise load nothing, or fail mid-import."""
     with pytest.raises(ValueError, match='transaction_rows must be at least 1'):
         ImportDBMySQL('h', 'd', 's', 'u', 'p', transaction_rows=rows)
+
+
+class _NoSchemaConnection:
+    """A server connection on which every ``USE`` names an unknown database."""
+
+    def __init__(self) -> None:
+        self.executed: list[str] = []
+
+    def cursor(self) -> _NoSchemaConnection:
+        return self
+
+    def __enter__(self) -> _NoSchemaConnection:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def execute(self, cmd: str, param_list: Any = None) -> None:
+        self.executed.append(cmd)
+        if cmd.startswith('USE '):
+            raise MySQLdb.OperationalError(1049, "Unknown database 'absent'")
+
+    def commit(self) -> None:
+        return None
+
+
+def test_a_read_only_connection_does_not_create_an_absent_schema(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A read-only run against a schema the server lacks fails instead of creating it."""
+    connection = _NoSchemaConnection()
+    monkeypatch.setattr(MySQLdb, 'connect', lambda **kwargs: connection)
+
+    with pytest.raises(ImportDBError, match='"absent" does not exist'):
+        ImportDBMySQL('host', 'db', 'absent', 'user', 'password', read_only=True)
+
+    assert connection.executed == ['USE `absent`']

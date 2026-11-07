@@ -76,6 +76,10 @@ def served_row() -> str:
     Returns:
         ``"<version> <state>"`` for a single row, `ABSENT` when the table is absent or
         empty, and ``"<n> rows"`` when it holds more than one.
+
+    Raises:
+        ImportDBError: If the database cannot be read, including when the schema does
+            not exist, which the read-only connection does not create.
     """
     from opus_config import get_config
     from opus_import import importdb

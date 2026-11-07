@@ -309,3 +309,24 @@ def test_the_erase_drops_the_table(
     _row(erase_run, db_credentials, SCHEMA_VERSION, STATE_READY)
     assert _step(erase_run, *build_run.DROP_ARGS).returncode == 0
     assert _rows(db_credentials, erase_run.schema) is None
+
+
+def test_a_read_only_run_does_not_create_an_absent_schema(
+    unfinished_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """The deploy check's read of a schema the server lacks fails and creates nothing."""
+    absent = fixture_layout.schema_name(os.getpid(), f'{_CASE}_absent')
+    # Dropped on the way out should a failure here leave it behind.
+    created_schemas.append(absent)
+    logged = len(_errors(unfinished_run))
+    result = _step(unfinished_run, '--read-only', '--override-db-schema', absent, '--validate-perm')
+    assert result.returncode != 0
+    assert f'"{absent}" does not exist' in _errors(unfinished_run)[logged:]
+    assert not _query(
+        db_credentials,
+        unfinished_run.schema,
+        'SELECT schema_name FROM information_schema.schemata WHERE schema_name = %s',
+        absent,
+    )

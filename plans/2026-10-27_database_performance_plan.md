@@ -4696,6 +4696,13 @@ Nothing above this line is rewritten by an executor.
 - The deploy check reads the row through `opus_import.schema_version.served_row()`,
   which imports `opus_config` and `opus_import.importdb` only when called, so that the
   `python -c` line in `_check_schema_version.sh` is one call.
+- A read-only connection no longer creates an absent schema. `ImportDBMySQL`'s
+  constructor answered an unknown database with `CREATE DATABASE` whatever the flag, so
+  `--read-only`, and the deploy check's read-only `served_row()`, against a schema the
+  server lacked left an empty schema behind. A read-only connection now fails as it
+  connects, with a fatal message naming the schema; the deploy check refuses with
+  "cannot read the schema_version row". The defect predates this plan; the review of
+  PR-04 found it, and PR-05 fixes it because its deploy check opens that connection.
 - The database the Ring-Moon Systems Node serves has no version row until this release
   imports one, so the first deploy of this release refuses it. A database another
   release with the same table schemas imported (this one changes none) is finished with
