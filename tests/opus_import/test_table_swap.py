@@ -28,7 +28,15 @@ class _RecordingDB(ImportDBMySQL):
     """An ImportDBMySQL that records statements, over a schema holding `tables`."""
 
     def __init__(self, tables: set[str], lock_timeouts: int = 0) -> None:
-        # Deliberately skips ImportDBMySQL.__init__, which connects to a server.
+        """Start with a schema holding `tables` and nothing executed.
+
+        Deliberately skips ImportDBMySQL.__init__, which connects to a server.
+
+        Parameters:
+            tables: The table names the schema holds, as the cache would list them.
+            lock_timeouts: How many ``RENAME TABLE`` attempts time out waiting for a
+                lock before one succeeds.
+        """
         ImportDBSuper.__init__(self, 'host', 'db', 'schema', 'user', 'password', logger=None)
         self._table_names = set(tables)
         self._table_info_cache = {}
@@ -39,6 +47,18 @@ class _RecordingDB(ImportDBMySQL):
     def _execute(
         self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
     ) -> None:
+        """Record a statement instead of running it.
+
+        Parameters:
+            cmd: The statement.
+            param_list: Its parameters.
+            cur: Unused.
+            mutates: Unused.
+
+        Raises:
+            MySQLdb.OperationalError: A lock wait timeout, for each of the first
+                ``lock_timeouts`` renames.
+        """
         self.executed.append((cmd, param_list))
         if cmd.startswith('RENAME TABLE') and self._lock_timeouts > 0:
             self._lock_timeouts -= 1
@@ -47,6 +67,16 @@ class _RecordingDB(ImportDBMySQL):
     def _execute_and_fetchall(
         self, cmd: str, func_name: str, param_list: Any = None
     ) -> list[tuple[Any, ...]]:
+        """Answer the one query a rename makes: the session's lock wait timeout.
+
+        Parameters:
+            cmd: The query, which must be that one.
+            func_name: Unused.
+            param_list: Unused.
+
+        Returns:
+            `_SESSION_LOCK_WAIT_TIMEOUT`, as one row.
+        """
         assert cmd == 'SELECT @@SESSION.lock_wait_timeout'
         return [(_SESSION_LOCK_WAIT_TIMEOUT,)]
 

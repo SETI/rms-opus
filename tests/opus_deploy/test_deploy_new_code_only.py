@@ -38,16 +38,25 @@ _FAKE_COMMANDS = ('sudo', 'pip', 'opus_manage', 'opus_import')
 
 _BASH = shutil.which('bash')
 
+#: What the fake ``opus_manage migrate --plan --check`` does for each case, as Django does.
+_MIGRATION_CHECKS = {
+    'clean': 'echo "Planned operations:"; echo "  No planned migration operations."; exit 0',
+    'pending': 'echo "Planned operations:"; echo "sessions.0002_x"; exit 1',
+    'broken': 'echo "django.core.exceptions.ImproperlyConfigured: no settings" >&2; exit 1',
+}
+
 
 def _run_deploy(
-    tmp_path: Path, *arguments: str, migrations_pending: bool = False
+    tmp_path: Path, *arguments: str, migration_check: str = 'clean'
 ) -> tuple[int, str, list[str]]:
     """Run the code-only deploy with its helpers stubbed and its commands faked.
 
     Parameters:
         tmp_path: A scratch directory.
         arguments: The script's arguments.
-        migrations_pending: Make ``opus_manage migrate --check`` report a migration.
+        migration_check: What ``opus_manage migrate --plan --check`` finds: ``'clean'``,
+            ``'pending'`` for a migration to apply, or ``'broken'`` for a Django that
+            cannot start.
 
     Returns:
         The script's status, everything it printed, and each faked command it ran, as
@@ -69,10 +78,9 @@ def _run_deploy(
     fake_bin = tmp_path / 'bin'
     fake_bin.mkdir()
     calls = tmp_path / 'calls'
-    check_status = 1 if migrations_pending else 0
     for command in _FAKE_COMMANDS:
         status = (
-            f'[[ "$*" == "migrate --check" ]] && exit {check_status}'
+            f'[[ "$*" == "migrate --plan --check" ]] && {{ {_MIGRATION_CHECKS[migration_check]}; }}'
             if command == 'opus_manage'
             else ':'
         )
@@ -113,7 +121,7 @@ def test_no_database_writes_nothing_to_the_database(tmp_path: Path) -> None:
     assert status == 0, output
     assert [call for call in ran if call.startswith('opus_import')] == []
     assert [call for call in ran if call.startswith('opus_manage')] == [
-        'opus_manage migrate --check',
+        'opus_manage migrate --plan --check',
         'opus_manage collectstatic --noinput',
     ]
     assert 'nothing will be written to served' in output
@@ -122,9 +130,21 @@ def test_no_database_writes_nothing_to_the_database(tmp_path: Path) -> None:
 @pytest.mark.skipif(_BASH is None, reason='needs bash')
 def test_no_database_refuses_a_pending_migration(tmp_path: Path) -> None:
     """A release that needs a migration cannot skip it, and is pointed at the plain deploy."""
-    status, output, ran = _run_deploy(tmp_path, '--no-database', migrations_pending=True)
+    status, output, ran = _run_deploy(tmp_path, '--no-database', migration_check='pending')
     assert status == 1
+    assert 'sessions.0002_x' in output
     assert 'Deploy this release without --no-database' in output
+    assert 'opus_manage collectstatic --noinput' not in ran
+
+
+@pytest.mark.skipif(_BASH is None, reason='needs bash')
+def test_no_database_reports_a_django_that_cannot_start(tmp_path: Path) -> None:
+    """A failed check that read no migrations is not reported as a pending one."""
+    status, output, ran = _run_deploy(tmp_path, '--no-database', migration_check='broken')
+    assert status == 1
+    assert 'ImproperlyConfigured' in output
+    assert "Cannot check Django's migrations" in output
+    assert 'without --no-database' not in output
     assert 'opus_manage collectstatic --noinput' not in ran
 
 

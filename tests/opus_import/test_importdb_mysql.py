@@ -888,7 +888,19 @@ def test_table_info_names_every_type_create_table_renders(
     """A column ``create_table`` can make is one ``table_info`` can read back."""
 
     class _ColumnsDB(_RecordingDB):
+        """A backend whose every table has one column of the case's server type."""
+
         def _execute_and_fetchall(self, cmd: str, func_name: str, param_list: Any = None) -> Any:
+            """Answer the columns query with that one column.
+
+            Parameters:
+                cmd: The query, unused.
+                func_name: Unused.
+                param_list: Unused.
+
+            Returns:
+                One ``INFORMATION_SCHEMA.COLUMNS`` row.
+            """
             return [('c', None, 'YES', data_type, char_len, data_type)]
 
     db = _ColumnsDB()

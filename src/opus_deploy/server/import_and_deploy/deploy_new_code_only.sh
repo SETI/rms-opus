@@ -125,9 +125,18 @@ pip install mod-wsgi
 if ${NO_DATABASE}; then
     # Only reads. A release that crosses a Django version with a contrib migration
     # needs that migration applied, which is a write, so it cannot take this path.
-    if ! opus_manage migrate --check; then
-        echo "Django has a migration to apply, which --no-database would skip."
-        echo "Deploy this release without --no-database: deploy_new_code_only.sh"
+    # --check exits non-zero for a pending migration and for a Django that cannot start;
+    # --plan prints "Planned operations:" only once it has read the migrations, which
+    # tells the two apart.
+    if ! migration_plan=$(opus_manage migrate --plan --check 2>&1); then
+        if grep -q '^Planned operations:' <<< "${migration_plan}"; then
+            echo "${migration_plan}"
+            echo "Django has a migration to apply, which --no-database would skip."
+            echo "Deploy this release without --no-database: deploy_new_code_only.sh"
+        else
+            echo "${migration_plan}"
+            echo "Cannot check Django's migrations; see the output above."
+        fi
         echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
         exit 1
     fi

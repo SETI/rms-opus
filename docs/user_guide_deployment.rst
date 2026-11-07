@@ -148,9 +148,9 @@ The scripts
     documentation. Whether a release is one of those is your call, from its release
     notes, as whether it changed the schema is. It still makes the schema version check,
     which only reads, and it refuses a release for which Django has a migration to apply
-    (``opus_manage migrate --check``), naming the plain code-only deploy as the one to
-    run, so a release that crosses a Django version with a new contrib migration cannot
-    skip it unnoticed.
+    (``opus_manage migrate --plan --check``), naming the plain code-only deploy as the one
+    to run, so a release that crosses a Django version with a new contrib migration cannot
+    skip it unnoticed. A Django that cannot start is refused too, with its own output.
 
     The database records its schema version, and the script refuses, before writing
     anything, a release whose version differs (:ref:`user_guide_deployment_schema_version`).
