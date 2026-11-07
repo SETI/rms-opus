@@ -75,6 +75,11 @@ def test_an_aux_table_is_built_beside_the_live_one_and_swapped_in(table: str) ->
         f'RENAME TABLE `{table}` TO `{table}__old`, `{table}__new` TO `{table}`'
     ]
     assert db.statements('DROP TABLE') == [f'DROP TABLE `{table}__old`']
+    # Analyzed after the fill, so it goes live with statistics that count its rows.
+    assert db.statements('ANALYZE TABLE') == [f'ANALYZE TABLE `{table}__new`']
+    analyzed = [cmd for cmd, _ in db.executed].index(f'ANALYZE TABLE `{table}__new`')
+    renamed = next(i for i, (cmd, _) in enumerate(db.executed) if cmd.startswith('RENAME'))
+    assert analyzed < renamed
     assert db.table_exists('perm', table)
     assert not db.table_exists('perm', f'{table}__new')
     assert not db.table_exists('perm', f'{table}__old')
@@ -143,6 +148,7 @@ def test_a_failed_fill_leaves_the_live_table_alone() -> None:
     assert _swap(db, ['param_info'], fill=lambda: False) is False
 
     assert db.statements('RENAME TABLE') == []
+    assert db.statements('ANALYZE TABLE') == []
     assert db.statements('DROP TABLE') == ['DROP TABLE `param_info__new`']
     assert db.table_exists('perm', 'param_info')
 

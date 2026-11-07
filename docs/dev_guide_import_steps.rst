@@ -156,7 +156,12 @@ set of tables, parents first, and a fill function, and:
    from one table of the set to another pointed at the other's ``__new`` table;
 3. calls the fill, which writes every row into the ``__new`` tables. A fill that returns
    False drops them again and leaves the live tables as they were;
-4. swaps the whole set in with one rename
+4. analyzes each ``__new`` table. The server's persistent statistics for a table
+   created empty say it has no rows, the rename carries them across, and nothing
+   recomputes them soon after a bulk fill, so a table swapped in unanalyzed goes live
+   with statistics that mislead the optimizer -- at fixture scale, validation against
+   such a ``param_info`` took over a third longer;
+5. swaps the whole set in with one rename
    (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.rename_tables_atomically`), then
    drops the ``__old`` tables.
 

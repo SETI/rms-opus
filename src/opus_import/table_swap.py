@@ -8,6 +8,11 @@ table aside to ``<table>__old`` and every new one into its place. MySQL applies 
 statement atomically, so a reader finds each table either as it was or as it now is,
 never missing and never partly filled. The ``__old`` tables are dropped afterwards.
 
+Each ``__new`` table is analyzed after it is filled and before it is swapped in. The
+server's persistent statistics for a table created empty say it has no rows, a rename
+carries them across, and nothing recomputes them soon after a bulk fill, so without
+this a rebuilt table goes live with statistics that mislead the optimizer.
+
 A set swapped together is named parents first. A foreign key from one table of the set
 to another is pointed at the other's ``__new`` table while the set is built, so after the
 rename it references the live table it should; ``definitions`` and ``contexts`` are the
@@ -166,8 +171,8 @@ def rebuild_tables_by_swap(
     """Rebuild a set of tables beside the live ones and swap them in together.
 
     Drops any leftovers of an earlier rebuild, creates the ``__new`` tables, fills them,
-    and swaps them in. A fill that fails drops the ``__new`` tables again and leaves the
-    live ones as they were.
+    analyzes them, and swaps them in. A fill that fails drops the ``__new`` tables again
+    and leaves the live ones as they were.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -183,5 +188,9 @@ def rebuild_tables_by_swap(
     if not fill():
         drop_swap_leftovers(ctx, tables)
         return False
+    db = ctx.db
+    assert db is not None
+    for table in tables:
+        db.analyze_table('perm', swap_new_name(table))
     swap_in_new_tables(ctx, tables)
     return True
