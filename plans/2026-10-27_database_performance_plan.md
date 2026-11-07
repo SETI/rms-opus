@@ -4730,9 +4730,11 @@ Nothing above this line is rewritten by an executor.
 
 ### 2026-11-07, PR-06 (written against this file at 1759a9c2)
 
-- PR-06 is stacked on PR-05: it was branched from `db-perf-pr-05` at 1759a9c2, because
-  `deploy_new_code_only.sh --no-database` calls PR-05's schema version check. It is
-  rebased onto `db-perf` once PR-05 merges.
+- PR-06 was stacked on PR-05, branched from `db-perf-pr-05` at 1759a9c2, because
+  `deploy_new_code_only.sh --no-database` calls PR-05's schema version check, and was
+  rebased onto `db-perf` after PR-05 merged (335d9898). The measurement below is of the
+  stacked branch, whose tree differs from the rebased one only by PR-05's last two review
+  fixes, neither of which touches the import's timing.
 - The section's `swap_in(tables)` is `opus_import.table_swap.rebuild_tables_by_swap`,
   which drops leftovers, creates the `__new` tables, fills them through a callback,
   analyzes them and swaps them in; `swap_in_new_tables` is the rename itself. The fault
