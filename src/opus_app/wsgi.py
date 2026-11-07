@@ -6,9 +6,10 @@ importable straight from the installed distribution and needs no sys.path setup,
 but ``OPUS_CONFIG`` must be set in the server's environment: it names the OPUS
 configuration file, and there is no default location for it.
 
-The schema is checked once, as this module loads (`opus_app.schema_guard`): unless
-its ``schema_version`` row holds this release's version in the ``ready`` state,
-``application`` answers every request 503 with a body naming the remedy. The
+The schema is checked as this module loads (`opus_app.schema_guard`): unless its
+``schema_version`` row holds this release's version in the ``ready`` state,
+``application`` answers 503 with a body naming the remedy, and checks again on each
+request until the row is right. The
 development server loads this module too (``WSGI_APPLICATION`` in the settings), so
 it serves the same 503.
 """

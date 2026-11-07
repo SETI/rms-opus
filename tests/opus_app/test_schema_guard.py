@@ -99,18 +99,93 @@ def test_an_unreachable_database_is_checked_again_on_each_request() -> None:
     assert len(calls) == 3
 
 
-def test_once_reached_a_refusing_database_stays_refused() -> None:
-    """The check that finally answers decides every later request too."""
-    answers: list[Any] = [OperationalError('down'), [(SCHEMA_VERSION + 1, STATE_READY)]]
+def test_a_refused_schema_is_served_once_it_is_finished() -> None:
+    """A worker that loaded before the version step serves the schema without a reload."""
+    answers: list[list[tuple[Any, ...]]] = [
+        [],
+        [(SCHEMA_VERSION, STATE_APPENDING)],
+        [(SCHEMA_VERSION, STATE_READY)],
+    ]
+    calls: list[int] = []
 
     def read() -> list[tuple[Any, ...]]:
-        answer = answers.pop(0)
-        if isinstance(answer, Exception):
-            raise answer
-        return answer  # type: ignore[no-any-return]
+        calls.append(1)
+        return answers.pop(0)
 
     guarded = schema_guard.guard(_application, read)
+    status, body = _call(guarded)
+    assert status == schema_guard.UNAVAILABLE_STATUS
+    assert b"'appending'" in body
+    assert _call(guarded) == ('200 OK', b'served')
+    assert _call(guarded) == ('200 OK', b'served')
+    assert len(calls) == 3
+
+
+def test_a_refused_schema_is_refused_on_every_request_until_then() -> None:
+    """Each refused request checks again, and says what is wrong now."""
+    guarded = schema_guard.guard(_application, _reader([(SCHEMA_VERSION + 1, STATE_READY)]))
     for _ in range(3):
         status, body = _call(guarded)
         assert status == schema_guard.UNAVAILABLE_STATUS
-    assert b'version' in body
+        assert f'version {SCHEMA_VERSION + 1}'.encode() in body
+
+
+class _FakeCursor:
+    """A cursor answering the version query."""
+
+    def __init__(self, connection: _FakeConnection) -> None:
+        self._connection = connection
+
+    def __enter__(self) -> _FakeCursor:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def execute(self, statement: str) -> None:
+        if self._connection.fail:
+            raise OperationalError('lost')
+        self._connection.statements.append(statement)
+
+    def fetchall(self) -> list[tuple[Any, ...]]:
+        return [(SCHEMA_VERSION, STATE_READY)]
+
+
+class _FakeConnection:
+    """Django's connection, as `schema_guard.read_rows` uses it."""
+
+    def __init__(self, *, has_table: bool, fail: bool = False) -> None:
+        self.fail = fail
+        self.closed = 0
+        self.statements: list[str] = []
+        tables = ['schema_version'] if has_table else ['obs_general']
+        self.introspection = type('Introspection', (), {'table_names': lambda _, c: tables})()
+
+    def cursor(self) -> _FakeCursor:
+        return _FakeCursor(self)
+
+    def close(self) -> None:
+        self.closed += 1
+
+
+@pytest.mark.parametrize(
+    ('has_table', 'fail', 'expected'),
+    [
+        (True, False, [(SCHEMA_VERSION, STATE_READY)]),
+        (False, False, []),
+        (True, True, None),
+    ],
+    ids=['row', 'no-table', 'database-error'],
+)
+def test_read_rows_closes_the_connection_however_it_ends(
+    monkeypatch: pytest.MonkeyPatch, has_table: bool, fail: bool, expected: Any
+) -> None:
+    """The connection was opened while loading, in a thread no request runs on."""
+    fake = _FakeConnection(has_table=has_table, fail=fail)
+    monkeypatch.setattr(schema_guard, 'connection', fake)
+    if expected is None:
+        with pytest.raises(OperationalError):
+            schema_guard.read_rows()
+    else:
+        assert schema_guard.read_rows() == expected
+    assert fake.closed == 1

@@ -36,8 +36,8 @@ def write_schema_version(ctx: ImportContext) -> bool:
     * with this version in the ``appending`` state, changes the state to ``ready``,
       logged at info level;
     * with this version already ``ready``, changes nothing, logged at debug level;
-    * with any other version, or more than one row, refuses: an error is logged and the
-      table is left as it is.
+    * with any other version, any other state, or more than one row, refuses: an error is
+      logged and the table is left as it is.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -90,5 +90,10 @@ def write_schema_version(ctx: ImportContext) -> bool:
             ctx, f'Schema version {SCHEMA_VERSION} changed from {STATE_APPENDING} to {STATE_READY}'
         )
         return True
+    if state != STATE_READY:
+        import_util.log_error(
+            ctx, f'The schema version row has the state {state!r}; it is left as it is'
+        )
+        return False
     import_util.log_debug(ctx, f'Schema version {SCHEMA_VERSION} is already {state}')
     return True

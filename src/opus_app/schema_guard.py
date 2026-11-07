@@ -2,10 +2,11 @@
 
 A finished schema carries a one-row ``schema_version`` table naming the generation of
 the table schemas that imported it, in the ``ready`` state
-(`opus_import.schema_version`). `opus_app.wsgi` reads the row once, as the application
-is loaded, and serves the application only when the row is this release's version and
+(`opus_import.schema_version`). `opus_app.wsgi` reads the row as the application is
+loaded, and serves the application only when the row is this release's version and
 ``ready``. Otherwise every request is answered ``503 Service Unavailable`` with a body
-saying what is wrong and what fixes it.
+saying what is wrong and what fixes it, and repeats the check, so a worker starts
+serving once the schema is finished, without a reload.
 
 The check sits in the WSGI entry point rather than in the settings or an application's
 ``ready`` hook so that ``inspectdb``, the database-free unit suite and every other
@@ -40,8 +41,9 @@ _LOG = logging.getLogger(__name__)
 def read_rows() -> list[tuple[Any, ...]]:
     """Read the served schema's version rows on Django's connection, then close it.
 
-    The connection is closed because it was opened while the application loaded, in a
-    thread no request runs on.
+    The connection is closed because the first read is made while the application loads,
+    in a thread no request runs on; a refused request's read closes its own thread's
+    connection too, which Django opens again when the thread next needs one.
 
     Returns:
         The ``(version, state)`` rows; empty when the table does not exist.
@@ -89,16 +91,19 @@ def unavailable(message: str) -> Application:
     return application
 
 
-class _CheckOnRequest:
-    """The application, behind a check that could not reach the database when loaded.
+class _Refusing:
+    """The application, behind a check that has not yet passed.
 
-    Each request repeats the check until it gets an answer. Then the request, and every
-    later one, goes to the application or to the 503 stub, as the answer says. A request
-    that still cannot reach the database is answered 503.
+    Each request repeats the check. While it fails -- no row, another version, a state
+    other than ``ready``, or a database that cannot be read -- the request is answered
+    503 with what is wrong. Once it passes, that request and every later one go to the
+    application, and the check is not made again. So a worker that loaded before the
+    schema was finished serves it once ``opus_import --write-schema-version`` has run,
+    without a reload, and a refused worker costs the database one small query a request.
     """
 
     def __init__(self, application: Application, read: RowReader) -> None:
-        """Hold the application until the check answers.
+        """Hold the application until the check passes.
 
         Parameters:
             application: The Django application.
@@ -106,8 +111,22 @@ class _CheckOnRequest:
         """
         self._application = application
         self._read = read
-        self._decided: Application | None = None
+        self._passed = False
         self._lock = threading.Lock()
+
+    def _problem(self) -> str | None:
+        """Make the check once.
+
+        Returns:
+            None when it passes, else what is wrong.
+        """
+        try:
+            return problem(self._read())
+        except DatabaseError as error:
+            # The driver's message names the account, so it goes to the log rather than
+            # into a public response.
+            _LOG.warning('The schema version row could not be read (%s)', error)
+            return 'the database could not be read'
 
     def __call__(self, environ: dict[str, Any], start_response: Callable[..., Any]) -> Any:
         """Serve one request.
@@ -117,58 +136,40 @@ class _CheckOnRequest:
             start_response: The server's callback.
 
         Returns:
-            The response body of whichever application serves the request.
+            The application's response once the check passes, else the 503's.
         """
-        if self._decided is None:
+        if not self._passed:
             with self._lock:
-                if self._decided is None:
-                    try:
-                        self._decided = decide(self._application, self._read())
-                    except DatabaseError as error:
-                        # The driver's message names the account, so it goes to the log
-                        # rather than into a public response.
-                        _LOG.warning('The schema version row could not be read (%s)', error)
-                        return unavailable('the database could not be read')(
-                            environ, start_response
-                        )
-        return self._decided(environ, start_response)
-
-
-def decide(application: Application, rows: list[tuple[Any, ...]]) -> Application:
-    """Choose what serves requests, given the schema's version rows.
-
-    Parameters:
-        application: The Django application.
-        rows: The ``(version, state)`` rows.
-
-    Returns:
-        The application when the rows pass `opus_import.schema_version.problem`, else
-        the 503 stub.
-    """
-    found = problem(rows)
-    return application if found is None else unavailable(found)
+                if not self._passed:
+                    found = self._problem()
+                    if found is not None:
+                        return unavailable(found)(environ, start_response)
+                    self._passed = True
+        return self._application(environ, start_response)
 
 
 def guard(application: Application, read: RowReader = read_rows) -> Application:
-    """Return what the web server should call: the application, or the 503 stub.
+    """Return what the web server should call.
 
     Parameters:
         application: The Django application.
         read: What reads the version rows; the default reads them through Django.
 
     Returns:
-        The application when the schema's row is this release's version and ``ready``;
-        the 503 stub when it is absent, another version, or not ``ready``; and, when the
-        database cannot be read at all, the application behind a check each request
-        repeats until the database answers, so a database that is down while the
-        application loads is not refused for good.
+        The application itself when the schema's row is this release's version and
+        ``ready``. Otherwise -- the row absent, another version or not ``ready``, or the
+        database unreadable -- the application behind a check every request repeats,
+        answering 503 until it passes.
     """
     try:
-        rows = read()
+        found = problem(read())
     except DatabaseError as error:
         # One line: a traceback here says nothing the error does not.
         _LOG.warning(
             'The schema version row could not be read (%s); each request will try again', error
         )
-        return _CheckOnRequest(application, read)
-    return decide(application, rows)
+        return _Refusing(application, read)
+    if found is None:
+        return application
+    _LOG.warning('Refusing to serve the schema: %s', found)
+    return _Refusing(application, read)

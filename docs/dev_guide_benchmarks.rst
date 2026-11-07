@@ -354,7 +354,9 @@ runs whose own 95th percentile is an outlier (below).
 Before starting a side's server, ``bench_web`` gives the schema the version row that
 side's web application checks for: it sets the row's version to the side's
 ``SCHEMA_VERSION``, read through the side's interpreter, or, on a schema with no row, runs
-the side's ``opus_import --write-schema-version``. Two sides that serve one schema
+the side's ``opus_import --write-schema-version``. A row whose state is not ``ready`` is
+refused rather than changed, since only a finished import may set it. Two sides that
+serve one schema
 expect different versions whenever the change raises it. A side whose code has no
 version checks nothing and is left alone. ``bench_server.clone_schema`` sets a copied
 row the same way, to the version of the side that will use the copy. ``bench_db``'s

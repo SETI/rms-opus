@@ -719,5 +719,5 @@ The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps
 
 Two things read it, and both require the release's own version in the ``ready`` state:
 
-* the web application, once as it loads (:mod:`opus_app.schema_guard`, called from :mod:`opus_app.wsgi`). Any other row, or none, makes every request answer 503 with a message naming the remedy. The check is in the WSGI entry point and not in the settings, so management commands, ``inspectdb`` among them, work against any database;
+* the web application, as it loads (:mod:`opus_app.schema_guard`, called from :mod:`opus_app.wsgi`). Any other row, or none, makes every request answer 503 with a message naming the remedy, and each refused request checks again, so a worker serves the database as soon as it is finished, without a reload. The check is in the WSGI entry point and not in the settings, so management commands, ``inspectdb`` among them, work against any database;
 * both deploy scripts, before they write anything (:ref:`user_guide_deployment_schema_version`).

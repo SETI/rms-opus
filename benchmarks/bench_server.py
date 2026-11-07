@@ -641,7 +641,7 @@ def drop_schema(server: MysqlServer, schema: str) -> None:
         query(connection, f'DROP DATABASE IF EXISTS {quote_identifier(schema)}')
 
 
-def restamp_version(server: MysqlServer, schema: str, version: int) -> bool:
+def restamp_version(server: MysqlServer, schema: str, version: int) -> str | None:
     """Set the version in a schema's version row, leaving its state alone.
 
     The import's own step never overwrites a different version, so where a side's code
@@ -655,8 +655,8 @@ def restamp_version(server: MysqlServer, schema: str, version: int) -> bool:
             the schema.
 
     Returns:
-        Whether the schema had a version row to set; False when it has no
-        ``schema_version`` table, or the table is empty.
+        The row's state, or None when the schema has no ``schema_version`` table or the
+        table is empty.
     """
     with contextlib.closing(server.connect()) as connection:
         exists = query(
@@ -666,13 +666,13 @@ def restamp_version(server: MysqlServer, schema: str, version: int) -> bool:
             [schema],
         )[0][0]
         if exists == 0:
-            return False
+            return None
         table = f'{quote_identifier(schema)}.schema_version'
-        rows = int(query(connection, f'SELECT COUNT(*) FROM {table}')[0][0])  # nosec B608 - quoted identifier
-        if rows == 0:
-            return False
+        states = query(connection, f'SELECT state FROM {table}')  # nosec B608 - quoted identifier
+        if len(states) == 0:
+            return None
         query(connection, f'UPDATE {table} SET version = %s', [version])  # nosec B608 - quoted identifier
-        return True
+        return str(states[0][0])
 
 
 def clone_schema(
