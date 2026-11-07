@@ -208,6 +208,20 @@ def test__ids_for_asks_the_server_about_a_name_it_does_not_hold(
     assert planet_model.objects.queries == 2
 
 
+@pytest.mark.parametrize(
+    'name',
+    ['Sätürn', 'Sat\u00a8urn', 'Sat\x01urn'],
+    ids=['accent', 'diaeresis-sign', 'control'],
+)
+def test__a_name_that_is_not_printable_ascii_asks_the_server(
+    planet_model: FakeMultModel, name: str
+) -> None:
+    # The fake server compares exactly, so none of these matches there.
+    table = mult_table('obs_general.planet_id')
+    assert table.ids_for([name]) == []
+    assert planet_model.objects.queries == 2
+
+
 def test__ids_for_returns_what_the_server_matched_on_a_miss(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -239,8 +253,9 @@ def test__ids_for_accepts_any_iterable(planet_model: FakeMultModel) -> None:
         ('Sat\u00adurn', False),
         ('Sat\x01urn', False),
         ('Jupitér', False),
+        ('General\u00a8Constraints', False),
     ],
-    ids=['letters', 'punctuation', 'space', 'soft-hyphen', 'control', 'accent'],
+    ids=['letters', 'punctuation', 'space', 'soft-hyphen', 'control', 'accent', 'diaeresis-sign'],
 )
 def test__only_printable_ascii_collates_as_its_key(text: str, expected: bool) -> None:
     assert import_constants.collates_as_key(text) is expected

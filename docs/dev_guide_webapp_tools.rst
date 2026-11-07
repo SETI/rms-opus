@@ -475,12 +475,14 @@ table, and one of the two equal copies is kept.
     the row labeled ``Saturn``. Every lookup here by a string compares the strings'
     keys. **The key is the collation only for printable ASCII**: it folds case and
     accents but does not ignore what the collation ignores, such as a soft hyphen or a
-    control character. Stored strings that are printable ASCII
+    control character, and it maps some characters onto others the collation keeps apart
+    (``¨`` onto a space). Strings that are printable ASCII
     (:func:`~opus_app.apps.tools.import_constants.collates_as_key`) compare the same way
-    under both, which is why a lookup that misses, or a mult table that is not all
-    printable ASCII, goes to the server, and why ``get_metadata`` asks the server about a
-    category list its copy does not match in full, or any list when a displayed table's
-    label or name is not printable ASCII.
+    under both. So a mult lookup goes to the server when a requested name is not printable
+    ASCII, finds nothing, or searches a table that is not all printable ASCII; and
+    ``get_metadata`` asks the server about a category list its copy does not match in
+    full, that holds a name that is not printable ASCII, or that is looked up while a
+    displayed table's label or name is not printable ASCII.
 
 .. _dev_guide_webapp_tools_file_utils:
 

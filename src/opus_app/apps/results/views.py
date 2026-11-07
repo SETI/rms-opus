@@ -104,6 +104,7 @@ from opus_app.apps.tools.db_utils import (
 )
 from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_products
 from opus_app.apps.tools.import_constants import (
+    collates_as_key,
     collation_key,
     displayed_table_names,
     partables,
@@ -603,9 +604,14 @@ def get_metadata(
             for row in displayed_table_names()
             if collation_key(row.label) in cat_keys or collation_key(row.table_name) in cat_keys
         ]
-        if len(all_tables) != len(cat_list) or not table_names_collate_as_keys():
+        if (
+            len(all_tables) != len(cat_list)
+            or not table_names_collate_as_keys()
+            or not all(collates_as_key(cat) for cat in cat_list)
+        ):
             # The server's collation decides a name the copy does not match, and every
-            # name when a table's label or name could compare differently there.
+            # name when a requested name or a table's label or name could compare
+            # differently there.
             all_tables = list(
                 (
                     TableNames.objects.filter(label__in=cat_list, display='Y')

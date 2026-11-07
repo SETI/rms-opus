@@ -13,11 +13,12 @@ A lookup by a string goes through `collation_key`, which folds case and accents 
 the server's ``utf8mb4_0900_ai_ci`` collation does, so ``saturn`` finds the row labeled
 ``Saturn`` here as it does in a query. The key is not the server's collation in full: it
 does not ignore what the collation ignores, such as a soft hyphen or an ASCII control
-character. It agrees with the server wherever the stored strings are printable ASCII
+character, and it maps some characters onto others the collation keeps apart (``¨``
+onto a space). It agrees with the server wherever both strings are printable ASCII
 (`collates_as_key`), since the collation compares those letters without regard to case
-and every other printable ASCII character as itself. A lookup that finds nothing under
-its key, or that searches rows holding a string that is not printable ASCII, is
-therefore asked of the server, which decides it.
+and every other printable ASCII character as itself. A lookup by a name that is not
+printable ASCII, one that finds nothing under its key, and one over rows holding a string
+that is not printable ASCII are therefore asked of the server, which decides them.
 """
 
 from __future__ import annotations
@@ -54,14 +55,15 @@ def collation_key(text: str) -> str:
 
 
 def collates_as_key(text: str) -> bool:
-    """Return whether a stored string is one `collation_key` compares as the server does.
+    """Return whether a string is one `collation_key` compares as the server does.
 
     A string of printable ASCII characters has a nonzero weight for every character
     under the server's collation, so two such strings are equal there exactly when their
-    keys are equal. Any other string may carry a character the collation ignores.
+    keys are equal. Any other string may carry a character the collation ignores, or one
+    the key maps onto a character the collation keeps apart from it.
 
     Parameters:
-        text: The stored string.
+        text: The string, stored or from a request.
 
     Returns:
         True if the string is printable ASCII.
@@ -181,9 +183,9 @@ class MultTable:
 
         A row is named when its label or its value is one of the names, as the server
         compares them; that is what the query this replaces asked for. The names are
-        looked up on the server instead when one of them has no row under its key here,
-        or when the table holds a name that is not printable ASCII, where a key could
-        miss a row the server's collation matches.
+        looked up on the server instead when one of them is not printable ASCII or has
+        no row under its key here, or when the table holds a name that is not printable
+        ASCII; in each of those a key could disagree with the server's collation.
 
         Parameters:
             names: The labels and values, in any mix.
@@ -194,7 +196,11 @@ class MultTable:
         names = list(names)
         ids: set[int] = set()
         for name in names:
-            matched = self.ids_by_key.get(collation_key(name)) if self.ascii_only else None
+            matched = (
+                self.ids_by_key.get(collation_key(name))
+                if self.ascii_only and collates_as_key(name)
+                else None
+            )
             if matched is None:
                 model = apps.get_model('search', self.model_name)
                 rows = model.objects.filter(Q(label__in=names) | Q(value__in=names))

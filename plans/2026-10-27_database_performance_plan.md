@@ -4582,12 +4582,15 @@ Nothing above this line is rewritten by an executor.
   requests into errors. PR-03's in-memory lookups compare a key that folds case and
   strips accents. The key is the collation only for printable ASCII: it does not ignore
   what the collation ignores (a soft hyphen, or an ASCII control character, which has zero
-  weight). Stored strings that are printable ASCII compare the same way under both, since
-  the collation compares those letters without regard to case and every other printable
-  ASCII character as itself, so a mult table holding any name that is not printable
-  ASCII is always asked of the server, as is a mult name with no entry under its key; and
-  `get_metadata` asks the server about a `cats` list its copy does not match in full, or
-  about any list when a displayed table's label or name is not printable ASCII. The unique keys on
+  weight), and it maps `¨` onto a space where the collation keeps them apart (checked on
+  MySQL 8.0.46: `'General Constraints' = 'General¨Constraints'` is 0). Strings that
+  are printable ASCII compare the same way under both, since the collation compares those
+  letters without regard to case and every other printable ASCII character as itself, so
+  a mult lookup is asked of the server when a requested name is not printable ASCII or
+  has no entry under its key, or when the table holds a name that is not printable ASCII;
+  and `get_metadata` asks the server about a `cats` list its copy does not match in full,
+  that holds a name that is not printable ASCII, or that is looked up while a displayed
+  table's label or name is not printable ASCII. The unique keys on
   `definitions` hold under the same collation, so its folded keys do not collide.
 - `api_get_mult_counts` reads its labels from the in-memory mult table rather than in one
   query, which the PR section allowed for: the table is already in memory for the
