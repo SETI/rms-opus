@@ -4650,6 +4650,12 @@ Nothing above this line is rewritten by an executor.
   setting, which lasts until the server restarts). The harness-owned server already has
   it on; the workstation's development server had it off, and the first import-suite
   run against it turned it on.
+- `run-tests.yml` does not run `SET GLOBAL local_infile = ON` before the import suite,
+  though the section says it does. The suite connects as the `mysql:8.0` service's root
+  account, which may change the setting, so the import turns it on itself; a step doing
+  it first would leave that branch of the connect untested in CI.
+  `import_tests/test_bulk_load.py` still asserts that every invocation took the file
+  path.
 - The import suite's main session sets `transaction_rows = 7` (`MAIN_RUN_TRANSACTION_ROWS`
   in `import_tests/conftest.py`), and the goldens were unchanged with it.
 - The call site's rows are the lists `import_one_index` already builds, one per table, so
