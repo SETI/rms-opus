@@ -4565,3 +4565,29 @@ Nothing above this line is rewritten by an executor.
   returned before the drop, which a connection closed at the end of the request had
   cleaned up. PR-02 drops both in a `finally` through `db_utils.drop_temporary_table`,
   with `DROP TEMPORARY TABLE IF EXISTS`.
+- At the operator's direction (2026-11-06), PR-03's target is the warm
+  statements-executed count of the fan-out with selections, not its warm p50, for the
+  reason PR-02's is a count: over kept connections and the Unix socket each removed
+  statement is a round trip far under the web jitter of PR-00's floors. PR-02's
+  measurement already showed that count at 15 on the base, so the fallback to the broad
+  search's first page did not arise. On the base the 15 are three digests five times
+  each: the `param_info` lookup by `(category_name, name)`, the mult selection's
+  `label IN (...) OR value IN (...)`, and a `param_info` lookup by slug. The third is not
+  one the PR section names: `get_param_info_by_slug` returned a search slug ending in its
+  range suffix (`time1`) without storing it in `_PARAMINFO_CACHE`, so that cache never
+  answered it. PR-03 stores it, returning a copy as the other branches do.
+- The server compares strings with `utf8mb4_0900_ai_ci` (case- and accent-insensitive),
+  and the API goldens depend on it (`planet=saturn` and `planet=SATURN` beside
+  `planet=Saturn`), so a dictionary keyed by the exact label would have turned those
+  requests into errors. PR-03's in-memory lookups by a string from a request compare a
+  key that folds case and strips accents, and a mult name with no entry under its key is
+  still asked of the server, so the server's collation decides every name that misses.
+  The unique keys on `definitions` hold under the same collation, so its folded keys do
+  not collide.
+- `api_get_mult_counts` reads its labels from the in-memory mult table rather than in one
+  query, which the PR section allowed for: the table is already in memory for the
+  search. `_valid_regex` remembers only the patterns the server accepted, bounded at
+  1024, through `functools.lru_cache` over a function that raises on a refusal, which
+  the cache does not store; a refusal from a lost connection is not taken for the
+  pattern's answer. `_PRETTY_MULT_CACHE` is removed, since the mult table's copy answers
+  its lookups.
