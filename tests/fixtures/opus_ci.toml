@@ -44,6 +44,8 @@ cache_server_prefix = "opus_ci"
 # application runs on its local-memory cache wherever the suite runs, rather than
 # writing into whichever memcached the machine happens to have on its default port.
 cache_location = "127.0.0.1:1"
+conn_max_age = 300
+conn_health_checks = true
 public_url = "https://opus.pds-rings.seti.org/"
 product_http_path = "https://opus.pds-rings.seti.org/"
 viewmaster_url = "https://pds-rings.seti.org/"

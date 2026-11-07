@@ -595,8 +595,8 @@ Each PR in §4 names its **target metric**. A PR is ready to merge when:
 
 A PR whose target metric does not improve is a **stop-and-report**: the measurement is
 committed anyway, labeled as such, and the orchestrator decides whether to revise the
-approach or drop the item. A negative result is a result; it is not discarded. PR-05,
-PR-06, PR-08, PR-14, PR-15, and PR-16a name a structural criterion beside or instead of a
+approach or drop the item. A negative result is a result; it is not discarded. PR-02,
+PR-05, PR-06, PR-08, PR-14, PR-15, and PR-16a name a structural criterion beside or instead of a
 target metric; their sections say so.
 
 ### 2.6 Statistics and noise floors
@@ -870,17 +870,18 @@ field-function cache is not made at all (§7).
     goes in the Execution notes; a cache that is not safe gets a lock in this PR.
 - **Measurement:** the page scenarios, the preview-image scenarios, the fan-out scenario,
   app-cold and warm, and the concurrency scenario, with each scenario's `Connections`
-  delta and statements-executed count (§2.2). Target metric: **warm p50 of the first
-  page of the broad search through `api/data.json`**, a `never_cache` request that always
-  reaches the database: it runs the session through `get_session_id` (a load and a save,
-  since the scenario's cookie jar carries the session, §2.2), `url_to_search_params`, and
-  the page query, so today each such request opens a database connection, which is the
-  cost this PR removes. A warm fan-out is not the target: its views read no session, and
-  once its counts are memcached it may execute no statement at all, so a connection it
-  never opens cannot get cheaper. Secondaries: the warm p50 of the tenth page through
-  `api/data.json` and of the first page through `__api/dataimages.json`, the warm fan-out
-  with selections, and the app-cold p50 of the fan-out; cold p95 under concurrency is
-  reported, not judged, before PR-11.
+  delta and statements-executed count (§2.2). **Target metric, structural:** the warm
+  `server.Connections` delta of every scenario whose requests reach the database (the
+  broad search's pages through `api/data.json` among them), which falls from one per
+  request to none once each worker thread holds its connection; it is a count, so the
+  comparison shows it exactly. Latency is reported, not judged: the harness reaches its
+  server through the Unix socket, where a connection, Django's setup statements and the
+  disconnect cost about 0.3 ms, under the web jitter of PR-00's floors (12.9 ms at test
+  scale), so no latency verdict could come of it. The saving this PR is for is a database
+  on another host: over TCP with TLS, a MySQL 8 connection with Django's setup statements
+  costs about 11.6 ms on the operator's workstation before any network round trip
+  (Execution notes), which the PR description states as an estimate for a remote
+  database, not as a harness measurement. Imports once (§2.3).
 - **Acceptance:** §2.5.
 - **Scale:** test scale.
 
@@ -4527,3 +4528,36 @@ Nothing above this line is rewritten by an executor.
   the logged-message sets move to PR-14, which rewrites `update_mult_table`, where the
   dictionary keeps a lookup's cost flat should the one table be loaded whole; the
   micro-benchmark is not kept.
+- At the operator's direction (2026-11-06), PR-02's target is the warm per-scenario
+  `server.Connections` count, not the first page's warm latency. Timed on the operator's
+  workstation against MySQL 8.0 (300 connections, each running Django's
+  `SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED` and its `SELECT VERSION(), ...`
+  check, then closing): 0.31 ms through the Unix socket, 0.39 ms over TCP without TLS,
+  and 11.6 ms over TCP with TLS (`TLS_AES_256_GCM_SHA384`), the default for a MySQL 8
+  server that has certificates. Production connects to `localhost`, which the MySQL
+  client takes as the Unix socket, so the PR saves little today; the database is to move
+  to another host, where every request would pay the TLS connection and its round trips.
+  The first page's warm latency at test scale is 17.9 ms against an effective floor of
+  12.9 ms (the web jitter), so a latency target could not be met by any saving under that.
+- PR-02's thread-safety audit (`grep -rnE '^_[A-Z_]+(\s*:[^=]+)?\s*=\s*(\{|\[|dict\(|set\()|^\s+global _' src/opus_app --include=*.py`,
+  run at f3702ae2, PR-02's base) finds four module-level mutables; at PR-02's head it
+  finds three, since the counter that replaces the fourth, `_API_CALL_NUMBERS` (an
+  `itertools.count`), matches neither pattern. `_API_CALL_NUMBER` in `tools/app_utils.py` was not
+  safe: `enter_api_call` incremented it and read it back as separate steps, so two
+  threads could take one number, and one call's start time overwrite another's; with the
+  interpreter switching threads as often as it can, eight threads entering 2,000 calls
+  each always produced duplicates. The numbers now come from one `itertools.count`,
+  whose `next()` the GIL does not interrupt, and a test drives the eight threads.
+  `_API_START_TIMES` is then keyed by numbers no two calls share, and each call removes
+  only its own entry. `_PRETTY_MULT_CACHE` in `tools/db_utils.py` and `_PARAMINFO_CACHE`
+  in `search/views.py` are only ever added to, each key always with the value any thread
+  would compute, so a race costs one repeated query and no wrong answer; the
+  `ParamInfo` objects the second holds are returned as copies wherever a caller changes
+  one (`results/views.py`'s referred slugs, which ask for the `col` form).
+- A kept connection also keeps every temporary table a request made on it. The search
+  results chunk (`results/views.get_search_results_chunk`) and the cart's range editor
+  (`cart/views._edit_cart_range`) each build one and dropped it only on their success
+  path; an unknown column slug, a range endpoint not in the cart, or a database error
+  returned before the drop, which a connection closed at the end of the request had
+  cleaned up. PR-02 drops both in a `finally` through `db_utils.drop_temporary_table`,
+  with `DROP TEMPORARY TABLE IF EXISTS`.

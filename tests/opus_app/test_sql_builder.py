@@ -338,9 +338,12 @@ class SQLBuilderStatementTests(TestCase):
         "[test_sql_builder.py] count_rows"
         self.assertEqual(sql_builder.count_rows('cache_12'), 'SELECT COUNT(*) FROM `cache_12`')
 
-    def test__drop_table(self) -> None:
-        "[test_sql_builder.py] drop_table"
-        self.assertEqual(sql_builder.drop_table('temp_abc_1_2'), 'DROP TABLE `temp_abc_1_2`')
+    def test__drop_temporary_table_if_exists(self) -> None:
+        "[test_sql_builder.py] drop_temporary_table_if_exists"
+        self.assertEqual(
+            sql_builder.drop_temporary_table_if_exists('temp_abc_1_2'),
+            'DROP TEMPORARY TABLE IF EXISTS `temp_abc_1_2`',
+        )
 
     def test__create_table_as_select_with_column_defs(self) -> None:
         "[test_sql_builder.py] create_table_as_select: the cache-table shape"

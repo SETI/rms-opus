@@ -376,6 +376,11 @@ DATABASES = {
         'ENGINE': _db_engines[_config.database.brand],
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
+        # Each worker thread keeps its connection for this long rather than opening
+        # one per request, and checks it before reusing it, so a connection the server
+        # dropped in the meantime is replaced rather than failing the request.
+        'CONN_MAX_AGE': _config.django.conn_max_age,
+        'CONN_HEALTH_CHECKS': _config.django.conn_health_checks,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
         'TEST': {
             'NAME': DB_SCHEMA_NAME,  # use same database for test as prod YES

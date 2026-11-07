@@ -21,7 +21,8 @@ Each of its modules is covered in full below.
    * - :mod:`~opus_app.apps.tools.sql_builder`
      - Assembling raw SQL from structure instead of from string concatenation.
    * - :mod:`~opus_app.apps.tools.db_utils`
-     - Finding a model by table name, and the labels behind the ``mult_`` tables.
+     - Finding a model by table name, the labels behind the ``mult_`` tables, and
+       dropping a request's temporary tables.
    * - :mod:`~opus_app.apps.tools.file_utils`
      - Lookups against ``obs_files``: an observation's products, its preview images, and
        the browse products the Details tab shows.
@@ -388,7 +389,7 @@ Nine module-level functions render whole statements:
 :func:`~opus_app.apps.tools.sql_builder.create_table_from_select_sql` and
 :func:`~opus_app.apps.tools.sql_builder.create_table_as_select` (the first for the one
 caller whose SELECT is already rendered),
-:func:`~opus_app.apps.tools.sql_builder.drop_table`,
+:func:`~opus_app.apps.tools.sql_builder.drop_temporary_table_if_exists`,
 :func:`~opus_app.apps.tools.sql_builder.count_rows`,
 :func:`~opus_app.apps.tools.sql_builder.delete_from`,
 :func:`~opus_app.apps.tools.sql_builder.delete_joined`,
@@ -413,7 +414,8 @@ created with, because both are consumed the same way.
 opus_app.apps.tools.db_utils
 ----------------------------
 
-Model lookup by table name, and the labels behind the ``mult_`` tables.
+Model lookup by table name, the labels behind the ``mult_`` tables, and dropping a
+request's temporary tables.
 
 :func:`~opus_app.apps.tools.db_utils.table_model_from_name`
     ``obs_pds`` becomes ``ObsPds``, looked up in the ``search`` app. The return has no
@@ -428,6 +430,13 @@ Model lookup by table name, and the labels behind the ``mult_`` tables.
     are cached in a module-level dictionary for the life of the process.** There are not
     many mult tables or values, so the memory cost is small; the cost is that nothing
     clears it, so a re-imported label needs the workers restarted.
+
+:func:`~opus_app.apps.tools.db_utils.drop_temporary_table`
+    Drops a temporary table a view built, if it is still there, logging rather than
+    raising a failure. The search results chunk and the cart's range editor call it from
+    a ``finally``, so the table goes on every way out of the request, errors and bad
+    input included: a worker thread keeps its database connection across requests
+    (``[django] conn_max_age``), and a temporary table lives as long as its connection.
 
 Three MySQL error numbers are declared here for callers to match a database exception
 against: ``MYSQL_TABLE_NOT_EXISTS``, ``MYSQL_TABLE_ALREADY_EXISTS`` -- which is how the

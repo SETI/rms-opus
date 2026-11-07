@@ -19,6 +19,7 @@ import datetime
 import functools
 import importlib.metadata
 import inspect
+import itertools
 import json
 import logging
 import random
@@ -203,7 +204,10 @@ def get_reqno(request: HttpRequest) -> int | None:
     return reqno
 
 
-_API_CALL_NUMBER = 0
+# Each API call's number comes from one counter. A worker's threads share it, and
+# next() on an itertools.count is a single step the GIL does not interrupt, so no two
+# concurrent calls are given the same number.
+_API_CALL_NUMBERS = itertools.count(1)
 _API_START_TIMES: dict[int, float] = {}
 
 
@@ -241,13 +245,12 @@ def enter_api_call(
         The API call number, which the matching `exit_api_call` is given so the
         two lines can be paired and the call timed.
     """
-    global _API_CALL_NUMBER
-    _API_CALL_NUMBER += 1
+    call_number = next(_API_CALL_NUMBERS)
     # Guarded here as well as inside the helper: building this line means
     # json.dumps of the whole query string, which is not worth doing to throw
     # away.
     if settings.OPUS_LOG_API_CALLS:  # pragma: no cover - internal debugging
-        s = 'API ' + str(_API_CALL_NUMBER) + ' '
+        s = 'API ' + str(call_number) + ' '
         if request and request.path:
             s += request.path
         if kwargs:
@@ -255,8 +258,8 @@ def enter_api_call(
         if request and request.GET:
             s += ' ' + json.dumps(request.GET, sort_keys=True, indent=4, separators=(',', ': '))
         _log_api_call_line(s)
-    _API_START_TIMES[_API_CALL_NUMBER] = time.time()
-    return _API_CALL_NUMBER
+    _API_START_TIMES[call_number] = time.time()
+    return call_number
 
 
 def exit_api_call(api_code: int, ret: Any) -> None:

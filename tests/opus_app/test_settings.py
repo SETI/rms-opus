@@ -49,6 +49,8 @@ debug = true
 allowed_hosts = ["django-allowed-host-1", "django-allowed-host-2"]
 cache_server_prefix = "django-cache-server-prefix"
 cache_location = "127.0.0.1:2"
+conn_max_age = 45
+conn_health_checks = false
 public_url = "https://django-public-url.example.org/"
 product_http_path = "https://django-product-http-path.example.org/"
 viewmaster_url = "https://django-viewmaster-url.example.org/"
@@ -260,6 +262,17 @@ def test_cache_location_reaches_the_probe_and_caches(distinct_config: Path, tmp_
     dumped = json.loads(result.stdout)
     assert dumped['probed'] == ['127.0.0.1', 2]
     assert dumped['caches']['default']['LOCATION'] == '127.0.0.1:2'
+
+
+def test_the_connection_lifetime_reaches_the_database_settings(
+    distinct_config: Path, tmp_path: Path
+) -> None:
+    """The configured lifetime and health check are what Django's connection uses."""
+    result = _import_settings(distinct_config, tmp_path, 'DATABASES')
+    assert result.returncode == 0, result.stderr
+    default = json.loads(result.stdout)['DATABASES']['default']
+    assert default['CONN_MAX_AGE'] == 45
+    assert default['CONN_HEALTH_CHECKS'] is False
 
 
 def test_settings_require_the_configuration_variable(tmp_path: Path) -> None:

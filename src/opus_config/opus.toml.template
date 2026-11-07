@@ -100,6 +100,15 @@ cache_server_prefix = "<CACHE_SERVER_PREFIX>"
 # the default is the value below, memcached's own port on this machine.
 cache_location = "127.0.0.1:11211"
 
+# How many seconds each web worker thread keeps its database connection open across
+# requests; 0 opens and closes one for every request. Optional; the default is the
+# value below.
+conn_max_age = 300
+
+# Whether a kept database connection is checked before a request reuses it, and
+# replaced if the server has dropped it. Optional; the default is the value below.
+conn_health_checks = true
+
 # The public URL of this OPUS installation.
 public_url = "https://opus.pds-rings.seti.org/"
 

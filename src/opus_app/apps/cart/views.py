@@ -82,6 +82,7 @@ from opus_app.apps.tools.app_utils import (
     http500_search_cache_failed,
     json_response,
 )
+from opus_app.apps.tools.db_utils import drop_temporary_table
 from opus_app.apps.tools.dictionary import Definitions
 from opus_app.apps.tools.file_size import nice_file_size
 from opus_app.apps.tools.file_utils import get_pds_products
@@ -1323,312 +1324,313 @@ def _edit_cart_range(
         raise Http400Error(http400_bad_or_missing_range(request))
 
     temp_table_name: str | None = None
-
-    user_query_table: str | None
-    if request.GET.get('view', 'browse') == 'cart':
-        # This is for the cart page - we don't have any pre-done sort order
-        # so we have to do it ourselves here
-        all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
-        order_params, order_descending_params = parse_order_slug(all_order)
-        # An unresolvable order slug is bad user input, not an internal failure.
-        # Unchecked, the None reaches create_order_by_terms and trips its
-        # `assert order_params`, so the caller sees an AssertionError.
-        if order_params is None:
-            log.error('_edit_cart_range: Could not parse order %r', all_order)
-            raise Http400Error(http400_unknown_slug(None, request))
-        # parse_order_slug returns both lists or neither, and the check above has
-        # ruled out "neither".
-        assert order_descending_params is not None
-        (order_terms, order_mult_tables, order_obs_tables) = create_order_by_terms(
-            order_params, order_descending_params
-        )
-        if order_terms is None:  # pragma: no cover -
-            # parse_order_slug resolves every slug through the same ParamInfo
-            # lookup, so it fails first; this guard is here because the function
-            # documents the return, not because a route reaches it.
-            log.error('_edit_cart_range: Could not build order terms for %r', all_order)
-            raise Http400Error(http400_unknown_slug(None, request))
-        # create_order_by_terms returns all three values or none of them, and the
-        # check above has ruled out "none".
-        assert order_mult_tables is not None
-        assert order_obs_tables is not None
-
-        cursor = connection.cursor()
-
-        # First we create a temporary table that contains the ids of
-        # observations in the cart, appropriately sorted, with a unique
-        # incrementing sort_id. This is just like a user_query_table, but
-        # short-lived, and we use it in the same way.
-        pid_sfx = str(os.getpid())
-        time1 = time.time()
-        time_sfx = (f'{time1:.6f}').replace('.', '_')
-        # The table name embeds the session id, which get_session_id leaves None
-        # only where Django could not create a session key at all.
-        assert session_id is not None
-        temp_table_name = 'temp_' + session_id + '_' + pid_sfx + '_' + time_sfx
-        temp_select = sql_builder.Select()
-        temp_select.add_column(sql_builder.column('id', 'obs_general'))
-        temp_from = temp_select.add_from('obs_general')
-        # Now JOIN all the obs_ tables together
-        add_obs_table_joins(temp_from, sorted(order_obs_tables))
-        # And JOIN all the mult_ tables together
-        add_mult_table_joins(temp_from, sorted(order_mult_tables))
-        temp_from.add_join(
-            'INNER',
-            'cart',
-            sql_builder.join_exprs(
-                [
-                    sql_builder.columns_equal(
-                        sql_builder.column('id', 'obs_general'),
-                        sql_builder.column('obs_general_id', 'cart'),
-                    ),
-                    sql_builder.binary_op(
-                        sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
-                    ),
-                ],
-                'AND',
-            ),
-        )
-        for order_column, descending in order_terms:
-            temp_select.add_order_by(order_column, descending=descending)
-        temp_sql, params = sql_builder.create_table_as_select(
-            temp_table_name,
-            temp_select,
-            column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS,
-            temporary=True,
-        )
-        try:
-            cursor.execute(temp_sql, params)
-        except DatabaseError:  # pragma: no cover - database error
-            log.exception('_edit_cart_range: "%r" "%r" failed', temp_sql, params)
-            return HttpResponseServerError(http500_database_error(request))
-        log.debug('_edit_cart_range SQL (%.2f secs): %r %r', time.time() - time1, temp_sql, params)
-
-        user_query_table = temp_table_name
-    else:
-        # This is for the browse page - everything is based on the
-        # user_query_table
-
-        # Find the index in the cache table for the min and max opus_ids
-
-        (selections, extras) = url_to_search_params(request.GET)
-        if selections is None:
-            log.error(
-                '_edit_cart_range: Could not find selections for' + ' request %r', request.GET
+    try:
+        user_query_table: str | None
+        if request.GET.get('view', 'browse') == 'cart':
+            # This is for the cart page - we don't have any pre-done sort order
+            # so we have to do it ourselves here
+            all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
+            order_params, order_descending_params = parse_order_slug(all_order)
+            # An unresolvable order slug is bad user input, not an internal failure.
+            # Unchecked, the None reaches create_order_by_terms and trips its
+            # `assert order_params`, so the caller sees an AssertionError.
+            if order_params is None:
+                log.error('_edit_cart_range: Could not parse order %r', all_order)
+                raise Http400Error(http400_unknown_slug(None, request))
+            # parse_order_slug returns both lists or neither, and the check above has
+            # ruled out "neither".
+            assert order_descending_params is not None
+            (order_terms, order_mult_tables, order_obs_tables) = create_order_by_terms(
+                order_params, order_descending_params
             )
-            raise Http400Error(http400_search_params_invalid(request))
+            if order_terms is None:  # pragma: no cover -
+                # parse_order_slug resolves every slug through the same ParamInfo
+                # lookup, so it fails first; this guard is here because the function
+                # documents the return, not because a route reaches it.
+                log.error('_edit_cart_range: Could not build order terms for %r', all_order)
+                raise Http400Error(http400_unknown_slug(None, request))
+            # create_order_by_terms returns all three values or none of them, and the
+            # check above has ruled out "none".
+            assert order_mult_tables is not None
+            assert order_obs_tables is not None
 
-        # url_to_search_params returns both values or neither, and the check above
-        # has ruled out "neither".
-        assert extras is not None
-        user_query_table = get_user_query_table(selections, extras, api_code=api_code)
-        if not user_query_table:  # pragma: no cover - database error
-            log.error(
-                '_edit_cart_range: get_user_query_table failed '
-                + '*** Selections %r *** Extras %r',
-                str(selections),
-                str(extras),
-            )
-            return HttpResponseServerError(http500_search_cache_failed(request))
+            cursor = connection.cursor()
 
-    cursor = connection.cursor()
-
-    def cache_table_join_condition() -> sql_builder.Expr:
-        """Return the condition matching obs_general rows to those of the query table."""
-        return sql_builder.columns_equal(
-            sql_builder.column('id', user_query_table), sql_builder.column('id', 'obs_general')
-        )
-
-    sort_orders = []
-    for opus_id in ids:
-        sort_order_select = sql_builder.Select()
-        sort_order_select.add_column(sql_builder.column('sort_order'))
-        # INNER JOIN because we only want rows that exist in the
-        # user_query_table
-        sort_order_select.add_from('obs_general').add_join(
-            'INNER', user_query_table, cache_table_join_condition()
-        )
-        sort_order_select.add_where(
-            sql_builder.binary_op(
-                sql_builder.column('opus_id', 'obs_general'), '=', sql_builder.value(opus_id)
-            )
-        )
-        sql, values = sort_order_select.build()
-        log.debug('_edit_cart_range SQL: %r %r', sql, values)
-        cursor.execute(sql, values)
-        results = cursor.fetchall()
-        if len(results) == 0:
-            log.error('_edit_cart_range: No OPUS ID "%r" in obs_general', opus_id)
-            if request.GET.get('view', 'browse') == 'cart':
-                return f'An OPUS ID was given to {action} that was not found ' + 'in the cart'
-            else:
-                return (
-                    f'An OPUS ID was given to {action} that was not found '
-                    + 'using the supplied search criteria'
-                )
-        sort_orders.append(results[0][0])
-
-    sort_order_column = sql_builder.column('sort_order', user_query_table)
-    range_condition = sql_builder.join_exprs(
-        [
-            sql_builder.binary_op(sort_order_column, '>=', sql_builder.value(min(sort_orders))),
-            sql_builder.binary_op(sort_order_column, '<=', sql_builder.value(max(sort_orders))),
-        ],
-        'AND',
-    )
-
-    def range_from_source(restrict_to_cart: bool) -> sql_builder.FromSource:
-        """Return the FROM clause selecting the observations in the range."""
-        from_source = sql_builder.FromSource('obs_general')
-        # INNER JOIN because we only want rows that exist in the
-        # user_query_table
-        from_source.add_join('INNER', user_query_table, cache_table_join_condition())
-        if restrict_to_cart:
-            # Restrict to observations already in this session's cart
-            from_source.add_join(
+            # First we create a temporary table that contains the ids of
+            # observations in the cart, appropriately sorted, with a unique
+            # incrementing sort_id. This is just like a user_query_table, but
+            # short-lived, and we use it in the same way.
+            pid_sfx = str(os.getpid())
+            time1 = time.time()
+            time_sfx = (f'{time1:.6f}').replace('.', '_')
+            # The table name embeds the session id, which get_session_id leaves None
+            # only where Django could not create a session key at all.
+            assert session_id is not None
+            temp_table_name = 'temp_' + session_id + '_' + pid_sfx + '_' + time_sfx
+            temp_select = sql_builder.Select()
+            temp_select.add_column(sql_builder.column('id', 'obs_general'))
+            temp_from = temp_select.add_from('obs_general')
+            # Now JOIN all the obs_ tables together
+            add_obs_table_joins(temp_from, sorted(order_obs_tables))
+            # And JOIN all the mult_ tables together
+            add_mult_table_joins(temp_from, sorted(order_mult_tables))
+            temp_from.add_join(
                 'INNER',
                 'cart',
                 sql_builder.join_exprs(
                     [
+                        sql_builder.columns_equal(
+                            sql_builder.column('id', 'obs_general'),
+                            sql_builder.column('obs_general_id', 'cart'),
+                        ),
                         sql_builder.binary_op(
                             sql_builder.column('session_id', 'cart'),
                             '=',
                             sql_builder.value(session_id),
                         ),
-                        sql_builder.columns_equal(
-                            sql_builder.column('obs_general_id', 'cart'),
-                            sql_builder.column('id', 'obs_general'),
-                        ),
                     ],
                     'AND',
                 ),
             )
-        return from_source
-
-    if action == 'addrange' or (action == 'removerange' and recycle_bin):
-        num_cart_and_recycle = Cart.objects.filter(session_id__exact=session_id).count()
-
-        # removerange with recyclebin=1 only flips the recycled flag on rows that
-        # are already in the cart, so its statements are restricted to those.
-        restrict_to_cart = action == 'removerange'
-
-        if not recycle_bin:
-            # We don't want to check the maximum when moving items to or from
-            # the recycle bin because they go towards the same maximum either
-            # way. So we should be left here with just:
-            #       action == 'addrange' and not recycle_bin
-            assert action == 'addrange'
-            assert not recycle_bin
-
-            # Count the number of observations we're going to add
-            count_select = sql_builder.Select()
-            count_select.add_column(sql_builder.count_star())
-            count_select.add_from_source(range_from_source(restrict_to_cart))
-            count_select.add_where(range_condition)
-            sql, count_params = count_select.build()
+            for order_column, descending in order_terms:
+                temp_select.add_order_by(order_column, descending=descending)
+            temp_sql, params = sql_builder.create_table_as_select(
+                temp_table_name,
+                temp_select,
+                column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS,
+                temporary=True,
+            )
             try:
-                cursor.execute(sql, count_params)
-                num_new = cursor.fetchone()[0]
+                cursor.execute(temp_sql, params)
             except DatabaseError:  # pragma: no cover - database error
-                log.exception(
-                    '_edit_cart_range: SQL query failed for request ' + '%r: SQL "%r"',
-                    request.GET,
-                    sql,
-                )
+                log.exception('_edit_cart_range: "%r" "%r" failed', temp_sql, params)
                 return HttpResponseServerError(http500_database_error(request))
+            log.debug(
+                '_edit_cart_range SQL (%.2f secs): %r %r', time.time() - time1, temp_sql, params
+            )
 
-            # Subtract the number of observations that are already in the cart.
-            # We are on the addrange path here (asserted above), so the FROM
-            # clause is not already restricted to the cart and this adds that
-            # restriction on top of it.
-            dup_select = sql_builder.Select()
-            dup_select.add_column(sql_builder.count_star())
-            dup_select.add_from_source(range_from_source(restrict_to_cart=True))
-            dup_select.add_where(range_condition)
-            sql, dup_params = dup_select.build()
-            try:
-                cursor.execute(sql, dup_params)
-                num_old = cursor.fetchone()[0]
-            except DatabaseError:  # pragma: no cover - database error
-                log.exception(
-                    '_edit_cart_range: SQL query failed for request ' + '%r: SQL "%r"',
-                    request.GET,
-                    sql,
+            user_query_table = temp_table_name
+        else:
+            # This is for the browse page - everything is based on the
+            # user_query_table
+
+            # Find the index in the cache table for the min and max opus_ids
+
+            (selections, extras) = url_to_search_params(request.GET)
+            if selections is None:
+                log.error(
+                    '_edit_cart_range: Could not find selections for' + ' request %r', request.GET
                 )
-                return HttpResponseServerError(http500_database_error(request))
+                raise Http400Error(http400_search_params_invalid(request))
 
-            num_wanted = num_new - num_old
-            if num_cart_and_recycle + num_wanted > settings.MAX_SELECTIONS_ALLOWED:
-                return (
-                    f'Your request to add {num_wanted:,d} observations ('
-                    + f'OPUS IDs {ids[0]} to {ids[1]}) '
-                    + 'to the cart failed. The resulting cart and recycle '
-                    + 'bin would have more than the maximum '
-                    + f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
-                    + 'allowed. None of the observations were added.'
+            # url_to_search_params returns both values or neither, and the check above
+            # has ruled out "neither".
+            assert extras is not None
+            user_query_table = get_user_query_table(selections, extras, api_code=api_code)
+            if not user_query_table:  # pragma: no cover - database error
+                log.error(
+                    '_edit_cart_range: get_user_query_table failed '
+                    + '*** Selections %r *** Extras %r',
+                    str(selections),
+                    str(extras),
                 )
+                return HttpResponseServerError(http500_search_cache_failed(request))
 
-        # We always set recycled to "0" on addrange. If an observation is
-        # already in the cart, it won't be changed. If it's in the recycle bin,
-        # then it will have recycled set to 0. The recycle_bin parameter is
-        # ignored.
-        #
-        # removerange with recyclebin=1 just means to set the recycled flag. In
-        # that case the FROM clause is restricted to items already in the cart.
-        recycled = 0 if action == 'addrange' else 1
-        edit_select = sql_builder.Select()
-        edit_select.add_column(sql_builder.value(session_id))
-        edit_select.add_column(sql_builder.column('id', 'obs_general'))
-        edit_select.add_column(sql_builder.column('opus_id', 'obs_general'))
-        edit_select.add_column(sql_builder.value(recycled))
-        edit_select.add_from_source(range_from_source(restrict_to_cart))
-        edit_select.add_where(range_condition)
-        sql, sql_params = sql_builder.replace_into_select('cart', _CART_COLUMNS, edit_select)
+        cursor = connection.cursor()
 
-    elif action == 'removerange':  # recycle_bin == 0
-        delete_from_source = sql_builder.FromSource('cart')
-        delete_from_source.add_join(
-            'INNER',
-            user_query_table,
-            sql_builder.columns_equal(
-                sql_builder.column('id', user_query_table),
-                sql_builder.column('obs_general_id', 'cart'),
-            ),
-        )
-        # The join above matches on obs_general_id alone, and the cart table
-        # holds every session's rows, so the session has to be named here as
-        # well or this deletes the observations in the range from every other
-        # user's cart too. The user_query_table does not supply the restriction:
-        # with view=browse it is the shared search cache table, and even with
-        # view=cart, where it is a temporary table holding only this session's
-        # cart, it only narrows which observations are in range -- another
-        # session's row for one of those same observations still joins.
-        delete_condition = sql_builder.join_exprs(
-            [
+        def cache_table_join_condition() -> sql_builder.Expr:
+            """Return the condition matching obs_general rows to those of the query table."""
+            return sql_builder.columns_equal(
+                sql_builder.column('id', user_query_table), sql_builder.column('id', 'obs_general')
+            )
+
+        sort_orders = []
+        for opus_id in ids:
+            sort_order_select = sql_builder.Select()
+            sort_order_select.add_column(sql_builder.column('sort_order'))
+            # INNER JOIN because we only want rows that exist in the
+            # user_query_table
+            sort_order_select.add_from('obs_general').add_join(
+                'INNER', user_query_table, cache_table_join_condition()
+            )
+            sort_order_select.add_where(
                 sql_builder.binary_op(
-                    sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
-                ),
-                range_condition,
+                    sql_builder.column('opus_id', 'obs_general'), '=', sql_builder.value(opus_id)
+                )
+            )
+            sql, values = sort_order_select.build()
+            log.debug('_edit_cart_range SQL: %r %r', sql, values)
+            cursor.execute(sql, values)
+            results = cursor.fetchall()
+            if len(results) == 0:
+                log.error('_edit_cart_range: No OPUS ID "%r" in obs_general', opus_id)
+                if request.GET.get('view', 'browse') == 'cart':
+                    return f'An OPUS ID was given to {action} that was not found ' + 'in the cart'
+                else:
+                    return (
+                        f'An OPUS ID was given to {action} that was not found '
+                        + 'using the supplied search criteria'
+                    )
+            sort_orders.append(results[0][0])
+
+        sort_order_column = sql_builder.column('sort_order', user_query_table)
+        range_condition = sql_builder.join_exprs(
+            [
+                sql_builder.binary_op(sort_order_column, '>=', sql_builder.value(min(sort_orders))),
+                sql_builder.binary_op(sort_order_column, '<=', sql_builder.value(max(sort_orders))),
             ],
             'AND',
         )
-        sql, sql_params = sql_builder.delete_joined('cart', delete_from_source, delete_condition)
-    else:  # pragma: no cover - error catchall
-        log.error('_edit_cart_range: Unknown action %r: %r', action, request.GET)
-        return HttpResponseServerError(http500_internal_error(request))
 
-    log.debug('_edit_cart_range SQL: %r %r', sql, sql_params)
-    cursor.execute(sql, sql_params)
+        def range_from_source(restrict_to_cart: bool) -> sql_builder.FromSource:
+            """Return the FROM clause selecting the observations in the range."""
+            from_source = sql_builder.FromSource('obs_general')
+            # INNER JOIN because we only want rows that exist in the
+            # user_query_table
+            from_source.add_join('INNER', user_query_table, cache_table_join_condition())
+            if restrict_to_cart:
+                # Restrict to observations already in this session's cart
+                from_source.add_join(
+                    'INNER',
+                    'cart',
+                    sql_builder.join_exprs(
+                        [
+                            sql_builder.binary_op(
+                                sql_builder.column('session_id', 'cart'),
+                                '=',
+                                sql_builder.value(session_id),
+                            ),
+                            sql_builder.columns_equal(
+                                sql_builder.column('obs_general_id', 'cart'),
+                                sql_builder.column('id', 'obs_general'),
+                            ),
+                        ],
+                        'AND',
+                    ),
+                )
+            return from_source
 
-    if temp_table_name:
-        sql = sql_builder.drop_table(temp_table_name)
-        try:
-            cursor.execute(sql)
-        except DatabaseError:  # pragma: no cover - database error
-            log.exception('_edit_cart_range: "%r" failed', sql)
-            return HttpResponseServerError(http500_database_error(request))
+        if action == 'addrange' or (action == 'removerange' and recycle_bin):
+            num_cart_and_recycle = Cart.objects.filter(session_id__exact=session_id).count()
 
-    return False
+            # removerange with recyclebin=1 only flips the recycled flag on rows that
+            # are already in the cart, so its statements are restricted to those.
+            restrict_to_cart = action == 'removerange'
+
+            if not recycle_bin:
+                # We don't want to check the maximum when moving items to or from
+                # the recycle bin because they go towards the same maximum either
+                # way. So we should be left here with just:
+                #       action == 'addrange' and not recycle_bin
+                assert action == 'addrange'
+                assert not recycle_bin
+
+                # Count the number of observations we're going to add
+                count_select = sql_builder.Select()
+                count_select.add_column(sql_builder.count_star())
+                count_select.add_from_source(range_from_source(restrict_to_cart))
+                count_select.add_where(range_condition)
+                sql, count_params = count_select.build()
+                try:
+                    cursor.execute(sql, count_params)
+                    num_new = cursor.fetchone()[0]
+                except DatabaseError:  # pragma: no cover - database error
+                    log.exception(
+                        '_edit_cart_range: SQL query failed for request ' + '%r: SQL "%r"',
+                        request.GET,
+                        sql,
+                    )
+                    return HttpResponseServerError(http500_database_error(request))
+
+                # Subtract the number of observations that are already in the cart.
+                # We are on the addrange path here (asserted above), so the FROM
+                # clause is not already restricted to the cart and this adds that
+                # restriction on top of it.
+                dup_select = sql_builder.Select()
+                dup_select.add_column(sql_builder.count_star())
+                dup_select.add_from_source(range_from_source(restrict_to_cart=True))
+                dup_select.add_where(range_condition)
+                sql, dup_params = dup_select.build()
+                try:
+                    cursor.execute(sql, dup_params)
+                    num_old = cursor.fetchone()[0]
+                except DatabaseError:  # pragma: no cover - database error
+                    log.exception(
+                        '_edit_cart_range: SQL query failed for request ' + '%r: SQL "%r"',
+                        request.GET,
+                        sql,
+                    )
+                    return HttpResponseServerError(http500_database_error(request))
+
+                num_wanted = num_new - num_old
+                if num_cart_and_recycle + num_wanted > settings.MAX_SELECTIONS_ALLOWED:
+                    return (
+                        f'Your request to add {num_wanted:,d} observations ('
+                        + f'OPUS IDs {ids[0]} to {ids[1]}) '
+                        + 'to the cart failed. The resulting cart and recycle '
+                        + 'bin would have more than the maximum '
+                        + f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
+                        + 'allowed. None of the observations were added.'
+                    )
+
+            # We always set recycled to "0" on addrange. If an observation is
+            # already in the cart, it won't be changed. If it's in the recycle bin,
+            # then it will have recycled set to 0. The recycle_bin parameter is
+            # ignored.
+            #
+            # removerange with recyclebin=1 just means to set the recycled flag. In
+            # that case the FROM clause is restricted to items already in the cart.
+            recycled = 0 if action == 'addrange' else 1
+            edit_select = sql_builder.Select()
+            edit_select.add_column(sql_builder.value(session_id))
+            edit_select.add_column(sql_builder.column('id', 'obs_general'))
+            edit_select.add_column(sql_builder.column('opus_id', 'obs_general'))
+            edit_select.add_column(sql_builder.value(recycled))
+            edit_select.add_from_source(range_from_source(restrict_to_cart))
+            edit_select.add_where(range_condition)
+            sql, sql_params = sql_builder.replace_into_select('cart', _CART_COLUMNS, edit_select)
+
+        elif action == 'removerange':  # recycle_bin == 0
+            delete_from_source = sql_builder.FromSource('cart')
+            delete_from_source.add_join(
+                'INNER',
+                user_query_table,
+                sql_builder.columns_equal(
+                    sql_builder.column('id', user_query_table),
+                    sql_builder.column('obs_general_id', 'cart'),
+                ),
+            )
+            # The join above matches on obs_general_id alone, and the cart table
+            # holds every session's rows, so the session has to be named here as
+            # well or this deletes the observations in the range from every other
+            # user's cart too. The user_query_table does not supply the restriction:
+            # with view=browse it is the shared search cache table, and even with
+            # view=cart, where it is a temporary table holding only this session's
+            # cart, it only narrows which observations are in range -- another
+            # session's row for one of those same observations still joins.
+            delete_condition = sql_builder.join_exprs(
+                [
+                    sql_builder.binary_op(
+                        sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+                    ),
+                    range_condition,
+                ],
+                'AND',
+            )
+            sql, sql_params = sql_builder.delete_joined(
+                'cart', delete_from_source, delete_condition
+            )
+        else:  # pragma: no cover - error catchall
+            log.error('_edit_cart_range: Unknown action %r: %r', action, request.GET)
+            return HttpResponseServerError(http500_internal_error(request))
+
+        log.debug('_edit_cart_range SQL: %r %r', sql, sql_params)
+        cursor.execute(sql, sql_params)
+
+        return False
+    finally:
+        if temp_table_name:
+            drop_temporary_table(temp_table_name, '_edit_cart_range')
 
 
 def _edit_cart_addall(

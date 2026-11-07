@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-"""Model lookup by table name, and the labels behind the mult tables.
+"""Model lookup by table name, the labels behind the mult tables, and temporary tables.
 
 The observation tables share a naming convention (`obs_pds` holds the rows of the
 `ObsPds` model), so code that has to work across all of them looks a model class up
@@ -12,17 +12,24 @@ by table name instead of importing it. A mult field stores the id of a row in it
 own small table rather than a value, so displaying one means a second lookup; the
 labels those lookups produce are cached here for the life of the process.
 
+A view that builds a temporary table drops it with `drop_temporary_table` on every
+way out of the request, since a worker thread keeps its database connection across
+requests and the table would otherwise outlive the request that made it.
+
 The MySQL error numbers are the failures that callers of these tables catch when
 they inspect a database exception.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 from django.apps import apps
 from django.conf import settings
+from django.db import DatabaseError, connection
 
+from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import get_mult_name
 from opus_support import parse_form_type
 
@@ -32,6 +39,8 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
 
     from opus_app.apps.paraminfo.models import ParamInfo
+
+log = logging.getLogger(__name__)
 
 MYSQL_TABLE_NOT_EXISTS = 1146
 MYSQL_TABLE_ALREADY_EXISTS = 1050
@@ -153,3 +162,21 @@ def lookup_pretty_value_for_mult_list(
     # belongs to the caller that passes cvt_null, so the declaration is left honest
     # and the fault is recorded instead of being cast away.
     return ','.join(result_list)  # type: ignore[arg-type]
+
+
+def drop_temporary_table(table_name: str, caller: str) -> None:
+    """Drop a temporary table a request built, if it exists, and log a failure.
+
+    Called from a ``finally``, so it never raises: the request has its answer
+    already, and a table left behind is dropped when its connection closes.
+
+    Parameters:
+        table_name: The temporary table.
+        caller: The function that built it, for the log.
+    """
+    sql = sql_builder.drop_temporary_table_if_exists(table_name)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+    except DatabaseError:  # pragma: no cover - database error
+        log.exception('%s: "%r" failed', caller, sql)
