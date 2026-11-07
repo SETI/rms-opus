@@ -290,9 +290,10 @@ older than 8.0.30 reports neither number, and the metric is left out.
 
 Every invocation's import log names the **bulk-load path** it took
 (:ref:`dev_guide_import_db_bulk_load`). A run's details list the paths its logs name
-(``bulk_load_paths``), and the result's environment records them as ``bulk_load_path``;
-a side whose import names none is recorded as ``insert_rows packets``, the path every
-import took before the bulk load existed.
+(``bulk_load_paths``), and the result's environment records as ``bulk_load_path`` every
+path any of the file's runs took, warm-up included, each once. A run whose import names
+none counts as ``insert_rows packets``, the path every import took before the bulk load
+existed, so a session whose runs took different paths shows both.
 ``--profile`` runs the holdings scales' bundle imports under :mod:`cProfile` and keeps
 the twenty functions with the highest cumulative time; a profiled run is recorded
 apart from the timed ones and never compared. ``--reuse-schema NAME`` imports nothing

@@ -176,3 +176,33 @@ def test_a_status_connection_can_bound_its_reads(monkeypatch: pytest.MonkeyPatch
     server.connect()
     assert seen[0]['read_timeout'] == bench_import.STATUS_READ_TIMEOUT_S
     assert 'read_timeout' not in seen[1]
+
+
+def _run_naming(paths: list[str] | None) -> dict[str, object]:
+    """Return a run whose details name `paths`, or record none when None."""
+    return {'details': {} if paths is None else {'bulk_load_paths': paths}}
+
+
+def test_the_summary_names_every_path_any_run_took() -> None:
+    """A session whose runs differ shows both paths, in the order first taken."""
+    file_path = mysql.BULK_LOAD_PATH_FILE
+    runs = [_run_naming([file_path]), _run_naming([file_path]), _run_naming([])]
+    assert bench_import.summarize_bulk_load_paths(runs) == (
+        f'{file_path}, {bench_import.DEFAULT_BULK_LOAD_PATH}'
+    )
+
+
+def test_a_run_naming_no_path_counts_as_the_default() -> None:
+    """A side whose import names none took the packets path."""
+    assert bench_import.summarize_bulk_load_paths([_run_naming([])]) == (
+        bench_import.DEFAULT_BULK_LOAD_PATH
+    )
+
+
+def test_a_run_recording_no_paths_adds_nothing() -> None:
+    """A run that imported nothing says nothing about the path."""
+    runs = [_run_naming(None), _run_naming([mysql.BULK_LOAD_PATH_FILE])]
+    assert bench_import.summarize_bulk_load_paths(runs) == mysql.BULK_LOAD_PATH_FILE
+    assert bench_import.summarize_bulk_load_paths([_run_naming(None)]) == (
+        bench_import.DEFAULT_BULK_LOAD_PATH
+    )

@@ -712,6 +712,47 @@ def bulk_load_paths(log_dir: Path) -> list[str]:
     return paths
 
 
+def summarize_bulk_load_paths(runs: Sequence[dict[str, Any]]) -> str:
+    """Return every bulk-load path a result's runs took, for its environment.
+
+    Parameters:
+        runs: The runs, in the order they were recorded.
+
+    Returns:
+        Each path any run's logs named, once, in the order first named, joined by commas.
+        A run whose logs name none took `DEFAULT_BULK_LOAD_PATH`; a run that records no
+        paths at all (one that imported nothing) adds nothing. With no path from any run,
+        `DEFAULT_BULK_LOAD_PATH`.
+    """
+    paths: list[str] = []
+    for run in runs:
+        named = run.get('details', {}).get('bulk_load_paths')
+        if named is None:
+            continue
+        for path in named if len(named) > 0 else [DEFAULT_BULK_LOAD_PATH]:
+            if path not in paths:
+                paths.append(path)
+    return ', '.join(paths) if len(paths) > 0 else DEFAULT_BULK_LOAD_PATH
+
+
+def file_bulk_load_path(label: Label, new_runs: Sequence[dict[str, Any]]) -> str:
+    """Return the bulk-load paths of a label's file once new runs are added to it.
+
+    The environment is the file's, not one run's, so its entry covers every run the file
+    holds as well as the ones being added (`summarize_bulk_load_paths`).
+
+    Parameters:
+        label: The label whose file the runs are added to.
+        new_runs: The runs about to be added.
+
+    Returns:
+        The summary of the file's runs and the new ones.
+    """
+    path = RESULTS_DIR / label.file_name
+    existing = load_result(path)['runs'] if path.exists() else []
+    return summarize_bulk_load_paths([*existing, *new_runs])
+
+
 def top_functions(profile: Path) -> list[dict[str, Any]]:
     """Return the functions with the highest cumulative time in a cProfile output file.
 
@@ -863,7 +904,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         count = scenario.runs if args.runs is None else args.runs
         existing = _existing_import_runs(label)
         if args.scale in WARMED_SCALES:
-            path = append_runs(label, environment, [bench.warm_up()])
+            warm_up = bench.warm_up()
+            environment['bulk_load_path'] = file_bulk_load_path(label, [warm_up])
+            path = append_runs(label, environment, [warm_up])
             sys.stdout.write(f'warm-up import recorded in {path}\n')
         for offset in range(count):
             index = existing + offset + 1
@@ -872,12 +915,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             else:
                 run, schema = bench.run_holdings(index, profile=args.profile, finalize=finalize)
             environment['schema'] = schema
-            # Each run's own, so a session whose runs took different paths is refused
-            # when the run is added rather than described by its last run alone.
-            named = run['details']['bulk_load_paths']
-            environment['bulk_load_path'] = (
-                ', '.join(named) if len(named) > 0 else DEFAULT_BULK_LOAD_PATH
-            )
+            environment['bulk_load_path'] = file_bulk_load_path(label, [run])
             path = append_runs(label, environment, [run])
             if index > 1:
                 drop_schema(server, bench.schema_name(index - 1))
