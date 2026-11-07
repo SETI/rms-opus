@@ -4622,13 +4622,15 @@ Nothing above this line is rewritten by an executor.
   changed.
 - `--write-schema-version` exits non-zero when it refuses, as well as logging the error,
   so `opus_import_all` and any script running it stops there.
-- The web application's check is read once as `opus_app.wsgi` loads, as the section
-  says, except when the database cannot be reached at all: then each request repeats the
-  check, answering 503 until it gets an answer, and the answer decides every later
-  request. Refusing for good would have turned a database that was briefly down while
-  mod_wsgi loaded into an outage until a restart, and the CI package job imports
-  `opus_app.wsgi` with no database. The 503 body leaves out the driver's message, which
-  names the account; the log has it.
+- The web application reads the row as `opus_app.wsgi` loads, as the section says, and
+  serves Django's application itself when the row is right. When it is not, or the
+  database cannot be read, the stub repeats the check on each request, answering 503
+  until a check passes, and then serves the application without checking again. A
+  stub that refused for good would have needed a reload of every worker after
+  `--write-schema-version`, and would have turned a database briefly down while mod_wsgi
+  loaded into an outage until a restart; the CI package job also imports
+  `opus_app.wsgi` with no database. The review of the PR asked for the recheck. The 503
+  body leaves out the driver's message, which names the account; the log has it.
 - The deploy check reads the row through `opus_import.schema_version.served_row()`,
   which imports `opus_config` and `opus_import.importdb` only when called, so that the
   `python -c` line in `_check_schema_version.sh` is one call.
