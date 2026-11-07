@@ -233,3 +233,20 @@ def test_the_fault_variable_names_a_site_and_an_argument(
     else:
         monkeypatch.setenv(import_fault.IMPORT_FAULT_ENV_VAR, value)
     assert import_fault.import_fault_argument(site) == argument
+
+
+@pytest.mark.parametrize('attempts', [0, -1])
+def test_a_rename_with_no_attempts_is_refused_before_anything_changes(attempts: int) -> None:
+    """Zero attempts would otherwise rename nothing and still update the cache."""
+    db = _RecordingDB({'partables', 'partables__new'})
+
+    with pytest.raises(ValueError, match='attempts must be at least 1'):
+        db.rename_tables_atomically(
+            'perm',
+            [('partables__new', 'partables')],
+            lock_wait_timeout_s=5,
+            attempts=attempts,
+        )
+
+    assert db.executed == []
+    assert db.table_exists('perm', 'partables__new')

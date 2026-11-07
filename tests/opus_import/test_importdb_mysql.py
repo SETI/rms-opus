@@ -876,3 +876,21 @@ def test_a_read_only_connection_does_not_create_an_absent_schema(
         ImportDBMySQL('host', 'db', 'absent', 'user', 'password', read_only=True)
 
     assert connection.executed == ['USE `absent`']
+
+
+@pytest.mark.parametrize(
+    ('data_type', 'char_len', 'field_type'),
+    [('varchar', 40, 'varchar(40)'), ('datetime', None, 'datetime')],
+)
+def test_table_info_names_every_type_create_table_renders(
+    data_type: str, char_len: int | None, field_type: str
+) -> None:
+    """A column ``create_table`` can make is one ``table_info`` can read back."""
+
+    class _ColumnsDB(_RecordingDB):
+        def _execute_and_fetchall(self, cmd: str, func_name: str, param_list: Any = None) -> Any:
+            return [('c', None, 'YES', data_type, char_len, data_type)]
+
+    db = _ColumnsDB()
+    db._table_info_cache = {}
+    assert db.table_info('perm', 'obs_general')[0]['field_type'] == field_type

@@ -677,6 +677,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     field_type = 'int8'
                 elif data_type == 'char':
                     field_type = f'char({char_len})'
+                elif data_type == 'varchar':
+                    field_type = f'varchar({char_len})'
                 elif data_type == 'float':
                     field_type = 'real4'
                 elif data_type == 'double':
@@ -687,6 +689,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     field_type = 'json'
                 elif data_type == 'timestamp':
                     field_type = 'timestamp'
+                elif data_type == 'datetime':
+                    field_type = 'datetime'
                 elif data_type == 'text':
                     field_type = 'text'
                 elif data_type == 'mult_list':
@@ -788,7 +792,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         Raises:
             ImportDBError: If the server rejects the statement, or every attempt timed out.
+            ValueError: If ``attempts`` is less than 1, before anything is changed.
         """
+        if attempts < 1:
+            raise ValueError(f'attempts must be at least 1, not {attempts}')
         with self._operation('rename_tables_atomically'):
             q = self.quote_identifier
             pairs = [
