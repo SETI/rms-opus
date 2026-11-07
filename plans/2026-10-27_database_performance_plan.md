@@ -4607,3 +4607,51 @@ Nothing above this line is rewritten by an executor.
   the cache does not store; a refusal from a lost connection is not taken for the
   pattern's answer. `_PRETTY_MULT_CACHE` is removed, since the mult table's copy answers
   its lookups.
+
+### 2026-11-07, PR-04 (written against this file at 8513d904)
+
+- PR-04's target did not improve, at either scale: a **stop-and-report** (§2.5). At
+  fixture scale (session a, imports alternated before, after, after, before, before,
+  after, three a side), `import.largest.import_s` went from 2.832 to 2.893 s (+2.2
+  percent against a floor of 3.6). At test scale, session a's one run a side went from
+  80.11 to 78.41 s (−2.1 percent against a floor of 2.1), within twice the floor, so it was
+  repeated (§2.6): session b, three runs a side alternated the same way, replaces it and
+  went from 79.07 to 79.04 s (−0.0 percent). The guards held at both scales: at test
+  scale `import.wall_s` went from 388.3 to 386.5 s and `import.peak_tree_pss_kb` fell 2.3
+  percent; at fixture scale `import.wall_s` was 64.45 s on both sides, peak PSS fell 6.6
+  percent, and `db.schema.data_bytes` and `db.schema.index_bytes` were identical. The
+  result files are `2026-11-06_PR-04_{before,after}_{fixture_mysql_a,test_mysql_a,test_mysql_b}.json`
+  in the operator's results directory, the after side measured at 87ba5652 and the
+  before side at 8513d904, against PR-00's floors files.
+- What the bulk load changed at test scale: `Com_insert` fell from 3,248 to 1,427 and
+  `Com_commit` from 14,500 to 13,250, while the redo written (`Innodb_os_log_written`, 3.16
+  GB a run), the data written (`Innodb_data_written`, 5.8 GB), the pages flushed and the
+  peak checkpoint age (750 MB, of a 14 GiB redo log) were the same on both sides within
+  their floors, and `Innodb_buffer_pool_wait_free` was zero on both. A timed import starts
+  on a restarted server (PR-00's notes), so at test scale the buffer pool and redo log
+  absorb every write and the import never waits on the server's writes; the statements
+  the bulk load removes cost too little of the run to show. How a test-scale import's
+  time divides between the import's own work and the server's was not measured. The
+  sustained-write case, where the write path could matter, is the complete scale's and
+  PR-09's back-to-back runs'.
+- Session b crossed midnight and its driver did not pass `--date`, so its last three
+  imports were written to files dated 2026-11-07. Their runs were appended to the
+  2026-11-06 session b files, numbered on from the runs already there, before comparing;
+  the copies were removed.
+- The bench_web and bench_db runs were fewer than §2.6 asks, since the PR changes the
+  import's write path and not what it writes: at fixture scale one `bench_web` run a side
+  and one `bench_db` run a side, each on its own side's schema; at test scale none. Every
+  web guard held at fixture scale.
+- Each `opus_import` invocation writes its info log to a file of its own,
+  `opus_import_<timestamp>.log` in the log directory, not to one `opus_import.log`.
+  `import_tests.tools.build_run.import_logs` lists them; the harness's bulk-load path
+  detail and `import_tests/test_bulk_load.py` read every one.
+- The import turns the server's `local_infile` on itself when its account may (a global
+  setting, which lasts until the server restarts). The harness-owned server already has
+  it on; the workstation's development server had it off, and the first import-suite
+  run against it turned it on.
+- The import suite's main session sets `transaction_rows = 7` (`MAIN_RUN_TRANSACTION_ROWS`
+  in `import_tests/conftest.py`), and the goldens were unchanged with it.
+- The call site's rows are the lists `import_one_index` already builds, one per table, so
+  `bulk_load_rows` writes each chunk's file from that list without copying it, rather than
+  appending each row as it is produced. Making the rows a stream is PR-09's change.
