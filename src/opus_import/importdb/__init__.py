@@ -75,6 +75,7 @@ def get_db(
     Raises:
         ImportDBError: If the brand is not one this package implements, or the
             connection cannot be opened.
+        ValueError: If `transaction_rows` is less than 1.
     """
     if db_brand.upper() == 'MYSQL':
         return ImportDBMySQL(

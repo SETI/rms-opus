@@ -182,6 +182,7 @@ class ImportDBMySQL(ImportDBSuper):
         Raises:
             ImportDBError: If the server cannot be reached, the schema can be neither
                 used nor created, or the session's SQL mode cannot be set.
+            ValueError: If `transaction_rows` is less than 1, before anything connects.
         """
         super().__init__(
             db_hostname,

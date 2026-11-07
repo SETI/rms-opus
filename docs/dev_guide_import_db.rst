@@ -171,8 +171,9 @@ Read-only runs
 ``mutates=True`` down to ``_execute``. A read-only run therefore **still executes
 non-mutating statements** -- it really reads the database -- and logs each mutating one
 with a ``[SIM]`` marker instead of running it. A read-only run's bulk loads take the
-``INSERT`` path, so they write no scratch file, and it changes no server or session
-setting. Log messages branch on the flag too, so a
+``INSERT`` path, so they write no scratch file, and it leaves ``local_infile`` and
+``sql_log_bin`` alone; it sets the session's ``sql_mode`` as every connection does. Log
+messages branch on the flag too, so a
 dropped table reads as ``[SIM] Dropped table`` rather than ``Dropped table``.
 
 Warnings

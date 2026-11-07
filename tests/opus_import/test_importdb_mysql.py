@@ -832,3 +832,10 @@ def test_an_empty_load_does_nothing(tmp_path: Path) -> None:
 
     assert db.executed == []
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('rows', [0, -5], ids=['zero', 'negative'])
+def test_a_transaction_size_below_one_is_refused_before_connecting(rows: int) -> None:
+    """A direct caller's bad size would otherwise load nothing, or fail mid-import."""
+    with pytest.raises(ValueError, match='transaction_rows must be at least 1'):
+        ImportDBMySQL('h', 'd', 's', 'u', 'p', transaction_rows=rows)

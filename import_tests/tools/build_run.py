@@ -268,17 +268,22 @@ def build_holdings_tree(paths: RunPaths, *, overlay: Path | None = None) -> None
 
 
 def _toml_string(value: str) -> str:
-    """Return a value with the two characters a TOML basic string cannot hold escaped.
+    """Return a value with every character a TOML basic string cannot hold escaped.
 
     Parameters:
         value: The value to interpolate -- a path, a schema name, or a password, none of
             which this suite controls the contents of.
 
     Returns:
-        The value with backslashes and double quotes escaped, so that a Windows path or a
-        password holding either produces a configuration the loader can read.
+        The value with backslashes and double quotes escaped, and every control
+        character written as a ``\\uXXXX`` escape, so that a Windows path, a password, or
+        a path holding a newline produces a configuration the loader can read.
     """
-    return value.replace('\\', '\\\\').replace('"', '\\"')
+    escaped = value.replace('\\', '\\\\').replace('"', '\\"')
+    return ''.join(
+        f'\\u{ord(character):04x}' if ord(character) < 0x20 or ord(character) == 0x7F else character
+        for character in escaped
+    )
 
 
 def import_logs(log_dir: Path) -> list[Path]:

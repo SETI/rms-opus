@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import functools
 import json
 import pstats
 import shutil
@@ -130,6 +131,10 @@ PROFILE_TOP = 20
 
 #: What the result records as the bulk-load path while the import's log names none.
 DEFAULT_BULK_LOAD_PATH = 'insert_rows packets'
+
+#: The seconds the sampler's checkpoint-age read may wait. A read that stalls is a sample
+#: missed, and must not stop the memory samples taken on the same thread.
+STATUS_READ_TIMEOUT_S = 5
 
 #: How an import log line naming the bulk-load path starts. The harness reads either
 #: side's log as text rather than importing the side's code, so this repeats
@@ -237,7 +242,9 @@ class ImportBench:
             expand=expand,
             timing_file=None if self.spelling.timing_json is None else timing_file,
             excluded_pids=lambda: {pid for pid in (self.server.pid(),) if pid is not None},
-            status_connection=self.server.connect,
+            status_connection=functools.partial(
+                self.server.connect, read_timeout=STATUS_READ_TIMEOUT_S
+            ),
         )
 
     def _invoke(
@@ -631,7 +638,9 @@ class ImportBench:
         importing = [r for r in records if r.name != 'migrate']
         metrics['import.peak_tree_pss_kb'] = max(r.peak_tree_pss_kb for r in importing)
         metrics['import.peak_rss_kb'] = max(r.peak_rss_kb for r in importing)
-        ages = [r.peak_checkpoint_age_bytes for r in records if r.peak_checkpoint_age_bytes]
+        ages = [
+            r.peak_checkpoint_age_bytes for r in records if r.peak_checkpoint_age_bytes is not None
+        ]
         if len(ages) > 0:
             metrics['import.server.peak_checkpoint_age_bytes'] = max(ages)
         with contextlib.closing(self.server.connect()) as connection:
@@ -863,9 +872,12 @@ def main(argv: Sequence[str] | None = None) -> None:
             else:
                 run, schema = bench.run_holdings(index, profile=args.profile, finalize=finalize)
             environment['schema'] = schema
+            # Each run's own, so a session whose runs took different paths is refused
+            # when the run is added rather than described by its last run alone.
             named = run['details']['bulk_load_paths']
-            if len(named) > 0:
-                environment['bulk_load_path'] = ', '.join(named)
+            environment['bulk_load_path'] = (
+                ', '.join(named) if len(named) > 0 else DEFAULT_BULK_LOAD_PATH
+            )
             path = append_runs(label, environment, [run])
             if index > 1:
                 drop_schema(server, bench.schema_name(index - 1))

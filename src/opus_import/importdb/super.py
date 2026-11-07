@@ -127,8 +127,15 @@ class ImportDBSuper:
             bulk_load: Whether `bulk_load_rows` may load from a scratch file.
             scratch_dir: The directory the bulk load's scratch files go in, or None for
                 the system temporary directory.
-            transaction_rows: The most rows one bulk load writes in one transaction.
+            transaction_rows: The most rows one bulk load writes in one transaction; at
+                least 1.
+
+        Raises:
+            ValueError: If `transaction_rows` is less than 1, which would make every bulk
+                load write nothing.
         """
+        if transaction_rows < 1:
+            raise ValueError(f'transaction_rows must be at least 1, not {transaction_rows}')
         self.log_sql = False
 
         self.db_hostname = db_hostname

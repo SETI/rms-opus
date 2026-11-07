@@ -197,3 +197,29 @@ def test_extra_import_keys_reach_the_configuration(tmp_path: Path) -> None:
         False,
         '/scratch/a"b',
     )
+
+
+def test_a_newline_in_a_value_survives_the_configuration(tmp_path: Path) -> None:
+    """A control character is escaped rather than breaking the file."""
+    paths = build_run.RunPaths.under(tmp_path)
+    build_run.write_opus_config(
+        paths,
+        'schema',
+        DatabaseCredentials('h', 'u', 'p'),
+        extra_import={'scratch_dir': '/scratch/a\nb\tc\\d\x7f'},
+    )
+    assert load_config(paths.config_file).import_.scratch_dir == '/scratch/a\nb\tc\\d\x7f'
+
+
+def test_perform_run_hands_extra_import_to_the_configuration(
+    tmp_path: Path, recorder: _Recorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A session's keys reach the file its pipeline reads, not just the writer's tests."""
+    written: list[object] = []
+    monkeypatch.setattr(
+        build_run,
+        'write_opus_config',
+        lambda paths, schema, credentials, extra_import=None: written.append(extra_import),
+    )
+    _perform(tmp_path, extra_import={'transaction_rows': 7})
+    assert written == [{'transaction_rows': 7}]

@@ -162,3 +162,17 @@ def test_the_harness_reads_the_line_the_import_writes() -> None:
     """The harness's copy of the prefix, and its default path, match the import's."""
     assert bench_import.BULK_LOAD_PATH_PREFIX == mysql.BULK_LOAD_PATH_PREFIX
     assert bench_import.DEFAULT_BULK_LOAD_PATH == mysql.BULK_LOAD_PATH_INSERT
+
+
+def test_a_status_connection_can_bound_its_reads(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The sampler's probe must not stall the memory samples on its thread."""
+    from benchmarks import bench_server
+
+    seen: list[dict[str, object]] = []
+    monkeypatch.setattr(MySQLdb, 'connect', lambda **kwargs: seen.append(kwargs))
+    server = bench_server.MysqlServer.__new__(bench_server.MysqlServer)
+    server.config = type('Config', (), {'socket': Path('/tmp/s')})()
+    server.connect(read_timeout=bench_import.STATUS_READ_TIMEOUT_S)
+    server.connect()
+    assert seen[0]['read_timeout'] == bench_import.STATUS_READ_TIMEOUT_S
+    assert 'read_timeout' not in seen[1]
