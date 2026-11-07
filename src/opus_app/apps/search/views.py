@@ -1325,7 +1325,8 @@ def get_param_info_by_slug(
         if source == 'search':
             if slug[-1] in ('1', '2'):
                 # Search slug has 1/2, param_info has 1/2 - all is good
-                return pi
+                _PARAMINFO_CACHE[key] = pi
+                return copy.copy(pi)
             # For a single-column range, the slug we were given MUST end
             # in a '1' or '2' - but for non-range types, it's OK to not
             # have the '1' or '2'. Note the non-single-column ranges were

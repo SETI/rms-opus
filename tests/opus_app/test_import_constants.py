@@ -448,3 +448,32 @@ def test__an_accepted_regex_is_asked_once_and_a_refused_one_every_time(
     assert not search_views._valid_regex('^N(1')
     assert not search_views._valid_regex('^N(1')
     assert fake.executed == ['^N(1|2)', '^N(1', '^N(1']
+
+
+# The slug cache, for a search slug that carries its range suffix
+
+
+class FakeSlugManager:
+    """Stands in for `ParamInfo.objects`, answering `get` by slug."""
+
+    def __init__(self) -> None:
+        self.queries = 0
+
+    def get(self, *, slug: str) -> ParamInfo:
+        """Return a two-column range's first column for its own slug."""
+        self.queries += 1
+        if slug != 'time1':
+            raise ParamInfo.DoesNotExist
+        return ParamInfo(category_name='obs_general', name='time1', slug='time1')
+
+
+def test__a_suffixed_search_slug_is_looked_up_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    manager = FakeSlugManager()
+    monkeypatch.setattr(ParamInfo, 'objects', manager)
+    monkeypatch.setattr(search_views, '_PARAMINFO_CACHE', {})
+    first = search_views.get_param_info_by_slug('time1', 'search')
+    second = search_views.get_param_info_by_slug('time1', 'search')
+    assert first is not None
+    assert second is not None
+    assert first is not second
+    assert manager.queries == 1
