@@ -456,7 +456,7 @@ workers after one (:ref:`dev_guide_webapp_caching`). A copy is built in full bef
 stored, so a thread never sees part of one; two threads that miss at once each read the
 table, and one of the two equal copies is kept.
 
-:func:`~opus_app.apps.tools.import_constants.table_names`, :func:`~opus_app.apps.tools.import_constants.get_table_name` and :func:`~opus_app.apps.tools.import_constants.partables`
+:func:`~opus_app.apps.tools.import_constants.table_names`, :func:`~opus_app.apps.tools.import_constants.displayed_table_names`, :func:`~opus_app.apps.tools.import_constants.get_table_name` and :func:`~opus_app.apps.tools.import_constants.partables`
     The rows, shared by every request in the process. A caller that sets an attribute
     on a row, as the menu does, copies it first.
 
@@ -465,14 +465,18 @@ table, and one of the two equal copies is kept.
     id, for showing a stored id as its label, and its ids by label and by value, for
     turning a search's mult selection into ids.
     :meth:`~opus_app.apps.tools.import_constants.MultTable.ids_for` answers what the
-    query ``label IN (...) OR value IN (...)`` answered, and asks the server about a name
-    it does not hold, so the server's collation decides every name that misses.
+    query ``label IN (...) OR value IN (...)`` answered, and asks the server instead
+    when a name finds nothing or when the table holds a name that is not ASCII.
 
 :func:`~opus_app.apps.tools.import_constants.collation_key`
     **The server compares strings without regard to case or accent**
     (``utf8mb4_0900_ai_ci``), and the public API relies on it: ``planet=saturn`` finds
-    the row labeled ``Saturn``. Every lookup here by a string from a request compares
-    the strings' keys, so it matches what a query would have matched.
+    the row labeled ``Saturn``. Every lookup here by a string compares the strings'
+    keys. **The key is the collation only for ASCII**: it folds case and accents but does
+    not ignore what the collation ignores, such as a soft hyphen. A stored string that
+    is ASCII compares the same way under both, which is why a lookup that misses, or a
+    mult table that is not all ASCII, goes to the server, and why ``get_metadata`` asks
+    the server about category names its copy does not match.
 
 .. _dev_guide_webapp_tools_file_utils:
 

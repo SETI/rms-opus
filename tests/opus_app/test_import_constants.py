@@ -38,6 +38,7 @@ from opus_app.apps.tools.dictionary import Definitions, get_def_for_tooltip, get
 from opus_app.apps.tools.import_constants import (
     MultTable,
     collation_key,
+    displayed_table_names,
     get_table_name,
     mult_table,
     partables,
@@ -105,6 +106,7 @@ def _empty_caches() -> Iterator[None]:
 
     def clear() -> None:
         table_names.cache_clear()
+        import_constants.displayed_table_names.cache_clear()
         import_constants._table_names_by_name.cache_clear()
         partables.cache_clear()
         mult_table.cache_clear()
@@ -218,13 +220,26 @@ def test__ids_for_returns_what_the_server_matched_on_a_miss(
     model = FakeMultModel(PLANET_ROWS)
     model.objects = Lenient(PLANET_ROWS)
     monkeypatch.setattr(apps, 'get_model', lambda _app, _name: model)
-    table = MultTable('MultObsGeneralPlanetId', {}, {})
+    table = MultTable('MultObsGeneralPlanetId', {}, {}, ascii_only=True)
     assert table.ids_for(['anything']) == [1, 3]
 
 
 def test__ids_for_accepts_any_iterable(planet_model: FakeMultModel) -> None:
     names: Iterable[str] = (name for name in ['Jupiter', 'Saturn'])
     assert mult_table('obs_general.planet_id').ids_for(names) == [1, 2]
+
+
+def test__a_table_holding_a_name_that_is_not_ascii_asks_the_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The key does not ignore what the collation ignores, so a non-ASCII stored name
+    # could be matched by the server and missed here.
+    model = FakeMultModel([*PLANET_ROWS, (5, 'SAT\u00adURN', 'Sat\u00adurn', '050')])
+    monkeypatch.setattr(apps, 'get_model', lambda _app, _name: model)
+    table = mult_table('obs_general.planet_id')
+    assert not table.ascii_only
+    assert table.ids_for(['Jupiter']) == [1]
+    assert model.objects.queries == 2
 
 
 # table_names and partables
@@ -265,6 +280,17 @@ def test__table_names_are_read_once_in_display_order(monkeypatch: pytest.MonkeyP
     assert get_table_name('obs_pds').label == 'PDS Constraints'
     assert get_table_name('obs_general').label == 'General Constraints'
     assert manager.queries == 1
+
+
+def test__table_names_compare_as_the_server_does(monkeypatch: pytest.MonkeyPatch) -> None:
+    hidden = _table_name('obs_hidden', 'Hidden', 30)
+    hidden.display = 'N'
+    lower = _table_name('obs_lower', 'Lower', 40)
+    lower.display = 'y'
+    manager = FakeRowManager([_table_name('obs_general', 'General Constraints', 10), hidden, lower])
+    monkeypatch.setattr(TableNames, 'objects', manager)
+    assert get_table_name('OBS_GENERAL').table_name == 'obs_general'
+    assert [row.table_name for row in displayed_table_names()] == ['obs_general', 'obs_lower']
 
 
 def test__get_table_name_raises_does_not_exist(monkeypatch: pytest.MonkeyPatch) -> None:

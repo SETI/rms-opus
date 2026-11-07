@@ -103,7 +103,12 @@ from opus_app.apps.tools.db_utils import (
     query_table_for_opus_id,
 )
 from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_products
-from opus_app.apps.tools.import_constants import collation_key, partables, table_names
+from opus_app.apps.tools.import_constants import (
+    collation_key,
+    displayed_table_names,
+    partables,
+    table_names,
+)
 from opus_support import format_unit_value, parse_form_type
 
 if TYPE_CHECKING:
@@ -586,7 +591,7 @@ def get_metadata(
         all_tables = []
     elif not cats:
         # Find all the tables (categories) this observation belongs to
-        all_tables = [row for row in table_names() if row.display == 'Y']
+        all_tables = list(displayed_table_names())
     else:
         # Uniquify
         cat_list = list(set(cats.split(',')))
@@ -594,10 +599,17 @@ def get_metadata(
         cat_keys = {collation_key(cat) for cat in cat_list}
         all_tables = [
             row
-            for row in table_names()
-            if row.display == 'Y'
-            and (collation_key(row.label) in cat_keys or collation_key(row.table_name) in cat_keys)
+            for row in displayed_table_names()
+            if collation_key(row.label) in cat_keys or collation_key(row.table_name) in cat_keys
         ]
+        if len(all_tables) != len(cat_list):
+            # The server's collation decides a name the copy does not match.
+            all_tables = list(
+                (
+                    TableNames.objects.filter(label__in=cat_list, display='Y')
+                    | TableNames.objects.filter(table_name__in=cat_list, display='Y')
+                ).order_by('disp_order')
+            )
         if len(all_tables) != len(cat_list):
             log.error('get_metadata: Unknown category name in "%r"', cats)
             raise Http400Error(http400_unknown_category(request))

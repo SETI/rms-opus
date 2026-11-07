@@ -81,7 +81,7 @@ from opus_app.apps.tools.file_utils import (
     get_pds_preview_images,
     get_pds_products,
 )
-from opus_app.apps.tools.import_constants import table_names
+from opus_app.apps.tools.import_constants import displayed_table_names
 from opus_support import (
     display_search_unit,
     display_unit_ever,
@@ -2058,8 +2058,8 @@ def _get_menu_labels(
     # cached rows are shared by every request in the process.
     divs = [
         copy.copy(row)
-        for row in table_names()
-        if row.display == 'Y' and row.table_name in triggered_tables  # type: ignore[operator]
+        for row in displayed_table_names()
+        if row.table_name in triggered_tables  # type: ignore[operator]
     ]
     params = ParamInfo.objects.filter(
         **{filter_: 1, 'category_name__in': triggered_tables}

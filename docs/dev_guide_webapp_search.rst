@@ -348,6 +348,19 @@ Python file in the repository. Its model classes are:
   Django contrib tables, and the OPUS tables that have hand-written models in the apps
   that own them.
 
+Two of the generated models are read through
+:mod:`~opus_app.apps.tools.import_constants`, whose signatures name them:
+
+.. py:class:: opus_app.apps.search.models.TableNames
+
+   One row per observation table: its label, whether the interface shows it
+   (``display``), and its place in the display order (``disp_order``).
+
+.. py:class:: opus_app.apps.search.models.Partables
+
+   One row per trigger: an observation whose ``trigger_col`` in ``trigger_tab`` holds
+   ``trigger_val`` brings the table ``partable`` into its results and its metadata.
+
 **The ``ZZ`` prefix is the generator's way of saying "a model exists for this table and
 nothing should use it."** The class name is otherwise the table name with each
 underscore-separated segment title-cased and the underscores removed, which is exactly
