@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import functools
 import json
 import pstats
 import shutil
@@ -101,18 +102,24 @@ from benchmarks.results import (
     scenario_hash,
 )
 from benchmarks.sides import Side, Spelling, require_no_pythonpath
-from import_tests.tools import build_run
+from import_tests.tools import build_run, run_logs
 from import_tests.tools.golden_io import DatabaseCredentials
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-#: The server counters whose movement over a run every import result records.
+#: The server counters whose movement over a run every import result records. The
+#: data, redo and flushed-page counts and the waits for a free page show whether a run
+#: reached the server's sustained write limit, as does the run's peak checkpoint age
+#: (`benchmarks.monitor.checkpoint_age`).
 IMPORT_COUNTERS = (
     'Innodb_rows_inserted',
     'Com_commit',
     'Com_insert',
     'Innodb_data_written',
+    'Innodb_os_log_written',
+    'Innodb_buffer_pool_pages_flushed',
+    'Innodb_buffer_pool_wait_free',
     'Innodb_buffer_pool_read_requests',
     'Innodb_buffer_pool_reads',
     'Com_create_table',
@@ -124,6 +131,16 @@ PROFILE_TOP = 20
 
 #: What the result records as the bulk-load path while the import's log names none.
 DEFAULT_BULK_LOAD_PATH = 'insert_rows packets'
+
+#: The seconds the sampler's checkpoint-age read may wait. A read that stalls is a sample
+#: missed, and must not stop the memory samples taken on the same thread.
+STATUS_READ_TIMEOUT_S = 5
+
+#: How an import log line naming the bulk-load path starts. The harness reads either
+#: side's log as text rather than importing the side's code, so this repeats
+#: ``opus_import.importdb.mysql.BULK_LOAD_PATH_PREFIX``, and a unit test holds the two
+#: equal.
+BULK_LOAD_PATH_PREFIX = 'Bulk load path: '
 
 #: What the result records as the start method while the import reports none.
 DEFAULT_START_METHOD = 'not reported by the import'
@@ -225,6 +242,9 @@ class ImportBench:
             expand=expand,
             timing_file=None if self.spelling.timing_json is None else timing_file,
             excluded_pids=lambda: {pid for pid in (self.server.pid(),) if pid is not None},
+            status_connection=functools.partial(
+                self.server.connect, read_timeout=STATUS_READ_TIMEOUT_S
+            ),
         )
 
     def _invoke(
@@ -380,7 +400,7 @@ class ImportBench:
             observer=monitor,
         )
         require_empty_errors_log(paths.errors_log, at_end=True)
-        self._fill_run(run, monitor, schema, before, full=finalize)
+        self._fill_run(run, monitor, schema, before, full=finalize, log_dir=paths.log_dir)
         return run, schema
 
     def run_holdings(
@@ -422,7 +442,14 @@ class ImportBench:
         if finalize:
             self._finalization(monitor, config_file, timing)
         require_empty_errors_log(errors_log, at_end=True)
-        self._fill_run(run, monitor, schema, before, full=finalize)
+        self._fill_run(
+            run,
+            monitor,
+            schema,
+            before,
+            full=finalize,
+            log_dir=errors_log.parent,
+        )
         if len(profiles) > 0:
             run['details']['profile_top_cumulative'] = profiles
         if finalize and scenario.largest is not None and scenario.largest_alone:
@@ -469,7 +496,14 @@ class ImportBench:
         before = self._status()
         self._finalization(monitor, config_file, timing)
         require_empty_errors_log(errors_log, at_end=True)
-        self._fill_run(run, monitor, schema, before, full=False)
+        self._fill_run(
+            run,
+            monitor,
+            schema,
+            before,
+            full=False,
+            log_dir=errors_log.parent,
+        )
         run['metrics']['import.finalize_clone_s'] = clone_s
         run['details']['source_schema'] = source
         return run, schema
@@ -569,6 +603,7 @@ class ImportBench:
         before: dict[str, int],
         *,
         full: bool,
+        log_dir: Path,
     ) -> None:
         """Turn a finished run's records into its metrics and details.
 
@@ -578,6 +613,8 @@ class ImportBench:
             schema: The schema it built.
             before: The server's counters when it started.
             full: Whether the run was a full one, which alone gets ``import.wall_s``.
+            log_dir: The run's log directory, whose information-level import logs
+                name the bulk-load path each invocation took.
         """
         metrics = run['metrics']
         records = monitor.records
@@ -601,6 +638,11 @@ class ImportBench:
         importing = [r for r in records if r.name != 'migrate']
         metrics['import.peak_tree_pss_kb'] = max(r.peak_tree_pss_kb for r in importing)
         metrics['import.peak_rss_kb'] = max(r.peak_rss_kb for r in importing)
+        ages = [
+            r.peak_checkpoint_age_bytes for r in records if r.peak_checkpoint_age_bytes is not None
+        ]
+        if len(ages) > 0:
+            metrics['import.server.peak_checkpoint_age_bytes'] = max(ages)
         with contextlib.closing(self.server.connect()) as connection:
             after = global_status(connection)
             by_bundle = {
@@ -619,6 +661,7 @@ class ImportBench:
         details = run['details']
         details.update(monitor.summary())
         details['schema'] = schema
+        details['bulk_load_paths'] = bulk_load_paths(log_dir)
         details['obs_general_rows'] = rows
         details['obs_general_rows_by_bundle'] = by_bundle
         details['bundle_count'] = len(by_bundle)
@@ -644,6 +687,70 @@ class ImportBench:
         step = f'import.phase.import_bundle:{largest}_s'
         if step in run['metrics']:
             run['metrics']['import.largest.import_s'] = run['metrics'][step]
+
+
+def bulk_load_paths(log_dir: Path) -> list[str]:
+    """Return the bulk-load paths a run's import logs name, each once, in the order named.
+
+    Every invocation names its path when it connects, and again if the server refuses a
+    load partway through, so a run's logs can name both.
+
+    Parameters:
+        log_dir: The run's log directory (`build_run.import_logs`).
+
+    Returns:
+        The paths, without the reason the log gives for one; empty when the side's
+        import names none.
+    """
+    paths: list[str] = []
+    for import_log in build_run.import_logs(log_dir):
+        for message in run_logs.read_messages(import_log):
+            if message.startswith(BULK_LOAD_PATH_PREFIX):
+                path = message.removeprefix(BULK_LOAD_PATH_PREFIX).split(' (', 1)[0]
+                if path not in paths:
+                    paths.append(path)
+    return paths
+
+
+def summarize_bulk_load_paths(runs: Sequence[dict[str, Any]]) -> str:
+    """Return every bulk-load path a result's runs took, for its environment.
+
+    Parameters:
+        runs: The runs, in the order they were recorded.
+
+    Returns:
+        Each path any run's logs named, once, in the order first named, joined by commas.
+        A run whose logs name none took `DEFAULT_BULK_LOAD_PATH`; a run that records no
+        paths at all (one that imported nothing) adds nothing. With no path from any run,
+        `DEFAULT_BULK_LOAD_PATH`.
+    """
+    paths: list[str] = []
+    for run in runs:
+        named = run.get('details', {}).get('bulk_load_paths')
+        if named is None:
+            continue
+        for path in named if len(named) > 0 else [DEFAULT_BULK_LOAD_PATH]:
+            if path not in paths:
+                paths.append(path)
+    return ', '.join(paths) if len(paths) > 0 else DEFAULT_BULK_LOAD_PATH
+
+
+def file_bulk_load_path(label: Label, new_runs: Sequence[dict[str, Any]]) -> str:
+    """Return the bulk-load paths of a label's file once new runs are added to it.
+
+    The environment is the file's, not one run's, so its entry covers every run the file
+    holds as well as the ones being added (`summarize_bulk_load_paths`).
+
+    Parameters:
+        label: The label whose file the runs are added to.
+        new_runs: The runs about to be added.
+
+    Returns:
+        The summary of the file's runs and the new ones.
+    """
+    path = RESULTS_DIR / label.file_name
+    existing = load_result(path)['runs'] if path.exists() else []
+    return summarize_bulk_load_paths([*existing, *new_runs])
 
 
 def top_functions(profile: Path) -> list[dict[str, Any]]:
@@ -790,6 +897,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                     )
                 run['details'] = {'reused_schema': args.reuse_schema, 'schema': schema}
             environment['schema'] = schema
+            environment['bulk_load_path'] = file_bulk_load_path(label, [run])
             path = append_runs(label, environment, [run])
             sys.stdout.write(f'recorded in {path}\n')
             return
@@ -797,7 +905,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         count = scenario.runs if args.runs is None else args.runs
         existing = _existing_import_runs(label)
         if args.scale in WARMED_SCALES:
-            path = append_runs(label, environment, [bench.warm_up()])
+            warm_up = bench.warm_up()
+            environment['bulk_load_path'] = file_bulk_load_path(label, [warm_up])
+            path = append_runs(label, environment, [warm_up])
             sys.stdout.write(f'warm-up import recorded in {path}\n')
         for offset in range(count):
             index = existing + offset + 1
@@ -806,6 +916,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             else:
                 run, schema = bench.run_holdings(index, profile=args.profile, finalize=finalize)
             environment['schema'] = schema
+            environment['bulk_load_path'] = file_bulk_load_path(label, [run])
             path = append_runs(label, environment, [run])
             if index > 1:
                 drop_schema(server, bench.schema_name(index - 1))

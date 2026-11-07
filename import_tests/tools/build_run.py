@@ -33,7 +33,7 @@ from import_tests.tools import fixture_layout, golden_io, holdings_survey, shelf
 from import_tests.tools.golden_io import DatabaseCredentials
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
 #: The environment variable the pipeline reads its configuration file from.
 CONFIG_ENV_VAR = 'OPUS_CONFIG'
@@ -76,6 +76,11 @@ THIS_PYTHON = Path(sys.executable)
 #: log directory. The run's real gate is what these hold, not the exit status.
 ERRORS_LOG = 'ERRORS.log'
 WARNINGS_LOG = 'WARNINGS.log'
+
+#: The information-level log the run's configuration names under its log directory.
+#: Each invocation writes a file of its own, the name's stem followed by the time it
+#: started (``opus_import_2026-11-06T22-13-27.log``), so `import_logs` finds them.
+IMPORT_LOG = 'opus_import.log'
 
 #: What `reimport_bundle` writes beside the first run's, under the run's own directory.
 #: The log directory is its own because pdslogger appends: sharing one would put the
@@ -130,6 +135,11 @@ class RunPaths:
     def warnings_log(self) -> Path:
         """The file every logged warning ends up in."""
         return self.log_dir / WARNINGS_LOG
+
+    @property
+    def import_logs(self) -> list[Path]:
+        """The files the pipeline's information-level records went to (`import_logs`)."""
+        return import_logs(self.log_dir)
 
 
 @dataclass(frozen=True)
@@ -258,20 +268,69 @@ def build_holdings_tree(paths: RunPaths, *, overlay: Path | None = None) -> None
 
 
 def _toml_string(value: str) -> str:
-    """Return a value with the two characters a TOML basic string cannot hold escaped.
+    """Return a value with every character a TOML basic string cannot hold escaped.
 
     Parameters:
         value: The value to interpolate -- a path, a schema name, or a password, none of
             which this suite controls the contents of.
 
     Returns:
-        The value with backslashes and double quotes escaped, so that a Windows path or a
-        password holding either produces a configuration the loader can read.
+        The value with backslashes and double quotes escaped, and every control
+        character written as a ``\\uXXXX`` escape, so that a Windows path, a password, or
+        a path holding a newline produces a configuration the loader can read.
     """
-    return value.replace('\\', '\\\\').replace('"', '\\"')
+    escaped = value.replace('\\', '\\\\').replace('"', '\\"')
+    return ''.join(
+        f'\\u{ord(character):04x}' if ord(character) < 0x20 or ord(character) == 0x7F else character
+        for character in escaped
+    )
 
 
-def write_opus_config(paths: RunPaths, schema: str, credentials: DatabaseCredentials) -> None:
+def import_logs(log_dir: Path) -> list[Path]:
+    """Return the information-level import logs in a log directory, oldest first.
+
+    The pipeline names each invocation's log after `IMPORT_LOG` and the time it
+    started, so the names sort in the order the invocations ran.
+
+    Parameters:
+        log_dir: The run's log directory.
+
+    Returns:
+        The logs; none when the directory holds none.
+    """
+    stem = Path(IMPORT_LOG).stem
+    pattern = re.compile(rf'{re.escape(stem)}(_\d{{4}}-\d{{2}}-\d{{2}}T[\d-]+)?\.log')
+    return sorted(path for path in log_dir.glob('*.log') if pattern.fullmatch(path.name))
+
+
+def _toml_value(value: object) -> str:
+    """Return a value as TOML writes it.
+
+    Parameters:
+        value: A boolean, a whole number or a string.
+
+    Returns:
+        The value's TOML spelling.
+
+    Raises:
+        TypeError: For any other type.
+    """
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, str):
+        return f'"{_toml_string(value)}"'
+    raise TypeError(f'no TOML spelling for {value!r}')
+
+
+def write_opus_config(
+    paths: RunPaths,
+    schema: str,
+    credentials: DatabaseCredentials,
+    *,
+    extra_import: Mapping[str, object] | None = None,
+) -> None:
     """Write the configuration file the run reads, with every key the loader requires.
 
     It goes to ``paths.config_file``, which is what every caller passes to the pipeline.
@@ -280,6 +339,8 @@ def write_opus_config(paths: RunPaths, schema: str, credentials: DatabaseCredent
         paths: Where the run's tree and logs are.
         schema: The database schema to import into.
         credentials: How to reach the database server.
+        extra_import: Further ``[import]`` keys and their values, for a session that
+            sets one; None for none.
     """
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
@@ -293,6 +354,8 @@ def write_opus_config(paths: RunPaths, schema: str, credentials: DatabaseCredent
         run_root=_toml_string(paths.root.as_posix()),
         log_dir=_toml_string(paths.log_dir.as_posix()),
     )
+    for key, value in (extra_import or {}).items():
+        text += f'{key} = {_toml_value(value)}\n'
     paths.config_file.write_text(text, encoding='utf-8')
 
 
@@ -519,6 +582,7 @@ def perform_run(
     overlay: Path | None = None,
     bundle_groups: Sequence[Sequence[str]] | None = None,
     extra_import_args: Iterable[str] = (),
+    extra_import: Mapping[str, object] | None = None,
     finalize: bool = True,
     python: Path = THIS_PYTHON,
     repo_root: Path = fixture_layout.REPO_ROOT,
@@ -548,6 +612,8 @@ def perform_run(
             is what puts them in the same import tables, which is where a duplicate OPUS
             id between them can be seen at all.
         extra_import_args: Arguments added to each ``--do-all-import`` invocation.
+        extra_import: Further ``[import]`` configuration keys every invocation reads
+            (`write_opus_config`), or None for none.
         finalize: Whether to run the four steps after the imports -- the auxiliary
             tables, the dictionary, the Django migration and the validation. True is the
             production sequence and what the main run uses. False stops after the
@@ -574,7 +640,7 @@ def perform_run(
     # Absolute, since every invocation runs in repo_root rather than the caller's directory.
     paths = RunPaths.under(root.resolve())
     build_holdings_tree(paths, overlay=overlay)
-    write_opus_config(paths, schema, credentials)
+    write_opus_config(paths, schema, credentials, extra_import=extra_import)
 
     groups = [[bundle] for bundle in fixture_bundles()] if bundle_groups is None else bundle_groups
     run = ImportRun(

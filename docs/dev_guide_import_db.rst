@@ -30,6 +30,9 @@ raises. A failed database operation always aborts the import.
             <<abstract>>
             +conn
             +log_sql
+            +bulk_load
+            +scratch_dir
+            +transaction_rows
             +tables_created
             +convert_raw_to_namespace()
             +convert_namespace_to_raw()
@@ -43,6 +46,7 @@ raises. A failed database operation always aborts the import.
             +analyze_table()*
             +insert_row()*
             +insert_rows()*
+            +bulk_load_rows()*
             +update_row()*
             +upsert_row()*
             +upsert_rows()*
@@ -52,12 +56,14 @@ raises. A failed database operation always aborts the import.
             +find_column_max()*
             #_execute()
             #_execute_and_fetchall()*
+            #_operation()
             #_enter()
             #_exit()
         }
         class ImportDBMySQL {
             +default_engine
             +mysql_version
+            +bulk_load_path
             implements every abstract member
         }
         class ImportDBPostgreSQL {
@@ -125,13 +131,20 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
      - Recompute the table's key distribution statistics.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.insert_row` / :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows`
      - Insert one row, or many.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.bulk_load_rows`\ ``(namespace, raw_table_name, rows)``
+     - Write many rows the fastest way the server allows, at most
+       ``transaction_rows`` to a transaction, checking that every row arrived unchanged;
+       or as ``insert_rows`` does where the server allows nothing faster. The
+       observation rows go through it (:ref:`dev_guide_import_db_bulk_load`).
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.update_row`\ ``(namespace, raw_table_name, row, where, where_params=None)``
      - Assign new values to the rows a WHERE clause selects.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_row` / :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows`
      - Insert, updating any row whose key is already present. The key column is written
        on an insert and never assigned on an update.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.delete_rows`\ ``(namespace, raw_table_name, where=None, where_params=None)``
-     - Delete the rows a WHERE clause selects.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.delete_rows`\ ``(namespace, raw_table_name, where=None, where_params=None, *, all_rows=False)``
+     - Delete the rows a WHERE clause selects. With no clause it deletes nothing and
+       raises, so a clause that came out empty cannot empty the table; ``all_rows=True``
+       is the one way to delete every row.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.copy_rows_between_namespaces`\ ``(src, dest, raw_table_name, where=None, where_params=None)``
      - Copy one table's rows from one namespace to the same table in another. Both
        tables must have the same columns in the same order, which they do because both
@@ -146,7 +159,8 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
 The concrete members are the constructor, the two namespace converters and their
 two predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
-collector ``_make_warning_handler``, and the ``_enter``/``_exit`` pair. The two
+collector ``_make_warning_handler``, and ``_operation`` with the ``_enter``/``_exit``
+pair it runs. The two
 converters do carry a ``raise NotImplementedError`` for a namespace value that is not
 one of the three, which is unreachable for a valid one.
 
@@ -156,17 +170,24 @@ Read-only runs
 ``--read-only`` sets a flag on the connection, and every mutating call passes
 ``mutates=True`` down to ``_execute``. A read-only run therefore **still executes
 non-mutating statements** -- it really reads the database -- and logs each mutating one
-with a ``[SIM]`` marker instead of running it. Log messages branch on the flag too, so a
+with a ``[SIM]`` marker instead of running it. A read-only run's bulk loads take the
+``INSERT`` path, so they write no scratch file, and it leaves ``local_infile`` and
+``sql_log_bin`` alone; it sets the session's ``sql_mode`` as every connection does. Log
+messages branch on the flag too, so a
 dropped table reads as ``[SIM] Dropped table`` rather than ``Dropped table``.
 
 Warnings
 ~~~~~~~~
 
-``_enter`` and ``_exit`` bracket every database operation. At the outermost one,
-``_enter`` clears the record of executed statements and installs a handler that collects
-Python warnings; ``_exit`` reports any warnings together with the statements that
-produced them, so a warning read out of a log names the SQL that caused it. Nesting is
-tracked, so an inner operation does not clear an outer one's record.
+Every database operation runs its body inside ``with self._operation(name):``, which
+calls ``_enter`` before it and ``_exit`` after it, however the body ends. At the
+outermost one, ``_enter`` clears the record of executed statements and installs a
+process-wide handler that collects Python warnings; ``_exit`` reports any warnings
+together with the statements that produced them, so a warning read out of a log names
+the SQL that caused it, and puts the previous handler back. Nesting is tracked, so an
+inner operation does not clear an outer one's record. Because ``_exit`` runs on a raise
+too, an operation that fails leaves neither the handler installed nor the nesting stack
+unbalanced.
 
 MySQL: ImportDBMySQL
 ~~~~~~~~~~~~~~~~~~~~
@@ -186,7 +207,10 @@ from the schemas, from the configuration, from a bundle id -- fits that shape.
 **Values are always parameters**, including None, which the driver renders as SQL NULL.
 The DDL is the one exception: a column's default and its enum option list are formatted
 straight into the ``CREATE TABLE``, which is safe only because both come from the table
-schemas packaged with :mod:`opus_import` and never from input. Some statement builders
+schemas packaged with :mod:`opus_import` and never from input. A bulk load's values
+travel in a scratch file rather than in the statement, written by
+:func:`~opus_import.importdb.mysql.load_data_text` with the escapes the statement
+reads; only the file's name is a parameter. Some statement builders
 here interpolate a caller's ``where`` fragment and carry an explicit note saying so, as
 does one in the base class; each is for trusted callers, and only the values inside
 such a fragment are bound.
@@ -210,7 +234,11 @@ Both :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows` and
 ``USE``; an unknown-database error makes it **create the schema** and retry, which is
 why an import into a new schema needs no ``CREATE DATABASE`` first. It then primes a
 cache of every table name, reads the server version, and sets a strict SQL mode --
-failing the run if it cannot. It does **not** close the connection: there is no close
+failing the run if it cannot. Last, it sets the session up for the import's writes:
+it chooses the bulk-load path (below), and where the server keeps a binary log it issues
+``SET sql_log_bin = 0``, so the import's rows are not written to it a second time. An
+account without the privilege for that gets one info line naming ``--skip-log-bin`` and
+the grant instead, and the import goes on. It does **not** close the connection: there is no close
 method, no destructor and no context manager, and each statement is run through its own
 cursor and committed immediately.
 
@@ -219,6 +247,62 @@ installed and a package-wide sweep -- Sphinx autodoc, or a test collection -- do
 fail on it. An instance built without the driver forces itself read-only and discards
 every statement rather than running it, so it reports no tables and reads no rows. **It
 is not a simulation anything can be driven through.**
+
+.. _dev_guide_import_db_bulk_load:
+
+The bulk load
+~~~~~~~~~~~~~
+
+:meth:`~opus_import.importdb.mysql.ImportDBMySQL.bulk_load_rows` writes the observation
+rows: every ``obs_`` table's rows, the per-target surface geometry tables' and
+``obs_files``', at the end of
+:func:`~opus_import.steps.do_import_index.import_one_index`. The mult tables are written
+before them by ``upsert_rows``, since a load cannot update a row it finds already there.
+
+**The text.** The rows are written as the text ``LOAD DATA`` reads by default: fields
+separated by tabs, rows ended by newlines, ``\N`` for NULL, and a backslash before each
+tab, newline, carriage return, NUL or backslash in a value. The statement names those
+rules beside ``CHARACTER SET utf8mb4``, which is required because it reads the file in
+the schema's character set and ignores ``SET NAMES``. Never CSV: quoting rules differ
+between readers, and these escapes do not.
+:func:`~opus_import.importdb.mysql.load_data_text` renders each value the way
+``insert_rows`` would have sent it, so the two paths store the same thing: a float by its
+``repr``, which names the exact double; a boolean as ``1`` or ``0``; and anything else,
+a JSON string included, as its text. A test in the import suite writes the same rows both
+ways into two tables and compares what the server stored.
+
+**Chunks and scratch files.** The rows go in chunks of at most ``[import]
+transaction_rows`` (100,000 by default), each loaded and committed as one transaction,
+so a killed import rolls back at most one chunk and the server holds at most one chunk's
+undo. Each chunk is written to a file of its own, made by :func:`tempfile.mkstemp` in
+``[import] scratch_dir`` (the system temporary directory by default) with the table's
+name as its prefix, so two imports sharing the directory never write or load each
+other's file. The rows are written to it one at a time from the list the import built,
+never copied into a second one, and the file is deleted when its load ends, whether the
+load succeeded or not.
+
+**The check.** ``LOAD DATA LOCAL`` behaves as though ``IGNORE`` were given, even under
+``STRICT_ALL_TABLES``: a row whose primary or unique key is already present is skipped,
+and a value its column cannot hold is converted, each with a warning rather than an
+error. So after every load the server's counts for the statement are read -- the
+connection's info string, ``Records``, ``Deleted``, ``Skipped`` and ``Warnings`` -- and a
+load that read fewer rows than its file holds, skipped any, or warned at all is rolled
+back and raised as :exc:`~opus_import.importdb.super.ImportDBError`, with the first
+warning's text from ``SHOW WARNINGS``. That check is the only thing that makes a key
+reject a duplicate on this path. The counts belong to the connection's last statement,
+so another connection loading into the same tables at the same time cannot change them.
+
+**The path, and the fallback.** The connection is opened with ``local_infile`` allowed
+when ``[import] bulk_load`` is true, which is the default. The constructor then reads
+the server's ``local_infile``; if it is off, the import turns it on with ``SET GLOBAL
+local_infile = ON`` where the account may, and otherwise writes with ``INSERT``
+statements, as ``insert_rows`` does. A load the server or the connection refuses later
+(errors 1148, 2068 or 3948) does the same, from that chunk on. The import log says which
+path each invocation took, on a line beginning ``Bulk load path:``, with the reason when
+it is the ``INSERT`` path; that and the statement an operator would run are logged at
+info level, because a warning would read as a defect in the import rather than in the
+server's settings. :ref:`user_guide_installation_prereqs` lists the server settings an
+import benefits from.
 
 The type mapping
 ~~~~~~~~~~~~~~~~

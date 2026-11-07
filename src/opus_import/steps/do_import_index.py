@@ -629,7 +629,7 @@ def import_one_index(
         if table_name.find('<TARGET>') == -1:
             imp_name = db.convert_raw_to_namespace('import', table_name)
             import_util.log_debug(ctx, f'Inserting into obs table "{imp_name}"')
-            db.insert_rows('import', table_name, table_rows[table_name])
+            db.bulk_load_rows('import', table_name, table_rows[table_name])
         else:
             for target_name in sorted(used_targets):
                 new_table_name = table_name.replace(
@@ -651,7 +651,7 @@ def import_one_index(
                 # obs_surface_geometry_target.json is packaged with opus_import.
                 assert surface_geo_schema is not None
                 db.create_table('import', new_table_name, surface_geo_schema)
-                db.insert_rows('import', new_table_name, table_rows[new_table_name])
+                db.bulk_load_rows('import', new_table_name, table_rows[new_table_name])
 
     return True  # SUCCESS!
 

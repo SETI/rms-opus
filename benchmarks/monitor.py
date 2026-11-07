@@ -6,9 +6,10 @@ benchmark hands to `build_run.perform_run`, and the one it wraps around each
 way at every scale: its wall-clock; its memory, sampled once a second from ``/proc``
 (each process's peak resident set, ``VmHWM``, and the peak over the samples of the
 import process tree's summed proportional set size, ``Pss``, which counts a page that
-forked workers share once rather than once per process); its own ``--timing-json``
-step timings; and, after a bundle-import invocation, the check that the permanent
-``obs_general`` holds rows for every bundle the invocation imports.
+forked workers share once rather than once per process); the server's checkpoint age,
+sampled on the same beat when the monitor is given a way to ask the server; its own
+``--timing-json`` step timings; and, after a bundle-import invocation, the check that
+the permanent ``obs_general`` holds rows for every bundle the invocation imports.
 """
 
 from __future__ import annotations
@@ -54,6 +55,9 @@ class InvocationRecord:
         peak_rss_kb: The largest ``VmHWM`` any process of its tree reached.
         peak_tree_pss_kb: The largest summed ``Pss`` of its tree over the samples.
         samples: How many memory samples were taken.
+        peak_checkpoint_age_bytes: The largest checkpoint age the server reached over
+            the samples, or None where it was not sampled or the server does not report
+            it (`checkpoint_age`).
         timings: Its own step timings, from ``--timing-json``, or empty.
         bundles: The bundles a bundle-import invocation imports, or empty.
     """
@@ -65,6 +69,7 @@ class InvocationRecord:
     peak_rss_kb: int = 0
     peak_tree_pss_kb: int = 0
     samples: int = 0
+    peak_checkpoint_age_bytes: int | None = None
     timings: dict[str, float] = field(default_factory=dict)
     bundles: list[str] = field(default_factory=list)
 
@@ -86,16 +91,56 @@ def read_kb(path: Path, key: str) -> int:
     return 0
 
 
-class _MemorySampler:
-    """Samples the memory of this process's children, once a second, on a thread."""
+def checkpoint_age(connection: Any) -> int | None:
+    """Return how far the server's redo log has run ahead of its last checkpoint.
 
-    def __init__(self, excluded: Callable[[], set[int]]) -> None:
+    The age is ``Innodb_redo_log_current_lsn`` less ``Innodb_redo_log_checkpoint_lsn``:
+    the redo the server has written whose pages are not yet flushed. When it nears the
+    redo log's capacity, the server stalls writes to flush, which is the sustained write
+    limit a long import can reach.
+
+    Parameters:
+        connection: An open connection to the server.
+
+    Returns:
+        The age in bytes, or None from a server older than 8.0.30, which reports neither
+        number.
+    """
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "SHOW GLOBAL STATUS WHERE Variable_name IN ('Innodb_redo_log_current_lsn', "
+            "'Innodb_redo_log_checkpoint_lsn')"
+        )
+        status = {str(name): int(value) for name, value in cursor.fetchall()}
+    finally:
+        cursor.close()
+    if len(status) < 2:
+        return None
+    return status['Innodb_redo_log_current_lsn'] - status['Innodb_redo_log_checkpoint_lsn']
+
+
+class _MemorySampler:
+    """Samples the memory of this process's children, once a second, on a thread.
+
+    Given a probe, it also samples the server's checkpoint age on the same beat.
+    """
+
+    def __init__(
+        self,
+        excluded: Callable[[], set[int]],
+        server_probe: Callable[[], int | None] | None = None,
+    ) -> None:
         """Prepare to sample.
 
         Parameters:
             excluded: Returns the process ids not to count (the owned servers).
+            server_probe: Returns the server's checkpoint age, or None for no sample of
+                it; None for no probe.
         """
         self._excluded = excluded
+        self._server_probe = server_probe
+        self.peak_checkpoint_age_bytes: int | None = None
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._peak_hwm: dict[int, int] = {}
@@ -131,7 +176,20 @@ class _MemorySampler:
             # A process can exit between being listed and being read.
             with contextlib.suppress(OSError):
                 self._sample()
+            self._sample_server()
             self._stop.wait(SAMPLE_INTERVAL_S)
+
+    def _sample_server(self) -> None:
+        """Take one sample of the server's checkpoint age, if there is a probe."""
+        if self._server_probe is None:
+            return
+        # A sample the server cannot answer is a sample missed, not a failed run.
+        try:
+            age = self._server_probe()
+        except MySQLdb.Error:
+            return
+        if age is not None:
+            self.peak_checkpoint_age_bytes = max(self.peak_checkpoint_age_bytes or 0, age)
 
     def start(self) -> None:
         """Start sampling."""
@@ -165,6 +223,7 @@ class InvocationMonitor:
         expand: Callable[[Sequence[str]], list[list[str]]],
         timing_file: Path | None,
         excluded_pids: Callable[[], set[int]],
+        status_connection: Callable[[], Any] | None = None,
     ) -> None:
         """Prepare to watch one run.
 
@@ -180,6 +239,9 @@ class InvocationMonitor:
             timing_file: The file each invocation's ``--timing-json`` writes, or None
                 where the side has no such option.
             excluded_pids: Returns the process ids the memory figures leave out.
+            status_connection: Opens a connection to the server for the sampler to read
+                its checkpoint age through, one per invocation; None to sample memory
+                alone.
         """
         self._server = server
         self._schema = schema
@@ -187,6 +249,8 @@ class InvocationMonitor:
         self._expand = expand
         self._timing_file = timing_file
         self._excluded_pids = excluded_pids
+        self._status_connection = status_connection
+        self._connection: Any = None
         self._groups: list[str] = []
         self._expanded: dict[str, list[str]] = {}
         self._current: InvocationRecord | None = None
@@ -233,7 +297,15 @@ class InvocationMonitor:
         if self._timing_file is not None:
             self._timing_file.unlink(missing_ok=True)
         self._current = record
-        self._sampler = _MemorySampler(self._excluded_pids)
+        probe = None
+        if self._status_connection is not None:
+            # The sampler's thread is the only user of this connection while it runs.
+            connection = self._connection = self._status_connection()
+
+            def probe() -> int | None:
+                return checkpoint_age(connection)
+
+        self._sampler = _MemorySampler(self._excluded_pids, probe)
         self._sampler.start()
         self._started = time.perf_counter()
 
@@ -255,6 +327,10 @@ class InvocationMonitor:
         record.peak_rss_kb = sampler.stop()
         record.peak_tree_pss_kb = sampler.peak_tree_pss_kb
         record.samples = sampler.samples
+        record.peak_checkpoint_age_bytes = sampler.peak_checkpoint_age_bytes
+        if self._connection is not None:
+            self._connection.close()
+            self._connection = None
         record.wall_s = wall
         record.returncode = result.returncode
         if self._timing_file is not None and self._timing_file.exists():
@@ -325,6 +401,7 @@ class InvocationMonitor:
                     'peak_rss_kb': record.peak_rss_kb,
                     'peak_tree_pss_kb': record.peak_tree_pss_kb,
                     'samples': record.samples,
+                    'peak_checkpoint_age_bytes': record.peak_checkpoint_age_bytes,
                     'timings': record.timings,
                     'bundles': record.bundles,
                 }

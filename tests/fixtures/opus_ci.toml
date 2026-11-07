@@ -61,3 +61,5 @@ fake_error500_probability = 0.0
 table_temp_prefix = "imp_"
 log_file = "/tmp/opus_ci_import.log"
 debug_log_file = "/tmp/opus_ci_import_debug.log"
+bulk_load = true
+transaction_rows = 100000
