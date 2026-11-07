@@ -88,6 +88,15 @@ Then open ``http://127.0.0.1:8000/opus/``, or ask the API a question directly::
 The number depends on what has been imported into the database this installation names;
 that it answers at all is the check.
 
+**A database must be finished before it is served.** ``runserver`` serves
+:mod:`opus_app.wsgi` (the settings' ``WSGI_APPLICATION``), as the production server does,
+so it applies the same check as it starts: unless the database's ``schema_version`` row
+holds this release's version in the ``ready`` state (:ref:`dev_guide_database_schema_version`),
+every request is answered 503 with a message naming the remedy. A database built with
+``opus_import --do-it-all`` needs ``opus_import --write-schema-version`` before it is
+served. Management commands other than the servers do not check, so ``migrate`` and the
+rest work against any database.
+
 Two things about what those commands do:
 
 **The site is served twice.** ``http://127.0.0.1:8000/opus/`` and

@@ -22,7 +22,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from opus_import import config_bundle_info, config_data, import_util
+from opus_import import config_bundle_info, config_data, import_util, schema_version
 
 if TYPE_CHECKING:
     from opus_import.config_bundle_info import BundleInfo
@@ -50,12 +50,18 @@ def lookup_vol_info(bundle_id: str) -> BundleInfo | None:
 def delete_all_obs_mult_tables(ctx: ImportContext, namespace: Namespace) -> None:
     """Delete every ``obs_`` and ``mult_`` table in a namespace, and ``cart`` with them.
 
+    In the permanent namespace ``schema_version`` goes too, and first, so an erase that
+    stops part way leaves a schema with no version row, which nothing serves or deploys
+    onto. The table exists only there.
+
     Parameters:
         ctx: The import run's context, for the open database.
         namespace: The namespace to empty.
     """
     db = ctx.db
     assert db is not None
+    if namespace == 'perm' and db.table_exists('perm', schema_version.TABLE_NAME):
+        db.drop_table('perm', schema_version.TABLE_NAME)
     table_names = sorted(db.table_names(namespace, prefix=['obs_', 'mult_', 'cart']))
     # This has to happen in four phases to handle foreign key contraints:
     # 1. All obs_ tables except obs_general

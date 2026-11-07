@@ -196,6 +196,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'opus_app.urls'
 
+# What runserver serves, so the development server checks the schema's version row as
+# the production entry point does.
+WSGI_APPLICATION = 'opus_app.wsgi.application'
+
 FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 TEMPLATES = [
