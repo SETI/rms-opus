@@ -596,7 +596,7 @@ Each PR in §4 names its **target metric**. A PR is ready to merge when:
 A PR whose target metric does not improve is a **stop-and-report**: the measurement is
 committed anyway, labeled as such, and the orchestrator decides whether to revise the
 approach or drop the item. A negative result is a result; it is not discarded. PR-02,
-PR-05, PR-06, PR-08, PR-14, PR-15, and PR-16a name a structural criterion beside or instead of a
+PR-03, PR-05, PR-06, PR-08, PR-14, PR-15, and PR-16a name a structural criterion beside or instead of a
 target metric; their sections say so.
 
 ### 2.6 Statistics and noise floors
@@ -915,18 +915,22 @@ field-function cache is not made at all (§7).
 - **Measurement:** the fan-out scenario with selections and the page scenarios, warm and
   app-cold; the statement digest table and the statements-executed count (§2.2) before
   and after (the `partables`, `param_info`, and `mult_*` point-lookup digests should leave
-  the top twenty). Target metric: **warm p50 of the fan-out with selections**: its mult
-  selection's label lookup and the `ParamInfo.objects.get` calls run in
-  `url_to_search_params` on every request, before the views' memcached entries answer,
-  and they are what this PR removes, while an app-cold request also pays the first
-  per-process load this PR adds. The fan-out's `__api` routes call `never_cache` views, so
-  Django's site cache never answers them (§2.2); the executor confirms from the
-  statements-executed count that the warm fan-out executes statements on the before
-  side, and if it executes none, the target becomes the warm p50 of the first page of
-  the broad search with the same selections through `api/data.json`, which always runs
-  `url_to_search_params`. Secondaries: the warm p50 of the first and tenth page through
-  `api/data.json`; app-cold p50 of the fan-out is guarded by §2.5. **Guarded, beyond §2.5's list:** the gunicorn workers' peak RSS,
-  since the per-process caches grow it.
+  the top twenty). **Target metric, structural:** the warm statements-executed count of
+  the fan-out with selections (`web.warm.fanout.selected.statements`). The fan-out's
+  `__api` routes call `never_cache` views, so Django's site cache never answers them
+  (§2.2), and before the views' memcached entries answer, `url_to_search_params` runs its
+  mult selection's label lookup and its `ParamInfo.objects.get` calls on every request:
+  those are the statements the base executes there, and this PR removes them. Secondary,
+  also a count: the warm statements-executed count of the page scenarios, whose
+  `table_names` and `param_info` lookups this PR removes. A count shows the comparison
+  exactly. Latency is reported, not judged: over PR-02's kept connections and the
+  harness's Unix socket, each removed statement is a round trip well under a millisecond,
+  and even summed over a request that is under the web jitter of PR-00's floors (12.9 ms
+  at test scale), so no latency verdict could come of it. Each removed statement also
+  saves a network round trip once the database is on another host, which is what the
+  PR is for. App-cold p50 of the fan-out is guarded by §2.5, since an app-cold request
+  pays the first per-process loads this PR adds. **Guarded, beyond §2.5's list:** the
+  gunicorn workers' peak RSS, since the per-process caches grow it.
 - **Acceptance:** §2.5; API goldens unchanged.
 
 ### Phase 2: the import, parallel and bulk
@@ -4561,3 +4565,37 @@ Nothing above this line is rewritten by an executor.
   returned before the drop, which a connection closed at the end of the request had
   cleaned up. PR-02 drops both in a `finally` through `db_utils.drop_temporary_table`,
   with `DROP TEMPORARY TABLE IF EXISTS`.
+- At the operator's direction (2026-11-06), PR-03's target is the warm
+  statements-executed count of the fan-out with selections, not its warm p50, for the
+  reason PR-02's is a count: over kept connections and the Unix socket each removed
+  statement is a round trip far under the web jitter of PR-00's floors. PR-02's
+  measurement already showed that count at 15 on the base, so the fallback to the broad
+  search's first page did not arise. On the base the 15 are three digests five times
+  each: the `param_info` lookup by `(category_name, name)`, the mult selection's
+  `label IN (...) OR value IN (...)`, and a `param_info` lookup by slug. The third is not
+  one the PR section names: `get_param_info_by_slug` returned a search slug ending in its
+  range suffix (`time1`) without storing it in `_PARAMINFO_CACHE`, so that cache never
+  answered it. PR-03 stores it, returning a copy as the other branches do.
+- The server compares strings with `utf8mb4_0900_ai_ci` (case- and accent-insensitive),
+  and the API goldens depend on it (`planet=saturn` and `planet=SATURN` beside
+  `planet=Saturn`), so a dictionary keyed by the exact label would have turned those
+  requests into errors. PR-03's in-memory lookups compare a key that folds case and
+  strips accents. The key is the collation only for printable ASCII: it does not ignore
+  what the collation ignores (a soft hyphen, or an ASCII control character, which has zero
+  weight), and it maps `¨` onto a space where the collation keeps them apart (checked on
+  MySQL 8.0.46: `'General Constraints' = 'General¨Constraints'` is 0). Strings that
+  are printable ASCII compare the same way under both, since the collation compares those
+  letters without regard to case and every other printable ASCII character as itself, so
+  a mult lookup is asked of the server when a requested name is not printable ASCII or
+  has no entry under its key, or when the table holds a name that is not printable ASCII;
+  and `get_metadata` asks the server about a `cats` list its copy does not match in full,
+  that holds a name that is not printable ASCII, or that is looked up while a displayed
+  table's label or name is not printable ASCII. The unique keys on
+  `definitions` hold under the same collation, so its folded keys do not collide.
+- `api_get_mult_counts` reads its labels from the in-memory mult table rather than in one
+  query, which the PR section allowed for: the table is already in memory for the
+  search. `_valid_regex` remembers only the patterns the server accepted, bounded at
+  1024, through `functools.lru_cache` over a function that raises on a refusal, which
+  the cache does not store; a refusal from a lost connection is not taken for the
+  pattern's answer. `_PRETTY_MULT_CACHE` is removed, since the mult table's copy answers
+  its lookups.

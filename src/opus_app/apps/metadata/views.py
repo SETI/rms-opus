@@ -36,7 +36,6 @@ from typing import TYPE_CHECKING, Any
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, connection
 from django.db.models import Max, Min
 from django.http import Http404, HttpResponseServerError
@@ -45,7 +44,6 @@ from django.views.decorators.cache import never_cache
 
 from opus_app.apps.cart.models import Cart
 from opus_app.apps.paraminfo.models import ParamInfo
-from opus_app.apps.search.models import TableNames
 from opus_app.apps.search.views import (
     get_param_info_by_slug,
     get_user_query_table,
@@ -58,7 +56,6 @@ from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
     csv_response,
-    get_mult_name,
     get_reqno,
     http400_bad_collapse,
     http400_bad_or_missing_reqno,
@@ -73,6 +70,7 @@ from opus_app.apps.tools.app_utils import (
     json_response,
     strip_numeric_suffix,
 )
+from opus_app.apps.tools.import_constants import get_table_name, mult_table
 from opus_support import (
     format_unit_value,
     get_default_unit,
@@ -321,14 +319,10 @@ def api_get_mult_counts(
     if cached_val is not None:
         mults = cached_val
     else:
-        mult_name = get_mult_name(param_qualified_name)
         try:
-            mult_model = apps.get_model('search', mult_name.title().replace('_', ''))
+            mult_rows = mult_table(param_qualified_name).rows
         except LookupError:  # pragma: no cover - configuration error
-            log.exception(
-                'api_get_mult_counts: Could not get_model for %r',
-                mult_name.title().replace('_', ''),
-            )
+            log.exception('api_get_mult_counts: No mult table for %r', param_qualified_name)
             return HttpResponseServerError(http500_internal_error(request))
 
         try:
@@ -395,20 +389,18 @@ def api_get_mult_counts(
 
         mult_result_list = []
         for row in results:
+            # A MULTIGROUP column's ids come out of JSON_TABLE as text.
             mult_id = row[0]
-            try:
-                mult = mult_model.objects.get(id=mult_id)
-                mult_disp_order = mult.disp_order
-                mult_label = mult.label
-            except ObjectDoesNotExist:  # pragma: no cover - import error
-                log.exception(
-                    'api_get_mult_counts: Could not find mult entry ' + 'for mult_model %r id %r',
-                    str(mult_model),
+            mult = mult_rows.get(int(mult_id)) if mult_id is not None else None
+            if mult is None:  # pragma: no cover - import error
+                log.error(
+                    'api_get_mult_counts: Could not find mult entry for %r id %r',
+                    param_qualified_name,
                     str(mult_id),
                 )
                 return HttpResponseServerError(http500_internal_error(request))
 
-            mult_result_list.append((mult_disp_order, (mult_label, row[1])))
+            mult_result_list.append((mult.disp_order, (mult.label, row[1])))
         mult_result_list.sort()
 
         mults = {}  # info to return
@@ -970,7 +962,7 @@ def get_fields_info(
             # Internal use only
             continue
 
-        table_name = TableNames.objects.get(table_name=f.category_name)
+        table_name = get_table_name(f.category_name)
         cat = table_name.label
         if collapse and cat.find('Surface Geometry Constraints') != -1:
             cat = cat.replace('Saturn', '<TARGET>')

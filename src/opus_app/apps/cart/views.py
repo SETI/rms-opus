@@ -83,7 +83,7 @@ from opus_app.apps.tools.app_utils import (
     json_response,
 )
 from opus_app.apps.tools.db_utils import drop_temporary_table
-from opus_app.apps.tools.dictionary import Definitions
+from opus_app.apps.tools.dictionary import get_definition
 from opus_app.apps.tools.file_size import nice_file_size
 from opus_app.apps.tools.file_utils import get_pds_products
 
@@ -969,12 +969,9 @@ def _get_download_info(product_types: list[str], session_id: str | None) -> dict
             else:
                 cur_product_list = []
                 product_cat_dict[pretty_name][ver] = cur_product_list
-        try:
-            entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE', term=short_name)
-            tooltip = entry.definition
-        except Definitions.DoesNotExist:  # pragma: no cover - import error
+        tooltip = get_definition(short_name, 'OPUS_PRODUCT_TYPE')
+        if tooltip is None:  # pragma: no cover - import error
             log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"', short_name)
-            tooltip = None
         product_dict_entry = {
             'slug_name': short_name,
             'tooltip': tooltip,

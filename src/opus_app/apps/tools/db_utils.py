@@ -9,8 +9,8 @@
 The observation tables share a naming convention (`obs_pds` holds the rows of the
 `ObsPds` model), so code that has to work across all of them looks a model class up
 by table name instead of importing it. A mult field stores the id of a row in its
-own small table rather than a value, so displaying one means a second lookup; the
-labels those lookups produce are cached here for the life of the process.
+own small table rather than a value, so displaying one means a second lookup, which
+reads the process's copy of that table from `import_constants`.
 
 A view that builds a temporary table drops it with `drop_temporary_table` on every
 way out of the request, since a worker thread keeps its database connection across
@@ -30,7 +30,7 @@ from django.conf import settings
 from django.db import DatabaseError, connection
 
 from opus_app.apps.tools import sql_builder
-from opus_app.apps.tools.app_utils import get_mult_name
+from opus_app.apps.tools.import_constants import mult_table
 from opus_support import parse_form_type
 
 if TYPE_CHECKING:
@@ -91,12 +91,6 @@ def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
     return table_model.objects.filter(obs_general__opus_id=opus_id)  # type: ignore[no-any-return]
 
 
-# Looking up entries in the mult tables is slow, so cache them in memory as they
-# are retrieved. There aren't that many mult tables or values, so this won't take
-# much memory even in the worst case.
-_PRETTY_MULT_CACHE: dict[tuple[str, Any], dict[str, str | None]] = {}
-
-
 def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any, cvt_null: bool) -> str | None:
     """Given a param_info for a mult and the mult value, return the pretty label.
 
@@ -120,21 +114,13 @@ def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any, cvt_null: bo
     if form_type not in settings.MULT_FORM_TYPES:  # pragma: no cover - import error
         return None
 
-    key = (param_info.param_qualified_name(), value)
-    if key in _PRETTY_MULT_CACHE:
-        result = _PRETTY_MULT_CACHE[key]
-    else:
-        mult_param = get_mult_name(param_info.param_qualified_name())
-        model = apps.get_model('search', mult_param.title().replace('_', ''))
-
-        results = model.objects.filter(id=value).values('value', 'label')
-        if not results:  # pragma: no cover - import error
-            return None
-        result = results[0]
-        _PRETTY_MULT_CACHE[key] = result
-    if not cvt_null and result['value'] is None:
+    rows = mult_table(param_info.param_qualified_name()).rows
+    row = rows.get(int(value)) if value is not None else None
+    if row is None:  # pragma: no cover - import error
         return None
-    return result['label']
+    if not cvt_null and row.value is None:
+        return None
+    return row.label
 
 
 def lookup_pretty_value_for_mult_list(

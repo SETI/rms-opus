@@ -9,14 +9,20 @@ drop them.
 They live in `tools` because that is the app the rest of OPUS reaches into for
 shared helpers: `paraminfo`, `ui` and `cart` are the three that use them.
 
+Each worker process reads the definitions once, on first use, and answers from memory
+after that; the deploy restarts the workers after an import.
+
 Both classes were produced by `inspectdb` and their field definitions are reproduced
 verbatim, because the columns they name are created by the import pipeline rather
 than by a migration: a field changed here would silently stop matching the table.
 """
 
+import functools
 import logging
 
 from django.db import models
+
+from opus_app.apps.tools.import_constants import collation_key
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +66,38 @@ class Definitions(models.Model):
         unique_together = (('term', 'context'),)
 
 
+@functools.cache
+def _definitions() -> dict[tuple[str, str], str]:
+    """Return every definition, keyed by the `collation_key` of its context and term."""
+    # django-stubs types a foreign key's value as the target's primary key, but this
+    # one points at `to_field='name'`, so `context` holds the context's name.
+    return {
+        (collation_key(context), collation_key(term)): definition  # type: ignore[arg-type]
+        for context, term, definition in Definitions.objects.values_list(
+            'context', 'term', 'definition'
+        )
+    }
+
+
+def get_definition(term: str | None, context: str | None) -> str | None:
+    """Return the definition of a term in a context.
+
+    The term and the context are compared the way the server's collation compares
+    them, ignoring case and accents.
+
+    Parameters:
+        term: The dictionary term to look up. Nothing at all matches no definition.
+        context: The name of the context the term is defined in. Nothing at all
+            matches no definition.
+
+    Returns:
+        The definition text, or None when the term is not defined in that context.
+    """
+    if term is None or context is None:
+        return None
+    return _definitions().get((collation_key(context), collation_key(term)))
+
+
 def get_def_for_tooltip(term: str | None, context: str | None) -> str | None:
     """Get a dictionary definition for (i) tooltips in the OPUS UI.
 
@@ -73,15 +111,12 @@ def get_def_for_tooltip(term: str | None, context: str | None) -> str | None:
         A missing definition is logged as an error except for the ``MULT_`` contexts,
         where a mult value is allowed to carry no tooltip.
     """
-    try:
-        entry = Definitions.objects.get(context__name=context, term=term)
-    except Definitions.DoesNotExist:
-        # We allow mult tooltips to be None
-        # A context of None matches no definition and then reaches this line, where
-        # it raises AttributeError. Every ParamInfo column this is called with is
-        # nullable, so that is a real fault rather than a typing artifact, and it is
-        # recorded here instead of being annotated away.
-        if not context.startswith('MULT_'):  # type: ignore[union-attr] # pragma: no cover - import error
-            log.error('No tooltip definition for context "%r" term "%r"', context, term)
-        return None
-    return entry.definition
+    definition = get_definition(term, context)
+    # We allow mult tooltips to be None
+    # A context of None matches no definition and then reaches the startswith, where
+    # it raises AttributeError. Every ParamInfo column this is called with is
+    # nullable, so that is a real fault rather than a typing artifact, and it is
+    # recorded here instead of being annotated away.
+    if definition is None and not context.startswith('MULT_'):  # type: ignore[union-attr] # pragma: no cover - import error
+        log.error('No tooltip definition for context "%r" term "%r"', context, term)
+    return definition

@@ -22,6 +22,7 @@ renders that pair as a SELECT through `opus_app.apps.tools.sql_builder`.
 from __future__ import annotations
 
 import copy
+import functools
 import hashlib
 import json
 import logging
@@ -32,17 +33,15 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 # This is used instead of "re" because it's closer to the ICU regex library
 # used by MySQL.
 import regex
-from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
 from django.db import DatabaseError, connection
-from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import Http404, HttpResponseServerError
 
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import UserSearches
-from opus_app.apps.tools import sql_builder
+from opus_app.apps.tools import import_constants, sql_builder
 from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
@@ -77,6 +76,9 @@ from opus_support import (
 )
 
 log = logging.getLogger(__name__)
+
+# How many regular expressions the server accepted each process remembers.
+_REGEX_CACHE_SIZE = 1024
 
 
 ################################################################################
@@ -714,19 +716,11 @@ def url_to_search_params(
             # No other form types can be sorted since their ordering
             # corresponds to qtype/unit ordering.
             new_val: list[str] | str | None = sorted(set(values))
-            # Now check to see if the mult values are all valid
-            mult_name = get_mult_name(param_qualified_name)
-            model_name = mult_name.title().replace('_', '')
-            model = apps.get_model('search', model_name)
-            mult_values = [
-                x['pk']
-                for x in list(
-                    model.objects.filter(Q(label__in=new_val) | Q(value__in=new_val)).values('pk')
-                )
-            ]
             # Still the sorted list here: the join and the None replacement
             # below are the only things that change what this name holds.
             assert isinstance(new_val, list)
+            # Now check to see if the mult values are all valid
+            mult_values = import_constants.mult_table(param_qualified_name).ids_for(new_val)
             if len(mult_values) != len(new_val):
                 if allow_errors:
                     new_val = None
@@ -1331,7 +1325,8 @@ def get_param_info_by_slug(
         if source == 'search':
             if slug[-1] in ('1', '2'):
                 # Search slug has 1/2, param_info has 1/2 - all is good
-                return pi
+                _PARAMINFO_CACHE[key] = pi
+                return copy.copy(pi)
             # For a single-column range, the slug we were given MUST end
             # in a '1' or '2' - but for non-range types, it's OK to not
             # have the '1' or '2'. Note the non-single-column ranges were
@@ -1462,17 +1457,7 @@ def construct_query_string(
             # This is where we convert from the "pretty" name the user selected
             # to the internal name stored in the database and mapped to the
             # mult table.
-            mult_name = get_mult_name(param_qualified_name)
-            model_name = mult_name.title().replace('_', '')
-            model = apps.get_model('search', model_name)
-            mult_values = [
-                x['pk']
-                for x in list(
-                    model.objects.filter(Q(label__in=value_list) | Q(value__in=value_list)).values(
-                        'pk'
-                    )
-                )
-            ]
+            mult_values = import_constants.mult_table(param_qualified_name).ids_for(value_list)
             if len(mult_values) != len(value_list):
                 log.error(
                     'construct_query_string: Bad mult data for "%r", '
@@ -1590,11 +1575,34 @@ def construct_query_string(
     return sql, clause_params
 
 
+@functools.lru_cache(maxsize=_REGEX_CACHE_SIZE)
+def _server_accepts_regex(r: str) -> Literal[True]:
+    """Ask the server to compile a regular expression.
+
+    Only an acceptance is remembered: a refusal raises, and `functools.lru_cache`
+    does not cache a call that raises, so a refusal caused by a lost connection is
+    not taken for the pattern's answer.
+
+    Parameters:
+        r: The regular expression, as the caller typed it.
+
+    Returns:
+        True, when the server accepted it.
+
+    Raises:
+        django.db.DatabaseError: If the server refused it.
+    """
+    cursor = connection.cursor()
+    cursor.execute('SELECT REGEXP_LIKE("x", %s)', (r,))
+    return True
+
+
 def _valid_regex(r: str) -> bool:
     """Whether the database will accept a regular expression the caller typed.
 
     The only way to know is to ask the server, since OPUS searches run the
-    expression through MySQL rather than through Python.
+    expression through MySQL rather than through Python. Each process remembers
+    the patterns the server accepted, up to `_REGEX_CACHE_SIZE` of them.
 
     Parameters:
         r: The regular expression, as the caller typed it.
@@ -1602,16 +1610,12 @@ def _valid_regex(r: str) -> bool:
     Returns:
         True if the server accepted it.
     """
-    # Validate the regex syntax. The only way to do this with certainty
-    # is to actually try it on the SQL server and see if it throws
-    # an error. No need to log this, though, because it's just bad
-    # user input, not a real internal error.
-    cursor = connection.cursor()
+    # No need to log a refusal, because it's just bad user input, not a real
+    # internal error.
     try:
-        cursor.execute('SELECT REGEXP_LIKE("x", %s)', (r,))
+        return _server_accepts_regex(r)
     except DatabaseError:
         return False
-    return True
 
 
 def get_string_query(
@@ -2127,6 +2131,35 @@ def search_cache_join_condition(table_name: str, cache_table_name: str) -> sql_b
 ################################################################################
 
 
+# _PARAMINFO_CACHE is keyed by slug, so the lookups by qualified name cannot use it
+# and have this cache of their own, keyed by (category_name, name). A name with no
+# param_info row is cached as None.
+_PARAMINFO_BY_NAME_CACHE: dict[tuple[str, str], ParamInfo | None] = {}
+
+
+def _cached_param_info(cat_name: str, name: str) -> ParamInfo | None:
+    """Return the param_info row for one column, reading it once per process.
+
+    The row is shared by every caller in the process, so a caller that changes it
+    copies it first.
+
+    Parameters:
+        cat_name: The table the column is in.
+        name: The column's name.
+
+    Returns:
+        The row, or None when no row describes that column.
+    """
+    key = (cat_name, name)
+    if key not in _PARAMINFO_BY_NAME_CACHE:
+        try:
+            pi: ParamInfo | None = ParamInfo.objects.get(category_name=cat_name, name=name)
+        except ParamInfo.DoesNotExist:
+            pi = None
+        _PARAMINFO_BY_NAME_CACHE[key] = pi
+    return _PARAMINFO_BY_NAME_CACHE[key]
+
+
 def _get_param_info_by_qualified_name(param_qualified_name: str) -> ParamInfo | None:
     "Given a qualified name cat.name return the ParamInfo"
     if param_qualified_name.find('.') == -1:
@@ -2135,15 +2168,13 @@ def _get_param_info_by_qualified_name(param_qualified_name: str) -> ParamInfo | 
     cat_name = param_qualified_name.split('.')[0]
     name = param_qualified_name.split('.')[1]
 
-    try:
-        return ParamInfo.objects.get(category_name=cat_name, name=name)
-    except ParamInfo.DoesNotExist:
+    pi = _cached_param_info(cat_name, name)
+    if pi is None:
         # Single column range queries will not have the numeric suffix
-        name_no_num = strip_numeric_suffix(name)
-        try:
-            return ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
-        except ParamInfo.DoesNotExist:
-            return None
+        pi = _cached_param_info(cat_name, strip_numeric_suffix(name))
+    if pi is None:
+        return None
+    return copy.copy(pi)
 
 
 def is_single_column_range(param_qualified_name: str) -> bool:
@@ -2152,13 +2183,7 @@ def is_single_column_range(param_qualified_name: str) -> bool:
     name = param_qualified_name.split('.')[1]
 
     # Single column range queries will not have the numeric suffix
-    name_no_num = strip_numeric_suffix(name)
-    try:
-        ParamInfo.objects.get(category_name=cat_name, name=name_no_num)
-    except ParamInfo.DoesNotExist:
-        return False
-
-    return True
+    return _cached_param_info(cat_name, strip_numeric_suffix(name)) is not None
 
 
 def parse_order_slug(all_order: str | None) -> tuple[list[str] | None, list[bool] | None]:

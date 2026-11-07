@@ -263,13 +263,24 @@ and nothing else.
 costs the time to rebuild it. The import drops them all, because an import changes what a
 search means.
 
-**Process-local dictionaries.** Two matter: the ``param_info`` lookup in
-:mod:`opus_app.apps.search.views` and the mult-label lookup in
-:mod:`opus_app.apps.tools.db_utils`. Both are module-level dictionaries private to each
-worker process, **unbounded, and never cleared** -- there is no invalidation path in
-either. So **nothing running outside a worker can clear them**,
+**Process-local copies.** Each worker process keeps its own copy of what only an import
+changes, so that a request reads it from memory rather than from the database:
+
+- the ``table_names``, ``partables`` and ``mult_`` tables, each read whole on first use
+  by :mod:`opus_app.apps.tools.import_constants`, which also compares a label from a
+  request the way the database server's case- and accent-insensitive collation does;
+- the ``definitions`` table, read whole on first use by
+  :mod:`opus_app.apps.tools.dictionary`;
+- the ``param_info`` rows :mod:`opus_app.apps.search.views` looks up, one dictionary
+  keyed by slug and one keyed by table and column, filled as rows are asked for. The
+  slug dictionary is **unbounded**: it keeps a miss for every slug a request names.
+
+The same module remembers each regular expression the database server accepted, up to a
+fixed number, and asks again about one it refused. None of these copies has an
+invalidation path, so **nothing running outside a worker can clear them**,
 ``clear_django_cache`` included, which empties the shared Django cache and nothing else.
-A change to ``param_info`` needs the application restarted.
+A change to any of those tables, which every import makes, needs the workers restarted;
+a restarted worker reads each table again on the first request that needs it.
 
 **The browser.** Most handlers carry ``@never_cache``. The exceptions are deliberate and
 few, and are noted where they occur.

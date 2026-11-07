@@ -110,8 +110,9 @@ Adding a term
    field should read differently beside a result.
 3. **Rebuild.** ``opus_import --import-dictionary`` rewrites both tables from scratch;
    nothing incremental is possible, and nothing else needs re-running.
-4. **Restart the web application.** The definition lookup is a database query rather than
-   a process-local cache, so this is only needed if you also changed ``param_info``.
+4. **Restart the web application.** Each worker process reads ``definitions`` once and
+   keeps it (:ref:`dev_guide_webapp_caching`), so a rebuilt dictionary reaches the
+   tooltips only once the workers restart.
 
 :mod:`opus_import.util.dump_pds_definitions` prints a PDS index label's own field
 descriptions in exactly the form a ``definition`` key wants, which is the quickest way to

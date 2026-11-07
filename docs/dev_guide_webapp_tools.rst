@@ -23,6 +23,8 @@ Each of its modules is covered in full below.
    * - :mod:`~opus_app.apps.tools.db_utils`
      - Finding a model by table name, the labels behind the ``mult_`` tables, and
        dropping a request's temporary tables.
+   * - :mod:`~opus_app.apps.tools.import_constants`
+     - Each worker's copy of the tables only an import changes.
    * - :mod:`~opus_app.apps.tools.file_utils`
      - Lookups against ``obs_files``: an observation's products, its preview images, and
        the browse products the Details tab shows.
@@ -426,10 +428,9 @@ request's temporary tables.
     -- where it is the primary key -- and on the foreign key for every other table.
 
 :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult` and :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult_list`
-    A mult column stores a row id, so displaying it means a second lookup. **The results
-    are cached in a module-level dictionary for the life of the process.** There are not
-    many mult tables or values, so the memory cost is small; the cost is that nothing
-    clears it, so a re-imported label needs the workers restarted.
+    A mult column stores a row id, so displaying it means a second lookup, which reads
+    the worker's copy of the field's ``mult_`` table from
+    :mod:`~opus_app.apps.tools.import_constants`.
 
 :func:`~opus_app.apps.tools.db_utils.drop_temporary_table`
     Drops a temporary table a view built, if it is still there, logging rather than
@@ -442,6 +443,46 @@ Three MySQL error numbers are declared here for callers to match a database exce
 against: ``MYSQL_TABLE_NOT_EXISTS``, ``MYSQL_TABLE_ALREADY_EXISTS`` -- which is how the
 cache-table race is resolved -- and ``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
 autocomplete endpoint learns its restricted query timed out.
+
+.. _dev_guide_webapp_tools_import_constants:
+
+opus_app.apps.tools.import_constants
+------------------------------------
+
+The ``table_names``, ``partables`` and ``mult_`` tables hold the same rows from one import
+to the next, so each worker process reads each of them whole, on first use, and answers
+from memory after that. **Nothing here notices an import**: the deploy restarts the
+workers after one (:ref:`dev_guide_webapp_caching`). A copy is built in full before it is
+stored, so a thread never sees part of one; two threads that miss at once each read the
+table, and one of the two equal copies is kept.
+
+:func:`~opus_app.apps.tools.import_constants.table_names`, :func:`~opus_app.apps.tools.import_constants.displayed_table_names`, :func:`~opus_app.apps.tools.import_constants.get_table_name` and :func:`~opus_app.apps.tools.import_constants.partables`
+    The rows, shared by every request in the process. A caller that sets an attribute
+    on a row, as the menu does, copies it first.
+
+:func:`~opus_app.apps.tools.import_constants.mult_table`
+    One mult field's table, keyed by the field's ``<table>.<column>`` name: its rows by
+    id, for showing a stored id as its label, and its ids by label and by value, for
+    turning a search's mult selection into ids.
+    :meth:`~opus_app.apps.tools.import_constants.MultTable.ids_for` answers what the
+    query ``label IN (...) OR value IN (...)`` answered, and asks the server instead
+    when a name finds nothing or when the table holds a name that is not printable
+    ASCII.
+
+:func:`~opus_app.apps.tools.import_constants.collation_key`
+    **The server compares strings without regard to case or accent**
+    (``utf8mb4_0900_ai_ci``), and the public API relies on it: ``planet=saturn`` finds
+    the row labeled ``Saturn``. Every lookup here by a string compares the strings'
+    keys. **The key is the collation only for printable ASCII**: it folds case and
+    accents but does not ignore what the collation ignores, such as a soft hyphen or a
+    control character, and it maps some characters onto others the collation keeps apart
+    (``¨`` onto a space). Strings that are printable ASCII
+    (:func:`~opus_app.apps.tools.import_constants.collates_as_key`) compare the same way
+    under both. So a mult lookup goes to the server when a requested name is not printable
+    ASCII, finds nothing, or searches a table that is not all printable ASCII; and
+    ``get_metadata`` asks the server about a category list its copy does not match in
+    full, that holds a name that is not printable ASCII, or that is looked up while a
+    displayed table's label or name is not printable ASCII.
 
 .. _dev_guide_webapp_tools_file_utils:
 
@@ -485,9 +526,13 @@ Both are **unmanaged**, because the import pipeline writes them and the web appl
 never does. Both came from Django's ``inspectdb``, and their field definitions are
 reproduced verbatim: a field changed here would silently stop matching the table.
 
-:func:`~opus_app.apps.tools.dictionary.get_def_for_tooltip` is the lookup. A missing
-definition is logged as an error **except** under a ``MULT_`` context, because a mult
-value legitimately has none.
+:func:`~opus_app.apps.tools.dictionary.get_definition` is the lookup, made against a
+copy of ``definitions`` each worker process reads whole on first use and keeps, and
+compared the way the server's collation compares (``collation_key`` in
+:mod:`~opus_app.apps.tools.import_constants`).
+:func:`~opus_app.apps.tools.dictionary.get_def_for_tooltip` is the tooltip's use of it: a
+missing definition is logged as an error **except** under a ``MULT_`` context, because a
+mult value legitimately has none.
 
 They live in ``tools`` rather than in an app of their own because ``paraminfo``, ``ui``
 and ``cart`` all use them.
