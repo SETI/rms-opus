@@ -39,9 +39,6 @@ SCHEMA_VERSION_REMEDY = (
     '`opus_import --write-schema-version`'
 )
 
-#: What the deploy chain's check prints when the schema has no version row.
-SCHEMA_VERSION_ABSENT = 'absent'
-
 
 def schema_version_problem(rows: Sequence[Sequence[object]]) -> str | None:
     """Say what keeps a schema with these version rows from being served, if anything.
@@ -67,15 +64,15 @@ def schema_version_problem(rows: Sequence[Sequence[object]]) -> str | None:
     return f'{found}: {SCHEMA_VERSION_REMEDY}'
 
 
-def read_served_schema_version() -> str:
-    """Read the version row of the schema ``OPUS_CONFIG`` names, for the deploy check.
+def served_schema_version_problem() -> str | None:
+    """Say what keeps the schema ``OPUS_CONFIG`` names from being served, for the deploy check.
 
-    The connection is the import's own, opened read-only, so the check needs nothing the
-    import does not.
+    The rows are judged by `schema_version_problem`, as the web application judges them, so
+    a deploy refuses a schema for exactly the reasons the application would. The connection
+    is the import's own, opened read-only, so the check needs nothing the import does not.
 
     Returns:
-        ``"<version> <state>"`` for a single row, `SCHEMA_VERSION_ABSENT` when the table is absent or
-        empty, and ``"<n> rows"`` when it holds more than one.
+        None when the schema may be served; otherwise what `schema_version_problem` says.
 
     Raises:
         ImportDBError: If the database cannot be read, including when the schema does
@@ -94,11 +91,7 @@ def read_served_schema_version() -> str:
         database.password,
         read_only=True,
     )
-    if not db.table_exists('perm', SCHEMA_VERSION_TABLE):
-        return SCHEMA_VERSION_ABSENT
-    rows = db.read_rows('perm', SCHEMA_VERSION_TABLE, ['version', 'state'])
-    if len(rows) == 0:
-        return SCHEMA_VERSION_ABSENT
-    if len(rows) > 1:
-        return f'{len(rows)} rows'
-    return f'{rows[0][0]} {rows[0][1]}'
+    rows: Sequence[Sequence[object]] = []
+    if db.table_exists('perm', SCHEMA_VERSION_TABLE):
+        rows = db.read_rows('perm', SCHEMA_VERSION_TABLE, ['version', 'state'])
+    return schema_version_problem(rows)

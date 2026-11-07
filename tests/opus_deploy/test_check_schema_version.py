@@ -2,8 +2,8 @@
 
 The deploy scripts run ``sudo`` and are never run by a test. The check is a file of its
 own that defines one function and executes nothing, so it is sourced here with a fake
-``python`` first on ``PATH`` that answers the two questions the function asks: the
-release's version and the served database's row.
+``python`` first on ``PATH`` that answers the one question the function asks: what would
+keep the served database from being served.
 """
 
 from __future__ import annotations
@@ -23,19 +23,16 @@ if TYPE_CHECKING:
 #: The check, inside the packaged chain.
 _CHECK = 'import_and_deploy/_check_schema_version.sh'
 
-#: What the fake python prints for the release's version.
-_RELEASE = '7'
-
 _BASH = shutil.which('bash')
 
 
-def _run_check(tmp_path: Path, served: str, *, release_fails: bool = False) -> tuple[int, str]:
+def _run_check(tmp_path: Path, problem: str, *, unreadable: bool = False) -> tuple[int, str]:
     """Source the check with a fake python and call it.
 
     Parameters:
         tmp_path: A scratch directory.
-        served: What the fake python prints for the database's row.
-        release_fails: Make the release's version unreadable instead.
+        problem: What the fake python prints: empty when the database may be served.
+        unreadable: Make the database unreadable instead.
 
     Returns:
         The function's status and everything it printed.
@@ -45,14 +42,13 @@ def _run_check(tmp_path: Path, served: str, *, release_fails: bool = False) -> t
     fake_bin = tmp_path / 'bin'
     fake_bin.mkdir()
     fake_python = fake_bin / 'python'
-    release_line = 'exit 1' if release_fails else f'echo {_RELEASE}'
+    answer = 'echo Traceback >&2; exit 1' if unreadable else f"echo '{problem}'"
     fake_python.write_text(
         textwrap.dedent(
             f"""\
             #!/bin/bash
             case "$2" in
-                *SCHEMA_VERSION*) {release_line} ;;
-                *read_served_schema_version*) echo '{served}' ;;
+                *served_schema_version_problem*) {answer} ;;
                 *) exit 2 ;;
             esac
             """
@@ -72,40 +68,29 @@ def _run_check(tmp_path: Path, served: str, *, release_fails: bool = False) -> t
 
 
 @pytest.mark.skipif(_BASH is None, reason='needs bash')
-def test_a_matching_ready_row_passes(tmp_path: Path) -> None:
-    """The only row a deploy proceeds over."""
-    status, output = _run_check(tmp_path, f'{_RELEASE} ready')
+def test_a_servable_database_passes(tmp_path: Path) -> None:
+    """The only database a deploy proceeds over."""
+    status, output = _run_check(tmp_path, '')
     assert status == 0, output
-    assert f'release {_RELEASE}, database {_RELEASE} ready' in output
+    assert 'ERROR' not in output
 
 
 @pytest.mark.skipif(_BASH is None, reason='needs bash')
-@pytest.mark.parametrize(
-    ('served', 'expected'),
-    [
-        ('absent', 'no schema_version row'),
-        ('8 ready', 'schema version 8'),
-        (f'{_RELEASE} appending', "state is 'appending'"),
-        ('2 rows', 'holds 2 rows'),
-    ],
-    ids=['absent', 'different', 'not-ready', 'several-rows'],
-)
-def test_any_other_row_refuses_naming_the_remedy(
-    tmp_path: Path, served: str, expected: str
-) -> None:
-    """Absent, different, or not ready: the deploy stops before writing anything."""
-    status, output = _run_check(tmp_path, served)
+def test_a_database_the_application_would_refuse_is_refused(tmp_path: Path) -> None:
+    """The refusal carries the application's own sentence, then the deploy's remedy."""
+    problem = 'the schema is version 8, and this release is version 7: re-import it'
+    status, output = _run_check(tmp_path, problem)
     assert status == 1
-    assert expected in output
-    assert 'ERROR' in output
+    assert f'ERROR: this release would not serve the database: {problem}.' in output
+    assert 'run_full_opus_import.sh' in output
 
 
 @pytest.mark.skipif(_BASH is None, reason='needs bash')
-def test_an_unreadable_release_version_refuses(tmp_path: Path) -> None:
-    """A staged installation that cannot say its version is not deployed."""
-    status, output = _run_check(tmp_path, f'{_RELEASE} ready', release_fails=True)
+def test_an_unreadable_database_refuses(tmp_path: Path) -> None:
+    """A database the check cannot read is not deployed onto."""
+    status, output = _run_check(tmp_path, '', unreadable=True)
     assert status == 1
-    assert "cannot read the release's schema version" in output
+    assert 'cannot read the schema_version row' in output
 
 
 def test_sourcing_the_check_runs_nothing(tmp_path: Path) -> None:

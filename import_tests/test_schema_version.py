@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import subprocess  # nosec B404
 import sys
 from typing import TYPE_CHECKING, Any
@@ -19,6 +20,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from import_tests.tools import build_run, fixture_layout, golden_io, negative_cases
+from opus_deploy import scripts
 from opus_import.schema_version import (
     SCHEMA_STATE_APPENDING,
     SCHEMA_STATE_READY,
@@ -27,6 +29,8 @@ from opus_import.schema_version import (
 )
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from import_tests.tools.golden_io import DatabaseCredentials
 
 #: The schema case these tests run under.
@@ -48,6 +52,9 @@ _SERVE_ONE = (
     'print(statuses[0])\n'
     'print(body.decode())\n'
 )
+
+#: The deploy chain's schema version check, inside the packaged chain.
+_DEPLOY_CHECK = 'import_and_deploy/_check_schema_version.sh'
 
 #: What `_LOAD_WSGI` prints when the entry point serves Django.
 _DJANGO_HANDLER = 'WSGIHandler'
@@ -190,6 +197,33 @@ def _serve_one(run: build_run.ImportRun) -> tuple[str, str]:
     )
     status, _, body = finished.stdout.partition('\n')
     return status, body
+
+
+def _deploy_check(run: build_run.ImportRun, tmp_path: Path) -> str:
+    """Ask the deploy check's own question of the run's schema, in a process.
+
+    The program is the ``python -c`` line of the packaged check, so the test runs what a
+    deploy runs.
+
+    Parameters:
+        run: The run.
+        tmp_path: Where to write the chain out.
+
+    Returns:
+        What it printed: empty when the schema may be served.
+    """
+    scripts.write_scripts(tmp_path / 'chain')
+    text = (tmp_path / 'chain' / _DEPLOY_CHECK).read_text(encoding='utf-8')
+    found = re.search(r"python -c '([^']*)'", text)
+    assert found is not None
+    finished = subprocess.run(  # nosec B603 - this interpreter and the packaged program
+        [sys.executable, '-c', found.group(1)],
+        env=build_run.run_environment(run.paths.config_file),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return finished.stdout.strip()
 
 
 def _no_table(credentials: DatabaseCredentials, schema: str) -> None:
@@ -335,3 +369,30 @@ def test_a_read_only_run_does_not_create_an_absent_schema(
         'SELECT schema_name FROM information_schema.schemata WHERE schema_name = %s',
         absent,
     )
+
+
+@pytest.mark.parametrize('state', [None, SCHEMA_STATE_APPENDING], ids=['no-row', 'appending'])
+def test_the_deploy_check_refuses_what_the_web_application_refuses(
+    unfinished_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    tmp_path: Path,
+    state: str | None,
+) -> None:
+    """The deploy check and the 503 give the same reason, from the same rule."""
+    if state is None:
+        _no_table(db_credentials, unfinished_run.schema)
+    else:
+        _row(unfinished_run, db_credentials, SCHEMA_VERSION, state)
+    found = _deploy_check(unfinished_run, tmp_path)
+    assert found != ''
+    status, body = _serve_one(unfinished_run)
+    assert status.startswith('503')
+    assert body.strip() == f'OPUS is unavailable: {found}.'
+
+
+def test_the_deploy_check_passes_a_finished_schema(
+    unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials, tmp_path: Path
+) -> None:
+    """A row of this version, ``ready``, is the one a deploy proceeds over."""
+    _row(unfinished_run, db_credentials, SCHEMA_VERSION, SCHEMA_STATE_READY)
+    assert _deploy_check(unfinished_run, tmp_path) == ''
