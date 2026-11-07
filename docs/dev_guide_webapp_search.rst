@@ -235,13 +235,16 @@ Four builders produce the clauses:
 
 Mult fields are handled inline in
 :func:`~opus_app.apps.search.views.construct_query_string`: the user's readable labels are
-looked up in the field's ``mult_`` table to get their ids, and a ``GROUP`` field becomes
-an ``IN`` test while a ``MULTIGROUP`` field becomes an OR of JSON containment tests,
-because it holds a list.
+looked up in the worker's copy of the field's ``mult_`` table
+(:func:`~opus_app.apps.tools.import_constants.mult_table`) to get their ids, and a
+``GROUP`` field becomes an ``IN`` test while a ``MULTIGROUP`` field becomes an OR of JSON
+containment tests, because it holds a list.
 
 ``_valid_regex`` is how a user's regular expression is checked: **by asking the server**,
 since OPUS runs the expression through MySQL rather than through Python, and only MySQL
-knows what it will accept.
+knows what it will accept. Each worker remembers the patterns the server accepted, up to
+``_REGEX_CACHE_SIZE`` of them, and asks again about one it refused, because a lost
+connection is refused the same way a bad pattern is.
 
 .. _dev_guide_webapp_search_paraminfo_cache:
 
@@ -285,7 +288,12 @@ cache matter:
   callers **mutate** the row they are given, so each needs its own copy.
 
 ``_get_param_info_by_qualified_name`` is the other direction -- a ``table.column`` name to
-its row -- and is **not** cached.
+its row -- and ``is_single_column_range`` asks the same question of the name without its
+numeric suffix. The slug cache cannot answer them, so they share a second module-level
+dictionary keyed by table and column, which also caches misses and is never cleared.
+Its keys are names the code built from rows, never from a request, so it holds at most
+one entry per column and suffix. ``_get_param_info_by_qualified_name`` returns a copy, for
+the same reason the slug lookup does.
 
 The join helpers
 ----------------

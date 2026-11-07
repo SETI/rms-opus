@@ -56,7 +56,7 @@ from django.views.decorators.cache import never_cache
 
 from opus_app.apps.metadata.views import get_cart_count, get_result_count_helper
 from opus_app.apps.paraminfo.models import ParamInfo
-from opus_app.apps.search.models import Partables, TableNames
+from opus_app.apps.search.models import TableNames
 from opus_app.apps.search.views import (
     add_mult_table_joins,
     add_obs_table_joins,
@@ -103,6 +103,7 @@ from opus_app.apps.tools.db_utils import (
     query_table_for_opus_id,
 )
 from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_products
+from opus_app.apps.tools.import_constants import collation_key, partables, table_names
 from opus_support import format_unit_value, parse_form_type
 
 if TYPE_CHECKING:
@@ -585,15 +586,18 @@ def get_metadata(
         all_tables = []
     elif not cats:
         # Find all the tables (categories) this observation belongs to
-        all_tables = TableNames.objects.filter(display='Y').order_by('disp_order')
+        all_tables = [row for row in table_names() if row.display == 'Y']
     else:
         # Uniquify
         cat_list = list(set(cats.split(',')))
-        # Restrict tables to those found in cats
-        all_tables = (
-            TableNames.objects.filter(label__in=cat_list, display='Y')
-            | TableNames.objects.filter(table_name__in=cat_list, display='Y')
-        ).order_by('disp_order')
+        # Restrict tables to those found in cats, by label or by name
+        cat_keys = {collation_key(cat) for cat in cat_list}
+        all_tables = [
+            row
+            for row in table_names()
+            if row.display == 'Y'
+            and (collation_key(row.label) in cat_keys or collation_key(row.table_name) in cat_keys)
+        ]
         if len(all_tables) != len(cat_list):
             log.error('get_metadata: Unknown category name in "%r"', cats)
             raise Http400Error(http400_unknown_category(request))
@@ -1097,10 +1101,8 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
         raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
 
     all_categories: list[dict[str, Any]] = []
-    table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
-
-    for tbl in table_info:
-        table_name = tbl['table_name']
+    for tbl in table_names():
+        table_name = tbl.table_name
         if table_name == 'obs_surface_geometry_name':
             # obs_surface_geometry_name is not a data table
             # It's only used to select targets, not to hold data, so remove it
@@ -1115,7 +1117,7 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
             continue
         opus_id_rows = results.values('opus_id')
         if opus_id_rows:
-            cat = {'table_name': table_name, 'label': tbl['label']}
+            cat = {'table_name': table_name, 'label': tbl.label}
             all_categories.append(cat)
 
     return json_response(all_categories)
@@ -1169,13 +1171,13 @@ def api_get_categories_for_search(request: HttpRequest, *, api_code: int) -> Htt
         # obs_surface_geometry_name should always be in the triggered list
         triggered_tables.remove('obs_surface_geometry_name')
 
-    labels = (
-        TableNames.objects.filter(table_name__in=triggered_tables)
-        .values('table_name', 'label')
-        .order_by('disp_order')
-    )
+    labels = [
+        {'table_name': row.table_name, 'label': row.label}
+        for row in table_names()
+        if row.table_name in triggered_tables
+    ]
 
-    return json_response(list(labels))
+    return json_response(labels)
 
 
 @never_cache
@@ -2016,7 +2018,7 @@ def get_triggered_tables(
 
     # Now see if any more tables are triggered from query
     queries: dict[str, list[Any]] = {}
-    for partable in Partables.objects.all():
+    for partable in partables():
         # We are joining the results of a user's query - the single column
         # table of ids - with the trigger_tab listed in the partable
         trigger_tab = partable.trigger_tab
@@ -2076,13 +2078,9 @@ def get_triggered_tables(
                 triggered_tables.append(partable_name)
 
     # Now hack in the proper ordering of tables
-    final_table_list: list[str] = []
-    for table in (
-        TableNames.objects.filter(table_name__in=triggered_tables)
-        .values('table_name')
-        .order_by('disp_order')
-    ):
-        final_table_list.append(table['table_name'])
+    final_table_list = [
+        row.table_name for row in table_names() if row.table_name in triggered_tables
+    ]
 
     cache.set(cache_key, final_table_list)
 

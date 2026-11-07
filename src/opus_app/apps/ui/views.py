@@ -32,6 +32,7 @@ back.
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 from typing import TYPE_CHECKING, Any, Literal
@@ -74,12 +75,13 @@ from opus_app.apps.tools.app_utils import (
     strip_numeric_suffix,
 )
 from opus_app.apps.tools.db_utils import lookup_pretty_value_for_mult
-from opus_app.apps.tools.dictionary import Definitions, get_def_for_tooltip
+from opus_app.apps.tools.dictionary import get_def_for_tooltip, get_definition
 from opus_app.apps.tools.file_utils import (
     get_displayed_browse_products,
     get_pds_preview_images,
     get_pds_products,
 )
+from opus_app.apps.tools.import_constants import table_names
 from opus_support import (
     display_search_unit,
     display_unit_ever,
@@ -92,7 +94,6 @@ from opus_support import (
 )
 
 if TYPE_CHECKING:
-    from django.db.models import QuerySet
     from django.http import HttpRequest, HttpResponse
 
 log = logging.getLogger(__name__)
@@ -893,14 +894,9 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 fn = file_list[i].split('/')[-1]
                 file_list[i] = {'filename': fn, 'link': file_list[i]}
             product_info['files'] = file_list
-            try:
-                entry = Definitions.objects.get(
-                    context__name='OPUS_PRODUCT_TYPE', term=product_type[2]
-                )
-                product_info['tooltip'] = entry.definition
-            except Definitions.DoesNotExist:  # pragma: no cover - import error
+            product_info['tooltip'] = get_definition(product_type[2], 'OPUS_PRODUCT_TYPE')
+            if product_info['tooltip'] is None:  # pragma: no cover - import error
                 log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"', product_type[2])
-                product_info['tooltip'] = None
             new_products[version][product_type[3]] = product_info
 
     context = {
@@ -2052,16 +2048,19 @@ def _get_menu_labels(
     # Below, in the metadata selector, this also comes to hold the fake div made
     # from a dictionary, which is what the wider half of the declared type is
     # for; the two loops that follow run before that and see only rows.
-    divs: QuerySet[TableNames] | list[TableNames | dict[str, str | bool]]
-    # The misc ignore is for `table_name__in=triggered_tables`: get_triggered_tables
-    # can return None, which Django's filter would reject at run time. That is a
+    divs: list[TableNames] | list[TableNames | dict[str, str | bool]]
+    # The operator ignore is for `in triggered_tables`: get_triggered_tables can
+    # return None, which the membership test would reject at run time. That is a
     # real unchecked-None defect, and the marker stands in for it rather than
     # hiding it -- adding a guard here changes what an unresolvable slug answers,
-    # which is a decision about the API's error contract, not an annotation.
-    divs = TableNames.objects.filter(
-        display='Y',  # type: ignore[misc]
-        table_name__in=triggered_tables,
-    ).order_by('disp_order')
+    # which is a decision about the API's error contract, not an annotation. The
+    # rows are copied because the loops below set attributes on them, and the
+    # cached rows are shared by every request in the process.
+    divs = [
+        copy.copy(row)
+        for row in table_names()
+        if row.display == 'Y' and row.table_name in triggered_tables  # type: ignore[operator]
+    ]
     params = ParamInfo.objects.filter(
         **{filter_: 1, 'category_name__in': triggered_tables}
     ).order_by('disp_order')
@@ -2231,7 +2230,8 @@ def _get_menu_labels(
         else:
             search_div['collapsed'] = 'collapsed'
             search_div['show'] = ''
-        divs = [search_div, *list(divs)]
+        selector_divs: list[TableNames | dict[str, str | bool]] = [search_div, *divs]
+        divs = selector_divs
         menu_data.setdefault('search_fields', {})
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:

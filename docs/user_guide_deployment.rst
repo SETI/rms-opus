@@ -251,10 +251,9 @@ That module configures the cache backend and calls ``clear()``, and does nothing
 Restarting the cache service has the same effect, and is what a deploy does -- the unit
 ``OPUS_CACHE_SERVICE`` names.
 
-**2. Every worker process has to be restarted**, because some caches are module-level
-dictionaries private to a process -- the ``param_info`` lookup in
-:mod:`opus_app.apps.search.views` and the mult-label lookup in
-:mod:`opus_app.apps.tools.db_utils`. **Nothing running outside a worker can reach those**,
+**2. Every worker process has to be restarted**, because each one keeps its own copy of
+the tables only an import changes -- ``param_info``, ``table_names``, ``partables``,
+``definitions`` and the ``mult_`` tables. **Nothing running outside a worker can reach those**,
 ``clear_django_cache`` included, so restarting the application is the only thing that
 clears them. See :ref:`dev_guide_webapp_caching`.
 

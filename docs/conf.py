@@ -248,6 +248,10 @@ nitpick_ignore = [
     # there.
     ('py:class', 'opus_app.apps.results.views.SearchResultsChunk'),
     ('py:class', 'SearchResultsChunk'),
+    # Models generated into opus_app/apps/search/models.py, which the API reference
+    # leaves out because the file is regenerated from a database rather than written.
+    ('py:class', 'opus_app.apps.search.models.Partables'),
+    ('py:class', 'opus_app.apps.search.models.TableNames'),
     # A TypeVar. Sphinx describes the generic function it parameterizes but has no
     # object of its own to point the parameter at.
     ('py:class', 'opus_log_analyzer.opus.html_generator.T'),
