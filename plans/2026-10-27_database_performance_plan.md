@@ -4759,9 +4759,10 @@ Nothing above this line is rewritten by an executor.
   `pi_dict_context`, `pi_dict_name` and `definition` twice, the second set meant as the
   `_results` pair its siblings carry. Fixed; the search form's tooltip for the field is
   now the range definition rather than the minimum one, the results tooltip is unchanged,
-  the `param_info` and `definitions` goldens were regenerated, and two search-menu golden
-  responses (`api_menu_search_cirs.html`, `api_metadata_selector_search_cirs.html`) were
-  edited to the range definition. Beyond the section's list it also checks units in
+  the `param_info` and `definitions` goldens were regenerated, and the search menu's golden
+  response `api_menu_search_cirs.html` was edited to the range definition. The metadata
+  selector and the detail page show the results tooltip, which is unchanged, so their
+  goldens are too. Beyond the section's list it also checks units in
   `pi_form_type`, `pi_ranges` names, flag types, unique `(term, context)` pairs, contexts
   that exist, and distinct `mult_options` ids.
 - `data_source_order` (unread since the 2022 refactor replaced the column ordering it
