@@ -24,21 +24,21 @@ from typing import Any
 
 from django.db import DatabaseError, connection
 
-from opus_import.schema_version import TABLE_NAME, problem
+from opus_import.schema_version import SCHEMA_VERSION_TABLE, schema_version_problem
 
 #: A WSGI application.
-Application = Callable[[dict[str, Any], Callable[..., Any]], Iterable[bytes]]
+WsgiApplication = Callable[[dict[str, Any], Callable[..., Any]], Iterable[bytes]]
 
 #: What reads the version rows, or raises `django.db.DatabaseError` when it cannot.
-RowReader = Callable[[], list[tuple[Any, ...]]]
+SchemaVersionReader = Callable[[], list[tuple[Any, ...]]]
 
 #: The status every refused request is answered with.
-UNAVAILABLE_STATUS = '503 Service Unavailable'
+SCHEMA_REFUSED_STATUS = '503 Service Unavailable'
 
 _LOG = logging.getLogger(__name__)
 
 
-def read_rows() -> list[tuple[Any, ...]]:
+def read_schema_version_rows() -> list[tuple[Any, ...]]:
     """Read the served schema's version rows on Django's connection, then close it.
 
     The connection is closed because the first read is made while the application loads,
@@ -53,15 +53,15 @@ def read_rows() -> list[tuple[Any, ...]]:
     """
     try:
         with connection.cursor() as cursor:
-            if TABLE_NAME not in connection.introspection.table_names(cursor):
+            if SCHEMA_VERSION_TABLE not in connection.introspection.table_names(cursor):
                 return []
-            cursor.execute(f'SELECT version, state FROM {TABLE_NAME}')  # nosec B608 - a constant
+            cursor.execute(f'SELECT version, state FROM {SCHEMA_VERSION_TABLE}')  # nosec B608 - a constant
             return [tuple(row) for row in cursor.fetchall()]
     finally:
         connection.close()
 
 
-def unavailable(message: str) -> Application:
+def schema_refused_application(message: str) -> WsgiApplication:
     """Return an application that answers every request 503, explaining why.
 
     Parameters:
@@ -83,7 +83,7 @@ def unavailable(message: str) -> Application:
             The body.
         """
         start_response(
-            UNAVAILABLE_STATUS,
+            SCHEMA_REFUSED_STATUS,
             [('Content-Type', 'text/plain; charset=utf-8'), ('Content-Length', str(len(body)))],
         )
         return [body]
@@ -91,7 +91,7 @@ def unavailable(message: str) -> Application:
     return application
 
 
-class _Refusing:
+class _SchemaVersionGate:
     """The application, behind a check that has not yet passed.
 
     Each request repeats the check. While it fails -- no row, another version, a state
@@ -102,7 +102,7 @@ class _Refusing:
     without a reload, and a refused worker costs the database one small query a request.
     """
 
-    def __init__(self, application: Application, read: RowReader) -> None:
+    def __init__(self, application: WsgiApplication, read: SchemaVersionReader) -> None:
         """Hold the application until the check passes.
 
         Parameters:
@@ -121,7 +121,7 @@ class _Refusing:
             None when it passes, else what is wrong.
         """
         try:
-            return problem(self._read())
+            return schema_version_problem(self._read())
         except DatabaseError as error:
             # The driver's message names the account, so it goes to the log rather than
             # into a public response.
@@ -143,12 +143,14 @@ class _Refusing:
                 if not self._passed:
                     found = self._problem()
                     if found is not None:
-                        return unavailable(found)(environ, start_response)
+                        return schema_refused_application(found)(environ, start_response)
                     self._passed = True
         return self._application(environ, start_response)
 
 
-def guard(application: Application, read: RowReader = read_rows) -> Application:
+def guard_schema_version(
+    application: WsgiApplication, read: SchemaVersionReader = read_schema_version_rows
+) -> WsgiApplication:
     """Return what the web server should call.
 
     Parameters:
@@ -162,14 +164,14 @@ def guard(application: Application, read: RowReader = read_rows) -> Application:
         answering 503 until it passes.
     """
     try:
-        found = problem(read())
+        found = schema_version_problem(read())
     except DatabaseError as error:
         # One line: a traceback here says nothing the error does not.
         _LOG.warning(
             'The schema version row could not be read (%s); each request will try again', error
         )
-        return _Refusing(application, read)
+        return _SchemaVersionGate(application, read)
     if found is None:
         return application
     _LOG.warning('Refusing to serve the schema: %s', found)
-    return _Refusing(application, read)
+    return _SchemaVersionGate(application, read)

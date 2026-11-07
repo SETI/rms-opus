@@ -27,7 +27,7 @@ check_schema_version() {
         echo "ERROR: cannot read the release's schema version from the staged installation."
         return 1
     fi
-    if ! served=$(python -c 'from opus_import.schema_version import served_row; print(served_row())'); then
+    if ! served=$(python -c 'from opus_import.schema_version import read_served_schema_version; print(read_served_schema_version())'); then
         echo "ERROR: cannot read the schema_version row of the database ${OPUS_CONFIG} names."
         return 1
     fi

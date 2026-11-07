@@ -52,7 +52,7 @@ def _run_check(tmp_path: Path, served: str, *, release_fails: bool = False) -> t
             #!/bin/bash
             case "$2" in
                 *SCHEMA_VERSION*) {release_line} ;;
-                *served_row*) echo '{served}' ;;
+                *read_served_schema_version*) echo '{served}' ;;
                 *) exit 2 ;;
             esac
             """

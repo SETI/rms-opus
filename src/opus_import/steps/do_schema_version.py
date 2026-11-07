@@ -17,10 +17,10 @@ from typing import TYPE_CHECKING
 
 from opus_import import import_util
 from opus_import.schema_version import (
+    SCHEMA_STATE_APPENDING,
+    SCHEMA_STATE_READY,
     SCHEMA_VERSION,
-    STATE_APPENDING,
-    STATE_READY,
-    TABLE_NAME,
+    SCHEMA_VERSION_TABLE,
 )
 
 if TYPE_CHECKING:
@@ -47,24 +47,26 @@ def write_schema_version(ctx: ImportContext) -> bool:
     """
     db = ctx.db
     assert db is not None
-    if db.table_exists('perm', TABLE_NAME):
-        rows = db.read_rows('perm', TABLE_NAME, ['version', 'state'])
+    if db.table_exists('perm', SCHEMA_VERSION_TABLE):
+        rows = db.read_rows('perm', SCHEMA_VERSION_TABLE, ['version', 'state'])
     else:
-        schema = import_util.read_schema_for_table(ctx, TABLE_NAME)
+        schema = import_util.read_schema_for_table(ctx, SCHEMA_VERSION_TABLE)
         # schema_version.json is packaged with opus_import, so the schema is always found.
         assert schema is not None
-        db.create_table('perm', TABLE_NAME, schema, ignore_if_exists=False)
+        db.create_table('perm', SCHEMA_VERSION_TABLE, schema, ignore_if_exists=False)
         rows = []
 
     if len(rows) == 0:
-        db.insert_row('perm', TABLE_NAME, {'version': SCHEMA_VERSION, 'state': STATE_READY})
-        import_util.log_info(ctx, f'Schema version {SCHEMA_VERSION} written, {STATE_READY}')
+        db.insert_row(
+            'perm', SCHEMA_VERSION_TABLE, {'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}
+        )
+        import_util.log_info(ctx, f'Schema version {SCHEMA_VERSION} written, {SCHEMA_STATE_READY}')
         return True
     if len(rows) > 1:
         found = ', '.join(f'{version} {state}' for version, state in rows)
         import_util.log_error(
             ctx,
-            f'The {TABLE_NAME} table holds {len(rows)} rows ({found}) rather than one; '
+            f'The {SCHEMA_VERSION_TABLE} table holds {len(rows)} rows ({found}) rather than one; '
             'it is left as it is',
         )
         return False
@@ -78,19 +80,20 @@ def write_schema_version(ctx: ImportContext) -> bool:
             'the release that will serve it, never restamped',
         )
         return False
-    if state == STATE_APPENDING:
+    if state == SCHEMA_STATE_APPENDING:
         db.update_row(
             'perm',
-            TABLE_NAME,
-            {'state': STATE_READY},
+            SCHEMA_VERSION_TABLE,
+            {'state': SCHEMA_STATE_READY},
             f'{db.quote_identifier("version")}=%s',
             [SCHEMA_VERSION],
         )
         import_util.log_info(
-            ctx, f'Schema version {SCHEMA_VERSION} changed from {STATE_APPENDING} to {STATE_READY}'
+            ctx,
+            f'Schema version {SCHEMA_VERSION} changed from {SCHEMA_STATE_APPENDING} to {SCHEMA_STATE_READY}',
         )
         return True
-    if state != STATE_READY:
+    if state != SCHEMA_STATE_READY:
         import_util.log_error(
             ctx, f'The schema version row has the state {state!r}; it is left as it is'
         )

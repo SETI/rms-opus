@@ -18,8 +18,8 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-from opus_app.schema_guard import guard
+from opus_app.schema_guard import guard_schema_version
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'opus_app.settings')
 
-application = guard(get_wsgi_application())
+application = guard_schema_version(get_wsgi_application())

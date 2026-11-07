@@ -4693,12 +4693,12 @@ Nothing above this line is rewritten by an executor.
   loaded into an outage until a restart; the CI package job also imports
   `opus_app.wsgi` with no database. The review of the PR asked for the recheck. The 503
   body leaves out the driver's message, which names the account; the log has it.
-- The deploy check reads the row through `opus_import.schema_version.served_row()`,
+- The deploy check reads the row through `opus_import.schema_version.read_served_schema_version()`,
   which imports `opus_config` and `opus_import.importdb` only when called, so that the
   `python -c` line in `_check_schema_version.sh` is one call.
 - A read-only connection no longer creates an absent schema. `ImportDBMySQL`'s
   constructor answered an unknown database with `CREATE DATABASE` whatever the flag, so
-  `--read-only`, and the deploy check's read-only `served_row()`, against a schema the
+  `--read-only`, and the deploy check's read-only `read_served_schema_version()`, against a schema the
   server lacked left an empty schema behind. A read-only connection now fails as it
   connects, with a fatal message naming the schema; the deploy check refuses with
   "cannot read the schema_version row". The defect predates this plan; the review of

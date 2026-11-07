@@ -19,7 +19,12 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from import_tests.tools import build_run, fixture_layout, golden_io, negative_cases
-from opus_import.schema_version import SCHEMA_VERSION, STATE_APPENDING, STATE_READY, TABLE_NAME
+from opus_import.schema_version import (
+    SCHEMA_STATE_APPENDING,
+    SCHEMA_STATE_READY,
+    SCHEMA_VERSION,
+    SCHEMA_VERSION_TABLE,
+)
 
 if TYPE_CHECKING:
     from import_tests.tools.golden_io import DatabaseCredentials
@@ -141,11 +146,11 @@ def _rows(credentials: DatabaseCredentials, schema: str) -> list[tuple[Any, ...]
         'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s '
         'AND TABLE_NAME = %s',
         schema,
-        TABLE_NAME,
+        SCHEMA_VERSION_TABLE,
     )[0][0]
     if exists == 0:
         return None
-    return _query(credentials, schema, f'SELECT version, state FROM {TABLE_NAME}')
+    return _query(credentials, schema, f'SELECT version, state FROM {SCHEMA_VERSION_TABLE}')
 
 
 def _wsgi_application(run: build_run.ImportRun) -> str:
@@ -194,7 +199,7 @@ def _no_table(credentials: DatabaseCredentials, schema: str) -> None:
         credentials: How to reach the server.
         schema: The schema.
     """
-    _query(credentials, schema, f'DROP TABLE IF EXISTS {TABLE_NAME}')
+    _query(credentials, schema, f'DROP TABLE IF EXISTS {SCHEMA_VERSION_TABLE}')
 
 
 def _row(
@@ -213,7 +218,7 @@ def _row(
     _query(
         credentials,
         run.schema,
-        f'UPDATE {TABLE_NAME} SET version = %s, state = %s',
+        f'UPDATE {SCHEMA_VERSION_TABLE} SET version = %s, state = %s',
         version,
         state,
     )
@@ -249,7 +254,7 @@ def test_the_web_application_refuses_a_schema_with_no_row(
     _no_table(db_credentials, unfinished_run.schema)
     status, body = _serve_one(unfinished_run)
     assert status.startswith('503')
-    assert f'no {TABLE_NAME} row' in body
+    assert f'no {SCHEMA_VERSION_TABLE} row' in body
     assert 'opus_import --write-schema-version' in body
 
 
@@ -259,14 +264,14 @@ def test_the_step_writes_this_version_ready(
     """With no table, the step creates it and inserts the release's version, ``ready``."""
     _no_table(db_credentials, unfinished_run.schema)
     assert _step(unfinished_run, *build_run.VERSION_ARGS).returncode == 0
-    assert _rows(db_credentials, unfinished_run.schema) == [(SCHEMA_VERSION, STATE_READY)]
+    assert _rows(db_credentials, unfinished_run.schema) == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]
 
 
 def test_the_web_application_serves_a_finished_schema(
     unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
     """Once the row is written, the entry point is Django's own application."""
-    _row(unfinished_run, db_credentials, SCHEMA_VERSION, STATE_READY)
+    _row(unfinished_run, db_credentials, SCHEMA_VERSION, SCHEMA_STATE_READY)
     assert _wsgi_application(unfinished_run) == _DJANGO_HANDLER
 
 
@@ -274,9 +279,9 @@ def test_running_it_again_changes_nothing(
     unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
     """A finished schema stays as it is."""
-    _row(unfinished_run, db_credentials, SCHEMA_VERSION, STATE_READY)
+    _row(unfinished_run, db_credentials, SCHEMA_VERSION, SCHEMA_STATE_READY)
     assert _step(unfinished_run, *build_run.VERSION_ARGS).returncode == 0
-    assert _rows(db_credentials, unfinished_run.schema) == [(SCHEMA_VERSION, STATE_READY)]
+    assert _rows(db_credentials, unfinished_run.schema) == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]
 
 
 def test_an_appending_row_of_this_version_becomes_ready(
@@ -284,9 +289,9 @@ def test_an_appending_row_of_this_version_becomes_ready(
 ) -> None:
     """The step is the only writer of ``ready``, and it finishes an append."""
     schema = unfinished_run.schema
-    _row(unfinished_run, db_credentials, SCHEMA_VERSION, STATE_APPENDING)
+    _row(unfinished_run, db_credentials, SCHEMA_VERSION, SCHEMA_STATE_APPENDING)
     assert _step(unfinished_run, *build_run.VERSION_ARGS).returncode == 0
-    assert _rows(db_credentials, schema) == [(SCHEMA_VERSION, STATE_READY)]
+    assert _rows(db_credentials, schema) == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]
 
 
 def test_another_version_is_refused_and_left_alone(
@@ -294,19 +299,19 @@ def test_another_version_is_refused_and_left_alone(
 ) -> None:
     """A schema another release imported is never restamped."""
     schema = unfinished_run.schema
-    _row(unfinished_run, db_credentials, _OTHER_VERSION, STATE_READY)
+    _row(unfinished_run, db_credentials, _OTHER_VERSION, SCHEMA_STATE_READY)
     logged = len(_errors(unfinished_run))
     result = _step(unfinished_run, *build_run.VERSION_ARGS)
     assert result.returncode != 0
     assert f'The schema is version {_OTHER_VERSION}' in _errors(unfinished_run)[logged:]
-    assert _rows(db_credentials, schema) == [(_OTHER_VERSION, STATE_READY)]
+    assert _rows(db_credentials, schema) == [(_OTHER_VERSION, SCHEMA_STATE_READY)]
 
 
 def test_the_erase_drops_the_table(
     erase_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
     """``--drop-permanent-tables --scorched-earth`` leaves no version row behind."""
-    _row(erase_run, db_credentials, SCHEMA_VERSION, STATE_READY)
+    _row(erase_run, db_credentials, SCHEMA_VERSION, SCHEMA_STATE_READY)
     assert _step(erase_run, *build_run.DROP_ARGS).returncode == 0
     assert _rows(db_credentials, erase_run.schema) is None
 

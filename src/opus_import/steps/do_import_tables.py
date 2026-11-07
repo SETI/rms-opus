@@ -60,8 +60,8 @@ def delete_all_obs_mult_tables(ctx: ImportContext, namespace: Namespace) -> None
     """
     db = ctx.db
     assert db is not None
-    if namespace == 'perm' and db.table_exists('perm', schema_version.TABLE_NAME):
-        db.drop_table('perm', schema_version.TABLE_NAME)
+    if namespace == 'perm' and db.table_exists('perm', schema_version.SCHEMA_VERSION_TABLE):
+        db.drop_table('perm', schema_version.SCHEMA_VERSION_TABLE)
     table_names = sorted(db.table_names(namespace, prefix=['obs_', 'mult_', 'cart']))
     # This has to happen in four phases to handle foreign key contraints:
     # 1. All obs_ tables except obs_general

@@ -25,25 +25,25 @@ from collections.abc import Sequence
 SCHEMA_VERSION: int = 1
 
 #: The table that holds a schema's version row.
-TABLE_NAME = 'schema_version'
+SCHEMA_VERSION_TABLE = 'schema_version'
 
 #: The state of a finished schema, the only one served or deployed onto.
-STATE_READY = 'ready'
+SCHEMA_STATE_READY = 'ready'
 
 #: The state of a schema an append is writing to.
-STATE_APPENDING = 'appending'
+SCHEMA_STATE_APPENDING = 'appending'
 
 #: What makes a schema servable, for the messages that refuse one.
-REMEDY = (
+SCHEMA_VERSION_REMEDY = (
     'a schema is served only after an import under this release has finished it with '
     '`opus_import --write-schema-version`'
 )
 
 #: What the deploy chain's check prints when the schema has no version row.
-ABSENT = 'absent'
+SCHEMA_VERSION_ABSENT = 'absent'
 
 
-def problem(rows: Sequence[Sequence[object]]) -> str | None:
+def schema_version_problem(rows: Sequence[Sequence[object]]) -> str | None:
     """Say what keeps a schema with these version rows from being served, if anything.
 
     Parameters:
@@ -52,29 +52,29 @@ def problem(rows: Sequence[Sequence[object]]) -> str | None:
 
     Returns:
         None when there is exactly one row, holding `SCHEMA_VERSION` in the ``ready``
-        state; otherwise a sentence naming what is wrong, followed by `REMEDY`.
+        state; otherwise a sentence naming what is wrong, followed by `SCHEMA_VERSION_REMEDY`.
     """
     if len(rows) == 0:
-        found = f'the schema has no {TABLE_NAME} row'
+        found = f'the schema has no {SCHEMA_VERSION_TABLE} row'
     elif len(rows) > 1:
-        found = f'the schema has {len(rows)} {TABLE_NAME} rows, not one'
+        found = f'the schema has {len(rows)} {SCHEMA_VERSION_TABLE} rows, not one'
     elif rows[0][0] != SCHEMA_VERSION:
         found = f'the schema is version {rows[0][0]}, and this release is version {SCHEMA_VERSION}'
-    elif rows[0][1] != STATE_READY:
-        found = f"the schema's state is {rows[0][1]!r}, not {STATE_READY!r}"
+    elif rows[0][1] != SCHEMA_STATE_READY:
+        found = f"the schema's state is {rows[0][1]!r}, not {SCHEMA_STATE_READY!r}"
     else:
         return None
-    return f'{found}: {REMEDY}'
+    return f'{found}: {SCHEMA_VERSION_REMEDY}'
 
 
-def served_row() -> str:
+def read_served_schema_version() -> str:
     """Read the version row of the schema ``OPUS_CONFIG`` names, for the deploy check.
 
     The connection is the import's own, opened read-only, so the check needs nothing the
     import does not.
 
     Returns:
-        ``"<version> <state>"`` for a single row, `ABSENT` when the table is absent or
+        ``"<version> <state>"`` for a single row, `SCHEMA_VERSION_ABSENT` when the table is absent or
         empty, and ``"<n> rows"`` when it holds more than one.
 
     Raises:
@@ -94,11 +94,11 @@ def served_row() -> str:
         database.password,
         read_only=True,
     )
-    if not db.table_exists('perm', TABLE_NAME):
-        return ABSENT
-    rows = db.read_rows('perm', TABLE_NAME, ['version', 'state'])
+    if not db.table_exists('perm', SCHEMA_VERSION_TABLE):
+        return SCHEMA_VERSION_ABSENT
+    rows = db.read_rows('perm', SCHEMA_VERSION_TABLE, ['version', 'state'])
     if len(rows) == 0:
-        return ABSENT
+        return SCHEMA_VERSION_ABSENT
     if len(rows) > 1:
         return f'{len(rows)} rows'
     return f'{rows[0][0]} {rows[0][1]}'

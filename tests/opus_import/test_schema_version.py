@@ -12,12 +12,12 @@ import pytest
 
 from opus_config import OPUS_CONFIG_ENV_VAR
 from opus_import.schema_version import (
-    REMEDY,
+    SCHEMA_STATE_APPENDING,
+    SCHEMA_STATE_READY,
     SCHEMA_VERSION,
-    STATE_APPENDING,
-    STATE_READY,
-    TABLE_NAME,
-    problem,
+    SCHEMA_VERSION_REMEDY,
+    SCHEMA_VERSION_TABLE,
+    schema_version_problem,
 )
 from opus_import.steps import do_import_tables, do_schema_version
 from tests.opus_import.conftest import RecordingLogger, make_context
@@ -47,11 +47,15 @@ class _VersionDB:
     def table_exists(self, namespace: str, table_name: str) -> bool:
         """Answer for the version table only."""
         assert namespace == 'perm'
-        return table_name == TABLE_NAME and self.rows is not None
+        return table_name == SCHEMA_VERSION_TABLE and self.rows is not None
 
     def read_rows(self, namespace: str, table_name: str, columns: Sequence[str]) -> list[Any]:
         """Return the rows."""
-        assert (namespace, table_name, list(columns)) == ('perm', TABLE_NAME, ['version', 'state'])
+        assert (namespace, table_name, list(columns)) == (
+            'perm',
+            SCHEMA_VERSION_TABLE,
+            ['version', 'state'],
+        )
         assert self.rows is not None
         return list(self.rows)
 
@@ -114,13 +118,13 @@ def _write(rows: list[tuple[Any, ...]] | None) -> tuple[bool, _VersionDB, Record
 @pytest.mark.parametrize(
     ('rows', 'expected'),
     [
-        ([(SCHEMA_VERSION, STATE_READY)], None),
-        ([], f'the schema has no {TABLE_NAME} row'),
-        ([(SCHEMA_VERSION + 1, STATE_READY)], f'the schema is version {SCHEMA_VERSION + 1}'),
-        ([(SCHEMA_VERSION, STATE_APPENDING)], "the schema's state is 'appending'"),
+        ([(SCHEMA_VERSION, SCHEMA_STATE_READY)], None),
+        ([], f'the schema has no {SCHEMA_VERSION_TABLE} row'),
+        ([(SCHEMA_VERSION + 1, SCHEMA_STATE_READY)], f'the schema is version {SCHEMA_VERSION + 1}'),
+        ([(SCHEMA_VERSION, SCHEMA_STATE_APPENDING)], "the schema's state is 'appending'"),
         (
-            [(SCHEMA_VERSION, STATE_READY), (SCHEMA_VERSION + 1, STATE_READY)],
-            f'the schema has 2 {TABLE_NAME} rows',
+            [(SCHEMA_VERSION, SCHEMA_STATE_READY), (SCHEMA_VERSION + 1, SCHEMA_STATE_READY)],
+            f'the schema has 2 {SCHEMA_VERSION_TABLE} rows',
         ),
     ],
     ids=['match', 'missing', 'other-version', 'appending', 'two-rows'],
@@ -129,13 +133,13 @@ def test_problem_names_what_keeps_a_schema_from_being_served(
     rows: list[tuple[Any, ...]], expected: str | None
 ) -> None:
     """Only one row, this version, ``ready``, passes; anything else names the remedy."""
-    found = problem(rows)
+    found = schema_version_problem(rows)
     if expected is None:
         assert found is None
     else:
         assert found is not None
         assert found.startswith(expected)
-        assert found.endswith(REMEDY)
+        assert found.endswith(SCHEMA_VERSION_REMEDY)
         assert '--write-schema-version' in found
 
 
@@ -143,8 +147,8 @@ def test_with_no_table_the_step_creates_it_and_writes_this_version_ready() -> No
     """A schema with no version table is one the step finishes."""
     written, db, logger = _write(None)
     assert written
-    assert db.created == [TABLE_NAME]
-    assert db.rows == [(SCHEMA_VERSION, STATE_READY)]
+    assert db.created == [SCHEMA_VERSION_TABLE]
+    assert db.rows == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]
     assert logger.messages_at('error') == []
 
 
@@ -153,27 +157,27 @@ def test_an_empty_table_gets_the_row() -> None:
     written, db, _ = _write([])
     assert written
     assert db.created == []
-    assert db.rows == [(SCHEMA_VERSION, STATE_READY)]
+    assert db.rows == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]
 
 
 def test_an_appending_row_of_this_version_becomes_ready_logged_at_info() -> None:
     """The step finishes an append."""
-    written, db, logger = _write([(SCHEMA_VERSION, STATE_APPENDING)])
+    written, db, logger = _write([(SCHEMA_VERSION, SCHEMA_STATE_APPENDING)])
     assert written
-    assert db.rows == [(SCHEMA_VERSION, STATE_READY)]
-    assert any(STATE_APPENDING in message for message in logger.messages_at('info'))
+    assert db.rows == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]
+    assert any(SCHEMA_STATE_APPENDING in message for message in logger.messages_at('info'))
 
 
 def test_a_ready_row_of_this_version_is_left_alone_logged_at_debug() -> None:
     """Running the step twice changes nothing."""
-    written, db, logger = _write([(SCHEMA_VERSION, STATE_READY)])
+    written, db, logger = _write([(SCHEMA_VERSION, SCHEMA_STATE_READY)])
     assert written
-    assert db.rows == [(SCHEMA_VERSION, STATE_READY)]
+    assert db.rows == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]
     assert logger.messages_at('info') == []
     assert any('already' in message for message in logger.messages_at('debug'))
 
 
-@pytest.mark.parametrize('state', [STATE_READY, STATE_APPENDING])
+@pytest.mark.parametrize('state', [SCHEMA_STATE_READY, SCHEMA_STATE_APPENDING])
 def test_another_version_is_refused_with_an_error_and_left_as_it_is(state: str) -> None:
     """New code never stamps an old schema, whatever its state."""
     other = (SCHEMA_VERSION + 1, state)
@@ -187,7 +191,7 @@ def test_another_version_is_refused_with_an_error_and_left_as_it_is(state: str) 
 
 def test_more_than_one_row_is_refused() -> None:
     """The table holds one row; the step does not choose between several."""
-    rows = [(SCHEMA_VERSION, STATE_READY), (SCHEMA_VERSION + 1, STATE_READY)]
+    rows = [(SCHEMA_VERSION, SCHEMA_STATE_READY), (SCHEMA_VERSION + 1, SCHEMA_STATE_READY)]
     written, db, logger = _write(rows)
     assert not written
     assert db.rows == rows
@@ -196,17 +200,17 @@ def test_more_than_one_row_is_refused() -> None:
 
 def test_the_erase_drops_the_version_table_before_any_other() -> None:
     """An erase that stops part way leaves no version row."""
-    db = _VersionDB([(SCHEMA_VERSION, STATE_READY)])
+    db = _VersionDB([(SCHEMA_VERSION, SCHEMA_STATE_READY)])
     do_import_tables.delete_all_obs_mult_tables(make_context(db=db), 'perm')
-    assert db.dropped[0] == TABLE_NAME
+    assert db.dropped[0] == SCHEMA_VERSION_TABLE
     assert set(db.dropped[1:]) == {'obs_general', 'obs_pds', 'cart', 'mult_obs_general_planet_id'}
 
 
 def test_emptying_the_import_tables_leaves_the_version_table_alone() -> None:
     """The table exists only in the permanent namespace."""
-    db = _VersionDB([(SCHEMA_VERSION, STATE_READY)])
+    db = _VersionDB([(SCHEMA_VERSION, SCHEMA_STATE_READY)])
     do_import_tables.delete_all_obs_mult_tables(make_context(db=db), 'import')
-    assert TABLE_NAME not in db.dropped
+    assert SCHEMA_VERSION_TABLE not in db.dropped
 
 
 def test_the_module_imports_neither_django_nor_the_configuration() -> None:
