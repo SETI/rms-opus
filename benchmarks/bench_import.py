@@ -897,6 +897,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                     )
                 run['details'] = {'reused_schema': args.reuse_schema, 'schema': schema}
             environment['schema'] = schema
+            environment['bulk_load_path'] = file_bulk_load_path(label, [run])
             path = append_runs(label, environment, [run])
             sys.stdout.write(f'recorded in {path}\n')
             return

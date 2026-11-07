@@ -7,6 +7,7 @@ import pytest
 
 from benchmarks import bench_import
 from benchmarks.monitor import InvocationMonitor, _MemorySampler, checkpoint_age
+from benchmarks.results import make_label
 from benchmarks.sides import Spelling
 from import_tests.tools.build_run import StepResult
 from opus_import.importdb import mysql
@@ -204,5 +205,32 @@ def test_a_run_recording_no_paths_adds_nothing() -> None:
     runs = [_run_naming(None), _run_naming([mysql.BULK_LOAD_PATH_FILE])]
     assert bench_import.summarize_bulk_load_paths(runs) == mysql.BULK_LOAD_PATH_FILE
     assert bench_import.summarize_bulk_load_paths([_run_naming(None)]) == (
+        bench_import.DEFAULT_BULK_LOAD_PATH
+    )
+
+
+def test_a_run_added_to_a_file_keeps_the_paths_its_runs_took(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A reuse or finalize-only run, which names no path, leaves the file's summary intact."""
+    label = make_label(pr='PR-04', side='after', scale='fixture', session='a', date='2026-11-07')
+    monkeypatch.setattr(bench_import, 'RESULTS_DIR', tmp_path)
+    (tmp_path / label.file_name).write_text('{}', encoding='utf-8')
+    monkeypatch.setattr(
+        bench_import,
+        'load_result',
+        lambda path: {'runs': [_run_naming([mysql.BULK_LOAD_PATH_FILE])]},
+    )
+    reuse = {'details': {'reused_schema': 's', 'schema': 's'}}
+    assert bench_import.file_bulk_load_path(label, [reuse]) == mysql.BULK_LOAD_PATH_FILE
+
+
+def test_a_first_run_in_a_new_file_is_summarized_alone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With no file yet, only the new runs count."""
+    label = make_label(pr='PR-04', side='after', scale='fixture', session='a', date='2026-11-07')
+    monkeypatch.setattr(bench_import, 'RESULTS_DIR', tmp_path)
+    assert bench_import.file_bulk_load_path(label, [_run_naming([])]) == (
         bench_import.DEFAULT_BULK_LOAD_PATH
     )
