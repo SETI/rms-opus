@@ -525,6 +525,7 @@ def _dump_and_replay(
         single_worker=True,
     )
     capture = label.scratch_dir / f'queries_{label.side}.sql'
+    bench.stamp_schema_version()
     memcached.start()
     try:
         bench.application_settings()

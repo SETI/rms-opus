@@ -100,8 +100,9 @@ exclude one another, so giving two of them switches on the union.
      - ``--create-param-info``, ``--create-partables``, ``--create-table-names``,
        ``--create-cart``, ``--drop-cache-tables``.
 
-None of them implies ``--update-mult-info``, ``--validate-perm`` or
-``--import-dictionary``; those are always asked for by name.
+None of them implies ``--update-mult-info``, ``--validate-perm``,
+``--import-dictionary`` or ``--write-schema-version``; those are always asked for by
+name.
 
 Selecting bundles
 ~~~~~~~~~~~~~~~~~
@@ -258,7 +259,15 @@ Auxiliary tables and other steps
      - Validate the permanent tables. **It reports through the log rather than through
        the exit status.**
    * - ``--import-dictionary``
-     - Rebuild ``contexts`` and ``definitions`` from scratch. It runs last.
+     - Rebuild ``contexts`` and ``definitions`` from scratch. It runs after every step
+       above.
+   * - ``--write-schema-version``
+     - Mark the schema finished: write its ``schema_version`` row, this release's
+       version in the ``ready`` state, which the web application and both deploy
+       scripts require (:ref:`user_guide_deployment_schema_version`). It runs last, and
+       is the last step of every sequence that finishes a database. It never changes a
+       version the schema already records: over another version it logs an error and
+       **exits non-zero**, leaving the row alone.
 
 Logging and diagnostics
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -324,6 +333,7 @@ whole shape. It:
     ``partables``, ``table_names``.
 11. Runs ``--update-mult-info``, then ``--validate-perm``, then the deferred second
     attempt at the cart table, then ``--import-dictionary``.
+12. Runs ``--write-schema-version``, exiting non-zero if it refuses.
 
 Any exception that reaches the top is logged as fatal -- with its traceback unless
 ``--log-suppress-traceback`` -- and the run exits non-zero. :exc:`SystemExit` and
@@ -402,7 +412,10 @@ One volume, into a scratch schema, is what to do while developing::
 
 ``--do-it-all`` imports the named bundles, copies the result over the permanent tables
 and rebuilds the auxiliary tables. Add ``--import-dictionary`` if the tooltips matter
-to what you are testing.
+to what you are testing. The web application serves the schema only once it has its
+version row, so finish with::
+
+    opus_import --override-db-schema opus_scratch --write-schema-version
 
 To redo only part of a failed run, name the steps individually. The import tables
 survive a failure precisely so that this works::
@@ -431,7 +444,7 @@ into a new schema and switched over afterwards rather than in place.
 
 The sequence itself is an installed command, :mod:`opus_import.import_all`, run as
 ``opus_import_all``: the erase, the bundle sets in the order a full import takes them,
-and the three steps that finish the database, each as its own ``opus_import`` process,
+and the four steps that finish the database, each as its own ``opus_import`` process,
 stopping at the first failure. ``opus_import_all --dry-run`` prints the whole sequence
 without running any of it, and :ref:`user_guide_installation_full_import` is the
 operator's account of it.
@@ -449,7 +462,7 @@ operator's account of it.
     The fixed bundle list the integration suite runs against -- Cassini ISS, UVIS, VIMS
     and CIRS, Galileo, Voyager, Hubble, New Horizons, and the occultation bundle sets --
     followed by ``--cleanup-aux-tables``, ``--import-dictionary``, ``manage.py
-    migrate`` and ``--validate-perm``. **It begins by erasing the permanent tables**
+    migrate``, ``--validate-perm`` and ``--write-schema-version``. **It begins by erasing the permanent tables**
     (``--drop-permanent-tables --scorched-earth``) and asks for confirmation first,
     printing the schema so that the erase cannot be aimed at the wrong database.
 

@@ -351,6 +351,15 @@ search, each half starting from its own reset. It records the latencies of every
 request, from which its 95th percentile is computed over all runs together, less the
 runs whose own 95th percentile is an outlier (below).
 
+Before starting a side's server, ``bench_web`` gives the schema the version row that
+side's web application checks for: it sets the row's version to the side's
+``SCHEMA_VERSION``, read through the side's interpreter, or, on a schema with no row, runs
+the side's ``opus_import --write-schema-version``. Two sides that serve one schema
+expect different versions whenever the change raises it. A side whose code has no
+version checks nothing and is left alone. ``bench_server.clone_schema`` sets a copied
+row the same way, to the version of the side that will use the copy. ``bench_db``'s
+query capture does the same before it starts its server.
+
 Before measuring, ``bench_web`` asks the side's settings, in the environment the workers
 run in, which cache they chose: it refuses to run on the local-memory fallback or on a
 memcached other than its own, and it refuses a run in which memcached answered no lookup
@@ -403,7 +412,8 @@ Everything a command measures goes into the **results directory**, one file per 
     <date>_<tag>_<side>_<scale>_mysql_<session>.json
 
 holding ``{"format", "environment", "runs"}``. The environment records the commit and
-whether the checkout had changes, the interpreter, the server's version and settings,
+whether the checkout had changes, the interpreter, the side's schema version (null for
+code that has none), the server's version and settings,
 the machine, and what the web runs ran against; a command refuses to add runs from
 another commit or server to a file. Each run records its kind (``import``, ``db`` or
 ``web``), the one-minute load average when it started, its metrics, and its details.

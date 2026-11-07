@@ -692,3 +692,32 @@ The fields are:
 * ``definition``: The full free-form text definition.
 * ``timestamp``: The date and time this row was last modified.
 * ``id``: A unique ID.
+
+.. _dev_guide_database_schema_version:
+
+The ``schema_version`` Table
+----------------------------
+
+The ``schema_version`` table records which generation of the table schemas imported the database, and whether the import is finished. It holds one row.
+
+::
+
+    mysql> DESC schema_version;
+    +---------+---------------------------+------+-----+---------+
+    | Field   | Type                      | Null | Key | Default |
+    +---------+---------------------------+------+-----+---------+
+    | version | int unsigned              | NO   | PRI | NULL    |
+    | state   | enum('ready','appending') | NO   |     | NULL    |
+    +---------+---------------------------+------+-----+---------+
+
+The fields are:
+
+* ``version``: The :data:`~opus_import.schema_version.SCHEMA_VERSION` of the release whose import created the tables. A release that changes a table schema in a way an existing database does not have raises it, and is deployed with a fresh import.
+* ``state``: ``ready`` once the database is finished; ``appending`` while an append to it is writing.
+
+The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), creates the table and writes the row. It is the only writer of ``ready``, and it never changes a ``version`` the row already holds. ``--drop-permanent-tables --scorched-earth`` drops the table before any other.
+
+Two things read it, and both require the release's own version in the ``ready`` state:
+
+* the web application, once as it loads (:mod:`opus_app.schema_guard`, called from :mod:`opus_app.wsgi`). Any other row, or none, makes every request answer 503 with a message naming the remedy. The check is in the WSGI entry point and not in the settings, so management commands, ``inspectdb`` among them, work against any database;
+* both deploy scripts, before they write anything (:ref:`user_guide_deployment_schema_version`).

@@ -36,6 +36,16 @@ if TYPE_CHECKING:
 #: The probe a side's interpreter runs to answer questions about that side's code.
 SIDE_PROBE = BENCHMARKS_DIR / 'side_probe.py'
 
+#: What a side's interpreter runs to print its ``SCHEMA_VERSION``, or ``None`` for a side
+#: whose code predates the module.
+SCHEMA_VERSION_PROBE = (
+    'try:\n'
+    '    from opus_import.schema_version import SCHEMA_VERSION\n'
+    'except ModuleNotFoundError:\n'
+    '    SCHEMA_VERSION = None\n'
+    'print(SCHEMA_VERSION)\n'
+)
+
 #: An option string as a whole token: two dashes, then letters, digits and dashes, with
 #: neither a word character nor a dash on either side.
 _OPTION_TOKEN = re.compile(r'(?<![\w-])--[A-Za-z0-9][A-Za-z0-9-]*(?![\w-])')
@@ -147,10 +157,10 @@ class Side:
         """Return the side's entries for a result's environment.
 
         Returns:
-            The commit, whether the checkout has uncommitted changes, and the
-            interpreter's version. An untracked file under ``src/`` counts as a
-            change, since the editable install imports it; one elsewhere does not, so
-            the harness's own uncommitted results leave the checkout clean.
+            The commit, whether the checkout has uncommitted changes, the interpreter's
+            version, and the side's `schema_version`. An untracked file under ``src/``
+            counts as a change, since the editable install imports it; one elsewhere
+            does not, so the harness's own uncommitted results leave the checkout clean.
         """
         version = self.run(['-c', 'import platform; print(platform.python_version())'])
         changed = self.git('status', '--porcelain', '--untracked-files=no')
@@ -159,7 +169,26 @@ class Side:
             'git_sha': self.git('rev-parse', 'HEAD'),
             'git_dirty': changed != '' or untracked_source != '',
             'python_version': version.stdout.strip(),
+            'schema_version': self.schema_version(),
         }
+
+    def schema_version(self) -> int | None:
+        """Return the schema version the side's code imports and serves.
+
+        Returns:
+            The side's ``opus_import.schema_version.SCHEMA_VERSION``, or None for a side
+            whose code has no such module.
+
+        Raises:
+            SideError: If the side's interpreter fails for any other reason.
+        """
+        finished = self.run(['-I', '-c', SCHEMA_VERSION_PROBE])
+        if finished.returncode != 0:
+            raise SideError(
+                f'{self.python} could not report its schema version:\n{finished.stderr[-4000:]}'
+            )
+        printed = finished.stdout.strip()
+        return None if printed == 'None' else int(printed)
 
     def import_help(self) -> str:
         """Return the side's ``opus_import --help`` text.

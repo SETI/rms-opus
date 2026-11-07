@@ -8,7 +8,7 @@ it -- the confirmation, and stopping at the first step that fails.
 The sequence is asserted as a sequence rather than element by element, because the order
 is the content: two bundle sets first because they need the duplicate-id check while the
 tables are small, then the rest in roughly reverse order of how long each takes, then the
-three steps that finish the database.
+steps that finish the database, the schema version last.
 """
 
 from __future__ import annotations
@@ -46,7 +46,9 @@ def test_the_sequence_starts_by_dropping_and_ends_by_validating() -> None:
     assert [step[-1] for step in steps[3 : 3 + len(import_all.BUNDLE_SETS)]] == list(
         import_all.BUNDLE_SETS
     )
-    assert [step[0] for step in steps[-3:]] == list(import_all.FINALIZATION_OPTIONS)
+    finishing = len(import_all.FINALIZATION_OPTIONS)
+    assert [step[0] for step in steps[-finishing:]] == list(import_all.FINALIZATION_OPTIONS)
+    assert steps[-1][0] == '--write-schema-version'
 
 
 def test_every_bundle_set_is_imported_once() -> None:

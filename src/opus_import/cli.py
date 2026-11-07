@@ -36,6 +36,7 @@ from opus_import.steps import (
     do_import,
     do_param_info,
     do_partables,
+    do_schema_version,
     do_table_names,
     do_update_mult_info,
     do_validate,
@@ -411,6 +412,15 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         help='Import the dictionary and contexts from scratch',
     )
 
+    parser.add_argument(
+        '--write-schema-version',
+        action='store_true',
+        default=False,
+        help="""Mark the schema finished under this release's schema version, the last
+                step of every sequence that finishes a database; implied by nothing.
+                Refuses, exiting non-zero, when the schema holds another version""",
+    )
+
     # Arguments about bundle selection
     parser.add_argument(
         'bundles',
@@ -480,7 +490,8 @@ def main() -> None:
     Raises:
         SystemExit: With a non-zero status, logged first, when the arguments are
             contradictory, a bundle descriptor is bad, the database connection fails,
-            the observation import fails, or an exception reaches the top-level handler.
+            the observation import fails, ``--write-schema-version`` refuses, or an
+            exception reaches the top-level handler.
             **A non-zero status means the run stopped, not that a zero status means it
             was clean:** several steps report failure through the log and leave the
             status zero, a failed dictionary import and every validation error among
@@ -717,6 +728,13 @@ def main() -> None:
             with ctx.timed('import_dictionary'):
                 do_dictionary.do_dictionary(ctx)
             logger.close()
+
+        # Last, after validation, because the row is what makes the schema servable.
+        if args.write_schema_version:
+            with ctx.timed('write_schema_version'):
+                written = do_schema_version.write_schema_version(ctx)
+            if not written:
+                sys.exit(-1)
 
         if args.profile:
             pr.disable()

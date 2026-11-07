@@ -119,6 +119,12 @@ def test_the_defaults_are_this_suites_own_sequence(tmp_path: Path, recorder: _Re
             build_run.THIS_PYTHON,
             REPO_ROOT,
         ),
+        (
+            'opus_import',
+            build_run.VERSION_ARGS,
+            build_run.THIS_PYTHON,
+            REPO_ROOT,
+        ),
     ]
 
 
@@ -136,6 +142,7 @@ def test_every_invocation_uses_the_given_interpreter_steps_and_checkout(
         aux_args=('--finish',),
         dictionary_args=('--dictionary', '--timing-json', 't.json'),
         validate_args=('--check',),
+        version_args=('--stamp',),
     )
     assert recorder.runs == [
         ('opus_import', ('--erase',), python, repo_root),
@@ -145,7 +152,14 @@ def test_every_invocation_uses_the_given_interpreter_steps_and_checkout(
         ('opus_import', ('--dictionary', '--timing-json', 't.json'), python, repo_root),
         ('migrate', build_run.MIGRATE_ARGS, python, repo_root),
         ('opus_import', ('--check',), python, repo_root),
+        ('opus_import', ('--stamp',), python, repo_root),
     ]
+
+
+def test_an_empty_version_step_is_skipped(tmp_path: Path, recorder: _Recorder) -> None:
+    """A side whose import has no version step ends the sequence with its validation."""
+    _perform(tmp_path, version_args=())
+    assert recorder.runs[-1][1] == build_run.VALIDATE_ARGS
 
 
 def test_the_observer_hears_each_invocation_start_and_finish_in_order(

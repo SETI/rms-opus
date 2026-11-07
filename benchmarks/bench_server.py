@@ -641,7 +641,48 @@ def drop_schema(server: MysqlServer, schema: str) -> None:
         query(connection, f'DROP DATABASE IF EXISTS {quote_identifier(schema)}')
 
 
-def clone_schema(server: MysqlServer, source: str, target: str, *, connections: int = 4) -> float:
+def restamp_version(server: MysqlServer, schema: str, version: int) -> bool:
+    """Set the version in a schema's version row, leaving its state alone.
+
+    The import's own step never overwrites a different version, so where a side's code
+    expects another version than the schema it is given carries, the harness sets the
+    row itself.
+
+    Parameters:
+        server: The owned server.
+        schema: The schema.
+        version: The version to record, the ``SCHEMA_VERSION`` of the side that will use
+            the schema.
+
+    Returns:
+        Whether the schema had a version row to set; False when it has no
+        ``schema_version`` table, or the table is empty.
+    """
+    with contextlib.closing(server.connect()) as connection:
+        exists = query(
+            connection,
+            'SELECT COUNT(*) FROM information_schema.TABLES '
+            "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'schema_version'",
+            [schema],
+        )[0][0]
+        if exists == 0:
+            return False
+        table = f'{quote_identifier(schema)}.schema_version'
+        rows = int(query(connection, f'SELECT COUNT(*) FROM {table}')[0][0])  # nosec B608 - quoted identifier
+        if rows == 0:
+            return False
+        query(connection, f'UPDATE {table} SET version = %s', [version])  # nosec B608 - quoted identifier
+        return True
+
+
+def clone_schema(
+    server: MysqlServer,
+    source: str,
+    target: str,
+    *,
+    version: int | None,
+    connections: int = 4,
+) -> float:
     """Copy a schema table by table into a new one, and time the copy.
 
     Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
@@ -649,16 +690,20 @@ def clone_schema(server: MysqlServer, source: str, target: str, *, connections: 
     ``foreign_key_checks`` off so that tables may be created and filled in any order;
     then its rows are copied with ``INSERT ... SELECT``, naming the stored columns only,
     since MySQL computes a generated column and refuses a value for one. The copies run
-    over several connections at once. The target is dropped first if it exists.
+    over several connections at once. The target is dropped first if it exists. Last,
+    a copied version row is restamped to `version` (`restamp_version`).
 
     Parameters:
         server: The owned server.
         source: The schema to copy.
         target: The new schema.
+        version: The ``SCHEMA_VERSION`` of the side that will use the copy, or None to
+            leave a copied version row as it was, for a side whose code has none. Every
+            call states it, since the right value depends on the side.
         connections: How many tables are copied at once.
 
     Returns:
-        The copy's wall-clock seconds, creation included.
+        The copy's wall-clock seconds, creation and restamp included.
 
     Raises:
         ServerError: If the source has no tables.
@@ -713,6 +758,8 @@ def clone_schema(server: MysqlServer, source: str, target: str, *, connections: 
 
     with ThreadPoolExecutor(max_workers=max(1, connections)) as pool:
         list(pool.map(copy, tables))
+    if version is not None:
+        restamp_version(server, target, version)
     return time.perf_counter() - started
 
 
