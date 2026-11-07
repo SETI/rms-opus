@@ -4599,3 +4599,43 @@ Nothing above this line is rewritten by an executor.
   the cache does not store; a refusal from a lost connection is not taken for the
   pattern's answer. `_PRETTY_MULT_CACHE` is removed, since the mult table's copy answers
   its lookups.
+
+### 2026-11-07, PR-05 (written against this file at 8513d904)
+
+- PR-05's measurement, at fixture scale: the base imported once (commit 8513d904) into
+  `bench_fixture_before_a_1`, and both sides served that schema, five web runs a side,
+  alternated before, after, before, after, then after, before, after, before, after,
+  before; the head measured at db533757. Every web guard held. The first four runs (one
+  a side twice) showed `web.app-cold.search.broad.wall_s` as regressed, set by one run
+  of 151 ms against others of 40 to 75 ms on both sides, so the count was raised to the
+  five §2.6 gives. The result files are `2026-11-07_PR-05_{before,after}_fixture_mysql_a.json`
+  in the operator's results directory; their environments record `schema_version` as
+  null and 1.
+- The harness's rule is general rather than a step for PR-05 alone: before a side's
+  server starts (`bench_web`, and `bench_db`'s query capture), `stamp_schema_version`
+  restamps the schema's row to that side's `SCHEMA_VERSION`, and where the schema has no
+  row it runs that side's own `--write-schema-version`. The head's first web run of the
+  measurement above wrote the shared schema's row that way. A side whose code has no
+  `SCHEMA_VERSION` checks nothing and is left alone.
+- `benchmarks/scenarios/import_test.toml` names bundle groups only, and the harness's
+  finalization already ran `--write-schema-version` for a side that lists it, so neither
+  changed.
+- `--write-schema-version` exits non-zero when it refuses, as well as logging the error,
+  so `opus_import_all` and any script running it stops there.
+- The web application's check is read once as `opus_app.wsgi` loads, as the section
+  says, except when the database cannot be reached at all: then each request repeats the
+  check, answering 503 until it gets an answer, and the answer decides every later
+  request. Refusing for good would have turned a database that was briefly down while
+  mod_wsgi loaded into an outage until a restart, and the CI package job imports
+  `opus_app.wsgi` with no database. The 503 body leaves out the driver's message, which
+  names the account; the log has it.
+- The deploy check reads the row through `opus_import.schema_version.served_row()`,
+  which imports `opus_config` and `opus_import.importdb` only when called, so that the
+  `python -c` line in `_check_schema_version.sh` is one call.
+- The database the Ring-Moon Systems Node serves has no version row until this release
+  imports one, so the first deploy of this release refuses it. A database another
+  release with the same table schemas imported (this one changes none) is finished with
+  `opus_import --write-schema-version` under the new installation's configuration.
+- PR-05 was branched from `db-perf` at 8513d904, before PR-04 merged. Both change
+  `build_run.perform_run`, `tests/import_tests/test_build_run_parameters.py` and these
+  notes, so the second of the two to merge rebases onto the first.
