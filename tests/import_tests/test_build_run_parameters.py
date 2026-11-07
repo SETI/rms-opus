@@ -165,9 +165,17 @@ def test_an_empty_version_step_is_skipped(tmp_path: Path, recorder: _Recorder) -
 
 
 @pytest.mark.parametrize(
-    'failing', [build_run.AUX_ARGS, build_run.DICTIONARY_ARGS, build_run.VALIDATE_ARGS]
+    'failing',
+    [
+        build_run.DROP_ARGS,
+        (*build_run.IMPORT_ARGS, 'A_0001'),
+        build_run.AUX_ARGS,
+        build_run.DICTIONARY_ARGS,
+        build_run.VALIDATE_ARGS,
+    ],
+    ids=['erase', 'bundle-import', 'aux', 'dictionary', 'validate'],
 )
-def test_a_failed_finishing_step_skips_the_version_step(
+def test_a_failed_step_skips_the_version_step(
     tmp_path: Path, recorder: _Recorder, failing: tuple[str, ...]
 ) -> None:
     """As ``opus_import_all`` stops there, the schema is left without a ready row."""

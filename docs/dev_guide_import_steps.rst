@@ -304,8 +304,9 @@ reports them all.
 **A failure keeps the schema from being served.** When a check logged an error, the
 invocation does not run ``--write-schema-version`` even if it was asked to, logging an
 error instead, and exits with failure once its other steps have run, so
-``opus_import_all`` stops before its own version step. ``--import-ignore-errors``
-overrides both, for a debugging run.
+``opus_import_all`` stops before its own version step. ``--import-ignore-errors`` on
+the same invocation overrides both, for a debugging run; ``opus_import_all`` never passes
+it to its finishing steps.
 
 Four checks, in this order:
 
