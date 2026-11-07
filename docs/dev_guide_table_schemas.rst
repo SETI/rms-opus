@@ -299,11 +299,6 @@ is.
     Notes to whoever reads the schema. Nothing consumes them, and that is what they
     are for.
 
-``data_source_order``, ``pi_units``
-    Read by no code at all. They are left where they are rather than removed, because
-    deleting a key from a schema is a change to the definition of the database rather
-    than documentation work. Do not add either to a new column.
-
 ``definition_results``
     Reported by the recipe and nonetheless read, for the reason given above.
 

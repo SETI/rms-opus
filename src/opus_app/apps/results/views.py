@@ -2127,7 +2127,7 @@ def labels_for_slugs(slugs: list[str], units: bool = True) -> list[str] | None:
             log.error('labels_for_slugs: Could not find param_info ' + 'for %r', slug)
             return None
 
-        # append units if pi_units has unit stored
+        # The unit the column's values are shown in, when the caller asked for units.
         unit = None
         if units:
             unit = pi.get_units(override_unit=desired_units)

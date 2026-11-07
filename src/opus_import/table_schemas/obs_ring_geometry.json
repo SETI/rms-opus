@@ -2420,8 +2420,7 @@
         "pi_old_slug": null,
         "pi_slug": "RINGGEOringintercepttime1",
         "pi_sub_heading": "Timing",
-        "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss",
-        "pi_units": null
+        "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss"
     },
     {
         "field_name": "ring_intercept_time2",

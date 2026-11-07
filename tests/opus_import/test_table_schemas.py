@@ -84,10 +84,6 @@ _COLUMN_KEYS = {
     # Notes to the reader, which nothing consumes.
     'comment',
     'comments',
-    # Read by nothing, and left in place; the developer guide's "Keys nothing reads"
-    # says why, and that no new column may carry either.
-    'data_source_order',
-    'pi_units',
 }
 
 #: What every column has.
