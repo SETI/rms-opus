@@ -705,9 +705,15 @@ def main() -> None:
 
             logger.close()
 
+        # A validation failure keeps this invocation from marking the schema ready, and
+        # makes it exit with failure once its other steps have run, so opus_import_all
+        # stops before its own --write-schema-version. --import-ignore-errors overrides
+        # both, for a debugging run.
+        validation_failed = False
         if args.validate_perm:
             with ctx.timed('validate_perm'):
-                do_validate.do_validate(ctx, 'perm')
+                validation_failed = not do_validate.do_validate(ctx, 'perm')
+        validation_refuses = validation_failed and not args.import_ignore_errors
 
         if args.create_cart and ctx.try_cart_later:
             logger.open(
@@ -731,6 +737,13 @@ def main() -> None:
 
         # Last, after validation, because the row is what makes the schema servable.
         if args.write_schema_version:
+            if validation_refuses:
+                import_util.log_error(
+                    ctx,
+                    'Validation logged errors, so the schema is not marked ready; '
+                    '--import-ignore-errors marks it ready regardless',
+                )
+                sys.exit(-1)
             with ctx.timed('write_schema_version'):
                 written = do_schema_version.write_schema_version(ctx)
             if not written:
@@ -746,6 +759,8 @@ def main() -> None:
             logger.info('Profile results:\n%s', s.getvalue())
 
         logger.close()
+        if validation_refuses:
+            sys.exit(-1)
 
     # This top-level handler logs the import failures that reach it, including an
     # ImportDBError raised from the pipeline. It catches Exception rather than

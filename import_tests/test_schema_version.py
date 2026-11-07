@@ -396,3 +396,39 @@ def test_the_deploy_check_passes_a_finished_schema(
     """A row of this version, ``ready``, is the one a deploy proceeds over."""
     _row(unfinished_run, db_credentials, SCHEMA_VERSION, SCHEMA_STATE_READY)
     assert _deploy_check(unfinished_run, tmp_path) == ''
+
+
+def test_a_validation_failure_keeps_the_schema_from_being_marked_ready(
+    unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
+) -> None:
+    """Validation that logs an error stops the version step, unless errors are ignored."""
+    schema = unfinished_run.schema
+    assert _step(unfinished_run, *build_run.AUX_ARGS).returncode == 0
+    try:
+        _query(
+            db_credentials,
+            schema,
+            "DELETE FROM param_info WHERE category_name = 'obs_general' AND name = 'opus_id'",
+        )
+        _no_table(db_credentials, schema)
+        logged = len(_errors(unfinished_run))
+
+        alone = _step(unfinished_run, *build_run.VALIDATE_ARGS)
+        assert alone.returncode != 0
+        combined = _step(unfinished_run, *build_run.VALIDATE_ARGS, *build_run.VERSION_ARGS)
+        assert combined.returncode != 0
+        errors = _errors(unfinished_run)[logged:]
+        assert '"obs_general.opus_id" missing param_info entry' in errors
+        assert 'the schema is not marked ready' in errors
+        assert _rows(db_credentials, schema) is None
+
+        ignored = _step(
+            unfinished_run,
+            *build_run.VALIDATE_ARGS,
+            *build_run.VERSION_ARGS,
+            '--import-ignore-errors',
+        )
+        assert ignored.returncode == 0
+        assert _rows(db_credentials, schema) == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]
+    finally:
+        assert _step(unfinished_run, *build_run.AUX_ARGS).returncode == 0

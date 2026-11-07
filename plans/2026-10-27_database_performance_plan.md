@@ -4684,6 +4684,14 @@ Nothing above this line is rewritten by an executor.
   changed.
 - `--write-schema-version` exits non-zero when it refuses, as well as logging the error,
   so `opus_import_all` and any script running it stops there.
+- A validation failure gates `ready`, which the section does not say. `do_validate` returns
+  whether any check logged an error. When one did, the invocation does not run
+  `--write-schema-version` even if asked, logging an error instead, and exits with
+  failure after its other steps, so `opus_import_all`, which runs each finishing step
+  as its own invocation, stops before the version step. `--import-ignore-errors`
+  overrides both. Without this, a schema that failed validation was marked `ready` and
+  served. The review of the PR found it. PR-07's bundle-error gate is the same rule for
+  the import's own errors.
 - The web application reads the row as `opus_app.wsgi` loads, as the section says, and
   serves Django's application itself when the row is right. When it is not, or the
   database cannot be read, the stub repeats the check on each request, answering 503

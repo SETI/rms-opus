@@ -186,7 +186,8 @@ The schema version check
 A finished database records which generation of the table schemas imported it, in a
 one-row ``schema_version`` table holding a version and a state. The import's last step,
 ``opus_import --write-schema-version``, writes it: ``opus_import_all`` runs it after
-validation, so a database ``run_full_opus_import.sh`` built has it. Each release carries
+validation, and only when validation logged no error, so a database
+``run_full_opus_import.sh`` built cleanly has it. Each release carries
 its own version, and the web application serves a database only when the row holds that
 version in the ``ready`` state. For any other database it answers every request with a
 503 whose text names the remedy.
@@ -300,8 +301,9 @@ what users see, so it is done deliberately.
    doing the work. Neither the database being served nor the installation serving it is
    touched, which is what makes every step after this one reversible.
 2. **Read the error log.** The import's own exit status is not the whole story:
-   ``--validate-perm`` and the dictionary import both report through the log rather than
-   through the status, so an automated run gates on ``ERRORS.log`` being empty.
+   the dictionary import reports through the log rather than through the status, so an
+   automated run gates on ``ERRORS.log`` being empty. A validation error does stop the
+   run, before the schema is marked ready.
    :ref:`dev_guide_import_verifying` is the full check.
 3. **Compare the new database against the one being served.** Both are named before
    anything is erased: ``opus_import_all`` names the one it is about to build, and the

@@ -294,12 +294,16 @@ opus_import.steps.do_validate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Checks the invariants no database constraint can express. Option: ``--validate-perm``,
-which runs it against the permanent namespace. **Nothing here changes the database**,
-and a failure is worth attention rather than being fatal -- the tables are already
-written, and an import that produced them is not undone by a validation error.
+which runs it against the permanent namespace. **Nothing here changes the database**:
+the tables are already written, and an import that produced them is not undone by a
+validation error. Every check runs and logs each failure at error level, so one run
+reports them all.
 
-**It reports through the logger and still exits zero**, which is one of the reasons
-:ref:`dev_guide_import_verifying` gates on ``ERRORS.log``.
+**A failure keeps the schema from being served.** When a check logged an error, the
+invocation does not run ``--write-schema-version`` even if it was asked to, logging an
+error instead, and exits with failure once its other steps have run, so
+``opus_import_all`` stops before its own version step. ``--import-ignore-errors``
+overrides both, for a debugging run.
 
 Four checks, in this order:
 

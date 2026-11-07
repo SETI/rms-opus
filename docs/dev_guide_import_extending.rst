@@ -43,7 +43,7 @@ Adding a metadata column
    ``definition`` carries the text itself. See :ref:`dev_guide_dictionary`.
 5. **Import a bundle and look at the error log.** A column with no ``param_info`` row is
    invisible; a column whose field method returns the wrong shape is reported by
-   ``--validate-perm`` through the error log rather than through an exit status.
+   ``--validate-perm`` in the error log, and the step then exits with failure.
 
 .. code-block:: python
 

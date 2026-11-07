@@ -376,7 +376,8 @@ Verifying that a run succeeded
 
 **The exit status is not sufficient.** A non-zero status means the run stopped; a zero
 status does **not** mean it was clean. Several steps report failure through the log and
-still exit zero, among them a failed dictionary import and the ``--validate-perm`` checks.
+still exit zero, among them a failed dictionary import. ``--validate-perm`` is not one of
+them: an error it logs makes the invocation exit with failure.
 
 The check that matters is, with ``<import_log_dir>`` standing for the directory that
 ``[paths] import_log_dir`` names::

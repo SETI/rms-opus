@@ -332,12 +332,17 @@ LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
                         )
 
 
-def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> None:
+def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> bool:
     """Run every validation check, driven by ``--validate-perm``.
+
+    Every check runs, so one run reports every failure; each is logged at error level.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
         namespace: The namespace holding the tables to check.
+
+    Returns:
+        True if no check logged an error, False otherwise.
     """
     ctx.logger.open('Performing database validation', limits={'info': -1, 'debug': -1})
 
@@ -346,4 +351,5 @@ def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> None:
     validate_min_max_order(ctx, namespace)
     validate_filter_wavelength_consistency(ctx, namespace)
 
-    ctx.logger.close()
+    fatal_count, error_count, _warning_count, _message_count = ctx.logger.close()
+    return bool(fatal_count + error_count == 0)
