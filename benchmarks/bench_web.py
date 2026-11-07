@@ -59,6 +59,7 @@ from benchmarks.bench_server import (
     load_server_config,
     query,
     reexec_with_socket,
+    restamp_version,
     server_environment,
     write_opus_config,
 )
@@ -90,6 +91,10 @@ from import_tests.tools import build_run
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
+
+#: The only version-row state a side's web application serves. The harness reads it from
+#: the schema as text rather than importing a side's code, so it repeats the value.
+READY_STATE = 'ready'
 
 #: The server counters whose movement over each scenario a web result records.
 SCENARIO_COUNTERS = (
@@ -430,33 +435,97 @@ def unserved(
     return [url for url in urls if not every <= served_by.get(f'/{url}', set())]
 
 
+def run_import_step(
+    side: Side, arguments: Sequence[str], env: Mapping[str, str], errors_log: Path
+) -> None:
+    """Run one of the side's import steps against the served schema.
+
+    The step is held to the rule an import run is: it may log an error and still exit
+    zero, so ``ERRORS.log`` growing during it fails it too.
+
+    Parameters:
+        side: The side whose import runs the step.
+        arguments: The step's options, as the side spells them.
+        env: The environment, whose ``OPUS_CONFIG`` names the schema.
+        errors_log: The ``ERRORS.log`` under that configuration's import log directory.
+
+    Raises:
+        WebRunError: If the step exits non-zero or logs an error.
+    """
+    name = ' '.join(arguments)
+    size = errors_log.stat().st_size if errors_log.exists() else 0
+    finished = side.run(['-m', 'opus_import', *arguments], env=env)
+    if finished.returncode != 0:
+        raise WebRunError(f'{name} exited {finished.returncode}:\n{finished.stderr[-4000:]}')
+    if errors_log.exists() and errors_log.stat().st_size > size:
+        logged = errors_log.read_text(encoding='utf-8', errors='replace')[size:][:4000]
+        raise WebRunError(f'{name} logged an error:\n{logged}')
+
+
 def reset_search_tables(
     side: Side, spelling: Spelling, env: Mapping[str, str], errors_log: Path
 ) -> None:
-    """Empty a schema's search tables with the side's own reset option.
-
-    The reset is held to the rule an import run is: it may log an error and still exit
-    zero, so ``ERRORS.log`` growing during it fails it too.
+    """Empty a schema's search tables with the side's own reset option (`run_import_step`).
 
     Parameters:
         side: The side whose import runs the reset.
         spelling: The side's spelling of it.
         env: The environment, whose ``OPUS_CONFIG`` names the schema.
         errors_log: The ``ERRORS.log`` under that configuration's import log directory.
+    """
+    run_import_step(side, [spelling.reset_search_tables], env, errors_log)
+
+
+def stamp_schema_version(
+    server: MysqlServer,
+    schema: str,
+    side: Side,
+    spelling: Spelling,
+    env: Mapping[str, str],
+    errors_log: Path,
+) -> int | None:
+    """Give the served schema the version row the side's web application checks for.
+
+    A schema both sides serve carries at most one version, and the two sides expect
+    different ones whenever a change raises it, so before a side's server starts the row
+    is set to that side's version (`restamp_version`). A schema with no row, which an
+    import before the version step built, gets one from the side's own
+    ``--write-schema-version``.
+
+    Parameters:
+        server: The owned server.
+        schema: The schema the side serves.
+        side: The side about to serve it.
+        spelling: The side's spelling of the version step.
+        env: The environment, whose ``OPUS_CONFIG`` names the schema.
+        errors_log: The ``ERRORS.log`` under that configuration's import log directory.
+
+    Returns:
+        The side's version, or None for a side whose code has none, which checks nothing
+        and whose schema is left as it is.
 
     Raises:
-        WebRunError: If the reset exits non-zero or logs an error.
+        WebRunError: If the side has a version but no step that writes the row, the step
+            fails, or the row's state is not ``ready``, which the harness does not
+            change, since only a finished import may set it.
     """
-    size = errors_log.stat().st_size if errors_log.exists() else 0
-    finished = side.run(['-m', 'opus_import', spelling.reset_search_tables], env=env)
-    if finished.returncode != 0:
+    version = side.schema_version()
+    if version is None:
+        return None
+    state = restamp_version(server, schema, version)
+    if state is None:
+        if len(spelling.write_schema_version) == 0:
+            raise WebRunError(
+                f'the side is schema version {version} but its import has no --write-schema-version'
+            )
+        run_import_step(side, spelling.write_schema_version, env, errors_log)
+    elif state != READY_STATE:
         raise WebRunError(
-            f'{spelling.reset_search_tables} exited {finished.returncode}:\n'
-            f'{finished.stderr[-4000:]}'
+            f"schema {schema}'s version row is {state!r}, not {READY_STATE!r}: an import or "
+            "append to it did not finish, and the side's application would answer every "
+            'request 503'
         )
-    if errors_log.exists() and errors_log.stat().st_size > size:
-        logged = errors_log.read_text(encoding='utf-8', errors='replace')[size:][:4000]
-        raise WebRunError(f'{spelling.reset_search_tables} logged an error:\n{logged}')
+    return version
 
 
 class WebBench:
@@ -564,6 +633,16 @@ class WebBench:
     def reset_search_tables(self) -> None:
         """Empty the search tables with the side's own reset option."""
         reset_search_tables(self.side, self.spelling, self.env, self.errors_log)
+
+    def stamp_schema_version(self) -> int | None:
+        """Give the schema the version row this side checks for (`stamp_schema_version`).
+
+        Returns:
+            The side's version, or None for a side whose code has none.
+        """
+        return stamp_schema_version(
+            self.server, self.schema, self.side, self.spelling, self.env, self.errors_log
+        )
 
     def reset(self, state: str) -> None:
         """Bring the servers to a cold state before a scenario.
@@ -888,6 +967,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             'app_loading': 'eager',
             'cache_owned': True,
         }
+        bench.stamp_schema_version()
         memcached.start()
         try:
             settings = bench.application_settings()

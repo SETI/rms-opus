@@ -6,10 +6,10 @@
 # is created by the import pipeline from the JSON table schemas that ship with the
 # release, so a release that changes one of them cannot read a database an earlier
 # release imported: columns it expects are missing, and columns it does not know
-# about are there. Nothing here can tell the two cases apart -- a database carries no
-# record of the release that wrote it -- so it is the operator's call, from the
-# release notes. When the schemas did change, the deploy is an import under the new
-# release (run_full_opus_import.sh) followed by deploy_new_code_and_database.sh.
+# about are there. The database records its schema version, and this refuses, before
+# anything is written, a release whose version differs (_check_schema_version.sh).
+# When the schemas did change, the deploy is an import under the new release
+# (run_full_opus_import.sh) followed by deploy_new_code_and_database.sh.
 #
 # What this does not do, deliberately, is upgrade the running installation in place.
 # A pip upgrade rewrites the files a running Apache is serving from, and these very
@@ -89,6 +89,15 @@ sudo echo
 
 # Beside the running installation, which goes on serving until the switch.
 source ${IMPORT_SCRIPT_DIR}/_opus_setup_environment.sh
+
+# Before anything writes to the database: a release whose schema version differs from
+# the one the database records cannot read it.
+source ${IMPORT_SCRIPT_DIR}/_check_schema_version.sh
+if ! check_schema_version; then
+    echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+    exit 1
+fi
+
 pip install mod-wsgi
 
 # Django's own contrib tables. A no-op when there is nothing to apply, and the

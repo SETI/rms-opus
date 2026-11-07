@@ -144,8 +144,10 @@ Then the deploy itself, and which one it is depends on the release.
     ./import_and_deploy/deploy_new_code_and_database.sh \
         <that database> ==3.25.0
 
-Nothing here can tell you which case you are in: a database carries no record
-of the release that wrote it. The release notes can.
+The database records its schema version, and both deploy scripts refuse,
+before writing anything, a release whose version differs from it. A refusal
+names the remedy: an import under the new release, or, for a database this
+release imported but did not finish, `opus_import --write-schema-version`.
 
 
 --------------------------------------------------------------------------------

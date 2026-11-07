@@ -30,16 +30,19 @@ The order, and what forces it
         V[do_validate]
         C3[do_cart, second attempt<br/>if the first was deferred]
         D[do_dictionary]
+        SV[do_schema_version]
 
         C1 --> C2 --> I
-        I --> P --> PT --> TN --> UM --> V --> C3 --> D
+        I --> P --> PT --> TN --> UM --> V --> C3 --> D --> SV
 
 * **The cart and cache cleanup comes first** because a ``cart`` row carries a foreign
   key onto ``obs_general``, so the cart has to be emptied before the permanent tables
   are rebuilt underneath it.
 * **The auxiliary tables come after the import** because each is derived from which
   permanent tables exist and from their schemas.
-* **The dictionary comes last** because nothing else depends on it.
+* **The dictionary comes after them** because nothing else depends on it.
+* **The schema version comes last** because its row is what makes the schema
+  servable, so it is written only once everything else, validation included, has run.
 * ``--drop-permanent-tables`` moves the first part: :mod:`opus_import.cli` skips the
   leading cleanup, because dropping the permanent tables would drop the cart again, and
   :func:`~opus_import.steps.do_import.do_import_steps` performs it after the drop
@@ -337,7 +340,8 @@ opus_import.steps.do_dictionary
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Fills ``contexts`` and ``definitions``, which is where every tooltip in the user
-interface comes from. Option: ``--import-dictionary``. It is the last thing a run does.
+interface comes from. Option: ``--import-dictionary``. Only the schema version comes
+after it.
 :ref:`dev_guide_dictionary` describes the two tables and where their content comes from.
 
 Its public functions:
@@ -356,6 +360,30 @@ The definitions builder collects every fault before writing anything; the contex
 builder stops at the first malformed line. Either way nothing is written and the
 permanent tables keep what the previous run wrote. A failed dictionary import reports through
 the log and does **not** change the run's exit status.
+
+.. _dev_guide_import_steps_do_schema_version:
+
+opus_import.steps.do_schema_version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Marks the permanent schema finished. Option: ``--write-schema-version``, which nothing
+implies: it is the last step of every sequence that finishes a database, after the
+validation. It creates the one-row ``schema_version`` table when it is absent, and then,
+by what the row holds:
+
+* **no row**: inserts :data:`~opus_import.schema_version.SCHEMA_VERSION` in the
+  ``ready`` state;
+* **this version,** ``appending``: changes the state to ``ready``, logged at info level;
+* **this version,** ``ready``: nothing, logged at debug level;
+* **another version, or more than one row**: refuses. It logs an error, leaves the
+  table as it is, and the run **exits non-zero**. A schema another release imported is
+  re-imported under this one, never restamped.
+
+It is the only writer of ``ready``. ``--cleanup-aux-tables``, ``--import-dictionary``
+and ``--do-it-all`` leave the row alone, so a schema they finished is not served until
+this step runs. ``--drop-permanent-tables --scorched-earth`` drops the table before any
+other, so an erase that stops part way leaves no version row behind.
+:ref:`dev_guide_database_schema_version` describes the table and who reads it.
 
 The four internal modules
 -------------------------

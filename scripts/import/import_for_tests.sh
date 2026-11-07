@@ -39,6 +39,7 @@ python -m opus_import --cleanup-aux-tables
 python -m opus_import --import-dictionary
 python manage.py migrate
 python -m opus_import --validate-perm
+python -m opus_import --write-schema-version
 
 echo "ALL DONE!"
 

@@ -128,9 +128,12 @@ is the same program under another name;
 
     opus_import --help
     opus_import --do-it-all COISS_2002
+    opus_import --write-schema-version
 
 ``--do-it-all`` runs the whole sequence -- import, copy to the permanent tables, and
-rebuild the auxiliary tables -- for the bundles named on the command line. Every step
+rebuild the auxiliary tables -- for the bundles named on the command line.
+``--write-schema-version`` then records the database as finished, which the web
+application requires before it serves it (:ref:`dev_guide_database_schema_version`). Every step
 can also be asked for on its own; :mod:`opus_import.cli` documents the surface and
 :mod:`opus_import.steps` documents the order the steps run in.
 
@@ -165,7 +168,7 @@ Django's own management command line with the settings module already named, so 
 installation needs nothing in its environment but ``OPUS_CONFIG``, and in a checkout
 ``manage.py`` is the same program. ``opus_config_template`` writes the configuration
 template into the working directory. ``opus_import_all`` runs a full import: every bundle
-set in order, each as its own ``opus_import`` process, and the three steps that finish the
+set in order, each as its own ``opus_import`` process, and the four steps that finish the
 database. ``opus_deploy_scripts`` writes the server deploy chain out of the distribution;
 :ref:`user_guide_deployment` is what it is for.
 
