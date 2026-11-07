@@ -107,6 +107,7 @@ def _empty_caches() -> Iterator[None]:
     def clear() -> None:
         table_names.cache_clear()
         import_constants.displayed_table_names.cache_clear()
+        import_constants.table_names_collate_as_keys.cache_clear()
         import_constants._table_names_by_name.cache_clear()
         partables.cache_clear()
         mult_table.cache_clear()
@@ -227,6 +228,46 @@ def test__ids_for_returns_what_the_server_matched_on_a_miss(
 def test__ids_for_accepts_any_iterable(planet_model: FakeMultModel) -> None:
     names: Iterable[str] = (name for name in ['Jupiter', 'Saturn'])
     assert mult_table('obs_general.planet_id').ids_for(names) == [1, 2]
+
+
+@pytest.mark.parametrize(
+    ('text', 'expected'),
+    [
+        ('Saturn', True),
+        ('N/A', True),
+        ('Sat urn', True),
+        ('Sat\u00adurn', False),
+        ('Sat\x01urn', False),
+        ('Jupitér', False),
+    ],
+    ids=['letters', 'punctuation', 'space', 'soft-hyphen', 'control', 'accent'],
+)
+def test__only_printable_ascii_collates_as_its_key(text: str, expected: bool) -> None:
+    assert import_constants.collates_as_key(text) is expected
+
+
+def test__a_table_holding_a_control_character_asks_the_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = FakeMultModel([*PLANET_ROWS, (5, 'SAT2', 'Sat\x01urn', '050')])
+    monkeypatch.setattr(apps, 'get_model', lambda _app, _name: model)
+    table = mult_table('obs_general.planet_id')
+    assert not table.ascii_only
+    assert table.ids_for(['Saturn']) == [2]
+    assert model.objects.queries == 2
+
+
+def test__table_names_collate_as_keys_only_when_all_are_printable_ascii(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [_table_name('obs_general', 'General Constraints', 10)]
+    monkeypatch.setattr(TableNames, 'objects', FakeRowManager(rows))
+    assert import_constants.table_names_collate_as_keys()
+    import_constants.table_names_collate_as_keys.cache_clear()
+    table_names.cache_clear()
+    displayed_table_names.cache_clear()
+    rows.append(_table_name('obs_soft', 'Sat\u00adurn', 20))
+    assert not import_constants.table_names_collate_as_keys()
 
 
 def test__a_table_holding_a_name_that_is_not_ascii_asks_the_server(

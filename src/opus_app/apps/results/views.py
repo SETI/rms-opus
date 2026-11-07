@@ -108,6 +108,7 @@ from opus_app.apps.tools.import_constants import (
     displayed_table_names,
     partables,
     table_names,
+    table_names_collate_as_keys,
 )
 from opus_support import format_unit_value, parse_form_type
 
@@ -602,8 +603,9 @@ def get_metadata(
             for row in displayed_table_names()
             if collation_key(row.label) in cat_keys or collation_key(row.table_name) in cat_keys
         ]
-        if len(all_tables) != len(cat_list):
-            # The server's collation decides a name the copy does not match.
+        if len(all_tables) != len(cat_list) or not table_names_collate_as_keys():
+            # The server's collation decides a name the copy does not match, and every
+            # name when a table's label or name could compare differently there.
             all_tables = list(
                 (
                     TableNames.objects.filter(label__in=cat_list, display='Y')

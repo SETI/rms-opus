@@ -466,17 +466,21 @@ table, and one of the two equal copies is kept.
     turning a search's mult selection into ids.
     :meth:`~opus_app.apps.tools.import_constants.MultTable.ids_for` answers what the
     query ``label IN (...) OR value IN (...)`` answered, and asks the server instead
-    when a name finds nothing or when the table holds a name that is not ASCII.
+    when a name finds nothing or when the table holds a name that is not printable
+    ASCII.
 
 :func:`~opus_app.apps.tools.import_constants.collation_key`
     **The server compares strings without regard to case or accent**
     (``utf8mb4_0900_ai_ci``), and the public API relies on it: ``planet=saturn`` finds
     the row labeled ``Saturn``. Every lookup here by a string compares the strings'
-    keys. **The key is the collation only for ASCII**: it folds case and accents but does
-    not ignore what the collation ignores, such as a soft hyphen. A stored string that
-    is ASCII compares the same way under both, which is why a lookup that misses, or a
-    mult table that is not all ASCII, goes to the server, and why ``get_metadata`` asks
-    the server about category names its copy does not match.
+    keys. **The key is the collation only for printable ASCII**: it folds case and
+    accents but does not ignore what the collation ignores, such as a soft hyphen or a
+    control character. Stored strings that are printable ASCII
+    (:func:`~opus_app.apps.tools.import_constants.collates_as_key`) compare the same way
+    under both, which is why a lookup that misses, or a mult table that is not all
+    printable ASCII, goes to the server, and why ``get_metadata`` asks the server about a
+    category list its copy does not match in full, or any list when a displayed table's
+    label or name is not printable ASCII.
 
 .. _dev_guide_webapp_tools_file_utils:
 

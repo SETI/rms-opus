@@ -12,11 +12,12 @@ kept.
 A lookup by a string goes through `collation_key`, which folds case and accents the way
 the server's ``utf8mb4_0900_ai_ci`` collation does, so ``saturn`` finds the row labeled
 ``Saturn`` here as it does in a query. The key is not the server's collation in full: it
-does not ignore what the collation ignores, such as a soft hyphen. It agrees with the
-server wherever the stored string is ASCII, since the collation compares ASCII letters
-without regard to case and every other ASCII character as itself. A lookup that finds
-nothing under its key, or that searches a mult table holding a name that is not ASCII,
-is therefore asked of the server, which decides it.
+does not ignore what the collation ignores, such as a soft hyphen or an ASCII control
+character. It agrees with the server wherever the stored strings are printable ASCII
+(`collates_as_key`), since the collation compares those letters without regard to case
+and every other printable ASCII character as itself. A lookup that finds nothing under
+its key, or that searches rows holding a string that is not printable ASCII, is
+therefore asked of the server, which decides it.
 """
 
 from __future__ import annotations
@@ -52,6 +53,22 @@ def collation_key(text: str) -> str:
     return ''.join(char for char in decomposed if not unicodedata.combining(char)).casefold()
 
 
+def collates_as_key(text: str) -> bool:
+    """Return whether a stored string is one `collation_key` compares as the server does.
+
+    A string of printable ASCII characters has a nonzero weight for every character
+    under the server's collation, so two such strings are equal there exactly when their
+    keys are equal. Any other string may carry a character the collation ignores.
+
+    Parameters:
+        text: The stored string.
+
+    Returns:
+        True if the string is printable ASCII.
+    """
+    return text.isascii() and text.isprintable()
+
+
 @functools.cache
 def table_names() -> tuple[TableNames, ...]:
     """Return every ``table_names`` row, in display order.
@@ -73,6 +90,20 @@ def displayed_table_names() -> tuple[TableNames, ...]:
         The rows whose ``display`` is ``Y``, compared as the server compares it.
     """
     return tuple(row for row in table_names() if collation_key(row.display) == 'y')
+
+
+@functools.cache
+def table_names_collate_as_keys() -> bool:
+    """Return whether every displayed table's label and name `collates_as_key`.
+
+    Returns:
+        True when a lookup of displayed tables by `collation_key` finds every row the
+        server's collation would.
+    """
+    return all(
+        collates_as_key(row.label) and collates_as_key(row.table_name)
+        for row in displayed_table_names()
+    )
 
 
 @functools.cache
@@ -136,8 +167,8 @@ class MultTable:
         model_name: The name of the table's model in the ``search`` app.
         rows: The rows keyed by id.
         ids_by_key: The ids of the rows whose label or value has each `collation_key`.
-        ascii_only: Whether every label and value in the table is ASCII, which is when
-            `ids_by_key` finds every row the server would.
+        ascii_only: Whether every label and value in the table `collates_as_key`, which
+            is when `ids_by_key` finds every row the server would.
     """
 
     model_name: str
@@ -151,8 +182,8 @@ class MultTable:
         A row is named when its label or its value is one of the names, as the server
         compares them; that is what the query this replaces asked for. The names are
         looked up on the server instead when one of them has no row under its key here,
-        or when the table holds a name that is not ASCII, where a key could miss a row
-        the server's collation matches.
+        or when the table holds a name that is not printable ASCII, where a key could
+        miss a row the server's collation matches.
 
         Parameters:
             names: The labels and values, in any mix.
@@ -194,7 +225,7 @@ def mult_table(param_qualified_name: str) -> MultTable:
         for name in (label, value):
             if name is not None:
                 ids_by_key.setdefault(collation_key(name), set()).add(row_id)
-                ascii_only = ascii_only and name.isascii()
+                ascii_only = ascii_only and collates_as_key(name)
     return MultTable(
         model_name,
         rows,

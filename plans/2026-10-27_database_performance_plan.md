@@ -4580,12 +4580,14 @@ Nothing above this line is rewritten by an executor.
   and the API goldens depend on it (`planet=saturn` and `planet=SATURN` beside
   `planet=Saturn`), so a dictionary keyed by the exact label would have turned those
   requests into errors. PR-03's in-memory lookups compare a key that folds case and
-  strips accents. The key is the collation only for ASCII: it does not ignore what the
-  collation ignores (a soft hyphen, for one). A stored string that is ASCII compares the
-  same way under both, since the collation compares ASCII letters without regard to case
-  and every other ASCII character as itself, so a mult table holding any name that is not
-  ASCII is always asked of the server, as is a mult name with no entry under its key and
-  a `cats` list `get_metadata`'s copy does not match in full. The unique keys on
+  strips accents. The key is the collation only for printable ASCII: it does not ignore
+  what the collation ignores (a soft hyphen, or an ASCII control character, which has zero
+  weight). Stored strings that are printable ASCII compare the same way under both, since
+  the collation compares those letters without regard to case and every other printable
+  ASCII character as itself, so a mult table holding any name that is not printable
+  ASCII is always asked of the server, as is a mult name with no entry under its key; and
+  `get_metadata` asks the server about a `cats` list its copy does not match in full, or
+  about any list when a displayed table's label or name is not printable ASCII. The unique keys on
   `definitions` hold under the same collation, so its folded keys do not collide.
 - `api_get_mult_counts` reads its labels from the in-memory mult table rather than in one
   query, which the PR section allowed for: the table is already in memory for the
