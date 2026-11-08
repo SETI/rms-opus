@@ -188,9 +188,22 @@ Every obs function
 
 The negative cases
     Each is its own run into its own schema with its own log directory, and each is
-    exempt from the clean-log rules: a volume imported twice in one invocation under
-    ``--import-check-duplicate-id``, and a volume whose index names a target the pipeline
-    does not describe under ``--import-ignore-errors``. The volumes that have no metadata
+    exempt from the clean-log rules: a volume imported twice in one invocation, with no
+    flag, which proves that the second import replaces the first and leaves one copy of
+    each observation, and a volume whose index names a target the pipeline does not
+    describe under ``--import-ignore-errors``.
+
+The fresh import's states
+    A schema of its own, two volumes imported fresh by two invocations, checks that the
+    second keeps the first's rows. Two observations are then copied under higher ids,
+    one under another volume and one under the same, and ``--finalize`` must keep each
+    copy, delete each original from every table, and log the first at info level and
+    the second as a warning; finalization's duplicate step has no fixture volume pair
+    that shares an OPUS ID to test it otherwise. An import into the result, finalized
+    but with no version row, must be refused and change nothing, and ``--finalize`` must
+    restore two keys dropped from it. The main run's schema is checked to carry exactly
+    the keys its schema files declare, read back from ``information_schema``, since the
+    goldens record tables, columns and primary keys only. The volumes that have no metadata
     directory at all cover the missing-summary branches, and the volume set reaches them
     naturally rather than by a special case.
 

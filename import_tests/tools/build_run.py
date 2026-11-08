@@ -61,7 +61,7 @@ COVERAGE_PTH_CONTENT = 'import coverage; coverage.process_startup()\n'
 #: rows are inserted, so this order is part of the fixture rather than a convenience.
 DROP_ARGS = ('--drop-permanent-tables', '--scorched-earth')
 IMPORT_ARGS = ('--do-all-import',)
-AUX_ARGS = ('--cleanup-aux-tables',)
+AUX_ARGS = ('--finalize',)
 DICTIONARY_ARGS = ('--import-dictionary',)
 VALIDATE_ARGS = ('--validate-perm',)
 VERSION_ARGS = ('--write-schema-version',)

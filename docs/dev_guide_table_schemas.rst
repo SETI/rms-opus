@@ -100,11 +100,17 @@ Defining the column
      - True to add ``AUTO_INCREMENT``.
    * - ``field_key``
      - ``"primary"``, ``"unique"``, ``"foreign"``, or any other true value for an
-       ordinary index. ``"foreign"`` requires ``field_key_foreign``.
+       ordinary index. ``"foreign"`` requires ``field_key_foreign``. On a fresh import an
+       observation or ``mult_`` table is created with only its primary key, its unique
+       keys and its ``bundle_id`` key, and finalization adds the others
+       (:ref:`dev_guide_import_db_keys`); the finished table carries every key declared.
    * - ``field_key_foreign``
      - ``[table, column]``, the target of a foreign key. The constraint is created
        ``ON DELETE RESTRICT ON UPDATE CASCADE``, and the referenced table is resolved
-       in the same namespace as the table being created.
+       in the same namespace as the table being created. An observation table's one
+       foreign key is ``obs_general_id`` onto ``obs_general.id``; its ``opus_id`` is a
+       plain key, as ``obs_general.opus_id`` is, because two bundles can produce the
+       same OPUS ID and both copies load before finalization keeps one.
    * - ``constraint``
      - Raw SQL inserted into the ``CREATE TABLE`` in place of a column definition. An
        entry carrying it defines no column.

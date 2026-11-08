@@ -10,7 +10,7 @@
         "field_name": "opus_id",
         "field_type": "char50",
         "field_notnull": true,
-        "field_key": "unique",
+        "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",

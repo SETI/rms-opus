@@ -7,7 +7,9 @@ written, and an import that produced them is not undone by a validation error.
 The checks are aimed at the OPUS invariants no database constraint can express -- that
 every user-visible column is described in ``param_info``, that a paired minimum and
 maximum are really in that order, and that observations sharing a filter agree about
-that filter's wavelengths.
+that filter's wavelengths -- and at the one a constraint expresses but does not check:
+a foreign key added with ``foreign_key_checks`` off, as finalization adds them, never
+reads the rows already there, so every row's ``obs_general`` row is counted here.
 """
 
 from __future__ import annotations
@@ -332,6 +334,47 @@ LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
                         )
 
 
+def validate_orphans(ctx: ImportContext, namespace: Namespace) -> None:
+    """Report rows whose ``obs_general`` row does not exist.
+
+    Every observation table other than ``obs_general``, and ``cart``, is anti-joined
+    against ``obs_general`` on ``obs_general_id``, and a table with any row left over is
+    reported at error level with the count.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        namespace: The namespace holding the tables to check.
+    """
+    db = ctx.db
+    assert db is not None
+    logger = ctx.logger
+
+    logger.log('debug', 'Validating references to obs_general')
+
+    if not db.table_exists(namespace, 'obs_general'):
+        return
+    tables = [
+        name for name in sorted(db.table_names(namespace, prefix='obs_')) if name != 'obs_general'
+    ]
+    if db.table_exists(namespace, 'cart'):
+        tables.append('cart')
+    q = db.quote_identifier
+    obs_general = q(db.convert_raw_to_namespace(namespace, 'obs_general'))
+    for table_name in tables:
+        child = q(db.convert_raw_to_namespace(namespace, table_name))
+        # Every interpolation is an identifier produced by quote_identifier
+        # (^[A-Za-z0-9_]+$); the statement carries no values at all.
+        cmd = f"""
+COUNT(*) FROM {child} LEFT JOIN {obs_general} ON
+{child}.{q('obs_general_id')} = {obs_general}.{q('id')}
+WHERE {obs_general}.{q('id')} IS NULL"""  # nosec B608
+        count = db.general_select(cmd)[0][0]
+        if count:
+            logger.log(
+                'error', f'Table "{table_name}" has {count} rows whose obs_general row is missing'
+            )
+
+
 def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> bool:
     """Run every validation check, driven by ``--validate-perm``.
 
@@ -350,6 +393,7 @@ def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> bool:
     validate_nulls(ctx, namespace)
     validate_min_max_order(ctx, namespace)
     validate_filter_wavelength_consistency(ctx, namespace)
+    validate_orphans(ctx, namespace)
 
     fatal_count, error_count, _warning_count, _message_count = ctx.logger.close()
     return bool(fatal_count + error_count == 0)

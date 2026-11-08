@@ -79,6 +79,9 @@ DEFAULT_CONN_MAX_AGE = 300
 #: The most rows one bulk load writes in one transaction when the file does not say.
 DEFAULT_TRANSACTION_ROWS = 100_000
 
+#: How many tables finalization builds indexes on at once when the file does not say.
+DEFAULT_INDEX_WORKERS = 1
+
 #: Names of the tables a configuration file must contain, in file order.
 TABLE_NAMES = ('database', 'paths', 'django', 'import')
 
@@ -221,6 +224,12 @@ class ImportConfig:
             the system temporary directory.
         transaction_rows: The most rows one bulk load writes in one transaction. The
             default is 100,000.
+        index_workers: How many tables finalization builds secondary indexes on at
+            once, each over a connection of its own. The default is 1, because the
+            database server, which does the work, may share the computer.
+        server_tmpdir: A directory on the database server's host that ``mysqld`` can
+            write, where it sorts the indexes finalization builds, or None to leave the
+            server's own setting.
     """
 
     table_temp_prefix: str
@@ -229,6 +238,8 @@ class ImportConfig:
     bulk_load: bool
     scratch_dir: str | None
     transaction_rows: int
+    index_workers: int
+    server_tmpdir: str | None
 
 
 @dataclass(frozen=True)
@@ -669,6 +680,8 @@ def _read_import(source: Path, values: dict[str, Any]) -> ImportConfig:
         transaction_rows=table.read_int(
             'transaction_rows', default=DEFAULT_TRANSACTION_ROWS, minimum=1
         ),
+        index_workers=table.read_int('index_workers', default=DEFAULT_INDEX_WORKERS, minimum=1),
+        server_tmpdir=table.read_optional_str('server_tmpdir'),
     )
     table.finish()
     return config

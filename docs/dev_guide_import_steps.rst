@@ -23,9 +23,12 @@ The order, and what forces it
         C1[do_cart:<br/>create the empty cart table]
         C2[do_django:<br/>drop cache_*, reset user_searches]
         I[do_import:<br/>the observation import,<br/>and the copy to permanent]
+        K[do_indexes:<br/>the secondary keys]
+        DU[do_duplicate_ids:<br/>one copy of each OPUS ID]
         P[do_param_info]
         PT[do_partables]
         TN[do_table_names]
+        A[analyze the tables]
         UM[do_update_mult_info]
         V[do_validate]
         C3[do_cart, second attempt<br/>if the first was deferred]
@@ -33,13 +36,19 @@ The order, and what forces it
         SV[do_schema_version]
 
         C1 --> C2 --> I
-        I --> P --> PT --> TN --> UM --> V --> C3 --> D --> SV
+        I --> K --> DU --> P --> PT --> TN --> A --> UM --> V --> C3 --> D --> SV
 
 * **The cart and cache cleanup comes first** because a ``cart`` row carries a foreign
   key onto ``obs_general``, so the cart has to be emptied before the permanent tables
   are rebuilt underneath it.
+* **The keys come right after the import**, and the foreign keys after every other key,
+  because a fresh import loads its tables without them; the duplicate step follows,
+  because it finds the copies through the key on ``opus_id`` and deletes them through
+  the keys on ``obs_general_id``.
 * **The auxiliary tables come after the import** because each is derived from which
   permanent tables exist and from their schemas.
+* **The tables are analyzed after the auxiliary tables**, so that the statistics count
+  every table's rows.
 * **The dictionary comes after them** because nothing else depends on it.
 * **The schema version comes last** because its row is what makes the schema
   servable, so it is written only once everything else, validation included, has run.
@@ -94,9 +103,30 @@ opus_import.steps.do_import
 
 The observation import. Option: ``--import``, plus everything that implies it. It also
 owns the work for options that are **not** steps of their own --
-``--drop-permanent-tables``, ``--delete-import-bundles`` and
-``--analyze-permanent-tables`` -- because each has to happen at a particular point in
-this sequence.
+``--drop-permanent-tables`` and ``--delete-import-bundles`` -- because each has to happen
+at a particular point in this sequence.
+
+**The path.** An invocation that imports bundles first reads the target schema's state
+(:func:`~opus_import.steps.do_import.choose_import_path`) and logs one line naming the
+path it takes, the schema and its version:
+
+* **no** ``schema_version`` **row, and none of the secondary keys finalization adds** on
+  any permanent observation table -- an empty schema, or one a fresh import is part way
+  through, since a full import runs one invocation per bundle group: the **fresh
+  import**. It sets ``ImportDBSuper.direct``, under
+  which the import namespace names the permanent observation and ``mult_`` tables, so
+  every bundle is written straight to them, and creates each of those tables with only
+  the keys a load needs (:ref:`dev_guide_import_db_keys`);
+* **a version row**: the **import tables**, staged in the import namespace and copied
+  over the permanent tables at the end;
+* **no version row but such a key**: a finalization that was interrupted. The import is
+  refused with a fatal message naming ``--finalize``, before anything is written, and
+  the invocation exits with failure. A finalization-only invocation completes it, since
+  every finalization step is idempotent; ``--drop-permanent-tables --scorched-earth``
+  starts over.
+
+:mod:`opus_import.cli` chooses before its first write; an invocation that erases the
+schema first chooses after the erase.
 
 :func:`~opus_import.steps.do_import.do_import_steps` is the whole sequence, and it runs
 whether or not ``--import`` was given, because it is where the copy and the drops live.
@@ -107,31 +137,116 @@ In order:
    :attr:`~opus_import.context.ImportContext.max_table_id_cache` and
    :attr:`~opus_import.context.ImportContext.created_import_mult_tables`.
 2. Expand the bundle descriptors into a list of bundle ids.
-3. **Drop the old import tables**, under ``--drop-old-import-tables`` unless
-   ``--leave-old-import-tables`` overrides it.
-4. **Drop the permanent tables**, under ``--drop-permanent-tables`` **and**
+3. **Drop the permanent tables**, under ``--drop-permanent-tables`` **and**
    ``--scorched-earth`` together. This has to happen before the import so that there
    are no vestigial ``mult_`` tables and the row ids restart from zero. The cart and
    cache cleanup that :mod:`opus_import.cli` skipped is performed here, after the drop.
-5. **Delete the named bundles from the import tables**, when ``--import`` or
+4. **Choose the path**, as above, when ``--import`` was given and it is not chosen yet.
+5. **Drop the old import tables**, under ``--drop-old-import-tables`` unless
+   ``--leave-old-import-tables`` overrides it. A fresh import has none, and logs that at
+   debug level instead.
+6. **Delete the named bundles from the import tables**, when ``--import`` or
    ``--delete-import-bundles`` was given and the import tables were not just dropped.
-6. **Import each bundle** through
-   :func:`~opus_import.steps.do_import.import_one_bundle`. A failure aborts the loop
-   unless ``--import-ignore-errors``, and any error at all makes the function return
-   False -- so the copy below never happens.
-7. **Delete from the permanent tables** every bundle the import tables hold, read as
+   A fresh import skips it, at debug level.
+7. **Import each bundle** through
+   :func:`~opus_import.steps.do_import.import_one_bundle`. **A fresh import first
+   deletes the bundle from the permanent tables**
+   (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`), so
+   importing a bundle again, in the same invocation or a later one, replaces it rather
+   than loading a second copy. A failure aborts the loop unless
+   ``--import-ignore-errors``, and any error at all makes the function return False --
+   so the copy below never happens.
+8. **Delete from the permanent tables** every bundle the import tables hold, read as
    ``SELECT DISTINCT bundle_id`` off the import ``obs_general``. ``--delete-permanent-bundles``
    separately deletes the bundles named on the command line.
-8. **Copy the import tables over the permanent ones**, under
+9. **Copy the import tables over the permanent ones**, under
    ``--copy-import-to-permanent-tables``, in this order: create the permanent tables
    each bundle needs, delete duplicate OPUS IDs from the permanent tables, copy the
    ``mult_`` tables, then copy each bundle's ``obs_`` rows.
-9. **Drop the new import tables** under ``--drop-new-import-tables``, and **analyze the
-   permanent tables** under ``--analyze-permanent-tables``.
+10. **Drop the new import tables** under ``--drop-new-import-tables``.
+
+Steps 8 to 10 belong to the import tables; a fresh import has already written the
+permanent tables, and says so at debug level. ``--delete-permanent-bundles`` runs on
+either path. A failed fresh import leaves a schema with no version row, which the web
+application refuses to serve and both deploy scripts refuse to promote.
 
 :func:`~opus_import.steps.do_import.import_one_bundle` is the per-bundle driver
 described in :ref:`dev_guide_import_per_bundle`. It resets the per-bundle caches, looks
 the bundle up in ``BUNDLE_INFO``, finds the primary index files and imports each one.
+
+.. _dev_guide_import_steps_create_indexes:
+
+opus_import.steps.do_indexes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Adds the secondary keys a fresh import left out. Option: ``--create-indexes``, the first
+step of ``--finalize``.
+
+:func:`~opus_import.steps.do_indexes.create_indexes` compares, for every permanent
+observation and ``mult_`` table, the keys
+:func:`~opus_import.table_keys.add_secondary_indexes` derives from its schema with the
+keys the server reports (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.read_table_keys`),
+**by kind and ordered columns, never by name**, since the server names an unnamed
+composite key itself (``time1_2``). Only the missing keys are added, so the step is
+idempotent: after an interruption it adds what is left, and on a finished schema it
+logs that every table has every key and does nothing. It then adds them in three
+phases:
+
+1. **The plain keys**, grouped per table into ``ALTER TABLE ... ADD KEY ..., ADD KEY
+   ...`` statements, run for different tables at once over ``[import] index_workers``
+   connections (:meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`). The
+   list includes a plain key on every foreign-key column no other key leads -- each
+   child's ``obs_general_id`` -- so the foreign keys find their index built rather than
+   building it themselves one table at a time.
+2. **The foreign keys**, one at a time with ``foreign_key_checks`` off, after every
+   plain key: with the checks off, adding a foreign key is an in-place change that does
+   not read the rows already there, and each one takes an exclusive lock on
+   ``obs_general``. Because nothing then checks those rows, validation counts the
+   orphans instead (:ref:`dev_guide_import_steps_do_validate`).
+3. **ANALYZE** of every table that gained a key.
+
+**Memory and temporary space.** Each connection's sort buffer
+(``innodb_ddl_buffer_size``, where the server has it) is set to a quarter of the
+server's buffer pool divided by ``index_workers``, so the builds running at once hold at
+most a quarter of the pool together. The sorts write to the server's own temporary
+directory unless ``[import] server_tmpdir`` names another -- a directory on the database
+server's host, never the import's ``scratch_dir``. Each key's temporary space is
+estimated as ``rows x (key bytes + primary key bytes + 10) x 1.3``. When
+``server_tmpdir`` is given and its free space can be read from where the import runs,
+that free space (or the data directory's, if less) is a budget the statements running at
+once must fit together: a table's keys are split into as many statements as it takes,
+a statement waits until it fits beside the ones running, and a key whose own estimate
+exceeds the whole budget is refused with an error naming it. Otherwise each table's keys
+go in one statement, and the total estimate is logged.
+
+Each statement's and each table's wall-clock go into ``--timing-json``, as
+``create_indexes:<table>:<keys>`` and ``create_indexes:<table>``, with each foreign key
+as ``create_indexes:<table>:<key>``.
+
+.. _dev_guide_import_steps_do_duplicate_ids:
+
+opus_import.steps.do_duplicate_ids
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Keeps one copy of each OPUS ID. It has no option of its own: ``--finalize`` runs it,
+after the keys.
+
+Two bundles can produce the same OPUS ID -- Galileo SSI does, and so can a calibrated
+bundle and its raw counterpart -- and ``obs_general.opus_id`` has a plain key, not a
+unique one, so both copies load side by side; no import looks for them while it loads.
+:func:`~opus_import.steps.do_duplicate_ids.delete_duplicate_opus_ids` finds every OPUS
+ID with more than one ``obs_general`` row, **keeps the row with the highest id**, and
+deletes the others' rows from every observation table by ``obs_general_id``, children
+first. Row ids are handed out in import order, so the copy kept is the one imported
+last: a duplicate between bundles is settled in favor of the later bundle's copy, and a
+bundle imported again replaces its own earlier copy.
+
+Each deleted copy is logged at info level when it came from a different bundle than the
+copy kept, and as a **warning** when it came from the same bundle, which is a fault in
+that bundle's data. The step runs with foreign-key checks on, so a row elsewhere that
+references a deleted copy stops it rather than being orphaned, and ends by checking that
+no OPUS ID has two rows; a failure keeps the invocation from marking the schema ready,
+as a validation failure does.
 
 .. _dev_guide_import_steps_table_swap:
 
@@ -346,7 +461,7 @@ error instead, and exits with failure once its other steps have run, so
 the same invocation overrides both, for a debugging run; ``opus_import_all`` never passes
 it to its finishing steps.
 
-Four checks, in this order:
+Five checks, in this order:
 
 :func:`~opus_import.steps.do_validate.validate_param_info`
     Every user-visible column of every ``obs_`` table has a ``param_info`` row. A list
@@ -378,6 +493,12 @@ Four checks, in this order:
     all observations sharing a filter agree about that filter's nine wavelength
     columns. ``obs_instrument_coiss`` is grouped by camera as well as by filter,
     because its two cameras carry filters of the same name. Reported as a warning.
+
+:func:`~opus_import.steps.do_validate.validate_orphans`
+    Counts, for every observation table other than ``obs_general`` and for ``cart``,
+    the rows whose ``obs_general_id`` names no ``obs_general`` row, by an anti-join. A
+    foreign key added with the checks off, as finalization adds them, never reads the
+    rows already there, so this is the check that it holds. Any orphan is an error.
 
 .. _dev_guide_import_steps_do_dictionary:
 
@@ -425,7 +546,7 @@ by what the row holds:
   table as it is, and the run **exits non-zero**. A schema another release imported is
   re-imported under this one, never restamped.
 
-It is the only writer of ``ready``. ``--cleanup-aux-tables``, ``--import-dictionary``
+It is the only writer of ``ready``. ``--finalize``, ``--import-dictionary``
 and ``--do-it-all`` leave the row alone, so a schema they finished is not served until
 this step runs. ``--drop-permanent-tables --scorched-earth`` drops the table before any
 other, so an erase that stops part way leaves no version row behind.
@@ -474,8 +595,13 @@ Its functions:
     Drops everything in a namespace, in the four phases above.
 
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`
-    ``DELETE ... WHERE bundle_id = ...`` across a namespace, other tables before
-    ``obs_general``.
+    Deletes one bundle across a namespace, in chunks: the bundle's ``obs_general`` ids
+    are taken ``[import] transaction_rows`` at a time, and each chunk's rows go from the
+    other tables, by ``bundle_id`` and an ``obs_general_id`` range, before
+    ``obs_general``. Each statement is its own transaction, so none holds a whole large
+    bundle's undo. A last pass by ``bundle_id`` alone catches any row of the bundle
+    another table holds without its ``obs_general`` row. Every statement selects through
+    the ``bundle_id`` key, which each of these tables is created with.
 
 :func:`~opus_import.steps.do_import_tables.delete_opus_id_from_obs_tables`
     The same for one OPUS ID.
@@ -494,11 +620,15 @@ Its functions:
 
 :func:`~opus_import.steps.do_import_tables.read_existing_import_opus_id`
     The OPUS IDs already in the import ``obs_general``, for
-    ``--import-check-duplicate-id``.
+    ``--import-check-duplicate-id`` on the import-tables path. A fresh import never
+    reads them: finalization's duplicate step settles a duplicate instead
+    (:ref:`dev_guide_import_steps_do_duplicate_ids`).
 
 :func:`~opus_import.steps.do_import_tables.analyze_all_tables`
-    Runs the backend's analyze over every ``obs_`` and ``mult_`` table in a namespace.
-    ``cart`` and the auxiliary tables are not analyzed.
+    Runs the backend's analyze over every ``obs_`` and ``mult_`` table in a namespace,
+    for ``--analyze-permanent-tables``, which :mod:`opus_import.cli` runs after the
+    auxiliary tables. ``cart`` and the auxiliary tables are not analyzed; each auxiliary
+    table is analyzed by its swap.
 
 .. _dev_guide_import_steps_do_import_index:
 
@@ -570,7 +700,8 @@ to the permanent namespace.
 **Naming.** :func:`~opus_import.import_util.table_name_mult` builds
 ``mult_<table>_<column>``, both lowercased --
 ``mult_obs_general_planet_id``. In the import namespace it gains the prefix:
-``imp_mult_obs_general_planet_id``.
+``imp_mult_obs_general_planet_id`` -- except on a fresh import, where the import
+namespace names the permanent table itself, so the two namespaces below are one table.
 
 **Caching, and its three lifetimes.** Every table is read once per bundle into the
 context's cache and written back at the end of each index file, so importing an index of a

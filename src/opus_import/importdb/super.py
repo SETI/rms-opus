@@ -16,25 +16,34 @@ statements that produced them.
 from __future__ import annotations
 
 import contextlib
+import threading
+import time
 import warnings
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
 from opus_config.config import DEFAULT_TRANSACTION_ROWS
+from opus_import.table_keys import is_key_filtered_table
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Iterator, Sequence
+    from collections.abc import Collection, Iterator, Mapping, Sequence
     from typing import TextIO
 
     import pdslogger
 
+    from opus_import.table_keys import TableKey
+
 Namespace = Literal['import', 'perm', 'all']
 """Which set of tables an operation applies to.
 
-An import run writes to prefixed *import* tables and only copies them over the *perm*
-(permanent) tables the web application reads once the run has succeeded. ``'all'`` means
-both, and is accepted only where reading both makes sense. When no import prefix is
-configured the two namespaces are the same tables.
+An import into a schema with a version row writes to prefixed *import* tables and only
+copies them over the *perm* (permanent) tables the web application reads once the run
+has succeeded. A fresh import writes the observation and mult tables directly: with
+`ImportDBSuper.direct` set, ``'import'`` names the permanent observation and mult tables.
+``'all'`` means both, and is accepted only where reading both makes sense. When no import
+prefix is configured the two namespaces are the same tables.
 """
 
 DBRow = dict[str, Any]
@@ -64,6 +73,67 @@ class ImportDBError(Exception):
     """Raised when a database operation fails; always aborts the import."""
 
 
+@dataclass(frozen=True)
+class IndexStatement:
+    """One statement that adds keys to one table, for `ImportDBSuper.build_indexes`.
+
+    Attributes:
+        sql: The statement.
+        label: What the statement adds, as the log and ``--timing-json`` name it.
+        space_bytes: The server's estimated temporary space for the sort the statement
+            runs, which a space budget counts against.
+    """
+
+    sql: str
+    label: str
+    space_bytes: int
+
+
+class _SpaceBudget:
+    """Temporary space the index builds running at once share, in bytes.
+
+    A statement takes its estimate from the budget before it runs and returns it after,
+    waiting while the statements already running hold too much for it to fit. No
+    statement's estimate exceeds the whole budget, which the caller checks, so a waiting
+    statement always fits once the others finish.
+    """
+
+    def __init__(self, total: int | None) -> None:
+        """Start with the whole budget free.
+
+        Parameters:
+            total: The budget, or None for no budget, under which nothing waits.
+        """
+        self._total = total
+        self._free = total
+        self._condition = threading.Condition()
+
+    @contextlib.contextmanager
+    def held(self, space_bytes: int) -> Iterator[None]:
+        """Hold a statement's share of the budget while the body runs.
+
+        Parameters:
+            space_bytes: The statement's estimate.
+
+        Yields:
+            Nothing; the body runs holding the share.
+        """
+        if self._total is None:
+            yield
+            return
+        with self._condition:
+            assert self._free is not None
+            self._condition.wait_for(lambda: self._free is not None and self._free >= space_bytes)
+            self._free -= space_bytes
+        try:
+            yield
+        finally:
+            with self._condition:
+                assert self._free is not None
+                self._free += space_bytes
+                self._condition.notify_all()
+
+
 class ImportDBSuper:
     """The brand-independent half of the import pipeline's database interface.
 
@@ -85,6 +155,12 @@ class ImportDBSuper:
         tables_created: The tables created through this instance, in creation order,
             so a caller can post-process the ones an import run made. A read-only run
             records the tables it would have created.
+        direct: True on a fresh import, which writes the permanent observation and mult
+            tables directly: ``'import'`` then names those tables in every method, and
+            `create_table` creates each of them with only the keys a load needs
+            (`opus_import.table_keys.create_time_keys`). Every other table keeps its
+            import namespace. Set by the import's choice of path, never by a caller
+            otherwise.
     """
 
     # Any DB-API 2.0 connection; the base class uses only `cursor()` and `commit()`, and
@@ -152,6 +228,7 @@ class ImportDBSuper:
         self.transaction_rows = transaction_rows
 
         self.tables_created: list[str] = []
+        self.direct = False
 
         self._enter_stack: list[str] = []
         self._cmds_executed: list[str] = []
@@ -166,7 +243,7 @@ class ImportDBSuper:
         # as both the sentinel and the saved value.
         self._warning_handler_installed = False
 
-    def _is_import_namespace(self, table_name: str) -> bool:
+    def _is_prefixed(self, table_name: str) -> bool:
         """Return whether a table name carries the import prefix.
 
         Parameters:
@@ -174,12 +251,40 @@ class ImportDBSuper:
 
         Returns:
             True if an import prefix is configured and the name starts with it, matched
-            without regard to case. False when no prefix is configured, because then no
-            table belongs to the import namespace alone.
+            without regard to case.
         """
         if self.import_prefix is None:
             return False
         return table_name.lower().startswith(self.import_prefix.lower())
+
+    def _is_direct_table(self, raw_table_name: str) -> bool:
+        """Return whether ``'import'`` names a table's permanent copy in this run.
+
+        Parameters:
+            raw_table_name: The table's raw name.
+
+        Returns:
+            True when `direct` is set and the table is an observation or mult table.
+        """
+        return self.direct and is_key_filtered_table(raw_table_name)
+
+    def _is_import_namespace(self, table_name: str) -> bool:
+        """Return whether a table, as the database spells it, is in the import namespace.
+
+        Parameters:
+            table_name: The table name as the database spells it.
+
+        Returns:
+            With `direct` set, True for an unprefixed observation or mult table and False
+            for a prefixed one, which the permanent table stands in for. Otherwise, True
+            if an import prefix is configured and the name starts with it, matched
+            without regard to case; False when no prefix is configured, because then no
+            table belongs to the import namespace alone.
+        """
+        if self._is_prefixed(table_name):
+            raw = table_name[len(self.import_prefix or '') :]
+            return not self._is_direct_table(raw)
+        return self._is_direct_table(table_name)
 
     def _is_perm_namespace(self, table_name: str) -> bool:
         """Return whether a table name lacks the import prefix.
@@ -202,10 +307,11 @@ class ImportDBSuper:
             raw_table_name: The table name without any namespace prefix.
 
         Returns:
-            The prefixed name for ``'import'``, and the unchanged name otherwise or when
-            no import prefix is configured.
+            The prefixed name for ``'import'``, and the unchanged name otherwise, when no
+            import prefix is configured, or for an observation or mult table under
+            `direct`.
         """
-        if self.import_prefix is None:
+        if self.import_prefix is None or self._is_direct_table(raw_table_name):
             return raw_table_name
         if namespace == 'import':
             return self.import_prefix + raw_table_name
@@ -222,9 +328,12 @@ class ImportDBSuper:
 
         Returns:
             The name with the import prefix removed for ``'import'``, and the unchanged
-            name otherwise or when no import prefix is configured.
+            name otherwise, when no import prefix is configured, or for an observation or
+            mult table under `direct`.
         """
-        if self.import_prefix is None:
+        if self.import_prefix is None or (
+            not self._is_prefixed(table_name) and self._is_direct_table(table_name)
+        ):
             return table_name
         if namespace == 'import':
             assert table_name.lower().startswith(self.import_prefix.lower())
@@ -407,6 +516,307 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::quote_identifier must be overridden')
+
+    def open_sibling_connection(self) -> ImportDBSuper:
+        """Open a second connection to the same schema, configured as this one is.
+
+        The sibling has no logger: `_enter` and `_exit` swap the process-wide
+        `warnings.showwarning`, which is not safe to do from several threads at once, so
+        a sibling reports nothing and its caller logs on its behalf. It shares `direct`.
+
+        Returns:
+            A new instance of this brand, connected.
+
+        Raises:
+            ImportDBError: If the connection fails.
+        """
+        sibling = type(self)(
+            self.db_hostname,
+            self.db_name,
+            self.db_schema,
+            self.db_user,
+            self.db_password,
+            mult_form_types=self._mult_form_types,
+            import_prefix=self.import_prefix,
+            logger=None,
+            read_only=self.read_only,
+            bulk_load=self.bulk_load,
+            scratch_dir=self.scratch_dir,
+            transaction_rows=self.transaction_rows,
+        )
+        sibling.direct = self.direct
+        return sibling
+
+    def build_indexes(
+        self,
+        table_to_statements: Mapping[str, Sequence[IndexStatement]],
+        *,
+        workers: int = 1,
+        server_tmpdir: str | None = None,
+        space_budget: int | None = None,
+        serial: bool = False,
+    ) -> dict[str, list[tuple[str, float]]]:
+        """Run statements that add keys, different tables at once across sibling connections.
+
+        Each table's statements run in order on one connection. Up to ``workers`` tables
+        build at once, each over a sibling connection of its own (`open_sibling_connection`),
+        unless ``serial`` asks for one table at a time on this connection. Every
+        connection is prepared for the builds first (`_prepare_index_session`). Under a
+        space budget a statement waits until its estimate fits beside the statements
+        already running. A failed statement stops its table's later statements; the
+        other tables finish, and the failures are raised together once every table is
+        done.
+
+        Parameters:
+            table_to_statements: Each table's statements, keyed by raw table name. A table
+                with none is skipped.
+            workers: The most tables that build at once; at least 1.
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None to leave the server's setting.
+            space_budget: The temporary space, in bytes, the statements running at once
+                may hold together, or None for no budget. No statement's estimate may
+                exceed it.
+            serial: True to build one table at a time on this connection.
+
+        Returns:
+            Each table's statements, keyed by table, as ``(label, seconds)`` pairs in the
+            order they ran, the table's own logged duration being their sum.
+
+        Raises:
+            ImportDBError: If any statement failed, naming every failure.
+            ValueError: If ``workers`` is less than 1, or a statement's estimate exceeds
+                the budget, before anything runs.
+        """
+        if workers < 1:
+            raise ValueError(f'workers must be at least 1, not {workers}')
+        tables = [table for table in sorted(table_to_statements) if table_to_statements[table]]
+        if space_budget is not None:
+            for table in tables:
+                for statement in table_to_statements[table]:
+                    if statement.space_bytes > space_budget:
+                        raise ValueError(
+                            f'{table}: {statement.label} needs an estimated '
+                            f'{statement.space_bytes} bytes of temporary space, more than the '
+                            f'{space_budget} available'
+                        )
+        budget = _SpaceBudget(space_budget)
+        durations: dict[str, list[tuple[str, float]]] = {}
+        failures: list[str] = []
+
+        def build_table(db: ImportDBSuper, table: str) -> list[tuple[str, float]]:
+            """Run one table's statements in order on one connection.
+
+            Parameters:
+                db: The connection to run them on.
+                table: The table.
+
+            Returns:
+                Each statement's label and seconds.
+            """
+            timed: list[tuple[str, float]] = []
+            for statement in table_to_statements[table]:
+                with budget.held(statement.space_bytes):
+                    started = time.perf_counter()
+                    db.run_ddl(statement.sql)
+                    timed.append((statement.label, time.perf_counter() - started))
+            return timed
+
+        def report(table: str, timed: list[tuple[str, float]]) -> None:
+            """Record and log one finished table.
+
+            Parameters:
+                table: The table.
+                timed: Its statements' labels and seconds.
+            """
+            durations[table] = timed
+            if self.logger:
+                self.logger.log(
+                    'info', f'  Built keys on "{table}" in {sum(s for _, s in timed):.2f} s'
+                )
+
+        if serial or workers == 1:
+            self._prepare_index_session(1 if serial else workers, server_tmpdir)
+            for table in tables:
+                try:
+                    report(table, build_table(self, table))
+                except ImportDBError as e:
+                    failures.append(f'{table}: {e}')
+        else:
+            local = threading.local()
+            siblings: list[ImportDBSuper] = []
+            siblings_lock = threading.Lock()
+
+            def build_on_sibling(table: str) -> list[tuple[str, float]]:
+                """Run one table's statements on this thread's sibling connection.
+
+                Parameters:
+                    table: The table.
+
+                Returns:
+                    Each statement's label and seconds.
+                """
+                sibling = getattr(local, 'sibling', None)
+                if sibling is None:
+                    sibling = self.open_sibling_connection()
+                    sibling._prepare_index_session(workers, server_tmpdir)
+                    local.sibling = sibling
+                    with siblings_lock:
+                        siblings.append(sibling)
+                return build_table(sibling, table)
+
+            try:
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    futures = {pool.submit(build_on_sibling, table): table for table in tables}
+                    for future in as_completed(futures):
+                        table = futures[future]
+                        try:
+                            report(table, future.result())
+                        except ImportDBError as e:
+                            failures.append(f'{table}: {e}')
+            finally:
+                for sibling in siblings:
+                    sibling.close()
+        if failures:
+            message = 'Building keys failed: ' + '; '.join(sorted(failures))
+            if self.logger:
+                self.logger.log('fatal', message)
+            raise ImportDBError(message)
+        return durations
+
+    def _prepare_index_session(self, workers: int, server_tmpdir: str | None) -> None:
+        """Set this connection's session up for building indexes.
+
+        Parameters:
+            workers: How many connections build at once, which the server's sort memory
+                is divided among.
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None to leave the server's setting.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::_prepare_index_session must be overridden')
+
+    def run_ddl(self, cmd: str) -> None:
+        """Run one statement that changes a table's definition.
+
+        Parameters:
+            cmd: The statement, which carries no parameters.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::run_ddl must be overridden')
+
+    def close(self) -> None:
+        """Close the connection.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::close must be overridden')
+
+    def read_table_keys(self, namespace: Namespace) -> dict[str, list[TableKey]]:
+        """Return the keys every table of a namespace has, as the server reports them.
+
+        Parameters:
+            namespace: The namespace to read.
+
+        Returns:
+            Each table's keys, keyed by raw table name; a table with no key is absent.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::read_table_keys must be overridden')
+
+    def add_keys_statement(
+        self, namespace: Namespace, raw_table_name: str, keys: Sequence[TableKey]
+    ) -> str:
+        """Return one statement that adds plain, unique or primary keys to a table.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            keys: The keys to add; no foreign key.
+
+        Returns:
+            The statement.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::add_keys_statement must be overridden')
+
+    def add_foreign_key_statement(
+        self, namespace: Namespace, raw_table_name: str, key: TableKey
+    ) -> str:
+        """Return one statement that adds a foreign key to a table.
+
+        Parameters:
+            namespace: The namespace holding the table and the one it references.
+            raw_table_name: The table, without its namespace prefix.
+            key: The foreign key.
+
+        Returns:
+            The statement.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::add_foreign_key_statement must be overridden')
+
+    def add_foreign_keys(self, statements: Sequence[IndexStatement]) -> list[tuple[str, float]]:
+        """Add foreign keys one at a time, without checking the rows already there.
+
+        Parameters:
+            statements: The statements, from `add_foreign_key_statement`.
+
+        Returns:
+            Each statement's label and seconds, in the order they ran.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::add_foreign_keys must be overridden')
+
+    def key_space_bytes(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        schema: Sequence[SchemaColumn],
+        key: TableKey,
+    ) -> int:
+        """Estimate the temporary space the server's sort needs to build one key.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            schema: The table's schema, which gives its columns' widths.
+            key: The key.
+
+        Returns:
+            The estimate, in bytes.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::key_space_bytes must be overridden')
+
+    def index_space_budget(self, server_tmpdir: str | None) -> int | None:
+        """Return the temporary space the index builds running at once may hold together.
+
+        Parameters:
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None when none is configured.
+
+        Returns:
+            The budget in bytes, or None when there is none to enforce.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::index_space_budget must be overridden')
 
     def table_names(
         self, namespace: Namespace, prefix: str | list[str] | tuple[str, ...] | None = None

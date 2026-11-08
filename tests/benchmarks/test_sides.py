@@ -90,7 +90,7 @@ def test_timing_options_name_the_file() -> None:
     ('field', 'expected'),
     [
         ('bundle_import', '--do-all-import'),
-        ('finalize', '--cleanup-aux-tables'),
+        ('finalize', '--finalize'),
         ('reset_search_tables', '--drop-cache-tables'),
         ('validate', '--validate-perm'),
         ('erase', ('--drop-permanent-tables', '--scorched-earth')),

@@ -85,7 +85,7 @@ A row for an OPUS ID does not need to be present in each table, and in fact neve
 In addition to the fields corresponding to the metadata available in the UI, each ``obs_*`` table also has several columns for internal use:
 
 * ``obs_general_id``: An integer corresponding to the ``id`` field in the ``obs_general`` table. This field is used to join multiple tables together so that a single joined row has all of the metadata from all of the relevant tables. This field does not exist in the ``obs_general`` table itself.
-* ``opus_id``: The OPUS ID of the row
+* ``opus_id``: The OPUS ID of the row. It is a plain key, not a foreign key: a table other than ``obs_general`` references ``obs_general`` through ``obs_general_id`` alone
 * ``bundle_id``: The PDS3 Volume ID of the row
 * ``instrument_id``: The PDS3 Instrument ID of the row. Unlike the others in this list, this one is not in every ``obs_*`` table: the per-instrument tables do not carry it (the table's own name already says which instrument it is), and neither do the Galileo and Voyager mission tables. Read the table's schema in ``table_schemas/`` rather than assuming it is there.
 * ``id``: An integer that can be used to quickly index a row in the table
@@ -102,7 +102,7 @@ Here is an example of the schema for the ``obs_general`` table (note this may ch
     | Field                | Type         | Null | Key | Default           |
     +----------------------+--------------+------+-----+-------------------+
     | id                   | int unsigned | NO   | PRI | NULL              |
-    | opus_id              | char(50)     | NO   | UNI | NULL              |
+    | opus_id              | char(50)     | NO   | MUL | NULL              |
     | bundle_id            | char(11)     | NO   | MUL | NULL              |
     | instrument_id        | int unsigned | NO   | MUL | NULL              |
     | mission_id           | int unsigned | NO   | MUL | NULL              |
@@ -126,6 +126,8 @@ Here is an example of the schema for the ``obs_general`` table (note this may ch
     | preview_images       | json         | NO   |     | NULL              |
     | timestamp            | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +----------------------+--------------+------+-----+-------------------+
+
+``opus_id`` carries a plain key rather than a unique one. Two bundles can produce the same OPUS ID, and an import loads both copies side by side; the import's finalization then keeps the copy imported last and deletes the others, so a finished database has one row per OPUS ID.
 
 Most of these fields should be self-evident. Some numeric fields have ``1`` and ``2`` versions. These are the minimum and maximum values of the metadata for a "dual column range". ``right_asc`` has two extra fields (``right_asc`` and ``d_right_asc``). These are internal fields that are used to help speed up searching on wrap-around longitudes. Also, ``obs_general`` has a hidden field ``preview_images`` which stores information (in the form of a JSON encoded PdsViewSet) about all of the preview images for each observation so that they can be rapidly retrieved when displaying the Gallery View without needing to join tables together.
 

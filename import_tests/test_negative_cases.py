@@ -5,7 +5,7 @@ appends, so a shared log directory would put a deliberately broken run's errors 
 of the clean run's assertions -- and each is exempt from the main run's clean-log rules.
 
 A negative run stops after its imports rather than following the main run's full
-sequence. Everything asserted here is in place by then: ``--do-all-import`` copies to the
+sequence. Everything asserted here is in place by then: a fresh import writes the
 permanent tables, so ``obs_general`` and the target-name mult table are written, and the
 rest of what these tests read is the run's own step statuses and error log. The auxiliary
 tables, the dictionary, the Django migration and the validation produce nothing any
@@ -107,28 +107,32 @@ def test_metadata_less_volume_still_imports(
     assert _row_count(db_credentials, main_run.schema, bundle) > 0
 
 
-def test_duplicate_opus_ids_are_resolved_rather_than_rejected(
-    duplicate_id_run: ImportRun,
+def test_a_bundle_imported_twice_in_one_invocation_leaves_one_copy(
+    duplicate_id_run: ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
-    """Importing a volume twice in one invocation runs to the end without an error.
+    """Importing a volume twice in one invocation runs clean and leaves one copy of each row.
 
-    That is the failure mode the flag prevents, and asking the finished database how
-    many rows share an OPUS id would not see it: ``obs_general.opus_id`` carries a
-    ``unique`` key, so a duplicate row cannot exist to be counted -- the *insert* is what
-    fails. The flag makes the import delete each OPUS id's earlier row before writing the
-    new one; without it, the second copy's insert is rejected and the run logs an error.
+    A fresh import deletes each bundle from the permanent tables before writing it, so
+    the second import of the volume replaces the first rather than loading beside it,
+    and no OPUS id has two ``obs_general`` rows even though the key on it is not unique.
     """
     stopped = [
         f'{" ".join(step.arguments)} exited {step.returncode}' for step in duplicate_id_run.steps
     ]
     assert [line for line in stopped if not line.endswith('exited 0')] == []
     assert run_logs.distinct(run_logs.read_messages(duplicate_id_run.paths.errors_log)) == []
+    shared = golden_io.query(
+        db_credentials,
+        duplicate_id_run.schema,
+        f'SELECT opus_id FROM `{_OBS_GENERAL}` GROUP BY opus_id HAVING COUNT(*) > 1',
+    )
+    assert shared == []
 
 
 def test_duplicate_id_run_imported_the_observations(
     duplicate_id_run: ImportRun, main_run: ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
-    """Resolving the duplicates kept every observation rather than dropping any."""
+    """Importing the volume twice kept every observation of it rather than dropping any."""
     bundle = negative_cases.bundle_for_class(negative_cases.DUPLICATE_ID_INSTRUMENT_CLASS)
     duplicated = _row_count(db_credentials, duplicate_id_run.schema, bundle)
     clean = _row_count(db_credentials, main_run.schema, bundle)

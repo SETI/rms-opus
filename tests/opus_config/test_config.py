@@ -190,6 +190,8 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('import_.bulk_load', True),
         ('import_.scratch_dir', None),
         ('import_.transaction_rows', 100_000),
+        ('import_.index_workers', 1),
+        ('import_.server_tmpdir', None),
     ],
 )
 def test_load_config_defaults_every_optional_key(
@@ -217,6 +219,8 @@ def test_load_config_defaults_every_optional_key(
         ('import', 'bulk_load', 'false', False),
         ('import', 'scratch_dir', '"/scratch/opus"', '/scratch/opus'),
         ('import', 'transaction_rows', '5', 5),
+        ('import', 'index_workers', '3', 3),
+        ('import', 'server_tmpdir', '"/var/tmp/mysql_ddl"', '/var/tmp/mysql_ddl'),
     ],
 )
 def test_load_config_reads_an_optional_key_that_is_written(
@@ -335,6 +339,18 @@ def test_load_config_accepts_a_whole_number_probability(
             "[import] 'transaction_rows' must be a whole number, not float",
         ),
         (
+            adding('import', 'index_workers', '0'),
+            "[import] 'index_workers' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'index_workers', '"max"'),
+            "[import] 'index_workers' must be a whole number, not str",
+        ),
+        (
+            adding('import', 'server_tmpdir', 'false'),
+            "[import] 'server_tmpdir' must be a string, not bool",
+        ),
+        (
             adding('import', 'bulk_load', '"yes"'),
             "[import] 'bulk_load' must be true or false, not str",
         ),
@@ -404,6 +420,9 @@ def test_load_config_accepts_a_whole_number_probability(
         'transaction-rows-zero',
         'transaction-rows-negative',
         'transaction-rows-not-whole',
+        'index-workers-zero',
+        'index-workers-not-whole',
+        'server-tmpdir-not-a-string',
         'bulk-load-given-a-string',
         'scratch-dir-given-a-number',
         'health-checks-given-a-string',

@@ -1527,9 +1527,7 @@ class ObsFiles(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        'ObsGeneral', models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     version_number = models.PositiveIntegerField()
@@ -1557,7 +1555,7 @@ class ObsFiles(models.Model):
 
 class ObsGeneral(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
-    opus_id = models.CharField(unique=True, max_length=50)
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.PositiveIntegerField()
     mission_id = models.PositiveIntegerField()
@@ -1593,9 +1591,7 @@ class ObsInstrumentCocirs(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     detector_id = models.PositiveIntegerField()
     instrument_mode_blinking_flag = models.PositiveIntegerField(blank=True, null=True)
@@ -1619,9 +1615,7 @@ class ObsInstrumentCoiss(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     data_conversion_type = models.PositiveIntegerField()
     compression_type = models.PositiveIntegerField()
@@ -1650,9 +1644,7 @@ class ObsInstrumentCouvis(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     observation_type = models.PositiveIntegerField()
     integration_duration = models.FloatField(blank=True, null=True)
@@ -1684,9 +1676,7 @@ class ObsInstrumentCovims(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_mode_id = models.PositiveIntegerField()
     spectral_editing = models.PositiveIntegerField()
@@ -1714,9 +1704,7 @@ class ObsInstrumentGossi(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     observation_id = models.CharField(max_length=20)
     image_id = models.CharField(max_length=15)
@@ -1741,9 +1729,7 @@ class ObsInstrumentNhlorri(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_compression_type = models.PositiveIntegerField()
     binning_mode = models.PositiveIntegerField()
@@ -1762,9 +1748,7 @@ class ObsInstrumentNhmvic(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_compression_type = models.PositiveIntegerField()
     id = models.PositiveIntegerField(primary_key=True)
@@ -1782,9 +1766,7 @@ class ObsInstrumentVgiss(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     image_id = models.CharField(max_length=10)
     scan_mode = models.PositiveIntegerField()
@@ -1811,9 +1793,7 @@ class ObsMissionCassini(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     obs_name = models.CharField(max_length=30)
@@ -1845,9 +1825,7 @@ class ObsMissionGalileo(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     orbit_number = models.PositiveIntegerField(blank=True, null=True)
     spacecraft_clock_count1 = models.FloatField()
@@ -1867,9 +1845,7 @@ class ObsMissionHubble(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     stsci_group_id = models.CharField(max_length=9)
@@ -1907,9 +1883,7 @@ class ObsMissionNewHorizons(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     spacecraft_clock_count1 = models.FloatField()
@@ -1930,9 +1904,7 @@ class ObsMissionVoyager(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     ert = models.FloatField(blank=True, null=True)
     spacecraft_clock_count1 = models.FloatField()
@@ -1953,9 +1925,7 @@ class ObsPds(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     data_set_id = models.CharField(max_length=40)
@@ -1979,9 +1949,7 @@ class ObsProfile(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     occ_type = models.PositiveIntegerField(blank=True, null=True)
@@ -2009,9 +1977,7 @@ class ObsRingGeometry(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     ring_radius1 = models.FloatField(blank=True, null=True)
@@ -2135,9 +2101,7 @@ class ObsSurfaceGeometry(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     target_list = models.TextField(blank=True, null=True)
@@ -2156,9 +2120,7 @@ class ObsSurfaceGeometryAdrastea(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -2253,9 +2215,7 @@ class ObsSurfaceGeometryAegaeon(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -2350,9 +2310,7 @@ class ObsSurfaceGeometryAlbiorix(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -2447,9 +2405,7 @@ class ObsSurfaceGeometryAmalthea(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -2544,9 +2500,7 @@ class ObsSurfaceGeometryAnthe(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -2641,9 +2595,7 @@ class ObsSurfaceGeometryAriel(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -2738,9 +2690,7 @@ class ObsSurfaceGeometryAtlas(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -2835,9 +2785,7 @@ class ObsSurfaceGeometryBebhionn(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -2932,9 +2880,7 @@ class ObsSurfaceGeometryBelinda(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3029,9 +2975,7 @@ class ObsSurfaceGeometryBergelmir(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3126,9 +3070,7 @@ class ObsSurfaceGeometryBestla(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3223,9 +3165,7 @@ class ObsSurfaceGeometryBianca(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3320,9 +3260,7 @@ class ObsSurfaceGeometryCallirrhoe(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3417,9 +3355,7 @@ class ObsSurfaceGeometryCallisto(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3514,9 +3450,7 @@ class ObsSurfaceGeometryCalypso(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3611,9 +3545,7 @@ class ObsSurfaceGeometryCharon(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3708,9 +3640,7 @@ class ObsSurfaceGeometryCordelia(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3805,9 +3735,7 @@ class ObsSurfaceGeometryCressida(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3902,9 +3830,7 @@ class ObsSurfaceGeometryCupid(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -3999,9 +3925,7 @@ class ObsSurfaceGeometryDaphnis(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4096,9 +4020,7 @@ class ObsSurfaceGeometryDesdemona(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4193,9 +4115,7 @@ class ObsSurfaceGeometryDespina(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4290,9 +4210,7 @@ class ObsSurfaceGeometryDione(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4387,9 +4305,7 @@ class ObsSurfaceGeometryEarth(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4484,9 +4400,7 @@ class ObsSurfaceGeometryElara(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4581,9 +4495,7 @@ class ObsSurfaceGeometryEnceladus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4678,9 +4590,7 @@ class ObsSurfaceGeometryEpimetheus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4775,9 +4685,7 @@ class ObsSurfaceGeometryErriapus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4872,9 +4780,7 @@ class ObsSurfaceGeometryEuropa(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -4969,9 +4875,7 @@ class ObsSurfaceGeometryFornjot(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5066,9 +4970,7 @@ class ObsSurfaceGeometryGalatea(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5163,9 +5065,7 @@ class ObsSurfaceGeometryGanymede(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5260,9 +5160,7 @@ class ObsSurfaceGeometryGreip(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5357,9 +5255,7 @@ class ObsSurfaceGeometryHati(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5454,9 +5350,7 @@ class ObsSurfaceGeometryHelene(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5551,9 +5445,7 @@ class ObsSurfaceGeometryHimalia(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5648,9 +5540,7 @@ class ObsSurfaceGeometryHydra(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5745,9 +5635,7 @@ class ObsSurfaceGeometryHyperion(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5842,9 +5730,7 @@ class ObsSurfaceGeometryIapetus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -5939,9 +5825,7 @@ class ObsSurfaceGeometryIjiraq(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6036,9 +5920,7 @@ class ObsSurfaceGeometryIo(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6133,9 +6015,7 @@ class ObsSurfaceGeometryJanus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6230,9 +6110,7 @@ class ObsSurfaceGeometryJarnsaxa(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6327,9 +6205,7 @@ class ObsSurfaceGeometryJuliet(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6424,9 +6300,7 @@ class ObsSurfaceGeometryJupiter(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6521,9 +6395,7 @@ class ObsSurfaceGeometryKari(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6618,9 +6490,7 @@ class ObsSurfaceGeometryKerberos(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6715,9 +6585,7 @@ class ObsSurfaceGeometryKiviuq(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6812,9 +6680,7 @@ class ObsSurfaceGeometryLarissa(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -6909,9 +6775,7 @@ class ObsSurfaceGeometryLoge(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7006,9 +6870,7 @@ class ObsSurfaceGeometryMab(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7103,9 +6965,7 @@ class ObsSurfaceGeometryMethone(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7200,9 +7060,7 @@ class ObsSurfaceGeometryMetis(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7297,9 +7155,7 @@ class ObsSurfaceGeometryMimas(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7394,9 +7250,7 @@ class ObsSurfaceGeometryMiranda(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7491,9 +7345,7 @@ class ObsSurfaceGeometryMoon(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7588,9 +7440,7 @@ class ObsSurfaceGeometryMundilfari(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7685,9 +7535,7 @@ class ObsSurfaceGeometryNaiad(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7782,9 +7630,7 @@ class ObsSurfaceGeometryNarvi(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7879,9 +7725,7 @@ class ObsSurfaceGeometryNeptune(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -7976,9 +7820,7 @@ class ObsSurfaceGeometryNereid(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8073,9 +7915,7 @@ class ObsSurfaceGeometryNix(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8170,9 +8010,7 @@ class ObsSurfaceGeometryOberon(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8267,9 +8105,7 @@ class ObsSurfaceGeometryOphelia(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8364,9 +8200,7 @@ class ObsSurfaceGeometryPaaliaq(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8461,9 +8295,7 @@ class ObsSurfaceGeometryPallene(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8558,9 +8390,7 @@ class ObsSurfaceGeometryPan(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8655,9 +8485,7 @@ class ObsSurfaceGeometryPandora(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8752,9 +8580,7 @@ class ObsSurfaceGeometryPerdita(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8849,9 +8675,7 @@ class ObsSurfaceGeometryPhoebe(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -8946,9 +8770,7 @@ class ObsSurfaceGeometryPluto(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9043,9 +8865,7 @@ class ObsSurfaceGeometryPolydeuces(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9140,9 +8960,7 @@ class ObsSurfaceGeometryPortia(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9237,9 +9055,7 @@ class ObsSurfaceGeometryPrometheus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9334,9 +9150,7 @@ class ObsSurfaceGeometryProteus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9431,9 +9245,7 @@ class ObsSurfaceGeometryPuck(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9528,9 +9340,7 @@ class ObsSurfaceGeometryRhea(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9625,9 +9435,7 @@ class ObsSurfaceGeometryRosalind(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9722,9 +9530,7 @@ class ObsSurfaceGeometryS2004S12(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9819,9 +9625,7 @@ class ObsSurfaceGeometryS2004S13(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -9916,9 +9720,7 @@ class ObsSurfaceGeometrySaturn(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10013,9 +9815,7 @@ class ObsSurfaceGeometrySiarnaq(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10110,9 +9910,7 @@ class ObsSurfaceGeometrySkathi(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10207,9 +10005,7 @@ class ObsSurfaceGeometrySkoll(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10304,9 +10100,7 @@ class ObsSurfaceGeometryStyx(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10401,9 +10195,7 @@ class ObsSurfaceGeometrySurtur(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10498,9 +10290,7 @@ class ObsSurfaceGeometrySuttungr(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10595,9 +10385,7 @@ class ObsSurfaceGeometryTarqeq(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10692,9 +10480,7 @@ class ObsSurfaceGeometryTarvos(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10789,9 +10575,7 @@ class ObsSurfaceGeometryTelesto(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10886,9 +10670,7 @@ class ObsSurfaceGeometryTethys(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -10983,9 +10765,7 @@ class ObsSurfaceGeometryThalassa(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11080,9 +10860,7 @@ class ObsSurfaceGeometryThebe(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11177,9 +10955,7 @@ class ObsSurfaceGeometryThrymr(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11274,9 +11050,7 @@ class ObsSurfaceGeometryTitan(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11371,9 +11145,7 @@ class ObsSurfaceGeometryTitania(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11468,9 +11240,7 @@ class ObsSurfaceGeometryTriton(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11565,9 +11335,7 @@ class ObsSurfaceGeometryUmbriel(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11662,9 +11430,7 @@ class ObsSurfaceGeometryUranus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11759,9 +11525,7 @@ class ObsSurfaceGeometryVenus(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11856,9 +11620,7 @@ class ObsSurfaceGeometryYmir(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     planetocentric_latitude1 = models.FloatField(blank=True, null=True)
@@ -11953,9 +11715,7 @@ class ObsSurfaceGeometryName(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     target_name = models.PositiveIntegerField()
@@ -11974,9 +11734,7 @@ class ObsTypeImage(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     image_type_id = models.PositiveIntegerField(blank=True, null=True)
@@ -11999,9 +11757,7 @@ class ObsWavelength(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.ForeignKey(
-        ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id'
-    )
+    opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     wavelength1 = models.FloatField(blank=True, null=True)

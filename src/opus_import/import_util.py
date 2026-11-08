@@ -674,6 +674,24 @@ def read_schema_for_table(
         raise
 
 
+def read_schema_for_existing_table(ctx: ImportContext, table_name: str) -> TableSchema | None:
+    """Read the schema an existing observation or mult table was created from.
+
+    Parameters:
+        ctx: The import run's context, for the logger.
+        table_name: The table's raw name, such as ``obs_instrument_coiss``,
+            ``obs_surface_geometry__titan`` or ``mult_obs_general_planet_id``.
+
+    Returns:
+        The table's own schema, the surface geometry template with the target filled
+        in, or the mult template for a mult table; None for a table no packaged schema
+        describes.
+    """
+    if table_name.lower().startswith('mult_'):
+        return read_schema_for_table(ctx, 'mult_template')
+    return read_schema_for_table(ctx, table_name)
+
+
 def find_max_table_id(ctx: ImportContext, table_name: str) -> Any:
     """Return the largest row id a table holds in either namespace.
 

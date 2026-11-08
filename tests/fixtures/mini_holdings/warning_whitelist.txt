@@ -17,11 +17,6 @@ Created new database "opus_import_test_\d+"
 # run starts from nothing. Saying so loudly is correct on a production database.
 \*\* DELETING ALL PERMANENT TABLES \*\*
 
-# Each bundle is its own `--do-all-import` invocation, so every one after the first
-# writes over permanent tables whose cart table this run never creates. The production
-# import script has the same shape, which is why the goldens encode it.
-Deleting bundles from perm tables but cart table not wiped
-
 # A Cassini ISS filter combination the polarization table does not describe. The import
 # stores CLEAR and says so; the value is right for the image, and the sampler picks rows
 # for filter diversity, so reaching one of these is the point rather than an accident.

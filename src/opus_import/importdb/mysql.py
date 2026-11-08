@@ -29,6 +29,7 @@ import numbers
 import os
 import re
 import tempfile
+import time
 from typing import TYPE_CHECKING, Any
 
 try:
@@ -43,9 +44,17 @@ from opus_import.importdb.super import (
     DBRow,
     ImportDBError,
     ImportDBSuper,
+    IndexStatement,
     Namespace,
     ResultRow,
     SchemaColumn,
+)
+from opus_import.table_keys import (
+    KeyKind,
+    TableKey,
+    create_time_keys,
+    declared_keys,
+    is_key_filtered_table,
 )
 
 if TYPE_CHECKING:
@@ -90,6 +99,22 @@ MYSQL_WIDTH_FIELD_TYPE = re.compile(r'(char|varchar)([1-9][0-9]*)')
 MYSQL_ENUM_FIELD_TYPE = 'enum'
 
 
+def _free_bytes(path: str) -> int | None:
+    """Return the bytes free to an unprivileged writer on a directory's filesystem.
+
+    Parameters:
+        path: The directory.
+
+    Returns:
+        The free bytes, or None when the path cannot be read from here.
+    """
+    try:
+        stat = os.statvfs(path)
+    except OSError:
+        return None
+    return stat.f_bavail * stat.f_frsize
+
+
 def is_renderable_field_type(field_type: str) -> bool:
     """Return whether `ImportDBMySQL.create_table` can render a ``field_type``.
 
@@ -106,6 +131,49 @@ def is_renderable_field_type(field_type: str) -> bool:
         or field_type == MYSQL_ENUM_FIELD_TYPE
     )
 
+
+#: The bytes one value of a fixed ``field_type`` takes in an index entry, for the space
+#: estimate of an index build (`ImportDBMySQL.key_space_bytes`). A width type takes up to
+#: four bytes a character, utf8mb4's widest, and a ``varchar`` two more for its length; a
+#: type absent here cannot be indexed without a prefix and is estimated by
+#: `MYSQL_UNSIZED_KEY_BYTES`.
+MYSQL_KEY_BYTES: dict[str, int] = {
+    'int1': 1,
+    'int2': 2,
+    'int3': 3,
+    'int4': 4,
+    'int8': 8,
+    'uint1': 1,
+    'uint2': 2,
+    'uint3': 3,
+    'uint4': 4,
+    'uint8': 8,
+    'real4': 4,
+    'real8': 8,
+    'flag_yesno': 4,
+    'flag_onoff': 4,
+    'mult_idx': 4,
+    'timestamp': 4,
+    'datetime': 5,
+    'enum': 2,
+}
+
+#: The index-entry bytes assumed for a column type `MYSQL_KEY_BYTES` does not size: the
+#: most an index key prefix may take under InnoDB's DYNAMIC row format.
+MYSQL_UNSIZED_KEY_BYTES = 3072
+
+#: The bytes an index entry carries beyond its key and the primary key, in the estimate
+#: ``rows x (key bytes + primary key bytes + 10) x 1.3``.
+MYSQL_INDEX_ENTRY_OVERHEAD = 10
+
+#: The factor the estimate allows for the sort's own overhead.
+MYSQL_INDEX_SORT_FACTOR = 1.3
+
+#: The largest ``innodb_ddl_buffer_size`` the server accepts.
+MYSQL_MAX_DDL_BUFFER_SIZE = 4_294_967_295
+
+#: The smallest ``innodb_ddl_buffer_size`` the server accepts.
+MYSQL_MIN_DDL_BUFFER_SIZE = 65_536
 
 #: The server's "lock wait timeout exceeded", which a statement fails with when it waited
 #: ``lock_wait_timeout`` seconds for a table another session holds.
@@ -856,6 +924,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
     ) -> bool:
         """Create a new table from the given OPUS table schema.
 
+        The table carries every key its schema declares, except an observation or mult
+        table under `direct`, which carries only the keys a load needs
+        (`opus_import.table_keys.create_time_keys`).
+
         Parameters:
             namespace: The namespace to create the table in.
             raw_table_name: The table, without its namespace prefix.
@@ -881,7 +953,6 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
             cmd = ''
-            key_cmd = ''
 
             for column in schema:
                 if 'pi_referred_slug' in column:
@@ -936,29 +1007,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 if field_type == 'timestamp':
                     cmd += ' ON UPDATE CURRENT_TIMESTAMP'
 
-                key_type = column.get('field_key', False)
                 foreign_key = column.get('field_key_foreign', False)
-                assert not foreign_key or key_type == 'foreign'
-                if key_type:
-                    if key_cmd != '':
-                        key_cmd += ',\n'
-                    if key_type == 'unique':
-                        quoted_field = self.quote_identifier(field_name)
-                        key_cmd += f'  UNIQUE KEY {quoted_field} ({quoted_field})'
-                    elif key_type == 'primary':
-                        key_cmd += f'  PRIMARY KEY ({self.quote_identifier(field_name)})'
-                    elif key_type == 'foreign':
-                        assert foreign_key
-                        key_cmd += f'  FOREIGN KEY ({self.quote_identifier(field_name)})'
-                        key_cmd += ' REFERENCES '
-                        f_table = self.convert_raw_to_namespace(namespace, foreign_key[0])
-                        key_cmd += self.quote_identifier(f_table)
-                        key_cmd += f'({self.quote_identifier(foreign_key[1])})'
-                        key_cmd += ' ON DELETE RESTRICT ON UPDATE CASCADE'
-                    else:
-                        quoted_field = self.quote_identifier(field_name)
-                        key_cmd += f'  KEY {quoted_field} ({quoted_field})'
+                assert not foreign_key or column.get('field_key') == 'foreign'
 
+            if self.direct and is_key_filtered_table(raw_table_name):
+                keys = create_time_keys(raw_table_name, schema)
+            else:
+                keys = declared_keys(schema)
+            key_cmd = ',\n'.join(f'  {self._create_key_clause(namespace, key)}' for key in keys)
             if key_cmd != '':
                 cmd += ',\n' + key_cmd
             cmd = f'CREATE TABLE {self.quote_identifier(table_name)} (\n' + cmd + '\n)'
@@ -986,6 +1042,335 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             self._table_info_cache.clear()
 
         return True
+
+    def _create_key_clause(self, namespace: Namespace, key: TableKey) -> str:
+        """Return a key as a ``CREATE TABLE`` clause names it.
+
+        A plain or unique key is named after its first column, as the server would name
+        it, and a foreign key is left for the server to name.
+
+        Parameters:
+            namespace: The namespace of the table, and of the table a foreign key
+                references.
+            key: The key.
+
+        Returns:
+            The clause.
+        """
+        q = self.quote_identifier
+        columns = ', '.join(q(column) for column in key.columns)
+        if key.kind == 'primary':
+            return f'PRIMARY KEY ({columns})'
+        if key.kind == 'foreign':
+            assert key.references is not None
+            table, referenced = key.references
+            referenced_columns = ', '.join(q(column) for column in referenced)
+            return (
+                f'FOREIGN KEY ({columns}) REFERENCES '
+                f'{q(self.convert_raw_to_namespace(namespace, table))}({referenced_columns}) '
+                'ON DELETE RESTRICT ON UPDATE CASCADE'
+            )
+        prefix = 'UNIQUE KEY' if key.kind == 'unique' else 'KEY'
+        return f'{prefix} {q(key.columns[0])} ({columns})'
+
+    def add_keys_statement(
+        self, namespace: Namespace, raw_table_name: str, keys: Sequence[TableKey]
+    ) -> str:
+        """Return one ``ALTER TABLE`` that adds plain, unique or primary keys to a table.
+
+        The keys are unnamed, so the server names each after its first column, as it
+        would have in ``CREATE TABLE``, or with a suffix where that name is taken.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            keys: The keys to add; no foreign key.
+
+        Returns:
+            The statement.
+        """
+        q = self.quote_identifier
+        clauses = []
+        for key in keys:
+            assert key.kind != 'foreign', key
+            columns = ', '.join(q(column) for column in key.columns)
+            kind = {'primary': 'PRIMARY KEY', 'unique': 'UNIQUE KEY', 'key': 'KEY'}[key.kind]
+            clauses.append(f'ADD {kind} ({columns})')
+        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+        return f'ALTER TABLE {q(table_name)} ' + ', '.join(clauses)
+
+    def add_foreign_key_statement(
+        self, namespace: Namespace, raw_table_name: str, key: TableKey
+    ) -> str:
+        """Return one ``ALTER TABLE`` that adds a foreign key to a table.
+
+        Parameters:
+            namespace: The namespace holding the table and the one it references.
+            raw_table_name: The table, without its namespace prefix.
+            key: The foreign key.
+
+        Returns:
+            The statement, rendered as ``CREATE TABLE`` renders the key.
+        """
+        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+        clause = self._create_key_clause(namespace, key)
+        return f'ALTER TABLE {self.quote_identifier(table_name)} ADD {clause}'
+
+    def read_table_keys(self, namespace: Namespace) -> dict[str, list[TableKey]]:
+        """Return the keys every table of a namespace has, from ``information_schema``.
+
+        Plain, unique and primary keys come from ``STATISTICS``, and foreign keys from
+        ``KEY_COLUMN_USAGE`` joined to ``REFERENTIAL_CONSTRAINTS``; a ``FULLTEXT`` or
+        spatial index is not a key here and is left out.
+
+        Parameters:
+            namespace: The namespace to read.
+
+        Returns:
+            Each table's keys, keyed by raw table name, plain, unique and primary keys
+            first, in the order the server lists them; a table with no key is absent.
+
+        Raises:
+            ImportDBError: If the server rejects a query.
+        """
+        index_rows = self._execute_and_fetchall(
+            """
+SELECT `TABLE_NAME`, `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME`, `INDEX_TYPE`
+FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA`=%s
+ORDER BY `TABLE_NAME`, `INDEX_NAME`, `SEQ_IN_INDEX`""",
+            'read_table_keys',
+            [self.db_schema],
+        )
+        foreign_rows = self._execute_and_fetchall(
+            """
+SELECT `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`COLUMN_NAME`,
+`k`.`REFERENCED_TABLE_NAME`, `k`.`REFERENCED_COLUMN_NAME`
+FROM `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` `k`
+JOIN `INFORMATION_SCHEMA`.`REFERENTIAL_CONSTRAINTS` `r`
+ON `r`.`CONSTRAINT_SCHEMA`=`k`.`CONSTRAINT_SCHEMA`
+AND `r`.`CONSTRAINT_NAME`=`k`.`CONSTRAINT_NAME` AND `r`.`TABLE_NAME`=`k`.`TABLE_NAME`
+WHERE `k`.`TABLE_SCHEMA`=%s
+ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
+            'read_table_keys',
+            [self.db_schema],
+        )
+
+        def in_namespace(table_name: str) -> bool:
+            """Return whether a table, as the server spells it, is in the namespace."""
+            if namespace == 'all':
+                return True
+            if namespace == 'import':
+                return self._is_import_namespace(table_name)
+            return self._is_perm_namespace(table_name)
+
+        indexes: dict[tuple[str, str], tuple[KeyKind, list[str]]] = {}
+        for table_name, index_name, non_unique, column_name, index_type in index_rows:
+            if not in_namespace(table_name) or index_type not in ('BTREE', 'HASH'):
+                continue
+            kind: KeyKind
+            if index_name == 'PRIMARY':
+                kind = 'primary'
+            elif int(non_unique) == 0:
+                kind = 'unique'
+            else:
+                kind = 'key'
+            indexes.setdefault((table_name, index_name), (kind, []))[1].append(column_name)
+        foreign: dict[tuple[str, str], tuple[str, list[str], list[str]]] = {}
+        for table_name, constraint_name, column_name, ref_table, ref_column in foreign_rows:
+            if not in_namespace(table_name):
+                continue
+            entry = foreign.setdefault((table_name, constraint_name), (ref_table, [], []))
+            entry[1].append(column_name)
+            entry[2].append(ref_column)
+
+        keys: dict[str, list[TableKey]] = {}
+        for (table_name, _index_name), (kind, columns) in indexes.items():
+            raw = self.convert_namespace_to_raw(namespace, table_name)
+            keys.setdefault(raw, []).append(TableKey(kind, tuple(columns)))
+        for (table_name, _constraint_name), (ref_table, columns, ref_columns) in foreign.items():
+            raw = self.convert_namespace_to_raw(namespace, table_name)
+            ref_raw = self.convert_namespace_to_raw(namespace, ref_table)
+            keys.setdefault(raw, []).append(
+                TableKey('foreign', tuple(columns), (ref_raw, tuple(ref_columns)))
+            )
+        return keys
+
+    def key_space_bytes(
+        self,
+        namespace: Namespace,
+        raw_table_name: str,
+        schema: Sequence[SchemaColumn],
+        key: TableKey,
+    ) -> int:
+        """Estimate the temporary space the server's sort needs to build one key.
+
+        The estimate is ``rows x (key bytes + primary key bytes + 10) x 1.3``, with the
+        rows the server's statistics count and each column's bytes from
+        `MYSQL_KEY_BYTES`.
+
+        Parameters:
+            namespace: The namespace holding the table.
+            raw_table_name: The table, without its namespace prefix.
+            schema: The table's schema, which gives its columns' types.
+            key: The key.
+
+        Returns:
+            The estimate, in bytes.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+        res = self._execute_and_fetchall(
+            'SELECT `TABLE_ROWS` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=%s '
+            'AND `TABLE_NAME`=%s',
+            'key_space_bytes',
+            [self.db_schema, table_name],
+        )
+        rows = int(res[0][0] or 0) if res else 0
+        types = {
+            column['field_name']: column['field_type']
+            for column in schema
+            if 'field_name' in column
+        }
+        primary = [k for k in declared_keys(schema) if k.kind == 'primary']
+        primary_columns = primary[0].columns if primary else ()
+
+        def width(columns: Sequence[str]) -> int:
+            """Return the index-entry bytes of some columns' values together."""
+            total = 0
+            for column in columns:
+                field_type = types.get(column, '')
+                width_type = MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type)
+                if field_type in MYSQL_KEY_BYTES:
+                    total += MYSQL_KEY_BYTES[field_type]
+                elif width_type is not None:
+                    total += 4 * int(width_type[2]) + (2 if width_type[1] == 'varchar' else 0)
+                else:
+                    total += MYSQL_UNSIZED_KEY_BYTES
+            return total
+
+        entry = width(key.columns) + width(primary_columns) + MYSQL_INDEX_ENTRY_OVERHEAD
+        return int(rows * entry * MYSQL_INDEX_SORT_FACTOR)
+
+    def index_space_budget(self, server_tmpdir: str | None) -> int | None:
+        """Return the temporary space the index builds running at once may hold together.
+
+        There is a budget only when ``server_tmpdir`` is given and is a directory this
+        process can read the free space of, which it can when the server shares the
+        computer: the budget is that free space, or the server's data directory's when
+        that is less and readable too.
+
+        Parameters:
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None when none is configured.
+
+        Returns:
+            The budget in bytes, or None.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        if server_tmpdir is None:
+            return None
+        free = _free_bytes(server_tmpdir)
+        if free is None:
+            return None
+        datadir = self._execute_and_fetchall('SELECT @@GLOBAL.datadir', 'index_space_budget')
+        if datadir:
+            datadir_free = _free_bytes(str(datadir[0][0]))
+            if datadir_free is not None:
+                free = min(free, datadir_free)
+        return free
+
+    def _prepare_index_session(self, workers: int, server_tmpdir: str | None) -> None:
+        """Size this session's sort memory for index builds, and point its sorts at a directory.
+
+        Where the server has ``innodb_ddl_buffer_size``, the session's is set to a quarter
+        of the buffer pool divided by ``workers``, so the builds running at once hold at
+        most a quarter of the pool together; ``innodb_ddl_threads`` is left at the
+        server's value. ``innodb_tmpdir`` is set only when ``server_tmpdir`` is given.
+
+        Parameters:
+            workers: How many connections build at once.
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None to leave the server's setting.
+
+        Raises:
+            ImportDBError: If the server refuses a setting.
+        """
+        if not MYSQLDB_AVAILABLE or self.read_only:
+            return
+        res = self._execute_and_fetchall(
+            "SHOW VARIABLES WHERE `Variable_name` IN ('innodb_ddl_buffer_size', "
+            "'innodb_buffer_pool_size')",
+            '_prepare_index_session',
+        )
+        variables = {str(name): int(value) for name, value in res}
+        try:
+            if 'innodb_ddl_buffer_size' in variables:
+                size = variables['innodb_buffer_pool_size'] // 4 // workers
+                size = max(MYSQL_MIN_DDL_BUFFER_SIZE, min(MYSQL_MAX_DDL_BUFFER_SIZE, size))
+                self._execute('SET SESSION innodb_ddl_buffer_size = %s', [size])
+            if server_tmpdir is not None:
+                self._execute('SET SESSION innodb_tmpdir = %s', [server_tmpdir])
+        except MySQLdb.Error as e:
+            if self.logger:
+                self.logger.log('fatal', f'Failed to prepare the session for index builds: {e}')
+            raise ImportDBError(e) from e
+
+    def run_ddl(self, cmd: str) -> None:
+        """Run one statement that changes a table's definition.
+
+        Parameters:
+            cmd: The statement, which carries no parameters.
+
+        Raises:
+            ImportDBError: If the server rejects it.
+        """
+        with self._operation('run_ddl'):
+            try:
+                self._execute(cmd, mutates=True)
+            except MySQLdb.Error as e:
+                if self.logger:
+                    self.logger.log('fatal', f'Failed in "{cmd}": {e}')
+                raise ImportDBError(e) from e
+            self._table_info_cache.clear()
+
+    def add_foreign_keys(self, statements: Sequence[IndexStatement]) -> list[tuple[str, float]]:
+        """Add foreign keys one at a time, with ``foreign_key_checks`` off.
+
+        With the checks off, ``ADD FOREIGN KEY`` is an in-place change that does not read
+        the rows already there; the import's validation counts orphans instead. The
+        session's checks are turned back on however the statements end.
+
+        Parameters:
+            statements: The statements, from `add_foreign_key_statement`.
+
+        Returns:
+            Each statement's label and seconds, in the order they ran.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        timed: list[tuple[str, float]] = []
+        if not statements:
+            return timed
+        self._execute('SET SESSION foreign_key_checks = 0')
+        try:
+            for statement in statements:
+                started = time.perf_counter()
+                self.run_ddl(statement.sql)
+                timed.append((statement.label, time.perf_counter() - started))
+        finally:
+            self._execute('SET SESSION foreign_key_checks = 1')
+        return timed
+
+    def close(self) -> None:
+        """Close the connection; an instance without the driver has none to close."""
+        if self.conn is not None:
+            self.conn.close()
+            self.conn = None
 
     def analyze_table(self, namespace: Namespace, raw_table_name: str) -> None:
         """Analyze the given table. This recomputes key distribution.
