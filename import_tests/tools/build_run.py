@@ -341,7 +341,8 @@ def write_opus_config(
         schema: The database schema to import into.
         credentials: How to reach the database server.
         extra_import: Further ``[import]`` keys and their values, for a session that
-            sets one; None for none.
+            sets one; None for none. A key the file sets by default, such as
+            ``log_file``, takes the value given here instead.
     """
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
@@ -355,7 +356,13 @@ def write_opus_config(
         run_root=_toml_string(paths.root.as_posix()),
         log_dir=_toml_string(paths.log_dir.as_posix()),
     )
-    for key, value in (extra_import or {}).items():
+    import_keys: dict[str, object] = {
+        'table_temp_prefix': 'imp_',
+        'log_file': f'{paths.log_dir.as_posix()}/opus_import.log',
+        'debug_log_file': f'{paths.log_dir.as_posix()}/opus_import_debug.log',
+        **(extra_import or {}),
+    }
+    for key, value in import_keys.items():
         text += f'{key} = {_toml_value(value)}\n'
     paths.config_file.write_text(text, encoding='utf-8')
 
@@ -403,9 +410,6 @@ fake_error404_probability = 0.0
 fake_error500_probability = 0.0
 
 [import]
-table_temp_prefix = "imp_"
-log_file = "{log_dir}/opus_import.log"
-debug_log_file = "{log_dir}/opus_import_debug.log"
 """
 
 
