@@ -255,13 +255,16 @@ def _is_finite_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
-def merge_environment(existing: dict[str, Any], update: dict[str, Any], source: str) -> None:
+def merge_environment(
+    existing: dict[str, Any], update: dict[str, Any], source: str, *, earlier_runs: bool
+) -> None:
     """Add entries to a result's environment, refusing to change a pinned one.
 
     Parameters:
         existing: The environment already in the file; updated in place.
         update: The entries this command measured.
         source: What to call the file in an error.
+        earlier_runs: Whether the file already holds runs.
 
     Raises:
         ResultError: If a `PINNED_ENVIRONMENT_KEYS` entry would change, which means the
@@ -274,7 +277,7 @@ def merge_environment(existing: dict[str, Any], update: dict[str, Any], source: 
             continue
         if key in existing:
             was = existing[key]
-        elif existing and key in PINNED_ENVIRONMENT_DEFAULTS:
+        elif earlier_runs and key in PINNED_ENVIRONMENT_DEFAULTS:
             was = PINNED_ENVIRONMENT_DEFAULTS[key]
         else:
             continue
@@ -306,7 +309,12 @@ def append_runs(label: Label, environment: dict[str, Any], runs: Sequence[dict[s
         content = load_result(path)
     else:
         content = {'format': FORMAT_VERSION, 'environment': {}, 'runs': []}
-    merge_environment(content['environment'], portable(environment), str(path))
+    merge_environment(
+        content['environment'],
+        portable(environment),
+        str(path),
+        earlier_runs=bool(content['runs']),
+    )
     for run in portable(list(runs)):
         kind = run['kind']
         run['index'] = 1 + sum(1 for old in content['runs'] if old['kind'] == kind)

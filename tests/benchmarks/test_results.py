@@ -140,6 +140,17 @@ def test_a_file_whose_runs_record_no_import_keys_holds_runs_that_set_none(
         )
 
 
+def test_runs_with_no_environment_recorded_take_only_runs_that_set_no_import_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The default applies because the file holds runs, not because it records anything."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-03', 'PR-00', 'after', 'test', 'mysql', 'a')
+    results.append_runs(label, {}, [_run()])
+    with pytest.raises(ResultError, match=re.escape('import_keys was {} and is now')):
+        results.append_runs(label, {'import_keys': {'index_workers': 2}}, [_run()])
+
+
 @pytest.mark.parametrize(
     ('content', 'message'),
     [

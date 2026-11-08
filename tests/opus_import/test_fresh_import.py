@@ -986,10 +986,13 @@ class _SharedOpusIdDB(_OrphanDB):
         super().__init__(0, tables)
         self.shared = shared
 
-    def general_select(self, cmd: str, params: Any = None) -> list[tuple[str]]:  # type: ignore[override]
-        """Return the shared OPUS ids."""
+    def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any, ...]]:
+        """Return how many OPUS ids are shared, or as many of them as the limit allows."""
         self.queries.append(' '.join(cmd.split()))
-        return [(opus_id,) for opus_id in self.shared]
+        if cmd.startswith('COUNT(*)'):
+            return [(len(self.shared),)]
+        limit = int(cmd.rsplit('LIMIT', 1)[1])
+        return [(opus_id,) for opus_id in self.shared[:limit]]
 
 
 def test_an_opus_id_on_two_obs_general_rows_is_an_error() -> None:
@@ -1002,7 +1005,8 @@ def test_an_opus_id_on_two_obs_general_rows_is_an_error() -> None:
     assert error.startswith('12 OPUS IDs have more than one obs_general row')
     assert '"co-iss-n09"' in error
     assert '"co-iss-n10"' not in error
-    assert 'HAVING COUNT(*) > 1' in db.queries[0]
+    assert all('HAVING COUNT(*) > 1' in query for query in db.queries)
+    assert db.queries[1].endswith('LIMIT 10')
 
 
 @pytest.mark.parametrize('tables', [['obs_general', 'obs_pds'], []])

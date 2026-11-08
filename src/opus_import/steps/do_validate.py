@@ -401,15 +401,20 @@ def validate_unique_opus_ids(ctx: ImportContext, namespace: Namespace) -> None:
     obs_general = q(db.convert_raw_to_namespace(namespace, 'obs_general'))
     # Every interpolation is an identifier produced by quote_identifier
     # (^[A-Za-z0-9_]+$); the statement carries no values at all.
-    rows = db.general_select(
-        f'{q("opus_id")} FROM {obs_general} GROUP BY {q("opus_id")} '  # nosec B608
-        f'HAVING COUNT(*) > 1 ORDER BY {q("opus_id")}'
+    shared = (
+        f'SELECT {q("opus_id")} FROM {obs_general} GROUP BY {q("opus_id")} '  # nosec B608
+        'HAVING COUNT(*) > 1'
     )
-    if rows:
-        shown = ', '.join(f'"{row[0]}"' for row in rows[:10])
+    count = db.general_select(f'COUNT(*) FROM ({shared}) {q("d")}')[0][0]  # nosec B608
+    if count:
+        rows = db.general_select(
+            f'{q("opus_id")} FROM ({shared}) {q("d")} '  # nosec B608
+            f'ORDER BY {q("opus_id")} LIMIT 10'
+        )
+        shown = ', '.join(f'"{row[0]}"' for row in rows)
         ctx.logger.log(
             'error',
-            f'{len(rows)} OPUS IDs have more than one obs_general row, among them {shown}; '
+            f'{count} OPUS IDs have more than one obs_general row, among them {shown}; '
             '--finalize keeps one copy of each',
         )
 
