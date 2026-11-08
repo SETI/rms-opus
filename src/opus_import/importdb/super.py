@@ -82,11 +82,15 @@ class IndexStatement:
         label: What the statement adds, as the log and ``--timing-json`` name it.
         space_bytes: The server's estimated temporary space for the sort the statement
             runs, which a space budget counts against.
+        sort_bytes: The estimated sort of the largest key the statement builds, which
+            the connection sizes its sort memory to before running it; 0 for a statement
+            that builds no index.
     """
 
     sql: str
     label: str
     space_bytes: int
+    sort_bytes: int
 
 
 class _SpaceBudget:
@@ -561,7 +565,8 @@ class ImportDBSuper:
         Each table's statements run in order on one connection. Up to ``workers`` tables
         build at once, each over a sibling connection of its own (`open_sibling_connection`),
         unless ``serial`` asks for one table at a time on this connection. Every
-        connection is prepared for the builds first (`_prepare_index_session`). Under a
+        connection is prepared for the builds first (`_prepare_index_session`), and sizes
+        its sort memory to each statement before running it (`_size_index_sort`). Under a
         space budget a statement waits until its estimate fits beside the statements
         already running. A failed statement stops its table's later statements; the
         other tables finish, and the failures are raised together once every table is
@@ -616,6 +621,7 @@ class ImportDBSuper:
             timed: list[tuple[str, float]] = []
             for statement in table_to_statements[table]:
                 with budget.held(statement.space_bytes):
+                    db._size_index_sort(statement.sort_bytes)
                     started = time.perf_counter()
                     db.run_ddl(statement.sql)
                     timed.append((statement.label, time.perf_counter() - started))
@@ -696,6 +702,17 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::_prepare_index_session must be overridden')
+
+    def _size_index_sort(self, sort_bytes: int) -> None:
+        """Size this connection's sort memory for the next statement that builds indexes.
+
+        Parameters:
+            sort_bytes: The estimated sort of the largest key the statement builds.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::_size_index_sort must be overridden')
 
     def run_ddl(self, cmd: str) -> None:
         """Run one statement that changes a table's definition.

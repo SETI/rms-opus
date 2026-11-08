@@ -66,6 +66,7 @@ raises. A failed database operation always aborts the import.
             +run_ddl()*
             +close()*
             #_prepare_index_session()*
+            #_size_index_sort()*
             #_execute()
             #_execute_and_fetchall()*
             #_operation()
@@ -161,8 +162,10 @@ the connection that opened it logs on its behalf.
 keys, each table's in order on one connection, for **different tables at once** across
 up to ``workers`` siblings, one per thread, or one table at a time on the connection
 itself when ``serial`` asks for it or there is one worker. Each connection is prepared
-first (``_prepare_index_session``: the MySQL brand sizes ``innodb_ddl_buffer_size`` and
-points ``innodb_tmpdir`` at ``[import] server_tmpdir`` when that is set). Under a space
+first (``_prepare_index_session``: the MySQL brand records the bounds of
+``innodb_ddl_buffer_size`` and points ``innodb_tmpdir`` at ``[import] server_tmpdir``
+when that is set), and before each statement sizes its sort memory to the statement's
+largest key (``_size_index_sort``). Under a space
 budget a statement waits until its estimate fits beside the statements already running,
 and one larger than the whole budget is refused before anything runs. A failed statement
 stops its own table; the other tables finish, and the failures are raised together as
@@ -238,6 +241,8 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
      - Run one statement that changes a table's definition; close the connection.
    * - ``_prepare_index_session(workers, server_tmpdir)``
      - Set a connection's session up for building indexes.
+   * - ``_size_index_sort(sort_bytes)``
+     - Size a connection's sort memory for the next statement that builds indexes.
    * - ``_execute_and_fetchall(cmd, func_name, param_list=None)``
      - Execute one query and return every row of its result.
 

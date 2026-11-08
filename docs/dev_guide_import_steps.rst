@@ -206,12 +206,15 @@ phases:
    orphans instead (:ref:`dev_guide_import_steps_do_validate`).
 3. **ANALYZE** of every table that gained a key.
 
-**Memory and temporary space.** Each connection's sort buffer
-(``innodb_ddl_buffer_size``, where the server has it) is set to a quarter of the
-server's buffer pool divided by ``index_workers``, so the builds running at once hold at
-most a quarter of the pool together. The sorts write to the server's own temporary
-directory unless ``[import] server_tmpdir`` names another -- a directory on the database
-server's host, never the import's ``scratch_dir``. Each key's temporary space is
+**Memory and temporary space.** Before each statement, the connection's sort buffer
+(``innodb_ddl_buffer_size``, where the server has it) is sized to the estimated sort of
+the largest key the statement builds (the estimate below), because the server allocates
+the whole buffer for every index it builds and a buffer far larger than the sort costs
+time on each one. The size is never below the server's own setting and never above a
+quarter of the server's buffer pool divided by ``index_workers``, so the builds running
+at once hold at most a quarter of the pool together. The sorts write to the server's own
+temporary directory unless ``[import] server_tmpdir`` names another -- a directory on
+the database server's host, never the import's ``scratch_dir``. Each key's temporary space is
 estimated as ``rows x (key bytes + primary key bytes + 10) x 1.3``. When the database
 server runs on the same computer as the import (its host is ``localhost``,
 ``127.0.0.1`` or ``::1``) and ``server_tmpdir`` is given and its free space can be read,

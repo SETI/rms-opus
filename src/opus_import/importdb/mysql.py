@@ -330,6 +330,8 @@ class ImportDBMySQL(ImportDBSuper):
             transaction_rows=transaction_rows,
         )
         self.bulk_load_path = BULK_LOAD_PATH_INSERT
+        self._ddl_buffer_bounds: tuple[int, int] | None = None
+        self._ddl_buffer_size: int | None = None
         with self._operation('__init__'):
             self._table_info_cache: dict[tuple[Namespace, str], list[SchemaColumn]] = {}
 
@@ -1289,12 +1291,14 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         return free
 
     def _prepare_index_session(self, workers: int, server_tmpdir: str | None) -> None:
-        """Size this session's sort memory for index builds, and point its sorts at a directory.
+        """Bound this session's sort memory for index builds, and point its sorts at a directory.
 
-        Where the server has ``innodb_ddl_buffer_size``, the session's is set to a quarter
-        of the buffer pool divided by ``workers``, so the builds running at once hold at
-        most a quarter of the pool together; ``innodb_ddl_threads`` is left at the
-        server's value. ``innodb_tmpdir`` is set only when ``server_tmpdir`` is given.
+        Where the server has ``innodb_ddl_buffer_size``, the bounds `_size_index_sort`
+        keeps it within are recorded: at most a quarter of the buffer pool divided by
+        ``workers``, so the builds running at once hold at most a quarter of the pool
+        together, and at least the session's value as the server sets it, or that ceiling
+        if it is lower. ``innodb_ddl_threads`` is left at the server's value.
+        ``innodb_tmpdir`` is set only when ``server_tmpdir`` is given.
 
         Parameters:
             workers: How many connections build at once.
@@ -1312,17 +1316,48 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             '_prepare_index_session',
         )
         variables = {str(name): int(value) for name, value in res}
-        try:
-            if 'innodb_ddl_buffer_size' in variables:
-                size = variables['innodb_buffer_pool_size'] // 4 // workers
-                size = max(MYSQL_MIN_DDL_BUFFER_SIZE, min(MYSQL_MAX_DDL_BUFFER_SIZE, size))
-                self._execute('SET SESSION innodb_ddl_buffer_size = %s', [size])
-            if server_tmpdir is not None:
+        if 'innodb_ddl_buffer_size' in variables:
+            ceiling = variables['innodb_buffer_pool_size'] // 4 // workers
+            ceiling = max(MYSQL_MIN_DDL_BUFFER_SIZE, min(MYSQL_MAX_DDL_BUFFER_SIZE, ceiling))
+            current = variables['innodb_ddl_buffer_size']
+            self._ddl_buffer_bounds = (min(current, ceiling), ceiling)
+            self._ddl_buffer_size = current
+        if server_tmpdir is not None:
+            try:
                 self._execute('SET SESSION innodb_tmpdir = %s', [server_tmpdir])
+            except MySQLdb.Error as e:
+                if self.logger:
+                    self.logger.log('fatal', f'Failed to prepare the session for index builds: {e}')
+                raise ImportDBError(e) from e
+
+    def _size_index_sort(self, sort_bytes: int) -> None:
+        """Size this session's ``innodb_ddl_buffer_size`` for the next index build.
+
+        The server allocates the whole buffer for every index a statement builds, so a
+        buffer far larger than the sort costs time on every index while saving none. The
+        size is the estimate, within the bounds `_prepare_index_session` recorded; the
+        session is changed only when the size differs from its current one. Nothing is
+        set on a server without the variable or before the session was prepared.
+
+        Parameters:
+            sort_bytes: The estimated sort of the largest key the statement builds.
+
+        Raises:
+            ImportDBError: If the server refuses the setting.
+        """
+        if self._ddl_buffer_bounds is None:
+            return
+        floor, ceiling = self._ddl_buffer_bounds
+        size = max(floor, min(ceiling, sort_bytes))
+        if size == self._ddl_buffer_size:
+            return
+        try:
+            self._execute('SET SESSION innodb_ddl_buffer_size = %s', [size])
         except MySQLdb.Error as e:
             if self.logger:
-                self.logger.log('fatal', f'Failed to prepare the session for index builds: {e}')
+                self.logger.log('fatal', f'Failed to size the sort for an index build: {e}')
             raise ImportDBError(e) from e
+        self._ddl_buffer_size = size
 
     def run_ddl(self, cmd: str) -> None:
         """Run one statement that changes a table's definition.

@@ -21,6 +21,7 @@ from opus_import.importdb.super import ImportDBError, ImportDBSuper, IndexStatem
 from opus_import.steps import (
     do_duplicate_ids,
     do_import,
+    do_import_mult,
     do_import_tables,
     do_indexes,
     do_validate,
@@ -65,6 +66,8 @@ class _RecordingDB(ImportDBMySQL):
         )
         self._table_names = set(tables)
         self._table_info_cache = {}
+        self._ddl_buffer_bounds = None
+        self._ddl_buffer_size = None
         self.default_engine = 'INNODB'
         self.executed: list[tuple[str, Any]] = []
         self.answers: dict[str, list[tuple[Any, ...]]] = {}
@@ -266,7 +269,7 @@ def test_a_failed_key_build_is_a_failed_step() -> None:
 def test_foreign_keys_are_added_with_the_checks_off_and_turned_back_on() -> None:
     """``foreign_key_checks`` is 0 around the statements and 1 after, even after a failure."""
     db = _RecordingDB(set())
-    statement = IndexStatement('ALTER TABLE `obs_pds` ADD FOREIGN KEY x', 'fk', 0)
+    statement = IndexStatement('ALTER TABLE `obs_pds` ADD FOREIGN KEY x', 'fk', 0, 0)
     timed = db.add_foreign_keys([statement])
     assert [label for label, _ in timed] == ['fk']
     assert [cmd for cmd, _ in db.executed] == [
@@ -276,8 +279,21 @@ def test_foreign_keys_are_added_with_the_checks_off_and_turned_back_on() -> None
     ]
 
 
-def test_an_index_session_shares_a_quarter_of_the_buffer_pool() -> None:
-    """Each of the connections building at once gets a quarter of the pool divided among them."""
+def _prepared_session(workers: int, ddl_buffer_size: int) -> _RecordingDB:
+    """Return a session prepared on a server with an 8 GiB pool and the given buffer."""
+    db = _RecordingDB(set())
+    db.answers = {
+        'SHOW VARIABLES': [
+            ('innodb_buffer_pool_size', 8 * 1024**3),
+            ('innodb_ddl_buffer_size', ddl_buffer_size),
+        ]
+    }
+    db._prepare_index_session(workers, None)
+    return db
+
+
+def test_preparing_an_index_session_sets_only_its_temporary_directory() -> None:
+    """The sort memory is left for each statement to size; the directory is set at once."""
     db = _RecordingDB(set())
     db.answers = {
         'SHOW VARIABLES': [
@@ -286,10 +302,40 @@ def test_an_index_session_shares_a_quarter_of_the_buffer_pool() -> None:
         ]
     }
     db._prepare_index_session(4, '/var/tmp/sort')
+    assert db.executed == [('SET SESSION innodb_tmpdir = %s', ['/var/tmp/sort'])]
+
+
+def test_an_index_sort_is_sized_to_its_estimate_within_the_bounds() -> None:
+    """A small sort keeps the server's buffer, a large one gets the ceiling, one between its estimate.
+
+    The ceiling is a quarter of the pool shared among the connections.
+    """
+    ceiling = 8 * 1024**3 // 4 // 4
+    db = _prepared_session(4, 1048576)
+    db._size_index_sort(1000)
+    assert db.executed == []
+    db._size_index_sort(ceiling * 10)
+    db._size_index_sort(64 * 1024**2)
     assert db.executed == [
-        ('SET SESSION innodb_ddl_buffer_size = %s', [8 * 1024**3 // 4 // 4]),
-        ('SET SESSION innodb_tmpdir = %s', ['/var/tmp/sort']),
+        ('SET SESSION innodb_ddl_buffer_size = %s', [ceiling]),
+        ('SET SESSION innodb_ddl_buffer_size = %s', [64 * 1024**2]),
     ]
+
+
+def test_an_index_sort_already_sized_is_not_set_again() -> None:
+    """Two statements of the same size change the session once."""
+    db = _prepared_session(1, 1048576)
+    db._size_index_sort(64 * 1024**2)
+    db._size_index_sort(64 * 1024**2)
+    assert len(db.executed) == 1
+
+
+def test_a_server_buffer_above_the_ceiling_is_held_to_it() -> None:
+    """The ceiling bounds even the server's own setting."""
+    ceiling = 8 * 1024**3 // 4 // 22
+    db = _prepared_session(22, 4 * 1024**3)
+    db._size_index_sort(1000)
+    assert db.executed == [('SET SESSION innodb_ddl_buffer_size = %s', [ceiling])]
 
 
 def test_an_index_session_on_a_server_without_the_buffer_setting_sets_nothing() -> None:
@@ -297,6 +343,7 @@ def test_an_index_session_on_a_server_without_the_buffer_setting_sets_nothing() 
     db = _RecordingDB(set())
     db.answers = {'SHOW VARIABLES': [('innodb_buffer_pool_size', 8 * 1024**3)]}
     db._prepare_index_session(1, None)
+    db._size_index_sort(64 * 1024**2)
     assert db.executed == []
 
 
@@ -319,12 +366,14 @@ class _BuildingDB(ImportDBSuper):
         super().__init__('host', 'db', 'schema', 'user', 'password')
         self.root: _BuildingDB = self if parent is None else parent.root
         self.failing = failing
+        self.sort_bytes: int | None = None
         if parent is None:
             self.lock = threading.Lock()
             self.ran: list[tuple[int, str]] = []
             self.running = 0
             self.most_running = 0
             self.prepared: list[tuple[int, str | None]] = []
+            self.sized: dict[str, int | None] = {}
             self.closed = 0
             self.siblings = 0
 
@@ -339,6 +388,10 @@ class _BuildingDB(ImportDBSuper):
         with self.root.lock:
             self.root.prepared.append((workers, server_tmpdir))
 
+    def _size_index_sort(self, sort_bytes: int) -> None:
+        """Hold the size for this connection's next statement."""
+        self.sort_bytes = sort_bytes
+
     def run_ddl(self, cmd: str) -> None:
         """Run a statement for a few milliseconds, tracking how many run at once."""
         root = self.root
@@ -349,6 +402,8 @@ class _BuildingDB(ImportDBSuper):
         with root.lock:
             root.running -= 1
             root.ran.append((id(self), cmd))
+            root.sized[cmd] = self.sort_bytes
+        self.sort_bytes = None
         if cmd == self.failing:
             raise ImportDBError(f'refused {cmd}')
 
@@ -359,9 +414,9 @@ class _BuildingDB(ImportDBSuper):
 
 
 def _statements(tables: dict[str, int], space: int = 0) -> dict[str, list[IndexStatement]]:
-    """Return `count` statements per table, labeled ``<table>.<n>``."""
+    """Return `count` statements per table, labeled ``<table>.<n>``, each sorting ``n``."""
     return {
-        table: [IndexStatement(f'{table}.{n}', f'{table}.{n}', space) for n in range(count)]
+        table: [IndexStatement(f'{table}.{n}', f'{table}.{n}', space, n) for n in range(count)]
         for table, count in tables.items()
     }
 
@@ -416,11 +471,19 @@ def test_a_statement_larger_than_the_budget_is_refused_before_anything_runs() ->
     db = _BuildingDB()
     with pytest.raises(ValueError, match=r'b: b\.0 needs an estimated 200 bytes'):
         db.build_indexes(
-            {'a': _statements({'a': 1})['a'], 'b': [IndexStatement('b.0', 'b.0', 200)]},
+            {'a': _statements({'a': 1})['a'], 'b': [IndexStatement('b.0', 'b.0', 200, 200)]},
             workers=2,
             space_budget=100,
         )
     assert db.ran == []
+
+
+@pytest.mark.parametrize('workers', [1, 3])
+def test_each_statement_runs_on_a_connection_sized_for_it(workers: int) -> None:
+    """The connection running a statement was sized to that statement's sort just before."""
+    db = _BuildingDB()
+    db.build_indexes(_statements({'a': 3, 'b': 2, 'c': 2}), workers=workers)
+    assert db.sized == {f'{t}.{n}': n for t, c in (('a', 3), ('b', 2), ('c', 2)) for n in range(c)}
 
 
 def test_no_workers_is_refused() -> None:
@@ -533,11 +596,12 @@ def test_an_interrupted_finalization_refuses_the_import() -> None:
 class _DeletingDB:
     """A stand-in that answers each table's ids for a bundle and records each delete."""
 
-    def __init__(self, ids: dict[str, list[int]] | list[int], tables: list[str]) -> None:
+    def __init__(self, ids: dict[str, list[Any]] | list[Any], tables: list[str]) -> None:
         """Hold each table's ids for the bundle, and the tables.
 
         Parameters:
-            ids: Each table's ids, in order, keyed by table; or one list for every table.
+            ids: Each table's ids, in order, keyed by table; or one list answering every
+                select, whatever it reads.
             tables: The ``obs_`` tables.
         """
         self.ids = ids
@@ -558,7 +622,7 @@ class _DeletingDB:
         """Return the name unchanged."""
         return name
 
-    def general_select(self, cmd: str, params: Any = None) -> list[tuple[int]]:
+    def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any]]:
         """Return the ids of the table the query names."""
         self.selects.append(cmd)
         if isinstance(self.ids, list):
@@ -619,7 +683,7 @@ def test_named_bundles_leave_the_permanent_tables_before_the_copy(
         lambda ctx: calls.append('duplicates'),
     )
     monkeypatch.setattr(
-        do_import.do_import_mult,
+        do_import_mult,
         'copy_mult_from_import_to_permanent',
         lambda ctx: calls.append('mult'),
     )
@@ -766,6 +830,7 @@ def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
     ctx = make_context(db=db)
     assert do_indexes.create_indexes(ctx)
     (statement,) = db.built['obs_pds']
+    assert statement.sort_bytes == 60 < statement.space_bytes
     assert statement.sql.startswith('ALTER TABLE `obs_pds` ADD KEY (`opus_id`)')
     assert 'ADD KEY (`obs_general_id`)' in statement.sql
     assert [s.sql for s in db.foreign] == [
