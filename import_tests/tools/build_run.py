@@ -599,10 +599,10 @@ def perform_run(
     `finalize` says otherwise.
 
     The sequence is the one the integration import script runs: drop everything, import
-    each bundle on its own, clean up the auxiliary tables, import the dictionary,
-    migrate Django's tables, validate, write the schema version row. Importing one bundle per invocation is what
-    produces the on-top-of-previous-import warnings the whitelist expects, and it fixes
-    the order row ids are handed out in, which the goldens encode.
+    each bundle on its own, finalize, import the dictionary, migrate Django's tables,
+    validate, write the schema version row. Importing one bundle per invocation into
+    the emptied schema makes each a fresh import, and fixes the order row ids are handed
+    out in, which the goldens encode.
 
     Parameters:
         root: The run's directory.
@@ -610,18 +610,16 @@ def perform_run(
         credentials: How to reach the database server.
         overlay: A tree copied over the built one, for a negative case.
         bundle_groups: The bundles each ``--do-all-import`` invocation imports, or None
-            for one invocation per fixture bundle. Naming two bundles in one invocation
-            is what puts them in the same import tables, which is where a duplicate OPUS
-            id between them can be seen at all.
+            for one invocation per fixture bundle.
         extra_import_args: Arguments added to each ``--do-all-import`` invocation.
         extra_import: Further ``[import]`` configuration keys every invocation reads
             (`write_opus_config`), or None for none.
-        finalize: Whether to run the steps after the imports -- the auxiliary tables,
-            the dictionary, the Django migration, the validation and the schema version.
+        finalize: Whether to run the steps after the imports -- the finalization, the
+            dictionary, the Django migration, the validation and the schema version.
             True is the production sequence and what the main run uses. False stops
-            after the imports, which is all a negative case needs: ``--do-all-import``
-            already copies to the permanent tables, so ``obs_general`` and the mult
-            tables the negative assertions read exist without any of the later steps,
+            after the imports, which is all a negative case needs: a fresh import writes
+            the permanent tables, so ``obs_general`` and the mult tables the negative
+            assertions read exist without any of the later steps,
             and none of those assertions reads a table only a later step creates. A run
             that stops early leaves `ImportRun.django_tables` empty, so it can never be
             goldened.

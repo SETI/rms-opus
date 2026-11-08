@@ -169,6 +169,10 @@ MYSQL_INDEX_ENTRY_OVERHEAD = 10
 #: The factor the estimate allows for the sort's own overhead.
 MYSQL_INDEX_SORT_FACTOR = 1.3
 
+#: The host names that put the server on the computer running the import, where a
+#: directory on the server's host can be read from here.
+LOCAL_HOSTS = frozenset({'localhost', '127.0.0.1', '::1'})
+
 #: The largest ``innodb_ddl_buffer_size`` the server accepts.
 MYSQL_MAX_DDL_BUFFER_SIZE = 4_294_967_295
 
@@ -1256,10 +1260,11 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
     def index_space_budget(self, server_tmpdir: str | None) -> int | None:
         """Return the temporary space the index builds running at once may hold together.
 
-        There is a budget only when ``server_tmpdir`` is given and is a directory this
-        process can read the free space of, which it can when the server shares the
-        computer: the budget is that free space, or the server's data directory's when
-        that is less and readable too.
+        There is a budget only when the server shares this computer (its host is one of
+        `LOCAL_HOSTS`) and ``server_tmpdir`` is given and is a directory this process can
+        read the free space of: the budget is that free space, or the server's data
+        directory's when that is less and readable too. A path read on any other host
+        would be this computer's directory of that name, not the server's.
 
         Parameters:
             server_tmpdir: The directory on the database server's host its sorts write
@@ -1271,7 +1276,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         Raises:
             ImportDBError: If the server rejects the query.
         """
-        if server_tmpdir is None:
+        if server_tmpdir is None or self.db_hostname not in LOCAL_HOSTS:
             return None
         free = _free_bytes(server_tmpdir)
         if free is None:

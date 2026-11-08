@@ -167,7 +167,8 @@ In order:
 
 Steps 8 to 10 belong to the import tables; a fresh import has already written the
 permanent tables, and says so at debug level. ``--delete-permanent-bundles`` runs on
-either path. A failed fresh import leaves a schema with no version row, which the web
+either path: on a fresh import before the first bundle is imported, otherwise before
+the copy. A failed fresh import leaves a schema with no version row, which the web
 application refuses to serve and both deploy scripts refuse to promote.
 
 :func:`~opus_import.steps.do_import.import_one_bundle` is the per-bundle driver
@@ -211,8 +212,9 @@ server's buffer pool divided by ``index_workers``, so the builds running at once
 most a quarter of the pool together. The sorts write to the server's own temporary
 directory unless ``[import] server_tmpdir`` names another -- a directory on the database
 server's host, never the import's ``scratch_dir``. Each key's temporary space is
-estimated as ``rows x (key bytes + primary key bytes + 10) x 1.3``. When
-``server_tmpdir`` is given and its free space can be read from where the import runs,
+estimated as ``rows x (key bytes + primary key bytes + 10) x 1.3``. When the database
+server runs on the same computer as the import (its host is ``localhost``,
+``127.0.0.1`` or ``::1``) and ``server_tmpdir`` is given and its free space can be read,
 that free space (or the data directory's, if less) is a budget the statements running at
 once must fit together: a table's keys are split into as many statements as it takes,
 a statement waits until it fits beside the ones running, and a key whose own estimate
@@ -595,13 +597,14 @@ Its functions:
     Drops everything in a namespace, in the four phases above.
 
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`
-    Deletes one bundle across a namespace, in chunks: the bundle's ``obs_general`` ids
-    are taken ``[import] transaction_rows`` at a time, and each chunk's rows go from the
-    other tables, by ``bundle_id`` and an ``obs_general_id`` range, before
-    ``obs_general``. Each statement is its own transaction, so none holds a whole large
-    bundle's undo. A last pass by ``bundle_id`` alone catches any row of the bundle
-    another table holds without its ``obs_general`` row. Every statement selects through
-    the ``bundle_id`` key, which each of these tables is created with.
+    Deletes one bundle across a namespace, every other table before ``obs_general``,
+    in chunks: a table's ids for the bundle are read through its ``bundle_id`` key,
+    which each of these tables is created with, and each ``[import] transaction_rows``
+    of them go in one statement selecting by ``bundle_id`` and a range of the table's
+    own ``id``. Each statement is its own transaction, so none holds a whole large
+    bundle's undo, and none reads rows outside its range -- which matters on a fresh
+    import, whose tables have no other key to find a bundle's rows by until
+    finalization.
 
 :func:`~opus_import.steps.do_import_tables.delete_opus_id_from_obs_tables`
     The same for one OPUS ID.

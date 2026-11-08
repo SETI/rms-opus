@@ -157,7 +157,9 @@ Then the deploy itself, and which one it is depends on the release.
 The database records its schema version, and both deploy scripts refuse,
 before writing anything, a release whose version differs from it. A refusal
 names the remedy: an import under the new release, or, for a database this
-release imported but did not finish, `opus_import --write-schema-version`.
+release imported but did not finish, its finishing steps -- `opus_import
+--finalize`, `--import-dictionary` and `--validate-perm` -- then
+`opus_import --write-schema-version`.
 
 
 --------------------------------------------------------------------------------

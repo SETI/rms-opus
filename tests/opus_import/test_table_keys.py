@@ -69,22 +69,21 @@ def test_every_observation_schema_is_among_the_filtered_ones() -> None:
 def test_the_two_key_sets_partition_what_the_schema_declares(path: Path) -> None:
     """Every declared key is created with the table or added by finalization, never both.
 
-    Finalization also adds a plain key under each foreign-key column no key leads, which
-    the schema does not declare; that is the only key outside the declared set.
+    Finalization also adds one key the schema does not declare: a plain key on
+    ``obs_general_id`` for each child, whose only declaration of that column is its
+    foreign key. No other undeclared key appears.
     """
     table = _table_name(path)
     schema = _schema(path)
     declared = table_keys.declared_keys(schema)
     kept = table_keys.create_time_keys(table, schema)
     added = table_keys.add_secondary_indexes(table, schema)
-    led = {key.columns[0] for key in declared if key.kind != 'foreign'}
-    supporting = [
-        TableKey('key', key.columns)
-        for key in declared
-        if key.kind == 'foreign' and key.columns[0] not in led
-    ]
+    child = TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',))) in declared
+    supporting = {TableKey('key', ('obs_general_id',))} if child else set()
     assert set(kept).isdisjoint(added)
-    assert sorted(map(repr, [*kept, *added])) == sorted(map(repr, [*declared, *supporting]))
+    assert set(kept) | set(declared) == set(declared)
+    assert set(added) - set(declared) == supporting
+    assert set(kept) | set(added) == set(declared) | supporting
 
 
 @pytest.mark.parametrize('path', _FILTERED, ids=lambda path: path.stem)

@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 
 from opus_config import get_config
 from opus_import import import_util
-from opus_import.importdb.super import IndexStatement
+from opus_import.importdb.super import ImportDBError, IndexStatement
 from opus_import.table_keys import KEY_FILTERED_TABLE_PREFIXES, TableKey, add_secondary_indexes
 
 if TYPE_CHECKING:
@@ -163,6 +163,10 @@ def create_indexes(ctx: ImportContext) -> bool:
             foreign_timed = db.add_foreign_keys(foreign)
     except ValueError as e:
         import_util.log_error(ctx, str(e))
+        return False
+    except ImportDBError:
+        # build_indexes and add_foreign_keys have logged every failure.
+        ctx.import_has_bad_data = True
         return False
     for table_name, timed in built.items():
         ctx.step_timings[f'create_indexes:{table_name}'] = sum(seconds for _, seconds in timed)

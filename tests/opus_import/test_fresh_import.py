@@ -230,6 +230,39 @@ def test_the_space_estimate() -> None:
     assert space == int(1000 * (4 * 50 + 4 + 10) * 1.3)
 
 
+def test_the_space_budget_is_the_free_space_of_a_local_servers_directory(tmp_path: Any) -> None:
+    """A server on this computer: the directory's free space, the data directory's if less."""
+    db = _RecordingDB(set())
+    db.db_hostname = 'localhost'
+    db.answers = {'datadir': [(str(tmp_path),)]}
+    budget = db.index_space_budget(str(tmp_path))
+    assert budget is not None
+    assert budget > 0
+
+
+def test_there_is_no_space_budget_for_a_remote_server_or_no_directory(tmp_path: Any) -> None:
+    """A path read here names this computer's directory, not a remote server's."""
+    db = _RecordingDB(set())
+    db.db_hostname = 'db.example.org'
+    assert db.index_space_budget(str(tmp_path)) is None
+    db.db_hostname = 'localhost'
+    assert db.index_space_budget(None) is None
+    assert db.index_space_budget(str(tmp_path / 'absent')) is None
+
+
+def test_a_failed_key_build_is_a_failed_step() -> None:
+    """A statement the server refuses makes the step return False rather than raise."""
+    db = _IndexingDB({'obs_pds': []})
+
+    def refuse(*args: Any, **kwargs: Any) -> Any:
+        raise ImportDBError('refused')
+
+    db.build_indexes = refuse  # type: ignore[method-assign]
+    ctx = make_context(db=db)
+    assert not do_indexes.create_indexes(ctx)
+    assert ctx.import_has_bad_data
+
+
 def test_foreign_keys_are_added_with_the_checks_off_and_turned_back_on() -> None:
     """``foreign_key_checks`` is 0 around the statements and 1 after, even after a failure."""
     db = _RecordingDB(set())
@@ -498,18 +531,19 @@ def test_an_interrupted_finalization_refuses_the_import() -> None:
 
 
 class _DeletingDB:
-    """A stand-in that answers a bundle's ids and records each delete."""
+    """A stand-in that answers each table's ids for a bundle and records each delete."""
 
-    def __init__(self, ids: list[int], tables: list[str]) -> None:
-        """Hold the bundle's ``obs_general`` ids and the tables.
+    def __init__(self, ids: dict[str, list[int]] | list[int], tables: list[str]) -> None:
+        """Hold each table's ids for the bundle, and the tables.
 
         Parameters:
-            ids: The ids, in order.
+            ids: Each table's ids, in order, keyed by table; or one list for every table.
             tables: The ``obs_`` tables.
         """
         self.ids = ids
         self.tables = tables
         self.transaction_rows = 2
+        self.selects: list[str] = []
         self.deletes: list[tuple[str, str, list[Any]]] = []
 
     def table_names(self, namespace: str, prefix: Any = None) -> list[str]:
@@ -524,33 +558,92 @@ class _DeletingDB:
         """Return the name unchanged."""
         return name
 
-    def general_select(self, cmd: str, params: list[Any]) -> list[tuple[int]]:
-        """Return the bundle's ids."""
-        return [(i,) for i in self.ids]
+    def general_select(self, cmd: str, params: Any = None) -> list[tuple[int]]:
+        """Return the ids of the table the query names."""
+        self.selects.append(cmd)
+        if isinstance(self.ids, list):
+            return [(i,) for i in self.ids]
+        table = cmd.split('FROM `')[1].split('`')[0]
+        return [(i,) for i in self.ids.get(table, [])]
 
     def delete_rows(self, namespace: str, table: str, where: str, where_params: list[Any]) -> None:
         """Record a delete."""
         self.deletes.append((table, where, where_params))
 
 
-def test_a_bundle_is_deleted_in_chunks_of_ids_children_first() -> None:
-    """Each chunk of `transaction_rows` ids goes from the children, then obs_general."""
-    db = _DeletingDB([4, 7, 9], ['obs_general', 'obs_pds'])
+_IN_RANGE = '`bundle_id`=%s AND `id` BETWEEN %s AND %s'
+
+
+def test_a_bundle_is_deleted_in_chunks_of_each_tables_own_ids_children_first() -> None:
+    """Each table's ids, `transaction_rows` at a time; every child before obs_general."""
+    db = _DeletingDB(
+        {'obs_general': [4, 7, 9], 'obs_pds': [10, 11, 12], 'obs_files': [1, 2]},
+        ['obs_files', 'obs_general', 'obs_pds'],
+    )
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1', 'perm')
     assert db.deletes == [
-        ('obs_pds', '`bundle_id`=%s AND `obs_general_id` BETWEEN %s AND %s', ['B_1', 4, 7]),
-        ('obs_general', '`bundle_id`=%s AND `id` BETWEEN %s AND %s', ['B_1', 4, 7]),
-        ('obs_pds', '`bundle_id`=%s AND `obs_general_id` BETWEEN %s AND %s', ['B_1', 9, 9]),
-        ('obs_general', '`bundle_id`=%s AND `id` BETWEEN %s AND %s', ['B_1', 9, 9]),
-        ('obs_pds', '`bundle_id`=%s', ['B_1']),
+        ('obs_files', _IN_RANGE, ['B_1', 1, 2]),
+        ('obs_pds', _IN_RANGE, ['B_1', 10, 11]),
+        ('obs_pds', _IN_RANGE, ['B_1', 12, 12]),
+        ('obs_general', _IN_RANGE, ['B_1', 4, 7]),
+        ('obs_general', _IN_RANGE, ['B_1', 9, 9]),
     ]
+    assert all('WHERE `bundle_id`=%s ORDER BY `id`' in cmd for cmd in db.selects)
 
 
-def test_a_bundle_not_in_the_schema_deletes_only_by_bundle() -> None:
-    """With no ``obs_general`` there are no ids to chunk by."""
-    db = _DeletingDB([], ['obs_pds'])
+def test_a_bundle_a_table_does_not_hold_deletes_nothing_there() -> None:
+    """No ids, no statement."""
+    db = _DeletingDB({'obs_pds': [3]}, ['obs_general', 'obs_pds'])
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1', 'perm')
-    assert db.deletes == [('obs_pds', '`bundle_id`=%s', ['B_1'])]
+    assert db.deletes == [('obs_pds', _IN_RANGE, ['B_1', 3, 3])]
+
+
+def test_named_bundles_leave_the_permanent_tables_before_the_copy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """On the import-tables path, ``--delete-permanent-bundles`` deletes before the copy writes."""
+    calls: list[str] = []
+    monkeypatch.setattr(
+        do_import_tables,
+        'delete_bundle_from_obs_tables',
+        lambda ctx, bundle, namespace: calls.append(f'delete {bundle} {namespace}'),
+    )
+    monkeypatch.setattr(
+        do_import_tables,
+        'create_tables_for_import',
+        lambda ctx, bundle, namespace: calls.append(f'create {bundle}'),
+    )
+    monkeypatch.setattr(
+        do_import_tables,
+        'delete_duplicate_opus_id_from_perm_tables',
+        lambda ctx: calls.append('duplicates'),
+    )
+    monkeypatch.setattr(
+        do_import.do_import_mult,
+        'copy_mult_from_import_to_permanent',
+        lambda ctx: calls.append('mult'),
+    )
+    monkeypatch.setattr(
+        do_import_tables,
+        'copy_bundle_from_import_to_permanent',
+        lambda ctx, bundle: calls.append(f'copy {bundle}'),
+    )
+    db = _DeletingDB(['B_1'], ['obs_general'])
+    db.table_exists = lambda namespace, table: True  # type: ignore[attr-defined]
+    args = default_arguments()
+    args.copy_import_to_permanent_tables = True
+    args.delete_permanent_bundles = True
+    args.create_cart = True
+    ctx = make_context(db=db, args=args)
+    do_import._copy_import_tables_to_permanent(ctx, False, ['B_2'])
+    assert calls == [
+        'delete B_1 perm',
+        'delete B_2 perm',
+        'create B_1',
+        'duplicates',
+        'mult',
+        'copy B_1',
+    ]
 
 
 # ------------------------------------------------------------------------------------

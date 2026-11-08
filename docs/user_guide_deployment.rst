@@ -223,8 +223,10 @@ fails. Nothing has been written to the database at that point, and the installat
 being served is untouched:
 
 * **No row**: no release finished the database. Re-import it under the release. If this
-  release imported it and only the last step is missing, run ``opus_import
-  --write-schema-version`` against it.
+  release imported it and only the finishing steps are missing, run them against it:
+  ``opus_import --finalize``, ``--import-dictionary`` and ``--validate-perm``, then
+  ``--write-schema-version``. ``--finalize`` adds the indexes and keeps one copy of
+  each observation two bundles share, which a database stamped without it would lack.
 * **Another version**: a different release imported it. Re-import it under this release
   and deploy it with ``deploy_new_code_and_database.sh``.
 * **A state other than** ``ready``: an import or an append is still writing to it, or

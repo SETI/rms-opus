@@ -274,7 +274,7 @@ def _errors(run: build_run.ImportRun) -> str:
 def test_the_finishing_steps_alone_write_no_row(
     unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
-    """``--cleanup-aux-tables`` and ``--import-dictionary`` leave the schema unservable."""
+    """``--finalize``, ``--import-dictionary`` and validation leave the schema unservable."""
     _no_table(db_credentials, unfinished_run.schema)
     for step in (build_run.AUX_ARGS, build_run.DICTIONARY_ARGS, build_run.VALIDATE_ARGS):
         assert _step(unfinished_run, *step).returncode == 0

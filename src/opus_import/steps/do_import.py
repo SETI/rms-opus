@@ -373,6 +373,11 @@ def do_import_steps(ctx: ImportContext) -> bool:
                 for bundle_id in import_util.yield_import_bundle_ids(ctx):
                     do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'import')
 
+    # On the fresh path the named bundles go before the import writes the permanent
+    # tables; on the import-tables path, before the copy.
+    if fresh:
+        _delete_permanent_bundles(ctx, bundle_id_list)
+
     if ctx.args.do_import:
         with ctx.timed('import'):
             for bundle_id in bundle_id_list:
@@ -401,32 +406,42 @@ def do_import_steps(ctx: ImportContext) -> bool:
                 ctx, 'Fresh import: the bundles are already in the permanent tables'
             )
     else:
-        _copy_import_tables_to_permanent(ctx, old_perm_tables_dropped)
+        _copy_import_tables_to_permanent(ctx, old_perm_tables_dropped, bundle_id_list)
 
-    # If --delete-permanent-bundles is given, delete the given set of bundles
-    # from the permanent tables.
+    return True
+
+
+def _delete_permanent_bundles(ctx: ImportContext, bundle_id_list: list[str]) -> None:
+    """Delete the bundles named on the command line from the permanent tables, if asked.
+
+    Parameters:
+        ctx: The import run's context, for the arguments and the open database.
+        bundle_id_list: The bundles the descriptors expand to.
+    """
     if ctx.args.delete_permanent_bundles:
         with ctx.timed('delete_permanent_bundles'):
             for bundle_id in bundle_id_list:
                 do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
 
-    return True
 
-
-def _copy_import_tables_to_permanent(ctx: ImportContext, old_perm_tables_dropped: bool) -> None:
+def _copy_import_tables_to_permanent(
+    ctx: ImportContext, old_perm_tables_dropped: bool, bundle_id_list: list[str]
+) -> None:
     """Copy the bundles the import tables hold over the permanent tables, as asked.
 
     Under ``--copy-import-to-permanent-tables`` or ``--delete-permanent-import-bundles``
-    every bundle the import ``obs_general`` holds is deleted from the permanent tables;
-    the copy then creates the permanent tables it needs, deletes the permanent copy of
-    every observation the import also produced, and copies the mult tables and each
-    bundle. ``--drop-new-import-tables`` then drops the import tables.
+    every bundle the import ``obs_general`` holds is deleted from the permanent tables,
+    and under ``--delete-permanent-bundles`` every bundle named on the command line; the
+    copy then creates the permanent tables it needs, deletes the permanent copy of every
+    observation the import also produced, and copies the mult tables and each bundle.
+    ``--drop-new-import-tables`` then drops the import tables.
 
     Parameters:
         ctx: The import run's context, for the arguments, the open database and the
             logger.
         old_perm_tables_dropped: True when this invocation dropped the permanent tables,
             so there is nothing in them to delete.
+        bundle_id_list: The bundles the descriptors expand to.
     """
     # If --copy-import-to-permanent-tables or --delete-permanent-import-bundles
     # are given, delete all bundles that exist in the import tables from the
@@ -454,6 +469,10 @@ def _copy_import_tables_to_permanent(ctx: ImportContext, old_perm_tables_dropped
             with ctx.timed('delete_permanent_import_bundles'):
                 for bundle_id in import_bundle_ids:
                     do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
+
+    # If --delete-permanent-bundles is given, delete the given set of bundles
+    # from the permanent tables.
+    _delete_permanent_bundles(ctx, bundle_id_list)
 
     # If --copy-import-to-permanent-tables is given, create obs and mult tables
     # as necessary, then copy the import tables to the permanent tables.

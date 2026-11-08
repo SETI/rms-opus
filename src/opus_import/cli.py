@@ -527,9 +527,10 @@ def main() -> None:
     Every step is driven by its own option, apart from the duplicate step, which only
     ``--finalize`` runs; ``--finalize``, ``--do-it-all`` and their siblings turn several
     of them on, and the two aggregates that finish a database do it through
-    ``--finalize``, so they run every step of its group. The database connection, the holdings directories and the log
-    file locations come from the configuration file named by ``OPUS_CONFIG``, which is
-    read only once the arguments parse, so ``--help`` works without one.
+    ``--finalize``, so they run every step of its group. The database connection, the
+    holdings directories and the log file locations come from the configuration file
+    named by ``OPUS_CONFIG``, which is read only once the arguments parse, so ``--help``
+    works without one.
 
     Raises:
         SystemExit: With a non-zero status, logged first, when the arguments are
