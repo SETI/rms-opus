@@ -87,8 +87,9 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str, namespace:
     """Delete one bundle's rows from every ``obs_`` table in a namespace.
 
     Every other table goes before ``obs_general``. Each table's rows of the bundle are
-    deleted in chunks of `ImportDBSuper.transaction_rows`: their ids are read through the
-    ``bundle_id`` key, which each of these tables is created with, and each chunk is one
+    deleted in chunks of `ImportDBSuper.transaction_rows`: their ids are read a chunk at a
+    time through the ``bundle_id`` key, which each of these tables is created with, so a
+    large bundle's ids are never all held at once, and each chunk is one
     statement selecting by ``bundle_id`` and a range of the table's own ``id``, its own
     transaction, so no single statement holds a whole large bundle's undo and none reads
     rows outside its range -- a table a fresh import is still loading has no other key
@@ -112,21 +113,33 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str, namespace:
 
     for table_name in ordered:
         table = db.convert_raw_to_namespace(namespace, table_name)
-        ids = [
-            row[0]
-            for row in db.general_select(
-                f'{q("id")} FROM {q(table)} WHERE {in_bundle} ORDER BY {q("id")}', [bundle_id]
-            )
-        ]
-        for start in range(0, len(ids), db.transaction_rows):
-            low = ids[start]
-            high = ids[min(len(ids), start + db.transaction_rows) - 1]
+        after: int | None = None
+        while True:
+            # One page of the bundle's ids at a time, read through the bundle_id key,
+            # so a large bundle's ids are never all held at once.
+            if after is None:
+                where, params = in_bundle, [bundle_id, db.transaction_rows]
+            else:
+                where = f'{in_bundle} AND {q("id")} > %s'
+                params = [bundle_id, after, db.transaction_rows]
+            ids = [
+                row[0]
+                for row in db.general_select(
+                    f'{q("id")} FROM {q(table)} WHERE {where} ORDER BY {q("id")} LIMIT %s',
+                    params,
+                )
+            ]
+            if not ids:
+                break
             db.delete_rows(
                 namespace,
                 table_name,
                 f'{in_bundle} AND {q("id")} BETWEEN %s AND %s',
-                where_params=[bundle_id, low, high],
+                where_params=[bundle_id, ids[0], ids[-1]],
             )
+            if len(ids) < db.transaction_rows:
+                break
+            after = ids[-1]
 
 
 def find_duplicate_opus_ids(ctx: ImportContext) -> list[str]:

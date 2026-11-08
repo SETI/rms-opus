@@ -279,6 +279,31 @@ def test_foreign_keys_are_added_with_the_checks_off_and_turned_back_on() -> None
     ]
 
 
+def test_foreign_key_checks_are_turned_back_on_after_a_refused_foreign_key() -> None:
+    """A foreign key the server refuses still leaves the session's checks on."""
+
+    class _RefusingDB(_RecordingDB):
+        def _execute(
+            self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
+        ) -> None:
+            super()._execute(cmd, param_list, cur, mutates)
+            if 'ADD FOREIGN KEY' in cmd:
+                raise MySQLdb.Error('refused')
+
+    db = _RefusingDB(set())
+    statements = [
+        IndexStatement('ALTER TABLE `obs_pds` ADD FOREIGN KEY x', 'fk', 0, 0),
+        IndexStatement('ALTER TABLE `obs_files` ADD FOREIGN KEY y', 'fk2', 0, 0),
+    ]
+    with pytest.raises(ImportDBError):
+        db.add_foreign_keys(statements)
+    assert [cmd for cmd, _ in db.executed] == [
+        'SET SESSION foreign_key_checks = 0',
+        'ALTER TABLE `obs_pds` ADD FOREIGN KEY x',
+        'SET SESSION foreign_key_checks = 1',
+    ]
+
+
 def _prepared_session(workers: int, ddl_buffer_size: int) -> _RecordingDB:
     """Return a session prepared on a server with an 8 GiB pool and the given buffer."""
     db = _RecordingDB(set())
@@ -384,9 +409,11 @@ class _BuildingDB(ImportDBSuper):
         return _BuildingDB(self.failing, parent=self)
 
     def _prepare_index_session(self, workers: int, server_tmpdir: str | None) -> None:
-        """Record the preparation."""
+        """Record the preparation, refusing a directory named ``refused``."""
         with self.root.lock:
             self.root.prepared.append((workers, server_tmpdir))
+        if server_tmpdir == 'refused':
+            raise ImportDBError('refused the directory')
 
     def _size_index_sort(self, sort_bytes: int) -> None:
         """Hold the size for this connection's next statement."""
@@ -446,6 +473,16 @@ def test_serial_builds_one_table_at_a_time_on_this_connection() -> None:
     assert db.siblings == 0
     assert {conn for conn, _ in db.ran} == {id(db)}
     assert db.prepared == [(1, None)]
+
+
+def test_a_sibling_whose_session_is_refused_is_closed_at_once() -> None:
+    """Every sibling opened is closed, though none could be prepared."""
+    db = _BuildingDB()
+    with pytest.raises(ImportDBError, match='refused the directory'):
+        db.build_indexes(_statements({'a': 1, 'b': 1, 'c': 1}), workers=2, server_tmpdir='refused')
+    assert db.siblings >= 1
+    assert db.closed == db.siblings
+    assert db.ran == []
 
 
 def test_a_failed_table_does_not_stop_the_others_and_is_raised_after() -> None:
@@ -623,12 +660,22 @@ class _DeletingDB:
         return name
 
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any]]:
-        """Return the ids of the table the query names."""
+        """Return the ids of the table the query names, one page of them when it asks.
+
+        A paged query's parameters end with the page size, after the bundle and, past
+        the first page, the id the page starts after.
+        """
         self.selects.append(cmd)
         if isinstance(self.ids, list):
-            return [(i,) for i in self.ids]
-        table = cmd.split('FROM `')[1].split('`')[0]
-        return [(i,) for i in self.ids.get(table, [])]
+            ids = self.ids
+        else:
+            table = cmd.split('FROM `')[1].split('`')[0]
+            ids = self.ids.get(table, [])
+        if 'LIMIT' in cmd:
+            if '> %s' in cmd:
+                ids = [i for i in ids if i > params[1]]
+            ids = ids[: params[-1]]
+        return [(i,) for i in ids]
 
     def delete_rows(self, namespace: str, table: str, where: str, where_params: list[Any]) -> None:
         """Record a delete."""
@@ -652,7 +699,10 @@ def test_a_bundle_is_deleted_in_chunks_of_each_tables_own_ids_children_first() -
         ('obs_general', _IN_RANGE, ['B_1', 4, 7]),
         ('obs_general', _IN_RANGE, ['B_1', 9, 9]),
     ]
-    assert all('WHERE `bundle_id`=%s ORDER BY `id`' in cmd for cmd in db.selects)
+    assert all('WHERE `bundle_id`=%s' in cmd for cmd in db.selects)
+    assert all(cmd.endswith('ORDER BY `id` LIMIT %s') for cmd in db.selects)
+    # A full page asks for the next one, after its last id; a short page ends the table.
+    assert sum('`id` > %s' in cmd for cmd in db.selects) == 3
 
 
 def test_a_bundle_a_table_does_not_hold_deletes_nothing_there() -> None:
@@ -734,7 +784,8 @@ class _DuplicateDB(_DeletingDB):
         return True
 
     def general_select(self, cmd: str, params: Any = None) -> list[Any]:
-        """Return the next answer."""
+        """Record the query and return the next answer."""
+        self.selects.append(cmd)
         return self.answers.pop(0)
 
 
@@ -745,6 +796,9 @@ def test_the_highest_id_is_kept_and_the_others_deleted_children_first() -> None:
     )
     ctx = make_context(db=db)
     assert do_duplicate_ids.delete_duplicate_opus_ids(ctx)
+    # The OPUS id comes from the grouped side, so case variants the collation joins
+    # come back under one spelling.
+    assert '`g`.`id`, `d`.`opus_id`, `g`.`bundle_id`' in db.selects[0]
     assert db.deletes == [
         ('obs_pds', '`obs_general_id` IN (%s,%s)', [3, 4]),
         ('obs_general', '`id` IN (%s,%s)', [3, 4]),
@@ -825,7 +879,7 @@ class _IndexingDB(_RecordingDB):
 
 
 def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
-    """The plain keys in one statement, the foreign key on its own, then ANALYZE."""
+    """ANALYZE for the estimates, the plain keys in one statement, the foreign key on its own, then ANALYZE."""
     db = _IndexingDB({'obs_pds': [TableKey('primary', ('id',)), TableKey('key', ('bundle_id',))]})
     ctx = make_context(db=db)
     assert do_indexes.create_indexes(ctx)
@@ -837,7 +891,7 @@ def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
         'ALTER TABLE `obs_pds` ADD FOREIGN KEY (`obs_general_id`) REFERENCES '
         '`obs_general`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
     ]
-    assert db.analyzed == ['obs_pds']
+    assert db.analyzed == ['obs_pds', 'obs_pds']
     assert db.workers == 1
     assert ctx.step_timings['create_indexes:obs_pds'] == 0.5
 
@@ -873,15 +927,15 @@ def test_under_a_budget_a_tables_keys_are_split_to_fit() -> None:
 class _OrphanDB(_DeletingDB):
     """A stand-in reporting an orphan count for every table."""
 
-    def __init__(self, count: int) -> None:
-        """Hold the count every anti-join finds."""
-        super().__init__([], ['obs_general', 'obs_pds'])
+    def __init__(self, count: int, tables: list[str] | None = None) -> None:
+        """Hold the count every anti-join finds, and the tables that exist besides cart."""
+        super().__init__([], ['obs_general', 'obs_pds'] if tables is None else tables)
         self.count = count
         self.queries: list[str] = []
 
     def table_exists(self, namespace: str, table: str) -> bool:
-        """Say obs_general and cart exist."""
-        return True
+        """Say cart exists, and each of the tables."""
+        return table == 'cart' or table in self.tables
 
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[int]]:
         """Return the count."""
@@ -899,6 +953,22 @@ def test_rows_whose_obs_general_row_is_missing_are_errors() -> None:
         'Table "cart" has 3 rows whose obs_general row is missing',
     ]
     assert all('IS NULL' in query for query in db.queries)
+
+
+@pytest.mark.parametrize(
+    ('tables', 'errors'),
+    [
+        (['obs_pds'], ['Table "obs_general" is missing, but 1 other obs_ tables exist']),
+        ([], []),
+    ],
+)
+def test_child_tables_without_obs_general_are_an_error(
+    tables: list[str], errors: list[str]
+) -> None:
+    """Children with no obs_general are reported; a schema with neither has nothing to check."""
+    ctx = make_context(db=_OrphanDB(0, tables))
+    do_validate.validate_orphans(ctx, 'perm')
+    assert ctx.logger.messages_at('error') == errors
 
 
 def test_no_orphans_is_silent() -> None:

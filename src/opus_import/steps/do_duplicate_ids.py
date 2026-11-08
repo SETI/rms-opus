@@ -34,7 +34,9 @@ def _duplicated_rows(ctx: ImportContext) -> Sequence[tuple[int, str, str]]:
         ctx: The import run's context, for the open database.
 
     Returns:
-        ``(id, opus_id, bundle_id)`` rows, ordered by OPUS id and then id.
+        ``(id, opus_id, bundle_id)`` rows, ordered by OPUS id and then id. The OPUS id is
+        the one the server grouped by, so two that differ only in case under the
+        column's collation come back as one.
     """
     db = ctx.db
     assert db is not None
@@ -43,11 +45,11 @@ def _duplicated_rows(ctx: ImportContext) -> Sequence[tuple[int, str, str]]:
     # Every interpolation is an identifier produced by quote_identifier
     # (^[A-Za-z0-9_]+$); the statement carries no values at all.
     rows = db.general_select(
-        f'{q("g")}.{q("id")}, {q("g")}.{q("opus_id")}, {q("g")}.{q("bundle_id")} '  # nosec B608
+        f'{q("g")}.{q("id")}, {q("d")}.{q("opus_id")}, {q("g")}.{q("bundle_id")} '  # nosec B608
         f'FROM {obs_general} {q("g")} JOIN (SELECT {q("opus_id")} FROM {obs_general} '
         f'GROUP BY {q("opus_id")} HAVING COUNT(*) > 1) {q("d")} '
         f'ON {q("d")}.{q("opus_id")} = {q("g")}.{q("opus_id")} '
-        f'ORDER BY {q("g")}.{q("opus_id")}, {q("g")}.{q("id")}'
+        f'ORDER BY {q("d")}.{q("opus_id")}, {q("g")}.{q("id")}'
     )
     return [(int(row[0]), str(row[1]), str(row[2])) for row in rows]
 

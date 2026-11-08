@@ -76,6 +76,7 @@ from benchmarks.bench_server import (
     drop_schema,
     global_status,
     load_server_config,
+    parse_import_keys,
     query,
     quote_identifier,
     reexec_with_socket,
@@ -413,6 +414,7 @@ class ImportBench:
                 else []
             ),
             observer=monitor,
+            extra_import=self.extra_import,
         )
         require_empty_errors_log(paths.errors_log, at_end=True)
         self._fill_run(run, monitor, schema, before, full=finalize, log_dir=paths.log_dir)
@@ -874,32 +876,6 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     if args.reuse_schema is not None and (args.stop_before_finalization or args.profile):
         parser.error('--reuse-schema imports nothing, so it takes no import options')
     return args
-
-
-def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
-    """Read ``--import-key`` arguments into the ``[import]`` keys they set.
-
-    Parameters:
-        pairs: Each ``KEY=VALUE``.
-
-    Returns:
-        The keys, each value a whole number, a boolean or a string, in argument order.
-
-    Raises:
-        ValueError: If an argument has no ``=`` or no key.
-    """
-    keys: dict[str, object] = {}
-    for pair in pairs:
-        key, separator, text = pair.partition('=')
-        if not separator or not key:
-            raise ValueError(f'--import-key takes KEY=VALUE, not {pair!r}')
-        value: object = text
-        if text in ('true', 'false'):
-            value = text == 'true'
-        elif text.lstrip('-').isdigit():
-            value = int(text)
-        keys[key] = value
-    return keys
 
 
 def main(argv: Sequence[str] | None = None) -> None:

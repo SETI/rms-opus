@@ -339,7 +339,8 @@ def validate_orphans(ctx: ImportContext, namespace: Namespace) -> None:
 
     Every observation table other than ``obs_general``, and ``cart``, is anti-joined
     against ``obs_general`` on ``obs_general_id``, and a table with any row left over is
-    reported at error level with the count.
+    reported at error level with the count. Observation tables without ``obs_general``
+    are an error too; a namespace with no observation table at all has nothing to check.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -351,11 +352,16 @@ def validate_orphans(ctx: ImportContext, namespace: Namespace) -> None:
 
     logger.log('debug', 'Validating references to obs_general')
 
-    if not db.table_exists(namespace, 'obs_general'):
-        return
     tables = [
         name for name in sorted(db.table_names(namespace, prefix='obs_')) if name != 'obs_general'
     ]
+    if not db.table_exists(namespace, 'obs_general'):
+        if tables:
+            logger.log(
+                'error',
+                f'Table "obs_general" is missing, but {len(tables)} other obs_ tables exist',
+            )
+        return
     if db.table_exists(namespace, 'cart'):
         tables.append('cart')
     q = db.quote_identifier

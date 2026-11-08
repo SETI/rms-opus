@@ -664,7 +664,11 @@ class ImportDBSuper:
                 sibling = getattr(local, 'sibling', None)
                 if sibling is None:
                     sibling = self.open_sibling_connection()
-                    sibling._prepare_index_session(workers, server_tmpdir)
+                    try:
+                        sibling._prepare_index_session(workers, server_tmpdir)
+                    except BaseException:
+                        sibling.close()
+                        raise
                     local.sibling = sibling
                     with siblings_lock:
                         siblings.append(sibling)

@@ -111,6 +111,18 @@ def test_a_pinned_environment_entry_cannot_change_within_a_file(
         results.append_runs(label, {'git_sha': 'def'}, [_run()])
 
 
+def test_runs_with_other_import_keys_are_refused_within_a_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A file's runs share one set of ``--import-key`` values."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-03', 'PR-00', 'after', 'test', 'mysql', 'a')
+    results.append_runs(label, {'import_keys': {'index_workers': 22}}, [_run()])
+    results.append_runs(label, {'import_keys': {'index_workers': 22}}, [_run()])
+    with pytest.raises(ResultError, match='import_keys was'):
+        results.append_runs(label, {'import_keys': {}}, [_run()])
+
+
 @pytest.mark.parametrize(
     ('content', 'message'),
     [

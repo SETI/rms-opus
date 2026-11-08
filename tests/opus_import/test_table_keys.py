@@ -88,11 +88,13 @@ def test_the_two_key_sets_partition_what_the_schema_declares(path: Path) -> None
 
 @pytest.mark.parametrize('path', _FILTERED, ids=lambda path: path.stem)
 def test_the_table_is_created_with_the_keys_the_delete_reads(path: Path) -> None:
-    """A table with a ``bundle_id`` key keeps it, and keeps its primary and unique keys."""
+    """An observation table has a ``bundle_id`` key, and keeps it and its primary and unique keys."""
     table = _table_name(path)
     schema = _schema(path)
     kept = table_keys.create_time_keys(table, schema)
     declared = table_keys.declared_keys(schema)
+    if table.startswith('obs_'):
+        assert TableKey('key', ('bundle_id',)) in kept
     for key in declared:
         if key.kind in ('primary', 'unique') or key == TableKey('key', ('bundle_id',)):
             assert key in kept

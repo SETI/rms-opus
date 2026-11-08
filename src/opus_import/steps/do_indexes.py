@@ -7,13 +7,14 @@ three phases:
 
 1. **The plain keys**, grouped per table into ``ALTER TABLE ... ADD KEY ..., ADD KEY
    ...`` statements, run for different tables at once over ``[import] index_workers``
-   connections (`ImportDBSuper.build_indexes`). Each statement's sort memory is sized to
-   the estimated sort of its largest key, within a share of a quarter of the server's
-   buffer pool, and its sorts go to ``[import] server_tmpdir`` when that is set. When the free space there can be read, the
-   statements running at once must fit it together: a table's keys are split into as
-   many statements as that takes, and a key whose own estimate exceeds the whole of it
-   is refused. Otherwise each table's keys go in one statement, and the estimate is
-   logged.
+   connections (`ImportDBSuper.build_indexes`), each table analyzed first so that its
+   keys' estimates count the rows its loads wrote. Each statement's sort memory is sized
+   to the estimated sort of its largest key, within a share of a quarter of the server's
+   buffer pool, and its sorts go to ``[import] server_tmpdir`` when that is set. When
+   the free space there can be read, the statements running at once must fit it
+   together: a table's keys are split into as many statements as that takes, and a key
+   whose own estimate exceeds the whole of it is refused. Otherwise each table's keys go
+   in one statement, and the estimate is logged.
 2. **The foreign keys**, one at a time with ``foreign_key_checks`` off, after every plain
    key, since each takes an exclusive lock on the table it references.
 3. **ANALYZE** of every table that gained a key.
@@ -131,6 +132,9 @@ def create_indexes(ctx: ImportContext) -> bool:
         missing = [key for key in add_secondary_indexes(table_name, schema) if key not in have]
         plain_keys = [key for key in missing if key.kind != 'foreign']
         if plain_keys:
+            # The estimates read the server's row count, which can predate the loads
+            # until the table is analyzed.
+            db.analyze_table('perm', table_name)
             plain[table_name] = _group_keys(db, table_name, schema, plain_keys, space_budget)
             total_estimate += sum(statement.space_bytes for statement in plain[table_name])
         for key in missing:

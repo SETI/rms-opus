@@ -71,6 +71,7 @@ PINNED_ENVIRONMENT_KEYS = (
     'server_version',
     'server_owned',
     'hostname',
+    'import_keys',
 )
 
 _RESULT_NAME = re.compile(

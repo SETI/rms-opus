@@ -716,7 +716,9 @@ def main() -> None:
                     failed_steps.append('--create-indexes')
             logger.close()
 
-        if args.finalize:
+        # The duplicate step deletes by obs_general_id, which only the keys just built
+        # index, so it waits for a run whose key builds succeed.
+        if args.finalize and '--create-indexes' not in failed_steps:
             logger.open(
                 'Deleting duplicate OPUS IDs',
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},

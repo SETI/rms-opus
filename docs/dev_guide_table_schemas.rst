@@ -99,8 +99,8 @@ Defining the column
    * - ``field_autoincrement``
      - True to add ``AUTO_INCREMENT``.
    * - ``field_key``
-     - ``"primary"``, ``"unique"``, ``"foreign"``, or any other true value for an
-       ordinary index. ``"foreign"`` requires ``field_key_foreign``. On a fresh import an
+     - ``"primary"``, ``"unique"``, ``"foreign"``, or ``true`` for an ordinary index;
+       any other value is refused. ``"foreign"`` requires ``field_key_foreign``. On a fresh import an
        observation or ``mult_`` table is created with only its primary key, its unique
        keys and its ``bundle_id`` key, and finalization adds the others
        (:ref:`dev_guide_import_db_keys`); the finished table carries every key declared.

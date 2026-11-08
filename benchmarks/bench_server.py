@@ -780,6 +780,33 @@ def clone_schema(
     return time.perf_counter() - started
 
 
+def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
+    """Read ``--import-key`` arguments into the ``[import]`` keys they set.
+
+    Parameters:
+        pairs: Each ``KEY=VALUE``.
+
+    Returns:
+        The keys, each value a whole number, a boolean or a string, in argument order.
+
+    Raises:
+        ValueError: If an argument has no ``=`` or no key.
+    """
+    keys: dict[str, object] = {}
+    for pair in pairs:
+        key, separator, text = pair.partition('=')
+        if not separator or not key:
+            raise ValueError(f'--import-key takes KEY=VALUE, not {pair!r}')
+        value: object = text
+        if text in ('true', 'false'):
+            value = text == 'true'
+        else:
+            with contextlib.suppress(ValueError):
+                value = int(text)
+        keys[key] = value
+    return keys
+
+
 def write_opus_config(
     path: Path,
     *,
@@ -803,8 +830,10 @@ def write_opus_config(
         run_dir: The run's own scratch directory.
         cache_location: The owned memcached's ``host:port``.
         extra_import: Further ``[import]`` keys and their values -- an integer, a
-            boolean or a string -- or None for none. A side whose configuration does not
-            know a key refuses the file, so a session sets one only for a side that does.
+            boolean or a string -- or None for none. One the file sets itself
+            (``log_file``, ``debug_log_file``) takes this value instead. A side whose
+            configuration does not know a key refuses the file, so a session sets one
+            only for a side that does.
 
     Returns:
         The path written.
@@ -825,6 +854,11 @@ def write_opus_config(
             return str(value)
         return toml(value)
 
+    import_keys: dict[str, object] = {
+        'log_file': log_dir / 'opus_import.log',
+        'debug_log_file': log_dir / 'opus_import_debug.log',
+        **(extra_import or {}),
+    }
     lines = [
         '[database]',
         'brand = "MySQL"',
@@ -860,9 +894,7 @@ def write_opus_config(
         'log_django_level = "WARNING"',
         '',
         '[import]',
-        f'log_file = {toml(log_dir / "opus_import.log")}',
-        f'debug_log_file = {toml(log_dir / "opus_import_debug.log")}',
-        *(f'{key} = {toml_value(value)}' for key, value in (extra_import or {}).items()),
+        *(f'{key} = {toml_value(value)}' for key, value in import_keys.items()),
         '',
     ]
     path.parent.mkdir(parents=True, exist_ok=True)

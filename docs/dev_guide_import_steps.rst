@@ -210,19 +210,21 @@ phases:
 (``innodb_ddl_buffer_size``, where the server has it) is sized to the estimated sort of
 the largest key the statement builds (the estimate below), because the server allocates
 the whole buffer for every index it builds and a buffer far larger than the sort costs
-time on each one. The size is never below the server's own setting and never above a
-quarter of the server's buffer pool divided by ``index_workers``, so the builds running
-at once hold at most a quarter of the pool together. The sorts write to the server's own
-temporary directory unless ``[import] server_tmpdir`` names another -- a directory on
-the database server's host, never the import's ``scratch_dir``. Each key's temporary space is
-estimated as ``rows x (key bytes + primary key bytes + 10) x 1.3``. When the database
-server runs on the same computer as the import (its host is ``localhost``,
-``127.0.0.1`` or ``::1``) and ``server_tmpdir`` is given and its free space can be read,
-that free space (or the data directory's, if less) is a budget the statements running at
-once must fit together: a table's keys are split into as many statements as it takes,
-a statement waits until it fits beside the ones running, and a key whose own estimate
-exceeds the whole budget is refused with an error naming it. Otherwise each table's keys
-go in one statement, and the total estimate is logged.
+time on each one. The size is never above a quarter of the server's buffer pool divided
+by ``index_workers``, so the builds running at once hold at most a quarter of the pool
+together, and never below the server's own setting unless that is above the same
+ceiling. The sorts write to the server's own temporary directory unless ``[import]
+server_tmpdir`` names another -- a directory on the database server's host, never the
+import's ``scratch_dir``. Each key's temporary space is estimated as
+``rows x (key bytes + primary key bytes + 10) x 1.3``, with the rows the server counts
+once the table has been analyzed, which the step does first. When the database server
+runs on the same computer as the import (its host is ``localhost``, ``127.0.0.1`` or
+``::1``) and ``server_tmpdir`` is given and its free space can be read, that free space
+(or the data directory's, if less) is a budget the statements running at once must fit
+together: a table's keys are split into as many statements as it takes, a statement
+waits until it fits beside the ones running, and a key whose own estimate exceeds the
+whole budget is refused with an error naming it. Otherwise each table's keys go in one
+statement, and the total estimate is logged.
 
 Each statement's and each table's wall-clock go into ``--timing-json``, as
 ``create_indexes:<table>:<keys>`` and ``create_indexes:<table>``, with each foreign key
@@ -234,7 +236,9 @@ opus_import.steps.do_duplicate_ids
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Keeps one copy of each OPUS ID. It has no option of its own: ``--finalize`` runs it,
-after the keys.
+after the keys, and skips it when the key builds failed, since it deletes by
+``obs_general_id``, which only those keys index. OPUS IDs are compared as the column's
+collation compares them, so two that differ only in case are the same ID.
 
 Two bundles can produce the same OPUS ID -- Galileo SSI does, and so can a calibrated
 bundle and its raw counterpart -- and ``obs_general.opus_id`` has a plain key, not a

@@ -362,10 +362,11 @@ observation already produced.
 
 The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, which
 takes the larger of the two namespaces' maxima. That is what makes a **re-import** of one
-bundle safe: its new rows are numbered above everything already present in either
-namespace, and its old rows are deleted only afterwards. It is also why a re-import
-renumbers that bundle above the rest of the table, which is a documented consequence
-rather than an accident.
+bundle into a schema with a version row safe: its new rows are numbered above everything
+already present in either namespace, and its old rows are deleted only afterwards. It is
+also why such a re-import renumbers that bundle above the rest of the table, which is a
+documented consequence rather than an accident. A fresh import deletes each bundle's
+rows before writing it, so a bundle written again can take ids its earlier rows had.
 
 The run keeps the running maximum in
 :attr:`~opus_import.context.ImportContext.max_table_id_cache` rather than querying for
@@ -409,10 +410,11 @@ contract it defines, and the method resolution order that falls out.
 Invariants
 ----------
 
-* **Nothing is visible until the run succeeds.** Every imported table is written under
-  the import prefix and copied over the permanent tables at the end. Deleting the import
-  tables before the copy, or copying before every bundle has been read, breaks the
-  guarantee the design rests on.
+* **Nothing is visible until the run succeeds.** Into a schema with a version row, every
+  imported table is written under the import prefix and copied over the permanent tables
+  at the end; deleting the import tables before the copy, or copying before every bundle
+  has been read, breaks the guarantee the design rests on. A fresh import writes the
+  permanent tables of a schema nothing serves until it has a version row.
 * **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
   constraint enforces it.
 * **An import run is single-threaded, and one obs instance serves a whole bundle**,

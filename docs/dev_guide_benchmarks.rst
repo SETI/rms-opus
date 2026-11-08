@@ -301,8 +301,10 @@ and records ``NAME`` as the side's schema, or with ``--clone`` a timed copy of i
 ``--import-key KEY=VALUE``, repeatable, adds an ``[import]`` key to every configuration
 the run writes -- ``index_workers=22``, say, to time finalization's key builds over more
 connections than the default -- and the result's environment records the keys as
-``import_keys``. A side whose configuration does not know a key refuses the file, so it
-is given only to a side that does.
+``import_keys``. A key the harness sets itself, such as ``log_file``, takes the given
+value instead. A result file holds runs of one set of keys: a run with others is refused,
+as a run of another commit is. A side whose configuration does not know a key refuses
+the file, so it is given only to a side that does.
 
 **A run that fails records nothing.** It fails when an invocation exits non-zero; when
 a bundle-import invocation leaves any bundle it imports without a row in the permanent
