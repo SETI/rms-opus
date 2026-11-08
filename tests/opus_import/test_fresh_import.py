@@ -978,6 +978,41 @@ def test_no_orphans_is_silent() -> None:
     assert ctx.logger.messages_at('error') == []
 
 
+class _SharedOpusIdDB(_OrphanDB):
+    """A stand-in whose ``obs_general`` holds the shared OPUS ids given."""
+
+    def __init__(self, shared: list[str], tables: list[str] | None = None) -> None:
+        """Hold the OPUS ids the grouping finds shared."""
+        super().__init__(0, tables)
+        self.shared = shared
+
+    def general_select(self, cmd: str, params: Any = None) -> list[tuple[str]]:  # type: ignore[override]
+        """Return the shared OPUS ids."""
+        self.queries.append(' '.join(cmd.split()))
+        return [(opus_id,) for opus_id in self.shared]
+
+
+def test_an_opus_id_on_two_obs_general_rows_is_an_error() -> None:
+    """The count and the first ten shared OPUS ids are named."""
+    shared = [f'co-iss-n{index:02d}' for index in range(12)]
+    db = _SharedOpusIdDB(shared)
+    ctx = make_context(db=db)
+    do_validate.validate_unique_opus_ids(ctx, 'perm')
+    [error] = ctx.logger.messages_at('error')
+    assert error.startswith('12 OPUS IDs have more than one obs_general row')
+    assert '"co-iss-n09"' in error
+    assert '"co-iss-n10"' not in error
+    assert 'HAVING COUNT(*) > 1' in db.queries[0]
+
+
+@pytest.mark.parametrize('tables', [['obs_general', 'obs_pds'], []])
+def test_unique_opus_ids_or_no_obs_general_is_silent(tables: list[str]) -> None:
+    """Nothing shared, or no obs_general to look in, logs no error."""
+    ctx = make_context(db=_SharedOpusIdDB([], tables))
+    do_validate.validate_unique_opus_ids(ctx, 'perm')
+    assert ctx.logger.messages_at('error') == []
+
+
 _GROUP = (
     'create_indexes',
     'create_param_info',

@@ -74,6 +74,10 @@ PINNED_ENVIRONMENT_KEYS = (
     'import_keys',
 )
 
+#: What a pinned entry is compared as in a file whose earlier runs do not record it: a
+#: run that records no ``import_keys`` set none.
+PINNED_ENVIRONMENT_DEFAULTS: dict[str, Any] = {'import_keys': {}}
+
 _RESULT_NAME = re.compile(
     r'^(?P<date>\d{4}-\d{2}-\d{2})_(?P<pr>PR-[0-9A-Za-z]+)_(?P<side>before|after)_'
     r'(?P<scale>fixture|test|complete)_(?P<brand>mysql)_(?P<session>[0-9A-Za-z]+)\.json$'
@@ -262,12 +266,21 @@ def merge_environment(existing: dict[str, Any], update: dict[str, Any], source: 
     Raises:
         ResultError: If a `PINNED_ENVIRONMENT_KEYS` entry would change, which means the
             command ran against a different commit, interpreter or server from the one
-            the file's earlier runs did.
+            the file's earlier runs did. An entry a file with earlier runs lacks is
+            compared as its `PINNED_ENVIRONMENT_DEFAULTS` value, where it has one.
     """
     for key in PINNED_ENVIRONMENT_KEYS:
-        if key in existing and key in update and existing[key] != update[key]:
+        if key not in update:
+            continue
+        if key in existing:
+            was = existing[key]
+        elif existing and key in PINNED_ENVIRONMENT_DEFAULTS:
+            was = PINNED_ENVIRONMENT_DEFAULTS[key]
+        else:
+            continue
+        if was != update[key]:
             raise ResultError(
-                f'{source}: {key} was {existing[key]!r} and is now {update[key]!r}; one '
+                f'{source}: {key} was {was!r} and is now {update[key]!r}; one '
                 'result file holds one label, so start a new session label instead'
             )
     existing.update(update)

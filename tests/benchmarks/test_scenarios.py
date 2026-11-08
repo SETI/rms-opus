@@ -205,8 +205,8 @@ def test_a_session_sets_import_keys_the_loader_reads(tmp_path: Path) -> None:
     assert config.import_.server_tmpdir == '/var/tmp/x'
 
 
-def test_an_import_key_the_harness_sets_itself_takes_the_given_value(tmp_path: Path) -> None:
-    """``log_file`` is written once, with the session's value."""
+def test_a_harness_import_key_given_by_its_caller_is_written_once(tmp_path: Path) -> None:
+    """``log_file`` passed to `write_opus_config` replaces the harness's own, once."""
     path = bench_server.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
@@ -217,6 +217,22 @@ def test_an_import_key_the_harness_sets_itself_takes_the_given_value(tmp_path: P
         extra_import={'log_file': str(tmp_path / 'mine.log')},
     )
     assert load_config(path).import_.log_file == str(tmp_path / 'mine.log')
+
+
+def test_a_control_character_in_an_import_value_survives_the_configuration(
+    tmp_path: Path,
+) -> None:
+    """A newline in a value is escaped rather than breaking the file."""
+    path = bench_server.write_opus_config(
+        tmp_path / 'opus.toml',
+        schema='bench_x',
+        pds3_holdings=tmp_path / 'holdings',
+        pds4_holdings=tmp_path / 'pds4-holdings',
+        run_dir=tmp_path / 'run',
+        cache_location='127.0.0.1:21211',
+        extra_import=bench_server.parse_import_keys(['server_tmpdir=/var/tmp/a\nb\x7f']),
+    )
+    assert load_config(path).import_.server_tmpdir == '/var/tmp/a\nb\x7f'
 
 
 @pytest.mark.parametrize(
@@ -235,3 +251,17 @@ def test_an_import_key_without_a_key_and_value_is_refused(pair: str) -> None:
     """Each ``--import-key`` is ``KEY=VALUE``."""
     with pytest.raises(ValueError, match='KEY=VALUE'):
         bench_server.parse_import_keys([pair])
+
+
+@pytest.mark.parametrize('pair', ['index workers=2', 'index.workers=2', 'a"b=1'])
+def test_an_import_key_that_is_not_a_key_name_is_refused(pair: str) -> None:
+    """A key TOML would not read bare is refused before any configuration is written."""
+    with pytest.raises(ValueError, match='not an \\[import\\] key name'):
+        bench_server.parse_import_keys([pair])
+
+
+@pytest.mark.parametrize('key', bench_server.HARNESS_IMPORT_KEYS)
+def test_an_import_key_naming_a_log_the_harness_reads_is_refused(key: str) -> None:
+    """The harness reads its runs' logs from where it put them."""
+    with pytest.raises(ValueError, match='the harness sets'):
+        bench_server.parse_import_keys([f'{key}=/tmp/x.log'])

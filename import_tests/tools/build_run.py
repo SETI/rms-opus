@@ -268,7 +268,7 @@ def build_holdings_tree(paths: RunPaths, *, overlay: Path | None = None) -> None
         _copy_tree(overlay / fixture_layout.PDS4_ROOT_NAME, paths.pds4_holdings)
 
 
-def _toml_string(value: str) -> str:
+def toml_string(value: str) -> str:
     """Return a value with every character a TOML basic string cannot hold escaped.
 
     Parameters:
@@ -304,7 +304,7 @@ def import_logs(log_dir: Path) -> list[Path]:
     return sorted(path for path in log_dir.glob('*.log') if pattern.fullmatch(path.name))
 
 
-def _toml_value(value: object) -> str:
+def toml_value(value: object) -> str:
     """Return a value as TOML writes it.
 
     Parameters:
@@ -321,7 +321,7 @@ def _toml_value(value: object) -> str:
     if isinstance(value, int):
         return str(value)
     if isinstance(value, str):
-        return f'"{_toml_string(value)}"'
+        return f'"{toml_string(value)}"'
     raise TypeError(f'no TOML spelling for {value!r}')
 
 
@@ -347,14 +347,14 @@ def write_opus_config(
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
     text = _CONFIG_TEMPLATE.format(
-        host=_toml_string(credentials.host),
-        user=_toml_string(credentials.user),
-        password=_toml_string(credentials.password),
-        schema=_toml_string(schema),
-        pds3_holdings=_toml_string(paths.pds3_holdings.as_posix()),
-        pds4_holdings=_toml_string(paths.pds4_holdings.as_posix()),
-        run_root=_toml_string(paths.root.as_posix()),
-        log_dir=_toml_string(paths.log_dir.as_posix()),
+        host=toml_string(credentials.host),
+        user=toml_string(credentials.user),
+        password=toml_string(credentials.password),
+        schema=toml_string(schema),
+        pds3_holdings=toml_string(paths.pds3_holdings.as_posix()),
+        pds4_holdings=toml_string(paths.pds4_holdings.as_posix()),
+        run_root=toml_string(paths.root.as_posix()),
+        log_dir=toml_string(paths.log_dir.as_posix()),
     )
     import_keys: dict[str, object] = {
         'table_temp_prefix': 'imp_',
@@ -363,7 +363,7 @@ def write_opus_config(
         **(extra_import or {}),
     }
     for key, value in import_keys.items():
-        text += f'{key} = {_toml_value(value)}\n'
+        text += f'{key} = {toml_value(value)}\n'
     paths.config_file.write_text(text, encoding='utf-8')
 
 

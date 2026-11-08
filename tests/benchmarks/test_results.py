@@ -2,6 +2,7 @@
 
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any
 
@@ -121,6 +122,22 @@ def test_runs_with_other_import_keys_are_refused_within_a_file(
     results.append_runs(label, {'import_keys': {'index_workers': 22}}, [_run()])
     with pytest.raises(ResultError, match='import_keys was'):
         results.append_runs(label, {'import_keys': {}}, [_run()])
+
+
+def test_a_file_whose_runs_record_no_import_keys_holds_runs_that_set_none(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A file whose runs record no ``import_keys`` takes only runs that set none."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-03', 'PR-00', 'after', 'test', 'mysql', 'a')
+    results.append_runs(label, {'git_sha': 'abc'}, [_run()])
+    results.append_runs(label, {'git_sha': 'abc', 'import_keys': {}}, [_run()])
+    other = Label('2026-11-03', 'PR-00', 'after', 'test', 'mysql', 'b')
+    results.append_runs(other, {'git_sha': 'abc'}, [_run()])
+    with pytest.raises(ResultError, match=re.escape('import_keys was {} and is now')):
+        results.append_runs(
+            other, {'git_sha': 'abc', 'import_keys': {'index_workers': 2}}, [_run()]
+        )
 
 
 @pytest.mark.parametrize(

@@ -470,7 +470,7 @@ error instead, and exits with failure once its other steps have run, so
 the same invocation overrides both, for a debugging run; ``opus_import_all`` never passes
 it to its finishing steps.
 
-Five checks, in this order:
+The checks, in this order:
 
 :func:`~opus_import.steps.do_validate.validate_param_info`
     Every user-visible column of every ``obs_`` table has a ``param_info`` row. A list
@@ -508,6 +508,12 @@ Five checks, in this order:
     the rows whose ``obs_general_id`` names no ``obs_general`` row, by an anti-join. A
     foreign key added with the checks off, as finalization adds them, never reads the
     rows already there, so this is the check that it holds. Any orphan is an error.
+
+:func:`~opus_import.steps.do_validate.validate_unique_opus_ids`
+    Groups ``obs_general`` by ``opus_id`` and reports any OPUS ID more than one row
+    carries, with how many there are and the first ten. ``opus_id`` carries a plain key,
+    and the duplicate step of ``--finalize`` is what leaves one row per OPUS ID, so a
+    schema that has not been through it can hold two. Any shared OPUS ID is an error.
 
 .. _dev_guide_import_steps_do_dictionary:
 

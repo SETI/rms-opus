@@ -381,6 +381,39 @@ WHERE {obs_general}.{q('id')} IS NULL"""  # nosec B608
             )
 
 
+def validate_unique_opus_ids(ctx: ImportContext, namespace: Namespace) -> None:
+    """Report OPUS IDs that more than one ``obs_general`` row carries.
+
+    ``obs_general.opus_id`` carries a plain key, and finalization's duplicate step is what
+    leaves one row per OPUS ID, so a schema that has not been through it can hold two.
+    Any such id is an error, naming how many there are and the first ten.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        namespace: The namespace holding the tables to check.
+    """
+    db = ctx.db
+    assert db is not None
+    ctx.logger.log('debug', 'Validating that each OPUS ID has one obs_general row')
+    if not db.table_exists(namespace, 'obs_general'):
+        return
+    q = db.quote_identifier
+    obs_general = q(db.convert_raw_to_namespace(namespace, 'obs_general'))
+    # Every interpolation is an identifier produced by quote_identifier
+    # (^[A-Za-z0-9_]+$); the statement carries no values at all.
+    rows = db.general_select(
+        f'{q("opus_id")} FROM {obs_general} GROUP BY {q("opus_id")} '  # nosec B608
+        f'HAVING COUNT(*) > 1 ORDER BY {q("opus_id")}'
+    )
+    if rows:
+        shown = ', '.join(f'"{row[0]}"' for row in rows[:10])
+        ctx.logger.log(
+            'error',
+            f'{len(rows)} OPUS IDs have more than one obs_general row, among them {shown}; '
+            '--finalize keeps one copy of each',
+        )
+
+
 def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> bool:
     """Run every validation check, driven by ``--validate-perm``.
 
@@ -400,6 +433,7 @@ def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> bool:
     validate_min_max_order(ctx, namespace)
     validate_filter_wavelength_consistency(ctx, namespace)
     validate_orphans(ctx, namespace)
+    validate_unique_opus_ids(ctx, namespace)
 
     fatal_count, error_count, _warning_count, _message_count = ctx.logger.close()
     return bool(fatal_count + error_count == 0)
