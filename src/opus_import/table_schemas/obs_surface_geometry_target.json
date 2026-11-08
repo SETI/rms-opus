@@ -161,9 +161,9 @@
         "pi_dict_context": "SURFACE_GEO",
         "pi_dict_name": "SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE",
         "definition": "The range of planetographic latitudes of the sub-observer point on the surface of the planet or specified target body. The planetographic value is defined by the angle between the body's equator plane and the local surface normal at the sub-observer point. Values are positive in the body's northern hemisphere and negative in the southern hemisphere. This value is defined by the geometry during the time of the observation; it is independent of the field of view.",
-        "pi_dict_context": "SURFACE_GEO",
-        "pi_dict_name": "MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE",
-        "definition": "The minimum planetographic latitude of the sub-observer point on the surface of the planet or specified target body. The planetographic value is defined by the angle between the body's equator plane and the local surface normal at the sub-observer point. Values are positive in the body's northern hemisphere and negative in the southern hemisphere. This value is defined by the geometry during the time of the observation; it is independent of the field of view.",
+        "pi_dict_context_results": "SURFACE_GEO",
+        "pi_dict_name_results": "MINIMUM_SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE",
+        "definition_results": "The minimum planetographic latitude of the sub-observer point on the surface of the planet or specified target body. The planetographic value is defined by the angle between the body's equator plane and the local surface normal at the sub-observer point. Values are positive in the body's northern hemisphere and negative in the southern hemisphere. This value is defined by the geometry during the time of the observation; it is independent of the field of view.",
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -1773,8 +1773,7 @@
         "pi_old_slug": null,
         "pi_slug": "SURFACEGEO<SLUGTARGET>_surfaceintercepttime1",
         "pi_sub_heading": "Timing",
-        "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss",
-        "pi_units": null
+        "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss"
     },
     {
         "field_name": "surface_intercept_time2",
@@ -1798,8 +1797,7 @@
         "pi_old_slug": null,
         "pi_slug": "SURFACEGEO<SLUGTARGET>_surfaceintercepttime2",
         "pi_sub_heading": "Timing",
-        "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss",
-        "pi_units": null
+        "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss"
     },
     {
         "field_name": "id",

@@ -4727,3 +4727,58 @@ Nothing above this line is rewritten by an executor.
 - PR-05 was branched from `db-perf` at 8513d904, before PR-04 merged, and rebased onto
   `db-perf` after it (15afebd6). The measurement above is of the branch before the
   rebase; PR-04 changes how the import writes, not what the web application serves.
+
+### 2026-11-07, PR-06 (written against this file at 1759a9c2)
+
+- PR-06 was stacked on PR-05, branched from `db-perf-pr-05` at 1759a9c2, because
+  `deploy_new_code_only.sh --no-database` calls PR-05's schema version check, and was
+  rebased onto `db-perf` after PR-05 merged (335d9898). The measurement below is of the
+  stacked branch, whose tree differs from the rebased one only by PR-05's last two review
+  fixes, neither of which touches the import's timing.
+- The section's `swap_in(tables)` is `opus_import.table_swap.rebuild_tables_by_swap`,
+  which drops leftovers, creates the `__new` tables, fills them through a callback,
+  analyzes them and swaps them in; `swap_in_new_tables` is the rename itself. The fault
+  site keeps the section's name, `swap_in`, and `opus_import.import_fault` reads
+  `OPUS_IMPORT_FAULT`. The `__new` tables are in the permanent namespace, so the aux and
+  dictionary steps no longer stage anything in the import namespace. The rename runs with
+  `lock_wait_timeout` lowered to 5 s, up to 12 attempts, and restores the session's value.
+- Each `__new` table is analyzed before the rename, which the section does not say. A
+  table created empty keeps persistent statistics that count no rows, the rename carries
+  them across, and nothing recomputed them after the fill: the first measurement showed
+  `--validate-perm` 61% slower against the swapped `param_info` (0.89 s to 1.43 s), and
+  `ANALYZE TABLE` on it brought validation back to 1.40 s.
+- The generated foreign key name follows the dictionary's rename, as the section expects;
+  `import_tests/test_table_swap.py` checks that `definitions` references `contexts` after
+  a swap, and the goldens are unchanged by the swap itself.
+- The import tests of the swap run on a schema of their own, one bundle imported and
+  finished, and compare each rebuilt table with what finalization wrote there, rather
+  than rebuilding on the main run and comparing with the goldens: rebuilding on the main
+  run would add invocations to its logs, which other tests read. The main run's goldens
+  pin what finalization writes.
+- The schema validator also refuses an object that repeats a key, which the orchestrator
+  asked for: Python's JSON reader keeps the last value silently. It found
+  `obs_surface_geometry_target.json`'s `sub_observer_planetographic_latitude1` naming
+  `pi_dict_context`, `pi_dict_name` and `definition` twice, the second set meant as the
+  `_results` pair its siblings carry. Fixed; the search form's tooltip for the field is
+  now the range definition rather than the minimum one, the results tooltip is unchanged,
+  the `param_info` and `definitions` goldens were regenerated, and the search menu's golden
+  response `api_menu_search_cirs.html` was edited to the range definition. The metadata
+  selector and the detail page show the results tooltip, which is unchanged, so their
+  goldens are too. Beyond the section's list it also checks units in
+  `pi_form_type`, `pi_ranges` names, flag types, unique `(term, context)` pairs, contexts
+  that exist, and distinct `mult_options` ids.
+- `data_source_order` (unread since the 2022 refactor replaced the column ordering it
+  drove) and `pi_units` (unread since units moved into `pi_form_type` in 2021; its three
+  entries were null) are deleted from the schemas rather than listed as exceptions, at
+  the orchestrator's direction, with the guide's entry for them and the docs test that
+  kept them listed. `field_defalut` is fixed to `field_default`.
+- PR-06's measurement, at fixture scale (2026-11-07, `2026-11-07_PR-06_{before,after}_fixture_mysql_a.json`),
+  three imports a side alternated, before at 1759a9c2 and after at 6b5c80cb: every guard
+  held (`import.wall_s` +0.2%, `import.largest.import_s` +3.3% against a 3.6% floor,
+  `import.peak_tree_pss_kb` -6.9%). The reported `--import-dictionary` phase fell from
+  0.248 s to 0.152 s (-38.8%) and its invocation from 0.757 s to 0.685 s (-9.5%), since
+  the swap fills the new tables directly rather than copying them from the import
+  namespace; `create_param_info` fell 44%. One before run took 92.4 s against 66 s for
+  the others, a disturbed run the per-metric statistics set aside. Two earlier sessions
+  are not used: the first ran without the `benchmarks` extra in the head's virtualenv,
+  and the second measured the swap before it analyzed its tables.

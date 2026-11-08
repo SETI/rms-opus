@@ -474,6 +474,32 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::drop_table must be overridden')
 
+    def rename_tables_atomically(
+        self,
+        namespace: Namespace,
+        renames: Sequence[tuple[str, str]],
+        *,
+        lock_wait_timeout_s: int,
+        attempts: int,
+    ) -> None:
+        """Rename several tables in one statement, which takes effect all at once or not at all.
+
+        A reader sees every table under its old name or every table under its new one,
+        never a mixture and never a moment with a name missing. The renames apply in
+        order, so a pair may name a table an earlier pair just freed.
+
+        Parameters:
+            namespace: The namespace holding every table named.
+            renames: ``(from, to)`` raw table names, in the order they apply.
+            lock_wait_timeout_s: How long one attempt waits for the tables' locks, which
+                a reader's open transaction holds, before it gives up.
+            attempts: How many times to try before the wait is a failure.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::rename_tables_atomically must be overridden')
+
     def create_table(
         self,
         namespace: Namespace,

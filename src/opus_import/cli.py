@@ -362,19 +362,19 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--create-param-info',
         action='store_true',
         default=False,
-        help='Create the param_info table; includes copying to permanent table',
+        help='Rebuild the param_info table beside the live one and swap it in',
     )
     parser.add_argument(
         '--create-partables',
         action='store_true',
         default=False,
-        help='Create the partables table; includes copying to permanent table',
+        help='Rebuild the partables table beside the live one and swap it in',
     )
     parser.add_argument(
         '--create-table-names',
         action='store_true',
         default=False,
-        help='Create the table_names table; includes copying to permanent table',
+        help='Rebuild the table_names table beside the live one and swap it in',
     )
     parser.add_argument(
         '--update-mult-info',
@@ -409,7 +409,7 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--import-dictionary',
         action='store_true',
         default=False,
-        help='Import the dictionary and contexts from scratch',
+        help='Rebuild the definitions and contexts tables beside the live ones and swap them in',
     )
 
     parser.add_argument(

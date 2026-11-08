@@ -6,7 +6,9 @@ parameters and mult values are described. A context names where a term came from
 exists so that the same word can mean different things to different missions.
 
 Neither table is touched by an ordinary import: this step runs only under
-``--import-dictionary``, and is the last thing `opus_import.cli` does.
+``--import-dictionary``. The two tables are built beside the live ones and swapped in
+together (`opus_import.table_swap`), so a reader never finds the dictionary missing or
+partly filled, and ``definitions``' foreign key onto ``contexts`` follows the swap.
 """
 
 from __future__ import annotations
@@ -15,14 +17,14 @@ import csv
 import os
 from typing import TYPE_CHECKING, Any
 
-from opus_import import import_util
+from opus_import import import_util, table_swap
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
 
 
-def create_import_definitions_table(ctx: ImportContext) -> bool:
-    """Fill the import ``definitions`` table from the table schemas.
+def fill_definitions(ctx: ImportContext, definitions_table: str, contexts_table: str) -> bool:
+    """Fill an empty ``definitions`` table from the table schemas.
 
     Each packaged ``obs*``, ``internal_def*`` and ``mult_tooltips*`` schema contributes a
     row per ``definition`` and ``definition_results`` entry it carries, filed under the
@@ -35,6 +37,10 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+        definitions_table: The permanent table to fill, already created from
+            ``definitions``' schema with its foreign key onto ``contexts_table``.
+        contexts_table: The ``contexts`` table being built beside it, which gains the
+            mult tooltip contexts.
 
     Returns:
         True on success. False if a schema entry has a definition but no term or no
@@ -46,12 +52,7 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
     assert db is not None
     logger = ctx.logger
 
-    logger.log('info', 'Creating new import definitions table')
-    def_schema = import_util.read_schema_for_table(ctx, 'definitions')
-    # definitions.json is packaged with opus_import, so the schema is always found.
-    assert def_schema is not None
-    # Start from scratch
-    db.create_table('import', 'definitions', def_schema, ignore_if_exists=False)
+    logger.log('info', f'Filling {definitions_table}')
 
     bad_db = False
 
@@ -102,20 +103,22 @@ def create_import_definitions_table(ctx: ImportContext) -> bool:
         }
         mult_tp_ctx_rows.append(new_row)
 
-    db.insert_rows('import', 'contexts', mult_tp_ctx_rows)
-    db.insert_rows('import', 'definitions', rows)
+    db.insert_rows('perm', contexts_table, mult_tp_ctx_rows)
+    db.insert_rows('perm', definitions_table, rows)
 
     return True
 
 
-def create_import_contexts_table(ctx: ImportContext) -> bool:
-    """Fill the import ``contexts`` table from the packaged ``contexts.csv``.
+def fill_contexts(ctx: ImportContext, new_table: str) -> bool:
+    """Fill an empty ``contexts`` table from the packaged ``contexts.csv``.
 
     Each line of the file is a context's name, its description and the name of its
     parent context.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+        new_table: The permanent table to fill, already created from ``contexts``'
+            schema.
 
     Returns:
         True on success. False if the file could not be read or any line does not have
@@ -126,12 +129,7 @@ def create_import_contexts_table(ctx: ImportContext) -> bool:
     assert db is not None
     logger = ctx.logger
 
-    logger.log('info', 'Creating new import contexts table')
-    contexts_schema = import_util.read_schema_for_table(ctx, 'contexts')
-    # contexts.json is packaged with opus_import, so the schema is always found.
-    assert contexts_schema is not None
-    # Start from scratch
-    db.create_table('import', 'contexts', contexts_schema, ignore_if_exists=False)
+    logger.log('info', f'Filling {new_table}')
 
     contexts_file = import_util.DICTIONARY_DATA_DIR / 'contexts.csv'
     rows: list[dict[str, Any]] = []
@@ -149,50 +147,15 @@ def create_import_contexts_table(ctx: ImportContext) -> bool:
         logger.log('error', f'Failed to read {contexts_file}: {e.strerror}')
         return False
 
-    db.insert_rows('import', 'contexts', rows)
+    db.insert_rows('perm', new_table, rows)
 
     return True
-
-
-def copy_dictionary_from_import_to_permanent(ctx: ImportContext) -> None:
-    """Replace the permanent dictionary tables with the import ones.
-
-    ``definitions`` has a foreign key onto ``contexts``, so it is dropped first and
-    created last.
-
-    Parameters:
-        ctx: The import run's context, for the open database and the logger.
-    """
-    db = ctx.db
-    assert db is not None
-    logger = ctx.logger
-
-    logger.log('info', 'Copying contexts table from import to permanent')
-    # Start from scratch
-    contexts_schema = import_util.read_schema_for_table(ctx, 'contexts')
-    # contexts.json is packaged with opus_import, so the schema is always found.
-    assert contexts_schema is not None
-    db.drop_table('perm', 'definitions')
-    db.drop_table('perm', 'contexts')
-    db.create_table('perm', 'contexts', contexts_schema, ignore_if_exists=False)
-
-    db.copy_rows_between_namespaces('import', 'perm', 'contexts')
-
-    logger.log('info', 'Copying definitions table from import to permanent')
-    # Start from scratch
-    def_schema = import_util.read_schema_for_table(ctx, 'definitions')
-    # definitions.json is packaged with opus_import, so the schema is always found.
-    assert def_schema is not None
-    db.create_table('perm', 'definitions', def_schema, ignore_if_exists=False)
-
-    db.copy_rows_between_namespaces('import', 'perm', 'definitions')
 
 
 def do_dictionary(ctx: ImportContext) -> bool:
     """Rebuild the permanent dictionary tables, driven by ``--import-dictionary``.
 
-    The import tables are dropped both before and after, so a failed build leaves
-    nothing behind and the permanent tables keep what the previous run wrote.
+    A failed build leaves the live tables as the previous run wrote them.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -200,14 +163,13 @@ def do_dictionary(ctx: ImportContext) -> bool:
     Returns:
         True if both tables were rebuilt, False if a build failed, having logged why.
     """
-    db = ctx.db
-    assert db is not None
-    # Contexts has to come first because of a foreign key
-    db.drop_table('import', 'definitions')
-    db.drop_table('import', 'contexts')
-    built = create_import_contexts_table(ctx) and create_import_definitions_table(ctx)
-    if built:
-        copy_dictionary_from_import_to_permanent(ctx)
-    db.drop_table('import', 'definitions')
-    db.drop_table('import', 'contexts')
-    return built
+    contexts_table = table_swap.swap_new_name('contexts')
+    definitions_table = table_swap.swap_new_name('definitions')
+    return table_swap.rebuild_tables_by_swap(
+        ctx,
+        ['contexts', 'definitions'],
+        lambda: (
+            fill_contexts(ctx, contexts_table)
+            and fill_definitions(ctx, definitions_table, contexts_table)
+        ),
+    )

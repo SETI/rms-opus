@@ -67,7 +67,7 @@
     {
         "field_name": "integration_duration",
         "field_type": "real8",
-        "field_defalut": null,
+        "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
         "val_min": 0,
