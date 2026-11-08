@@ -4856,6 +4856,10 @@ Nothing above this line is rewritten by an executor.
     27.4-29.3 s against 38.1-52.9 s, and finalization 42.8-44.7 s against 53.4-68.3 s. At
     22 workers the key builds last as long as `obs_files`, the largest table, takes
     beside the others (27-29 s, against 13-14 s alone).
+  - The review's later fixes (96b3f077) are not measured: each table is analyzed before
+    its keys' space is estimated, since the server's row count can predate the loads
+    (the closing `ANALYZE` of the same tables takes 0.7 s at test scale), and the bundle
+    delete reads its ids a page at a time, which on a fresh schema finds none.
   - Session `a` (at 02738217, before the review's fixes and the sized buffer) is not used
     beyond the diagnosis above. The secondary measurement's unfinalized schema
     (`bench_test_after_unfinalized_1`) was imported at 02738217; the fixes since touch
