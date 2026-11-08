@@ -4859,7 +4859,9 @@ Nothing above this line is rewritten by an executor.
   - The review's later fixes (96b3f077) are not measured: each table is analyzed before
     its keys' space is estimated, since the server's row count can predate the loads
     (the closing `ANALYZE` of the same tables takes 0.7 s at test scale), and the bundle
-    delete reads its ids a page at a time, which on a fresh schema finds none.
+    delete reads its ids a page at a time, which on a fresh schema finds none. Nor is
+    ea6db085's validation check, which groups `obs_general` by `opus_id`, a column the
+    finalized schema keys.
   - Session `a` (at 02738217, before the review's fixes and the sized buffer) is not used
     beyond the diagnosis above. The secondary measurement's unfinalized schema
     (`bench_test_after_unfinalized_1`) was imported at 02738217; the fixes since touch
