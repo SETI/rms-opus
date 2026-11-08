@@ -4782,3 +4782,81 @@ Nothing above this line is rewritten by an executor.
   the others, a disturbed run the per-metric statistics set aside. Two earlier sessions
   are not used: the first ran without the `benchmarks` extra in the head's virtualenv,
   and the second measured the swap before it analyzed its tables.
+
+### 2026-11-08, PR-07 (written against this file at 02c7ca88)
+
+- **The sort buffer is sized per statement, not per session.** The section has each
+  sibling session set `innodb_ddl_buffer_size` to a quarter of the buffer pool divided by
+  `index_workers`. The server allocates the whole buffer for every index a statement
+  builds, so at the default one worker on the benchmark server (an 18 GiB pool, so the
+  4 GiB maximum) each index cost about a third of a second whatever its table held: the
+  first measurement's test-scale finalization took 977 s, 961 s of it in the key builds,
+  and the import as a whole ran 3.2 times slower than the base (1272-1384 s against
+  388-411 s). One `ALTER` adding the 56 plain keys of `obs_surface_geometry__hydra`
+  (2,209 rows) took 0.45 s at the server's 1 MiB default and 19 s at 4 GiB; on
+  `obs_files` (one million rows, eight keys), 1 MiB, 64 MiB and 256 MiB all took 17-18 s
+  and 1 GiB and 4 GiB took 22-24 s. Each statement now sets the session's buffer to the
+  estimated sort of the largest key it builds (the section's space estimate), never below
+  the server's own setting and never above the section's quarter of the pool shared
+  among the workers, which becomes a ceiling rather than the setting; the session is
+  changed only when the size differs (`ImportDBSuper._size_index_sort`, and
+  `IndexStatement.sort_bytes`). The key builds at test scale went from about 1000 s to
+  39 s. Full scale may want a larger buffer for its largest tables than test scale shows,
+  which the ceiling still allows.
+- `build_indexes` takes `workers`, `server_tmpdir` and `space_budget` keyword arguments
+  beside the section's `serial`, rather than reading the configuration itself, so the
+  unit tests drive it without a configuration file; `create_indexes` passes them from
+  `[import]`.
+- The bundle delete is chunked by each table's own `id`, not by `obs_general.id` as the
+  section says: each table's ids for the bundle are read in order and deleted
+  `transaction_rows` at a time by `bundle_id` and an `id` range, every child before
+  `obs_general`. Chunking every table by `obs_general.id` would delete a child's rows by
+  `obs_general_id`, which no key a fresh import creates leads, so each chunk would scan
+  the child.
+- The duplicate step has no flag of its own; it runs inside `--finalize` after the key
+  builds and is named in a failure as "the duplicate step of --finalize". The section
+  names no flag for it.
+- The section's per-index wall-clock is not measurable: a table's plain keys are added in
+  one `ALTER` at the default, so `--timing-json` carries each statement
+  (`create_indexes:<table>:<keys>`) and each table; a per-index split would need one
+  `ALTER` per key, each reading the whole table again.
+- `models.py` is edited rather than regenerated. Regenerating it with
+  `create_opus_models.sh` against the finalized fixture schema also changes it in ways
+  older than this PR (column order in some classes, the mult tables' `aliases` column,
+  `instrument_id`'s width), which belong to no PR in this plan; the regenerated `opus_id`
+  lines matched the edited ones in every class both files hold. The script's two
+  `opus_id` foreign-key rules and its `opus =` rule are removed as the section says, and
+  its temporary-file chain fixed.
+- `--create-indexes` on a schema finalized at version 1 would add a plain `opus_id` key
+  to `obs_general` beside the unique one already there, since the two differ by kind.
+  Nothing should run it there: `SCHEMA_VERSION` is 2, so PR-05's check refuses to serve
+  or deploy such a schema, which is replaced by a fresh import rather than finalized
+  again.
+- `duplicate_id_run` no longer passes `--import-check-duplicate-id`, which the fresh path
+  never reads; PR-08 removes the flag itself.
+- `benchmarks.bench_import` gains `--import-key KEY=VALUE`, which writes an `[import]`
+  key into one side's configuration (through `write_opus_config(extra_import=...)`), so
+  the secondary measurement could run both sides from the head at different
+  `index_workers`.
+- PR-07's measurement (2026-11-07 and 2026-11-08, session `b`, three imports a side
+  alternated, before at 02c7ca88 and after at 09d009d2):
+  - **Test scale** (`2026-11-07_PR-07_{before,after}_test_mysql_b.json`): the target
+    `import.wall_s` improved from 405.3 s to 346.6 s (-14.5%, floor 7.2%), and every
+    guard held (`import.largest.import_s` -15.5%, `import.peak_tree_pss_kb` -0.3%). The
+    bundle imports fell from 391.6 s to 291.1 s (-25.7%) and finalization rose from
+    12.4 s to 54.3 s, 38.9 s of it the key builds; the copy to the permanent tables
+    (33.5 s) is gone. `Innodb_data_written` fell 42.8% (5.89 GB to 3.37 GB),
+    `Innodb_os_log_written` 54.8% and `Innodb_rows_inserted` 50.0%.
+  - **Fixture scale** (`2026-11-07_PR-07_{before,after}_fixture_mysql_b.json`):
+    `import.wall_s` improved from 64.8 s to 41.7 s (-35.7%); the guards held.
+  - **Workers** (`2026-11-07_PR-07_{before,after}_test_mysql_workersb.json`, both sides at
+    09d009d2 finalizing copies of one unfinalized test-scale import, before at the default
+    `index_workers = 1`, which builds on the parent connection as `serial=True` does, and
+    after at 22, three quarters of the workstation's 30 cores): the key builds took
+    27.4-29.3 s against 38.1-52.9 s, and finalization 42.8-44.7 s against 53.4-68.3 s. At
+    22 workers the key builds last as long as `obs_files`, the largest table, takes
+    beside the others (27-29 s, against 13-14 s alone).
+  - Session `a` (at 02738217, before the review's fixes and the sized buffer) is not used
+    beyond the diagnosis above. The secondary measurement's unfinalized schema
+    (`bench_test_after_unfinalized_1`) was imported at 02738217; the fixes since touch
+    the delete and finalization, and a fresh import into an empty schema deletes nothing.
