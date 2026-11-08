@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks import bench_server, import_scenarios, web_scenarios
+from benchmarks import bench_import, bench_server, import_scenarios, web_scenarios
 from benchmarks.app_servers import ServerError
 from benchmarks.web_scenarios import ScenarioError
 from opus_config import load_config
@@ -184,3 +184,29 @@ def test_the_written_configuration_is_one_opus_reads(tmp_path: Path) -> None:
     assert config.django.cache_location == '127.0.0.1:21211'
     assert config.database.schema == 'bench_x'
     assert config.paths.import_log_dir == str(tmp_path / 'run' / 'logs')
+
+
+def test_a_session_sets_import_keys_the_loader_reads(tmp_path: Path) -> None:
+    """``--import-key`` values reach the side's configuration with their types."""
+    path = bench_server.write_opus_config(
+        tmp_path / 'opus.toml',
+        schema='bench_x',
+        pds3_holdings=tmp_path / 'holdings',
+        pds4_holdings=tmp_path / 'pds4-holdings',
+        run_dir=tmp_path / 'run',
+        cache_location='127.0.0.1:21211',
+        extra_import=bench_import.parse_import_keys(
+            ['index_workers=22', 'bulk_load=false', 'server_tmpdir=/var/tmp/x']
+        ),
+    )
+    config = load_config(path)
+    assert config.import_.index_workers == 22
+    assert config.import_.bulk_load is False
+    assert config.import_.server_tmpdir == '/var/tmp/x'
+
+
+@pytest.mark.parametrize('pair', ['index_workers', '=3'])
+def test_an_import_key_without_a_key_and_value_is_refused(pair: str) -> None:
+    """Each ``--import-key`` is ``KEY=VALUE``."""
+    with pytest.raises(ValueError, match='KEY=VALUE'):
+        bench_import.parse_import_keys([pair])

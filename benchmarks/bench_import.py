@@ -106,7 +106,7 @@ from import_tests.tools import build_run, run_logs
 from import_tests.tools.golden_io import DatabaseCredentials
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
 #: The server counters whose movement over a run every import result records. The
 #: data, redo and flushed-page counts and the waits for a free page show whether a run
@@ -167,6 +167,7 @@ class ImportBench:
         label: Label,
         scenario: ImportScenario,
         cache_location: str,
+        extra_import: Mapping[str, object] | None = None,
     ) -> None:
         """Prepare to run imports.
 
@@ -178,6 +179,8 @@ class ImportBench:
             scenario: The scale's import scenario.
             cache_location: The memcached the configuration names. Nothing listens there
                 during an import; the migration's settings probe it and fall back.
+            extra_import: Further ``[import]`` keys every run's configuration sets, or
+                None for none.
         """
         self.server = server
         self.side = side
@@ -185,6 +188,7 @@ class ImportBench:
         self.label = label
         self.scenario = scenario
         self.cache_location = cache_location
+        self.extra_import = dict(extra_import or {})
 
     @functools.cached_property
     def schema_version(self) -> int | None:
@@ -339,6 +343,7 @@ class ImportBench:
             pds4_holdings=pds4,
             run_dir=run_dir,
             cache_location=self.cache_location,
+            extra_import=self.extra_import,
         )
         errors_log = run_dir / 'logs' / build_run.ERRORS_LOG
         require_empty_errors_log(errors_log)
@@ -846,7 +851,20 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         help="with --reuse-schema, copy the schema into one of this side's own and run this "
         "side's finalization sequence on the copy",
     )
+    parser.add_argument(
+        '--import-key',
+        metavar='KEY=VALUE',
+        action='append',
+        default=[],
+        help="an [import] key every run's configuration sets, such as index_workers=22; "
+        'repeatable. A whole number or true or false is written as one, anything else as '
+        'a string',
+    )
     args = parser.parse_args(argv)
+    try:
+        args.import_keys = parse_import_keys(args.import_key)
+    except ValueError as e:
+        parser.error(str(e))
     if args.profile and args.scale == 'fixture':
         parser.error('--profile profiles the bundle imports of the test and complete scales')
     if (args.clone or args.finalize_only) and args.reuse_schema is None:
@@ -856,6 +874,32 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     if args.reuse_schema is not None and (args.stop_before_finalization or args.profile):
         parser.error('--reuse-schema imports nothing, so it takes no import options')
     return args
+
+
+def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
+    """Read ``--import-key`` arguments into the ``[import]`` keys they set.
+
+    Parameters:
+        pairs: Each ``KEY=VALUE``.
+
+    Returns:
+        The keys, each value a whole number, a boolean or a string, in argument order.
+
+    Raises:
+        ValueError: If an argument has no ``=`` or no key.
+    """
+    keys: dict[str, object] = {}
+    for pair in pairs:
+        key, separator, text = pair.partition('=')
+        if not separator or not key:
+            raise ValueError(f'--import-key takes KEY=VALUE, not {pair!r}')
+        value: object = text
+        if text in ('true', 'false'):
+            value = text == 'true'
+        elif text.lstrip('-').isdigit():
+            value = int(text)
+        keys[key] = value
+    return keys
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -882,8 +926,10 @@ def main(argv: Sequence[str] | None = None) -> None:
         label=label,
         scenario=scenario,
         cache_location=web_scenarios.load_web_config().server.memcached_location,
+        extra_import=args.import_keys,
     )
     environment: dict[str, Any] = {
+        'import_keys': args.import_keys,
         **host_environment(),
         **side.environment(),
         'skipped_steps': list(spelling.skipped_steps),

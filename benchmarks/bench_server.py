@@ -788,6 +788,7 @@ def write_opus_config(
     pds4_holdings: Path,
     run_dir: Path,
     cache_location: str,
+    extra_import: Mapping[str, object] | None = None,
 ) -> Path:
     """Write the ``OPUS_CONFIG`` a harness-run import or web application reads.
 
@@ -801,6 +802,9 @@ def write_opus_config(
         pds4_holdings: The PDS4 holdings root.
         run_dir: The run's own scratch directory.
         cache_location: The owned memcached's ``host:port``.
+        extra_import: Further ``[import]`` keys and their values -- an integer, a
+            boolean or a string -- or None for none. A side whose configuration does not
+            know a key refuses the file, so a session sets one only for a side that does.
 
     Returns:
         The path written.
@@ -812,6 +816,14 @@ def write_opus_config(
     def toml(value: object) -> str:
         """Return a TOML basic string."""
         return '"' + str(value).replace('\\', '\\\\').replace('"', '\\"') + '"'
+
+    def toml_value(value: object) -> str:
+        """Return an ``[import]`` value as TOML: a boolean, an integer or a string."""
+        if isinstance(value, bool):
+            return 'true' if value else 'false'
+        if isinstance(value, int):
+            return str(value)
+        return toml(value)
 
     lines = [
         '[database]',
@@ -850,6 +862,7 @@ def write_opus_config(
         '[import]',
         f'log_file = {toml(log_dir / "opus_import.log")}',
         f'debug_log_file = {toml(log_dir / "opus_import_debug.log")}',
+        *(f'{key} = {toml_value(value)}' for key, value in (extra_import or {}).items()),
         '',
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
