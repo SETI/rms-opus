@@ -269,7 +269,7 @@ def test_a_failed_key_build_is_a_failed_step() -> None:
 def test_foreign_keys_are_added_with_the_checks_off_and_turned_back_on() -> None:
     """``foreign_key_checks`` is 0 around the statements and 1 after, even after a failure."""
     db = _RecordingDB(set())
-    statement = IndexStatement('ALTER TABLE `obs_pds` ADD FOREIGN KEY x', 'fk', 0, 0)
+    statement = IndexStatement('ALTER TABLE `obs_pds` ADD FOREIGN KEY x', 'fk', 0, 0, 0)
     timed = db.add_foreign_keys([statement])
     assert [label for label, _ in timed] == ['fk']
     assert [cmd for cmd, _ in db.executed] == [
@@ -292,8 +292,8 @@ def test_foreign_key_checks_are_turned_back_on_after_a_refused_foreign_key() -> 
 
     db = _RefusingDB(set())
     statements = [
-        IndexStatement('ALTER TABLE `obs_pds` ADD FOREIGN KEY x', 'fk', 0, 0),
-        IndexStatement('ALTER TABLE `obs_files` ADD FOREIGN KEY y', 'fk2', 0, 0),
+        IndexStatement('ALTER TABLE `obs_pds` ADD FOREIGN KEY x', 'fk', 0, 0, 0),
+        IndexStatement('ALTER TABLE `obs_files` ADD FOREIGN KEY y', 'fk2', 0, 0, 0),
     ]
     with pytest.raises(ImportDBError):
         db.add_foreign_keys(statements)
@@ -304,13 +304,16 @@ def test_foreign_key_checks_are_turned_back_on_after_a_refused_foreign_key() -> 
     ]
 
 
-def _prepared_session(workers: int, ddl_buffer_size: int) -> _RecordingDB:
-    """Return a session prepared on a server with an 8 GiB pool and the given buffer."""
+def _prepared_session(
+    workers: int, ddl_buffer_size: int, ddl_threads: int = 4, pool: int = 8 * 1024**3
+) -> _RecordingDB:
+    """Return a session prepared on a server with the given pool, buffer and DDL threads."""
     db = _RecordingDB(set())
     db.answers = {
         'SHOW VARIABLES': [
-            ('innodb_buffer_pool_size', 8 * 1024**3),
+            ('innodb_buffer_pool_size', pool),
             ('innodb_ddl_buffer_size', ddl_buffer_size),
+            ('innodb_ddl_threads', ddl_threads),
         ]
     }
     db._prepare_index_session(workers, None)
@@ -337,10 +340,10 @@ def test_an_index_sort_is_sized_to_its_estimate_within_the_bounds() -> None:
     """
     ceiling = 8 * 1024**3 // 4 // 4
     db = _prepared_session(4, 1048576)
-    db._size_index_sort(1000)
+    db._size_index_sort(1000, 1)
     assert db.executed == []
-    db._size_index_sort(ceiling * 10)
-    db._size_index_sort(64 * 1024**2)
+    db._size_index_sort(ceiling * 10, 1)
+    db._size_index_sort(64 * 1024**2, 1)
     assert db.executed == [
         ('SET SESSION innodb_ddl_buffer_size = %s', [ceiling]),
         ('SET SESSION innodb_ddl_buffer_size = %s', [64 * 1024**2]),
@@ -350,8 +353,8 @@ def test_an_index_sort_is_sized_to_its_estimate_within_the_bounds() -> None:
 def test_an_index_sort_already_sized_is_not_set_again() -> None:
     """Two statements of the same size change the session once."""
     db = _prepared_session(1, 1048576)
-    db._size_index_sort(64 * 1024**2)
-    db._size_index_sort(64 * 1024**2)
+    db._size_index_sort(64 * 1024**2, 1)
+    db._size_index_sort(64 * 1024**2, 1)
     assert len(db.executed) == 1
 
 
@@ -359,8 +362,30 @@ def test_a_server_buffer_above_the_ceiling_is_held_to_it() -> None:
     """The ceiling bounds even the server's own setting."""
     ceiling = 8 * 1024**3 // 4 // 22
     db = _prepared_session(22, 4 * 1024**3)
-    db._size_index_sort(1000)
+    db._size_index_sort(1000, 1)
     assert db.executed == [('SET SESSION innodb_ddl_buffer_size = %s', [ceiling])]
+
+
+@pytest.mark.parametrize(('key_count', 'sharing'), [(2, 2), (4, 4), (8, 4)])
+def test_the_ceiling_is_shared_among_the_indexes_built_at_once(
+    key_count: int, sharing: int
+) -> None:
+    """Each index a statement builds at once, up to ``innodb_ddl_threads``, holds a buffer."""
+    db = _prepared_session(1, 1048576, ddl_threads=4)
+    db._size_index_sort(8 * 1024**3, key_count)
+    assert db.executed == [
+        ('SET SESSION innodb_ddl_buffer_size = %s', [8 * 1024**3 // 4 // sharing])
+    ]
+
+
+def test_the_ceiling_keeps_within_the_values_the_server_accepts() -> None:
+    """A large pool's share is held to the largest buffer, a tiny one's raised to the smallest."""
+    db = _prepared_session(1, 65536, ddl_threads=1, pool=64 * 1024**3)
+    db._size_index_sort(64 * 1024**3, 1)
+    assert db.executed == [('SET SESSION innodb_ddl_buffer_size = %s', [4_294_967_295])]
+    db = _prepared_session(64, 1048576, pool=16 * 1024**2)
+    db._size_index_sort(1024**3, 8)
+    assert db.executed == [('SET SESSION innodb_ddl_buffer_size = %s', [65536])]
 
 
 def test_an_index_session_on_a_server_without_the_buffer_setting_sets_nothing() -> None:
@@ -368,7 +393,7 @@ def test_an_index_session_on_a_server_without_the_buffer_setting_sets_nothing() 
     db = _RecordingDB(set())
     db.answers = {'SHOW VARIABLES': [('innodb_buffer_pool_size', 8 * 1024**3)]}
     db._prepare_index_session(1, None)
-    db._size_index_sort(64 * 1024**2)
+    db._size_index_sort(64 * 1024**2, 1)
     assert db.executed == []
 
 
@@ -391,14 +416,14 @@ class _BuildingDB(ImportDBSuper):
         super().__init__('host', 'db', 'schema', 'user', 'password')
         self.root: _BuildingDB = self if parent is None else parent.root
         self.failing = failing
-        self.sort_bytes: int | None = None
+        self.sort_size: tuple[int, int] | None = None
         if parent is None:
             self.lock = threading.Lock()
             self.ran: list[tuple[int, str]] = []
             self.running = 0
             self.most_running = 0
             self.prepared: list[tuple[int, str | None]] = []
-            self.sized: dict[str, int | None] = {}
+            self.sized: dict[str, tuple[int, int] | None] = {}
             self.closed = 0
             self.siblings = 0
 
@@ -415,9 +440,9 @@ class _BuildingDB(ImportDBSuper):
         if server_tmpdir == 'refused':
             raise ImportDBError('refused the directory')
 
-    def _size_index_sort(self, sort_bytes: int) -> None:
-        """Hold the size for this connection's next statement."""
-        self.sort_bytes = sort_bytes
+    def _size_index_sort(self, sort_bytes: int, key_count: int) -> None:
+        """Hold the sort and key count for this connection's next statement."""
+        self.sort_size = (sort_bytes, key_count)
 
     def run_ddl(self, cmd: str) -> None:
         """Run a statement for a few milliseconds, tracking how many run at once."""
@@ -429,8 +454,8 @@ class _BuildingDB(ImportDBSuper):
         with root.lock:
             root.running -= 1
             root.ran.append((id(self), cmd))
-            root.sized[cmd] = self.sort_bytes
-        self.sort_bytes = None
+            root.sized[cmd] = self.sort_size
+        self.sort_size = None
         if cmd == self.failing:
             raise ImportDBError(f'refused {cmd}')
 
@@ -441,9 +466,14 @@ class _BuildingDB(ImportDBSuper):
 
 
 def _statements(tables: dict[str, int], space: int = 0) -> dict[str, list[IndexStatement]]:
-    """Return `count` statements per table, labeled ``<table>.<n>``, each sorting ``n``."""
+    """Return `count` statements per table, labeled ``<table>.<n>``, each sorting ``n``.
+
+    Statement ``n`` builds ``n + 1`` keys.
+    """
     return {
-        table: [IndexStatement(f'{table}.{n}', f'{table}.{n}', space, n) for n in range(count)]
+        table: [
+            IndexStatement(f'{table}.{n}', f'{table}.{n}', space, n, n + 1) for n in range(count)
+        ]
         for table, count in tables.items()
     }
 
@@ -508,7 +538,7 @@ def test_a_statement_larger_than_the_budget_is_refused_before_anything_runs() ->
     db = _BuildingDB()
     with pytest.raises(ValueError, match=r'b: b\.0 needs an estimated 200 bytes'):
         db.build_indexes(
-            {'a': _statements({'a': 1})['a'], 'b': [IndexStatement('b.0', 'b.0', 200, 200)]},
+            {'a': _statements({'a': 1})['a'], 'b': [IndexStatement('b.0', 'b.0', 200, 200, 1)]},
             workers=2,
             space_budget=100,
         )
@@ -517,10 +547,12 @@ def test_a_statement_larger_than_the_budget_is_refused_before_anything_runs() ->
 
 @pytest.mark.parametrize('workers', [1, 3])
 def test_each_statement_runs_on_a_connection_sized_for_it(workers: int) -> None:
-    """The connection running a statement was sized to that statement's sort just before."""
+    """The connection running a statement was sized to that statement's sort and keys just before."""
     db = _BuildingDB()
     db.build_indexes(_statements({'a': 3, 'b': 2, 'c': 2}), workers=workers)
-    assert db.sized == {f'{t}.{n}': n for t, c in (('a', 3), ('b', 2), ('c', 2)) for n in range(c)}
+    assert db.sized == {
+        f'{t}.{n}': (n, n + 1) for t, c in (('a', 3), ('b', 2), ('c', 2)) for n in range(c)
+    }
 
 
 def test_no_workers_is_refused() -> None:
@@ -885,6 +917,7 @@ def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
     assert do_indexes.create_indexes(ctx)
     (statement,) = db.built['obs_pds']
     assert statement.sort_bytes == 60 < statement.space_bytes
+    assert statement.key_count == statement.sql.count('ADD KEY')
     assert statement.sql.startswith('ALTER TABLE `obs_pds` ADD KEY (`opus_id`)')
     assert 'ADD KEY (`obs_general_id`)' in statement.sql
     assert [s.sql for s in db.foreign] == [

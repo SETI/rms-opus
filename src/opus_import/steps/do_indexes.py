@@ -10,11 +10,12 @@ three phases:
    connections (`ImportDBSuper.build_indexes`), each table analyzed first so that its
    keys' estimates count the rows its loads wrote. Each statement's sort memory is sized
    to the estimated sort of its largest key, within a share of a quarter of the server's
-   buffer pool, and its sorts go to ``[import] server_tmpdir`` when that is set. When
-   the free space there can be read, the statements running at once must fit it
-   together: a table's keys are split into as many statements as that takes, and a key
-   whose own estimate exceeds the whole of it is refused. Otherwise each table's keys go
-   in one statement, and the estimate is logged.
+   buffer pool divided among the indexes it builds at once, and its sorts go to
+   ``[import] server_tmpdir`` when that is set. When the free space there can be read,
+   the statements running at once must fit it together: a table's keys are split into
+   as many statements as that takes, and a key whose own estimate exceeds the whole of
+   it is refused. Otherwise each table's keys go in one statement, and the estimate is
+   logged.
 2. **The foreign keys**, one at a time with ``foreign_key_checks`` off, after every plain
    key, since each takes an exclusive lock on the table it references.
 3. **ANALYZE** of every table that gained a key.
@@ -94,6 +95,7 @@ def _group_keys(
             label=_key_label([key for key, _ in group]),
             space_bytes=sum(space for _, space in group),
             sort_bytes=max(space for _, space in group),
+            key_count=len(group),
         )
         for group in groups
     ]
@@ -145,6 +147,7 @@ def create_indexes(ctx: ImportContext) -> bool:
                         label=f'{table_name}:{key.describe()}',
                         space_bytes=0,
                         sort_bytes=0,
+                        key_count=0,
                     )
                 )
                 foreign_tables.add(table_name)

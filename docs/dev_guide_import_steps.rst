@@ -208,12 +208,13 @@ phases:
 
 **Memory and temporary space.** Before each statement, the connection's sort buffer
 (``innodb_ddl_buffer_size``, where the server has it) is sized to the estimated sort of
-the largest key the statement builds (the estimate below), because the server allocates
-the whole buffer for every index it builds and a buffer far larger than the sort costs
-time on each one. The size is never above a quarter of the server's buffer pool divided
-by ``index_workers``, so the builds running at once hold at most a quarter of the pool
-together, and never below the server's own setting unless that is above the same
-ceiling. The sorts write to the server's own temporary directory unless ``[import]
+the largest key the statement builds (the estimate below), because a buffer far larger
+than the sort costs time on every index. The server holds a whole buffer for each index
+it is building at once -- every index the statement adds, up to the server's
+``innodb_ddl_threads`` -- so the size is never above a quarter of the server's buffer
+pool divided by ``index_workers`` and by that many indexes, and the builds running at
+once hold at most a quarter of the pool together. Nor is it below the server's own
+setting, unless that is above the same ceiling. The sorts write to the server's own temporary directory unless ``[import]
 server_tmpdir`` names another -- a directory on the database server's host, never the
 import's ``scratch_dir``. Each key's temporary space is estimated as
 ``rows x (key bytes + primary key bytes + 10) x 1.3``, with the rows the server counts

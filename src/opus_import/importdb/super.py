@@ -85,12 +85,15 @@ class IndexStatement:
         sort_bytes: The estimated sort of the largest key the statement builds, which
             the connection sizes its sort memory to before running it; 0 for a statement
             that builds no index.
+        key_count: How many indexes the statement builds, which the sort memory is
+            shared among; 0 for a statement that builds none.
     """
 
     sql: str
     label: str
     space_bytes: int
     sort_bytes: int
+    key_count: int
 
 
 class _SpaceBudget:
@@ -621,7 +624,7 @@ class ImportDBSuper:
             timed: list[tuple[str, float]] = []
             for statement in table_to_statements[table]:
                 with budget.held(statement.space_bytes):
-                    db._size_index_sort(statement.sort_bytes)
+                    db._size_index_sort(statement.sort_bytes, statement.key_count)
                     started = time.perf_counter()
                     db.run_ddl(statement.sql)
                     timed.append((statement.label, time.perf_counter() - started))
@@ -707,11 +710,12 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::_prepare_index_session must be overridden')
 
-    def _size_index_sort(self, sort_bytes: int) -> None:
+    def _size_index_sort(self, sort_bytes: int, key_count: int) -> None:
         """Size this connection's sort memory for the next statement that builds indexes.
 
         Parameters:
             sort_bytes: The estimated sort of the largest key the statement builds.
+            key_count: How many indexes the statement builds.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
