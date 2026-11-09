@@ -1,10 +1,10 @@
-"""The fresh import's machinery, without a server.
+"""The two write paths' machinery, without a server.
 
-The namespace aliasing, the keys a table is created with, the statements that add the
-rest, the concurrent index build, the choice of path, the chunked per-bundle delete, the
-duplicate step and validation's orphan count are each driven here against a backend that
-records statements or a stand-in that answers the few queries a step makes. The import
-suite runs the same code against a server.
+The keys a table is created with, the statements that add the rest, the concurrent index
+build, the choice of path, the chunked per-bundle delete, the duplicate step and
+validation's orphan count are each driven here against a backend that records statements
+or a stand-in that answers the few queries a step makes. The import suite runs the same
+code against a server.
 """
 
 from __future__ import annotations
@@ -18,15 +18,20 @@ import pytest
 
 from opus_import import cli, import_util
 from opus_import.importdb.super import ImportDBError, ImportDBSuper, IndexStatement
+from opus_import.schema_version import SCHEMA_VERSION
 from opus_import.steps import (
     do_duplicate_ids,
     do_import,
-    do_import_mult,
     do_import_tables,
     do_indexes,
     do_validate,
 )
-from opus_import.table_keys import TableKey, add_secondary_indexes, create_time_keys
+from opus_import.table_keys import (
+    TableKey,
+    add_secondary_indexes,
+    create_time_keys,
+    declared_keys,
+)
 
 from .conftest import default_arguments, make_context
 
@@ -52,18 +57,15 @@ _CHILD_SCHEMA: list[dict[str, Any]] = [
 class _RecordingDB(ImportDBMySQL):
     """An ImportDBMySQL that records statements, over a schema holding `tables`."""
 
-    def __init__(self, tables: set[str], import_prefix: str | None = 'imp_') -> None:
+    def __init__(self, tables: set[str]) -> None:
         """Start with a schema holding `tables` and nothing executed.
 
         Deliberately skips ImportDBMySQL.__init__, which connects to a server.
 
         Parameters:
             tables: The table names the schema holds, as the server spells them.
-            import_prefix: The import namespace's prefix.
         """
-        ImportDBSuper.__init__(
-            self, 'host', 'db', 'schema', 'user', 'password', import_prefix=import_prefix
-        )
+        ImportDBSuper.__init__(self, 'host', 'db', 'schema', 'user', 'password')
         self._table_names = set(tables)
         self._table_info_cache = {}
         self._ddl_buffer_bounds = None
@@ -105,49 +107,20 @@ class _RecordingDB(ImportDBMySQL):
 
 
 # ------------------------------------------------------------------------------------
-# The namespace aliasing
-# ------------------------------------------------------------------------------------
-
-
-def test_without_direct_the_import_namespace_is_the_prefixed_tables() -> None:
-    """The import-tables path reads and writes the ``imp_`` copies."""
-    db = _RecordingDB({'obs_general', 'mult_x', 'param_info'})
-    assert db.convert_raw_to_namespace('import', 'obs_general') == 'imp_obs_general'
-    assert not db.table_exists('import', 'obs_general')
-    assert list(db.table_names('import')) == []
-
-
-def test_with_direct_import_names_the_permanent_observation_and_mult_tables() -> None:
-    """A fresh import writes ``obs_`` and ``mult_`` tables in place; the rest keep the prefix."""
-    db = _RecordingDB({'obs_general', 'mult_x', 'param_info', 'imp_obs_pds', 'imp_cart'})
-    db.direct = True
-    assert db.convert_raw_to_namespace('import', 'obs_general') == 'obs_general'
-    assert db.convert_raw_to_namespace('import', 'mult_x') == 'mult_x'
-    assert db.convert_raw_to_namespace('import', 'param_info') == 'imp_param_info'
-    assert db.convert_namespace_to_raw('import', 'obs_general') == 'obs_general'
-    assert db.table_exists('import', 'obs_general')
-    # The prefixed observation table is shadowed by the permanent one; cart is not an
-    # observation table and keeps its import copy.
-    assert list(db.table_names('import')) == ['cart', 'mult_x', 'obs_general']
-    assert list(db.table_names('perm')) == ['mult_x', 'obs_general', 'param_info']
-
-
-# ------------------------------------------------------------------------------------
 # The keys a table is created with, and the statements that add the rest
 # ------------------------------------------------------------------------------------
 
 
 def _create_statement(db: _RecordingDB, table: str) -> str:
     """Create `table` from the child schema and return the statement sent."""
-    db.create_table('import', table, _CHILD_SCHEMA)
+    db.create_table(table, _CHILD_SCHEMA)
     (cmd,) = [cmd for cmd, _ in db.executed if cmd.startswith('CREATE TABLE')]
     return cmd
 
 
-def test_a_fresh_import_creates_a_child_with_only_the_keys_a_load_needs() -> None:
+def test_a_child_is_created_with_only_the_keys_a_load_needs() -> None:
     """The primary key and the bundle key, and neither the plain keys nor the foreign key."""
     db = _RecordingDB(set())
-    db.direct = True
     cmd = _create_statement(db, 'obs_pds')
     assert cmd.startswith('CREATE TABLE `obs_pds`')
     assert 'KEY `bundle_id` (`bundle_id`)' in cmd
@@ -157,13 +130,12 @@ def test_a_fresh_import_creates_a_child_with_only_the_keys_a_load_needs() -> Non
     assert '`opus_id` (`opus_id`)' not in cmd
 
 
-def test_the_import_tables_path_creates_every_declared_key() -> None:
-    """Without `direct` the table carries its schema's keys, as every table did before."""
+def test_a_table_outside_the_filter_is_created_with_every_declared_key() -> None:
+    """Only observation and mult tables leave keys for finalization."""
     db = _RecordingDB(set())
-    cmd = _create_statement(db, 'obs_pds')
-    assert cmd.startswith('CREATE TABLE `imp_obs_pds`')
+    cmd = _create_statement(db, 'cart')
     for clause in (
-        'FOREIGN KEY (`obs_general_id`) REFERENCES `imp_obs_general`(`id`) '
+        'FOREIGN KEY (`obs_general_id`) REFERENCES `obs_general`(`id`) '
         'ON DELETE RESTRICT ON UPDATE CASCADE',
         'KEY `opus_id` (`opus_id`)',
         'KEY `bundle_id` (`bundle_id`)',
@@ -173,25 +145,46 @@ def test_the_import_tables_path_creates_every_declared_key() -> None:
         assert clause in cmd
 
 
-def test_a_table_outside_the_filter_keeps_every_key_under_direct() -> None:
-    """``direct`` filters only observation and mult tables."""
+def test_a_table_level_foreign_key_renders_what_a_delete_does() -> None:
+    """The entry is no column, and its ``on_delete`` reaches the clause."""
     db = _RecordingDB(set())
-    db.direct = True
-    db.create_table('perm', 'cart', _CHILD_SCHEMA)
+    schema: list[dict[str, Any]] = [
+        {'field_name': 'obs_general_id', 'field_type': 'uint4', 'field_notnull': True},
+        {
+            'foreign_key': {
+                'columns': ['obs_general_id'],
+                'references': ['obs_general', 'id'],
+                'on_delete': 'cascade',
+            }
+        },
+        {'constraint': 'CONSTRAINT one UNIQUE (obs_general_id)'},
+    ]
+    db.create_table('cart', schema)
     (cmd,) = [cmd for cmd, _ in db.executed if cmd.startswith('CREATE TABLE')]
-    assert 'FOREIGN KEY' in cmd
-    assert 'KEY `time1` (`time1`)' in cmd
+    assert cmd == (
+        'CREATE TABLE `cart` ( `obs_general_id` int unsigned NOT NULL, '
+        'CONSTRAINT one UNIQUE (obs_general_id) , FOREIGN KEY (`obs_general_id`) '
+        'REFERENCES `obs_general`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ) ENGINE=INNODB'
+    )
+
+
+def test_the_packaged_cart_cascades_to_its_rows() -> None:
+    """Deleting an observation removes the cart rows that name it."""
+    schema = import_util.read_schema_for_table(make_context(), 'cart')
+    assert schema is not None
+    (foreign,) = [key for key in declared_keys(schema) if key.kind == 'foreign']
+    assert foreign == TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)), 'cascade')
 
 
 def test_the_statements_that_add_keys() -> None:
     """Plain keys are added unnamed in one statement; a foreign key as create_table renders it."""
     db = _RecordingDB(set())
     keys = [TableKey('key', ('time1',)), TableKey('key', ('time1', 'time2'))]
-    assert db.add_keys_statement('perm', 'obs_pds', keys) == (
+    assert db.add_keys_statement('obs_pds', keys) == (
         'ALTER TABLE `obs_pds` ADD KEY (`time1`), ADD KEY (`time1`, `time2`)'
     )
     foreign = TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)))
-    assert db.add_foreign_key_statement('perm', 'obs_pds', foreign) == (
+    assert db.add_foreign_key_statement('obs_pds', foreign) == (
         'ALTER TABLE `obs_pds` ADD FOREIGN KEY (`obs_general_id`) REFERENCES '
         '`obs_general`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
     )
@@ -207,19 +200,24 @@ def test_the_server_keys_are_read_by_kind_and_columns() -> None:
             ('obs_pds', 'time1_2', 1, 'time2', 'BTREE'),
             ('obs_pds', 'note', 1, 'note', 'FULLTEXT'),
             ('obs_pds', 'u', 0, 'opus_id', 'BTREE'),
-            ('imp_obs_pds', 'PRIMARY', 0, 'id', 'BTREE'),
+            ('cart', 'PRIMARY', 0, 'id', 'BTREE'),
         ],
         'KEY_COLUMN_USAGE': [
-            ('obs_pds', 'obs_pds_ibfk_1', 'obs_general_id', 'obs_general', 'id'),
+            ('obs_pds', 'obs_pds_ibfk_1', 'obs_general_id', 'obs_general', 'id', 'RESTRICT'),
+            ('cart', 'cart_ibfk_1', 'obs_general_id', 'obs_general', 'id', 'CASCADE'),
         ],
     }
-    assert db.read_table_keys('perm') == {
+    assert db.read_table_keys() == {
         'obs_pds': [
             TableKey('primary', ('id',)),
             TableKey('key', ('time1', 'time2')),
             TableKey('unique', ('opus_id',)),
             TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',))),
-        ]
+        ],
+        'cart': [
+            TableKey('primary', ('id',)),
+            TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)), 'cascade'),
+        ],
     }
 
 
@@ -227,9 +225,9 @@ def test_the_space_estimate() -> None:
     """``rows x (key bytes + primary key bytes + 10) x 1.3``, from the server's row count."""
     db = _RecordingDB(set())
     db.answers = {'TABLE_ROWS': [(1000,)]}
-    space = db.key_space_bytes('perm', 'obs_pds', _CHILD_SCHEMA, TableKey('key', ('time1',)))
+    space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('key', ('time1',)))
     assert space == int(1000 * (8 + 4 + 10) * 1.3)
-    space = db.key_space_bytes('perm', 'obs_pds', _CHILD_SCHEMA, TableKey('key', ('opus_id',)))
+    space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('key', ('opus_id',)))
     assert space == int(1000 * (4 * 50 + 4 + 10) * 1.3)
 
 
@@ -586,23 +584,22 @@ class _StateDB:
         self.keys = keys
         self.tables = tables
         self.db_schema = 'opus_test'
-        self.direct = False
 
-    def table_exists(self, namespace: str, table: str) -> bool:
+    def table_exists(self, table: str) -> bool:
         """Say whether the version table exists."""
         assert table == 'schema_version'
         return self.version_rows is not None
 
-    def read_rows(self, namespace: str, table: str, columns: list[str]) -> list[tuple[int, str]]:
+    def read_rows(self, table: str, columns: list[str]) -> list[tuple[int, str]]:
         """Return the version rows."""
         assert self.version_rows is not None
         return self.version_rows
 
-    def read_table_keys(self, namespace: str) -> dict[str, list[TableKey]]:
+    def read_table_keys(self) -> dict[str, list[TableKey]]:
         """Return the keys."""
         return self.keys
 
-    def table_names(self, namespace: str, prefix: Any = None) -> list[str]:
+    def table_names(self, prefix: Any = None) -> list[str]:
         """Return the tables."""
         return self.tables
 
@@ -614,12 +611,10 @@ def _choose(db: _StateDB) -> tuple[bool, Any]:
 
 
 def test_an_empty_schema_is_imported_fresh() -> None:
-    """No version row and no tables: the fresh path, and `direct` set."""
-    db = _StateDB(None, {}, [])
-    chosen, ctx = _choose(db)
+    """No version row and no tables: the fresh path."""
+    chosen, ctx = _choose(_StateDB(None, {}, []))
     assert chosen
     assert ctx.import_path == do_import.IMPORT_PATH_FRESH
-    assert db.direct
     assert ctx.logger.messages_at('info') == [
         'Import path: fresh import, into "opus_test" (no schema_version row)'
     ]
@@ -633,25 +628,43 @@ def test_a_fresh_import_in_progress_stays_fresh() -> None:
     assert ctx.import_path == do_import.IMPORT_PATH_FRESH
 
 
-def test_a_schema_with_a_version_row_is_imported_through_the_import_tables() -> None:
-    """The import-tables path, with the version named, and `direct` left off."""
-    db = _StateDB([(2, 'ready')], {}, [])
-    chosen, ctx = _choose(db)
+@pytest.mark.parametrize('state', ['ready', 'appending'])
+def test_a_schema_of_this_version_is_appended_to(state: str) -> None:
+    """A finished schema, or one an earlier append left part way, takes the append."""
+    chosen, ctx = _choose(_StateDB([(SCHEMA_VERSION, state)], {}, []))
     assert chosen
-    assert ctx.import_path == do_import.IMPORT_PATH_NAMESPACE
-    assert not db.direct
+    assert ctx.import_path == do_import.IMPORT_PATH_APPEND
     assert ctx.logger.messages_at('info') == [
-        'Import path: import tables, into "opus_test" (version 2, ready)'
+        f'Import path: append, into "opus_test" (version {SCHEMA_VERSION}, {state})'
     ]
+
+
+@pytest.mark.parametrize(
+    ('rows', 'named'),
+    [
+        ([(SCHEMA_VERSION - 1, 'ready')], f'is version {SCHEMA_VERSION - 1} and this release'),
+        ([(SCHEMA_VERSION, 'ready'), (SCHEMA_VERSION, 'ready')], 'has 2 schema_version rows'),
+        ([(SCHEMA_VERSION, 'loading')], "has the state 'loading'"),
+    ],
+    ids=['another-version', 'two-rows', 'unknown-state'],
+)
+def test_a_schema_no_import_may_append_to_is_refused(
+    rows: list[tuple[int, str]], named: str
+) -> None:
+    """Another release's schema, or a malformed version table, is re-imported instead."""
+    chosen, ctx = _choose(_StateDB(rows, {}, []))
+    assert not chosen
+    assert ctx.import_path is None
+    (message,) = ctx.logger.messages_at('fatal')
+    assert named in message
+    assert '--scorched-earth --yes' in message
 
 
 def test_an_interrupted_finalization_refuses_the_import() -> None:
     """No version row but a key finalization adds: refused, naming --finalize."""
     keys = {'obs_general': [TableKey('primary', ('id',)), TableKey('key', ('time1',))]}
-    db = _StateDB(None, keys, ['obs_general'])
-    chosen, ctx = _choose(db)
+    chosen, ctx = _choose(_StateDB(None, keys, ['obs_general']))
     assert not chosen
-    assert not db.direct
     (message,) = ctx.logger.messages_at('fatal')
     assert 'obs_general: KEY (time1)' in message
     assert '--finalize' in message
@@ -679,17 +692,13 @@ class _DeletingDB:
         self.selects: list[str] = []
         self.deletes: list[tuple[str, str, list[Any]]] = []
 
-    def table_names(self, namespace: str, prefix: Any = None) -> list[str]:
+    def table_names(self, prefix: Any = None) -> list[str]:
         """Return the tables."""
         return self.tables
 
     def quote_identifier(self, name: str) -> str:
         """Backtick-quote a name."""
         return f'`{name}`'
-
-    def convert_raw_to_namespace(self, namespace: str, name: str) -> str:
-        """Return the name unchanged."""
-        return name
 
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any]]:
         """Return the ids of the table the query names, one page of them when it asks.
@@ -709,7 +718,7 @@ class _DeletingDB:
             ids = ids[: params[-1]]
         return [(i,) for i in ids]
 
-    def delete_rows(self, namespace: str, table: str, where: str, where_params: list[Any]) -> None:
+    def delete_rows(self, table: str, where: str, where_params: list[Any]) -> None:
         """Record a delete."""
         self.deletes.append((table, where, where_params))
 
@@ -723,7 +732,7 @@ def test_a_bundle_is_deleted_in_chunks_of_each_tables_own_ids_children_first() -
         {'obs_general': [4, 7, 9], 'obs_pds': [10, 11, 12], 'obs_files': [1, 2]},
         ['obs_files', 'obs_general', 'obs_pds'],
     )
-    do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1', 'perm')
+    do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
     assert db.deletes == [
         ('obs_files', _IN_RANGE, ['B_1', 1, 2]),
         ('obs_pds', _IN_RANGE, ['B_1', 10, 11]),
@@ -740,56 +749,8 @@ def test_a_bundle_is_deleted_in_chunks_of_each_tables_own_ids_children_first() -
 def test_a_bundle_a_table_does_not_hold_deletes_nothing_there() -> None:
     """No ids, no statement."""
     db = _DeletingDB({'obs_pds': [3]}, ['obs_general', 'obs_pds'])
-    do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1', 'perm')
+    do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
     assert db.deletes == [('obs_pds', _IN_RANGE, ['B_1', 3, 3])]
-
-
-def test_named_bundles_leave_the_permanent_tables_before_the_copy(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """On the import-tables path, ``--delete-permanent-bundles`` deletes before the copy writes."""
-    calls: list[str] = []
-    monkeypatch.setattr(
-        do_import_tables,
-        'delete_bundle_from_obs_tables',
-        lambda ctx, bundle, namespace: calls.append(f'delete {bundle} {namespace}'),
-    )
-    monkeypatch.setattr(
-        do_import_tables,
-        'create_tables_for_import',
-        lambda ctx, bundle, namespace: calls.append(f'create {bundle}'),
-    )
-    monkeypatch.setattr(
-        do_import_tables,
-        'delete_duplicate_opus_id_from_perm_tables',
-        lambda ctx: calls.append('duplicates'),
-    )
-    monkeypatch.setattr(
-        do_import_mult,
-        'copy_mult_from_import_to_permanent',
-        lambda ctx: calls.append('mult'),
-    )
-    monkeypatch.setattr(
-        do_import_tables,
-        'copy_bundle_from_import_to_permanent',
-        lambda ctx, bundle: calls.append(f'copy {bundle}'),
-    )
-    db = _DeletingDB(['B_1'], ['obs_general'])
-    db.table_exists = lambda namespace, table: True  # type: ignore[attr-defined]
-    args = default_arguments()
-    args.copy_import_to_permanent_tables = True
-    args.delete_permanent_bundles = True
-    args.create_cart = True
-    ctx = make_context(db=db, args=args)
-    do_import._copy_import_tables_to_permanent(ctx, False, ['B_2'])
-    assert calls == [
-        'delete B_1 perm',
-        'delete B_2 perm',
-        'create B_1',
-        'duplicates',
-        'mult',
-        'copy B_1',
-    ]
 
 
 # ------------------------------------------------------------------------------------
@@ -811,7 +772,7 @@ class _DuplicateDB(_DeletingDB):
         self.answers = [rows, remaining]
         self.read_only = False
 
-    def table_exists(self, namespace: str, table: str) -> bool:
+    def table_exists(self, table: str) -> bool:
         """Say obs_general exists."""
         return True
 
@@ -875,7 +836,7 @@ class _IndexingDB(_RecordingDB):
         self.foreign: list[IndexStatement] = []
         self.analyzed: list[str] = []
 
-    def read_table_keys(self, namespace: Any) -> dict[str, list[TableKey]]:
+    def read_table_keys(self) -> dict[str, list[TableKey]]:
         """Return the keys."""
         return self.keys
 
@@ -883,9 +844,7 @@ class _IndexingDB(_RecordingDB):
         """Return the budget."""
         return self.budget
 
-    def key_space_bytes(
-        self, namespace: Any, raw_table_name: str, schema: Any, key: TableKey
-    ) -> int:
+    def key_space_bytes(self, table_name: str, schema: Any, key: TableKey) -> int:
         """Size every key at 60 bytes."""
         return 60
 
@@ -905,9 +864,9 @@ class _IndexingDB(_RecordingDB):
         self.foreign = list(statements)
         return [(statement.label, 0.25) for statement in statements]
 
-    def analyze_table(self, namespace: Any, raw_table_name: str) -> None:
+    def analyze_table(self, table_name: str) -> None:
         """Record the analyze."""
-        self.analyzed.append(raw_table_name)
+        self.analyzed.append(table_name)
 
 
 def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
@@ -966,7 +925,7 @@ class _OrphanDB(_DeletingDB):
         self.count = count
         self.queries: list[str] = []
 
-    def table_exists(self, namespace: str, table: str) -> bool:
+    def table_exists(self, table: str) -> bool:
         """Say cart exists, and each of the tables."""
         return table == 'cart' or table in self.tables
 
@@ -980,7 +939,7 @@ def test_rows_whose_obs_general_row_is_missing_are_errors() -> None:
     """Every child and ``cart`` is anti-joined against ``obs_general``."""
     db = _OrphanDB(3)
     ctx = make_context(db=db)
-    do_validate.validate_orphans(ctx, 'perm')
+    do_validate.validate_orphans(ctx)
     assert ctx.logger.messages_at('error') == [
         'Table "obs_pds" has 3 rows whose obs_general row is missing',
         'Table "cart" has 3 rows whose obs_general row is missing',
@@ -1000,14 +959,14 @@ def test_child_tables_without_obs_general_are_an_error(
 ) -> None:
     """Children with no obs_general are reported; a schema with neither has nothing to check."""
     ctx = make_context(db=_OrphanDB(0, tables))
-    do_validate.validate_orphans(ctx, 'perm')
+    do_validate.validate_orphans(ctx)
     assert ctx.logger.messages_at('error') == errors
 
 
 def test_no_orphans_is_silent() -> None:
     """A count of zero logs nothing."""
     ctx = make_context(db=_OrphanDB(0))
-    do_validate.validate_orphans(ctx, 'perm')
+    do_validate.validate_orphans(ctx)
     assert ctx.logger.messages_at('error') == []
 
 
@@ -1033,7 +992,7 @@ def test_an_opus_id_on_two_obs_general_rows_is_an_error() -> None:
     shared = [f'co-iss-n{index:02d}' for index in range(12)]
     db = _SharedOpusIdDB(shared)
     ctx = make_context(db=db)
-    do_validate.validate_unique_opus_ids(ctx, 'perm')
+    do_validate.validate_unique_opus_ids(ctx)
     [error] = ctx.logger.messages_at('error')
     assert error.startswith('12 OPUS IDs have more than one obs_general row')
     assert '"co-iss-n09"' in error
@@ -1046,7 +1005,7 @@ def test_an_opus_id_on_two_obs_general_rows_is_an_error() -> None:
 def test_unique_opus_ids_or_no_obs_general_is_silent(tables: list[str]) -> None:
     """Nothing shared, or no obs_general to look in, logs no error."""
     ctx = make_context(db=_SharedOpusIdDB([], tables))
-    do_validate.validate_unique_opus_ids(ctx, 'perm')
+    do_validate.validate_unique_opus_ids(ctx)
     assert ctx.logger.messages_at('error') == []
 
 
@@ -1057,13 +1016,13 @@ _GROUP = (
     'create_table_names',
     'create_cart',
     'drop_cache_tables',
-    'analyze_permanent_tables',
+    'analyze_tables',
 )
 
 
-@pytest.mark.parametrize('option', ['finalize', 'do_it_all', 'do_import_finalization'])
+@pytest.mark.parametrize('option', ['finalize', 'do_it_all'])
 def test_every_aggregate_that_finishes_a_database_runs_the_whole_group(option: str) -> None:
-    """``--do-it-all`` and ``--do-import-finalization`` expand through ``--finalize``."""
+    """``--do-it-all`` expands through ``--finalize``."""
     args = default_arguments()
     setattr(args, option, True)
     cli.expand_aggregate_options(args)
@@ -1071,14 +1030,16 @@ def test_every_aggregate_that_finishes_a_database_runs_the_whole_group(option: s
     assert all(getattr(args, step) for step in _GROUP)
 
 
-def test_the_bundle_import_aggregate_does_not_finalize() -> None:
-    """``--do-all-import`` imports and copies, and finishes nothing."""
+def test_do_it_all_imports_and_finalize_alone_does_not() -> None:
+    """``--do-it-all`` is ``--import`` then ``--finalize``; ``--finalize`` imports nothing."""
     args = default_arguments()
-    args.do_all_import = True
+    args.do_it_all = True
     cli.expand_aggregate_options(args)
     assert args.do_import
-    assert not args.finalize
-    assert not any(getattr(args, step) for step in _GROUP)
+    args = default_arguments()
+    args.finalize = True
+    cli.expand_aggregate_options(args)
+    assert not args.do_import
 
 
 def test_a_new_context_has_chosen_no_path() -> None:

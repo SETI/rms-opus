@@ -166,11 +166,11 @@ def test_the_backend_chose_the_bulk_load_path(bulk_db: ImportDBMySQL) -> None:
 
 def test_bulk_load_stores_what_insert_statements_store(bulk_db: ImportDBMySQL) -> None:
     """One row set, written both ways, reads back the same from both tables."""
-    bulk_db.create_table('perm', 'round_trip_bulk', _COLUMNS)
-    bulk_db.create_table('perm', 'round_trip_insert', _COLUMNS)
+    bulk_db.create_table('round_trip_bulk', _COLUMNS)
+    bulk_db.create_table('round_trip_insert', _COLUMNS)
 
-    bulk_db.bulk_load_rows('perm', 'round_trip_bulk', _ROWS)
-    bulk_db.insert_rows('perm', 'round_trip_insert', _ROWS)
+    bulk_db.bulk_load_rows('round_trip_bulk', _ROWS)
+    bulk_db.insert_rows('round_trip_insert', _ROWS)
 
     loaded = _read_back(bulk_db, 'round_trip_bulk')
     inserted = _read_back(bulk_db, 'round_trip_insert')
@@ -184,11 +184,11 @@ def test_bulk_load_stores_what_insert_statements_store(bulk_db: ImportDBMySQL) -
 
 def test_a_duplicate_key_raises_and_loads_nothing(bulk_db: ImportDBMySQL) -> None:
     """The load would skip the second row with a warning; the check raises instead."""
-    bulk_db.create_table('perm', 'duplicate_key', _COLUMNS[:2])
+    bulk_db.create_table('duplicate_key', _COLUMNS[:2])
     rows = [{'id': 1, 'f_char': 'first'}, {'id': 1, 'f_char': 'second'}]
 
     with pytest.raises(ImportDBError, match=r"1 skipped.*Duplicate entry '1'"):
-        bulk_db.bulk_load_rows('perm', 'duplicate_key', rows)
+        bulk_db.bulk_load_rows('duplicate_key', rows)
 
     assert _read_back(bulk_db, 'duplicate_key') == []
 
@@ -196,11 +196,11 @@ def test_a_duplicate_key_raises_and_loads_nothing(bulk_db: ImportDBMySQL) -> Non
 def test_a_truncated_value_raises_and_loads_nothing(bulk_db: ImportDBMySQL) -> None:
     """The load would cut the value short with a warning; the check raises instead."""
     columns = [_COLUMNS[0], {'field_name': 'short', 'field_type': 'char3'}]
-    bulk_db.create_table('perm', 'truncated_value', columns)
+    bulk_db.create_table('truncated_value', columns)
     rows = [{'id': 1, 'short': 'abc'}, {'id': 2, 'short': 'abcdef'}]
 
     with pytest.raises(ImportDBError, match="Data truncated for column 'short'"):
-        bulk_db.bulk_load_rows('perm', 'truncated_value', rows)
+        bulk_db.bulk_load_rows('truncated_value', rows)
 
     assert _read_back(bulk_db, 'truncated_value') == []
 

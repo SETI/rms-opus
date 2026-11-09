@@ -6,10 +6,11 @@ of the clean run's assertions -- and each is exempt from the main run's clean-lo
 
 A negative run stops after its imports rather than following the main run's full
 sequence. Everything asserted here is in place by then: a fresh import writes the
-permanent tables, so ``obs_general`` and the target-name mult table are written, and the
-rest of what these tests read is the run's own step statuses and error log. The auxiliary
-tables, the dictionary, the Django migration and the validation produce nothing any
-assertion below looks at, and running them three times a suite bought only wall clock.
+observation tables directly, so ``obs_general`` and the target-name mult table are
+written, and the rest of what these tests read is the run's own step statuses and error
+log. The auxiliary tables, the dictionary, the Django migration and the validation
+produce nothing any assertion below looks at, and running them three times a suite
+bought only wall clock.
 The main run keeps the production order, which is where that order is under test.
 """
 
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 _OBS_GENERAL = 'obs_general'
 _TARGET_NAME_MULT = 'mult_obs_general_target_name'
 
-#: The value an unknown target name falls back to under ``--import-ignore-errors``.
+#: The value an unknown target name falls back to under ``--ignore-errors``.
 _OTHER_TARGET = 'OTHER'
 
 
@@ -112,7 +113,7 @@ def test_a_bundle_imported_twice_in_one_invocation_leaves_one_copy(
 ) -> None:
     """Importing a volume twice in one invocation runs clean and leaves one copy of each row.
 
-    A fresh import deletes each bundle from the permanent tables before writing it, so
+    The import deletes each bundle from the observation tables before writing it, so
     the second import of the volume replaces the first rather than loading beside it,
     and no OPUS id has two ``obs_general`` rows even though the key on it is not unique.
     """

@@ -36,7 +36,7 @@ from opus_import import import_util
 from opus_import.steps import do_import_mult, do_import_obs, do_import_tables
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
+    from collections.abc import Sequence
 
     from opus_import.config_bundle_info import BundleInfo
     from opus_import.context import ImportContext
@@ -349,9 +349,7 @@ def import_one_index(
                 metadata[assoc_type] = assoc_dict
                 metadata[assoc_type + '_label'] = assoc_label_dict
 
-    table_schemas, table_names_in_order = do_import_tables.create_tables_for_import(
-        ctx, bundle_id, 'import'
-    )
+    table_schemas, table_names_in_order = do_import_tables.create_tables_for_import(ctx, bundle_id)
 
     # It's time to actually compute the values that will go in the database!
     # Start with the obs_general table, because other tables reference
@@ -363,16 +361,10 @@ def import_one_index(
     for table_name in table_names_in_order:
         table_rows[table_name] = []
 
-    # Also look for duplicates in the existing import tables. A fresh import writes the
-    # permanent tables directly and looks for none: finalization's duplicate step keeps
-    # the later copy of each OPUS id.
+    # Two bundles can produce the same OPUS ID; finalization's duplicate step keeps the
+    # later copy of each.
     db = ctx.db
     assert db is not None
-    used_opus_id_prev_vol: Collection[str]
-    if ctx.args.import_check_duplicate_id and not db.direct:
-        used_opus_id_prev_vol = do_import_tables.read_existing_import_opus_id(ctx)
-    else:
-        used_opus_id_prev_vol = set()
 
     used_targets: set[str] = set()
 
@@ -431,14 +423,14 @@ def import_one_index(
             if 'ring_geo' in metadata:
                 ring_geo = metadata['ring_geo'].get(primary_filespec_phase, None)
                 metadata['ring_geo_row'] = ring_geo
-                if ring_geo is None and ctx.args.import_report_missing_ring_geo:
+                if ring_geo is None and ctx.args.report_missing_ring_geo:
                     import_util.log_warning(
                         ctx, f'RING GEO metadata missing for "{primary_filespec_phase}"'
                     )
             if 'sky_geo' in metadata:
                 sky_geo = metadata['sky_geo'].get(primary_filespec_phase, None)
                 metadata['sky_geo_row'] = sky_geo
-                if sky_geo is None and ctx.args.import_report_missing_sky_geo:
+                if sky_geo is None and ctx.args.report_missing_sky_geo:
                     import_util.log_warning(
                         ctx, f'SKY GEO metadata missing for "{primary_filespec_phase}"'
                     )
@@ -470,18 +462,6 @@ def import_one_index(
                     obs_pds_row = obs_row
                 if table_name == 'obs_general':
                     obs_general_row = obs_row
-                    opus_id = obs_row['opus_id']
-                    if opus_id in used_opus_id_prev_vol:
-                        # Some of the GO_xxxx and COUVIS_xxxx bundles have
-                        # duplicate observations across bundles. In these cases
-                        # we have to use the NEW one and delete the old one
-                        # from the database itself. Note this will only be
-                        # triggered if we have already loaded the previous
-                        # bundle into the import tables but not clear them out.
-                        # In the case where we copied them to the perm tables
-                        # and cleared them out, a future check during the copy
-                        # process will catch the duplicates.
-                        do_import_tables.delete_opus_id_from_obs_tables(ctx, opus_id, 'import')
                 table_rows[table_name].append(obs_row)
                 metadata[table_name + '_row'] = obs_row
 
@@ -623,22 +603,20 @@ def import_one_index(
     # The mult tables go first: an obs_ row holds the id its value was given in the
     # mult_ table, so that row has to be there to be looked up. Nothing enforces it --
     # a mult_idx column is a plain index, not a foreign key.
-    do_import_mult.dump_import_mult_tables(ctx)
+    do_import_mult.write_mult_tables(ctx)
 
     # Now dump out the obs tables, in order: obs_general is the foreign-key target of the
     # other obs_ tables, so it goes first.
     for table_name in table_names_in_order:
         if table_name.find('<TARGET>') == -1:
-            imp_name = db.convert_raw_to_namespace('import', table_name)
-            import_util.log_debug(ctx, f'Inserting into obs table "{imp_name}"')
-            db.bulk_load_rows('import', table_name, table_rows[table_name])
+            import_util.log_debug(ctx, f'Inserting into obs table "{table_name}"')
+            db.bulk_load_rows(table_name, table_rows[table_name])
         else:
             for target_name in sorted(used_targets):
                 new_table_name = table_name.replace(
                     '<TARGET>', import_util.table_name_for_sfc_target(target_name)
                 )
-                imp_name = db.convert_raw_to_namespace('import', new_table_name)
-                import_util.log_debug(ctx, f'Inserting into obs table "{imp_name}"')
+                import_util.log_debug(ctx, f'Inserting into obs table "{new_table_name}"')
                 surface_geo_schema = import_util.read_schema_for_table(
                     ctx,
                     'obs_surface_geometry_target',
@@ -652,8 +630,8 @@ def import_one_index(
                 # we have
                 # obs_surface_geometry_target.json is packaged with opus_import.
                 assert surface_geo_schema is not None
-                db.create_table('import', new_table_name, surface_geo_schema)
-                db.bulk_load_rows('import', new_table_name, table_rows[new_table_name])
+                db.create_table(new_table_name, surface_geo_schema)
+                db.bulk_load_rows(new_table_name, table_rows[new_table_name])
 
     return True  # SUCCESS!
 
@@ -675,7 +653,7 @@ def get_opus_products_rows_for_filespec(
 
     Two kinds of file are left out. A shared index or summary file that does not list
     this observation contributes nothing, since it holds no data for it; that check runs
-    only for PDS3 and only without ``--import-dont-use-row-files``, so otherwise every
+    only for PDS3 and only without ``--no-row-files``, so otherwise every
     index file is listed. A PDS3 file whose shelf metadata is missing is left out too,
     with a warning, because its size and checksum are unknown.
 
@@ -711,7 +689,7 @@ def get_opus_products_rows_for_filespec(
         # A product that is not local has no absolute path; it cannot be named in the
         # message, and there is nothing to say about it beyond the ones that can.
         file_list_str = '  '.join([x.abspath for x in products[''][0] if x.abspath is not None])
-        if ctx.args.import_report_empty_products:
+        if ctx.args.report_empty_products:
             import_util.log_nonrepeating_warning(
                 ctx, f'Empty opus_product key for files: {file_list_str}'
             )
@@ -748,7 +726,7 @@ def get_opus_products_rows_for_filespec(
         # when the current index product type is skip.
         current_rows: list[dict[str, Any]] = []
         for sublist in list_of_sublists:
-            if not ctx.args.import_dont_use_row_files and skip_current_product_type:
+            if not ctx.args.no_row_files and skip_current_product_type:
                 current_rows = []
                 break
             for file_num, file in enumerate(sublist):
@@ -768,7 +746,7 @@ def get_opus_products_rows_for_filespec(
                 # about missing pickle files in _indexshelf-metadata, so for now we will
                 # assume the selection is always in the index file and create a row for
                 # it in db. Will fix this when pickle files in indexshelf is ready.
-                if not ctx.args.import_dont_use_row_files and file.is_index and pds_version == 3:
+                if not ctx.args.no_row_files and file.is_index and pds_version == 3:
                     basename = filespec.split('/')[-1]
                     selection = basename.split('.')[0]
                     try:

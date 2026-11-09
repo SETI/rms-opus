@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 def write_schema_version(ctx: ImportContext) -> bool:
-    """Mark the permanent schema finished under this release's version.
+    """Mark the schema finished under this release's version.
 
     Creates the table when it is absent, then:
 
@@ -47,18 +47,18 @@ def write_schema_version(ctx: ImportContext) -> bool:
     """
     db = ctx.db
     assert db is not None
-    if db.table_exists('perm', SCHEMA_VERSION_TABLE):
-        rows = db.read_rows('perm', SCHEMA_VERSION_TABLE, ['version', 'state'])
+    if db.table_exists(SCHEMA_VERSION_TABLE):
+        rows = db.read_rows(SCHEMA_VERSION_TABLE, ['version', 'state'])
     else:
         schema = import_util.read_schema_for_table(ctx, SCHEMA_VERSION_TABLE)
         # schema_version.json is packaged with opus_import, so the schema is always found.
         assert schema is not None
-        db.create_table('perm', SCHEMA_VERSION_TABLE, schema, ignore_if_exists=False)
+        db.create_table(SCHEMA_VERSION_TABLE, schema, ignore_if_exists=False)
         rows = []
 
     if len(rows) == 0:
         db.insert_row(
-            'perm', SCHEMA_VERSION_TABLE, {'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}
+            SCHEMA_VERSION_TABLE, {'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}
         )
         import_util.log_info(ctx, f'Schema version {SCHEMA_VERSION} written, {SCHEMA_STATE_READY}')
         return True
@@ -82,7 +82,6 @@ def write_schema_version(ctx: ImportContext) -> bool:
         return False
     if state == SCHEMA_STATE_APPENDING:
         db.update_row(
-            'perm',
             SCHEMA_VERSION_TABLE,
             {'state': SCHEMA_STATE_READY},
             f'{db.quote_identifier("version")}=%s',

@@ -92,7 +92,7 @@ class ObsGeneral(ObsBase):
         # instead of a bool, and the truthiness is what keeps the empty one out.
         if isinstance(viewset, PdsViewSet) and viewset:
             browse_data = viewset.to_dict()
-            if not self._ctx.args.import_ignore_missing_images:
+            if not self._ctx.args.ignore_missing_images:
                 if not viewset.thumbnail:
                     self._log_nonrepeating_warning(
                         f'Missing thumbnail browse/diagram image for "{filespec}"'
@@ -110,7 +110,7 @@ class ObsGeneral(ObsBase):
                         f'Missing full_size browse/diagram image for "{filespec}"'
                     )
         else:
-            if self._ctx.args.import_fake_images:
+            if self._ctx.args.fake_images:
                 base_path = os.path.splitext(pdsf.logical_path)[0]
                 if base_path.find('CIRS') != -1:
                     base_path = base_path.replace('volumes', 'diagrams')
@@ -155,7 +155,7 @@ class ObsGeneral(ObsBase):
                 }
             else:
                 browse_data = {'viewables': []}
-                if not self._ctx.args.import_ignore_missing_images:
+                if not self._ctx.args.ignore_missing_images:
                     self._log_nonrepeating_warning(
                         f'Missing all browse/diagram images for "{self.primary_filespec}"'
                     )

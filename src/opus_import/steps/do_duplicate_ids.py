@@ -41,7 +41,7 @@ def _duplicated_rows(ctx: ImportContext) -> Sequence[tuple[int, str, str]]:
     db = ctx.db
     assert db is not None
     q = db.quote_identifier
-    obs_general = q(db.convert_raw_to_namespace('perm', 'obs_general'))
+    obs_general = q('obs_general')
     # Every interpolation is an identifier produced by quote_identifier
     # (^[A-Za-z0-9_]+$); the statement carries no values at all.
     rows = db.general_select(
@@ -69,7 +69,7 @@ def delete_duplicate_opus_ids(ctx: ImportContext) -> bool:
     """
     db = ctx.db
     assert db is not None
-    if not db.table_exists('perm', 'obs_general'):
+    if not db.table_exists('obs_general'):
         return True
     rows = _duplicated_rows(ctx)
     groups: dict[str, list[tuple[int, str]]] = {}
@@ -95,20 +95,17 @@ def delete_duplicate_opus_ids(ctx: ImportContext) -> bool:
         )
 
     q = db.quote_identifier
-    other_tables = [
-        name for name in sorted(db.table_names('perm', prefix='obs_')) if name != 'obs_general'
-    ]
+    other_tables = [name for name in sorted(db.table_names(prefix='obs_')) if name != 'obs_general']
     for start in range(0, len(deleted), db.transaction_rows):
         chunk = deleted[start : start + db.transaction_rows]
         placeholders = ','.join(['%s'] * len(chunk))
         for table_name in other_tables:
             db.delete_rows(
-                'perm',
                 table_name,
                 f'{q("obs_general_id")} IN ({placeholders})',
                 where_params=chunk,
             )
-        db.delete_rows('perm', 'obs_general', f'{q("id")} IN ({placeholders})', where_params=chunk)
+        db.delete_rows('obs_general', f'{q("id")} IN ({placeholders})', where_params=chunk)
 
     if not db.read_only and _duplicated_rows(ctx):
         import_util.log_error(ctx, 'An OPUS ID still has more than one obs_general row')

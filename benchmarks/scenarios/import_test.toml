@@ -37,7 +37,6 @@ bundles = "COCIRS_5408"
 
 [[groups]]
 bundles = "GO_0016,GO_0017,GO_0018"
-options = ["--import-check-duplicate-id"]
 
 [[groups]]
 bundles = "VGISS_6210,VGISS_8201"

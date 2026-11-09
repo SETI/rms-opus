@@ -46,7 +46,7 @@ COLLAPSED_SURFACE_GEO_TARGET = 'saturn'
 #: The table the collapsed surface geometry fields are read from.
 COLLAPSED_SURFACE_GEO_TABLE = f'obs_surface_geometry__{COLLAPSED_SURFACE_GEO_TARGET}'
 
-#: Schemas that define no permanent ``obs_`` table of their own.
+#: Schemas that define no ``obs_`` table of their own.
 #:
 #: ``obs_surface_geometry_target`` is the template every per-target surface geometry
 #: table is made from rather than a table, and is read under
@@ -82,7 +82,7 @@ class FieldRow(NamedTuple):
 
 
 def _packaged_obs_table_names() -> list[str]:
-    """Return the permanent ``obs_`` tables the packaged schemas define.
+    """Return the ``obs_`` tables the packaged schemas define.
 
     Returns:
         One name per ``obs_*.json`` schema that defines a table of its own, plus
@@ -103,7 +103,7 @@ def _read_schema(table_name: str) -> list[dict[str, Any]]:
     need an import run: no configuration is read and nothing is logged.
 
     Parameters:
-        table_name: The permanent table whose schema to read.
+        table_name: The table whose schema to read.
 
     Returns:
         The column definitions in the order the schema lists them.

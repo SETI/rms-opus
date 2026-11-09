@@ -1,23 +1,20 @@
 """Import every bundle set OPUS holds, in the order a full import runs them.
 
 A full-holdings import is not one command. The bundle sets are imported one group at a
-time, in a deliberate order; two of them need an extra option; and the database is
-finished afterwards by four more steps. That sequence used to live in a shell script in
-the repository, which meant an installed OPUS could not run it. It lives here instead, so
-that ``opus_import_all`` is available wherever the distribution is installed::
+time, in a deliberate order, and the database is finished afterwards by four more steps.
+The sequence lives in the package, so that ``opus_import_all`` is available wherever the
+distribution is installed::
 
     OPUS_CONFIG=/opt/opus/opus.toml opus_import_all --override-db-schema opus3_new
 
-**Every group is a separate** ``opus_import`` **process**, as it was when this was a shell
-script, and the run stops at the first one that fails. One process per group is what keeps
-each group's import tables separate from the next group's, and it is what lets a failed
-run be continued by hand from the group that failed.
+**Every group is a separate** ``opus_import`` **process**, and the run stops at the first
+one that fails, which is what lets a failed run be continued by hand from the group that
+failed.
 
-**The run erases the permanent tables it is pointed at before it begins**, so it asks for
-confirmation first, naming the schema. ``--yes`` answers for a caller that has already
-asked -- which is what the Ring-Moon Systems Node's ``scripts/import/import_all.sh``
-wrapper does before it
-puts the run under ``nohup``.
+**The run erases every OPUS table in the schema it is pointed at before it begins**, so
+it asks for confirmation first, naming the schema. ``--yes`` answers for a caller that has
+already asked -- which is what the Ring-Moon Systems Node's ``scripts/import/import_all.sh``
+wrapper does before it puts the run under ``nohup``.
 """
 
 from __future__ import annotations
@@ -26,15 +23,12 @@ import argparse
 import subprocess  # nosec B404
 import sys
 
-#: The bundle sets imported before any other, each in its own run, with
-#: ``--import-check-duplicate-id``. Their bundles carry observations that appear in more
-#: than one bundle, and the check is cheapest while the tables are still small.
-DUPLICATE_ID_BUNDLE_SETS = ('GALILEO', 'NEWHORIZONS')
-
-#: The rest of the bundle sets, in the order they are imported. That order is roughly the
-#: reverse of how long each takes, so that a run which is going to fail on a small set
-#: fails early rather than after the largest one.
+#: The bundle sets, in the order they are imported -- GALILEO and NEWHORIZONS, then the rest
+#: roughly in the reverse of how long each takes, so that a run which is going to fail on
+#: a small set fails early rather than after the largest one.
 BUNDLE_SETS = (
+    'GALILEO',
+    'NEWHORIZONS',
     'EBROCC',
     'uranus_occs_earthbased',
     'cassini_uvis_solarocc_beckerjarmak2023',
@@ -57,13 +51,14 @@ BUNDLE_SETS = (
 FINALIZATION_OPTIONS = (
     '--finalize',
     '--import-dictionary',
-    '--validate-perm',
+    '--validate',
     '--write-schema-version',
 )
 
-#: What the run does before it imports anything, which is to drop the permanent tables,
-#: including the ones no bundle set being imported would otherwise replace.
-DROP_OPTIONS = ('--drop-permanent-tables', '--scorched-earth')
+#: What the run does before it imports anything, which is to drop every table the import
+#: creates, including the ones no bundle set being imported would otherwise replace. The
+#: run has asked its own confirmation by then.
+DROP_OPTIONS = ('--scorched-earth', '--yes')
 
 #: What has to be typed to let the run proceed. Nothing else is accepted, including
 #: ``yes``: the tables it is about to drop are not recoverable.
@@ -82,17 +77,12 @@ def import_steps(schema: str | None, extra_options: list[str]) -> list[list[str]
 
     Returns:
         One argument list per invocation, each without the interpreter and the module
-        name. The drop comes first, then the duplicate-id bundle sets, then the rest,
-        then the finalization steps -- which take neither a bundle nor the extra options,
+        name. The drop comes first, then the bundle sets, then the finalization steps -- which take neither a bundle nor the extra options,
         because they import nothing.
     """
     override = ['--override-db-schema', schema] if schema is not None else []
     steps = [[*DROP_OPTIONS, *override, *extra_options]]
-    steps += [
-        ['--import-check-duplicate-id', '--do-all-import', *override, *extra_options, name]
-        for name in DUPLICATE_ID_BUNDLE_SETS
-    ]
-    steps += [['--do-all-import', *override, *extra_options, name] for name in BUNDLE_SETS]
+    steps += [['--import', *override, *extra_options, name] for name in BUNDLE_SETS]
     steps += [[option, *override] for option in FINALIZATION_OPTIONS]
     return steps
 
@@ -126,7 +116,7 @@ def confirm(schema: str | None) -> bool:
         Whether `CONFIRMATION` was typed exactly.
     """
     target = schema if schema is not None else 'the schema named in $OPUS_CONFIG'
-    print('*** A full import ERASES the permanent tables before it starts. ***')
+    print('*** A full import ERASES every OPUS table in the schema before it starts. ***')
     print(f'*** About to erase and re-import: {target}')
     return input(f'>>> Type {CONFIRMATION} to continue: ') == CONFIRMATION
 

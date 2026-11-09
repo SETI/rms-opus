@@ -13,9 +13,9 @@
 # invocation asks for it.
 Created new database "opus_import_test_\d+"
 
-# The first invocation is `--drop-permanent-tables --scorched-earth`, which is how the
-# run starts from nothing. Saying so loudly is correct on a production database.
-\*\* DELETING ALL PERMANENT TABLES \*\*
+# The first invocation is `--scorched-earth --yes`, which is how the run starts from
+# nothing. Saying so loudly is correct on a production database.
+\*\* DELETING EVERY OPUS TABLE IN SCHEMA opus_import_test_\w+ \*\*
 
 # A Cassini ISS filter combination the polarization table does not describe. The import
 # stores CLEAR and says so; the value is right for the image, and the sampler picks rows

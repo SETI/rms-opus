@@ -1,10 +1,14 @@
 """The keys a table schema declares, and which of them a fresh import creates when.
 
-A table schema declares its keys on its columns: ``field_key`` is ``"primary"``,
+A table schema declares most of its keys on its columns: ``field_key`` is ``"primary"``,
 ``"unique"``, ``"foreign"`` (with ``field_key_foreign`` naming the referenced table and
-column) or true for a plain key. `declared_keys` reads them as `TableKey` values, which
-the brand renders and which compare by kind and ordered columns, never by name, because
-the server names an unnamed key itself.
+column) or true for a plain key. A foreign key may instead be a table-level entry,
+``{"foreign_key": {"columns": [...], "references": ["<table>", "<column>", ...],
+"on_delete": "cascade" | "restrict"}}``, which is how one says what deleting the row it
+references does; ``on_delete`` is optional and ``"restrict"`` when absent. `declared_keys`
+reads both as `TableKey` values, which the brand renders and which compare by kind,
+ordered columns and, for a foreign key, what it references and does on delete -- never by
+name, because the server names an unnamed key itself.
 
 On a fresh import the observation and mult tables (`is_key_filtered_table`) are created
 with only the keys a load needs (`create_time_keys`): the primary key, every unique key,
@@ -32,6 +36,15 @@ if TYPE_CHECKING:
 KeyKind = Literal['primary', 'unique', 'key', 'foreign']
 """The kind of a key -- the primary key, a unique key, a plain key or a foreign key."""
 
+OnDelete = Literal['cascade', 'restrict']
+"""What deleting a referenced row does to the rows a foreign key ties to it."""
+
+#: The ``on_delete`` values a table-level ``foreign_key`` entry may hold.
+ON_DELETE_VALUES: tuple[OnDelete, ...] = ('cascade', 'restrict')
+
+#: What a foreign key does on delete when its entry does not say.
+DEFAULT_ON_DELETE: OnDelete = 'restrict'
+
 #: The table-name prefixes of the tables a fresh import creates with only the keys a load
 #: needs: the observation tables the bundle steps write, and the mult tables.
 KEY_FILTERED_TABLE_PREFIXES = ('obs_', 'mult_')
@@ -46,18 +59,22 @@ class TableKey:
     """One key of one table, as a schema declares it or the server reports it.
 
     Two keys are the same key when their kind, their columns in order and, for a foreign
-    key, what they reference agree; a key's name never enters the comparison.
+    key, what they reference and what they do on delete agree; a key's name never enters
+    the comparison.
 
     Attributes:
         kind: What the key is.
         columns: The key's columns, in order.
         references: For a foreign key, the referenced table and its columns, in order;
             None for every other kind.
+        on_delete: For a foreign key, what deleting a referenced row does; meaningless
+            for every other kind, which keeps the default.
     """
 
     kind: KeyKind
     columns: tuple[str, ...]
     references: tuple[str, tuple[str, ...]] | None = None
+    on_delete: OnDelete = DEFAULT_ON_DELETE
 
     def describe(self) -> str:
         """Return the key as a log line names it, such as ``KEY (time1)``.
@@ -69,7 +86,10 @@ class TableKey:
         if self.kind == 'foreign':
             assert self.references is not None
             table, referenced = self.references
-            return f'FOREIGN KEY ({columns}) REFERENCES {table} ({", ".join(referenced)})'
+            described = f'FOREIGN KEY ({columns}) REFERENCES {table} ({", ".join(referenced)})'
+            if self.on_delete != DEFAULT_ON_DELETE:
+                described += f' ON DELETE {self.on_delete.upper()}'
+            return described
         label = {'primary': 'PRIMARY KEY', 'unique': 'UNIQUE KEY', 'key': 'KEY'}[self.kind]
         return f'{label} ({columns})'
 
@@ -86,16 +106,40 @@ def is_key_filtered_table(table_name: str) -> bool:
     return table_name.lower().startswith(KEY_FILTERED_TABLE_PREFIXES)
 
 
+def _table_level_foreign_key(entry: SchemaColumn) -> TableKey:
+    """Return the foreign key a table-level ``foreign_key`` entry declares.
+
+    Parameters:
+        entry: The entry's ``foreign_key`` value.
+
+    Returns:
+        The key.
+
+    Raises:
+        ValueError: If the entry names no columns, does not name a table and as many
+            columns as it has, or holds an ``on_delete`` that is not one of
+            `ON_DELETE_VALUES`.
+    """
+    columns = tuple(entry.get('columns') or ())
+    references = tuple(entry.get('references') or ())
+    if not columns or len(references) != len(columns) + 1:
+        raise ValueError(f'foreign_key {entry!r}: names a table and a column for each column')
+    on_delete = entry.get('on_delete', DEFAULT_ON_DELETE)
+    if on_delete not in ON_DELETE_VALUES:
+        raise ValueError(f'foreign_key {entry!r}: unknown on_delete {on_delete!r}')
+    return TableKey('foreign', columns, (references[0], references[1:]), on_delete)
+
+
 def declared_keys(schema: Sequence[SchemaColumn]) -> list[TableKey]:
-    """Return the keys a table schema declares on its columns, in column order.
+    """Return the keys a table schema declares, in the order of its entries.
 
     Parameters:
         schema: The table schema.
 
     Returns:
-        One key per column whose ``field_key`` declares one. Entries without
-        ``field_name`` (constraints, and ``param_info`` rows of another table) declare
-        none.
+        One key per column whose ``field_key`` declares one, and one per table-level
+        ``foreign_key`` entry. Other entries without ``field_name`` (constraints, and
+        ``param_info`` rows of another table) declare none.
 
     Raises:
         ValueError: If a ``field_key`` is not one of the values a schema may hold, or a
@@ -103,6 +147,9 @@ def declared_keys(schema: Sequence[SchemaColumn]) -> list[TableKey]:
     """
     keys: list[TableKey] = []
     for column in schema:
+        if 'foreign_key' in column:
+            keys.append(_table_level_foreign_key(column['foreign_key']))
+            continue
         if 'field_name' not in column:
             continue
         field_key = column.get('field_key', False)

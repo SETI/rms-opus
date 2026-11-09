@@ -224,13 +224,14 @@ being served is untouched:
 
 * **No row**: no release finished the database. Re-import it under the release. If this
   release imported it and only the finishing steps are missing, run them against it:
-  ``opus_import --finalize``, ``--import-dictionary`` and ``--validate-perm``, then
+  ``opus_import --finalize``, ``--import-dictionary`` and ``--validate``, then
   ``--write-schema-version``. ``--finalize`` adds the indexes and keeps one copy of
   each observation two bundles share, which a database stamped without it would lack.
 * **Another version**: a different release imported it. Re-import it under this release
   and deploy it with ``deploy_new_code_and_database.sh``.
-* **A state other than** ``ready``: an import or an append is still writing to it, or
-  stopped part way. Finish it, ending with ``opus_import --write-schema-version``.
+* **A state other than** ``ready``: an append is still writing to it, or stopped part
+  way. Finish it, ending with ``opus_import --write-schema-version``
+  (:ref:`user_guide_deployment_adding_bundles`).
 
 ``--write-schema-version`` never changes a version a database already records, so a
 release cannot claim a database another release imported.
@@ -354,10 +355,48 @@ what users see, so it is done deliberately.
    under ``staged/``, and going back to it is moving the same symlink.
 
 **An import can be resumed rather than restarted.** The per-step options let a run redo
-only the part that failed: an import into a new database deletes each bundle before it
-writes it, so a failed bundle is imported again by naming it, and an interrupted
+only the part that failed: every import deletes each bundle before it writes it, so a
+failed bundle is imported again by naming it, and an interrupted
 ``opus_import --finalize`` is completed by running it again -- see
-:ref:`dev_guide_import_two_namespaces`.
+:ref:`dev_guide_import_write_paths`.
+
+.. _user_guide_deployment_adding_bundles:
+
+Adding bundles to a database that is not being served
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A finished database the public site is not serving -- the one a full import has just
+built, before the switch -- can take more bundles, or fresh copies of ones it holds,
+without being imported again from the start. Run ``opus_import`` from the installation
+that built it, with that installation's own configuration, which names the database::
+
+    # Each command runs only if the one before it succeeded.
+    OPUS_CONFIG=/opt/opus/import/opus.toml \
+        /opt/opus/import/opus_venv/bin/opus_import --import COISS_2115 &&
+    OPUS_CONFIG=/opt/opus/import/opus.toml \
+        /opt/opus/import/opus_venv/bin/opus_import --finalize &&
+    OPUS_CONFIG=/opt/opus/import/opus.toml \
+        /opt/opus/import/opus_venv/bin/opus_import --validate &&
+    OPUS_CONFIG=/opt/opus/import/opus.toml \
+        /opt/opus/import/opus_venv/bin/opus_import --write-schema-version
+
+Because the database already holds this release's schema version, the import is an
+**append**: each named bundle is deleted from the database and loaded again, or added if
+the database did not hold it. The first command marks the database ``appending``, and
+from then until ``--write-schema-version`` marks it ``ready`` again, the web application
+answers every request on it with a 503 and both deploy scripts refuse it
+(:ref:`user_guide_deployment_schema_version`) -- which is why this is done only to a
+database nothing is being served from. Read ``ERRORS.log`` afterwards, as for any
+import. A database another release imported is refused rather than appended to, and is
+re-imported under this one instead.
+
+**A bundle that fails has to be dealt with before the database can be finished.** The
+import records every bundle it takes on, and one whose import fails or logs an error is
+recorded as failed: ``--finalize`` and ``--write-schema-version`` both refuse, naming
+it, and the database stays ``appending``. Either import it again -- the next
+``opus_import --import`` takes up every unfinished bundle before the ones it names --
+or remove it with ``opus_import --delete-bundles <bundle>``, which deletes its rows and
+its record. Then run the three closing commands again.
 
 .. _user_guide_deployment_log_analyzer:
 

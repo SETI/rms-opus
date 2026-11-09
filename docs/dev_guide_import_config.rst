@@ -70,9 +70,8 @@ Some of the names carry a placeholder, substituted per bundle by
        :func:`~opus_import.import_util.table_name_for_sfc_target`. Unlike the other
        two, this is **not** substituted when the tables are created: which targets an
        observation mentions is not known until the index has been read, so the
-       ``obs_surface_geometry__<TARGET>`` tables are created during the write-out and
-       discovered by listing the database when the copy to the permanent namespace
-       happens.
+       ``obs_surface_geometry__<TARGET>`` tables are created during the write-out, each
+       when the first rows for its target are written.
 
 A table whose schema file does not exist is skipped, which is how a bundle ends up
 with only the tables its instrument actually has columns in.
@@ -393,7 +392,7 @@ which module it lives in.
 
     A ``TARGET_NAME`` this table does not describe is reported through
     :meth:`~opus_import.context.ImportLog.unknown_target_name`, and the observation
-    imports without a target -- unless ``--import-ignore-errors`` is given, under which
+    imports without a target -- unless ``--ignore-errors`` is given, under which
     it becomes ``OTHER``.
 
 ``TARGET_NAME_MAPPING`` (:mod:`opus_import.config_targets.target_name_mapping`)

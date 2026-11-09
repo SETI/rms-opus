@@ -28,12 +28,12 @@ def drop_cache_tables(ctx: ImportContext) -> None:
     import_util.log_debug(ctx, 'Dropping cache tables')
     db = ctx.db
     assert db is not None
-    table_names = db.table_names('all', prefix='cache_')
+    table_names = db.table_names(prefix='cache_')
     for table_name in table_names:
-        db.drop_table('all', table_name)
+        db.drop_table(table_name)
 
     user_search_schema = import_util.read_schema_for_table(ctx, 'user_searches')
     # user_searches.json is packaged with opus_import, so the schema is always found.
     assert user_search_schema is not None
-    db.drop_table('perm', 'user_searches')
-    db.create_table('perm', 'user_searches', user_search_schema)
+    db.drop_table('user_searches')
+    db.create_table('user_searches', user_search_schema)

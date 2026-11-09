@@ -6,8 +6,7 @@ the part that matters anyway: the sequence it would run, and the two guards in f
 it -- the confirmation, and stopping at the first step that fails.
 
 The sequence is asserted as a sequence rather than element by element, because the order
-is the content: two bundle sets first because they need the duplicate-id check while the
-tables are small, then the rest in roughly reverse order of how long each takes, then the
+is the content: the bundle sets in roughly reverse order of how long each takes, then the
 steps that finish the database, the schema version last.
 """
 
@@ -37,30 +36,27 @@ def recorded_steps(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
 
 
 def test_the_sequence_starts_by_dropping_and_ends_by_validating() -> None:
-    """The shape of a full import: erase, the duplicate-id sets, the rest, then finish."""
+    """The shape of a full import: erase, every bundle set, then finish."""
     steps = import_all.import_steps('opus3_new', [])
 
-    assert steps[0][:2] == list(import_all.DROP_OPTIONS)
-    assert [step[-1] for step in steps[1:3]] == list(import_all.DUPLICATE_ID_BUNDLE_SETS)
-    assert all('--import-check-duplicate-id' in step for step in steps[1:3])
-    assert [step[-1] for step in steps[3 : 3 + len(import_all.BUNDLE_SETS)]] == list(
+    assert steps[0][:2] == ['--scorched-earth', '--yes']
+    assert [step[-1] for step in steps[1 : 1 + len(import_all.BUNDLE_SETS)]] == list(
         import_all.BUNDLE_SETS
     )
-    assert [step[0] for step in steps[3 + len(import_all.BUNDLE_SETS) :]] == [
+    assert all(step[0] == '--import' for step in steps[1 : 1 + len(import_all.BUNDLE_SETS)])
+    assert [step[0] for step in steps[1 + len(import_all.BUNDLE_SETS) :]] == [
         '--finalize',
         '--import-dictionary',
-        '--validate-perm',
+        '--validate',
         '--write-schema-version',
     ]
 
 
 def test_every_bundle_set_is_imported_once() -> None:
-    """No set is imported twice, and none of the two lists overlaps the other."""
-    imported = [step[-1] for step in import_all.import_steps(None, []) if '--do-all-import' in step]
+    """No set is imported twice."""
+    imported = [step[-1] for step in import_all.import_steps(None, []) if '--import' in step]
 
-    assert sorted(imported) == sorted(
-        [*import_all.DUPLICATE_ID_BUNDLE_SETS, *import_all.BUNDLE_SETS]
-    )
+    assert sorted(imported) == sorted(import_all.BUNDLE_SETS)
     assert len(imported) == len(set(imported))
 
 
@@ -101,7 +97,7 @@ def test_a_dry_run_runs_nothing(
     assert recorded_steps == []
     printed = capsys.readouterr().out
     assert printed.count('opus_import ') == len(import_all.import_steps('opus3_new', []))
-    assert '--validate-perm' in printed
+    assert '--validate' in printed
 
 
 def test_the_confirmation_has_to_be_typed_exactly(

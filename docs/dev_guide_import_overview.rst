@@ -25,20 +25,19 @@ An import run turns the index tables of a set of bundles into the whole OPUS dat
         H[(PDS3 and PDS4 holdings:<br/>primary index, summary and<br/>supplemental index files, shelves)]
         BI[config_bundle_info:<br/>which obs class, which index files]
         OB[One obs class instance per bundle]
-        IMP[(Import tables:<br/>imp_obs_*, imp_mult_*)]
-        PERM[(Permanent tables:<br/>obs_*, mult_*)]
+        OBS[(Observation tables:<br/>obs_*, mult_*)]
+        REG[(Bundle registry:<br/>import_bundle)]
         AUX[(Auxiliary tables:<br/>param_info, table_names,<br/>partables, contexts, definitions)]
         SUP[(Support tables:<br/>cart, user_searches)]
 
         H --> BI
         BI --> OB
-        OB -->|fresh import:<br/>a schema with no version row| PERM
-        OB -->|a schema with a version row| IMP
-        IMP -->|only if the import phase logged no error| PERM
-        PERM -->|finalization| AUX
-        PERM -.-> SUP
+        OB -->|each bundle deleted, then loaded:<br/>a fresh import or an append| OBS
+        OB -.->|each bundle's state| REG
+        OBS -->|finalization| AUX
+        OBS -.-> SUP
 
-Four groups of table come out, and they are produced at different times and with
+Five groups of table come out, and they are produced at different times and with
 different guarantees:
 
 **The observation tables** -- ``obs_general``, ``obs_pds``, the per-mission and
@@ -55,55 +54,77 @@ others come from the checked-in table schemas and configuration maps.
 web application owns their contents; the import only resets them, because an import
 changes what a search means.
 
+**The import's own records** -- ``import_bundle``, the bundle registry, which records
+each bundle an import takes on and how far it got
+(:ref:`dev_guide_import_steps_registry`), and ``schema_version``, whose one row says
+which release finished the schema and whether it is ready to serve
+(:ref:`dev_guide_database_schema_version`).
+
 **Django's own contrib tables** -- sessions, auth, content types, admin. These come from
 ``opus_manage migrate``, not from the import. There are no OPUS migrations, because
 every OPUS table is created from a table schema by the import itself.
 
-.. _dev_guide_import_two_namespaces:
+.. _dev_guide_import_write_paths:
 
-The two namespaces
-------------------
+The two write paths
+-------------------
 
-An imported table can exist twice. The **import namespace** carries the prefix the
-configuration's ``table_temp_prefix`` names (``imp_`` by default), and the **permanent
-namespace** carries no prefix and is what the web application reads.
-:meth:`~opus_import.importdb.super.ImportDBSuper.convert_raw_to_namespace` is what turns
-a bare table name into one or the other, and no step module builds a prefixed name
-itself.
+There is one set of tables, the one the web application reads, and every import writes
+into it directly. What differs is the state of the schema it writes into, which chooses
+one of two paths; no option chooses (:ref:`dev_guide_import_running_paths`).
 
-Which one a run writes depends on the target schema (:ref:`dev_guide_import_running_paths`).
+**A fresh import** is the path into a schema with no ``schema_version`` row. Such a
+schema is not served -- the web application refuses it and both deploy scripts refuse to
+promote it -- so there is nothing to protect while it fills. The observation and
+``mult_`` tables are created with only the keys a load needs, and finalization adds the
+rest once, after the last bundle (:ref:`dev_guide_import_steps_create_indexes`), which is
+far cheaper than maintaining every index row by row through every load. A failed fresh
+import leaves a schema that is still not served until an import finishes it.
 
-**A fresh import writes the permanent tables directly.** A schema with no
-``schema_version`` row is not served -- the web application refuses it and both deploy
-scripts refuse to promote it -- so there is nothing to protect by staging, and every
-observation and ``mult_`` table is written in place: under
-``ImportDBSuper.direct`` the import namespace names the
-permanent observation and ``mult_`` tables. Each bundle is deleted from them before it is
-written, so a failed bundle is imported again by naming it. The tables are created with
-only the keys a load needs, and finalization adds the rest once, after the last bundle
-(:ref:`dev_guide_import_steps_create_indexes`), which is far cheaper than maintaining
-every index row by row through every load. A failed fresh import leaves a schema that is
-still not served until an import finishes it.
+**An append** is the path into a schema that holds this release's version row, whether
+``ready`` or left ``appending`` by an earlier append: a finished database that bundles
+are being added to or replaced in. Its tables keep their indexes, and the bundles load
+into them in place. Before the first bundle the append sets the row's state to
+``appending``, so the web application refuses the schema and both deploy scripts refuse
+to promote it until ``--write-schema-version`` sets it back to ``ready``. **An append
+never finalizes the schema itself**: ``--finalize``, ``--validate`` and
+``--write-schema-version`` follow as invocations of their own, as they do after a fresh
+import. Each finalization step then either does its work again, because an append
+invalidates it -- the duplicate step, the auxiliary tables, the cart and cache tables,
+``ANALYZE`` and validation -- or finds nothing to do, as ``--create-indexes`` does on
+tables that already carry every key. A table first created by an append, because its
+bundle is the first to need it, is created with only the keys a load needs and keyed by
+the ``--finalize`` that follows.
 
-**An import into a schema with a version row writes only the import tables.** It copies
-them over the permanent tables at the very end, and **only if the import phase logged no
-error**: an error logged through the run's own log sets
-:attr:`~opus_import.context.ImportContext.import_has_bad_data`, and
-:func:`~opus_import.steps.do_import.do_import_steps` skips the copy, unless
-``--import-ignore-errors`` says to go ahead. This is the guarantee for a finished
-schema: a failed import cannot leave the web application serving half a bundle of
-observation metadata.
+A schema holding another release's version is imported into on neither path: it is
+re-imported under the release that will serve it, starting from
+``opus_import --scorched-earth --yes``.
 
-That protection covers the imported tables and no others. ``cart`` is created directly in
-the permanent namespace, and the ``cache_*`` and ``user_searches`` tables are dropped
-there outright, so a failed run can leave those already reset. They hold no imported
-data, which is why they are outside the copy. ``--drop-permanent-tables`` with
-``--scorched-earth`` is outside it too: it deletes the permanent observation and mult
-tables before the import starts, ahead of any error gate.
+**On both paths each bundle is deleted, then loaded.**
+:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables` removes the
+bundle's rows from every observation table with foreign key checks on, so ``cart``'s
+cascading foreign key removes the cart rows that name them; the bundle is then loaded
+with the checks off, and validation's orphan count stands in for them
+(:ref:`dev_guide_import_steps_do_validate`). A bundle imported again therefore replaces
+its earlier rows rather than adding a second copy, and a failed bundle is repaired by
+importing it again.
 
-On either path a run can be **resumed rather than restarted**: the import tables survive
-a failure, a fresh import's bundles already written stay, and the per-step options let a
-second invocation redo only the part that failed.
+**The bundle registry keeps an unfinished import from being finished.** Every invocation
+that imports bundles records each of them in ``import_bundle`` before the first starts,
+and moves each from ``pending`` through ``importing`` to ``done``, or to ``failed`` when
+it logged an error. ``--finalize`` refuses to run, and ``--write-schema-version``
+refuses to mark the schema ready, while any bundle there is not ``done``. An append
+resumes every bundle an earlier append left unfinished before the ones it names.
+:ref:`dev_guide_import_steps_registry` gives the rules.
+
+The other tables are not the import's to protect. Finalization's cart and cache steps
+drop and recreate ``cart`` and ``user_searches`` empty and drop the ``cache_*`` tables,
+because an import changes what a search means; ``--scorched-earth`` drops every table the
+import creates before anything else runs.
+
+On either path a run can be **resumed rather than restarted**: the bundles already
+written stay, the registry names the ones that did not finish, and the per-step options
+let a second invocation redo only the part that failed.
 
 .. _dev_guide_import_context:
 
@@ -133,13 +154,14 @@ collected since they were last reported, the wall-clock of each step timed so fa
 (:attr:`~opus_import.context.ImportContext.step_timings`, which ``--timing-json``
 writes), and :attr:`~opus_import.context.ImportContext.import_has_bad_data`.
 
-Three of those have different lifetimes, and mixing them up is a real bug:
+Four of those are reset **per bundle**, and treating one as per run is a real bug:
 :attr:`~opus_import.context.ImportContext.max_table_id_cache`,
-:attr:`~opus_import.context.ImportContext.mult_table_cache` and
-:attr:`~opus_import.context.ImportContext.modified_mult_tables` are cleared **per
-bundle**, while
-:attr:`~opus_import.context.ImportContext.created_import_mult_tables` is cleared **per
-run**.
+:attr:`~opus_import.context.ImportContext.mult_table_cache`,
+:attr:`~opus_import.context.ImportContext.modified_mult_tables` and
+:attr:`~opus_import.context.ImportContext.bundle_has_errors`, which says whether the
+bundle being imported has logged an error, beside
+:attr:`~opus_import.context.ImportContext.import_has_bad_data`, which says it for the
+whole run.
 
 Logging goes through :attr:`~opus_import.context.ImportContext.log`, an
 :class:`~opus_import.context.ImportLog` bound to the context. Its methods are the four
@@ -164,28 +186,29 @@ The command line asks for the ones it wants and :mod:`opus_import.cli` runs the
 requested subset **in a fixed order**. The order is not a preference; each part of it is
 forced by something:
 
-1. **Clean up the cart and cache tables** (:mod:`~opus_import.steps.do_cart`,
-   :mod:`~opus_import.steps.do_django`). A ``cart`` row can reference an observation, so
-   the cart has to be emptied before the permanent tables are rebuilt underneath it.
+1. **Erase or delete**, inside :mod:`~opus_import.steps.do_import`:
+   ``--scorched-earth`` drops every table the import creates, before anything else, so
+   that no ``mult_`` table survives and the row ids start again; ``--delete-bundles``
+   then deletes the named bundles.
 2. **Import the observations** (:mod:`~opus_import.steps.do_import`). This is the long
-   part, and it owns the copy to the permanent namespace as well.
+   part.
 3. **Add the secondary keys** (:mod:`~opus_import.steps.do_indexes`) a fresh import
    left out, foreign keys last, then **keep one copy of each OPUS ID**
    (:mod:`~opus_import.steps.do_duplicate_ids`), which finds and deletes the copies
-   through those keys.
+   through those keys. ``--finalize`` refuses before this point, changing nothing,
+   while any bundle in the bundle registry is not ``done``.
 4. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
    :mod:`~opus_import.steps.do_partables`,
-   :mod:`~opus_import.steps.do_table_names`), then analyze the tables. Each auxiliary
-   table is derived from the permanent tables -- from which of them exist, and from
-   their schemas -- so it must follow the copy.
-5. **Pin the mult display details** (:mod:`~opus_import.steps.do_update_mult_info`),
-   **validate** (:mod:`~opus_import.steps.do_validate`), and retry the cart if creating
-   it earlier failed because the permanent tables did not exist yet.
-6. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`), last.
-
-``--drop-permanent-tables`` reorders the first part: the leading cleanup is skipped and
-:mod:`~opus_import.steps.do_import` performs it instead, after the drop, because
-dropping the permanent tables also drops the cart.
+   :mod:`~opus_import.steps.do_table_names`), **recreate the cart and drop the cache
+   tables** (:mod:`~opus_import.steps.do_cart`, :mod:`~opus_import.steps.do_django`),
+   then analyze the tables. Each auxiliary table is derived from the imported tables --
+   from which of them exist, and from their schemas -- and ``cart`` carries a foreign
+   key onto ``obs_general``, so all of them must follow the import.
+5. **Pin the mult display details** (:mod:`~opus_import.steps.do_update_mult_info`) and
+   **validate** (:mod:`~opus_import.steps.do_validate`).
+6. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`).
+7. **Mark the schema ready** (:mod:`~opus_import.steps.do_schema_version`), last,
+   because its row is what makes the schema servable.
 
 :mod:`opus_import.steps` states the whole order and what forces each part of it, and is
 the authority if this summary and it ever disagree.
@@ -199,9 +222,11 @@ Inside one bundle
 bundle id it:
 
 1. **Looks the bundle up** in ``BUNDLE_INFO``
-   (:mod:`opus_import.config_bundle_info`). A bundle id matching no entry is one OPUS
-   does not know, and is an error. An entry whose ``instrument_class`` is None names a
-   bundle OPUS knows about and deliberately ignores, which counts as success.
+   (:mod:`opus_import.config_bundle_info`). An entry whose ``instrument_class`` is None
+   names a bundle OPUS knows about and deliberately ignores
+   (:func:`~opus_import.steps.do_import_tables.opus_imports_bundle` is False), which
+   counts as success; such a bundle is never recorded in the bundle registry. A bundle
+   id matching no entry is one OPUS does not know, and is an error.
 2. **Resolves it to a ``pdsfile`` object** -- ``Pds3File.from_path`` or
    ``Pds4File.from_path`` -- and requires it to be a bundle.
 3. **Finds the primary index files.** ``BUNDLE_INFO`` gives one or more file-name
@@ -326,8 +351,9 @@ reports rather than raises**, so one bad row does not end the run:
   ``val_set_invalid_to_null`` logs an out-of-range value at **debug** level instead of
   as an error, so those are discarded silently and the run still succeeds.
 
-Logging an error is what marks the run as having produced bad data, and that is what
-suppresses the copy to the permanent tables at the end.
+Logging an error is what marks the run, and the bundle, as having produced bad data:
+the bundle is recorded ``failed`` in the bundle registry, which keeps finalization and
+the version step from running until it is imported again or deleted.
 
 Finally, a column whose ``pi_form_type`` is a GROUP type has its value replaced by a
 ``mult_`` table row id, adding the value to that table if it is new. A ``mult_list``
@@ -360,13 +386,12 @@ pipeline assigns both: a ``MAX_ID`` column gets one more than the largest id use
 table so far, and an ``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this
 observation already produced.
 
-The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, which
-takes the larger of the two namespaces' maxima. That is what makes a **re-import** of one
-bundle into a schema with a version row safe: its new rows are numbered above everything
-already present in either namespace, and its old rows are deleted only afterwards. It is
-also why such a re-import renumbers that bundle above the rest of the table, which is a
-documented consequence rather than an accident. A fresh import deletes each bundle's
-rows before writing it, so a bundle written again can take ids its earlier rows had.
+The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, the
+largest id the table holds. Each bundle is deleted before it is written, so its new rows
+are numbered above every row that remains: a bundle imported again into a finished
+schema is renumbered above the rest of the table, which is a documented consequence
+rather than an accident, and one whose rows were the highest in the table can take the
+ids its earlier rows had.
 
 The run keeps the running maximum in
 :attr:`~opus_import.context.ImportContext.max_table_id_cache` rather than querying for
@@ -410,11 +435,12 @@ contract it defines, and the method resolution order that falls out.
 Invariants
 ----------
 
-* **Nothing is visible until the run succeeds.** Into a schema with a version row, every
-  imported table is written under the import prefix and copied over the permanent tables
-  at the end; deleting the import tables before the copy, or copying before every bundle
-  has been read, breaks the guarantee the design rests on. A fresh import writes the
-  permanent tables of a schema nothing serves until it has a version row.
+* **Nothing is served until it is finished.** A fresh import writes a schema with no
+  version row, and an append sets the row to ``appending`` before its first write; the
+  web application and both deploy scripts refuse either until
+  ``--write-schema-version`` marks it ``ready``, which it refuses to do while any bundle
+  in the bundle registry is not ``done``. A step that wrote a served schema before
+  setting it ``appending`` would break the guarantee the design rests on.
 * **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
   constraint enforces it.
 * **An import run is single-threaded, and one obs instance serves a whole bundle**,
@@ -454,10 +480,14 @@ that. They exist because a single systematic fault -- one column missing from on
 index -- would otherwise be reported once per observation, hundreds of thousands of
 times.
 
-:attr:`~opus_import.context.ImportContext.import_has_bad_data` is the flag that
-suppresses the copy to the permanent tables. Every ``log`` error sets it, and a few
-sites set it directly; it is **not** a complete record of the run's errors, because
-several steps log failures straight to the underlying logger and leave it alone.
+:attr:`~opus_import.context.ImportContext.import_has_bad_data` is the flag that makes
+an import exit with failure, unless ``--ignore-errors``, and
+:attr:`~opus_import.context.ImportContext.bundle_has_errors`, set with it and reset at
+the start of each bundle, is what records the bundle ``failed`` in the bundle registry.
+Every ``log`` error sets both, through
+:meth:`~opus_import.context.ImportContext.mark_bad_data`, and a few sites set them
+through it directly; they are **not** a complete record of the run's errors, because
+several steps log failures straight to the underlying logger and leave them alone.
 
 Where to go next
 ----------------

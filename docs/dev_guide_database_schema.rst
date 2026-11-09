@@ -589,7 +589,7 @@ The ``cart`` table records the current Cart contents for all users. As long as t
 The fields are:
 
 * ``session_id``: The Django session ID.
-* ``obs_general_id``: The ``obs_general`` unique ID of the observation in the cart.
+* ``obs_general_id``: The ``obs_general`` unique ID of the observation in the cart. It is a foreign key that cascades on delete, so deleting an observation -- when its bundle is imported again, deleted with ``--delete-bundles``, or settled by finalization's duplicate step -- deletes the cart rows that hold it.
 * ``opus_id``: The OPUS ID of the observation in the cart (which could also be found by joining the ``obs_general_id`` with the ``obs_general`` table).
 * ``recycled``: A boolean flag saying whether or not this observation is in the recycle bin.
 * ``id``: A unique ID.
@@ -717,9 +717,33 @@ The fields are:
 * ``version``: The :data:`~opus_import.schema_version.SCHEMA_VERSION` of the release whose import created the tables. A release that changes a table schema in a way an existing database does not have raises it, and is deployed with a fresh import.
 * ``state``: ``ready`` once the database is finished; ``appending`` while an append to it is writing.
 
-The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), creates the table and writes the row. It is the only writer of ``ready``, and it never changes a ``version`` the row already holds. ``--drop-permanent-tables --scorched-earth`` drops the table before any other.
+The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), creates the table and writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append sets ``state`` to ``appending`` before its first write (:ref:`dev_guide_import_write_paths`). ``--scorched-earth`` drops the table before any other.
 
 Two things read it, and both require the release's own version in the ``ready`` state:
 
 * the web application, as it loads (:mod:`opus_app.schema_guard`, called from :mod:`opus_app.wsgi`). Any other row, or none, makes every request answer 503 with a message naming the remedy, and each refused request checks again, so a worker serves the database as soon as it is finished, without a reload. The check is in the WSGI entry point and not in the settings, so management commands, ``inspectdb`` among them, work against any database;
 * both deploy scripts, before they write anything (:ref:`user_guide_deployment_schema_version`).
+
+.. _dev_guide_database_schema_import_bundle:
+
+The ``import_bundle`` Table
+---------------------------
+
+The ``import_bundle`` table is the bundle registry: the import's record of each bundle it has taken on and how far it got (:ref:`dev_guide_import_steps_registry`). The web application never reads it.
+
+::
+
+    mysql> DESC import_bundle;
+    +-----------+---------------------------------------------+------+-----+---------+
+    | Field     | Type                                        | Null | Key | Default |
+    +-----------+---------------------------------------------+------+-----+---------+
+    | bundle_id | varchar(75)                                 | NO   | PRI | NULL    |
+    | state     | enum('pending','importing','done','failed') | NO   |     | NULL    |
+    +-----------+---------------------------------------------+------+-----+---------+
+
+The fields are:
+
+* ``bundle_id``: The bundle, such as ``COISS_2002``. A bundle OPUS deliberately skips is never recorded.
+* ``state``: ``pending`` once an import has recorded the bundle and before it starts; ``importing`` while the bundle is deleted and loaded; ``done`` once it is imported without logging an error, or under ``--ignore-errors``; ``failed`` when its import failed or logged an error.
+
+Every invocation that imports bundles creates the table when the schema lacks it, on a fresh import and an append alike, and records its bundles before the first one starts. ``--finalize`` refuses to run, and ``--write-schema-version`` refuses to write ``ready``, while any row is not ``done``. ``--delete-bundles`` deletes a bundle's row with its observations, and ``--scorched-earth`` drops the table.

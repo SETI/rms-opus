@@ -150,9 +150,9 @@ def duplicate_id_run(
 ) -> build_run.ImportRun:
     """Import one volume twice in a single invocation, into an empty schema.
 
-    The schema is imported fresh, so each import of the volume first deletes the volume
-    from the permanent tables; the run is what shows that the second import replaces the
-    first rather than loading a second copy beside it.
+    Each import of the volume first deletes the volume from the observation tables; the
+    run is what shows that the second import replaces the first rather than loading a
+    second copy beside it.
 
     Returns:
         The completed run, in a schema and a log directory of its own.
@@ -180,7 +180,7 @@ def ignore_errors_run(
     """Import a fixture whose index names a target OPUS does not know.
 
     Returns:
-        A run of the one perturbed bundle under ``--import-ignore-errors``, in a schema
+        A run of the one perturbed bundle under ``--ignore-errors``, in a schema
         and a log directory of its own.
     """
     root = tmp_path_factory.mktemp('mini_holdings_ignore_errors')
@@ -194,6 +194,6 @@ def ignore_errors_run(
         db_credentials,
         overlay=overlay,
         bundle_groups=[[recipe.bundle]],
-        extra_import_args=['--import-ignore-errors'],
+        extra_import_args=['--ignore-errors'],
         finalize=False,
     )

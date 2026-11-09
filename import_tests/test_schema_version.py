@@ -344,7 +344,7 @@ def test_another_version_is_refused_and_left_alone(
 def test_the_erase_drops_the_table(
     erase_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
-    """``--drop-permanent-tables --scorched-earth`` leaves no version row behind."""
+    """``--scorched-earth --yes`` leaves no version row behind."""
     _row(erase_run, db_credentials, SCHEMA_VERSION, SCHEMA_STATE_READY)
     assert _step(erase_run, *build_run.DROP_ARGS).returncode == 0
     assert _rows(db_credentials, erase_run.schema) is None
@@ -360,7 +360,7 @@ def test_a_read_only_run_does_not_create_an_absent_schema(
     # Dropped on the way out should a failure here leave it behind.
     created_schemas.append(absent)
     logged = len(_errors(unfinished_run))
-    result = _step(unfinished_run, '--read-only', '--override-db-schema', absent, '--validate-perm')
+    result = _step(unfinished_run, '--read-only', '--override-db-schema', absent, '--validate')
     assert result.returncode != 0
     assert f'"{absent}" does not exist' in _errors(unfinished_run)[logged:]
     assert not _query(
@@ -426,7 +426,7 @@ def test_a_validation_failure_keeps_the_schema_from_being_marked_ready(
             unfinished_run,
             *build_run.VALIDATE_ARGS,
             *build_run.VERSION_ARGS,
-            '--import-ignore-errors',
+            '--ignore-errors',
         )
         assert ignored.returncode == 0
         assert _rows(db_credentials, schema) == [(SCHEMA_VERSION, SCHEMA_STATE_READY)]

@@ -212,8 +212,6 @@ class ImportConfig:
     """Settings of the import pipeline.
 
     Attributes:
-        table_temp_prefix: Prefix of the temporary tables an import builds before
-            copying them over the permanent ones.
         log_file: File the pipeline writes its information-level log to.
         debug_log_file: File the pipeline writes its debug-level log to.
         bulk_load: Whether observation rows are written with ``LOAD DATA LOCAL
@@ -232,7 +230,6 @@ class ImportConfig:
             server's own setting.
     """
 
-    table_temp_prefix: str
     log_file: str
     debug_log_file: str
     bulk_load: bool
@@ -672,7 +669,6 @@ def _read_import(source: Path, values: dict[str, Any]) -> ImportConfig:
     """
     table = _TableReader(source, 'import', values)
     config = ImportConfig(
-        table_temp_prefix=table.read_str('table_temp_prefix', default='imp_'),
         log_file=table.read_str('log_file'),
         debug_log_file=table.read_str('debug_log_file'),
         bulk_load=table.read_bool('bulk_load', default=True),

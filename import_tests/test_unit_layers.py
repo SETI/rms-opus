@@ -168,7 +168,6 @@ def import_db(
         # its own name cache inside its logging branch, so an unlogged connection answers
         # `table_exists` from a cache that never learned about it.
         logger=_import_context().logger,
-        import_prefix='imp_',
     )
     yield db
     golden_io.execute(db_credentials, None, f'DROP DATABASE IF EXISTS `{schema}`')
@@ -183,8 +182,8 @@ def test_the_widest_packaged_schema_creates_a_real_table(import_db: ImportDBSupe
     ctx = _import_context()
     schema = import_util.read_schema_for_table(ctx, 'obs_general')
     assert schema is not None
-    import_db.create_table('perm', 'obs_general', schema)
-    assert import_db.table_exists('perm', 'obs_general')
+    import_db.create_table('obs_general', schema)
+    assert import_db.table_exists('obs_general')
 
 
 def test_upsert_updates_the_row_it_finds(import_db: ImportDBSuper) -> None:
@@ -196,12 +195,12 @@ def test_upsert_updates_the_row_it_finds(import_db: ImportDBSuper) -> None:
     ctx = _import_context()
     schema = import_util.read_schema_for_table(ctx, _UPSERT_TABLE)
     assert schema is not None
-    import_db.create_table('perm', _UPSERT_TABLE, schema)
+    import_db.create_table(_UPSERT_TABLE, schema)
 
     first = {_UPSERT_KEY: 'OPUS_GENERAL', 'description': 'first', 'parent': 'OPUS'}
     second = {_UPSERT_KEY: 'OPUS_GENERAL', 'description': 'second', 'parent': 'OPUS'}
-    import_db.upsert_rows('perm', _UPSERT_TABLE, _UPSERT_KEY, [first])
-    import_db.upsert_rows('perm', _UPSERT_TABLE, _UPSERT_KEY, [second])
+    import_db.upsert_rows(_UPSERT_TABLE, _UPSERT_KEY, [first])
+    import_db.upsert_rows(_UPSERT_TABLE, _UPSERT_KEY, [second])
 
     quoted = import_db.quote_identifier
     rows = import_db.general_select(

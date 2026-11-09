@@ -61,10 +61,10 @@ def test_read_schema_for_table_parses_a_schema() -> None:
     assert any(column.get('field_name') == 'opus_id' for column in schema)
 
 
-def test_read_schema_for_table_strips_the_import_prefix() -> None:
-    """An import-table name resolves to the schema of the table it is a copy of."""
+def test_read_schema_for_table_ignores_case() -> None:
+    """A table name the server spells in capitals resolves to the same schema."""
     assert import_util.read_schema_for_table(
-        make_context(), 'imp_obs_general'
+        make_context(), 'OBS_GENERAL'
     ) == import_util.read_schema_for_table(make_context(), 'obs_general')
 
 

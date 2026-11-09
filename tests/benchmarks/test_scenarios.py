@@ -20,12 +20,10 @@ def _script_groups() -> list[tuple[str, tuple[str, ...]]]:
     """Return each active bundle-import line of import_for_tests.sh: bundles, options."""
     groups = []
     for line in IMPORT_FOR_TESTS.read_text().splitlines():
-        if not re.match(r'^python -m opus_import .*--do-all-import', line):
+        if not re.match(r'^python -m opus_import .*--import ', line):
             continue
         words = [word for word in shlex.split(line)[3:] if word != '$1']
-        options = tuple(
-            word for word in words if word.startswith('--') and word != '--do-all-import'
-        )
+        options = tuple(word for word in words if word.startswith('--') and word != '--import')
         bundles = [word for word in words if not word.startswith('--')]
         groups.append((bundles[0], options))
     return groups
@@ -45,10 +43,10 @@ def test_the_complete_scale_groups_are_opus_import_all_s(monkeypatch: pytest.Mon
     expected = [
         (
             step[-1],
-            tuple(option for option in step if option != '--do-all-import' and option != step[-1]),
+            tuple(option for option in step if option != '--import' and option != step[-1]),
         )
         for step in import_all.import_steps(None, [])
-        if '--do-all-import' in step
+        if '--import' in step
     ]
     assert [(group.bundles, group.options) for group in scenario.groups] == expected
 

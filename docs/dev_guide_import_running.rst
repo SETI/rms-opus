@@ -50,8 +50,6 @@ and the log locations all come from the configuration file, and the keys it uses
      - Where ``WARNINGS.log`` and ``ERRORS.log`` are written.
    * - ``[import] log_file``, ``debug_log_file``
      - The run's own info and debug logs.
-   * - ``[import] table_temp_prefix``
-     - The import namespace's prefix, ``imp_`` by default.
    * - ``[import] bulk_load``, ``scratch_dir``, ``transaction_rows``
      - How the observation rows are written: whether with ``LOAD DATA LOCAL INFILE``
        (true by default), where its scratch files go (the system temporary directory by
@@ -90,24 +88,19 @@ exclude one another, so giving two of them switches on the union.
    * - Option
      - What it implies
    * - ``--do-it-all``
-     - ``--drop-old-import-tables``, ``--import``,
-       ``--copy-import-to-permanent-tables``, ``--drop-new-import-tables``, then
-       ``--finalize``.
-   * - ``--do-all-import``
-     - ``--drop-old-import-tables``, ``--import``,
-       ``--copy-import-to-permanent-tables``, ``--drop-new-import-tables``.
-   * - ``--do-import-finalization``
-     - ``--copy-import-to-permanent-tables``, ``--drop-new-import-tables``, then
-       ``--finalize``.
+     - ``--import``, then ``--finalize``, in one invocation.
    * - ``--finalize``
      - The **finalization group**: ``--create-indexes``, the duplicate step (which has
        no option of its own), ``--create-param-info``, ``--create-partables``,
        ``--create-table-names``, ``--create-cart``, ``--drop-cache-tables`` and
-       ``--analyze-permanent-tables``.
+       ``--analyze-tables``. It refuses to run while any bundle in the bundle registry is
+       not ``done`` (below).
 
-``--do-it-all`` and ``--do-import-finalization`` finish a database through
-``--finalize``, so each runs every step of the group. None of them implies
-``--update-mult-info``, ``--validate-perm``, ``--import-dictionary`` or
+``--do-it-all`` is the one option that imports and finalizes in one invocation, a
+convenience for a small run; everywhere else ``--import`` and ``--finalize`` are
+invocations of their own. Its ``--finalize`` refuses as any other does, so a bundle that
+failed in its import stops it before the first finalization step. Neither option implies
+``--update-mult-info``, ``--validate``, ``--import-dictionary`` or
 ``--write-schema-version``; those are always asked for by name.
 
 .. _dev_guide_import_running_paths:
@@ -116,21 +109,53 @@ Which path an import takes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 No option chooses how an invocation that imports bundles writes; the target schema's
-state does, and the import log says which on a line beginning ``Import path:``, naming
-the schema and its version:
+state does (:ref:`dev_guide_import_write_paths`), and the import log says which on a line
+beginning ``Import path:``, naming the schema and its version:
 
-* A schema with **no** ``schema_version`` **row** and none of the secondary keys
-  finalization adds is **imported fresh**: an empty schema, and one a fresh import is
-  part way through, since a full import runs one invocation per bundle group. Each
-  bundle is deleted from the permanent tables and written straight into them, and the
-  tables carry only the keys a load needs until ``--finalize`` adds the rest once. The
-  options that stage, copy and drop import tables have nothing to do on this path.
-* A schema **with a version row** is imported into through the import tables, and
-  copied over the permanent tables at the end.
-* A schema with no version row **but with those keys** had its finalization
-  interrupted. An import into it is refused, with a message naming ``--finalize``, and
-  changes nothing; ``opus_import --finalize`` on its own completes the finalization,
-  and ``--drop-permanent-tables --scorched-earth`` starts over.
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Target schema
+     - Path
+   * - No ``schema_version`` row, and none of the secondary keys finalization adds
+     - **Fresh import**: an empty schema, or one a fresh import is part way through,
+       since a full import runs one invocation per bundle group. The tables carry only
+       the keys a load needs until ``--finalize`` adds the rest once.
+   * - One row, of this release's version, ``ready`` or ``appending``
+     - **Append**: the bundles load into the tables with their keys in place. The row is
+       set to ``appending`` before the first bundle, and stays so until
+       ``--write-schema-version``.
+   * - A row of another version, more than one row, or a state that is neither
+     - **Refused**, with a fatal message naming ``--scorched-earth --yes``: a schema is
+       re-imported under the release that will serve it.
+   * - No row, but some of the keys finalization adds
+     - **Refused**, with a fatal message naming ``--finalize``: its finalization was
+       interrupted. ``opus_import --finalize`` on its own completes it, and
+       ``--scorched-earth --yes`` starts over.
+
+A refused import changes nothing and exits with failure. On both paths each bundle is
+deleted from the observation tables before it is loaded, so importing a bundle again
+replaces it. Neither path finalizes on its own: ``--finalize``, ``--validate`` and
+``--write-schema-version`` follow as their own invocations, or ``--do-it-all`` runs the
+first of them in the same one.
+
+**The bundle registry.** Every invocation that imports bundles records each of them in
+the ``import_bundle`` table, on both paths: ``pending`` before the first bundle starts,
+``importing`` while it is deleted and loaded, then ``done``, or ``failed`` when its
+import failed or logged an error. A bundle whose import fails stops the invocation,
+leaving the ones after it ``pending``; one that only logged an error is recorded
+``failed`` and the invocation goes on to the next, exiting with failure after the last.
+An append first resumes every bundle the registry holds that is not ``done``, in bundle
+order, then imports the ones it names.
+
+**An unfinished registry is never finalized or marked ready.** While any bundle in the
+registry is not ``done``, ``--finalize`` refuses before its first step, and
+``--write-schema-version`` refuses to write ``ready``; each refusal is a fatal message
+naming every such bundle with its state, and the invocation exits with failure. Import
+the bundle again, or remove it with ``--delete-bundles``, which also deletes its
+registry row. ``--ignore-errors`` records a bundle that logged errors ``done``, which is
+how a debugging run reaches ``ready`` with them.
 
 :ref:`dev_guide_import_steps_do_import` gives the detail.
 
@@ -196,31 +221,24 @@ Import steps
 
    * - Option
      - Meaning
-   * - ``--drop-old-import-tables``
-     - Drop every existing import table before starting.
-   * - ``--leave-old-import-tables``
-     - Keep them and add to them; overrides ``--drop-old-import-tables``.
-   * - ``--delete-import-bundles``
-     - Delete the named bundles from the import tables.
    * - ``--import``
-     - Import the named bundles. Implies ``--delete-import-bundles``.
-   * - ``--copy-import-to-permanent-tables``
-     - Copy the import tables over the permanent ones. Implies
-       ``--delete-permanent-import-bundles``.
-   * - ``--delete-permanent-import-bundles``
-     - Delete from the permanent tables every bundle the import tables hold.
-   * - ``--delete-permanent-bundles``
-     - Delete the named bundles from the permanent tables.
-   * - ``--drop-permanent-tables``
-     - Delete **all** permanent tables. Requires ``--scorched-earth``.
+     - Import the named bundles, on the path the schema's state chooses. Each bundle is
+       deleted from the observation tables first, so importing it again replaces it.
+   * - ``--delete-bundles``
+     - Delete the named bundles' rows from every observation table, and their bundle
+       registry rows, before any bundle is imported.
    * - ``--scorched-earth``
-     - Confirms ``--drop-permanent-tables``. Giving either without the other is a fatal
-       argument error, checked before anything connects.
-   * - ``--drop-new-import-tables``
-     - Drop the import tables after the copy.
-   * - ``--analyze-permanent-tables``
-     - Recompute the permanent tables' key distributions, after the auxiliary tables
-       are built.
+     - Drop every table the import creates in the schema -- every table but Django's
+       own ``django_*`` and ``auth_*`` tables
+       (:ref:`which tables, in which order <dev_guide_import_steps_scorched_earth>`) --
+       before any other step. Requires ``--yes``. **This deletes all existing data.**
+   * - ``--yes``
+     - Confirms ``--scorched-earth``. Giving either without the other is a fatal
+       argument error, checked before the database is opened. ``opus_import`` never
+       prompts.
+   * - ``--analyze-tables``
+     - Recompute the key distributions of every ``obs_`` and ``mult_`` table, after the
+       auxiliary, cart and cache tables are built.
 
 Import behavior
 ~~~~~~~~~~~~~~~
@@ -233,37 +251,34 @@ These change what the import does with awkward data rather than which steps run.
 
    * - Option
      - Meaning
-   * - ``--import-ignore-errors``
-     - Copy to the permanent tables even with errors, and substitute made-up values
-       where a real one cannot be determined -- an unknown target name becomes
-       ``OTHER`` rather than dropping the observation. **The result is wrong on
-       purpose**; it is a debugging aid.
-   * - ``--import-check-duplicate-id``
-     - On the import-tables path, delete an OPUS ID's earlier copy from the import
-       tables when a later bundle of the same invocation produces it again. A fresh
-       import ignores it: ``--finalize``'s duplicate step keeps the copy imported last
-       of every OPUS ID two bundles share.
-   * - ``--import-force-metadata-index``
+   * - ``--ignore-errors``
+     - Record a bundle ``done`` in the bundle registry even when it logs errors, so
+       that ``--finalize`` and ``--write-schema-version`` accept it; go on past a
+       bundle whose import failed; let a finishing step's failure leave the schema
+       marked ready; and substitute made-up values where a real one cannot be
+       determined -- an unknown target name becomes ``OTHER`` rather than dropping the
+       observation. **The result is wrong on purpose**; it is a debugging aid.
+   * - ``--force-metadata-index``
      - Require a metadata index file and fail when none is available.
-   * - ``--import-dont-use-row-files``
+   * - ``--no-row-files``
      - Do not use the metadata row files to decide whether an index or summary file
        belongs in ``obs_files``.
-   * - ``--import-fake-images``
+   * - ``--fake-images``
      - Pretend a browse image exists when the real file is missing.
-   * - ``--import-ignore-missing-images``
+   * - ``--ignore-missing-images``
      - Do not warn about a missing browse image.
-   * - ``--import-ignore-geo-mismatch``
+   * - ``--ignore-geo-mismatch``
      - Do not warn when a gridless geometry column's minimum and maximum disagree.
-   * - ``--import-report-missing-ring-geo``
+   * - ``--report-missing-ring-geo``
      - Report observations that should have ring geometry and do not.
-   * - ``--import-report-missing-sky-geo``
+   * - ``--report-missing-sky-geo``
      - The same for sky geometry.
-   * - ``--import-report-inventory-mismatch``
+   * - ``--report-inventory-mismatch``
      - Report a disagreement between the inventory file and the surface geometry
        tables.
-   * - ``--import-report-empty-products``
+   * - ``--report-empty-products``
      - Report products ``rms-pdsfile`` returns under an empty key.
-   * - ``--import-suppress-mult-messages``
+   * - ``--suppress-mult-messages``
      - Say nothing about ``mult_`` table maintenance.
 
 Auxiliary tables and other steps
@@ -291,11 +306,12 @@ Auxiliary tables and other steps
      - Write the display details a schema pins for a ``mult_`` table back over the
        table the import discovered.
    * - ``--create-cart``
-     - Create the ``cart`` table.
+     - Drop and recreate the empty ``cart`` table. It needs ``obs_general``, and on a
+       schema without one it logs an error and creates nothing.
    * - ``--drop-cache-tables``
      - Drop the ``cache_*`` tables and clear ``user_searches``.
-   * - ``--validate-perm``
-     - Validate the permanent tables. A check that logs an error keeps the invocation
+   * - ``--validate``
+     - Validate the imported tables. A check that logs an error keeps the invocation
        from marking the schema ready, and makes it exit with failure.
    * - ``--import-dictionary``
      - Rebuild ``contexts`` and ``definitions`` from scratch. It runs after every step
@@ -304,9 +320,11 @@ Auxiliary tables and other steps
      - Mark the schema finished: write its ``schema_version`` row, this release's
        version in the ``ready`` state, which the web application and both deploy
        scripts require (:ref:`user_guide_deployment_schema_version`). It runs last, and
-       is the last step of every sequence that finishes a database. It never changes a
-       version the schema already records: over another version it logs an error and
-       **exits non-zero**, leaving the row alone.
+       is the last step of every sequence that finishes a database, and changes an
+       append's ``appending`` to ``ready``. It never changes a version the schema already
+       records: over another version it logs an error and **exits non-zero**, leaving the
+       row alone. It refuses the same way while any bundle in the bundle registry is not
+       ``done``.
 
 Logging and diagnostics
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -336,12 +354,13 @@ Logging and diagnostics
        write one JSON object to ``PATH`` mapping each step the run performed to its
        wall-clock seconds, plus ``total``. The steps are named as
        :meth:`~opus_import.context.ImportContext.timed` records them: each phase of
-       :func:`~opus_import.steps.do_import.do_import_steps`, ``import_bundle:<bundle>``,
-       ``delete_bundle:<bundle>`` and ``copy_bundle:<bundle>`` for each bundle, each
-       table's and each statement's key build (``create_indexes:<table>``,
-       ``create_indexes:<table>:<keys>``), and the auxiliary, validation, cart and
-       dictionary steps under their option's name with underscores for dashes
-       (``create_param_info``, ``validate_perm``); ``grep -n "ctx.timed("
+       :func:`~opus_import.steps.do_import.do_import_steps` (``scorched_earth``,
+       ``delete_bundles``, ``import``), ``delete_bundle:<bundle>`` and
+       ``import_bundle:<bundle>`` for each bundle, each table's and each statement's key
+       build (``create_indexes:<table>``, ``create_indexes:<table>:<keys>``), and the
+       auxiliary, analyze, validation, cart and dictionary steps under their option's
+       name with underscores for dashes (``create_param_info``, ``analyze_tables``,
+       ``validate``); ``grep -n "ctx.timed("
        src/opus_import`` lists every name. The benchmark harness
        (:ref:`dev_guide_benchmarks`) reads it; nothing else does.
 
@@ -353,14 +372,14 @@ What a run does, in order
 :func:`opus_import.cli.main` is short, and reading it is the quickest way to see the
 whole shape. It:
 
-1. Parses the arguments and expands the four aggregates.
+1. Parses the arguments and expands the two aggregates.
 2. Reads the configuration -- **after** parsing, so ``--help`` needs none.
 3. Builds a ``pdslogger.PdsLogger`` and the run's
    :class:`~opus_import.context.ImportContext`, and attaches the five log destinations
    described below.
 4. Installs a warning handler that collects Python warnings onto the context.
-5. Rejects ``--drop-permanent-tables`` without ``--scorched-earth``, or the reverse,
-   with a fatal message and a non-zero exit.
+5. Rejects ``--scorched-earth`` without ``--yes``, or ``--yes`` without
+   ``--scorched-earth``, with a fatal message and a non-zero exit.
 6. Configures ``rms-pdsfile`` -- shelves-only unless ``--dont-use-shelves-only`` -- and
    preloads both holdings roots. The ``rms-pdsfile`` logger is attached *after* the
    preload, so the preload's own debug output stays out of the run's log.
@@ -369,16 +388,19 @@ whole shape. It:
 8. Chooses the import's path when the invocation imports bundles and erases nothing
    first, exiting non-zero if the import is refused
    (:ref:`dev_guide_import_running_paths`).
-9. Runs the cart and cache cleanup, unless ``--drop-permanent-tables`` will drop those
-   tables anyway.
-10. Runs :func:`opus_import.steps.do_import.do_import_steps`, exiting non-zero if it
-    returns False.
+9. Runs :func:`opus_import.steps.do_import.do_import_steps` -- the erase under
+   ``--scorched-earth``, then ``--delete-bundles``, then the import -- exiting non-zero
+   if it returns False.
+10. Under ``--finalize``, refuses with a fatal message and a non-zero exit, before any
+    finalization step, while any bundle in the bundle registry is not ``done``.
 11. Runs ``--create-indexes``, then, under ``--finalize``, the duplicate step.
 12. Builds the auxiliary tables that were asked for, in the order ``param_info``,
-    ``partables``, ``table_names``, then runs ``--analyze-permanent-tables``.
-13. Runs ``--update-mult-info``, then ``--validate-perm``, then the deferred second
-    attempt at the cart table, then ``--import-dictionary``.
-14. Runs ``--write-schema-version``, exiting non-zero if it refuses.
+    ``partables``, ``table_names``, then runs ``--create-cart`` and
+    ``--drop-cache-tables``, then ``--analyze-tables``.
+13. Runs ``--update-mult-info``, then ``--validate``, then ``--import-dictionary``.
+14. Runs ``--write-schema-version``, exiting non-zero if it refuses: when a finishing
+    step of the same invocation failed, when a bundle in the registry is not ``done``,
+    or when the schema holds another version.
 
 Any exception that reaches the top is logged as fatal -- with its traceback unless
 ``--log-suppress-traceback`` -- and the run exits non-zero. :exc:`SystemExit` and
@@ -422,7 +444,7 @@ Verifying that a run succeeded
 **The exit status is not sufficient.** A non-zero status means the run stopped; a zero
 status does **not** mean it was clean. Several steps report failure through the log and
 still exit zero. Five are not among them: a failed ``--create-indexes``, duplicate step,
-``--create-param-info``, ``--import-dictionary`` or ``--validate-perm`` makes the
+``--create-param-info``, ``--import-dictionary`` or ``--validate`` makes the
 invocation exit with failure and keeps it from marking the schema ready.
 
 The check that matters is, with ``<import_log_dir>`` standing for the directory that
@@ -432,7 +454,7 @@ The check that matters is, with ``<import_log_dir>`` standing for the directory 
 
 It is an error-level gate. Because ``ERRORS.log`` is appended to rather than rotated,
 truncate or move it before a run whose result you are going to judge this way, and read
-``WARNINGS.log`` too: ``--validate-perm`` reports some of what it finds below error level.
+``WARNINGS.log`` too: ``--validate`` reports some of what it finds below error level.
 
 ``WARNINGS.log`` is worth reading too, but a clean run can have warnings: an index that
 legitimately names files OPUS does not import produces one, and so does an observation
@@ -459,20 +481,30 @@ One volume, into a scratch schema, is what to do while developing::
 
 ``--do-it-all`` imports the named bundles, then runs ``--finalize``: the secondary keys,
 one copy of each OPUS ID, and the auxiliary tables. Into an empty schema the import is a
-fresh one, written straight into the permanent tables. Add ``--import-dictionary`` if the
+fresh one. Add ``--import-dictionary`` if the
 tooltips matter to what you are testing. The web application serves the schema only once
 it has its version row, so finish with::
 
     opus_import --override-db-schema opus_scratch --write-schema-version
 
-To redo only part of a failed run, name the steps individually. A fresh import deletes
-each bundle before it writes it, so a failed bundle is imported again by naming it::
+To redo only part of a failed run, name the steps individually. Every import deletes
+each bundle before it writes it, so a failed bundle is imported again by naming it, and
+``--finalize`` refuses until it has been::
 
     # COISS_2002 failed partway through; import it again, then finish
     opus_import --override-db-schema opus_scratch --import COISS_2002
     opus_import --override-db-schema opus_scratch --finalize
 
 An interrupted ``--finalize`` is completed by running ``--finalize`` again.
+
+Once the schema is ready, importing into it again is an append, which adds bundles or
+replaces them; the schema is ``appending``, and refused by the web application, until
+the closing invocations have run::
+
+    opus_import --override-db-schema opus_scratch --import COISS_2003
+    opus_import --override-db-schema opus_scratch --finalize
+    opus_import --override-db-schema opus_scratch --validate
+    opus_import --override-db-schema opus_scratch --write-schema-version
 
 To see what a run *would* do without touching anything::
 
@@ -512,9 +544,9 @@ operator's account of it.
 ``import_for_tests.sh``
     The fixed bundle list the integration suite runs against -- Cassini ISS, UVIS, VIMS
     and CIRS, Galileo, Voyager, Hubble, New Horizons, and the occultation bundle sets --
-    followed by ``--finalize``, ``--import-dictionary``, ``manage.py
-    migrate``, ``--validate-perm`` and ``--write-schema-version``. **It begins by erasing the permanent tables**
-    (``--drop-permanent-tables --scorched-earth``) and asks for confirmation first,
+    followed by ``--finalize``, ``--import-dictionary``, ``manage.py migrate``,
+    ``--validate`` and ``--write-schema-version``. **It begins by erasing every table the
+    import creates** (``--scorched-earth --yes``) and asks for confirmation first,
     printing the schema so that the erase cannot be aimed at the wrong database.
 
 ``clone_database.sh``

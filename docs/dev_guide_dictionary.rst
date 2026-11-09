@@ -96,7 +96,7 @@ tables as the previous run wrote them. ``definitions__new``'s foreign key points
 
 **A failed dictionary import stops the schema being marked ready.** It is logged, and the
 invocation exits with failure once its other steps have run, so ``opus_import_all`` stops
-before its version step; see :ref:`dev_guide_import_verifying`. ``--import-ignore-errors``
+before its version step; see :ref:`dev_guide_import_verifying`. ``--ignore-errors``
 on the same invocation overrides both, for a debugging run; ``opus_import_all`` never
 passes it to its finishing steps.
 

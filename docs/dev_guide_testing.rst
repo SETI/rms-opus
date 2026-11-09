@@ -105,13 +105,25 @@ It runs serially: the run is one long import followed by fast assertions, so ``-
 nothing, and a session-scoped fixture under xdist would run the import once per worker
 into the same schema.
 
+.. _dev_guide_testing_faults:
+
 ``OPUS_IMPORT_FAULT`` is set by the suite itself, in the environment of an
 ``opus_import`` process it starts, to make the import fail on purpose at a named point
 and prove it recovers. Its form is ``<site>:<argument>``
 (:mod:`opus_import.import_fault`); the import reads it only at the sites that ask for it,
-and each site decides what its argument selects. The one site is ``swap_in``, between
-the fill of a rebuilt table and the rename that swaps it in, and its argument is a table:
-``swap_in:definitions`` stops the dictionary's swap. Never set it outside a test.
+and each site decides what its argument selects. The sites are:
+
+``swap_in``
+    Between the fill of a rebuilt table and the rename that swaps it in; its argument is
+    a table. ``swap_in:definitions`` stops the dictionary's swap.
+
+``log_error``
+    Inside one bundle's import; its argument is a bundle. ``log_error:COISS_2002`` logs
+    one error while that bundle is imported and carries on, so the bundle ends ``failed``
+    in the bundle registry without the import raising
+    (:ref:`dev_guide_import_steps_registry`).
+
+Never set it outside a test.
 
 That plain form is the everyday one -- about two minutes, no coverage, with the three
 executed-functions tests skipping because the report they read is not there. Measuring
@@ -186,7 +198,7 @@ By hand
    imports a fixed list of bundle sets -- Cassini ISS, UVIS, VIMS and CIRS, Galileo,
    Voyager, Hubble, New Horizons, and the occultation sets -- and finishes with
    ``--finalize``, ``--import-dictionary``, ``manage.py migrate`` and
-   ``--validate-perm``. Read ``ERRORS.log`` afterwards rather than trusting the exit
+   ``--validate``. Read ``ERRORS.log`` afterwards rather than trusting the exit
    status: several import steps report failure through the log and still exit zero.
 
 3. **Run the suite**::

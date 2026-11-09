@@ -47,22 +47,22 @@ that observation belongs to.
         B --> C[pdstable / pdsfile:<br/>read the primary index and its supplements]
         C --> D[One obs class instance for the bundle]
         D --> E[For each index row:<br/>replace the metadata, then call one<br/>field_obs_table_column method per column]
-        E -->|fresh import| G[(Permanent tables: obs_*, mult_*)]
-        E -->|a schema with a version row| F[(Import tables: imp_obs_*, imp_mult_*)]
-        F --> G
+        E -->|each bundle deleted, then loaded:<br/>a fresh import or an append| G[(Observation tables: obs_*, mult_*)]
         G -->|finalization| H[(Auxiliary tables:<br/>param_info, table_names, partables)]
 
-An import into a schema that is not served yet -- one with no ``schema_version`` row --
-is a **fresh import**: every imported table is written straight to the permanent tables,
-with only the keys a load needs, and finalization adds the remaining keys once at the
-end. An import into a finished schema writes the import tables first and copies them over
-the permanent tables only once the whole run has succeeded, so a failed run cannot leave
-the web application serving half a bundle; the cart and cache tables are reset outside
-that protection. :ref:`dev_guide_import_two_namespaces` is the whole of it.
+There is one set of tables, and every import writes into it. An import into a schema
+that is not served yet -- one with no ``schema_version`` row -- is a **fresh import**: the
+observation tables are created with only the keys a load needs, and finalization adds the
+remaining keys once at the end. An import into a finished schema is an **append**, into
+the tables with their keys in place; it marks the schema ``appending`` first, so the web
+application refuses to serve it until finalization has run again and the schema is
+marked ready. On both paths each bundle is deleted before it is loaded, and a bundle
+registry keeps a schema with an unfinished bundle from being finalized or marked ready.
+:ref:`dev_guide_import_write_paths` is the whole of it.
 
-The auxiliary tables are built after the permanent tables, but only ``param_info`` is
-derived from what was imported. ``table_names`` lists the permanent tables that actually
-exist, while ``partables`` walks the configuration maps alone, so a mission that was never
+The auxiliary tables are built after the observation tables, but only ``param_info`` is
+derived from what was imported. ``table_names`` lists the observation tables that
+actually exist, while ``partables`` walks the configuration maps alone, so a mission that was never
 imported still gets a ``partables`` row.
 
 :ref:`dev_guide_import_steps` states the order the steps run in, what forces each part of
