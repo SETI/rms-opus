@@ -231,7 +231,7 @@ def test_opus_imports_every_bundle_but_the_ones_with_no_instrument_class(
 
 
 def test_an_append_resumes_the_unfinished_bundles_first(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Every registered bundle not done, in bundle order, then the named ones not among them."""
+    """Every registered bundle not done and not named, in bundle order, then the named ones."""
     db = _RegistryDB(
         {
             SCHEMA_VERSION_TABLE: [{'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}],
@@ -243,11 +243,13 @@ def test_an_append_resumes_the_unfinished_bundles_first(monkeypatch: pytest.Monk
     succeeded, ctx = _run(db, ['B_9', 'B_5'], monkeypatch)
     assert succeeded
     assert ctx.import_path == do_import.IMPORT_PATH_APPEND
+    # B_5 is both unfinished and named, and keeps its named place after B_9: the order
+    # decides which copy of a shared OPUS ID finalization keeps.
     assert [event for event in db.events if event.startswith('delete')] == [
         'delete B_4',
-        'delete B_5',
         'delete B_7',
         'delete B_9',
+        'delete B_5',
     ]
     assert db.states() == {
         'B_1': 'done',
@@ -259,6 +261,19 @@ def test_an_append_resumes_the_unfinished_bundles_first(monkeypatch: pytest.Monk
     assert db.tables[SCHEMA_VERSION_TABLE] == [
         {'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_APPENDING}
     ]
+
+
+@pytest.mark.parametrize('named', [[], ['GO_0001']], ids=['nothing-named', 'only-skipped'])
+def test_an_append_with_nothing_to_import_leaves_the_schema_ready(
+    named: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Nothing unfinished and nothing OPUS imports named: no bundle, and still ``ready``."""
+    ready = [{'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}]
+    db = _RegistryDB({SCHEMA_VERSION_TABLE: list(ready), 'import_bundle': []})
+    succeeded, _ctx = _run(db, named, monkeypatch)
+    assert succeeded
+    assert db.tables[SCHEMA_VERSION_TABLE] == ready
+    assert db.states() == {}
 
 
 def test_a_fresh_import_does_not_resume(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -309,8 +309,9 @@ def do_import_steps(ctx: ImportContext) -> bool:
     bundles chooses its path from the schema's state (`choose_import_path`), unless
     `opus_import.cli` chose it already, and records its bundles in the registry before
     the first one starts: on the append path every bundle an earlier append left
-    unfinished, in bundle order, followed by the ones named; on a fresh import the ones
-    named. A bundle OPUS deliberately skips is never recorded.
+    unfinished and not named, in bundle order, followed by the ones named in their order;
+    on a fresh import the ones named. A bundle OPUS deliberately skips is never recorded,
+    and an append that records none leaves the schema's state alone.
 
     Each bundle is then marked ``importing``, deleted from the observation tables with
     foreign keys checked, so ``cart``'s cascade removes the cart rows that name it, and
@@ -362,7 +363,8 @@ def do_import_steps(ctx: ImportContext) -> bool:
     registered = [b for b in bundle_id_list if do_import_tables.opus_imports_bundle(b)]
     bundle_registry.create_registry(ctx)
     bundle_registry.register_bundles(ctx, registered)
-    if ctx.import_path == IMPORT_PATH_APPEND:
+    # An append that has nothing to import leaves a finished schema as it is.
+    if ctx.import_path == IMPORT_PATH_APPEND and registered:
         _mark_appending(ctx)
 
     with ctx.timed('import'):
@@ -402,9 +404,10 @@ def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str
         named_bundles: The bundles the command line's descriptors expand to.
 
     Returns:
-        On the append path, every bundle the registry holds that is not ``done``, in
-        bundle order, then each named bundle not among them; on a fresh import, the
-        named bundles.
+        On the append path, every bundle the registry holds that is not ``done`` and is
+        not named, in bundle order, then the named bundles in the order named; on a
+        fresh import, the named bundles. The named order is kept because it decides
+        which copy of a shared OPUS ID finalization keeps: the one imported last.
     """
     if ctx.import_path != IMPORT_PATH_APPEND:
         return named_bundles
@@ -413,7 +416,7 @@ def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str
         import_util.log_info(
             ctx, f'Resuming the unfinished bundles of an earlier append: {", ".join(resumed)}'
         )
-    return [*resumed, *(bundle for bundle in named_bundles if bundle not in resumed)]
+    return [*(bundle for bundle in resumed if bundle not in named_bundles), *named_bundles]
 
 
 def _mark_appending(ctx: ImportContext) -> None:

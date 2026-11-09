@@ -127,7 +127,7 @@ and never by name, because the server names an unnamed key itself.
 observation or ``mult_`` table with **the keep set**,
 :func:`~opus_import.table_keys.create_time_keys`, exactly: the primary key, every unique
 key, every ``{"constraint": ...}`` entry (rendered raw, as always), and the keys the
-per-bundle delete reads, which today is each table's ``bundle_id`` key. It does so on
+per-bundle delete reads, which is each table's ``bundle_id`` key. It does so on
 both write paths, so a table first created by an append is keyed by the ``--finalize``
 that follows, as every table of a fresh import is. Every other table is created with
 every key its schema declares, a table-level ``foreign_key`` entry's included

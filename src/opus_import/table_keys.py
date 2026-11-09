@@ -1,4 +1,4 @@
-"""The keys a table schema declares, and which of them a fresh import creates when.
+"""The keys a table schema declares, and which of them a table is created with.
 
 A table schema declares most of its keys on its columns: ``field_key`` is ``"primary"``,
 ``"unique"``, ``"foreign"`` (with ``field_key_foreign`` naming the referenced table and
@@ -10,10 +10,11 @@ reads both as `TableKey` values, which the brand renders and which compare by ki
 ordered columns and, for a foreign key, what it references and does on delete -- never by
 name, because the server names an unnamed key itself.
 
-On a fresh import the observation and mult tables (`is_key_filtered_table`) are created
-with only the keys a load needs (`create_time_keys`): the primary key, every unique key,
-and the keys the per-bundle delete reads, so that a load maintains as few indexes as it
-can. Finalization adds the rest (`add_secondary_indexes`) once, after the last bundle.
+The observation and mult tables (`is_key_filtered_table`) are created, on both write
+paths, with only the keys a load needs (`create_time_keys`): the primary key, every
+unique key, and the keys the per-bundle delete reads, so that a load maintains as few
+indexes as it can. Finalization adds the rest (`add_secondary_indexes`) once, after the
+last bundle.
 The two are complements over a filtered table's keys, apart from the plain key
 `add_secondary_indexes` adds under a foreign-key column no key of its own leads, so that
 the foreign key finds its index already built. Every other table is created with every
@@ -45,7 +46,7 @@ ON_DELETE_VALUES: tuple[OnDelete, ...] = ('cascade', 'restrict')
 #: What a foreign key does on delete when its entry does not say.
 DEFAULT_ON_DELETE: OnDelete = 'restrict'
 
-#: The table-name prefixes of the tables a fresh import creates with only the keys a load
+#: The table-name prefixes of the tables the import creates with only the keys a load
 #: needs: the observation tables the bundle steps write, and the mult tables.
 KEY_FILTERED_TABLE_PREFIXES = ('obs_', 'mult_')
 
@@ -95,7 +96,7 @@ class TableKey:
 
 
 def is_key_filtered_table(table_name: str) -> bool:
-    """Return whether a fresh import creates a table with only the keys a load needs.
+    """Return whether the import creates a table with only the keys a load needs.
 
     Parameters:
         table_name: The table's raw name.
@@ -187,7 +188,7 @@ def _delete_keys(keys: Sequence[TableKey]) -> list[TableKey]:
 
 
 def create_time_keys(table_name: str, schema: Sequence[SchemaColumn]) -> list[TableKey]:
-    """Return the keys a fresh import creates a table with, in column order.
+    """Return the keys the import creates a table with, in column order.
 
     Parameters:
         table_name: The table's raw name.
@@ -205,7 +206,7 @@ def create_time_keys(table_name: str, schema: Sequence[SchemaColumn]) -> list[Ta
 
 
 def add_secondary_indexes(table_name: str, schema: Sequence[SchemaColumn]) -> list[TableKey]:
-    """Return the keys finalization adds to a table a fresh import created.
+    """Return the keys finalization adds to a table the import created.
 
     These are every declared key `create_time_keys` leaves out, in column order, then, for
     each foreign-key column that no key leads, a plain key on that column, so that the

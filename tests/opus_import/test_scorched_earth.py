@@ -13,6 +13,30 @@ from .conftest import make_context
 #: Tables ``opus_manage migrate`` creates, which scorched earth leaves.
 _DJANGO_TABLES = ('django_session', 'django_migrations', 'auth_user')
 
+#: Every table the import creates by exact name, written out here rather than read from
+#: the constant, so that a name dropped from the constant fails these tests.
+_EXACT_NAMES = (
+    'schema_version',
+    'cart',
+    'import_bundle',
+    'param_info',
+    'partables',
+    'table_names',
+    'contexts',
+    'definitions',
+    'user_searches',
+    'param_info__new',
+    'param_info__old',
+    'partables__new',
+    'partables__old',
+    'table_names__new',
+    'table_names__old',
+    'contexts__new',
+    'contexts__old',
+    'definitions__new',
+    'definitions__old',
+)
+
 #: One table of each prefix the import creates in any number.
 _PREFIXED = (
     'obs_general',
@@ -58,14 +82,14 @@ def _erase(tables: list[str]) -> _DroppingDB:
 
 def test_every_opus_table_goes_and_no_django_table_does() -> None:
     """The prefixes and the exact names cover every table the import creates."""
-    db = _erase([*_PREFIXED, *do_import_tables.OPUS_TABLE_NAMES, *_DJANGO_TABLES])
+    db = _erase([*_PREFIXED, *_EXACT_NAMES, *_DJANGO_TABLES])
     assert sorted(db.tables) == sorted(_DJANGO_TABLES)
-    assert sorted(db.dropped) == sorted([*_PREFIXED, *do_import_tables.OPUS_TABLE_NAMES])
+    assert sorted(db.dropped) == sorted([*_PREFIXED, *_EXACT_NAMES])
 
 
 def test_the_drop_order_follows_the_foreign_keys() -> None:
     """The version table first, children before cart before obs_general, mult tables last."""
-    db = _erase([*_PREFIXED, *do_import_tables.OPUS_TABLE_NAMES, *_DJANGO_TABLES])
+    db = _erase([*_PREFIXED, *_EXACT_NAMES, *_DJANGO_TABLES])
     position = {table: index for index, table in enumerate(db.dropped)}
     assert db.dropped[0] == 'schema_version'
     assert position['obs_pds'] < position['cart'] < position['obs_general']

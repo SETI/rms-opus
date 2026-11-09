@@ -146,8 +146,10 @@ the ``import_bundle`` table, on both paths: ``pending`` before the first bundle 
 import failed or logged an error. A bundle whose import fails stops the invocation,
 leaving the ones after it ``pending``; one that only logged an error is recorded
 ``failed`` and the invocation goes on to the next, exiting with failure after the last.
-An append first resumes every bundle the registry holds that is not ``done``, in bundle
-order, then imports the ones it names.
+An append first resumes every bundle the registry holds that is not ``done`` and that it
+does not name, in bundle order, then imports the ones it names, in the order named. That
+order matters: of two copies of one OPUS ID, finalization keeps the one imported last.
+An append with nothing to import leaves a finished schema ``ready``.
 
 **An unfinished registry is never finalized or marked ready.** While any bundle in the
 registry is not ``done``, ``--finalize`` refuses before its first step, and
@@ -228,8 +230,8 @@ Import steps
      - Delete the named bundles' rows from every observation table, and their bundle
        registry rows, before any bundle is imported.
    * - ``--scorched-earth``
-     - Drop every table the import creates in the schema -- every table but Django's
-       own ``django_*`` and ``auth_*`` tables
+     - Drop every table the import creates in the schema, leaving Django's own
+       ``django_*`` and ``auth_*`` tables
        (:ref:`which tables, in which order <dev_guide_import_steps_scorched_earth>`) --
        before any other step. Requires ``--yes``. **This deletes all existing data.**
    * - ``--yes``

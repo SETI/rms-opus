@@ -150,10 +150,13 @@ def test_an_append_that_replaces_one_bundle_and_adds_one_matches_a_fresh_import(
 ) -> None:
     """Every table ends as the full fresh import's goldens hold it, ids aside.
 
-    The added bundle is removed first with ``--delete-bundles``, so the append adds it
-    back; the replaced one is deleted and loaded again. A table holding bundles' rows is
-    compared without its server-numbered columns, since both bundles are renumbered;
-    every other table, the mult tables among them, exactly.
+    The added bundle is removed first with ``--delete-bundles``, so the append adds its
+    rows back; the replaced one is deleted and loaded again. A table holding bundles'
+    rows is compared without its server-numbered columns, since both bundles are
+    renumbered; every other table, the mult tables among them, exactly. The mult values
+    the added bundle brings stay in their tables through the deletion, since mult rows
+    are never deleted, so this shows the append's rows and finalization, not an append
+    writing a mult value the schema has never held.
     """
     copy = _copy(main_run, db_credentials, created_schemas, 'append')
     replaced, added = main_run.bundles[0], main_run.bundles[-1]

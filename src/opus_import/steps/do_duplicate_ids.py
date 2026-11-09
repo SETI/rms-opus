@@ -11,8 +11,9 @@ imported again gets ids above every existing one, so its new copy replaces the o
 Each deleted copy is logged at info level when it came from another bundle than the copy
 kept, and as a warning when it came from the same bundle, which is a fault in that
 bundle's data. The step runs on the import's own connection, whose foreign-key checks
-are on (only `ImportDBSuper.add_foreign_keys` turns them off, and it turns them back on),
-so a row that references a deleted copy is refused rather than orphaned.
+are on (`ImportDBSuper.foreign_keys_unchecked`, which turns them off while foreign keys
+are added and while a bundle loads, turns them back on), so a row that references a
+deleted copy is refused rather than orphaned.
 """
 
 from __future__ import annotations

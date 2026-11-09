@@ -77,8 +77,8 @@ def import_steps(schema: str | None, extra_options: list[str]) -> list[list[str]
 
     Returns:
         One argument list per invocation, each without the interpreter and the module
-        name. The drop comes first, then the bundle sets, then the finalization steps -- which take neither a bundle nor the extra options,
-        because they import nothing.
+        name. The drop comes first, then the bundle sets, then the finalization steps --
+        which take neither a bundle nor the extra options, because they import nothing.
     """
     override = ['--override-db-schema', schema] if schema is not None else []
     steps = [[*DROP_OPTIONS, *override, *extra_options]]

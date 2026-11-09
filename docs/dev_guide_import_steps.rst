@@ -244,8 +244,8 @@ neither step is refused.
 
 **Resuming.** A failed append leaves the schema ``appending``, the bundle it was on
 ``importing`` or ``failed`` and the bundles after it ``pending``. The next import on the
-append path resumes every bundle that is not ``done``, in bundle order, before the ones
-it names, and logs the list; because each bundle is deleted before it is written, the
+append path resumes every bundle that is not ``done`` and is not named, in bundle order,
+before the ones it names, which keep their named order, and logs the list; because each bundle is deleted before it is written, the
 rerun is clean. A fresh import resumes nothing on its own: a failed bundle is imported
 again by naming it. A failed bundle's rows stay until it is next imported, which
 deletes them first, or until ``--delete-bundles`` deletes them and its registry row.
@@ -704,10 +704,10 @@ Its functions:
 .. _dev_guide_import_steps_scorched_earth:
 
 :func:`~opus_import.steps.do_import_tables.delete_all_opus_tables`
-    **Scorched earth**: drops every table the import creates, which is every table in
-    the schema but Django's own (``opus_manage migrate``'s ``django_*`` and ``auth_*``
-    tables, ``django_session`` among them). The tables are named by two constants, so
-    nothing outside them is ever dropped:
+    **Scorched earth**: drops every table the import creates, leaving Django's own
+    (``opus_manage migrate``'s ``django_*`` and ``auth_*`` tables, ``django_session``
+    among them). The tables are named by two constants, so nothing outside them is ever
+    dropped, not even a table of no known name:
     :data:`~opus_import.steps.do_import_tables.OPUS_TABLE_PREFIXES` (``obs_``,
     ``mult_`` and ``cache_``, which catch every observation, mult and cache table
     however many there are) and
