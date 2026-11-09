@@ -972,7 +972,7 @@ class ObsBase:
         self._ctx.log.nonrepeating_warning(*args, **kwargs)
 
     def _log_nonrepeating_error(self, *args: Any, **kwargs: Any) -> None:
-        """Log an error at most once per bundle, however many rows produce it.
+        """Log an error once per run, however many rows produce it, marking bad data each time.
 
         Parameters:
             args: Passed through to `opus_import.context.ImportLog.nonrepeating_error`.

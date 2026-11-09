@@ -138,6 +138,18 @@ def test_a_nonrepeating_error_is_logged_once_however_the_position_changes(
     assert ctx.import_has_bad_data is True
 
 
+def test_a_repeated_nonrepeating_error_still_marks_a_later_bundle(ctx: ImportContext) -> None:
+    """A second bundle that repeats the first one's error has errors, though nothing is logged."""
+    ctx.current_bundle_id = 'COISS_2002'
+    ctx.log.nonrepeating_error('the same fault')
+    ctx.bundle_has_errors = False
+    ctx.current_bundle_id = 'COISS_2008'
+    ctx.log.nonrepeating_error('the same fault')
+
+    assert _messages(ctx, 'error') == ['[COISS_2002] the same fault']
+    assert ctx.bundle_has_errors is True
+
+
 def test_a_nonrepeating_warning_is_logged_once(ctx: ImportContext) -> None:
     """Warnings deduplicate the same way, and still do not mark the import bad."""
     ctx.log.nonrepeating_warning('the same fault')

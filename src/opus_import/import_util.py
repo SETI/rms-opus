@@ -882,7 +882,7 @@ def log_debug(ctx: ImportContext, msg: str, *args: Any) -> None:
 
 
 def log_nonrepeating_error(ctx: ImportContext, msg: str) -> None:
-    """Log an error the first time this run produces it, and ignore it after that.
+    """Log an error the first time this run produces it, and mark bad data every time.
 
     Parameters:
         ctx: The import run's context.

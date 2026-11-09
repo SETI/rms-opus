@@ -108,15 +108,20 @@ class ImportLog:
         self._ctx.logger.log('debug', self._position() + msg, *args)
 
     def nonrepeating_error(self, msg: str) -> None:
-        """Log an error the first time this run produces it, and ignore it after that.
+        """Log an error the first time this run produces it, and mark bad data every time.
+
+        Every call marks the bundle being imported as having errors, so a later bundle
+        that repeats an earlier bundle's error is recorded failed too.
 
         Parameters:
             msg: The message. Two calls with equal messages log once, even though their
                 position prefixes differ.
         """
-        if msg not in self._ctx.logged_import_errors:
-            self._ctx.logged_import_errors.append(msg)
-            self.error(msg)
+        if msg in self._ctx.logged_import_errors:
+            self._ctx.mark_bad_data()
+            return
+        self._ctx.logged_import_errors.append(msg)
+        self.error(msg)
 
     def nonrepeating_warning(self, msg: str) -> None:
         """Log a warning the first time this run produces it, and ignore it after that.
