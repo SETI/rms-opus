@@ -4895,3 +4895,16 @@ Nothing above this line is rewritten by an executor.
     data -0.5%, indexes -3.8% (`obs_files`' +4.5%).
   - A finalization alone on a copy of session `a`'s schema, run outside the harness
     straight after the server's crash recovery, built the keys in 1,871 s; it is not used.
+- A complete-scale finalization at `index_workers = 2` (2026-11-09, session `workers2`,
+  `bench_import --finalize-only` on a copy of session `a`'s schema at 64860d70,
+  `2026-11-09_PR-07_after_complete_mysql_workers2.json`) was slower than one worker, at
+  the same memory. Against the one-worker finalization of the same copy above: key builds
+  1,871 s to 2,693 s (+44%), `obs_files` 846 s to 2,370 s, `obs_pds` 88 s to 490 s,
+  `obs_general` 98 s to 104 s. The server's resident set peaked at 24.62 GiB, against
+  24.69 GiB at one worker, three minutes into the builds while the small tables ran in
+  parallel. Each connection's sort share is a quarter of the pool divided by the
+  workers, busy or not, so after the small tables finished `obs_files` built alone for
+  about 40 minutes with half its one-worker buffer; that is the likely cause, not
+  measured. `index_workers` stays 1 for the complete holdings. The copied runs are
+  slower than session `b`'s in-import key builds (1,305 s) at either setting, so they
+  compare only with each other.
