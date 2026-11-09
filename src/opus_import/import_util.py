@@ -462,9 +462,10 @@ def safe_pdstable_read_pds3(
         return None, None
 
     rows = table.dicts_by_row()
-    label = table.info.label.as_dict()
-
-    return rows, label
+    label = table.info.label
+    # pdstable returns a dictionary only for a PDS4 table; a PDS3 table's is a parsed label.
+    assert not isinstance(label, dict)
+    return rows, label.as_dict()
 
 
 def safe_column(row: IndexRow, column_name: str, idx: int | None = None) -> Any:
