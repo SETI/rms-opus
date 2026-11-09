@@ -124,6 +124,34 @@ def _rows_of(credentials: DatabaseCredentials, schema: str, bundle: str) -> int:
     return int(golden_io.query(credentials, schema, query, [bundle])[0][0])
 
 
+def _plant_cart_rows(credentials: DatabaseCredentials, schema: str, *bundles: str) -> None:
+    """Put one cart row in the copy for every observation of the given bundles."""
+    placeholders = ', '.join(['%s'] * len(bundles))
+    connection = golden_io.connect(credentials, schema)
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            'INSERT INTO cart (session_id, obs_general_id, opus_id, recycled) '
+            "SELECT 'append', id, opus_id, 0 FROM obs_general "
+            f'WHERE bundle_id IN ({placeholders})',  # nosec B608 - placeholders only
+            bundles,
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+
+def _cart_bundles(credentials: DatabaseCredentials, schema: str) -> set[str]:
+    """Return the bundles whose observations the copy's cart rows name."""
+    query = 'SELECT DISTINCT g.bundle_id FROM cart c JOIN obs_general g ON g.id = c.obs_general_id'
+    return {str(bundle) for (bundle,) in golden_io.query(credentials, schema, query)}
+
+
+def _cart_rows(credentials: DatabaseCredentials, schema: str) -> int:
+    """Return how many rows the copy's cart holds."""
+    return int(golden_io.query(credentials, schema, 'SELECT COUNT(*) FROM cart')[0][0])
+
+
 def _serves(copy: _Copy) -> str:
     """Load the web application against the copy, in a process, and return one status."""
     finished = subprocess.run(  # nosec B603 - this interpreter and a fixed program
@@ -157,14 +185,27 @@ def test_an_append_that_replaces_one_bundle_and_adds_one_matches_a_fresh_import(
     the added bundle brings stay in their tables through the deletion, since mult rows
     are never deleted, so this shows the append's rows and finalization, not an append
     writing a mult value the schema has never held.
+
+    Before the append, the cart names every observation of the replaced bundle and of
+    one the append leaves alone; straight after it, before finalization re-creates the
+    cart, only the second bundle's rows remain, removed by the cart's cascade when the
+    replaced bundle was deleted.
     """
     copy = _copy(main_run, db_credentials, created_schemas, 'append')
     replaced, added = main_run.bundles[0], main_run.bundles[-1]
+    kept = next(bundle for bundle in main_run.bundles if bundle not in (replaced, added))
     assert copy.step('--delete-bundles', added).returncode == 0
     assert _rows_of(db_credentials, copy.schema, added) == 0
+    _plant_cart_rows(db_credentials, copy.schema, replaced, kept)
+    planted = _cart_rows(db_credentials, copy.schema)
+    assert _cart_bundles(db_credentials, copy.schema) == {replaced, kept}
     appended = copy.step(*build_run.IMPORT_ARGS, f'{replaced},{added}')
     assert appended.returncode == 0, appended.stderr
     assert f'{do_import.IMPORT_PATH_PREFIX}{do_import.IMPORT_PATH_APPEND}' in appended.stdout
+    assert _cart_bundles(db_credentials, copy.schema) == {kept}
+    assert _cart_rows(db_credentials, copy.schema) == planted - _rows_of(
+        db_credentials, copy.schema, replaced
+    )
     for closing in build_run.closing_steps(copy.paths.config_file):
         assert closing.returncode == 0, closing.stderr
     assert copy.errors() == ''
