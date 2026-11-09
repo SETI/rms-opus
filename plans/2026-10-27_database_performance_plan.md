@@ -4908,3 +4908,58 @@ Nothing above this line is rewritten by an executor.
   measured. `index_workers` stays 1 for the complete holdings. The copied runs are
   slower than session `b`'s in-import key builds (1,305 s) at either setting, so they
   compare only with each other.
+
+### 2026-11-09, PR-08 (written against this file at ff5a0485)
+
+- The cart and cache cleanup moves after the import. `--create-cart` and
+  `--drop-cache-tables` ran before the import, so that `cart` was emptied before
+  `obs_general` was rebuilt, and `--create-cart` was tried a second time after the import
+  when `obs_general` did not exist yet (`ImportContext.try_cart_later`). The section does
+  not say where the cleanup goes. With `cart`'s cascade the per-bundle delete removes the
+  cart rows it orphans and nothing rebuilds `obs_general`, so the cleanup now runs once,
+  inside finalization after the auxiliary tables, and the retry and its flag are gone. On
+  a schema with no `obs_general` (a `--scorched-earth` with no import), `--create-cart`
+  logs an error and creates nothing, where it used to log a warning and try again.
+- `--analyze-tables`' help is `Analyze every observation and mult table (recompute its key
+  distribution)`, not the section's `Analyze every table (...)`: the step analyzes the
+  `obs_` and `mult_` tables only, as it did before the rename.
+- The section says an append resumes every unfinished bundle "plus any it names" without
+  an order. The unfinished bundles that are not named come first, in bundle order, then
+  the named bundles in the order named, because the order decides which copy of a shared
+  OPUS ID finalization keeps (the one imported last).
+- An append that registers no bundles (every named bundle skipped for having no
+  instrument class, and none unfinished) leaves the version row `ready`: the row is set to
+  `appending` only when the registry has a bundle to import, so a no-op invocation does
+  not take a served schema out of service.
+- Scorched earth drops the tables named by the `obs_`, `mult_` and `cache_` prefixes and
+  the exact names (`do_import_tables.OPUS_TABLE_PREFIXES` and `OPUS_TABLE_NAMES`). A
+  schema imported before this PR may hold `imp_` tables from an interrupted namespace
+  import; scorched earth leaves them, like any table it does not know. A full re-import
+  goes into a new schema, so none should be met.
+- The structural grep (`grep -rn "imp_\|'import'\|import_prefix\|table_temp_prefix"
+  src/opus_import`) finds one unrelated hit: `ctx.timed('import')` in `do_import.py`, the
+  timing phase name `--timing-json` reports.
+- rms-pdstable 1.2.0, released during this PR, ships type information declaring a
+  table's label as a parsed PDS3 label or a dictionary (a PDS4 table's). Its run-time
+  behavior is that of 1.1.0, whose docstring already said so, but mypy now rejects
+  `safe_pdstable_read_pds3`'s unconditional `as_dict()`, which would fail every PR's
+  gates. The function reads PDS3 tables only, so an assertion narrows the label (its own
+  commit, 14bd08da). Both benchmark sides ran on 1.1.0.
+- PR-08's measurement (2026-11-09, session `a`, three imports a side alternated, each
+  followed by the incremental group, before at ff5a0485 and after at 652be959, which
+  differs from the branch's head only in the label line above):
+  - **Test scale** (`2026-11-09_PR-08_{before,after}_test_mysql_a.json`): the target
+    `import.incremental.wall_s` improved from 146.3 s to 137.3 s (-6.2%, floor 5.6%;
+    spreads 0.4% and 0.2%), of which the schema clone is 22.1 s on both sides. Every
+    guard held: `import.wall_s` +0.9% (floor 0.9%), `import.largest.import_s` +0.7%,
+    `import.peak_tree_pss_kb` -0.8%. The full import's bundle imports (266.3 s to
+    268.1 s), finalization invocation (43.2 s to 45.8 s, within its 7.2% floor) and
+    `Innodb_data_written` (-0.6%) did not move: PR-07 had already moved the fresh import
+    off the namespace, so this PR's gain is the append alone.
+  - **Fixture scale** (`2026-11-09_PR-08_{before,after}_fixture_mysql_a.json`; fixture
+    scale has no incremental group): `import.wall_s` 41.8 s to 41.9 s (+0.2%), and every
+    guard held (`import.peak_tree_pss_kb` -6.9%).
+  - The change in lines, `git diff --stat origin/db-perf` before this note: 98 files,
+    3,217 insertions and 2,558 deletions. Of them, `-- src` is 38 files, 1,052
+    insertions and 1,542 deletions, and `-- docs tests import_tests` 55 files, 2,146
+    insertions and 992 deletions.
