@@ -456,7 +456,6 @@ then deploys the database that produced::
     # here rather than leaving a database marked ready and deployed. The last line is
     # step 5 as usual, naming that database.
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI &&
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --cleanup-aux-tables &&
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --import-dictionary &&
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate-perm &&
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --write-schema-version &&
@@ -466,9 +465,11 @@ What ``--do-it-all`` takes is a *descriptor*, and several can be given, comma- o
 space-separated: a bundle id (``COISS_2002``), a whole bundleset (``COISS_2xxx``), one of
 the shorthands for a mission or an instrument (``CASSINI``, ``GALILEO``, ``HST``,
 ``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their relatives, matched without regard to
-case), or ``ALL``. The four steps after it are what finishes a database, the last of
-them what lets the web application serve it, and a direct invocation is the one path
-that does not run them for you. ``opus_import --help`` lists
+case), or ``ALL``. ``--do-it-all`` imports them and then runs ``--finalize``, which
+adds the database's indexes, keeps one copy of each observation two bundles share and
+builds the tables that describe the search form. The three steps after it finish the
+database, the last of them what lets the web application serve it, and a direct
+invocation is the one path that does not run them for you. ``opus_import --help`` lists
 every option and works without a configuration file; :ref:`dev_guide_import_running` is
 the complete reference.
 
@@ -733,6 +734,18 @@ entirely.
        least 1. Default ``100000``. Lowering it shortens each transaction, so a killed
        import rolls back faster and the server holds less undo at once; raising it means
        fewer statements and commits.
+   * - ``index_workers``
+     - optional
+     - How many tables the import's finalization builds indexes on at once, each over a
+       connection of its own, a whole number of at least 1. Default ``1``. The database
+       server does the work, so raise it only when the server has cores to spare beyond
+       whatever else shares its computer. See :ref:`dev_guide_import_steps_create_indexes`.
+   * - ``server_tmpdir``
+     - optional
+     - A directory on the database server's host, writable by ``mysqld``, where the
+       server sorts the indexes finalization builds. It names a path on the server, not
+       on the computer running the import, and setting it needs an account that may set
+       restricted session variables. Default: the server's own setting.
 
 Where to go next
 ----------------

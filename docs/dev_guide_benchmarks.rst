@@ -298,6 +298,14 @@ existed, so a session whose runs took different paths shows both.
 the twenty functions with the highest cumulative time; a profiled run is recorded
 apart from the timed ones and never compared. ``--reuse-schema NAME`` imports nothing
 and records ``NAME`` as the side's schema, or with ``--clone`` a timed copy of it.
+``--import-key KEY=VALUE``, repeatable, adds an ``[import]`` key to every configuration
+the run writes -- ``index_workers=22``, say, to time finalization's key builds over more
+connections than the default -- and the result's environment records the keys as
+``import_keys``. ``log_file`` and ``debug_log_file`` are refused, since the harness
+reads each run's logs from where it put them. A result file holds runs of one set of
+keys: a run with others is refused, as a run of another commit is, and a file whose
+runs record no keys takes only runs that set none. A side whose configuration does not
+know a key refuses the file, so it is given only to a side that does.
 
 **A run that fails records nothing.** It fails when an invocation exits non-zero; when
 a bundle-import invocation leaves any bundle it imports without a row in the permanent

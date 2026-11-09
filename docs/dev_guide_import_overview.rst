@@ -32,9 +32,10 @@ An import run turns the index tables of a set of bundles into the whole OPUS dat
 
         H --> BI
         BI --> OB
-        OB --> IMP
+        OB -->|fresh import:<br/>a schema with no version row| PERM
+        OB -->|a schema with a version row| IMP
         IMP -->|only if the import phase logged no error| PERM
-        PERM --> AUX
+        PERM -->|finalization| AUX
         PERM -.-> SUP
 
 Four groups of table come out, and they are produced at different times and with
@@ -63,31 +64,46 @@ every OPUS table is created from a table schema by the import itself.
 The two namespaces
 ------------------
 
-Every imported table exists twice. The **import namespace** carries the prefix the
+An imported table can exist twice. The **import namespace** carries the prefix the
 configuration's ``table_temp_prefix`` names (``imp_`` by default), and the **permanent
 namespace** carries no prefix and is what the web application reads.
 :meth:`~opus_import.importdb.super.ImportDBSuper.convert_raw_to_namespace` is what turns
 a bare table name into one or the other, and no step module builds a prefixed name
 itself.
 
-A run writes only the import tables. It copies them over the permanent tables at the very
-end, and **only if the import phase logged no error**: an error logged through the run's
-own log sets :attr:`~opus_import.context.ImportContext.import_has_bad_data`, and
-:func:`~opus_import.steps.do_import.do_import_steps` skips the copy, unless
-``--import-ignore-errors`` says to go ahead. This is the guarantee the whole design rests
-on: a failed import cannot leave the web application serving half a bundle of observation
-metadata.
+Which one a run writes depends on the target schema (:ref:`dev_guide_import_running_paths`).
 
-The protection covers the imported tables and no others. ``cart`` is created directly in
+**A fresh import writes the permanent tables directly.** A schema with no
+``schema_version`` row is not served -- the web application refuses it and both deploy
+scripts refuse to promote it -- so there is nothing to protect by staging, and every
+observation and ``mult_`` table is written in place: under
+``ImportDBSuper.direct`` the import namespace names the
+permanent observation and ``mult_`` tables. Each bundle is deleted from them before it is
+written, so a failed bundle is imported again by naming it. The tables are created with
+only the keys a load needs, and finalization adds the rest once, after the last bundle
+(:ref:`dev_guide_import_steps_create_indexes`), which is far cheaper than maintaining
+every index row by row through every load. A failed fresh import leaves a schema that is
+still not served until an import finishes it.
+
+**An import into a schema with a version row writes only the import tables.** It copies
+them over the permanent tables at the very end, and **only if the import phase logged no
+error**: an error logged through the run's own log sets
+:attr:`~opus_import.context.ImportContext.import_has_bad_data`, and
+:func:`~opus_import.steps.do_import.do_import_steps` skips the copy, unless
+``--import-ignore-errors`` says to go ahead. This is the guarantee for a finished
+schema: a failed import cannot leave the web application serving half a bundle of
+observation metadata.
+
+That protection covers the imported tables and no others. ``cart`` is created directly in
 the permanent namespace, and the ``cache_*`` and ``user_searches`` tables are dropped
 there outright, so a failed run can leave those already reset. They hold no imported
 data, which is why they are outside the copy. ``--drop-permanent-tables`` with
 ``--scorched-earth`` is outside it too: it deletes the permanent observation and mult
 tables before the import starts, ahead of any error gate.
 
-Because the import tables survive a failure, a run can be **resumed rather than
-restarted**: the per-step options let a second invocation redo only the part that
-failed.
+On either path a run can be **resumed rather than restarted**: the import tables survive
+a failure, a fresh import's bundles already written stay, and the per-step options let a
+second invocation redo only the part that failed.
 
 .. _dev_guide_import_context:
 
@@ -153,15 +169,19 @@ forced by something:
    the cart has to be emptied before the permanent tables are rebuilt underneath it.
 2. **Import the observations** (:mod:`~opus_import.steps.do_import`). This is the long
    part, and it owns the copy to the permanent namespace as well.
-3. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
+3. **Add the secondary keys** (:mod:`~opus_import.steps.do_indexes`) a fresh import
+   left out, foreign keys last, then **keep one copy of each OPUS ID**
+   (:mod:`~opus_import.steps.do_duplicate_ids`), which finds and deletes the copies
+   through those keys.
+4. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
    :mod:`~opus_import.steps.do_partables`,
-   :mod:`~opus_import.steps.do_table_names`). Each of these is derived from the
-   permanent tables -- from which of them exist, and from their schemas -- so it must
-   follow the copy.
-4. **Pin the mult display details** (:mod:`~opus_import.steps.do_update_mult_info`),
+   :mod:`~opus_import.steps.do_table_names`), then analyze the tables. Each auxiliary
+   table is derived from the permanent tables -- from which of them exist, and from
+   their schemas -- so it must follow the copy.
+5. **Pin the mult display details** (:mod:`~opus_import.steps.do_update_mult_info`),
    **validate** (:mod:`~opus_import.steps.do_validate`), and retry the cart if creating
    it earlier failed because the permanent tables did not exist yet.
-5. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`), last.
+6. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`), last.
 
 ``--drop-permanent-tables`` reorders the first part: the leading cleanup is skipped and
 :mod:`~opus_import.steps.do_import` performs it instead, after the drop, because
@@ -342,10 +362,11 @@ observation already produced.
 
 The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, which
 takes the larger of the two namespaces' maxima. That is what makes a **re-import** of one
-bundle safe: its new rows are numbered above everything already present in either
-namespace, and its old rows are deleted only afterwards. It is also why a re-import
-renumbers that bundle above the rest of the table, which is a documented consequence
-rather than an accident.
+bundle into a schema with a version row safe: its new rows are numbered above everything
+already present in either namespace, and its old rows are deleted only afterwards. It is
+also why such a re-import renumbers that bundle above the rest of the table, which is a
+documented consequence rather than an accident. A fresh import deletes each bundle's
+rows before writing it, so a bundle written again can take ids its earlier rows had.
 
 The run keeps the running maximum in
 :attr:`~opus_import.context.ImportContext.max_table_id_cache` rather than querying for
@@ -389,10 +410,11 @@ contract it defines, and the method resolution order that falls out.
 Invariants
 ----------
 
-* **Nothing is visible until the run succeeds.** Every imported table is written under
-  the import prefix and copied over the permanent tables at the end. Deleting the import
-  tables before the copy, or copying before every bundle has been read, breaks the
-  guarantee the design rests on.
+* **Nothing is visible until the run succeeds.** Into a schema with a version row, every
+  imported table is written under the import prefix and copied over the permanent tables
+  at the end; deleting the import tables before the copy, or copying before every bundle
+  has been read, breaks the guarantee the design rests on. A fresh import writes the
+  permanent tables of a schema nothing serves until it has a version row.
 * **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
   constraint enforces it.
 * **An import run is single-threaded, and one obs instance serves a whole bundle**,

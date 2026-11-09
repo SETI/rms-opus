@@ -34,10 +34,13 @@ raises. A failed database operation always aborts the import.
             +scratch_dir
             +transaction_rows
             +tables_created
+            +direct
             +convert_raw_to_namespace()
             +convert_namespace_to_raw()
             +table_exists()
             +read_rows()
+            +open_sibling_connection()
+            +build_indexes()
             +quote_identifier()*
             +table_names()*
             +table_info()*
@@ -54,6 +57,16 @@ raises. A failed database operation always aborts the import.
             +copy_rows_between_namespaces()*
             +general_select()*
             +find_column_max()*
+            +read_table_keys()*
+            +add_keys_statement()*
+            +add_foreign_key_statement()*
+            +add_foreign_keys()*
+            +key_space_bytes()*
+            +index_space_budget()*
+            +run_ddl()*
+            +close()*
+            #_prepare_index_session()*
+            #_size_index_sort()*
             #_execute()
             #_execute_and_fetchall()*
             #_operation()
@@ -95,8 +108,71 @@ inverse. ``'all'`` is accepted only where reading both makes sense.
 :func:`~opus_import.steps.do_django.drop_cache_tables` is the only step that uses it; the
 MySQL constructor also passes it when priming its table-name cache.
 
+**On a fresh import** the import namespace is the permanent tables, for the observation
+and ``mult_`` tables only. ``ImportDBSuper.direct``,
+which the import's choice of path sets (:ref:`dev_guide_import_steps_do_import`), makes
+``'import'`` name an observation or ``mult_`` table without the prefix -- in the
+converters, in ``table_names``, in ``table_exists`` and so in every method -- while every
+other table keeps its prefixed import copy. A prefixed observation table left in the
+schema is then not in the import namespace at all, since the permanent table stands in
+for it. The steps that read and write the import namespace work unchanged on either
+path.
+
 Because every method converts the name itself, **no step module ever builds a prefixed
 name**. That is the property to preserve when adding one.
+
+.. _dev_guide_import_db_keys:
+
+Keys on a fresh import
+~~~~~~~~~~~~~~~~~~~~~~
+
+:mod:`opus_import.table_keys` reads a schema's keys as
+:class:`~opus_import.table_keys.TableKey` values -- a kind, the columns in order and, for
+a foreign key, what it references -- which compare by those and never by name, because
+the server names an unnamed key itself. Under ``direct``,
+:meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_table` creates each observation
+and ``mult_`` table with **the keep set**,
+:func:`~opus_import.table_keys.create_time_keys`, exactly: the primary key, every unique
+key, every ``{"constraint": ...}`` entry (rendered raw, as always), and the keys the
+per-bundle delete reads, which today is each table's ``bundle_id`` key. Every other
+table, and every table on the import-tables path, is created with every key its schema
+declares.
+
+:func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
+tables: the declared keys the keep set leaves out, plain keys first and foreign keys
+last, plus a plain key on each foreign-key column no other key leads (every child's
+``obs_general_id``), so the foreign key finds its index built. Finalization's
+``--create-indexes`` adds what it lists (:ref:`dev_guide_import_steps_create_indexes`).
+Both read the same column entries, so the two can never disagree; a unit test checks
+that they partition every observation and ``mult_`` schema's keys and that the keep set
+holds every key the delete reads.
+
+.. _dev_guide_import_db_siblings:
+
+Sibling connections and the index build
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:meth:`~opus_import.importdb.super.ImportDBSuper.open_sibling_connection` opens a second
+connection to the same schema, configured as the first and sharing ``direct``, **with no
+logger**: ``_enter`` and ``_exit`` swap the process-wide :func:`warnings.showwarning`,
+which is not safe to do from several threads at once, so a sibling reports nothing and
+the connection that opened it logs on its behalf.
+
+:meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes` runs statements that add
+keys, each table's in order on one connection, for **different tables at once** across
+up to ``workers`` siblings, one per thread, or one table at a time on the connection
+itself when ``serial`` asks for it or there is one worker. Each connection is prepared
+first (``_prepare_index_session``: the MySQL brand records the server's
+``innodb_ddl_buffer_size``, the connection's share of the sort memory and
+``innodb_ddl_threads``, and points ``innodb_tmpdir`` at ``[import] server_tmpdir`` when
+that is set), and before each statement sizes its sort memory to the statement's largest
+key, its share divided among the indexes the statement builds at once
+(``_size_index_sort``). Under a space budget a statement waits until its estimate fits
+beside the statements already running, and one larger than the whole budget is refused
+before anything runs. A failed statement stops its own table; the other tables finish,
+and the failures are raised together as one
+:exc:`~opus_import.importdb.super.ImportDBError` once every table is done. The
+parent logs each table's duration as it finishes.
 
 The abstract contract
 ~~~~~~~~~~~~~~~~~~~~~
@@ -153,11 +229,30 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
      - Run a query the caller assembled and return every row.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.find_column_max`\ ``(namespace, raw_table_name, column_name)``
      - The largest value in a column.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.read_table_keys`\ ``(namespace)``
+     - Every table's keys as the server reports them, as
+       :class:`~opus_import.table_keys.TableKey` values.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.add_keys_statement`\ ``(namespace, raw_table_name, keys)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_key_statement`\ ``(namespace, raw_table_name, key)``
+     - One statement that adds plain keys to a table, or one foreign key.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_keys`\ ``(statements)``
+     - Add foreign keys one at a time without checking the rows already there.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.key_space_bytes`\ ``(namespace, raw_table_name, schema, key)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.index_space_budget`\ ``(server_tmpdir)``
+     - A key build's estimated temporary space, and the budget the builds running at
+       once share, or None for none.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.run_ddl`\ ``(cmd)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.close`
+     - Run one statement that changes a table's definition; close the connection.
+   * - ``_prepare_index_session(workers, server_tmpdir)``
+     - Set a connection's session up for building indexes.
+   * - ``_size_index_sort(sort_bytes, key_count)``
+     - Size a connection's sort memory for the next statement that builds indexes, from
+       its largest key's estimated sort and how many indexes it builds.
    * - ``_execute_and_fetchall(cmd, func_name, param_list=None)``
      - Execute one query and return every row of its result.
 
 The concrete members are the constructor, the two namespace converters and their
-two predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
+predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.open_sibling_connection`,
+:meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`,
+:meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
 collector ``_make_warning_handler``, and ``_operation`` with the ``_enter``/``_exit``
 pair it runs. The two
@@ -242,9 +337,10 @@ failing the run if it cannot. Last, it sets the session up for the import's writ
 it chooses the bulk-load path (below), and where the server keeps a binary log it issues
 ``SET sql_log_bin = 0``, so the import's rows are not written to it a second time. An
 account without the privilege for that gets one info line naming ``--skip-log-bin`` and
-the grant instead, and the import goes on. It does **not** close the connection: there is no close
-method, no destructor and no context manager, and each statement is run through its own
-cursor and committed immediately.
+the grant instead, and the import goes on. The import's own connection is never closed
+explicitly -- there is no destructor and no context manager -- and each statement is run
+through its own cursor and committed immediately; the index build closes the sibling
+connections it opens.
 
 The driver is imported defensively, so the module still imports without ``mysqlclient``
 installed and a package-wide sweep -- Sphinx autodoc, or a test collection -- does not

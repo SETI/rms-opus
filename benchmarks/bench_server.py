@@ -22,6 +22,7 @@ import argparse
 import contextlib
 import math
 import os
+import re
 import subprocess  # nosec B404 - the harness starts and stops its own servers
 import sys
 import time
@@ -41,6 +42,7 @@ from benchmarks.app_servers import (
     wait_for,
 )
 from benchmarks.results import SCENARIOS_DIR, filesystem_type
+from import_tests.tools import build_run
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping, Sequence
@@ -780,6 +782,45 @@ def clone_schema(
     return time.perf_counter() - started
 
 
+#: The ``[import]`` keys `write_opus_config` sets, which name the logs a run's results
+#: are read from, so ``--import-key`` refuses them.
+HARNESS_IMPORT_KEYS = ('log_file', 'debug_log_file')
+
+
+def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
+    """Read ``--import-key`` arguments into the ``[import]`` keys they set.
+
+    Parameters:
+        pairs: Each ``KEY=VALUE``.
+
+    Returns:
+        The keys, each value a whole number, a boolean or a string, in argument order.
+
+    Raises:
+        ValueError: If an argument has no ``=``, or its key is not a TOML bare key, or
+            is one of `HARNESS_IMPORT_KEYS`.
+    """
+    keys: dict[str, object] = {}
+    for pair in pairs:
+        key, separator, text = pair.partition('=')
+        if not separator or not key:
+            raise ValueError(f'--import-key takes KEY=VALUE, not {pair!r}')
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', key):
+            raise ValueError(f'--import-key {pair!r}: {key!r} is not an [import] key name')
+        if key in HARNESS_IMPORT_KEYS:
+            raise ValueError(
+                f'--import-key {pair!r}: the harness sets {key} itself and reads that log'
+            )
+        value: object = text
+        if text in ('true', 'false'):
+            value = text == 'true'
+        else:
+            with contextlib.suppress(ValueError):
+                value = int(text)
+        keys[key] = value
+    return keys
+
+
 def write_opus_config(
     path: Path,
     *,
@@ -788,6 +829,7 @@ def write_opus_config(
     pds4_holdings: Path,
     run_dir: Path,
     cache_location: str,
+    extra_import: Mapping[str, object] | None = None,
 ) -> Path:
     """Write the ``OPUS_CONFIG`` a harness-run import or web application reads.
 
@@ -801,6 +843,11 @@ def write_opus_config(
         pds4_holdings: The PDS4 holdings root.
         run_dir: The run's own scratch directory.
         cache_location: The owned memcached's ``host:port``.
+        extra_import: Further ``[import]`` keys and their values -- an integer, a
+            boolean or a string -- or None for none. One the file sets itself
+            (``log_file``, ``debug_log_file``) takes this value instead. A side whose
+            configuration does not know a key refuses the file, so a session sets one
+            only for a side that does.
 
     Returns:
         The path written.
@@ -811,8 +858,13 @@ def write_opus_config(
 
     def toml(value: object) -> str:
         """Return a TOML basic string."""
-        return '"' + str(value).replace('\\', '\\\\').replace('"', '\\"') + '"'
+        return f'"{build_run.toml_string(str(value))}"'
 
+    import_keys: dict[str, object] = {
+        'log_file': str(log_dir / 'opus_import.log'),
+        'debug_log_file': str(log_dir / 'opus_import_debug.log'),
+        **(extra_import or {}),
+    }
     lines = [
         '[database]',
         'brand = "MySQL"',
@@ -848,8 +900,7 @@ def write_opus_config(
         'log_django_level = "WARNING"',
         '',
         '[import]',
-        f'log_file = {toml(log_dir / "opus_import.log")}',
-        f'debug_log_file = {toml(log_dir / "opus_import_debug.log")}',
+        *(f'{key} = {build_run.toml_value(value)}' for key, value in import_keys.items()),
         '',
     ]
     path.parent.mkdir(parents=True, exist_ok=True)

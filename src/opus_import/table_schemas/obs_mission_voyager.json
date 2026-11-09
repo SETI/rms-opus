@@ -14,11 +14,7 @@
     {
         "field_name": "opus_id",
         "field_type": "char50",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "opus_id"
-        ],
+        "field_key": true,
         "field_notnull": true,
         "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."

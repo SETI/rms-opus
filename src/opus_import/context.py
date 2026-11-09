@@ -186,6 +186,9 @@ class ImportContext:
             therefore have to be written back. Cleared for each bundle.
         step_timings: Wall-clock seconds per step the run has timed with `timed`,
             keyed by step name, which is what ``--timing-json`` writes out.
+        import_path: The path an invocation that imports bundles takes, once
+            `opus_import.steps.do_import.choose_import_path` has chosen it from the
+            target schema's state, or None before.
     """
 
     args: argparse.Namespace
@@ -210,6 +213,8 @@ class ImportContext:
     modified_mult_tables: set[str] = field(default_factory=set)
 
     step_timings: dict[str, float] = field(default_factory=dict)
+
+    import_path: str | None = None
 
     log: ImportLog = field(init=False)
 

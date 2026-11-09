@@ -32,6 +32,11 @@ if TYPE_CHECKING:
 #: nothing. Prime, so chunk boundaries fall at different places in different tables.
 MAIN_RUN_TRANSACTION_ROWS = 7
 
+#: The main run's ``[import] index_workers``: more than one, so the goldens are taken over
+#: the path that builds several tables' indexes at once rather than the default's one at a
+#: time.
+MAIN_RUN_INDEX_WORKERS = 2
+
 #: The schema-name suffix of the session that writes with ``INSERT`` statements.
 INSERT_PATH_CASE = 'insert_path'
 
@@ -87,7 +92,8 @@ def main_run(
 ) -> build_run.ImportRun:
     """Import the whole fixture once, and hand every test the finished run.
 
-    Its loads are split into `MAIN_RUN_TRANSACTION_ROWS`-row transactions.
+    Its loads are split into `MAIN_RUN_TRANSACTION_ROWS`-row transactions, and its
+    finalization builds indexes over `MAIN_RUN_INDEX_WORKERS` connections.
 
     Returns:
         The completed run, whose logs and schema the assertions read.
@@ -99,7 +105,10 @@ def main_run(
         root,
         schema,
         db_credentials,
-        extra_import={'transaction_rows': MAIN_RUN_TRANSACTION_ROWS},
+        extra_import={
+            'transaction_rows': MAIN_RUN_TRANSACTION_ROWS,
+            'index_workers': MAIN_RUN_INDEX_WORKERS,
+        },
     )
 
 
@@ -139,12 +148,11 @@ def duplicate_id_run(
     created_schemas: list[str],
     subprocess_coverage: None,
 ) -> build_run.ImportRun:
-    """Import one volume twice in a single invocation, under the duplicate-id check.
+    """Import one volume twice in a single invocation, into an empty schema.
 
-    One invocation is what makes this a duplicate: the import tables are dropped once
-    per invocation, so a second volume in the same invocation sees the first volume's
-    rows and finds its own OPUS ids already there. That is the situation the flag exists
-    for, and importing the same volume twice produces it for every observation.
+    The schema is imported fresh, so each import of the volume first deletes the volume
+    from the permanent tables; the run is what shows that the second import replaces the
+    first rather than loading a second copy beside it.
 
     Returns:
         The completed run, in a schema and a log directory of its own.
@@ -158,7 +166,6 @@ def duplicate_id_run(
         schema,
         db_credentials,
         bundle_groups=[[bundle, bundle]],
-        extra_import_args=['--import-check-duplicate-id'],
         finalize=False,
     )
 

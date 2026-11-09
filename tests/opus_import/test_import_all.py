@@ -47,7 +47,7 @@ def test_the_sequence_starts_by_dropping_and_ends_by_validating() -> None:
         import_all.BUNDLE_SETS
     )
     assert [step[0] for step in steps[3 + len(import_all.BUNDLE_SETS) :]] == [
-        '--cleanup-aux-tables',
+        '--finalize',
         '--import-dictionary',
         '--validate-perm',
         '--write-schema-version',

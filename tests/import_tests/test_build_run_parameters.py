@@ -236,6 +236,24 @@ def test_extra_import_keys_reach_the_configuration(tmp_path: Path) -> None:
     )
 
 
+def test_an_extra_import_key_replaces_a_default_one(tmp_path: Path) -> None:
+    """A key the file sets by default takes the session's value, written once."""
+    paths = build_run.RunPaths.under(tmp_path)
+    log_file = (tmp_path / 'mine.log').as_posix()
+    build_run.write_opus_config(
+        paths,
+        'schema',
+        DatabaseCredentials('h', 'u', 'p'),
+        extra_import={'log_file': log_file},
+    )
+
+    config = load_config(paths.config_file).import_
+    assert config.log_file == log_file
+    assert config.debug_log_file == f'{paths.log_dir.as_posix()}/opus_import_debug.log'
+    lines = paths.config_file.read_text(encoding='utf-8').splitlines()
+    assert sum(line.startswith('log_file = ') for line in lines) == 1
+
+
 def test_a_newline_in_a_value_survives_the_configuration(tmp_path: Path) -> None:
     """A control character is escaped rather than breaking the file."""
     paths = build_run.RunPaths.under(tmp_path)

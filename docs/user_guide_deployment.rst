@@ -122,8 +122,10 @@ The scripts
     that changes the table schemas. It builds a new installation under ``staged/``
     naming that database -- virtual environment, ``pip install``, generated
     ``opus.toml``, ``wsgi.py`` symlink -- creates the application's own tables
-    (``opus_manage migrate``), gathers the static files and rebuilds the dictionary and
-    the auxiliary tables, and only then switches: the ``deployed`` symlink is moved onto
+    (``opus_manage migrate``), gathers the static files, reloads the dictionary and drops
+    the search tables any searches made while the staged installation was being tried out
+    left behind (``opus_import --import-dictionary --drop-cache-tables``), and only then
+    switches. The import already finalized the database, so nothing else is rebuilt: the ``deployed`` symlink is moved onto
     it, the cache service is restarted, and the workers are started again. They are
     stopped for the switch alone, not for the build. Which units those are comes from
     ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
@@ -221,8 +223,10 @@ fails. Nothing has been written to the database at that point, and the installat
 being served is untouched:
 
 * **No row**: no release finished the database. Re-import it under the release. If this
-  release imported it and only the last step is missing, run ``opus_import
-  --write-schema-version`` against it.
+  release imported it and only the finishing steps are missing, run them against it:
+  ``opus_import --finalize``, ``--import-dictionary`` and ``--validate-perm``, then
+  ``--write-schema-version``. ``--finalize`` adds the indexes and keeps one copy of
+  each observation two bundles share, which a database stamped without it would lack.
 * **Another version**: a different release imported it. Re-import it under this release
   and deploy it with ``deploy_new_code_and_database.sh``.
 * **A state other than** ``ready``: an import or an append is still writing to it, or
@@ -350,8 +354,10 @@ what users see, so it is done deliberately.
    under ``staged/``, and going back to it is moving the same symlink.
 
 **An import can be resumed rather than restarted.** The per-step options let a run redo
-only the part that failed, and the import tables survive a failure precisely so that this
-is possible -- see :ref:`dev_guide_import_two_namespaces`.
+only the part that failed: an import into a new database deletes each bundle before it
+writes it, so a failed bundle is imported again by naming it, and an interrupted
+``opus_import --finalize`` is completed by running it again -- see
+:ref:`dev_guide_import_two_namespaces`.
 
 .. _user_guide_deployment_log_analyzer:
 

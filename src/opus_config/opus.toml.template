@@ -169,3 +169,16 @@ bulk_load = true
 # by the server; raise it for fewer statements and commits. Optional; the default is
 # the value below.
 transaction_rows = 100000
+
+# How many tables the import's finalization builds indexes on at once, each over a
+# connection of its own. The database server does the work, so raise this only when
+# the server has cores to spare beyond whatever else shares its computer. Optional;
+# the default is the value below.
+index_workers = 1
+
+# A directory on the database server's host, writable by mysqld, where the server
+# sorts the indexes finalization builds, when its own temporary directory is too
+# small. It names a path on the server, not on the computer running the import.
+# Setting it needs an account that may set restricted session variables. Optional;
+# leaving it out keeps the server's own setting.
+# server_tmpdir = "/var/tmp/mysql_ddl"

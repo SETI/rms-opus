@@ -61,7 +61,7 @@ COVERAGE_PTH_CONTENT = 'import coverage; coverage.process_startup()\n'
 #: rows are inserted, so this order is part of the fixture rather than a convenience.
 DROP_ARGS = ('--drop-permanent-tables', '--scorched-earth')
 IMPORT_ARGS = ('--do-all-import',)
-AUX_ARGS = ('--cleanup-aux-tables',)
+AUX_ARGS = ('--finalize',)
 DICTIONARY_ARGS = ('--import-dictionary',)
 VALIDATE_ARGS = ('--validate-perm',)
 VERSION_ARGS = ('--write-schema-version',)
@@ -268,7 +268,7 @@ def build_holdings_tree(paths: RunPaths, *, overlay: Path | None = None) -> None
         _copy_tree(overlay / fixture_layout.PDS4_ROOT_NAME, paths.pds4_holdings)
 
 
-def _toml_string(value: str) -> str:
+def toml_string(value: str) -> str:
     """Return a value with every character a TOML basic string cannot hold escaped.
 
     Parameters:
@@ -304,7 +304,7 @@ def import_logs(log_dir: Path) -> list[Path]:
     return sorted(path for path in log_dir.glob('*.log') if pattern.fullmatch(path.name))
 
 
-def _toml_value(value: object) -> str:
+def toml_value(value: object) -> str:
     """Return a value as TOML writes it.
 
     Parameters:
@@ -321,7 +321,7 @@ def _toml_value(value: object) -> str:
     if isinstance(value, int):
         return str(value)
     if isinstance(value, str):
-        return f'"{_toml_string(value)}"'
+        return f'"{toml_string(value)}"'
     raise TypeError(f'no TOML spelling for {value!r}')
 
 
@@ -341,22 +341,29 @@ def write_opus_config(
         schema: The database schema to import into.
         credentials: How to reach the database server.
         extra_import: Further ``[import]`` keys and their values, for a session that
-            sets one; None for none.
+            sets one; None for none. A key the file sets by default, such as
+            ``log_file``, takes the value given here instead.
     """
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
     text = _CONFIG_TEMPLATE.format(
-        host=_toml_string(credentials.host),
-        user=_toml_string(credentials.user),
-        password=_toml_string(credentials.password),
-        schema=_toml_string(schema),
-        pds3_holdings=_toml_string(paths.pds3_holdings.as_posix()),
-        pds4_holdings=_toml_string(paths.pds4_holdings.as_posix()),
-        run_root=_toml_string(paths.root.as_posix()),
-        log_dir=_toml_string(paths.log_dir.as_posix()),
+        host=toml_string(credentials.host),
+        user=toml_string(credentials.user),
+        password=toml_string(credentials.password),
+        schema=toml_string(schema),
+        pds3_holdings=toml_string(paths.pds3_holdings.as_posix()),
+        pds4_holdings=toml_string(paths.pds4_holdings.as_posix()),
+        run_root=toml_string(paths.root.as_posix()),
+        log_dir=toml_string(paths.log_dir.as_posix()),
     )
-    for key, value in (extra_import or {}).items():
-        text += f'{key} = {_toml_value(value)}\n'
+    import_keys: dict[str, object] = {
+        'table_temp_prefix': 'imp_',
+        'log_file': f'{paths.log_dir.as_posix()}/opus_import.log',
+        'debug_log_file': f'{paths.log_dir.as_posix()}/opus_import_debug.log',
+        **(extra_import or {}),
+    }
+    for key, value in import_keys.items():
+        text += f'{key} = {toml_value(value)}\n'
     paths.config_file.write_text(text, encoding='utf-8')
 
 
@@ -403,9 +410,6 @@ fake_error404_probability = 0.0
 fake_error500_probability = 0.0
 
 [import]
-table_temp_prefix = "imp_"
-log_file = "{log_dir}/opus_import.log"
-debug_log_file = "{log_dir}/opus_import_debug.log"
 """
 
 
@@ -599,10 +603,10 @@ def perform_run(
     `finalize` says otherwise.
 
     The sequence is the one the integration import script runs: drop everything, import
-    each bundle on its own, clean up the auxiliary tables, import the dictionary,
-    migrate Django's tables, validate, write the schema version row. Importing one bundle per invocation is what
-    produces the on-top-of-previous-import warnings the whitelist expects, and it fixes
-    the order row ids are handed out in, which the goldens encode.
+    each bundle on its own, finalize, import the dictionary, migrate Django's tables,
+    validate, write the schema version row. Importing one bundle per invocation into
+    the emptied schema makes each a fresh import, and fixes the order row ids are handed
+    out in, which the goldens encode.
 
     Parameters:
         root: The run's directory.
@@ -610,18 +614,16 @@ def perform_run(
         credentials: How to reach the database server.
         overlay: A tree copied over the built one, for a negative case.
         bundle_groups: The bundles each ``--do-all-import`` invocation imports, or None
-            for one invocation per fixture bundle. Naming two bundles in one invocation
-            is what puts them in the same import tables, which is where a duplicate OPUS
-            id between them can be seen at all.
+            for one invocation per fixture bundle.
         extra_import_args: Arguments added to each ``--do-all-import`` invocation.
         extra_import: Further ``[import]`` configuration keys every invocation reads
             (`write_opus_config`), or None for none.
-        finalize: Whether to run the steps after the imports -- the auxiliary tables,
-            the dictionary, the Django migration, the validation and the schema version.
+        finalize: Whether to run the steps after the imports -- the finalization, the
+            dictionary, the Django migration, the validation and the schema version.
             True is the production sequence and what the main run uses. False stops
-            after the imports, which is all a negative case needs: ``--do-all-import``
-            already copies to the permanent tables, so ``obs_general`` and the mult
-            tables the negative assertions read exist without any of the later steps,
+            after the imports, which is all a negative case needs: a fresh import writes
+            the permanent tables, so ``obs_general`` and the mult tables the negative
+            assertions read exist without any of the later steps,
             and none of those assertions reads a table only a later step creates. A run
             that stops early leaves `ImportRun.django_tables` empty, so it can never be
             goldened.

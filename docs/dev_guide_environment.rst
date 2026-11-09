@@ -130,8 +130,9 @@ is the same program under another name;
     opus_import --do-it-all COISS_2002
     opus_import --write-schema-version
 
-``--do-it-all`` runs the whole sequence -- import, copy to the permanent tables, and
-rebuild the auxiliary tables -- for the bundles named on the command line.
+``--do-it-all`` runs the whole sequence -- the import, then ``--finalize``, which adds
+the secondary keys, keeps one copy of each OPUS ID and rebuilds the auxiliary tables --
+for the bundles named on the command line.
 ``--write-schema-version`` then records the database as finished, which the web
 application requires before it serves it (:ref:`dev_guide_database_schema_version`). Every step
 can also be asked for on its own; :mod:`opus_import.cli` documents the surface and

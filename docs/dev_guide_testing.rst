@@ -185,7 +185,7 @@ By hand
    anything, which is the check that keeps it off a database you meant to keep. It then
    imports a fixed list of bundle sets -- Cassini ISS, UVIS, VIMS and CIRS, Galileo,
    Voyager, Hubble, New Horizons, and the occultation sets -- and finishes with
-   ``--cleanup-aux-tables``, ``--import-dictionary``, ``manage.py migrate`` and
+   ``--finalize``, ``--import-dictionary``, ``manage.py migrate`` and
    ``--validate-perm``. Read ``ERRORS.log`` afterwards rather than trusting the exit
    status: several import steps report failure through the log and still exit zero.
 

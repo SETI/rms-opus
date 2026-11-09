@@ -47,14 +47,18 @@ that observation belongs to.
         B --> C[pdstable / pdsfile:<br/>read the primary index and its supplements]
         C --> D[One obs class instance for the bundle]
         D --> E[For each index row:<br/>replace the metadata, then call one<br/>field_obs_table_column method per column]
-        E --> F[(Import tables: imp_obs_*, imp_mult_*)]
-        F --> G[(Permanent tables: obs_*, mult_*)]
-        G --> H[(Auxiliary tables:<br/>param_info, table_names, partables)]
+        E -->|fresh import| G[(Permanent tables: obs_*, mult_*)]
+        E -->|a schema with a version row| F[(Import tables: imp_obs_*, imp_mult_*)]
+        F --> G
+        G -->|finalization| H[(Auxiliary tables:<br/>param_info, table_names, partables)]
 
-Every **imported** table is written to the import tables first and copied over the
-permanent tables only once the whole run has succeeded, which is the guarantee the design
-rests on; the cart and cache tables are reset outside that protection.
-:ref:`dev_guide_import_two_namespaces` is the whole of it.
+An import into a schema that is not served yet -- one with no ``schema_version`` row --
+is a **fresh import**: every imported table is written straight to the permanent tables,
+with only the keys a load needs, and finalization adds the remaining keys once at the
+end. An import into a finished schema writes the import tables first and copies them over
+the permanent tables only once the whole run has succeeded, so a failed run cannot leave
+the web application serving half a bundle; the cart and cache tables are reset outside
+that protection. :ref:`dev_guide_import_two_namespaces` is the whole of it.
 
 The auxiliary tables are built after the permanent tables, but only ``param_info`` is
 derived from what was imported. ``table_names`` lists the permanent tables that actually

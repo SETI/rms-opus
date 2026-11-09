@@ -71,7 +71,12 @@ PINNED_ENVIRONMENT_KEYS = (
     'server_version',
     'server_owned',
     'hostname',
+    'import_keys',
 )
+
+#: What a pinned entry is compared as in a file whose earlier runs do not record it: a
+#: run that records no ``import_keys`` set none.
+PINNED_ENVIRONMENT_DEFAULTS: dict[str, Any] = {'import_keys': {}}
 
 _RESULT_NAME = re.compile(
     r'^(?P<date>\d{4}-\d{2}-\d{2})_(?P<pr>PR-[0-9A-Za-z]+)_(?P<side>before|after)_'
@@ -250,23 +255,35 @@ def _is_finite_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
-def merge_environment(existing: dict[str, Any], update: dict[str, Any], source: str) -> None:
+def merge_environment(
+    existing: dict[str, Any], update: dict[str, Any], source: str, *, earlier_runs: bool
+) -> None:
     """Add entries to a result's environment, refusing to change a pinned one.
 
     Parameters:
         existing: The environment already in the file; updated in place.
         update: The entries this command measured.
         source: What to call the file in an error.
+        earlier_runs: Whether the file already holds runs.
 
     Raises:
         ResultError: If a `PINNED_ENVIRONMENT_KEYS` entry would change, which means the
             command ran against a different commit, interpreter or server from the one
-            the file's earlier runs did.
+            the file's earlier runs did. An entry a file with earlier runs lacks is
+            compared as its `PINNED_ENVIRONMENT_DEFAULTS` value, where it has one.
     """
     for key in PINNED_ENVIRONMENT_KEYS:
-        if key in existing and key in update and existing[key] != update[key]:
+        if key not in update:
+            continue
+        if key in existing:
+            was = existing[key]
+        elif earlier_runs and key in PINNED_ENVIRONMENT_DEFAULTS:
+            was = PINNED_ENVIRONMENT_DEFAULTS[key]
+        else:
+            continue
+        if was != update[key]:
             raise ResultError(
-                f'{source}: {key} was {existing[key]!r} and is now {update[key]!r}; one '
+                f'{source}: {key} was {was!r} and is now {update[key]!r}; one '
                 'result file holds one label, so start a new session label instead'
             )
     existing.update(update)
@@ -292,7 +309,12 @@ def append_runs(label: Label, environment: dict[str, Any], runs: Sequence[dict[s
         content = load_result(path)
     else:
         content = {'format': FORMAT_VERSION, 'environment': {}, 'runs': []}
-    merge_environment(content['environment'], portable(environment), str(path))
+    merge_environment(
+        content['environment'],
+        portable(environment),
+        str(path),
+        earlier_runs=bool(content['runs']),
+    )
     for run in portable(list(runs)):
         kind = run['kind']
         run['index'] = 1 + sum(1 for old in content['runs'] if old['kind'] == kind)

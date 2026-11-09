@@ -33,7 +33,10 @@ from opus_import.steps import (
     do_cart,
     do_dictionary,
     do_django,
+    do_duplicate_ids,
     do_import,
+    do_import_tables,
+    do_indexes,
     do_param_info,
     do_partables,
     do_schema_version,
@@ -146,17 +149,12 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--do-it-all',
         action='store_true',
         default=False,
-        help="""Perform all import and aux functions. This implies, in order:
+        help="""Perform all import and finalization functions. This implies, in order:
                 --drop-old-import-tables
                 --import
                 --copy-import-to-permanent-tables
                 --drop-new-import-tables
-                --analyze-permanent-tables
-                --create-param-info
-                --create-partables
-                --create-table-names
-                --create-cart
-                --drop-cache-tables
+                --finalize
              """,
     )
 
@@ -179,26 +177,32 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         help="""Perform all import functions related to permanent tables. This implies, in order:
                 --copy-import-to-permanent-tables
                 --drop-new-import-tables
-                --analyze-permanent-tables
-                --create-param-info
-                --create-partables
-                --create-table-names
-                --create-cart
-                --drop-cache-tables
+                --finalize
              """,
     )
 
     parser.add_argument(
-        '--cleanup-aux-tables',
+        '--finalize',
         action='store_true',
         default=False,
-        help="""Create or clean up auxiliary tables. This implies:
+        help="""Finish the database after its bundles are imported. This implies, in order:
+                --create-indexes,
+                the deletion of every copy of a duplicated OPUS ID but the last imported,
                 --create-param-info
                 --create-partables
                 --create-table-names
                 --create-cart
                 --drop-cache-tables
+                --analyze-permanent-tables
              """,
+    )
+
+    parser.add_argument(
+        '--create-indexes',
+        action='store_true',
+        default=False,
+        help="""Add every key the table schemas declare and an observation or mult table
+                lacks, which a fresh import leaves for finalization""",
     )
 
     parser.add_argument(
@@ -479,22 +483,63 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def expand_aggregate_options(args: argparse.Namespace) -> None:
+    """Turn on the steps each aggregate option given stands for.
+
+    ``--do-it-all`` and ``--do-import-finalization`` finish a database, and do it through
+    ``--finalize``, so each runs every step of the finalization group, the duplicate step
+    among them, which has no option of its own.
+
+    Parameters:
+        args: The parsed arguments, changed in place.
+    """
+    if args.do_it_all:
+        args.drop_old_import_tables = True
+        args.do_import = True
+        args.copy_import_to_permanent_tables = True
+        args.drop_new_import_tables = True
+        args.finalize = True
+
+    if args.do_all_import:
+        args.drop_old_import_tables = True
+        args.do_import = True
+        args.copy_import_to_permanent_tables = True
+        args.drop_new_import_tables = True
+
+    if args.do_import_finalization:
+        args.copy_import_to_permanent_tables = True
+        args.drop_new_import_tables = True
+        args.finalize = True
+
+    if args.finalize:
+        args.create_indexes = True
+        args.create_param_info = True
+        args.create_partables = True
+        args.create_table_names = True
+        args.create_cart = True
+        args.drop_cache_tables = True
+        args.analyze_permanent_tables = True
+
+
 def main() -> None:
     """Run the import steps requested on the command line.
 
-    Every step is driven by its own option; ``--do-it-all`` and its siblings simply turn
-    several of them on. The database connection, the holdings directories and the log
-    file locations come from the configuration file named by ``OPUS_CONFIG``, which is
-    read only once the arguments parse, so ``--help`` works without one.
+    Every step is driven by its own option, apart from the duplicate step, which only
+    ``--finalize`` runs; ``--finalize``, ``--do-it-all`` and their siblings turn several
+    of them on, and the two aggregates that finish a database do it through
+    ``--finalize``, so they run every step of its group. The database connection, the
+    holdings directories and the log file locations come from the configuration file
+    named by ``OPUS_CONFIG``, which is read only once the arguments parse, so ``--help``
+    works without one.
 
     Raises:
         SystemExit: With a non-zero status, logged first, when the arguments are
             contradictory, a bundle descriptor is bad, the database connection fails,
-            the observation import fails, ``--write-schema-version`` refuses, an
-            exception reaches the top-level handler, or -- unless
-            ``--import-ignore-errors`` -- ``--create-param-info``,
-            ``--import-dictionary`` or ``--validate-perm`` failed, after the
-            invocation's other steps have run.
+            the observation import fails or is refused, ``--write-schema-version``
+            refuses, an exception reaches the top-level handler, or -- unless
+            ``--import-ignore-errors`` -- ``--create-indexes``, the duplicate step,
+            ``--create-param-info``, ``--import-dictionary`` or ``--validate-perm``
+            failed, after the invocation's other steps have run.
             **A non-zero status means the run stopped, not that a zero status means it
             was clean:** other steps report failure through the log and leave the
             status zero. Read ``ERRORS.log`` to judge whether a run was clean.
@@ -507,40 +552,7 @@ def main() -> None:
         # The file is written at exit, too late for its failure to change the exit status.
         parser.error(f'--timing-json: the directory {args.timing_json.parent} does not exist')
 
-    if args.do_it_all:
-        args.drop_old_import_tables = True
-        args.do_import = True
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
-        args.analyze_permanent_tables = True
-        args.create_param_info = True
-        args.create_partables = True
-        args.create_table_names = True
-        args.create_cart = True
-        args.drop_cache_tables = True
-
-    if args.do_all_import:
-        args.drop_old_import_tables = True
-        args.do_import = True
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
-
-    if args.do_import_finalization:
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
-        args.analyze_permanent_tables = True
-        args.create_param_info = True
-        args.create_partables = True
-        args.create_table_names = True
-        args.create_cart = True
-        args.drop_cache_tables = True
-
-    if args.cleanup_aux_tables:
-        args.create_param_info = True
-        args.create_partables = True
-        args.create_table_names = True
-        args.create_cart = True
-        args.drop_cache_tables = True
+    expand_aggregate_options(args)
 
     ################################################################################
     # LOGGING INITIALIZATION
@@ -650,6 +662,16 @@ def main() -> None:
 
         ctx.db.log_sql = args.log_sql
 
+        # The path an import takes is chosen before anything else writes, so an import
+        # refused for an interrupted finalization changes nothing. An invocation that
+        # erases the schema first chooses after the erase, in do_import_steps.
+        if (
+            args.do_import
+            and not args.drop_permanent_tables
+            and not do_import.choose_import_path(ctx)
+        ):
+            sys.exit(-1)
+
         # This MUST be done before the permanent tables are created, because there
         # could be entries in the cart table that point at the permanent
         # tables, and import could delete entries out of the permanent tables
@@ -682,6 +704,30 @@ def main() -> None:
         # overrides both, for a debugging run.
         failed_steps: list[str] = []
 
+        # The finalization group's sequence, which later steps extend in place: the keys,
+        # then the duplicate step, then the auxiliary tables, then ANALYZE.
+        if args.create_indexes:
+            logger.open(
+                'Creating secondary keys',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
+            with ctx.timed('create_indexes'):
+                if not do_indexes.create_indexes(ctx):
+                    failed_steps.append('--create-indexes')
+            logger.close()
+
+        # The duplicate step deletes by obs_general_id, which only the keys just built
+        # index, so it waits for a run whose key builds succeed.
+        if args.finalize and '--create-indexes' not in failed_steps:
+            logger.open(
+                'Deleting duplicate OPUS IDs',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
+            with ctx.timed('duplicate_step'):
+                if not do_duplicate_ids.delete_duplicate_opus_ids(ctx):
+                    failed_steps.append('the duplicate step of --finalize')
+            logger.close()
+
         # This MUST be done after the permanent tables are created, since they
         # are used to determine what goes into the param_info table.
 
@@ -703,6 +749,12 @@ def main() -> None:
                     do_table_names.do_table_names(ctx)
 
             logger.close()
+
+        # After the auxiliary tables, so that the statistics count every table's rows.
+        if args.analyze_permanent_tables:
+            import_util.log_info(ctx, 'Analyzing all permanent tables')
+            with ctx.timed('analyze_permanent_tables'):
+                do_import_tables.analyze_all_tables(ctx, 'perm')
 
         if args.update_mult_info:
             logger.open(

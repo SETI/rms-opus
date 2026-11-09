@@ -363,9 +363,13 @@ def import_one_index(
     for table_name in table_names_in_order:
         table_rows[table_name] = []
 
-    # Also look for duplicates in the existing import tables
+    # Also look for duplicates in the existing import tables. A fresh import writes the
+    # permanent tables directly and looks for none: finalization's duplicate step keeps
+    # the later copy of each OPUS id.
+    db = ctx.db
+    assert db is not None
     used_opus_id_prev_vol: Collection[str]
-    if ctx.args.import_check_duplicate_id:
+    if ctx.args.import_check_duplicate_id and not db.direct:
         used_opus_id_prev_vol = do_import_tables.read_existing_import_opus_id(ctx)
     else:
         used_opus_id_prev_vol = set()
@@ -621,10 +625,8 @@ def import_one_index(
     # a mult_idx column is a plain index, not a foreign key.
     do_import_mult.dump_import_mult_tables(ctx)
 
-    # Now dump out the obs tables, in order: obs_general really is a foreign-key target
-    # for the other obs_ tables (on id and on opus_id), so it has to exist first.
-    db = ctx.db
-    assert db is not None
+    # Now dump out the obs tables, in order: obs_general is the foreign-key target of the
+    # other obs_ tables, so it goes first.
     for table_name in table_names_in_order:
         if table_name.find('<TARGET>') == -1:
             imp_name = db.convert_raw_to_namespace('import', table_name)

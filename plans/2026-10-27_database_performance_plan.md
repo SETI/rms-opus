@@ -4782,3 +4782,129 @@ Nothing above this line is rewritten by an executor.
   the others, a disturbed run the per-metric statistics set aside. Two earlier sessions
   are not used: the first ran without the `benchmarks` extra in the head's virtualenv,
   and the second measured the swap before it analyzed its tables.
+
+### 2026-11-08, PR-07 (written against this file at 02c7ca88)
+
+- **The sort buffer is sized per statement, not per session.** The section has each
+  sibling session set `innodb_ddl_buffer_size` to a quarter of the buffer pool divided by
+  `index_workers`. The server allocates the whole buffer for every index a statement
+  builds, so at the default one worker on the benchmark server (an 18 GiB pool, so the
+  4 GiB maximum) each index cost about a third of a second whatever its table held: the
+  first measurement's test-scale finalization took 977 s, 961 s of it in the key builds,
+  and the import as a whole ran 3.2 times slower than the base (1272-1384 s against
+  388-411 s). One `ALTER` adding the 56 plain keys of `obs_surface_geometry__hydra`
+  (2,209 rows) took 0.45 s at the server's 1 MiB default and 19 s at 4 GiB; on
+  `obs_files` (one million rows, eight keys), 1 MiB, 64 MiB and 256 MiB all took 17-18 s
+  and 1 GiB and 4 GiB took 22-24 s. Each statement now sets the session's buffer to the
+  estimated sort of the largest key it builds (the section's space estimate), never below
+  the server's own setting and never above the section's quarter of the pool shared
+  among the workers, which becomes a ceiling rather than the setting; the session is
+  changed only when the size differs (`ImportDBSuper._size_index_sort`, and
+  `IndexStatement.sort_bytes`). The key builds at test scale went from about 1000 s to
+  39 s. Full scale may want a larger buffer for its largest tables than test scale shows,
+  which the ceiling still allows.
+- `build_indexes` takes `workers`, `server_tmpdir` and `space_budget` keyword arguments
+  beside the section's `serial`, rather than reading the configuration itself, so the
+  unit tests drive it without a configuration file; `create_indexes` passes them from
+  `[import]`.
+- The bundle delete is chunked by each table's own `id`, not by `obs_general.id` as the
+  section says: each table's ids for the bundle are read in order and deleted
+  `transaction_rows` at a time by `bundle_id` and an `id` range, every child before
+  `obs_general`. Chunking every table by `obs_general.id` would delete a child's rows by
+  `obs_general_id`, which no key a fresh import creates leads, so each chunk would scan
+  the child.
+- The duplicate step has no flag of its own; it runs inside `--finalize` after the key
+  builds and is named in a failure as "the duplicate step of --finalize". The section
+  names no flag for it.
+- The section's per-index wall-clock is not measurable: a table's plain keys are added in
+  one `ALTER` at the default, so `--timing-json` carries each statement
+  (`create_indexes:<table>:<keys>`) and each table; a per-index split would need one
+  `ALTER` per key, each reading the whole table again.
+- `models.py` is edited rather than regenerated. Regenerating it with
+  `create_opus_models.sh` against the finalized fixture schema also changes it in ways
+  older than this PR (column order in some classes, the mult tables' `aliases` column,
+  `instrument_id`'s width), which belong to no PR in this plan; the regenerated `opus_id`
+  lines matched the edited ones in every class both files hold. The script's two
+  `opus_id` foreign-key rules and its `opus =` rule are removed as the section says, and
+  its temporary-file chain fixed.
+- `--create-indexes` on a schema finalized at version 1 would add a plain `opus_id` key
+  to `obs_general` beside the unique one already there, since the two differ by kind.
+  Nothing should run it there: `SCHEMA_VERSION` is 2, so PR-05's check refuses to serve
+  or deploy such a schema, which is replaced by a fresh import rather than finalized
+  again.
+- `duplicate_id_run` no longer passes `--import-check-duplicate-id`, which the fresh path
+  never reads; PR-08 removes the flag itself.
+- `benchmarks.bench_import` gains `--import-key KEY=VALUE`, which writes an `[import]`
+  key into one side's configuration (through `write_opus_config(extra_import=...)`), so
+  the secondary measurement could run both sides from the head at different
+  `index_workers`.
+- PR-07's measurement (2026-11-07 and 2026-11-08, session `b`, three imports a side
+  alternated, before at 02c7ca88 and after at 09d009d2):
+  - **Test scale** (`2026-11-07_PR-07_{before,after}_test_mysql_b.json`): the target
+    `import.wall_s` improved from 405.3 s to 346.6 s (-14.5%, floor 7.2%), and every
+    guard held (`import.largest.import_s` -15.5%, `import.peak_tree_pss_kb` -0.3%). The
+    bundle imports fell from 391.6 s to 291.1 s (-25.7%) and finalization rose from
+    12.4 s to 54.3 s, 38.9 s of it the key builds; the copy to the permanent tables
+    (33.5 s) is gone. `Innodb_data_written` fell 42.8% (5.89 GB to 3.37 GB),
+    `Innodb_os_log_written` 54.8% and `Innodb_rows_inserted` 50.0%.
+  - **Fixture scale** (`2026-11-07_PR-07_{before,after}_fixture_mysql_b.json`):
+    `import.wall_s` improved from 64.8 s to 41.7 s (-35.7%); the guards held.
+  - **Workers** (`2026-11-07_PR-07_{before,after}_test_mysql_workersb.json`, both sides at
+    09d009d2 finalizing copies of one unfinalized test-scale import, before at the default
+    `index_workers = 1`, which builds on the parent connection as `serial=True` does, and
+    after at 22, three quarters of the workstation's 30 cores): the key builds took
+    27.4-29.3 s against 38.1-52.9 s, and finalization 42.8-44.7 s against 53.4-68.3 s. At
+    22 workers the key builds last as long as `obs_files`, the largest table, takes
+    beside the others (27-29 s, against 13-14 s alone).
+  - The review's later fixes (96b3f077) are not measured: each table is analyzed before
+    its keys' space is estimated, since the server's row count can predate the loads
+    (the closing `ANALYZE` of the same tables takes 0.7 s at test scale), and the bundle
+    delete reads its ids a page at a time, which on a fresh schema finds none. Nor is
+    ea6db085's validation check, which groups `obs_general` by `opus_id`, a column the
+    finalized schema keys.
+  - Session `a` (at 02738217, before the review's fixes and the sized buffer) is not used
+    beyond the diagnosis above. The secondary measurement's unfinalized schema
+    (`bench_test_after_unfinalized_1`) was imported at 02738217; the fixes since touch
+    the delete and finalization, and a fresh import into an empty schema deletes nothing.
+- **The sort buffer's ceiling is also divided among the indexes a statement builds at
+  once** (64860d70). The first complete-scale import (session `a`) loaded every bundle and
+  was then killed by the kernel two and a half minutes into `obs_files`' key builds, the
+  server at 31 GiB against the session's cap. The server holds a whole
+  `innodb_ddl_buffer_size` for each index it is building at once, up to
+  `innodb_ddl_threads` (4 on the benchmark server): adding `obs_files`' eight keys to the
+  unfinalized complete-scale table, `memory/innodb/ddl` peaked at 1,057 MiB with a
+  256 MiB buffer and 2,081 MiB with 512 MiB, and adding two keys at 256 MiB at 520 MiB.
+  At the old 4 GiB ceiling the statement held up to 16 GiB beside the 18 GiB pool. The
+  ceiling is now the connection's share divided by the smaller of the statement's key
+  count and `innodb_ddl_threads` (`IndexStatement.key_count`), so the builds running at
+  once hold at most a quarter of the pool together; `obs_files`' statement gets about
+  1.1 GiB a buffer.
+- PR-07's complete-scale measurement (2026-11-08, session `b`, one import at 64860d70,
+  `2026-11-08_PR-07_after_complete_mysql_b.json`, against PR-00's
+  `2026-11-05_PR-00_before_complete_mysql_a.json`; no complete-scale floors exist, so it
+  is reported, not judged):
+  - `import.wall_s` 18,235 s to 13,437 s (-26.3%); the bundle imports 17,620 s to
+    11,988 s (-32.0%; COVIMS_0xxx, the largest group, -37.3%); finalization 613 s to
+    1,448 s, of which the key builds are 1,305 s and `obs_files`' one statement 798 s;
+    validation 596 s to 114 s. `Innodb_data_written` fell 61.7% (350 GB to 134 GB), and
+    `import.peak_tree_pss_kb` held (-0.5%).
+  - The server's resident set, sampled every five seconds outside the harness, held
+    19.97 GiB through the loads and peaked at 24.76 GiB in the key builds: 4.79 GiB above
+    the loads against the 4.5 GiB share, and 0.76 GiB above `server.toml`'s 24 GiB budget.
+  - `bench_db`: the same row counts (`obs_general` 1,627,081, `obs_files` 50,647,642),
+    data -0.5%, indexes -3.8% (`obs_files`' +4.5%).
+  - A finalization alone on a copy of session `a`'s schema, run outside the harness
+    straight after the server's crash recovery, built the keys in 1,871 s; it is not used.
+- A complete-scale finalization at `index_workers = 2` (2026-11-09, session `workers2`,
+  `bench_import --finalize-only` on a copy of session `a`'s schema at 64860d70,
+  `2026-11-09_PR-07_after_complete_mysql_workers2.json`) was slower than one worker, at
+  the same memory. Against the one-worker finalization of the same copy above: key builds
+  1,871 s to 2,693 s (+44%), `obs_files` 846 s to 2,370 s, `obs_pds` 88 s to 490 s,
+  `obs_general` 98 s to 104 s. The server's resident set peaked at 24.62 GiB, against
+  24.69 GiB at one worker, three minutes into the builds while the small tables ran in
+  parallel. Each connection's sort share is a quarter of the pool divided by the
+  workers, busy or not, so after the small tables finished `obs_files` built alone for
+  about 40 minutes with half its one-worker buffer; that is the likely cause, not
+  measured. `index_workers` stays 1 for the complete holdings. The copied runs are
+  slower than session `b`'s in-import key builds (1,305 s) at either setting, so they
+  compare only with each other.
