@@ -4866,3 +4866,32 @@ Nothing above this line is rewritten by an executor.
     beyond the diagnosis above. The secondary measurement's unfinalized schema
     (`bench_test_after_unfinalized_1`) was imported at 02738217; the fixes since touch
     the delete and finalization, and a fresh import into an empty schema deletes nothing.
+- **The sort buffer's ceiling is also divided among the indexes a statement builds at
+  once** (64860d70). The first complete-scale import (session `a`) loaded every bundle and
+  was then killed by the kernel two and a half minutes into `obs_files`' key builds, the
+  server at 31 GiB against the session's cap. The server holds a whole
+  `innodb_ddl_buffer_size` for each index it is building at once, up to
+  `innodb_ddl_threads` (4 on the benchmark server): adding `obs_files`' eight keys to the
+  unfinalized complete-scale table, `memory/innodb/ddl` peaked at 1,057 MiB with a
+  256 MiB buffer and 2,081 MiB with 512 MiB, and adding two keys at 256 MiB at 520 MiB.
+  At the old 4 GiB ceiling the statement held up to 16 GiB beside the 18 GiB pool. The
+  ceiling is now the connection's share divided by the smaller of the statement's key
+  count and `innodb_ddl_threads` (`IndexStatement.key_count`), so the builds running at
+  once hold at most a quarter of the pool together; `obs_files`' statement gets about
+  1.1 GiB a buffer.
+- PR-07's complete-scale measurement (2026-11-08, session `b`, one import at 64860d70,
+  `2026-11-08_PR-07_after_complete_mysql_b.json`, against PR-00's
+  `2026-11-05_PR-00_before_complete_mysql_a.json`; no complete-scale floors exist, so it
+  is reported, not judged):
+  - `import.wall_s` 18,235 s to 13,437 s (-26.3%); the bundle imports 17,620 s to
+    11,988 s (-32.0%; COVIMS_0xxx, the largest group, -37.3%); finalization 613 s to
+    1,448 s, of which the key builds are 1,305 s and `obs_files`' one statement 798 s;
+    validation 596 s to 114 s. `Innodb_data_written` fell 61.7% (350 GB to 134 GB), and
+    `import.peak_tree_pss_kb` held (-0.5%).
+  - The server's resident set, sampled every five seconds outside the harness, held
+    19.97 GiB through the loads and peaked at 24.76 GiB in the key builds: 4.79 GiB above
+    the loads against the 4.5 GiB share, and 0.76 GiB above `server.toml`'s 24 GiB budget.
+  - `bench_db`: the same row counts (`obs_general` 1,627,081, `obs_files` 50,647,642),
+    data -0.5%, indexes -3.8% (`obs_files`' +4.5%).
+  - A finalization alone on a copy of session `a`'s schema, run outside the harness
+    straight after the server's crash recovery, built the keys in 1,871 s; it is not used.
