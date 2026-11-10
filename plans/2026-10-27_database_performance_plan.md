@@ -5559,3 +5559,68 @@ Nothing above this line is rewritten by an executor.
     the PR proceeds on the structural gains the section's cost model names: no DDL in
     a request, a bounded table count, statement digests that describe the searches, the
     stored count, the pruner, and the fixed-width cache keys.
+
+### 2026-11-10, PR-12 (written against this file at 18372a6d)
+
+- The branch is PR-11's with PR-09 merged in, since the section builds on both.
+- `obs_files`' secondary key, `(opus_id, short_name, version_name)`, is a composite key,
+  so the table-level `{"key": [...]}` entry the section gives PR-13 is added here
+  (`table_keys.TABLE_LEVEL_KEY_KINDS`, the schema validator, `create_table` through
+  `declared_keys`); PR-13 only uses it.
+- The create-time key set reads `bundle_id` only where the per-bundle delete selects by
+  it, `obs_general` and the tables `table_keys.BUNDLE_KEYED_TABLE_PREFIXES` names
+  (`is_bundle_keyed_table`), so `obs_pds`'s kept `bundle_id` key waits for finalization
+  like any other plain key.
+- A delete chunk is `[import] transaction_rows` of the bundle's `obs_general` ids, so
+  `obs_files`' statement for a chunk deletes every file of those observations, many
+  times that many rows; MySQL's multi-table `DELETE` takes no `LIMIT`, and the section
+  asks for ranges over `obs_general.id`.
+- The review found that a run stopping partway through an index can leave a child's rows
+  whose `obs_general` rows were never loaded, since each table is loaded once a
+  transaction's worth of its rows wait: the joined delete cannot reach them, and the
+  bundle's ids, handed out again from `obs_general`'s highest, collided with them on the
+  retry. The per-bundle delete now first removes every rekeyed table's rows above
+  `obs_general`'s highest `id`; `import_tests/test_append.py` plants such rows and
+  re-imports the bundle, and without the removal the import fails on a duplicate
+  primary key. A failed index's take-back (`TableRowSink.discard`) deletes by `id` in
+  the tables that number their own rows and by `obs_general_id` elsewhere, so it never
+  scans a surface geometry table a fresh import has not keyed on `obs_general_id`.
+- `file_number` counts from 1. `--validate` gains `validate_pds_bundle_ids`.
+- `models.py` is edited rather than regenerated, as in PR-07: regenerating it with
+  `create_opus_models.sh` against the local integration database, imported with this
+  head, gives the same key fields in every class the section changes (the one-to-one
+  primary keys and `ObsFiles`' `CompositePrimaryKey` with its `ForeignKey`), and a
+  wider `ObsFiles.instrument_id`, a difference older than this PR. The script gains a
+  `sed` rule that names the one-to-one relation as the foreign-key rules do.
+- `import_tests/tools/golden_io.tables_holding_bundle` reaches a table holding only
+  `obs_general_id` through `obs_general`, and the append test compares any table holding
+  observations without the server's ids (`holds_observations`). The integration suite's
+  per-bundle row counts read the children's bundle through `obs_general__bundle_id`.
+- `tests/opus_import/test_obs_field_annotations.py` stated how many field methods its
+  driven classes cannot reach, a count already out of date; with the dropped columns'
+  methods gone it says so in words.
+- `SCHEMA_VERSION` is 5.
+- PR-12's measurement (2026-11-10, test scale; before at 18372a6d, after at 94fc1187,
+  whose code session `c`'s 4642583a only adds the query capture to). Session `b`: three
+  fixture imports a side alternated A B B A A B, one test-scale import a side, A B, each
+  side serving its own schema, and `bench_db --dump-queries` once a side. Its three web
+  runs a side are replaced by session `c`'s five a side, alternated, since the target's
+  change landed within twice its floor (§2.6). A session `a` stopped at its first
+  `bench_db`, the two virtual environments lacking the `benchmarks` extra; its files are
+  not used.
+  - **The target did not improve: a stop-and-report** (§2.5).
+    `web.db-cold.search.ring_radius.wall_s` was 295.1 ms against 284.4 ms (-3.6%, floor
+    6.9%), with its `Innodb_buffer_pool_reads` 1,136 against 1,124. The schema fits the
+    buffer pool on both sides (its data and indexes are 9.1% and 6.3% of it), and the
+    build reads `obs_ring_geometry` by a table scan, joining `obs_general` by primary
+    key, on both sides; the scan took 6.8 ms against 8.9 ms. The section's gain, fewer
+    and denser pages, is one a db-cold run of a search this small barely sees.
+  - Every guard held, the section's own among them: the ring-radius search's app-cold
+    p50 -5.0% (floor 31.7%); the files API's app-cold p50 +0.9% (floor 10.2%) and warm
+    +5.3% (floor 35.5%); the detail page's app-cold -14.0% and warm +12.1% (floor
+    263%).
+  - Schema size: data 937.7 MB to 799.2 MB (-14.8%), indexes 819.4 MB to 412.9 MB
+    (-49.6%). `obs_files`' indexes 531.2 MB to 174.0 MB, its key build 11.4 s to 5.0 s.
+  - Reported: the ring-radius re-sort's db-cold p50 163.4 ms to 94.4 ms (-42.2%), its
+    buffer-pool reads 1,446 to 1,147; the test-scale import 347.0 s to 334.7 s; the
+    fixture imports within noise.
