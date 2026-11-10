@@ -400,7 +400,9 @@ Regenerating it
 
 ``scripts/models/create_opus_models.sh``, run from the repository root against a fully
 imported database. It runs Django's ``inspectdb``, applies the prefixing and the
-foreign-key repairs, and formats the result.
+foreign-key repairs, makes ``UserSearches.search_hash`` a ``BinaryField`` (``inspectdb``
+reads a ``BINARY`` column as text, which would not return a digest's bytes unaltered),
+and formats the result.
 
 Consequences worth knowing:
 

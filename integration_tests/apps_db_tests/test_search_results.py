@@ -23,21 +23,24 @@ HSTI1_2003
 
 from __future__ import annotations
 
+import contextlib
 import datetime
+import io
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Any
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from django.conf import settings
 from django.contrib.sessions.models import Session
-from django.core.cache import cache
-from django.core.management import call_command
+from django.core.cache import cache, caches
+from django.core.management import CommandError, call_command
 from django.db import connection, connections, transaction
 from django.utils import timezone
 
 from opus_app.apps.search import views as search_views
+from opus_app.apps.search.management.commands import prune
 from opus_app.apps.search.views import (
     get_search_results,
     search_hash,
@@ -97,8 +100,58 @@ def _run_in_thread(target: Callable[[], Any]) -> Callable[[], Any]:
             return target()
         finally:
             connections.close_all()
+            caches.close_all()
 
     return run
+
+
+@contextlib.contextmanager
+def _holding_lock(search_id: int) -> Iterator[None]:
+    """Hold a search's row lock on another connection for the duration of the block."""
+    locked = threading.Event()
+    release = threading.Event()
+
+    def hold_lock() -> None:
+        with transaction.atomic(), connection.cursor() as cursor:
+            cursor.execute('SELECT id FROM user_searches WHERE id = %s FOR UPDATE', [search_id])
+            locked.set()
+            release.wait(30)
+
+    holder = threading.Thread(target=_run_in_thread(hold_lock))
+    holder.start()
+    try:
+        assert locked.wait(30)
+        yield
+    finally:
+        release.set()
+        holder.join()
+
+
+def _last_used(search_id: int) -> datetime.datetime:
+    """Return a search's ``last_used_at``."""
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT last_used_at FROM user_searches WHERE id = %s', [search_id])
+        last_used: datetime.datetime = cursor.fetchone()[0]
+    return last_used
+
+
+def _plant_results(search_id: int, rows: int) -> None:
+    """Write rows of ``search_results`` for a search, whether or not it is registered."""
+    with connection.cursor() as cursor:
+        cursor.executemany(
+            'INSERT INTO search_results (search_id, sort_order, obs_general_id) VALUES (%s, %s, %s)',
+            [(search_id, number + 1, number + 1) for number in range(rows)],
+        )
+
+
+def _make_stale(search_id: int) -> None:
+    """Mark a search as last used sixty days ago."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            'UPDATE user_searches SET last_used_at = UTC_TIMESTAMP() - INTERVAL 60 DAY '
+            'WHERE id = %s',
+            [search_id],
+        )
 
 
 class SearchResultsTests(TestCase):
@@ -187,23 +240,8 @@ class SearchResultsTests(TestCase):
         search_id = search_views.set_user_search_number(selections, extras)
         assert search_id is not None
         settings.SEARCH_BUILD_TIMEOUT = 1
-        locked = threading.Event()
-        release = threading.Event()
-
-        def hold_lock() -> None:
-            with transaction.atomic(), connection.cursor() as cursor:
-                cursor.execute('SELECT id FROM user_searches WHERE id = %s FOR UPDATE', [search_id])
-                locked.set()
-                release.wait(30)
-
-        holder = threading.Thread(target=_run_in_thread(hold_lock))
-        holder.start()
-        try:
-            self.assertTrue(locked.wait(30))
+        with _holding_lock(search_id):
             self.assertIsNone(get_search_results(selections, extras))
-        finally:
-            release.set()
-            holder.join()
         self.assertEqual(_row(search_id), (None, None))
 
     def test_a_search_the_cache_names_after_a_prune_registers_afresh(self) -> None:
@@ -220,6 +258,111 @@ class SearchResultsTests(TestCase):
         self.assertNotEqual(second.search_id, first.search_id)
         self.assertEqual(second.result_count, first.result_count)
         self.assertEqual(_result_rows(second.search_id), second.result_count)
+
+    def test_a_search_pruned_while_its_build_waited_registers_afresh(self) -> None:
+        """The row is gone when the build takes its lock, so the search starts over."""
+        selections, extras = _search()
+        first_id = search_views.set_user_search_number(selections, extras)
+        assert first_id is not None
+
+        def delete_row() -> None:
+            with connection.cursor() as cursor:
+                cursor.execute('DELETE FROM user_searches WHERE id = %s', [first_id])
+
+        def prune_before_lock(execute: Any, sql: str, params: Any, many: bool, context: Any) -> Any:
+            if sql.endswith('FOR UPDATE') and list(params) == [first_id]:
+                # The pruner's delete commits on a connection of its own.
+                pruner = threading.Thread(target=_run_in_thread(delete_row))
+                pruner.start()
+                pruner.join()
+            return execute(sql, params, many, context)
+
+        with connection.execute_wrapper(prune_before_lock):
+            results = get_search_results(selections, extras)
+        assert results is not None
+        self.assertNotEqual(results.search_id, first_id)
+        self.assertIsNone(_row(first_id))
+        self.assertEqual(_result_rows(results.search_id), results.result_count)
+
+    def test_a_cached_search_is_stamped_once_on_a_later_day(self) -> None:
+        """A hit on a later day stamps the row, unless a build holds it."""
+        selections, extras = _search()
+        search_id = search_views.set_user_search_number(selections, extras)
+        assert search_id is not None
+        key = search_number_cache_key(search_hash(selections, extras))
+        today = timezone.now().date().isoformat()
+
+        _make_stale(search_id)
+        cache.set(key, (search_id, '2000-01-01'))
+        with _holding_lock(search_id):
+            self.assertEqual(search_views.set_user_search_number(selections, extras), search_id)
+        self.assertEqual(cache.get(key), (search_id, '2000-01-01'))
+        stale = _last_used(search_id)
+
+        self.assertEqual(search_views.set_user_search_number(selections, extras), search_id)
+        self.assertEqual(cache.get(key), (search_id, today))
+        self.assertGreater(_last_used(search_id), stale)
+
+    def test_prune_refuses_a_negative_row_limit_and_fewer_than_one_day(self) -> None:
+        """Both bounds are checked before anything is read."""
+        with self.assertRaisesRegex(CommandError, '--max-rows'):
+            call_command('prune', max_rows=-1, stdout=io.StringIO())
+        with self.assertRaisesRegex(CommandError, '--unused-days'):
+            call_command('prune', unused_days=0, stdout=io.StringIO())
+
+    def test_prune_stats_and_dry_run_report_and_change_nothing(self) -> None:
+        """Both describe the prune of a stale search and leave it in place."""
+        selections, extras = _search()
+        stale = get_search_results(selections, extras)
+        assert stale is not None
+        _make_stale(stale.search_id)
+
+        stats = io.StringIO()
+        call_command('prune', stats=True, stdout=stats)
+        self.assertIn(f'search_results rows: {stale.result_count}', stats.getvalue())
+        self.assertIn('Searches: 1', stats.getvalue())
+        self.assertIn('per row', stats.getvalue())
+        self.assertIn(
+            f'would remove 1 searches holding {stale.result_count} rows', stats.getvalue()
+        )
+        self.assertIn('leave 0 searches holding 0 rows', stats.getvalue())
+
+        dry_run = io.StringIO()
+        call_command('prune', dry_run=True, stdout=dry_run)
+        self.assertIn(f'Would prune search {stale.search_id}', dry_run.getvalue())
+        self.assertIn(
+            f'Would prune 1 searches holding {stale.result_count} rows', dry_run.getvalue()
+        )
+
+        self.assertEqual(_result_rows(stale.search_id), stale.result_count)
+        self.assertIsNotNone(_row(stale.search_id))
+
+    def test_prune_skips_a_search_being_built_and_deletes_in_chunks(self) -> None:
+        """A locked search stays; an orphan's rows and a pruned search's go chunk by chunk."""
+        building_selections, building_extras = _search('instrument=Cassini+UVIS')
+        building_id = search_views.set_user_search_number(building_selections, building_extras)
+        assert building_id is not None
+        _make_stale(building_id)
+        stale = get_search_results(*_search())
+        assert stale is not None
+        _make_stale(stale.search_id)
+        orphan_id = max(building_id, stale.search_id) + 1000
+        _plant_results(orphan_id, 25)
+
+        output = io.StringIO()
+        with (
+            mock.patch.object(prune, 'DELETE_CHUNK_ROWS', 10),
+            _holding_lock(building_id),
+        ):
+            call_command('prune', unused_days=30, max_rows=10**9, stdout=output)
+
+        self.assertIn('Removed the rows of 1 searches already removed', output.getvalue())
+        self.assertIn('Pruned 1 searches', output.getvalue())
+        self.assertIn('skipped 1 being built', output.getvalue())
+        self.assertEqual(_result_rows(orphan_id), 0)
+        self.assertEqual(_result_rows(stale.search_id), 0)
+        self.assertIsNone(_row(stale.search_id))
+        self.assertIsNotNone(_row(building_id))
 
     def test_prune_removes_old_searches_expired_sessions_and_orphaned_carts(self) -> None:
         """An old search, an expired session and its cart go; recent ones stay."""

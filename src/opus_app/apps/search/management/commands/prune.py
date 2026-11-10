@@ -252,9 +252,10 @@ def _read_searches() -> list[StoredSearch]:
 
 
 def _aware(value: datetime.datetime) -> datetime.datetime:
-    """Return a time read from a ``DATETIME`` column, which holds UTC, as an aware time."""
-    if timezone.is_aware(value):
-        return value
+    """Return a time a raw cursor read from a ``DATETIME`` column as an aware UTC time.
+
+    The column holds UTC, and the driver returns it with no time zone.
+    """
     return value.replace(tzinfo=datetime.UTC)
 
 
