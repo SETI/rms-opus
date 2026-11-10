@@ -598,7 +598,22 @@ The fields are:
 The ``user_searches`` and ``search_results`` Tables
 ---------------------------------------------------
 
-When a search query comes in, OPUS first looks in the ``user_searches`` table to see if the exact same search has already been made; if so, and its results are built, they are already in ``search_results``. If not, the search is given a row in ``user_searches``, and the first request that finds its results unbuilt writes them into ``search_results``. Both tables are created by the import from their schema files, and both are emptied by every reset of the search tables (``opus_import --reset-search-tables``); between resets, ``opus_manage prune`` removes the least recently used searches (:ref:`user_guide_deployment_prune`).
+OPUS stores every search a user makes, so that a later request for the same search reads
+the stored results instead of running the search again:
+
+* ``user_searches`` has one row for each distinct search. The row's ``id`` is the
+  search's number.
+* ``search_results`` holds each search's results: the observations it matched, in sort
+  order.
+
+When a request makes a search, OPUS looks for it in ``user_searches``. If the search is
+not there, OPUS adds a row for it. If the search's results are not stored yet, the request
+writes them into ``search_results``; every later request for the search reads them.
+
+The import creates both tables from their schema files, and empties them when it resets
+the search tables (``opus_import --reset-search-tables``). Between imports,
+``opus_manage prune`` removes the searches that have gone longest without use
+(:ref:`user_guide_deployment_prune`).
 
 ::
 
@@ -624,23 +639,44 @@ When a search query comes in, OPUS first looks in the ``user_searches`` table to
 
 The fields of ``user_searches`` are:
 
-* ``id``: A unique ID, which identifies the search's rows in ``search_results``.
-* ``search_hash``: The SHA-256 digest, stored as its 32 bytes, of the JSON list of four strings describing the search: its selections, its qtypes, its units and its sort order, each of the last three ``null`` when the search has none. It is a unique key, so a search is considered to have been previously made only if all four match.
-* ``result_count``: The number of rows the search's build wrote to ``search_results``. ``NULL`` until the search is built.
-* ``results_built_at``: When the search's results were built. ``NULL`` until they are, which is how OPUS tells a built search from one that is only registered.
-* ``last_used_at``: When the search was registered or last used, stamped at most once a day. ``opus_manage prune`` removes searches least recently used first by it.
+* ``id``: The search's number. The search's rows in ``search_results`` carry it.
+* ``search_hash``: What identifies the search: the SHA-256 hash, stored as 32 bytes, of
+  a JSON list of the search's selections, qtypes, units and sort order; each of the last
+  three is ``null`` when the search has none. It is a unique key, so two searches are the
+  same search only if all four match.
+* ``result_count``: How many results the search has. ``NULL`` until its results are
+  stored.
+* ``results_built_at``: When the search's results were stored. ``NULL`` until they are;
+  this is how OPUS tells whether a search's results exist yet.
+* ``last_used_at``: When the search was added or last used, updated at most once a day.
+  ``opus_manage prune`` removes the searches with the oldest ``last_used_at`` first.
 
 Both times are in UTC.
 
-``search_results`` holds every built search's results. Each row represents one OPUS ID in one search's results. The fields of ``search_results`` are:
+Each row of ``search_results`` is one observation in one search's results. Its fields are:
 
-* ``search_id``: The ``user_searches`` ID of the search.
-* ``sort_order``: The result's position in the search's sorted order, numbered from 1 with no gaps.
-* ``obs_general_id``: The ``obs_general`` ID of the result.
+* ``search_id``: The search's number, its ``user_searches`` ``id``.
+* ``sort_order``: The observation's position in the search's sorted order: 1, 2, 3, ...
+  with no gaps.
+* ``obs_general_id``: The observation's ``obs_general`` ``id``.
 
-The primary key is ``(search_id, sort_order)``, so a page of one search's results is a range of the primary key, and a unique key over ``(search_id, obs_general_id)`` serves the joins from the ``obs_*`` tables to one search's results. Neither table has a foreign key: a search's rows of ``search_results`` are removed by the code that removes its ``user_searches`` row.
+It has two keys:
 
-A search's results are written by one ``INSERT INTO search_results ... SELECT`` statement, which numbers the rows with ``ROW_NUMBER()`` in the search's order, inside a transaction that holds the search's ``user_searches`` row with ``SELECT ... FOR UPDATE`` and that also writes ``result_count``, ``results_built_at`` and ``last_used_at``. Concurrent requests for the same new search wait on that row lock, and then find the search built. :ref:`dev_guide_webapp_search_flow` describes the build in full.
+* The primary key, ``(search_id, sort_order)``, keeps each search's results together and
+  in order, so a page of results is one range of the key.
+* The unique key, ``(search_id, obs_general_id)``, finds an observation in one search's
+  results. The queries that join the ``obs_*`` tables to a search's results use it.
+
+Neither table has a foreign key. The code that removes a search removes its rows of
+``search_results`` too.
+
+A search's results are written by one ``INSERT INTO search_results ... SELECT``
+statement, which runs the search and numbers its rows in sort order with
+``ROW_NUMBER()``. The same transaction locks the search's ``user_searches`` row
+(``SELECT ... FOR UPDATE``) and fills in ``result_count``, ``results_built_at`` and
+``last_used_at``. Two requests that make the same new search at once therefore cannot
+both write its results: the second waits for the lock, then finds the results stored.
+:ref:`dev_guide_webapp_search_flow` describes this step by step.
 
 The ``contexts`` and ``definitions`` Tables
 -------------------------------------------

@@ -286,7 +286,7 @@ Import steps
        prompts.
    * - ``--analyze-tables``
      - Recompute the key distributions of every ``obs_`` and ``mult_`` table, after the
-       auxiliary, cart and search tables are built.
+       auxiliary, cart and search tables are created.
 
 Parallelism
 ~~~~~~~~~~~
@@ -372,9 +372,10 @@ Auxiliary tables and other steps
        schema without one it logs an error and creates nothing.
    * - ``--reset-search-tables``
      - Drop and re-create the web application's search tables, ``user_searches`` and
-       ``search_results``, empty from their schema files, then flush the web
-       application's cache (:ref:`dev_guide_import_steps_do_django`). A flush that
-       fails fails the step.
+       ``search_results``, empty from their schema files, then empty the web
+       application's cache (:ref:`dev_guide_import_steps_do_django`). If emptying the
+       cache fails, the step fails. Without memcached there is no shared cache to empty,
+       and each web worker keeps its own until it is restarted.
    * - ``--validate``
      - Validate the imported tables. A check that logs an error keeps the invocation
        from marking the schema ready, and makes it exit with failure.

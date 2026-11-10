@@ -405,7 +405,7 @@ What bench_db records
 ~~~~~~~~~~~~~~~~~~~~~
 
 It first empties the search tables with the side's own option, since the searches an
-earlier web run stored are not part of what the import built. Then, after
+earlier web run stored are not part of what the import wrote. Then, after
 ``ANALYZE TABLE`` on every table, with the statistics cache off: each table's data
 and index bytes, exact row count and index count, and each ``mult_`` table's largest
 id; the schema's totals, its ``FULLTEXT`` tablespaces, and its size against the buffer

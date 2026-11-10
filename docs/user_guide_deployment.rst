@@ -129,7 +129,8 @@ The scripts
     (``opus_import --import-dictionary --reset-search-tables``), and only then switches.
     The import already finalized the database, so nothing else is rebuilt: the
     ``deployed`` symlink is moved onto it, the cache service is restarted, and the
-    workers are started again. They are stopped for the switch alone, not for the build.
+    workers are started again. They are stopped only for the switch, not while the new
+    installation is being prepared.
     Which units those are comes from ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
 
 ``deploy_new_code_only.sh [--no-database] [<version spec>]``
@@ -303,22 +304,25 @@ Two things that always have to happen
 
 After **anything** that changes the database, and both are easy to forget:
 
-**1. The shared Django cache has to be emptied**, because it holds the id each search is
-stored under, and mult counts, range endpoints and product-type lists keyed by a search
-that now means something else::
+**1. The shared Django cache has to be emptied**, because it holds each search's number
+and answers computed from the old data: mult counts, range endpoints and product-type
+lists::
 
     OPUS_CONFIG=/opt/opus/deployed/opus.toml \
         /opt/opus/deployed/opus_venv/bin/python -m opus_app.clear_django_cache
 
 That module configures the cache backend and calls ``clear()``, and does nothing else.
 Restarting the cache service has the same effect, and is what a deploy does -- the unit
-``OPUS_CACHE_SERVICE`` names.
+``OPUS_CACHE_SERVICE`` names. Without memcached there is no shared cache: the command
+succeeds but empties nothing the workers use, because each worker keeps its cache in its
+own memory. Step 2 empties those.
 
 **2. Every worker process has to be restarted**, because each one keeps its own copy of
 the tables only an import changes -- ``param_info``, ``table_names``, ``partables``,
-``definitions`` and the ``mult_`` tables. **Nothing running outside a worker can reach those**,
-``clear_django_cache`` included, so restarting the application is the only thing that
-clears them. See :ref:`dev_guide_webapp_caching`.
+``definitions`` and the ``mult_`` tables -- and, without memcached, its own cache.
+**Nothing running outside a worker can reach those**, ``clear_django_cache`` included, so
+restarting the application is the only thing that clears them. See
+:ref:`dev_guide_webapp_caching`.
 
 .. _user_guide_deployment_runbook:
 
@@ -414,9 +418,9 @@ Pruning stored searches
 -----------------------
 
 The web application stores every search a user makes: one row in ``user_searches``, and
-the search's results, one row per matching observation, in ``search_results``. A search
-is built once and every later request for it reads the stored rows, so ``search_results``
-grows with every new search and no request removes anything from it.
+the search's results, one row per matching observation, in ``search_results``. The first
+request for a search stores its results and every later request reads them, so
+``search_results`` grows with every new search and no request removes anything from it.
 ``opus_manage prune`` is what bounds it::
 
     opus_manage prune [--max-rows ROWS] [--unused-days DAYS] [--stats | --dry-run]
@@ -429,13 +433,14 @@ only as much as it must:
    stay until the next run.
 2. **Searches, least recently used first**, until the searches left hold no more than
    ``--max-rows`` rows of ``search_results``, and in any case every search nobody has
-   used for ``--unused-days`` days. A search another request is building at that
+   used for ``--unused-days`` days. A search whose results a request is storing at that
    moment, or one used since the prune read when it was last used, is left alone, and
    counted as skipped.
 3. **Expired sessions**, through Django's own ``clearsessions``.
 4. **Cart rows whose session no longer exists.**
 
-Removing a search costs nothing but speed: the next request for it builds it again. A
+Removing a search costs nothing but speed: the next request for it runs the search
+and stores its results again. A
 search's last use is recorded at most once a day, so a search in daily use always has a
 recent stamp: it is never removed for going unused, and it is among the last removed to
 bring the table down to ``--max-rows``.

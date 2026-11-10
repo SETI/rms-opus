@@ -362,8 +362,8 @@ parameters its placeholders consume. Everything below returns one.
        by ``sort_order`` that a page reads.
    * - :func:`~opus_app.apps.tools.sql_builder.row_number`
      - ``ROW_NUMBER() OVER (ORDER BY ...)``, or ``ROW_NUMBER() OVER ()`` given no
-       terms. It numbers a search's results as its build writes them, and the cart in a
-       sort order with the same shape.
+       terms. It numbers a search's results as they are stored, and numbers the cart in
+       a sort order the same way.
 
 The statement layer
 ~~~~~~~~~~~~~~~~~~~
@@ -406,8 +406,8 @@ The statement layer
 The module-level functions that render whole statements are
 :func:`~opus_app.apps.tools.sql_builder.delete_from`,
 :func:`~opus_app.apps.tools.sql_builder.delete_joined`,
-:func:`~opus_app.apps.tools.sql_builder.insert_into_select` (which a search's build
-writes ``search_results`` with),
+:func:`~opus_app.apps.tools.sql_builder.insert_into_select` (which stores a search's
+results in ``search_results``),
 :func:`~opus_app.apps.tools.sql_builder.replace_into_values`,
 :func:`~opus_app.apps.tools.sql_builder.replace_into_select` and
 :func:`~opus_app.apps.tools.sql_builder.update`.
@@ -445,8 +445,8 @@ are ``MYSQL_TABLE_NOT_EXISTS``; ``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how 
 autocomplete endpoint learns its restricted query timed out; and
 ``MYSQL_LOCK_WAIT_TIMEOUT``, which
 :func:`~opus_app.apps.tools.db_utils.is_lock_timeout_error` matches, and which is how a
-search's build learns that its wait for another worker's build of the same search ran
-out.
+request learns that it waited too long for another request storing the same search's
+results.
 
 .. _dev_guide_webapp_tools_import_constants:
 

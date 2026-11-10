@@ -671,13 +671,13 @@ entirely.
        replaced if the server has dropped it. Default ``true``.
    * - ``search_build_timeout``
      - optional
-     - How many seconds a request building a search's results waits for another web
-       worker already building the same search before it gives up and answers with a
-       500. Default ``270``. **Keep it at least 30 seconds below the web server's worker
-       timeout** -- gunicorn's ``--timeout``, uWSGI's ``harakiri``, Apache's ``Timeout``
-       (:ref:`user_guide_web_server`): a worker killed partway through a build loses the
-       build, and the next request waiting for it starts over. A generated file never
-       contains it.
+     - How many seconds a request waits while another web worker stores the results of
+       the same search, before it gives up and answers with a 500. Default ``270``.
+       **Keep it at least 30 seconds below the web server's worker timeout** --
+       gunicorn's ``--timeout``, uWSGI's ``harakiri``, Apache's ``Timeout``
+       (:ref:`user_guide_web_server`): if the web server kills a worker partway through
+       storing a search's results, nothing is stored, and the next request has to start
+       over. A generated file never contains it.
    * - ``search_results_max_rows``
      - optional
      - The rows ``opus_manage prune`` cuts the ``search_results`` table down to unless
