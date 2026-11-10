@@ -54,10 +54,11 @@ There is one set of tables, and every import writes into it. An import into a sc
 that is not served yet -- one with no ``schema_version`` row -- is a **fresh import**: the
 observation tables are created with only the keys a load needs, and finalization adds the
 remaining keys once at the end. An import into a finished schema is an **append**, into
-the tables with their keys in place; it marks the schema ``appending`` first, so the web
-application refuses to serve it until finalization has run again and the schema is
-marked ready. On both paths each bundle is deleted before it is loaded, and a bundle
-registry keeps a schema with an unfinished bundle from being finalized or marked ready.
+the tables with their keys in place; it marks the schema ``appending`` first, so a web
+application that loads it refuses to serve it until finalization has run again and the
+schema is marked ready. On both paths each bundle is deleted before it is loaded, and a
+bundle registry keeps a schema with an unfinished bundle from being finalized or marked
+ready.
 :ref:`dev_guide_import_write_paths` is the whole of it.
 
 The auxiliary tables are built after the observation tables, but only ``param_info`` is

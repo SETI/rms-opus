@@ -305,7 +305,9 @@ def do_import_steps(ctx: ImportContext) -> bool:
     """Run the import work the command line asked for, in the one order that is safe.
 
     ``--scorched-earth`` drops every table the import creates first; ``--delete-bundles``
-    then deletes the named bundles and their registry rows. An invocation that imports
+    then deletes the named bundles and their registry rows, setting a ``ready`` schema of
+    this release's version to ``appending`` first, since the deletion unfinishes it as an
+    append does. An invocation that imports
     bundles chooses its path from the schema's state (`choose_import_path`), unless
     `opus_import.cli` chose it already, and records its bundles in the registry before
     the first one starts: on the append path every bundle an earlier append left
@@ -349,6 +351,8 @@ def do_import_steps(ctx: ImportContext) -> bool:
             do_import_tables.delete_all_opus_tables(ctx)
 
     if ctx.args.delete_bundles:
+        if named_bundles and _schema_is_ready(ctx):
+            _mark_appending(ctx)
         with ctx.timed('delete_bundles'):
             for bundle_id in named_bundles:
                 do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
@@ -417,6 +421,20 @@ def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str
             ctx, f'Resuming the unfinished bundles of an earlier append: {", ".join(resumed)}'
         )
     return [*(bundle for bundle in resumed if bundle not in named_bundles), *named_bundles]
+
+
+def _schema_is_ready(ctx: ImportContext) -> bool:
+    """Return whether the schema's one version row is this release's version, ``ready``.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+    """
+    db = ctx.db
+    assert db is not None
+    if not db.table_exists(schema_version.SCHEMA_VERSION_TABLE):
+        return False
+    rows = list(db.read_rows(schema_version.SCHEMA_VERSION_TABLE, ['version', 'state']))
+    return rows == [(schema_version.SCHEMA_VERSION, schema_version.SCHEMA_STATE_READY)]
 
 
 def _mark_appending(ctx: ImportContext) -> None:

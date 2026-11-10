@@ -196,6 +196,7 @@ def test_an_append_that_replaces_one_bundle_and_adds_one_matches_a_fresh_import(
     kept = next(bundle for bundle in main_run.bundles if bundle not in (replaced, added))
     assert copy.step('--delete-bundles', added).returncode == 0
     assert _rows_of(db_credentials, copy.schema, added) == 0
+    assert _version_rows(db_credentials, copy.schema) == [(SCHEMA_VERSION, SCHEMA_STATE_APPENDING)]
     _plant_cart_rows(db_credentials, copy.schema, replaced, kept)
     planted = _cart_rows(db_credentials, copy.schema)
     assert _cart_bundles(db_credentials, copy.schema) == {replaced, kept}

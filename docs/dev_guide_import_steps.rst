@@ -149,7 +149,9 @@ live. In order:
 3. **Delete the named bundles**, under ``--delete-bundles``: each one's rows from every
    observation table, then their rows in the bundle registry
    (:func:`~opus_import.bundle_registry.unregister_bundles`). It runs on any schema
-   state and never changes the version row.
+   state. A schema whose version row is this release's version and ``ready`` is set to
+   ``appending`` before the first delete, as an append sets it, since the deletion changes
+   a finished schema; no other state is changed.
 4. Stop here unless ``--import`` was given.
 5. **Choose the path**, as above, if :mod:`opus_import.cli` has not.
 6. **Record the bundles** in the bundle registry, creating its table first if the schema
@@ -174,8 +176,8 @@ live. In order:
 Any error at all makes the function return False once the loop ends, unless
 ``--ignore-errors``, and the invocation exits with failure. Neither path finalizes. A
 failed fresh import leaves a schema with no version row and a failed append leaves one
-``appending``, and the web application refuses to serve either, as both deploy scripts
-refuse to promote it.
+``appending``, and a web application that loads either refuses to serve it, as both
+deploy scripts refuse to promote it.
 
 :func:`~opus_import.steps.do_import.import_one_bundle` is the per-bundle driver
 described in :ref:`dev_guide_import_per_bundle`. It resets the per-bundle caches, skips

@@ -294,6 +294,38 @@ def test_deleting_bundles_removes_their_registry_rows(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.parametrize(
+    ('state', 'after'),
+    [
+        (SCHEMA_STATE_READY, SCHEMA_STATE_APPENDING),
+        (SCHEMA_STATE_APPENDING, SCHEMA_STATE_APPENDING),
+    ],
+    ids=['ready', 'appending'],
+)
+def test_deleting_bundles_from_a_finished_schema_unfinishes_it(
+    state: str, after: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The deletion changes a served schema, so it is ``appending`` until stamped again."""
+    db = _RegistryDB(
+        {
+            SCHEMA_VERSION_TABLE: [{'version': SCHEMA_VERSION, 'state': state}],
+            'import_bundle': _registry({'B_4': 'done'}),
+        }
+    )
+    succeeded, _ctx = _run(db, ['B_4'], monkeypatch, do_import=False, delete_bundles=True)
+    assert succeeded
+    assert db.tables[SCHEMA_VERSION_TABLE] == [{'version': SCHEMA_VERSION, 'state': after}]
+
+
+def test_deleting_nothing_leaves_a_finished_schema_ready(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With no bundle named there is nothing to delete, so nothing changes."""
+    ready = [{'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}]
+    db = _RegistryDB({SCHEMA_VERSION_TABLE: list(ready)})
+    succeeded, _ctx = _run(db, [], monkeypatch, do_import=False, delete_bundles=True)
+    assert succeeded
+    assert db.tables[SCHEMA_VERSION_TABLE] == ready
+
+
+@pytest.mark.parametrize(
     ('tables', 'finished'),
     [
         ({}, True),

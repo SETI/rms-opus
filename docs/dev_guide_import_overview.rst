@@ -85,11 +85,11 @@ import leaves a schema that is still not served until an import finishes it.
 ``ready`` or left ``appending`` by an earlier append: a finished database that bundles
 are being added to or replaced in. Its tables keep their indexes, and the bundles load
 into them in place. Before the first bundle the append sets the row's state to
-``appending``, so the web application refuses the schema and both deploy scripts refuse
-to promote it until ``--write-schema-version`` sets it back to ``ready``. **An append
-never finalizes the schema itself**: ``--finalize``, ``--validate`` and
-``--write-schema-version`` follow as invocations of their own, as they do after a fresh
-import. Each finalization step then either does its work again, because an append
+``appending``, so a web application that loads the schema refuses it and both deploy
+scripts refuse to promote it until ``--write-schema-version`` sets it back to
+``ready``. **An append never finalizes the schema itself**: ``--finalize``,
+``--validate`` and ``--write-schema-version`` follow as invocations of their own, as
+they do after a fresh import. Each finalization step then either does its work again, because an append
 invalidates it -- the duplicate step, the auxiliary tables, the cart and cache tables,
 ``ANALYZE`` and validation -- or finds nothing to do, as ``--create-indexes`` does on
 tables that already carry every key. A table first created by an append, because its
@@ -436,11 +436,13 @@ Invariants
 ----------
 
 * **Nothing is served until it is finished.** A fresh import writes a schema with no
-  version row, and an append sets the row to ``appending`` before its first write; the
-  web application and both deploy scripts refuse either until
-  ``--write-schema-version`` marks it ``ready``, which it refuses to do while any bundle
-  in the bundle registry is not ``done``. A step that wrote a served schema before
-  setting it ``appending`` would break the guarantee the design rests on.
+  version row, and an append, or ``--delete-bundles`` on a finished schema, sets the row
+  to ``appending`` before its first write; a web application that loads either, and both
+  deploy scripts, refuse it until ``--write-schema-version`` marks it ``ready``, which it
+  refuses to do while any bundle in the bundle registry is not ``done``. A step that
+  wrote a finished schema before setting it ``appending`` would break the guarantee the
+  design rests on. A web application already serving a schema does not check it again,
+  so appends and deletions go to a schema nothing is serving.
 * **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
   constraint enforces it.
 * **An import run is single-threaded, and one obs instance serves a whole bundle**,

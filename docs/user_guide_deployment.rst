@@ -383,10 +383,13 @@ that built it, with that installation's own configuration, which names the datab
 Because the database already holds this release's schema version, the import is an
 **append**: each named bundle is deleted from the database and loaded again, or added if
 the database did not hold it. The first command marks the database ``appending``, and
-from then until ``--write-schema-version`` marks it ``ready`` again, the web application
-answers every request on it with a 503 and both deploy scripts refuse it
-(:ref:`user_guide_deployment_schema_version`) -- which is why this is done only to a
-database nothing is being served from. Read ``ERRORS.log`` afterwards, as for any
+from then until ``--write-schema-version`` marks it ``ready`` again, both deploy scripts
+refuse it and a web application that starts on it answers every request with a 503
+(:ref:`user_guide_deployment_schema_version`). A web server already serving the database
+checks only once, as it starts, so it would go on serving the half-changed tables --
+which is why this is done only to a database nothing is being served from.
+``opus_import --delete-bundles`` marks a finished database ``appending`` in the same
+way. Read ``ERRORS.log`` afterwards, as for any
 import. A database another release imported is refused rather than appended to, and is
 re-imported under this one instead.
 

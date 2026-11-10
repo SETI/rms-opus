@@ -717,11 +717,11 @@ The fields are:
 * ``version``: The :data:`~opus_import.schema_version.SCHEMA_VERSION` of the release whose import created the tables. A release that changes a table schema in a way an existing database does not have raises it, and is deployed with a fresh import.
 * ``state``: ``ready`` once the database is finished; ``appending`` while an append to it is writing.
 
-The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), creates the table and writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append sets ``state`` to ``appending`` before its first write (:ref:`dev_guide_import_write_paths`). ``--scorched-earth`` drops the table before any other.
+The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), creates the table and writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append, and ``--delete-bundles`` on a finished database, set ``state`` to ``appending`` before the first write (:ref:`dev_guide_import_write_paths`). ``--scorched-earth`` drops the table before any other.
 
 Two things read it, and both require the release's own version in the ``ready`` state:
 
-* the web application, as it loads (:mod:`opus_app.schema_guard`, called from :mod:`opus_app.wsgi`). Any other row, or none, makes every request answer 503 with a message naming the remedy, and each refused request checks again, so a worker serves the database as soon as it is finished, without a reload. The check is in the WSGI entry point and not in the settings, so management commands, ``inspectdb`` among them, work against any database;
+* the web application, as it loads (:mod:`opus_app.schema_guard`, called from :mod:`opus_app.wsgi`). Any other row, or none, makes every request answer 503 with a message naming the remedy, and each refused request checks again, so a worker serves the database as soon as it is finished, without a reload. Once the check passes the worker does not make it again, so a worker already serving a database goes on serving it if the row later changes: an append or a deletion is made only to a database nothing is serving. The check is in the WSGI entry point and not in the settings, so management commands, ``inspectdb`` among them, work against any database;
 * both deploy scripts, before they write anything (:ref:`user_guide_deployment_schema_version`).
 
 .. _dev_guide_database_schema_import_bundle:

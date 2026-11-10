@@ -228,7 +228,8 @@ Import steps
        deleted from the observation tables first, so importing it again replaces it.
    * - ``--delete-bundles``
      - Delete the named bundles' rows from every observation table, and their bundle
-       registry rows, before any bundle is imported.
+       registry rows, before any bundle is imported. A ``ready`` schema of this release's
+       version is set to ``appending`` first, and needs the closing invocations again.
    * - ``--scorched-earth``
      - Drop every table the import creates in the schema, leaving Django's own
        ``django_*`` and ``auth_*`` tables
