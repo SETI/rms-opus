@@ -5372,7 +5372,7 @@ Nothing above this line is rewritten by an executor.
     44.6, 10.7 and 41.5 ms after), so a median of three moves by tens of percent
     either way with nothing changed. The warm tenth page, which pays no first-request
     cost, is 10 ms on both sides.
-- `benchmarks/scenarios/queries.sql` was last written by PR-00, and PR-02 to PR-09 each
-  changed the SQL without capturing it again. It is rewritten from this PR's head
+- `benchmarks/scenarios/queries.sql` was last written by PR-00, and no PR since captured
+  it again, though the SQL the scenarios issue changed. It is rewritten from this PR's head
   (2026-11-10, `bench_db --dump-queries --commit-capture`, session `capture`, test
   scale, `bench_test_before_a_3`): the same 67 blocks, 500 statements against 1,977.
