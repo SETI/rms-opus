@@ -366,7 +366,8 @@ def write_opus_config(
         credentials: How to reach the database server.
         extra_import: Further ``[import]`` keys and their values, for a session that
             sets one; None for none. A key the file sets by default, such as
-            ``log_file`` or ``cpus`` (`fixture_cpus`), takes the value given here instead.
+            ``log_file`` or ``cpus`` (`fixture_cpus`), takes the value given here instead,
+            and a key given None is left out of the file.
     """
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
@@ -387,7 +388,8 @@ def write_opus_config(
         **(extra_import or {}),
     }
     for key, value in import_keys.items():
-        text += f'{key} = {toml_value(value)}\n'
+        if value is not None:
+            text += f'{key} = {toml_value(value)}\n'
     paths.config_file.write_text(text, encoding='utf-8')
 
 

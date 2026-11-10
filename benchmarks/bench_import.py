@@ -416,7 +416,10 @@ class ImportBench:
                 else []
             ),
             observer=monitor,
-            extra_import=self.extra_import,
+            # The suite's stated host size is left out: the harness measures this
+            # machine, whose cores the import counts, and a side older than the key
+            # would refuse it.
+            extra_import={'cpus': None, **self.extra_import},
         )
         require_empty_errors_log(paths.errors_log, at_end=True)
         self._fill_run(run, monitor, schema, before, full=finalize, log_dir=paths.log_dir)
