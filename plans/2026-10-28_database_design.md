@@ -497,10 +497,14 @@ session setting and refuses a server whose token size is not 2.
 
 `schema_version(version INT UNSIGNED NOT NULL PRIMARY KEY, state ENUM('ready',
 'appending') NOT NULL, generation INT UNSIGNED NOT NULL, pending_generation INT UNSIGNED
-NULL)`, one row; the last two columns exist under design B of §3.1 only. `generation` is
-the import generation the web application serves, and `pending_generation` the one an
-incremental update is writing; a fresh import's row starts at generation 1 with none
-pending.
+NULL, pending_ready BOOLEAN NOT NULL DEFAULT FALSE, revertible BOOLEAN NOT NULL DEFAULT
+FALSE)`, one row; the last four columns exist under design B of §3.1 only. `generation`
+is the import generation the web application serves, `pending_generation` the one an
+incremental update is writing, `pending_ready` whether that one has been validated and
+stamped since anything last wrote it, and `revertible` whether the previous generation
+is still whole; a fresh import's row starts at generation 1 with none pending. Under
+design B the table is created empty when `obs_general` is, since the served view reads
+it, and an empty table counts as no row.
 It is written by an explicit step that every import sequence runs last, after
 validation, and that is the only writer of `ready`: it inserts the row as `ready` when it
 is absent, changes `appending` to `ready` when the version matches, and refuses to
@@ -857,7 +861,8 @@ served schema as a new **import generation**, which the served `obs_general` vie
 hides until it is switched in:
 
 1. **Begin.** The version row's `pending_generation` is set to P, one more than the served
-   `generation` (§2.7). The state stays `ready`, so every worker goes on serving, and a
+   `generation` (§2.7), and `pending_ready` to false; every later write to P sets it false
+   again, and only the version step, run after validation, sets it true. The state stays `ready`, so every worker goes on serving, and a
    worker that starts meanwhile passes the startup check.
 2. **Import.** Each bundle takes the append path, with one change: its served rows are
    *retired*, given `removed_generation = P`, rather than deleted, and its new rows are
@@ -865,29 +870,40 @@ hides until it is switched in:
    were never served, are deleted, so a rerun is clean. A dropped bundle is retired and
    nothing is loaded. A re-imported bundle takes a new bundle number and an id range
    after every existing one, since its old range still holds the rows the served
-   generation shows, so it wins a duplicate `opus_id` against every unchanged bundle. New
-   mult values append, and a new surface geometry target is a row (§2.3).
+   generation shows, so it wins a duplicate `opus_id` against every unchanged bundle. The
+   retired copy's registry row records the generation that retired it, so an unchanged
+   bundle's row, and its range, survive every purge. New mult values append, and a new
+   surface geometry target is a row (§2.3).
 3. **Finalization, for generation P, writing nothing a request reads.**
    - The duplicate step and validation read generation P.
    - The aux tables are built into their `__new` copies.
    - The mult step, the search-table reset and the cache flush wait.
 4. **The switch**, inside the same stop and start of the web service as a promotion (§3,
-   step 6). The aux tables are swapped in. Each cart row whose observation was retired
+   step 6), and refused unless `pending_ready` is true. The aux tables are swapped in,
+   the ones they replace kept until the purge. Each cart row whose observation was retired
    is pointed at the new copy by `opus_id`, or dropped and counted when there is none.
    The search tables are reset and the cache flushed. Last, the row's `generation`
-   becomes P. Each step checks whether it has run, so an interrupted switch is finished by
-   running it again. The restart refreshes the per-process caches, and the warm-up runs.
+   becomes P and `revertible` true. Each step checks whether it has run, so an
+   interrupted switch is finished by running it again; until it is, the web service stays
+   stopped, since a half-switched schema pairs one generation's aux tables, carts and
+   caches with the other's rows. The restart refreshes the per-process caches, and the
+   warm-up runs.
    Sessions stay where they are, since the schema does not change.
-5. **The purge**, while serving: the retired rows, which no generation the web
-   application serves contains, are deleted a chunk at a time, each child before
-   `obs_general_rows`. The mult step then removes the values only they used.
+5. **The purge**, while serving: `revertible` is set false and committed first, so a
+   purge that stops part way never leaves a previous generation that can be reverted to
+   with rows missing. The retired rows, which no generation the web application serves
+   contains, are then deleted a chunk at a time, each child before `obs_general_rows`,
+   with the retired copies' registry rows and the previous aux tables, and the mult step
+   removes the values only they used. The generation commands take a named lock on the
+   schema, so none runs while another does.
 
-Until the purge, the previous generation is still whole. A revert runs the switch
-backward: the previous aux tables, the cart pointed back by `opus_id`, the reset, and the
-previous `generation`. Before the switch, an abandoned update deletes the rows added at P
-and clears the retirements. A second server receives the update as it receives a full
-import, by a dump of the whole schema loaded on it, after which it switches with the same
-command.
+Until the purge, the previous generation is still whole. A revert, allowed while
+`revertible` is true, runs the switch backward: the previous aux tables, the cart pointed
+back by `opus_id`, the reset, and the previous `generation`. Before the switch, an
+abandoned update deletes the rows added at P and clears the retirements. A second server
+cannot take the update in place, since its load creates a new database, so it receives a
+dump of the whole schema, both generations, under a new name, switches that copy while
+nothing serves it, and promotes it as after a full import.
 
 **What it costs.** An update writes only the changed bundles. The served tables keep their
 indexes, so no index is rebuilt; the switch is a few statements with the service stopped,

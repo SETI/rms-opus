@@ -3893,10 +3893,16 @@ once (§1, Deploy; §2.3).
   - `obs_general` gains `added_generation INT UNSIGNED NOT NULL` and `removed_generation
     INT UNSIGNED NULL`, with no key on either: nearly every row passes the visibility test,
     so no key would be read, and the update finds a bundle's rows by `bundle_id`'s key.
-    `schema_version` gains `generation INT UNSIGNED NOT NULL`, the generation the web
-    application serves, and `pending_generation INT UNSIGNED NULL`, the one an update is
-    writing. A fresh import writes `added_generation = 1`, and `--write-schema-version`
-    inserts its row with `generation = 1`. A row is **in generation G** when
+    `schema_version` gains four columns:
+    - `generation INT UNSIGNED NOT NULL`, the generation the web application serves;
+    - `pending_generation INT UNSIGNED NULL`, the one an update is writing;
+    - `pending_ready BOOLEAN NOT NULL DEFAULT FALSE`, true once the pending generation has
+      been finalized, validated and stamped, and false again as soon as anything writes it;
+    - `revertible BOOLEAN NOT NULL DEFAULT FALSE`, true from a switch until the purge
+      starts.
+
+    A fresh import writes `added_generation = 1`, and `--write-schema-version` inserts its
+    row with `generation = 1`. A row is **in generation G** when
     `added_generation <= G AND (removed_generation IS NULL OR removed_generation > G)`.
   - **The served view.** The base table is `obs_general_rows`, and `obs_general` is a view
     of the rows in the served generation:
@@ -3914,7 +3920,15 @@ once (§1, Deploy; §2.3).
     names it, so `opus_app` changes no query, and nothing that reads `obs_general` can
     miss the test. `create_table` creates both when it creates `obs_general`, and the view
     lists the columns of `obs_general.json`, so a PR that adds a column regenerates the view
-    with the table. The import reads and writes the base table: `ImportDBSuper`
+    with the table. **The view needs `schema_version` to exist,** so `create_table` first
+    creates that table empty from its schema file when it is absent. Its row is still
+    written only by `--write-schema-version`, and an empty table reads as no row to
+    PR-08's dispatch and to PR-05's checks, so a fresh import stays a fresh import and is
+    not served. **Scorched earth drops the view with `DROP VIEW`,** before any table,
+    since `DROP TABLE` refuses a view; PR-08's scorched-earth test gains the view.
+    **`bench_server.clone_schema` recreates the view** in a clone after the clone's tables,
+    from the source's `SHOW CREATE VIEW`, so the clone-based A/Bs of later PRs can run
+    the web scenarios against a design-B schema; a `tests/benchmarks` test clones one. The import reads and writes the base table: `ImportDBSuper`
     translates the name `obs_general` to `obs_general_rows` in its table methods, the one
     place the import names it. The schema file keeps its name, the children's and `cart`'s
     foreign keys reference the base table, and Django's unmanaged `ObsGeneral` model reads
@@ -3928,9 +3942,12 @@ once (§1, Deploy; §2.3).
     generation's values. The PR lists every such query, found by reading every raw SQL site
     (`grep -rn "cursor.execute" src/opus_app/apps`) and every ORM query on a per-observation
     model, and makes each join the view.
-  - **The registry.** `import_bundle` (PR-16) gains `generation INT UNSIGNED NOT NULL`, and
-    its key becomes `(bundle_id, generation)`, so a re-imported bundle has a row for its
-    served copy and a row for its pending one. A bundle re-imported in generation P takes a
+  - **The registry.** `import_bundle` (PR-16) gains `generation INT UNSIGNED NOT NULL` and
+    `retired_generation INT UNSIGNED NULL`, and its key becomes `(bundle_id, generation)`,
+    so a re-imported bundle has a row for its served copy and a row for its pending one.
+    Retiring a bundle copy's rows sets its row's `retired_generation`, so the purge deletes
+    the registry rows of exactly the copies it deletes, and an unchanged bundle keeps its
+    row, and so its range, from whatever generation imported it. A bundle re-imported in generation P takes a
     new bundle number and an id range after every existing one, as a new bundle does: its
     old range is still full of the rows the served generation shows. So **a re-imported
     bundle wins every duplicate `opus_id` against an unchanged one**, where a full import
@@ -3939,7 +3956,8 @@ once (§1, Deploy; §2.3).
 - **The update, invocation by invocation.** Each step is a new `opus_import` flag or a
   changed behavior of an existing one when the schema has a pending generation P.
   1. `--begin-generation`: on a `ready` schema at this release's version with no pending
-     generation, sets `pending_generation` to `generation + 1`. It is refused otherwise; a
+     generation, sets `pending_generation` to `generation + 1` and `pending_ready` to
+     false. It is refused otherwise; a
      pending generation is named, with `--abandon-generation`. **The state stays `ready`**:
      every worker serves generation G throughout, and a worker that starts during the
      update still passes PR-05's check.
@@ -3952,11 +3970,13 @@ once (§1, Deploy; §2.3).
        rerun is clean.
      - **Loaded rows get `added_generation = P`.**
      - **The state is never set to `appending`.**
-  3. `--delete-bundles` with P pending retires the bundles' rows, deletes their rows added
-     at P, and deletes their registry rows of generation P. Without a pending generation it
+     - **`pending_ready` is set to false** before the first write.
+  3. `--delete-bundles` with P pending sets `pending_ready` to false, retires the bundles'
+     rows (setting `retired_generation = P` on their registry rows), deletes their rows
+     added at P, and deletes their registry rows of generation P. Without a pending generation it
      behaves as PR-08 made it.
-  4. `--finalize` with P pending works on generation P, and writes nothing a request reads
-     before the switch:
+  4. `--finalize` with P pending sets `pending_ready` to false, works on generation P, and
+     writes nothing a request reads before the switch:
      - `--create-indexes` is unchanged; on an existing schema it finds nothing to add.
      - **The duplicate step reads generation P only.** Of two rows sharing an `opus_id` it
        keeps the higher id, as today; the other is deleted if it was added at P, and
@@ -3974,35 +3994,52 @@ once (§1, Deploy; §2.3).
   5. `--validate` with P pending checks generation P. The orphan counts read every row,
      since a retired row's children are still there.
   6. `--write-schema-version` with P pending refuses an unfinished registry as today, and
-     otherwise logs that generation P is ready to switch. It writes nothing: the version
-     and the state are already right.
-  7. `--switch-generation` runs while the web service is stopped (below). Each of its steps
-     checks whether it has already run, so an interrupted switch is completed by running
-     it again:
-     1. PR-06's swap of every aux `__new` table;
+     otherwise sets `pending_ready` to true and logs that generation P is ready to switch.
+     It is the only writer of true, and the scripts run it only after `--validate`
+     succeeds, as every sequence runs it last.
+  7. `--switch-generation` runs while the web service is stopped (below). It is refused
+     unless `pending_ready` is true, so a pending generation whose import, finalization or
+     validation failed, or that anything has written since it was stamped, is never
+     switched in. Each of its steps checks whether it has already run, so an interrupted
+     switch is completed by running it again:
+     1. the swap of every aux `__new` table, which keeps the tables it replaces as
+        `__prev` rather than dropping them as PR-06's swap drops `__old`, after first
+        dropping any `__prev` an earlier switch left;
      2. every `cart` row whose observation is retired at P is pointed at the generation-P
         row with the same `opus_id`, or, when there is none, deleted and counted in the log,
         as PR-18's carry-over does;
      3. PR-11's search-table reset and cache flush;
-     4. last, in one statement, `generation = P` and `pending_generation = NULL`.
+     4. last, in one statement, `generation = P`, `pending_generation = NULL`,
+        `pending_ready = false`, and `revertible = true`.
 
      The web service starts only after the last step succeeds. The restart refreshes the
      per-process caches (`param_info`, the mult labels, `partables`, `table_names`), and
      PR-18's warm-up runs.
-  8. `--purge-generations` runs after the switch, while the site is serving. It deletes
-     every row retired at or before the served generation, `transaction_rows` at a time,
-     each child table before `obs_general_rows`, with `foreign_key_checks = 1`. The rows it
-     deletes are in no served generation, so no request reads them. It deletes the retired
-     generations' registry rows, then runs PR-14's mult step and `ANALYZE`.
+  8. `--purge-generations` runs after the switch, while the site is serving. **Its first
+     statement, committed on its own, sets `revertible` to false**, so a revert is
+     refused from before the first row is deleted, and an interrupted purge leaves a
+     generation that can no longer be reverted to, rather than one with rows missing. It
+     then deletes every row retired at or before the served generation,
+     `transaction_rows` at a time, each child table before `obs_general_rows`, with
+     `foreign_key_checks = 1`. The rows it deletes are in no served generation, so no
+     request reads them. Last, it deletes the registry rows whose `retired_generation` is
+     at or before the served generation, drops the aux `__prev` tables, and runs PR-14's
+     mult step and `ANALYZE`.
   9. **Abandoning and reverting.** `--abandon-generation`, with P pending and not switched,
      deletes the rows added at P, clears `removed_generation = P` back to NULL, drops the
      aux `__new` tables, deletes P's registry rows, and clears `pending_generation`.
      `--revert-generation`, after a switch and before the purge, runs the switch backward:
-     it swaps PR-06's `__old` aux tables back, points the cart at the previous generation
-     by `opus_id`, resets the search tables, and sets `generation` back to G and
-     `pending_generation` to P, so the update can then be abandoned or switched again. It
-     is refused once the purge has run, which deletes the registry rows it needs. Like the
-     switch, it runs while the web service is stopped.
+     it swaps the `__prev` aux tables back, keeping the reverted-from ones as `__prev` in
+     turn, points the cart at the previous generation by `opus_id`, resets the search
+     tables, and sets `generation` back to G, `pending_generation` to P, `pending_ready`
+     to true, and `revertible` to false, so the update can then be abandoned or switched
+     again. It is refused unless `revertible` is true. Like the switch, it runs while the
+     web service is stopped.
+  10. **The generation commands never overlap.** `--begin-generation`,
+      `--switch-generation`, `--revert-generation`, `--abandon-generation` and
+      `--purge-generations` each hold a MySQL named lock on the schema
+      (`GET_LOCK('<schema>.generation', 0)`) for their whole run, and each is refused
+      when another holds it.
 - **The scripts.** `run_incremental_opus_update.sh`, its `_incremental_opus_update_wrapper.sh`,
   the internal `_run_incremental_opus_update.sh`, and the sourced
   `_incremental_opus_update_steps.sh` are new in `src/opus_deploy/server/import_and_deploy/`,
@@ -4020,19 +4057,27 @@ once (§1, Deploy; §2.3).
   `--delete-bundles <the --drop list>` when `--drop` is given, then `--finalize`,
   `--validate` and `--write-schema-version`. It then runs the error-log check of
   `_opus_import_bundles.sh` (PR-16) on a log directory that starts empty.
-  - **A second server receives the update the same way as a full import.** When
-    `deploy.env` names `OPUS_DB_DUMP_DIR` and `OPUS_PEER_DB_HOST`, the whole schema, both
-    generations, is dumped and loaded on the peer through `copy_database_to_peer`. This PR
-    moves that block out of `_run_full_opus_import.sh` into the new packaged file
-    `_copy_database_to_peer.sh`, which executes nothing at top level, so the two scripts
-    cannot drift. The peer then switches with the same command. With a peer, the update
-    pays the copy design A pays on every update; without one, it does not.
+  - **A second server receives the update as a new schema.** `load_db.sh` creates its
+    database and refuses one that exists, so the peer's served schema cannot take the
+    update in place. When `deploy.env` names `OPUS_DB_DUMP_DIR` and `OPUS_PEER_DB_HOST`,
+    the internal script, after `--write-schema-version`, dumps the whole schema, both
+    generations, and loads it on the peer under a new schema name, through
+    `copy_database_to_peer`. This PR moves that block out of `_run_full_opus_import.sh`
+    into the new packaged file `_copy_database_to_peer.sh`, which executes nothing at top
+    level, so the two scripts cannot drift. On the peer the operator runs
+    `opus_import --switch-generation` against the loaded schema, which nothing serves, so
+    no stop is needed, and promotes it with `deploy_new_code_and_database.sh <name>` as
+    after a full import. The peer's served schema is never written. With a peer, the
+    update pays the copy design A pays on every update; without one, it does not.
   - **`promote_generation.sh`** is new beside `deploy_new_code_and_database.sh`, for the
     operator. It stops the web service and runs `opus_import --switch-generation`. It then
     restarts the cache service, starts the web service and runs the warm-up, with
-    `_promote.sh`'s stop and start. On failure it starts the web service again on the
-    generation the row names and exits non-zero. `promote_generation.sh --revert` runs
-    `--revert-generation` the same way. The purge is the operator's next command,
+    `_promote.sh`'s stop and start. **On failure it leaves the web service stopped** and
+    exits non-zero, naming the two ways on: run `promote_generation.sh` again, which
+    completes the interrupted switch, or `promote_generation.sh --revert`. Starting on a
+    half-switched schema would serve aux tables, carts and caches of one generation
+    against the rows of the other. `promote_generation.sh --revert` runs
+    `--revert-generation` the same way, and starts the service only when it succeeds. The purge is the operator's next command,
     `opus_import --purge-generations`, run once the switched generation has been checked.
   - **Tests for the scripts.** As in design A, the scripts' logic is
     functions in `_incremental_opus_update_steps.sh`, tested in `tests/opus_deploy` with a
@@ -4128,7 +4173,10 @@ once (§1, Deploy; §2.3).
   on the same branch. If none is chosen, the PR closes with the report in its description.
 - **Option 1: a default-sort rank on `obs_general`.** Prototype: `ALTER TABLE obs_general
   ADD COLUMN default_rank INT UNSIGNED, ADD KEY (default_rank)`, filled from `ROW_NUMBER()
-  OVER (ORDER BY time1, opus_id)`. Probe shapes, on the prototype copy: the empty
+  OVER (ORDER BY time1, opus_id)`; if PR-23 chose design B, `obs_general` is a view, so
+  the `ALTER` and the fill go to `obs_general_rows` and the view is recreated with the new
+  column, and if implemented `obs_general.json`'s new column reaches the view the same
+  way. Probe shapes, on the prototype copy: the empty
   search's first and last pages in the default sort, read as `default_rank BETWEEN ? AND
   ?` with no search build, against the captured page reads from `search_results`; and the
   `SELECT` of the broad constrained search's build ordered by `default_rank`, against the
