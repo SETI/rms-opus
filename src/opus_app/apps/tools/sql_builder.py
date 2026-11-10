@@ -28,8 +28,7 @@ by inspection:
   Django's ``quote_name`` wraps a name in backticks but does not escape a backtick
   *inside* it, so validation, not quoting, is what closes that hole. It matters
   here because several identifiers are computed at runtime: the cache table name
-  (``cache_<n>``), the temporary table names built from a session id and a pid, and
-  the column names that come from the ``param_info`` table.
+  (``cache_<n>``) and the column names that come from the ``param_info`` table.
 * **Values are always parameters.** Anything that is data is rendered as ``%s``
   and collected into a parameter list; the module never formats a value into SQL
   text. There are exactly **two** exceptions, and both are numbers that shape the
@@ -63,6 +62,7 @@ constructs those call sites do not use.
 """
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, NamedTuple
 
@@ -82,10 +82,8 @@ _BINARY_OPERATORS = frozenset(['=', '<', '<=', '>', '>=', '+', '-', 'LIKE', 'NOT
 #: text of statements built here, so the separator is pinned rather than free.
 _SEPARATOR = ','
 
-#: The column definitions of a search cache table. Both the durable `cache_<n>`
-#: table and the short-lived temporary table the cart's range editor builds use
-#: exactly these, because both are consumed the same way: `sort_order` gives the
-#: result ordering and `id` joins back to `obs_general`.
+#: The column definitions of a search cache table -- `sort_order` numbers the results
+#: from 1 in the search's order, and `id` joins back to `obs_general`.
 CACHE_TABLE_COLUMN_DEFS = (
     'sort_order INT NOT NULL AUTO_INCREMENT, '
     'PRIMARY KEY(sort_order), id INT UNSIGNED, '
@@ -262,6 +260,47 @@ def in_sequence(expr: Expr, vals: list[Any] | tuple[Any, ...]) -> Expr:
     used.
     """
     return Expr(f'{expr.sql} IN %s', [*expr.params, vals])
+
+
+def between(expr: Expr, low: Any, high: Any) -> Expr:
+    """Return `expr BETWEEN %s AND %s`, the two bounds as parameters."""
+    return Expr(f'{expr.sql} BETWEEN %s AND %s', [*expr.params, low, high])
+
+
+def sort_order_range(table: str, offset: int, count: int) -> Expr:
+    """Return the condition selecting one window of a table numbered by `sort_order`.
+
+    A search's cache table, and the cart numbered by `row_number`, number their rows
+    from 1 with no gaps, so the rows after the first `offset` and `count` of them are
+    exactly those whose `sort_order` lies in the range, and a key on `sort_order`
+    reads only them.
+
+    Parameters:
+        table: The table, or the alias of the derived table, whose `sort_order` is
+            meant.
+        offset: How many rows come before the window.
+        count: How many rows the window holds.
+    """
+    return between(column('sort_order', table), offset + 1, offset + count)
+
+
+def row_number(order_terms: Sequence[tuple[Expr, bool | None]]) -> Expr:
+    """Return `ROW_NUMBER() OVER (ORDER BY ...)`, numbering rows from 1 in that order.
+
+    Parameters:
+        order_terms: The sort, as `(expression, descending)` pairs; descending is
+            True for DESC, False for ASC, or None for no keyword, as in
+            `Select.add_order_by`.
+    """
+    terms: list[str] = []
+    params: list[Any] = []
+    for expr, descending in order_terms:
+        term = expr.sql
+        if descending is not None:
+            term += ' DESC' if descending else ' ASC'
+        terms.append(term)
+        params += expr.params
+    return Expr(f'ROW_NUMBER() OVER (ORDER BY {_SEPARATOR.join(terms)})', params)
 
 
 def parenthesize(expr: Expr) -> Expr:
@@ -554,7 +593,7 @@ class Select:
 
 
 def create_table_from_select_sql(
-    table_name: str, select_sql: str, column_defs: str | None = None, temporary: bool = False
+    table_name: str, select_sql: str, column_defs: str | None = None
 ) -> str:
     """Return the SQL of a CREATE TABLE ... SELECT, given the SELECT as text.
 
@@ -568,41 +607,13 @@ def create_table_from_select_sql(
         column_defs: Literal column definitions to declare ahead of the SELECT,
             or None to let the columns come from the SELECT alone. The only value
             ever passed is `CACHE_TABLE_COLUMN_DEFS`.
-        temporary: True to create a TEMPORARY table, which the session drops for
-            us if the process dies before the explicit DROP runs.
     """
-    keyword = 'CREATE TEMPORARY TABLE' if temporary else 'CREATE TABLE'
-    statement = f'{keyword} {quote_identifier(table_name)}'
+    statement = f'CREATE TABLE {quote_identifier(table_name)}'
     if column_defs is not None:
         statement += f'({column_defs}) '
     else:
         statement += ' '
     return statement + select_sql
-
-
-def create_table_as_select(
-    table_name: str, select: Select, column_defs: str | None = None, temporary: bool = False
-) -> tuple[str, list[Any]]:
-    """Return the `(sql, params)` of a CREATE TABLE ... SELECT.
-
-    Parameters:
-        table_name: The table to create.
-        select: The `Select` whose result becomes the table's contents.
-        column_defs: See `create_table_from_select_sql`.
-        temporary: See `create_table_from_select_sql`.
-    """
-    select_sql, params = select.build()
-    return (
-        create_table_from_select_sql(
-            table_name, select_sql, column_defs=column_defs, temporary=temporary
-        ),
-        params,
-    )
-
-
-def drop_temporary_table_if_exists(table_name: str) -> str:
-    """Return the SQL that drops a temporary table, doing nothing if there is none."""
-    return f'DROP TEMPORARY TABLE IF EXISTS {quote_identifier(table_name)}'
 
 
 def count_rows(table_name: str) -> str:

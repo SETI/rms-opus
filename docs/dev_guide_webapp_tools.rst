@@ -21,8 +21,7 @@ Each of its modules is covered in full below.
    * - :mod:`~opus_app.apps.tools.sql_builder`
      - Assembling raw SQL from structure instead of from string concatenation.
    * - :mod:`~opus_app.apps.tools.db_utils`
-     - Finding a model by table name, the labels behind the ``mult_`` tables, and
-       dropping a request's temporary tables.
+     - Finding a model by table name, and the labels behind the ``mult_`` tables.
    * - :mod:`~opus_app.apps.tools.import_constants`
      - Each worker's copy of the tables only an import changes.
    * - :mod:`~opus_app.apps.tools.file_utils`
@@ -205,8 +204,8 @@ which gives three properties uniformly:
 ``[A-Za-z0-9_]`` before handing the name to the backend's quoting. Django's ``quote_name``
 wraps a name in backticks but does not escape a backtick *inside* one, so validation, not
 quoting, is what closes that hole -- and it matters because several identifiers are
-computed at run time: the cache table name, the temporary table names built from a
-session id and a process id, and the column names that come out of ``param_info``.
+computed at run time: the cache table name and the column names that come out of
+``param_info``.
 
 **Values are always parameters.** Anything that is data is rendered as a placeholder and
 collected into a parameter list. There are exactly **two** exceptions, and both are
@@ -358,6 +357,13 @@ parameters its placeholders consume. Everything below returns one.
      - Grouping. :func:`~opus_app.apps.tools.sql_builder.join_exprs` adds no parentheses;
        :func:`~opus_app.apps.tools.sql_builder.combine_exprs` parenthesizes each
        operand first.
+   * - :func:`~opus_app.apps.tools.sql_builder.between`,
+       :func:`~opus_app.apps.tools.sql_builder.sort_order_range`
+     - A range test with both bounds as parameters, and the window of a table numbered
+       by ``sort_order`` that a page reads.
+   * - :func:`~opus_app.apps.tools.sql_builder.row_number`
+     - ``ROW_NUMBER() OVER (ORDER BY ...)``, which numbers the cart in a sort order with
+       a cache table's shape.
 
 The statement layer
 ~~~~~~~~~~~~~~~~~~~
@@ -387,11 +393,9 @@ The statement layer
 :exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError`
     Raised when a name about to be used as an identifier is unsafe.
 
-Nine module-level functions render whole statements:
-:func:`~opus_app.apps.tools.sql_builder.create_table_from_select_sql` and
-:func:`~opus_app.apps.tools.sql_builder.create_table_as_select` (the first for the one
-caller whose SELECT is already rendered),
-:func:`~opus_app.apps.tools.sql_builder.drop_temporary_table_if_exists`,
+The module-level functions that render whole statements are
+:func:`~opus_app.apps.tools.sql_builder.create_table_from_select_sql` (for the one caller
+whose SELECT is already rendered),
 :func:`~opus_app.apps.tools.sql_builder.count_rows`,
 :func:`~opus_app.apps.tools.sql_builder.delete_from`,
 :func:`~opus_app.apps.tools.sql_builder.delete_joined`,
@@ -408,16 +412,15 @@ insert, because the cart table's unique key over the session and the observation
 concurrent second write into a replacement instead of a duplicate.
 
 :data:`~opus_app.apps.tools.sql_builder.CACHE_TABLE_COLUMN_DEFS` is the column definition
-both the durable ``cache_NNN`` table and the cart range editor's temporary table are
-created with, because both are consumed the same way.
+a ``cache_NNN`` table is created with: ``sort_order`` numbering the results from 1 in the
+search's order, and ``id`` joining back to ``obs_general``.
 
 .. _dev_guide_webapp_tools_db_utils:
 
 opus_app.apps.tools.db_utils
 ----------------------------
 
-Model lookup by table name, the labels behind the ``mult_`` tables, and dropping a
-request's temporary tables.
+Model lookup by table name, and the labels behind the ``mult_`` tables.
 
 :func:`~opus_app.apps.tools.db_utils.table_model_from_name`
     ``obs_pds`` becomes ``ObsPds``, looked up in the ``search`` app. The return has no
@@ -431,13 +434,6 @@ request's temporary tables.
     A mult column stores a row id, so displaying it means a second lookup, which reads
     the worker's copy of the field's ``mult_`` table from
     :mod:`~opus_app.apps.tools.import_constants`.
-
-:func:`~opus_app.apps.tools.db_utils.drop_temporary_table`
-    Drops a temporary table a view built, if it is still there, logging rather than
-    raising a failure. The search results chunk and the cart's range editor call it from
-    a ``finally``, so the table goes on every way out of the request, errors and bad
-    input included: a worker thread keeps its database connection across requests
-    (``[django] conn_max_age``), and a temporary table lives as long as its connection.
 
 Three MySQL error numbers are declared here for callers to match a database exception
 against: ``MYSQL_TABLE_NOT_EXISTS``, ``MYSQL_TABLE_ALREADY_EXISTS`` -- which is how the

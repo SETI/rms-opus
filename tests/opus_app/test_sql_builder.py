@@ -338,40 +338,51 @@ class SQLBuilderStatementTests(TestCase):
         "[test_sql_builder.py] count_rows"
         self.assertEqual(sql_builder.count_rows('cache_12'), 'SELECT COUNT(*) FROM `cache_12`')
 
-    def test__drop_temporary_table_if_exists(self) -> None:
-        "[test_sql_builder.py] drop_temporary_table_if_exists"
+    def test__create_table_from_select_sql_with_column_defs(self) -> None:
+        "[test_sql_builder.py] create_table_from_select_sql: the cache-table shape"
         self.assertEqual(
-            sql_builder.drop_temporary_table_if_exists('temp_abc_1_2'),
-            'DROP TEMPORARY TABLE IF EXISTS `temp_abc_1_2`',
-        )
-
-    def test__create_table_as_select_with_column_defs(self) -> None:
-        "[test_sql_builder.py] create_table_as_select: the cache-table shape"
-        select = sql_builder.Select()
-        select.add_column(sql_builder.column('id', 'obs_general'))
-        select.add_from('obs_general')
-        sql, params = sql_builder.create_table_as_select(
-            'cache_12', select, column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS
-        )
-        self.assertEqual(
-            sql,
+            sql_builder.create_table_from_select_sql(
+                'cache_12',
+                'SELECT `obs_general`.`id` FROM `obs_general`',
+                column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS,
+            ),
             'CREATE TABLE `cache_12`(sort_order INT NOT NULL AUTO_INCREMENT,'
             ' PRIMARY KEY(sort_order), id INT UNSIGNED, UNIQUE KEY(id)) '
             'SELECT `obs_general`.`id` FROM `obs_general`',
         )
-        self.assertEqual(params, [])
 
-    def test__create_table_as_select_temporary_without_column_defs(self) -> None:
-        "[test_sql_builder.py] create_table_as_select: TEMPORARY, columns from the SELECT"
-        select = sql_builder.Select()
-        select.add_column(sql_builder.column('sort_order'))
-        select.add_from('cache_12')
-        select.limit(10)
-        select.offset(5)
-        sql, _params = sql_builder.create_table_as_select('temp_x', select, temporary=True)
+    def test__between(self) -> None:
+        "[test_sql_builder.py] between: both bounds are parameters, after the expression's"
         self.assertEqual(
-            sql,
-            'CREATE TEMPORARY TABLE `temp_x` SELECT `sort_order` FROM `cache_12` LIMIT 10 OFFSET 5',
+            sql_builder.between(sql_builder.column('sort_order', 'cache_12'), 3, 7),
+            sql_builder.Expr('`cache_12`.`sort_order` BETWEEN %s AND %s', [3, 7]),
+        )
+
+    def test__sort_order_range(self) -> None:
+        "[test_sql_builder.py] sort_order_range: the window after an offset, numbered from 1"
+        self.assertEqual(
+            sql_builder.sort_order_range('cache_12', 200, 100),
+            sql_builder.Expr('`cache_12`.`sort_order` BETWEEN %s AND %s', [201, 300]),
+        )
+
+    def test__row_number(self) -> None:
+        "[test_sql_builder.py] row_number: the window's ORDER BY renders as Select's does"
+        self.assertEqual(
+            sql_builder.row_number(
+                [
+                    (sql_builder.column('time1', 'obs_general'), True),
+                    (sql_builder.column('opus_id', 'obs_general'), None),
+                    (
+                        sql_builder.binary_op(sql_builder.column('x'), '+', sql_builder.value(1)),
+                        False,
+                    ),
+                ]
+            ),
+            sql_builder.Expr(
+                'ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` DESC,`obs_general`.`opus_id`,'
+                '`x` + %s ASC)',
+                [1],
+            ),
         )
 
     def test__create_table_from_select_sql(self) -> None:

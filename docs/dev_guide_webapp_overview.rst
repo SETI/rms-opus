@@ -6,8 +6,7 @@ How a Request Is Served
 :mod:`opus_app` **reads** the database an import wrote and never writes an ``obs_``
 table. What it does write is everything the *session* produces: the ``user_searches`` row
 that gives a search its number and the ``cache_NNN`` table that holds its results, the
-``cart`` rows a session selects, a few genuinely temporary tables the results and cart
-queries build, and the tables Django's own contrib apps own. Only an import removes the
+``cart`` rows a session selects, and the tables Django's own contrib apps own. Only an import removes the
 first two.
 
 This is the *why* of the chapter: what happens between a request arriving and an answer
@@ -175,12 +174,12 @@ queries over one cached search rather than four searches.
 ``obs_general`` joins on its own primary key, and every other ``obs_`` table on the
 ``obs_general_id`` it carries.
 
-The results reader adds one more level of indirection.
-:func:`~opus_app.apps.results.views.get_search_results_chunk` creates a **temporary
-table** holding just the page's slice of the cache table -- ``sort_order`` and ``id``,
-with the ``LIMIT`` and ``OFFSET`` applied -- and joins the wide query to that instead, so
-the ordering and the paging are settled before the joins run. It drops the temporary
-table in the same call.
+The results reader joins the wide query to the cache table on the page's range of
+``sort_order`` as well as on ``id``
+(:func:`~opus_app.apps.results.views.get_search_results_chunk`). A cache table numbers its
+results from 1 with no gaps, so the range is exactly the page, the ordering and the paging
+are settled by the cache table's primary key before the joins run, and a late page reads
+no more of it than the first.
 
 .. _dev_guide_webapp_errors:
 

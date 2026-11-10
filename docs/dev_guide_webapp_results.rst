@@ -80,13 +80,15 @@ order, an auxiliary dictionary and an error pair.
 
 It has two modes:
 
-**Reading a search.** It resolves the query string to a cache table, creates a
-**temporary table** holding just that page's slice of it -- ``sort_order`` and ``id``,
-with the limit and offset applied -- INNER JOINs the wide query to that, and drops the
-temporary table before returning. Settling the ordering and the paging before the joins
-run is the point.
+**Reading a search.** It resolves the query string to a cache table and INNER JOINs the
+wide query to it on ``id`` **and on the page's range of** ``sort_order``
+(:func:`~opus_app.apps.tools.sql_builder.sort_order_range`). A cache table numbers its
+results from 1 with no gaps, so the rows after the first *offset* and *limit* of them are
+exactly those whose ``sort_order`` lies between *offset* + 1 and *offset* + *limit*, and
+the table's primary key reads only those: the last page costs what the first does,
+settling the ordering and the paging before the joins run.
 
-**Reading the cart.** No temporary table: it joins the ``cart`` table directly and
+**Reading the cart.** It joins the ``cart`` table directly and
 applies the sort order and the paging to the main statement. The paging parameters are
 named differently in this mode, so that a browse position and a cart position can both be
 in one URL.
@@ -312,8 +314,10 @@ Adding a range
 
 ``_edit_cart_range`` adds or removes an inclusive range of observations, given the two
 ends' OPUS IDs, **in the current sort order**. Reading the browse list it uses the
-search's cache table; reading the cart it has to build a **temporary table** of the
-session's cart in sort order first, because the cart has no cache table of its own. The
+search's cache table; reading the cart it numbers the session's cart in sort order with
+``ROW_NUMBER()`` in a derived table (:func:`~opus_app.apps.tools.sql_builder.row_number`,
+aliased ``cart_order``), which has a cache table's shape, because the cart has no cache
+table of its own. The derived table is computed afresh by each statement that names it. The
 delete form explicitly carries the session id in its WHERE clause, so it cannot reach
 another user's cart.
 

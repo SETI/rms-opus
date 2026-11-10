@@ -5429,3 +5429,56 @@ Nothing above this line is rewritten by an executor.
   sweep caps each count at the detected cores times `cpu_fraction`. The `Parallelism`
   line reads `<C> cores detected`. The fixture suite's fixed `workers = 3` is a four-core
   machine's ceiling, so a GitHub-hosted runner never refuses it.
+
+### 2026-11-10, PR-10 (written against this file at 2b098379)
+
+- With both temporary tables gone, the application creates none, so their helpers go
+  with them, beyond the section's `create_table_as_select`: `sql_builder`'s
+  `drop_temporary_table_if_exists`, `db_utils.drop_temporary_table`, and
+  `create_table_from_select_sql`'s `temporary` parameter. `sql_builder` gains `between`,
+  `sort_order_range` (the window after an offset, numbered from 1), and `row_number`
+  (`ROW_NUMBER() OVER (ORDER BY ...)`, rendered as `Select`'s ORDER BY is).
+- The cart's range editor numbers the session's cart in a derived table aliased
+  `cart_order`, which each statement that names it computes afresh: the two endpoint
+  lookups, the add's two counts, and the write. MySQL accepts the `REPLACE INTO cart ...
+  SELECT` and the multi-table `DELETE` from `cart` that join a derived table reading
+  `cart` (checked on a scratch schema: the right rows of the session, none of another's),
+  because a derived table with a window function is materialized rather than merged.
+- The test-scale A/B (2026-11-10, session `a`, `bench_db` once a side, then three
+  `bench_web` runs a side alternated A B A B; before at 56d510f2, after at 17b67a54)
+  served one schema, `bench_test_before_a_3`, the base import PR-09's session `a` kept:
+  PR-10 changes no imported table, and the code that imported it is the base's.
+  - The target, `web.warm.pages.broad.page_last.latency_s`, fell from 11.3 ms to 6.9 ms
+    (-39.4%, spreads 0.4% and 0.6%) and is **not judged improved**: its floor is
+    12.9 ms, which is more than the whole latency, so no change at this scale could pass
+    it, and repeating at five runs, as §2.6 would for a change within twice the floor,
+    could not either. Every guard held.
+  - Reported: the warm empty search's last page -38.2%; app-cold last pages of the
+    broad, empty, ring-radius and selective searches -40.4%, -35.6%, -17.9% and -32.3%
+    (all within floors); the statements a page scenario executes fell, warm 29 to 23 and
+    the re-sort's 16 to 12, the temporary table's `CREATE` and `DROP` gone.
+  - The target is measured again at complete scale, where a last page is costly enough
+    to measure, on the complete-scale schema an informational eight-worker import at
+    PR-09's code builds; that note follows.
+- The complete-scale A/B (2026-11-10, session `a`, three `bench_web` runs a side
+  alternated A B A B A B; before at 56d510f2, after at 0446022f) served
+  `bench_complete_after_workers8_1`, the schema of PR-09's informational complete-scale
+  import. No complete-scale floors exist, so `compare.py` judges against the before
+  side's spread, and the verdicts are reported, not ruled on by §2.6.
+  - The target, `web.warm.pages.broad.page_last.latency_s`, fell from 100.9 ms to
+    5.5 ms (-94.5%, spreads 2.5% and 10.1%). Every guard held.
+  - Last pages of the other large searches fell by the same mechanism: warm, the empty
+    search 104.3 ms to 10.0 ms, ring radius 39.1 ms to 7.3 ms, the target search
+    29.8 ms to 8.1 ms, surface geometry 15.9 ms to 4.7 ms; app-cold and db-cold, the
+    broad and empty searches about 103 ms to 9 to 15 ms. A warm page scenario executes
+    23 statements against 29.
+  - First and tenth pages are the same work on both sides, a few rows read by key, and
+    their app-cold and db-cold latencies are bimodal on both: each run lands near
+    10 ms or near 42 ms (the broad search's tenth page 13.8, 12.4 and 43.5 ms before;
+    44.6, 10.7 and 41.5 ms after), so a median of three moves by tens of percent
+    either way with nothing changed. The warm tenth page, which pays no first-request
+    cost, is 10 ms on both sides.
+- `benchmarks/scenarios/queries.sql` was last written by PR-00, and no PR since captured
+  it again, though the SQL the scenarios issue changed. It is rewritten from this PR's head
+  (2026-11-10, `bench_db --dump-queries --commit-capture`, session `capture`, test
+  scale, `bench_test_before_a_3`): the same 67 blocks, 500 statements against 1,977.
