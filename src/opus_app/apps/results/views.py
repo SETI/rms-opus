@@ -1667,10 +1667,10 @@ def get_search_results_chunk(
         add_mult_table_joins(from_source, sorted(mult_tables))
 
         # But the search's results are an INNER JOIN because we only want opus_ids
-        # that appear in them to cause result rows. Their sort_order numbers the
-        # search's results from 1 with no gaps -- the build numbers them with
-        # ROW_NUMBER() -- so the page is the range of sort_order values, which the
-        # primary key reads directly.
+        # that appear in them to cause result rows. Their sort_order is each
+        # observation's position in the search's order, counting 1, 2, 3, ... with
+        # no gaps (ROW_NUMBER() assigns it when the results are stored), so the page
+        # is a range of sort_order values, which the primary key reads directly.
         from_source.add_join(
             'INNER',
             sql_builder.search_results_source(search_id),
