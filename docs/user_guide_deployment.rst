@@ -389,7 +389,9 @@ refuse it and a web application that starts on it answers every request with a 5
 checks only once, as it starts, so it would go on serving the half-changed tables --
 which is why this is done only to a database nothing is being served from.
 ``opus_import --delete-bundles`` marks a finished database ``appending`` in the same
-way. Read ``ERRORS.log`` afterwards, as for any
+way. ``--finalize`` drops and re-creates the ``cart`` table empty, so every cart the
+database holds is lost, not only entries for the appended bundles; a database that has
+never been served holds none. Read ``ERRORS.log`` afterwards, as for any
 import. A database another release imported is refused rather than appended to, and is
 re-imported under this one instead.
 
