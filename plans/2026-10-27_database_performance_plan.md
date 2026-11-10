@@ -3928,7 +3928,8 @@ once (§1, Deploy; §2.3).
     since `DROP TABLE` refuses a view; PR-08's scorched-earth test gains the view.
     **`bench_server.clone_schema` recreates the view** in a clone after the clone's tables,
     from the source's `SHOW CREATE VIEW`, so the clone-based A/Bs of later PRs can run
-    the web scenarios against a design-B schema; a `tests/benchmarks` test clones one. The import reads and writes the base table: `ImportDBSuper`
+    the web scenarios against a design-B schema; a `tests/benchmarks` test clones one.
+    The import reads and writes the base table: `ImportDBSuper`
     translates the name `obs_general` to `obs_general_rows` in its table methods, the one
     place the import names it. The schema file keeps its name, the children's and `cart`'s
     foreign keys reference the base table, and Django's unmanaged `ObsGeneral` model reads
@@ -3947,7 +3948,8 @@ once (§1, Deploy; §2.3).
     so a re-imported bundle has a row for its served copy and a row for its pending one.
     Retiring a bundle copy's rows sets its row's `retired_generation`, so the purge deletes
     the registry rows of exactly the copies it deletes, and an unchanged bundle keeps its
-    row, and so its range, from whatever generation imported it. A bundle re-imported in generation P takes a
+    row, and so its range, from whatever generation imported it. A bundle re-imported in
+    generation P takes a
     new bundle number and an id range after every existing one, as a new bundle does: its
     old range is still full of the rows the served generation shows. So **a re-imported
     bundle wins every duplicate `opus_id` against an unchanged one**, where a full import
@@ -3973,7 +3975,8 @@ once (§1, Deploy; §2.3).
      - **`pending_ready` is set to false** before the first write.
   3. `--delete-bundles` with P pending sets `pending_ready` to false, retires the bundles'
      rows (setting `retired_generation = P` on their registry rows), deletes their rows
-     added at P, and deletes their registry rows of generation P. Without a pending generation it
+     added at P, and deletes their registry rows of generation P. Without a pending
+     generation it
      behaves as PR-08 made it.
   4. `--finalize` with P pending sets `pending_ready` to false, works on generation P, and
      writes nothing a request reads before the switch:
@@ -4077,7 +4080,8 @@ once (§1, Deploy; §2.3).
     completes the interrupted switch, or `promote_generation.sh --revert`. Starting on a
     half-switched schema would serve aux tables, carts and caches of one generation
     against the rows of the other. `promote_generation.sh --revert` runs
-    `--revert-generation` the same way, and starts the service only when it succeeds. The purge is the operator's next command,
+    `--revert-generation` the same way, and starts the service only when it succeeds.
+    The purge is the operator's next command,
     `opus_import --purge-generations`, run once the switched generation has been checked.
   - **Tests for the scripts.** As in design A, the scripts' logic is
     functions in `_incremental_opus_update_steps.sh`, tested in `tests/opus_deploy` with a

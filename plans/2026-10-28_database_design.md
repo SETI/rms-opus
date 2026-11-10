@@ -862,7 +862,8 @@ hides until it is switched in:
 
 1. **Begin.** The version row's `pending_generation` is set to P, one more than the served
    `generation` (§2.7), and `pending_ready` to false; every later write to P sets it false
-   again, and only the version step, run after validation, sets it true. The state stays `ready`, so every worker goes on serving, and a
+   again, and only the version step, run after validation, sets it true. The state stays
+   `ready`, so every worker goes on serving, and a
    worker that starts meanwhile passes the startup check.
 2. **Import.** Each bundle takes the append path, with one change: its served rows are
    *retired*, given `removed_generation = P`, rather than deleted, and its new rows are
