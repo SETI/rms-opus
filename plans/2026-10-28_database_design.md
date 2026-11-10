@@ -210,21 +210,21 @@ shows a measured db-cold gain on the target search; otherwise it stays. Its shar
 table's data length cannot decide it, because a large JSON value is stored off-page,
 where a scan of the other columns never reads it.
 
-**The served rows are a view.** The table the import writes is `obs_general_rows`, which
-adds `added_generation` and `removed_generation` to the columns above, and `obs_general`
-is a view of the rows in the generation `schema_version` names (§2.7, §3.1). MySQL merges
-it into each query that names it, so the web application reads `obs_general` as before
-and cannot read a row of another generation through it; the import alone names the base
-table. The child tables carry no generation, since a request reaches a child row only
-through an `obs_general` id.
+**Under design B of §3.1, the served rows are a view.** The table the import writes is
+`obs_general_rows`, which adds `added_generation` and `removed_generation` to the columns
+above, and `obs_general` is a view of the rows in the generation `schema_version` names
+(§2.7, §3.1). MySQL merges it into each query that names it, so the web application reads
+`obs_general` as before and cannot read a row of another generation through it; the import
+alone names the base table. The child tables carry no generation, since a request reaches
+a child row only through an `obs_general` id.
 
 **The import finds a bundle's rows through `obs_general` alone**, by its `bundle_id`
 key. `obs_pds` also stores `bundle_id`, because it is the public `bundleid` field (§2.2),
 and the import writes both from the same bundle; validation checks that they agree. Every
 other table the import writes per observation (the remaining children, the junction tables
 of §2.5, `obs_preview`, and the surface geometry table) reaches its bundle through
-`obs_general_id`, so the per-bundle delete, and the retire and purge of §3.1, join each
-table to `obs_general`'s bundle key, and the duplicate step deletes by
+`obs_general_id`, so the per-bundle delete, design A's incremental copy and schema clone,
+and design B's retire and purge (§3.1) join each table to `obs_general`'s bundle key, and the duplicate step deletes by
 `obs_general_id`. A table whose primary key does not start with `obs_general_id` (the
 surface geometry table and the junction tables) is created with its `obs_general_id`
 key, even in a fresh import, so that join reads a range of that key and never scans the
@@ -497,9 +497,10 @@ session setting and refuses a server whose token size is not 2.
 
 `schema_version(version INT UNSIGNED NOT NULL PRIMARY KEY, state ENUM('ready',
 'appending') NOT NULL, generation INT UNSIGNED NOT NULL, pending_generation INT UNSIGNED
-NULL)`, one row. `generation` is the import generation the web application serves, and
-`pending_generation` the one an incremental update is writing (§3.1); a fresh import's
-row starts at generation 1 with none pending.
+NULL)`, one row; the last two columns exist under design B of §3.1 only. `generation` is
+the import generation the web application serves, and `pending_generation` the one an
+incremental update is writing; a fresh import's row starts at generation 1 with none
+pending.
 It is written by an explicit step that every import sequence runs last, after
 validation, and that is the only writer of `ready`: it inserts the row as `ready` when it
 is absent, changes `appending` to `ready` when the version matches, and refuses to
@@ -700,8 +701,9 @@ finalization is an explicit step that the sequences run once at the end.
    `contexts`. Validation includes an orphan count per child and for `cart`, because
    finalization's foreign keys never validate existing rows. Last, the version step
    writes the version row, or turns `appending` to `ready` (§2.7).
-6. **Promotion**, after a full import (an incremental update switches a generation inside
-   the same stop and start instead, §3.1): the web service
+6. **Promotion**, for a full import and, under design A of §3.1, an incremental update
+   alike (under design B an incremental update switches a generation inside the same stop
+   and start instead): the web service
    stops, the previous schema's sessions and carts are carried over into the new schema
    (unexpired `django_session` rows, and the `cart` rows of those sessions by `opus_id`,
    which `cart` already stores, to the observation's new `obs_general_id`; a cart row
@@ -799,9 +801,60 @@ importers to the same queue, a first Ctrl-C drains and a second aborts, and reru
 ### 3.1 Incremental update
 
 An incremental update replaces a bundle with a new copy, adds a bundle, or drops one. A
-browser sees nothing of it until it is finished, and then sees all of it at once. The
-update is written into the served schema as a new **import generation**, which the
-served `obs_general` view (§2.1) hides until it is switched in:
+browser sees nothing of it until it is finished, and then sees all of it at once. Two
+designs give that, and the plan measures both before choosing one (its PR-23): **design
+A** creates the update as a new schema and promotes it whole, and **design B** writes it
+into the served schema as a new import generation and switches it in whole.
+
+**Design A: a schema clone, promoted whole.** The update is created as a new schema and
+promoted whole, exactly as a full import is:
+
+1. **Schema clone**: the served schema less the bundles being replaced (a bundle being
+   dropped is copied, then deleted, below). The
+   import, given `--clone-from-schema <served>` on an empty target, creates the tables as
+   step 2 does and copies the served schema's rows into them, refusing when the served
+   schema's version differs from the code's: `obs_general` with `WHERE bundle_id NOT IN
+   (<the bundles being replaced>)`, every other per-observation table with `WHERE
+   obs_general_id NOT IN (SELECT id FROM <served>.obs_general WHERE bundle_id IN (<the
+   same bundles>))`, the three mult tables whole, and the bundle registry with the replaced
+   bundles set back to pending and the importer tracking reset (the importer table is
+   created empty). Every bundle keeps its number and every unchanged observation its id.
+   A bundle being dropped is copied with the rest and then deleted from the new schema by a
+   separate bundle delete, which also removes its registry row, before finalization. The copies run over the sibling connections, one table per connection, under `READ COMMITTED` so
+   the served schema's rows are not locked; values
+   only the replaced or dropped bundles used are removed by finalization's mult step. Ids are
+   preserved, so an unchanged observation keeps its `obs_general_id` and its mult ids. The
+   served schema is only read.
+2. **Import.** How the cloned tables are keyed depends on how much changes: when the
+   replaced bundles hold more `obs_general` rows than a measured fraction of the schema,
+   the schema clone creates bare tables, the bundles go through the ordinary fresh import,
+   and finalization creates every index once, by sort; below it, the schema clone copies
+   each table with its indexes in place and ends by writing the version row in the
+   `appending` state, so the bundles go through the append path with the indexes up and a
+   small update rebuilds nothing. A re-imported bundle keeps its number and so its id
+   range, which the copy left empty; a new bundle takes the next number and so wins a
+   duplicate `opus_id` against every copied bundle. New mult values append, and a new
+   surface geometry target is a row, not a table (§2.3).
+3. **Steps 3 to 5 as for a full import:** finalization, aux tables, dictionary,
+   validation, and the version row. `cart`, `user_searches`, and `search_results` are
+   created empty.
+4. **Promotion** is step 6: stop, carry over, switch, start. A cart row whose
+   observation no longer exists is dropped and counted in the import log, and the
+   browser is not told (a decision: the cart is shorter, the badge and the listing
+   agree, and no table records what was dropped). `user_searches` and
+   `search_results` start empty and refill on demand; the warm-up runs after the start.
+
+An update that only drops bundles is the schema clone with nothing excluded and nothing
+imported, followed by the bundle delete. The cost is
+one copy of the database per update, plus one full index build above the fraction,
+measured by the plan, and the disk for two schemas, which a full-import deploy needs
+already. The previous schema stays until the next update, so a rollback is step 6 run
+toward it: the carry-over brings back the sessions and carts as they stand at that moment,
+and only a cart row for an observation the previous schema lacks is lost.
+
+**Design B: an import generation, switched in whole.** The update is written into the
+served schema as a new **import generation**, which the served `obs_general` view (§2.1)
+hides until it is switched in:
 
 1. **Begin.** The version row's `pending_generation` is set to P, one more than the served
    `generation` (§2.7). The state stays `ready`, so every worker goes on serving, and a
@@ -839,23 +892,31 @@ command.
 **What it costs.** An update writes only the changed bundles. The served tables keep their
 indexes, so no index is rebuilt; the switch is a few statements with the service stopped,
 and the purge a delete of the rows retired. The price is the view's test on every query
-that reads `obs_general`, which the plan gates on a prototype holding every web metric
-within its floor. Two other costs are accepted: the import loading into the tables the
+that reads `obs_general`, which the plan measures before choosing. Two other costs are accepted: the import loading into the tables the
 site is reading, and a mult value new in the update showing in a choice list before the
 switch, with no results.
 
-**Why not a schema clone, and why not a table swap.** A clone of the served schema, less
-the changed bundles, into a new schema promoted whole leaves the served schema untouched.
-That is safer against a defect in the update, but every update then costs a copy of
-the whole database, `obs_files` and all. The plan keeps the clone as PR-23's fallback if
-the view's cost fails the gate. A `RENAME TABLE` swap of staged copies inside the served
-schema needs the same full copy and leaves the old tables beside the new. Writing into
-the served schema without generations is not atomic: between the first bundle delete and
-the closing reset, a request can build a search against a partial observation set.
-`param_info` and the dictionary are different: they are small, rebuilt whole from the
-schema files, and reloaded on their own by the code-only deploy, so each is swapped in
-place with one atomic `RENAME TABLE`. `partables` and `table_names` are the same: the
-code-only deploy rebuilds them from the code and the served data, and swaps each in.
+**Choosing.**
+- **Design A** keeps the served schema read only and every query unchanged, and needs no
+  schema change. Every update costs a copy of the whole database less the changed
+  bundles, `obs_files` and all, and two schemas' disk while it runs.
+- **Design B** writes only the changed bundles and can revert until its purge. It costs:
+  - the view's test on every query that reads `obs_general`;
+  - writes into the served schema while it is served;
+  - an import competing with the site for the server;
+  - a full re-import to adopt.
+
+**Why not in place without generations, and why not a table swap.** Writing into the
+served schema without generations is not atomic: between the first bundle delete and the
+closing reset a request can build a search against a partial observation set and be
+served from it, and the workers' per-process caches go stale. A `RENAME TABLE` swap of
+staged copies inside the served schema is atomic for the names, but it needs the same
+full copy as design A, still leaves the per-process caches stale until a restart, and
+leaves the old tables beside the new; it buys nothing over either design. `param_info` and the dictionary are
+different: they are small, rebuilt whole from the schema files, and reloaded on their own
+by the code-only deploy, so each is swapped in place with one atomic `RENAME TABLE` rather
+than given a new schema. `partables` and `table_names` are the same: the code-only deploy
+rebuilds them from the code and the served data, and swaps each in.
 
 The import connection sets `sql_log_bin = 0` when the account may, and otherwise says so
 and continues. `unique_checks` is never changed: the primary and unique keys catch the
@@ -928,12 +989,12 @@ properties that make that true, and the one constraint:
   writer. Read-only aggregates over the permanent `obs_*` tables could use a replica.
 
 Sessions and the cart live in the per-import schema, and every promotion of a new schema,
-after a full import, carries them into it while the web service is
-stopped (§3, step 6): session rows whole, cart rows by `opus_id` to the observation's new
+after a full import or a design-A incremental update, carries them into it while the web
+service is stopped (§3, step 6): session rows whole, cart rows by `opus_id` to the observation's new
 `obs_general_id`, dropping a row whose session expired or whose observation is gone. A
 cart therefore survives an update unless its observation vanished, and nothing of the
-previous schema is referenced afterward. An incremental update keeps the schema, so its
-switch leaves the sessions alone and points each cart row at its observation's new copy
+previous schema is referenced afterward. A design-B incremental update keeps the schema,
+so its switch leaves the sessions alone and points each cart row at its observation's new copy
 by the same `opus_id` rule (§3.1). Keying the cart by `(session_id, opus_id)` in a
 schema that outlives imports would remove the mapping step; it is a schema change left for
 later (`plans/2026-10-28_cloud_deployment_notes.md`, §4).

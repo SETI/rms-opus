@@ -52,11 +52,11 @@ architecture Phases 0 to 6 produced.
   identifiers, and the landing page warmed after every deploy (Phase 3).
 - Indexes for the JSON list columns, re-sort without re-search, and indexed autocomplete,
   on MySQL (Phase 4).
-- Incremental updates (replace, add, or drop a bundle) written into the served schema as a
-  new import generation that no request sees until it is switched in whole, during a
-  stop of the web service lasting seconds, with the replaced rows purged afterward
-  (PR-23); sessions and carts are carried over at every promotion of a new schema
-  (PR-18).
+- Incremental updates (replace, add, or drop a bundle) by one of two designs, chosen after
+  measuring both (PR-23): a clone of the served schema into a new one, imported and
+  promoted whole, or a new import generation written into the served schema, which no
+  request sees until it is switched in whole; sessions and carts are carried over at
+  every promotion of a new schema (PR-18).
 - Two further options, a default-sort rank column and a narrow facet table for mult
   counts, measured on the complete holdings, reported, and
   implemented only after the numbers are discussed (PR-24).
@@ -82,7 +82,7 @@ architecture Phases 0 to 6 produced.
 | Brand dispatch | SQL that differs by brand lives in exactly two places: `opus_import.importdb.<brand>` for the import and `opus_app.apps.tools.sql_builder` for the application, the latter dispatching on `connection.vendor`. Driver exceptions are classified in `opus_app.apps.tools.db_utils`, which is the only module that imports a driver's error types. Views and steps never test the brand or a driver error code themselves. A reviewer checks this with `grep -rn "connection\.vendor\|\.brand\b\|MySQLdb\|psycopg\|MYSQL_[A-Z_]*" src/opus_app/apps src/opus_import/steps --include=*.py`, which after Phase P should hit only those modules; today it hits the views' driver-code tests, which Phase P moves. Phases 0 to 6 add MySQL implementations behind these boundaries; where a PR knows what the PostgreSQL rendering will be, it says so in a one-line **PostgreSQL note** for Phase P and writes no code for it. |
 | Parallel import design | **Single writer, many computers.** Worker processes turn index rows into table rows and return them with chunk-relative ids; the parent process alone rebases ids, resolves mult values, writes to the database, and emits the log. Item 3 of the analysis (write the permanent tables directly and drop the import namespace) is PR-07's and PR-08's, so no process has tables of its own; items 1 and 2 (per-bundle id ranges, mult ids that concurrent writers cannot collide on) are PR-16's. Within one process: with one writer there is no shared counter to protect, and ids and logs stay identical to the serial run, so the golden suites keep comparing byte for byte. Several `opus_import` processes, on one computer or several, may also import into one schema at once (PR-16): ids come from per-bundle id ranges and mult values from a unique key, so no counter is shared. |
 | Import parallelism | **Every import parallelism setting defaults to 1**, because the computer doing the import may also run the database server: PR-07's `[import] index_workers`, PR-09's `[import] workers`, and PR-16a's `opus_import_all --workers` total. Parallelism is asked for by argument or key, never assumed. PR-09 adds the ceiling all of them obey, `max(1, floor(C × [import] cpu_fraction))`, with `[import] cpus` to state C instead of detecting it, and the value `"max"` for "the ceiling". **The CI scripts raise them:** every fixture session's main run sets `workers` and `index_workers` at `"max"`, with `cpus = 4` on a GitHub-hosted runner (ceiling 3) and `cpus = 8` anywhere else (ceiling 6) (PR-09), so the pool and concurrent-DDL paths are the ones the goldens exercise, and a local run exercises more of them; and `scripts/automated_tests/opus_setup_environment.sh`, which both the self-hosted integration job and the nightly staging tests run, writes `workers` and `index_workers` at `"max"` with `cpus = 32` under GitHub Actions (the self-hosted job) and `cpus = 16` otherwise (the nightly staging run). |
-| Where indexes are created | **One write path, chosen by the target schema's state, never by a switch** (PR-07, PR-08; `§D-3`). A schema with no version row is **imported fresh**: the observation and mult tables are created with only their primary and unique keys and the keys the per-bundle delete reads (`obs_general`'s bundle key, and `obs_general_id` on a table whose primary key does not start with it), every other table with all its keys, and finalization creates every other index and foreign key once, by sort. A finalized schema is **appended** to with its indexes in place. There is no import namespace after PR-08. An incremental update of the served schema imports into it as a new generation, which the served `obs_general` view hides until the generation is switched in (PR-23; `§D-3.1`). |
+| Where indexes are created | **One write path, chosen by the target schema's state, never by a switch** (PR-07, PR-08; `§D-3`). A schema with no version row is **imported fresh**: the observation and mult tables are created with only their primary and unique keys and the keys the per-bundle delete reads (`obs_general`'s bundle key, and `obs_general_id` on a table whose primary key does not start with it), every other table with all its keys, and finalization creates every other index and foreign key once, by sort. A finalized schema is **appended** to with its indexes in place. There is no import namespace after PR-08. An incremental update of the served schema either clones it, less the changed bundles, into a new schema and imports into that, or imports into it as a new generation that the served `obs_general` view hides until it is switched in, whichever design PR-23 chooses (`§D-3.1`). |
 | Append invalidation | Every finalization step declares whether an append invalidates it, and the `--finalize` that follows an append re-runs exactly those (PR-08); an append never finalizes by itself (except under `--do-it-all`, which runs `--import` then `--finalize` in one invocation, PR-08). At PR-08 they are PR-07's duplicate step, the aux tables, the cache-table drop (PR-11 turns it into the search-table reset and cache flush), `ANALYZE`, and validation; PR-14's mult step, PR-25's histograms, and PR-24's options, if implemented, add themselves. `--create-indexes` runs in every finalization and adds the keys the schema files declare and a table lacks; on an append of existing tables it finds nothing to do, and a table first created on the append path is keyed by that run. A PR that adds a finalization step adds an append test. |
 | Foreign keys | Child tables are created **without** foreign keys; finalization adds them, **serially and after every index build**, with `foreign_key_checks = 0` (which is what makes `ADD FOREIGN KEY` an in-place operation that does not re-check existing rows; each add takes an exclusive metadata lock on `obs_general`, so they never run concurrently with an `ALTER` on it). Because an unvalidated foreign key never catches orphans, validation gains an anti-join count per child (PR-07). An append loads with the foreign keys in place under `foreign_key_checks = 0`, and the same orphan count covers it. InnoDB performs no cascade while the checks are off, so **the per-bundle delete and the duplicate step always run with `foreign_key_checks = 1`**, and `cart`'s cascade (PR-08) removes the cart rows they orphan; the orphan count covers `cart` too. PostgreSQL note: `ADD CONSTRAINT ... NOT VALID` then `VALIDATE CONSTRAINT`. The permanent schema at the end of an import is unchanged. |
 | Unique checks | MySQL's `unique_checks=0` is **never** set: it lets InnoDB skip uniqueness checks, and the primary and unique keys stay on every table during every load. **`obs_general.opus_id` has a plain key, not a unique one** (PR-07): duplicate OPUS ids load side by side, and one finalization step, the **duplicate step**, keeps the copy with the highest `obs_general.id` and deletes the others (PR-07). **Bundles that share OPUS ids (a calibrated bundle and its raw counterpart, for instance) are deleted and re-imported together**, so a deleted copy never needs to come back, and nothing records it. Ids follow import order on every path (counted up in PR-07 and PR-09, per-bundle ranges in `bundle_number` order from PR-16), so the later bundle wins (from PR-16, the later-registered one, so a re-imported bundle, which keeps its number, loses to any bundle registered after it), and no import, sequential, parallel, or concurrent, looks for duplicates while it loads. |
@@ -90,7 +90,7 @@ architecture Phases 0 to 6 produced.
 | Golden suites | `import_tests` goldens and the `integration_tests` golden responses are the behavior-preservation gate. A PR that changes the schema regenerates the import goldens with `python -m import_tests.tools.make_mini_goldens` (`docs/dev_guide_import_fixture.rst`) and shows in its description that the diff is confined to the columns and tables it declared. The warning whitelist (`warning_whitelist.txt`, with `test_no_whitelist_entry_is_stale`) is part of the gate: a PR that removes a warning's cause removes its entry in the same PR. **API golden responses change only where a PR names the cause** (PR-13's removal of `ring_obs_id`, PR-14's display rank, PR-17's identifier collation) **and lists every changed golden with its reason for one ruling**; otherwise they never change. |
 | Surface geometry | One physical table, `obs_surface_geometry_target`, keyed `(target_name, obs_general_id)`, absorbs the per-target tables. The per-target **categories** (`obs_surface_geometry__<target>`), which the public API exposes in `api/categories` and in every `SURFACEGEO<target>_<field>` slug, and the selector category `obs_surface_geometry_name`, stay as **data** in `table_names`, `param_info`, and `partables`; the application resolves a category to the table plus an optional `target_name` filter through one function. A new target becomes a mult row and its category rows, written by the import; no table is created, no model is generated, nothing is redeployed (PR-15). |
 | Mult values | One `mult` table keyed `(field_id, id)` replaces the per-column `mult_` tables (PR-14). The display order is an integer rank that finalization recomputes for every field from typed values, so it never depends on import order; values no observation references are deleted in finalization except in fields whose schema lists the choices. A value is renamed by a `mult_overrides` entry in its column's schema, applied without a re-import by the code-only deploy. **Search results sorted by a mult column sort by label text, and that never changes.** |
-| Deploy | A schema-changing PR is marked **requires full re-import** in §4 and bumps `SCHEMA_VERSION`. The deploy chain already creates a new installation and schema under `staged/` and switches a symlink, so a re-import is the normal deploy. PR-05's schema version guard makes **both** deploy scripts refuse, before any `opus_import` step runs, when the served schema's row is absent or differs from the release's constant; the row's `version` is written only by the explicit step `--write-schema-version` and never overwritten; PR-23's generation update writes neither `version` nor `state`, leaving the row `ready` throughout, and records the served and pending generations in two columns of its own. **`--write-schema-version` is the only writer of `state = 'ready'`** (PR-05, PR-08): it runs last in every sequence, after validation, and changes `appending` to `ready` when the version matches; from PR-08 it, and `--finalize`, refuse while any bundle in the registry is not `done`. `SCHEMA_VERSION` covers the tables the import fills and the tables it only re-creates or truncates (`user_searches` and `search_results`, re-created from their schema files by `reset_search_tables`, and PR-24's counts table if implemented, created by its own finalization step and truncated by that reset), because the code-only deploy leaves those in place: a change to any of them is a re-import and a full deploy. The one table outside it is PR-16a's `import_process`, which needs no re-import: the import's coordinator creates it when absent, and nothing but the import reads it. An incremental update needs no new schema: `run_incremental_opus_update.sh` (PR-23) writes a new generation into the served schema and `promote_generation.sh` switches it in, inside the same stop and start of the web service as a promotion. The deploy scripts run `sudo systemctl` and are the **operator's**; no PR runs them, and the rehearsal before the merge (PR-26) is the orchestrator's step on the Node. |
+| Deploy | A schema-changing PR is marked **requires full re-import** in §4 and bumps `SCHEMA_VERSION`. The deploy chain already creates a new installation and schema under `staged/` and switches a symlink, so a re-import is the normal deploy. PR-05's schema version guard makes **both** deploy scripts refuse, before any `opus_import` step runs, when the served schema's row is absent or differs from the release's constant; the row's `version` is written only by the explicit step `--write-schema-version` and never overwritten, with one exception: PR-23's schema clone (design A), in its indexed shape, writes the served schema's version with `state = 'appending'` so that the append path takes the update's bundles. PR-23's generation update (design B) writes neither `version` nor `state`, leaving the row `ready` throughout, and records the served and pending generations in two columns of its own. **`--write-schema-version` is the only writer of `state = 'ready'`** (PR-05, PR-08): it runs last in every sequence, after validation, and changes `appending` to `ready` when the version matches; from PR-08 it, and `--finalize`, refuse while any bundle in the registry is not `done`. `SCHEMA_VERSION` covers the tables the import fills and the tables it only re-creates or truncates (`user_searches` and `search_results`, re-created from their schema files by `reset_search_tables`, and PR-24's counts table if implemented, created by its own finalization step and truncated by that reset), because the code-only deploy leaves those in place: a change to any of them is a re-import and a full deploy. The one table outside it is PR-16a's `import_process`, which needs no re-import: the import's coordinator creates it when absent, and nothing but the import reads it. An incremental update is a deploy of the same shape under PR-23's design A: `run_incremental_opus_update.sh` clones the served schema into the new one and `deploy_new_code_and_database.sh` promotes it. Under design B it needs no new schema: `run_incremental_opus_update.sh` writes a new generation into the served schema and `promote_generation.sh` switches it in, inside the same stop and start of the web service as a promotion. The deploy scripts run `sudo systemctl` and are the **operator's**; no PR runs them, and the rehearsal before the merge (PR-26) is the orchestrator's step on the Node. |
 | MySQL floor | Stays 8.0.19 (set by the `INSERT ... AS new` alias). `EXPLAIN ANALYZE` needs 8.0.18, the ngram parser 5.7; `innodb_ddl_threads` and `innodb_ddl_buffer_size` (8.0.27) and `innodb_redo_log_capacity` (8.0.30) are used when present, and the harness records the server version. #1503 asks `importdb` for a server-version gate against this floor. |
 | Index pruning | The analysis's item 10, second half (dropping single-column indexes production never uses) is done from **production's index statistics**: `performance_schema.table_io_waits_summary_by_index_usage` on the production server for the 28 days from 2026-10-05 to 2026-11-02 (the counters run from the server's last start; no import ran, so every read is web traffic), against the schema imported on 2025-12-27. Most of the secondary-index bytes on the permanent tables were never read, chiefly on `obs_files`, the per-target surface geometry tables, and `obs_ring_geometry`. The mult-count keys on `obs_general` (`instrument_id`, `planet_id`, `mission_id`, `inst_host_id`) carried most of its index reads, and `obs_general`, `obs_pds`, and `obs_instrument_coiss` read the most rows by table scan. The same server's statement digests cannot show the searches: each per-search table's statements are separate digests, and they filled the digest table on the first day. **A key goes when production never read it**, or when it leads a composite key on the same table (MySQL serves anything the shorter key does from the composite), **unless the import or a code path the web traffic does not exercise needs it** (`obs_general.bundle_id`), a foreign key needs it, or it is an autocomplete column, whose prefix match reads it (a searchable column with the `STRING` form type). A column whose `1`/`2` partner keeps its key keeps its own, and a few are kept by choice (PR-13). PR-12 applies this to `obs_files` and the children, and PR-13 to the other single-column keys, with the list of those that stay; the surface geometry table keeps a key on every keyed template column (PR-15), as there are few of them. PR-25 documents re-collecting the statistics on the new schema. |
 | Configuration keys | Every new `[import]`, `[django]`, or `[database]` key is added in all of: `opus_config/config.py` (the dataclass and its reader; `_TableReader.finish` rejects unknown keys), `opus_config/opus.toml.template`, the ``[django]``, ``[import]``, and ``[database]`` key tables in `docs/user_guide_installation.rst`, for an `[import]` or `[database]` key the configuration-key table in `docs/dev_guide_import_running.rst` (a `[django]` key does not go there; `docs/dev_guide_webapp_running.rst` has no key table and gains none, the user guide's `[django]` table being the reference, and the developer-guide page that describes the behavior the key controls names it), `tests/opus_config`, `tests/fixtures/opus_ci.toml`, and `import_tests/tools/build_run.write_opus_config`, which gains an `extra_import: dict[str, object]` parameter so a test session can set a key. Three more files write an `opus.toml` of their own: `src/opus_deploy/server/import_and_deploy/_write_opus_toml.sh` (the deploy's), `scripts/automated_tests/opus_setup_environment.sh` (the integration and staging runs'), and `tests/opus_app/test_settings.py` (its fixture configuration); a new key goes in each of them only when that file needs a value other than the default, and a removed key goes from each, since `_TableReader.finish` would reject the file. `src/opus_deploy/server/deploy.env.template` holds deploy variables, not keys, and changes only when a new key's value comes from one. A PR removing a key removes it from every file `grep -rln '<key>' src scripts tests import_tests docs` finds. Any PR adding or removing a key does all of them. |
@@ -505,7 +505,9 @@ against its own copy. A PR that changes no
 imported table (PR-02, PR-03, PR-05, PR-06, PR-10, PR-11, PR-18, PR-21, PR-24's
 prototypes) imports once and runs both web servers against the same schema. PR-23's
 target compares the head with itself (an incremental update against a full import, both
-on the head); its web guards compare base and head, as any schema-changing PR's do. From PR-05 on, where a PR's code expects a newer
+on the head), so under design A it imports with the head only; design B changes the
+schema, so its web guards compare base and head, as any schema-changing PR's do.
+From PR-05 on, where a PR's code expects a newer
 `SCHEMA_VERSION` than the schema carries, the harness restamps the row itself
 (`bench_server.restamp_version`, which PR-05 adds and `clone_schema` then calls on every
 copy that has a version row, restamping it to the version of **the side that will use
@@ -2855,8 +2857,10 @@ once (§1, Deploy; §2.3).
     UNSIGNED NULL, rows_done BIGINT UNSIGNED NOT NULL DEFAULT 0, losses TINYINT UNSIGNED
     NOT NULL DEFAULT 0, KEY (state, size_estimate, bundle_number))`, a table in
     the target schema beside the observation tables, created by the first registration,
-    dropped by scorched earth (by exact name, PR-08), and kept across PR-23's generation
-    updates, which add a `generation` column and key it by `(bundle_id, generation)`. The last three
+    dropped by scorched earth (by exact name, PR-08), and, by PR-23's design, either copied
+    by its schema clone so that bundle numbers and ids carry over (design A, which says
+    how the copy is adjusted) or kept across its generation updates, which add a
+    `generation` column and key it by `(bundle_id, generation)` (design B). The last three
     columns are PR-16a's tracking, created here so that PR-16a changes no imported table:
     this PR advances `rows_done` at each chunk commit, and leaves `process_id` NULL and
     `losses` at 0. The state columns are the work queue below, and a plain
@@ -3131,7 +3135,8 @@ once (§1, Deploy; §2.3).
     log_path VARCHAR(1024) NOT NULL, started_at DATETIME NOT NULL, progress_at DATETIME
     NOT NULL, state ENUM('running','exited','lost') NOT NULL)`, beside `import_bundle`,
     dropped by scorched earth (its list gains `import_process` by exact name, and PR-08's
-    recording-fake test gains the assertion), and left alone by PR-23's generation update. The coordinator,
+    recording-fake test gains the assertion), and neither copied by PR-23's schema clone
+    nor touched by its generation update. The coordinator,
     `--join`, and `--status` create it with `CREATE TABLE IF NOT EXISTS` before first use,
     so a schema PR-16 built gains it on its next import, and nothing but the import reads
     it (§1, Deploy). An importer updates `progress_at` with each `rows_done`, in the same
@@ -3644,28 +3649,246 @@ once (§1, Deploy; §2.3).
 
 ### Phase 5: the deploy, the measured options, and the server
 
-**PR-23: feat: incremental update of the served schema as an import generation, switched in whole** (`§D-3.1`)
+**PR-23: feat: incremental update of the served schema, by one of two designs** (`§D-3.1`)
 
 - **The problem, after PR-08.** The append updates a finalized schema in place, which is
   right for a database nobody is using and wrong for the served one: between the first
   bundle delete and the end of the re-run finalization a request can build a search
   against a partial observation set, and the workers' per-process caches are refreshed
-  only by the restart. A schema clone (this section as it stood at `ff5a0485`) avoids
-  that by copying every unchanged row into a new schema and promoting it, so every update
-  costs a copy of the whole database. This PR writes only the changed bundles, into the
-  served schema, as rows no request can see until they are switched in, and keeps the
-  replaced rows, unseen, until they are purged.
-- **Gate: a prototype first.** Before any code is written, the executor makes two copies of
-  the finalized test-scale schema with `bench_server.clone_schema`: one as merged, and one
-  with `obs_general` renamed to `obs_general_rows`, the two generation columns added, the
-  `schema_version` columns added, and the view below created over it. `bench_web`'s
-  scenarios and `bench_db` run against each, three times, alternated (§2.3), and are judged
-  as §2.5 judges guards: **every web metric holds within its floor**. `EXPLAIN` of the
-  broad search build, a metadata lookup by `opus_id`, and a result page must show the
-  view's subquery evaluated once (`SUBQUERY`, never `DEPENDENT SUBQUERY`) and no other
-  table's access path changed. If a metric regresses beyond its floor or a plan changes,
-  the PR is executed as this section stood at `ff5a0485` (the schema clone) instead. Either
-  way an Execution note records the prototype's numbers and plans, and the decision.
+  only by the restart. Two designs solve it, and both are specified below so that the
+  choice can be made on measurements; exactly one is implemented. **Design A** clones the
+  served schema, less the changed bundles, into a new schema and promotes it whole, as a
+  full import is promoted. **Design B** writes only the changed bundles into the served
+  schema as a new import generation, which a view hides until it is switched in.
+- **Choosing: measure both, report, discuss, then decide.** Before any code is written,
+  the executor measures what decides between the designs, on the finalized test-scale
+  schema, and at complete scale too, reported, when the workstation holds that schema:
+  - **Design A's cost.** For the bundles of `import_test.toml`'s incremental group:
+    - into an empty schema, each table created with `CREATE TABLE ... LIKE`;
+    - every table copied from the served schema except the group's rows, with design A's
+      `INSERT ... SELECT` statements below, over sibling connections;
+    - both reported: the copy's wall-clock, and the disk the second schema takes.
+  - **Design B's cost.**
+    - Two copies of the schema, made with `bench_server.clone_schema`:
+      - one as merged;
+      - one with `obs_general` renamed to `obs_general_rows`, the two generation columns
+        and the `schema_version` columns added, and the view below created over it.
+    - `bench_web`'s scenarios and `bench_db` run against each three times, alternated
+      (§2.3), and are judged as §2.5 judges guards.
+    - `EXPLAIN` of the broad search build, a metadata lookup by `opus_id`, and a result
+      page shows whether the view's subquery is evaluated once (`SUBQUERY`, never
+      `DEPENDENT SUBQUERY`), and whether any other table's access path changes.
+
+  An Execution note records the numbers and plans beside the trade-offs below. The design
+  is chosen with the orchestrator before implementation. Design B is not chosen if any
+  web metric regresses beyond its floor or any access path changes. The note names the
+  choice, and the other design's text stays here as the record of what was weighed.
+  - **What design A gives and costs.**
+    - The served schema is only read, so a defect in the update cannot touch the rows
+      users see.
+    - No query changes, and no re-import is needed.
+    - Sessions and carts move by PR-18's carry-over, as at every promotion.
+    - Every update copies the whole database less the changed bundles, `obs_files` and
+      all.
+    - The server holds two schemas while the update runs.
+  - **What design B gives and costs.**
+    - An update writes only the changed bundles, into tables whose indexes stay in place.
+    - The previous generation stays whole until the purge, so a revert is free until then.
+    - The switch is a few statements inside the stop and start a promotion already has.
+    - Every query that reads `obs_general` pays the view's test.
+    - The served schema is written during the update.
+    - The import competes with the site for the server.
+    - The schema change is a full re-import.
+    - A re-imported bundle takes a new bundle number, so it wins every duplicate
+      `opus_id` against an unchanged bundle.
+
+**Design A: from a clone of the served schema, promoted whole.**
+
+- **Changes:**
+  - `opus_import --clone-from-schema <served>`, accepted only on an empty target. It
+    refuses when the served schema's version row differs from the release's
+    `SCHEMA_VERSION`, since its rows would not fit the new tables. With `--import`, it
+    excludes the positional bundles (the bundles being replaced or added) from the copy and
+    imports them in the same invocation; without `--import` it excludes nothing and the
+    invocation ends after the copy (an update that only drops bundles), and positional
+    bundles without `--import` are refused. Before the first bundle
+    it creates every table and copies the served schema's rows, in one of two shapes
+    chosen by the rows involved: when the replaced bundles' `obs_general` rows exceed
+    `[import] clone_rebuild_fraction` of the served schema's (per §1's configuration-key
+    rule; the default is the crossover this PR measures), the tables are created as
+    PR-07's fresh import does and finalization creates every index once; below it, they
+    are created with `CREATE TABLE ... LIKE`, indexes in place, and the bundles load with
+    the indexes up, so a small update rebuilds no index. The copies: `obs_general` with
+    `INSERT INTO <target>.obs_general SELECT * FROM <served>.obs_general WHERE bundle_id
+    NOT IN (%s, ...)`, and every other per-observation table with `WHERE obs_general_id
+    NOT IN (SELECT id FROM <served>.obs_general WHERE bundle_id IN (%s, ...))`, excluding
+    the positional bundles; the `mult`, `mult_field`, and `mult_group`
+    tables whole, and PR-16's `import_bundle`, so every bundle keeps its number and
+    every unchanged observation its id, whose values only the excluded or dropped bundles
+    used are then removed by PR-14's finalization step. **The copied registry is adjusted**
+    in the same step: the re-imported bundles go back to `pending` with
+    `started_at` and `finished_at` NULL and `rows_done` 0; and every row's PR-16a tracking
+    is reset (`process_id` NULL, `losses` 0), since it describes importers of the served
+    schema. PR-16a's `import_process` is not copied; the importers create it empty. The
+    copies run over PR-07's sibling connections, one table per connection, `obs_general`
+    first by convention, each under `SET TRANSACTION ISOLATION LEVEL READ COMMITTED`, so
+    the `INSERT ... SELECT` takes no shared locks on the served schema's rows while it
+    serves. The served
+    schema is read only, and the account needs `SELECT` on it (documented). Nothing else
+    is copied: `cart`, `user_searches`, `search_results`, the dictionary, the aux tables,
+    and Django's tables are created empty or regenerated by the steps that follow
+    (`migrate`, `--import-dictionary`, `--finalize`, `--write-schema-version`).
+  - **Which path the bundles take.** In the bare shape the target has no version row and
+    no secondary indexes, so the bundles go through PR-07's fresh import and finalization
+    creates every index once, by sort. In the indexed shape the schema clone's last step
+    writes the served schema's version row with `state = 'appending'`, the bundles to
+    import being the copied registry's `pending` rows (PR-16), so PR-08's dispatch takes
+    the append path rather than
+    refusing a schema with indexes and no version row: each bundle's delete finds nothing,
+    the rows load with the indexes up, the script's `--finalize` runs the finalization
+    steps an append invalidates, and `--write-schema-version`, run last, changes the state to `ready` (PR-05). A failure after the schema clone resumes as any
+    append does; a failure during the schema clone leaves a target that is not empty,
+    which `--clone-from-schema` refuses, so that run restarts after scorched earth.
+  - **Ids and duplicates.** Ids come from PR-16's ranges: a re-imported bundle keeps its
+    copied number and so its range, which the copy left empty (one that has outgrown it is
+    refused, naming a full import), and a bundle new to the registry takes the next number
+    and a range after every copied bundle's. PR-07's duplicate step
+    settles a duplicate `opus_id` between an imported bundle and a copied one by the same
+    rule as a full import, the higher id, and so the higher number, winning, so a new bundle wins against every copied one;
+    an update that needs a new bundle to lose such a duplicate is a full import. Mult
+    values append as in any import.
+  - **Dropping a bundle is a separate invocation.** `--delete-bundles` is an on/off flag that
+    acts on the positional bundles (PR-08); it names no set of its own, and the schema clone
+    never reads it. A bundle is dropped from an update by copying it with the rest and then
+    running `opus_import --delete-bundles <the bundles to drop>` on the new schema, an
+    invocation distinct from the clone-and-import one, before the finalization sequence, so
+    the mult step and validation see the drop. `--delete-bundles` also deletes each named
+    bundle's `import_bundle` row (PR-08), so a dropped bundle is neither imported nor
+    waited for.
+  - **The scripts are named after the full import's** (`run_full_opus_import.sh`,
+    `_full_opus_import_wrapper.sh`, `_run_full_opus_import.sh`): the operator's
+    `run_incremental_opus_update.sh`, its `_incremental_opus_update_wrapper.sh`, the
+    internal `_run_incremental_opus_update.sh`, and the sourced
+    `_incremental_opus_update_steps.sh`, all new in
+    `src/opus_deploy/server/import_and_deploy/`. The three scripts take the same
+    arguments, and the operator's prints exactly this usage line:
+
+    ```text
+    Usage: run_incremental_opus_update.sh [<version_spec>] [--drop <bundle>[,<bundle>...]] [<bundle> ...]
+    ```
+
+    The positional bundles are those to replace or add; `--drop` names those to drop
+    without re-importing. At least one bundle or `--drop` is required. A bundle named both
+    ways is re-imported and left out of the drop list: a re-import already deletes every
+    row of the bundle before writing the new version's, so observations the new version
+    no longer has are gone either way.
+  - `_run_incremental_opus_update.sh`, modeled on
+    `_run_full_opus_import.sh`: a new `OPUS_DB_NAME`, the served schema name read from
+    `deployed/opus.toml`, the staged installation, then these `opus_import` invocations,
+    each its own process, against the new schema:
+    1. `opus_import --clone-from-schema <served> --import <bundle> ...` when bundles are
+       given, otherwise `opus_import --clone-from-schema <served>`;
+    2. when `--drop` is given, `opus_import --delete-bundles <the --drop list>`;
+    3. `opus_import --finalize`, `opus_import --import-dictionary`, `opus_import
+       --validate`, and `opus_import --write-schema-version`, once, after both the
+       import and the drop (the finalization accounts for both; the last invocation
+       writes the version row in the bare shape and changes `appending` to `ready` in
+       the indexed shape);
+
+    then the same error-log check as `_opus_import_bundles.sh` (PR-16), on a log directory
+    that starts empty, and `opus_manage migrate`, as that file runs it; and then **the
+    same dump and peer load as `_run_full_opus_import.sh`**, gated on the same `deploy.env`
+    variables: when `OPUS_DB_DUMP_DIR` names a directory, `${DATABASE_SCRIPT_DIR}/dump_db.sh
+    <new db>`, and when `OPUS_PEER_DB_HOST` names a host as well, `load_db.sh <new db>`
+    after it (with PR-22's session setting and refusal), so a second server holds the
+    updated schema before either server promotes it. So that the two scripts cannot drift,
+    this PR moves that block out of `_run_full_opus_import.sh` into a function,
+    `copy_database_to_peer <database>`, in a new packaged file
+    `src/opus_deploy/server/import_and_deploy/_copy_database_to_peer.sh`, which executes
+    nothing at top level and which both `_run_full_opus_import.sh` and
+    `_run_incremental_opus_update.sh` source and call with the new schema's name, keeping
+    its banners and the comment above it. The operator then
+    runs `deploy_new_code_and_database.sh <new db>` as after a full import, and PR-18's
+    carry-over moves the sessions and carts.
+    The script's logic (reading the served schema's name, building the invocations above
+    from the bundles and `--drop`, and the error-log check) is a function in
+    `_incremental_opus_update_steps.sh`, which the script sources and which,
+    like PR-05's `_check_schema_version.sh`, executes nothing at top level; a
+    `tests/opus_deploy` test sources it with a fake `opus_import` on `PATH` and asserts the
+    invocations it builds (with bundles only, with `--drop` only, with both, and with a
+    bundle named both ways, which appears only in the import; the `--delete-bundles`
+    invocation present only with `--drop` and always after the clone; `--finalize` run
+    exactly once)
+    and that a non-empty error log fails it. A second `tests/opus_deploy` test sources
+    `_copy_database_to_peer.sh` with `DATABASE_SCRIPT_DIR` pointing at a directory of
+    recording fakes for `dump_db.sh` and `load_db.sh`, and asserts the three cases: with
+    `OPUS_DB_DUMP_DIR` empty neither runs; with a directory and no `OPUS_PEER_DB_HOST`
+    only the dump runs; with both, the dump and then the load, each with the database it
+    was given. `tests/opus_deploy`'s
+    `rglob` checks cover only the new files' packaging.
+  - **The operator's command.** `_run_incremental_opus_update.sh` is internal, as
+    `_run_full_opus_import.sh` is, and is not what an operator types.
+    `run_incremental_opus_update.sh`, modeled on `run_full_opus_import.sh`, checks its
+    arguments first and prints the usage line above and exits non-zero, having run
+    nothing, when no bundle and no `--drop` is given; then
+    it reads `deploy.env`, creates the log file, and runs
+    `_incremental_opus_update_wrapper.sh` under `nohup`, which, like
+    `_full_opus_import_wrapper.sh`, runs `_run_incremental_opus_update.sh` with its output
+    in that log and mails the log to `OPUS_IMPORT_MAIL_TO`, with the subject naming success
+    or failure, when that names anyone. It prints the log file's path and returns at
+    once. A `tests/opus_deploy` test runs it with no bundle and asserts the usage message,
+    the non-zero exit, and that nothing else ran (a fake `nohup` on `PATH` records any
+    call); the `rglob` checks cover the new files' packaging and the scripts' executable
+    bits. `src/opus_deploy/server/README.txt` gains the script in "WHAT IS IN HERE" and the
+    procedure in "UPDATING A RUNNING SERVER". `docs/user_guide_deployment.rst` gains the
+    script in "The scripts" and a row in the "Operating checklist" table ("Update, add, or drop bundles of the served
+    database": `run_incremental_opus_update.sh`, verify, then
+    `deploy_new_code_and_database.sh <name>`).
+  - **The peer path, documented.** `docs/user_guide_deployment.rst`'s paragraph on
+    `database/` (which says `run_full_opus_import.sh` runs `dump_db.sh` and `load_db.sh`)
+    says that both `run_full_opus_import.sh` and `run_incremental_opus_update.sh` end with
+    them, by the same `deploy.env` variables, and the new "Operating checklist" row says
+    that with `OPUS_PEER_DB_HOST` set the second server receives the updated database
+    before the deploy; `src/opus_deploy/server/README.txt` says the same in its
+    `database/` entry and its "UPDATING A RUNNING SERVER" procedure, and its `_*.sh` entry
+    in "WHAT IS IN HERE" gains the copy to a second server; the comment above
+    `OPUS_DB_DUMP_DIR` and `OPUS_PEER_DB_HOST` in `src/opus_deploy/server/deploy.env.template`
+    (today "Both of these are used only by run_full_opus_import.sh") names both scripts;
+    and `user_guide_installation.rst`'s rows for the two variables are checked and say
+    that an incremental update is copied too. The header comments of `src/opus_deploy/server/database/dump_db.sh` and `load_db.sh`,
+    which today say `run_full_opus_import.sh` runs them, say that both run scripts call
+    them through `copy_database_to_peer` (`_copy_database_to_peer.sh`).
+  - Tests: `build_run` gains `clone_run(source_schema, reimport, drop)`, which imports
+    the fixture fully into one schema, clones a second from it with one bundle re-imported
+    and one dropped (the drop through its own `--delete-bundles` invocation, as the script
+    runs it), and asserts per table that the row counts and the set of `opus_id`
+    values equal the source less the dropped bundle, that the golden tables, columns, and
+    primary keys equal the source's, that the dropped bundle has no `import_bundle` row,
+    and that a mult value only the dropped bundle used is gone. Unit tests in `tests/opus_import` cover the rendering of the exclusion and the
+    set of tables copied whole.
+  - Docs: `user_guide_deployment.rst` (the incremental update procedure, the operator's
+    command, its usage line, and the `SELECT` grant), `dev_guide_import_running.rst` (the
+    option, and `--delete-bundles` deleting the registry rows),
+    `dev_guide_import_steps.rst` (the schema clone).
+- **Measurement:** on the incremental group of `import_test.toml` at test scale, in both
+  shapes, plus a one-bundle update, to find the crossover that sets the default fraction:
+  the schema clone's wall-clock and the whole update's (schema clone, import,
+  finalization, with the bare shape's full index build inside it), against a full
+  test-scale import of the same bundle set followed by promotion, the deploy an
+  incremental update replaces (promotion is the same step after either, so the harness
+  times the imports); PR-08's append of the same group into a copy of the served schema
+  made by `bench_server.clone_schema` is reported beside them as a reference only, since
+  a whole-schema clone cannot beat an in-place append; and the disk of the two schemas.
+  Target metric: incremental update wall-clock against the full import.
+- **Acceptance:** §2.5; the clone test; goldens unchanged; `CHECKSUM TABLE` of the
+  served schema's `obs_general` identical before and after the run.
+- **Requires full re-import:** no.
+- **Scale:** test scale.
+- **PostgreSQL note:** cross-schema `INSERT ... SELECT` is the same statement with
+  schema-qualified names; `search_path` is not involved.
+
+**Design B: an import generation in the served schema, switched in whole.**
+
 - **Generations.**
   - `obs_general` gains `added_generation INT UNSIGNED NOT NULL` and `removed_generation
     INT UNSIGNED NULL`, with no key on either: nearly every row passes the visibility test,
@@ -3803,7 +4026,7 @@ once (§1, Deploy; §2.3).
     moves that block out of `_run_full_opus_import.sh` into the new packaged file
     `_copy_database_to_peer.sh`, which executes nothing at top level, so the two scripts
     cannot drift. The peer then switches with the same command. With a peer, the update
-    pays the copy the clone design paid; without one, it does not.
+    pays the copy design A pays on every update; without one, it does not.
   - **`promote_generation.sh`** is new beside `deploy_new_code_and_database.sh`, for the
     operator. It stops the web service and runs `opus_import --switch-generation`. It then
     restarts the cache service, starts the web service and runs the warm-up, with
@@ -3811,7 +4034,7 @@ once (§1, Deploy; §2.3).
     generation the row names and exits non-zero. `promote_generation.sh --revert` runs
     `--revert-generation` the same way. The purge is the operator's next command,
     `opus_import --purge-generations`, run once the switched generation has been checked.
-  - **Tests for the scripts.** As the clone design specified, the scripts' logic is
+  - **Tests for the scripts.** As in design A, the scripts' logic is
     functions in `_incremental_opus_update_steps.sh`, tested in `tests/opus_deploy` with a
     fake `opus_import` on `PATH`. The tests assert the invocations it builds with bundles
     only, with `--drop` only, with both, and with a bundle named both ways, and that a
@@ -3866,11 +4089,11 @@ once (§1, Deploy; §2.3).
   import of the same bundle set, the deploy an incremental update replaces, run three
   times on the head (§2.3, a target with no recorded floor). Because the schema changes,
   the web scenarios run against base and head as for any schema-changing PR, and hold as
-  guards (the view's cost, already seen by the gate). Reported: `bench_web`'s scenarios
+  guards (the view's cost, already measured in choosing the design). Reported: `bench_web`'s scenarios
   run while the update imports, against the same scenarios idle, and the switch's
   wall-clock, which is the service's downtime. Target metric: incremental update
   wall-clock against the full import.
-- **Acceptance:** §2.5, the gate, and the generation tests. The goldens change only as
+- **Acceptance:** §2.5 and the generation tests. The goldens change only as
   listed. The rows the view returns are identical before `--begin-generation` and after
   `--write-schema-version`.
 - **Requires full re-import:** yes: `obs_general` becomes a base table and a view, and
@@ -3914,8 +4137,8 @@ once (§1, Deploy; §2.3).
   `SELECT` ordered by `(time1, opus_id)`; the empty search's pages are reported, not judged,
   since PR-18's warm-up already builds the empty search after every deploy. If implemented:
   `obs_general.json` declares the column; finalization writes it after the B-tree
-  builds, so a full import renumbers it and an incremental update renumbers it at its
-  switch (PR-23); a search in
+  builds, so a full import and an incremental update both renumber it (under PR-23's
+  design B, at its switch); a search in
   the default order sorts on it; and the empty search in the default order pages on it
   directly, the one place the application branches on the empty search. `SCHEMA_VERSION`
   bumps.
@@ -4194,7 +4417,7 @@ the orchestrator's).
 | PR-20 | PR-09, PR-11, PR-12, PR-14 | the parent emits junction rows from resolved ids; the mult count joins `search_results`; the junction tables reach their bundle through `obs_general_id` (PR-12); PR-14's cleanup reads the junctions |
 | PR-21 | PR-11, PR-20's measurement | `user_searches` and `search_results` are PR-11's; gated on the predicate share of the broad search build |
 | PR-22 | PR-07, PR-11, PR-13 | `FULLTEXT` keys are created by PR-07's `add_secondary_indexes`; the `COUNT(*)` is already gone; the autocomplete columns keep the B-trees PR-13's rule leaves them |
-| PR-23 | PR-06, PR-07, PR-08, PR-11, PR-14, PR-15, PR-16, PR-16a, PR-18 | gated on a prototype of the served view on clones of its merge-base's schema holding every web metric within its floor, else executed as the schema clone of this file at `ff5a0485`; the generation path is PR-08's append with a retire; the switch uses PR-06's aux swap, PR-11's search reset, and PR-18's carry-over rule for the cart and its warm-up; the purge runs PR-14's mult step; a new target is a row; the registry's ranges (PR-16) gain a generation |
+| PR-23 | PR-07, PR-08, PR-14, PR-15, PR-16, PR-16a, PR-18; design B also PR-06 and PR-11 | one design is chosen after both are measured. Design A: the schema clone uses the fresh-import path and its sibling connections; the append is its reference; a new target is a row; the copied registry keeps every bundle's number and id range, with PR-16a's tracking reset; PR-18's carry-over moves the sessions. Design B: the generation path is PR-08's append with a retire; the switch uses PR-06's aux swap, PR-11's search reset, and PR-18's carry-over rule for the cart and its warm-up; the purge runs PR-14's mult step; the registry's ranges (PR-16) gain a generation |
 | PR-24 | every PR above | measured on the finished schema; option 2 reads PR-14's ids |
 | PR-25 | every PR above | describes the final schema |
 | PR-26 | PR-25 and the recorded outcomes of PR-19, PR-21, and PR-24 | the merge |
@@ -4212,11 +4435,16 @@ the orchestrator's).
 - **The computed display rank reorders a widget or an `api/mults` response.** That is
   the intent where today's key is wrong; PR-14 lists every changed golden with its
   reason, and the results order on a mult column is pinned unchanged.
-- **The served view adds a test to every query that reads `obs_general`.** PR-23 is
-  gated on a prototype that holds every web metric within its floor and changes no access
-  path; if it fails, PR-23 is the schema clone of this file at `ff5a0485`, which copies
-  the whole database on every update but leaves the queries alone.
-- **An incremental update writes into the served schema.** A defect in the generation path
+- **Design A's schema clone copies the whole database on every incremental update.**
+  PR-23 measures it against a full import of the same bundle set, with PR-08's append of
+  the same group as a reference; the copy runs over sibling connections and the indexes
+  are created once afterward (PR-07). If the clone dominates at test scale the number is
+  reported and the update is still correct; design B avoids the copy at the costs below,
+  which is why PR-23 measures both before choosing.
+- **Design B's served view adds a test to every query that reads `obs_general`.** PR-23
+  does not choose design B unless the view holds every web metric within its floor and
+  changes no access path.
+- **Design B writes into the served schema during an update.** A defect in the generation path
   could change rows the served generation shows. PR-23 limits every write to rows added at
   the pending generation or to setting `removed_generation` on rows it then hides, its
   acceptance requires the view's rows to be identical before and after the update, a
