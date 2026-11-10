@@ -5447,3 +5447,9 @@ Nothing above this line is rewritten by an executor.
   - Pruning 1,000 planted searches of 100 rows each took 2.8 s, and the next run's
     removal of their 100,000 rows 3.1 s, each including Django's start (the local
     integration database, on the workstation's own server).
+  - The orchestrator's decision on the stop-and-report (2026-11-10): the unique key on
+    `(search_id, obs_general_id)` stays, as the section requires, for the cart range
+    editor's probe and for a join that duplicates an observation to fail loudly, and
+    the PR proceeds on the structural gains the section's cost model names: no DDL in
+    a request, a bounded table count, statement digests that describe the searches, the
+    stored count, the pruner, and the fixed-width cache keys.
