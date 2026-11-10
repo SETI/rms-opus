@@ -6,6 +6,7 @@ both halves of that contract: what a valid file produces, and which invalid file
 refused with which message.
 """
 
+import os
 import re
 from collections.abc import Callable
 from dataclasses import FrozenInstanceError
@@ -16,9 +17,12 @@ import pytest
 from opus_config import (
     OPUS_CONFIG_ENV_VAR,
     ConfigError,
+    ImportConfig,
     config_path,
+    detected_cores,
     get_config,
     load_config,
+    resolve_parallelism,
 )
 
 #: A configuration holding every required key and no optional one, which is what the
@@ -191,6 +195,10 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('import_.transaction_rows', 100_000),
         ('import_.index_workers', 1),
         ('import_.server_tmpdir', None),
+        ('import_.workers', 1),
+        ('import_.cpus', None),
+        ('import_.cpu_fraction', 0.75),
+        ('import_.worker_rows', 500),
     ],
 )
 def test_load_config_defaults_every_optional_key(
@@ -219,7 +227,14 @@ def test_load_config_defaults_every_optional_key(
         ('import', 'scratch_dir', '"/scratch/opus"', '/scratch/opus'),
         ('import', 'transaction_rows', '5', 5),
         ('import', 'index_workers', '3', 3),
+        ('import', 'index_workers', '"max"', 'max'),
         ('import', 'server_tmpdir', '"/var/tmp/mysql_ddl"', '/var/tmp/mysql_ddl'),
+        ('import', 'workers', '4', 4),
+        ('import', 'workers', '"max"', 'max'),
+        ('import', 'cpus', '8', 8),
+        ('import', 'cpu_fraction', '1', 1.0),
+        ('import', 'cpu_fraction', '0.5', 0.5),
+        ('import', 'worker_rows', '5', 5),
     ],
 )
 def test_load_config_reads_an_optional_key_that_is_written(
@@ -342,8 +357,44 @@ def test_load_config_accepts_a_whole_number_probability(
             "[import] 'index_workers' must be at least 1, not 0",
         ),
         (
-            adding('import', 'index_workers', '"max"'),
-            "[import] 'index_workers' must be a whole number, not str",
+            adding('import', 'index_workers', '"MAX"'),
+            "[import] 'index_workers' must be a whole number or \"max\", not 'MAX'",
+        ),
+        (
+            adding('import', 'index_workers', 'true'),
+            '[import] \'index_workers\' must be a whole number or "max", not bool',
+        ),
+        (
+            adding('import', 'workers', '0'),
+            "[import] 'workers' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'workers', '2.5'),
+            '[import] \'workers\' must be a whole number or "max", not float',
+        ),
+        (
+            adding('import', 'cpus', '0'),
+            "[import] 'cpus' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'cpus', '"8"'),
+            "[import] 'cpus' must be a whole number, not str",
+        ),
+        (
+            adding('import', 'cpu_fraction', '0'),
+            "[import] 'cpu_fraction' must be greater than 0, not 0",
+        ),
+        (
+            adding('import', 'cpu_fraction', '1.5'),
+            "[import] 'cpu_fraction' must be at most 1, not 1.5",
+        ),
+        (
+            adding('import', 'worker_rows', '0'),
+            "[import] 'worker_rows' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'worker_rows', '2.5'),
+            "[import] 'worker_rows' must be a whole number, not float",
         ),
         (
             adding('import', 'server_tmpdir', 'false'),
@@ -420,7 +471,16 @@ def test_load_config_accepts_a_whole_number_probability(
         'transaction-rows-negative',
         'transaction-rows-not-whole',
         'index-workers-zero',
-        'index-workers-not-whole',
+        'index-workers-max-misspelled',
+        'index-workers-given-a-boolean',
+        'workers-zero',
+        'workers-not-whole',
+        'cpus-zero',
+        'cpus-given-a-string',
+        'cpu-fraction-zero',
+        'cpu-fraction-above-one',
+        'worker-rows-zero',
+        'worker-rows-not-whole',
         'server-tmpdir-not-a-string',
         'bulk-load-given-a-string',
         'scratch-dir-given-a-number',
@@ -579,3 +639,114 @@ def test_the_ci_fixture_is_a_valid_configuration(ci_config_path: Path) -> None:
     assert config.database.schema == 'opus_ci_db'
     assert config.import_.bulk_load is True
     assert config.paths.static_root is None
+
+
+def _import_table(**keys: object) -> ImportConfig:
+    """Return an ``[import]`` table with the parallelism keys given and every other default."""
+    values: dict[str, object] = {
+        'log_file': 'import.log',
+        'debug_log_file': 'import_debug.log',
+        'bulk_load': True,
+        'scratch_dir': None,
+        'transaction_rows': 100_000,
+        'index_workers': 1,
+        'server_tmpdir': None,
+        'workers': 1,
+        'cpus': None,
+        'cpu_fraction': 0.75,
+        'worker_rows': 500,
+    }
+    values.update(keys)
+    return ImportConfig(**values)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ('keys', 'detected', 'ceiling', 'source'),
+    [
+        ({}, 8, 6, 'detected'),
+        ({}, 1, 1, 'detected'),
+        ({}, 3, 2, 'detected'),
+        ({'cpus': 4}, 32, 3, '[import] cpus'),
+        ({'cpus': 32, 'cpu_fraction': 1.0}, 2, 32, '[import] cpus'),
+        ({'cpu_fraction': 0.1}, 4, 1, 'detected'),
+    ],
+    ids=[
+        'three-quarters',
+        'one-core',
+        'rounds-down',
+        'stated',
+        'stated-above-detected',
+        'floor-of-one',
+    ],
+)
+def test_the_ceiling_is_a_fraction_of_the_cores_and_never_zero(
+    keys: dict[str, object], detected: int, ceiling: int, source: str
+) -> None:
+    """``max(1, floor(C * cpu_fraction))``, with C stated by ``cpus`` or counted."""
+    resolved = resolve_parallelism(_import_table(**keys), detected=detected)
+    assert (resolved.ceiling, resolved.cores_source, resolved.detected_cores) == (
+        ceiling,
+        source,
+        detected,
+    )
+    assert (resolved.workers, resolved.index_workers) == (1, 1)
+
+
+def test_max_asks_for_the_ceiling() -> None:
+    """Both counts accept ``"max"``, and resolve it to the ceiling."""
+    resolved = resolve_parallelism(_import_table(workers='max', index_workers='max'), detected=8)
+    assert (resolved.workers, resolved.index_workers) == (6, 6)
+
+
+def test_a_command_line_count_replaces_the_files() -> None:
+    """``--workers`` overrides ``[import] workers``, and is held to the same ceiling."""
+    config = _import_table(workers=2)
+    assert resolve_parallelism(config, 5, detected=8).workers == 5
+    assert resolve_parallelism(config, 'max', detected=8).workers == 6
+
+
+@pytest.mark.parametrize(
+    ('keys', 'override', 'message'),
+    [
+        (
+            {'workers': 7},
+            None,
+            '[import] workers 7 is above the ceiling of 6: 8 cores (detected) times '
+            'cpu_fraction 0.75',
+        ),
+        (
+            {},
+            7,
+            '--workers 7 is above the ceiling of 6: 8 cores (detected) times cpu_fraction 0.75',
+        ),
+        (
+            {'index_workers': 4, 'cpus': 4},
+            None,
+            '[import] index_workers 4 is above the ceiling of 3: 4 cores ([import] cpus) '
+            'times cpu_fraction 0.75',
+        ),
+    ],
+    ids=['workers', 'command-line', 'index-workers'],
+)
+def test_a_count_above_the_ceiling_is_refused_naming_it(
+    keys: dict[str, object], override: int | None, message: str
+) -> None:
+    """No request takes more than the ceiling; the refusal says how it was reached."""
+    with pytest.raises(ConfigError) as caught:
+        resolve_parallelism(_import_table(**keys), override, detected=8)
+    assert str(caught.value) == message
+
+
+def test_the_parallelism_line_names_everything_it_was_worked_out_from() -> None:
+    """The line the import logs: cores and their source, the fraction, the ceiling, both counts."""
+    resolved = resolve_parallelism(_import_table(workers='max', cpus=8), detected=30)
+    assert resolved.describe() == (
+        'Parallelism: 8 cores ([import] cpus), cpu_fraction 0.75, ceiling 6; '
+        'workers 6, index_workers 1'
+    )
+
+
+def test_the_detected_cores_are_the_ones_the_process_may_run_on() -> None:
+    """The affinity set where the platform has one, never fewer than one."""
+    expected = len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else os.cpu_count()
+    assert detected_cores() == max(1, expected or 1)

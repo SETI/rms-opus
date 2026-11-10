@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 import pdslogger
 from pdsfile import Pds3File, Pds4File
 
-from opus_config import get_config
+from opus_config import MAX_WORKERS, ConfigError, get_config, resolve_parallelism
 from opus_import import bundle_registry, import_util, importdb
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
@@ -51,6 +51,31 @@ if TYPE_CHECKING:
     from opus_import.importdb.super import WarningHandler
 
 LOGNAME = 'opus_import.main'
+
+
+def _worker_count(text: str) -> int | str:
+    """Parse ``--workers``: a whole number of at least 1, or ``max``.
+
+    Parameters:
+        text: The argument as given.
+
+    Returns:
+        The number, or `opus_config.MAX_WORKERS`.
+
+    Raises:
+        argparse.ArgumentTypeError: If the argument is neither.
+    """
+    if text == MAX_WORKERS:
+        return text
+    try:
+        count = int(text)
+    except ValueError:
+        count = 0
+    if count < 1:
+        raise argparse.ArgumentTypeError(
+            f'must be a whole number of at least 1 or "{MAX_WORKERS}", not {text!r}'
+        )
+    return count
 
 
 def _make_warning_handler(ctx: ImportContext) -> WarningHandler:
@@ -188,6 +213,14 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         default=False,
         help="Import the given bundles; the target schema's state chooses a fresh import "
         'or an append',
+    )
+    parser.add_argument(
+        '--workers',
+        type=_worker_count,
+        default=None,
+        metavar='N',
+        help='Compute each index\'s observations in N processes, or "max" for the ceiling '
+        '([import] cpus and cpu_fraction); replaces [import] workers',
     )
     parser.add_argument(
         '--ignore-errors',
@@ -527,6 +560,24 @@ def main() -> None:
     logger.add_handler(handler)
 
     warnings.showwarning = _make_warning_handler(ctx)
+
+    # First, so the log says how much of the computer the run may use before anything
+    # uses it.
+    try:
+        parallelism = resolve_parallelism(config.import_, args.workers)
+    except ConfigError as e:
+        logger.log('fatal', str(e))
+        sys.exit(-1)
+    logger.log('info', parallelism.describe())
+    if parallelism.cores > parallelism.detected_cores:
+        logger.log(
+            'info',
+            f'[import] cpus {parallelism.cores} is more than the {parallelism.detected_cores} '
+            'cores detected; the stated count is used',
+        )
+    ctx.workers = parallelism.workers
+    ctx.index_workers = parallelism.index_workers
+    ctx.worker_rows = config.import_.worker_rows
 
     ################################################################################
     #

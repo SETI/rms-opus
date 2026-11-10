@@ -324,6 +324,31 @@ def toml_value(value: object) -> str:
     raise TypeError(f'no TOML spelling for {value!r}')
 
 
+#: The cores a GitHub-hosted runner has, which a fixture session there states as
+#: ``[import] cpus``.
+GITHUB_HOSTED_CPUS = 4
+
+#: The cores a fixture session states everywhere else: a local run or a self-hosted runner.
+OTHER_HOST_CPUS = 8
+
+
+def fixture_cpus() -> int:
+    """Return the ``[import] cpus`` every fixture session states.
+
+    A session states the host's size rather than having it counted, so that its
+    ``workers`` and ``index_workers`` are never refused for exceeding the ceiling on a
+    smaller machine; on one with fewer cores, the pool's processes share them, which only
+    slows the run. The goldens do not depend on the count.
+
+    Returns:
+        `GITHUB_HOSTED_CPUS` when ``RUNNER_ENVIRONMENT`` is ``github-hosted``, otherwise
+        `OTHER_HOST_CPUS`.
+    """
+    if os.environ.get('RUNNER_ENVIRONMENT') == 'github-hosted':
+        return GITHUB_HOSTED_CPUS
+    return OTHER_HOST_CPUS
+
+
 def write_opus_config(
     paths: RunPaths,
     schema: str,
@@ -341,7 +366,7 @@ def write_opus_config(
         credentials: How to reach the database server.
         extra_import: Further ``[import]`` keys and their values, for a session that
             sets one; None for none. A key the file sets by default, such as
-            ``log_file``, takes the value given here instead.
+            ``log_file`` or ``cpus`` (`fixture_cpus`), takes the value given here instead.
     """
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
@@ -358,6 +383,7 @@ def write_opus_config(
     import_keys: dict[str, object] = {
         'log_file': f'{paths.log_dir.as_posix()}/opus_import.log',
         'debug_log_file': f'{paths.log_dir.as_posix()}/opus_import_debug.log',
+        'cpus': fixture_cpus(),
         **(extra_import or {}),
     }
     for key, value in import_keys.items():
