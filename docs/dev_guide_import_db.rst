@@ -377,9 +377,11 @@ The bulk load
 
 :meth:`~opus_import.importdb.mysql.ImportDBMySQL.bulk_load_rows` writes the observation
 rows: every ``obs_`` table's rows, the per-target surface geometry tables' and
-``obs_files``', at the end of
-:func:`~opus_import.steps.do_import_index.import_one_index`. The mult tables are written
-before them by ``upsert_rows``, since a load cannot update a row it finds already there.
+``obs_files``'. :class:`~opus_import.steps.do_import_index.TableRowSink` loads a table
+each time ``[import] transaction_rows`` of its rows wait, and the rest at the end of
+:func:`~opus_import.steps.do_import_index.import_one_index`, after ``upsert_rows`` has
+written the mult tables. The mult tables are upserted rather than loaded because a load
+cannot update a row it finds already there.
 
 **The text.** The rows are written as the text ``LOAD DATA`` reads by default: fields
 separated by tabs, rows ended by newlines, ``\N`` for NULL, and a backslash before each

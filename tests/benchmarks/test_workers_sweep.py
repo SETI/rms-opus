@@ -13,6 +13,7 @@ from benchmarks import bench_import
         ([8, 4, 2, 1], {'cpus': 4}, [3, 2, 1]),
         ([1, 2, 4, 8], {'cpus': 8, 'cpu_fraction': 1.0}, [1, 2, 4, 8]),
         ([2, 2, 1], {'cpus': 2}, [1]),
+        ([1, 4, 8], {'cpus': 8, 'cpu_fraction': '0.5'}, [1, 4]),
     ],
     ids=[
         'caps-at-the-ceiling',
@@ -20,6 +21,7 @@ from benchmarks import bench_import
         'keeps-the-order',
         'whole-machine',
         'once-each',
+        'fraction-given-as-text',
     ],
 )
 def test_each_count_is_capped_at_the_ceiling_and_run_once(
@@ -44,8 +46,27 @@ def test_without_a_stated_size_the_detected_cores_decide(monkeypatch: pytest.Mon
             ['--workers-sweep', '1,2', '--stop-before-finalization'],
             '--workers-sweep runs imports of its own and takes no other mode',
         ),
+        (
+            ['--workers-sweep', '1,2', '--import-key', 'cpu_fraction=half'],
+            "--import-key cpu_fraction must be greater than 0 and at most 1, not 'half'",
+        ),
+        (
+            ['--workers-sweep', '1,2', '--import-key', 'cpu_fraction=1.5'],
+            "--import-key cpu_fraction must be greater than 0 and at most 1, not '1.5'",
+        ),
+        (
+            ['--workers-sweep', '1,2', '--import-key', 'cpus=0'],
+            '--import-key cpus must be a whole number of at least 1, not 0',
+        ),
     ],
-    ids=['not-a-number', 'zero', 'another-mode'],
+    ids=[
+        'not-a-number',
+        'zero',
+        'another-mode',
+        'fraction-not-a-number',
+        'fraction-above-one',
+        'no-cpus',
+    ],
 )
 def test_a_malformed_sweep_is_refused(
     extra: list[str], message: str, capsys: pytest.CaptureFixture[str]
