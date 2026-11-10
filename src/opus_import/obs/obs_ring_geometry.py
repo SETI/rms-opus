@@ -9,7 +9,7 @@ outright.
 
 from typing import TYPE_CHECKING, Any
 
-from opus_import.obs.field_types import FloatField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_base import ObsBase
 
 # The longitude, in degrees, of each planet's ring-plane ascending node measured
@@ -102,17 +102,6 @@ class ObsRingGeometry(ObsBase):
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
-
-    ### Don't override these ###
-
-    def field_obs_ring_geometry_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_ring_geometry_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_ring_geometry_instrument_id(self) -> StrField:
-        return self.instrument_id
 
     ################################
     ### ! Might override these ! ###

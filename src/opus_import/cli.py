@@ -692,8 +692,9 @@ def main() -> None:
                     failed_steps.append('--create-indexes')
             logger.close()
 
-        # The duplicate step deletes by obs_general_id, which only the keys just built
-        # index, so it waits for a run whose key builds succeed.
+        # The duplicate step finds the copies through obs_general's opus_id key and
+        # deletes the surface geometry tables' rows by obs_general_id, both keys the
+        # step just built, so it waits for a run whose key builds succeed.
         if args.finalize and '--create-indexes' not in failed_steps:
             logger.open(
                 'Deleting duplicate OPUS IDs',

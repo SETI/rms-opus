@@ -47,10 +47,10 @@ def import_observation_table(
 ) -> dict[str, Any] | None:
     """Compute one observation's row of one table.
 
-    Three kinds of column are skipped: ``timestamp``, which the database maintains
+    Three kinds of entry are skipped: ``timestamp``, which the database maintains
     itself; a column marked ``put_mults_here``, which holds another column's mult id;
-    and a ``pi_referred_slug`` entry, which describes a search parameter rather than a
-    column.
+    and an entry with no ``field_name`` -- a ``pi_referred_slug`` entry, which describes
+    a search parameter rather than a column, or a table-level key.
 
     A column whose form type is a GROUP type stores a ``mult_`` table id rather than the
     value, and the value is added to that table if it is new. A ``mult_list`` column
@@ -77,16 +77,14 @@ def import_observation_table(
 
     metadata[table_name + '_row'] = new_row
 
-    # Run through all the based columns and compute their values.
-    # Always skip "id" for tables other than obs_general, because this is just
-    # an AUTO_INCREMENT field used by Django and has no other purpose.
-    # Always skip "timestamp" fields because these are automatically filled in
-    # by SQL because we mark them as ON CREATE and ON UPDATE.
-    # Skip "mult_" tables because they are handled separately when the search
-    # type is a GROUP-type.
+    # Compute every column's value. A "timestamp" column is skipped because the
+    # server fills it in, and an entry that is not a column of this table -- a
+    # param_info row of another table's column, or a table-level key -- is skipped
+    # too.
 
     for table_column in table_schema:
-        if table_column.get('put_mults_here', False) or table_column.get('pi_referred_slug', False):
+        if 'field_name' not in table_column or table_column.get('put_mults_here', False):
+            # A param_info row of another table's column, or a table-level key.
             continue
         field_name = table_column['field_name']
         field_type = table_column['field_type']

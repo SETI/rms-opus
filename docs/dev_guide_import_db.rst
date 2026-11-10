@@ -34,6 +34,7 @@ raises. A failed database operation always aborts the import.
             +scratch_dir
             +transaction_rows
             +tables_created
+            +JOINED_PARENT_ALIAS
             +table_exists()
             +read_rows()
             +open_sibling_connection()
@@ -53,6 +54,7 @@ raises. A failed database operation always aborts the import.
             +upsert_row()*
             +upsert_rows()*
             +delete_rows()*
+            +delete_joined_rows()*
             +general_select()*
             +find_column_max()*
             +read_table_keys()*
@@ -121,29 +123,34 @@ Keys on a fresh import
 ~~~~~~~~~~~~~~~~~~~~~~
 
 :mod:`opus_import.table_keys` reads a schema's keys as
-:class:`~opus_import.table_keys.TableKey` values -- a kind, the columns in order and, for
-a foreign key, what it references and what it does on delete -- which compare by those
-and never by name, because the server names an unnamed key itself.
+:class:`~opus_import.table_keys.TableKey` values -- a kind, the columns in order and,
+for a foreign key, what it references and what it does on delete -- which compare by
+those and never by name, because the server names an unnamed key itself.
 :meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_table` always creates an
 observation or ``mult_`` table with **the keep set**,
 :func:`~opus_import.table_keys.create_time_keys`, exactly: the primary key, every unique
 key, every ``{"constraint": ...}`` entry (rendered raw, as always), and the keys the
-per-bundle delete reads, which is each table's ``bundle_id`` key. It does so on
-both write paths, so a table first created by an append is keyed by the ``--finalize``
-that follows, as every table of a fresh import is. Every other table is created with
-every key its schema declares, table-level ``foreign_key``, ``primary_key`` and
-``unique`` entries included (:ref:`dev_guide_table_schemas`), which is how ``cart`` has
-its cascading foreign key, and ``search_results`` its keys over two columns, from the
-start.
+per-bundle delete reads: the ``bundle_id`` key of ``obs_general`` and of the surface
+geometry name and per-target tables, the tables it selects by ``bundle_id``
+(:func:`~opus_import.table_keys.is_bundle_keyed_table`). Every other observation table
+is keyed on ``obs_general_id``, which the delete reaches by joining ``obs_general``, so
+it is created with its primary key alone, and ``obs_pds``'s ``bundle_id`` key waits for
+finalization like any other plain key. It does so on both write paths, so a table first
+created by an append is keyed by the ``--finalize`` that follows, as every table of a
+fresh import is. A table of neither kind is created with every key its schema declares,
+table-level ``foreign_key``, ``primary_key``, ``unique`` and ``key`` entries included
+(:ref:`dev_guide_table_schemas`), which is how ``cart`` has its cascading foreign key,
+and ``search_results`` its keys over two columns, from the start.
 
 :func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
 tables: the declared keys the keep set leaves out, plain keys first and foreign keys
-last, plus a plain key on each foreign-key column no other key leads (every child's
-``obs_general_id``), so the foreign key finds its index built. Finalization's
-``--create-indexes`` adds what it lists (:ref:`dev_guide_import_steps_create_indexes`).
-Both read the same column entries, so the two can never disagree; a unit test checks
-that they partition every observation and ``mult_`` schema's keys and that the keep set
-holds every key the delete reads.
+last, plus a plain key on each foreign-key column no other key leads (the
+``obs_general_id`` of the surface geometry name and per-target tables; every other
+table's primary key leads with it), so the foreign key finds its index built.
+Finalization's ``--create-indexes`` adds what it lists
+(:ref:`dev_guide_import_steps_create_indexes`). Both read the same column entries, so
+the two can never disagree; a unit test checks that they partition every observation and
+``mult_`` schema's keys and that the keep set holds every key the delete reads.
 
 .. _dev_guide_import_db_siblings:
 
@@ -222,6 +229,13 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
      - Delete the rows a WHERE clause selects. With no clause it deletes nothing and
        raises, so a clause that came out empty cannot empty the table; ``all_rows=True``
        is the one way to delete every row.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.delete_joined_rows`\ ``(table_name, join_column, parent_table, parent_column, where, where_params)``
+     - Delete a table's rows whose ``join_column`` names a parent row a WHERE clause
+       selects, by joining the parent; the parent rows stay. The clause names the
+       parent's columns qualified by
+       :attr:`~opus_import.importdb.super.ImportDBSuper.JOINED_PARENT_ALIAS`, and every
+       value in it is a placeholder. The per-bundle delete reaches a child's rows through
+       ``obs_general`` this way.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.general_select`\ ``(cmd, param_list=None)``
      - Run a query the caller assembled and return every row.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.find_column_max`\ ``(table_name, column_name)``
@@ -565,7 +579,7 @@ Schemas
     :attr:`~opus_import.context.ImportContext.max_table_id_cache`. In a pool worker it
     returns a :class:`~opus_import.deferred.LocalId` instead, which the import's process
     rebases onto the real id (:ref:`dev_guide_import_steps_do_import_pool`). A ``MAX_ID``
-    column and every ``obs_files`` row take their ids from it.
+    column takes its ids from it.
 
 Logging
 ~~~~~~~

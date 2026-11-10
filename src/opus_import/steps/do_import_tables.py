@@ -32,12 +32,16 @@ from opus_import import (
     config_data,
     import_util,
     schema_version,
+    table_keys,
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from opus_import.config_bundle_info import BundleInfo
     from opus_import.context import ImportContext
     from opus_import.import_util import TableSchema
+    from opus_import.importdb.super import ImportDBSuper
 
 #: The prefixes of the tables the import creates in any number -- the observation tables
 #: and the mult tables.
@@ -138,17 +142,23 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
 def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     """Delete one bundle's rows from every ``obs_`` table.
 
-    Every other table goes before ``obs_general``. Each table's rows of the bundle are
-    deleted in chunks of `ImportDBSuper.transaction_rows`: their ids are read a chunk at a
-    time through the ``bundle_id`` key, which each of these tables is created with, so a
-    large bundle's ids are never all held at once, and each chunk is one
-    statement selecting by ``bundle_id`` and a range of the table's own ``id``, its own
-    transaction, so no single statement holds a whole large bundle's undo and none reads
-    rows outside its range -- a table a fresh import is still loading has no other key
-    to find a bundle's rows by.
+    Every other table goes before ``obs_general``, a chunk of
+    `ImportDBSuper.transaction_rows` rows at a time, each chunk one statement and its own
+    transaction, so no single statement holds a whole large bundle's undo:
 
-    The connection checks foreign keys while it deletes, so ``cart``'s cascade removes
-    the cart rows that name the bundle's observations.
+    * The tables `opus_import.table_keys.BUNDLE_KEYED_TABLE_PREFIXES` names hold
+      ``bundle_id``, and are created with its key: their rows of the bundle are deleted
+      by ``bundle_id`` and a range of the table's own ``id``, read a chunk at a time
+      through that key.
+    * Then the bundle's ``obs_general`` ids are read a chunk at a time through
+      ``obs_general``'s ``bundle_id`` key. For each chunk, every other table's rows are
+      deleted by joining ``obs_general`` on ``obs_general_id``, which leads each such
+      table's primary key, and then the chunk's ``obs_general`` rows.
+
+    Every statement selects by ``bundle_id`` and a range of ids, so none reads rows
+    outside its range: a table a fresh import is still loading has no other key to find
+    a bundle's rows by. The connection checks foreign keys while it deletes, so
+    ``cart``'s cascade removes the cart rows that name the bundle's observations.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -159,39 +169,90 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     db = ctx.db
     assert db is not None
     table_names = sorted(db.table_names(prefix=['obs_']))
-    ordered = [name for name in table_names if name != 'obs_general']
-    if 'obs_general' in table_names:
-        ordered.append('obs_general')
+    children = [name for name in table_names if name != 'obs_general']
+    keyed = [name for name in children if table_keys.is_bundle_keyed_table(name)]
+    joined = [name for name in children if name not in keyed]
+
+    for table_name in keyed:
+        for first_id, last_id in _bundle_id_ranges(db, table_name, bundle_id):
+            _delete_id_range(db, table_name, bundle_id, first_id, last_id)
+    if 'obs_general' not in table_names:
+        return
+    q = db.quote_identifier
+    parent = q(db.JOINED_PARENT_ALIAS)
+    in_chunk = f'{parent}.{q("bundle_id")} = %s AND {parent}.{q("id")} BETWEEN %s AND %s'
+    for first_id, last_id in _bundle_id_ranges(db, 'obs_general', bundle_id):
+        for table_name in joined:
+            db.delete_joined_rows(
+                table_name,
+                'obs_general_id',
+                'obs_general',
+                'id',
+                in_chunk,
+                [bundle_id, first_id, last_id],
+            )
+        _delete_id_range(db, 'obs_general', bundle_id, first_id, last_id)
+
+
+def _bundle_id_ranges(
+    db: ImportDBSuper, table_name: str, bundle_id: str
+) -> Iterator[tuple[int, int]]:
+    """Yield the ranges of a table's ``id`` its rows of a bundle cover, a chunk at a time.
+
+    Each range covers at most `ImportDBSuper.transaction_rows` of the bundle's rows, read
+    through the table's ``bundle_id`` key, so a large bundle's ids are never all held at
+    once. The caller deletes each range's rows before the next is read.
+
+    Parameters:
+        db: The open database.
+        table_name: A table holding ``bundle_id`` and an ``id`` of its own.
+        bundle_id: The bundle.
+
+    Yields:
+        The first and last id of each chunk.
+    """
     q = db.quote_identifier
     in_bundle = f'{q("bundle_id")}=%s'
-
-    for table_name in ordered:
-        after: int | None = None
-        while True:
-            # One page of the bundle's ids at a time, read through the bundle_id key,
-            # so a large bundle's ids are never all held at once.
-            if after is None:
-                where, params = in_bundle, [bundle_id, db.transaction_rows]
-            else:
-                where = f'{in_bundle} AND {q("id")} > %s'
-                params = [bundle_id, after, db.transaction_rows]
-            ids = [
-                row[0]
-                for row in db.general_select(
-                    f'{q("id")} FROM {q(table_name)} WHERE {where} ORDER BY {q("id")} LIMIT %s',
-                    params,
-                )
-            ]
-            if not ids:
-                break
-            db.delete_rows(
-                table_name,
-                f'{in_bundle} AND {q("id")} BETWEEN %s AND %s',
-                where_params=[bundle_id, ids[0], ids[-1]],
+    after: int | None = None
+    while True:
+        if after is None:
+            where, params = in_bundle, [bundle_id, db.transaction_rows]
+        else:
+            where = f'{in_bundle} AND {q("id")} > %s'
+            params = [bundle_id, after, db.transaction_rows]
+        ids = [
+            row[0]
+            for row in db.general_select(
+                f'{q("id")} FROM {q(table_name)} WHERE {where} ORDER BY {q("id")} LIMIT %s',
+                params,
             )
-            if len(ids) < db.transaction_rows:
-                break
-            after = ids[-1]
+        ]
+        if not ids:
+            return
+        yield ids[0], ids[-1]
+        if len(ids) < db.transaction_rows:
+            return
+        after = ids[-1]
+
+
+def _delete_id_range(
+    db: ImportDBSuper, table_name: str, bundle_id: str, first_id: int, last_id: int
+) -> None:
+    """Delete a table's rows of a bundle whose ``id`` lies in a range.
+
+    Parameters:
+        db: The open database.
+        table_name: A table holding ``bundle_id`` and an ``id`` of its own.
+        bundle_id: The bundle.
+        first_id: The range's first id.
+        last_id: Its last.
+    """
+    q = db.quote_identifier
+    db.delete_rows(
+        table_name,
+        f'{q("bundle_id")}=%s AND {q("id")} BETWEEN %s AND %s',
+        where_params=[bundle_id, first_id, last_id],
+    )
 
 
 def create_tables_for_import(
@@ -264,9 +325,8 @@ def create_tables_for_import(
 
         # Create the referenced mult_ tables
         for table_column in table_schema:
-            if table_column.get('put_mults_here', False) or table_column.get(
-                'pi_referred_slug', False
-            ):
+            if 'field_name' not in table_column or table_column.get('put_mults_here', False):
+                # A param_info row of another table's column, or a table-level key.
                 continue
             field_name = table_column['field_name']
             pi_form_type = table_column.get('pi_form_type', None)

@@ -50,8 +50,8 @@ The order, and what forces it
   and an import in the same invocation can still finish the registry first.
 * **The keys come right after the import**, and the foreign keys after every other key,
   because a fresh import loads its tables without them; the duplicate step follows,
-  because it finds the copies through the key on ``opus_id`` and deletes them through
-  the keys on ``obs_general_id``.
+  because it finds the copies through the key on ``opus_id`` and deletes them from the
+  surface geometry name and per-target tables through their key on ``obs_general_id``.
 * **The auxiliary tables come after the import** because each is derived from which
   observation tables exist and from their schemas.
 * **The cart and search tables come after the import** because ``cart`` carries a
@@ -293,9 +293,10 @@ here. It then adds them in three phases:
    connections (:meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`), as
    :mod:`opus_import.cli` resolved it against the ceiling
    (:ref:`dev_guide_import_running_parallelism`) -- ``"max"`` is the ceiling itself. The
-   list includes a plain key on every foreign-key column no other key leads -- each
-   child's ``obs_general_id`` -- so the foreign keys find their index built rather than
-   building it themselves one table at a time.
+   list includes a plain key on every foreign-key column no other key leads -- the
+   ``obs_general_id`` of the surface geometry name and per-target tables, since every
+   other table's primary key leads with it -- so the foreign keys find their index built
+   rather than building it themselves one table at a time.
 2. **The foreign keys**, one at a time with ``foreign_key_checks`` off, after every
    plain key: with the checks off, adding a foreign key is an in-place change that does
    not read the rows already there, and each one takes an exclusive lock on
@@ -334,9 +335,10 @@ opus_import.steps.do_duplicate_ids
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Keeps one copy of each OPUS ID. It has no option of its own: ``--finalize`` runs it,
-after the keys, and skips it when the key builds failed, since it deletes by
-``obs_general_id``, which only those keys index. OPUS IDs are compared as the column's
-collation compares them, so two that differ only in case are the same ID.
+after the keys, and skips it when the key builds failed, since it finds the copies by
+``obs_general.opus_id`` and deletes them from the surface geometry name and per-target
+tables by ``obs_general_id``, which only those keys index. OPUS IDs are compared as the
+column's collation compares them, so two that differ only in case are the same ID.
 
 Two bundles can produce the same OPUS ID -- Galileo SSI does, and so can a calibrated
 bundle and its raw counterpart -- and ``obs_general.opus_id`` has a plain key, not a
@@ -595,7 +597,8 @@ The checks, in this order:
     hundred OPUS IDs. A ``LONG`` field is skipped, because a longitude range wraps and
     its low end legitimately exceeds its high end, and so is a column whose
     ``param_info`` form type is NULL. A missing ``X2``, an absent
-    ``param_info`` row, or more than one, is an error.
+    ``param_info`` row, or more than one, is an error. A table other than
+    ``obs_general`` names a bad row by the OPUS ID of the ``obs_general`` row it joins.
 
 :func:`~opus_import.steps.do_validate.validate_filter_wavelength_consistency`
     For every table with a ``filter_name`` or ``combined_filter`` column, checks that
@@ -608,6 +611,13 @@ The checks, in this order:
     the rows whose ``obs_general_id`` names no ``obs_general`` row, by an anti-join. A
     foreign key added with the checks off, as finalization adds them, never reads the
     rows already there, so this is the check that it holds. Any orphan is an error.
+
+:func:`~opus_import.steps.do_validate.validate_pds_bundle_ids`
+    Counts the ``obs_pds`` rows whose ``bundle_id`` differs from their ``obs_general``
+    row's. ``obs_pds.bundle_id`` is the public bundle field, written beside
+    ``obs_general.bundle_id``, which the per-bundle delete selects by, so a search by
+    bundle and the delete would otherwise see different bundles. Any such row is an
+    error.
 
 :func:`~opus_import.steps.do_validate.validate_unique_opus_ids`
     Groups ``obs_general`` by ``opus_id`` and reports any OPUS ID more than one row
@@ -745,14 +755,22 @@ Its functions:
 
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`
     Deletes one bundle from every observation table, every other table before
-    ``obs_general``, in chunks: a table's ids for the bundle are read through its
-    ``bundle_id`` key, which each of these tables is created with, and each ``[import]
-    transaction_rows`` of them go in one statement selecting by ``bundle_id`` and a
-    range of the table's own ``id``. Each statement is its own transaction, so none
-    holds a whole large bundle's undo, and none reads rows outside its range -- which
-    matters on a fresh import, whose tables have no other key to find a bundle's rows by
-    until finalization. The connection checks foreign keys while it deletes, so
-    ``cart``'s cascade removes the cart rows that name the bundle's observations.
+    ``obs_general``, in chunks of ``[import] transaction_rows`` rows. First the tables
+    :data:`~opus_import.table_keys.BUNDLE_KEYED_TABLE_PREFIXES` names -- the surface
+    geometry name and per-target tables, which hold ``bundle_id`` and are created with
+    its key -- are emptied of the bundle: their ids for it are read a chunk at a time
+    through that key, and each chunk goes in one statement selecting by ``bundle_id``
+    and a range of the table's own ``id``. Then the bundle's ``obs_general`` ids are
+    read a chunk at a time through ``obs_general``'s ``bundle_id`` key, and for each
+    chunk every other table's rows go in one statement per table that joins
+    ``obs_general`` on ``obs_general_id``
+    (:meth:`~opus_import.importdb.super.ImportDBSuper.delete_joined_rows`), selecting
+    by the bundle and the chunk's range of ids, followed by the chunk's ``obs_general``
+    rows. Each statement is its own transaction, so none holds a whole large bundle's
+    undo, and none reads rows outside its range -- which matters on a fresh import,
+    whose tables have no other key to find a bundle's rows by until finalization. The
+    connection checks foreign keys while it deletes, so ``cart``'s cascade removes the
+    cart rows that name the bundle's observations.
 
 :func:`~opus_import.steps.do_import_tables.analyze_all_tables`
     Runs the backend's analyze over every ``obs_`` and ``mult_`` table, for
@@ -803,8 +821,12 @@ Importing every observation one primary index file describes.
     another during the index, which the foreign keys tolerate because a bundle loads with
     their checks off (:ref:`dev_guide_import_steps_do_import`). An index that fails
     partway is taken back by
-    :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes each
-    table's rows from the first id the sink loaded: the index's mult values are never
+    :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes the
+    rows of every observation from the first one the sink loaded, by ``id`` in
+    ``obs_general`` and by ``obs_general_id`` in every other table, with ``obs_general``
+    after the tables whose rows refer to it. Observation ids are handed out from
+    ``obs_general``'s highest and the import's process is the only writer, so those are
+    exactly the index's rows. None may be left: the index's mult values are never
     written, so a row of it left behind would hold a mult id a later bundle gives to
     another value.
 
@@ -814,7 +836,10 @@ Importing every observation one primary index file describes.
     the results page shows the product types in. It leaves out two kinds of file -- a
     shared index or summary file that does not list this observation, and a PDS3 file
     whose shelf metadata is missing (with a warning, because its size and checksum are
-    unknown). A file that is not the current version is never checked by default.
+    unknown). A file that is not the current version is never checked by default. Each
+    row's ``file_number`` is its position in the list, from 1, which with the
+    observation's id is the table's primary key and keeps the observation's files in
+    that order.
 
 .. _dev_guide_import_steps_do_import_pool:
 

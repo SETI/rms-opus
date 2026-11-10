@@ -174,9 +174,10 @@ The re-import path
     that holds none of that bundle's rows -- every mult table, and everything the
     dictionary and finalization steps write -- is therefore required to be byte-identical
     to its golden, ids included, which is what says the upsert updated the row it found
-    rather than adding another. Every table that does hold them is required to hold the
-    same rows with the same values once the two server-numbered columns, ``id`` and
-    ``obs_general_id``, are dropped. A third assertion checks that neither half is empty,
+    rather than adding another. Every table that does hold them -- one whose
+    ``bundle_id`` names the bundle, or whose ``obs_general_id`` names one of its
+    ``obs_general`` rows -- is required to hold the same rows with the same values once
+    the two server-numbered columns, ``id`` and ``obs_general_id``, are dropped. A third assertion checks that neither half is empty,
     so a bundle id matching nothing cannot make both pass.
 
 Every obs function

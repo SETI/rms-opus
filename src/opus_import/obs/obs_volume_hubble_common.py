@@ -227,15 +227,6 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
-    def field_obs_mission_hubble_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_mission_hubble_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_mission_hubble_instrument_id(self) -> StrField:
-        return self.instrument_id
-
     def field_obs_mission_hubble_stsci_group_id(self) -> StrField:
         return cast(StrField, self._index_col('STSCI_GROUP_ID'))
 

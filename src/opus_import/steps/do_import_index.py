@@ -411,6 +411,18 @@ class IndexState:
     obs_rows: list[IndexRow]
 
 
+def _observation_id_column(table_name: str) -> str:
+    """Return the column holding the id of the observation a table's row belongs to.
+
+    Parameters:
+        table_name: An observation table.
+
+    Returns:
+        ``id`` for ``obs_general``, and ``obs_general_id`` for every other table.
+    """
+    return 'id' if table_name == 'obs_general' else 'obs_general_id'
+
+
 @dataclass
 class TableRowSink:
     """Collects an index's rows per table and loads each table a transaction at a time.
@@ -429,8 +441,8 @@ class TableRowSink:
         rows: The rows waiting to be loaded, per table.
         targets: Each surface geometry target's table, mapped to the target.
         created: The targets' tables already created.
-        first_loaded: The id of the first row loaded into each table, in the order the
-            tables were first loaded.
+        first_loaded: The observation id of the first row loaded into each table, in the
+            order the tables were first loaded.
     """
 
     ctx: ImportContext
@@ -470,15 +482,18 @@ class TableRowSink:
     def discard(self) -> None:
         """Delete every row this sink loaded, and drop the rows still waiting.
 
-        Row ids are handed out from each table's highest, and the import's process is
-        the only writer, so this index's rows are those from the first id it loaded up.
-        The tables are emptied of them in the reverse of the order they were first
-        loaded, so ``obs_general`` goes after the tables whose rows refer to it.
+        Observation ids are handed out from ``obs_general``'s highest, and the import's
+        process is the only writer, so this index's rows are those of the observations
+        from the first one it loaded up: in ``obs_general`` by ``id``, and in every other
+        table by ``obs_general_id``. The tables are emptied of them in the reverse of the
+        order they were first loaded, so ``obs_general`` goes after the tables whose rows
+        refer to it.
         """
         db = self.ctx.db
         assert db is not None
         for table_name, first_id in reversed(self.first_loaded.items()):
-            db.delete_rows(table_name, '`id` >= %s', [first_id])
+            column = db.quote_identifier(_observation_id_column(table_name))
+            db.delete_rows(table_name, f'{column} >= %s', [first_id])
         self.first_loaded.clear()
         self.rows.clear()
 
@@ -507,7 +522,7 @@ class TableRowSink:
         import_util.log_debug(self.ctx, f'Inserting into obs table "{table_name}"')
         waiting = self.rows.get(table_name, [])
         if waiting:
-            self.first_loaded.setdefault(table_name, waiting[0]['id'])
+            self.first_loaded.setdefault(table_name, waiting[0][_observation_id_column(table_name)])
         db.bulk_load_rows(table_name, waiting)
         self.rows[table_name] = []
 
@@ -755,7 +770,9 @@ def get_opus_products_rows_for_filespec(
 
     Each row is one file of one product type at one version: where it lives, how big it
     is, its checksum, and the ordering the results page shows the product types in. A
-    file that is not the current version is never checked by default.
+    file that is not the current version is never checked by default. A row's
+    ``file_number`` is its position in the list, from 1, which with the observation's id
+    is the table's primary key and keeps the observation's files in this order.
 
     Two kinds of file are left out. A shared index or summary file that does not list
     this observation contributes nothing, since it holds no data for it; that check runs
@@ -769,7 +786,7 @@ def get_opus_products_rows_for_filespec(
         filespec: The observation's primary filespec.
         obs_general_id: The observation's ``obs_general`` row id.
         opus_id: The observation's OPUS id.
-        bundle_id: The bundle being imported.
+        bundle_id: The bundle being imported, for a warning's message.
         instrument_id: The OPUS instrument id.
 
     Returns:
@@ -905,13 +922,9 @@ def get_opus_products_rows_for_filespec(
                 width = file.width or None
                 height = file.height or None
 
-                table_id = import_util.next_table_id(ctx, 'obs_files')
-
                 row = {
-                    'id': table_id,
                     'obs_general_id': obs_general_id,
                     'opus_id': opus_id,
-                    'bundle_id': bundle_id,
                     'instrument_id': instrument_id,
                     'version_number': version_number,
                     'version_name': version_name,
@@ -940,4 +953,6 @@ def get_opus_products_rows_for_filespec(
 
         rows += current_rows
 
+    for file_number, row in enumerate(rows, 1):
+        row['file_number'] = file_number
     return rows

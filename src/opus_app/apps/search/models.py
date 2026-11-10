@@ -1521,14 +1521,15 @@ class MultObsWavelengthSpecFlag(models.Model):
 
 
 class ObsFiles(models.Model):
+    pk = models.CompositePrimaryKey('obs_general_id', 'file_number')
     obs_general = models.ForeignKey(
         'ObsGeneral',
         models.DO_NOTHING,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
+    file_number = models.PositiveSmallIntegerField()
     opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
     version_number = models.PositiveIntegerField()
     version_name = models.CharField(max_length=16)
@@ -1545,7 +1546,6 @@ class ObsFiles(models.Model):
     width = models.PositiveIntegerField(blank=True, null=True)
     height = models.PositiveIntegerField(blank=True, null=True)
     pds_version = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1585,14 +1585,13 @@ class ObsGeneral(models.Model):
 
 
 class ObsInstrumentCocirs(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     detector_id = models.PositiveIntegerField()
     instrument_mode_blinking_flag = models.PositiveIntegerField(blank=True, null=True)
     instrument_mode_even_flag = models.PositiveIntegerField(blank=True, null=True)
@@ -1600,7 +1599,6 @@ class ObsInstrumentCocirs(models.Model):
     instrument_mode_centers_flag = models.PositiveIntegerField(blank=True, null=True)
     instrument_mode_pairs_flag = models.PositiveIntegerField(blank=True, null=True)
     instrument_mode_all_flag = models.PositiveIntegerField(blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1609,14 +1607,13 @@ class ObsInstrumentCocirs(models.Model):
 
 
 class ObsInstrumentCoiss(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     data_conversion_type = models.PositiveIntegerField()
     compression_type = models.PositiveIntegerField()
     gain_mode_id = models.PositiveIntegerField()
@@ -1629,7 +1626,6 @@ class ObsInstrumentCoiss(models.Model):
     target_desc = models.PositiveIntegerField()
     combined_filter = models.PositiveIntegerField()
     camera = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1638,14 +1634,13 @@ class ObsInstrumentCoiss(models.Model):
 
 
 class ObsInstrumentCouvis(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     observation_type = models.PositiveIntegerField()
     integration_duration = models.FloatField(blank=True, null=True)
     compression_type = models.PositiveIntegerField()
@@ -1661,7 +1656,6 @@ class ObsInstrumentCouvis(models.Model):
     line2 = models.IntegerField(blank=True, null=True)
     line_bin = models.IntegerField(blank=True, null=True)
     samples = models.IntegerField(blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1670,14 +1664,13 @@ class ObsInstrumentCouvis(models.Model):
 
 
 class ObsInstrumentCovims(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     instrument_mode_id = models.PositiveIntegerField()
     spectral_editing = models.PositiveIntegerField()
     spectral_summing = models.PositiveIntegerField()
@@ -1689,7 +1682,6 @@ class ObsInstrumentCovims(models.Model):
     vis_exposure = models.FloatField(blank=True, null=True)
     vis_sampling_mode_id = models.PositiveIntegerField()
     channel = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1698,14 +1690,13 @@ class ObsInstrumentCovims(models.Model):
 
 
 class ObsInstrumentGossi(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     observation_id = models.CharField(max_length=20)
     image_id = models.CharField(max_length=15)
     filter_name = models.PositiveIntegerField()
@@ -1714,7 +1705,6 @@ class ObsInstrumentGossi(models.Model):
     frame_duration = models.PositiveIntegerField()
     obstruction_id = models.PositiveIntegerField()
     compression_type = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1723,17 +1713,15 @@ class ObsInstrumentGossi(models.Model):
 
 
 class ObsInstrumentNhlorri(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     instrument_compression_type = models.PositiveIntegerField()
     binning_mode = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1742,16 +1730,14 @@ class ObsInstrumentNhlorri(models.Model):
 
 
 class ObsInstrumentNhmvic(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     instrument_compression_type = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1760,14 +1746,13 @@ class ObsInstrumentNhmvic(models.Model):
 
 
 class ObsInstrumentVgiss(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     image_id = models.CharField(max_length=10)
     scan_mode = models.PositiveIntegerField()
     shutter_mode = models.PositiveIntegerField()
@@ -1778,7 +1763,6 @@ class ObsInstrumentVgiss(models.Model):
     camera = models.PositiveIntegerField()
     usable_lines = models.SmallIntegerField(blank=True, null=True)
     usable_samples = models.SmallIntegerField(blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1787,15 +1771,13 @@ class ObsInstrumentVgiss(models.Model):
 
 
 class ObsMissionCassini(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     obs_name = models.CharField(max_length=30)
     rev_no = models.CharField(max_length=3, blank=True, null=True)
     rev_no_int = models.IntegerField(blank=True, null=True)
@@ -1810,7 +1792,6 @@ class ObsMissionCassini(models.Model):
     activity_name = models.CharField(max_length=9, blank=True, null=True)
     mission_phase_name = models.PositiveIntegerField(blank=True, null=True)
     sequence_id = models.CharField(max_length=4, blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1819,18 +1800,16 @@ class ObsMissionCassini(models.Model):
 
 
 class ObsMissionGalileo(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     orbit_number = models.PositiveIntegerField(blank=True, null=True)
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1839,15 +1818,13 @@ class ObsMissionGalileo(models.Model):
 
 
 class ObsMissionHubble(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     stsci_group_id = models.CharField(max_length=9)
     hst_proposal_id = models.IntegerField()
     hst_pi_name = models.CharField(max_length=24)
@@ -1868,7 +1845,6 @@ class ObsMissionHubble(models.Model):
     wf4_flag = models.PositiveIntegerField(blank=True, null=True)
     targeted_detector_id = models.PositiveIntegerField(blank=True, null=True)
     optical_element = models.PositiveIntegerField(blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1877,19 +1853,16 @@ class ObsMissionHubble(models.Model):
 
 
 class ObsMissionNewHorizons(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
     mission_phase = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1898,19 +1871,17 @@ class ObsMissionNewHorizons(models.Model):
 
 
 class ObsMissionVoyager(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
     ert = models.FloatField(blank=True, null=True)
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
     mission_phase_name = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1919,22 +1890,21 @@ class ObsMissionVoyager(models.Model):
 
 
 class ObsPds(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
     opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     data_set_id = models.CharField(max_length=40)
     product_id = models.CharField(max_length=50)
     primary_lid = models.CharField(max_length=240)
     product_creation_time = models.FloatField(blank=True, null=True)
     primary_filespec = models.CharField(max_length=240)
     note = models.CharField(max_length=255, blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1943,15 +1913,13 @@ class ObsPds(models.Model):
 
 
 class ObsProfile(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     occ_type = models.PositiveIntegerField(blank=True, null=True)
     occ_dir = models.PositiveIntegerField(blank=True, null=True)
     body_occ_flag = models.PositiveIntegerField(blank=True, null=True)
@@ -1962,7 +1930,6 @@ class ObsProfile(models.Model):
     wl_band = models.PositiveIntegerField(blank=True, null=True)
     source = models.PositiveIntegerField(blank=True, null=True)
     host = models.PositiveIntegerField(blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1971,15 +1938,13 @@ class ObsProfile(models.Model):
 
 
 class ObsRingGeometry(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     ring_radius1 = models.FloatField(blank=True, null=True)
     ring_radius2 = models.FloatField(blank=True, null=True)
     resolution1 = models.FloatField(blank=True, null=True)
@@ -2086,7 +2051,6 @@ class ObsRingGeometry(models.Model):
     center_x_coordinate = models.FloatField(blank=True, null=True)
     center_y_coordinate = models.FloatField(blank=True, null=True)
 
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -2095,17 +2059,14 @@ class ObsRingGeometry(models.Model):
 
 
 class ObsSurfaceGeometry(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     target_list = models.TextField(blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -11728,21 +11689,18 @@ class ObsSurfaceGeometryName(models.Model):
 
 
 class ObsTypeImage(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     image_type_id = models.PositiveIntegerField(blank=True, null=True)
     duration = models.FloatField(blank=True, null=True)
     levels = models.PositiveIntegerField(blank=True, null=True)
     greater_pixel_size = models.PositiveIntegerField(blank=True, null=True)
     lesser_pixel_size = models.PositiveIntegerField(blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -11751,15 +11709,13 @@ class ObsTypeImage(models.Model):
 
 
 class ObsWavelength(models.Model):
-    obs_general = models.ForeignKey(
+    obs_general = models.OneToOneField(
         ObsGeneral,
         models.DO_NOTHING,
+        primary_key=True,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    instrument_id = models.CharField(max_length=12)
     wavelength1 = models.FloatField(blank=True, null=True)
     wavelength2 = models.FloatField(blank=True, null=True)
     wave_res1 = models.FloatField(blank=True, null=True)
@@ -11771,7 +11727,6 @@ class ObsWavelength(models.Model):
     spec_flag = models.PositiveIntegerField()
     spec_size = models.PositiveIntegerField(blank=True, null=True)
     polarization_type = models.PositiveIntegerField()
-    id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:

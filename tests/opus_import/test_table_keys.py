@@ -3,7 +3,9 @@
 Every packaged schema is read: for an observation or mult table the keys created with
 the table and the keys finalization adds must partition what the schema declares, and
 the first set must hold every key the per-bundle delete reads, or each bundle's delete
-would scan its tables whole.
+would scan its tables whole. The delete reads ``obs_general`` and the surface geometry
+tables through their ``bundle_id`` keys, and every other observation table through the
+primary key ``obs_general_id`` leads.
 """
 
 from __future__ import annotations
@@ -69,17 +71,21 @@ def test_every_observation_schema_is_among_the_filtered_ones() -> None:
 def test_the_two_key_sets_partition_what_the_schema_declares(path: Path) -> None:
     """Every declared key is created with the table or added by finalization, never both.
 
-    Finalization also adds one key the schema does not declare: a plain key on
-    ``obs_general_id`` for each child, whose only declaration of that column is its
-    foreign key. No other undeclared key appears.
+    Finalization also adds a key the schema does not declare: a plain key on a foreign
+    key's column where no declared key leads with that column (the surface geometry
+    tables' ``obs_general_id``). No other undeclared key appears.
     """
     table = _table_name(path)
     schema = _schema(path)
     declared = table_keys.declared_keys(schema)
     kept = table_keys.create_time_keys(table, schema)
     added = table_keys.add_secondary_indexes(table, schema)
-    child = TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',))) in declared
-    supporting = {TableKey('key', ('obs_general_id',))} if child else set()
+    led = {key.columns[0] for key in declared if key.kind != 'foreign'}
+    supporting = {
+        TableKey('key', key.columns)
+        for key in declared
+        if key.kind == 'foreign' and key.columns[0] not in led
+    }
     assert set(kept).isdisjoint(added)
     assert set(kept) | set(declared) == set(declared)
     assert set(added) - set(declared) == supporting
@@ -88,15 +94,26 @@ def test_the_two_key_sets_partition_what_the_schema_declares(path: Path) -> None
 
 @pytest.mark.parametrize('path', _FILTERED, ids=lambda path: path.stem)
 def test_the_table_is_created_with_the_keys_the_delete_reads(path: Path) -> None:
-    """An observation table has a ``bundle_id`` key, and keeps it and its primary and unique keys."""
+    """The delete finds a bundle's rows through a key every table is created with.
+
+    A table the delete selects by ``bundle_id`` keeps that key; any other observation
+    table is reached by joining ``obs_general`` on ``obs_general_id``, which leads its
+    primary key, and keeps no ``bundle_id`` key even where it declares one (``obs_pds``).
+    Primary and unique keys are always kept, and foreign keys never.
+    """
     table = _table_name(path)
     schema = _schema(path)
     kept = table_keys.create_time_keys(table, schema)
     declared = table_keys.declared_keys(schema)
-    if table.startswith('obs_'):
-        assert TableKey('key', ('bundle_id',)) in kept
+    bundle_key = TableKey('key', ('bundle_id',))
+    if table_keys.is_bundle_keyed_table(table):
+        assert bundle_key in kept
+    elif table.startswith('obs_'):
+        assert bundle_key not in kept
+        (primary,) = [key for key in kept if key.kind == 'primary']
+        assert primary.columns[0] == 'obs_general_id'
     for key in declared:
-        if key.kind in ('primary', 'unique') or key == TableKey('key', ('bundle_id',)):
+        if key.kind in ('primary', 'unique'):
             assert key in kept
     assert all(key.kind != 'foreign' for key in kept)
 
@@ -124,14 +141,29 @@ def test_obs_general_keeps_only_its_primary_key_and_bundle_key() -> None:
     assert TableKey('key', ('opus_id',)) in table_keys.add_secondary_indexes('obs_general', schema)
 
 
-def test_a_child_gains_its_foreign_key_on_obs_general_id_and_none_on_opus_id() -> None:
-    """A child references ``obs_general`` by id only, through a key built before it."""
+def test_a_child_is_keyed_on_obs_general_id_and_gains_its_foreign_key_on_it() -> None:
+    """A child's primary key is its observation's id, which its one foreign key uses."""
     schema = _schema(TABLE_SCHEMA_DIR / 'obs_pds.json')
+    kept = table_keys.create_time_keys('obs_pds', schema)
     added = table_keys.add_secondary_indexes('obs_pds', schema)
-    assert TableKey('key', ('obs_general_id',)) in added
-    assert TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',))) in added
+    assert kept == [TableKey('primary', ('obs_general_id',))]
+    assert TableKey('key', ('obs_general_id',)) not in added
+    assert TableKey('key', ('bundle_id',)) in added
+    assert TableKey('key', ('opus_id',)) in added
     assert [key for key in added if key.kind == 'foreign'] == [
         TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)))
+    ]
+
+
+def test_obs_files_is_keyed_on_its_observation_and_file_number() -> None:
+    """``obs_files`` is created with its composite primary key, and gains one secondary key."""
+    schema = _schema(TABLE_SCHEMA_DIR / 'obs_files.json')
+    assert table_keys.create_time_keys('obs_files', schema) == [
+        TableKey('primary', ('obs_general_id', 'file_number'))
+    ]
+    assert table_keys.add_secondary_indexes('obs_files', schema) == [
+        TableKey('key', ('opus_id', 'short_name', 'version_name')),
+        TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',))),
     ]
 
 

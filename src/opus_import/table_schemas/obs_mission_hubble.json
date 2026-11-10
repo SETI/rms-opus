@@ -2,38 +2,21 @@
     {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
+        "field_key": "primary",
         "field_notnull": true,
         "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "opus_id",
-        "field_type": "char50",
-        "field_key": true,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "This is the secondary key linking the record to obs_general."
-    },
-    {
-        "field_name": "bundle_id",
-        "field_type": "char75",
-        "field_key": true,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The bundle_id is included here for ease of database manipulation only."
-    },
-    {
-        "field_name": "instrument_id",
-        "field_type": "char60",
-        "field_key": false,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The instrument_id is included here for ease of database manipulation only."
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
     },
     {
         "field_name": "stsci_group_id",
@@ -538,13 +521,6 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "field_name": "id",
-        "field_type": "uint4",
-        "field_key": "primary",
-        "field_notnull": true,
-        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

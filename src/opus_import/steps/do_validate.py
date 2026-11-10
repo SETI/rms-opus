@@ -9,7 +9,8 @@ every user-visible column is described in ``param_info``, that a paired minimum 
 maximum are really in that order, and that observations sharing a filter agree about
 that filter's wavelengths -- and at the one a constraint expresses but does not check:
 a foreign key added with ``foreign_key_checks`` off, as finalization adds them, never
-reads the rows already there, so every row's ``obs_general`` row is counted here.
+reads the rows already there, so every row's ``obs_general`` row is counted here, and
+``obs_pds``'s copy of each row's bundle is compared with ``obs_general``'s.
 """
 
 from __future__ import annotations
@@ -178,7 +179,8 @@ def validate_min_max_order(ctx: ImportContext) -> None:
     the high end, so a row where the second is smaller is bad data. A missing sibling,
     and a pair with no ``param_info`` row or more than one, are reported too. Longitude
     pairs are exempt: a longitude range wraps, so the low end legitimately exceeds the
-    high end.
+    high end. A bad row is named by its OPUS ID, which a table other than
+    ``obs_general`` reads from the ``obs_general`` row it joins.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -235,9 +237,17 @@ def validate_min_max_order(ctx: ImportContext) -> None:
             if pi_form_type is None or pi_form_type.startswith('LONG'):
                 continue
 
-            cmd = f"""
+            # Every interpolation is an identifier produced by quote_identifier
+            # (^[A-Za-z0-9_]+$); the statement carries no values at all.
+            if obs_table_name == 'obs_general':
+                cmd = f"""
 {q('opus_id')} FROM {q(full_obs_table_name)} WHERE
-{q(field_name2)} < {q(field_name1)}"""
+{q(field_name2)} < {q(field_name1)}"""  # nosec B608
+            else:
+                cmd = f"""
+{q('g')}.{q('opus_id')} FROM {q(full_obs_table_name)} {q('c')}
+JOIN {q('obs_general')} {q('g')} ON {q('g')}.{q('id')} = {q('c')}.{q('obs_general_id')}
+WHERE {q('c')}.{q(field_name2)} < {q('c')}.{q(field_name1)}"""  # nosec B608
             res = db.general_select(cmd)
             if len(res):
                 opus_ids = [x[0] for x in res]
@@ -373,6 +383,36 @@ WHERE {obs_general}.{q('id')} IS NULL"""  # nosec B608
             )
 
 
+def validate_pds_bundle_ids(ctx: ImportContext) -> None:
+    """Report ``obs_pds`` rows whose bundle differs from their ``obs_general`` row's.
+
+    ``obs_pds.bundle_id`` is the public ``bundleid`` field, written by the import
+    beside ``obs_general.bundle_id``, which the per-bundle delete selects by; the two
+    must agree, or a search by bundle and the delete would see different bundles. Any
+    such row is an error, with the count.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
+    db = ctx.db
+    assert db is not None
+    ctx.logger.log('debug', "Validating that obs_pds names each row's bundle")
+    if not (db.table_exists('obs_general') and db.table_exists('obs_pds')):
+        return
+    q = db.quote_identifier
+    # Every interpolation is an identifier produced by quote_identifier
+    # (^[A-Za-z0-9_]+$); the statement carries no values at all.
+    cmd = f"""
+COUNT(*) FROM {q('obs_pds')} {q('p')}
+JOIN {q('obs_general')} {q('g')} ON {q('g')}.{q('id')} = {q('p')}.{q('obs_general_id')}
+WHERE {q('p')}.{q('bundle_id')} <> {q('g')}.{q('bundle_id')}"""  # nosec B608
+    count = db.general_select(cmd)[0][0]
+    if count:
+        ctx.logger.log(
+            'error', f'Table "obs_pds" has {count} rows whose bundle_id differs from obs_general'
+        )
+
+
 def validate_unique_opus_ids(ctx: ImportContext) -> None:
     """Report OPUS IDs that more than one ``obs_general`` row carries.
 
@@ -428,6 +468,7 @@ def do_validate(ctx: ImportContext) -> bool:
     validate_min_max_order(ctx)
     validate_filter_wavelength_consistency(ctx)
     validate_orphans(ctx)
+    validate_pds_bundle_ids(ctx)
     validate_unique_opus_ids(ctx)
 
     fatal_count, error_count, _warning_count, _message_count = ctx.logger.close()

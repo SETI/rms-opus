@@ -23,15 +23,6 @@ class ObsSurfaceGeometry(ObsBase):
 
     ### Don't override these ###
 
-    def field_obs_surface_geometry_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_surface_geometry_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_surface_geometry_instrument_id(self) -> StrField:
-        return self.instrument_id
-
     def field_obs_surface_geometry_target_list(self) -> StrField:
         # This is the "Multiple Target List" field
         assert self._metadata is not None

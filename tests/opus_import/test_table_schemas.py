@@ -15,7 +15,8 @@ An entry is one of four kinds, told apart by its keys:
 * a **table-level entry**, which has none of those: ``{"constraint": "..."}``, appended to
   ``CREATE TABLE`` as written; ``{"foreign_key": {...}}``, a foreign key with its
   columns, what it references, and optionally what deleting a referenced row does; or
-  ``{"primary_key": [...]}`` or ``{"unique": [...]}``, a key over the listed columns.
+  ``{"primary_key": [...]}``, ``{"unique": [...]}`` or ``{"key": [...]}``, a key over the
+  listed columns.
 """
 
 from __future__ import annotations
@@ -256,12 +257,12 @@ def test_every_entry_is_one_of_the_four_kinds() -> None:
 
 
 def _table_level_key_problems(name: str, entry: dict[str, Any], level_entry: str) -> list[str]:
-    """Say what is wrong with a table-level ``primary_key`` or ``unique`` entry, if anything.
+    """Say what is wrong with a table-level ``primary_key``, ``unique`` or ``key`` entry.
 
     Parameters:
         name: The file the entry is in.
         entry: The entry.
-        level_entry: Which of the two it is.
+        level_entry: Which of the three it is.
 
     Returns:
         One line, or none for an entry `create_table` renders as written.
@@ -274,7 +275,13 @@ def _table_level_key_problems(name: str, entry: dict[str, Any], level_entry: str
 
 @pytest.mark.parametrize(
     ('entry', 'problem'),
-    [({'unique': ['a', 'b']}, False), ({'primary_key': []}, True), ({'unique': 'a'}, True)],
+    [
+        ({'unique': ['a', 'b']}, False),
+        ({'key': ['a', 'b', 'c']}, False),
+        ({'primary_key': []}, True),
+        ({'unique': 'a'}, True),
+        ({'key': [1]}, True),
+    ],
 )
 def test_the_table_level_key_check_refuses_what_create_table_cannot_render(
     entry: dict[str, Any], problem: bool

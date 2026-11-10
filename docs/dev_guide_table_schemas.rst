@@ -103,17 +103,22 @@ Defining the column
      - ``"primary"``, ``"unique"``, ``"foreign"``, or ``true`` for an ordinary index;
        any other value is refused. ``"foreign"`` requires ``field_key_foreign``. An
        observation or ``mult_`` table is created with only its primary key, its unique
-       keys and its ``bundle_id`` key, on either write path, and finalization adds the
-       others (:ref:`dev_guide_import_db_keys`); the finished table carries every key
+       keys and, in a table the per-bundle delete selects by ``bundle_id``, its
+       ``bundle_id`` key, on either write path, and finalization adds the others
+       (:ref:`dev_guide_import_db_keys`); the finished table carries every key
        declared.
    * - ``field_key_foreign``
      - ``[table, column]``, the target of a foreign key. The constraint is created
        ``ON DELETE RESTRICT ON UPDATE CASCADE``; a foreign key that says what deleting
        the referenced row does is a table-level ``foreign_key`` entry instead. An
        observation table's one foreign key is ``obs_general_id`` onto
-       ``obs_general.id``; its ``opus_id`` is a plain key, as ``obs_general.opus_id``
-       is, because two bundles can produce the same OPUS ID and both copies load before
-       finalization keeps one.
+       ``obs_general.id``. The surface geometry name and per-target tables, which number
+       their own rows in an ``id`` primary key, declare it here; every other observation
+       table declares it as a table-level ``foreign_key`` entry, because its
+       ``obs_general_id`` is its primary key, or in ``obs_files`` leads it. Wherever
+       ``opus_id`` carries a key it is a plain one, as in ``obs_general``, because two
+       bundles can produce the same OPUS ID and both copies load before finalization
+       keeps one.
    * - ``constraint``
      - Raw SQL inserted into the ``CREATE TABLE`` in place of a column definition. An
        entry carrying it defines no column.
@@ -140,8 +145,14 @@ Defining the column
    * - ``unique``
      - A table-level unique key over listed columns, in the same form:
        ``{"unique": ["<column>", ...]}``. ``search_results`` declares its unique key
-       ``(search_id, obs_general_id)`` this way. A ``primary_key`` or ``unique`` entry
-       whose value is not a non-empty list of column names is refused.
+       ``(search_id, obs_general_id)`` this way.
+   * - ``key``
+     - A table-level plain key over listed columns, in the same form:
+       ``{"key": ["<column>", ...]}``. It is created and added like a column's plain
+       key: an observation or ``mult_`` table gains it at finalization.
+       ``obs_files`` declares its key ``(opus_id, short_name, version_name)`` this way.
+       A ``primary_key``, ``unique`` or ``key`` entry whose value is not a non-empty
+       list of column names is refused.
    * - ``comments``
      - A note for whoever reads the schema. Nothing consumes it.
 
@@ -232,10 +243,9 @@ another table rather than defining a column of this one, so no SQL column is cre
 for it and no value is computed.
 
 ``obs_files`` is filled by :mod:`opus_import.steps.do_import_index` rather than by the
-dispatch above: it builds each row from a literal, and takes the row id by calling
-:func:`opus_import.import_util.next_table_id` directly, as ``MAX_ID`` does, rather than
-through the dispatch. Its schema's list-valued ``data_source`` entries are therefore **dead
-data** -- nothing reads them. The ``TAB:`` values among them are the only ones left in
+dispatch above: it builds each row from a literal, and numbers an observation's rows in
+``file_number``, from 1, in the order it builds them. Its schema's list-valued
+``data_source`` entries are therefore **dead data** -- nothing reads them. The ``TAB:`` values among them are the only ones left in
 the repository, and a ``TAB:`` written into any other schema would be reported as an
 unknown data source: they are a survival of a vocabulary the pipeline does not
 dispatch on.
@@ -353,8 +363,9 @@ packaged schema whole and checks what the import and the web application assume 
 so a mistake fails the suite rather than an import, or a tooltip nobody sees. An entry is
 one of four kinds, told apart by its keys -- a column (``field_name``), a link
 (``pi_referred_slug``), a definition with no column (``definition`` and no
-``field_name``), or a table-level entry, which is one of ``{"constraint": "..."}`` and
-``{"foreign_key": {...}}`` -- and the checks are:
+``field_name``), or a table-level entry, which is one of ``{"constraint": "..."}``,
+``{"foreign_key": {...}}``, ``{"primary_key": [...]}``, ``{"unique": [...]}`` and
+``{"key": [...]}`` -- and the checks are:
 
 * **No object names a key twice.** JSON allows it and Python's reader keeps the last
   value without a word, so a key written twice is a value silently ignored. The files
@@ -364,7 +375,8 @@ one of four kinds, told apart by its keys -- a column (``field_name``), a link
   table-level entry its one key. A ``constraint`` is text, and a ``foreign_key`` has
   ``columns`` and ``references``, optionally ``on_delete`` and nothing else, with a
   non-empty list of column names, a table and one column for each of them, and an
-  ``on_delete`` of ``"cascade"`` or ``"restrict"``.
+  ``on_delete`` of ``"cascade"`` or ``"restrict"``; a ``primary_key``, ``unique`` or
+  ``key`` entry is a non-empty list of column names.
 * Every ``field_type`` is one ``create_table`` renders. The renderer and the test read
   the same constants, ``MYSQL_FIELD_TYPE_SQL`` and ``MYSQL_WIDTH_FIELD_TYPE`` in
   :mod:`opus_import.importdb.mysql`, so the two cannot disagree. An ``enum`` column, and

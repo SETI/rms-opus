@@ -8,7 +8,7 @@ more than one encounter.
 from typing import cast
 
 import opus_support
-from opus_import.obs.field_types import FloatField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
@@ -100,12 +100,6 @@ class ObsVolumeVoyagerCommon(ObsCommonPDS3):
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
-
-    def field_obs_mission_voyager_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_mission_voyager_bundle_id(self) -> StrField:
-        return self.bundle
 
     def field_obs_mission_voyager_ert(self) -> FloatField:
         if not self._col_in_index('EARTH_RECEIVED_TIME'):

@@ -114,8 +114,8 @@ EXCLUDED_TABLES: dict[str, str] = {}
 DERIVED_COLUMNS = {'obs_files': frozenset({'url'})}
 
 #: The columns the server numbers rather than the import computing: ``id`` is the
-#: auto-incremented row id and ``obs_general_id`` is the foreign key naming an
-#: observation's ``obs_general`` row. They are stable across two clean runs from an empty
+#: auto-incremented row id and ``obs_general_id`` names an observation's ``obs_general``
+#: row (a child table's primary key, or part of it). They are stable across two clean runs from an empty
 #: database, which is why the goldens carry them, and they are *not* stable across a
 #: re-import: the pipeline deletes the bundle's rows and loads them again, handing out ids
 #: from the largest present, so re-importing a bundle renumbers it.
@@ -124,6 +124,23 @@ SURROGATE_ID_COLUMNS = frozenset({'id', 'obs_general_id'})
 
 #: The column naming the bundle a row came from, where a table has one.
 BUNDLE_COLUMN = 'bundle_id'
+
+#: The column naming the observation a row belongs to, through which a table without
+#: `BUNDLE_COLUMN` reaches its row's bundle in ``obs_general``.
+OBSERVATION_COLUMN = 'obs_general_id'
+
+
+def holds_observations(header: Sequence[str]) -> bool:
+    """Return whether a table's rows belong to observations, and so to bundles.
+
+    Parameters:
+        header: The table's column names.
+
+    Returns:
+        True when it has `BUNDLE_COLUMN` or `OBSERVATION_COLUMN`: ``obs_general`` and
+        every other observation table, and ``cart``.
+    """
+    return BUNDLE_COLUMN in header or OBSERVATION_COLUMN in header
 
 
 @dataclass(frozen=True)
@@ -230,7 +247,9 @@ def list_tables(credentials: DatabaseCredentials, schema: str) -> list[str]:
     return sorted(str(row[0]) for row in rows)
 
 
-def _columns(credentials: DatabaseCredentials, schema: str, table: str) -> list[tuple[str, str]]:
+def table_columns(
+    credentials: DatabaseCredentials, schema: str, table: str
+) -> list[tuple[str, str]]:
     """Return a table's columns in declaration order, with their data types.
 
     Parameters:
@@ -327,7 +346,7 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
     derived = DERIVED_COLUMNS.get(table, frozenset())
     columns = [
         name
-        for name, data_type in _columns(credentials, schema, table)
+        for name, data_type in table_columns(credentials, schema, table)
         if data_type != TIMESTAMP_DATA_TYPE and name not in derived
     ]
     if len(columns) == 0:
@@ -393,8 +412,9 @@ def tables_holding_bundle(
 ) -> set[str]:
     """Return which of those tables carry rows belonging to one bundle.
 
-    A table with no `BUNDLE_COLUMN` at all carries none: that is every mult table, and
-    every table the dictionary and finalization steps write.
+    A table with `BUNDLE_COLUMN` is asked by it, and one with only `OBSERVATION_COLUMN`
+    by joining ``obs_general`` through it. A table with neither carries none: that is
+    every mult table, and every table the dictionary and finalization steps write.
 
     Parameters:
         credentials: How to reach the server.
@@ -407,14 +427,17 @@ def tables_holding_bundle(
     """
     holding = set()
     for table in tables:
-        if BUNDLE_COLUMN not in [name for name, _type in _columns(credentials, schema, table)]:
+        names = [name for name, _type in table_columns(credentials, schema, table)]
+        if BUNDLE_COLUMN in names:
+            statement = f'SELECT 1 FROM `{table}` WHERE `{BUNDLE_COLUMN}` = %s LIMIT 1'
+        elif OBSERVATION_COLUMN in names:
+            statement = (
+                f'SELECT 1 FROM `{table}` t JOIN `obs_general` g '
+                f'ON g.`id` = t.`{OBSERVATION_COLUMN}` WHERE g.`{BUNDLE_COLUMN}` = %s LIMIT 1'
+            )
+        else:
             continue
-        rows = query(
-            credentials,
-            schema,
-            f'SELECT 1 FROM `{table}` WHERE `{BUNDLE_COLUMN}` = %s LIMIT 1',
-            [bundle],
-        )
+        rows = query(credentials, schema, statement, [bundle])
         if len(rows) > 0:
             holding.add(table)
     return holding

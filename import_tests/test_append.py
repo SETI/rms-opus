@@ -215,7 +215,7 @@ def test_an_append_that_replaces_one_bundle_and_adds_one_matches_a_fresh_import(
     for table in golden_io.goldened_tables(fixture_layout.GOLDENS_DIR):
         expected = golden_io.read_golden(fixture_layout.GOLDENS_DIR, table)
         actual = golden_io.serialize_table(db_credentials, copy.schema, table)
-        if golden_io.BUNDLE_COLUMN in expected.splitlines()[0].split('\t'):
+        if golden_io.holds_observations(expected.splitlines()[0].split('\t')):
             expected = golden_io.without_surrogate_ids(expected)
             actual = golden_io.without_surrogate_ids(actual)
         if actual != expected:

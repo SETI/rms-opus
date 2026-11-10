@@ -6,8 +6,9 @@ column) or true for a plain key. A foreign key may instead be a table-level entr
 ``{"foreign_key": {"columns": [...], "references": ["<table>", "<column>", ...],
 "on_delete": "cascade" | "restrict"}}``, which is how one says what deleting the row it
 references does; ``on_delete`` is optional and ``"restrict"`` when absent. A key over
-several columns is a table-level entry too: ``{"primary_key": [...]}`` or
-``{"unique": [...]}``, each listing its columns in order. `declared_keys` reads all of
+several columns is a table-level entry too: ``{"primary_key": [...]}``,
+``{"unique": [...]}`` or ``{"key": [...]}`` for a plain key, each listing its columns in
+order. `declared_keys` reads all of
 them as `TableKey` values, which the brand renders and which compare by kind,
 ordered columns and, for a foreign key, what it references and does on delete -- never by
 name, because the server names an unnamed key itself.
@@ -55,6 +56,25 @@ KEY_FILTERED_TABLE_PREFIXES = ('obs_', 'mult_')
 #: The columns the per-bundle delete selects a table's rows by, each read through a plain
 #: key whose only column it is.
 DELETE_READ_COLUMNS = ('bundle_id',)
+
+#: The prefixes of the observation tables besides ``obs_general`` that the per-bundle
+#: delete selects rows from by ``bundle_id``: the surface geometry name table and the
+#: per-target tables. It reaches every other observation table's rows by joining
+#: ``obs_general`` on ``obs_general_id``, through the primary key that column leads.
+BUNDLE_KEYED_TABLE_PREFIXES = ('obs_surface_geometry_name', 'obs_surface_geometry__')
+
+
+def is_bundle_keyed_table(table_name: str) -> bool:
+    """Return whether the per-bundle delete selects a table's rows by ``bundle_id``.
+
+    Parameters:
+        table_name: The table's raw name.
+
+    Returns:
+        True for ``obs_general`` and the tables `BUNDLE_KEYED_TABLE_PREFIXES` names.
+    """
+    name = table_name.lower()
+    return name == 'obs_general' or name.startswith(BUNDLE_KEYED_TABLE_PREFIXES)
 
 
 @dataclass(frozen=True)
@@ -133,13 +153,17 @@ def _table_level_foreign_key(entry: SchemaColumn) -> TableKey:
     return TableKey('foreign', columns, (references[0], references[1:]), on_delete)
 
 
-#: The table-level entries that declare a primary or unique key over listed columns, and
-#: the kind of key each declares.
-TABLE_LEVEL_KEY_KINDS: dict[str, KeyKind] = {'primary_key': 'primary', 'unique': 'unique'}
+#: The table-level entries that declare a primary, unique or plain key over listed
+#: columns, and the kind of key each declares.
+TABLE_LEVEL_KEY_KINDS: dict[str, KeyKind] = {
+    'primary_key': 'primary',
+    'unique': 'unique',
+    'key': 'key',
+}
 
 
 def _table_level_key(entry_name: str, columns: object) -> TableKey:
-    """Return the key a table-level ``primary_key`` or ``unique`` entry declares.
+    """Return the key a table-level ``primary_key``, ``unique`` or ``key`` entry declares.
 
     Parameters:
         entry_name: The entry's name, a key of `TABLE_LEVEL_KEY_KINDS`.
@@ -168,7 +192,7 @@ def declared_keys(schema: Sequence[SchemaColumn]) -> list[TableKey]:
 
     Returns:
         One key per column whose ``field_key`` declares one, and one per table-level
-        ``foreign_key``, ``primary_key`` or ``unique`` entry. Other entries without
+        ``foreign_key``, ``primary_key``, ``unique`` or ``key`` entry. Other entries without
         ``field_name`` (constraints, and ``param_info`` rows of another table) declare
         none.
 
@@ -206,15 +230,20 @@ def declared_keys(schema: Sequence[SchemaColumn]) -> list[TableKey]:
     return keys
 
 
-def _delete_keys(keys: Sequence[TableKey]) -> list[TableKey]:
+def _delete_keys(table_name: str, keys: Sequence[TableKey]) -> list[TableKey]:
     """Return the declared keys the per-bundle delete reads.
 
     Parameters:
-        keys: A table's declared keys.
+        table_name: The table's raw name.
+        keys: Its declared keys.
 
     Returns:
-        Each plain key whose only column is one the delete selects rows by.
+        For a table the delete selects rows from by ``bundle_id``
+        (`is_bundle_keyed_table`), each plain key whose only column is one the delete
+        selects rows by; for any other table, none.
     """
+    if not is_bundle_keyed_table(table_name):
+        return []
     return [
         key
         for key in keys
@@ -236,7 +265,7 @@ def create_time_keys(table_name: str, schema: Sequence[SchemaColumn]) -> list[Ta
     keys = declared_keys(schema)
     if not is_key_filtered_table(table_name):
         return keys
-    delete_keys = _delete_keys(keys)
+    delete_keys = _delete_keys(table_name, keys)
     return [key for key in keys if key.kind in ('primary', 'unique') or key in delete_keys]
 
 

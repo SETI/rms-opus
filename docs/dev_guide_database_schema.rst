@@ -82,16 +82,12 @@ A row for an OPUS ID does not need to be present in each table, and in fact neve
 * "Ring Geometry Constraints" (``obs_ring_geometry``) has rows only for observations for which some amount of ring geometry metadata exists.
 * The top-level "Surface Geometry Constraints" (``obs_surface_geometry``) and body-specific Surface Geometry Constraints (e.g. "Saturn Surface Geometry Constraints", ``obs_surface_geometry__saturn``) have rows only for observations for which some amount of surface geometry metadata exists for the observation (top-level) or specific body (body-specific).
 
-In addition to the fields corresponding to the metadata available in the UI, each ``obs_*`` table also has several columns for internal use:
+In addition to the fields corresponding to the metadata available in the UI, each ``obs_*`` table also has columns for internal use:
 
-* ``obs_general_id``: An integer corresponding to the ``id`` field in the ``obs_general`` table. This field is used to join multiple tables together so that a single joined row has all of the metadata from all of the relevant tables. This field does not exist in the ``obs_general`` table itself.
-* ``opus_id``: The OPUS ID of the row. It is a plain key, not a foreign key: a table other than ``obs_general`` references ``obs_general`` through ``obs_general_id`` alone
-* ``bundle_id``: The PDS3 Volume ID of the row
-* ``instrument_id``: The PDS3 Instrument ID of the row. Unlike the others in this list, this one is not in every ``obs_*`` table: the per-instrument tables do not carry it (the table's own name already says which instrument it is), and neither do the Galileo and Voyager mission tables. Read the table's schema in ``table_schemas/`` rather than assuming it is there.
-* ``id``: An integer that can be used to quickly index a row in the table
+* ``obs_general_id``: An integer corresponding to the ``id`` field in the ``obs_general`` table, and a foreign key onto it. This field is used to join multiple tables together so that a single joined row has all of the metadata from all of the relevant tables. In every ``obs_*`` table other than ``obs_files`` and the surface geometry name and per-body tables (see `The Surface Geometry Tables`_), it is the table's primary key, because such a table holds at most one row per observation. This field does not exist in the ``obs_general`` table itself.
 * ``timestamp``: A date/time field that records when the row was last updated
 
-With the exception of the ``id`` field in the ``obs_general`` table and the ``obs_general_id`` field in all other ``obs_*`` tables, these extra fields are not used during OPUS's execution. In fact, the fields ``opus_id``, ``bundle_id``, and ``instrument_id`` can easily be retrieved simply by joining a table with ``obs_general``, which under the concept of "database normalization" is the correct and safest thing to do. Nevertheless, we have this redundant data in each table because it makes the import process easier (e.g., one can readily delete all metadata from a particular instrument without needing to join tables together), and because it helps in manual debugging and/or maintenance.
+What identifies an observation is held once, in ``obs_general``: its ``id``, its ``opus_id``, the ``bundle_id`` of the PDS3 volume or PDS4 bundle it came from, and its ``instrument_id``. Every other table reaches them by joining ``obs_general`` on ``obs_general_id``, which under the concept of "database normalization" is the correct and safest thing to do. ``obs_pds`` repeats two of them because they are search fields in their own right: ``obs_pds.opus_id`` is the "OPUS ID" field and ``obs_pds.bundle_id`` the "Bundle/Volume ID" field of the "PDS Constraints" category, each carrying a plain key and no foreign key. The import writes both beside ``obs_general``'s, and its validation step reports an ``obs_pds`` row whose ``bundle_id`` differs from its ``obs_general`` row's.
 
 Here is an example of the schema for the ``obs_general`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
 
@@ -103,7 +99,7 @@ Here is an example of the schema for the ``obs_general`` table (note this may ch
     +----------------------+--------------+------+-----+-------------------+
     | id                   | int unsigned | NO   | PRI | NULL              |
     | opus_id              | char(50)     | NO   | MUL | NULL              |
-    | bundle_id            | char(11)     | NO   | MUL | NULL              |
+    | bundle_id            | char(75)     | NO   | MUL | NULL              |
     | instrument_id        | int unsigned | NO   | MUL | NULL              |
     | mission_id           | int unsigned | NO   | MUL | NULL              |
     | inst_host_id         | int unsigned | NO   | MUL | NULL              |
@@ -139,16 +135,15 @@ Most of these fields should be self-evident. Some numeric fields have ``1`` and 
     +-----------------------+--------------+------+-----+-------------------+
     | Field                 | Type         | Null | Key | Default           |
     +-----------------------+--------------+------+-----+-------------------+
-    | obs_general_id        | int unsigned | NO   | MUL | NULL              |
+    | obs_general_id        | int unsigned | NO   | PRI | NULL              |
     | opus_id               | char(50)     | NO   | MUL | NULL              |
-    | bundle_id             | char(11)     | NO   | MUL | NULL              |
-    | instrument_id         | char(12)     | NO   | MUL | NULL              |
-    | data_set_id           | char(40)     | NO   | MUL | NULL              |
-    | product_id            | char(50)     | NO   | MUL | NULL              |
+    | bundle_id             | char(75)     | NO   | MUL | NULL              |
+    | data_set_id           | char(40)     | YES  | MUL | NULL              |
+    | product_id            | char(50)     | YES  | MUL | NULL              |
+    | primary_lid           | char(240)    | YES  | MUL | NULL              |
     | product_creation_time | double       | YES  | MUL | NULL              |
     | primary_filespec      | char(240)    | NO   | MUL | NULL              |
     | note                  | char(255)    | YES  | MUL | NULL              |
-    | id                    | int unsigned | NO   | PRI | NULL              |
     | timestamp             | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +-----------------------+--------------+------+-----+-------------------+
 
@@ -160,10 +155,7 @@ Here is an example of a mission table:
     +-------------------------+--------------+------+-----+-------------------+
     | Field                   | Type         | Null | Key | Default           |
     +-------------------------+--------------+------+-----+-------------------+
-    | obs_general_id          | int unsigned | NO   | MUL | NULL              |
-    | opus_id                 | char(50)     | NO   | MUL | NULL              |
-    | bundle_id               | char(11)     | NO   | MUL | NULL              |
-    | instrument_id           | char(12)     | NO   | MUL | NULL              |
+    | obs_general_id          | int unsigned | NO   | PRI | NULL              |
     | obs_name                | char(30)     | NO   | MUL | NULL              |
     | rev_no                  | char(3)      | YES  | MUL | NULL              |
     | rev_no_int              | int          | YES  | MUL | NULL              |
@@ -178,7 +170,6 @@ Here is an example of a mission table:
     | activity_name           | char(9)      | YES  | MUL | NULL              |
     | mission_phase_name      | int unsigned | YES  | MUL | NULL              |
     | sequence_id             | char(4)      | YES  |     | NULL              |
-    | id                      | int unsigned | NO   | PRI | NULL              |
     | timestamp               | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +-------------------------+--------------+------+-----+-------------------+
 
@@ -338,12 +329,8 @@ There are two types of surface geometry tables. The first, called simply ``obs_s
     +----------------+--------------+------+-----+-------------------+
     | Field          | Type         | Null | Key | Default           |
     +----------------+--------------+------+-----+-------------------+
-    | obs_general_id | int unsigned | NO   | MUL | NULL              |
-    | opus_id        | char(50)     | NO   | MUL | NULL              |
-    | bundle_id      | char(11)     | NO   | MUL | NULL              |
-    | instrument_id  | char(12)     | NO   | MUL | NULL              |
+    | obs_general_id | int unsigned | NO   | PRI | NULL              |
     | target_list    | text         | YES  |     | NULL              |
-    | id             | int unsigned | NO   | PRI | NULL              |
     | timestamp      | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +----------------+--------------+------+-----+-------------------+
 
@@ -365,41 +352,40 @@ There is also a series of tables, one per body, containing the surface geometry 
     |        0 |
     +----------+
 
-Other than the odd naming, these surface geometry tables behave exactly the same as any other ``obs_*`` table.
+The per-body tables are all built from one template. They and ``obs_surface_geometry_name``, which holds the ``Surface Geometry Target Selector`` field as one row per observation and body, are keyed differently from the other ``obs_*`` tables: each numbers its rows in an ``id`` primary key of its own, carries ``obs_general_id`` as a plain key under its foreign key onto ``obs_general.id``, and repeats ``opus_id``, ``bundle_id`` and ``instrument_id`` from ``obs_general``, which is how the query above can select by ``opus_id``. The import deletes a bundle's rows from these tables by their ``bundle_id``, and from every other ``obs_*`` table by joining ``obs_general``.
 
 The Special ``obs_files`` Table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. ``obs_files`` holds one row per downloadable file product, so a single OPUS ID has as many rows as it has products. ``obs_files.obs_general_id`` is a foreign key onto ``obs_general.id``, which is the one-to-many relationship a single ``obs_general`` row cannot represent and why this is its own table. Its structure otherwise resembles the other ``obs_*`` tables. It is only joined with ``obs_general`` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
+The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. ``obs_files`` holds one row per downloadable file product, so a single OPUS ID has as many rows as it has products. ``obs_files.obs_general_id`` is a foreign key onto ``obs_general.id``, which is the one-to-many relationship a single ``obs_general`` row cannot represent and why this is its own table. Its primary key is ``(obs_general_id, file_number)``, where ``file_number`` is the file's position among its observation's files, from 1, in the order the import writes them; the web application's file list sorts by it last, so the files of one product type at one version keep that order. ``opus_id`` is repeated from ``obs_general`` because the file list is read by OPUS ID, through the one secondary key over ``(opus_id, short_name, version_name)``. It is only joined with ``obs_general`` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
 
 ::
 
     mysql> DESC obs_files;
-    +-----------------+--------------+------+-----+-------------------+
-    | Field           | Type         | Null | Key | Default           |
-    +-----------------+--------------+------+-----+-------------------+
-    | obs_general_id  | int unsigned | NO   | MUL | NULL              |
-    | opus_id         | char(50)     | NO   | MUL | NULL              |
-    | bundle_id       | char(11)     | NO   | MUL | NULL              |
-    | instrument_id   | char(12)     | NO   | MUL | NULL              |
-    | version_number  | int unsigned | NO   | MUL | NULL              |
-    | version_name    | char(16)     | NO   | MUL | NULL              |
-    | category        | char(32)     | NO   | MUL | NULL              |
-    | sort_order      | char(9)      | NO   | MUL | NULL              |
-    | short_name      | char(32)     | NO   | MUL | NULL              |
-    | full_name       | char(64)     | NO   | MUL | NULL              |
-    | default_checked | int unsigned | NO   |     | NULL              |
-    | product_order   | int unsigned | NO   |     | NULL              |
-    | logical_path    | text         | NO   |     | NULL              |
-    | url             | text         | NO   |     | NULL              |
-    | checksum        | char(32)     | NO   |     | NULL              |
-    | size            | int unsigned | NO   |     | NULL              |
-    | width           | int unsigned | YES  |     | NULL              |
-    | height          | int unsigned | YES  |     | NULL              |
-    | pds_version     | int unsigned | NO   |     | NULL              |
-    | id              | int unsigned | NO   | PRI | NULL              |
-    | timestamp       | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +-----------------+--------------+------+-----+-------------------+
+    +-----------------+-------------------+------+-----+-------------------+
+    | Field           | Type              | Null | Key | Default           |
+    +-----------------+-------------------+------+-----+-------------------+
+    | obs_general_id  | int unsigned      | NO   | PRI | NULL              |
+    | file_number     | smallint unsigned | NO   | PRI | NULL              |
+    | opus_id         | char(50)          | NO   | MUL | NULL              |
+    | instrument_id   | char(60)          | NO   |     | NULL              |
+    | version_number  | int unsigned      | NO   |     | NULL              |
+    | version_name    | char(16)          | NO   |     | NULL              |
+    | category        | char(64)          | NO   |     | NULL              |
+    | sort_order      | char(9)           | NO   |     | NULL              |
+    | short_name      | char(64)          | NO   |     | NULL              |
+    | full_name       | char(64)          | NO   |     | NULL              |
+    | default_checked | int unsigned      | NO   |     | NULL              |
+    | product_order   | int unsigned      | NO   |     | NULL              |
+    | logical_path    | text              | NO   |     | NULL              |
+    | url             | text              | NO   |     | NULL              |
+    | checksum        | char(32)          | NO   |     | NULL              |
+    | size            | int unsigned      | NO   |     | NULL              |
+    | width           | int unsigned      | YES  |     | NULL              |
+    | height          | int unsigned      | YES  |     | NULL              |
+    | pds_version     | int unsigned      | NO   |     | NULL              |
+    | timestamp       | timestamp         | NO   |     | CURRENT_TIMESTAMP |
+    +-----------------+-------------------+------+-----+-------------------+
 
 And as predicted a single OPUS ID is likely to appear more than once:
 

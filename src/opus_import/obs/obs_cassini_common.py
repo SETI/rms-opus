@@ -647,15 +647,6 @@ class ObsCassiniCommon(ObsBase):
     ### FIELD METHODS FOR obs_mission_cassini ###
     #############################################
 
-    def field_obs_mission_cassini_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_mission_cassini_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_mission_cassini_instrument_id(self) -> StrField:
-        return self.instrument_id
-
     # Override this in obs_cassini_common_pds3/4
     def field_obs_mission_cassini_obs_name(self) -> StrField:
         return None
@@ -805,12 +796,6 @@ class ObsCassiniCommon(ObsBase):
     ##############################################
     ### FIELD METHODS FOR obs_instrument_coiss ###
     ##############################################
-
-    def field_obs_instrument_coiss_opus_id(self) -> StrField:
-        return None
-
-    def field_obs_instrument_coiss_bundle_id(self) -> StrField:
-        return None
 
     def field_obs_instrument_coiss_data_conversion_type(self) -> MultFieldRet:
         return self._create_mult(None)

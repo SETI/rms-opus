@@ -401,7 +401,11 @@ Regenerating it
 
 ``scripts/models/create_opus_models.sh``, run from the repository root against a fully
 imported database. It runs Django's ``inspectdb``, applies the prefixing and the
-foreign-key repairs, makes ``UserSearches.search_hash`` a ``BinaryField`` (``inspectdb``
+foreign-key repairs -- every relation to ``ObsGeneral`` is given
+``related_name='%(class)s_general_id'`` and ``db_column='obs_general_id'``, whether
+``inspectdb`` wrote it as a foreign key or, for a table whose primary key is
+``obs_general_id``, as a one-to-one field -- makes ``UserSearches.search_hash`` a
+``BinaryField`` (``inspectdb``
 reads a ``BINARY`` column as text, which would not return a digest's bytes unaltered),
 and formats the result.
 

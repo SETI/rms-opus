@@ -41,16 +41,11 @@ from opus_import.importdb.mysql import ImportDBMySQL  # noqa: E402 - follows the
 
 #: A child table's schema, cut down to the keys.
 _CHILD_SCHEMA: list[dict[str, Any]] = [
-    {
-        'field_name': 'obs_general_id',
-        'field_type': 'uint4',
-        'field_key': 'foreign',
-        'field_key_foreign': ['obs_general', 'id'],
-    },
+    {'field_name': 'obs_general_id', 'field_type': 'uint4', 'field_key': 'primary'},
+    {'foreign_key': {'columns': ['obs_general_id'], 'references': ['obs_general', 'id']}},
     {'field_name': 'opus_id', 'field_type': 'char50', 'field_key': True},
     {'field_name': 'bundle_id', 'field_type': 'char75', 'field_key': True},
     {'field_name': 'time1', 'field_type': 'real8', 'field_key': True},
-    {'field_name': 'id', 'field_type': 'uint4', 'field_key': 'primary'},
 ]
 
 
@@ -119,14 +114,22 @@ def _create_statement(db: _RecordingDB, table: str) -> str:
 
 
 def test_a_child_is_created_with_only_the_keys_a_load_needs() -> None:
-    """The primary key and the bundle key, and neither the plain keys nor the foreign key."""
+    """The primary key alone: no plain key, not even ``bundle_id``'s, and no foreign key."""
     db = _RecordingDB(set())
     cmd = _create_statement(db, 'obs_pds')
     assert cmd.startswith('CREATE TABLE `obs_pds`')
-    assert 'KEY `bundle_id` (`bundle_id`)' in cmd
-    assert 'PRIMARY KEY (`id`)' in cmd
+    assert 'PRIMARY KEY (`obs_general_id`)' in cmd
+    assert '`bundle_id` (`bundle_id`)' not in cmd
     assert 'FOREIGN KEY' not in cmd
     assert '`time1` (`time1`)' not in cmd
+    assert '`opus_id` (`opus_id`)' not in cmd
+
+
+def test_a_table_the_delete_selects_by_bundle_is_created_with_the_bundle_key() -> None:
+    """The surface geometry tables keep the ``bundle_id`` key the delete reads them by."""
+    db = _RecordingDB(set())
+    cmd = _create_statement(db, 'obs_surface_geometry__titan')
+    assert 'KEY `bundle_id` (`bundle_id`)' in cmd
     assert '`opus_id` (`opus_id`)' not in cmd
 
 
@@ -140,7 +143,7 @@ def test_a_table_outside_the_filter_is_created_with_every_declared_key() -> None
         'KEY `opus_id` (`opus_id`)',
         'KEY `bundle_id` (`bundle_id`)',
         'KEY `time1` (`time1`)',
-        'PRIMARY KEY (`id`)',
+        'PRIMARY KEY (`obs_general_id`)',
     ):
         assert clause in cmd
 
@@ -722,35 +725,66 @@ class _DeletingDB:
         """Record a delete."""
         self.deletes.append((table, where, where_params))
 
+    JOINED_PARENT_ALIAS = 'p'
+
+    def delete_joined_rows(
+        self,
+        table: str,
+        join_column: str,
+        parent_table: str,
+        parent_column: str,
+        where: str,
+        where_params: list[Any],
+    ) -> None:
+        """Record a joined delete, naming its join as ``<table>~<parent>``."""
+        assert (join_column, parent_table, parent_column) == ('obs_general_id', 'obs_general', 'id')
+        self.deletes.append((f'{table}~{parent_table}', where, where_params))
+
 
 _IN_RANGE = '`bundle_id`=%s AND `id` BETWEEN %s AND %s'
 
+_PARENT_IN_RANGE = '`p`.`bundle_id` = %s AND `p`.`id` BETWEEN %s AND %s'
 
-def test_a_bundle_is_deleted_in_chunks_of_each_tables_own_ids_children_first() -> None:
-    """Each table's ids, `transaction_rows` at a time; every child before obs_general."""
+
+def test_a_bundle_is_deleted_a_chunk_of_obs_general_at_a_time_children_first() -> None:
+    """The surface geometry tables by their own ids; every other child through each chunk.
+
+    Each chunk is `transaction_rows` of the bundle's ``obs_general`` ids: every other
+    child's rows joining them go, then the chunk's ``obs_general`` rows.
+    """
     db = _DeletingDB(
-        {'obs_general': [4, 7, 9], 'obs_pds': [10, 11, 12], 'obs_files': [1, 2]},
-        ['obs_files', 'obs_general', 'obs_pds'],
+        {'obs_general': [4, 7, 9], 'obs_surface_geometry__titan': [10, 11, 12]},
+        ['obs_files', 'obs_general', 'obs_pds', 'obs_surface_geometry__titan'],
     )
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
     assert db.deletes == [
-        ('obs_files', _IN_RANGE, ['B_1', 1, 2]),
-        ('obs_pds', _IN_RANGE, ['B_1', 10, 11]),
-        ('obs_pds', _IN_RANGE, ['B_1', 12, 12]),
+        ('obs_surface_geometry__titan', _IN_RANGE, ['B_1', 10, 11]),
+        ('obs_surface_geometry__titan', _IN_RANGE, ['B_1', 12, 12]),
+        ('obs_files~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 7]),
+        ('obs_pds~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 7]),
         ('obs_general', _IN_RANGE, ['B_1', 4, 7]),
+        ('obs_files~obs_general', _PARENT_IN_RANGE, ['B_1', 9, 9]),
+        ('obs_pds~obs_general', _PARENT_IN_RANGE, ['B_1', 9, 9]),
         ('obs_general', _IN_RANGE, ['B_1', 9, 9]),
     ]
+    # Only obs_general and the surface geometry table are read, each by its bundle key.
+    assert {cmd.split('FROM `')[1].split('`')[0] for cmd in db.selects} == {
+        'obs_general',
+        'obs_surface_geometry__titan',
+    }
     assert all('WHERE `bundle_id`=%s' in cmd for cmd in db.selects)
     assert all(cmd.endswith('ORDER BY `id` LIMIT %s') for cmd in db.selects)
     # A full page asks for the next one, after its last id; a short page ends the table.
-    assert sum('`id` > %s' in cmd for cmd in db.selects) == 3
+    assert sum('`id` > %s' in cmd for cmd in db.selects) == 2
 
 
 def test_a_bundle_a_table_does_not_hold_deletes_nothing_there() -> None:
     """No ids, no statement."""
-    db = _DeletingDB({'obs_pds': [3]}, ['obs_general', 'obs_pds'])
+    db = _DeletingDB(
+        {'obs_surface_geometry_name': [3]}, ['obs_general', 'obs_pds', 'obs_surface_geometry_name']
+    )
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
-    assert db.deletes == [('obs_pds', _IN_RANGE, ['B_1', 3, 3])]
+    assert db.deletes == [('obs_surface_geometry_name', _IN_RANGE, ['B_1', 3, 3])]
 
 
 # ------------------------------------------------------------------------------------
@@ -871,14 +905,16 @@ class _IndexingDB(_RecordingDB):
 
 def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
     """ANALYZE for the estimates, the plain keys in one statement, the foreign key on its own, then ANALYZE."""
-    db = _IndexingDB({'obs_pds': [TableKey('primary', ('id',)), TableKey('key', ('bundle_id',))]})
+    db = _IndexingDB({'obs_pds': [TableKey('primary', ('obs_general_id',))]})
     ctx = make_context(db=db)
     assert do_indexes.create_indexes(ctx)
     (statement,) = db.built['obs_pds']
     assert statement.sort_bytes == 60 < statement.space_bytes
     assert statement.key_count == statement.sql.count('ADD KEY')
     assert statement.sql.startswith('ALTER TABLE `obs_pds` ADD KEY (`opus_id`)')
-    assert 'ADD KEY (`obs_general_id`)' in statement.sql
+    assert 'ADD KEY (`bundle_id`)' in statement.sql
+    # The primary key leads with the foreign key's column, so no key is added for it.
+    assert 'ADD KEY (`obs_general_id`)' not in statement.sql
     assert [s.sql for s in db.foreign] == [
         'ALTER TABLE `obs_pds` ADD FOREIGN KEY (`obs_general_id`) REFERENCES '
         '`obs_general`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
@@ -967,6 +1003,28 @@ def test_no_orphans_is_silent() -> None:
     """A count of zero logs nothing."""
     ctx = make_context(db=_OrphanDB(0))
     do_validate.validate_orphans(ctx)
+    assert ctx.logger.messages_at('error') == []
+
+
+@pytest.mark.parametrize(('count', 'errors'), [(2, 1), (0, 0)])
+def test_an_obs_pds_bundle_unlike_obs_generals_is_an_error(count: int, errors: int) -> None:
+    """``obs_pds`` is joined to ``obs_general`` and rows naming another bundle counted."""
+    db = _OrphanDB(count)
+    ctx = make_context(db=db)
+    do_validate.validate_pds_bundle_ids(ctx)
+    assert ctx.logger.messages_at('error') == (
+        ['Table "obs_pds" has 2 rows whose bundle_id differs from obs_general'] * errors
+    )
+    (query,) = db.queries
+    assert '`p`.`bundle_id` <> `g`.`bundle_id`' in query
+
+
+def test_no_obs_pds_has_no_bundle_to_compare() -> None:
+    """Without ``obs_pds`` the check reads nothing."""
+    db = _OrphanDB(5, ['obs_general'])
+    ctx = make_context(db=db)
+    do_validate.validate_pds_bundle_ids(ctx)
+    assert db.queries == []
     assert ctx.logger.messages_at('error') == []
 
 

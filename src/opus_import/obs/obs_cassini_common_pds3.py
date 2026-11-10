@@ -148,12 +148,6 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
     ### OVERRIDE METHODS FOR obs_instrument_coiss FROM ObsCassiniCommon ###
     #######################################################################
 
-    def field_obs_instrument_coiss_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_instrument_coiss_bundle_id(self) -> StrField:
-        return self.bundle
-
     def field_obs_instrument_coiss_data_conversion_type(self) -> MultFieldRet:
         return self._create_mult(self._index_col('DATA_CONVERSION_TYPE'))
 

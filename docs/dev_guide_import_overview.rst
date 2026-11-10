@@ -330,10 +330,10 @@ Inside one row
 
 :func:`~opus_import.steps.do_import_obs.import_observation_table` computes one
 observation's row of one table by walking that table's schema and producing one value
-per column. Three kinds of column are skipped outright: ``timestamp``, which the
+per column. Three kinds of entry are skipped outright: ``timestamp``, which the
 database maintains itself; a column marked ``put_mults_here``, which holds another
-column's mult id; and a ``pi_referred_slug`` entry, which describes a search parameter
-rather than a column.
+column's mult id; and an entry with no ``field_name`` -- a ``pi_referred_slug`` entry,
+which describes a search parameter rather than a column, or a table-level key.
 
 For every other column it dispatches on the schema's ``data_source``:
 
@@ -405,11 +405,17 @@ Row ids and mult ids
 Two kinds of surrogate integer hold the database together, and neither is assigned by the
 database server.
 
-**The row id.** Every ``obs_`` table has an ``id`` column, and every table but
-``obs_general`` also has an ``obs_general_id`` naming the row this one hangs off. The
-pipeline assigns both: a ``MAX_ID`` column gets one more than the largest id used in that
-table so far, and an ``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this
-observation already produced.
+**The row id.** ``obs_general`` numbers its rows in an ``id`` column, and every other
+``obs_`` table has an ``obs_general_id`` naming the row this one hangs off. In most of
+them that is the whole primary key, since such a table holds at most one row per
+observation; ``obs_files`` adds ``file_number``, the file's position among its
+observation's files; and the surface geometry name table, which holds one row per
+observation and body, and the per-target tables number their rows in an ``id`` of their
+own. The pipeline
+assigns them all: a ``MAX_ID`` column gets one more than the largest id used in that
+table so far, an ``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this
+observation already produced, and ``file_number`` counts from 1 in the order the files
+are written.
 
 The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, the
 largest id the table holds. Each bundle is deleted before it is written, so its new rows

@@ -1133,8 +1133,7 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
                 'api_get_categories_for_opus_id: Unable to find ' + 'table %r', table_name
             )
             continue
-        opus_id_rows = results.values('opus_id')
-        if opus_id_rows:
+        if results.exists():
             cat = {'table_name': table_name, 'label': tbl.label}
             all_categories.append(cat)
 

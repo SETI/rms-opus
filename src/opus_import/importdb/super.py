@@ -188,6 +188,10 @@ class ImportDBSuper:
     # cannot name a brand's own connection type without depending on that brand.
     conn: Any
 
+    #: The alias `delete_joined_rows` gives the parent table, which its WHERE clause
+    #: qualifies the parent's columns by.
+    JOINED_PARENT_ALIAS = 'p'
+
     def __init__(
         self,
         db_hostname: str,
@@ -1054,6 +1058,36 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::delete_rows must be overridden')
+
+    def delete_joined_rows(
+        self,
+        table_name: str,
+        join_column: str,
+        parent_table: str,
+        parent_column: str,
+        where: str,
+        where_params: Sequence[Any],
+    ) -> None:
+        """Delete the rows of a table that join a parent row a WHERE clause selects.
+
+        The rows go whose `join_column` equals the `parent_column` of a parent row the
+        clause selects; the parent rows stay.
+
+        Parameters:
+            table_name: The table rows are deleted from.
+            join_column: Its column naming a parent row.
+            parent_table: The parent table.
+            parent_column: The parent's column `join_column` holds.
+            where: The WHERE clause selecting parent rows. It names the parent's columns
+                qualified by `JOINED_PARENT_ALIAS`, each part quoted by
+                `quote_identifier`; any value it compares against must be a `%s`
+                placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::delete_joined_rows must be overridden')
 
     def general_select(
         self, cmd: str, param_list: Sequence[Any] | None = None

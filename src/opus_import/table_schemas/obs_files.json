@@ -2,39 +2,48 @@
     {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
+        "field_key": false,
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
             "id"
         ],
-        "comments": "This is the primary (surrogate) key linking the record to obs_general."
+        "comments": "With file_number, the primary key; it links the record to obs_general."
+    },
+    {
+        "field_name": "file_number",
+        "field_type": "uint2",
+        "field_key": false,
+        "field_notnull": true,
+        "comments": "The file's position among its observation's files, from 1, in the order the import writes them."
+    },
+    {
+        "primary_key": [
+            "obs_general_id",
+            "file_number"
+        ]
+    },
+    {
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
     },
     {
         "field_name": "opus_id",
         "field_type": "char50",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true,
         "data_source": [
             "TAB:obs_general",
             "opus_id"
         ],
-        "comments": "This is the secondary key linking the record to obs_general."
-    },
-    {
-        "field_name": "bundle_id",
-        "field_type": "char75",
-        "field_key": true,
-        "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "bundle_id"
-        ],
-        "comments": "The bundle_id is included here for ease of database manipulation only."
+        "comments": "What the file-list read selects an observation by, through KEY (opus_id, short_name, version_name)."
     },
     {
         "field_name": "instrument_id",
@@ -50,38 +59,45 @@
     {
         "field_name": "version_number",
         "field_type": "uint4",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "version_name",
         "field_type": "char16",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "category",
         "field_type": "char64",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "sort_order",
         "field_type": "char9",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "short_name",
         "field_type": "char64",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "full_name",
         "field_type": "char64",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true
+    },
+    {
+        "key": [
+            "opus_id",
+            "short_name",
+            "version_name"
+        ]
     },
     {
         "field_name": "default_checked",
@@ -138,16 +154,6 @@
         "field_type": "uint4",
         "field_key": false,
         "field_notnull": true
-    },
-    {
-        "field_name": "id",
-        "field_type": "uint4",
-        "field_key": "primary",
-        "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
     },
     {
         "field_name": "timestamp",

@@ -422,12 +422,6 @@ class ObsVolumeCOUVIS0xxx(ObsCassiniCommonPDS3):
     ### FIELD METHODS FOR obs_instrument_couvis ###
     ###############################################
 
-    def field_obs_instrument_couvis_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_instrument_couvis_bundle_id(self) -> StrField:
-        return self.bundle
-
     def field_obs_instrument_couvis_observation_type(self) -> MultFieldRet:
         obstype = self._index_col('OBSERVATION_TYPE')
         if obstype == '' or obstype == 'NULL':
