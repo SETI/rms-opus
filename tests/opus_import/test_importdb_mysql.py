@@ -42,9 +42,7 @@ class _RecordingDB(ImportDBMySQL):
 
     def __init__(self) -> None:
         # Deliberately skips ImportDBMySQL.__init__, which connects to a server.
-        ImportDBSuper.__init__(
-            self, 'host', 'db', 'schema', 'user', 'password', import_prefix='imp_', logger=None
-        )
+        ImportDBSuper.__init__(self, 'host', 'db', 'schema', 'user', 'password', logger=None)
         self.executed: list[tuple[str, list[Any] | None]] = []
 
     def _execute(
@@ -74,7 +72,6 @@ def db() -> _RecordingDB:
 def test_upsert_rows_writes_every_row_in_one_statement(db: _RecordingDB) -> None:
     """Three rows of one table become one INSERT, not three."""
     db.upsert_rows(
-        'import',
         'mult_obs_general_planet_id',
         'id',
         [_mult_row(0, 'JUP'), _mult_row(1, 'SAT'), _mult_row(2, 'URA')],
@@ -82,7 +79,7 @@ def test_upsert_rows_writes_every_row_in_one_statement(db: _RecordingDB) -> None
 
     assert len(db.executed) == 1
     cmd, params = db.executed[0]
-    assert cmd.startswith('INSERT INTO `imp_mult_obs_general_planet_id` (')
+    assert cmd.startswith('INSERT INTO `mult_obs_general_planet_id` (')
     assert cmd.count('ON DUPLICATE KEY UPDATE') == 1
     # Three value tuples, one per row, ahead of the update clause.
     values_clause = cmd.split('ON DUPLICATE KEY UPDATE', 1)[0]
@@ -123,7 +120,7 @@ def test_upsert_rows_writes_every_row_in_one_statement(db: _RecordingDB) -> None
 
 def test_upsert_rows_does_not_assign_the_key_column(db: _RecordingDB) -> None:
     """The key identifies the row being updated, so it must not be in the SET list."""
-    db.upsert_rows('import', 'mult_obs_general_planet_id', 'id', [_mult_row(0, 'JUP')])
+    db.upsert_rows('mult_obs_general_planet_id', 'id', [_mult_row(0, 'JUP')])
 
     cmd, _params = db.executed[0]
     update_clause = cmd.split('ON DUPLICATE KEY UPDATE', 1)[1]
@@ -140,9 +137,7 @@ def test_upsert_rows_names_the_new_row_through_the_alias_not_values(db: _Recordi
     alias is declared once, immediately before the clause that reads it, and the
     deprecated spelling appears nowhere.
     """
-    db.upsert_rows(
-        'import', 'mult_obs_general_planet_id', 'id', [_mult_row(0, 'JUP'), _mult_row(1, 'SAT')]
-    )
+    db.upsert_rows('mult_obs_general_planet_id', 'id', [_mult_row(0, 'JUP'), _mult_row(1, 'SAT')])
 
     cmd, _params = db.executed[0]
     assert 'VALUES(`' not in cmd
@@ -160,14 +155,13 @@ def test_upsert_rows_names_the_new_row_through_the_alias_not_values(db: _Recordi
 def test_upsert_rows_does_not_alias_a_row_as_the_table_it_writes(db: _RecordingDB) -> None:
     """A table called ``new`` gets a different row alias, because MySQL forbids the clash.
 
-    MySQL requires the row alias to differ from the table name, and the ``perm``
-    namespace passes the raw table name straight through, so the one name that collides
-    reaches the statement unprefixed. Nothing in today's schema is called ``new`` --
+    MySQL requires the row alias to differ from the table name, so the one name that
+    collides would reach the statement as it is. Nothing in today's schema is called ``new`` --
     which is exactly why this is a test rather than a comment: the collision would first
     appear as a syntax error partway through an import of some future table, and the
     packet loop would already have written the earlier ones.
     """
-    db.upsert_rows('perm', 'new', 'id', [{'id': 0, 'value': 'a'}, {'id': 1, 'value': 'b'}])
+    db.upsert_rows('new', 'id', [{'id': 0, 'value': 'a'}, {'id': 1, 'value': 'b'}])
 
     cmd, _params = db.executed[0]
     assert cmd.startswith('INSERT INTO `new` (')
@@ -183,7 +177,7 @@ def test_upsert_rows_keeps_the_plain_alias_for_every_other_table(db: _RecordingD
     a prefix -- would go unnoticed, and the statement every real import runs would
     quietly stop being the one the tests above pin.
     """
-    db.upsert_rows('perm', 'newer', 'id', [{'id': 0, 'value': 'a'}])
+    db.upsert_rows('newer', 'id', [{'id': 0, 'value': 'a'}])
 
     cmd, _params = db.executed[0]
     assert ' AS `new` ON DUPLICATE KEY UPDATE ' in cmd
@@ -193,7 +187,7 @@ def test_upsert_rows_keeps_the_plain_alias_for_every_other_table(db: _RecordingD
 def test_upsert_rows_splits_large_row_sets_into_packets(db: _RecordingDB) -> None:
     """MySQL rejects an unbounded statement, so rows go 1000 at a time."""
     db.upsert_rows(
-        'perm', 'mult_obs_general_target_name', 'id', [_mult_row(i, f'T{i}') for i in range(2500)]
+        'mult_obs_general_target_name', 'id', [_mult_row(i, f'T{i}') for i in range(2500)]
     )
 
     assert len(db.executed) == 3
@@ -208,9 +202,7 @@ def test_upsert_rows_splits_large_row_sets_into_packets(db: _RecordingDB) -> Non
 
 def test_upsert_rows_groups_rows_that_have_different_columns(db: _RecordingDB) -> None:
     """A mixed row set still produces correct statements, one per column set."""
-    db.upsert_rows(
-        'import', 'mult_x', 'id', [{'id': 0, 'value': 'a'}, {'id': 1, 'value': 'b', 'extra': 'c'}]
-    )
+    db.upsert_rows('mult_x', 'id', [{'id': 0, 'value': 'a'}, {'id': 1, 'value': 'b', 'extra': 'c'}])
 
     assert len(db.executed) == 2
     # Sorted-column order per group: (id, value), then (extra, id, value).
@@ -220,14 +212,14 @@ def test_upsert_rows_groups_rows_that_have_different_columns(db: _RecordingDB) -
 
 def test_upsert_rows_does_nothing_for_an_empty_row_set(db: _RecordingDB) -> None:
     """An empty mult table must not produce a syntactically invalid INSERT."""
-    db.upsert_rows('import', 'mult_x', 'id', [])
+    db.upsert_rows('mult_x', 'id', [])
 
     assert db.executed == []
 
 
 def test_upsert_rows_passes_a_missing_value_as_a_parameter(db: _RecordingDB) -> None:
     """None is a bound parameter like any other value; MySQLdb renders it as NULL."""
-    db.upsert_rows('import', 'mult_x', 'id', [{'id': 0, 'value': None}, {'id': 1, 'value': 'a'}])
+    db.upsert_rows('mult_x', 'id', [{'id': 0, 'value': None}, {'id': 1, 'value': 'a'}])
 
     assert len(db.executed) == 1
     cmd, params = db.executed[0]
@@ -242,16 +234,17 @@ def test_upsert_rows_omits_the_update_clause_for_a_key_only_row(db: _RecordingDB
     implementation emitted `ON DUPLICATE KEY UPDATE ` with an empty assignment list,
     which is a syntax error.
     """
-    db.upsert_rows('import', 'mult_x', 'id', [{'id': 0}])
+    db.upsert_rows('mult_x', 'id', [{'id': 0}])
 
     cmd, params = db.executed[0]
     assert 'ON DUPLICATE KEY UPDATE' not in cmd
-    assert cmd == 'INSERT INTO `imp_mult_x` (`id`) VALUES(%s)'
+    assert cmd == 'INSERT INTO `mult_x` (`id`) VALUES(%s)'
     assert params == [0]
 
 
 @pytest.mark.parametrize(
-    'name', ['obs_general', 'imp_obs_general', 'cache_12', 'J2000_longitude', '_mult_val_']
+    'name',
+    ['obs_general', 'mult_obs_general_planet_id', 'cache_12', 'J2000_longitude', '_mult_val_'],
 )
 def test_quote_identifier_accepts_the_names_opus_uses(db: _RecordingDB, name: str) -> None:
     """Everything OPUS actually names is letters, digits and underscores."""
@@ -277,30 +270,23 @@ def test_quote_identifier_rejects_anything_else(db: _RecordingDB, name: Any) -> 
 
 
 def test_where_clause_values_travel_as_parameters(db: _RecordingDB) -> None:
-    """delete_rows and copy_rows_between_namespaces take their own parameters.
+    """delete_rows takes its own parameters.
 
-    Their WHERE clauses are the one place in the import pipeline where a value read
+    Its WHERE clause is the one place in the import pipeline where a value read
     off the command line reaches a statement, so building `bundle_id="COISS_2002"` by
     interpolation here is what parameters have to keep out.
     """
     where = f'{db.quote_identifier("bundle_id")}=%s'
-    db.delete_rows('perm', 'obs_general', where, where_params=['COISS_2002'])
-    db.copy_rows_between_namespaces(
-        'import', 'perm', 'obs_general', where=where, where_params=['COISS_2002']
-    )
+    db.delete_rows('obs_general', where, where_params=['COISS_2002'])
 
     assert db.executed == [
         ('DELETE FROM `obs_general` WHERE `bundle_id`=%s', ['COISS_2002']),
-        (
-            'INSERT INTO `obs_general` SELECT * FROM `imp_obs_general` WHERE `bundle_id`=%s',
-            ['COISS_2002'],
-        ),
     ]
 
 
 def test_a_where_clause_with_no_parameters_passes_none(db: _RecordingDB) -> None:
     """An empty parameter list would make MySQLdb interpolate, so pass None."""
-    db.delete_rows('perm', 'obs_general', '`id` > 0')
+    db.delete_rows('obs_general', '`id` > 0')
 
     assert db.executed == [('DELETE FROM `obs_general` WHERE `id` > 0', None)]
 
@@ -308,7 +294,6 @@ def test_a_where_clause_with_no_parameters_passes_none(db: _RecordingDB) -> None
 def test_update_row_parameterizes_the_set_values_and_the_where(db: _RecordingDB) -> None:
     """The SET list and the WHERE clause contribute parameters in that order."""
     db.update_row(
-        'perm',
         'mult_x',
         {'label': 'Saturn', 'disp_order': 3},
         f'{db.quote_identifier("id")}=%s',
@@ -328,21 +313,21 @@ def test_upsert_row_omits_the_update_clause_for_a_key_only_row(db: _RecordingDB)
     `ImportDBSuper` backend interface and an empty assignment list is a syntax
     error, so the two siblings should not disagree about it.
     """
-    db.upsert_row('import', 'mult_x', 'id', {'id': 0})
+    db.upsert_row('mult_x', 'id', {'id': 0})
 
     cmd, params = db.executed[0]
     assert 'ON DUPLICATE KEY UPDATE' not in cmd
-    assert cmd == 'INSERT INTO `imp_mult_x` (`id`) VALUES(%s)'
+    assert cmd == 'INSERT INTO `mult_x` (`id`) VALUES(%s)'
     assert params == [0]
 
 
 def test_upsert_row_assigns_every_column_except_the_key(db: _RecordingDB) -> None:
     """The ordinary case still updates the non-key columns, values bound twice."""
-    db.upsert_row('import', 'mult_x', 'id', {'id': 0, 'value': 'a'})
+    db.upsert_row('mult_x', 'id', {'id': 0, 'value': 'a'})
 
     cmd, params = db.executed[0]
     assert cmd == (
-        'INSERT INTO `imp_mult_x` (`id`,`value`) VALUES(%s,%s) ON DUPLICATE KEY UPDATE `value`=%s'
+        'INSERT INTO `mult_x` (`id`,`value`) VALUES(%s,%s) ON DUPLICATE KEY UPDATE `value`=%s'
     )
     # The row's values, then the values the update clause re-binds.
     assert params == [0, 'a', 'a']
@@ -360,17 +345,15 @@ class _FailingDB(_RecordingDB):
 @pytest.mark.parametrize(
     ('method', 'args'),
     [
-        ('delete_rows', ('import', 'obs_general', '`id`=%s', [1])),
-        ('copy_rows_between_namespaces', ('import', 'perm', 'obs_general')),
-        ('upsert_rows', ('import', 'mult_x', 'id', [{'id': 0, 'value': 'a'}])),
+        ('delete_rows', ('obs_general', '`id`=%s', [1])),
+        ('upsert_rows', ('mult_x', 'id', [{'id': 0, 'value': 'a'}])),
     ],
-    ids=['delete_rows', 'copy_rows_between_namespaces', 'upsert_rows'],
+    ids=['delete_rows', 'upsert_rows'],
 )
 def test_a_failed_statement_becomes_an_import_db_error(method: str, args: tuple[Any, ...]) -> None:
     """Every mutating method reports a server failure as ImportDBError.
 
-    A raw `MySQLdb.Error` escaping `delete_rows` or `copy_rows_between_namespaces`
-    is the one kind of database failure a plain `except Exception:` could swallow
+    A raw `MySQLdb.Error` escaping `delete_rows` or `upsert_rows` is the one kind of database failure a plain `except Exception:` could swallow
     without the top-level handler ever seeing it, so every one of them wraps.
     """
     db = _FailingDB()
@@ -403,7 +386,7 @@ def test_a_failed_operation_restores_the_warning_handler_and_the_stack() -> None
     before = warnings.showwarning
 
     with pytest.raises(ImportDBError):
-        db.delete_rows('import', 'obs_general', '`id`=%s', [1])
+        db.delete_rows('obs_general', '`id`=%s', [1])
 
     assert warnings.showwarning is before
     assert db._enter_stack == []
@@ -420,10 +403,10 @@ def test_create_table_records_the_table_without_a_logger(db: _RecordingDB) -> No
     db._table_info_cache = {}
     db.default_engine = 'INNODB'
 
-    db.create_table('import', 'cart', [{'field_name': 'id', 'field_type': 'uint4'}])
+    db.create_table('cart', [{'field_name': 'id', 'field_type': 'uint4'}])
 
-    assert db.table_exists('import', 'cart')
-    assert db.create_table('import', 'cart', [{'field_name': 'id', 'field_type': 'uint4'}]) is False
+    assert db.table_exists('cart')
+    assert db.create_table('cart', [{'field_name': 'id', 'field_type': 'uint4'}]) is False
 
 
 def test_a_server_error_with_one_argument_is_reported() -> None:
@@ -445,17 +428,17 @@ def test_a_server_error_with_one_argument_is_reported() -> None:
     db.logger = _Logger()
 
     with pytest.raises(ImportDBError, match='lost connection'):
-        db.delete_rows('import', 'obs_general', '`id`=%s', [1])
+        db.delete_rows('obs_general', '`id`=%s', [1])
 
-    assert messages == ['Failed to delete rows from "imp_obs_general": lost connection']
+    assert messages == ['Failed to delete rows from "obs_general": lost connection']
 
 
 def test_delete_rows_refuses_a_missing_where_clause(db: _RecordingDB) -> None:
     """No clause means nothing is deleted, rather than every row."""
     with pytest.raises(ImportDBError, match='needs a WHERE clause or all_rows=True'):
-        db.delete_rows('perm', 'obs_general')
+        db.delete_rows('obs_general')
     with pytest.raises(ImportDBError, match='needs a WHERE clause or all_rows=True'):
-        db.delete_rows('perm', 'obs_general', '')
+        db.delete_rows('obs_general', '')
 
     assert db.executed == []
 
@@ -463,14 +446,14 @@ def test_delete_rows_refuses_a_missing_where_clause(db: _RecordingDB) -> None:
 def test_delete_rows_refuses_a_where_clause_with_all_rows(db: _RecordingDB) -> None:
     """Asking for every row and for some of them at once is a caller's mistake."""
     with pytest.raises(ImportDBError, match='and not both'):
-        db.delete_rows('perm', 'obs_general', '`id`=%s', [1], all_rows=True)
+        db.delete_rows('obs_general', '`id`=%s', [1], all_rows=True)
 
     assert db.executed == []
 
 
 def test_delete_rows_deletes_every_row_when_asked(db: _RecordingDB) -> None:
     """`all_rows=True` is the one way to empty a table."""
-    db.delete_rows('perm', 'obs_general', all_rows=True)
+    db.delete_rows('obs_general', all_rows=True)
 
     assert db.executed == [('DELETE FROM `obs_general`', None)]
 
@@ -681,7 +664,7 @@ def test_bulk_load_issues_one_load_per_chunk(
     """N rows take N divided by transaction_rows, rounded up, loads, each committed."""
     db = _LoadingDB(tmp_path, transaction_rows=transaction_rows)
 
-    db.bulk_load_rows('import', 'obs_general', _obs_rows(row_count))
+    db.bulk_load_rows('obs_general', _obs_rows(row_count))
 
     assert len(db.loads) == loads
     assert [len(lines) for _, lines in db.loads] == [
@@ -692,14 +675,14 @@ def test_bulk_load_issues_one_load_per_chunk(
 
 
 def test_bulk_load_names_the_table_columns_and_character_set(tmp_path: Path) -> None:
-    """The statement loads the namespaced table, in sorted column order, as utf8mb4."""
+    """The statement loads the table, in sorted column order, as utf8mb4."""
     db = _LoadingDB(tmp_path)
 
-    db.bulk_load_rows('import', 'obs_general', _obs_rows(2))
+    db.bulk_load_rows('obs_general', _obs_rows(2))
 
     [(cmd, params)] = _statements(db, 'LOAD DATA')
     assert cmd == (
-        'LOAD DATA LOCAL INFILE %s INTO TABLE `imp_obs_general` CHARACTER SET utf8mb4 '
+        'LOAD DATA LOCAL INFILE %s INTO TABLE `obs_general` CHARACTER SET utf8mb4 '
         "FIELDS TERMINATED BY '\\t' ESCAPED BY '\\\\' LINES TERMINATED BY '\\n' "
         '(`id`,`note`,`opus_id`)'
     )
@@ -712,14 +695,14 @@ def test_bulk_load_files_are_unique_and_removed(tmp_path: Path) -> None:
     first = _LoadingDB(tmp_path, transaction_rows=2)
     second = _LoadingDB(tmp_path, transaction_rows=2)
 
-    first.bulk_load_rows('import', 'obs_general', _obs_rows(5))
-    second.bulk_load_rows('import', 'obs_general', _obs_rows(5))
+    first.bulk_load_rows('obs_general', _obs_rows(5))
+    second.bulk_load_rows('obs_general', _obs_rows(5))
 
     paths = [path for db in (first, second) for path, _ in db.loads]
     assert len(paths) == 6
     assert len(set(paths)) == 6
     assert all(Path(path).parent == tmp_path for path in paths)
-    assert all(Path(path).name.startswith('imp_obs_general_') for path in paths)
+    assert all(Path(path).name.startswith('obs_general_') for path in paths)
     assert list(tmp_path.iterdir()) == []
 
 
@@ -749,7 +732,7 @@ def test_a_load_that_loses_or_changes_a_row_raises(
     db.conn.first_warning = warning
 
     with pytest.raises(ImportDBError, match=re.escape(message)):
-        db.bulk_load_rows('import', 'obs_general', _obs_rows(2))
+        db.bulk_load_rows('obs_general', _obs_rows(2))
 
     assert db.conn.rollbacks == 1
     assert db.conn.commits == 0
@@ -768,7 +751,7 @@ def test_a_load_stops_at_the_first_bad_chunk(tmp_path: Path) -> None:
     )
 
     with pytest.raises(ImportDBError, match='1 skipped'):
-        db.bulk_load_rows('import', 'obs_general', _obs_rows(6))
+        db.bulk_load_rows('obs_general', _obs_rows(6))
 
     assert len(db.loads) == 2
     assert (db.conn.commits, db.conn.rollbacks) == (1, 1)
@@ -778,8 +761,8 @@ def test_a_refused_load_falls_back_to_insert_statements(tmp_path: Path) -> None:
     """A refused file sends that chunk and every later one through `insert_rows`."""
     db = _LoadingDB(tmp_path, transaction_rows=2, refuse_at=1)
 
-    db.bulk_load_rows('import', 'obs_general', _obs_rows(5))
-    db.bulk_load_rows('import', 'obs_general', _obs_rows(1))
+    db.bulk_load_rows('obs_general', _obs_rows(5))
+    db.bulk_load_rows('obs_general', _obs_rows(1))
 
     assert db.bulk_load_path == BULK_LOAD_PATH_INSERT
     assert len(db.loads) == 2
@@ -806,7 +789,7 @@ def test_any_other_load_failure_raises(tmp_path: Path) -> None:
     db = _BrokenDB(tmp_path)
 
     with pytest.raises(ImportDBError, match="Table 'x' doesn't exist"):
-        db.bulk_load_rows('import', 'obs_general', _obs_rows(1))
+        db.bulk_load_rows('obs_general', _obs_rows(1))
 
     assert db.bulk_load_path == BULK_LOAD_PATH_FILE
     assert db.conn.rollbacks == 1
@@ -818,7 +801,7 @@ def test_the_insert_path_writes_insert_statements(tmp_path: Path) -> None:
     db = _LoadingDB(tmp_path)
     db.bulk_load_path = BULK_LOAD_PATH_INSERT
 
-    db.bulk_load_rows('import', 'obs_general', _obs_rows(3))
+    db.bulk_load_rows('obs_general', _obs_rows(3))
 
     assert db.loads == []
     assert len(_statements(db, 'INSERT INTO')) == 1
@@ -828,7 +811,7 @@ def test_an_empty_load_does_nothing(tmp_path: Path) -> None:
     """No rows, no file, no statement."""
     db = _LoadingDB(tmp_path)
 
-    db.bulk_load_rows('import', 'obs_general', [])
+    db.bulk_load_rows('obs_general', [])
 
     assert db.executed == []
     assert list(tmp_path.iterdir()) == []
@@ -905,4 +888,4 @@ def test_table_info_names_every_type_create_table_renders(
 
     db = _ColumnsDB()
     db._table_info_cache = {}
-    assert db.table_info('perm', 'obs_general')[0]['field_type'] == field_type
+    assert db.table_info('obs_general')[0]['field_type'] == field_type

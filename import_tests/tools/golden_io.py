@@ -117,10 +117,9 @@ DERIVED_COLUMNS = {'obs_files': frozenset({'url'})}
 #: auto-incremented row id and ``obs_general_id`` is the foreign key naming an
 #: observation's ``obs_general`` row. They are stable across two clean runs from an empty
 #: database, which is why the goldens carry them, and they are *not* stable across a
-#: re-import: the pipeline hands out ids from the largest already present in either
-#: namespace and only deletes the bundle's old rows afterwards, so re-importing a bundle
-#: renumbers it above everything else in the table. `without_surrogate_ids` is what the
-#: re-import comparison drops them with.
+#: re-import: the pipeline deletes the bundle's rows and loads them again, handing out ids
+#: from the largest present, so re-importing a bundle renumbers it.
+#: `without_surrogate_ids` is what the re-import comparison drops them with.
 SURROGATE_ID_COLUMNS = frozenset({'id', 'obs_general_id'})
 
 #: The column naming the bundle a row came from, where a table has one.

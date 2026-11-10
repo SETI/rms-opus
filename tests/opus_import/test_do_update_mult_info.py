@@ -29,7 +29,7 @@ class _RecordingDatabase:
         self._table_names = table_names
         self.updates: list[tuple[str, dict[str, Any], list[Any]]] = []
 
-    def table_names(self, namespace: str, prefix: str | None = None) -> list[str]:
+    def table_names(self, prefix: str | None = None) -> list[str]:
         return [name for name in self._table_names if prefix is None or name.startswith(prefix)]
 
     def quote_identifier(self, name: str) -> str:
@@ -37,16 +37,14 @@ class _RecordingDatabase:
 
     def update_row(
         self,
-        namespace: str,
-        raw_table_name: str,
+        table_name: str,
         row: dict[str, Any],
         where: str,
         where_params: list[Any] | None = None,
     ) -> None:
-        assert namespace == 'perm'
         assert where == '`id`=%s'
         assert where_params is not None
-        self.updates.append((raw_table_name, row, where_params))
+        self.updates.append((table_name, row, where_params))
 
 
 def _run(table_names: list[str]) -> tuple[_RecordingDatabase, RecordingLogger]:

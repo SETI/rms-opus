@@ -58,7 +58,6 @@ fake_error404_probability = 0.0
 fake_error500_probability = 0.0
 
 [import]
-table_temp_prefix = "imp_"
 log_file = "/tmp/opus_ci_import.log"
 debug_log_file = "/tmp/opus_ci_import_debug.log"
 bulk_load = true

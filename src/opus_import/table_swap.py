@@ -2,11 +2,11 @@
 
 The auxiliary tables (``param_info``, ``partables``, ``table_names``) and the dictionary
 (``contexts`` and ``definitions``) are rebuilt on a schema the web application may be
-serving. Each is built as ``<table>__new`` in the permanent namespace and filled there,
-while the live table goes on answering, and then one ``RENAME TABLE`` moves every live
-table aside to ``<table>__old`` and every new one into its place. MySQL applies the whole
-statement atomically, so a reader finds each table either as it was or as it now is,
-never missing and never partly filled. The ``__old`` tables are dropped afterwards.
+serving. Each is built as ``<table>__new`` and filled there, while the live table goes on
+answering, and then one ``RENAME TABLE`` moves every live table aside to ``<table>__old``
+and every new one into its place. MySQL applies the whole statement atomically, so a
+reader finds each table either as it was or as it now is, never missing and never partly
+filled. The ``__old`` tables are dropped afterwards.
 
 Each ``__new`` table is analyzed after it is filled and before it is swapped in. The
 server's persistent statistics for a table created empty say it has no rows, a rename
@@ -85,7 +85,7 @@ def drop_swap_leftovers(ctx: ImportContext, tables: Sequence[str]) -> None:
     assert db is not None
     for name_for in (swap_new_name, swap_old_name):
         for table in reversed(tables):
-            db.drop_table('perm', name_for(table))
+            db.drop_table(name_for(table))
 
 
 def _point_foreign_keys_at_new_tables(
@@ -124,7 +124,6 @@ def create_swap_tables(ctx: ImportContext, tables: Sequence[str]) -> None:
         # Every table swapped in has a schema packaged with opus_import.
         assert schema is not None, table
         db.create_table(
-            'perm',
             swap_new_name(table),
             _point_foreign_keys_at_new_tables(schema, tables),
             ignore_if_exists=False,
@@ -151,18 +150,17 @@ def swap_in_new_tables(ctx: ImportContext, tables: Sequence[str]) -> None:
 
     renames: list[tuple[str, str]] = []
     for table in tables:
-        if db.table_exists('perm', table):
+        if db.table_exists(table):
             renames.append((table, swap_old_name(table)))
         renames.append((swap_new_name(table), table))
     import_util.log_info(ctx, f'Swapping in {", ".join(tables)}')
     db.rename_tables_atomically(
-        'perm',
         renames,
         lock_wait_timeout_s=SWAP_LOCK_WAIT_TIMEOUT_S,
         attempts=SWAP_RENAME_ATTEMPTS,
     )
     for table in reversed(tables):
-        db.drop_table('perm', swap_old_name(table))
+        db.drop_table(swap_old_name(table))
 
 
 def rebuild_tables_by_swap(
@@ -191,6 +189,6 @@ def rebuild_tables_by_swap(
     db = ctx.db
     assert db is not None
     for table in tables:
-        db.analyze_table('perm', swap_new_name(table))
+        db.analyze_table(swap_new_name(table))
     swap_in_new_tables(ctx, tables)
     return True

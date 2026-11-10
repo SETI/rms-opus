@@ -77,7 +77,7 @@ def _group_keys(
         statement's estimate within it, keys in order. A key whose own estimate exceeds
         the budget is a statement of its own, which `ImportDBSuper.build_indexes` refuses.
     """
-    sized = [(key, db.key_space_bytes('perm', table_name, schema, key)) for key in keys]
+    sized = [(key, db.key_space_bytes(table_name, schema, key)) for key in keys]
     groups: list[list[tuple[TableKey, int]]] = []
     for key, space in sized:
         if (
@@ -91,7 +91,7 @@ def _group_keys(
         groups[-1].append((key, space))
     return [
         IndexStatement(
-            sql=db.add_keys_statement('perm', table_name, [key for key, _ in group]),
+            sql=db.add_keys_statement(table_name, [key for key, _ in group]),
             label=_key_label([key for key, _ in group]),
             space_bytes=sum(space for _, space in group),
             sort_bytes=max(space for _, space in group),
@@ -115,7 +115,7 @@ def create_indexes(ctx: ImportContext) -> bool:
     db = ctx.db
     assert db is not None
     config = get_config().import_
-    existing = db.read_table_keys('perm')
+    existing = db.read_table_keys()
     space_budget = db.index_space_budget(config.server_tmpdir)
     if space_budget is None:
         import_util.log_info(ctx, 'Building keys with no space budget')
@@ -126,7 +126,7 @@ def create_indexes(ctx: ImportContext) -> bool:
     foreign: list[IndexStatement] = []
     foreign_tables: set[str] = set()
     total_estimate = 0
-    for table_name in sorted(db.table_names('perm', prefix=list(KEY_FILTERED_TABLE_PREFIXES))):
+    for table_name in sorted(db.table_names(prefix=list(KEY_FILTERED_TABLE_PREFIXES))):
         schema = import_util.read_schema_for_existing_table(ctx, table_name)
         if schema is None:
             continue
@@ -136,14 +136,14 @@ def create_indexes(ctx: ImportContext) -> bool:
         if plain_keys:
             # The estimates read the server's row count, which can predate the loads
             # until the table is analyzed.
-            db.analyze_table('perm', table_name)
+            db.analyze_table(table_name)
             plain[table_name] = _group_keys(db, table_name, schema, plain_keys, space_budget)
             total_estimate += sum(statement.space_bytes for statement in plain[table_name])
         for key in missing:
             if key.kind == 'foreign':
                 foreign.append(
                     IndexStatement(
-                        sql=db.add_foreign_key_statement('perm', table_name, key),
+                        sql=db.add_foreign_key_statement(table_name, key),
                         label=f'{table_name}:{key.describe()}',
                         space_bytes=0,
                         sort_bytes=0,
@@ -175,7 +175,7 @@ def create_indexes(ctx: ImportContext) -> bool:
         return False
     except ImportDBError:
         # build_indexes and add_foreign_keys have logged every failure.
-        ctx.import_has_bad_data = True
+        ctx.mark_bad_data()
         return False
     for table_name, timed in built.items():
         ctx.step_timings[f'create_indexes:{table_name}'] = sum(seconds for _, seconds in timed)
@@ -186,5 +186,5 @@ def create_indexes(ctx: ImportContext) -> bool:
 
     with ctx.timed('create_indexes:analyze'):
         for table_name in sorted(set(plain) | foreign_tables):
-            db.analyze_table('perm', table_name)
+            db.analyze_table(table_name)
     return True

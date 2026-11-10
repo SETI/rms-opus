@@ -1,28 +1,33 @@
 """The observation import: read the PDS holdings and write the observation tables.
 
-This is the step behind ``--import`` and the several options that imply it. It also owns
-the work for two options that are not steps of their own -- dropping the permanent tables
-under ``--drop-permanent-tables`` and deleting bundles from the import tables under
-``--delete-import-bundles`` -- because each of them has to happen at a particular point
-in this sequence.
+This is the step behind ``--import``. It also owns two options that are not steps of
+their own, because each has to happen at a particular point in this sequence:
+``--scorched-earth``, which drops every table the import creates before anything else
+runs, and ``--delete-bundles``, which deletes the named bundles before any is imported.
 
 Which way an invocation that imports bundles writes depends on the target schema's state,
 which `choose_import_path` reads before the first bundle:
 
 - **A schema with no** ``schema_version`` **row and none of the secondary keys
-  finalization adds** is imported fresh: each bundle's rows are written straight to the
-  permanent observation and mult tables, which are created with only the keys a load
-  needs (`opus_import.table_keys`), and finalization's ``--create-indexes`` adds the
-  rest once. A failed fresh import leaves a schema with no version row, which the web
-  application refuses to serve and both deploy scripts refuse to promote.
-- **A schema with a version row** is imported into through the import namespace:
-  everything is written to the import tables first and copied over the permanent tables
-  only once the whole run has succeeded, so a failed import cannot leave the web
-  application serving half a bundle.
-- **A schema with no version row but with those keys** is one whose finalization was
-  interrupted, and an import into it is refused in favor of ``--finalize``.
+  finalization adds** is imported fresh: the observation and mult tables are created with
+  only the keys a load needs (`opus_import.table_keys`), and finalization's
+  ``--create-indexes`` adds the rest once. A failed fresh import leaves a schema with no
+  version row, which the web application refuses to serve and both deploy scripts refuse
+  to promote.
+- **A schema with this release's version row** is appended to, its keys in place. The
+  append first sets the row's state to ``appending``, which the web application and both
+  deploy scripts refuse until ``--write-schema-version`` changes it back to ``ready``, and
+  resumes every bundle an earlier append left unfinished. It never finalizes the schema
+  itself: ``--finalize`` does, as after a fresh import.
+- **A schema with another release's version row** is refused, and so is **one with no
+  version row but with those keys**, whose finalization was interrupted, in favor of
+  ``--finalize``.
 
-An error anywhere aborts the run, unless ``--import-ignore-errors`` says otherwise.
+On both paths every bundle is recorded in the bundle registry
+(`opus_import.bundle_registry`) before the first one starts, and then deleted from the
+observation tables and loaded again, so a rerun is clean. A bundle that logs an error is
+recorded ``failed``, and finalization and the version step refuse to run until it is
+imported again or deleted; ``--ignore-errors`` records it ``done`` instead.
 
 The per-bundle work is split across four modules that are not steps of their own:
 `opus_import.steps.do_import_tables` prepares the tables,
@@ -38,31 +43,30 @@ from typing import TYPE_CHECKING
 
 import pdsfile
 
-from opus_import import import_util, schema_version
-from opus_import.steps import (
-    do_cart,
-    do_django,
-    do_import_index,
-    do_import_mult,
-    do_import_tables,
-)
+from opus_import import bundle_registry, import_util, schema_version
+from opus_import.import_fault import import_fault_argument
+from opus_import.steps import do_import_index, do_import_tables
 from opus_import.table_keys import KEY_FILTERED_TABLE_PREFIXES, add_secondary_indexes
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
 
-#: The path a fresh import takes, straight into the permanent tables.
+#: The path a fresh import takes, into a schema with no version row.
 IMPORT_PATH_FRESH = 'fresh import'
 
-#: The path an import into a schema with a version row takes, through the import tables.
-IMPORT_PATH_NAMESPACE = 'import tables'
+#: The path an import into a finalized schema takes.
+IMPORT_PATH_APPEND = 'append'
 
 #: How the log line naming the path starts.
 IMPORT_PATH_PREFIX = 'Import path: '
 
+#: The `opus_import.import_fault` site inside a bundle's import. Its argument is a
+#: bundle; importing that bundle logs one error there and carries on.
+LOG_ERROR_FAULT_SITE = 'log_error'
+
 
 def finalization_keys_present(ctx: ImportContext) -> list[str]:
-    """Return the secondary keys finalization adds that the permanent tables already have.
+    """Return the secondary keys finalization adds that the tables already have.
 
     Parameters:
         ctx: The import run's context, for the open database.
@@ -73,9 +77,9 @@ def finalization_keys_present(ctx: ImportContext) -> list[str]:
     """
     db = ctx.db
     assert db is not None
-    existing = db.read_table_keys('perm')
+    existing = db.read_table_keys()
     present: list[str] = []
-    for table_name in sorted(db.table_names('perm', prefix=list(KEY_FILTERED_TABLE_PREFIXES))):
+    for table_name in sorted(db.table_names(prefix=list(KEY_FILTERED_TABLE_PREFIXES))):
         schema = import_util.read_schema_for_existing_table(ctx, table_name)
         if schema is None:
             continue
@@ -93,13 +97,14 @@ def choose_import_path(ctx: ImportContext) -> bool:
 
     A schema with no ``schema_version`` row and none of the secondary keys finalization
     adds -- an empty schema, or one a fresh import is part way through -- is imported
-    fresh, which sets `ImportDBSuper.direct`. A schema with a version row is imported
-    through the import tables. One with no version row but such keys had its
-    finalization interrupted, and the import is refused, since loading into tables that
-    carry every index is the slow path a fresh import exists to avoid and its bundles
-    would then miss the finalization already done; ``--finalize`` completes it. The
-    choice is logged on one line naming the path, the schema and its version, and kept
-    in `ImportContext.import_path`.
+    fresh. A schema whose one row holds this release's version is appended to, whether
+    the row is ``ready`` or an earlier append left it ``appending``. Anything else is
+    refused: a row of another version, or several rows, since a schema is re-imported
+    under the release that will serve it; and no row but such keys, a finalization that
+    was interrupted, since loading into tables that carry every index is what a fresh
+    import exists to avoid and ``--finalize`` completes it. The choice is logged on one
+    line naming the path, the schema and its version, and kept in
+    `ImportContext.import_path`.
 
     Parameters:
         ctx: The import run's context, for the open database, the arguments and the
@@ -111,13 +116,35 @@ def choose_import_path(ctx: ImportContext) -> bool:
     db = ctx.db
     assert db is not None
     rows = []
-    if db.table_exists('perm', schema_version.SCHEMA_VERSION_TABLE):
-        rows = list(db.read_rows('perm', schema_version.SCHEMA_VERSION_TABLE, ['version', 'state']))
+    if db.table_exists(schema_version.SCHEMA_VERSION_TABLE):
+        rows = list(db.read_rows(schema_version.SCHEMA_VERSION_TABLE, ['version', 'state']))
     if rows:
         versions = ', '.join(f'version {version}, {state}' for version, state in rows)
-        ctx.import_path = IMPORT_PATH_NAMESPACE
+        problem = None
+        if len(rows) > 1:
+            problem = f'has {len(rows)} {schema_version.SCHEMA_VERSION_TABLE} rows ({versions})'
+        elif rows[0][0] != schema_version.SCHEMA_VERSION:
+            problem = (
+                f'is version {rows[0][0]} and this release is version '
+                f'{schema_version.SCHEMA_VERSION}'
+            )
+        elif rows[0][1] not in (
+            schema_version.SCHEMA_STATE_READY,
+            schema_version.SCHEMA_STATE_APPENDING,
+        ):
+            problem = f'has the state {rows[0][1]!r}'
+        if problem is not None:
+            ctx.logger.log(
+                'fatal',
+                f'"{db.db_schema}" {problem}, so nothing is imported into it: a schema is '
+                're-imported under the release that will serve it, starting with '
+                '"opus_import --scorched-earth --yes"',
+            )
+            ctx.import_has_bad_data = True
+            return False
+        ctx.import_path = IMPORT_PATH_APPEND
         import_util.log_info(
-            ctx, f'{IMPORT_PATH_PREFIX}{IMPORT_PATH_NAMESPACE}, into "{db.db_schema}" ({versions})'
+            ctx, f'{IMPORT_PATH_PREFIX}{IMPORT_PATH_APPEND}, into "{db.db_schema}" ({versions})'
         )
         return True
     present = finalization_keys_present(ctx)
@@ -127,11 +154,10 @@ def choose_import_path(ctx: ImportContext) -> bool:
             f'"{db.db_schema}" has no {schema_version.SCHEMA_VERSION_TABLE} row but has '
             f'{len(present)} of the keys finalization adds (the first: {present[0]}), so its '
             'finalization was interrupted: "opus_import --finalize" completes it, and '
-            '"--drop-permanent-tables --scorched-earth" starts over',
+            '"--scorched-earth --yes" starts over',
         )
         ctx.import_has_bad_data = True
         return False
-    db.direct = True
     ctx.import_path = IMPORT_PATH_FRESH
     import_util.log_info(
         ctx,
@@ -147,7 +173,7 @@ def choose_import_path(ctx: ImportContext) -> bool:
 
 
 def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
-    """Import one bundle into the import namespace.
+    """Import one bundle into the observation tables.
 
     The bundle's primary index files are found by looking through its metadata
     directories, and for PDS3 its own ``index`` directory as well, for the file names
@@ -178,17 +204,19 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
     ctx.current_index_row_number = None
     ctx.current_primary_filespec = None
 
+    if not do_import_tables.opus_imports_bundle(bundle_id):
+        import_util.log_debug(ctx, f'Ignoring import of {bundle_id}')
+        ctx.logger.close()
+        ctx.current_bundle_id = None
+        return True
     vol_info = do_import_tables.lookup_vol_info(bundle_id)
     if vol_info is None:
         import_util.log_error(ctx, f'No BUNDLE_INFO entry for {bundle_id}!')
         ctx.logger.close()
         ctx.current_bundle_id = None
         return False
-    if vol_info['instrument_class'] is None:
-        import_util.log_debug(ctx, f'Ignoring import of {bundle_id}')
-        ctx.logger.close()
-        ctx.current_bundle_id = None
-        return True
+    if import_fault_argument(LOG_ERROR_FAULT_SITE) == bundle_id:
+        import_util.log_error(ctx, f'{LOG_ERROR_FAULT_SITE} fault injected into {bundle_id}')
 
     if vol_info['pds_version'] == 3:
         bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
@@ -276,26 +304,28 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
 def do_import_steps(ctx: ImportContext) -> bool:
     """Run the import work the command line asked for, in the one order that is safe.
 
-    The permanent tables are dropped first if ``--scorched-earth`` confirms it. An
-    invocation that imports bundles then chooses its path from the schema's state
-    (`choose_import_path`), unless `opus_import.cli` chose it already.
+    ``--scorched-earth`` drops every table the import creates first; ``--delete-bundles``
+    then deletes the named bundles and their registry rows, setting a ``ready`` schema of
+    this release's version to ``appending`` first, since the deletion unfinishes it as an
+    append does. An invocation that imports
+    bundles chooses its path from the schema's state (`choose_import_path`), unless
+    `opus_import.cli` chose it already, and records its bundles in the registry before
+    the first one starts: on the append path every bundle an earlier append left
+    unfinished and not named, in bundle order, followed by the ones named in their order;
+    on a fresh import the ones named. A bundle OPUS deliberately skips is never recorded,
+    and an append that records none leaves the schema's state alone.
 
-    On the fresh-import path each bundle is deleted from the permanent tables and
-    imported straight into them, so a rerun of a bundle is clean; nothing is staged,
-    copied or dropped, and each step of the import-tables path that is skipped says so
-    at debug level. On the import-tables path the old import tables are dropped, the
-    bundles are imported into them, then the permanent tables get the bundles the import
-    produced -- deleted first, then created, then copied -- and finally the import tables
-    are dropped.
-
-    The copy to the permanent tables is skipped when the import logged any error, so a
-    run that produced bad data leaves the web application on the previous import.
-    ``--import-ignore-errors`` overrides that, and also keeps the run going past a
-    bundle that failed.
+    Each bundle is then marked ``importing``, deleted from the observation tables with
+    foreign keys checked, so ``cart``'s cascade removes the cart rows that name it, and
+    loaded with them unchecked, which validation's orphan count stands in for. It ends
+    ``done``, or ``failed`` when its import failed or logged an error, unless
+    ``--ignore-errors``, which records it ``done`` regardless. A bundle whose import
+    failed stops the loop and leaves the bundles after it ``pending``, again unless
+    ``--ignore-errors``.
 
     Each phase that runs is timed into `ImportContext.step_timings` under its own name,
-    the bundle import and the copy also per bundle as ``import_bundle:<bundle>`` and
-    ``copy_bundle:<bundle>``. The names are the arguments of the ``ctx.timed`` calls
+    the bundle import also per bundle as ``delete_bundle:<bundle>`` and
+    ``import_bundle:<bundle>``. The names are the arguments of the ``ctx.timed`` calls
     below; ``grep -n "ctx.timed(" src/opus_import`` lists every one.
 
     Parameters:
@@ -303,199 +333,126 @@ def do_import_steps(ctx: ImportContext) -> bool:
 
     Returns:
         True if everything asked for succeeded. False if the import was refused, or a
-        bundle failed and errors are not being ignored, which is logged.
+        bundle failed or logged an error and errors are not being ignored, which is
+        logged.
     """
     ctx.import_has_bad_data = False
     ctx.max_table_id_cache = {}
-    ctx.created_import_mult_tables = set()
+    db = ctx.db
+    assert db is not None
 
-    bundle_id_list = []
-    for bundle_id in import_util.yield_import_bundle_ids(ctx):
-        bundle_id_list.append(bundle_id)
+    named_bundles = list(import_util.yield_import_bundle_ids(ctx))
 
-    # If --drop-permanent-tables AND --scorched-earth is given, delete
-    # the permanent tables entirely. We have to do this before starting the
-    # real import so that there are no vestigial mult tables and the ids
-    # can be reset to 0.
-    old_perm_tables_dropped = False
-    if ctx.args.drop_permanent_tables and ctx.args.scorched_earth:
-        import_util.log_warning(ctx, '** DELETING ALL PERMANENT TABLES **')
-        with ctx.timed('drop_permanent_tables'):
-            do_import_tables.delete_all_obs_mult_tables(ctx, 'perm')
-        old_perm_tables_dropped = True
+    # Before anything else, so that there are no vestigial mult tables and the ids start
+    # again from 1.
+    if ctx.args.scorched_earth:
+        import_util.log_warning(ctx, f'** DELETING EVERY OPUS TABLE IN SCHEMA {db.db_schema} **')
+        with ctx.timed('scorched_earth'):
+            do_import_tables.delete_all_opus_tables(ctx)
 
-        # This must be done after the permanent tables were deleted, since
-        # that process also deleted these tables. In this case, we didn't do
-        # this step earlier.
-        if ctx.args.drop_cache_tables or ctx.args.create_cart:
-            ctx.logger.open(
-                'Cleaning up OPUS/Django tables',
-                limits={'info': ctx.args.log_info_limit, 'debug': ctx.args.log_debug_limit},
-            )
+    if ctx.args.delete_bundles:
+        if named_bundles and _schema_is_ready(ctx):
+            _mark_appending(ctx)
+        with ctx.timed('delete_bundles'):
+            for bundle_id in named_bundles:
+                do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
+            bundle_registry.unregister_bundles(ctx, named_bundles)
 
-            if ctx.args.create_cart:
-                with ctx.timed('create_cart'):
-                    do_cart.create_cart(ctx)
-            if ctx.args.drop_cache_tables:
-                with ctx.timed('drop_cache_tables'):
-                    do_django.drop_cache_tables(ctx)
-
-            ctx.logger.close()
-
-    if ctx.args.do_import and ctx.import_path is None and not choose_import_path(ctx):
+    if not ctx.args.do_import:
+        return True
+    if ctx.import_path is None and not choose_import_path(ctx):
         return False
-    fresh = ctx.import_path == IMPORT_PATH_FRESH
 
-    # Delete the old import tables if
-    #   --drop-old-import-tables but not
-    #   --leave-old-import-tables
-    # is given.
-    old_imp_tables_dropped = False
-    if ctx.args.drop_old_import_tables and not ctx.args.leave_old_import_tables:
-        if fresh:
-            import_util.log_debug(ctx, 'Fresh import: no old import tables to drop')
-        else:
-            import_util.log_info(ctx, 'Deleting all old import tables')
-            with ctx.timed('drop_old_import_tables'):
-                do_import_tables.delete_all_obs_mult_tables(ctx, 'import')
-        old_imp_tables_dropped = True
+    bundle_id_list = _bundles_to_import(ctx, named_bundles)
+    registered = [b for b in bundle_id_list if do_import_tables.opus_imports_bundle(b)]
+    bundle_registry.create_registry(ctx)
+    bundle_registry.register_bundles(ctx, registered)
+    # An append that has nothing to import leaves a finished schema as it is.
+    if ctx.import_path == IMPORT_PATH_APPEND and registered:
+        _mark_appending(ctx)
 
-    # If --import is given, first delete the bundles from the import tables,
-    # then do the new import
-    if (ctx.args.do_import or ctx.args.delete_import_bundles) and not old_imp_tables_dropped:
-        if fresh:
-            import_util.log_debug(
-                ctx, 'Fresh import: each bundle is deleted from the permanent tables instead'
-            )
-        else:
-            import_util.log_warning(ctx, 'Importing on top of previous import tables!')
-            with ctx.timed('delete_import_bundles'):
-                for bundle_id in import_util.yield_import_bundle_ids(ctx):
-                    do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'import')
+    with ctx.timed('import'):
+        for bundle_id in bundle_id_list:
+            is_registered = bundle_id in registered
+            if is_registered:
+                bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_IMPORTING)
+            ctx.bundle_has_errors = False
+            with ctx.timed(f'delete_bundle:{bundle_id}'):
+                do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
+            with ctx.timed(f'import_bundle:{bundle_id}'), db.foreign_keys_unchecked():
+                imported = import_one_bundle(ctx, bundle_id)
+            if not imported:
+                ctx.logger.log('fatal', f'Import of bundle {bundle_id} failed - Aborting')
+                ctx.mark_bad_data()
+            if is_registered:
+                failed = ctx.bundle_has_errors and not ctx.args.ignore_errors
+                bundle_registry.set_bundle_state(
+                    ctx,
+                    bundle_id,
+                    bundle_registry.BUNDLE_FAILED if failed else bundle_registry.BUNDLE_DONE,
+                )
+            if not imported and not ctx.args.ignore_errors:
+                break
 
-    # On the fresh path the named bundles go before the import writes the permanent
-    # tables; on the import-tables path, before the copy.
-    if fresh:
-        _delete_permanent_bundles(ctx, bundle_id_list)
-
-    if ctx.args.do_import:
-        with ctx.timed('import'):
-            for bundle_id in bundle_id_list:
-                if fresh:
-                    with ctx.timed(f'delete_bundle:{bundle_id}'):
-                        do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
-                with ctx.timed(f'import_bundle:{bundle_id}'):
-                    imported = import_one_bundle(ctx, bundle_id)
-                if not imported:
-                    ctx.logger.log('fatal', f'Import of bundle {bundle_id} failed - Aborting')
-                    ctx.import_has_bad_data = True
-                    if not ctx.args.import_ignore_errors:
-                        break
-
-        if ctx.import_has_bad_data and not ctx.args.import_ignore_errors:
-            ctx.logger.log('fatal', 'ERRORs found during import - aborting early')
-            return False
-
-    if fresh:
-        if (
-            ctx.args.copy_import_to_permanent_tables
-            or ctx.args.delete_permanent_import_bundles
-            or ctx.args.drop_new_import_tables
-        ):
-            import_util.log_debug(
-                ctx, 'Fresh import: the bundles are already in the permanent tables'
-            )
-    else:
-        _copy_import_tables_to_permanent(ctx, old_perm_tables_dropped, bundle_id_list)
-
+    if ctx.import_has_bad_data and not ctx.args.ignore_errors:
+        ctx.logger.log('fatal', 'ERRORs found during import - aborting early')
+        return False
     return True
 
 
-def _delete_permanent_bundles(ctx: ImportContext, bundle_id_list: list[str]) -> None:
-    """Delete the bundles named on the command line from the permanent tables, if asked.
+def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str]:
+    """Return the bundles an invocation imports, in order.
 
     Parameters:
-        ctx: The import run's context, for the arguments and the open database.
-        bundle_id_list: The bundles the descriptors expand to.
+        ctx: The import run's context, for the open database and the chosen path.
+        named_bundles: The bundles the command line's descriptors expand to.
+
+    Returns:
+        On the append path, every bundle the registry holds that is not ``done`` and is
+        not named, in bundle order, then the named bundles in the order named; on a
+        fresh import, the named bundles. The named order is kept because it decides
+        which copy of a shared OPUS ID finalization keeps: the one imported last.
     """
-    if ctx.args.delete_permanent_bundles:
-        with ctx.timed('delete_permanent_bundles'):
-            for bundle_id in bundle_id_list:
-                do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
+    if ctx.import_path != IMPORT_PATH_APPEND:
+        return named_bundles
+    resumed = [bundle for bundle, _ in bundle_registry.unfinished_bundles(ctx)]
+    if resumed:
+        import_util.log_info(
+            ctx, f'Resuming the unfinished bundles of an earlier append: {", ".join(resumed)}'
+        )
+    return [*(bundle for bundle in resumed if bundle not in named_bundles), *named_bundles]
 
 
-def _copy_import_tables_to_permanent(
-    ctx: ImportContext, old_perm_tables_dropped: bool, bundle_id_list: list[str]
-) -> None:
-    """Copy the bundles the import tables hold over the permanent tables, as asked.
-
-    Under ``--copy-import-to-permanent-tables`` or ``--delete-permanent-import-bundles``
-    every bundle the import ``obs_general`` holds is deleted from the permanent tables,
-    and under ``--delete-permanent-bundles`` every bundle named on the command line; the
-    copy then creates the permanent tables it needs, deletes the permanent copy of every
-    observation the import also produced, and copies the mult tables and each bundle.
-    ``--drop-new-import-tables`` then drops the import tables.
+def _schema_is_ready(ctx: ImportContext) -> bool:
+    """Return whether the schema's one version row is this release's version, ``ready``.
 
     Parameters:
-        ctx: The import run's context, for the arguments, the open database and the
-            logger.
-        old_perm_tables_dropped: True when this invocation dropped the permanent tables,
-            so there is nothing in them to delete.
-        bundle_id_list: The bundles the descriptors expand to.
+        ctx: The import run's context, for the open database.
     """
-    # If --copy-import-to-permanent-tables or --delete-permanent-import-bundles
-    # are given, delete all bundles that exist in the import tables from the
-    # permanent tables.
     db = ctx.db
     assert db is not None
-    import_bundle_ids = []
-    if (
-        ctx.args.copy_import_to_permanent_tables or ctx.args.delete_permanent_import_bundles
-    ) and db.table_exists('import', 'obs_general'):
-        imp_obs_general_table_name = db.convert_raw_to_namespace('import', 'obs_general')
-        q = db.quote_identifier
-        import_bundle_ids = [
-            x[0]
-            for x in db.general_select(
-                f'DISTINCT {q("bundle_id")} FROM {q(imp_obs_general_table_name)} ORDER BY {q("bundle_id")}'
-            )
-        ]
-        if not old_perm_tables_dropped:
-            # Don't bother if there's nothing there!
-            if not ctx.args.create_cart:
-                import_util.log_warning(
-                    ctx, 'Deleting bundles from perm tables but cart table not wiped'
-                )
-            with ctx.timed('delete_permanent_import_bundles'):
-                for bundle_id in import_bundle_ids:
-                    do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id, 'perm')
+    if not db.table_exists(schema_version.SCHEMA_VERSION_TABLE):
+        return False
+    rows = list(db.read_rows(schema_version.SCHEMA_VERSION_TABLE, ['version', 'state']))
+    return rows == [(schema_version.SCHEMA_VERSION, schema_version.SCHEMA_STATE_READY)]
 
-    # If --delete-permanent-bundles is given, delete the given set of bundles
-    # from the permanent tables.
-    _delete_permanent_bundles(ctx, bundle_id_list)
 
-    # If --copy-import-to-permanent-tables is given, create obs and mult tables
-    # as necessary, then copy the import tables to the permanent tables.
-    if ctx.args.copy_import_to_permanent_tables:
-        with ctx.timed('create_permanent_tables'):
-            for bundle_id in import_bundle_ids:
-                do_import_tables.create_tables_for_import(ctx, bundle_id, 'perm')
+def _mark_appending(ctx: ImportContext) -> None:
+    """Set the schema's version row to ``appending``, if it is not already.
 
-        import_util.log_info(ctx, 'Deleting duplicate opus_ids')
-        with ctx.timed('delete_duplicate_opus_ids'):
-            do_import_tables.delete_duplicate_opus_id_from_perm_tables(ctx)
-
-        import_util.log_info(ctx, 'Copying import mult tables to permanent')
-        with ctx.timed('copy_mult_tables'):
-            do_import_mult.copy_mult_from_import_to_permanent(ctx)
-
-        with ctx.timed('copy_to_permanent'):
-            for bundle_id in import_bundle_ids:
-                with ctx.timed(f'copy_bundle:{bundle_id}'):
-                    do_import_tables.copy_bundle_from_import_to_permanent(ctx, bundle_id)
-
-    # If --drop-new-import-tables is given, delete the new import tables
-    if ctx.args.drop_new_import_tables:
-        import_util.log_info(ctx, 'Deleting all new import tables')
-        with ctx.timed('drop_new_import_tables'):
-            do_import_tables.delete_all_obs_mult_tables(ctx, 'import')
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
+    db = ctx.db
+    assert db is not None
+    db.update_row(
+        schema_version.SCHEMA_VERSION_TABLE,
+        {'state': schema_version.SCHEMA_STATE_APPENDING},
+        f'{db.quote_identifier("version")}=%s',
+        [schema_version.SCHEMA_VERSION],
+    )
+    import_util.log_info(
+        ctx,
+        f'Schema version {schema_version.SCHEMA_VERSION} is '
+        f'{schema_version.SCHEMA_STATE_APPENDING} until --write-schema-version',
+    )

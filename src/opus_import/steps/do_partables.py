@@ -57,11 +57,11 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        new_table: The permanent table to fill, already created from ``partables``'s
+        new_table: The table to fill, already created from ``partables``'s
             schema.
 
     Returns:
-        True; every row is built from what the permanent tables hold.
+        True; every row is built from what the imported tables hold.
     """
     db = ctx.db
     assert db is not None
@@ -143,7 +143,7 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
     # }
     # rows.append(entry)
 
-    surface_geo_table_names = db.table_names('perm', prefix='obs_surface_geometry__')
+    surface_geo_table_names = db.table_names(prefix='obs_surface_geometry__')
     for table_name in sorted(surface_geo_table_names):
         target_name = table_name.replace('obs_surface_geometry__', '')
         target_name = import_util.decode_target_name(target_name).upper()
@@ -160,12 +160,12 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
         }
         rows.append(entry)
 
-    db.insert_rows('perm', new_table, rows)
+    db.insert_rows(new_table, rows)
     return True
 
 
 def do_partables(ctx: ImportContext) -> None:
-    """Rebuild the permanent ``partables`` table, driven by ``--create-partables``.
+    """Rebuild the ``partables`` table, driven by ``--create-partables``.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.

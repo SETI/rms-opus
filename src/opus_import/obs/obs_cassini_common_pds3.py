@@ -37,7 +37,7 @@ class ObsCassiniCommonPDS3(ObsCommonPDS3, ObsCassiniCommon):
         Returns:
             The corrected target name and the name shown for it, or ``(None, None)`` if
             the
-            name is one this pipeline does not describe. Under ``--import-ignore-errors``
+            name is one this pipeline does not describe. Under ``--ignore-errors``
             the name becomes the string ``'None'`` so that the observation still imports.
         """
         target_name = self._index_col('TARGET_NAME').upper()

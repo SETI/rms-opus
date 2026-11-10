@@ -10,15 +10,17 @@ import json
 import os
 import subprocess
 import sys
+import warnings
 from pathlib import Path
 
+import pdslogger
 import pytest
 
 import opus_import.__main__
 from opus_config import OPUS_CONFIG_ENV_VAR
-from opus_import import cli
+from opus_import import cli, importdb
 
-from .conftest import make_context
+from .conftest import RecordingLogger, make_context
 
 
 def test_parser_defaults_to_doing_nothing() -> None:
@@ -26,7 +28,7 @@ def test_parser_defaults_to_doing_nothing() -> None:
     args = cli._create_argument_parser().parse_args([])
     assert args.do_it_all is False
     assert args.do_import is False
-    assert args.validate_perm is False
+    assert args.validate is False
     assert args.bundles == []
     assert args.override_db_schema is None
 
@@ -35,17 +37,127 @@ def test_parser_reads_bundles_and_options() -> None:
     """Bundle descriptors are positional; the options around them keep their names."""
     args = cli._create_argument_parser().parse_args(
         [
-            '--import-check-duplicate-id',
-            '--do-all-import',
+            '--ignore-errors',
+            '--import',
             '--override-db-schema',
             'opus_test_db',
             'COISS_2002,COISS_2008',
         ]
     )
     assert args.bundles == ['COISS_2002,COISS_2008']
-    assert args.do_all_import is True
-    assert args.import_check_duplicate_id is True
+    assert args.do_import is True
+    assert args.ignore_errors is True
     assert args.override_db_schema == 'opus_test_db'
+
+
+@pytest.mark.parametrize(
+    ('option', 'attribute'),
+    [
+        ('--delete-bundles', 'delete_bundles'),
+        ('--analyze-tables', 'analyze_tables'),
+        ('--validate', 'validate'),
+        ('--ignore-errors', 'ignore_errors'),
+        ('--suppress-mult-messages', 'suppress_mult_messages'),
+        ('--report-missing-ring-geo', 'report_missing_ring_geo'),
+        ('--report-missing-sky-geo', 'report_missing_sky_geo'),
+        ('--report-inventory-mismatch', 'report_inventory_mismatch'),
+        ('--force-metadata-index', 'force_metadata_index'),
+        ('--ignore-missing-images', 'ignore_missing_images'),
+        ('--ignore-geo-mismatch', 'ignore_geo_mismatch'),
+        ('--report-empty-products', 'report_empty_products'),
+        ('--fake-images', 'fake_images'),
+        ('--no-row-files', 'no_row_files'),
+        ('--scorched-earth', 'scorched_earth'),
+        ('--yes', 'yes'),
+    ],
+)
+def test_each_option_sets_the_attribute_named_after_it(option: str, attribute: str) -> None:
+    """An option's attribute is the option with ``_`` for ``-``, off unless given."""
+    parser = cli._create_argument_parser()
+    assert getattr(parser.parse_args([]), attribute) is False
+    assert getattr(parser.parse_args([option]), attribute) is True
+
+
+@pytest.mark.parametrize(
+    'option',
+    [
+        '--drop-old-import-tables',
+        '--delete-import-bundles',
+        '--leave-old-import-tables',
+        '--delete-permanent-import-bundles',
+        '--copy-import-to-permanent-tables',
+        '--drop-new-import-tables',
+        '--do-all-import',
+        '--do-import-finalization',
+        '--import-check-duplicate-id',
+        '--drop-permanent-tables',
+        '--delete-permanent-bundles',
+        '--analyze-permanent-tables',
+        '--validate-perm',
+        '--import-ignore-errors',
+        '--import-dont-use-row-files',
+    ],
+)
+def test_no_option_of_the_import_namespace_or_its_old_spellings_remains(
+    option: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The removed and renamed options are refused, with no alias kept."""
+    with pytest.raises(SystemExit) as excinfo:
+        cli._create_argument_parser().parse_args([option])
+    assert excinfo.value.code == 2
+    assert option in capsys.readouterr().err
+
+
+def test_no_help_text_names_the_permanent_tables_or_a_namespace() -> None:
+    """One set of tables remains, so no option's help distinguishes two."""
+    for action in cli._create_argument_parser()._actions:
+        text = (action.help or '').lower()
+        assert 'permanent' not in text, action.option_strings
+        assert 'import table' not in text, action.option_strings
+        assert 'namespace' not in text, action.option_strings
+
+
+@pytest.mark.parametrize(
+    ('arguments', 'message'),
+    [
+        (
+            ['--scorched-earth'],
+            '--scorched-earth drops every OPUS table in the schema; give --yes to confirm',
+        ),
+        (['--yes'], '--yes confirms --scorched-earth and is refused without it'),
+    ],
+    ids=['erase-without-yes', 'yes-without-erase'],
+)
+def test_an_unconfirmed_erase_or_a_stray_yes_is_refused_before_the_database_opens(
+    arguments: list[str],
+    message: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Both refusals exit non-zero, logged, and neither connects."""
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: None)
+    opened: list[object] = []
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: opened.append(args))
+    monkeypatch.setattr(sys, 'argv', ['opus_import', *arguments])
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    assert excinfo.value.code != 0
+    assert opened == []
+    assert logger.messages_at('fatal') == [message]
+
+
+class _HandlerlessLogger(RecordingLogger):
+    """A recording logger that accepts the handlers `cli.main` adds, and keeps none."""
+
+    def add_handler(self, handler: object) -> None:
+        """Ignore a handler.
+
+        Parameters:
+            handler: The handler.
+        """
 
 
 def test_parser_names_the_import_option_do_import() -> None:
@@ -103,7 +215,7 @@ def test_help_works_without_a_configuration_file(tmp_path: Path) -> None:
 
 def test_running_without_settings_reports_the_missing_variable(tmp_path: Path) -> None:
     """Asking for real work without settings names the variable that has to be set."""
-    result = _run_without_settings(tmp_path, '--validate-perm')
+    result = _run_without_settings(tmp_path, '--validate')
     assert result.returncode != 0
     assert OPUS_CONFIG_ENV_VAR in result.stderr
     assert 'ConfigError' in result.stderr
@@ -118,7 +230,7 @@ def test_parser_reads_the_timing_file_as_a_path() -> None:
 
 def test_a_timing_file_in_a_missing_directory_is_refused_at_once(tmp_path: Path) -> None:
     """The file is written at exit, so a directory it cannot be written in fails up front."""
-    result = _run_without_settings(tmp_path, '--timing-json', 'missing/t.json', '--validate-perm')
+    result = _run_without_settings(tmp_path, '--timing-json', 'missing/t.json', '--validate')
     assert result.returncode == 2
     assert '--timing-json: the directory missing does not exist' in result.stderr
 

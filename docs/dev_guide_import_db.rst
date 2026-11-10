@@ -34,18 +34,17 @@ raises. A failed database operation always aborts the import.
             +scratch_dir
             +transaction_rows
             +tables_created
-            +direct
-            +convert_raw_to_namespace()
-            +convert_namespace_to_raw()
             +table_exists()
             +read_rows()
             +open_sibling_connection()
             +build_indexes()
+            +foreign_keys_unchecked()
             +quote_identifier()*
             +table_names()*
             +table_info()*
             +create_table()*
             +drop_table()*
+            +rename_tables_atomically()*
             +analyze_table()*
             +insert_row()*
             +insert_rows()*
@@ -54,7 +53,6 @@ raises. A failed database operation always aborts the import.
             +upsert_row()*
             +upsert_rows()*
             +delete_rows()*
-            +copy_rows_between_namespaces()*
             +general_select()*
             +find_column_max()*
             +read_table_keys()*
@@ -67,6 +65,7 @@ raises. A failed database operation always aborts the import.
             +close()*
             #_prepare_index_session()*
             #_size_index_sort()*
+            #_set_foreign_key_checks()*
             #_execute()
             #_execute_and_fetchall()*
             #_operation()
@@ -92,34 +91,28 @@ raises. A failed database operation always aborts the import.
         ImportDBSuper <|-- ImportDBPostgreSQL
         ImportDBMySQL ..> ImportDBError : raises
 
-Namespaces
-~~~~~~~~~~
+.. _dev_guide_import_db_foreign_key_checks:
 
-The layer is where the import/permanent split of
-:ref:`dev_guide_import_two_namespaces` is implemented. A ``Namespace`` is one of
-``'import'``, ``'perm'`` or ``'all'``, and **every** method takes one plus a *raw* table
-name.
+Table names and foreign key checks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`~opus_import.importdb.super.ImportDBSuper.convert_raw_to_namespace` prepends the
-configured prefix for ``'import'`` and returns the name unchanged for ``'perm'`` and
-``'all'``; with no prefix configured, the two namespaces are literally the same tables.
-:meth:`~opus_import.importdb.super.ImportDBSuper.convert_namespace_to_raw` is the
-inverse. ``'all'`` is accepted only where reading both makes sense.
-:func:`~opus_import.steps.do_django.drop_cache_tables` is the only step that uses it; the
-MySQL constructor also passes it when priming its table-name cache.
+Every method takes a table's name as the schema holds it. There is one set of tables,
+the one the web application reads, whichever write path an import takes
+(:ref:`dev_guide_import_write_paths`), so no method adds a prefix or any other qualifier
+to a name, and neither does any step.
 
-**On a fresh import** the import namespace is the permanent tables, for the observation
-and ``mult_`` tables only. ``ImportDBSuper.direct``,
-which the import's choice of path sets (:ref:`dev_guide_import_steps_do_import`), makes
-``'import'`` name an observation or ``mult_`` table without the prefix -- in the
-converters, in ``table_names``, in ``table_exists`` and so in every method -- while every
-other table keeps its prefixed import copy. A prefixed observation table left in the
-schema is then not in the import namespace at all, since the permanent table stands in
-for it. The steps that read and write the import namespace work unchanged on either
-path.
-
-Because every method converts the name itself, **no step module ever builds a prefixed
-name**. That is the property to preserve when adding one.
+:meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked` is a context
+manager that turns the connection's foreign key checks off while its body runs and back
+on however the body ends. The brand supplies ``_set_foreign_key_checks(enabled)``, which
+the MySQL brand implements as ``SET SESSION foreign_key_checks``. With the checks off a
+write is not checked against the foreign keys and **a delete cascades nothing**, so the
+import turns them off for two things only: loading a bundle, whose orphans validation
+counts instead (:ref:`dev_guide_import_steps_do_validate`), and adding foreign keys in
+finalization, which is then an in-place change that does not read the rows already there
+(:meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_keys`). Every delete -- a
+bundle's before it is loaded, ``--delete-bundles``, the duplicate step -- runs with the
+checks on, so that ``cart``'s cascading foreign key removes the cart rows it would
+otherwise orphan.
 
 .. _dev_guide_import_db_keys:
 
@@ -128,15 +121,18 @@ Keys on a fresh import
 
 :mod:`opus_import.table_keys` reads a schema's keys as
 :class:`~opus_import.table_keys.TableKey` values -- a kind, the columns in order and, for
-a foreign key, what it references -- which compare by those and never by name, because
-the server names an unnamed key itself. Under ``direct``,
-:meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_table` creates each observation
-and ``mult_`` table with **the keep set**,
+a foreign key, what it references and what it does on delete -- which compare by those
+and never by name, because the server names an unnamed key itself.
+:meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_table` always creates an
+observation or ``mult_`` table with **the keep set**,
 :func:`~opus_import.table_keys.create_time_keys`, exactly: the primary key, every unique
 key, every ``{"constraint": ...}`` entry (rendered raw, as always), and the keys the
-per-bundle delete reads, which today is each table's ``bundle_id`` key. Every other
-table, and every table on the import-tables path, is created with every key its schema
-declares.
+per-bundle delete reads, which is each table's ``bundle_id`` key. It does so on
+both write paths, so a table first created by an append is keyed by the ``--finalize``
+that follows, as every table of a fresh import is. Every other table is created with
+every key its schema declares, a table-level ``foreign_key`` entry's included
+(:ref:`dev_guide_table_schemas`), which is how ``cart`` has its cascading foreign key
+from the start.
 
 :func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
 tables: the declared keys the keep set leaves out, plain keys first and foreign keys
@@ -153,8 +149,7 @@ Sibling connections and the index build
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :meth:`~opus_import.importdb.super.ImportDBSuper.open_sibling_connection` opens a second
-connection to the same schema, configured as the first and sharing ``direct``, **with no
-logger**: ``_enter`` and ``_exit`` swap the process-wide :func:`warnings.showwarning`,
+connection to the same schema, configured as the first, **with no logger**: ``_enter`` and ``_exit`` swap the process-wide :func:`warnings.showwarning`,
 which is not safe to do from several threads at once, so a sibling reports nothing and
 the connection that opened it logs on its behalf.
 
@@ -190,57 +185,60 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
      - Contract
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.quote_identifier`\ ``(s)``
      - Return a name quoted for use as an identifier.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_names`\ ``(namespace, prefix=None)``
-     - The tables in a namespace, optionally filtered by one prefix or several. **An
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_names`\ ``(prefix=None)``
+     - The tables in the schema, optionally filtered by one prefix or several. **An
        implementation must sort them**, because a caller handing out row ids while
        iterating this would otherwise produce a different database on a different
        machine.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_info`\ ``(namespace, raw_table_name)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_info`\ ``(table_name)``
      - The table's columns as the database currently defines them, in the same shape a
        packaged schema has.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.create_table`\ ``(namespace, raw_table_name, schema, ignore_if_exists=True)``
-     - Create a table from an OPUS table schema. Returns True if it created one, False
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.create_table`\ ``(table_name, schema, ignore_if_exists=True)``
+     - Create a table from an OPUS table schema, with the keys
+       :ref:`dev_guide_import_db_keys` describes. Returns True if it created one, False
        if it was already there.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.drop_table`\ ``(namespace, raw_table_name, ignore_if_not_exists=True)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.drop_table`\ ``(table_name, ignore_if_not_exists=True)``
      - Delete a table.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.analyze_table`\ ``(namespace, raw_table_name)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.rename_tables_atomically`\ ``(renames, *, lock_wait_timeout_s, attempts)``
+     - Rename several tables in one statement that takes effect all at once, for the
+       swap (:ref:`dev_guide_import_steps_table_swap`).
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.analyze_table`\ ``(table_name)``
      - Recompute the table's key distribution statistics.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.insert_row` / :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows`
      - Insert one row, or many.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.bulk_load_rows`\ ``(namespace, raw_table_name, rows)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.bulk_load_rows`\ ``(table_name, rows)``
      - Write many rows the fastest way the server allows, at most
        ``transaction_rows`` to a transaction, checking that every row arrived unchanged;
        or as ``insert_rows`` does where the server allows nothing faster. The
        observation rows go through it (:ref:`dev_guide_import_db_bulk_load`).
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.update_row`\ ``(namespace, raw_table_name, row, where, where_params=None)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.update_row`\ ``(table_name, row, where, where_params=None)``
      - Assign new values to the rows a WHERE clause selects.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_row` / :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows`
      - Insert, updating any row whose key is already present. The key column is written
        on an insert and never assigned on an update.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.delete_rows`\ ``(namespace, raw_table_name, where=None, where_params=None, *, all_rows=False)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.delete_rows`\ ``(table_name, where=None, where_params=None, *, all_rows=False)``
      - Delete the rows a WHERE clause selects. With no clause it deletes nothing and
        raises, so a clause that came out empty cannot empty the table; ``all_rows=True``
        is the one way to delete every row.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.copy_rows_between_namespaces`\ ``(src, dest, raw_table_name, where=None, where_params=None)``
-     - Copy one table's rows from one namespace to the same table in another. Both
-       tables must have the same columns in the same order, which they do because both
-       are created from the same OPUS table schema.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.general_select`\ ``(cmd, param_list=None)``
      - Run a query the caller assembled and return every row.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.find_column_max`\ ``(namespace, raw_table_name, column_name)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.find_column_max`\ ``(table_name, column_name)``
      - The largest value in a column.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.read_table_keys`\ ``(namespace)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.read_table_keys`\ ``()``
      - Every table's keys as the server reports them, as
        :class:`~opus_import.table_keys.TableKey` values.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.add_keys_statement`\ ``(namespace, raw_table_name, keys)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_key_statement`\ ``(namespace, raw_table_name, key)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.add_keys_statement`\ ``(table_name, keys)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_key_statement`\ ``(table_name, key)``
      - One statement that adds plain keys to a table, or one foreign key.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_keys`\ ``(statements)``
      - Add foreign keys one at a time without checking the rows already there.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.key_space_bytes`\ ``(namespace, raw_table_name, schema, key)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.index_space_budget`\ ``(server_tmpdir)``
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.key_space_bytes`\ ``(table_name, schema, key)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.index_space_budget`\ ``(server_tmpdir)``
      - A key build's estimated temporary space, and the budget the builds running at
        once share, or None for none.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.run_ddl`\ ``(cmd)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.close`
      - Run one statement that changes a table's definition; close the connection.
+   * - ``_set_foreign_key_checks(enabled)``
+     - Turn the connection's foreign key checks on or off, for
+       :meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked`.
    * - ``_prepare_index_session(workers, server_tmpdir)``
      - Set a connection's session up for building indexes.
    * - ``_size_index_sort(sort_bytes, key_count)``
@@ -249,15 +247,14 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
    * - ``_execute_and_fetchall(cmd, func_name, param_list=None)``
      - Execute one query and return every row of its result.
 
-The concrete members are the constructor, the two namespace converters and their
-predicates, :meth:`~opus_import.importdb.super.ImportDBSuper.open_sibling_connection`,
+The concrete members are the constructor,
+:meth:`~opus_import.importdb.super.ImportDBSuper.open_sibling_connection`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`,
+:meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
 collector ``_make_warning_handler``, and ``_operation`` with the ``_enter``/``_exit``
-pair it runs. The two
-converters do carry a ``raise NotImplementedError`` for a namespace value that is not
-one of the three, which is unreachable for a valid one.
+pair it runs.
 
 Read-only runs
 ~~~~~~~~~~~~~~
@@ -522,16 +519,16 @@ Schemas
     is what lets an installed OPUS find them without a checkout.
 
 :func:`~opus_import.import_util.read_schema_for_table`
-    Reads and parses one schema, stripping the import prefix from the name first. It is
+    Reads and parses one schema, matching the table's name without regard to case. It is
     the only place the ``<TARGET>``/``<SLUGTARGET>`` substitution happens, and the
     substitution is plain text applied before the JSON is parsed. A name with no schema
     file returns None, which is how a bundle ends up with only the tables its instrument
     has columns in.
 
 :func:`~opus_import.import_util.find_max_table_id`
-    The larger of the maximum ``id`` in the two namespaces, or -1 when the table exists
-    in neither or is empty in both. **Both** namespaces, which is what makes a
-    re-import hand out ids above everything already present.
+    The largest ``id`` the table holds, or -1 when the table does not exist or is
+    empty. A bundle is deleted before it is written, so its new rows are numbered above
+    every row that remains.
 
 Logging
 ~~~~~~~

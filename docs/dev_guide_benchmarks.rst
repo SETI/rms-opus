@@ -308,7 +308,7 @@ runs record no keys takes only runs that set none. A side whose configuration do
 know a key refuses the file, so it is given only to a side that does.
 
 **A run that fails records nothing.** It fails when an invocation exits non-zero; when
-a bundle-import invocation leaves any bundle it imports without a row in the permanent
+a bundle-import invocation leaves any bundle it imports without a row in
 ``obs_general`` (the bundles are its descriptors expanded by the side's own code, less
 the ones the import deliberately skips); or when the run's ``ERRORS.log`` is not empty,
 because several steps log an error and still exit zero. Each run starts with a log

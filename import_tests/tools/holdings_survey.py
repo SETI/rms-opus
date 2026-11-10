@@ -239,22 +239,22 @@ def script_bundle_descriptors(script_path: Path) -> list[str]:
         script_path: The shell script to read.
 
     Returns:
-        Every descriptor on an active ``--do-all-import`` line, in script order.
+        Every descriptor on an active ``--import`` line, in script order.
     """
     descriptors: list[str] = []
     for line in script_path.read_text(encoding='utf-8').splitlines():
         stripped = line.strip()
         if stripped.startswith('#'):
             continue
-        if '--do-all-import' not in stripped:
+        if '--import' not in stripped:
             continue
         for index, field in enumerate(stripped.split()):
             # Both spellings the option takes. Matching the substring alone would also
-            # match `--do-all-import-something`, and asking for the exact token alone
+            # match `--import-dictionary`, and asking for the exact token alone
             # would miss the `=` form and raise looking for it.
-            if field.startswith('--do-all-import='):
+            if field.startswith('--import='):
                 descriptors.extend(field.partition('=')[2].split(','))
-            elif field == '--do-all-import':
+            elif field == '--import':
                 following = stripped.split()[index + 1 : index + 2]
                 descriptors.extend(word for value in following for word in value.split(','))
     return descriptors

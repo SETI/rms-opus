@@ -16,6 +16,7 @@ of the run.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import pickle
 import re
@@ -59,11 +60,11 @@ COVERAGE_PTH_CONTENT = 'import coverage; coverage.process_startup()\n'
 #: The pipeline's own steps, in the order the integration import script runs them. The
 #: goldens encode the row ids these produce, and the ids are handed out in the order
 #: rows are inserted, so this order is part of the fixture rather than a convenience.
-DROP_ARGS = ('--drop-permanent-tables', '--scorched-earth')
-IMPORT_ARGS = ('--do-all-import',)
+DROP_ARGS = ('--scorched-earth', '--yes')
+IMPORT_ARGS = ('--import',)
 AUX_ARGS = ('--finalize',)
 DICTIONARY_ARGS = ('--import-dictionary',)
-VALIDATE_ARGS = ('--validate-perm',)
+VALIDATE_ARGS = ('--validate',)
 VERSION_ARGS = ('--write-schema-version',)
 
 #: The Django migration's command line after the interpreter, run in the checkout.
@@ -83,11 +84,9 @@ WARNINGS_LOG = 'WARNINGS.log'
 #: started (``opus_import_2026-11-06T22-13-27.log``), so `import_logs` finds them.
 IMPORT_LOG = 'opus_import.log'
 
-#: What `reimport_bundle` writes beside the first run's, under the run's own directory.
-#: The log directory is its own because pdslogger appends: sharing one would put the
-#: re-import's records in front of the assertions that read the first run's.
-REIMPORT_LOG_DIRNAME = 'logs_reimport'
-REIMPORT_CONFIG_NAME = 'opus_reimport.toml'
+#: What `reimport_bundle` names the configuration and logs it writes beside the first
+#: run's (`sibling_paths`).
+REIMPORT_NAME = 'reimport'
 
 
 @dataclass(frozen=True)
@@ -357,7 +356,6 @@ def write_opus_config(
         log_dir=toml_string(paths.log_dir.as_posix()),
     )
     import_keys: dict[str, object] = {
-        'table_temp_prefix': 'imp_',
         'log_file': f'{paths.log_dir.as_posix()}/opus_import.log',
         'debug_log_file': f'{paths.log_dir.as_posix()}/opus_import_debug.log',
         **(extra_import or {}),
@@ -613,18 +611,18 @@ def perform_run(
         schema: The schema to import into.
         credentials: How to reach the database server.
         overlay: A tree copied over the built one, for a negative case.
-        bundle_groups: The bundles each ``--do-all-import`` invocation imports, or None
+        bundle_groups: The bundles each ``--import`` invocation imports, or None
             for one invocation per fixture bundle.
-        extra_import_args: Arguments added to each ``--do-all-import`` invocation.
+        extra_import_args: Arguments added to each ``--import`` invocation.
         extra_import: Further ``[import]`` configuration keys every invocation reads
             (`write_opus_config`), or None for none.
         finalize: Whether to run the steps after the imports -- the finalization, the
             dictionary, the Django migration, the validation and the schema version.
             True is the production sequence and what the main run uses. False stops
             after the imports, which is all a negative case needs: a fresh import writes
-            the permanent tables, so ``obs_general`` and the mult tables the negative
-            assertions read exist without any of the later steps,
-            and none of those assertions reads a table only a later step creates. A run
+            the observation tables directly, so ``obs_general`` and the mult tables the
+            negative assertions read exist without any of the later steps, and none of
+            those assertions reads a table only a later step creates. A run
             that stops early leaves `ImportRun.django_tables` empty, so it can never be
             goldened.
         python: The interpreter every invocation runs with; the default is this
@@ -728,37 +726,74 @@ def _migrate_and_diff(
     return frozenset(after) - frozenset(before)
 
 
-def reimport_paths(run: ImportRun) -> RunPaths:
-    """Return where a re-import of one run's bundles writes.
+def sibling_paths(run: ImportRun, name: str) -> RunPaths:
+    """Return where a further invocation against one run's built tree writes.
 
-    The built tree is the finished run's, because re-importing means importing the same
-    files again. The log directory is the re-import's own, because pdslogger appends and
-    the first run's logs are what the log assertions read; the configuration file is its
-    own because that is what points the invocation at that log directory.
+    The built tree is the finished run's, because importing into the run's schema again
+    means importing the same files. The log directory is the invocation's own, because
+    pdslogger appends and the first run's logs are what the log assertions read; the
+    configuration file is its own because that is what points the invocation at that log
+    directory, and at a schema of its own when the caller writes one there.
 
     Parameters:
-        run: The completed run to re-import into.
+        run: The completed run whose tree to use.
+        name: What distinguishes the configuration file and the log directory.
 
     Returns:
-        The paths, so that the caller running the re-import and the caller reading its
+        The paths, so that the caller running the invocation and the caller reading its
         log agree about where it went without either of them spelling out the layout.
     """
     return RunPaths(
         root=run.paths.root,
         pds3_holdings=run.paths.pds3_holdings,
         pds4_holdings=run.paths.pds4_holdings,
-        config_file=run.paths.root / REIMPORT_CONFIG_NAME,
-        log_dir=run.paths.root / REIMPORT_LOG_DIRNAME,
+        config_file=run.paths.root / f'opus_{name}.toml',
+        log_dir=run.paths.root / f'logs_{name}',
     )
 
 
-def reimport_bundle(run: ImportRun, bundle: str, credentials: DatabaseCredentials) -> StepResult:
-    """Import one bundle a second time into the schema that already holds it.
+def reimport_paths(run: ImportRun) -> RunPaths:
+    """Return where a re-import of one run's bundles writes (`sibling_paths`).
 
-    This is the only thing in the suite that executes the update half of every upsert --
-    the documented re-import operational mode -- so it is run against the finished
-    database rather than a fresh one. It writes its logs into a directory of its own,
-    because pdslogger appends and the first run's logs are what the log assertions read.
+    Parameters:
+        run: The completed run to re-import into.
+
+    Returns:
+        The paths.
+    """
+    return sibling_paths(run, REIMPORT_NAME)
+
+
+def closing_steps(config_file: Path) -> list[StepResult]:
+    """Run the invocations that follow an append: finalize, validate, mark it ready.
+
+    They stop at the first that exits with failure, as ``opus_import_all`` stops there.
+
+    Parameters:
+        config_file: The configuration naming the schema.
+
+    Returns:
+        What each invocation that ran did, in order.
+    """
+    results: list[StepResult] = []
+    for arguments in (AUX_ARGS, VALIDATE_ARGS, VERSION_ARGS):
+        results.append(run_pipeline_step(config_file, arguments))
+        if results[-1].returncode != 0:
+            break
+    return results
+
+
+def reimport_bundle(
+    run: ImportRun, bundle: str, credentials: DatabaseCredentials
+) -> list[StepResult]:
+    """Import one bundle a second time into the finished schema that already holds it.
+
+    The schema has a version row, so this is an append, and like every append it is
+    followed by the invocations that finalize the schema and mark it ready again
+    (`closing_steps`). This is the only thing in the main run's schema that executes the
+    update half of every upsert, which is why it runs against the finished database
+    rather than a fresh one. It writes its logs into a directory of its own, because
+    pdslogger appends and the first run's logs are what the log assertions read.
 
     Parameters:
         run: The completed run whose schema and built tree to reuse.
@@ -766,14 +801,42 @@ def reimport_bundle(run: ImportRun, bundle: str, credentials: DatabaseCredential
         credentials: How to reach the database server.
 
     Returns:
-        What the invocation did. Its status is worth reading: a re-import that never ran
-        leaves the database as the first import left it, which is what all three of the
-        re-import assertions also accept, so nothing downstream can tell it from a
-        re-import that worked.
+        What each invocation did, the import first. Their statuses are worth reading: a
+        re-import that never ran leaves the database as the first import left it, which
+        is what all three of the re-import assertions also accept, so nothing downstream
+        can tell it from a re-import that worked.
     """
     paths = reimport_paths(run)
     write_opus_config(paths, run.schema, credentials)
-    return run_pipeline_step(paths.config_file, [*IMPORT_ARGS, bundle])
+    imported = run_pipeline_step(paths.config_file, [*IMPORT_ARGS, bundle])
+    if imported.returncode != 0:
+        return [imported]
+    return [imported, *closing_steps(paths.config_file)]
+
+
+def clone_schema(credentials: DatabaseCredentials, source: str, target: str) -> None:
+    """Copy every table of a schema, keys, foreign keys and rows, into a new schema.
+
+    Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
+    keys and foreign keys, with ``foreign_key_checks`` off so that tables may be created
+    and filled in any order. The target is dropped first if it exists.
+
+    Parameters:
+        credentials: How to reach the database server.
+        source: The schema to copy.
+        target: The new schema.
+    """
+    drop_schema(credentials, target)
+    golden_io.execute(credentials, None, f'CREATE DATABASE `{target}`')
+    with contextlib.closing(golden_io.connect(credentials, target)) as connection:
+        with contextlib.closing(connection.cursor()) as cursor:
+            cursor.execute('SET SESSION foreign_key_checks = 0')
+            for table in golden_io.list_tables(credentials, source):
+                cursor.execute(f'SHOW CREATE TABLE `{source}`.`{table}`')
+                cursor.execute(cursor.fetchall()[0][1])
+                cursor.execute(f'INSERT INTO `{table}` SELECT * FROM `{source}`.`{table}`')
+            cursor.execute('SET SESSION foreign_key_checks = 1')
+        connection.commit()
 
 
 def drop_schema(credentials: DatabaseCredentials, schema: str) -> None:

@@ -64,7 +64,6 @@ fake_error404_probability = 0.25
 fake_error500_probability = 0.75
 
 [import]
-table_temp_prefix = "import-table-temp-prefix"
 log_file = "/import/log-file.log"
 debug_log_file = "/import/debug-log-file.log"
 """

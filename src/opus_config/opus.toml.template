@@ -144,10 +144,6 @@ fake_error500_probability = 0.0
 
 [import]
 
-# The prefix of the temporary tables an import builds before copying them over
-# the permanent ones. Optional; the default is "imp_".
-table_temp_prefix = "imp_"
-
 # The log files the import pipeline writes. Their directory must already exist.
 log_file = "<IMPORT_LOG_DIR>/opus_import.log"
 debug_log_file = "<IMPORT_LOG_DIR>/opus_import_debug.log"

@@ -5,7 +5,7 @@ belongs in the search form, and what the data dictionary calls it. The web appli
 reads nothing else to decide what the search form contains, so a column that has no
 ``param_info`` row is invisible to users no matter what the import wrote into it.
 
-The rows are derived from the packaged table schemas of the permanent ``obs_`` tables,
+The rows are derived from the packaged table schemas of the ``obs_`` tables,
 which is why this step has to run after the import rather than alongside it. The table is
 built beside the live one and swapped in (`opus_import.table_swap`), so the step can run
 on a schema that is being served.
@@ -24,15 +24,15 @@ if TYPE_CHECKING:
 
 
 def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
-    """Fill an empty ``param_info`` table from the permanent tables' schemas.
+    """Fill an empty ``param_info`` table from the ``obs_`` tables' schemas.
 
-    Every column of every permanent ``obs_`` table that carries a ``pi_category_name``
+    Every column of every ``obs_`` table that carries a ``pi_category_name``
     contributes one row. A column's ``pi_ranges`` names an entry in the packaged
     ``param_info_ranges.json``, which is stored as JSON text in the row.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        new_table: The permanent table to fill, already created from ``param_info``'s
+        new_table: The table to fill, already created from ``param_info``'s
             schema.
 
     Returns:
@@ -50,8 +50,8 @@ def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
 
     logger.log('info', f'Filling {new_table}')
 
-    # We use the permanent tables to determine what goes into param_info
-    table_names = db.table_names('perm', prefix='obs_')
+    # The obs_ tables that exist determine what goes into param_info
+    table_names = db.table_names(prefix='obs_')
 
     # read json file for ranges info
     ranges_file = import_util.TABLE_SCHEMA_DIR / 'param_info_ranges.json'
@@ -121,13 +121,13 @@ def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
                 'field_hints2': column.get('pi_field_hints2', None),
             }
             rows.append(new_row)
-    db.insert_rows('perm', new_table, rows)
+    db.insert_rows(new_table, rows)
 
     return True
 
 
 def do_param_info(ctx: ImportContext) -> bool:
-    """Rebuild the permanent ``param_info`` table, driven by ``--create-param-info``.
+    """Rebuild the ``param_info`` table, driven by ``--create-param-info``.
 
     A failed build leaves the live table as the previous run wrote it.
 

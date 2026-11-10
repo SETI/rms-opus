@@ -31,10 +31,10 @@ _COLUMN_BLOCK_RE = re.compile(
 DUPLICATE_ID_CASE = 'dupid'
 IGNORE_ERRORS_CASE = 'ignore_errors'
 
-#: The registered type whose volume is imported twice in one invocation, which is what
-#: puts two copies of every OPUS id in the same import tables. Galileo is the type the
-#: production import script applies ``--import-check-duplicate-id`` to, because its
-#: volumes really do share observations.
+#: The registered type whose volume is imported twice in one invocation, which would put
+#: two copies of every OPUS id in the observation tables if the second import did not
+#: replace the first. Galileo is the type chosen because its volumes really do share
+#: observations.
 DUPLICATE_ID_INSTRUMENT_CLASS = 'ObsVolumeGO0xxx'
 
 #: What a recipe can ask for: overwrite one column of one row, which is how an unknown

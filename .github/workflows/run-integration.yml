@@ -3,7 +3,7 @@
 # and a MySQL server.
 #
 # Two things about the gates here are not visible from the steps:
-#   * `opus_import --validate-perm` reports validation failures through the log
+#   * `opus_import --validate` reports validation failures through the log
 #     and still exits zero, so a non-empty ERRORS.log is the only thing that
 #     catches one. `[ -s ERRORS.log ]` is false for a MISSING file too, so the
 #     exit-status check beside it catches an import that died before logging.

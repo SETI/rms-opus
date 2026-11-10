@@ -72,13 +72,13 @@ class ObsBase:
         self._ctx = ctx
         self._bundle = bundle
         self._metadata = metadata
-        # --import-ignore-errors, read off the run's arguments rather than taken as a
+        # --ignore-errors, read off the run's arguments rather than taken as a
         # constructor argument, so that every construction site reaches the two branches
         # that consult it -- an unknown target name here and in
         # `opus_import.obs.obs_cassini_common_pds3` -- without having to pass it on.
         # Read eagerly, so a context built without real parsed arguments fails at
         # construction rather than only on the rare error path that needs the flag.
-        self._ignore_errors = ctx.args.import_ignore_errors
+        self._ignore_errors = ctx.args.ignore_errors
 
         self._opus_id_last_filespec: str | None = None  # For caching opus_id
         self._opus_id_cached: str | None = None
@@ -701,7 +701,7 @@ class ObsBase:
             The corrected name and its `TargetInfo`, or ``(None, None)`` if the name is
             one `opus_import.config_targets.TARGET_NAME_INFO` does not describe, which
             is reported through the run's unknown-target-name log. Under
-            ``--import-ignore-errors`` an unknown name becomes ``'OTHER'`` and its
+            ``--ignore-errors`` an unknown name becomes ``'OTHER'`` and its
             entry, so that the observation still imports.
         """
         # Given a target_name, map the name as necessary and return the
@@ -972,7 +972,7 @@ class ObsBase:
         self._ctx.log.nonrepeating_warning(*args, **kwargs)
 
     def _log_nonrepeating_error(self, *args: Any, **kwargs: Any) -> None:
-        """Log an error at most once per bundle, however many rows produce it.
+        """Log an error once per run, however many rows produce it, marking bad data each time.
 
         Parameters:
             args: Passed through to `opus_import.context.ImportLog.nonrepeating_error`.

@@ -160,15 +160,17 @@ The goldens
     on.
 
 The re-import path
-    One volume is imported a second time into the finished database, and every table is
-    compared with the goldens again. This is not a determinism check -- the import is
-    deterministic by design. It is the only thing in the suite that runs the *update*
-    half of every upsert, which is the documented re-import operational mode.
+    One volume is imported a second time into the finished database -- an append, since
+    the database has its version row, followed by ``--finalize``, ``--validate`` and
+    ``--write-schema-version`` -- and every table is compared with the goldens again. This
+    is not a determinism check -- the import is deterministic by design. It is what runs
+    the *update* half of every upsert on the main run's schema, which is the documented
+    re-import operational mode.
 
     A re-import does not leave the database bit-for-bit as it was, and the comparison
-    splits in two because of it. The pipeline hands out row ids from the largest already
-    present in either namespace and deletes the bundle's old rows only afterwards, so
-    re-importing a bundle renumbers it above everything else in the table. Every table
+    splits in two because of it. The pipeline deletes the bundle's rows and loads them
+    again, handing out row ids from the largest present, so re-importing a bundle
+    renumbers it. Every table
     that holds none of that bundle's rows -- every mult table, and everything the
     dictionary and finalization steps write -- is therefore required to be byte-identical
     to its golden, ids included, which is what says the upsert updated the row it found
@@ -191,7 +193,22 @@ The negative cases
     exempt from the clean-log rules: a volume imported twice in one invocation, with no
     flag, which proves that the second import replaces the first and leaves one copy of
     each observation, and a volume whose index names a target the pipeline does not
-    describe under ``--import-ignore-errors``.
+    describe under ``--ignore-errors``.
+
+The append
+    Each case starts from a copy of the main run's finished schema and runs real
+    ``opus_import`` invocations against it, a failure being made with the test-only fault
+    ``OPUS_IMPORT_FAULT=log_error:<bundle>``
+    (:ref:`the import's fault sites <dev_guide_testing_faults>`). An append that
+    replaces one volume and adds another must end with every table as the full fresh
+    import's goldens hold it, ids aside. An append that fails in its second volume must
+    leave the schema ``appending``, have ``--finalize`` and ``--write-schema-version``
+    each refuse naming the volume and its state, and have the web application refuse the
+    schema, until a rerun resumes it and the schema ends ``ready``; ``--delete-bundles``
+    of the failed volume instead must let the schema end ``ready`` without it; and under
+    ``--ignore-errors`` the volume must be recorded ``done`` and neither step refused. A
+    fresh import with a failed volume must have ``--write-schema-version`` refuse and
+    write no version row.
 
 The fresh import's states
     A schema of its own, two volumes imported fresh by two invocations, checks that the

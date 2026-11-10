@@ -89,11 +89,11 @@ def test_timing_options_name_the_file() -> None:
 @pytest.mark.parametrize(
     ('field', 'expected'),
     [
-        ('bundle_import', '--do-all-import'),
+        ('bundle_import', '--import'),
         ('finalize', '--finalize'),
         ('reset_search_tables', '--drop-cache-tables'),
-        ('validate', '--validate-perm'),
-        ('erase', ('--drop-permanent-tables', '--scorched-earth')),
+        ('validate', '--validate'),
+        ('erase', ('--scorched-earth', '--yes')),
         ('timing_json', '--timing-json'),
     ],
 )

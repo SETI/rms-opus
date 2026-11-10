@@ -26,7 +26,7 @@ import pdslogger
 from pdsfile import Pds3File, Pds4File
 
 from opus_config import get_config
-from opus_import import import_util, importdb
+from opus_import import bundle_registry, import_util, importdb
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
 from opus_import.steps import (
@@ -149,34 +149,9 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--do-it-all',
         action='store_true',
         default=False,
-        help="""Perform all import and finalization functions. This implies, in order:
-                --drop-old-import-tables
+        help="""Import the given bundles and finalize the schema in one invocation. This
+                implies, in order:
                 --import
-                --copy-import-to-permanent-tables
-                --drop-new-import-tables
-                --finalize
-             """,
-    )
-
-    parser.add_argument(
-        '--do-all-import',
-        action='store_true',
-        default=False,
-        help="""Perform all import functions. This implies, in order:
-                --drop-old-import-tables
-                --import
-                --copy-import-to-permanent-tables
-                --drop-new-import-tables
-             """,
-    )
-
-    parser.add_argument(
-        '--do-import-finalization',
-        action='store_true',
-        default=False,
-        help="""Perform all import functions related to permanent tables. This implies, in order:
-                --copy-import-to-permanent-tables
-                --drop-new-import-tables
                 --finalize
              """,
     )
@@ -185,7 +160,8 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--finalize',
         action='store_true',
         default=False,
-        help="""Finish the database after its bundles are imported. This implies, in order:
+        help="""Finish the database after its bundles are imported; refused while any
+                bundle in the bundle registry is not done. This implies, in order:
                 --create-indexes,
                 the deletion of every copy of a duplicated OPUS ID but the last imported,
                 --create-param-info
@@ -193,7 +169,7 @@ def _create_argument_parser() -> argparse.ArgumentParser:
                 --create-table-names
                 --create-cart
                 --drop-cache-tables
-                --analyze-permanent-tables
+                --analyze-tables
              """,
     )
 
@@ -206,158 +182,110 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        '--drop-old-import-tables',
-        action='store_true',
-        default=False,
-        help='Drop ALL the old import tables',
-    )
-
-    parser.add_argument(
-        '--delete-import-bundles',
-        action='store_true',
-        default=False,
-        help='Delete the given bundles from the import tables',
-    )
-
-    parser.add_argument(
         '--import',
         dest='do_import',
         action='store_true',
         default=False,
-        help="""Perform an import of the specified bundles; implies
-                --delete-import-bundles""",
+        help="Import the given bundles; the target schema's state chooses a fresh import "
+        'or an append',
     )
     parser.add_argument(
-        '--leave-old-import-tables',
+        '--ignore-errors',
         action='store_true',
         default=False,
-        help="""Leave the previous import tables and just add to them. Overrides
-                --drop-old-import-tables.""",
+        help='Mark a bundle done even when it logs errors, so that --finalize and '
+        '--write-schema-version accept it, and substitute made-up values where a real one '
+        'cannot be determined -- an unknown target name becomes OTHER rather than dropping '
+        'the observation. The result is wrong on purpose; for debugging',
     )
     parser.add_argument(
-        '--import-ignore-errors',
-        action='store_true',
-        default=False,
-        help='Copy to the permanent tables even with errors, and substitute made-up '
-        'values where a real one cannot be determined -- an unknown target name '
-        'becomes OTHER rather than dropping the observation. The result is '
-        'wrong on purpose; for debugging',
-    )
-    parser.add_argument(
-        '--import-suppress-mult-messages',
+        '--suppress-mult-messages',
         action='store_true',
         default=False,
         help="Don't give messages about mult table maintenance",
     )
     parser.add_argument(
-        '--import-report-missing-ring-geo',
+        '--report-missing-ring-geo',
         action='store_true',
         default=False,
         help="Report observations that should have ring_geo data but don't",
     )
     parser.add_argument(
-        '--import-report-missing-sky-geo',
+        '--report-missing-sky-geo',
         action='store_true',
         default=False,
         help="Report observations that should have sky_geo data but don't",
     )
     parser.add_argument(
-        '--import-report-inventory-mismatch',
+        '--report-inventory-mismatch',
         action='store_true',
         default=False,
         help='Report mismatches between inventory and surface geometry tables',
     )
     parser.add_argument(
-        '--import-force-metadata-index',
+        '--force-metadata-index',
         action='store_true',
         default=False,
         help='Force the use of metadata index files and fail if none available',
     )
     parser.add_argument(
-        '--import-check-duplicate-id',
-        action='store_true',
-        default=False,
-        help='Check for duplicate opus_id; needed for GOSSI,COUVIS,NH',
-    )
-    parser.add_argument(
-        '--import-ignore-missing-images',
+        '--ignore-missing-images',
         action='store_true',
         default=False,
         help="Don't warn about missing browse images",
     )
     parser.add_argument(
-        '--import-ignore-geo-mismatch',
+        '--ignore-geo-mismatch',
         action='store_true',
         default=False,
         help="Don't warn about gridless column mismatch in geo files",
     )
     parser.add_argument(
-        '--import-dont-use-row-files',
+        '--no-row-files',
         action='store_true',
         default=False,
         help="""Do not use metadata row files to determine whether index and summary
                 files should be included in the files table""",
     )
     parser.add_argument(
-        '--import-report-empty-products',
+        '--report-empty-products',
         action='store_true',
         default=False,
         help='Report empty products during import',
     )
     parser.add_argument(
-        '--import-fake-images',
+        '--fake-images',
         action='store_true',
         default=False,
         help='Fake the existence of browse images if real browse files are missing',
     )
 
     parser.add_argument(
-        '--delete-permanent-import-bundles',
+        '--delete-bundles',
         action='store_true',
         default=False,
-        help='Delete the bundles in the import tables from the permanent tables',
-    )
-    parser.add_argument(
-        '--delete-permanent-bundles',
-        action='store_true',
-        default=False,
-        help='Delete the given bundles from the permanent tables',
-    )
-
-    parser.add_argument(
-        '--copy-import-to-permanent-tables',
-        action='store_true',
-        default=False,
-        help="""Copy all temporary import tables to the permanent tables;
-                implies --delete-permanent-import-bundles
-             """,
-    )
-    parser.add_argument(
-        '--drop-permanent-tables',
-        action='store_true',
-        default=False,
-        help="""Delete ALL permanent tables; requires --scorched-earth.
-                WARNING: THIS DELETES ALL EXISTING DATA""",
+        help="Delete the given bundles' rows from every observation table, and their bundle "
+        'registry rows',
     )
     parser.add_argument(
         '--scorched-earth',
         action='store_true',
         default=False,
-        help='You are serious about deleting all tables!',
+        help="Drop every table the import creates in the schema -- all but Django's own -- "
+        'before any other step; requires --yes. WARNING: THIS DELETES ALL EXISTING DATA',
+    )
+    parser.add_argument(
+        '--yes',
+        action='store_true',
+        default=False,
+        help='Confirm --scorched-earth; refused without it',
     )
 
     parser.add_argument(
-        '--drop-new-import-tables',
+        '--analyze-tables',
         action='store_true',
         default=False,
-        help='Drop the new import tables after copying to permanent (if selected)',
-    )
-
-    parser.add_argument(
-        '--analyze-permanent-tables',
-        action='store_true',
-        default=False,
-        help='Analyze (recompute key distribution) the permanent tables',
+        help='Analyze every observation and mult table (recompute its key distribution)',
     )
 
     # Import-related auxiliary functions
@@ -366,19 +294,21 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--create-param-info',
         action='store_true',
         default=False,
-        help='Rebuild the param_info table beside the live one and swap it in',
+        help='Rebuild the param_info table from the table schemas and swap it in atomically',
     )
     parser.add_argument(
         '--create-partables',
         action='store_true',
         default=False,
-        help='Rebuild the partables table beside the live one and swap it in',
+        help="Rebuild the partables table from the code's mission and instrument lists and "
+        'the imported mult ids, and swap it in atomically',
     )
     parser.add_argument(
         '--create-table-names',
         action='store_true',
         default=False,
-        help='Rebuild the table_names table beside the live one and swap it in',
+        help="Rebuild the table_names table from the code's list of categories and the "
+        'imported tables, and swap it in atomically',
     )
     parser.add_argument(
         '--update-mult-info',
@@ -403,10 +333,10 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        '--validate-perm',
+        '--validate',
         action='store_true',
         default=False,
-        help='Perform validation of the final permanent tables',
+        help='Validate the imported tables',
     )
 
     parser.add_argument(
@@ -422,7 +352,8 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         default=False,
         help="""Mark the schema finished under this release's schema version, the last
                 step of every sequence that finishes a database; implied by nothing.
-                Refuses, exiting non-zero, when the schema holds another version""",
+                Refuses, exiting non-zero, when the schema holds another version or any
+                bundle in the bundle registry is not done""",
     )
 
     # Arguments about bundle selection
@@ -486,29 +417,15 @@ def _create_argument_parser() -> argparse.ArgumentParser:
 def expand_aggregate_options(args: argparse.Namespace) -> None:
     """Turn on the steps each aggregate option given stands for.
 
-    ``--do-it-all`` and ``--do-import-finalization`` finish a database, and do it through
-    ``--finalize``, so each runs every step of the finalization group, the duplicate step
-    among them, which has no option of its own.
+    ``--do-it-all`` imports and then finalizes, through ``--finalize``, so it runs every
+    step of the finalization group, the duplicate step among them, which has no option of
+    its own.
 
     Parameters:
         args: The parsed arguments, changed in place.
     """
     if args.do_it_all:
-        args.drop_old_import_tables = True
         args.do_import = True
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
-        args.finalize = True
-
-    if args.do_all_import:
-        args.drop_old_import_tables = True
-        args.do_import = True
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
-
-    if args.do_import_finalization:
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
         args.finalize = True
 
     if args.finalize:
@@ -518,28 +435,50 @@ def expand_aggregate_options(args: argparse.Namespace) -> None:
         args.create_table_names = True
         args.create_cart = True
         args.drop_cache_tables = True
-        args.analyze_permanent_tables = True
+        args.analyze_tables = True
+
+
+def _registry_finished(ctx: ImportContext, step: str) -> bool:
+    """Return whether every bundle in the bundle registry is done, refusing a step if not.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        step: The option refused, as the message names it.
+
+    Returns:
+        True when the registry is absent or every bundle in it is ``done``; otherwise
+        False, after a fatal message naming every other bundle with its state.
+    """
+    unfinished = bundle_registry.unfinished_bundles(ctx)
+    if not unfinished:
+        return True
+    ctx.logger.log(
+        'fatal',
+        f'{step} refuses to run while bundles in the bundle registry are not done: '
+        f'{bundle_registry.unfinished_message(unfinished)}. Import them again, or remove '
+        'them with --delete-bundles',
+    )
+    return False
 
 
 def main() -> None:
     """Run the import steps requested on the command line.
 
     Every step is driven by its own option, apart from the duplicate step, which only
-    ``--finalize`` runs; ``--finalize``, ``--do-it-all`` and their siblings turn several
-    of them on, and the two aggregates that finish a database do it through
-    ``--finalize``, so they run every step of its group. The database connection, the
-    holdings directories and the log file locations come from the configuration file
-    named by ``OPUS_CONFIG``, which is read only once the arguments parse, so ``--help``
-    works without one.
+    ``--finalize`` runs; ``--finalize`` and ``--do-it-all`` turn several of them on, and
+    ``--do-it-all`` finalizes through ``--finalize``, so it runs every step of its group.
+    The database connection, the holdings directories and the log file locations come
+    from the configuration file named by ``OPUS_CONFIG``, which is read only once the
+    arguments parse, so ``--help`` works without one.
 
     Raises:
         SystemExit: With a non-zero status, logged first, when the arguments are
             contradictory, a bundle descriptor is bad, the database connection fails,
-            the observation import fails or is refused, ``--write-schema-version``
-            refuses, an exception reaches the top-level handler, or -- unless
-            ``--import-ignore-errors`` -- ``--create-indexes``, the duplicate step,
-            ``--create-param-info``, ``--import-dictionary`` or ``--validate-perm``
-            failed, after the invocation's other steps have run.
+            the observation import fails or is refused, ``--finalize`` or
+            ``--write-schema-version`` refuses, an exception reaches the top-level
+            handler, or -- unless ``--ignore-errors`` -- ``--create-indexes``, the
+            duplicate step, ``--create-param-info``, ``--import-dictionary`` or
+            ``--validate`` failed, after the invocation's other steps have run.
             **A non-zero status means the run stopped, not that a zero status means it
             was clean:** other steps report failure through the log and leave the
             status zero. Read ``ERRORS.log`` to judge whether a run was clean.
@@ -595,8 +534,13 @@ def main() -> None:
     #
     ################################################################################
 
-    if args.drop_permanent_tables != args.scorched_earth:
-        logger.log('fatal', '--drop-permanent-tables and --scorched-earth must be used together')
+    if args.scorched_earth and not args.yes:
+        logger.log(
+            'fatal', '--scorched-earth drops every OPUS table in the schema; give --yes to confirm'
+        )
+        sys.exit(-1)
+    if args.yes and not args.scorched_earth:
+        logger.log('fatal', '--yes confirms --scorched-earth and is refused without it')
         sys.exit(-1)
 
     our_schema_name = config.database.schema
@@ -651,7 +595,6 @@ def main() -> None:
                 config.database.password,
                 mult_form_types=GROUP_FORM_TYPES,
                 logger=logger,
-                import_prefix=config.import_.table_temp_prefix,
                 read_only=args.read_only,
                 bulk_load=config.import_.bulk_load,
                 scratch_dir=config.import_.scratch_dir,
@@ -665,47 +608,28 @@ def main() -> None:
         # The path an import takes is chosen before anything else writes, so an import
         # refused for an interrupted finalization changes nothing. An invocation that
         # erases the schema first chooses after the erase, in do_import_steps.
-        if (
-            args.do_import
-            and not args.drop_permanent_tables
-            and not do_import.choose_import_path(ctx)
-        ):
+        if args.do_import and not args.scorched_earth and not do_import.choose_import_path(ctx):
             sys.exit(-1)
 
-        # This MUST be done before the permanent tables are created, because there
-        # could be entries in the cart table that point at the permanent
-        # tables, and import could delete entries out of the permanent tables
-        # causing a foreign key violation.
-        # Note, however, that do_import_steps() might actually delete ALL permanent
-        # tables with --scorched-earth, which means our effort here will be wasted,
-        # so don't bother in that case.
-        if (args.drop_cache_tables or args.create_cart) and not args.drop_permanent_tables:
-            logger.open(
-                'Cleaning up OPUS/Django tables',
-                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
-            )
-
-            if args.create_cart:
-                with ctx.timed('create_cart'):
-                    do_cart.create_cart(ctx)
-            if args.drop_cache_tables:
-                with ctx.timed('drop_cache_tables'):
-                    do_django.drop_cache_tables(ctx)
-
-            logger.close()
-
         if not do_import.do_import_steps(ctx):
+            sys.exit(-1)
+
+        # Before the first finalization step, so a refused finalization changes nothing;
+        # after the bundles this invocation imports or deletes, which can finish the
+        # registry.
+        if args.finalize and not _registry_finished(ctx, '--finalize'):
             sys.exit(-1)
 
         # The finishing steps that failed in this invocation. Any failure keeps it from
         # marking the schema ready, and makes it exit with failure once its other steps
         # have run, so opus_import_all, which runs each finishing step as its own
-        # invocation, stops before its --write-schema-version. --import-ignore-errors
-        # overrides both, for a debugging run.
+        # invocation, stops before its --write-schema-version. --ignore-errors overrides
+        # both, for a debugging run.
         failed_steps: list[str] = []
 
         # The finalization group's sequence, which later steps extend in place: the keys,
-        # then the duplicate step, then the auxiliary tables, then ANALYZE.
+        # then the duplicate step, then the auxiliary tables, the cart and the cache
+        # tables, then ANALYZE.
         if args.create_indexes:
             logger.open(
                 'Creating secondary keys',
@@ -728,9 +652,8 @@ def main() -> None:
                     failed_steps.append('the duplicate step of --finalize')
             logger.close()
 
-        # This MUST be done after the permanent tables are created, since they
-        # are used to determine what goes into the param_info table.
-
+        # After the import, since the imported tables are what determine what goes into
+        # the auxiliary tables.
         if args.create_param_info or args.create_partables or args.create_table_names:
             logger.open(
                 'Creating auxiliary tables',
@@ -750,11 +673,25 @@ def main() -> None:
 
             logger.close()
 
+        # After the import, since the cart's foreign key needs obs_general.
+        if args.create_cart or args.drop_cache_tables:
+            logger.open(
+                'Cleaning up OPUS/Django tables',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
+            if args.create_cart:
+                with ctx.timed('create_cart'):
+                    do_cart.create_cart(ctx)
+            if args.drop_cache_tables:
+                with ctx.timed('drop_cache_tables'):
+                    do_django.drop_cache_tables(ctx)
+            logger.close()
+
         # After the auxiliary tables, so that the statistics count every table's rows.
-        if args.analyze_permanent_tables:
-            import_util.log_info(ctx, 'Analyzing all permanent tables')
-            with ctx.timed('analyze_permanent_tables'):
-                do_import_tables.analyze_all_tables(ctx, 'perm')
+        if args.analyze_tables:
+            import_util.log_info(ctx, 'Analyzing all tables')
+            with ctx.timed('analyze_tables'):
+                do_import_tables.analyze_all_tables(ctx)
 
         if args.update_mult_info:
             logger.open(
@@ -767,21 +704,10 @@ def main() -> None:
 
             logger.close()
 
-        if args.validate_perm:
-            with ctx.timed('validate_perm'):
-                if not do_validate.do_validate(ctx, 'perm'):
-                    failed_steps.append('--validate-perm')
-
-        if args.create_cart and ctx.try_cart_later:
-            logger.open(
-                'Trying to create cart table a second time',
-                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
-            )
-
-            with ctx.timed('create_cart'):
-                do_cart.create_cart(ctx)
-
-            logger.close()
+        if args.validate:
+            with ctx.timed('validate'):
+                if not do_validate.do_validate(ctx):
+                    failed_steps.append('--validate')
 
         if args.import_dictionary:
             logger.open(
@@ -793,7 +719,7 @@ def main() -> None:
                     failed_steps.append('--import-dictionary')
             logger.close()
 
-        failure_refuses = len(failed_steps) > 0 and not args.import_ignore_errors
+        failure_refuses = len(failed_steps) > 0 and not args.ignore_errors
 
         # Last, after validation, because the row is what makes the schema servable.
         if args.write_schema_version:
@@ -801,8 +727,10 @@ def main() -> None:
                 import_util.log_error(
                     ctx,
                     f'{", ".join(failed_steps)} failed, so the schema is not marked ready; '
-                    '--import-ignore-errors marks it ready regardless',
+                    '--ignore-errors marks it ready regardless',
                 )
+                sys.exit(-1)
+            if not _registry_finished(ctx, '--write-schema-version'):
                 sys.exit(-1)
             with ctx.timed('write_schema_version'):
                 written = do_schema_version.write_schema_version(ctx)

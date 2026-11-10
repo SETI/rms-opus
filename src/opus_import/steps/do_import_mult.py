@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from opus_import.context import ImportContext
-    from opus_import.importdb.super import Namespace
 
 MultRow = dict[str, Any]
 """One row of a ``mult_`` table: a value, its id, and how it is presented."""
@@ -102,18 +101,13 @@ def read_or_create_mult_table(
 
     A column whose schema carries ``mult_options`` has its values fixed there, so those
     are used and the table is marked for writing. Otherwise the rows come from the
-    database: from the import table when a previous run left one, and from the permanent
-    table otherwise. An import table this run created empty is not read, because it has
-    nothing in it yet; the permanent table is read instead and marked for writing, so
-    the values it holds survive into the import table.
-
-    A table that exists in neither namespace starts out with no rows, and the import
-    fills it as it meets values.
+    table, and a table that does not exist yet starts out with no rows, which the import
+    fills as it meets values.
 
     Parameters:
         ctx: The import run's context, for the open database, the caches and the
             arguments.
-        mult_table_name: The mult table, without its namespace prefix.
+        mult_table_name: The mult table.
         table_column: The definition of the column the table belongs to.
 
     Returns:
@@ -124,43 +118,19 @@ def read_or_create_mult_table(
         return ctx.mult_table_cache[mult_table_name]
 
     if 'mult_options' in table_column:
-        if not ctx.args.import_suppress_mult_messages:
+        if not ctx.args.suppress_mult_messages:
             import_util.log_debug(ctx, f'Using preprogrammed mult table "{mult_table_name}"')
         mult_rows = _convert_sql_response_to_mult_table(table_column['mult_options'])
         ctx.mult_table_cache[mult_table_name] = mult_rows
         ctx.modified_mult_tables.add(mult_table_name)
         return mult_rows
 
-    # If there is already an import version of the table, it means this is a
-    # second run of the import pipeline without copying over to the new
-    # database, so read the contents of the import version. But it's also
-    # possible we just created the mult table during the initialization phase
-    # and it's empty. In that case ignore the import one.
-    # Otherwise, if there is already a non-import version, read that one.
-    # And if there's no table to be found anyway, create a new one.
-    use_namespace: Namespace | None = None
-
     db = ctx.db
     assert db is not None
-    if mult_table_name not in ctx.created_import_mult_tables and db.table_exists(
-        'import', mult_table_name
-    ):
-        # Previous import table available
-        use_namespace = 'import'
-
-    elif db.table_exists('perm', mult_table_name):
-        use_namespace = 'perm'
-        # If we just created an import version but are reading the permanent
-        # version, we have to write out the import version before doing
-        # anything else too
-        if mult_table_name in ctx.created_import_mult_tables:
-            ctx.modified_mult_tables.add(mult_table_name)
-
-    if use_namespace is not None:
-        ns_mult_table_name = db.convert_raw_to_namespace(use_namespace, mult_table_name)
-        if not ctx.args.import_suppress_mult_messages:
-            import_util.log_debug(ctx, f'Reading from mult table "{ns_mult_table_name}"')
-        rows = db.read_rows(use_namespace, mult_table_name, _mult_table_column_names())
+    if db.table_exists(mult_table_name):
+        if not ctx.args.suppress_mult_messages:
+            import_util.log_debug(ctx, f'Reading from mult table "{mult_table_name}"')
+        rows = db.read_rows(mult_table_name, _mult_table_column_names())
         mult_rows = _convert_sql_response_to_mult_table(rows)
         ctx.mult_table_cache[mult_table_name] = mult_rows
         return mult_rows
@@ -347,7 +317,7 @@ def update_mult_table(
     mult_table.append(new_entry)
 
     ctx.modified_mult_tables.add(mult_table_name)
-    if not ctx.args.import_suppress_mult_messages:
+    if not ctx.args.suppress_mult_messages:
         import_util.log_info(
             ctx, f'Added new value "{val}" ("{label}") to mult table ' + f'"{mult_table_name}"'
         )
@@ -355,8 +325,8 @@ def update_mult_table(
     return next_id
 
 
-def dump_import_mult_tables(ctx: ImportContext) -> None:
-    """Write every mult table this bundle changed out to the import namespace.
+def write_mult_tables(ctx: ImportContext) -> None:
+    """Write every mult table this bundle changed out to the database.
 
     Parameters:
         ctx: The import run's context, for the open database and the caches.
@@ -364,35 +334,5 @@ def dump_import_mult_tables(ctx: ImportContext) -> None:
     db = ctx.db
     assert db is not None
     for mult_table_name in sorted(ctx.modified_mult_tables):
-        rows = ctx.mult_table_cache[mult_table_name]
-        # Insert or update all the rows
-        imp_mult_table_name = db.convert_raw_to_namespace('import', mult_table_name)
-        import_util.log_debug(ctx, f'Writing mult table "{imp_mult_table_name}"')
-        db.upsert_rows('import', mult_table_name, 'id', rows)
-        # If we wrote out a mult table, that means we didn't just create it
-        # empty anymore, so remove it from ctx.created_import_mult_tables.
-        if mult_table_name in ctx.created_import_mult_tables:
-            ctx.created_import_mult_tables.remove(mult_table_name)
-
-
-def copy_mult_from_import_to_permanent(ctx: ImportContext) -> None:
-    """Copy every import mult table over its permanent counterpart.
-
-    All of them, not just the ones this run changed: an earlier run or an earlier bundle
-    may have changed a table, and nothing records that.
-
-    Parameters:
-        ctx: The import run's context, for the open database.
-    """
-    db = ctx.db
-    assert db is not None
-    table_names = db.table_names('import', prefix='mult_')
-    for table_name in table_names:
-        imp_mult_table_name = db.convert_raw_to_namespace('import', table_name)
-        import_util.log_debug(ctx, f'Copying mult table "{imp_mult_table_name}"')
-        # Read the import mult table
-        column_list = _mult_table_column_names()
-        rows = db.read_rows('import', table_name, column_list)
-        mult_rows = _convert_sql_response_to_mult_table(rows)
-        # Write the permanent table
-        db.upsert_rows('perm', table_name, 'id', mult_rows)
+        import_util.log_debug(ctx, f'Writing mult table "{mult_table_name}"')
+        db.upsert_rows(mult_table_name, 'id', ctx.mult_table_cache[mult_table_name])

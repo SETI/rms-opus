@@ -1,4 +1,4 @@
-"""Write the checked-in display details back over the permanent ``mult_`` tables.
+"""Write the checked-in display details back over the ``mult_`` tables.
 
 A ``mult_`` table holds the enumerated values one column can take, along with how the
 web application should present them. Where a table schema pins those presentation
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 def update_mult_info(ctx: ImportContext) -> None:
-    """Update every permanent ``mult_`` table whose schema pins its values.
+    """Update every ``mult_`` table whose schema pins its values.
 
     The table's name says which schema and which column it belongs to, so the name is
     split apart and matched against the packaged schemas. A table whose schema or column
@@ -48,8 +48,8 @@ def update_mult_info(ctx: ImportContext) -> None:
     assert db is not None
     logger = ctx.logger
 
-    # Find all the permanent mult_ tables
-    table_names = db.table_names('perm', prefix='mult_')
+    # Find all the mult_ tables
+    table_names = db.table_names(prefix='mult_')
 
     for table_name in table_names:
         # A mult table's name is its observation table's name joined to its column's,
@@ -101,7 +101,6 @@ def update_mult_info(ctx: ImportContext) -> None:
             }
 
             db.update_row(
-                'perm',
                 table_name,
                 row_dict,
                 f'{db.quote_identifier("id")}=%s',

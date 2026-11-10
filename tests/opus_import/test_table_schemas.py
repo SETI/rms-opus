@@ -12,8 +12,9 @@ An entry is one of four kinds, told apart by its keys:
   table defines;
 * a **definition**, which has ``definition`` and no ``field_name``: a dictionary term with
   no column of its own;
-* a **table-level entry**, which has none of those. ``{"constraint": "..."}`` is the only
-  one today, appended to ``CREATE TABLE`` as written.
+* a **table-level entry**, which has none of those: ``{"constraint": "..."}``, appended to
+  ``CREATE TABLE`` as written, or ``{"foreign_key": {...}}``, a foreign key with its
+  columns, what it references, and optionally what deleting a referenced row does.
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ from opus_import.importdb.mysql import (
     MYSQL_FIELD_TYPE_SQL,
     is_renderable_field_type,
 )
+from opus_import.table_keys import ON_DELETE_VALUES
 
 #: The packaged schema directory, as a path.
 _SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
@@ -106,7 +108,13 @@ _LINK_KEYS = {
 _DEFINITION_KEYS = {'definition', 'pi_dict_context', 'pi_dict_name'}
 
 #: The table-level entries, each a single key.
-_TABLE_LEVEL_KEYS = {'constraint'}
+_TABLE_LEVEL_KEYS = {'constraint', 'foreign_key'}
+
+#: The members a table-level ``foreign_key`` entry may have.
+_FOREIGN_KEY_MEMBERS = {'columns', 'references', 'on_delete'}
+
+#: The members it must have.
+_FOREIGN_KEY_REQUIRED = {'columns', 'references'}
 
 #: The ``field_key`` values `create_table` renders, besides False for none.
 _FIELD_KEYS = {True, 'primary', 'unique', 'foreign'}
@@ -235,9 +243,71 @@ def test_every_entry_is_one_of_the_four_kinds() -> None:
                     wrong.append(f'{_where(name, entry)}: a definition with {sorted(keys)}')
             elif len(keys) != 1 or not keys <= _TABLE_LEVEL_KEYS:
                 wrong.append(f'{name}: an entry of no known kind, {sorted(keys)}')
-            elif not isinstance(entry['constraint'], str):
+            elif 'constraint' in entry and not isinstance(entry['constraint'], str):
                 wrong.append(f'{name}: a constraint that is not text')
+            elif 'foreign_key' in entry:
+                wrong += _foreign_key_problems(name, entry['foreign_key'])
     assert wrong == []
+
+
+def _foreign_key_problems(name: str, entry: Any) -> list[str]:
+    """Say what is wrong with a table-level ``foreign_key`` entry, if anything.
+
+    Parameters:
+        name: The file the entry is in.
+        entry: The entry's ``foreign_key`` value.
+
+    Returns:
+        One line per problem; none for an entry `create_table` renders as written.
+    """
+    if not isinstance(entry, dict):
+        return [f'{name}: a foreign_key that is not an object']
+    members = set(entry)
+    problems = []
+    if not members <= _FOREIGN_KEY_MEMBERS:
+        problems.append(f'{name}: foreign_key with {sorted(members - _FOREIGN_KEY_MEMBERS)}')
+    if not members >= _FOREIGN_KEY_REQUIRED:
+        problems.append(f'{name}: foreign_key without {sorted(_FOREIGN_KEY_REQUIRED - members)}')
+        return problems
+    columns, references = entry['columns'], entry['references']
+    if not isinstance(columns, list) or not columns or not all(isinstance(c, str) for c in columns):
+        problems.append(f'{name}: foreign_key columns {columns!r} is not a list of names')
+    elif (
+        not isinstance(references, list)
+        or len(references) != len(columns) + 1
+        or not all(isinstance(r, str) for r in references)
+    ):
+        problems.append(
+            f'{name}: foreign_key references {references!r} is not a table and a column '
+            'for each column'
+        )
+    if 'on_delete' in entry and entry['on_delete'] not in ON_DELETE_VALUES:
+        problems.append(f'{name}: foreign_key on_delete {entry["on_delete"]!r}')
+    return problems
+
+
+@pytest.mark.parametrize(
+    ('entry', 'problem'),
+    [
+        ({'columns': ['a'], 'references': ['t', 'id']}, None),
+        ({'columns': ['a'], 'references': ['t', 'id'], 'on_delete': 'cascade'}, None),
+        ({'columns': ['a'], 'references': ['t', 'id'], 'on_delete': 'set null'}, 'on_delete'),
+        ({'columns': ['a'], 'references': ['t']}, 'references'),
+        ({'columns': [], 'references': ['t']}, 'columns'),
+        ({'columns': ['a']}, 'without'),
+        ({'columns': ['a'], 'references': ['t', 'id'], 'on_update': 'cascade'}, 'on_update'),
+    ],
+)
+def test_the_foreign_key_check_refuses_what_create_table_cannot_render(
+    entry: dict[str, Any], problem: str | None
+) -> None:
+    """A well-formed entry passes, and each kind of malformed one is named."""
+    problems = _foreign_key_problems('x.json', entry)
+    if problem is None:
+        assert problems == []
+    else:
+        assert len(problems) == 1
+        assert problem in problems[0]
 
 
 # ---------------------------------------------------------------------------

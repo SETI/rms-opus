@@ -6,8 +6,9 @@ Table Schemas
 ``src/opus_import/table_schemas/`` holds one JSON file per OPUS table, named after the
 table. A file is a list of objects in the order the columns appear in the table --
 mostly one per column, plus the occasional entry that deliberately defines no column:
-a ``constraint``, or a ``pi_referred_slug`` link to a field defined in another table. This is the single description of the database: the import pipeline creates
-every table from it, computes its schema-driven values from it, validates the result
+a ``constraint``, a table-level ``foreign_key``, or a ``pi_referred_slug`` link to a
+field defined in another table. This is the single description of the database: the
+import pipeline creates every table from it, computes its schema-driven values from it, validates the result
 against it, and derives from it what the web application's search form contains.
 ``obs_files`` is the exception to the second of those -- its rows are built from
 literals rather than computed from the schema; see `Filling the column`_ below.
@@ -100,20 +101,35 @@ Defining the column
      - True to add ``AUTO_INCREMENT``.
    * - ``field_key``
      - ``"primary"``, ``"unique"``, ``"foreign"``, or ``true`` for an ordinary index;
-       any other value is refused. ``"foreign"`` requires ``field_key_foreign``. On a fresh import an
+       any other value is refused. ``"foreign"`` requires ``field_key_foreign``. An
        observation or ``mult_`` table is created with only its primary key, its unique
-       keys and its ``bundle_id`` key, and finalization adds the others
-       (:ref:`dev_guide_import_db_keys`); the finished table carries every key declared.
+       keys and its ``bundle_id`` key, on either write path, and finalization adds the
+       others (:ref:`dev_guide_import_db_keys`); the finished table carries every key
+       declared.
    * - ``field_key_foreign``
      - ``[table, column]``, the target of a foreign key. The constraint is created
-       ``ON DELETE RESTRICT ON UPDATE CASCADE``, and the referenced table is resolved
-       in the same namespace as the table being created. An observation table's one
-       foreign key is ``obs_general_id`` onto ``obs_general.id``; its ``opus_id`` is a
-       plain key, as ``obs_general.opus_id`` is, because two bundles can produce the
-       same OPUS ID and both copies load before finalization keeps one.
+       ``ON DELETE RESTRICT ON UPDATE CASCADE``; a foreign key that says what deleting
+       the referenced row does is a table-level ``foreign_key`` entry instead. An
+       observation table's one foreign key is ``obs_general_id`` onto
+       ``obs_general.id``; its ``opus_id`` is a plain key, as ``obs_general.opus_id``
+       is, because two bundles can produce the same OPUS ID and both copies load before
+       finalization keeps one.
    * - ``constraint``
      - Raw SQL inserted into the ``CREATE TABLE`` in place of a column definition. An
        entry carrying it defines no column.
+   * - ``foreign_key``
+     - A table-level foreign key, in an entry of its own that defines no column:
+       ``{"foreign_key": {"columns": [...], "references": ["<table>", "<column>", ...],
+       "on_delete": "cascade"}}``. ``references`` names the referenced table and then
+       one column for each of ``columns``. ``on_delete`` is ``"cascade"`` or
+       ``"restrict"``, and ``"restrict"`` when it is absent; the key is created
+       ``ON DELETE CASCADE`` or ``ON DELETE RESTRICT``, each with ``ON UPDATE CASCADE``,
+       and :func:`~opus_import.table_keys.declared_keys` reads it as a
+       :class:`~opus_import.table_keys.TableKey` beside the column-level keys, so
+       finalization compares it with the server's keys by what it does on delete as
+       well. ``cart`` declares its key onto ``obs_general`` this way, with
+       ``"cascade"``, so deleting a bundle's observations deletes the cart rows that
+       name them rather than being refused.
    * - ``comments``
      - A note for whoever reads the schema. Nothing consumes it.
 
@@ -322,13 +338,18 @@ packaged schema whole and checks what the import and the web application assume 
 so a mistake fails the suite rather than an import, or a tooltip nobody sees. An entry is
 one of four kinds, told apart by its keys -- a column (``field_name``), a link
 (``pi_referred_slug``), a definition with no column (``definition`` and no
-``field_name``), or a table-level ``{"constraint": "..."}`` -- and the checks are:
+``field_name``), or a table-level entry, which is one of ``{"constraint": "..."}`` and
+``{"foreign_key": {...}}`` -- and the checks are:
 
 * **No object names a key twice.** JSON allows it and Python's reader keeps the last
   value without a word, so a key written twice is a value silently ignored. The files
   are read with a loader that refuses it.
 * Each entry carries exactly the keys of its kind: a column only the keys above, at
-  least ``field_name`` and ``field_type``; a link and a definition exactly theirs.
+  least ``field_name`` and ``field_type``; a link and a definition exactly theirs; a
+  table-level entry its one key. A ``constraint`` is text, and a ``foreign_key`` has
+  ``columns`` and ``references``, optionally ``on_delete`` and nothing else, with a
+  non-empty list of column names, a table and one column for each of them, and an
+  ``on_delete`` of ``"cascade"`` or ``"restrict"``.
 * Every ``field_type`` is one ``create_table`` renders. The renderer and the test read
   the same constants, ``MYSQL_FIELD_TYPE_SQL`` and ``MYSQL_WIDTH_FIELD_TYPE`` in
   :mod:`opus_import.importdb.mysql`, so the two cannot disagree. An ``enum`` column, and

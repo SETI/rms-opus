@@ -37,7 +37,6 @@ def get_db(
     db_user: str,
     db_password: str,
     mult_form_types: Sequence[str] | None = None,
-    import_prefix: str | None = None,
     logger: pdslogger.PdsLogger | None = None,
     read_only: bool = False,
     bulk_load: bool = True,
@@ -57,8 +56,6 @@ def get_db(
         db_password: That user's password.
         mult_form_types: The ``param_info`` form types that have a ``mult_`` table, or
             None for none of them.
-        import_prefix: The prefix distinguishing an import table from its permanent
-            counterpart, or None to make the two namespaces the same tables.
         logger: Where to report progress, statements and warnings, or None to report
             nothing.
         read_only: True to log every mutating statement instead of executing it.
@@ -85,7 +82,6 @@ def get_db(
             db_user,
             db_password,
             mult_form_types=mult_form_types,
-            import_prefix=import_prefix,
             logger=logger,
             read_only=read_only,
             bulk_load=bulk_load,
@@ -96,7 +92,6 @@ def get_db(
     #     return ImportDBPostgreSQL(db_hostname, db_name, db_schema,
     #                               db_user, db_password,
     #                               mult_form_types=mult_form_types,
-    #                               import_prefix=import_prefix,
     #                               logger=logger, read_only=read_only)
     if logger:
         logger.log('fatal', f'Unknown database brand "{db_brand}"')

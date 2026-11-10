@@ -221,12 +221,18 @@ Slug
     The short field id an API call names a field by -- ``time1``, ``RINGGEOringradius1``
     -- as distinct from the SQL column name. The mapping lives in ``param_info``.
 
-Import namespace, permanent namespace
-    A table OPUS imports can exist twice: once under a configured prefix (the *import*
-    namespace) and once without it (the *permanent* namespace, which the web application
-    reads). An import into a finished schema writes the import tables and copies them
-    over the permanent ones only once the whole run has succeeded; a fresh import, into a
-    schema not yet served, writes the permanent tables directly.
+Fresh import, append
+    The two ways an import writes, chosen by the state of the schema it writes into.
+    A *fresh import*, into a schema not yet served, creates the observation tables with
+    only the keys a load needs and leaves the rest for finalization; an *append*, into a
+    finished schema, loads into the tables with their keys in place and marks the schema
+    ``appending`` until it is finalized and marked ready again. Either way there is one
+    set of tables, the one the web application reads.
+
+Bundle registry
+    The ``import_bundle`` table, which records each bundle an import takes on and whether
+    it finished. Finalization and the step that marks a schema ready both refuse while any
+    bundle in it is not ``done``.
 
 Cache table
     A table named ``cache_NNN`` holding the ids of the observations one search matched,

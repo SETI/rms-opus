@@ -22,7 +22,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 #: The generation of the table schemas this release imports and serves.
-SCHEMA_VERSION: int = 2
+SCHEMA_VERSION: int = 3
 
 #: The table that holds a schema's version row.
 SCHEMA_VERSION_TABLE = 'schema_version'
@@ -92,6 +92,6 @@ def served_schema_version_problem() -> str | None:
         read_only=True,
     )
     rows: Sequence[Sequence[object]] = []
-    if db.table_exists('perm', SCHEMA_VERSION_TABLE):
-        rows = db.read_rows('perm', SCHEMA_VERSION_TABLE, ['version', 'state'])
+    if db.table_exists(SCHEMA_VERSION_TABLE):
+        rows = db.read_rows(SCHEMA_VERSION_TABLE, ['version', 'state'])
     return schema_version_problem(rows)
