@@ -426,7 +426,9 @@ class SearchResultsTests(TestCase):
             call_command('prune', unused_days=30, max_rows=10**9, stdout=output)
 
         self.assertIn('Pruned 0 searches', output.getvalue())
-        self.assertIn('skipped 2 being built or used since', output.getvalue())
+        self.assertIn(
+            'skipped 2 whose results were being stored or that were used since', output.getvalue()
+        )
         self.assertIsNotNone(_row(building_id))
         self.assertIsNotNone(_row(used.search_id))
 

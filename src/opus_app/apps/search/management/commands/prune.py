@@ -12,8 +12,8 @@ must:
    ``--unused-days`` days, so a busy server is pruned harder than a quiet one. For each,
    its hash-keyed cache entry is deleted first and then its ``user_searches`` row, so
    that a request arriving meanwhile registers the search afresh under a new id. A
-   search another request is building right now, or one used since the prune read its
-   last use, is left alone.
+   search whose results another request is storing right now, or one used since the
+   prune read its last use, is left alone.
 3. **Expired sessions**, through Django's own ``clearsessions``.
 4. **Cart rows whose session no longer exists.**
 
@@ -47,42 +47,6 @@ DEFAULT_UNUSED_DAYS = 30
 
 #: The rows of ``search_results`` one statement deletes.
 DELETE_CHUNK_ROWS = 100_000
-
-#: Every search, least recently used first.
-_SEARCHES_SQL = (
-    'SELECT id, search_hash, COALESCE(result_count, 0), last_used_at FROM user_searches '
-    'ORDER BY last_used_at, id'
-)
-
-#: The searches ``search_results`` holds rows of, read through its primary key's prefix.
-_RESULT_SEARCH_IDS_SQL = 'SELECT DISTINCT search_id FROM search_results'
-
-#: Every search's id.
-_SEARCH_IDS_SQL = 'SELECT id FROM user_searches'
-
-#: Takes a search's row to remove it, unless a search build holds it, and reads its last
-#: use again.
-_LOCK_SEARCH_SQL = 'SELECT last_used_at FROM user_searches WHERE id = %s FOR UPDATE SKIP LOCKED'
-
-_DELETE_SEARCH_SQL = 'DELETE FROM user_searches WHERE id = %s'
-
-_DELETE_RESULTS_CHUNK_SQL = 'DELETE FROM search_results WHERE search_id = %s LIMIT %s'
-
-_COUNT_RESULTS_SQL = 'SELECT COUNT(*) FROM search_results'
-
-_COUNT_SEARCHES_SQL = 'SELECT COUNT(*) FROM user_searches'
-
-#: The size of ``search_results`` on disk, from the server's own statistics.
-_TABLE_BYTES_SQL = (
-    'SELECT DATA_LENGTH, INDEX_LENGTH FROM information_schema.TABLES '
-    "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'search_results'"
-)
-
-#: Cart rows of sessions that no longer exist.
-_DELETE_ORPHAN_CARTS_SQL = (
-    'DELETE c FROM cart AS c LEFT JOIN django_session AS s ON s.session_key = c.session_id '
-    'WHERE s.session_key IS NULL'
-)
 
 
 class StoredSearch(NamedTuple):
@@ -202,7 +166,8 @@ class Command(BaseCommand):
                 skipped += 1
         self.stdout.write(
             f'Pruned {pruned} searches holding {pruned_rows} rows, whose results the next '
-            f'prune removes; skipped {skipped} being built or used since'
+            f'prune removes; skipped {skipped} whose results were being stored or that '
+            'were used since'
         )
 
         expired = Session.objects.filter(expire_date__lt=timezone.now()).count()
@@ -210,7 +175,11 @@ class Command(BaseCommand):
         self.stdout.write(f'Cleared {expired} expired sessions')
 
         with connection.cursor() as cursor:
-            cursor.execute(_DELETE_ORPHAN_CARTS_SQL)
+            cursor.execute(
+                'DELETE c FROM cart AS c '
+                'LEFT JOIN django_session AS s ON s.session_key = c.session_id '
+                'WHERE s.session_key IS NULL'
+            )
             carts = cursor.rowcount
         self.stdout.write(f'Removed {carts} cart rows of sessions that no longer exist')
 
@@ -225,11 +194,15 @@ class Command(BaseCommand):
             chosen_rows: Their rows.
         """
         with connection.cursor() as cursor:
-            cursor.execute(_COUNT_RESULTS_SQL)
+            cursor.execute('SELECT COUNT(*) FROM search_results')
             (rows,) = cursor.fetchone()
-            cursor.execute(_COUNT_SEARCHES_SQL)
+            cursor.execute('SELECT COUNT(*) FROM user_searches')
             (search_count,) = cursor.fetchone()
-            cursor.execute(_TABLE_BYTES_SQL)
+            # The table's size on disk, from the server's own statistics.
+            cursor.execute(
+                'SELECT DATA_LENGTH, INDEX_LENGTH FROM information_schema.TABLES '
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'search_results'"
+            )
             data_bytes, index_bytes = cursor.fetchone()
         total_bytes = int(data_bytes) + int(index_bytes)
         held = sum(search.rows for search in searches)
@@ -250,7 +223,10 @@ class Command(BaseCommand):
 def _read_searches() -> list[StoredSearch]:
     """Return every search, least recently used first."""
     with connection.cursor() as cursor:
-        cursor.execute(_SEARCHES_SQL)
+        cursor.execute(
+            'SELECT id, search_hash, COALESCE(result_count, 0), last_used_at '
+            'FROM user_searches ORDER BY last_used_at, id'
+        )
         return [
             StoredSearch(int(search_id), bytes(digest), int(rows), _aware(last_used_at))
             for search_id, digest, rows, last_used_at in cursor.fetchall()
@@ -272,16 +248,21 @@ def _delete_search(search: StoredSearch) -> bool:
         search: The search, as the prune read it.
 
     Returns:
-        False if a search build holds the search's row, or the search was used since the
-        prune read it, either of which leaves it alone.
+        False if a request storing the search's results holds its row, or the search was
+        used since the prune read it, either of which leaves it alone.
     """
     with transaction.atomic(), connection.cursor() as cursor:
-        cursor.execute(_LOCK_SEARCH_SQL, [search.search_id])
+        # Lock the row and read its last use again. SKIP LOCKED returns no row when a
+        # request storing the search's results holds the lock, rather than waiting.
+        cursor.execute(
+            'SELECT last_used_at FROM user_searches WHERE id = %s FOR UPDATE SKIP LOCKED',
+            [search.search_id],
+        )
         row = cursor.fetchone()
         if row is None or _aware(row[0]) != search.last_used_at:
             return False
         cache.delete(search_number_cache_key(search.search_hash))
-        cursor.execute(_DELETE_SEARCH_SQL, [search.search_id])
+        cursor.execute('DELETE FROM user_searches WHERE id = %s', [search.search_id])
     return True
 
 
@@ -289,7 +270,10 @@ def _delete_results(search_id: int) -> None:
     """Delete a search's rows of ``search_results``, a chunk per statement."""
     with connection.cursor() as cursor:
         while True:
-            cursor.execute(_DELETE_RESULTS_CHUNK_SQL, [search_id, DELETE_CHUNK_ROWS])
+            cursor.execute(
+                'DELETE FROM search_results WHERE search_id = %s LIMIT %s',
+                [search_id, DELETE_CHUNK_ROWS],
+            )
             if cursor.rowcount < DELETE_CHUNK_ROWS:
                 return
 
@@ -304,9 +288,10 @@ def _delete_orphan_results() -> int:
         How many such searches there were.
     """
     with connection.cursor() as cursor:
-        cursor.execute(_RESULT_SEARCH_IDS_SQL)
+        # DISTINCT over search_id reads the primary key's first column.
+        cursor.execute('SELECT DISTINCT search_id FROM search_results')
         holding = {int(row[0]) for row in cursor.fetchall()}
-        cursor.execute(_SEARCH_IDS_SQL)
+        cursor.execute('SELECT id FROM user_searches')
         registered = {int(row[0]) for row in cursor.fetchall()}
     orphans = sorted(holding - registered)
     for search_id in orphans:
