@@ -787,6 +787,27 @@ def clone_schema(
 HARNESS_IMPORT_KEYS = ('log_file', 'debug_log_file')
 
 
+def _import_key_value(text: str) -> object:
+    """Return an ``--import-key`` value as the type TOML would give it.
+
+    Parameters:
+        text: The value as written.
+
+    Returns:
+        A boolean for ``true`` or ``false``, a whole number, a finite decimal number, or
+        else the text itself.
+    """
+    if text in ('true', 'false'):
+        return text == 'true'
+    with contextlib.suppress(ValueError):
+        return int(text)
+    with contextlib.suppress(ValueError):
+        number = float(text)
+        if math.isfinite(number):
+            return number
+    return text
+
+
 def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
     """Read ``--import-key`` arguments into the ``[import]`` keys they set.
 
@@ -794,7 +815,8 @@ def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
         pairs: Each ``KEY=VALUE``.
 
     Returns:
-        The keys, each value a whole number, a boolean or a string, in argument order.
+        The keys, each value a whole number, a finite decimal number, a boolean or a
+        string, in argument order.
 
     Raises:
         ValueError: If an argument has no ``=``, or its key is not a TOML bare key, or
@@ -811,13 +833,7 @@ def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
             raise ValueError(
                 f'--import-key {pair!r}: the harness sets {key} itself and reads that log'
             )
-        value: object = text
-        if text in ('true', 'false'):
-            value = text == 'true'
-        else:
-            with contextlib.suppress(ValueError):
-                value = int(text)
-        keys[key] = value
+        keys[key] = _import_key_value(text)
     return keys
 
 

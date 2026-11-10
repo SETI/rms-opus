@@ -225,15 +225,27 @@ def test_extra_import_keys_reach_the_configuration(tmp_path: Path) -> None:
         paths,
         'schema',
         DatabaseCredentials('h', 'u', 'p'),
-        extra_import={'transaction_rows': 5, 'bulk_load': False, 'scratch_dir': '/scratch/a"b'},
+        extra_import={
+            'transaction_rows': 5,
+            'bulk_load': False,
+            'scratch_dir': '/scratch/a"b',
+            'cpu_fraction': 0.5,
+        },
     )
 
     config = load_config(paths.config_file).import_
-    assert (config.transaction_rows, config.bulk_load, config.scratch_dir) == (
-        5,
-        False,
-        '/scratch/a"b',
-    )
+    assert (
+        config.transaction_rows,
+        config.bulk_load,
+        config.scratch_dir,
+        config.cpu_fraction,
+    ) == (5, False, '/scratch/a"b', 0.5)
+
+
+def test_a_decimal_number_that_is_not_finite_has_no_toml_spelling() -> None:
+    """A configuration is never written with a value the import could not read."""
+    with pytest.raises(TypeError, match='no TOML spelling'):
+        build_run.toml_value(float('nan'))
 
 
 def test_an_extra_import_key_replaces_a_default_one(tmp_path: Path) -> None:

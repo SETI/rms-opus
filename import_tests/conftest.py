@@ -32,10 +32,15 @@ if TYPE_CHECKING:
 #: nothing. Prime, so chunk boundaries fall at different places in different tables.
 MAIN_RUN_TRANSACTION_ROWS = 7
 
-#: The main run's ``[import] index_workers``: more than one, so the goldens are taken over
-#: the path that builds several tables' indexes at once rather than the default's one at a
-#: time.
-MAIN_RUN_INDEX_WORKERS = 2
+#: The main run's ``[import] workers`` and ``index_workers``: the ceiling, so the goldens
+#: are taken over the pool of workers computing observations and the path that builds
+#: several tables' indexes at once, rather than the defaults' one process and one table.
+MAIN_RUN_WORKERS = 'max'
+
+#: The main run's ``[import] worker_rows``. The fixture's indexes are a few dozen rows, so
+#: at the default's 500 every index would fall back to computing in one process; a small
+#: value splits each across several tasks.
+MAIN_RUN_WORKER_ROWS = 5
 
 #: The schema-name suffix of the session that writes with ``INSERT`` statements.
 INSERT_PATH_CASE = 'insert_path'
@@ -92,8 +97,9 @@ def main_run(
 ) -> build_run.ImportRun:
     """Import the whole fixture once, and hand every test the finished run.
 
-    Its loads are split into `MAIN_RUN_TRANSACTION_ROWS`-row transactions, and its
-    finalization builds indexes over `MAIN_RUN_INDEX_WORKERS` connections.
+    Its loads are split into `MAIN_RUN_TRANSACTION_ROWS`-row transactions, its
+    observations are computed by `MAIN_RUN_WORKERS` workers in `MAIN_RUN_WORKER_ROWS`-row
+    tasks, and its finalization builds indexes over as many connections.
 
     Returns:
         The completed run, whose logs and schema the assertions read.
@@ -107,7 +113,9 @@ def main_run(
         db_credentials,
         extra_import={
             'transaction_rows': MAIN_RUN_TRANSACTION_ROWS,
-            'index_workers': MAIN_RUN_INDEX_WORKERS,
+            'workers': MAIN_RUN_WORKERS,
+            'index_workers': MAIN_RUN_WORKERS,
+            'worker_rows': MAIN_RUN_WORKER_ROWS,
         },
     )
 

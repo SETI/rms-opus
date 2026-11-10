@@ -709,6 +709,28 @@ def find_max_table_id(ctx: ImportContext, table_name: str) -> Any:
     return -1 if max_id is None else max_id
 
 
+def next_table_id(ctx: ImportContext, table_name: str) -> Any:
+    """Hand out the next row id for a table.
+
+    The first id a bundle asks for in a table is one more than the largest the table
+    holds; each later one is one more than the last.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the id cache.
+        table_name: The table.
+
+    Returns:
+        The id, or, in a pool worker, the `opus_import.deferred.LocalId` the import's
+        process turns into it.
+    """
+    if ctx.capture is not None:
+        return ctx.capture.next_id(table_name)
+    if table_name not in ctx.max_table_id_cache:
+        ctx.max_table_id_cache[table_name] = find_max_table_id(ctx, table_name)
+    ctx.max_table_id_cache[table_name] += 1
+    return ctx.max_table_id_cache[table_name]
+
+
 ################################################################################
 # ANNOUNCE ERRORS BUT LET IMPORT CONTINUE
 ################################################################################

@@ -11,7 +11,7 @@ Several options are not steps of their own: the work for ``--scorched-earth`` an
 ``--delete-bundles`` is done inside `do_import`, and ``--analyze-tables`` inside
 `do_import_tables`.
 
-`do_import` is large enough to live in five modules rather than one. ``do_import.py``
+`do_import` is large enough to live in several modules rather than one. ``do_import.py``
 holds the main loop (`do_import_steps`) and the per-bundle driver (`import_one_bundle`);
 the ``do_import_<part>.py`` modules hold its internals and are **not** steps of their
 own, so nothing outside `do_import` runs them as one:
@@ -19,6 +19,7 @@ own, so nothing outside `do_import` runs them as one:
 * `do_import_tables` -- creating the ``obs_`` tables and deleting from them;
 * `do_import_mult` -- reading, caching and writing the ``mult_`` tables;
 * `do_import_index` -- importing every observation in one primary index file;
+* `do_import_pool` -- computing an index's rows in a pool of workers and replaying them;
 * `do_import_obs` -- computing one row of one observation table.
 
 Import each step from its own module (``from opus_import.steps import do_cart``); this

@@ -49,6 +49,8 @@ directory has a chapter of its own, it is named beside it.
     │   ├── opus_import/          # the import pipeline
     │   │   ├── cli.py, __main__.py       # the command-line surface
     │   │   ├── context.py                # the per-run context every step is handed
+    │   │   ├── deferred.py               # what a pool worker records in place of
+    │   │   │                             #   database calls and log writes
     │   │   ├── config_data.py            # which missions, instruments and bundles exist
     │   │   ├── config_bundle_info.py     # which obs class and index files a bundle uses
     │   │   ├── config_targets/           # target names, classes and aliases
@@ -58,7 +60,7 @@ directory has a chapter of its own, it is named beside it.
     │   │   │                             #   both brands inherit), mysql.py, and the
     │   │   │                             #   unimplemented postgresql.py stub
     │   │   ├── obs/                      # the obs_* class hierarchy, one row per observation
-    │   │   ├── steps/                    # the do_* steps; four do_import_* modules are
+    │   │   ├── steps/                    # the do_* steps; the do_import_* modules are
     │   │   │                             #   internals of do_import, not steps
     │   │   ├── table_schemas/            # package data: the JSON that defines every OPUS table
     │   │   ├── dictionary_data/          # package data: contexts.csv, the dictionary's

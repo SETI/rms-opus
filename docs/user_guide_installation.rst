@@ -729,12 +729,32 @@ entirely.
        least 1. Default ``100000``. Lowering it shortens each transaction, so a killed
        import rolls back faster and the server holds less undo at once; raising it means
        fewer statements and commits.
+   * - ``workers``
+     - optional
+     - How many processes compute an index's observations: a whole number of at least
+       1, or ``"max"`` for the ceiling below. Default ``1``, the import's own process;
+       more forks a pool of that many for each index. The tables and the log come out the
+       same whatever the count. ``opus_import --workers`` replaces it for one run. See
+       :ref:`dev_guide_import_running_parallelism`.
+   * - ``worker_rows``
+     - optional
+     - The index rows one worker task covers, a whole number of at least 1. Default
+       ``500``. An index with fewer rows is computed in the import's own process. Smaller
+       tasks keep every worker busy closer to the end of an index; larger ones spend less
+       on handing tasks out.
    * - ``index_workers``
      - optional
      - How many tables the import's finalization builds indexes on at once, each over a
-       connection of its own, a whole number of at least 1. Default ``1``. The database
-       server does the work, so raise it only when the server has cores to spare beyond
-       whatever else shares its computer. See :ref:`dev_guide_import_steps_create_indexes`.
+       connection of its own: a whole number of at least 1, or ``"max"`` for the ceiling
+       below. Default ``1``. The database server does the work, so raise it only when the
+       server has cores to spare beyond whatever else shares its computer. See
+       :ref:`dev_guide_import_steps_create_indexes`.
+   * - ``cpu_fraction``
+     - optional
+     - The share of the cores the ceiling allows, greater than 0 and at most 1. Default
+       ``0.75``. The ceiling is ``max(1, floor(cores * cpu_fraction))``, where cores is
+       the number the import may run on, counted when it starts, and a ``workers`` or
+       ``index_workers`` above it stops the import before it starts.
    * - ``server_tmpdir``
      - optional
      - A directory on the database server's host, writable by ``mysqld``, where the

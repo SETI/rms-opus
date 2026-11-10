@@ -294,6 +294,12 @@ write_to = "src/opus_config/_version.py"
 [tool.coverage.run]
 branch = true
 parallel = true
+# An import computes an index's observations in forked pool workers when [import]
+# workers asks for more than one, as the import suite's main run does. Coverage follows
+# them only when told to: "multiprocessing" starts it in each worker and saves the
+# worker's data as the worker finishes, which the field functions' lines would
+# otherwise never reach. "thread" is the default this list replaces.
+concurrency = ["thread", "multiprocessing"]
 # Unit-coverage scope only. The integration suite's 100%-gate configuration is a
 # separate file, integration_tests/.coveragerc, selected with COVERAGE_RCFILE:
 # coverage.py ignores `include` once `source` is set, so one merged configuration

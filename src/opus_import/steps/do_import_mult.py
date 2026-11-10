@@ -209,8 +209,14 @@ def update_mult_table(
     Returns:
         The row id -- the existing one if the table already had the value, the new one if
         a row was added, and 0 if the value is missing from a preprogrammed table, which
-        is reported as an error because such a table cannot be added to.
+        is reported as an error because such a table cannot be added to. In a pool
+        worker, the `opus_import.deferred.MultRef` standing for the call, which the
+        import's process makes where the serial loop would have.
     """
+    if ctx.capture is not None:
+        values = (val, label, aliases, disp, disp_order, grouping, group_disp_order)
+        position = (ctx.current_index_row_number, ctx.current_primary_filespec)
+        return ctx.capture.mult(position, table_name, field_name, values)
     mult_table_name = import_util.table_name_mult(table_name, field_name)
     mult_table = read_or_create_mult_table(ctx, mult_table_name, table_column)
     if val is not None:

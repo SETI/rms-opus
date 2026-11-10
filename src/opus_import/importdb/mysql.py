@@ -1348,6 +1348,17 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             self.conn.close()
             self.conn = None
 
+    def socket_descriptor(self) -> int | None:
+        """Return the file descriptor of the connection's socket.
+
+        Returns:
+            The descriptor, or None when there is no open connection.
+        """
+        if self.conn is None:
+            return None
+        descriptor: int = self.conn.fileno()
+        return descriptor
+
     def analyze_table(self, table_name: str) -> None:
         """Analyze the given table. This recomputes key distribution.
 

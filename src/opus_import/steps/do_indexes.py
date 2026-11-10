@@ -156,7 +156,7 @@ def create_indexes(ctx: ImportContext) -> bool:
         return True
     import_util.log_info(
         ctx,
-        f'Adding keys to {len(plain)} tables over {config.index_workers} connections, '
+        f'Adding keys to {len(plain)} tables over {ctx.index_workers} connections, '
         f'an estimated {total_estimate} bytes of temporary space in all',
     )
 
@@ -164,7 +164,7 @@ def create_indexes(ctx: ImportContext) -> bool:
         with ctx.timed('create_indexes:keys'):
             built = db.build_indexes(
                 plain,
-                workers=config.index_workers,
+                workers=ctx.index_workers,
                 server_tmpdir=config.server_tmpdir,
                 space_budget=space_budget,
             )
