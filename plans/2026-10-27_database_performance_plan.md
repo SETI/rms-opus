@@ -5624,3 +5624,6 @@ Nothing above this line is rewritten by an executor.
   - Reported: the ring-radius re-sort's db-cold p50 163.4 ms to 94.4 ms (-42.2%), its
     buffer-pool reads 1,446 to 1,147; the test-scale import 347.0 s to 334.7 s; the
     fixture imports within noise.
+  - The orchestrator's decision on the stop-and-report (2026-11-10): the PR proceeds on
+    the structural gains, the schema's smaller indexes and data, `obs_files`' two keys,
+    and the children keyed on their observation, which PR-14 and PR-15 build on.
