@@ -135,11 +135,21 @@ The run's state lives in one object
 layers. Exactly one is built, by :func:`opus_import.cli.main`, and passed by hand from
 there down: ``cli`` hands it to each step, the steps hand it to each other, and the obs
 classes keep it as their ``_ctx``. **Nothing in the pipeline reaches for pipeline state
-any other way**, and no step module has a module-level global.
+any other way.** The one step module with a module-level global is
+:mod:`~opus_import.steps.do_import_pool`, which installs the context and the index's
+state there for the length of one index, because a module global is what a forked worker
+inherits without anything being pickled; each worker then works on its own copy of the
+context, with no database and a :attr:`~opus_import.context.ImportContext.capture` in
+place of one (:ref:`dev_guide_import_steps_do_import_pool`).
 
 Its fields fall into three groups:
 
-**What the run was given** -- the parsed arguments, the logger, and the open database.
+**What the run was given** -- the parsed arguments, the logger, the open database, and
+the resolved worker counts (:attr:`~opus_import.context.ImportContext.workers`,
+:attr:`~opus_import.context.ImportContext.worker_rows` and
+:attr:`~opus_import.context.ImportContext.index_workers`), which :mod:`opus_import.cli`
+sets once it has checked them against the ceiling
+(:ref:`dev_guide_import_running_parallelism`).
 
 **Where the run currently is** -- the bundle, the 1-based index row number, and the
 primary file specification. These are what
@@ -174,7 +184,11 @@ levels :meth:`~opus_import.context.ImportLog.error`,
 :meth:`~opus_import.context.ImportLog.unknown_target_name`, which reports a target the
 configuration does not describe and names the file to edit. The step modules reach the
 same operations through the ``log_*`` functions in :mod:`opus_import.import_util`, which
-take the context as their first argument; both spellings are one implementation.
+take the context as their first argument; both spellings are one implementation. While
+the context has a :attr:`~opus_import.context.ImportContext.capture`, in a pool worker,
+every one of them records the call and the position instead of logging it, deduplicating
+and marking nothing, and the import's process makes the call when it replays the worker's
+task.
 
 .. _dev_guide_import_pass_structure:
 
@@ -273,10 +287,12 @@ file specification (expensive) to decide which row to keep. The rest are dropped
 log line. ``temporal_camera`` is passed straight through onto the metadata for the obs
 classes to read.
 
-**The second half is the master loop.** For each index row, and for each *phase* of that
+**The second half computes the rows.** For each index row, and for each *phase* of that
 row, every table the observation belongs to gets one row computed by
-:func:`~opus_import.steps.do_import_obs.import_observation_table`. Three things are
-deferred, in this order:
+:func:`~opus_import.steps.do_import_obs.import_observation_table`, through the one row
+function :func:`~opus_import.steps.do_import_index.import_index_row`. Each row starts
+from the metadata as it stood before the first row, so a row's result depends on that row
+alone. Three things are deferred, in this order:
 
 * the ``obs_surface_geometry__<TARGET>`` tables, because which of them exist depends on
   the targets the observations turn out to mention;
@@ -285,12 +301,21 @@ deferred, in this order:
 * ``obs_files``, because it needs the ``obs_general`` and ``obs_pds`` rows and
   contributes many rows per observation rather than one.
 
-**Nothing is written to the database until every row of the index has been computed.**
-Then the ``mult_`` tables go out, and only then the ``obs_`` tables -- because an
+**The rows are computed by one process or by many, and written by one.** With
+``[import] workers`` above 1, a pool of forked workers computes ranges of rows and records
+every database call and log write instead of making it; the import's own process replays
+each range's events in index order, where the serial loop would have made them, so the
+tables, their ids and the log are the same whatever the number of workers
+(:ref:`dev_guide_import_steps_do_import_pool`).
+
+**Each finished row goes to a sink** that loads a table's rows as soon as
+``[import] transaction_rows`` of them are waiting, so an index is never held in memory
+whole. Once every row has been computed, the ``mult_`` tables go out, and then the
+``obs_`` rows still waiting, table by table in order with ``obs_general`` first. An
 ``obs_`` row stores the row id its value was given in the corresponding ``mult_`` table,
-and that row has to exist to be looked up. Nothing enforces the order: a ``mult_idx``
-column carries a plain index, not a foreign key. Within the ``obs_`` tables,
-``obs_general`` goes first, and *that* one really is a foreign-key target for the rest.
+and a table that filled a transaction during the index was loaded before the ``mult_``
+tables were written; nothing enforces the order, because a ``mult_idx`` column carries a
+plain index, not a foreign key, and the bundle loads with foreign key checks off.
 
 Where the surface geometry comes from varies. Most bundles have separate summary files
 per target. Some -- COCIRS_[01]xxx among them -- carry it inline in the primary index
@@ -397,7 +422,10 @@ The run keeps the running maximum in
 :attr:`~opus_import.context.ImportContext.max_table_id_cache` rather than querying for
 each row, and clears it per bundle. **Ids therefore depend on the order rows are
 produced in**, which is why the pipeline sorts every directory listing and every table
-name it iterates.
+name it iterates. A pool worker cannot know the running maximum, so it numbers its ids
+from zero per table within its task, and the import's process rebases them onto the
+maximum as it replays the tasks in index order; the ids are the ones the serial loop
+gives.
 
 **The mult id.** A column whose value comes from a fixed set stores an integer index into
 that column's ``mult_`` table rather than the value itself. The table is
@@ -406,8 +434,10 @@ one more than the current maximum -- unless the column's schema pins its values 
 ``mult_options``, in which case a value that is not among them is an error.
 
 Nothing enforces the reference: a ``mult_idx`` column carries a plain index and **no
-foreign key**. That is why the write order matters, and why the mult tables go out before
-the ``obs_`` tables.
+foreign key**, so a table's rows can be loaded before the ``mult_`` values they name are
+written, which happens at the end of each index. A pool worker cannot know a value's id
+either; it records the value, and the import's process resolves each one in the order
+the serial loop meets them, so every value gets the id the serial loop gives it.
 
 A ``mult_list`` column -- one an observation can have several values of -- stores a JSON
 array of those ids instead, with missing values omitted rather than stored as null.
@@ -443,12 +473,21 @@ Invariants
   wrote a finished schema before setting it ``appending`` would break the guarantee the
   design rests on. A web application already serving a schema does not check it again,
   so appends and deletions go to a schema nothing is serving.
-* **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
-  constraint enforces it.
-* **An import run is single-threaded, and one obs instance serves a whole bundle**,
-  whose metadata dictionary is replaced in place once per row -- so **no obs method may
-  cache anything derived from it**. :ref:`dev_guide_import_obs_base` gives the one
-  pattern that is allowed.
+* **Every** ``mult_`` **value an** ``obs_`` **row names is in its** ``mult_`` **table
+  by the end of the index.** The ``mult_`` tables are written once every row has been
+  computed, before the rows still waiting are loaded. No database constraint enforces
+  it.
+* **An import computes in many processes and writes from one.** Only the import's own
+  process uses the database and writes the log; pool workers compute rows and record
+  what they would have written, and that process replays it in index order, so the
+  result does not depend on how many workers there are
+  (:ref:`dev_guide_import_steps_do_import_pool`).
+* **A row's result depends on that row alone.** One obs instance serves a whole bundle,
+  and its metadata dictionary is cleared and refilled from the index's pre-loop metadata
+  at the start of every row -- so **no obs method may cache anything derived from it**,
+  since a cache carried from one row to the next would make a row's result depend on
+  which rows the same process computed before it.
+  :ref:`dev_guide_import_obs_base` gives the one pattern that is allowed.
 * **Row ids depend on insertion order**, so anything that changes the order rows are
   produced in changes every id. Directory listings are sorted for exactly this reason.
 * **Longitudes carry two derived columns.** A ``LONG`` field stores, besides its minimum

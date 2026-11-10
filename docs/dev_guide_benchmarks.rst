@@ -301,11 +301,30 @@ and records ``NAME`` as the side's schema, or with ``--clone`` a timed copy of i
 ``--import-key KEY=VALUE``, repeatable, adds an ``[import]`` key to every configuration
 the run writes -- ``index_workers=22``, say, to time finalization's key builds over more
 connections than the default -- and the result's environment records the keys as
-``import_keys``. ``log_file`` and ``debug_log_file`` are refused, since the harness
+``import_keys``. A value is written as TOML would read it: ``true`` and ``false`` as
+booleans, a whole or finite decimal number as a number, and anything else as a string.
+``log_file`` and ``debug_log_file`` are refused, since the harness
 reads each run's logs from where it put them. A result file holds runs of one set of
 keys: a run with others is refused, as a run of another commit is, and a file whose
 runs record no keys takes only runs that set none. A side whose configuration does not
 know a key refuses the file, so it is given only to a side that does.
+
+``--workers-sweep N,N,...`` chooses an ``[import] workers`` count rather than measuring a
+change. Instead of the timed runs, it imports the scenario's largest bundle alone,
+without finalization, into a fresh schema on a freshly restarted server, once per count:
+each count is capped at the ceiling the import itself would apply -- the counted cores
+times ``cpu_fraction``, from ``--import-key`` where given and the default otherwise
+(:ref:`dev_guide_import_running_parallelism`) -- and each distinct
+capped count runs once, in the order first asked for. Each is recorded as a run of kind
+``import_sweep`` holding the import's wall-clock, its ``obs_general`` rows per second and
+the process tree's peak proportional set size, with the count in its details; a warm-up
+import comes first at a scale whose timed runs have one. ``compare`` never compares a
+sweep run, so give the sweep a session of its own. It takes none of ``--reuse-schema``,
+``--stop-before-finalization`` and ``--profile``, and a scale whose scenario names no
+largest bundle refuses it::
+
+    python -m benchmarks.bench_import --scale test --side after --pr <tag> \
+        --session sweep --python venv/bin/python --repo-root . --workers-sweep 1,2,4,8,16
 
 **A run that fails records nothing.** It fails when an invocation exits non-zero; when
 a bundle-import invocation leaves any bundle it imports without a row in

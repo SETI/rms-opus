@@ -15,6 +15,7 @@ The schema, and the errors an invalid file produces, are documented in
 from opus_config.config import (
     DATABASE_BRANDS,
     LOG_LEVELS,
+    MAX_WORKERS,
     OPUS_CONFIG_ENV_VAR,
     TABLE_NAMES,
     ConfigError,
@@ -22,15 +23,19 @@ from opus_config.config import (
     DjangoConfig,
     ImportConfig,
     OpusConfig,
+    Parallelism,
     PathsConfig,
     config_path,
+    detected_cores,
     get_config,
     load_config,
+    resolve_parallelism,
 )
 
 __all__ = [
     'DATABASE_BRANDS',
     'LOG_LEVELS',
+    'MAX_WORKERS',
     'OPUS_CONFIG_ENV_VAR',
     'TABLE_NAMES',
     'ConfigError',
@@ -38,8 +43,11 @@ __all__ = [
     'DjangoConfig',
     'ImportConfig',
     'OpusConfig',
+    'Parallelism',
     'PathsConfig',
     'config_path',
+    'detected_cores',
     'get_config',
     'load_config',
+    'resolve_parallelism',
 ]

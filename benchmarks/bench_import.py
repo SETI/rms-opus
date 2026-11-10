@@ -57,6 +57,7 @@ import argparse
 import contextlib
 import functools
 import json
+import math
 import pstats
 import shutil
 import subprocess  # nosec B404 - the harness runs the side's import
@@ -105,6 +106,7 @@ from benchmarks.results import (
 from benchmarks.sides import Side, Spelling, require_no_pythonpath
 from import_tests.tools import build_run, run_logs
 from import_tests.tools.golden_io import DatabaseCredentials
+from opus_config.config import DEFAULT_CPU_FRACTION, detected_cores
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -550,6 +552,52 @@ class ImportBench:
         run['details']['largest_alone'] = monitor.summary()
         drop_schema(self.server, schema)
 
+    def run_sweep(self, workers: int) -> dict[str, Any]:
+        """Import the largest bundle alone with a given number of workers, and record it.
+
+        Parameters:
+            workers: The ``[import] workers`` the import runs with.
+
+        Returns:
+            The result run, of kind ``import_sweep``: the import's wall-clock, its rows
+            per second, and the process tree's peak PSS, with the worker count.
+        """
+        bundle = self.scenario.largest
+        assert bundle is not None
+        run = new_run('import_sweep')
+        schema = self.schema_name(f'sweep_{workers}')
+        drop_schema(self.server, schema)
+        run_dir = self.label.scratch_dir / f'import_sweep_{workers}'
+        saved = self.extra_import
+        self.extra_import = {**saved, 'workers': workers}
+        try:
+            config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
+        finally:
+            self.extra_import = saved
+        monitor.expect_groups([bundle])
+        monitor.expand_groups()
+        self.fresh_server(run, 'sweep')
+        self._invoke(monitor, config_file, [*self.spelling.erase, *timing])
+        self._invoke(monitor, config_file, [self.spelling.bundle_import, *timing, bundle])
+        require_empty_errors_log(errors_log, at_end=True)
+        record = monitor.records[-1]
+        rows = self._rows(schema, bundle)
+        run['metrics']['import.sweep.wall_s'] = record.wall_s
+        run['metrics']['import.sweep.rows_per_s'] = rows / record.wall_s
+        run['metrics']['import.sweep.peak_tree_pss_kb'] = record.peak_tree_pss_kb
+        run['details'] = {'workers': workers, 'bundle': bundle, 'obs_general_rows': rows}
+        drop_schema(self.server, schema)
+        return run
+
+    def _rows(self, schema: str, bundle: str) -> int:
+        """Return how many ``obs_general`` rows a bundle has in a schema."""
+        statement = (
+            f'SELECT COUNT(*) FROM {quote_identifier(schema)}.obs_general '  # nosec B608 - quoted identifier
+            'WHERE bundle_id = %s'
+        )
+        with contextlib.closing(self.server.connect()) as connection:
+            return int(query(connection, statement, [bundle])[0][0])
+
     def _incremental(self, run: dict[str, Any], index: int | str, source: str) -> None:
         """Append the largest bundle to a copy of the finished schema, and finalize.
 
@@ -862,11 +910,34 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         'repeatable. A whole number or true or false is written as one, anything else as '
         'a string',
     )
+    parser.add_argument(
+        '--workers-sweep',
+        metavar='N,N,...',
+        default=None,
+        help="instead of the timed runs, import the scenario's largest bundle alone once per "
+        "worker count, each capped at the ceiling the detected cores and the side's "
+        '[import] cpu_fraction give and each distinct count run once; recorded as kind '
+        'import_sweep, in a session '
+        'of its own, to choose a count rather than to be judged',
+    )
     args = parser.parse_args(argv)
     try:
         args.import_keys = parse_import_keys(args.import_key)
     except ValueError as e:
         parser.error(str(e))
+    if args.workers_sweep is not None:
+        try:
+            requested = [int(text) for text in args.workers_sweep.split(',')]
+        except ValueError:
+            parser.error('--workers-sweep takes whole numbers separated by commas')
+        if any(count < 1 for count in requested):
+            parser.error('--workers-sweep takes counts of at least 1')
+        try:
+            args.sweep_counts = sweep_counts(requested, args.import_keys)
+        except ValueError as e:
+            parser.error(str(e))
+        if args.reuse_schema is not None or args.stop_before_finalization or args.profile:
+            parser.error('--workers-sweep runs imports of its own and takes no other mode')
     if args.profile and args.scale == 'fixture':
         parser.error('--profile profiles the bundle imports of the test and complete scales')
     if (args.clone or args.finalize_only) and args.reuse_schema is None:
@@ -932,6 +1003,19 @@ def main(argv: Sequence[str] | None = None) -> None:
             path = append_runs(label, environment, [run])
             sys.stdout.write(f'recorded in {path}\n')
             return
+        if args.workers_sweep is not None:
+            if scenario.largest is None:
+                sys.exit(f'the {args.scale} scenario names no largest bundle to sweep')
+            if args.scale in WARMED_SCALES:
+                warm_up = bench.warm_up()
+                append_runs(label, environment, [warm_up])
+            for workers in args.sweep_counts:
+                run = bench.run_sweep(workers)
+                environment['bulk_load_path'] = file_bulk_load_path(label, [run])
+                path = append_runs(label, environment, [run])
+                wall = run['metrics']['import.sweep.wall_s']
+                sys.stdout.write(f'workers {workers}: {wall:.1f} s, recorded in {path}\n')
+            return
         finalize = not args.stop_before_finalization
         count = scenario.runs if args.runs is None else args.runs
         existing = _existing_import_runs(label)
@@ -955,6 +1039,45 @@ def main(argv: Sequence[str] | None = None) -> None:
                 'import.wall_s', run['metrics']['import.bundle_imports.wall_s']
             )
             sys.stdout.write(f'import run {index}: {wall:.1f} s, recorded in {path}\n')
+
+
+def sweep_counts(
+    requested: Sequence[int], import_keys: Mapping[str, object], *, detected: int | None = None
+) -> list[int]:
+    """Return the worker counts a sweep runs: each capped at the ceiling, each once.
+
+    The ceiling is the import's: the cores counted, times ``cpu_fraction``.
+
+    Parameters:
+        requested: The counts asked for.
+        import_keys: The ``[import]`` keys every run sets, whose ``cpu_fraction``, when
+            given, decides the ceiling as the import does.
+        detected: The cores to take as detected; None counts them with
+            `opus_config.config.detected_cores`.
+
+    Returns:
+        The distinct capped counts, in the order first asked for.
+
+    Raises:
+        ValueError: If ``cpu_fraction`` is not a number greater than 0 and at most 1.
+    """
+    cores = detected_cores() if detected is None else detected
+    fraction = import_keys.get('cpu_fraction', DEFAULT_CPU_FRACTION)
+    if (
+        isinstance(fraction, bool)
+        or not isinstance(fraction, (int, float))
+        or not 0 < fraction <= 1
+    ):
+        raise ValueError(
+            f'--import-key cpu_fraction must be greater than 0 and at most 1, not {fraction!r}'
+        )
+    ceiling = max(1, math.floor(cores * fraction))
+    counts: list[int] = []
+    for count in requested:
+        capped = min(count, ceiling)
+        if capped not in counts:
+            counts.append(capped)
+    return counts
 
 
 def _existing_import_runs(label: Label) -> int:
