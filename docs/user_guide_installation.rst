@@ -768,13 +768,9 @@ entirely.
    * - ``cpu_fraction``
      - optional
      - The share of the cores the ceiling allows, greater than 0 and at most 1. Default
-       ``0.75``. The ceiling is ``max(1, floor(cores * cpu_fraction))``, and a
-       ``workers`` or ``index_workers`` above it stops the import before it starts.
-   * - ``cpus``
-     - optional
-     - The number of cores to take the computer as having, a whole number of at least
-       1, for a host whose size is better stated than counted. Default: the cores the
-       import may run on, counted when it starts.
+       ``0.75``. The ceiling is ``max(1, floor(cores * cpu_fraction))``, where cores is
+       the number the import may run on, counted when it starts, and a ``workers`` or
+       ``index_workers`` above it stops the import before it starts.
    * - ``server_tmpdir``
      - optional
      - A directory on the database server's host, writable by ``mysqld``, where the

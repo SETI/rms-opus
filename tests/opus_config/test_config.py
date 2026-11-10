@@ -198,7 +198,6 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('import_.index_workers', 1),
         ('import_.server_tmpdir', None),
         ('import_.workers', 1),
-        ('import_.cpus', None),
         ('import_.cpu_fraction', 0.75),
         ('import_.worker_rows', 500),
     ],
@@ -235,7 +234,6 @@ def test_load_config_defaults_every_optional_key(
         ('import', 'server_tmpdir', '"/var/tmp/mysql_ddl"', '/var/tmp/mysql_ddl'),
         ('import', 'workers', '4', 4),
         ('import', 'workers', '"max"', 'max'),
-        ('import', 'cpus', '8', 8),
         ('import', 'cpu_fraction', '1', 1.0),
         ('import', 'cpu_fraction', '0.5', 0.5),
         ('import', 'worker_rows', '5', 5),
@@ -385,14 +383,6 @@ def test_load_config_accepts_a_whole_number_probability(
             '[import] \'workers\' must be a whole number or "max", not float',
         ),
         (
-            adding('import', 'cpus', '0'),
-            "[import] 'cpus' must be at least 1, not 0",
-        ),
-        (
-            adding('import', 'cpus', '"8"'),
-            "[import] 'cpus' must be a whole number, not str",
-        ),
-        (
             adding('import', 'cpu_fraction', '0'),
             "[import] 'cpu_fraction' must be greater than 0, not 0",
         ),
@@ -489,8 +479,6 @@ def test_load_config_accepts_a_whole_number_probability(
         'index-workers-given-a-boolean',
         'workers-zero',
         'workers-not-whole',
-        'cpus-zero',
-        'cpus-given-a-string',
         'cpu-fraction-zero',
         'cpu-fraction-above-one',
         'worker-rows-zero',
@@ -666,7 +654,6 @@ def _import_table(**keys: object) -> ImportConfig:
         'index_workers': 1,
         'server_tmpdir': None,
         'workers': 1,
-        'cpus': None,
         'cpu_fraction': 0.75,
         'worker_rows': 500,
     }
@@ -675,34 +662,28 @@ def _import_table(**keys: object) -> ImportConfig:
 
 
 @pytest.mark.parametrize(
-    ('keys', 'detected', 'ceiling', 'source'),
+    ('keys', 'detected', 'ceiling'),
     [
-        ({}, 8, 6, 'detected'),
-        ({}, 1, 1, 'detected'),
-        ({}, 3, 2, 'detected'),
-        ({'cpus': 4}, 32, 3, '[import] cpus'),
-        ({'cpus': 32, 'cpu_fraction': 1.0}, 2, 32, '[import] cpus'),
-        ({'cpu_fraction': 0.1}, 4, 1, 'detected'),
+        ({}, 8, 6),
+        ({}, 1, 1),
+        ({}, 3, 2),
+        ({'cpu_fraction': 1.0}, 32, 32),
+        ({'cpu_fraction': 0.1}, 4, 1),
     ],
     ids=[
         'three-quarters',
         'one-core',
         'rounds-down',
-        'stated',
-        'stated-above-detected',
+        'whole-machine',
         'floor-of-one',
     ],
 )
 def test_the_ceiling_is_a_fraction_of_the_cores_and_never_zero(
-    keys: dict[str, object], detected: int, ceiling: int, source: str
+    keys: dict[str, object], detected: int, ceiling: int
 ) -> None:
-    """``max(1, floor(C * cpu_fraction))``, with C stated by ``cpus`` or counted."""
+    """``max(1, floor(C * cpu_fraction))``, with C the cores counted."""
     resolved = resolve_parallelism(_import_table(**keys), detected=detected)
-    assert (resolved.ceiling, resolved.cores_source, resolved.detected_cores) == (
-        ceiling,
-        source,
-        detected,
-    )
+    assert (resolved.ceiling, resolved.cores) == (ceiling, detected)
     assert (resolved.workers, resolved.index_workers) == (1, 1)
 
 
@@ -725,19 +706,19 @@ def test_a_command_line_count_replaces_the_files() -> None:
         (
             {'workers': 7},
             None,
-            '[import] workers 7 is above the ceiling of 6: 8 cores (detected) times '
+            '[import] workers 7 is above the ceiling of 6: 8 cores detected times '
             'cpu_fraction 0.75',
         ),
         (
             {},
             7,
-            '--workers 7 is above the ceiling of 6: 8 cores (detected) times cpu_fraction 0.75',
+            '--workers 7 is above the ceiling of 6: 8 cores detected times cpu_fraction 0.75',
         ),
         (
-            {'index_workers': 4, 'cpus': 4},
+            {'index_workers': 7},
             None,
-            '[import] index_workers 4 is above the ceiling of 3: 4 cores ([import] cpus) '
-            'times cpu_fraction 0.75',
+            '[import] index_workers 7 is above the ceiling of 6: 8 cores detected times '
+            'cpu_fraction 0.75',
         ),
     ],
     ids=['workers', 'command-line', 'index-workers'],
@@ -752,11 +733,10 @@ def test_a_count_above_the_ceiling_is_refused_naming_it(
 
 
 def test_the_parallelism_line_names_everything_it_was_worked_out_from() -> None:
-    """The line the import logs: cores and their source, the fraction, the ceiling, both counts."""
-    resolved = resolve_parallelism(_import_table(workers='max', cpus=8), detected=30)
+    """The line the import logs: the cores detected, the fraction, the ceiling, both counts."""
+    resolved = resolve_parallelism(_import_table(workers='max'), detected=8)
     assert resolved.describe() == (
-        'Parallelism: 8 cores ([import] cpus), cpu_fraction 0.75, ceiling 6; '
-        'workers 6, index_workers 1'
+        'Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1'
     )
 
 

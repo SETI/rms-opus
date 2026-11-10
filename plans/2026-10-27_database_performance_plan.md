@@ -80,8 +80,8 @@ architecture Phases 0 to 6 produced.
 | Deployment layout | The schema supports **one database server and any number of stateless web workers** with no later change (`§D-5`): every piece of per-user and per-search state lives in the database, the search build serializes on a row lock in the database, and no PR adds a worker-local table or file. The application-level work a multi-host deployment would need (a shared cache, shared download storage, a fleet deploy step) is **not in this plan**; it is listed in `plans/2026-10-28_cloud_deployment_notes.md` for later. |
 | PostgreSQL | **Optional, last, and complete if done.** All PostgreSQL work is at the end and can be finished at a later time; when it is done it is a complete port, because a comparison based on the import alone or on hand-translated queries is meaningless without the production runtime (the SQL the Django views emit, the driver's parameter handling, the connection lifecycle, and the worker model). Phases 0 to 6 therefore change nothing about PostgreSQL, write no PostgreSQL code, and depend on nothing from Phase P; they keep the brand boundary (next row) so that Phase P has less to translate. |
 | Brand dispatch | SQL that differs by brand lives in exactly two places: `opus_import.importdb.<brand>` for the import and `opus_app.apps.tools.sql_builder` for the application, the latter dispatching on `connection.vendor`. Driver exceptions are classified in `opus_app.apps.tools.db_utils`, which is the only module that imports a driver's error types. Views and steps never test the brand or a driver error code themselves. A reviewer checks this with `grep -rn "connection\.vendor\|\.brand\b\|MySQLdb\|psycopg\|MYSQL_[A-Z_]*" src/opus_app/apps src/opus_import/steps --include=*.py`, which after Phase P should hit only those modules; today it hits the views' driver-code tests, which Phase P moves. Phases 0 to 6 add MySQL implementations behind these boundaries; where a PR knows what the PostgreSQL rendering will be, it says so in a one-line **PostgreSQL note** for Phase P and writes no code for it. |
-| Parallel import design | **Single writer, many computers.** Worker processes turn index rows into table rows and return them with chunk-relative ids; the parent process alone rebases ids, resolves mult values, writes to the database, and emits the log. Item 3 of the analysis (write the permanent tables directly and drop the import namespace) is PR-07's and PR-08's, so no process has tables of its own; items 1 and 2 (per-bundle id ranges, mult ids that concurrent writers cannot collide on) are PR-16's. Within one process: with one writer there is no shared counter to protect, and ids and logs stay identical to the serial run, so the golden suites keep comparing byte for byte. Several `opus_import` processes, on one computer or several, may also import into one schema at once (PR-16): ids come from per-bundle id ranges and mult values from a unique key, so no counter is shared. |
-| Import parallelism | **Every import parallelism setting defaults to 1**, because the computer doing the import may also run the database server: PR-07's `[import] index_workers`, PR-09's `[import] workers`, and PR-16a's `opus_import_all --workers` total. Parallelism is asked for by argument or key, never assumed. PR-09 adds the ceiling all of them obey, `max(1, floor(C × [import] cpu_fraction))`, with `[import] cpus` to state C instead of detecting it, and the value `"max"` for "the ceiling". **The CI scripts raise them:** every fixture session's main run sets `workers` and `index_workers` at `"max"`, with `cpus = 4` on a GitHub-hosted runner (ceiling 3) and `cpus = 8` anywhere else (ceiling 6) (PR-09), so the pool and concurrent-DDL paths are the ones the goldens exercise, and a local run exercises more of them; and `scripts/automated_tests/opus_setup_environment.sh`, which both the self-hosted integration job and the nightly staging tests run, writes `workers` and `index_workers` at `"max"` with `cpus = 32` under GitHub Actions (the self-hosted job) and `cpus = 16` otherwise (the nightly staging run). |
+| Parallel import design | **Many processes compute, one writes.** Worker processes turn index rows into table rows and return them with chunk-relative ids; the parent process alone rebases ids, resolves mult values, writes to the database, and emits the log. Item 3 of the analysis (write the permanent tables directly and drop the import namespace) is PR-07's and PR-08's, so no process has tables of its own; items 1 and 2 (per-bundle id ranges, mult ids that concurrent writers cannot collide on) are PR-16's. Within one process: with one writer there is no shared counter to protect, and ids and logs stay identical to the serial run, so the golden suites keep comparing byte for byte. Several `opus_import` processes, on one computer or several, may also import into one schema at once (PR-16): ids come from per-bundle id ranges and mult values from a unique key, so no counter is shared. |
+| Import parallelism | **Every import parallelism setting defaults to 1**, because the computer doing the import may also run the database server: PR-07's `[import] index_workers`, PR-09's `[import] workers`, and PR-16a's `opus_import_all --workers` total. Parallelism is asked for by argument or key, never assumed. PR-09 adds the ceiling all of them obey, `max(1, floor(C × [import] cpu_fraction))`, C being the cores the import detects (no key states it), and the value `"max"` for "the ceiling". **The CI scripts raise them:** every fixture session's main run sets `workers` and `index_workers` at `"max"`, so on a GitHub-hosted runner's four cores the ceiling is 3 (PR-09), the pool and concurrent-DDL paths are the ones the goldens exercise, and a local run exercises more of them; and `scripts/automated_tests/opus_setup_environment.sh`, which both the self-hosted integration job and the nightly staging tests run, writes `workers` and `index_workers` at `"max"`, at the ceiling of the cores each machine has. |
 | Where indexes are created | **One write path, chosen by the target schema's state, never by a switch** (PR-07, PR-08; `§D-3`). A schema with no version row is **imported fresh**: the observation and mult tables are created with only their primary and unique keys and the keys the per-bundle delete reads (`obs_general`'s bundle key, and `obs_general_id` on a table whose primary key does not start with it), every other table with all its keys, and finalization creates every other index and foreign key once, by sort. A finalized schema is **appended** to with its indexes in place. There is no import namespace after PR-08. An incremental update of the served schema either clones it, less the changed bundles, into a new schema and imports into that, or imports into it as a new generation that the served `obs_general` view hides until it is switched in, whichever design PR-23 chooses (`§D-3.1`). |
 | Append invalidation | Every finalization step declares whether an append invalidates it, and the `--finalize` that follows an append re-runs exactly those (PR-08); an append never finalizes by itself (except under `--do-it-all`, which runs `--import` then `--finalize` in one invocation, PR-08). At PR-08 they are PR-07's duplicate step, the aux tables, the cache-table drop (PR-11 turns it into the search-table reset and cache flush), `ANALYZE`, and validation; PR-14's mult step, PR-25's histograms, and PR-24's options, if implemented, add themselves. `--create-indexes` runs in every finalization and adds the keys the schema files declare and a table lacks; on an append of existing tables it finds nothing to do, and a table first created on the append path is keyed by that run. A PR that adds a finalization step adds an append test. |
 | Foreign keys | Child tables are created **without** foreign keys; finalization adds them, **serially and after every index build**, with `foreign_key_checks = 0` (which is what makes `ADD FOREIGN KEY` an in-place operation that does not re-check existing rows; each add takes an exclusive metadata lock on `obs_general`, so they never run concurrently with an `ALTER` on it). Because an unvalidated foreign key never catches orphans, validation gains an anti-join count per child (PR-07). An append loads with the foreign keys in place under `foreign_key_checks = 0`, and the same orphan count covers it. InnoDB performs no cascade while the checks are off, so **the per-bundle delete and the duplicate step always run with `foreign_key_checks = 1`**, and `cart`'s cascade (PR-08) removes the cart rows they orphan; the orphan count covers `cart` too. PostgreSQL note: `ADD CONSTRAINT ... NOT VALID` then `VALIDATE CONSTRAINT`. The permanent schema at the end of an import is unchanged. |
@@ -1799,12 +1799,9 @@ field-function cache is not made at all (§7).
     refused, naming the ceiling, above `max(1, floor(C × [import] cpu_fraction))`, where C
     is the cores the process may run on (`len(os.sched_getaffinity(0))` where the platform
     has it, else `os.cpu_count()`) and `cpu_fraction` defaults to 0.75 and must lie in
-    (0, 1]. `[import] cpus`, when set, is C instead of the detected count, for a host
-    whose size the operator states (the import logs at info level when it exceeds the
-    detected count, and runs; stating C is the key's purpose, and the fixture sessions
-    below set it, so a warning would fail the whitelist test). `workers` and PR-07's `index_workers` both accept
-    `"max"`, meaning the ceiling, and both are refused above it; the log's first line
-    states C and where it came from, the fraction, the ceiling, and both values. **The
+    (0, 1]. No key states C: the import detects it. `workers` and PR-07's
+    `index_workers` both accept `"max"`, meaning the ceiling, and both are refused above
+    it; the log's first line states C, the fraction, the ceiling, and both values. **The
     pool is created once per
     index** (a COCIRS bundle has several index tables, and `metadata` is per index),
     after the index's `metadata`, `vol_info`, `table_schemas`, and the parsed `args` have
@@ -1904,14 +1901,11 @@ field-function cache is not made at all (§7).
   3` (both with `worker_rows = 5`) into two schemas and asserts the dumped tables and the
   logs (timestamps stripped) are identical. The fixture suite's main run uses `workers =
   "max"`, `index_workers = "max"` (replacing PR-07's `2`), and `worker_rows = 5`, so the pool path is the golden
-  path; the negative-case runs use `workers = 1`. **Every fixture session states its
-  host size** through `write_opus_config(extra_import=...)`: `import_tests/conftest.py`
-  sets `cpus = 4` when the `RUNNER_ENVIRONMENT` environment variable is `github-hosted`
-  (a standard runner has four cores; the ceiling is 3) and `cpus = 8` otherwise (a
-  local run or a self-hosted runner; the ceiling is 6), so the suite's `workers = 3` and
-  `"max"` are never refused. The goldens do not depend on the count, which the
-  determinism test proves. On a machine with fewer cores than `cpus` the pool's
-  processes share them, which only slows the run.
+  path; the negative-case runs use `workers = 1`. **The fixture sessions count the
+  machine's cores** like any import: the suite's fixed `workers = 3` is a four-core
+  machine's ceiling, so it is never refused on a GitHub-hosted runner, and `"max"`
+  resolves to whatever the machine allows. The goldens do not depend on the count,
+  which the determinism test proves.
 - **Measurement:** fixture and test scale, `--import` wall-clock for the largest bundle at
   `workers = 1, 2, 4, 8`, each capped at the workstation's ceiling (the harness takes a
   list, caps each value, and runs each distinct value once), rows per second, the tree's
@@ -1925,23 +1919,17 @@ field-function cache is not made at all (§7).
   so the judged numbers on both sides are the same statistic and the sweep's single runs,
   the fastest of which was chosen for being fast, are never judged.
 - **CI.** The defaults stay 1; the scripts raise them (§1, Import parallelism). The
-  GitHub-hosted `import-tests` job runs the fixture sessions at their `cpus = 4`
-  ceiling, as above.
-  `scripts/automated_tests/opus_setup_environment.sh` writes the `opus.toml` for both
-  the self-hosted integration job and the nightly staging tests, so it chooses the
-  assumed host size: `cpus = 32` when `GITHUB_ACTIONS` is `true` (the self-hosted
-  runner), `cpus = 16` otherwise (the nightly staging run, started outside Actions), and
-  `OPUS_TEST_CPUS`, from the environment or `~/opus_runner_secrets`, overriding both; it
-  refuses a value that is not a positive integer, beside its existing check of the other
-  values it writes. Its `[import]` table gains that `cpus` with `workers = "max"` and
-  `index_workers = "max"`, so the integration import runs at the assumed host's ceiling,
-  and `opus_main_test.sh` echoes the chosen value with the other run settings.
-  `tests/opus_config` covers `cpus`, `"max"`, and the refusal above the ceiling.
+  GitHub-hosted `import-tests` job runs the fixture sessions at its four cores' ceiling,
+  as above. `scripts/automated_tests/opus_setup_environment.sh` writes the `opus.toml`
+  for both the self-hosted integration job and the nightly staging tests; its
+  `[import]` table gains `workers = "max"` and `index_workers = "max"`, so the
+  integration import runs at the ceiling of the cores the machine running it has.
+  `tests/opus_config` covers `"max"` and the refusal above the ceiling.
 - **Docs:** `dev_guide_import_running.rst` (`--workers`, the `[import]` keys, and the
   ceiling), `dev_guide_import_steps.rst` (the row-range tasks, the event stream, and the
   parent's replay), `dev_guide_import_overview.rst` (its statement that an import run is
-  single-threaded), and `dev_guide_testing.rst` (`OPUS_TEST_CPUS`, and the fixture
-  suite's host size on a GitHub-hosted runner and elsewhere).
+  single-threaded), and `dev_guide_testing.rst` (the fixture suite's and the
+  integration chain's counts).
 - **Acceptance:** §2.5; goldens unchanged; the determinism test passes; the warning
   whitelist unchanged.
 - **Scale:** test scale.
@@ -5433,6 +5421,14 @@ Nothing above this line is rewritten by an executor.
     widely with the server's state.
   - `Innodb_data_written` held (134.1 GB to 133.7 GB). The tree's peak PSS was 6.93 GB
     against 3.05 GB, and the largest process's peak RSS 2.63 GB against 3.07 GB.
+- The orchestrator's decision (2026-11-10): no key or script states the number of cores,
+  since the import counts the ones it may run on. `[import] cpus` goes, and with it
+  `build_run.fixture_cpus`, `write_opus_config`'s leaving out of a key given None (the
+  harness's only use of it was to leave out `cpus`), `OPUS_TEST_CPUS`, the integration
+  chain's stated count and its echo, and `bench_import`'s `--import-key cpus`; the
+  sweep caps each count at the detected cores times `cpu_fraction`. The `Parallelism`
+  line reads `<C> cores detected`. The fixture suite's fixed `workers = 3` is a four-core
+  machine's ceiling, so a GitHub-hosted runner never refuses it.
 
 ### 2026-11-10, PR-10 (written against this file at 2b098379)
 

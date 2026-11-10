@@ -65,10 +65,10 @@ and the log locations all come from the configuration file, and the keys it uses
        default), and in which directory on the database server's host the server sorts
        them (the server's own setting by default). See
        :ref:`dev_guide_import_steps_create_indexes`.
-   * - ``[import] cpus``, ``cpu_fraction``
-     - The ceiling neither ``workers`` nor ``index_workers`` may exceed: the cores to take
-       the computer as having (counted by default), and the share of them allowed (0.75
-       by default). See :ref:`dev_guide_import_running_parallelism`.
+   * - ``[import] cpu_fraction``
+     - The ceiling neither ``workers`` nor ``index_workers`` may exceed: the share of the
+       cores the import counts that is allowed (0.75 by default). See
+       :ref:`dev_guide_import_running_parallelism`.
 
 Configuration values can be overridden for one run without editing the file, with
 ``--override-db-schema``, ``--override-pds3-data-dir``, ``--override-pds4-data-dir`` and
@@ -89,25 +89,22 @@ tables finalization builds keys on at once, each over a connection of its own
 the ceiling.
 
 **No request takes every core**, because the database server or another user may share
-the computer. The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is
-``[import] cpus`` when the file sets it, and otherwise the cores the process may run on
--- its CPU affinity set where the platform has one, so a run confined by ``taskset`` or a
-container's CPU set counts only those. ``cpu_fraction`` is greater than 0 and at most 1,
+the computer. The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is the cores
+the process may run on -- its CPU affinity set where the platform has one, so a run
+confined by ``taskset`` or a container's CPU set counts only those. ``cpu_fraction`` is greater than 0 and at most 1,
 0.75 by default. :func:`opus_config.config.resolve_parallelism` resolves both counts,
 and a count above the ceiling is **refused**, not lowered: the run logs a fatal message
-naming the count, the ceiling, the cores and where they came from, and the fraction, and
-exits non-zero before it opens the database.
+naming the count, the ceiling, the cores and the fraction, and exits non-zero before it
+opens the database.
 
 ``--workers N`` replaces ``[import] workers`` for one invocation, and takes a whole
-number of at least 1 or ``max``, checked against the same ceiling. ``[import] cpus`` is
-for a host whose size is better stated than counted; a stated count above the counted one
-is used as stated, and the run says so on an info line.
+number of at least 1 or ``max``, checked against the same ceiling.
 
-**The first line of every run's log states the parallelism**: the cores and where they
-came from (``detected`` or ``[import] cpus``), ``cpu_fraction``, the ceiling, and the
-resolved ``workers`` and ``index_workers``, as in::
+**The first line of every run's log states the parallelism**: the cores detected,
+``cpu_fraction``, the ceiling, and the resolved ``workers`` and ``index_workers``, as
+in::
 
-    Parallelism: 8 cores (detected), cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1
+    Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1
 
 An index with fewer rows than ``[import] worker_rows`` is computed in the import's own
 process whatever ``workers`` says, and so is every index on a platform that cannot

@@ -6,14 +6,14 @@ from benchmarks import bench_import
 
 
 @pytest.mark.parametrize(
-    ('requested', 'keys', 'expected'),
+    ('requested', 'cores', 'keys', 'expected'),
     [
-        ([1, 2, 4, 8], {'cpus': 8}, [1, 2, 4, 6]),
-        ([1, 2, 4, 8], {'cpus': 4}, [1, 2, 3]),
-        ([8, 4, 2, 1], {'cpus': 4}, [3, 2, 1]),
-        ([1, 2, 4, 8], {'cpus': 8, 'cpu_fraction': 1.0}, [1, 2, 4, 8]),
-        ([2, 2, 1], {'cpus': 2}, [1]),
-        ([1, 4, 8], {'cpus': 8, 'cpu_fraction': 0.5}, [1, 4]),
+        ([1, 2, 4, 8], 8, {}, [1, 2, 4, 6]),
+        ([1, 2, 4, 8], 4, {}, [1, 2, 3]),
+        ([8, 4, 2, 1], 4, {}, [3, 2, 1]),
+        ([1, 2, 4, 8], 8, {'cpu_fraction': 1.0}, [1, 2, 4, 8]),
+        ([2, 2, 1], 2, {}, [1]),
+        ([1, 4, 8], 8, {'cpu_fraction': 0.5}, [1, 4]),
     ],
     ids=[
         'caps-at-the-ceiling',
@@ -25,14 +25,14 @@ from benchmarks import bench_import
     ],
 )
 def test_each_count_is_capped_at_the_ceiling_and_run_once(
-    requested: list[int], keys: dict[str, object], expected: list[int]
+    requested: list[int], cores: int, keys: dict[str, object], expected: list[int]
 ) -> None:
-    """The ceiling is the import's, ``max(1, floor(cpus * cpu_fraction))``."""
-    assert bench_import.sweep_counts(requested, keys) == expected
+    """The ceiling is the import's, ``max(1, floor(cores * cpu_fraction))``."""
+    assert bench_import.sweep_counts(requested, keys, detected=cores) == expected
 
 
-def test_without_a_stated_size_the_detected_cores_decide(monkeypatch: pytest.MonkeyPatch) -> None:
-    """With no ``cpus`` key the sweep counts the cores, as the import does."""
+def test_the_detected_cores_decide(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The sweep counts the cores, as the import does."""
     monkeypatch.setattr(bench_import, 'detected_cores', lambda: 30)
     assert bench_import.sweep_counts([1, 32], {}) == [1, 22]
 
@@ -54,10 +54,6 @@ def test_without_a_stated_size_the_detected_cores_decide(monkeypatch: pytest.Mon
             ['--workers-sweep', '1,2', '--import-key', 'cpu_fraction=1.5'],
             '--import-key cpu_fraction must be greater than 0 and at most 1, not 1.5',
         ),
-        (
-            ['--workers-sweep', '1,2', '--import-key', 'cpus=0'],
-            '--import-key cpus must be a whole number of at least 1, not 0',
-        ),
     ],
     ids=[
         'not-a-number',
@@ -65,7 +61,6 @@ def test_without_a_stated_size_the_detected_cores_decide(monkeypatch: pytest.Mon
         'another-mode',
         'fraction-not-a-number',
         'fraction-above-one',
-        'no-cpus',
     ],
 )
 def test_a_malformed_sweep_is_refused(

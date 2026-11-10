@@ -416,10 +416,7 @@ class ImportBench:
                 else []
             ),
             observer=monitor,
-            # The suite's stated host size is left out: the harness measures this
-            # machine, whose cores the import counts, and a side older than the key
-            # would refuse it.
-            extra_import={'cpus': None, **self.extra_import},
+            extra_import=self.extra_import,
         )
         require_empty_errors_log(paths.errors_log, at_end=True)
         self._fill_run(run, monitor, schema, before, full=finalize, log_dir=paths.log_dir)
@@ -918,8 +915,9 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         metavar='N,N,...',
         default=None,
         help="instead of the timed runs, import the scenario's largest bundle alone once per "
-        "worker count, each capped at the ceiling the side's [import] cpus and cpu_fraction "
-        'give and each distinct count run once; recorded as kind import_sweep, in a session '
+        "worker count, each capped at the ceiling the detected cores and the side's "
+        '[import] cpu_fraction give and each distinct count run once; recorded as kind '
+        'import_sweep, in a session '
         'of its own, to choose a count rather than to be judged',
     )
     args = parser.parse_args(argv)
@@ -1043,25 +1041,27 @@ def main(argv: Sequence[str] | None = None) -> None:
             sys.stdout.write(f'import run {index}: {wall:.1f} s, recorded in {path}\n')
 
 
-def sweep_counts(requested: Sequence[int], import_keys: Mapping[str, object]) -> list[int]:
+def sweep_counts(
+    requested: Sequence[int], import_keys: Mapping[str, object], *, detected: int | None = None
+) -> list[int]:
     """Return the worker counts a sweep runs: each capped at the ceiling, each once.
+
+    The ceiling is the import's: the cores counted, times ``cpu_fraction``.
 
     Parameters:
         requested: The counts asked for.
-        import_keys: The ``[import]`` keys every run sets, whose ``cpus`` and
-            ``cpu_fraction``, when given, decide the ceiling as the import does.
+        import_keys: The ``[import]`` keys every run sets, whose ``cpu_fraction``, when
+            given, decides the ceiling as the import does.
+        detected: The cores to take as detected; None counts them with
+            `opus_config.config.detected_cores`.
 
     Returns:
         The distinct capped counts, in the order first asked for.
 
     Raises:
-        ValueError: If ``cpus`` is not a whole number of at least 1, or ``cpu_fraction``
-            is not a number greater than 0 and at most 1.
+        ValueError: If ``cpu_fraction`` is not a number greater than 0 and at most 1.
     """
-    cpus = import_keys.get('cpus')
-    if cpus is not None and (isinstance(cpus, bool) or not isinstance(cpus, int) or cpus < 1):
-        raise ValueError(f'--import-key cpus must be a whole number of at least 1, not {cpus!r}')
-    cores = cpus if isinstance(cpus, int) else detected_cores()
+    cores = detected_cores() if detected is None else detected
     fraction = import_keys.get('cpu_fraction', DEFAULT_CPU_FRACTION)
     if (
         isinstance(fraction, bool)

@@ -262,8 +262,6 @@ class ImportConfig:
             server's own setting.
         workers: How many processes compute an index's observations, or `MAX_WORKERS`
             for the ceiling. The default is 1, the import's own process with no pool.
-        cpus: The number of cores to take the computer as having, or None to count the
-            cores the process may run on.
         cpu_fraction: The share of the cores the ceiling allows, greater than 0 and at
             most 1. The default is 0.75.
         worker_rows: The index rows one worker task covers. The default is 500.
@@ -277,7 +275,6 @@ class ImportConfig:
     index_workers: int | str
     server_tmpdir: str | None
     workers: int | str
-    cpus: int | None
     cpu_fraction: float
     worker_rows: int
 
@@ -287,9 +284,8 @@ class Parallelism:
     """How many processes and connections an import may use, and why.
 
     Attributes:
-        cores: The cores the ceiling is computed from.
-        cores_source: Where `cores` came from: ``'detected'`` or ``'[import] cpus'``.
-        detected_cores: The cores the process may run on, as counted.
+        cores: The cores the process may run on, as counted, which the ceiling is
+            computed from.
         cpu_fraction: The share of `cores` the ceiling allows.
         ceiling: ``max(1, floor(cores * cpu_fraction))``, the most either count may be.
         workers: The processes that compute an index's observations.
@@ -297,8 +293,6 @@ class Parallelism:
     """
 
     cores: int
-    cores_source: str
-    detected_cores: int
     cpu_fraction: float
     ceiling: int
     workers: int
@@ -308,11 +302,10 @@ class Parallelism:
         """Return the one line an import logs about its parallelism.
 
         Returns:
-            The cores and where they came from, the fraction, the ceiling, and both
-            counts.
+            The cores detected, the fraction, the ceiling, and both counts.
         """
         return (
-            f'Parallelism: {self.cores} cores ({self.cores_source}), cpu_fraction '
+            f'Parallelism: {self.cores} cores detected, cpu_fraction '
             f'{self.cpu_fraction:g}, ceiling {self.ceiling}; workers {self.workers}, '
             f'index_workers {self.index_workers}'
         )
@@ -805,7 +798,6 @@ def _read_import(source: Path, values: dict[str, Any]) -> ImportConfig:
         index_workers=table.read_int_or_max('index_workers', default=DEFAULT_INDEX_WORKERS),
         server_tmpdir=table.read_optional_str('server_tmpdir'),
         workers=table.read_int_or_max('workers', default=DEFAULT_WORKERS),
-        cpus=table.read_optional_int('cpus', minimum=1),
         cpu_fraction=table.read_float(
             'cpu_fraction', default=DEFAULT_CPU_FRACTION, above=0.0, maximum=1.0
         ),
@@ -835,9 +827,9 @@ def resolve_parallelism(
 ) -> Parallelism:
     """Resolve the import's worker counts against the ceiling no request may exceed.
 
-    The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is ``[import] cpus`` when
-    the file sets it and the detected cores otherwise, because the database server or
-    another user may share the computer. `MAX_WORKERS` asks for the ceiling itself.
+    The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is the number of cores the
+    process may run on (`detected_cores`), because the database server or another user may
+    share the computer. `MAX_WORKERS` asks for the ceiling itself.
 
     Parameters:
         config: The ``[import]`` table.
@@ -853,9 +845,7 @@ def resolve_parallelism(
         ConfigError: If either count is above the ceiling, naming the ceiling and how it
             was reached.
     """
-    counted = detected_cores() if detected is None else detected
-    cores = config.cpus if config.cpus is not None else counted
-    source = '[import] cpus' if config.cpus is not None else 'detected'
+    cores = detected_cores() if detected is None else detected
     ceiling = max(1, math.floor(cores * config.cpu_fraction))
 
     def resolve(value: int | str, name: str) -> int:
@@ -865,7 +855,7 @@ def resolve_parallelism(
         assert isinstance(value, int)
         if value > ceiling:
             raise ConfigError(
-                f'{name} {value} is above the ceiling of {ceiling}: {cores} cores ({source}) '
+                f'{name} {value} is above the ceiling of {ceiling}: {cores} cores detected '
                 f'times cpu_fraction {config.cpu_fraction:g}'
             )
         return value
@@ -873,8 +863,6 @@ def resolve_parallelism(
     workers_name = '--workers' if workers is not None else '[import] workers'
     return Parallelism(
         cores=cores,
-        cores_source=source,
-        detected_cores=counted,
         cpu_fraction=config.cpu_fraction,
         ceiling=ceiling,
         workers=resolve(config.workers if workers is None else workers, workers_name),
