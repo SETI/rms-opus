@@ -297,8 +297,9 @@ here. It then adds them in three phases:
    (:ref:`dev_guide_import_running_parallelism`) -- ``"max"`` is the ceiling itself. The
    list includes a plain key on every foreign-key column no other key leads -- the
    ``obs_general_id`` of the surface geometry name and per-target tables, since every
-   other table's primary key leads with it -- so the foreign keys find their index built
-   rather than building it themselves one table at a time.
+   other table's primary key leads with it -- so the index each foreign key needs
+   already exists, and adding the foreign key does not have to create it, one table at a
+   time.
 2. **The foreign keys**, one at a time with ``foreign_key_checks`` off, after every
    plain key: with the checks off, adding a foreign key is an in-place change that does
    not read the rows already there, and each one takes an exclusive lock on
@@ -337,7 +338,7 @@ opus_import.steps.do_duplicate_ids
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Keeps one copy of each OPUS ID. It has no option of its own: ``--finalize`` runs it,
-after the keys, and skips it when the key builds failed, since it finds the copies by
+after the keys, and skips it when adding the keys failed, since it finds the copies by
 ``obs_general.opus_id`` and deletes them from the surface geometry name and per-target
 tables by ``obs_general_id``, which only those keys index. OPUS IDs are compared as the
 column's collation compares them, so two that differ only in case are the same ID.

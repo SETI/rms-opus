@@ -112,13 +112,17 @@ Defining the column
        ``ON DELETE RESTRICT ON UPDATE CASCADE``; a foreign key that says what deleting
        the referenced row does is a table-level ``foreign_key`` entry instead. An
        observation table's one foreign key is ``obs_general_id`` onto
-       ``obs_general.id``. The surface geometry name and per-target tables, which number
-       their own rows in an ``id`` primary key, declare it here; every other observation
-       table declares it as a table-level ``foreign_key`` entry, because its
-       ``obs_general_id`` is its primary key, or in ``obs_files`` leads it. Wherever
-       ``opus_id`` carries a key it is a plain one, as in ``obs_general``, because two
-       bundles can produce the same OPUS ID and both copies load before finalization
-       keeps one.
+       ``obs_general.id``. Where it is declared depends on the table's primary key:
+
+       * The surface geometry name and per-target tables have an ``id`` primary key of
+         their own, so they declare the foreign key here, on ``obs_general_id``.
+       * Every other observation table uses ``obs_general_id`` as its primary key (in
+         ``obs_files``, as the first of two columns), so it declares the foreign key
+         as a table-level ``foreign_key`` entry.
+
+       A key on ``opus_id`` is always a plain key, never a unique one, because two
+       bundles can produce the same OPUS ID, and both copies are loaded before
+       finalization keeps one.
    * - ``constraint``
      - Raw SQL inserted into the ``CREATE TABLE`` in place of a column definition. An
        entry carrying it defines no column.
@@ -243,8 +247,8 @@ another table rather than defining a column of this one, so no SQL column is cre
 for it and no value is computed.
 
 ``obs_files`` is filled by :mod:`opus_import.steps.do_import_index` rather than by the
-dispatch above: it builds each row from a literal, and numbers an observation's rows in
-``file_number``, from 1, in the order it builds them. Its schema's list-valued
+dispatch above: it writes each row's values directly, and numbers an observation's rows
+in ``file_number``, from 1, in the order it writes them. Its schema's list-valued
 ``data_source`` entries are therefore **dead data** -- nothing reads them. The ``TAB:`` values among them are the only ones left in
 the repository, and a ``TAB:`` written into any other schema would be reported as an
 unknown data source: they are a survival of a vocabulary the pipeline does not

@@ -146,7 +146,8 @@ and ``search_results`` its keys over two columns, from the start.
 tables: the declared keys the keep set leaves out, plain keys first and foreign keys
 last, plus a plain key on each foreign-key column no other key leads (the
 ``obs_general_id`` of the surface geometry name and per-target tables; every other
-table's primary key leads with it), so the foreign key finds its index built.
+table's primary key leads with it), so the index each foreign key needs already
+exists when the foreign key is added.
 Finalization's ``--create-indexes`` adds what it lists
 (:ref:`dev_guide_import_steps_create_indexes`). Both read the same column entries, so
 the two can never disagree; a unit test checks that they partition every observation and

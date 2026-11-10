@@ -84,10 +84,12 @@ A row for an OPUS ID does not need to be present in each table, and in fact neve
 
 In addition to the fields corresponding to the metadata available in the UI, each ``obs_*`` table also has columns for internal use:
 
-* ``obs_general_id``: An integer corresponding to the ``id`` field in the ``obs_general`` table, and a foreign key onto it. This field is used to join multiple tables together so that a single joined row has all of the metadata from all of the relevant tables. In every ``obs_*`` table other than ``obs_files`` and the surface geometry name and per-body tables (see `The Surface Geometry Tables`_), it is the table's primary key, because such a table holds at most one row per observation. This field does not exist in the ``obs_general`` table itself.
+* ``obs_general_id``: The ``id`` of the observation's row in ``obs_general``, and a foreign key onto it. Joining tables on it puts all of an observation's metadata into one row. Most ``obs_*`` tables have at most one row per observation, so ``obs_general_id`` is their primary key. The exceptions are ``obs_files`` (`The Special obs_files Table`_) and the surface geometry name and per-body tables (`The Surface Geometry Tables`_), which can have several rows per observation. ``obs_general`` itself has no ``obs_general_id``.
 * ``timestamp``: A date/time field that records when the row was last updated
 
-What identifies an observation is held once, in ``obs_general``: its ``id``, its ``opus_id``, the ``bundle_id`` of the PDS3 volume or PDS4 bundle it came from, and its ``instrument_id``. Every other table reaches them by joining ``obs_general`` on ``obs_general_id``, which under the concept of "database normalization" is the correct and safest thing to do. ``obs_pds`` repeats two of them because they are search fields in their own right: ``obs_pds.opus_id`` is the "OPUS ID" field and ``obs_pds.bundle_id`` the "Bundle/Volume ID" field of the "PDS Constraints" category, each carrying a plain key and no foreign key. The import writes both beside ``obs_general``'s, and its validation step reports an ``obs_pds`` row whose ``bundle_id`` differs from its ``obs_general`` row's.
+The columns that identify an observation are stored once, in ``obs_general``: its ``id``, its ``opus_id``, its ``bundle_id`` (the PDS3 volume or PDS4 bundle it came from) and its ``instrument_id``. Another table that needs one of them joins ``obs_general`` on ``obs_general_id``. Storing each value in one place means the copies can never disagree.
+
+``obs_pds`` is the exception: it also has ``opus_id`` and ``bundle_id``, because they are search fields of their own, "OPUS ID" and "Bundle/Volume ID" in the "PDS Constraints" category. Each has a plain key and no foreign key. The import writes the same values into ``obs_pds`` as into ``obs_general``, and its validation step reports any ``obs_pds`` row whose ``bundle_id`` differs from its ``obs_general`` row's.
 
 Here is an example of the schema for the ``obs_general`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
 
@@ -352,12 +354,25 @@ There is also a series of tables, one per body, containing the surface geometry 
     |        0 |
     +----------+
 
-The per-body tables are all built from one template. They and ``obs_surface_geometry_name``, which holds the ``Surface Geometry Target Selector`` field as one row per observation and body, are keyed differently from the other ``obs_*`` tables: each numbers its rows in an ``id`` primary key of its own, carries ``obs_general_id`` as a plain key under its foreign key onto ``obs_general.id``, and repeats ``opus_id``, ``bundle_id`` and ``instrument_id`` from ``obs_general``, which is how the query above can select by ``opus_id``. The import deletes a bundle's rows from these tables by their ``bundle_id``, and from every other ``obs_*`` table by joining ``obs_general``.
+The per-body tables are all made from one template. They and ``obs_surface_geometry_name``, which holds the ``Surface Geometry Target Selector`` field as one row per observation and body, are laid out differently from the other ``obs_*`` tables:
+
+* Each has an ``id`` primary key of its own, because it can have several rows per observation.
+* ``obs_general_id`` is an ordinary column with a plain key and a foreign key onto ``obs_general.id``.
+* Each also has ``opus_id``, ``bundle_id`` and ``instrument_id``, copied from ``obs_general``. That is why the query above can select by ``opus_id``.
+
+To remove a bundle, the import deletes these tables' rows by their own ``bundle_id``, and every other ``obs_*`` table's rows by joining ``obs_general``.
 
 The Special ``obs_files`` Table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. ``obs_files`` holds one row per downloadable file product, so a single OPUS ID has as many rows as it has products. ``obs_files.obs_general_id`` is a foreign key onto ``obs_general.id``, which is the one-to-many relationship a single ``obs_general`` row cannot represent and why this is its own table. Its primary key is ``(obs_general_id, file_number)``, where ``file_number`` is the file's position among its observation's files, from 1, in the order the import writes them; the web application's file list sorts by it last, so the files of one product type at one version keep that order. ``opus_id`` is repeated from ``obs_general`` because the file list is read by OPUS ID, through the one secondary key over ``(opus_id, short_name, version_name)``. It is only joined with ``obs_general`` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
+The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. ``obs_files`` holds one row per downloadable file, so an observation has as many rows as it has files. That is why it is a table of its own, rather than columns of ``obs_general``.
+
+* ``obs_general_id`` is a foreign key onto ``obs_general.id``.
+* ``file_number`` numbers an observation's files 1, 2, 3, ..., in the order the import writes them. The web application's file list sorts by it last, so the files of one product type and version keep that order.
+* The primary key is ``(obs_general_id, file_number)``.
+* ``opus_id`` is copied from ``obs_general``, because the web application looks files up by OPUS ID. The one other key, over ``(opus_id, short_name, version_name)``, serves those lookups.
+
+``obs_files`` is joined with ``obs_general`` only to compute details of the Cart and to list the available products on the Detail tab. Its schema is:
 
 ::
 
