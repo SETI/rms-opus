@@ -13,7 +13,7 @@ from benchmarks import bench_import
         ([8, 4, 2, 1], {'cpus': 4}, [3, 2, 1]),
         ([1, 2, 4, 8], {'cpus': 8, 'cpu_fraction': 1.0}, [1, 2, 4, 8]),
         ([2, 2, 1], {'cpus': 2}, [1]),
-        ([1, 4, 8], {'cpus': 8, 'cpu_fraction': '0.5'}, [1, 4]),
+        ([1, 4, 8], {'cpus': 8, 'cpu_fraction': 0.5}, [1, 4]),
     ],
     ids=[
         'caps-at-the-ceiling',
@@ -52,7 +52,7 @@ def test_without_a_stated_size_the_detected_cores_decide(monkeypatch: pytest.Mon
         ),
         (
             ['--workers-sweep', '1,2', '--import-key', 'cpu_fraction=1.5'],
-            "--import-key cpu_fraction must be greater than 0 and at most 1, not '1.5'",
+            '--import-key cpu_fraction must be greater than 0 and at most 1, not 1.5',
         ),
         (
             ['--workers-sweep', '1,2', '--import-key', 'cpus=0'],

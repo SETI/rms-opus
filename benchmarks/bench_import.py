@@ -1056,21 +1056,20 @@ def sweep_counts(requested: Sequence[int], import_keys: Mapping[str, object]) ->
 
     Raises:
         ValueError: If ``cpus`` is not a whole number of at least 1, or ``cpu_fraction``
-            is not a number greater than 0 and at most 1. ``--import-key`` passes a
-            fraction such as ``0.5`` as text, which is read as a number here.
+            is not a number greater than 0 and at most 1.
     """
     cpus = import_keys.get('cpus')
     if cpus is not None and (isinstance(cpus, bool) or not isinstance(cpus, int) or cpus < 1):
         raise ValueError(f'--import-key cpus must be a whole number of at least 1, not {cpus!r}')
     cores = cpus if isinstance(cpus, int) else detected_cores()
-    raw_fraction = import_keys.get('cpu_fraction', DEFAULT_CPU_FRACTION)
-    try:
-        fraction = float(str(raw_fraction))
-    except ValueError:
-        fraction = 0.0
-    if isinstance(raw_fraction, bool) or not 0 < fraction <= 1:
+    fraction = import_keys.get('cpu_fraction', DEFAULT_CPU_FRACTION)
+    if (
+        isinstance(fraction, bool)
+        or not isinstance(fraction, (int, float))
+        or not 0 < fraction <= 1
+    ):
         raise ValueError(
-            f'--import-key cpu_fraction must be greater than 0 and at most 1, not {raw_fraction!r}'
+            f'--import-key cpu_fraction must be greater than 0 and at most 1, not {fraction!r}'
         )
     ceiling = max(1, math.floor(cores * fraction))
     counts: list[int] = []

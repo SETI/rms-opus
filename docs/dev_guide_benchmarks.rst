@@ -301,7 +301,9 @@ and records ``NAME`` as the side's schema, or with ``--clone`` a timed copy of i
 ``--import-key KEY=VALUE``, repeatable, adds an ``[import]`` key to every configuration
 the run writes -- ``index_workers=22``, say, to time finalization's key builds over more
 connections than the default -- and the result's environment records the keys as
-``import_keys``. ``log_file`` and ``debug_log_file`` are refused, since the harness
+``import_keys``. A value is written as TOML would read it: ``true`` and ``false`` as
+booleans, a whole or finite decimal number as a number, and anything else as a string.
+``log_file`` and ``debug_log_file`` are refused, since the harness
 reads each run's logs from where it put them. A result file holds runs of one set of
 keys: a run with others is refused, as a run of another commit is, and a file whose
 runs record no keys takes only runs that set none. A side whose configuration does not
