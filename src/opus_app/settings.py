@@ -38,13 +38,23 @@ try:  # pragma: no cover
 except ImportError:  # pragma: no cover
     pass
 
+# The seconds a connection to memcached, or one reply from it, may take before the
+# attempt counts as a failure. memcached answers in well under a millisecond, so this
+# only ever matters when it is unreachable or hung.
+_memcache_timeout = 1.0
+
 # Now check to see if memcached is actually running
 if _has_memcache:
     try:
         _cache_host, _, _cache_port = CACHE_LOCATION.rpartition(':')
-        _memcache_client = pymemcache.client.base.Client((_cache_host, int(_cache_port)))
+        _memcache_client = pymemcache.client.base.Client(
+            (_cache_host, int(_cache_port)),
+            connect_timeout=_memcache_timeout,
+            timeout=_memcache_timeout,
+        )
         _memcache_client.set('__test_key__', 'test_val')
-    except ConnectionRefusedError:
+        _memcache_client.close()
+    except (OSError, pymemcache.exceptions.MemcacheError):
         _has_memcache = False
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
@@ -266,6 +276,15 @@ if _has_memcache:  # pragma: no cover
             'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
             'LOCATION': CACHE_LOCATION,
             'TIMEOUT': None,
+            # A memcached that stops or hangs while the site runs must not fail
+            # requests: with ignore_exc, every read that cannot reach it is a miss
+            # and every write is skipped, so the site runs uncached, from the
+            # database, until it is back.
+            'OPTIONS': {
+                'ignore_exc': True,
+                'connect_timeout': _memcache_timeout,
+                'timeout': _memcache_timeout,
+            },
         },
     }
 else:

@@ -322,18 +322,20 @@ search. Emptying the cache costs speed and nothing else.
 
 :mod:`opus_app.settings` decides at startup, in each worker, whether to use memcached:
 it checks that ``pymemcache`` can be imported, and then that the memcached the
-configuration's ``[django] cache_location`` names accepts a connection. **What happens
-without memcached** depends on when it is missing:
+configuration's ``[django] cache_location`` names answers within a second. **A missing
+or failed memcached never fails a request.** What happens depends on when it fails:
 
-* **Missing when a worker starts** (not installed, or not running): the worker uses
-  Django's local-memory cache instead, which belongs to that one process. Everything
-  still works, but each worker computes and stores its own copy of every cached answer,
-  and a worker keeps using its local memory even after memcached starts. Restart the
-  workers to switch them to memcached.
-* **Stopped while the workers are using it:** every request that reads or writes the
-  cache fails with a 500. A worker tries the server again about once a minute, so the
-  errors end soon after memcached is running again. Restarting the workers also ends
-  them, since a worker that starts without memcached uses local memory.
+* **Missing when a worker starts** (not installed, not running, or not answering): the
+  worker uses Django's local-memory cache instead, which belongs to that one process.
+  Everything still works, but each worker computes and stores its own copy of every
+  cached answer, and a worker keeps using its local memory even after memcached starts.
+  Restart the workers to switch them to memcached.
+* **Stopped or hung while the workers are using it:** every cache read that cannot reach
+  it within a second counts as a miss, and every write is skipped (``pymemcache``'s
+  ``ignore_exc``). Requests are answered from the database, uncached, so they are slower
+  but correct. After a few failures a worker stops trying the server for a minute, so
+  requests do not each wait for the timeout. Once memcached answers again, the workers
+  use it again.
 * **Emptying the cache from outside the workers** --
   ``python -m opus_app.clear_django_cache``, the import's reset of the search tables,
   ``opus_manage prune`` removing a search's entry -- runs in a process of its own. With

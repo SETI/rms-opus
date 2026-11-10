@@ -423,10 +423,10 @@ request for a search stores its results and every later request reads them, so
 ``search_results`` grows with every new search and no request removes anything from it.
 ``opus_manage prune`` is what bounds it::
 
-    opus_manage prune [--max-rows ROWS] [--unused-days DAYS] [--stats | --dry-run]
+    opus_manage prune [--max-rows ROWS] [--unused-days DAYS] [--dry-run]
 
-It needs ``OPUS_CONFIG``, like every other OPUS program, and removes, in this order and
-only as much as it must:
+It needs ``OPUS_CONFIG``, like every other OPUS program. It first reports the state of the
+table (below), and then removes, in this order and only as much as it must:
 
 1. **The results of the searches the previous prune removed.** A request that read a
    search just before the prune removed it may still be reading its results, so they
@@ -439,11 +439,16 @@ only as much as it must:
 3. **Expired sessions**, through Django's own ``clearsessions``.
 4. **Cart rows whose session no longer exists.**
 
-Removing a search costs nothing but speed: the next request for it runs the search
-and stores its results again. A
-search's last use is recorded at most once a day, so a search in daily use always has a
-recent stamp: it is never removed for going unused, and it is among the last removed to
-bring the table down to ``--max-rows``.
+Removing a search costs nothing but speed: the next request for it runs the search and
+stores its results again. A search's last use is recorded at most once a day, so a search
+in daily use always has a recent stamp: it is never removed for going unused, and it is
+among the last removed to bring the table down to ``--max-rows``.
+
+**What every run reports**, before it changes anything: the rows ``search_results``
+holds, how many of them belong to searches an earlier prune removed, the number of
+searches, the table's data and index bytes and the bytes per row they come to, and how
+many searches and rows this run removes and keeps. Then it reports what it removed, one
+line per kind.
 
 ``--max-rows ROWS``
     The rows the searches left may hold. The table also holds, until the next run, the
@@ -455,21 +460,11 @@ bring the table down to ``--max-rows``.
     Remove every search unused for this many days, however few rows the table holds.
     Default ``30``. It must be at least 1.
 
-``--stats``
-    Change nothing; report the rows ``search_results`` holds and how many of them are
-    the results of removed searches the next prune removes, the number of searches,
-    the table's data and index bytes and the bytes per row they come to, and how many
-    searches and rows a prune with these options would remove and leave.
-
 ``--dry-run``
-    Change nothing; list each search a prune with these options would remove -- its id,
-    its rows and when it was last used -- and the totals.
-
-``--stats`` and ``--dry-run`` cannot be given together. Without either, the command
-reports what it removed, one line per kind.
+    Print the report and change nothing.
 
 **Sizing** ``--max-rows``. Decide how much disk ``search_results`` may take, and divide it
-by the bytes per row ``opus_manage prune --stats`` reports on the server itself; that is
+by the bytes per row ``opus_manage prune --dry-run`` reports on the server itself; that is
 the figure to give ``search_results_max_rows`` or ``--max-rows``. Deleting rows does not
 shrink the table's file on disk, but InnoDB reuses the pages the deleted rows freed, so a
 prune run regularly keeps the table near the size its row limit implies rather than

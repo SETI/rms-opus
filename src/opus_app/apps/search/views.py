@@ -988,36 +988,6 @@ class _SearchPrunedError(Exception):
     """
 
 
-#: Reads a search's result count, which is NULL until its results are built, and the
-#: digest of the search the row is.
-_BUILT_STATE_SQL = (
-    'SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = %s'
-)
-
-#: The same read, taking the row lock a search build holds while it writes the results.
-_LOCK_SEARCH_SQL = _BUILT_STATE_SQL + ' FOR UPDATE'
-
-#: Records a built search's count, and that it is built and used.
-_FINISH_BUILD_SQL = (
-    'UPDATE user_searches SET result_count = %s, results_built_at = UTC_TIMESTAMP(), '
-    'last_used_at = UTC_TIMESTAMP() WHERE id = %s'
-)
-
-#: Takes a search's row for a stamp, unless a search build holds it.
-_LOCK_STAMP_SQL = 'SELECT id FROM user_searches WHERE id = %s FOR UPDATE SKIP LOCKED'
-
-#: Stamps a search as used now.
-_STAMP_SQL = 'UPDATE user_searches SET last_used_at = UTC_TIMESTAMP() WHERE id = %s'
-
-#: The session's lock wait, which a search build raises for its duration.
-_READ_LOCK_WAIT_SQL = 'SELECT @@SESSION.innodb_lock_wait_timeout'
-_SET_LOCK_WAIT_SQL = 'SET SESSION innodb_lock_wait_timeout = %s'
-
-#: The columns a search build writes to ``search_results``, in the order its SELECT
-#: produces them.
-_SEARCH_RESULTS_COLUMNS = ('search_id', 'sort_order', 'obs_general_id')
-
-
 def get_search_id(
     selections: dict[str, Any], extras: dict[str, Any], api_code: int | None = None
 ) -> int | None:
@@ -1095,13 +1065,22 @@ def _built_count(search_id: int, digest: bytes) -> int | None:
         _SearchPrunedError: If the search has no row, or the row is another search's.
     """
     with connection.cursor() as cursor:
-        cursor.execute(_BUILT_STATE_SQL, [search_id])
+        cursor.execute(
+            'SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = %s',
+            [search_id],
+        )
         row = cursor.fetchone()
     return _count_from_row(search_id, digest, row)
 
 
 def _count_from_row(search_id: int, digest: bytes, row: tuple[Any, ...] | None) -> int | None:
-    """Return the result count a row of `_BUILT_STATE_SQL` holds, if it is built.
+    """Return a search's result count, or None if its results are not stored yet.
+
+    Parameters:
+        search_id: The search's row.
+        digest: The search's `search_hash`, which the row has to hold.
+        row: The row's ``result_count``, ``results_built_at`` and ``search_hash``, in
+            that order, or None if there is no row.
 
     Raises:
         _SearchPrunedError: If there is no row, or it is another search's.
@@ -1159,16 +1138,23 @@ def _build_search_results(
     select.add_column(sql_builder.row_number(order_terms))
     select.add_column(sql_builder.column('id', 'obs_general'))
     insert_sql, params = sql_builder.insert_into_select(
-        'search_results', _SEARCH_RESULTS_COLUMNS, select
+        'search_results', ('search_id', 'sort_order', 'obs_general_id'), select
     )
 
     with connection.cursor() as cursor:
-        cursor.execute(_READ_LOCK_WAIT_SQL)
+        # How long this session waits for a row lock, raised for this transaction only.
+        cursor.execute('SELECT @@SESSION.innodb_lock_wait_timeout')
         (previous_wait,) = cursor.fetchone()
-        cursor.execute(_SET_LOCK_WAIT_SQL, [settings.SEARCH_BUILD_TIMEOUT])
+        cursor.execute('SET SESSION innodb_lock_wait_timeout = %s', [settings.SEARCH_BUILD_TIMEOUT])
         try:
             with transaction.atomic():
-                cursor.execute(_LOCK_SEARCH_SQL, [search_id])
+                # Lock the search's row. A request already storing this search's results
+                # holds the lock, so this waits until that request commits.
+                cursor.execute(
+                    'SELECT result_count, results_built_at, search_hash FROM user_searches '
+                    'WHERE id = %s FOR UPDATE',
+                    [search_id],
+                )
                 built = _count_from_row(search_id, digest, cursor.fetchone())
                 if built is not None:
                     # Another worker built the search while this one waited.
@@ -1176,7 +1162,12 @@ def _build_search_results(
                 time1 = time.time()
                 cursor.execute(insert_sql, params)
                 count = int(cursor.rowcount)
-                cursor.execute(_FINISH_BUILD_SQL, [count, search_id])
+                cursor.execute(
+                    'UPDATE user_searches SET result_count = %s, '
+                    'results_built_at = UTC_TIMESTAMP(), last_used_at = UTC_TIMESTAMP() '
+                    'WHERE id = %s',
+                    [count, search_id],
+                )
         except DatabaseError as e:
             if is_lock_timeout_error(e):
                 log.error(
@@ -1216,7 +1207,7 @@ def _restore_lock_wait(cursor: Any, previous_wait: int) -> None:
         previous_wait: The wait the build replaced.
     """
     try:
-        cursor.execute(_SET_LOCK_WAIT_SQL, [previous_wait])
+        cursor.execute('SET SESSION innodb_lock_wait_timeout = %s', [previous_wait])
     except DatabaseError:  # pragma: no cover - the connection failed during the build
         log.exception('_build_search_results: could not restore the lock wait; reconnecting')
         connection.close()
@@ -1359,10 +1350,16 @@ def _stamp_last_used(search_id: int) -> bool:
         Whether the row was stamped.
     """
     with transaction.atomic(), connection.cursor() as cursor:
-        cursor.execute(_LOCK_STAMP_SQL, [search_id])
+        # SKIP LOCKED returns no row, rather than waiting, when a request storing the
+        # search's results holds the lock.
+        cursor.execute(
+            'SELECT id FROM user_searches WHERE id = %s FOR UPDATE SKIP LOCKED', [search_id]
+        )
         if cursor.fetchone() is None:
             return False
-        cursor.execute(_STAMP_SQL, [search_id])
+        cursor.execute(
+            'UPDATE user_searches SET last_used_at = UTC_TIMESTAMP() WHERE id = %s', [search_id]
+        )
     return True
 
 

@@ -342,33 +342,39 @@ class SearchResultsTests(TestCase):
         with self.assertRaisesRegex(CommandError, '--unused-days'):
             call_command('prune', unused_days=0, stdout=io.StringIO())
 
-    def test_prune_stats_and_dry_run_report_and_change_nothing(self) -> None:
-        """Both describe the prune of a stale search and leave it in place."""
+    def test_prune_dry_run_reports_and_changes_nothing(self) -> None:
+        """A dry run reports the table and the prune of a stale search, and keeps it."""
         selections, extras = _search()
         stale = get_search_results(selections, extras)
         assert stale is not None
         _make_stale(stale.search_id)
 
-        stats = io.StringIO()
-        call_command('prune', stats=True, stdout=stats)
-        self.assertIn(f'search_results rows: {stale.result_count}', stats.getvalue())
-        self.assertIn('Rows of removed searches the next prune removes: 0', stats.getvalue())
-        self.assertIn('Searches: 1', stats.getvalue())
-        self.assertIn('per row', stats.getvalue())
-        self.assertIn(
-            f'would remove 1 searches holding {stale.result_count} rows', stats.getvalue()
-        )
-        self.assertIn('leave 0 searches holding 0 rows', stats.getvalue())
-
-        dry_run = io.StringIO()
-        call_command('prune', dry_run=True, stdout=dry_run)
-        self.assertIn(f'Would prune search {stale.search_id}', dry_run.getvalue())
-        self.assertIn(
-            f'Would prune 1 searches holding {stale.result_count} rows', dry_run.getvalue()
-        )
+        output = io.StringIO()
+        call_command('prune', dry_run=True, stdout=output)
+        self.assertIn(f'search_results rows: {stale.result_count}', output.getvalue())
+        self.assertIn('Rows of searches an earlier prune removed: 0', output.getvalue())
+        self.assertIn('Searches: 1', output.getvalue())
+        self.assertIn('per row', output.getvalue())
+        self.assertIn(f'Searches to prune: 1, holding {stale.result_count} rows', output.getvalue())
+        self.assertIn('Searches to keep: 0, holding 0 rows', output.getvalue())
+        self.assertIn('Dry run: nothing was changed', output.getvalue())
+        self.assertNotIn('Pruned', output.getvalue())
 
         self.assertEqual(_result_rows(stale.search_id), stale.result_count)
         self.assertIsNotNone(_row(stale.search_id))
+
+    def test_prune_reports_the_table_before_it_prunes(self) -> None:
+        """A real run reports the same figures first, then what it removed."""
+        selections, extras = _search()
+        stale = get_search_results(selections, extras)
+        assert stale is not None
+        _make_stale(stale.search_id)
+
+        output = io.StringIO()
+        call_command('prune', stdout=output)
+        text = output.getvalue()
+        self.assertLess(text.index('Searches to prune: 1'), text.index('Pruned 1 searches'))
+        self.assertIsNone(_row(stale.search_id))
 
     def test_prune_leaves_a_removed_searchs_results_to_the_next_run(self) -> None:
         """A request that read the search just before may still read them; the next run
@@ -426,7 +432,9 @@ class SearchResultsTests(TestCase):
             call_command('prune', unused_days=30, max_rows=10**9, stdout=output)
 
         self.assertIn('Pruned 0 searches', output.getvalue())
-        self.assertIn('skipped 2 being built or used since', output.getvalue())
+        self.assertIn(
+            'skipped 2 whose results were being stored or that were used since', output.getvalue()
+        )
         self.assertIsNotNone(_row(building_id))
         self.assertIsNotNone(_row(used.search_id))
 
