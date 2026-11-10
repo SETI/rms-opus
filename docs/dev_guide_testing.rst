@@ -264,7 +264,7 @@ continue if it is missing.
 
 The ``opus.toml`` the chain writes states the import's host size as ``[import] cpus``
 and asks for ``workers = "max"`` and ``index_workers = "max"``, so the import computes
-and builds keys at the ceiling of the host the run assumes: 32 cores when
+and builds keys at the ceiling of the host the run assumes: 8 cores when
 ``GITHUB_ACTIONS`` is ``true``, as on the self-hosted runner, and 16 otherwise, as for a
 run started outside Actions. ``OPUS_TEST_CPUS``, from the environment or
 ``~/opus_runner_secrets``, replaces both, and must be a whole number of at least 1; the

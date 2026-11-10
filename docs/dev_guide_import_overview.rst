@@ -477,10 +477,11 @@ Invariants
   by the end of the index.** The ``mult_`` tables are written once every row has been
   computed, before the rows still waiting are loaded. No database constraint enforces
   it.
-* **An import has a single writer and many computers.** Only the import's own process
-  uses the database and writes the log; pool workers compute rows and record what they
-  would have written, and that process replays it in index order, so the result does not
-  depend on how many workers there are (:ref:`dev_guide_import_steps_do_import_pool`).
+* **An import computes in many processes and writes from one.** Only the import's own
+  process uses the database and writes the log; pool workers compute rows and record
+  what they would have written, and that process replays it in index order, so the
+  result does not depend on how many workers there are
+  (:ref:`dev_guide_import_steps_do_import_pool`).
 * **A row's result depends on that row alone.** One obs instance serves a whole bundle,
   and its metadata dictionary is cleared and refilled from the index's pre-loop metadata
   at the start of every row -- so **no obs method may cache anything derived from it**,

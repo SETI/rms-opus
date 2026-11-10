@@ -805,9 +805,9 @@ Importing every observation one primary index file describes.
 opus_import.steps.do_import_pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Computing an index's rows in a pool of forked processes. **Single writer, many
-computers**: the workers compute, and only the import's own process touches the
-database or the log.
+Computing an index's rows in a pool of forked processes. **Many processes compute, one
+writes**: the workers compute, and only the import's own process touches the database
+or the log.
 
 :func:`~opus_import.steps.do_import_pool.compute_index` is the entry point. With
 :attr:`~opus_import.context.ImportContext.workers` at 1, or an index of fewer rows than

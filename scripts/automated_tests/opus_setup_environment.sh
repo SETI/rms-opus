@@ -24,13 +24,13 @@ fi
 
 # The import's host size, stated rather than counted, so that workers = "max" and
 # index_workers = "max" below resolve to the ceiling of the host the run assumes:
-# 32 cores on the self-hosted runner (GITHUB_ACTIONS is true), 16 for the nightly
+# 8 cores on the self-hosted runner (GITHUB_ACTIONS is true), 16 for the nightly
 # staging run, which is started outside Actions. OPUS_TEST_CPUS, from the
 # environment or ~/opus_runner_secrets, overrides both.
 if [[ -n ${OPUS_TEST_CPUS+x} ]]; then
     IMPORT_CPUS=$OPUS_TEST_CPUS
 elif [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
-    IMPORT_CPUS=32
+    IMPORT_CPUS=8
 else
     IMPORT_CPUS=16
 fi

@@ -2,9 +2,9 @@
 
 `opus_import.steps.do_import_index` computes each index row with one function, which this
 module runs either in the import's own process or, with ``workers`` above 1, across a
-pool. **Single writer, many computers**: each worker computes a range of rows exactly as
-the import's process would, through the same code, but records every database call and
-log write on its context's `opus_import.deferred.Capture` instead of making it. The
+pool. **Many processes compute, one writes**: each worker computes a range of rows exactly
+as the import's process would, through the same code, but records every database call
+and log write on its context's `opus_import.deferred.Capture` instead of making it. The
 import's process takes the workers' results in index order and replays each event where
 the serial loop would have produced it -- rebasing the workers' row ids onto the real
 ones, resolving each ``mult_`` value through
