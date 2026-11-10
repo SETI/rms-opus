@@ -183,41 +183,45 @@ need.
 
 .. _dev_guide_webapp_search_cache:
 
-Building a search's results
----------------------------
+Storing a search's results
+--------------------------
 
-:ref:`dev_guide_webapp_search_flow` describes the mechanism; these are the functions.
+:ref:`dev_guide_webapp_search_flow` explains how a search's results are stored; these are
+the functions that do it.
 
 :func:`~opus_app.apps.search.views.search_hash`
-    The SHA-256 digest that identifies a search: of the JSON list of its selections,
-    qtypes, units and order, each as sorted JSON and None when the search has none, with
-    the qtypes and units of unconstrained fields left out.
+    Returns the SHA-256 hash that identifies a search: the hash of a JSON list of its
+    selections, qtypes, units and sort order. Qtypes and units for fields that are not
+    being searched are left out.
 
 :func:`~opus_app.apps.search.views.set_user_search_number`
-    Maps a search to its ``user_searches`` id, registering it if it is new. The memory
-    cache maps the digest to the id and the day the row was last stamped, under
-    :func:`~opus_app.apps.search.views.search_number_cache_key`; a miss inserts the row
-    and, if the unique key on ``search_hash`` refuses it, reads back the row a
-    concurrent request inserted. It stamps ``last_used_at`` at most once a day, through
-    ``SELECT ... FOR UPDATE SKIP LOCKED``, so it never waits on a build. Returns None
-    only when the row a duplicate insert ran into was pruned before it could be read.
+    Returns the search's number, its ``user_searches`` ``id``, adding a row if the search
+    is new. It looks in the Django cache first, under
+    :func:`~opus_app.apps.search.views.search_number_cache_key`. If the search is not
+    there, it inserts a row, and if another request inserted the same search first, it
+    reads that row instead. It updates ``last_used_at`` at most once a day, and never
+    waits for a request that is writing the search's results. Returns None only when the
+    other request's row was pruned before it could be read. Without memcached each worker
+    has its own cache, so each worker looks the search up in the database once.
 
 :func:`~opus_app.apps.search.views.get_search_results`
-    Registers the search, builds its results if no worker has, and returns its id and
-    result count, or None when it could not. The build, ``_build_search_results``, holds
-    the search's ``user_searches`` row with ``SELECT ... FOR UPDATE`` while it writes
-    the rows with ``INSERT INTO search_results ... SELECT``, and writes the count, the
-    build time and the last use in the same transaction. The lock is what serializes
-    concurrent builders of one search: a second builder waits, up to ``[django]
-    search_build_timeout``, and then reads the first one's count. A wait that times out
-    returns None, which callers answer with a 500
-    (:func:`~opus_app.apps.tools.app_utils.http500_search_cache_failed`). A search whose
-    row is gone, or holds another search's digest, is registered afresh, once. It refuses
-    to run inside a transaction: registration and the build each commit on their own.
+    Returns the search's number and result count, first storing its results if they are
+    not stored yet, or None if either fails. ``_build_search_results`` stores them: it
+    locks the search's ``user_searches`` row, writes the results with one ``INSERT INTO
+    search_results ... SELECT``, and fills in ``result_count``, ``results_built_at`` and
+    ``last_used_at``, all in one transaction. A second request for the same new search
+    waits for the lock, for up to ``[django] search_build_timeout`` seconds, and then
+    uses the first request's results. If the wait runs out it returns None, which the
+    caller answers with a 500
+    (:func:`~opus_app.apps.tools.app_utils.http500_search_cache_failed`). If the search's
+    row is gone, or holds another search's hash, the search is added again, once. It
+    must not be called inside a transaction, because adding the search and storing its
+    results each commit on their own.
 
 :func:`~opus_app.apps.search.views.get_search_id`
-    The same, returning the id alone -- what the results, metadata and cart views join
-    as :func:`~opus_app.apps.tools.sql_builder.search_results_source`.
+    The same, returning only the number. The results, metadata and cart views join the
+    search's results through it, as
+    :func:`~opus_app.apps.tools.sql_builder.search_results_source`.
 
 :func:`~opus_app.apps.search.views.search_results_join_condition`
     The condition that ties a table's rows to a search's results.
@@ -231,8 +235,9 @@ Turning a search into SQL
     dispatches on each field's form type. It collects the ``obs_`` and ``mult_`` tables
     the clauses and the ordering need, assembles the joins, and returns a
     :class:`~opus_app.apps.tools.sql_builder.Select` with no columns and no ORDER BY,
-    together with the search's order as terms. The build adds the search's id,
-    ``ROW_NUMBER()`` over those terms and ``obs_general.id`` as its columns.
+    together with the search's order as terms. ``_build_search_results`` adds the
+    columns it stores: the search's number, ``ROW_NUMBER()`` over those terms, and
+    ``obs_general.id``.
 
 :func:`~opus_app.apps.search.views.construct_query_string`
     The same search as a plain statement and its parameters: the one column

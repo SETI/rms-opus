@@ -88,31 +88,33 @@ observations rather than being refused.
 opus_import.steps.do_django
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Resets the tables the web application keeps its searches in, and flushes its cache.
+Empties the tables the web application stores its searches in, and empties its cache.
+An import changes what a search returns, so every stored search's results are out of date
+once it finishes.
 
 :func:`~opus_import.steps.do_django.reset_search_tables` drops ``user_searches`` and
 ``search_results`` (:data:`~opus_import.steps.do_django.SEARCH_TABLES`) and creates each
-again empty from its schema file. The re-created ``user_searches`` hands out ids above
-the highest the old one held
-(:meth:`~opus_import.importdb.super.ImportDBSuper.set_next_id`), so an id a request in
-flight cached across the reset names no row rather than another search's. Option:
-``--reset-search-tables``, part of
-``--finalize``, which runs it after ``--create-cart``. The deploy of a new database runs
-it too, alongside ``--import-dictionary``, so that searches made while the staged
-installation was being tried out are not served.
+again, empty, from its schema file. The new ``user_searches`` starts its ids above the
+highest id the old one held
+(:meth:`~opus_import.importdb.super.ImportDBSuper.set_next_id`), so a search number a
+web worker still remembers from before the reset matches no row, rather than matching a
+different search. Option: ``--reset-search-tables``, part of ``--finalize``, which runs
+it after ``--create-cart``. Deploying a new database runs it too, alongside
+``--import-dictionary``, so that searches made while the staged installation was being
+tried out are not served.
 
-An import changes what a search returns, so every built search is stale the moment it
-finishes.
+**Then it empties the web application's cache.** The cache maps each search to its number
+and holds answers computed from the old data, so none of it is valid after the reset. The
+step runs :data:`~opus_import.steps.do_django.CACHE_FLUSH_COMMAND`, which is ``python -m
+opus_app.clear_django_cache`` under this interpreter, in a separate process, because the
+cache is configured by the web application's settings; it needs only the ``OPUS_CONFIG``
+the import already has. If that process exits with a nonzero status, the step fails
+with :exc:`~opus_import.steps.do_django.CacheFlushError`. A simulated run, whose database
+is read-only, skips it.
 
-**Every reset of the search tables flushes the web application's cache.** The cache
-maps a search's hash to its ``user_searches`` id, and keys other answers by that id, so
-every entry made before the reset names a search that is gone. The
-flush runs :data:`~opus_import.steps.do_django.CACHE_FLUSH_COMMAND`, this interpreter on
-``python -m opus_app.clear_django_cache``, in a subprocess of its own, because the
-cache's configuration is the web application's; it needs only the ``OPUS_CONFIG`` the
-import already has. A flush that exits with a nonzero status fails the step with
-:exc:`~opus_import.steps.do_django.CacheFlushError`. A simulated run, whose database is
-read-only, skips the flush.
+**Without memcached** there is no shared cache to empty. The separate process falls back
+to its own local memory, empties that, and succeeds, and each web worker keeps its own
+cache until it is restarted (:ref:`dev_guide_webapp_caching`).
 
 .. _dev_guide_import_steps_do_import:
 

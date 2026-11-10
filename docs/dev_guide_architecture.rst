@@ -107,7 +107,7 @@ The web application
 
 A request arrives at one of the routes :mod:`opus_app.urls` assembles, is answered by a
 view, and -- for anything that searches -- reaches the database through the rows of
-``search_results`` built once per distinct search.
+``search_results`` stored once for each distinct search.
 
 .. mermaid::
     :zoom:
@@ -116,7 +116,7 @@ view, and -- for anything that searches -- reaches the database through the rows
         R([HTTP request]) --> U[opus_app.urls:<br/>each app contributes its routes]
         U --> V[The view, wrapped in api_view]
         V --> P[url_to_search_params:<br/>the query string becomes<br/>selections and extras]
-        P --> Q[get_search_id:<br/>register the search, and build<br/>its search_results rows once]
+        P --> Q[get_search_id:<br/>register the search, and write<br/>its results once]
         Q --> S[sql_builder.Select:<br/>join the obs_ and mult_ tables]
         S --> D[(MySQL)]
         D --> F[Format as JSON, CSV or HTML]

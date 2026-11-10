@@ -237,8 +237,9 @@ Bundle registry
 Search results
     The rows of the ``search_results`` table holding the ids of the observations one
     search matched, in sort order, under the search's ``user_searches`` id. The web
-    application builds them once per distinct search and joins every later query
-    against them; ``opus_manage prune`` removes the least recently used.
+    application stores them the first time anyone makes the search, and every later
+    query for the search reads them; ``opus_manage prune`` removes the searches unused
+    the longest.
 
 Trigger
     A value a user can search for that makes a further table of search parameters

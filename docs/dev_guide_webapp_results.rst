@@ -152,7 +152,7 @@ What each handler returns
 
 :func:`~opus_app.apps.results.views.api_get_product_types_for_opus_id` and :func:`~opus_app.apps.results.views.api_get_product_types_for_search`
     The product types available for one observation, or across a whole search. The
-    search form caches its built response in the Django cache under the search's id.
+    search form caches its response in the Django cache under the search's number.
 
 :func:`~opus_app.apps.results.views.get_triggered_tables`
     Which tables a search makes relevant. With no selections it is the ``BASE_TABLES``
@@ -216,8 +216,8 @@ each simply calls its public twin, which is where the
      - public
      - :func:`~opus_app.apps.metadata.views.api_get_fields`
 
-**The result count** is the number the search's build stored in its ``user_searches``
-row, ``result_count``, so counting a built search reads one row by its primary key.
+**The result count** is the ``result_count`` stored in the search's ``user_searches``
+row when its results were stored, so counting a search's results reads one row.
 :func:`~opus_app.apps.metadata.views.get_result_count_helper` is the routine, and it
 returns the count, the search's id and an error response, so that a caller that also
 needs the search's results does not resolve the search twice. The results and cart apps
@@ -321,7 +321,7 @@ search's results (:func:`~opus_app.apps.tools.sql_builder.search_results_source`
 reading the cart it numbers the session's cart in sort order with ``ROW_NUMBER()`` in a
 derived table (:func:`~opus_app.apps.tools.sql_builder.row_number`, aliased
 ``cart_order``), which has the same ``id`` and ``sort_order`` columns, because the cart
-has no built results of its own. Each derived table is computed afresh by each statement
+has no stored results of its own. Each derived table is computed afresh by each statement
 that names it. The
 delete form explicitly carries the session id in its WHERE clause, so it cannot reach
 another user's cart.

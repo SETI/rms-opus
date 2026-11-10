@@ -117,13 +117,13 @@ itself.
 Two of those options are chosen rather than default. ``--timeout 300`` is generous
 because building a cart archive of thousands of files is a slow request. **The
 configuration's** ``[django] search_build_timeout`` **has to be at least 30 seconds below
-it** (:ref:`user_guide_installation_configuring`): a request waiting for another worker's
-build of the same search waits that long, and a worker gunicorn kills partway through a
-build loses the build, so the next request waiting on it starts over. The default, ``270``,
-fits ``--timeout 300``; lowering ``--timeout`` means lowering it too. The worker count
-should be tuned to the machine; every worker holds its own copy of the process-local
-caches described in :ref:`dev_guide_webapp_caching`, and **restarting the service is what
-clears them**, which is why ``ExecReload`` matters after an import.
+it** (:ref:`user_guide_installation_configuring`). That is how long a request waits while
+another worker stores the same search's results, and if gunicorn kills a worker partway
+through storing them, nothing is stored and the next request has to start over. The
+default, ``270``, fits ``--timeout 300``; lowering ``--timeout`` means lowering it too.
+The worker count should be tuned to the machine; every worker holds its own copy of the
+process-local caches described in :ref:`dev_guide_webapp_caching`, and **restarting the
+service is what clears them**, which is why ``ExecReload`` matters after an import.
 
 The nginx server block
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -365,8 +365,8 @@ what C extensions -- the MySQL driver among them -- want.
 
 ``Timeout`` is how long Apache waits on a request here, and the same rule holds as for
 gunicorn's ``--timeout``: ``[django] search_build_timeout`` has to be at least 30 seconds
-below it, so that a request waiting for another worker's build of the same search gives
-up and answers before Apache gives up on it.
+below it, so that a request waiting while another worker stores the same search's
+results gives up and answers before Apache gives up on it.
 
 The ``wsgi.py`` path
 ~~~~~~~~~~~~~~~~~~~~
