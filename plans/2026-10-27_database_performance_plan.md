@@ -3896,8 +3896,10 @@ once (§1, Deploy; §2.3).
     `schema_version` gains four columns:
     - `generation INT UNSIGNED NOT NULL`, the generation the web application serves;
     - `pending_generation INT UNSIGNED NULL`, the one an update is writing;
-    - `pending_ready BOOLEAN NOT NULL DEFAULT FALSE`, true once the pending generation has
-      been finalized, validated and stamped, and false again as soon as anything writes it;
+    - `pending_state ENUM('writing','validated','ready') NULL`, how far the pending
+      generation has got: `writing` from `--begin-generation` and again whenever anything
+      writes it, `validated` once `--validate` has passed on it, and `ready` once
+      `--write-schema-version` has stamped a validated one;
     - `revertible BOOLEAN NOT NULL DEFAULT FALSE`, true from a switch until the purge
       starts.
 
@@ -3958,8 +3960,8 @@ once (§1, Deploy; §2.3).
 - **The update, invocation by invocation.** Each step is a new `opus_import` flag or a
   changed behavior of an existing one when the schema has a pending generation P.
   1. `--begin-generation`: on a `ready` schema at this release's version with no pending
-     generation, sets `pending_generation` to `generation + 1` and `pending_ready` to
-     false. It is refused otherwise; a
+     generation, sets `pending_generation` to `generation + 1` and `pending_state` to
+     `writing`. It is refused otherwise; a
      pending generation is named, with `--abandon-generation`. **The state stays `ready`**:
      every worker serves generation G throughout, and a worker that starts during the
      update still passes PR-05's check.
@@ -3972,13 +3974,15 @@ once (§1, Deploy; §2.3).
        rerun is clean.
      - **Loaded rows get `added_generation = P`.**
      - **The state is never set to `appending`.**
-     - **`pending_ready` is set to false** before the first write.
-  3. `--delete-bundles` with P pending sets `pending_ready` to false, retires the bundles'
+     - **`pending_state` is set to `writing`** before the first write.
+  3. `--delete-bundles` with P pending sets `pending_state` to `writing`, retires the
+     bundles'
      rows (setting `retired_generation = P` on their registry rows), deletes their rows
      added at P, and deletes their registry rows of generation P. Without a pending
      generation it
      behaves as PR-08 made it.
-  4. `--finalize` with P pending sets `pending_ready` to false, works on generation P, and
+  4. `--finalize` with P pending sets `pending_state` to `writing`, works on generation P,
+     and
      writes nothing a request reads before the switch:
      - `--create-indexes` is unchanged; on an existing schema it finds nothing to add.
      - **The duplicate step reads generation P only.** Of two rows sharing an `opus_id` it
@@ -3994,14 +3998,16 @@ once (§1, Deploy; §2.3).
      - A finalization step that a later PR adds states whether it runs here or at the
        switch. PR-24's `default_rank`, if implemented, renumbers at the switch, since it
        writes rows the served generation shows.
-  5. `--validate` with P pending checks generation P. The orphan counts read every row,
-     since a retired row's children are still there.
+  5. `--validate` with P pending checks generation P, and sets `pending_state` to
+     `validated` when every check passes and to `writing` when one fails. The orphan
+     counts read every row, since a retired row's children are still there.
   6. `--write-schema-version` with P pending refuses an unfinished registry as today, and
-     otherwise sets `pending_ready` to true and logs that generation P is ready to switch.
-     It is the only writer of true, and the scripts run it only after `--validate`
-     succeeds, as every sequence runs it last.
+     refuses unless `pending_state` is `validated`, so a stamp never follows a failed or
+     skipped validation; otherwise it sets `pending_state` to `ready` and logs that
+     generation P is ready to switch. It is the only writer of `ready`.
   7. `--switch-generation` runs while the web service is stopped (below). It is refused
-     unless `pending_ready` is true, so a pending generation whose import, finalization or
+     unless `pending_state` is `ready`, so a pending generation whose import, finalization
+     or
      validation failed, or that anything has written since it was stamped, is never
      switched in. Each of its steps checks whether it has already run, so an interrupted
      switch is completed by running it again:
@@ -4013,7 +4019,7 @@ once (§1, Deploy; §2.3).
         as PR-18's carry-over does;
      3. PR-11's search-table reset and cache flush;
      4. last, in one statement, `generation = P`, `pending_generation = NULL`,
-        `pending_ready = false`, and `revertible = true`.
+        `pending_state = NULL`, and `revertible = true`.
 
      The web service starts only after the last step succeeds. The restart refreshes the
      per-process caches (`param_info`, the mult labels, `partables`, `table_names`), and
@@ -4032,11 +4038,13 @@ once (§1, Deploy; §2.3).
      deletes the rows added at P, clears `removed_generation = P` back to NULL, drops the
      aux `__new` tables, deletes P's registry rows, and clears `pending_generation`.
      `--revert-generation`, after a switch and before the purge, runs the switch backward:
-     it swaps the `__prev` aux tables back, keeping the reverted-from ones as `__prev` in
-     turn, points the cart at the previous generation by `opus_id`, resets the search
-     tables, and sets `generation` back to G, `pending_generation` to P, `pending_ready`
-     to true, and `revertible` to false, so the update can then be abandoned or switched
-     again. It is refused unless `revertible` is true. Like the switch, it runs while the
+     it swaps the `__prev` aux tables back in and renames the reverted-from ones to
+     `__new`, since they are again the pending generation's, points the cart at the
+     previous generation by `opus_id`, resets the search tables, and sets `generation`
+     back to G, `pending_generation` to P, `pending_state` to `ready`, and `revertible` to
+     false, so the update can then be abandoned, which drops those `__new` tables, or
+     switched again, which swaps them in as any switch does. It is refused unless
+     `revertible` is true. Like the switch, it runs while the
      web service is stopped.
   10. **The generation commands never overlap.** `--begin-generation`,
       `--switch-generation`, `--revert-generation`, `--abandon-generation` and

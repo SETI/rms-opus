@@ -497,12 +497,13 @@ session setting and refuses a server whose token size is not 2.
 
 `schema_version(version INT UNSIGNED NOT NULL PRIMARY KEY, state ENUM('ready',
 'appending') NOT NULL, generation INT UNSIGNED NOT NULL, pending_generation INT UNSIGNED
-NULL, pending_ready BOOLEAN NOT NULL DEFAULT FALSE, revertible BOOLEAN NOT NULL DEFAULT
-FALSE)`, one row; the last four columns exist under design B of §3.1 only. `generation`
-is the import generation the web application serves, `pending_generation` the one an
-incremental update is writing, `pending_ready` whether that one has been validated and
-stamped since anything last wrote it, and `revertible` whether the previous generation
-is still whole; a fresh import's row starts at generation 1 with none pending. Under
+NULL, pending_state ENUM('writing','validated','ready') NULL, revertible BOOLEAN NOT
+NULL DEFAULT FALSE)`, one row; the last four columns exist under design B of §3.1 only.
+`generation` is the import generation the web application serves, `pending_generation`
+the one an incremental update is writing, `pending_state` how far that one has got since
+anything last wrote it (written, validated, stamped), and `revertible` whether the
+previous generation is still whole; a fresh import's row starts at generation 1 with none
+pending. Under
 design B the table is created empty when `obs_general` is, since the served view reads
 it, and an empty table counts as no row.
 It is written by an explicit step that every import sequence runs last, after
@@ -861,8 +862,9 @@ served schema as a new **import generation**, which the served `obs_general` vie
 hides until it is switched in:
 
 1. **Begin.** The version row's `pending_generation` is set to P, one more than the served
-   `generation` (§2.7), and `pending_ready` to false; every later write to P sets it false
-   again, and only the version step, run after validation, sets it true. The state stays
+   `generation` (§2.7), and `pending_state` to `writing`; every later write to P sets it
+   back to `writing`, a validation that passes sets it to `validated`, and only the version
+   step, which requires `validated`, sets it to `ready`. The state stays
    `ready`, so every worker goes on serving, and a
    worker that starts meanwhile passes the startup check.
 2. **Import.** Each bundle takes the append path, with one change: its served rows are
@@ -880,7 +882,7 @@ hides until it is switched in:
    - The aux tables are built into their `__new` copies.
    - The mult step, the search-table reset and the cache flush wait.
 4. **The switch**, inside the same stop and start of the web service as a promotion (§3,
-   step 6), and refused unless `pending_ready` is true. The aux tables are swapped in,
+   step 6), and refused unless `pending_state` is `ready`. The aux tables are swapped in,
    the ones they replace kept until the purge. Each cart row whose observation was retired
    is pointed at the new copy by `opus_id`, or dropped and counted when there is none.
    The search tables are reset and the cache flushed. Last, the row's `generation`
@@ -899,8 +901,10 @@ hides until it is switched in:
    schema, so none runs while another does.
 
 Until the purge, the previous generation is still whole. A revert, allowed while
-`revertible` is true, runs the switch backward: the previous aux tables, the cart pointed
-back by `opus_id`, the reset, and the previous `generation`. Before the switch, an
+`revertible` is true, runs the switch backward: the previous aux tables back in, the
+reverted-from ones named as the pending generation's again so a later switch takes them,
+the cart pointed back by `opus_id`, the reset, and the previous `generation`. Before the
+switch, an
 abandoned update deletes the rows added at P and clears the retirements. A second server
 cannot take the update in place, since its load creates a new database, so it receives a
 dump of the whole schema, both generations, under a new name, switches that copy while
