@@ -21,12 +21,15 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from opus_config.config import DEFAULT_INDEX_WORKERS, DEFAULT_WORKER_ROWS, DEFAULT_WORKERS
+
 if TYPE_CHECKING:
     import argparse
     from collections.abc import Iterator
 
     import pdslogger
 
+    from opus_import.deferred import Capture
     from opus_import.importdb.super import ImportDBSuper
 
 
@@ -38,6 +41,11 @@ class ImportLog:
     produced it. The ``nonrepeating_`` methods log a given message only once per run,
     which is what keeps a fault shared by every row of an index out of the log a hundred
     thousand times.
+
+    While the context is capturing (`ImportContext.capture`, in a pool worker), every
+    method records its call and the position instead, deduplicating nothing and marking
+    nothing, and the import's process replays the call where the serial loop would have
+    made it.
 
     Instances are created by `ImportContext`; the pipeline reaches this class only as
     ``ctx.log``.
@@ -70,6 +78,22 @@ class ImportLog:
             ret = '[' + ret + '] '
         return ret
 
+    def _recorded(self, method: str, args: tuple[Any, ...]) -> bool:
+        """Record a call on the context's capture, if it has one.
+
+        Parameters:
+            method: The name of the method called.
+            args: Its arguments.
+
+        Returns:
+            True if the call was recorded, and so is not to be carried out.
+        """
+        ctx = self._ctx
+        if ctx.capture is None:
+            return False
+        ctx.capture.log((ctx.current_index_row_number, ctx.current_primary_filespec), method, args)
+        return True
+
     def error(self, msg: str, *args: Any) -> None:
         """Log a message at error level and mark the import as having produced bad data.
 
@@ -77,6 +101,8 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
+        if self._recorded('error', (msg, *args)):
+            return
         self._ctx.logger.log('error', self._position() + msg, *args)
         self._ctx.mark_bad_data()
 
@@ -87,6 +113,8 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
+        if self._recorded('warning', (msg, *args)):
+            return
         self._ctx.logger.log('warning', self._position() + msg, *args)
 
     def info(self, msg: str, *args: Any) -> None:
@@ -96,6 +124,8 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
+        if self._recorded('info', (msg, *args)):
+            return
         self._ctx.logger.log('info', self._position() + msg, *args)
 
     def debug(self, msg: str, *args: Any) -> None:
@@ -105,6 +135,8 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
+        if self._recorded('debug', (msg, *args)):
+            return
         self._ctx.logger.log('debug', self._position() + msg, *args)
 
     def nonrepeating_error(self, msg: str) -> None:
@@ -117,6 +149,8 @@ class ImportLog:
             msg: The message. Two calls with equal messages log once, even though their
                 position prefixes differ.
         """
+        if self._recorded('nonrepeating_error', (msg,)):
+            return
         if msg in self._ctx.logged_import_errors:
             self._ctx.mark_bad_data()
             return
@@ -130,6 +164,8 @@ class ImportLog:
             msg: The message. Two calls with equal messages log once, even though their
                 position prefixes differ.
         """
+        if self._recorded('nonrepeating_warning', (msg,)):
+            return
         if msg not in self._ctx.logged_import_warnings:
             self._ctx.logged_import_warnings.append(msg)
             self.warning(msg)
@@ -192,6 +228,13 @@ class ImportContext:
         import_path: The path an invocation that imports bundles takes, once
             `opus_import.steps.do_import.choose_import_path` has chosen it from the
             target schema's state, or None before.
+        workers: How many processes compute an index's observations; 1 is this
+            process, with no pool. `opus_import.cli` sets it from the resolved
+            parallelism.
+        worker_rows: The index rows one worker task covers.
+        index_workers: How many tables finalization builds indexes on at once.
+        capture: The record a pool worker keeps in place of database calls and log
+            writes (`opus_import.deferred`), or None in the import's own process.
     """
 
     args: argparse.Namespace
@@ -216,6 +259,11 @@ class ImportContext:
     step_timings: dict[str, float] = field(default_factory=dict)
 
     import_path: str | None = None
+
+    workers: int = DEFAULT_WORKERS
+    worker_rows: int = DEFAULT_WORKER_ROWS
+    index_workers: int = DEFAULT_INDEX_WORKERS
+    capture: Capture | None = None
 
     log: ImportLog = field(init=False)
 

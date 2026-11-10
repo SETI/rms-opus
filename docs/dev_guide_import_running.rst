@@ -55,16 +55,64 @@ and the log locations all come from the configuration file, and the keys it uses
        (true by default), where its scratch files go (the system temporary directory by
        default), and the most rows to a transaction (100,000 by default). See
        :ref:`dev_guide_import_db_bulk_load`.
+   * - ``[import] workers``, ``worker_rows``
+     - How the observations of an index are computed: in how many processes (1 by
+       default, the import's own process with no pool), and how many index rows one
+       worker task covers (500 by default). See
+       :ref:`dev_guide_import_running_parallelism`.
    * - ``[import] index_workers``, ``server_tmpdir``
      - How finalization builds the secondary indexes: on how many tables at once (1 by
        default), and in which directory on the database server's host the server sorts
        them (the server's own setting by default). See
        :ref:`dev_guide_import_steps_create_indexes`.
+   * - ``[import] cpus``, ``cpu_fraction``
+     - The ceiling neither ``workers`` nor ``index_workers`` may exceed: the cores to take
+       the computer as having (counted by default), and the share of them allowed (0.75
+       by default). See :ref:`dev_guide_import_running_parallelism`.
 
 Configuration values can be overridden for one run without editing the file, with
-``--override-db-schema``, ``--override-pds3-data-dir`` and ``--override-pds4-data-dir``.
-Importing into a schema other than the one being served is what
+``--override-db-schema``, ``--override-pds3-data-dir``, ``--override-pds4-data-dir`` and
+``--workers``. Importing into a schema other than the one being served is what
 ``--override-db-schema`` is for, and it is how a production import is done.
+
+.. _dev_guide_import_running_parallelism:
+
+How many processes a run uses
+-----------------------------
+
+``[import] workers`` and ``index_workers`` say how much of the computer a run may use.
+``workers`` is how many processes compute an index's observations: 1, the default, is
+the import's own process with no pool, and a larger count forks a pool of that many for
+each index (:ref:`dev_guide_import_steps_do_import_pool`). ``index_workers`` is how many
+tables finalization builds keys on at once, each over a connection of its own
+(:ref:`dev_guide_import_steps_create_indexes`). Either may be ``"max"``, which asks for
+the ceiling.
+
+**No request takes every core**, because the database server or another user may share
+the computer. The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is
+``[import] cpus`` when the file sets it, and otherwise the cores the process may run on
+-- its CPU affinity set where the platform has one, so a run confined by ``taskset`` or a
+container's CPU set counts only those. ``cpu_fraction`` is greater than 0 and at most 1,
+0.75 by default. :func:`opus_config.config.resolve_parallelism` resolves both counts,
+and a count above the ceiling is **refused**, not lowered: the run logs a fatal message
+naming the count, the ceiling, the cores and where they came from, and the fraction, and
+exits non-zero before it opens the database.
+
+``--workers N`` replaces ``[import] workers`` for one invocation, and takes a whole
+number of at least 1 or ``max``, checked against the same ceiling. ``[import] cpus`` is
+for a host whose size is better stated than counted; a stated count above the counted one
+is used as stated, and the run says so on an info line.
+
+**The first line of every run's log states the parallelism**: the cores and where they
+came from (``detected`` or ``[import] cpus``), ``cpu_fraction``, the ceiling, and the
+resolved ``workers`` and ``index_workers``, as in::
+
+    Parallelism: 8 cores (detected), cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1
+
+An index with fewer rows than ``[import] worker_rows`` is computed in the import's own
+process whatever ``workers`` says, and so is every index on a platform that cannot
+``fork``, which the run reports on an info line. The tables, their ids and the log are the
+same whatever the number of workers, apart from the ``Parallelism`` line.
 
 .. _dev_guide_import_the_options:
 
@@ -243,6 +291,20 @@ Import steps
      - Recompute the key distributions of every ``obs_`` and ``mult_`` table, after the
        auxiliary, cart and search tables are built.
 
+Parallelism
+~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Option
+     - Meaning
+   * - ``--workers N``
+     - Compute each index's observations in ``N`` processes, or ``max`` for the ceiling;
+       replaces ``[import] workers``. A count above the ceiling is a fatal error
+       (:ref:`dev_guide_import_running_parallelism`).
+
 Import behavior
 ~~~~~~~~~~~~~~~
 
@@ -384,27 +446,30 @@ whole shape. It:
    :class:`~opus_import.context.ImportContext`, and attaches the five log destinations
    described below.
 4. Installs a warning handler that collects Python warnings onto the context.
-5. Rejects ``--scorched-earth`` without ``--yes``, or ``--yes`` without
+5. Resolves ``workers`` and ``index_workers`` against the ceiling and logs the
+   ``Parallelism`` line, exiting non-zero with a fatal message if either is above it
+   (:ref:`dev_guide_import_running_parallelism`).
+6. Rejects ``--scorched-earth`` without ``--yes``, or ``--yes`` without
    ``--scorched-earth``, with a fatal message and a non-zero exit.
-6. Configures ``rms-pdsfile`` -- shelves-only unless ``--dont-use-shelves-only`` -- and
+7. Configures ``rms-pdsfile`` -- shelves-only unless ``--dont-use-shelves-only`` -- and
    preloads both holdings roots. The ``rms-pdsfile`` logger is attached *after* the
    preload, so the preload's own debug output stays out of the run's log.
-7. Opens the database through :func:`opus_import.importdb.get_db`, exiting non-zero if
+8. Opens the database through :func:`opus_import.importdb.get_db`, exiting non-zero if
    the connection fails.
-8. Chooses the import's path when the invocation imports bundles and erases nothing
+9. Chooses the import's path when the invocation imports bundles and erases nothing
    first, exiting non-zero if the import is refused
    (:ref:`dev_guide_import_running_paths`).
-9. Runs :func:`opus_import.steps.do_import.do_import_steps` -- the erase under
-   ``--scorched-earth``, then ``--delete-bundles``, then the import -- exiting non-zero
-   if it returns False.
-10. Under ``--finalize``, refuses with a fatal message and a non-zero exit, before any
+10. Runs :func:`opus_import.steps.do_import.do_import_steps` -- the erase under
+    ``--scorched-earth``, then ``--delete-bundles``, then the import -- exiting non-zero
+    if it returns False.
+11. Under ``--finalize``, refuses with a fatal message and a non-zero exit, before any
     finalization step, while any bundle in the bundle registry is not ``done``.
-11. Runs ``--create-indexes``, then, under ``--finalize``, the duplicate step.
-12. Builds the auxiliary tables that were asked for, in the order ``param_info``,
+12. Runs ``--create-indexes``, then, under ``--finalize``, the duplicate step.
+13. Builds the auxiliary tables that were asked for, in the order ``param_info``,
     ``partables``, ``table_names``, then runs ``--create-cart`` and
     ``--reset-search-tables``, then ``--analyze-tables``.
-13. Runs ``--update-mult-info``, then ``--validate``, then ``--import-dictionary``.
-14. Runs ``--write-schema-version``, exiting non-zero if it refuses: when a finishing
+14. Runs ``--update-mult-info``, then ``--validate``, then ``--import-dictionary``.
+15. Runs ``--write-schema-version``, exiting non-zero if it refuses: when a finishing
     step of the same invocation failed, when a bundle in the registry is not ``done``,
     or when the schema holds another version.
 
@@ -440,7 +505,10 @@ A run writes to five places:
 Every message produced while a bundle is being imported carries the bundle, index row
 number and primary file specification the run was on when it was produced, so a line read
 out of a log names the observation that caused it. Messages from before the first bundle,
-and from the steps that run over the whole database, carry none of it.
+and from the steps that run over the whole database, carry none of it. A message made in
+a pool worker is written by the import's own process, with the position the worker was
+at, where the serial loop would have written it, so the log reads the same whatever
+``[import] workers`` is.
 
 .. _dev_guide_import_verifying:
 

@@ -5324,6 +5324,116 @@ Nothing above this line is rewritten by an executor.
     insertions and 1,542 deletions, and `-- docs tests import_tests` 55 files, 2,146
     insertions and 992 deletions.
 
+### 2026-11-09, PR-09 (written against this file at 56d510f2)
+
+- The pool is `concurrent.futures.ProcessPoolExecutor` with the `fork` context, not
+  `multiprocessing.Pool`: a worker that dies breaks the executor, which raises, where a
+  `Pool` waits for it forever. The import's process submits a bounded number of tasks
+  ahead of the one it replays (`do_import_pool.TASKS_AHEAD_PER_WORKER` per worker), so it
+  holds a bounded number of results; the executor's `map` would submit every task at once
+  and hold every result that arrives early. The executor forks its workers before it
+  starts its own thread.
+- **Each row starts from the index's pre-loop metadata**, on the serial path as in a
+  worker (`import_index_row` clears `metadata` and refills it from a snapshot taken before
+  the first row). The section does not say this; without it, a worker's first row would
+  see a different previous row's leftovers than the serial loop's, and nothing would
+  bound which leftovers a field function reads. The goldens did not change, so nothing
+  read one.
+- The event stream is one per task, not one per observation; each event carries the
+  index row and filespec it was recorded at, which is what the replay sets before acting
+  on it, so the two are the same. A mult event names its table and column, and the
+  import's process looks the column definition up in the index's schemas (the `<TARGET>`
+  template for a target's table) rather than receiving it pickled.
+- `obs_files`' `TAB:obs_general` columns need no rewrite of their own: a worker builds
+  them from its `obs_general` row, whose `id` is a `LocalId` and whose `instrument_id` is
+  a `MultRef`, and the replay resolves every placeholder in every row the same way.
+- `pdsfile`'s logging is recorded per class rather than through `set_logger`: before the
+  pool is created the import's process lists every `pdsfile` class whose own `LOGGER` is
+  set, and each worker replaces each with a recorder, so a call is replayed into the
+  logger of the class it was made on. The arguments of a recorded call that are not a
+  string, a number or None travel as their text.
+- **A Python warning is issued again in the import's process** (`warnings.warn_explicit`,
+  against the `__warningregistry__` of the module its file is), not appended to the
+  context's list. Every worker has its own copy of the record of what has been shown, so
+  a warning shown once per location could otherwise reach the import's process once per
+  worker. Found in review of the documentation, not by the determinism test, whose
+  bundles raise no warning; `test_import_pool.py` covers it.
+- Rows go to `do_import_index.TableRowSink`, which loads a table through PR-04's
+  `bulk_load_rows` each time `transaction_rows` of its rows wait, and creates a target's
+  table before its first load. A table's rows can therefore load before the mult tables
+  are written, and a child's before `obs_general`'s; the bundle loads with foreign-key
+  checks off and a `mult_idx` column has no foreign key, so the loads succeed, and every
+  value is in its mult table by the end of the index. The unused
+  `remove_opus_id_from_tables` went with the whole-index row lists it worked on.
+- The determinism test imports two bundles in one invocation (`COVIMS_0048`, whose rows
+  give two observations each and which has moon, Saturn and ring summaries, and
+  `VGISS_6109`, the fixture's largest index) rather than one. It compares every table,
+  ids included, and the info logs' lines across files, with timestamps, elapsed times,
+  the run's schema and directory, and the `Parallelism:` line removed; each invocation's
+  log is named after the second it started in, so the number of files differs between
+  runs. The kill test fails with the death-signal request removed (the three stalled
+  workers outlive their parent).
+- `import_tests/tools/build_run.write_opus_config` writes `cpus` (`fixture_cpus`) into
+  every session's configuration and leaves out a key given None. The harness's
+  fixture-scale runs, which write their configuration with it, give `cpus` None: a side
+  older than the key refuses it, and the harness measures the machine's own cores.
+- `bench_import --workers-sweep` runs only at test scale, the one scale whose scenario
+  names a largest bundle. The sweep (2026-11-09, session `sweep`,
+  `2026-11-09_PR-09_after_test_mysql_sweep.json`, NHPELO_1001 imported alone once per
+  count, the workstation's 30 cores giving a ceiling of 22) was widened past the
+  section's 8 to find where the curve flattens:
+
+  | `workers` | `--import` | rows per second | tree's peak PSS |
+  |---|---|---|---|
+  | 1 | 74.8 s | 90.5 | 0.72 GB |
+  | 2 | 48.0 s | 141.2 | 1.43 GB |
+  | 4 | 32.5 s | 208.1 | 2.02 GB |
+  | 8 | 25.0 s | 271.4 | 3.11 GB |
+  | 12 | 26.6 s | 254.2 | 4.17 GB |
+  | 16 | 26.4 s | 257.0 | 4.67 GB |
+  | 22 | 26.6 s | 254.2 | 4.69 GB |
+
+  The curve flattens at 8, where the import's process replaying the results and the
+  serial reads of the index and its summaries bound it; 8 is the count measured.
+- PR-09's measurement (2026-11-09, session `a`, three imports a side alternated, before at
+  56d510f2 and after at 3522bac5 with `--import-key workers=8`; the guards from a second
+  after session, `defaults`, at the default `workers = 1`, as §2.5 judges import guards at
+  the default parallelism):
+  - **Test scale** (`2026-11-09_PR-09_{before_test_mysql_a,after_test_mysql_a}.json`): the
+    target `import.largest.import_s` improved from 72.9 s to 22.6 s (-69.0%, floor 3.5%).
+    At 8 workers the bundle imports fell from 289.4 s to 150.4 s (-48.0%), the whole
+    import from 347.0 s to 207.4 s (-40.2%), the largest bundle alone from 75.7 s to
+    24.9 s, and the incremental group from 137.3 s to 86.1 s; finalization did not move
+    (56.3 s to 55.7 s). The tree's peak PSS at 8 workers was 3.13 GB against 0.84 GB
+    (reported), and the largest single process's peak RSS 0.88 GB against 0.85 GB.
+  - **Guards at the default** (`2026-11-09_PR-09_after_test_mysql_defaults.json` against
+    the same before file): `import.wall_s` -1.2%, `import.largest.import_s` -0.4%,
+    `import.peak_tree_pss_kb` -13.5% (0.84 GB to 0.72 GB, the sink loading each table a
+    transaction at a time rather than holding a whole index); all held.
+  - **Fixture scale** (`2026-11-09_PR-09_{before,after}_fixture_mysql_a.json` and
+    `..._after_fixture_mysql_defaults.json`): every fixture index is smaller than one
+    500-row task, so both after sessions compute in one process; `import.wall_s` 41.2 s
+    to 41.1 s, and every guard held.
+- A complete-scale import at `workers = 8` (2026-11-10, session `workers8`, one import at
+  7a165498, `2026-11-10_PR-09_after_complete_mysql_workers8.json`; informational, against
+  PR-00's `2026-11-05_PR-00_before_complete_mysql_a.json` and PR-07's
+  `2026-11-08_PR-07_after_complete_mysql_b.json`, with PR-08 between them unmeasured at
+  this scale):
+  - `import.wall_s` 18,235 s (PR-00) and 13,437 s (PR-07) to 8,262 s, -54.7% and -38.5%;
+    the bundle imports 17,620 s and 11,988 s to 5,344 s, -69.7% and -55.4%; the largest
+    bundle (COVIMS_0003) 287 s and 249 s to 59 s.
+  - By group against PR-07: COVIMS_0xxx 4,336 s to 1,554 s, COISS 4,119 s to 1,391 s,
+    COUVIS_0xxx 1,149 s to 434 s and NEWHORIZONS 277 s to 102 s, each about -63%;
+    VOYAGER -25%; HST -5%; COCIRS did not move (882 s to 895 s).
+  - Finalization rose from 1,448 s to 2,916 s, almost all of it `obs_files`' key build
+    (798 s to 1,943 s), whose code this PR does not change. The peak checkpoint age was
+    5.53 GB against 0.96 GB, the loads outrunning the server's page flushing, and the key
+    builds start against that backlog; that is the likely cause, not measured. The same
+    statement took 846 s and 2,370 s in PR-07's copied finalizations, so its time varies
+    widely with the server's state.
+  - `Innodb_data_written` held (134.1 GB to 133.7 GB). The tree's peak PSS was 6.93 GB
+    against 3.05 GB, and the largest process's peak RSS 2.63 GB against 3.07 GB.
+
 ### 2026-11-10, PR-10 (written against this file at 2b098379)
 
 - With both temporary tables gone, the application creates none, so their helpers go

@@ -290,7 +290,9 @@ here. It then adds them in three phases:
 
 1. **The plain keys**, grouped per table into ``ALTER TABLE ... ADD KEY ..., ADD KEY
    ...`` statements, run for different tables at once over ``[import] index_workers``
-   connections (:meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`). The
+   connections (:meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`), as
+   :mod:`opus_import.cli` resolved it against the ceiling
+   (:ref:`dev_guide_import_running_parallelism`) -- ``"max"`` is the ceiling itself. The
    list includes a plain key on every foreign-key column no other key leads -- each
    child's ``obs_general_id`` -- so the foreign keys find their index built rather than
    building it themselves one table at a time.
@@ -671,8 +673,8 @@ this step runs; an append sets it to ``appending`` and leaves it so.
 leaves no version row behind.
 :ref:`dev_guide_database_schema_version` describes the table and who reads it.
 
-The four internal modules
--------------------------
+The internal modules
+--------------------
 
 These are the internals of :mod:`~opus_import.steps.do_import`. **They are not steps**:
 no command-line option runs one on its own, and nothing outside ``do_import`` calls
@@ -715,8 +717,9 @@ Its functions:
     order, which is what the index importer walks. **The
     ``obs_surface_geometry__<TARGET>`` tables are deliberately not created here**: the
     target names are not known until the observations have been read, so the index
-    importer creates each from the template as it writes the first rows for that target.
-    The template schema is still returned, because the import needs the column names.
+    importer's row sink creates each from the template just before it loads the first
+    rows for that target. The template schema is still returned, because the import needs
+    the column names.
 
 .. _dev_guide_import_steps_scorched_earth:
 
@@ -763,12 +766,47 @@ opus_import.steps.do_import_index
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Importing every observation one primary index file describes.
-:ref:`dev_guide_import_one_index` walks it; this section names its three functions.
+:ref:`dev_guide_import_one_index` walks it; this section names its parts.
 
 :func:`~opus_import.steps.do_import_index.import_one_index`
     The whole of it: read the primary index, resolve ambiguous rows, discover and
-    cross-reference the associated metadata files, run the master loop, then write the
-    ``mult_`` tables and the ``obs_`` tables out.
+    cross-reference the associated metadata files, compute every row through
+    :func:`~opus_import.steps.do_import_pool.compute_index`, then write the ``mult_``
+    tables and load what is left of the ``obs_`` rows. It returns False, abandoning the
+    index, when a pool worker failed.
+
+:class:`~opus_import.steps.do_import_index.IndexState`
+    What every row of the index is computed from, built once the metadata is assembled
+    and the tables are created: the obs instance, the metadata dictionary it reads, a
+    copy of that dictionary as it stands before the first row
+    (:attr:`~opus_import.steps.do_import_index.IndexState.base_metadata`), the table
+    schemas and their order, the PDS version, and the index rows. A pool's workers inherit
+    it by ``fork``.
+
+:func:`~opus_import.steps.do_import_index.import_index_row`
+    Computes every table's rows for one index row and hands each to a row emitter, in the
+    order the tables are walked. **It first clears the metadata dictionary and refills it
+    from** ``base_metadata``, so what a row computes depends on that row alone and not on
+    the rows computed before it in the same process -- which is what lets any process
+    compute any row. It is the one row function, run by the serial loop and by every pool
+    worker alike.
+
+:class:`~opus_import.steps.do_import_index.TableRowSink`
+    Where the import's own process sends each finished row, by table. A table's rows are
+    loaded as soon as ``[import] transaction_rows`` of them are waiting
+    (:meth:`~opus_import.importdb.super.ImportDBSuper.bulk_load_rows`), so the import
+    holds at most that many rows of a table at once rather than a whole index's; a
+    surface geometry target's table is created from the template just before its first
+    load. :meth:`~opus_import.steps.do_import_index.TableRowSink.finish` loads what is
+    still waiting, table by table in the order walked, the targets' tables in the order
+    of their target names. Tables therefore load in no fixed order relative to one
+    another during the index, which the foreign keys tolerate because a bundle loads with
+    their checks off (:ref:`dev_guide_import_steps_do_import`). An index that fails
+    partway is taken back by
+    :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes each
+    table's rows from the first id the sink loaded: the index's mult values are never
+    written, so a row of it left behind would hold a mult id a later bundle gives to
+    another value.
 
 :func:`~opus_import.steps.do_import_index.get_opus_products_rows_for_filespec`
     The ``obs_files`` rows for one observation: one row per file of one product type at
@@ -778,11 +816,94 @@ Importing every observation one primary index file describes.
     whose shelf metadata is missing (with a warning, because its size and checksum are
     unknown). A file that is not the current version is never checked by default.
 
-:func:`~opus_import.steps.do_import_index.remove_opus_id_from_tables`
-    Drops every row an observation contributed from the in-memory table lists, before
-    any of them is written. An observation can have more than one row in a table -- one
-    per target in the surface geometry tables -- so every match is removed rather than
-    the first.
+.. _dev_guide_import_steps_do_import_pool:
+
+opus_import.steps.do_import_pool
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Computing an index's rows in a pool of forked processes. **Single writer, many
+computers**: the workers compute, and only the import's own process touches the
+database or the log.
+
+:func:`~opus_import.steps.do_import_pool.compute_index` is the entry point. With
+:attr:`~opus_import.context.ImportContext.workers` at 1, or an index of fewer rows than
+:attr:`~opus_import.context.ImportContext.worker_rows`, it runs the row function over
+every row in the import's own process, handing each row straight to the sink. A platform
+without the ``fork`` start method computes the same way, and says so on an info line.
+Otherwise it computes in a pool:
+
+* **The pool is created once per index**, after the index's metadata is assembled and its
+  tables are created, with the ``fork`` start method named explicitly. The state the
+  rows are computed from is installed in a module global before the pool exists, so the
+  workers inherit it -- the context, the
+  :class:`~opus_import.steps.do_import_index.IndexState`, the row function -- and nothing
+  is pickled to a worker but a task: a ``(start, end)`` range of row numbers,
+  ``worker_rows`` long.
+* **Each worker runs the same row function** as the serial loop, over its range, with a
+  :class:`~opus_import.deferred.Capture` installed on its context
+  (:attr:`~opus_import.context.ImportContext.capture`). Everywhere the code would ask
+  the database for something or write a message, it records an event on the capture
+  instead, each event carrying the index row number and primary file specification the
+  worker was at (:mod:`opus_import.deferred`):
+
+  - a new row id (:func:`~opus_import.import_util.next_table_id`) is a
+    :class:`~opus_import.deferred.LocalId`, numbered from zero per table within the task;
+  - a ``mult_`` value (:func:`~opus_import.steps.do_import_mult.update_mult_table`) is
+    recorded with its arguments and stands in the row as a
+    :class:`~opus_import.deferred.MultRef`;
+  - a ``mult_list`` column holding either is a :class:`~opus_import.deferred.DeferredJson`,
+    the list before it is turned into JSON;
+  - a computed row, an :class:`~opus_import.context.ImportLog` call, a Python warning,
+    and a call of a ``pdsfile`` class's own logger are each recorded as they happen.
+
+  A placeholder is not validated in
+  :func:`~opus_import.steps.do_import_obs.import_observation_table`; an id has nothing to
+  check.
+* **The import's process takes results in index order**, keeping a bounded number of
+  tasks queued ahead of the one it is replaying
+  (:data:`~opus_import.steps.do_import_pool.TASKS_AHEAD_PER_WORKER` per worker), and
+  **replays each task's events where the serial loop would have made them**. A
+  :class:`~opus_import.deferred.LocalId` becomes the id the table had when the task's
+  replay began, plus its number, plus one, and the table's cached id then moves past the
+  task's last; each recorded ``mult_`` value goes through
+  :func:`~opus_import.steps.do_import_mult.update_mult_table` in the serial order, so it
+  gets the id the serial loop gives it; each log call is made on ``ctx.log`` with the
+  recorded position, so the non-repeating variants deduplicate in the import's process
+  exactly as they do serially; each Python warning is issued again with its class and
+  location, against the registry of the module it came from, so the import's process's
+  own filters decide whether it is shown -- a warning shown once per location is shown
+  once however many workers met it -- and ``pdsfile`` calls go to the real logger. Each row then goes to the sink with every value final. **The
+  tables, their ids, the** ``mult_`` **ids and the log are therefore the same whatever the
+  number of workers.**
+* **A worker's failure abandons the index**: the import's process logs an error naming
+  the range of rows and the index file, replays nothing after it, and
+  :func:`~opus_import.steps.do_import_index.import_one_index` returns False. Rows the sink
+  had already loaded stay until the bundle is imported again, which deletes it first.
+
+**What a worker does with what it inherited.** A worker exits by ``os._exit``, so nothing
+it inherited is ever closed or flushed on its way out, and its initializer is the only
+place it deals with it:
+
+* every database connection the import's process had open is let go of without a byte
+  sent on it (:func:`~opus_import.importdb.super.close_inherited_connections`): every
+  :class:`~opus_import.importdb.super.ImportDBSuper` instance registers itself when
+  created, and the worker closes each one's socket descriptor with :func:`os.close`,
+  which leaves the import's session untouched, then keeps the instance referenced for the
+  rest of its life, so the driver's destructor never sends its quit message on a
+  descriptor number the worker may since have reused. The worker's context has no
+  database at all;
+* on Linux it asks the kernel (``prctl(PR_SET_PDEATHSIG, SIGKILL)``) to kill it when the
+  import's process dies, and exits at once if that process died before the request.
+  Elsewhere a worker outlives a killed import's process; a worker that kept an inherited
+  socket open would keep the import's session alive after it, which is what closing them
+  prevents;
+* Python warnings and the ``pdsfile`` classes' loggers are redirected onto the task's
+  capture, since the worker shares the import's log files.
+
+**Test-only faults.** Under ``OPUS_IMPORT_FAULT=stall_worker:<seconds>`` every task
+first sleeps for that many seconds, so a test can find the pool's workers alive; under
+``OPUS_IMPORT_FAULT=fail_worker:<row>`` the task holding that index row, numbered from
+zero, fails (:ref:`the import's fault sites <dev_guide_testing_faults>`).
 
 .. _dev_guide_import_steps_do_import_obs:
 
@@ -829,7 +950,11 @@ back.
 **Caching.** Every table is read once per bundle into the
 context's cache and written back at the end of each index file, so importing an index of a
 hundred thousand rows does not query for the same enumeration a hundred thousand times.
-Two collections track it, both cleared per bundle:
+The cache lives in the import's own process: in a pool worker,
+:func:`~opus_import.steps.do_import_mult.update_mult_table` reads and changes nothing,
+and records its arguments for the import's process to resolve
+(:ref:`dev_guide_import_steps_do_import_pool`). Two collections track it, both cleared
+per bundle:
 
 .. list-table::
    :header-rows: 1
@@ -863,8 +988,10 @@ numeric sorts numerically; ``Yes`` sorts before ``No`` and ``On`` before ``Off``
 anything else sorts by its label.
 
 **Writing back.** :func:`~opus_import.steps.do_import_mult.write_mult_tables` upserts
-every modified table at the end of each index file, before the ``obs_`` rows that hold
-its ids are written. A bundle that is deleted leaves its values in the ``mult_`` tables,
+every modified table at the end of each index file, once every row has been computed and
+before the sink loads the ``obs_`` rows still waiting; a table whose rows filled a
+transaction during the index was loaded earlier, holding ids its ``mult_`` table gains
+only here. A bundle that is deleted leaves its values in the ``mult_`` tables,
 where an observation of another bundle may hold them too.
 
 API reference

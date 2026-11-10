@@ -178,11 +178,32 @@ bulk_load = true
 # the value below.
 transaction_rows = 100000
 
+# How many processes compute an index's observations. 1 is the import's own process;
+# more forks a pool of that many. "max" asks for the ceiling below. Optional; the
+# default is the value below.
+workers = 1
+
 # How many tables the import's finalization builds indexes on at once, each over a
 # connection of its own. The database server does the work, so raise this only when
-# the server has cores to spare beyond whatever else shares its computer. Optional;
-# the default is the value below.
+# the server has cores to spare beyond whatever else shares its computer. "max" asks for
+# the ceiling below. Optional; the default is the value below.
 index_workers = 1
+
+# No request takes every core, since the database server or another user may share
+# the computer: workers and index_workers are each refused above
+# max(1, floor(cores * cpu_fraction)). cpu_fraction must be greater than 0 and at most
+# 1. Optional; the default is the value below.
+cpu_fraction = 0.75
+
+# The number of cores to take the computer as having, for a host whose size you would
+# rather state than have counted. Optional; leaving it out counts the cores the import
+# may run on.
+# cpus = 8
+
+# The index rows one worker task covers. Smaller tasks keep every worker busy closer to
+# the end of an index; larger ones spend less on handing out tasks. Optional; the
+# default is the value below.
+worker_rows = 500
 
 # A directory on the database server's host, writable by mysqld, where the server
 # sorts the indexes finalization builds, when its own temporary directory is too

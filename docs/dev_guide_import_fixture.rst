@@ -224,6 +224,20 @@ The fresh import's states
     directory at all cover the missing-summary branches, and the volume set reaches them
     naturally rather than by a special case.
 
+The pool of workers
+    The main run, which the goldens are compared against, computes its observations in a
+    pool at the ceiling of the host size every session states
+    (:ref:`dev_guide_testing`), with tasks small enough to split each of the fixture's
+    indexes across several workers. One case imports the same volumes in one invocation
+    into two schemas of its own, with a single worker and with a pool, and every table,
+    ids included, and every log, timestamps and the ``Parallelism`` line aside, must be
+    the same in both. Another makes one task fail at the ``fail_worker`` fault site, which
+    the import's process meets only after loading the rows of the tasks before it, and
+    requires that no ``obs_`` table keep a row of the failed index. Another starts an import whose workers stall at the ``stall_worker``
+    fault site (:ref:`the import's fault sites <dev_guide_testing_faults>`), kills the
+    import's process, and requires that no worker and no database session of the run
+    outlive it; it reads ``/proc``, and runs on Linux only.
+
 What it cannot test
 -------------------
 

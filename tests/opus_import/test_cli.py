@@ -16,6 +16,7 @@ from pathlib import Path
 import pdslogger
 import pytest
 
+import opus_config.config
 import opus_import.__main__
 from opus_config import OPUS_CONFIG_ENV_VAR
 from opus_import import cli, importdb
@@ -147,6 +148,70 @@ def test_an_unconfirmed_erase_or_a_stray_yes_is_refused_before_the_database_open
     assert excinfo.value.code != 0
     assert opened == []
     assert logger.messages_at('fatal') == [message]
+
+
+def _main_until_refused(
+    arguments: list[str], monkeypatch: pytest.MonkeyPatch
+) -> tuple[RecordingLogger, list[object]]:
+    """Run `cli.main` with handlerless logging and eight detected cores until it exits.
+
+    Returns:
+        The logger, and the connections it would have opened.
+    """
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: None)
+    monkeypatch.setattr(opus_config.config, 'detected_cores', lambda: 8)
+    opened: list[object] = []
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: opened.append(args))
+    monkeypatch.setattr(sys, 'argv', ['opus_import', *arguments])
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    assert excinfo.value.code != 0
+    return logger, opened
+
+
+def test_the_first_line_logged_says_how_much_of_the_computer_the_run_may_use(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The cores and their source, the fraction, the ceiling, and both counts, first."""
+    logger, _opened = _main_until_refused(['--workers', 'max', '--scorched-earth'], monkeypatch)
+    assert logger.messages[0] == (
+        'info',
+        'Parallelism: 8 cores (detected), cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1',
+    )
+
+
+def test_a_worker_count_above_the_ceiling_is_refused_before_the_database_opens(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The refusal names the ceiling and how it was reached, and nothing connects."""
+    logger, opened = _main_until_refused(['--workers', '7', '--import', 'COISS_2002'], monkeypatch)
+    assert opened == []
+    assert logger.messages_at('fatal') == [
+        '--workers 7 is above the ceiling of 6: 8 cores (detected) times cpu_fraction 0.75'
+    ]
+
+
+@pytest.mark.parametrize(('given', 'parsed'), [('1', 1), ('12', 12), ('max', 'max')])
+def test_parser_reads_a_worker_count_or_max(given: str, parsed: int | str) -> None:
+    """``--workers`` takes a whole number of at least 1, or ``max``; it is absent by default."""
+    parser = cli._create_argument_parser()
+    assert parser.parse_args([]).workers is None
+    assert parser.parse_args(['--workers', given]).workers == parsed
+
+
+@pytest.mark.parametrize('given', ['0', '-2', 'MAX', 'two'])
+def test_parser_rejects_a_worker_count_that_is_neither(
+    given: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Anything else is a usage error naming what it takes."""
+    with pytest.raises(SystemExit) as excinfo:
+        cli._create_argument_parser().parse_args(['--workers', given])
+    assert excinfo.value.code == 2
+    assert 'must be a whole number of at least 1 or "max"' in capsys.readouterr().err
 
 
 class _HandlerlessLogger(RecordingLogger):

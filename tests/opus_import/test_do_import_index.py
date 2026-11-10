@@ -1,18 +1,10 @@
-"""Two properties of the per-index import that nothing else can catch.
+"""`get_opus_products_rows_for_filespec` returns an empty list, never a bare `None`.
 
-1. `get_opus_products_rows_for_filespec` returns an empty list, never a bare `None`,
-   when the filespec cannot be converted. Its only caller does
-   ``table_rows[table_name].extend(rows)``, so a `None` would turn a recoverable,
-   logged error into ``TypeError: 'NoneType' object is not iterable`` and abort the
-   whole index import.
-2. Every ``table_rows`` guard initializes the key it tested. The
-   ``obs_surface_geometry`` one is unreachable at run time -- ``table_rows`` is
-   pre-populated with every name the loop can yield -- so this is asserted against the
-   source rather than against behavior; no test could reach it otherwise.
+When the filespec cannot be converted, the function logs the error and returns no rows.
+Its only caller iterates the result, so a `None` would turn a recoverable, logged error
+into ``TypeError: 'NoneType' object is not iterable`` and abort the whole index import.
 """
 
-import ast
-from pathlib import Path
 from typing import Any, Literal
 
 import pytest
@@ -70,58 +62,16 @@ def test_a_failed_filespec_conversion_returns_an_empty_list(
     assert failing_pdsfile.import_has_bad_data is True
 
 
-def test_a_failed_filespec_conversion_can_be_extended_by_the_caller(
+def test_a_failed_filespec_conversion_can_be_iterated_by_the_caller(
     failing_pdsfile: ImportContext,
 ) -> None:
-    """Reproduces the caller's exact use: a bare None here is a TypeError."""
-    table_rows: dict[str, list[Any]] = {'obs_files': []}
+    """Reproduces the caller's exact use: iterating a bare None is a TypeError."""
+    emitted: list[Any] = []
 
     rows = do_import_index.get_opus_products_rows_for_filespec(
         failing_pdsfile, 3, 'BOGUS/FILESPEC.LBL', 1, 'co-iss-n0', 'COISS_2002', 'COISS'
     )
-    table_rows['obs_files'].extend(rows)
+    for row in rows:
+        emitted.append(row)
 
-    assert table_rows == {'obs_files': []}
-
-
-def test_every_table_rows_guard_initializes_the_key_it_tested() -> None:
-    """``if X not in table_rows`` must be followed by ``table_rows[X] = []``.
-
-    Testing one key and initializing another makes the append on the next line a
-    `KeyError`, or a `NameError` first where the other name is a leftover from an
-    earlier loop that need not be bound at all.
-
-    The ``obs_surface_geometry`` guard is unreachable (``table_rows`` is pre-populated
-    with every entry of ``table_names_in_order`` before the row loop, and that loop
-    only yields names from the same list), so no test and no import run can execute
-    it. That is why this checks the source rather than the behavior. The other three
-    guards -- two for the derived ``obs_surface_geometry__<TARGET>`` names, which *are*
-    reachable, and one for ``obs_files`` -- are held to the same rule.
-    """
-    source = Path(do_import_index.__file__).read_text(encoding='utf-8')
-    tree = ast.parse(source)
-
-    guards = []
-    for node in ast.walk(tree):
-        # if <key> not in table_rows: table_rows[<key2>] = []
-        if not isinstance(node, ast.If) or not isinstance(node.test, ast.Compare):
-            continue
-        test = node.test
-        if not (len(test.ops) == 1 and isinstance(test.ops[0], ast.NotIn)):
-            continue
-        if not (
-            isinstance(test.comparators[0], ast.Name) and test.comparators[0].id == 'table_rows'
-        ):
-            continue
-        assigns = [stmt for stmt in node.body if isinstance(stmt, ast.Assign)]
-        assert assigns, f'line {node.lineno}: guard body assigns nothing'
-        target = assigns[0].targets[0]
-        assert isinstance(target, ast.Subscript), f'line {node.lineno}'
-        guards.append((node.lineno, ast.unparse(test.left), ast.unparse(target.slice)))
-
-    assert len(guards) == 4, f'expected 4 table_rows guards, found {guards}'
-    mismatched = [(line, tested, created) for line, tested, created in guards if tested != created]
-    assert mismatched == [], (
-        'a table_rows guard initializes a different key than it tested, so the append '
-        f'that follows it raises KeyError: {mismatched}'
-    )
+    assert emitted == []

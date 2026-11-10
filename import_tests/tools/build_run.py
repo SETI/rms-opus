@@ -17,6 +17,7 @@ of the run.
 from __future__ import annotations
 
 import contextlib
+import math
 import os
 import pickle
 import re
@@ -307,21 +308,48 @@ def toml_value(value: object) -> str:
     """Return a value as TOML writes it.
 
     Parameters:
-        value: A boolean, a whole number or a string.
+        value: A boolean, a whole number, a finite decimal number or a string.
 
     Returns:
         The value's TOML spelling.
 
     Raises:
-        TypeError: For any other type.
+        TypeError: For any other type, or a decimal number that is not finite.
     """
     if isinstance(value, bool):
         return 'true' if value else 'false'
     if isinstance(value, int):
         return str(value)
+    if isinstance(value, float) and math.isfinite(value):
+        return repr(value)
     if isinstance(value, str):
         return f'"{toml_string(value)}"'
     raise TypeError(f'no TOML spelling for {value!r}')
+
+
+#: The cores a GitHub-hosted runner has, which a fixture session there states as
+#: ``[import] cpus``.
+GITHUB_HOSTED_CPUS = 4
+
+#: The cores a fixture session states everywhere else: a local run or a self-hosted runner.
+OTHER_HOST_CPUS = 8
+
+
+def fixture_cpus() -> int:
+    """Return the ``[import] cpus`` every fixture session states.
+
+    A session states the host's size rather than having it counted, so that its
+    ``workers`` and ``index_workers`` are never refused for exceeding the ceiling on a
+    smaller machine; on one with fewer cores, the pool's processes share them, which only
+    slows the run. The goldens do not depend on the count.
+
+    Returns:
+        `GITHUB_HOSTED_CPUS` when ``RUNNER_ENVIRONMENT`` is ``github-hosted``, otherwise
+        `OTHER_HOST_CPUS`.
+    """
+    if os.environ.get('RUNNER_ENVIRONMENT') == 'github-hosted':
+        return GITHUB_HOSTED_CPUS
+    return OTHER_HOST_CPUS
 
 
 def write_opus_config(
@@ -341,7 +369,8 @@ def write_opus_config(
         credentials: How to reach the database server.
         extra_import: Further ``[import]`` keys and their values, for a session that
             sets one; None for none. A key the file sets by default, such as
-            ``log_file``, takes the value given here instead.
+            ``log_file`` or ``cpus`` (`fixture_cpus`), takes the value given here instead,
+            and a key given None is left out of the file.
     """
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
@@ -358,10 +387,12 @@ def write_opus_config(
     import_keys: dict[str, object] = {
         'log_file': f'{paths.log_dir.as_posix()}/opus_import.log',
         'debug_log_file': f'{paths.log_dir.as_posix()}/opus_import_debug.log',
+        'cpus': fixture_cpus(),
         **(extra_import or {}),
     }
     for key, value in import_keys.items():
-        text += f'{key} = {toml_value(value)}\n'
+        if value is not None:
+            text += f'{key} = {toml_value(value)}\n'
     paths.config_file.write_text(text, encoding='utf-8')
 
 

@@ -51,6 +51,7 @@ Example of a complete file::
 """
 
 import functools
+import math
 import os
 import tomllib
 from dataclasses import dataclass
@@ -88,6 +89,20 @@ DEFAULT_TRANSACTION_ROWS = 100_000
 
 #: How many tables finalization builds indexes on at once when the file does not say.
 DEFAULT_INDEX_WORKERS = 1
+
+#: How many processes compute an index's observations when the file does not say. One
+#: means the import's own process, with no pool.
+DEFAULT_WORKERS = 1
+
+#: The share of the computer's cores the parallelism ceiling allows when the file does not
+#: say.
+DEFAULT_CPU_FRACTION = 0.75
+
+#: The index rows one worker task covers when the file does not say.
+DEFAULT_WORKER_ROWS = 500
+
+#: The ``workers`` or ``index_workers`` value that asks for the ceiling itself.
+MAX_WORKERS = 'max'
 
 #: Names of the tables a configuration file must contain, in file order.
 TABLE_NAMES = ('database', 'paths', 'django', 'import')
@@ -239,11 +254,19 @@ class ImportConfig:
         transaction_rows: The most rows one bulk load writes in one transaction. The
             default is 100,000.
         index_workers: How many tables finalization builds secondary indexes on at
-            once, each over a connection of its own. The default is 1, because the
-            database server, which does the work, may share the computer.
+            once, each over a connection of its own, or `MAX_WORKERS` for the ceiling
+            (`resolve_parallelism`). The default is 1, because the database server,
+            which does the work, may share the computer.
         server_tmpdir: A directory on the database server's host that ``mysqld`` can
             write, where it sorts the indexes finalization builds, or None to leave the
             server's own setting.
+        workers: How many processes compute an index's observations, or `MAX_WORKERS`
+            for the ceiling. The default is 1, the import's own process with no pool.
+        cpus: The number of cores to take the computer as having, or None to count the
+            cores the process may run on.
+        cpu_fraction: The share of the cores the ceiling allows, greater than 0 and at
+            most 1. The default is 0.75.
+        worker_rows: The index rows one worker task covers. The default is 500.
     """
 
     log_file: str
@@ -251,8 +274,48 @@ class ImportConfig:
     bulk_load: bool
     scratch_dir: str | None
     transaction_rows: int
-    index_workers: int
+    index_workers: int | str
     server_tmpdir: str | None
+    workers: int | str
+    cpus: int | None
+    cpu_fraction: float
+    worker_rows: int
+
+
+@dataclass(frozen=True)
+class Parallelism:
+    """How many processes and connections an import may use, and why.
+
+    Attributes:
+        cores: The cores the ceiling is computed from.
+        cores_source: Where `cores` came from: ``'detected'`` or ``'[import] cpus'``.
+        detected_cores: The cores the process may run on, as counted.
+        cpu_fraction: The share of `cores` the ceiling allows.
+        ceiling: ``max(1, floor(cores * cpu_fraction))``, the most either count may be.
+        workers: The processes that compute an index's observations.
+        index_workers: The tables finalization builds indexes on at once.
+    """
+
+    cores: int
+    cores_source: str
+    detected_cores: int
+    cpu_fraction: float
+    ceiling: int
+    workers: int
+    index_workers: int
+
+    def describe(self) -> str:
+        """Return the one line an import logs about its parallelism.
+
+        Returns:
+            The cores and where they came from, the fraction, the ceiling, and both
+            counts.
+        """
+        return (
+            f'Parallelism: {self.cores} cores ({self.cores_source}), cpu_fraction '
+            f'{self.cpu_fraction:g}, ceiling {self.ceiling}; workers {self.workers}, '
+            f'index_workers {self.index_workers}'
+        )
 
 
 @dataclass(frozen=True)
@@ -476,28 +539,27 @@ class _TableReader:
             self._fail(f'{key!r} must be at least {minimum}, not {value}')
         return value
 
-    def read_optional_int(self, key: str) -> int | None:
+    def read_optional_int(self, key: str, *, minimum: int | None = None) -> int | None:
         """Read a whole number that may be left out of the file.
 
         Parameters:
             key: The key to read.
+            minimum: The smallest value allowed, or None for no bound.
 
         Returns:
             The number, or None if the key is absent.
 
         Raises:
-            ConfigError: If the key is present but its value is not a whole number.
-                A boolean is rejected even though Python counts one as an integer.
+            ConfigError: If the key is present but its value is not a whole number, or
+                it is below ``minimum``. A boolean is rejected even though Python counts
+                one as an integer.
         """
-        value = self._take(key, None)
-        if value is None:
+        if key not in self._values:
             return None
-        if isinstance(value, bool) or not isinstance(value, int):
-            self._fail(f'{key!r} must be a whole number, not {type(value).__name__}')
-        return value
+        return self.read_int(key, minimum=minimum)
 
-    def read_float(self, key: str, *, default: Any = _REQUIRED) -> float:
-        """Read a number, accepting one written without a decimal point.
+    def read_int_or_max(self, key: str, *, default: Any = _REQUIRED) -> int | str:
+        """Read a count of at least 1, or `MAX_WORKERS` for the ceiling.
 
         Parameters:
             key: The key to read.
@@ -505,16 +567,58 @@ class _TableReader:
                 required.
 
         Returns:
-            The number, as a float.
+            The number, or `MAX_WORKERS`.
 
         Raises:
             ConfigError: If the key is missing and has no default, or its value is
-                not a number. A boolean is rejected even though Python counts one as
-                an integer.
+                neither a whole number of at least 1 nor the string ``"max"``. A boolean
+                is rejected even though Python counts one as an integer.
+        """
+        value = self._take(key, default)
+        if isinstance(value, str):
+            if value != MAX_WORKERS:
+                self._fail(f'{key!r} must be a whole number or "{MAX_WORKERS}", not {value!r}')
+            return value
+        if isinstance(value, bool) or not isinstance(value, int):
+            self._fail(
+                f'{key!r} must be a whole number or "{MAX_WORKERS}", not {type(value).__name__}'
+            )
+        if value < 1:
+            self._fail(f'{key!r} must be at least 1, not {value}')
+        return value
+
+    def read_float(
+        self,
+        key: str,
+        *,
+        default: Any = _REQUIRED,
+        above: float | None = None,
+        maximum: float | None = None,
+    ) -> float:
+        """Read a number, accepting one written without a decimal point.
+
+        Parameters:
+            key: The key to read.
+            default: Value to use when the key is absent; by default the key is
+                required.
+            above: A value the number must be greater than, or None for no bound.
+            maximum: The largest value allowed, or None for no bound.
+
+        Returns:
+            The number, as a float.
+
+        Raises:
+            ConfigError: If the key is missing and has no default, its value is not a
+                number, or it is outside the bounds. A boolean is rejected even though
+                Python counts one as an integer.
         """
         value = self._take(key, default)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             self._fail(f'{key!r} must be a number, not {type(value).__name__}')
+        if above is not None and value <= above:
+            self._fail(f'{key!r} must be greater than {above:g}, not {value}')
+        if maximum is not None and value > maximum:
+            self._fail(f'{key!r} must be at most {maximum:g}, not {value}')
         return float(value)
 
     def read_host_port(self, key: str, *, default: Any = _REQUIRED) -> str:
@@ -698,11 +802,84 @@ def _read_import(source: Path, values: dict[str, Any]) -> ImportConfig:
         transaction_rows=table.read_int(
             'transaction_rows', default=DEFAULT_TRANSACTION_ROWS, minimum=1
         ),
-        index_workers=table.read_int('index_workers', default=DEFAULT_INDEX_WORKERS, minimum=1),
+        index_workers=table.read_int_or_max('index_workers', default=DEFAULT_INDEX_WORKERS),
         server_tmpdir=table.read_optional_str('server_tmpdir'),
+        workers=table.read_int_or_max('workers', default=DEFAULT_WORKERS),
+        cpus=table.read_optional_int('cpus', minimum=1),
+        cpu_fraction=table.read_float(
+            'cpu_fraction', default=DEFAULT_CPU_FRACTION, above=0.0, maximum=1.0
+        ),
+        worker_rows=table.read_int('worker_rows', default=DEFAULT_WORKER_ROWS, minimum=1),
     )
     table.finish()
     return config
+
+
+def detected_cores() -> int:
+    """Return the number of cores this process may run on.
+
+    Returns:
+        The size of the process's CPU affinity set where the platform has one, else the
+        computer's core count, and at least 1.
+    """
+    if hasattr(os, 'sched_getaffinity'):
+        return max(1, len(os.sched_getaffinity(0)))
+    return max(1, os.cpu_count() or 1)
+
+
+def resolve_parallelism(
+    config: ImportConfig,
+    workers: int | str | None = None,
+    *,
+    detected: int | None = None,
+) -> Parallelism:
+    """Resolve the import's worker counts against the ceiling no request may exceed.
+
+    The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is ``[import] cpus`` when
+    the file sets it and the detected cores otherwise, because the database server or
+    another user may share the computer. `MAX_WORKERS` asks for the ceiling itself.
+
+    Parameters:
+        config: The ``[import]`` table.
+        workers: A worker count given on the command line, which replaces
+            ``[import] workers``, or None to use the file's.
+        detected: The cores to take as detected, for a caller that has counted them;
+            None counts them with `detected_cores`.
+
+    Returns:
+        The resolved counts and how the ceiling was reached.
+
+    Raises:
+        ConfigError: If either count is above the ceiling, naming the ceiling and how it
+            was reached.
+    """
+    counted = detected_cores() if detected is None else detected
+    cores = config.cpus if config.cpus is not None else counted
+    source = '[import] cpus' if config.cpus is not None else 'detected'
+    ceiling = max(1, math.floor(cores * config.cpu_fraction))
+
+    def resolve(value: int | str, name: str) -> int:
+        """Return one count, the ceiling for `MAX_WORKERS`, refusing one above it."""
+        if value == MAX_WORKERS:
+            return ceiling
+        assert isinstance(value, int)
+        if value > ceiling:
+            raise ConfigError(
+                f'{name} {value} is above the ceiling of {ceiling}: {cores} cores ({source}) '
+                f'times cpu_fraction {config.cpu_fraction:g}'
+            )
+        return value
+
+    workers_name = '--workers' if workers is not None else '[import] workers'
+    return Parallelism(
+        cores=cores,
+        cores_source=source,
+        detected_cores=counted,
+        cpu_fraction=config.cpu_fraction,
+        ceiling=ceiling,
+        workers=resolve(config.workers if workers is None else workers, workers_name),
+        index_workers=resolve(config.index_workers, '[import] index_workers'),
+    )
 
 
 def _read_tables(source: Path, raw: dict[str, Any]) -> dict[str, dict[str, Any]]:

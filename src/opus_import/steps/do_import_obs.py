@@ -24,11 +24,10 @@ their own.
 
 from __future__ import annotations
 
-import json
 import traceback
 from typing import TYPE_CHECKING, Any
 
-from opus_import import config_data, import_util
+from opus_import import config_data, deferred, import_util
 from opus_import.obs.obs_base import ObsBase
 from opus_import.obs.obs_ring_geometry import ObsRingGeometry
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
@@ -153,12 +152,7 @@ def import_observation_table(
                 column_val_list = [instrument_obj.compute_d_longitude_field()]
 
             elif data_source == 'MAX_ID':
-                if table_name not in ctx.max_table_id_cache:
-                    ctx.max_table_id_cache[table_name] = import_util.find_max_table_id(
-                        ctx, table_name
-                    )
-                ctx.max_table_id_cache[table_name] = ctx.max_table_id_cache[table_name] + 1
-                column_val_list = [ctx.max_table_id_cache[table_name]]
+                column_val_list = [import_util.next_table_id(ctx, table_name)]
 
             else:
                 import_util.log_nonrepeating_error(
@@ -194,6 +188,10 @@ def import_observation_table(
                         f'Column "{field_name}" in table "{table_name}" '
                         + 'has NULL value but NOT NULL is set',
                     )
+            elif deferred.is_deferred(column_val):
+                # A row id a pool worker handed out, which the import's process turns
+                # into the real one; an id has nothing to validate.
+                pass
             else:
                 if field_type.startswith('flag'):
                     if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
@@ -374,7 +372,7 @@ def import_observation_table(
             if len(row_val) == 0:
                 new_row[field_name] = None
             else:
-                new_row[field_name] = json.dumps(row_val)
+                new_row[field_name] = deferred.json_list(row_val)
         else:
             new_row[field_name] = row_val[0]  # Only a single value
 

@@ -16,9 +16,11 @@ produced them.
 from __future__ import annotations
 
 import contextlib
+import os
 import threading
 import time
 import warnings
+import weakref
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -55,6 +57,36 @@ The parameter list is left open because the two sides of that assignment disagre
 it: the warnings machinery always passes six arguments, while the standard library's own
 handler makes the last two optional. Naming either shape would reject the other.
 """
+
+
+#: Every instance this process has created, so a forked pool worker can let go of the
+#: connections it inherited (`close_inherited_connections`).
+_OPEN_DATABASES: weakref.WeakSet[ImportDBSuper] = weakref.WeakSet()
+
+#: The instances a pool worker inherited, kept referenced for the worker's life so that
+#: no driver destructor ever runs in it.
+_INHERITED_DATABASES: list[ImportDBSuper] = []
+
+
+def close_inherited_connections() -> None:
+    """Let a forked pool worker go of every database connection it inherited.
+
+    Each connection's socket descriptor is closed with `os.close`, which sends nothing on
+    the socket, so the session the import's process holds is untouched; and the instance
+    is kept referenced for the rest of the worker's life, so the driver never sends its
+    quit message on a descriptor number the worker may since have reused. A worker that
+    kept the socket would keep the session alive after the import's process died.
+    """
+    for database in list(_OPEN_DATABASES):
+        try:
+            descriptor = database.socket_descriptor()
+        except NotImplementedError:
+            # A brand that is not implemented never connected.
+            descriptor = None
+        if descriptor is not None:
+            with contextlib.suppress(OSError):
+                os.close(descriptor)
+        _INHERITED_DATABASES.append(database)
 
 
 class ImportDBError(Exception):
@@ -198,6 +230,7 @@ class ImportDBSuper:
         """
         if transaction_rows < 1:
             raise ValueError(f'transaction_rows must be at least 1, not {transaction_rows}')
+        _OPEN_DATABASES.add(self)
         self.log_sql = False
 
         self.db_hostname = db_hostname
@@ -653,6 +686,17 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::close must be overridden')
+
+    def socket_descriptor(self) -> int | None:
+        """Return the file descriptor of the connection's socket.
+
+        Returns:
+            The descriptor, or None when there is no open connection.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::socket_descriptor must be overridden')
 
     def read_table_keys(self) -> dict[str, list[TableKey]]:
         """Return the keys every table in the schema has, as the server reports them.
