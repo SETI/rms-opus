@@ -1,9 +1,10 @@
 """A pool of workers imports exactly what one process does, and dies with the import.
 
 The first case imports the same bundles with one worker and with three into two schemas
-and compares every table and every log. The second starts an import whose workers stall,
-kills the import's process, and checks that no worker and no database session of the run
-outlives it.
+and compares every table and every log. The second makes one worker task fail after the
+rows before it were loaded, and checks that the failed index leaves no row behind. The
+third starts an import whose workers stall, kills the import's process, and checks that
+no worker and no database session of the run outlives it.
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ import pytest
 
 from import_tests.tools import build_run, fixture_layout, golden_io
 from opus_import.import_fault import IMPORT_FAULT_ENV_VAR
-from opus_import.steps.do_import_pool import STALL_FAULT_SITE
+from opus_import.steps.do_import_pool import FAIL_FAULT_SITE, STALL_FAULT_SITE
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -133,6 +134,42 @@ def test_three_workers_import_what_one_does(
     ]
     assert parallelism
     assert parallelism[0].endswith('workers 3, index_workers 1')
+
+
+#: The index row whose task fails, late enough that the rows before it were loaded.
+FAILING_ROW = 12
+
+
+def test_a_failed_index_leaves_none_of_its_rows(
+    tmp_path_factory: pytest.TempPathFactory,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """The rows loaded before a worker failed are taken back, so no mult id dangles."""
+    paths = build_run.RunPaths.under(tmp_path_factory.mktemp('parallel_fail').resolve())
+    build_run.build_holdings_tree(paths)
+    schema = fixture_layout.schema_name(os.getpid(), 'parallel_fail')
+    created_schemas.append(schema)
+    build_run.write_opus_config(
+        paths,
+        schema,
+        db_credentials,
+        extra_import={'workers': 3, 'worker_rows': 2, 'transaction_rows': 2},
+    )
+    environment = build_run.run_environment(paths.config_file)
+    environment[IMPORT_FAULT_ENV_VAR] = f'{FAIL_FAULT_SITE}:{FAILING_ROW}'
+    finished = subprocess.run(  # nosec B603 - this interpreter and a fixed program
+        [sys.executable, '-m', 'opus_import', *build_run.IMPORT_ARGS, 'VGISS_6109'],
+        cwd=fixture_layout.REPO_ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert finished.returncode != 0
+    for table in ('obs_general', 'obs_pds', 'obs_files'):
+        rows = golden_io.query(db_credentials, schema, f'SELECT COUNT(*) FROM {table}', [])  # nosec B608 - a fixed table name
+        assert rows[0][0] == 0, table
 
 
 def _children(pid: int) -> list[int]:

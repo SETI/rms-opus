@@ -26,6 +26,11 @@ class _LoadingDB:
         """Record a load and its size."""
         self.events.append(('load', table_name, len(rows)))
 
+    def delete_rows(self, table_name: str, where: str, where_params: list[Any]) -> None:
+        """Record a delete and the id it starts from."""
+        assert where == '`id` >= %s'
+        self.events.append(('delete', table_name, where_params[0]))
+
 
 ORDER = ['obs_general', 'obs_surface_geometry__<TARGET>', 'obs_files']
 
@@ -81,3 +86,20 @@ def test_a_new_target_is_logged_once_and_its_table_created_once() -> None:
     ]
     debug = sink.ctx.logger.messages_at('debug')
     assert debug.count('Creating surface geo table for new target MIMAS') == 1
+
+
+def test_a_failed_index_takes_back_what_it_loaded_children_first() -> None:
+    """Each table loses its rows from the first id loaded; nothing waiting is loaded after."""
+    sink, db = _sink(2)
+    for number in range(10, 13):
+        sink.add('obs_general', {'id': number}, None)
+        sink.add('obs_files', {'id': number + 100}, None)
+    sink.add('obs_surface_geometry__titan', {'id': 7}, 'TITAN')
+    sink.discard()
+    sink.finish()
+    deletes = [event for event in db.events if event[0] == 'delete']
+    assert deletes == [('delete', 'obs_files', 110), ('delete', 'obs_general', 10)]
+    assert [event for event in db.events if event[0] == 'load' and event[2] > 0] == [
+        ('load', 'obs_general', 2),
+        ('load', 'obs_files', 2),
+    ]

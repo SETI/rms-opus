@@ -785,7 +785,12 @@ Importing every observation one primary index file describes.
     still waiting, table by table in the order walked, the targets' tables in the order
     of their target names. Tables therefore load in no fixed order relative to one
     another during the index, which the foreign keys tolerate because a bundle loads with
-    their checks off (:ref:`dev_guide_import_steps_do_import`).
+    their checks off (:ref:`dev_guide_import_steps_do_import`). An index that fails
+    partway is taken back by
+    :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes each
+    table's rows from the first id the sink loaded: the index's mult values are never
+    written, so a row of it left behind would hold a mult id a later bundle gives to
+    another value.
 
 :func:`~opus_import.steps.do_import_index.get_opus_products_rows_for_filespec`
     The ``obs_files`` rows for one observation: one row per file of one product type at
@@ -879,9 +884,10 @@ place it deals with it:
 * Python warnings and the ``pdsfile`` classes' loggers are redirected onto the task's
   capture, since the worker shares the import's log files.
 
-**A test-only stall.** Under ``OPUS_IMPORT_FAULT=stall_worker:<seconds>`` every task
-first sleeps for that many seconds, so a test can find the pool's workers alive
-(:ref:`the import's fault sites <dev_guide_testing_faults>`).
+**Test-only faults.** Under ``OPUS_IMPORT_FAULT=stall_worker:<seconds>`` every task
+first sleeps for that many seconds, so a test can find the pool's workers alive; under
+``OPUS_IMPORT_FAULT=fail_worker:<row>`` the task holding that index row, numbered from
+zero, fails (:ref:`the import's fault sites <dev_guide_testing_faults>`).
 
 .. _dev_guide_import_steps_do_import_obs:
 

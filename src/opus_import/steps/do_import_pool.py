@@ -38,7 +38,7 @@ import pdsfile
 
 from opus_import import import_util
 from opus_import.deferred import Capture, DeferredJson, Event, LocalId, MultRef
-from opus_import.import_fault import import_fault_argument
+from opus_import.import_fault import InjectedImportFaultError, import_fault_argument
 from opus_import.importdb.super import close_inherited_connections
 from opus_import.steps import do_import_mult
 
@@ -50,6 +50,10 @@ if TYPE_CHECKING:
 #: for the number of seconds the argument gives, so a test can find the pool's workers
 #: alive.
 STALL_FAULT_SITE = 'stall_worker'
+
+#: The test-only fault site at which the task holding the index row the argument numbers,
+#: from zero, fails, so a test can see what a failed index leaves behind.
+FAIL_FAULT_SITE = 'fail_worker'
 
 #: Linux's ``prctl`` option that sends the calling process a signal when its parent dies.
 PR_SET_PDEATHSIG = 1
@@ -243,6 +247,9 @@ def _compute_task(bounds: tuple[int, int]) -> TaskResult:
     stall = import_fault_argument(STALL_FAULT_SITE)
     if stall is not None:
         time.sleep(float(stall))
+    failing_row = import_fault_argument(FAIL_FAULT_SITE)
+    if failing_row is not None and bounds[0] <= int(failing_row) < bounds[1]:
+        raise InjectedImportFaultError(f'the task holding index row {failing_row} fails')
     ctx = _STATE.ctx
     capture = Capture()
     ctx.capture = capture

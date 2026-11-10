@@ -142,6 +142,11 @@ and each site decides what its argument selects. The sites are:
     processes alive and kill the import under them
     (:ref:`dev_guide_import_steps_do_import_pool`).
 
+``fail_worker``
+    In the pool worker task holding one index row; its argument is the row, numbered
+    from zero. ``fail_worker:12`` fails that task after the tasks before it were
+    replayed, so a test can see that the failed index leaves none of its rows.
+
 Never set it outside a test.
 
 That plain form is the everyday one -- about two minutes, no coverage, with the three

@@ -368,6 +368,9 @@ def import_one_index(
     # Two bundles can produce the same OPUS ID; finalization's duplicate step keeps the
     # later copy of each.
     if not do_import_pool.compute_index(ctx, state, import_index_row, sink.add, bundle_label_path):
+        # The index's mult values are never written, so none of its rows may stay: a
+        # later bundle would give their mult ids to other values.
+        sink.discard()
         return False
 
     ctx.current_index_row_number = None
@@ -415,7 +418,9 @@ class TableRowSink:
     A table's rows are loaded as soon as `transaction_rows` of them are waiting, so the
     import holds at most that many rows of a table at once rather than a whole index's.
     A surface geometry target's table is created when its first rows are loaded, which
-    is when the import first knows the index has that target.
+    is when the import first knows the index has that target. An index that fails
+    partway takes back what was loaded (`discard`), so a failed index leaves no rows, as
+    it would if its rows were loaded only at the end.
 
     Attributes:
         ctx: The import run's context, for the open database and the logger.
@@ -424,6 +429,8 @@ class TableRowSink:
         rows: The rows waiting to be loaded, per table.
         targets: Each surface geometry target's table, mapped to the target.
         created: The targets' tables already created.
+        first_loaded: The id of the first row loaded into each table, in the order the
+            tables were first loaded.
     """
 
     ctx: ImportContext
@@ -431,6 +438,7 @@ class TableRowSink:
     rows: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     targets: dict[str, str] = field(default_factory=dict)
     created: set[str] = field(default_factory=set)
+    first_loaded: dict[str, int] = field(default_factory=dict)
 
     def add(self, table_name: str, row: dict[str, Any], target: str | None) -> None:
         """Take one computed row, loading its table's rows once a transaction's worth wait.
@@ -459,6 +467,21 @@ class TableRowSink:
             for target_table in sorted(self.targets, key=self.targets.__getitem__):
                 self._load(target_table)
 
+    def discard(self) -> None:
+        """Delete every row this sink loaded, and drop the rows still waiting.
+
+        Row ids are handed out from each table's highest, and the import's process is
+        the only writer, so this index's rows are those from the first id it loaded up.
+        The tables are emptied of them in the reverse of the order they were first
+        loaded, so ``obs_general`` goes after the tables whose rows refer to it.
+        """
+        db = self.ctx.db
+        assert db is not None
+        for table_name, first_id in reversed(self.first_loaded.items()):
+            db.delete_rows(table_name, '`id` >= %s', [first_id])
+        self.first_loaded.clear()
+        self.rows.clear()
+
     def _load(self, table_name: str) -> None:
         """Load one table's waiting rows, creating a target's table first if need be.
 
@@ -483,6 +506,8 @@ class TableRowSink:
             self.created.add(table_name)
         import_util.log_debug(self.ctx, f'Inserting into obs table "{table_name}"')
         waiting = self.rows.get(table_name, [])
+        if waiting:
+            self.first_loaded.setdefault(table_name, waiting[0]['id'])
         db.bulk_load_rows(table_name, waiting)
         self.rows[table_name] = []
 

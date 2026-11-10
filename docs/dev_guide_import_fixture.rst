@@ -231,7 +231,9 @@ The pool of workers
     indexes across several workers. One case imports the same volumes in one invocation
     into two schemas of its own, with a single worker and with a pool, and every table,
     ids included, and every log, timestamps and the ``Parallelism`` line aside, must be
-    the same in both. Another starts an import whose workers stall at the ``stall_worker``
+    the same in both. Another makes one task fail at the ``fail_worker`` fault site after
+    the rows before it were loaded, and requires that the failed index leave none of its
+    rows. Another starts an import whose workers stall at the ``stall_worker``
     fault site (:ref:`the import's fault sites <dev_guide_testing_faults>`), kills the
     import's process, and requires that no worker and no database session of the run
     outlive it; it reads ``/proc``, and runs on Linux only.
