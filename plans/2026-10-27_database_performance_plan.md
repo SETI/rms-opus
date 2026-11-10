@@ -5354,3 +5354,25 @@ Nothing above this line is rewritten by an executor.
   - The target is measured again at complete scale, where a last page is costly enough
     to measure, on the complete-scale schema an informational eight-worker import at
     PR-09's code builds; that note follows.
+- The complete-scale A/B (2026-11-10, session `a`, three `bench_web` runs a side
+  alternated A B A B A B; before at 56d510f2, after at 0446022f) served
+  `bench_complete_after_workers8_1`, the schema of PR-09's informational complete-scale
+  import. No complete-scale floors exist, so `compare.py` judges against the before
+  side's spread, and the verdicts are reported, not ruled on by §2.6.
+  - The target, `web.warm.pages.broad.page_last.latency_s`, fell from 100.9 ms to
+    5.5 ms (-94.5%, spreads 2.5% and 10.1%). Every guard held.
+  - Last pages of the other large searches fell by the same mechanism: warm, the empty
+    search 104.3 ms to 10.0 ms, ring radius 39.1 ms to 7.3 ms, the target search
+    29.8 ms to 8.1 ms, surface geometry 15.9 ms to 4.7 ms; app-cold and db-cold, the
+    broad and empty searches about 103 ms to 9 to 15 ms. A warm page scenario executes
+    23 statements against 29.
+  - First and tenth pages are the same work on both sides, a few rows read by key, and
+    their app-cold and db-cold latencies are bimodal on both: each run lands near
+    10 ms or near 42 ms (the broad search's tenth page 13.8, 12.4 and 43.5 ms before;
+    44.6, 10.7 and 41.5 ms after), so a median of three moves by tens of percent
+    either way with nothing changed. The warm tenth page, which pays no first-request
+    cost, is 10 ms on both sides.
+- `benchmarks/scenarios/queries.sql` was last written by PR-00, and no PR since captured
+  it again, though the SQL the scenarios issue changed. It is rewritten from this PR's head
+  (2026-11-10, `bench_db --dump-queries --commit-capture`, session `capture`, test
+  scale, `bench_test_before_a_3`): the same 67 blocks, 500 statements against 1,977.
