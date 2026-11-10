@@ -242,7 +242,8 @@ partial import or a one-off report is run directly:
        that finish the database. This is what an import deploy runs.
    * - ``opus_manage``
      - Administers the web application -- creating its tables, gathering its static
-       files, and checking that its configuration works. A deploy runs it too.
+       files, checking that its configuration works, and pruning its stored searches
+       (:ref:`user_guide_deployment_prune`). A deploy runs it too.
    * - ``opus_config_template``
      - Writes out the annotated template of the file OPUS itself reads. On a server the
        deploy generates that file, so this is for reading rather than for filling in;
@@ -668,6 +669,21 @@ entirely.
      - optional
      - Whether a kept database connection is checked before a request reuses it, and
        replaced if the server has dropped it. Default ``true``.
+   * - ``search_build_timeout``
+     - optional
+     - How many seconds a request building a search's results waits for another web
+       worker already building the same search before it gives up and answers with a
+       500. Default ``270``. **Keep it at least 30 seconds below the web server's worker
+       timeout** -- gunicorn's ``--timeout``, uWSGI's ``harakiri``, Apache's ``Timeout``
+       (:ref:`user_guide_web_server`): a worker killed partway through a build loses the
+       build, and the next request waiting for it starts over. A generated file never
+       contains it.
+   * - ``search_results_max_rows``
+     - optional
+     - The rows ``opus_manage prune`` cuts the ``search_results`` table down to unless
+       its ``--max-rows`` says otherwise, removing the least recently used searches
+       first. Default ``50000000``. :ref:`user_guide_deployment_prune` says how to size
+       it. A generated file never contains it.
    * - ``public_url``
      - yes
      - This installation's public URL, used by the citation page.

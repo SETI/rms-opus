@@ -87,6 +87,10 @@ PDS4_DATA_DIR = _config.paths.pds4_holdings
 # Static files and public URLs.
 OPUS_STATIC_ROOT = _config.paths.opus_static_root
 CACHE_SERVER_PREFIX = _config.django.cache_server_prefix
+# The seconds a search build waits for another worker's build of the same search, and
+# the rows `opus_manage prune` cuts search_results down to by default.
+SEARCH_BUILD_TIMEOUT = _config.django.search_build_timeout
+SEARCH_RESULTS_MAX_ROWS = _config.django.search_results_max_rows
 PUBLIC_OPUS_URL = _config.django.public_url
 PRODUCT_HTTP_PATH = _config.django.product_http_path
 VIEWMASTER_ROOT_PATH = _config.django.viewmaster_url
@@ -492,11 +496,11 @@ DEFAULT_STRINGCHOICE_LIMIT = 100
 
 SQL_MAX_LIMIT = 100000000  # Max size for a LIMIT clause
 
-# More than this many rows in the cache table -> don't join it
+# More than this many results in the search -> don't join them
 STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000
-# Timeout for SELECT when joined with cache table
+# Timeout for SELECT when joined with the search's results
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500  # ms
-# Timeout for SELECT When not joined with cache table
+# Timeout for SELECT When not joined with the search's results
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500  # ms
 
 THUMBNAIL_NOT_FOUND = 'https://opus.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'

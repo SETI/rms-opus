@@ -76,6 +76,13 @@ DEFAULT_CACHE_LOCATION = '127.0.0.1:11211'
 #: Seconds a worker thread keeps its database connection open when the file does not say.
 DEFAULT_CONN_MAX_AGE = 300
 
+#: The default seconds a search build waits for another worker's build of the same
+#: search, `DjangoConfig.search_build_timeout`.
+DEFAULT_SEARCH_BUILD_TIMEOUT = 270
+
+#: The default rows ``search_results`` is pruned to, `DjangoConfig.search_results_max_rows`.
+DEFAULT_SEARCH_RESULTS_MAX_ROWS = 50_000_000
+
 #: The most rows one bulk load writes in one transaction when the file does not say.
 DEFAULT_TRANSACTION_ROWS = 100_000
 
@@ -170,6 +177,13 @@ class DjangoConfig:
         conn_health_checks: Whether a kept connection is checked before a request
             reuses it, and replaced if the server has dropped it, Django's
             ``CONN_HEALTH_CHECKS``. The default is true.
+        search_build_timeout: Seconds a request building a search's results waits for
+            another worker already building the same search, as the session's
+            ``innodb_lock_wait_timeout`` during the build. It has to be at least 30
+            seconds below the web server's worker timeout. The default is 270.
+        search_results_max_rows: The rows ``opus_manage prune`` cuts ``search_results``
+            down to by default, removing the least recently used searches first. The
+            default is 50,000,000.
         public_url: Public URL of this OPUS installation.
         product_http_path: Root URL products are retrieved from.
         viewmaster_url: Root URL of the viewmaster file browser.
@@ -194,6 +208,8 @@ class DjangoConfig:
     cache_location: str
     conn_max_age: int
     conn_health_checks: bool
+    search_build_timeout: int
+    search_results_max_rows: int
     public_url: str
     product_http_path: str
     viewmaster_url: str
@@ -637,6 +653,12 @@ def _read_django(source: Path, values: dict[str, Any]) -> DjangoConfig:
         cache_location=table.read_host_port('cache_location', default=DEFAULT_CACHE_LOCATION),
         conn_max_age=table.read_int('conn_max_age', default=DEFAULT_CONN_MAX_AGE, minimum=0),
         conn_health_checks=table.read_bool('conn_health_checks', default=True),
+        search_build_timeout=table.read_int(
+            'search_build_timeout', default=DEFAULT_SEARCH_BUILD_TIMEOUT, minimum=1
+        ),
+        search_results_max_rows=table.read_int(
+            'search_results_max_rows', default=DEFAULT_SEARCH_RESULTS_MAX_ROWS, minimum=1
+        ),
         public_url=table.read_str('public_url'),
         product_http_path=table.read_str('product_http_path'),
         viewmaster_url=table.read_str('viewmaster_url'),

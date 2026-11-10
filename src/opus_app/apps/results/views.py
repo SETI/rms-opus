@@ -61,9 +61,9 @@ from opus_app.apps.search.views import (
     add_obs_table_joins,
     create_order_by_terms,
     get_param_info_by_slug,
-    get_user_query_table,
+    get_search_id,
     parse_order_slug,
-    search_cache_join_condition,
+    search_results_join_condition,
     url_to_search_params,
 )
 from opus_app.apps.tools import sql_builder
@@ -1171,8 +1171,8 @@ def api_get_categories_for_search(request: HttpRequest, *, api_code: int) -> Htt
     if not selections:
         triggered_tables = settings.BASE_TABLES[:]  # Copy
     else:
-        # get_triggered_tables returns None when the search's cache table cannot
-        # be created, and nothing here checks for it: that None reaches the
+        # get_triggered_tables returns None when the search's results cannot be
+        # built, and nothing here checks for it: that None reaches the
         # membership test below and raises TypeError. The fault is recorded here
         # rather than cast away by widening the declaration.
         triggered_tables = get_triggered_tables(
@@ -1279,10 +1279,10 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
     # url_to_search_params returns both of these or neither.
     assert extras is not None
 
-    user_query_table = get_user_query_table(selections, extras, api_code)
-    if not user_query_table:  # pragma: no cover - internal or database failure
+    search_id = get_search_id(selections, extras, api_code)
+    if search_id is None:  # pragma: no cover - internal or database failure
         log.error(
-            'api_get_product_types_for_search: get_user_query_table '
+            'api_get_product_types_for_search: get_search_id '
             + 'failed *** Selections %r *** Extras %r',
             str(selections),
             str(extras),
@@ -1293,7 +1293,7 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
         settings.CACHE_SERVER_PREFIX
         + settings.CACHE_KEY_PREFIX
         + ':product_types:'
-        + user_query_table
+        + str(search_id)
     )
     # This cache holds the responses this endpoint built earlier.
     cached_val: HttpResponse | None = cache.get(cache_key)
@@ -1306,10 +1306,10 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
     if selections:
         from_source.add_join(
             'INNER',
-            user_query_table,
+            sql_builder.search_results_source(search_id),
             sql_builder.columns_equal(
                 sql_builder.column('obs_general_id', 'obs_files'),
-                sql_builder.column('id', user_query_table),
+                sql_builder.column('id', sql_builder.SEARCH_RESULTS_ALIAS),
             ),
         )
 
@@ -1637,11 +1637,11 @@ def get_search_results_chunk(
         # url_to_search_params returns both of these or neither.
         assert extras is not None
 
-        user_query_table = get_user_query_table(selections, extras, api_code=api_code)
-        if not user_query_table:  # pragma: no cover -
+        search_id = get_search_id(selections, extras, api_code=api_code)
+        if search_id is None:  # pragma: no cover -
             # internal or database failure
             log.error(
-                'get_search_results_chunk: get_user_query_table failed '
+                'get_search_results_chunk: get_search_id failed '
                 + '*** Selections %r *** Extras %r',
                 str(selections),
                 str(extras),
@@ -1666,21 +1666,21 @@ def get_search_results_chunk(
             assert not is_multigroup
         add_mult_table_joins(from_source, sorted(mult_tables))
 
-        # But the cache table is an INNER JOIN because we only want opus_ids
-        # that appear in the cache table to cause result rows. Its sort_order
-        # numbers the search's results from 1 with no gaps -- the table is filled
-        # by one INSERT into a fresh AUTO_INCREMENT column -- so the page is the
-        # range of sort_order values, which the primary key reads directly.
+        # But the search's results are an INNER JOIN because we only want opus_ids
+        # that appear in them to cause result rows. Their sort_order numbers the
+        # search's results from 1 with no gaps -- the build numbers them with
+        # ROW_NUMBER() -- so the page is the range of sort_order values, which the
+        # primary key reads directly.
         from_source.add_join(
             'INNER',
-            user_query_table,
+            sql_builder.search_results_source(search_id),
             sql_builder.join_exprs(
                 [
                     sql_builder.columns_equal(
                         sql_builder.column('id', 'obs_general'),
-                        sql_builder.column('id', user_query_table),
+                        sql_builder.column('id', sql_builder.SEARCH_RESULTS_ALIAS),
                     ),
-                    sql_builder.sort_order_range(user_query_table, offset, limit),
+                    sql_builder.sort_order_range(sql_builder.SEARCH_RESULTS_ALIAS, offset, limit),
                 ],
                 'AND',
             ),
@@ -1707,7 +1707,7 @@ def get_search_results_chunk(
                 ),
             )
 
-        select.add_order_by(sql_builder.column('sort_order', user_query_table))
+        select.add_order_by(sql_builder.column('sort_order', sql_builder.SEARCH_RESULTS_ALIAS))
     else:
         # This is for a cart
         order_params, order_descending_params = parse_order_slug(all_order)
@@ -1975,16 +1975,15 @@ def get_triggered_tables(
     Returns:
         The names of the triggered tables, in the order they are displayed in, or
         the base tables sorted by name when there are no selections. It is None when
-        the search's cache table could not be created.
+        the search's results could not be built.
     """
     if not selections:
         return sorted(settings.BASE_TABLES)
 
-    user_query_table = get_user_query_table(selections, extras, api_code=api_code)
-    if not user_query_table:  # pragma: no cover - database error
+    search_id = get_search_id(selections, extras, api_code=api_code)
+    if search_id is None:  # pragma: no cover - database error
         log.error(
-            'get_triggered_tables: get_user_query_table failed '
-            + '*** Selections %r *** Extras %r',
+            'get_triggered_tables: get_search_id failed ' + '*** Selections %r *** Extras %r',
             str(selections),
             str(extras),
         )
@@ -1994,7 +1993,7 @@ def get_triggered_tables(
         settings.CACHE_SERVER_PREFIX
         + settings.CACHE_KEY_PREFIX
         + ':triggered_tables:'
-        + user_query_table
+        + str(search_id)
     )
     # This cache holds the table lists this function built earlier.
     cached_val: list[str] | None = cache.get(cache_key)
@@ -2038,7 +2037,7 @@ def get_triggered_tables(
             if trigger_tab + trigger_col in queries:
                 results = queries[trigger_tab + trigger_col]
             else:
-                # We are joining the search's cache table, which has no model,
+                # We are joining the search's results, which have no model,
                 # so this is raw SQL rather than an ORM query. The model is
                 # still what resolves the trigger column's name, because a field
                 # declared with db_column is not named by its column.
@@ -2052,8 +2051,8 @@ def get_triggered_tables(
                 select = sql_builder.Select(distinct=True)
                 select.add_column(sql_builder.column(trigger_column, trigger_tab))
                 select.add_from(trigger_tab)
-                select.add_from(user_query_table)
-                select.add_where(search_cache_join_condition(trigger_tab, user_query_table))
+                select.add_from(sql_builder.search_results_source(search_id))
+                select.add_where(search_results_join_condition(trigger_tab))
                 sql, sql_params = select.build()
                 log.debug('get_triggered_tables SQL: %r *** PARAMS %r', sql, str(sql_params))
                 cursor = connection.cursor()

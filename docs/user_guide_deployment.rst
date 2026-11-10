@@ -7,7 +7,8 @@ Deployment and Operations
 and :ref:`user_guide_web_server` puts a web server in front of it. This chapter is the
 running of it afterwards: what a deploy actually does, how a release is deployed onto a
 running site, the two things that always have to happen when a database changes, the
-runbook for replacing one, and the cron jobs that keep the log reports current.
+runbook for replacing one, and the cron jobs that keep the stored searches bounded and the
+log reports current.
 
 The scripts are the same ones the installation chapter wrote out with
 ``opus_deploy_scripts``, in the deploy directory beside their ``secrets/deploy.env``.
@@ -122,20 +123,24 @@ The scripts
     that changes the table schemas. It builds a new installation under ``staged/``
     naming that database -- virtual environment, ``pip install``, generated
     ``opus.toml``, ``wsgi.py`` symlink -- creates the application's own tables
-    (``opus_manage migrate``), gathers the static files, reloads the dictionary and drops
-    the search tables any searches made while the staged installation was being tried out
-    left behind (``opus_import --import-dictionary --drop-cache-tables``), and only then
-    switches. The import already finalized the database, so nothing else is rebuilt: the ``deployed`` symlink is moved onto
-    it, the cache service is restarted, and the workers are started again. They are
-    stopped for the switch alone, not for the build. Which units those are comes from
-    ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
+    (``opus_manage migrate``), gathers the static files, reloads the dictionary and empties
+    the search tables of any searches made while the staged installation was being tried
+    out, flushing the shared cache with them
+    (``opus_import --import-dictionary --reset-search-tables``), and only then switches.
+    The import already finalized the database, so nothing else is rebuilt: the
+    ``deployed`` symlink is moved onto it, the cache service is restarted, and the
+    workers are started again. They are stopped for the switch alone, not for the build.
+    Which units those are comes from ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
 
 ``deploy_new_code_only.sh [--no-database] [<version spec>]``
     **Only for a release that does not change the database schema** -- a bug-fix release
     against the database already being served. It reads the database name out of the
     installation currently deployed, builds a new installation at the new release naming
     that same database, runs the same migration, static-file and description-table steps,
-    and switches to it the same way. It does not upgrade anything in place.
+    and switches to it the same way. It does not upgrade anything in place. It leaves the
+    search tables alone, so the searches users have made are still stored after the
+    release; a release that changes either search table's columns changes the schema
+    version, and is deployed with ``deploy_new_code_and_database.sh``.
 
     The description-table step rebuilds ``param_info``, ``partables``, ``table_names`` and
     the dictionary from the new release, so a release that changed a label, a tooltip or
@@ -298,9 +303,9 @@ Two things that always have to happen
 
 After **anything** that changes the database, and both are easy to forget:
 
-**1. The shared Django cache has to be emptied**, because it holds result counts, mult
-counts, range endpoints and product-type lists keyed by a search that now means something
-else::
+**1. The shared Django cache has to be emptied**, because it holds the id each search is
+stored under, and mult counts, range endpoints and product-type lists keyed by a search
+that now means something else::
 
     OPUS_CONFIG=/opt/opus/deployed/opus.toml \
         /opt/opus/deployed/opus_venv/bin/python -m opus_app.clear_django_cache
@@ -403,6 +408,73 @@ it, and the database stays ``appending``. Either import it again -- the next
 or remove it with ``opus_import --delete-bundles <bundle>``, which deletes its rows and
 its record. Then run the three closing commands again.
 
+.. _user_guide_deployment_prune:
+
+Pruning stored searches
+-----------------------
+
+The web application stores every search a user makes: one row in ``user_searches``, and
+the search's results, one row per matching observation, in ``search_results``. A search
+is built once and every later request for it reads the stored rows, so ``search_results``
+grows with every new search and no request removes anything from it.
+``opus_manage prune`` is what bounds it::
+
+    opus_manage prune [--max-rows ROWS] [--unused-days DAYS] [--stats | --dry-run]
+
+It needs ``OPUS_CONFIG``, like every other OPUS program, and removes, in this order and
+only as much as it must:
+
+1. **Searches, least recently used first**, until ``search_results`` holds no more than
+   ``--max-rows`` rows, and in any case every search nobody has used for
+   ``--unused-days`` days. Rows a search left behind because an earlier prune stopped
+   part way are removed first. A search another request is building at that moment is
+   skipped, and counted as skipped.
+2. **Expired sessions**, through Django's own ``clearsessions``.
+3. **Cart rows whose session no longer exists.**
+
+Removing a search costs nothing but speed: the next request for it builds it again. A
+search's last use is recorded at most once a day, so a search in daily use always has a
+recent stamp: it is never removed for going unused, and it is among the last removed to
+bring the table down to ``--max-rows``.
+
+``--max-rows ROWS``
+    The rows ``search_results`` may hold afterwards. Default: the configuration's
+    ``[django] search_results_max_rows``, which is ``50000000`` when the file does not
+    set it (:ref:`user_guide_installation_configuring`). It must be at least 0.
+
+``--unused-days DAYS``
+    Remove every search unused for this many days, however few rows the table holds.
+    Default ``30``. It must be at least 1.
+
+``--stats``
+    Change nothing; report the rows ``search_results`` holds, the number of searches,
+    the table's data and index bytes and the bytes per row they come to, and how many
+    searches and rows a prune with these options would remove and leave.
+
+``--dry-run``
+    Change nothing; list each search a prune with these options would remove -- its id,
+    its rows and when it was last used -- and the totals.
+
+``--stats`` and ``--dry-run`` cannot be given together. Without either, the command
+reports what it removed, one line per kind.
+
+**Sizing** ``--max-rows``. Decide how much disk ``search_results`` may take, and divide it
+by the bytes per row ``opus_manage prune --stats`` reports on the server itself; that is
+the figure to give ``search_results_max_rows`` or ``--max-rows``. Deleting rows does not
+shrink the table's file on disk, but InnoDB reuses the pages the deleted rows freed, so a
+prune run regularly keeps the table near the size its row limit implies rather than
+letting it grow.
+
+**Schedule it hourly**, from the crontab of the account ``OPUS_USER`` names, through the
+``deployed`` symlink so that it follows each deploy::
+
+    0 * * * *  OPUS_CONFIG=/opt/opus/deployed/opus.toml /opt/opus/deployed/opus_venv/bin/opus_manage prune >> /opt/opus/opus_logs/prune.log 2>&1
+
+**Nothing in the deploy scripts runs it or installs that line**: each installation adds it
+to its own crontab, as it does the log analyzer's jobs below. A database replaced by
+``deploy_new_code_and_database.sh`` starts with empty search tables, and a code-only
+deploy keeps them as they are, so neither needs a prune of its own.
+
 .. _user_guide_deployment_log_analyzer:
 
 The log analyzer cron jobs
@@ -474,6 +546,9 @@ Operating checklist
    * - Change a field label or a tooltip
      - Edit the table schema, re-run ``--update-mult-info`` or ``--import-dictionary``,
        clear the cache and restart the workers.
+   * - ``search_results`` is growing
+     - The hourly ``opus_manage prune`` cron job
+       (:ref:`user_guide_deployment_prune`). It is per-installation and is not deployed.
    * - Reports look stale
      - The log-analyzer cron jobs. They are per-installation and are not deployed.
    * - Results look stale

@@ -4,7 +4,7 @@
 the observation import; then finalization's steps, `do_indexes`, `do_duplicate_ids`, the
 auxiliary tables `do_param_info`, `do_partables` and `do_table_names`, which are derived
 from the imported tables and so must follow it, and `do_cart` and `do_django`, which
-recreate the cart and clear the cache tables; then `do_update_mult_info`, `do_validate`,
+recreate the cart and reset the search tables; then `do_update_mult_info`, `do_validate`,
 `do_dictionary` and, last, `do_schema_version`.
 
 Several options are not steps of their own: the work for ``--scorched-earth`` and

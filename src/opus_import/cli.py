@@ -168,7 +168,7 @@ def _create_argument_parser() -> argparse.ArgumentParser:
                 --create-partables
                 --create-table-names
                 --create-cart
-                --drop-cache-tables
+                --reset-search-tables
                 --analyze-tables
              """,
     )
@@ -320,10 +320,11 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     # Functions other than main import
 
     parser.add_argument(
-        '--drop-cache-tables',
+        '--reset-search-tables',
         action='store_true',
         default=False,
-        help='Drop the cache tables used by OPUS; also clears user_searches',
+        help="""Re-create the web application's search tables, user_searches and
+                search_results, empty, and flush its cache""",
     )
     parser.add_argument(
         '--create-cart',
@@ -434,7 +435,7 @@ def expand_aggregate_options(args: argparse.Namespace) -> None:
         args.create_partables = True
         args.create_table_names = True
         args.create_cart = True
-        args.drop_cache_tables = True
+        args.reset_search_tables = True
         args.analyze_tables = True
 
 
@@ -674,7 +675,7 @@ def main() -> None:
             logger.close()
 
         # After the import, since the cart's foreign key needs obs_general.
-        if args.create_cart or args.drop_cache_tables:
+        if args.create_cart or args.reset_search_tables:
             logger.open(
                 'Cleaning up OPUS/Django tables',
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
@@ -682,9 +683,9 @@ def main() -> None:
             if args.create_cart:
                 with ctx.timed('create_cart'):
                     do_cart.create_cart(ctx)
-            if args.drop_cache_tables:
-                with ctx.timed('drop_cache_tables'):
-                    do_django.drop_cache_tables(ctx)
+            if args.reset_search_tables:
+                with ctx.timed('reset_search_tables'):
+                    do_django.reset_search_tables(ctx)
             logger.close()
 
         # After the auxiliary tables, so that the statistics count every table's rows.

@@ -5,9 +5,9 @@ How a Request Is Served
 
 :mod:`opus_app` **reads** the database an import wrote and never writes an ``obs_``
 table. What it does write is everything the *session* produces: the ``user_searches`` row
-that gives a search its number and the ``cache_NNN`` table that holds its results, the
-``cart`` rows a session selects, and the tables Django's own contrib apps own. Only an import removes the
-first two.
+that gives a search its number and the ``search_results`` rows that hold its results, the
+``cart`` rows a session selects, and the tables Django's own contrib apps own. Only an
+import and ``opus_manage prune`` remove the first two.
 
 This is the *why* of the chapter: what happens between a request arriving and an answer
 leaving, and what forces that shape. The pages beside it are the *what*.
@@ -25,8 +25,8 @@ The request lifecycle
         M --> U[opus_app.urls:<br/>each app contributes its routes,<br/>mounted at / and at /opus/]
         U --> V[the view, wrapped in api_view]
         V --> P[url_to_search_params:<br/>the query string becomes<br/>selections and extras]
-        P --> Q[get_user_query_table:<br/>find or build cache_NNN<br/>for this search]
-        Q --> S[sql_builder.Select:<br/>join obs_, mult_ and the cache table]
+        P --> Q[get_search_id:<br/>register the search, and build<br/>its search_results rows once]
+        Q --> S[sql_builder.Select:<br/>join obs_, mult_ and the search's results]
         S --> D[(MySQL)]
         D --> F[render as JSON, CSV or HTML]
         F --> RESP([HTTP response])
@@ -52,17 +52,18 @@ it delegates to. It is the single place a failure becomes a status code, and it 
 described in :ref:`dev_guide_webapp_errors` below. The page itself, Django's admin site
 and the API guide's redirect are the routes that are not API calls and are not wrapped.
 
-**4. A search becomes a cache table.**
+**4. A search becomes rows of** ``search_results``.
 :func:`~opus_app.apps.search.views.url_to_search_params` turns the query string into two
-dictionaries, and :func:`~opus_app.apps.search.views.get_user_query_table` turns those
-into a ``cache_NNN`` table holding the ids of the matching observations in sort order.
+dictionaries, and :func:`~opus_app.apps.search.views.get_search_id` turns those into the
+search's id, having written the ids of the matching observations into ``search_results``
+in sort order the first time anyone made the search.
 :ref:`dev_guide_webapp_search_flow` below is the whole of it.
 
 **5. The wide joins are assembled, not written.**
 :mod:`opus_app.apps.tools.sql_builder` builds every statement that joins the ``obs_``
-tables to each other, to the ``mult_`` tables holding their enumerated values, and to a
-cache table whose name is computed at runtime. It is the one module allowed to turn
-Python values into SQL text.
+tables to each other, to the ``mult_`` tables holding their enumerated values, and to one
+search's rows of ``search_results``. It is the one module allowed to turn Python values
+into SQL text.
 
 **6. The result is rendered in one of three formats.** JSON through
 :func:`~opus_app.apps.tools.app_utils.json_response`, CSV through
@@ -129,57 +130,96 @@ Three details shape everything downstream:
 Step 2: the search gets a number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:func:`~opus_app.apps.search.views.set_user_search_number` hashes the selections, the
-qtypes, the units and the order, and looks the four hashes up in ``user_searches``. That
-table's unique key over the four is what makes a search's number stable, so the same
-search from a different session reuses the same cache table.
-
-**The write is deliberately optimistic**: rather than looking a row up and creating it if
-absent -- which leaves a window for two processes to create it at once -- it inserts and
-lets the unique constraint reject the loser, which then reads the winner's row. An absent
-hash is stored as the literal string ``'NONE'``, because MySQL treats NULLs in a unique
-index as distinct and a NULL would defeat the deduplication entirely.
+:func:`~opus_app.apps.search.views.set_user_search_number` reduces the search to four
+strings -- the selections, the qtypes, the units and the order, each as sorted JSON and
+None when the search has none -- and hashes the JSON list of the four with SHA-256
+(:func:`~opus_app.apps.search.views.search_hash`). The digest is ``user_searches``'s
+unique ``search_hash``, which is what makes a search's number stable, so the same search
+from a different session reuses the same results.
 
 Unused qtypes and units are stripped before hashing, so a qtype for a field that is not
 being searched does not make the search look different.
 
-Step 3: the cache table is built
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**The memory cache answers first.** It maps the digest to the search's id and the day its
+row was last stamped. On a miss **the write is deliberately optimistic**: rather than
+looking a row up and creating it if absent -- which leaves a window for two processes to
+create it at once -- it inserts and lets the unique key reject the loser, which then reads
+the winner's row. Either statement commits on its own, before any build starts.
 
-:func:`~opus_app.apps.search.views.get_user_query_table` turns that number into
-``cache_NNN`` and, unless the memory cache already says the table exists, runs
-:func:`~opus_app.apps.search.views.construct_query_string` and creates the table from
-its result. Two columns:
+**A search's row records when it was last used**, in ``last_used_at``, which is what
+``opus_manage prune`` chooses by. A request stamps it at most once a day per search --
+the cache entry records the day of the last stamp -- and the stamp never waits:
+``SELECT ... FOR UPDATE SKIP LOCKED`` passes over a row a build holds, and the build's
+own update stamps it instead.
+
+Step 3: the search's results are built
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:func:`~opus_app.apps.search.views.get_search_results` reads the search's row by primary
+key. A row whose ``results_built_at`` is set is built, and its ``result_count`` is the
+answer. Otherwise the search's results are written into ``search_results``, one row per
+matching observation:
 
 .. code-block:: text
 
-    sort_order  INT NOT NULL AUTO_INCREMENT, PRIMARY KEY(sort_order)
-    id          INT UNSIGNED, UNIQUE KEY(id)
+    search_id       the search's user_searches id
+    sort_order      its place in the search's order, from 1 with no gaps
+    obs_general_id  the observation
+    PRIMARY KEY (search_id, sort_order), UNIQUE KEY (search_id, obs_general_id)
 
-``sort_order`` gives the result ordering and ``id`` joins back to ``obs_general``. The
-SELECT that fills it has exactly one output column: ``obs_general.id``.
+The build is one transaction, serialized on the search's ``user_searches`` row:
 
-**Two processes racing to build the same table is expected and handled.** The second
-one's ``CREATE TABLE`` either fails immediately with "table already exists", or blocks on
-the first one's lock and then fails the same way once it is finished -- and either way
-the table is now there, so the error is caught and the name returned. Any other database
-error is logged and returns None, which the caller turns into a 500.
+1. The session's ``innodb_lock_wait_timeout`` is set to the configuration's ``[django]
+   search_build_timeout`` for the build, and restored afterwards whatever happens.
+2. ``SELECT ... FROM user_searches WHERE id = %s FOR UPDATE`` takes the row's lock. A
+   request that finds the search built once it has the lock -- because another worker
+   built it while this one waited -- returns that worker's count.
+3. ``INSERT INTO search_results ... SELECT`` writes the rows, numbering them with
+   ``ROW_NUMBER() OVER (ORDER BY ...)`` in the search's order.
+4. One ``UPDATE`` writes ``result_count``, ``results_built_at`` and ``last_used_at``, and
+   the commit releases the lock.
+
+**Two processes racing to build the same search is expected and handled**: the second
+waits on the row lock and then reads the first one's count, so a search is built once.
+Its wait is bounded by ``search_build_timeout``, and a wait that times out (MySQL error
+1205, :func:`~opus_app.apps.tools.db_utils.is_lock_timeout_error`) returns None, which
+the caller turns into a 500, as does any other database error. A build that fails, or a
+worker killed partway through one, rolls back and leaves the search unbuilt, so the next
+request waiting on it starts over -- which is why ``search_build_timeout`` has to be
+shorter than the web server's worker timeout
+(:ref:`user_guide_installation_configuring`).
+
+Django's MySQL backend runs its connections at ``READ COMMITTED``, so the ``INSERT ...
+SELECT`` takes no shared locks on the rows it reads.
+
+A search ``opus_manage prune`` removed after the memory cache named it has no row: the
+cache entry is deleted and the search registered afresh, once.
 
 Step 4: everything downstream joins against it
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A page of results, a count, a set of file URLs and a list of product types are four
-queries over one cached search rather than four searches.
-:func:`~opus_app.apps.search.views.search_cache_join_condition` builds the join:
+A page of results, a set of file URLs and a list of product types are queries over one
+built search rather than searches of their own, and the result count is the number the
+build stored in ``user_searches``. Each joins the search's rows as a derived table,
+:func:`~opus_app.apps.tools.sql_builder.search_results_source`:
+
+.. code-block:: sql
+
+    (SELECT obs_general_id AS id, sort_order FROM search_results WHERE search_id = %s)
+        AS results
+
+MySQL merges a derived table this simple into the statement that names it, so the join
+reads ``search_results``'s own keys.
+:func:`~opus_app.apps.search.views.search_results_join_condition` builds the join:
 ``obs_general`` joins on its own primary key, and every other ``obs_`` table on the
 ``obs_general_id`` it carries.
 
-The results reader joins the wide query to the cache table on the page's range of
+The results reader joins the wide query to the search's results on the page's range of
 ``sort_order`` as well as on ``id``
-(:func:`~opus_app.apps.results.views.get_search_results_chunk`). A cache table numbers its
-results from 1 with no gaps, so the range is exactly the page, the ordering and the paging
-are settled by the cache table's primary key before the joins run, and a late page reads
-no more of it than the first.
+(:func:`~opus_app.apps.results.views.get_search_results_chunk`). A search's results are
+numbered from 1 with no gaps, so the range is exactly the page, the ordering and the
+paging are settled by the ``(search_id, sort_order)`` primary key before the joins run,
+and a late page reads no more of it than the first.
 
 .. _dev_guide_webapp_errors:
 
@@ -258,9 +298,15 @@ configuration and the second is ``'opus:'`` plus the database schema name -- whi
 what lets several OPUS installations share one memcached. Losing this cache costs speed
 and nothing else.
 
-**The** ``cache_NNN`` **tables**, which are real tables in the OPUS database. Losing one
-costs the time to rebuild it. The import drops them all, because an import changes what a
-search means.
+``search_results`` **and** ``user_searches``, which are real tables in the OPUS
+database: every built search's ordered results, and one row per distinct search saying
+whether and when it was built and when it was last used. Losing a search costs the time
+to build it again. The import resets both empty, because an import changes what a search
+means, and ``opus_manage prune`` removes the least recently used searches to keep
+``search_results`` within bounds (:ref:`user_guide_deployment_prune`). The memory cache's
+entry mapping a search to its id is trusted, so an entry outliving a reset would hand one
+search's results to another once the ids restart; every reset of the two tables is
+therefore followed by a flush of the shared cache.
 
 **Process-local copies.** Each worker process keeps its own copy of what only an import
 changes, so that a request reads it from memory rather than from the database:
@@ -298,8 +344,9 @@ table's schema (:ref:`dev_guide_table_schemas`) and regenerating.
 
 The generated models are used for the queries that read a single row or a small set. The
 wide joins a search needs are built by :mod:`opus_app.apps.tools.sql_builder` instead,
-because they join a dynamically named cache table that has no model at all -- and
-because they are far clearer as SQL than as ORM expressions.
+because they join one search's rows of ``search_results`` as a derived table, and no
+model reads that table -- and because they are far clearer as SQL than as ORM
+expressions.
 
 Some tables have hand-written models elsewhere as well, in the app that owns them:
 :class:`~opus_app.apps.paraminfo.models.ParamInfo`,

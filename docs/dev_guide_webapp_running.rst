@@ -39,8 +39,8 @@ Running it from the command line
 --------------------------------
 
 Django management commands are how the application is administered: creating its contrib
-tables, gathering its static files, opening a shell with the models loaded, and running
-the development server. There are three ways to reach them. The first two are the same
+tables, gathering its static files, opening a shell with the models loaded, running
+the development server, and pruning its stored searches. There are three ways to reach them. The first two are the same
 program under two names; the third is Django's own command, and is the only one that
 needs a second environment variable.
 
@@ -112,8 +112,9 @@ to do the second time.
 The commands worth knowing
 --------------------------
 
-OPUS adds no management commands of its own, so these are all Django's. Each one below
-takes ``opus_manage`` or ``python manage.py`` in front of it.
+All but ``prune`` are Django's own; ``prune`` is OPUS's, defined by the ``search`` app in
+:mod:`opus_app.apps.search.management.commands.prune`. Each one below takes
+``opus_manage`` or ``python manage.py`` in front of it.
 
 .. list-table::
    :header-rows: 1
@@ -139,6 +140,14 @@ takes ``opus_manage`` or ``python manage.py`` in front of it.
    * - ``diffsettings``
      - Prints the settings that differ from Django's defaults, which is the quickest way
        to see what a configuration file actually produced.
+   * - ``prune``
+     - Removes the least recently used searches until ``search_results`` holds no more
+       than ``--max-rows`` rows and none has gone unused for ``--unused-days`` days, then
+       expired sessions, then the cart rows of sessions that no longer exist. ``--stats``
+       reports the table's size and what a prune would remove, and ``--dry-run`` lists
+       it, both changing nothing. A server runs it from cron;
+       :ref:`user_guide_deployment_prune` gives the options, their defaults and the
+       sizing rule.
 
 **The test suites are not run through any of them** -- ``pytest`` runs the holdings-free
 suite and ``pytest integration_tests`` the live-database ones; see

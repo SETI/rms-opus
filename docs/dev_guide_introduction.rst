@@ -234,10 +234,11 @@ Bundle registry
     it finished. Finalization and the step that marks a schema ready both refuse while any
     bundle in it is not ``done``.
 
-Cache table
-    A table named ``cache_NNN`` holding the ids of the observations one search matched,
-    in sort order. The web application builds it once per distinct search and joins
-    every later query against it.
+Search results
+    The rows of the ``search_results`` table holding the ids of the observations one
+    search matched, in sort order, under the search's ``user_searches`` id. The web
+    application builds them once per distinct search and joins every later query
+    against them; ``opus_manage prune`` removes the least recently used.
 
 Trigger
     A value a user can search for that makes a further table of search parameters

@@ -8,9 +8,10 @@ search *found*; :mod:`opus_app.apps.metadata` describes what is *searchable* and
 observations match; :mod:`opus_app.apps.cart` holds what a session has *selected* and
 builds the downloads.
 
-All three depend on the cache table :ref:`dev_guide_webapp_search_flow` describes, and
-every handler that returns a *page* of observations goes through one paging routine.
-``metadata`` counts and aggregates over that table instead, and never pages.
+All three depend on the search's rows of ``search_results`` that
+:ref:`dev_guide_webapp_search_flow` describes, and every handler that returns a *page* of
+observations goes through one paging routine. ``metadata`` counts and aggregates over
+those rows instead, and never pages.
 
 .. _dev_guide_webapp_results_app:
 
@@ -80,13 +81,16 @@ order, an auxiliary dictionary and an error pair.
 
 It has two modes:
 
-**Reading a search.** It resolves the query string to a cache table and INNER JOINs the
-wide query to it on ``id`` **and on the page's range of** ``sort_order``
-(:func:`~opus_app.apps.tools.sql_builder.sort_order_range`). A cache table numbers its
-results from 1 with no gaps, so the rows after the first *offset* and *limit* of them are
+**Reading a search.** It resolves the query string to the search's id and INNER JOINs
+the wide query to the search's results
+(:func:`~opus_app.apps.tools.sql_builder.search_results_source`) on ``id`` **and on the
+page's range of** ``sort_order``
+(:func:`~opus_app.apps.tools.sql_builder.sort_order_range`). A search's results are
+numbered from 1 with no gaps, so the rows after the first *offset* and *limit* of them are
 exactly those whose ``sort_order`` lies between *offset* + 1 and *offset* + *limit*, and
-the table's primary key reads only those: the last page costs what the first does,
-settling the ordering and the paging before the joins run.
+the ``(search_id, sort_order)`` primary key of ``search_results`` reads only those: the
+last page costs what the first does, settling the ordering and the paging before the
+joins run.
 
 **Reading the cart.** It joins the ``cart`` table directly and
 applies the sort order and the paging to the main statement. The paging parameters are
@@ -148,8 +152,7 @@ What each handler returns
 
 :func:`~opus_app.apps.results.views.api_get_product_types_for_opus_id` and :func:`~opus_app.apps.results.views.api_get_product_types_for_search`
     The product types available for one observation, or across a whole search. The
-    search form caches its built response in the Django cache under the cache table's
-    name.
+    search form caches its built response in the Django cache under the search's id.
 
 :func:`~opus_app.apps.results.views.get_triggered_tables`
     Which tables a search makes relevant. With no selections it is the ``BASE_TABLES``
@@ -213,12 +216,12 @@ each simply calls its public twin, which is where the
      - public
      - :func:`~opus_app.apps.metadata.views.api_get_fields`
 
-**The result count** is a row count over the cache table, cached in the Django cache under
-the installation's cache prefixes plus ``:resultcount:`` and that table's name.
-:func:`~opus_app.apps.metadata.views.get_result_count_helper` is
-the routine, and it returns the count, the table name and an error response, so that a
-caller that also needs the table does not resolve the search twice. The results and cart
-apps both use it.
+**The result count** is the number the search's build stored in its ``user_searches``
+row, ``result_count``, so counting a built search reads one row by its primary key.
+:func:`~opus_app.apps.metadata.views.get_result_count_helper` is the routine, and it
+returns the count, the search's id and an error response, so that a caller that also
+needs the search's results does not resolve the search twice. The results and cart apps
+both use it.
 
 **The mult counts** are what the interface's green numbers beside each checkbox are: for
 each value of a mult field, how many of the search's observations have it. **The field's
@@ -230,8 +233,8 @@ rows. The values come back in the mult table's display order.
 **The range endpoints** are the smallest and largest value a numeric field takes over the
 search, plus how many observations have neither. The field's own constraints are removed
 for the same reason as above. With no search at all it uses the ORM's aggregates over the
-whole table; with one it issues raw ``MIN`` and ``MAX`` joined to the cache table. The
-answer is cached per field, per unit and per search.
+whole table; with one it issues raw ``MIN`` and ``MAX`` joined to the search's results.
+The answer is cached per field, per unit and per search.
 
 **The field descriptions** are the public field dictionary:
 :func:`~opus_app.apps.metadata.views.get_fields_info` builds one entry per field, or one
@@ -251,7 +254,7 @@ The ``cart`` app
 ----------------
 
 The one app that writes rows a user can see. (The search app writes too --
-``user_searches`` and the ``cache_NNN`` tables -- but nothing a user selected.) A cart is
+``user_searches`` and ``search_results`` -- but nothing a user selected.) A cart is
 the set of ``cart`` rows carrying one session id; a row whose ``recycled`` column is set
 is in the recycle bin -- still in the table, counted separately, and left out of the
 download totals and the archives themselves.
@@ -314,10 +317,12 @@ Adding a range
 
 ``_edit_cart_range`` adds or removes an inclusive range of observations, given the two
 ends' OPUS IDs, **in the current sort order**. Reading the browse list it uses the
-search's cache table; reading the cart it numbers the session's cart in sort order with
-``ROW_NUMBER()`` in a derived table (:func:`~opus_app.apps.tools.sql_builder.row_number`,
-aliased ``cart_order``), which has a cache table's shape, because the cart has no cache
-table of its own. The derived table is computed afresh by each statement that names it. The
+search's results (:func:`~opus_app.apps.tools.sql_builder.search_results_source`);
+reading the cart it numbers the session's cart in sort order with ``ROW_NUMBER()`` in a
+derived table (:func:`~opus_app.apps.tools.sql_builder.row_number`, aliased
+``cart_order``), which has the same ``id`` and ``sort_order`` columns, because the cart
+has no built results of its own. Each derived table is computed afresh by each statement
+that names it. The
 delete form explicitly carries the session id in its WHERE clause, so it cannot reach
 another user's cart.
 

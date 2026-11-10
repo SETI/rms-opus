@@ -13,7 +13,8 @@ own small table rather than a value, so displaying one means a second lookup, wh
 reads the process's copy of that table from `import_constants`.
 
 The MySQL error numbers are the failures that callers of these tables catch when
-they inspect a database exception.
+they inspect a database exception; `is_lock_timeout_error` is the one place that reads
+the number of a lock wait that timed out.
 """
 
 from __future__ import annotations
@@ -34,8 +35,21 @@ if TYPE_CHECKING:
     from opus_app.apps.paraminfo.models import ParamInfo
 
 MYSQL_TABLE_NOT_EXISTS = 1146
-MYSQL_TABLE_ALREADY_EXISTS = 1050
 MYSQL_EXECUTION_TIME_EXCEEDED = 3024
+MYSQL_LOCK_WAIT_TIMEOUT = 1205
+
+
+def is_lock_timeout_error(exc: BaseException) -> bool:
+    """Return whether a database exception is a lock wait that timed out.
+
+    Parameters:
+        exc: The exception, as Django raises it, which carries the driver's error
+            number as its first argument.
+
+    Returns:
+        True for MySQL's error 1205.
+    """
+    return bool(exc.args) and exc.args[0] == MYSQL_LOCK_WAIT_TIMEOUT
 
 
 def table_model_from_name(table_name: str) -> type[Any]:

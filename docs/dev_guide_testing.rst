@@ -150,9 +150,9 @@ are terabytes on a machine at the Ring-Moon Systems Node; without them there is 
 database to run against. A developer working elsewhere runs the other two suites, and
 :ref:`dev_guide_import_fixture` is what covers the import pipeline for them.
 
-It runs **serially**, deliberately: every test shares one database, and one of them drops
-the ``cache_*`` tables between tests, so ``-n`` would have workers pulling the ground out
-from under each other.
+It runs **serially**, deliberately: every test shares one database, and some of them
+empty ``user_searches`` and ``search_results`` between tests, so ``-n`` would have workers
+pulling the ground out from under each other.
 
 Three markers describe what a test reaches for, and ``--strict-markers`` is on, so every
 one of them is declared in ``pyproject.toml``:

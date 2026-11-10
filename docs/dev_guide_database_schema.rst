@@ -595,52 +595,52 @@ The fields are:
 * ``id``: A unique ID.
 * ``timestamp``: The date and time this row was last modified.
 
-The ``user_searches`` and ``cache_*`` Tables
---------------------------------------------
+The ``user_searches`` and ``search_results`` Tables
+---------------------------------------------------
 
-When a search query comes in, OPUS first looks in the ``user_searches`` table to see if the exact same search has already been performed; if so the results are already cached in one of the ``cache_*`` tables. If not, the details of the search are stored in ``user_searches`` and a new ``cache_*`` table is created with the results.
+When a search query comes in, OPUS first looks in the ``user_searches`` table to see if the exact same search has already been made; if so, and its results are built, they are already in ``search_results``. If not, the search is given a row in ``user_searches``, and the first request that finds its results unbuilt writes them into ``search_results``. Both tables are created by the import from their schema files, and both are emptied by every reset of the search tables (``opus_import --reset-search-tables``); between resets, ``opus_manage prune`` removes the least recently used searches (:ref:`user_guide_deployment_prune`).
 
 ::
 
     mysql> DESC user_searches;
-    +-----------------+--------------+------+-----+-------------------+
-    | Field           | Type         | Null | Key | Default           |
-    +-----------------+--------------+------+-----+-------------------+
-    | id              | int unsigned | NO   | PRI | NULL              |
-    | selections_json | text         | NO   |     | NULL              |
-    | selections_hash | varchar(32)  | NO   | MUL | NULL              |
-    | qtypes_json     | text         | YES  |     | NULL              |
-    | qtypes_hash     | varchar(32)  | YES  |     | NULL              |
-    | units_json      | text         | YES  |     | NULL              |
-    | units_hash      | varchar(32)  | YES  |     | NULL              |
-    | order_json      | text         | YES  |     | NULL              |
-    | order_hash      | varchar(32)  | YES  |     | NULL              |
-    | timestamp       | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    +-----------------+--------------+------+-----+-------------------+
+    +------------------+--------------+------+-----+---------+
+    | Field            | Type         | Null | Key | Default |
+    +------------------+--------------+------+-----+---------+
+    | id               | int unsigned | NO   | PRI | NULL    |
+    | search_hash      | binary(32)   | NO   | UNI | NULL    |
+    | result_count     | int unsigned | YES  |     | NULL    |
+    | results_built_at | datetime     | YES  |     | NULL    |
+    | last_used_at     | datetime     | NO   |     | NULL    |
+    +------------------+--------------+------+-----+---------+
 
-    mysql> DESC cache_1;
-    +------------+--------------+------+-----+---------+
-    | Field      | Type         | Null | Key | Default |
-    +------------+--------------+------+-----+---------+
-    | sort_order | int          | NO   | PRI | NULL    |
-    | id         | int unsigned | YES  | UNI | NULL    |
-    +------------+--------------+------+-----+---------+
+    mysql> DESC search_results;
+    +----------------+--------------+------+-----+---------+
+    | Field          | Type         | Null | Key | Default |
+    +----------------+--------------+------+-----+---------+
+    | search_id      | int unsigned | NO   | PRI | NULL    |
+    | sort_order     | int unsigned | NO   | PRI | NULL    |
+    | obs_general_id | int unsigned | NO   |     | NULL    |
+    +----------------+--------------+------+-----+---------+
 
 The fields of ``user_searches`` are:
 
-* ``selections_json`` and ``selections_hash``: A JSON structure containing internal details of the search query, and an MD5 hash of the structure for ease of searching.
-* ``qtypes_json`` and ``qtypes_hash``: A JSON structure containing internal details of the qtypes used in the search query, and an MD5 hash of the structure for ease of searching.
-* ``units_json`` and ``units_hash``: A JSON structure containing internal details of the units used in the search query, and an MD5 hash of the structure for ease of searching.
-* ``order_json`` and ``order_hash``: A JSON structure containing internal details of the sort order used in the search query, and an MD5 hash of the structure for ease of searching.
-* ``id``: A unique ID. This unique ID is also used to identify the particular associated ``cache_N`` table.
-* ``timestamp``: The date and time this row was last modified.
+* ``id``: A unique ID, which identifies the search's rows in ``search_results``.
+* ``search_hash``: The SHA-256 digest, stored as its 32 bytes, of the JSON list of four strings describing the search: its selections, its qtypes, its units and its sort order, each of the last three ``null`` when the search has none. It is a unique key, so a search is considered to have been previously made only if all four match.
+* ``result_count``: The number of rows the search's build wrote to ``search_results``. ``NULL`` until the search is built.
+* ``results_built_at``: When the search's results were built. ``NULL`` until they are, which is how OPUS tells a built search from one that is only registered.
+* ``last_used_at``: When the search was registered or last used, stamped at most once a day. ``opus_manage prune`` removes searches least recently used first by it.
 
-Only if all of the fields ``selections``, ``qtypes``, ``units``, and ``order`` match is a search considered to have been previously performed.
+Both times are in UTC.
 
-The ``cache_*`` tables each contain all of the results from one search. Each row represents one OPUS ID in the search results. The fields of ``cache_*`` are:
+``search_results`` holds every built search's results. Each row represents one OPUS ID in one search's results. The fields of ``search_results`` are:
 
-* ``id``: The ``obs_general`` ID of the result.
-* ``sort_order``: An integer indicating how the result appears in the sorted order. It is necessary because the ``CREATE TABLE`` operation in ``get_search_results_chunk`` does not preserve the ordering of the original table.
+* ``search_id``: The ``user_searches`` ID of the search.
+* ``sort_order``: The result's position in the search's sorted order, numbered from 1 with no gaps.
+* ``obs_general_id``: The ``obs_general`` ID of the result.
+
+The primary key is ``(search_id, sort_order)``, so a page of one search's results is a range of the primary key, and a unique key over ``(search_id, obs_general_id)`` serves the joins from the ``obs_*`` tables to one search's results. Neither table has a foreign key: a search's rows of ``search_results`` are removed by the code that removes its ``user_searches`` row.
+
+A search's results are written by one ``INSERT INTO search_results ... SELECT`` statement, which numbers the rows with ``ROW_NUMBER()`` in the search's order, inside a transaction that holds the search's ``user_searches`` row with ``SELECT ... FOR UPDATE`` and that also writes ``result_count``, ``results_built_at`` and ``last_used_at``. Concurrent requests for the same new search wait on that row lock, and then find the search built. :ref:`dev_guide_webapp_search_flow` describes the build in full.
 
 The ``contexts`` and ``definitions`` Tables
 -------------------------------------------

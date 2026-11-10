@@ -40,13 +40,12 @@ class SearchTests(TestCase):
     """Search-URL parsing, and the SQL each kind of search clause builds."""
 
     def _empty_user_searches(self) -> None:
-        """Delete every recorded search and the cache tables they created.
+        """Delete every stored search and its results.
 
-        A search records itself in `user_searches` and materializes its results into a
-        `cache_<number>` table named after that row, so leaving either behind would let
-        one test answer another's query. The count is checked first because the common
-        case is an already-empty table, and the counter is reset because the cache table
-        name is derived from it.
+        A search records itself in `user_searches` and its results in `search_results`,
+        so leaving either behind would let one test answer another's query. The count is
+        checked first because the common case is an already-empty table, and the counter
+        is reset because the tests expect the first search registered to be number 1.
 
         It also empties the Django cache and builds the request factory these tests
         call the views with, because `setUp` calls this instead of doing either.
@@ -56,13 +55,9 @@ class SearchTests(TestCase):
         cursor.execute(sql)
         results = cursor.fetchall()
         if int(results[0][0]) != 0:
+            cursor.execute('DELETE FROM search_results')
             cursor.execute('DELETE FROM user_searches')
             cursor.execute('ALTER TABLE user_searches AUTO_INCREMENT = 1')
-            cursor.execute('SHOW TABLES LIKE %s', ['cache_%'])
-            for row in cursor:  # pragma: no cover - may never be cache_ tables
-                q = 'DROP TABLE ' + row[0]
-                print(q)
-                cursor.execute(q)
         cache.clear()
         self.factory = RequestFactory()
 
@@ -73,8 +68,8 @@ class SearchTests(TestCase):
         so every suite resets them; a suite that did not would see its own API calls
         fail at random.
 
-        It also calls `_empty_user_searches`, which clears the rows and cache tables a
-        search leaves behind and builds this suite's request factory.
+        It also calls `_empty_user_searches`, which clears the rows a search leaves
+        behind and builds this suite's request factory.
         """
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -3821,6 +3816,12 @@ class SearchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__the_server_runs_djangos_connection_at_read_committed(self) -> None:
+        "[test_search.py] the search build's isolation level, as the server reports it"
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT @@transaction_isolation')
+            self.assertEqual(cursor.fetchone()[0], 'READ-COMMITTED')
+
         #####################################################
         ######### set_user_search_number UNIT TESTS #########
         #####################################################
@@ -3832,8 +3833,8 @@ class SearchTests(TestCase):
         num1 = set_user_search_number(selections, extras)
         extras = {'qtypes': {}, 'units': {}, 'order': ([], [])}
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_qtype_str(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype string"
@@ -3853,8 +3854,8 @@ class SearchTests(TestCase):
             'order': (['obs_pds.bundle_id'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_qtype_num_1(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype numeric 1"
@@ -3874,8 +3875,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_qtype_num_2(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype numeric 2"
@@ -3895,8 +3896,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_unit_num_1(self) -> None:
         "[test_search.py] set_user_search_number: dead unit numeric 1"
@@ -3916,8 +3917,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_unit_num_2(self) -> None:
         "[test_search.py] set_user_search_number: dead unit numeric 2"
@@ -3937,8 +3938,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_qtype_num_1(self) -> None:
         "[test_search.py] set_user_search_number: qtype numeric 1"
@@ -3956,8 +3957,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (2, True))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 2)
 
     def test__set_user_search_number_qtype_num_2(self) -> None:
         "[test_search.py] set_user_search_number: qtype numeric 2"
@@ -3975,8 +3976,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (2, True))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 2)
 
     def test__set_user_search_number_unit_num_1(self) -> None:
         "[test_search.py] set_user_search_number: unit numeric 1"
@@ -3994,8 +3995,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (2, True))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 2)
 
     def test__set_user_search_number_unit_num_2(self) -> None:
         "[test_search.py] set_user_search_number: unit numeric 2"
@@ -4013,5 +4014,5 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (2, True))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 2)

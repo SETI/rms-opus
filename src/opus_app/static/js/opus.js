@@ -314,7 +314,7 @@ var opus = {
         // The way this is currently implemented, the result count has to finish before
         // any of the search hinting is updated. This is a good thing because of the way
         // the back end is implemented, where the result count needs to finish so the
-        // cache table has been created before hinting can be performed. However, at
+        // search's results have been built before hinting can be performed. However, at
         // some point we would like to be able to do these in parallel. This will require
         // both backend changes and a change here to remove the sequential dependence.
         o_search.allNormalizeInputApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);

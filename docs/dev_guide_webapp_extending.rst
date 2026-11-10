@@ -35,8 +35,9 @@ Adding an API endpoint
    :exc:`django.http.Http404` for something that does not exist, and **take the message
    from** :mod:`opus_app.apps.tools.app_utils` rather than writing one at the raise site.
    Add a new message function there if none fits. A server-side failure you have already
-   diagnosed -- a database error, a cache-table error -- is *returned* as an
-   :class:`~django.http.HttpResponseServerError` carrying an ``http500_`` message instead;
+   diagnosed -- a database error, a search whose results could not be built -- is
+   *returned* as an :class:`~django.http.HttpResponseServerError` carrying an
+   ``http500_`` message instead;
    :func:`~opus_app.apps.results.views.get_search_results_chunk_error_handler` is where
    that split is written down.
 6. **Add a golden-response test.**
@@ -117,12 +118,14 @@ Querying from an endpoint
 
 If the endpoint reads a search, do **not** parse the query string yourself. Call
 :func:`~opus_app.apps.search.views.url_to_search_params` and then either
-:func:`~opus_app.apps.search.views.get_user_query_table`, for a cache table to join
-against, or :func:`~opus_app.apps.results.views.get_search_results_chunk`, for a page of
-rows already formatted. Both handle the cache-table race a hand-written query would have
-to repeat; the paging, the units and the null rendering belong to
+:func:`~opus_app.apps.search.views.get_search_id`, for a search whose results to join
+against as :func:`~opus_app.apps.tools.sql_builder.search_results_source`, or
+:func:`~opus_app.apps.results.views.get_search_results_chunk`, for a page of rows already
+formatted. Both register the search and build its results under the row lock that keeps
+two requests from building one search twice, which a hand-written query would have to
+repeat; the paging, the units and the null rendering belong to
 :func:`~opus_app.apps.results.views.get_search_results_chunk` alone, which calls
-:func:`~opus_app.apps.search.views.get_user_query_table` for the table underneath.
+:func:`~opus_app.apps.search.views.get_search_id` for the search underneath.
 
 If the endpoint needs SQL of its own, build it with
 :mod:`opus_app.apps.tools.sql_builder` and never by concatenation.

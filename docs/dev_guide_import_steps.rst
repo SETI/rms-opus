@@ -29,7 +29,7 @@ The order, and what forces it
         PT[do_partables]
         TN[do_table_names]
         C[do_cart:<br/>recreate the empty cart table]
-        DJ[do_django:<br/>drop cache_*, reset user_searches]
+        DJ[do_django:<br/>reset user_searches and search_results,<br/>flush the web cache]
         A[analyze the tables]
         UM[do_update_mult_info]
         V[do_validate]
@@ -54,7 +54,7 @@ The order, and what forces it
   the keys on ``obs_general_id``.
 * **The auxiliary tables come after the import** because each is derived from which
   observation tables exist and from their schemas.
-* **The cart and cache tables come after the import** because ``cart`` carries a
+* **The cart and search tables come after the import** because ``cart`` carries a
   foreign key onto ``obs_general``, which must exist first; a schema without it logs an
   error and gets no cart.
 * **The tables are analyzed after them**, so that the statistics count every table's
@@ -88,16 +88,27 @@ observations rather than being refused.
 opus_import.steps.do_django
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Discards the tables the web application caches search results in.
+Resets the tables the web application keeps its searches in, and flushes its cache.
 
-:func:`~opus_import.steps.do_django.drop_cache_tables` drops every table whose name
-starts with ``cache_`` -- found **by prefix**, because a cache table is named after a row
-of ``user_searches`` rather than defined by a schema -- and then drops and recreates
-``user_searches`` empty. Option: ``--drop-cache-tables``, part of ``--finalize``, which
-runs it after ``--create-cart``.
+:func:`~opus_import.steps.do_django.reset_search_tables` drops ``user_searches`` and
+``search_results`` (:data:`~opus_import.steps.do_django.SEARCH_TABLES`) and creates each
+again empty from its schema file. Option: ``--reset-search-tables``, part of
+``--finalize``, which runs it after ``--create-cart``. The deploy of a new database runs
+it too, alongside ``--import-dictionary``, so that searches made while the staged
+installation was being tried out are not served.
 
-An import changes what a search returns, so every cached result is stale the moment it
+An import changes what a search returns, so every built search is stale the moment it
 finishes.
+
+**Every reset of the search tables flushes the web application's cache.** The cache
+maps a search's hash to its ``user_searches`` id and trusts the entry, so an entry that
+outlived the reset would hand one search's results to another once the ids restart. The
+flush runs :data:`~opus_import.steps.do_django.CACHE_FLUSH_COMMAND`, this interpreter on
+``python -m opus_app.clear_django_cache``, in a subprocess of its own, because the
+cache's configuration is the web application's; it needs only the ``OPUS_CONFIG`` the
+import already has. A flush that exits with a nonzero status fails the step with
+:exc:`~opus_import.steps.do_django.CacheFlushError`. A simulated run, whose database is
+read-only, skips the flush.
 
 .. _dev_guide_import_steps_do_import:
 
@@ -710,19 +721,20 @@ Its functions:
     (``opus_manage migrate``'s ``django_*`` and ``auth_*`` tables, ``django_session``
     among them). The tables are named by two constants, so nothing outside them is ever
     dropped, not even a table of no known name:
-    :data:`~opus_import.steps.do_import_tables.OPUS_TABLE_PREFIXES` (``obs_``,
-    ``mult_`` and ``cache_``, which catch every observation, mult and cache table
-    however many there are) and
+    :data:`~opus_import.steps.do_import_tables.OPUS_TABLE_PREFIXES` (``obs_`` and
+    ``mult_``, which catch every observation and mult table however many there are)
+    and
     :data:`~opus_import.steps.do_import_tables.OPUS_TABLE_NAMES`, the other tables by
     exact name -- ``schema_version``, ``cart``, ``import_bundle``, the auxiliary
-    tables, the dictionary's, ``user_searches``, and the ``__new`` and ``__old`` tables
+    tables, the dictionary's, ``user_searches``, ``search_results``, and the ``__new``
+    and ``__old`` tables
     an interrupted swap can leave (:ref:`dev_guide_import_steps_table_swap`). A step that
     creates a table outside the prefixes adds its name there. The drop order is the one
     the foreign keys allow: ``schema_version`` first, so an erase that stops part way
     leaves a schema nothing serves or promotes; every ``obs_`` table but
     ``obs_general``; ``cart``; ``obs_general``; ``definitions`` and its swap tables,
-    which reference ``contexts``; every other exact name and every ``cache_`` table; and
-    the ``mult_`` tables last.
+    which reference ``contexts``; every other exact name; and the ``mult_`` tables
+    last.
 
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`
     Deletes one bundle from every observation table, every other table before
@@ -738,7 +750,7 @@ Its functions:
 :func:`~opus_import.steps.do_import_tables.analyze_all_tables`
     Runs the backend's analyze over every ``obs_`` and ``mult_`` table, for
     ``--analyze-tables``, which :mod:`opus_import.cli` runs after the auxiliary, cart
-    and cache tables. ``cart`` and the auxiliary tables are not analyzed; each auxiliary
+    and search tables. ``cart`` and the auxiliary tables are not analyzed; each auxiliary
     table is analyzed by its swap.
 
 .. _dev_guide_import_steps_do_import_index:

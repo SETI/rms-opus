@@ -92,7 +92,7 @@ exclude one another, so giving two of them switches on the union.
    * - ``--finalize``
      - The **finalization group**: ``--create-indexes``, the duplicate step (which has
        no option of its own), ``--create-param-info``, ``--create-partables``,
-       ``--create-table-names``, ``--create-cart``, ``--drop-cache-tables`` and
+       ``--create-table-names``, ``--create-cart``, ``--reset-search-tables`` and
        ``--analyze-tables``. It refuses to run while any bundle in the bundle registry is
        not ``done`` (below).
 
@@ -241,7 +241,7 @@ Import steps
        prompts.
    * - ``--analyze-tables``
      - Recompute the key distributions of every ``obs_`` and ``mult_`` table, after the
-       auxiliary, cart and cache tables are built.
+       auxiliary, cart and search tables are built.
 
 Import behavior
 ~~~~~~~~~~~~~~~
@@ -311,8 +311,11 @@ Auxiliary tables and other steps
    * - ``--create-cart``
      - Drop and recreate the empty ``cart`` table. It needs ``obs_general``, and on a
        schema without one it logs an error and creates nothing.
-   * - ``--drop-cache-tables``
-     - Drop the ``cache_*`` tables and clear ``user_searches``.
+   * - ``--reset-search-tables``
+     - Drop and re-create the web application's search tables, ``user_searches`` and
+       ``search_results``, empty from their schema files, then flush the web
+       application's cache (:ref:`dev_guide_import_steps_do_django`). A flush that
+       fails fails the step.
    * - ``--validate``
      - Validate the imported tables. A check that logs an error keeps the invocation
        from marking the schema ready, and makes it exit with failure.
@@ -399,7 +402,7 @@ whole shape. It:
 11. Runs ``--create-indexes``, then, under ``--finalize``, the duplicate step.
 12. Builds the auxiliary tables that were asked for, in the order ``param_info``,
     ``partables``, ``table_names``, then runs ``--create-cart`` and
-    ``--drop-cache-tables``, then ``--analyze-tables``.
+    ``--reset-search-tables``, then ``--analyze-tables``.
 13. Runs ``--update-mult-info``, then ``--validate``, then ``--import-dictionary``.
 14. Runs ``--write-schema-version``, exiting non-zero if it refuses: when a finishing
     step of the same invocation failed, when a bundle in the registry is not ``done``,

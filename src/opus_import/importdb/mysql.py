@@ -89,6 +89,8 @@ MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
     'mult_idx': 'int unsigned',
     'timestamp': 'timestamp',
     'datetime': 'datetime',
+    # A SHA-256 digest, stored as its bytes.
+    'binary32': 'binary(32)',
 }
 
 #: A ``field_type`` that names a character type and its width, such as ``char12`` or
@@ -156,6 +158,7 @@ MYSQL_KEY_BYTES: dict[str, int] = {
     'timestamp': 4,
     'datetime': 5,
     'enum': 2,
+    'binary32': 32,
 }
 
 #: The index-entry bytes assumed for a column type `MYSQL_KEY_BYTES` does not size: the
@@ -234,8 +237,8 @@ def load_data_text(value: Any) -> str:
         The field's text, escaped.
 
     Raises:
-        TypeError: If the value is bytes, which no OPUS column holds and which the text
-            has no faithful rendering for.
+        TypeError: If the value is bytes, which no column a load writes holds and which
+            the text has no faithful rendering for.
     """
     if value is None:
         return '\\N'
@@ -731,6 +734,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     field_type = 'timestamp'
                 elif data_type == 'datetime':
                     field_type = 'datetime'
+                elif data_type == 'binary' and char_len == 32:
+                    field_type = 'binary32'
                 elif data_type == 'text':
                     field_type = 'text'
                 elif data_type == 'mult_list':

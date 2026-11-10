@@ -71,6 +71,8 @@ directory has a chapter of its own, it is named beside it.
     │   │   │                             #   calls it
     │   │   ├── clear_django_cache.py     # a deployment helper, run as a module
     │   │   ├── apps/{search,results,metadata,ui,cart,help,paraminfo,tools}/
+    │   │   │                             # the Django apps; search/management/commands/
+    │   │   │                             #   holds the opus_manage commands OPUS adds
     │   │   ├── templates/                # package data: the project-level templates
     │   │   └── static/                   # package data: the JavaScript, CSS and images
     │   ├── opus_deploy/          # the server deploy chain, shipped so that a server

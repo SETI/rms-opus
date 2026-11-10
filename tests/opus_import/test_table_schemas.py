@@ -13,8 +13,9 @@ An entry is one of four kinds, told apart by its keys:
 * a **definition**, which has ``definition`` and no ``field_name``: a dictionary term with
   no column of its own;
 * a **table-level entry**, which has none of those: ``{"constraint": "..."}``, appended to
-  ``CREATE TABLE`` as written, or ``{"foreign_key": {...}}``, a foreign key with its
-  columns, what it references, and optionally what deleting a referenced row does.
+  ``CREATE TABLE`` as written; ``{"foreign_key": {...}}``, a foreign key with its
+  columns, what it references, and optionally what deleting a referenced row does; or
+  ``{"primary_key": [...]}`` or ``{"unique": [...]}``, a key over the listed columns.
 """
 
 from __future__ import annotations
@@ -34,7 +35,7 @@ from opus_import.importdb.mysql import (
     MYSQL_FIELD_TYPE_SQL,
     is_renderable_field_type,
 )
-from opus_import.table_keys import ON_DELETE_VALUES
+from opus_import.table_keys import ON_DELETE_VALUES, TABLE_LEVEL_KEY_KINDS
 
 #: The packaged schema directory, as a path.
 _SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
@@ -108,7 +109,7 @@ _LINK_KEYS = {
 _DEFINITION_KEYS = {'definition', 'pi_dict_context', 'pi_dict_name'}
 
 #: The table-level entries, each a single key.
-_TABLE_LEVEL_KEYS = {'constraint', 'foreign_key'}
+_TABLE_LEVEL_KEYS = {'constraint', 'foreign_key', *TABLE_LEVEL_KEY_KINDS}
 
 #: The members a table-level ``foreign_key`` entry may have.
 _FOREIGN_KEY_MEMBERS = {'columns', 'references', 'on_delete'}
@@ -243,11 +244,44 @@ def test_every_entry_is_one_of_the_four_kinds() -> None:
                     wrong.append(f'{_where(name, entry)}: a definition with {sorted(keys)}')
             elif len(keys) != 1 or not keys <= _TABLE_LEVEL_KEYS:
                 wrong.append(f'{name}: an entry of no known kind, {sorted(keys)}')
-            elif 'constraint' in entry and not isinstance(entry['constraint'], str):
-                wrong.append(f'{name}: a constraint that is not text')
+            elif 'constraint' in entry:
+                if not isinstance(entry['constraint'], str):
+                    wrong.append(f'{name}: a constraint that is not text')
             elif 'foreign_key' in entry:
                 wrong += _foreign_key_problems(name, entry['foreign_key'])
+            else:
+                (level_entry,) = keys
+                wrong += _table_level_key_problems(name, entry, level_entry)
     assert wrong == []
+
+
+def _table_level_key_problems(name: str, entry: dict[str, Any], level_entry: str) -> list[str]:
+    """Say what is wrong with a table-level ``primary_key`` or ``unique`` entry, if anything.
+
+    Parameters:
+        name: The file the entry is in.
+        entry: The entry.
+        level_entry: Which of the two it is.
+
+    Returns:
+        One line, or none for an entry `create_table` renders as written.
+    """
+    columns = entry[level_entry]
+    if isinstance(columns, list) and columns and all(isinstance(c, str) for c in columns):
+        return []
+    return [f'{name}: {level_entry} {columns!r} is not a list of column names']
+
+
+@pytest.mark.parametrize(
+    ('entry', 'problem'),
+    [({'unique': ['a', 'b']}, False), ({'primary_key': []}, True), ({'unique': 'a'}, True)],
+)
+def test_the_table_level_key_check_refuses_what_create_table_cannot_render(
+    entry: dict[str, Any], problem: bool
+) -> None:
+    """A key lists at least one column, by name."""
+    (level_entry,) = entry
+    assert bool(_table_level_key_problems('x.json', entry, level_entry)) == problem
 
 
 def _foreign_key_problems(name: str, entry: Any) -> list[str]:

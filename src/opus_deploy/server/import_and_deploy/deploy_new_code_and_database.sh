@@ -103,10 +103,9 @@ pip install mod-wsgi
 opus_manage migrate
 opus_manage collectstatic --noinput
 
-# The import finalized the database. This reloads the dictionary, and drops the
-# search tables any searches made while the staged installation was being tried out
-# left behind.
-opus_import --import-dictionary --drop-cache-tables
+# The import finalized the database. This reloads the dictionary, and empties the
+# search tables of any searches made while the staged installation was being tried out.
+opus_import --import-dictionary --reset-search-tables
 
 # The staged installation is complete. Switch to it, empty the shared cache, and
 # restart the workers.

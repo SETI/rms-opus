@@ -25,6 +25,7 @@ _EXACT_NAMES = (
     'contexts',
     'definitions',
     'user_searches',
+    'search_results',
     'param_info__new',
     'param_info__old',
     'partables__new',
@@ -43,7 +44,6 @@ _PREFIXED = (
     'obs_pds',
     'obs_surface_geometry__saturn',
     'mult_obs_general_planet_id',
-    'cache_12',
 )
 
 
@@ -98,7 +98,7 @@ def test_the_drop_order_follows_the_foreign_keys() -> None:
         assert position['obs_general'] < position[definitions] < position['contexts']
     assert db.dropped[-1] == 'mult_obs_general_planet_id'
     assert position['import_bundle'] < position['mult_obs_general_planet_id']
-    assert position['cache_12'] < position['mult_obs_general_planet_id']
+    assert position['search_results'] < position['mult_obs_general_planet_id']
 
 
 def test_an_absent_table_is_not_asked_for() -> None:
