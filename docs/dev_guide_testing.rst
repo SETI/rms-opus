@@ -144,8 +144,9 @@ and each site decides what its argument selects. The sites are:
 
 ``fail_worker``
     In the pool worker task holding one index row; its argument is the row, numbered
-    from zero. ``fail_worker:12`` fails that task after the tasks before it were
-    replayed, so a test can see that the failed index leaves none of its rows.
+    from zero. ``fail_worker:12`` fails that task; the import's process meets the failure
+    when it reaches the task in index order, having replayed and loaded the tasks before
+    it, so a test can see that the failed index leaves none of its rows.
 
 Never set it outside a test.
 

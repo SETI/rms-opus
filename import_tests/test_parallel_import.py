@@ -167,8 +167,12 @@ def test_a_failed_index_leaves_none_of_its_rows(
         check=False,
     )
     assert finished.returncode != 0
-    for table in ('obs_general', 'obs_pds', 'obs_files'):
-        rows = golden_io.query(db_credentials, schema, f'SELECT COUNT(*) FROM {table}', [])  # nosec B608 - a fixed table name
+    tables = [
+        table for table in golden_io.list_tables(db_credentials, schema) if table.startswith('obs_')
+    ]
+    assert 'obs_general' in tables
+    for table in tables:
+        rows = golden_io.query(db_credentials, schema, f'SELECT COUNT(*) FROM {table}', [])  # nosec B608 - a table the schema lists
         assert rows[0][0] == 0, table
 
 
