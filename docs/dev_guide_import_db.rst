@@ -63,6 +63,7 @@ raises. A failed database operation always aborts the import.
             +index_space_budget()*
             +run_ddl()*
             +close()*
+            +socket_descriptor()*
             #_prepare_index_session()*
             #_size_index_sort()*
             #_set_foreign_key_checks()*
@@ -236,6 +237,10 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
        once share, or None for none.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.run_ddl`\ ``(cmd)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.close`
      - Run one statement that changes a table's definition; close the connection.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.socket_descriptor`\ ``()``
+     - The file descriptor of the connection's socket, or None with no open connection,
+       so a forked pool worker can close it without a word sent on it
+       (:ref:`dev_guide_import_db_inherited`).
    * - ``_set_foreign_key_checks(enabled)``
      - Turn the connection's foreign key checks on or off, for
        :meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked`.
@@ -255,6 +260,26 @@ The concrete members are the constructor,
 :meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
 collector ``_make_warning_handler``, and ``_operation`` with the ``_enter``/``_exit``
 pair it runs.
+
+.. _dev_guide_import_db_inherited:
+
+Connections a pool worker inherits
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every :class:`~opus_import.importdb.super.ImportDBSuper` adds itself, as it is
+constructed, to a module-level weak set of the instances this process has created. A
+forked pool worker (:ref:`dev_guide_import_steps_do_import_pool`) inherits every open
+connection's socket, and
+:func:`~opus_import.importdb.super.close_inherited_connections` is how it lets go of
+them: for each instance in the set it closes the descriptor
+:meth:`~opus_import.importdb.super.ImportDBSuper.socket_descriptor` returns with
+:func:`os.close`, which sends nothing on the socket, so the session the import's process
+holds is untouched; and it keeps the instance referenced for the rest of the worker's
+life, so the driver's destructor never runs and never sends its quit message on a
+descriptor number the worker may since have reused. A worker that kept the socket open
+would keep the import's session alive after the import's process died. A brand that does
+not implement :meth:`~opus_import.importdb.super.ImportDBSuper.socket_descriptor` never
+connected, and is passed over.
 
 Read-only runs
 ~~~~~~~~~~~~~~
@@ -529,6 +554,15 @@ Schemas
     The largest ``id`` the table holds, or -1 when the table does not exist or is
     empty. A bundle is deleted before it is written, so its new rows are numbered above
     every row that remains.
+
+:func:`~opus_import.import_util.next_table_id`
+    Hands out a table's next row id: one more than
+    :func:`~opus_import.import_util.find_max_table_id` the first time a bundle asks, one
+    more than the last after that, kept in
+    :attr:`~opus_import.context.ImportContext.max_table_id_cache`. In a pool worker it
+    returns a :class:`~opus_import.deferred.LocalId` instead, which the import's process
+    rebases onto the real id (:ref:`dev_guide_import_steps_do_import_pool`). A ``MAX_ID``
+    column and every ``obs_files`` row take their ids from it.
 
 Logging
 ~~~~~~~

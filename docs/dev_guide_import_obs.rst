@@ -230,11 +230,13 @@ The root: ObsBase
 :class:`opus_import.obs.obs_base.ObsBase`
 
 One instance is created per bundle, not per observation.
-:func:`~opus_import.steps.do_import_index.import_one_index` mutates the metadata
-dictionary in place for each row it reads, so **no method may cache anything derived
-from it**. :attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows what caching is
-allowed to look like: it re-derives whenever the file specification it was computed from
-changes.
+:func:`~opus_import.steps.do_import_index.import_index_row` clears the metadata
+dictionary and refills it from the index's pre-loop metadata for each row, so **no
+method may cache anything derived from it**: with ``[import] workers`` above 1 each pool
+worker has its own copy of the instance and computes only some of the rows, so a value
+carried from one row to the next would differ with the number of workers.
+:attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows what caching is allowed to look
+like: it re-derives whenever the file specification it was computed from changes.
 
 Construction and attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,14 +254,17 @@ Construction and attributes
        only to log and to read the run's arguments; it never reaches the database
        through it**, which is what lets
        :func:`~opus_import.steps.do_import_obs.import_run_field_function` treat a field
-       method's exception as a bad field rather than an aborted import.
+       method's exception as a bad field rather than an aborted import, and what lets a
+       pool worker, whose context has no database, run it
+       (:ref:`dev_guide_import_steps_do_import_pool`).
    * - ``_bundle``
      - The PDS3 volume or PDS4 bundle being imported, exposed as
        :attr:`~opus_import.obs.obs_base.ObsBase.bundle`.
    * - ``_metadata``
      - Everything the import has assembled for the current observation. **It is the same
-       dictionary object for the whole index file, mutated in place.** It is None while
-       the tables are being created, before any observation has been read.
+       dictionary object for the whole index file, cleared and refilled at the start of
+       every row** from what the index had before the first. It is None while the tables
+       are being created, before any observation has been read.
    * - ``_ignore_errors``
      - ``--ignore-errors``, read off the run's arguments at construction rather
        than taken as a parameter, so that every construction site reaches the branches
@@ -274,8 +279,9 @@ The metadata dictionary
 
 A subclass reads it through the ``_*_col`` helpers rather than reaching into it, because
 those apply the ``pdstable`` mask that marks a value as missing. The keys
-:func:`~opus_import.steps.do_import_index.import_one_index` fills, and which an obs
-class may read:
+:func:`~opus_import.steps.do_import_index.import_one_index` fills before the first row
+and :func:`~opus_import.steps.do_import_index.import_index_row` fills for each one, and
+which an obs class may read:
 
 .. list-table::
    :header-rows: 1

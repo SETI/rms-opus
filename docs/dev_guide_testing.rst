@@ -105,6 +105,19 @@ It runs serially: the run is one long import followed by fast assertions, so ``-
 nothing, and a session-scoped fixture under xdist would run the import once per worker
 into the same schema.
 
+**Every session states its host's size** as ``[import] cpus`` in the configuration it
+writes, rather than having the cores counted: 4 when ``RUNNER_ENVIRONMENT`` is
+``github-hosted``, as on a GitHub-hosted runner, and 8 everywhere else, a local run or a
+self-hosted runner included (``import_tests.tools.build_run.fixture_cpus``). A stated
+count makes the main run's ``workers = "max"`` and ``index_workers = "max"`` resolve to a
+ceiling chosen by where the session runs rather than by the machine's cores, and keeps a
+count from being refused on a smaller machine, where the pool's processes only share the
+cores; the goldens do not depend on the count. The main run computes its observations in
+a pool at that ceiling, in tasks of 5 index rows so that the fixture's small indexes split
+across several workers, and builds its keys over as many connections; a session that sets
+no ``workers`` of its own, as the negative cases do not, computes in one process
+(:ref:`dev_guide_import_fixture`).
+
 .. _dev_guide_testing_faults:
 
 ``OPUS_IMPORT_FAULT`` is set by the suite itself, in the environment of an
@@ -122,6 +135,12 @@ and each site decides what its argument selects. The sites are:
     one error while that bundle is imported and carries on, so the bundle ends ``failed``
     in the bundle registry without the import raising
     (:ref:`dev_guide_import_steps_registry`).
+
+``stall_worker``
+    At the start of every task a pool worker computes; its argument is a number of
+    seconds. ``stall_worker:600`` holds each worker asleep, so a test can find the pool's
+    processes alive and kill the import under them
+    (:ref:`dev_guide_import_steps_do_import_pool`).
 
 Never set it outside a test.
 
@@ -236,6 +255,15 @@ is not in the repository. It sets ``OPUS_DB_USER`` and ``OPUS_DB_PASSWORD``, ``T
 (where the per-run directories go) and ``PDS_HOLDINGS_ROOT`` (the directory holding
 ``holdings`` and ``pds4-holdings``). Every script that needs one of them exits rather than
 continue if it is missing.
+
+The ``opus.toml`` the chain writes states the import's host size as ``[import] cpus``
+and asks for ``workers = "max"`` and ``index_workers = "max"``, so the import computes
+and builds keys at the ceiling of the host the run assumes: 32 cores when
+``GITHUB_ACTIONS`` is ``true``, as on the self-hosted runner, and 16 otherwise, as for a
+run started outside Actions. ``OPUS_TEST_CPUS``, from the environment or
+``~/opus_runner_secrets``, replaces both, and must be a whole number of at least 1; the
+script exits otherwise. ``opus_main_test.sh`` prints the stated count after writing the
+file.
 
 Two coverage configurations
 ---------------------------
