@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -217,14 +218,18 @@ def test_settings_omit_static_root_when_the_file_does(tmp_path: Path) -> None:
 #: built with and accepts every write, so the settings take their memcached branch
 #: without a memcached running.
 _STUB_PYMEMCACHE = {
-    'pymemcache/__init__.py': 'from pymemcache import client\n',
+    'pymemcache/__init__.py': 'from pymemcache import client, exceptions\n',
+    'pymemcache/exceptions.py': 'class MemcacheError(Exception):\n    pass\n',
     'pymemcache/client/__init__.py': 'from pymemcache.client import base\n',
     'pymemcache/client/base.py': (
         'class Client:\n'
-        '    def __init__(self, server):\n'
+        '    def __init__(self, server, **options):\n'
         '        self.server = server\n'
+        '        self.options = options\n'
         '    def set(self, key, value):\n'
         '        return True\n'
+        '    def close(self):\n'
+        '        pass\n'
     ),
 }
 
@@ -235,12 +240,8 @@ _DUMP_CACHE = (
 )
 
 
-def test_cache_location_reaches_the_probe_and_caches(distinct_config: Path, tmp_path: Path) -> None:
-    """The configured memcached is the one probed and the one Django's cache uses.
-
-    A stub client stands in for ``pymemcache``, so the memcached branch is taken
-    whether or not the real package or a memcached is present.
-    """
+def _dump_cache_with_stub(distinct_config: Path, tmp_path: Path) -> dict[str, Any]:
+    """Import the settings with the stub ``pymemcache`` and return `_DUMP_CACHE`'s output."""
     stub_root = tmp_path / 'stub'
     for relative, text in _STUB_PYMEMCACHE.items():
         path = stub_root / relative
@@ -258,9 +259,29 @@ def test_cache_location_reaches_the_probe_and_caches(distinct_config: Path, tmp_
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    dumped = json.loads(result.stdout)
+    dumped: dict[str, Any] = json.loads(result.stdout)
+    return dumped
+
+
+def test_cache_location_reaches_the_probe_and_caches(distinct_config: Path, tmp_path: Path) -> None:
+    """The configured memcached is the one probed and the one Django's cache uses.
+
+    A stub client stands in for ``pymemcache``, so the memcached branch is taken
+    whether or not the real package or a memcached is present.
+    """
+    dumped = _dump_cache_with_stub(distinct_config, tmp_path)
     assert dumped['probed'] == ['127.0.0.1', 2]
     assert dumped['caches']['default']['LOCATION'] == '127.0.0.1:2'
+
+
+def test_a_failed_memcached_is_a_cache_miss_not_an_error(
+    distinct_config: Path, tmp_path: Path
+) -> None:
+    """The cache is told to swallow a failed memcached, and to give up on it quickly."""
+    options = _dump_cache_with_stub(distinct_config, tmp_path)['caches']['default']['OPTIONS']
+    assert options['ignore_exc'] is True
+    assert 0 < options['connect_timeout'] <= 1
+    assert 0 < options['timeout'] <= 1
 
 
 def test_the_connection_lifetime_reaches_the_database_settings(
