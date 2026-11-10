@@ -143,9 +143,9 @@ All but ``prune`` are Django's own; ``prune`` is OPUS's, defined by the ``search
    * - ``prune``
      - Removes the least recently used searches until ``search_results`` holds no more
        than ``--max-rows`` rows and none has gone unused for ``--unused-days`` days, then
-       expired sessions, then the cart rows of sessions that no longer exist. ``--stats``
-       reports the table's size and what a prune would remove, and ``--dry-run`` lists
-       it, both changing nothing. A server runs it from cron;
+       expired sessions, then the cart rows of sessions that no longer exist. Every run
+       first reports the table's size and what it is about to remove, and ``--dry-run``
+       reports that and changes nothing. A server runs it from cron;
        :ref:`user_guide_deployment_prune` gives the options, their defaults and the
        sizing rule.
 

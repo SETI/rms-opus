@@ -17,8 +17,8 @@ must:
 3. **Expired sessions**, through Django's own ``clearsessions``.
 4. **Cart rows whose session no longer exists.**
 
-``--stats`` reports the table's size and what a prune would remove, and ``--dry-run``
-lists it search by search; neither changes anything. Ids are never reused within a
+Every run first reports the table's size and how many searches and rows it is about to
+remove; ``--dry-run`` reports that and changes nothing. Ids are never reused within a
 schema, so the other cache entries keyed by a removed search's id are unreachable and
 age out on their own.
 """
@@ -110,20 +110,14 @@ class Command(BaseCommand):
             default=DEFAULT_UNUSED_DAYS,
             help='Prune every search unused for this many days (default %(default)s)',
         )
-        mode = parser.add_mutually_exclusive_group()
-        mode.add_argument(
-            '--stats',
+        parser.add_argument(
+            '--dry-run',
             action='store_true',
             help="Report search_results' size and what a prune would remove; change nothing",
         )
-        mode.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='List the searches a prune would remove; change nothing',
-        )
 
     def handle(self, *args: Any, **options: Any) -> None:
-        """Prune, or report what a prune would do.
+        """Report the table's size and what a prune removes, then prune unless a dry run.
 
         Parameters:
             *args: Unused.
@@ -143,16 +137,9 @@ class Command(BaseCommand):
         chosen = searches_to_prune(searches, max_rows, unused_before)
         chosen_rows = sum(search.rows for search in chosen)
 
-        if options['stats']:
-            self._report_stats(searches, chosen, chosen_rows)
-            return
+        self._report_stats(searches, chosen, chosen_rows)
         if options['dry_run']:
-            for search in chosen:
-                self.stdout.write(
-                    f'Would prune search {search.search_id}: {search.rows} rows, '
-                    f'last used {search.last_used_at.isoformat()}'
-                )
-            self.stdout.write(f'Would prune {len(chosen)} searches holding {chosen_rows} rows')
+            self.stdout.write('Dry run: nothing was changed')
             return
 
         orphans = _delete_orphan_results()
@@ -186,11 +173,11 @@ class Command(BaseCommand):
     def _report_stats(
         self, searches: Sequence[StoredSearch], chosen: Sequence[StoredSearch], chosen_rows: int
     ) -> None:
-        """Write what ``--stats`` reports.
+        """Write the table's size and what this prune removes, before it removes anything.
 
         Parameters:
             searches: Every search.
-            chosen: The searches a prune would remove.
+            chosen: The searches this prune removes.
             chosen_rows: Their rows.
         """
         with connection.cursor() as cursor:
@@ -207,16 +194,15 @@ class Command(BaseCommand):
         total_bytes = int(data_bytes) + int(index_bytes)
         held = sum(search.rows for search in searches)
         self.stdout.write(f'search_results rows: {rows}')
-        self.stdout.write(f'Rows of removed searches the next prune removes: {rows - held}')
+        self.stdout.write(f'Rows of searches an earlier prune removed: {rows - held}')
         self.stdout.write(f'Searches: {search_count}')
         self.stdout.write(
             f'search_results bytes: {data_bytes} data, {index_bytes} index, '
             f'{total_bytes / rows if rows else 0:.1f} per row'
         )
-        self.stdout.write(f'A prune would remove {len(chosen)} searches holding {chosen_rows} rows')
+        self.stdout.write(f'Searches to prune: {len(chosen)}, holding {chosen_rows} rows')
         self.stdout.write(
-            f'It would leave {len(searches) - len(chosen)} searches holding '
-            f'{held - chosen_rows} rows'
+            f'Searches to keep: {len(searches) - len(chosen)}, holding {held - chosen_rows} rows'
         )
 
 
