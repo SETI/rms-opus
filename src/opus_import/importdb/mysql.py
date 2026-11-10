@@ -1313,6 +1313,20 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 raise ImportDBError(e) from e
             self._table_info_cache.clear()
 
+    def set_next_id(self, table_name: str, next_id: int) -> None:
+        """Make the next row a table's auto-increment key hands out take a given id.
+
+        Parameters:
+            table_name: The table, whose primary key is an auto-increment column.
+            next_id: The id the next row is given.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        self.run_ddl(
+            f'ALTER TABLE {self.quote_identifier(table_name)} AUTO_INCREMENT = {int(next_id)}'
+        )
+
     def add_foreign_keys(self, statements: Sequence[IndexStatement]) -> list[tuple[str, float]]:
         """Add foreign keys one at a time, with ``foreign_key_checks`` off.
 

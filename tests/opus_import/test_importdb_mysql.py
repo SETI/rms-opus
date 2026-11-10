@@ -426,6 +426,13 @@ def test_create_table_renders_table_level_keys_and_a_digest_column(db: _Recordin
     assert 'UNIQUE KEY `search_hash` (`search_hash`)' in user_searches
 
 
+def test_set_next_id_sets_the_tables_auto_increment(db: _RecordingDB) -> None:
+    """The next row the table's key hands out takes the given id."""
+    db._table_info_cache = {}
+    db.set_next_id('user_searches', 501)
+    assert db.executed == [('ALTER TABLE `user_searches` AUTO_INCREMENT = 501', None)]
+
+
 def test_a_server_error_with_one_argument_is_reported() -> None:
     """An error carrying only a message is reported as itself, not as an IndexError."""
 

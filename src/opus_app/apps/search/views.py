@@ -60,7 +60,11 @@ from opus_app.apps.tools.app_utils import (
     sort_dictionary,
     strip_numeric_suffix,
 )
-from opus_app.apps.tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, is_lock_timeout_error
+from opus_app.apps.tools.db_utils import (
+    MYSQL_EXECUTION_TIME_EXCEEDED,
+    is_deadlock_error,
+    is_lock_timeout_error,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -976,11 +980,19 @@ class SearchResults(NamedTuple):
 
 
 class _SearchPrunedError(Exception):
-    """The ``user_searches`` row a search was registered as is gone: the pruner took it."""
+    """The ``user_searches`` row a search was registered as is gone or is another search's.
+
+    The pruner removes rows, and an entry cached by a request in flight across a reset of
+    the search tables can name an id the re-created table has not handed out, or one a
+    later search was given.
+    """
 
 
-#: Reads a search's result count, which is NULL until its results are built.
-_BUILT_STATE_SQL = 'SELECT result_count, results_built_at FROM user_searches WHERE id = %s'
+#: Reads a search's result count, which is NULL until its results are built, and the
+#: digest of the search the row is.
+_BUILT_STATE_SQL = (
+    'SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = %s'
+)
 
 #: The same read, taking the row lock a search build holds while it writes the results.
 _LOCK_SEARCH_SQL = _BUILT_STATE_SQL + ' FOR UPDATE'
@@ -1046,16 +1058,20 @@ def get_search_results(
         The search's id and result count, or None when the search could not be
         registered or built.
     """
+    # Registration and the build each commit on their own, and the build's row lock must
+    # end with its own transaction; inside a caller's transaction neither would.
+    assert not connection.in_atomic_block, 'a search is built outside any transaction'
+    digest = search_hash(selections, extras)
     for _attempt in range(2):
         search_id = set_user_search_number(selections, extras)
         if search_id is None:  # pragma: no cover - pruned during registration
-            return None
+            continue
         try:
-            count = _built_count(search_id)
+            count = _built_count(search_id, digest)
             if count is None:
-                count = _build_search_results(search_id, selections, extras, api_code)
+                count = _build_search_results(search_id, digest, selections, extras, api_code)
         except _SearchPrunedError:
-            cache.delete(search_number_cache_key(search_hash(selections, extras)))
+            cache.delete(search_number_cache_key(digest))
             continue
         if count is None:
             return None
@@ -1068,22 +1084,39 @@ def get_search_results(
     return None  # pragma: no cover - ditto
 
 
-def _built_count(search_id: int) -> int | None:
+def _built_count(search_id: int, digest: bytes) -> int | None:
     """Return a search's result count, or None if its results are not built yet.
 
+    Parameters:
+        search_id: The search's row.
+        digest: The search's `search_hash`, which the row has to hold.
+
     Raises:
-        _SearchPrunedError: If the search has no row.
+        _SearchPrunedError: If the search has no row, or the row is another search's.
     """
     with connection.cursor() as cursor:
         cursor.execute(_BUILT_STATE_SQL, [search_id])
         row = cursor.fetchone()
-    if row is None:
+    return _count_from_row(search_id, digest, row)
+
+
+def _count_from_row(search_id: int, digest: bytes, row: tuple[Any, ...] | None) -> int | None:
+    """Return the result count a row of `_BUILT_STATE_SQL` holds, if it is built.
+
+    Raises:
+        _SearchPrunedError: If there is no row, or it is another search's.
+    """
+    if row is None or bytes(row[2]) != digest:
         raise _SearchPrunedError(search_id)
     return None if row[1] is None else int(row[0])
 
 
 def _build_search_results(
-    search_id: int, selections: dict[str, Any], extras: dict[str, Any], api_code: int | None
+    search_id: int,
+    digest: bytes,
+    selections: dict[str, Any],
+    extras: dict[str, Any],
+    api_code: int | None,
 ) -> int | None:
     """Write a search's rows of ``search_results`` under its row's lock, unless built.
 
@@ -1100,6 +1133,7 @@ def _build_search_results(
 
     Parameters:
         search_id: The search's row.
+        digest: The search's `search_hash`, which the row has to hold.
         selections: The search's constraints.
         extras: Its query types, units and order.
         api_code: The API call number to log the build under.
@@ -1109,7 +1143,7 @@ def _build_search_results(
         wait for another builder timed out, or a statement failed.
 
     Raises:
-        _SearchPrunedError: If the search has no row.
+        _SearchPrunedError: If the search has no row, or the row is another search's.
     """
     search = _search_select(selections, extras)
     if search is None:  # pragma: no cover - already caught by previous checks
@@ -1135,12 +1169,10 @@ def _build_search_results(
         try:
             with transaction.atomic():
                 cursor.execute(_LOCK_SEARCH_SQL, [search_id])
-                row = cursor.fetchone()
-                if row is None:
-                    raise _SearchPrunedError(search_id)
-                if row[1] is not None:
+                built = _count_from_row(search_id, digest, cursor.fetchone())
+                if built is not None:
                     # Another worker built the search while this one waited.
-                    return int(row[0])
+                    return built
                 time1 = time.time()
                 cursor.execute(insert_sql, params)
                 count = int(cursor.rowcount)
@@ -1161,7 +1193,7 @@ def _build_search_results(
                 )
             return None
         finally:
-            cursor.execute(_SET_LOCK_WAIT_SQL, [previous_wait])
+            _restore_lock_wait(cursor, previous_wait)
     log.debug(
         'API %r (%.3f) _build_search_results: %r *** PARAMS %r',
         str(api_code),
@@ -1170,6 +1202,24 @@ def _build_search_results(
         str(params),
     )
     return count
+
+
+def _restore_lock_wait(cursor: Any, previous_wait: int) -> None:
+    """Set the session's lock wait back after a build, closing a connection that fails.
+
+    The restore must not replace the error a build already logged and answered, so a
+    connection that cannot take it is closed, and Django opens a fresh one, with the
+    server's default wait, for the next statement.
+
+    Parameters:
+        cursor: The build's cursor.
+        previous_wait: The wait the build replaced.
+    """
+    try:
+        cursor.execute(_SET_LOCK_WAIT_SQL, [previous_wait])
+    except DatabaseError:  # pragma: no cover - the connection failed during the build
+        log.exception('_build_search_results: could not restore the lock wait; reconnecting')
+        connection.close()
 
 
 def _search_strings(
@@ -1261,7 +1311,7 @@ def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]) -
 
     entry = UserSearches(search_hash=digest, last_used_at=timezone.now())
     try:
-        entry.save()
+        _save_registration(entry)
         search_id, stamped_on = entry.id, today
     except IntegrityError:
         # A concurrent request registered the search first.
@@ -1273,6 +1323,27 @@ def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]) -
         stamped_on = today if _stamp_last_used(search_id) else None
     cache.set(cache_key, (search_id, stamped_on))
     return int(search_id)
+
+
+def _save_registration(entry: UserSearches) -> None:
+    """Insert a search's new row, trying once more if the insert deadlocked.
+
+    Two requests inserting the same digest just after the pruner removed its row can
+    deadlock on the removed row's index entry; the server rolls one back, and its second
+    attempt finds the other's row.
+
+    Parameters:
+        entry: The unsaved row.
+
+    Raises:
+        IntegrityError: If a row with the digest exists.
+    """
+    try:
+        entry.save()
+    except DatabaseError as e:  # pragma: no cover - two registrations deadlocked
+        if not is_deadlock_error(e):
+            raise
+        entry.save()
 
 
 def _stamp_last_used(search_id: int) -> bool:

@@ -424,13 +424,16 @@ grows with every new search and no request removes anything from it.
 It needs ``OPUS_CONFIG``, like every other OPUS program, and removes, in this order and
 only as much as it must:
 
-1. **Searches, least recently used first**, until ``search_results`` holds no more than
-   ``--max-rows`` rows, and in any case every search nobody has used for
-   ``--unused-days`` days. Rows a search left behind because an earlier prune stopped
-   part way are removed first. A search another request is building at that moment is
-   skipped, and counted as skipped.
-2. **Expired sessions**, through Django's own ``clearsessions``.
-3. **Cart rows whose session no longer exists.**
+1. **The results of the searches the previous prune removed.** A request that read a
+   search just before the prune removed it may still be reading its results, so they
+   stay until the next run.
+2. **Searches, least recently used first**, until the searches left hold no more than
+   ``--max-rows`` rows of ``search_results``, and in any case every search nobody has
+   used for ``--unused-days`` days. A search another request is building at that
+   moment, or one used since the prune read when it was last used, is left alone, and
+   counted as skipped.
+3. **Expired sessions**, through Django's own ``clearsessions``.
+4. **Cart rows whose session no longer exists.**
 
 Removing a search costs nothing but speed: the next request for it builds it again. A
 search's last use is recorded at most once a day, so a search in daily use always has a
@@ -438,7 +441,8 @@ recent stamp: it is never removed for going unused, and it is among the last rem
 bring the table down to ``--max-rows``.
 
 ``--max-rows ROWS``
-    The rows ``search_results`` may hold afterwards. Default: the configuration's
+    The rows the searches left may hold. The table also holds, until the next run, the
+    results of the searches this run removed. Default: the configuration's
     ``[django] search_results_max_rows``, which is ``50000000`` when the file does not
     set it (:ref:`user_guide_installation_configuring`). It must be at least 0.
 
@@ -447,7 +451,8 @@ bring the table down to ``--max-rows``.
     Default ``30``. It must be at least 1.
 
 ``--stats``
-    Change nothing; report the rows ``search_results`` holds, the number of searches,
+    Change nothing; report the rows ``search_results`` holds and how many of them are
+    the results of removed searches the next prune removes, the number of searches,
     the table's data and index bytes and the bytes per row they come to, and how many
     searches and rows a prune with these options would remove and leave.
 
@@ -466,9 +471,10 @@ prune run regularly keeps the table near the size its row limit implies rather t
 letting it grow.
 
 **Schedule it hourly**, from the crontab of the account ``OPUS_USER`` names, through the
-``deployed`` symlink so that it follows each deploy::
+``deployed`` symlink so that it follows each deploy, under ``flock`` so that a run still
+going an hour later is not joined by the next::
 
-    0 * * * *  OPUS_CONFIG=/opt/opus/deployed/opus.toml /opt/opus/deployed/opus_venv/bin/opus_manage prune >> /opt/opus/opus_logs/prune.log 2>&1
+    0 * * * *  flock -n /opt/opus/opus_logs/prune.lock env OPUS_CONFIG=/opt/opus/deployed/opus.toml /opt/opus/deployed/opus_venv/bin/opus_manage prune >> /opt/opus/opus_logs/prune.log 2>&1
 
 **Nothing in the deploy scripts runs it or installs that line**: each installation adds it
 to its own crontab, as it does the log analyzer's jobs below. A database replaced by

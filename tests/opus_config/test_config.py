@@ -334,8 +334,8 @@ def test_load_config_accepts_a_whole_number_probability(
             "[django] 'search_build_timeout' must be at least 1, not 0",
         ),
         (
-            adding('django', 'search_results_max_rows', '0'),
-            "[django] 'search_results_max_rows' must be at least 1, not 0",
+            adding('django', 'search_results_max_rows', '-1'),
+            "[django] 'search_results_max_rows' must be at least 0, not -1",
         ),
         (
             adding('import', 'transaction_rows', '0'),
@@ -429,7 +429,7 @@ def test_load_config_accepts_a_whole_number_probability(
         'connection-lifetime-given-a-string',
         'connection-lifetime-given-a-boolean',
         'search-build-timeout-zero',
-        'search-results-max-rows-zero',
+        'search-results-max-rows-negative',
         'transaction-rows-zero',
         'transaction-rows-negative',
         'transaction-rows-not-whole',

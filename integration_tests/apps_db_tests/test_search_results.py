@@ -54,6 +54,11 @@ _SEARCH = 'instrument=Cassini+ISS&planet=Saturn'
 #: The statement a build writes its results with.
 _INSERT_PREFIX = 'INSERT INTO `search_results`'
 
+#: The statement a build takes its search's row lock with.
+_LOCK_PREFIX = (
+    'SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = %s FOR UPDATE'
+)
+
 #: The statement a build records its count with.
 _FINISH_PREFIX = 'UPDATE user_searches SET result_count'
 
@@ -174,13 +179,19 @@ class SearchResultsTests(TestCase):
         """The second waits for the first's row lock and reads its count."""
         selections, extras = _search()
         inserts: list[str] = []
+        locking = threading.Semaphore(0)
         barrier = threading.Barrier(2)
 
         def slow_insert(execute: Any, sql: str, params: Any, many: bool, context: Any) -> Any:
+            if sql.startswith(_LOCK_PREFIX):
+                locking.release()
             if sql.startswith(_INSERT_PREFIX):
                 inserts.append(sql)
-                # Hold the row lock long enough for the other request to queue on it.
-                time.sleep(1)
+                # Hold the row lock until the other request has asked for it as well:
+                # this request's own lock statement released once, the other's once.
+                self.assertTrue(locking.acquire(timeout=30))
+                self.assertTrue(locking.acquire(timeout=30))
+                time.sleep(0.5)
             return execute(sql, params, many, context)
 
         def request() -> Any:
@@ -240,9 +251,30 @@ class SearchResultsTests(TestCase):
         search_id = search_views.set_user_search_number(selections, extras)
         assert search_id is not None
         settings.SEARCH_BUILD_TIMEOUT = 1
+        before = _lock_wait()
         with _holding_lock(search_id):
             self.assertIsNone(get_search_results(selections, extras))
         self.assertEqual(_row(search_id), (None, None))
+        self.assertEqual(_lock_wait(), before)
+
+    def test_a_cached_id_that_is_another_searchs_row_registers_afresh(self) -> None:
+        """An id a request cached across a reset can be a later search's: it is not used."""
+        selections, extras = _search()
+        other = get_search_results(*_search('instrument=Cassini+UVIS'))
+        assert other is not None
+        key = search_number_cache_key(search_hash(selections, extras))
+        cache.set(key, (other.search_id, timezone.now().date().isoformat()))
+
+        results = get_search_results(selections, extras)
+        assert results is not None
+        self.assertNotEqual(results.search_id, other.search_id)
+        self.assertEqual(_result_rows(results.search_id), results.result_count)
+        self.assertEqual(cache.get(key)[0], results.search_id)
+
+    def test_a_search_is_not_built_inside_a_transaction(self) -> None:
+        """Registration and the build each commit on their own."""
+        with transaction.atomic(), self.assertRaises(AssertionError):
+            get_search_results(*_search())
 
     def test_a_search_the_cache_names_after_a_prune_registers_afresh(self) -> None:
         """A cached id whose row is gone gives way to a new row and a new build."""
@@ -320,6 +352,7 @@ class SearchResultsTests(TestCase):
         stats = io.StringIO()
         call_command('prune', stats=True, stdout=stats)
         self.assertIn(f'search_results rows: {stale.result_count}', stats.getvalue())
+        self.assertIn('Rows of removed searches the next prune removes: 0', stats.getvalue())
         self.assertIn('Searches: 1', stats.getvalue())
         self.assertIn('per row', stats.getvalue())
         self.assertIn(
@@ -337,32 +370,65 @@ class SearchResultsTests(TestCase):
         self.assertEqual(_result_rows(stale.search_id), stale.result_count)
         self.assertIsNotNone(_row(stale.search_id))
 
-    def test_prune_skips_a_search_being_built_and_deletes_in_chunks(self) -> None:
-        """A locked search stays; an orphan's rows and a pruned search's go chunk by chunk."""
-        building_selections, building_extras = _search('instrument=Cassini+UVIS')
-        building_id = search_views.set_user_search_number(building_selections, building_extras)
-        assert building_id is not None
-        _make_stale(building_id)
+    def test_prune_leaves_a_removed_searchs_results_to_the_next_run(self) -> None:
+        """A request that read the search just before may still read them; the next run
+        removes them, chunk by chunk, along with those of searches removed earlier."""
         stale = get_search_results(*_search())
         assert stale is not None
         _make_stale(stale.search_id)
-        orphan_id = max(building_id, stale.search_id) + 1000
+        orphan_id = stale.search_id + 1000
         _plant_results(orphan_id, 25)
+        deletes: list[Any] = []
+
+        def count_deletes(execute: Any, sql: str, params: Any, many: bool, context: Any) -> Any:
+            if sql.startswith('DELETE FROM search_results'):
+                deletes.append(params[0])
+            return execute(sql, params, many, context)
 
         output = io.StringIO()
         with (
             mock.patch.object(prune, 'DELETE_CHUNK_ROWS', 10),
+            connection.execute_wrapper(count_deletes),
+        ):
+            call_command('prune', unused_days=30, max_rows=10**9, stdout=output)
+        self.assertEqual(deletes, [orphan_id] * 3)
+        self.assertIn(
+            'Removed the results of 1 searches an earlier prune removed', output.getvalue()
+        )
+        self.assertIn('Pruned 1 searches', output.getvalue())
+        self.assertIsNone(_row(stale.search_id))
+        self.assertEqual(_result_rows(stale.search_id), stale.result_count)
+
+        call_command('prune', unused_days=30, max_rows=10**9, stdout=io.StringIO())
+        self.assertEqual(_result_rows(stale.search_id), 0)
+        self.assertEqual(_result_rows(orphan_id), 0)
+
+    def test_prune_leaves_a_search_being_built_or_used_since_it_read_them(self) -> None:
+        """A locked row is skipped, and so is one whose last use moved after the read."""
+        building_id = search_views.set_user_search_number(*_search('instrument=Cassini+UVIS'))
+        assert building_id is not None
+        _make_stale(building_id)
+        used = get_search_results(*_search())
+        assert used is not None
+        _make_stale(used.search_id)
+        snapshot = prune._read_searches()
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'UPDATE user_searches SET last_used_at = UTC_TIMESTAMP() WHERE id = %s',
+                [used.search_id],
+            )
+        output = io.StringIO()
+        with (
+            mock.patch.object(prune, '_read_searches', return_value=snapshot),
             _holding_lock(building_id),
         ):
             call_command('prune', unused_days=30, max_rows=10**9, stdout=output)
 
-        self.assertIn('Removed the rows of 1 searches already removed', output.getvalue())
-        self.assertIn('Pruned 1 searches', output.getvalue())
-        self.assertIn('skipped 1 being built', output.getvalue())
-        self.assertEqual(_result_rows(orphan_id), 0)
-        self.assertEqual(_result_rows(stale.search_id), 0)
-        self.assertIsNone(_row(stale.search_id))
+        self.assertIn('Pruned 0 searches', output.getvalue())
+        self.assertIn('skipped 2 being built or used since', output.getvalue())
         self.assertIsNotNone(_row(building_id))
+        self.assertIsNotNone(_row(used.search_id))
 
     def test_prune_removes_old_searches_expired_sessions_and_orphaned_carts(self) -> None:
         """An old search, an expired session and its cart go; recent ones stay."""
@@ -401,10 +467,9 @@ class SearchResultsTests(TestCase):
                     [session_key, obs_id, opus_id],
                 )
         try:
-            call_command('prune', unused_days=30, max_rows=10**9)
+            call_command('prune', unused_days=30, max_rows=10**9, stdout=io.StringIO())
 
             self.assertIsNone(_row(old.search_id))
-            self.assertEqual(_result_rows(old.search_id), 0)
             self.assertIsNone(cache.get(old_key))
             self.assertIsNotNone(_row(recent.search_id))
             self.assertEqual(_result_rows(recent.search_id), recent.result_count)

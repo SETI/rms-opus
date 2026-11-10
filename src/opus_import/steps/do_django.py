@@ -5,9 +5,10 @@ is stale once the run finishes. ``user_searches``, one row per distinct search, 
 ``search_results``, every search's ordered results, are dropped and created again empty
 from their schema files.
 
-The web application's cache trusts its entries: an entry mapping a search to its row
-that outlived the reset would hand one search's results to another once the row ids
-restart. So every reset is followed by a flush of that cache, in a subprocess of its
+The web application's cache trusts its entries, which name searches by their rows' ids.
+So the re-created ``user_searches`` hands out ids above every id the old one held, and
+an entry a request in flight writes after the reset names no row rather than another
+search's; and every reset is followed by a flush of that cache, in a subprocess of its
 own, since the cache's configuration is the web application's.
 """
 
@@ -46,12 +47,17 @@ def reset_search_tables(ctx: ImportContext) -> None:
     import_util.log_debug(ctx, 'Resetting the search tables')
     db = ctx.db
     assert db is not None
+    last_id = (
+        db.find_column_max('user_searches', 'id') if db.table_exists('user_searches') else None
+    )
     for table_name in SEARCH_TABLES:
         schema = import_util.read_schema_for_table(ctx, table_name)
         # The search tables' schemas are packaged with opus_import, so each is found.
         assert schema is not None
         db.drop_table(table_name)
         db.create_table(table_name, schema)
+    if last_id is not None:
+        db.set_next_id('user_searches', int(last_id) + 1)
 
     if db.read_only:
         import_util.log_debug(ctx, '[SIM] Flushed the web cache')

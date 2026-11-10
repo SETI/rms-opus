@@ -192,8 +192,11 @@ shorter than the web server's worker timeout
 Django's MySQL backend runs its connections at ``READ COMMITTED``, so the ``INSERT ...
 SELECT`` takes no shared locks on the rows it reads.
 
-A search ``opus_manage prune`` removed after the memory cache named it has no row: the
-cache entry is deleted and the search registered afresh, once.
+Each read of the row checks that it holds the search's own digest. A search ``opus_manage
+prune`` removed after the memory cache named it has no row, and an id a request in flight
+cached across a reset of the search tables names no row or another search's, since the
+re-created table hands out ids above every old one; either way the cache entry is deleted
+and the search registered afresh, once.
 
 Step 4: everything downstream joins against it
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -4,16 +4,18 @@
 user makes. This command bounds it, and removes, in this order and only as much as it
 must:
 
-1. **Searches, least recently used first,** until ``search_results`` holds no more than
-   ``--max-rows`` rows, and in any case every search unused for ``--unused-days`` days,
-   so a busy server is pruned harder than a quiet one. For each, its hash-keyed cache
-   entry is deleted first and then its ``user_searches`` row, so that a request
-   arriving meanwhile registers the search afresh under a new id; then its rows of
-   ``search_results``, in chunks. A search another request is building right now is
-   skipped. Rows a removed search left behind, because an earlier prune stopped part
-   way, are removed first.
-2. **Expired sessions**, through Django's own ``clearsessions``.
-3. **Cart rows whose session no longer exists.**
+1. **The results of searches an earlier prune removed,** in chunks. A request that read
+   a search just before its row went may still be reading its results, so they are
+   left until the next run, by which time any such request has finished.
+2. **Searches, least recently used first,** until the searches left hold no more than
+   ``--max-rows`` rows of ``search_results``, and in any case every search unused for
+   ``--unused-days`` days, so a busy server is pruned harder than a quiet one. For each,
+   its hash-keyed cache entry is deleted first and then its ``user_searches`` row, so
+   that a request arriving meanwhile registers the search afresh under a new id. A
+   search another request is building right now, or one used since the prune read its
+   last use, is left alone.
+3. **Expired sessions**, through Django's own ``clearsessions``.
+4. **Cart rows whose session no longer exists.**
 
 ``--stats`` reports the table's size and what a prune would remove, and ``--dry-run``
 lists it search by search; neither changes anything. Ids are never reused within a
@@ -58,8 +60,9 @@ _RESULT_SEARCH_IDS_SQL = 'SELECT DISTINCT search_id FROM search_results'
 #: Every search's id.
 _SEARCH_IDS_SQL = 'SELECT id FROM user_searches'
 
-#: Takes a search's row to remove it, unless a search build holds it.
-_LOCK_SEARCH_SQL = 'SELECT id FROM user_searches WHERE id = %s FOR UPDATE SKIP LOCKED'
+#: Takes a search's row to remove it, unless a search build holds it, and reads its last
+#: use again.
+_LOCK_SEARCH_SQL = 'SELECT last_used_at FROM user_searches WHERE id = %s FOR UPDATE SKIP LOCKED'
 
 _DELETE_SEARCH_SQL = 'DELETE FROM user_searches WHERE id = %s'
 
@@ -189,7 +192,7 @@ class Command(BaseCommand):
             return
 
         orphans = _delete_orphan_results()
-        self.stdout.write(f'Removed the rows of {orphans} searches already removed')
+        self.stdout.write(f'Removed the results of {orphans} searches an earlier prune removed')
         pruned = skipped = pruned_rows = 0
         for search in chosen:
             if _delete_search(search):
@@ -198,7 +201,8 @@ class Command(BaseCommand):
             else:
                 skipped += 1
         self.stdout.write(
-            f'Pruned {pruned} searches holding {pruned_rows} rows; skipped {skipped} being built'
+            f'Pruned {pruned} searches holding {pruned_rows} rows, whose results the next '
+            f'prune removes; skipped {skipped} being built or used since'
         )
 
         expired = Session.objects.filter(expire_date__lt=timezone.now()).count()
@@ -228,7 +232,9 @@ class Command(BaseCommand):
             cursor.execute(_TABLE_BYTES_SQL)
             data_bytes, index_bytes = cursor.fetchone()
         total_bytes = int(data_bytes) + int(index_bytes)
+        held = sum(search.rows for search in searches)
         self.stdout.write(f'search_results rows: {rows}')
+        self.stdout.write(f'Rows of removed searches the next prune removes: {rows - held}')
         self.stdout.write(f'Searches: {search_count}')
         self.stdout.write(
             f'search_results bytes: {data_bytes} data, {index_bytes} index, '
@@ -237,7 +243,7 @@ class Command(BaseCommand):
         self.stdout.write(f'A prune would remove {len(chosen)} searches holding {chosen_rows} rows')
         self.stdout.write(
             f'It would leave {len(searches) - len(chosen)} searches holding '
-            f'{sum(search.rows for search in searches) - chosen_rows} rows'
+            f'{held - chosen_rows} rows'
         )
 
 
@@ -260,21 +266,22 @@ def _aware(value: datetime.datetime) -> datetime.datetime:
 
 
 def _delete_search(search: StoredSearch) -> bool:
-    """Remove one search: its cache entry, its row, then its results in chunks.
+    """Remove one search's cache entry and row, leaving its results to the next prune.
 
     Parameters:
-        search: The search.
+        search: The search, as the prune read it.
 
     Returns:
-        False if a search build holds the search's row, which is then left alone.
+        False if a search build holds the search's row, or the search was used since the
+        prune read it, either of which leaves it alone.
     """
     with transaction.atomic(), connection.cursor() as cursor:
         cursor.execute(_LOCK_SEARCH_SQL, [search.search_id])
-        if cursor.fetchone() is None:
+        row = cursor.fetchone()
+        if row is None or _aware(row[0]) != search.last_used_at:
             return False
         cache.delete(search_number_cache_key(search.search_hash))
         cursor.execute(_DELETE_SEARCH_SQL, [search.search_id])
-    _delete_results(search.search_id)
     return True
 
 
@@ -288,7 +295,10 @@ def _delete_results(search_id: int) -> None:
 
 
 def _delete_orphan_results() -> int:
-    """Delete the rows of searches whose ``user_searches`` row is gone.
+    """Delete the results of searches whose ``user_searches`` row is gone.
+
+    It runs before this prune removes any search, so the searches it finds are ones an
+    earlier prune removed.
 
     Returns:
         How many such searches there were.

@@ -212,7 +212,8 @@ Building a search's results
     search_build_timeout``, and then reads the first one's count. A wait that times out
     returns None, which callers answer with a 500
     (:func:`~opus_app.apps.tools.app_utils.http500_search_cache_failed`). A search whose
-    row the pruner removed after the cache named it is registered afresh, once.
+    row is gone, or holds another search's digest, is registered afresh, once. It refuses
+    to run inside a transaction: registration and the build each commit on their own.
 
 :func:`~opus_app.apps.search.views.get_search_id`
     The same, returning the id alone -- what the results, metadata and cart views join

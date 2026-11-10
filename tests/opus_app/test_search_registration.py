@@ -2,11 +2,12 @@
 
 These run with no database. What is worth pinning, and why:
 
-* **Two requests share a search exactly when they always did.** ``user_searches`` keys a
-  search by one SHA-256 digest, where it used to key it by four MD5 hashes with a
-  ``'NONE'`` sentinel for an absent part. A digest that merged two searches the four
-  hashes kept apart would hand one search's results to the other; one that split a
-  search would only cost a rebuild, but would still be a change.
+* **Two requests share a search exactly when four hashes of their parts agree.**
+  ``user_searches`` keys a search by one SHA-256 digest; the reference it is held to is
+  four MD5 hashes, of the selections, query types, units and order, with a ``'NONE'``
+  sentinel for an absent part. A digest that merged two searches the four hashes keep
+  apart would hand one search's results to the other; one that split a search would
+  cost a rebuild and break the reference.
 * **Every cache key fits memcached.** A key longer than memcached's limit is refused,
   and a request's own text could make one that long.
 * **The search build runs at READ COMMITTED.** The build's ``INSERT ... SELECT`` takes no
@@ -41,10 +42,9 @@ _ORDER = [['obs_general.time1', 'obs_general.opus_id'], [False, False]]
 
 
 def _four_hashes(selections: dict[str, Any], extras: dict[str, Any]) -> tuple[str, ...]:
-    """Return the four hashes ``user_searches`` used to key a search by.
+    """Return the reference identity of a search: four MD5 hashes with a ``'NONE'`` sentinel.
 
-    This is the earlier registration's computation, kept here as the reference the
-    digest is compared with.
+    The digest is compared with it pair by pair.
     """
 
     def md5(text: str) -> str:

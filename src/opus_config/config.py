@@ -657,7 +657,7 @@ def _read_django(source: Path, values: dict[str, Any]) -> DjangoConfig:
             'search_build_timeout', default=DEFAULT_SEARCH_BUILD_TIMEOUT, minimum=1
         ),
         search_results_max_rows=table.read_int(
-            'search_results_max_rows', default=DEFAULT_SEARCH_RESULTS_MAX_ROWS, minimum=1
+            'search_results_max_rows', default=DEFAULT_SEARCH_RESULTS_MAX_ROWS, minimum=0
         ),
         public_url=table.read_str('public_url'),
         product_http_path=table.read_str('product_http_path'),
