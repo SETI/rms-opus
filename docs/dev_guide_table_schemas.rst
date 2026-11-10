@@ -233,8 +233,8 @@ for it and no value is computed.
 
 ``obs_files`` is filled by :mod:`opus_import.steps.do_import_index` rather than by the
 dispatch above: it builds each row from a literal, and takes the row id by calling
-:func:`opus_import.import_util.find_max_table_id` directly rather than through
-``MAX_ID``. Its schema's list-valued ``data_source`` entries are therefore **dead
+:func:`opus_import.import_util.next_table_id` directly, as ``MAX_ID`` does, rather than
+through the dispatch. Its schema's list-valued ``data_source`` entries are therefore **dead
 data** -- nothing reads them. The ``TAB:`` values among them are the only ones left in
 the repository, and a ``TAB:`` written into any other schema would be reported as an
 unknown data source: they are a survival of a vocabulary the pipeline does not

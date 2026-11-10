@@ -17,6 +17,7 @@ of the run.
 from __future__ import annotations
 
 import contextlib
+import math
 import os
 import pickle
 import re
@@ -307,18 +308,20 @@ def toml_value(value: object) -> str:
     """Return a value as TOML writes it.
 
     Parameters:
-        value: A boolean, a whole number or a string.
+        value: A boolean, a whole number, a finite decimal number or a string.
 
     Returns:
         The value's TOML spelling.
 
     Raises:
-        TypeError: For any other type.
+        TypeError: For any other type, or a decimal number that is not finite.
     """
     if isinstance(value, bool):
         return 'true' if value else 'false'
     if isinstance(value, int):
         return str(value)
+    if isinstance(value, float) and math.isfinite(value):
+        return repr(value)
     if isinstance(value, str):
         return f'"{toml_string(value)}"'
     raise TypeError(f'no TOML spelling for {value!r}')

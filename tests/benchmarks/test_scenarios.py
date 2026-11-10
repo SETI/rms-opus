@@ -235,12 +235,23 @@ def test_a_control_character_in_an_import_value_survives_the_configuration(
 
 @pytest.mark.parametrize(
     ('text', 'value'),
-    [('22', 22), ('-3', -3), ('true', True), ('false', False), ('--2', '--2'), ('a-1', 'a-1')],
+    [
+        ('22', 22),
+        ('-3', -3),
+        ('0.5', 0.5),
+        ('1e-1', 0.1),
+        ('true', True),
+        ('false', False),
+        ('nan', 'nan'),
+        ('inf', 'inf'),
+        ('--2', '--2'),
+        ('a-1', 'a-1'),
+    ],
 )
-def test_an_import_key_value_is_a_whole_number_a_boolean_or_else_a_string(
+def test_an_import_key_value_is_a_number_a_boolean_or_else_a_string(
     text: str, value: object
 ) -> None:
-    """A value that does not read as a whole number or a boolean stays as written."""
+    """A value that does not read as a finite number or a boolean stays as written."""
     assert bench_server.parse_import_keys([f'k={text}']) == {'k': value}
 
 

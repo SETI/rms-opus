@@ -105,6 +105,15 @@ It runs serially: the run is one long import followed by fast assertions, so ``-
 nothing, and a session-scoped fixture under xdist would run the import once per worker
 into the same schema.
 
+**The import counts the cores of the machine a session runs on**, and the main run's
+``workers = "max"`` and ``index_workers = "max"`` resolve to the ceiling they give; the
+goldens do not depend on the count. A session that asks for a fixed count asks for no
+more than a four-core machine's ceiling, 3, so it is never refused on a GitHub-hosted
+runner. The main run computes its observations in a pool at that ceiling, in tasks of 5
+index rows so that the fixture's small indexes split across several workers, and builds
+its keys over as many connections; a session that sets no ``workers`` of its own, as the
+negative cases do not, computes in one process (:ref:`dev_guide_import_fixture`).
+
 .. _dev_guide_testing_faults:
 
 ``OPUS_IMPORT_FAULT`` is set by the suite itself, in the environment of an
@@ -122,6 +131,18 @@ and each site decides what its argument selects. The sites are:
     one error while that bundle is imported and carries on, so the bundle ends ``failed``
     in the bundle registry without the import raising
     (:ref:`dev_guide_import_steps_registry`).
+
+``stall_worker``
+    At the start of every task a pool worker computes; its argument is a number of
+    seconds. ``stall_worker:600`` holds each worker asleep, so a test can find the pool's
+    processes alive and kill the import under them
+    (:ref:`dev_guide_import_steps_do_import_pool`).
+
+``fail_worker``
+    In the pool worker task holding one index row; its argument is the row, numbered
+    from zero. ``fail_worker:12`` fails that task; the import's process meets the failure
+    when it reaches the task in index order, having replayed and loaded the tasks before
+    it, so a test can see that the failed index leaves none of its rows.
 
 Never set it outside a test.
 
@@ -236,6 +257,10 @@ is not in the repository. It sets ``OPUS_DB_USER`` and ``OPUS_DB_PASSWORD``, ``T
 (where the per-run directories go) and ``PDS_HOLDINGS_ROOT`` (the directory holding
 ``holdings`` and ``pds4-holdings``). Every script that needs one of them exits rather than
 continue if it is missing.
+
+The ``opus.toml`` the chain writes asks for ``workers = "max"`` and
+``index_workers = "max"``, so the import computes and builds keys at the ceiling of the
+cores it counts on the machine running it.
 
 Two coverage configurations
 ---------------------------
