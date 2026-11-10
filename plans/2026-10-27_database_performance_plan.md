@@ -5054,3 +5054,22 @@ Nothing above this line is rewritten by an executor.
     `..._after_fixture_mysql_defaults.json`): every fixture index is smaller than one
     500-row task, so both after sessions compute in one process; `import.wall_s` 41.2 s
     to 41.1 s, and every guard held.
+- A complete-scale import at `workers = 8` (2026-11-10, session `workers8`, one import at
+  7a165498, `2026-11-10_PR-09_after_complete_mysql_workers8.json`; informational, against
+  PR-00's `2026-11-05_PR-00_before_complete_mysql_a.json` and PR-07's
+  `2026-11-08_PR-07_after_complete_mysql_b.json`, with PR-08 between them unmeasured at
+  this scale):
+  - `import.wall_s` 18,235 s (PR-00) and 13,437 s (PR-07) to 8,262 s, -54.7% and -38.5%;
+    the bundle imports 17,620 s and 11,988 s to 5,344 s, -69.7% and -55.4%; the largest
+    bundle (COVIMS_0003) 287 s and 249 s to 59 s.
+  - By group against PR-07: COVIMS_0xxx 4,336 s to 1,554 s, COISS 4,119 s to 1,391 s,
+    COUVIS_0xxx 1,149 s to 434 s and NEWHORIZONS 277 s to 102 s, each about -63%;
+    VOYAGER -25%; HST -5%; COCIRS did not move (882 s to 895 s).
+  - Finalization rose from 1,448 s to 2,916 s, almost all of it `obs_files`' key build
+    (798 s to 1,943 s), whose code this PR does not change. The peak checkpoint age was
+    5.53 GB against 0.96 GB, the loads outrunning the server's page flushing, and the key
+    builds start against that backlog; that is the likely cause, not measured. The same
+    statement took 846 s and 2,370 s in PR-07's copied finalizations, so its time varies
+    widely with the server's state.
+  - `Innodb_data_written` held (134.1 GB to 133.7 GB). The tree's peak PSS was 6.93 GB
+    against 3.05 GB, and the largest process's peak RSS 2.63 GB against 3.07 GB.
