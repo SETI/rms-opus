@@ -42,7 +42,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import time
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -97,7 +96,6 @@ from opus_app.apps.tools.app_utils import (
     json_response,
 )
 from opus_app.apps.tools.db_utils import (
-    drop_temporary_table,
     lookup_pretty_value_for_mult,
     lookup_pretty_value_for_mult_list,
     query_table_for_opus_id,
@@ -1615,222 +1613,191 @@ def get_search_results_chunk(
         log.error('get_search_results_chunk: Bad offset %r', str(offset))
         return error_return(400, http400_bad_offset(offset, request))
 
-    temp_table_name: str | None = None
-    drop_temp_table = False
-    try:
-        if not use_cart:
-            # This is for a search query
+    if not use_cart:
+        # This is for a search query
 
-            # Create the SQL query
-            # There MUST be some way to do this in Django, but I just can't figure
-            # it out. It's incredibly easy to do in raw SQL, so we just do that
-            # instead. -RF
-            selections: dict[str, Any] | None
-            extras: dict[str, Any] | None
-            if opus_id:
-                selections = {'obs_general.opus_id': [opus_id]}
-                extras = {'qtypes': {'obs_general.opus_id': ['matches']}}
-            else:
-                (selections, extras) = url_to_search_params(request.GET)
-            if selections is None:
-                log.error(
-                    'get_search_results_chunk: Could not find selections for' + ' request %r',
-                    str(request.GET),
-                )
-                return error_return(400, http400_search_params_invalid(request))
-
-            # url_to_search_params returns both of these or neither.
-            assert extras is not None
-
-            user_query_table = get_user_query_table(selections, extras, api_code=api_code)
-            if not user_query_table:  # pragma: no cover -
-                # internal or database failure
-                log.error(
-                    'get_search_results_chunk: get_user_query_table failed '
-                    + '*** Selections %r *** Extras %r',
-                    str(selections),
-                    str(extras),
-                )
-                return error_return(500, http500_search_cache_failed(request))
-
-            # First we create a temporary table that contains only those ids
-            # in the limit window that we care about (if there's a limit window).
-            # Then we use that temporary table (or the original cache table) to
-            # extract data from all our data tables.
-            drop_temp_table = True
-            pid_sfx = str(os.getpid())
-            time1 = time.time()
-            time_sfx = (f'{time1:.6f}').replace('.', '_')
-            temp_table_name = 'temp_' + user_query_table
-            temp_table_name += '_' + pid_sfx + '_' + time_sfx
-            temp_select = sql_builder.Select()
-            temp_select.add_column(sql_builder.column('sort_order'))
-            temp_select.add_column(sql_builder.column('id'))
-            temp_select.add_from(user_query_table)
-            temp_select.add_order_by(sql_builder.column('sort_order'))
-            temp_select.limit(limit)
-            temp_select.offset(offset)
-            temp_sql, temp_params = sql_builder.create_table_as_select(
-                temp_table_name, temp_select, temporary=True
-            )
-            # This SELECT has no WHERE, so it carries no parameters. Assert that
-            # rather than discarding the list, so a condition added here later
-            # cannot lose its values silently.
-            assert not temp_params
-            cursor = connection.cursor()
-            try:
-                cursor.execute(temp_sql)
-            except DatabaseError:  # pragma: no cover - database error
-                log.exception('get_search_results_chunk: "%r" failed', temp_sql)
-                return error_return(500, http500_database_error(request))
-            log.debug('get_search_results_chunk SQL (%.2f secs): %r', time.time() - time1, temp_sql)
-
-            select = _results_column_select(column_names)
-            from_source = select.add_from('obs_general')
-
-            # All the column tables are LEFT JOINs because if the table doesn't
-            # have an entry for a given opus_id, we still want the row to show up,
-            # just full of NULLs.
-            # Sorted so the generated SQL and its debug log are the same from one
-            # process to the next: these are sets, and set iteration order depends on
-            # PYTHONHASHSEED. The join order carries no meaning either way.
-            add_obs_table_joins(from_source, sorted(tables))
-
-            # Now JOIN in all the mult_ tables.
-            for _mult_table, is_multigroup, _table, _field_name in mult_tables:
-                # We can't have a MULTIGROUP here because those fields are simply
-                # added as columns above to be mapped later
-                assert not is_multigroup
-            add_mult_table_joins(from_source, sorted(mult_tables))
-
-            # But the cache table is an INNER JOIN because we only want opus_ids
-            # that appear in the cache table to cause result rows
-            from_source.add_join(
-                'INNER',
-                temp_table_name,
-                sql_builder.columns_equal(
-                    sql_builder.column('id', 'obs_general'),
-                    sql_builder.column('id', temp_table_name),
-                ),
-            )
-
-            # Maybe join in the cart table if we need cart_state
-            if return_cart_states:
-                from_source.add_join(
-                    'LEFT',
-                    'cart',
-                    sql_builder.join_exprs(
-                        [
-                            sql_builder.columns_equal(
-                                sql_builder.column('id', 'obs_general'),
-                                sql_builder.column('obs_general_id', 'cart'),
-                            ),
-                            sql_builder.binary_op(
-                                sql_builder.column('session_id', 'cart'),
-                                '=',
-                                sql_builder.value(session_id),
-                            ),
-                        ],
-                        'AND',
-                    ),
-                )
-
-            select.add_order_by(sql_builder.column('sort_order', temp_table_name))
+        # Create the SQL query
+        # There MUST be some way to do this in Django, but I just can't figure
+        # it out. It's incredibly easy to do in raw SQL, so we just do that
+        # instead. -RF
+        selections: dict[str, Any] | None
+        extras: dict[str, Any] | None
+        if opus_id:
+            selections = {'obs_general.opus_id': [opus_id]}
+            extras = {'qtypes': {'obs_general.opus_id': ['matches']}}
         else:
-            # This is for a cart
-            order_params, order_descending_params = parse_order_slug(all_order)
-            # An unresolvable order slug is bad user input, not an internal failure.
-            # Unchecked, the None reaches create_order_by_terms and trips its
-            # `assert order_params`, so the caller sees an AssertionError.
-            if order_params is None:
-                log.error('get_search_results_chunk: Could not parse order %r', all_order)
-                return error_return(400, http400_unknown_slug(None, request))
-
-            # parse_order_slug returns both of these or neither.
-            assert order_descending_params is not None
-
-            (order_terms, order_mult_tables, order_obs_tables) = create_order_by_terms(
-                order_params, order_descending_params
+            (selections, extras) = url_to_search_params(request.GET)
+        if selections is None:
+            log.error(
+                'get_search_results_chunk: Could not find selections for' + ' request %r',
+                str(request.GET),
             )
-            if order_terms is None:  # pragma: no cover -
-                # parse_order_slug resolves every slug through the same ParamInfo
-                # lookup, so it fails first; this guard is here because the function
-                # documents the return, not because a route reaches it.
-                log.error(
-                    'get_search_results_chunk: Could not build order terms ' + 'for %r', all_order
-                )
-                return error_return(400, http400_unknown_slug(None, request))
+            return error_return(400, http400_search_params_invalid(request))
 
-            # create_order_by_terms returns all three of these or none of them.
-            assert order_mult_tables is not None
-            assert order_obs_tables is not None
+        # url_to_search_params returns both of these or neither.
+        assert extras is not None
 
-            select = _results_column_select(column_names)
-            from_source = select.add_from('obs_general')
+        user_query_table = get_user_query_table(selections, extras, api_code=api_code)
+        if not user_query_table:  # pragma: no cover -
+            # internal or database failure
+            log.error(
+                'get_search_results_chunk: get_user_query_table failed '
+                + '*** Selections %r *** Extras %r',
+                str(selections),
+                str(extras),
+            )
+            return error_return(500, http500_search_cache_failed(request))
 
-            # All the column tables are LEFT JOINs because if the table doesn't
-            # have an entry for a given opus_id, we still want the row to show up,
-            # just full of NULLs.
-            add_obs_table_joins(from_source, sorted(tables | order_obs_tables))
+        select = _results_column_select(column_names)
+        from_source = select.add_from('obs_general')
 
-            # Now JOIN in all the mult_ tables.
-            # If is_multigroup is True, this must have been from order_mult_tables.
-            # This is OK, because a multigroup field will never show up in mult_tables
-            # (see above), so this field will only be used for sorting.
-            add_mult_table_joins(from_source, sorted(mult_tables | order_mult_tables))
+        # All the column tables are LEFT JOINs because if the table doesn't
+        # have an entry for a given opus_id, we still want the row to show up,
+        # just full of NULLs.
+        # Sorted so the generated SQL and its debug log are the same from one
+        # process to the next: these are sets, and set iteration order depends on
+        # PYTHONHASHSEED. The join order carries no meaning either way.
+        add_obs_table_joins(from_source, sorted(tables))
 
-            # But the cart table is an INNER JOIN because we only want
-            # opus_ids that appear in the cart table to cause result rows
-            cart_conditions = [
-                sql_builder.columns_equal(
-                    sql_builder.column('id', 'obs_general'),
-                    sql_builder.column('obs_general_id', 'cart'),
+        # Now JOIN in all the mult_ tables.
+        for _mult_table, is_multigroup, _table, _field_name in mult_tables:
+            # We can't have a MULTIGROUP here because those fields are simply
+            # added as columns above to be mapped later
+            assert not is_multigroup
+        add_mult_table_joins(from_source, sorted(mult_tables))
+
+        # But the cache table is an INNER JOIN because we only want opus_ids
+        # that appear in the cache table to cause result rows. Its sort_order
+        # numbers the search's results from 1 with no gaps -- the table is filled
+        # by one INSERT into a fresh AUTO_INCREMENT column -- so the page is the
+        # range of sort_order values, which the primary key reads directly.
+        from_source.add_join(
+            'INNER',
+            user_query_table,
+            sql_builder.join_exprs(
+                [
+                    sql_builder.columns_equal(
+                        sql_builder.column('id', 'obs_general'),
+                        sql_builder.column('id', user_query_table),
+                    ),
+                    sql_builder.sort_order_range(user_query_table, offset, limit),
+                ],
+                'AND',
+            ),
+        )
+
+        # Maybe join in the cart table if we need cart_state
+        if return_cart_states:
+            from_source.add_join(
+                'LEFT',
+                'cart',
+                sql_builder.join_exprs(
+                    [
+                        sql_builder.columns_equal(
+                            sql_builder.column('id', 'obs_general'),
+                            sql_builder.column('obs_general_id', 'cart'),
+                        ),
+                        sql_builder.binary_op(
+                            sql_builder.column('session_id', 'cart'),
+                            '=',
+                            sql_builder.value(session_id),
+                        ),
+                    ],
+                    'AND',
                 ),
+            )
+
+        select.add_order_by(sql_builder.column('sort_order', user_query_table))
+    else:
+        # This is for a cart
+        order_params, order_descending_params = parse_order_slug(all_order)
+        # An unresolvable order slug is bad user input, not an internal failure.
+        # Unchecked, the None reaches create_order_by_terms and trips its
+        # `assert order_params`, so the caller sees an AssertionError.
+        if order_params is None:
+            log.error('get_search_results_chunk: Could not parse order %r', all_order)
+            return error_return(400, http400_unknown_slug(None, request))
+
+        # parse_order_slug returns both of these or neither.
+        assert order_descending_params is not None
+
+        (order_terms, order_mult_tables, order_obs_tables) = create_order_by_terms(
+            order_params, order_descending_params
+        )
+        if order_terms is None:  # pragma: no cover -
+            # parse_order_slug resolves every slug through the same ParamInfo
+            # lookup, so it fails first; this guard is here because the function
+            # documents the return, not because a route reaches it.
+            log.error(
+                'get_search_results_chunk: Could not build order terms ' + 'for %r', all_order
+            )
+            return error_return(400, http400_unknown_slug(None, request))
+
+        # create_order_by_terms returns all three of these or none of them.
+        assert order_mult_tables is not None
+        assert order_obs_tables is not None
+
+        select = _results_column_select(column_names)
+        from_source = select.add_from('obs_general')
+
+        # All the column tables are LEFT JOINs because if the table doesn't
+        # have an entry for a given opus_id, we still want the row to show up,
+        # just full of NULLs.
+        add_obs_table_joins(from_source, sorted(tables | order_obs_tables))
+
+        # Now JOIN in all the mult_ tables.
+        # If is_multigroup is True, this must have been from order_mult_tables.
+        # This is OK, because a multigroup field will never show up in mult_tables
+        # (see above), so this field will only be used for sorting.
+        add_mult_table_joins(from_source, sorted(mult_tables | order_mult_tables))
+
+        # But the cart table is an INNER JOIN because we only want
+        # opus_ids that appear in the cart table to cause result rows
+        cart_conditions = [
+            sql_builder.columns_equal(
+                sql_builder.column('id', 'obs_general'),
+                sql_builder.column('obs_general_id', 'cart'),
+            ),
+            sql_builder.binary_op(
+                sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+            ),
+        ]
+        if ignore_recycle_bin:
+            cart_conditions.append(
                 sql_builder.binary_op(
-                    sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
-                ),
-            ]
-            if ignore_recycle_bin:
-                cart_conditions.append(
-                    sql_builder.binary_op(
-                        sql_builder.column('recycled', 'cart'), '=', sql_builder.value(0)
-                    )
+                    sql_builder.column('recycled', 'cart'), '=', sql_builder.value(0)
                 )
-            from_source.add_join('INNER', 'cart', sql_builder.join_exprs(cart_conditions, 'AND'))
+            )
+        from_source.add_join('INNER', 'cart', sql_builder.join_exprs(cart_conditions, 'AND'))
 
-            # Note we don't need to add in a special cart JOIN here for
-            # return_cart_states, because we're already joining in the
-            # cart table.
+        # Note we don't need to add in a special cart JOIN here for
+        # return_cart_states, because we're already joining in the
+        # cart table.
 
-            # Finally add in the sort order
-            for order_column, descending in order_terms:
-                select.add_order_by(order_column, descending=descending)
-            select.limit(limit)
-            select.offset(offset)
+        # Finally add in the sort order
+        for order_column, descending in order_terms:
+            select.add_order_by(order_column, descending=descending)
+        select.limit(limit)
+        select.offset(offset)
 
-        sql, params = select.build()
+    sql, params = select.build()
 
-        time1 = time.time()
+    time1 = time.time()
 
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, params)
-        except DatabaseError:  # pragma: no cover - database error
-            log.exception('get_search_results_chunk: "%r" + "%r" failed', sql, params)
-            return error_return(500, http500_database_error(request))
-        results = []
-        more = True
-        while more:
-            part_results = cursor.fetchall()
-            results += part_results
-            more = cursor.nextset()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(sql, params)
+    except DatabaseError:  # pragma: no cover - database error
+        log.exception('get_search_results_chunk: "%r" + "%r" failed', sql, params)
+        return error_return(500, http500_database_error(request))
+    results = []
+    more = True
+    while more:
+        part_results = cursor.fetchall()
+        results += part_results
+        more = cursor.nextset()
 
-        log.debug('get_search_results_chunk SQL (%.2f secs): %r', time.time() - time1, sql)
-    finally:
-        if drop_temp_table:
-            # drop_temp_table is set only where the temporary table was named.
-            assert temp_table_name is not None
-            drop_temporary_table(temp_table_name, 'get_search_results_chunk')
+    log.debug('get_search_results_chunk SQL (%.2f secs): %r', time.time() - time1, sql)
 
     if return_opusids:
         # Return a simple list of opus_ids
