@@ -3896,9 +3896,10 @@ once (§1, Deploy; §2.3).
     `schema_version` gains four columns:
     - `generation INT UNSIGNED NOT NULL`, the generation the web application serves;
     - `pending_generation INT UNSIGNED NULL`, the one an update is writing;
-    - `pending_state ENUM('writing','validated','ready') NULL`, how far the pending
-      generation has got: `writing` from `--begin-generation` and again whenever anything
-      writes it, `validated` once `--validate` has passed on it, and `ready` once
+    - `pending_state ENUM('writing','finalized','validated','ready') NULL`, how far the
+      pending generation has got: `writing` from `--begin-generation` and again whenever
+      anything writes it, `finalized` once every step of `--finalize` has succeeded on it,
+      `validated` once `--validate` has passed on a finalized one, and `ready` once
       `--write-schema-version` has stamped a validated one;
     - `revertible BOOLEAN NOT NULL DEFAULT FALSE`, true from a switch until the purge
       starts.
@@ -3961,8 +3962,11 @@ once (§1, Deploy; §2.3).
   changed behavior of an existing one when the schema has a pending generation P.
   1. `--begin-generation`: on a `ready` schema at this release's version with no pending
      generation, sets `pending_generation` to `generation + 1` and `pending_state` to
-     `writing`. It is refused otherwise; a
-     pending generation is named, with `--abandon-generation`. **The state stays `ready`**:
+     `writing`. It is refused otherwise: a pending generation is named, with
+     `--abandon-generation`; and while `revertible` is true it is refused too, naming
+     `--purge-generations`, or `--revert-generation` then `--abandon-generation`, since a
+     revert of the previous update would otherwise overwrite the new one's
+     `pending_generation` and leave its rows untracked. **The state stays `ready`**:
      every worker serves generation G throughout, and a worker that starts during the
      update still passes PR-05's check.
   2. `--import <bundles>` with P pending: `choose_import_path` logs `Import path:
@@ -3981,9 +3985,9 @@ once (§1, Deploy; §2.3).
      added at P, and deletes their registry rows of generation P. Without a pending
      generation it
      behaves as PR-08 made it.
-  4. `--finalize` with P pending sets `pending_state` to `writing`, works on generation P,
-     and
-     writes nothing a request reads before the switch:
+  4. `--finalize` with P pending sets `pending_state` to `writing` when it starts and to
+     `finalized` when every step has succeeded, works on generation P, and writes nothing
+     a request reads before the switch:
      - `--create-indexes` is unchanged; on an existing schema it finds nothing to add.
      - **The duplicate step reads generation P only.** Of two rows sharing an `opus_id` it
        keeps the higher id, as today; the other is deleted if it was added at P, and
@@ -3998,8 +4002,10 @@ once (§1, Deploy; §2.3).
      - A finalization step that a later PR adds states whether it runs here or at the
        switch. PR-24's `default_rank`, if implemented, renumbers at the switch, since it
        writes rows the served generation shows.
-  5. `--validate` with P pending checks generation P, and sets `pending_state` to
-     `validated` when every check passes and to `writing` when one fails. The orphan
+  5. `--validate` with P pending is refused unless `pending_state` is `finalized` or
+     `validated`, so a generation whose finalization failed or was skipped is never
+     validated. It checks generation P, and sets `pending_state` to `validated` when every
+     check passes and to `finalized` when one fails. The orphan
      counts read every row, since a retired row's children are still there.
   6. `--write-schema-version` with P pending refuses an unfinished registry as today, and
      refuses unless `pending_state` is `validated`, so a stamp never follows a failed or
@@ -4007,10 +4013,12 @@ once (§1, Deploy; §2.3).
      generation P is ready to switch. It is the only writer of `ready`.
   7. `--switch-generation` runs while the web service is stopped (below). It is refused
      unless `pending_state` is `ready`, so a pending generation whose import, finalization
-     or
-     validation failed, or that anything has written since it was stamped, is never
+     or validation failed, or that anything has written since it was stamped, is never
      switched in. Each of its steps checks whether it has already run, so an interrupted
-     switch is completed by running it again:
+     switch is completed by running it again; and with no pending generation and
+     `revertible` true, it reports that the served generation is already switched in and
+     succeeds, so a run interrupted after its last statement committed is completed by
+     running it again too:
      1. the swap of every aux `__new` table, which keeps the tables it replaces as
         `__prev` rather than dropping them as PR-06's swap drops `__old`, after first
         dropping any `__prev` an earlier switch left;
@@ -4035,8 +4043,10 @@ once (§1, Deploy; §2.3).
      at or before the served generation, drops the aux `__prev` tables, and runs PR-14's
      mult step and `ANALYZE`.
   9. **Abandoning and reverting.** `--abandon-generation`, with P pending and not switched,
-     deletes the rows added at P, clears `removed_generation = P` back to NULL, drops the
-     aux `__new` tables, deletes P's registry rows, and clears `pending_generation`.
+     deletes the rows added at P, clears `removed_generation = P` on the observation rows
+     and `retired_generation = P` on the registry rows back to NULL, drops the aux `__new`
+     tables, deletes P's registry rows, and clears `pending_generation` and
+     `pending_state`.
      `--revert-generation`, after a switch and before the purge, runs the switch backward:
      it swaps the `__prev` aux tables back in and renames the reverted-from ones to
      `__new`, since they are again the pending generation's, points the cart at the
@@ -4046,11 +4056,17 @@ once (§1, Deploy; §2.3).
      switched again, which swaps them in as any switch does. It is refused unless
      `revertible` is true. Like the switch, it runs while the
      web service is stopped.
-  10. **The generation commands never overlap.** `--begin-generation`,
-      `--switch-generation`, `--revert-generation`, `--abandon-generation` and
-      `--purge-generations` each hold a MySQL named lock on the schema
-      (`GET_LOCK('<schema>.generation', 0)`) for their whole run, and each is refused
-      when another holds it.
+  10. **The generation commands never overlap each other or a write to the pending
+      generation.** `--begin-generation`, `--switch-generation`, `--revert-generation`,
+      `--abandon-generation` and `--purge-generations` each hold a MySQL named lock on
+      the schema (`GET_LOCK('<schema>.generation', 0)`) for their whole run, and each is
+      refused when another holds it. Every invocation that writes the pending generation
+      (`--import`, `--delete-bundles`, `--finalize`, `--validate`, and
+      `--write-schema-version`) registers itself in PR-16a's `import_process`, with its
+      liveness lock, while briefly holding that generation lock, and a generation command,
+      holding it, is refused while any registered invocation is alive (PR-16a's liveness
+      test). Several imports into the pending generation can still run at once, as
+      PR-16a allows; none can run under a generation command.
 - **The scripts.** `run_incremental_opus_update.sh`, its `_incremental_opus_update_wrapper.sh`,
   the internal `_run_incremental_opus_update.sh`, and the sourced
   `_incremental_opus_update_steps.sh` are new in `src/opus_deploy/server/import_and_deploy/`,
@@ -4073,7 +4089,12 @@ once (§1, Deploy; §2.3).
     update in place. When `deploy.env` names `OPUS_DB_DUMP_DIR` and `OPUS_PEER_DB_HOST`,
     the internal script, after `--write-schema-version`, dumps the whole schema, both
     generations, and loads it on the peer under a new schema name, through
-    `copy_database_to_peer`. This PR moves that block out of `_run_full_opus_import.sh`
+    `copy_database_to_peer <source> <target>`. The dump is taken with `mysqldump
+    --single-transaction`, a consistent snapshot that takes no table locks, since the
+    served schema goes on taking cart and search writes; `dump_db.sh` gains that option,
+    and nothing runs DDL on the schema while it runs. `load_db.sh` gains a target schema
+    name separate from the dump's, so the peer creates the new schema from the source's
+    dump. This PR moves that block out of `_run_full_opus_import.sh`
     into the new packaged file `_copy_database_to_peer.sh`, which executes nothing at top
     level, so the two scripts cannot drift. On the peer the operator runs
     `opus_import --switch-generation` against the loaded schema, which nothing serves, so

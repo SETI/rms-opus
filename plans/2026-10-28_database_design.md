@@ -497,11 +497,13 @@ session setting and refuses a server whose token size is not 2.
 
 `schema_version(version INT UNSIGNED NOT NULL PRIMARY KEY, state ENUM('ready',
 'appending') NOT NULL, generation INT UNSIGNED NOT NULL, pending_generation INT UNSIGNED
-NULL, pending_state ENUM('writing','validated','ready') NULL, revertible BOOLEAN NOT
+NULL, pending_state ENUM('writing','finalized','validated','ready') NULL, revertible
+BOOLEAN NOT
 NULL DEFAULT FALSE)`, one row; the last four columns exist under design B of §3.1 only.
 `generation` is the import generation the web application serves, `pending_generation`
 the one an incremental update is writing, `pending_state` how far that one has got since
-anything last wrote it (written, validated, stamped), and `revertible` whether the
+anything last wrote it (written, finalized, validated, stamped), and `revertible`
+whether the
 previous generation is still whole; a fresh import's row starts at generation 1 with none
 pending. Under
 design B the table is created empty when `obs_general` is, since the served view reads
@@ -863,8 +865,12 @@ hides until it is switched in:
 
 1. **Begin.** The version row's `pending_generation` is set to P, one more than the served
    `generation` (§2.7), and `pending_state` to `writing`; every later write to P sets it
-   back to `writing`, a validation that passes sets it to `validated`, and only the version
-   step, which requires `validated`, sets it to `ready`. The state stays
+   back to `writing`, a finalization whose every step succeeds sets it to `finalized`, a
+   validation, which requires that, sets it to `validated` when it passes, and only the
+   version step, which requires `validated`, sets it to `ready`. A new update cannot begin
+   while the previous one can still be reverted, and the invocations that write P register
+   as importers, so the commands that begin, switch, revert, abandon or purge a
+   generation, which take a named lock on the schema, never run under them. The state stays
    `ready`, so every worker goes on serving, and a
    worker that starts meanwhile passes the startup check.
 2. **Import.** Each bundle takes the append path, with one change: its served rows are
