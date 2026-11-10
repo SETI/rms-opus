@@ -37,9 +37,8 @@ One check needs the machine as well as the file. ``[import] workers`` and
 depends on the cores, so :func:`opus_config.config.resolve_parallelism` checks both
 against the ceiling, ``max(1, floor(C * cpu_fraction))``, when an import starts rather
 than when the file is read, and returns a :class:`~opus_config.config.Parallelism` that
-says how it got there. C is ``[import] cpus`` when the file sets it and
-:func:`opus_config.config.detected_cores` otherwise
-(:ref:`dev_guide_import_running_parallelism`).
+says how it got there. C is the cores the process may run on,
+:func:`opus_config.config.detected_cores` (:ref:`dev_guide_import_running_parallelism`).
 
 :mod:`opus_config` also hosts ``_version.py``, which setuptools-scm writes at build time.
 Every other package asks :func:`importlib.metadata.version` for the distribution's version

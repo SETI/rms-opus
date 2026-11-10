@@ -266,38 +266,6 @@ def test_an_extra_import_key_replaces_a_default_one(tmp_path: Path) -> None:
     assert sum(line.startswith('log_file = ') for line in lines) == 1
 
 
-@pytest.mark.parametrize(
-    ('environment', 'cpus'),
-    [
-        ('github-hosted', build_run.GITHUB_HOSTED_CPUS),
-        ('self-hosted', build_run.OTHER_HOST_CPUS),
-        (None, build_run.OTHER_HOST_CPUS),
-    ],
-    ids=['github-hosted', 'self-hosted', 'local'],
-)
-def test_every_session_states_its_host_size(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, environment: str | None, cpus: int
-) -> None:
-    """``cpus`` is written by default: four on a GitHub-hosted runner, eight elsewhere."""
-    if environment is None:
-        monkeypatch.delenv('RUNNER_ENVIRONMENT', raising=False)
-    else:
-        monkeypatch.setenv('RUNNER_ENVIRONMENT', environment)
-    paths = build_run.RunPaths.under(tmp_path)
-    build_run.write_opus_config(paths, 'schema', DatabaseCredentials('h', 'u', 'p'))
-    assert load_config(paths.config_file).import_.cpus == cpus
-
-
-def test_a_key_given_none_is_left_out(tmp_path: Path) -> None:
-    """None removes a key the file sets by default, so a side older than it can load the file."""
-    paths = build_run.RunPaths.under(tmp_path)
-    build_run.write_opus_config(
-        paths, 'schema', DatabaseCredentials('h', 'u', 'p'), extra_import={'cpus': None}
-    )
-    assert load_config(paths.config_file).import_.cpus is None
-    assert 'cpus' not in paths.config_file.read_text(encoding='utf-8')
-
-
 def test_a_newline_in_a_value_survives_the_configuration(tmp_path: Path) -> None:
     """A control character is escaped rather than breaking the file."""
     paths = build_run.RunPaths.under(tmp_path)

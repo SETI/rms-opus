@@ -176,11 +176,11 @@ def _main_until_refused(
 def test_the_first_line_logged_says_how_much_of_the_computer_the_run_may_use(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The cores and their source, the fraction, the ceiling, and both counts, first."""
+    """The cores detected, the fraction, the ceiling, and both counts, first."""
     logger, _opened = _main_until_refused(['--workers', 'max', '--scorched-earth'], monkeypatch)
     assert logger.messages[0] == (
         'info',
-        'Parallelism: 8 cores (detected), cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1',
+        'Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1',
     )
 
 
@@ -191,7 +191,7 @@ def test_a_worker_count_above_the_ceiling_is_refused_before_the_database_opens(
     logger, opened = _main_until_refused(['--workers', '7', '--import', 'COISS_2002'], monkeypatch)
     assert opened == []
     assert logger.messages_at('fatal') == [
-        '--workers 7 is above the ceiling of 6: 8 cores (detected) times cpu_fraction 0.75'
+        '--workers 7 is above the ceiling of 6: 8 cores detected times cpu_fraction 0.75'
     ]
 
 

@@ -100,7 +100,6 @@ if [ $? -ne 0 ]; then
     echo "******************************************"
     exit -1
 fi
-echo "Import cpus: $(sed -n 's/^cpus = //p' opus.toml) (workers and index_workers at the ceiling)"
 echo
 echo "End:  " `date`
 echo

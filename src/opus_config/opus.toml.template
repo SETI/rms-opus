@@ -179,14 +179,10 @@ index_workers = 1
 
 # No request takes every core, since the database server or another user may share
 # the computer: workers and index_workers are each refused above
-# max(1, floor(cores * cpu_fraction)). cpu_fraction must be greater than 0 and at most
-# 1. Optional; the default is the value below.
+# max(1, floor(cores * cpu_fraction)), where cores is the number the import counts as
+# available to it. cpu_fraction must be greater than 0 and at most 1. Optional; the
+# default is the value below.
 cpu_fraction = 0.75
-
-# The number of cores to take the computer as having, for a host whose size you would
-# rather state than have counted. Optional; leaving it out counts the cores the import
-# may run on.
-# cpus = 8
 
 # The index rows one worker task covers. Smaller tasks keep every worker busy closer to
 # the end of an index; larger ones spend less on handing out tasks. Optional; the

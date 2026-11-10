@@ -22,23 +22,6 @@ if [ ! -d "$PDS4_HOLDINGS_DIR" ]; then
     exit -1
 fi
 
-# The import's host size, stated rather than counted, so that workers = "max" and
-# index_workers = "max" below resolve to the ceiling of the host the run assumes:
-# 8 cores on the self-hosted runner (GITHUB_ACTIONS is true), 16 for the nightly
-# staging run, which is started outside Actions. OPUS_TEST_CPUS, from the
-# environment or ~/opus_runner_secrets, overrides both.
-if [[ -n ${OPUS_TEST_CPUS+x} ]]; then
-    IMPORT_CPUS=$OPUS_TEST_CPUS
-elif [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
-    IMPORT_CPUS=8
-else
-    IMPORT_CPUS=16
-fi
-if ! [[ "$IMPORT_CPUS" =~ ^[1-9][0-9]*$ ]]; then
-    echo "ERROR: OPUS_TEST_CPUS must be a positive whole number, not '$IMPORT_CPUS'"
-    exit 1
-fi
-
 # Create the opus.toml configuration file
 
 echo "Ignore any error about pwd here..."
@@ -120,7 +103,6 @@ fake_error500_probability = 0.0
 [import]
 log_file = "$(toml_escape "${LOG_DIR}")/import_logs/opus_import.log"
 debug_log_file = "$(toml_escape "${LOG_DIR}")/import_logs/opus_import_debug.log"
-cpus = ${IMPORT_CPUS}
 workers = "max"
 index_workers = "max"
 EOF

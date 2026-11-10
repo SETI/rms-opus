@@ -220,7 +220,7 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         default=None,
         metavar='N',
         help='Compute each index\'s observations in N processes, or "max" for the ceiling '
-        '([import] cpus and cpu_fraction); replaces [import] workers',
+        '(the cores detected times [import] cpu_fraction); replaces [import] workers',
     )
     parser.add_argument(
         '--ignore-errors',
@@ -569,12 +569,6 @@ def main() -> None:
         logger.log('fatal', str(e))
         sys.exit(-1)
     logger.log('info', parallelism.describe())
-    if parallelism.cores > parallelism.detected_cores:
-        logger.log(
-            'info',
-            f'[import] cpus {parallelism.cores} is more than the {parallelism.detected_cores} '
-            'cores detected; the stated count is used',
-        )
     ctx.workers = parallelism.workers
     ctx.index_workers = parallelism.index_workers
     ctx.worker_rows = config.import_.worker_rows
