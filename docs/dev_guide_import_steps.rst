@@ -755,21 +755,27 @@ Its functions:
 
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`
     Deletes one bundle from every observation table, every other table before
-    ``obs_general``, in chunks of ``[import] transaction_rows`` rows. First the tables
+    ``obs_general``, in chunks. First the tables
     :data:`~opus_import.table_keys.BUNDLE_KEYED_TABLE_PREFIXES` names -- the surface
     geometry name and per-target tables, which hold ``bundle_id`` and are created with
-    its key -- are emptied of the bundle: their ids for it are read a chunk at a time
-    through that key, and each chunk goes in one statement selecting by ``bundle_id``
-    and a range of the table's own ``id``. Then the bundle's ``obs_general`` ids are
-    read a chunk at a time through ``obs_general``'s ``bundle_id`` key, and for each
-    chunk every other table's rows go in one statement per table that joins
-    ``obs_general`` on ``obs_general_id``
+    its key -- are emptied of the bundle: their ids for it are read ``[import]
+    transaction_rows`` at a time through that key, and each chunk goes in one statement
+    selecting by ``bundle_id`` and a range of the table's own ``id``. Next every other
+    table loses its rows above ``obs_general``'s highest ``id``: rows of observations
+    whose ``obs_general`` rows were never loaded, which a run that stopped partway
+    through an index leaves, since each table is loaded once a transaction's worth of
+    its rows wait; the bundle's ids, handed out again from ``obs_general``'s highest,
+    would otherwise collide with them. Then the bundle's ``obs_general`` ids are read
+    ``[import] transaction_rows`` at a time through ``obs_general``'s ``bundle_id`` key,
+    and for each chunk every other table's rows of those observations go in one
+    statement per table that joins ``obs_general`` on ``obs_general_id``
     (:meth:`~opus_import.importdb.super.ImportDBSuper.delete_joined_rows`), selecting
-    by the bundle and the chunk's range of ids, followed by the chunk's ``obs_general``
-    rows. Each statement is its own transaction, so none holds a whole large bundle's
-    undo, and none reads rows outside its range -- which matters on a fresh import,
-    whose tables have no other key to find a bundle's rows by until finalization. The
-    connection checks foreign keys while it deletes, so ``cart``'s cascade removes the
+    by the bundle and the chunk's range of ids -- for ``obs_files``, every file of each
+    observation -- followed by the chunk's ``obs_general`` rows. Each statement is its
+    own transaction, so none holds a whole large bundle's undo, and none reads rows
+    outside its range -- which matters on a fresh import, whose tables have no other
+    key to find a bundle's rows by until finalization. The connection checks foreign
+    keys while it deletes, so ``cart``'s cascade removes the
     cart rows that name the bundle's observations.
 
 :func:`~opus_import.steps.do_import_tables.analyze_all_tables`
@@ -821,12 +827,12 @@ Importing every observation one primary index file describes.
     another during the index, which the foreign keys tolerate because a bundle loads with
     their checks off (:ref:`dev_guide_import_steps_do_import`). An index that fails
     partway is taken back by
-    :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes the
-    rows of every observation from the first one the sink loaded, by ``id`` in
-    ``obs_general`` and by ``obs_general_id`` in every other table, with ``obs_general``
-    after the tables whose rows refer to it. Observation ids are handed out from
-    ``obs_general``'s highest and the import's process is the only writer, so those are
-    exactly the index's rows. None may be left: the index's mult values are never
+    :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes every
+    table's rows from the first one the sink loaded: by ``id`` in the tables that number
+    their own rows (``obs_general`` and the surface geometry name and per-target tables)
+    and by ``obs_general_id`` in every other table, with ``obs_general`` after the
+    tables whose rows refer to it. Ids are handed out from each table's highest and the
+    import's process is the only writer, so those are exactly the index's rows. None may be left: the index's mult values are never
     written, so a row of it left behind would hold a mult id a later bundle gives to
     another value.
 

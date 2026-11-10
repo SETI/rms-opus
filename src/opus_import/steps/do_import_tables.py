@@ -142,23 +142,30 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
 def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     """Delete one bundle's rows from every ``obs_`` table.
 
-    Every other table goes before ``obs_general``, a chunk of
-    `ImportDBSuper.transaction_rows` rows at a time, each chunk one statement and its own
-    transaction, so no single statement holds a whole large bundle's undo:
+    Every other table goes before ``obs_general``, in chunks, each chunk one statement and
+    its own transaction, so no single statement holds a whole large bundle's undo:
 
     * The tables `opus_import.table_keys.BUNDLE_KEYED_TABLE_PREFIXES` names hold
       ``bundle_id``, and are created with its key: their rows of the bundle are deleted
-      by ``bundle_id`` and a range of the table's own ``id``, read a chunk at a time
-      through that key.
-    * Then the bundle's ``obs_general`` ids are read a chunk at a time through
-      ``obs_general``'s ``bundle_id`` key. For each chunk, every other table's rows are
-      deleted by joining ``obs_general`` on ``obs_general_id``, which leads each such
-      table's primary key, and then the chunk's ``obs_general`` rows.
+      by ``bundle_id`` and a range of the table's own ``id``,
+      `ImportDBSuper.transaction_rows` rows at a time, read through that key.
+    * Every other table's rows above ``obs_general``'s highest ``id`` are deleted. They
+      are rows of observations whose ``obs_general`` rows were never loaded: a table is
+      loaded once a transaction's worth of its rows wait, so a run that stopped partway
+      through an index can leave a child's rows behind with no ``obs_general`` row to
+      join, and the bundle's ids, handed out again from ``obs_general``'s highest, would
+      collide with them.
+    * Then the bundle's ``obs_general`` ids are read `ImportDBSuper.transaction_rows` at
+      a time through ``obs_general``'s ``bundle_id`` key. For each chunk, every other
+      table's rows of those observations are deleted by joining ``obs_general`` on
+      ``obs_general_id``, which leads each such table's primary key -- for ``obs_files``
+      every file of each observation -- and then the chunk's ``obs_general`` rows.
 
-    Every statement selects by ``bundle_id`` and a range of ids, so none reads rows
-    outside its range: a table a fresh import is still loading has no other key to find
-    a bundle's rows by. The connection checks foreign keys while it deletes, so
-    ``cart``'s cascade removes the cart rows that name the bundle's observations.
+    Every statement selects by ``bundle_id`` and a range of ids, or by a range of the
+    primary key, so none reads rows outside its range: a table a fresh import is still
+    loading has no other key to find a bundle's rows by. The connection checks foreign
+    keys while it deletes, so ``cart``'s cascade removes the cart rows that name the
+    bundle's observations.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -179,6 +186,9 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     if 'obs_general' not in table_names:
         return
     q = db.quote_identifier
+    highest = db.find_column_max('obs_general', 'id') or 0
+    for table_name in joined:
+        db.delete_rows(table_name, f'{q("obs_general_id")} > %s', [highest])
     parent = q(db.JOINED_PARENT_ALIAS)
     in_chunk = f'{parent}.{q("bundle_id")} = %s AND {parent}.{q("id")} BETWEEN %s AND %s'
     for first_id, last_id in _bundle_id_ranges(db, 'obs_general', bundle_id):

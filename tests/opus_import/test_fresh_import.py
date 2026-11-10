@@ -727,6 +727,12 @@ class _DeletingDB:
 
     JOINED_PARENT_ALIAS = 'p'
 
+    def find_column_max(self, table: str, column: str) -> int | None:
+        """Return obs_general's highest id: the last of its ids, or None for none."""
+        assert (table, column) == ('obs_general', 'id')
+        ids = self.ids if isinstance(self.ids, list) else self.ids.get('obs_general', [])
+        return ids[-1] if ids else None
+
     def delete_joined_rows(
         self,
         table: str,
@@ -745,11 +751,14 @@ _IN_RANGE = '`bundle_id`=%s AND `id` BETWEEN %s AND %s'
 
 _PARENT_IN_RANGE = '`p`.`bundle_id` = %s AND `p`.`id` BETWEEN %s AND %s'
 
+_ABOVE_HIGHEST = '`obs_general_id` > %s'
+
 
 def test_a_bundle_is_deleted_a_chunk_of_obs_general_at_a_time_children_first() -> None:
     """The surface geometry tables by their own ids; every other child through each chunk.
 
-    Each chunk is `transaction_rows` of the bundle's ``obs_general`` ids: every other
+    Before the chunks, every other child loses its rows above ``obs_general``'s highest
+    id. Each chunk is `transaction_rows` of the bundle's ``obs_general`` ids: every other
     child's rows joining them go, then the chunk's ``obs_general`` rows.
     """
     db = _DeletingDB(
@@ -760,6 +769,8 @@ def test_a_bundle_is_deleted_a_chunk_of_obs_general_at_a_time_children_first() -
     assert db.deletes == [
         ('obs_surface_geometry__titan', _IN_RANGE, ['B_1', 10, 11]),
         ('obs_surface_geometry__titan', _IN_RANGE, ['B_1', 12, 12]),
+        ('obs_files', _ABOVE_HIGHEST, [9]),
+        ('obs_pds', _ABOVE_HIGHEST, [9]),
         ('obs_files~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 7]),
         ('obs_pds~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 7]),
         ('obs_general', _IN_RANGE, ['B_1', 4, 7]),
@@ -784,7 +795,11 @@ def test_a_bundle_a_table_does_not_hold_deletes_nothing_there() -> None:
         {'obs_surface_geometry_name': [3]}, ['obs_general', 'obs_pds', 'obs_surface_geometry_name']
     )
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
-    assert db.deletes == [('obs_surface_geometry_name', _IN_RANGE, ['B_1', 3, 3])]
+    # An empty obs_general leaves no row of a child that joins it.
+    assert db.deletes == [
+        ('obs_surface_geometry_name', _IN_RANGE, ['B_1', 3, 3]),
+        ('obs_pds', _ABOVE_HIGHEST, [0]),
+    ]
 
 
 # ------------------------------------------------------------------------------------

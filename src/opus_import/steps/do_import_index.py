@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import pdsfile
 
-from opus_import import import_util
+from opus_import import import_util, table_keys
 from opus_import.steps import do_import_mult, do_import_obs, do_import_pool, do_import_tables
 
 if TYPE_CHECKING:
@@ -412,15 +412,18 @@ class IndexState:
 
 
 def _observation_id_column(table_name: str) -> str:
-    """Return the column holding the id of the observation a table's row belongs to.
+    """Return the column a failed index's rows of a table are taken back by.
 
     Parameters:
         table_name: An observation table.
 
     Returns:
-        ``id`` for ``obs_general``, and ``obs_general_id`` for every other table.
+        ``id`` for a table that numbers its own rows -- ``obs_general`` and the tables
+        `opus_import.table_keys.is_bundle_keyed_table` names, whose ``id`` is their
+        primary key -- and ``obs_general_id``, which leads the primary key, for every
+        other table.
     """
-    return 'id' if table_name == 'obs_general' else 'obs_general_id'
+    return 'id' if table_keys.is_bundle_keyed_table(table_name) else 'obs_general_id'
 
 
 @dataclass
@@ -482,10 +485,10 @@ class TableRowSink:
     def discard(self) -> None:
         """Delete every row this sink loaded, and drop the rows still waiting.
 
-        Observation ids are handed out from ``obs_general``'s highest, and the import's
-        process is the only writer, so this index's rows are those of the observations
-        from the first one it loaded up: in ``obs_general`` by ``id``, and in every other
-        table by ``obs_general_id``. The tables are emptied of them in the reverse of the
+        Ids are handed out from each table's highest, and the import's process is the
+        only writer, so this index's rows are those from the first it loaded up: by
+        ``id`` in a table that numbers its own rows, and by ``obs_general_id``, the
+        observation's id, in every other table. The tables are emptied of them in the reverse of the
         order they were first loaded, so ``obs_general`` goes after the tables whose rows
         refer to it.
         """

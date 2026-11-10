@@ -223,6 +223,70 @@ def test_an_append_that_replaces_one_bundle_and_adds_one_matches_a_fresh_import(
     assert differences == {}
 
 
+def _plant_orphans(credentials: DatabaseCredentials, schema: str, tables: tuple[str, ...]) -> int:
+    """Copy one row of each table to the observation id above ``obs_general``'s highest.
+
+    The copies are what a run that stopped partway through an index leaves: rows of a
+    child loaded before their ``obs_general`` rows were. They are written with foreign
+    keys unchecked, as the import loads.
+
+    Parameters:
+        credentials: How to reach the server.
+        schema: The schema to plant them in.
+        tables: The tables to copy a row of.
+
+    Returns:
+        The id they name.
+    """
+    connection = golden_io.connect(credentials, schema)
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT MAX(id) + 1 FROM obs_general')
+        (orphan_id,) = cursor.fetchone()
+        cursor.execute('SET SESSION foreign_key_checks = 0')
+        for table in tables:
+            cursor.execute(f'CREATE TEMPORARY TABLE `plant` AS SELECT * FROM `{table}` LIMIT 1')  # nosec B608 - a fixed table name
+            cursor.execute('UPDATE `plant` SET `obs_general_id` = %s', [orphan_id])
+            if table == 'obs_files':
+                cursor.execute('UPDATE `plant` SET `file_number` = 1')
+            cursor.execute(f'INSERT INTO `{table}` SELECT * FROM `plant`')  # nosec B608
+            cursor.execute('DROP TEMPORARY TABLE `plant`')
+        connection.commit()
+    finally:
+        connection.close()
+    return int(orphan_id)
+
+
+def test_rows_left_above_obs_generals_highest_id_are_removed_before_a_bundle_loads(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """A child's rows with no ``obs_general`` row, above its highest id, go first.
+
+    The bundle's ids are handed out again from ``obs_general``'s highest, so its first
+    observation takes the id the planted rows name: the import succeeds only if they are
+    removed before its rows load, and validation then finds no row without its
+    ``obs_general`` row.
+    """
+    copy = _copy(main_run, db_credentials, created_schemas, 'append_orphans')
+    added = main_run.bundles[-1]
+    assert copy.step('--delete-bundles', added).returncode == 0
+    orphan_id = _plant_orphans(db_credentials, copy.schema, ('obs_files', 'obs_pds'))
+    appended = copy.step(*build_run.IMPORT_ARGS, added)
+    assert appended.returncode == 0, appended.stderr
+    (owner,) = golden_io.query(
+        db_credentials, copy.schema, 'SELECT bundle_id FROM obs_general WHERE id = %s', [orphan_id]
+    )[0]
+    assert owner == added
+    for closing in build_run.closing_steps(copy.paths.config_file):
+        assert closing.returncode == 0, closing.stderr
+    assert copy.errors() == ''
+    assert _rows_of(db_credentials, copy.schema, added) == _rows_of(
+        db_credentials, main_run.schema, added
+    )
+
+
 def test_a_failed_append_stays_appending_until_a_rerun_resumes_it(
     main_run: build_run.ImportRun,
     db_credentials: DatabaseCredentials,
