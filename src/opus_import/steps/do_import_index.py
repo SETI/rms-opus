@@ -916,29 +916,3 @@ def get_opus_products_rows_for_filespec(
         rows += current_rows
 
     return rows
-
-
-def remove_opus_id_from_tables(
-    ctx: ImportContext, table_rows: dict[str, list[dict[str, Any]]], opus_id: str
-) -> None:
-    """Drop every row an observation contributed, before any of them is written.
-
-    An observation can have more than one row in a table -- one per target in the
-    surface geometry tables -- so every match is removed rather than the first.
-
-    Parameters:
-        ctx: The import run's context, for the logger.
-        table_rows: The rows computed so far, keyed by table name, edited in place.
-        opus_id: The observation to drop.
-    """
-    for table_name in table_rows:
-        rows = table_rows[table_name]
-        i = 0
-        while i < len(rows):
-            if 'opus_id' in rows[i] and rows[i]['opus_id'] == opus_id:
-                import_util.log_debug(
-                    ctx, f'Removing "{opus_id}" from unwritten table "{table_name}"'
-                )
-                del rows[i]
-                continue  # There might be more than one in obs_surface_geometry
-            i += 1

@@ -169,14 +169,24 @@ class Capture:
         """
         self.events.append(('log', *position, method, args))
 
-    def warning(self, position: tuple[Any, Any], text: str) -> None:
-        """Record a Python warning's text.
+    def warning(
+        self,
+        position: tuple[Any, Any],
+        text: str,
+        category: type[Warning],
+        filename: str,
+        lineno: int,
+    ) -> None:
+        """Record a Python warning the worker's filters let through.
 
         Parameters:
             position: The index row number and primary filespec the worker is on.
-            text: The warning, as the import's warning handler records it.
+            text: The warning's text.
+            category: Its class.
+            filename: The file it is attributed to.
+            lineno: The line it is attributed to.
         """
-        self.events.append(('warning', *position, text))
+        self.events.append(('warning', *position, text, category, filename, lineno))
 
     def pdsfile_log(
         self,

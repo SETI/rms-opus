@@ -321,7 +321,11 @@ def _replay(
             method, args = event[3:]
             getattr(ctx.log, method)(*args)
         elif kind == 'warning':
-            ctx.python_warning_list.append(event[3])
+            text, category, filename, lineno = event[3:]
+            module, registry = _warning_registry(filename)
+            warnings.warn_explicit(
+                text, category, filename, lineno, module=module, registry=registry
+            )
         else:
             assert kind == 'pdsfile', kind
             owner, method, args, kwargs = event[3:]
@@ -387,6 +391,36 @@ def _pdsfile_loggers() -> dict[str, tuple[type, Any]]:
     return found
 
 
+#: Each file a replayed warning names, mapped to its module's name and warning registry.
+_WARNING_REGISTRIES: dict[str, tuple[str | None, dict[Any, Any] | None]] = {}
+
+
+def _warning_registry(filename: str) -> tuple[str | None, dict[Any, Any] | None]:
+    """Return the module a warning's file is, and the registry ``warnings.warn`` would use.
+
+    A worker records each warning its filters show once at a location, but every worker
+    has its own copy of the record of what has been shown. Issuing the warning again in the
+    import's process against the registry the serial loop's ``warnings.warn`` would have
+    used -- the module's own ``__warningregistry__`` -- lets that process's filters
+    suppress a repeat across workers exactly as they suppress one serially.
+
+    Parameters:
+        filename: The file the warning is attributed to.
+
+    Returns:
+        The module's name and its registry, or two Nones for a file that is no module.
+    """
+    if filename not in _WARNING_REGISTRIES:
+        found: tuple[str | None, dict[Any, Any] | None] = (None, None)
+        for module in list(sys.modules.values()):
+            if getattr(module, '__file__', None) == filename:
+                registry = module.__dict__.setdefault('__warningregistry__', {})
+                found = (module.__name__, registry)
+                break
+        _WARNING_REGISTRIES[filename] = found
+    return _WARNING_REGISTRIES[filename]
+
+
 def _position() -> tuple[Any, Any]:
     """Return the index row number and primary filespec the worker is on."""
     assert _STATE is not None
@@ -402,20 +436,23 @@ def _record_warning(
     file: Any = None,
     line: str | None = None,
 ) -> None:
-    """Record a Python warning's text on the task's capture, as the import's handler would.
+    """Record a Python warning on the task's capture, with its class and location.
+
+    The import's process issues it again from the record (`_replay`), so its own filters
+    decide whether it is shown, as they do for a warning the serial loop raises.
 
     Parameters:
         message: The warning, or its text.
-        category: The warning class. Not recorded.
-        filename: Where the warning was raised. Not recorded.
-        lineno: The line it was raised on. Not recorded.
+        category: The warning class.
+        filename: Where the warning is attributed to.
+        lineno: The line it is attributed to.
         file: Where the standard handler would have written it. Unused.
-        line: The source line, if the caller supplied one. Not recorded.
+        line: The source line, if the caller supplied one. Unused.
     """
     assert _STATE is not None
     capture = _STATE.ctx.capture
     if capture is not None:
-        capture.warning(_position(), str(message))
+        capture.warning(_position(), str(message), category, filename, lineno)
 
 
 def _loggable(value: Any) -> Any:

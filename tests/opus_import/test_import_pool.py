@@ -164,6 +164,32 @@ def test_a_pool_computes_what_one_process_computes() -> None:
     assert pooled.capture is None
 
 
+def _warning_row(ctx: ImportContext, index: _Index, index_row_num: int, emit: Any) -> None:
+    """Warn from one location on every row."""
+    warnings.warn('every row warns from here', UserWarning, stacklevel=1)
+    emit('obs_general', {'row': index_row_num}, None)
+
+
+def test_a_warning_shown_once_per_location_is_shown_once_across_workers() -> None:
+    """Under the default filter, every worker sees the warning, and the import shows it once."""
+    recorded: dict[int, list[str]] = {}
+    for workers in (1, 3):
+        ctx = make_context()
+        ctx.workers = workers
+        ctx.worker_rows = 2
+        with warnings.catch_warnings():
+            warnings.simplefilter('default')
+            warnings.filterwarnings(
+                'ignore', message=r'This process .* is multi-threaded', category=DeprecationWarning
+            )
+            warnings.showwarning = cli._make_warning_handler(ctx)
+            assert do_import_pool.compute_index(
+                ctx, _Index(list(range(12))), _warning_row, lambda *_: None, 'TEST_0001_index.lbl'
+            )
+        recorded[workers] = ctx.python_warning_list
+    assert recorded[3] == recorded[1] == ['every row warns from here']
+
+
 def test_the_rows_are_computed_in_forked_workers() -> None:
     """With more rows than one task covers, the rows come from several other processes."""
 
