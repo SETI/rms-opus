@@ -5323,3 +5323,34 @@ Nothing above this line is rewritten by an executor.
     3,217 insertions and 2,558 deletions. Of them, `-- src` is 38 files, 1,052
     insertions and 1,542 deletions, and `-- docs tests import_tests` 55 files, 2,146
     insertions and 992 deletions.
+
+### 2026-11-10, PR-10 (written against this file at 2b098379)
+
+- With both temporary tables gone, the application creates none, so their helpers go
+  with them, beyond the section's `create_table_as_select`: `sql_builder`'s
+  `drop_temporary_table_if_exists`, `db_utils.drop_temporary_table`, and
+  `create_table_from_select_sql`'s `temporary` parameter. `sql_builder` gains `between`,
+  `sort_order_range` (the window after an offset, numbered from 1), and `row_number`
+  (`ROW_NUMBER() OVER (ORDER BY ...)`, rendered as `Select`'s ORDER BY is).
+- The cart's range editor numbers the session's cart in a derived table aliased
+  `cart_order`, which each statement that names it computes afresh: the two endpoint
+  lookups, the add's two counts, and the write. MySQL accepts the `REPLACE INTO cart ...
+  SELECT` and the multi-table `DELETE` from `cart` that join a derived table reading
+  `cart` (checked on a scratch schema: the right rows of the session, none of another's),
+  because a derived table with a window function is materialized rather than merged.
+- The test-scale A/B (2026-11-10, session `a`, `bench_db` once a side, then three
+  `bench_web` runs a side alternated A B A B; before at 56d510f2, after at 17b67a54)
+  served one schema, `bench_test_before_a_3`, the base import PR-09's session `a` kept:
+  PR-10 changes no imported table, and the code that imported it is the base's.
+  - The target, `web.warm.pages.broad.page_last.latency_s`, fell from 11.3 ms to 6.9 ms
+    (-39.4%, spreads 0.4% and 0.6%) and is **not judged improved**: its floor is
+    12.9 ms, which is more than the whole latency, so no change at this scale could pass
+    it, and repeating at five runs, as §2.6 would for a change within twice the floor,
+    could not either. Every guard held.
+  - Reported: the warm empty search's last page -38.2%; app-cold last pages of the
+    broad, empty, ring-radius and selective searches -40.4%, -35.6%, -17.9% and -32.3%
+    (all within floors); the statements a page scenario executes fell, warm 29 to 23 and
+    the re-sort's 16 to 12, the temporary table's `CREATE` and `DROP` gone.
+  - The target is measured again at complete scale, where a last page is costly enough
+    to measure, on the complete-scale schema an informational eight-worker import at
+    PR-09's code builds; that note follows.
