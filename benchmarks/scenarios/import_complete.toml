@@ -16,11 +16,9 @@ pds4 = "$PDS_DROPBOX_ROOT/pds4-holdings"
 
 [[groups]]
 bundles = "GALILEO"
-options = ["--import-check-duplicate-id"]
 
 [[groups]]
 bundles = "NEWHORIZONS"
-options = ["--import-check-duplicate-id"]
 
 [[groups]]
 bundles = "EBROCC"

@@ -150,7 +150,7 @@ def test_the_finalized_schema_carries_exactly_the_declared_keys(
 
 def test_every_main_run_import_took_the_fresh_path(main_run: build_run.ImportRun) -> None:
     """Each bundle invocation logged its path, and it was the fresh import's."""
-    import_steps = [step for step in main_run.steps if '--do-all-import' in step.arguments]
+    import_steps = [step for step in main_run.steps if '--import' in step.arguments]
     assert import_steps != []
     for step in import_steps:
         assert f'{do_import.IMPORT_PATH_PREFIX}{do_import.IMPORT_PATH_FRESH}' in step.stdout
@@ -369,7 +369,7 @@ def sequence(
     }
     before = _snapshot(db_credentials, schema)
     keys_before = _server_keys(db_credentials, schema)
-    refused = step('--do-all-import', _FIRST_BUNDLE)
+    refused = step('--import', _FIRST_BUNDLE)
     after = _snapshot(db_credentials, schema)
     keys_after = _server_keys(db_credentials, schema)
     dropped = _drop_two_keys(db_credentials, schema)

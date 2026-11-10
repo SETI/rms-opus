@@ -104,6 +104,20 @@ everything else the chain needs underneath it, it creates.
 
     basename "$(readlink /opt/opus/import)"
 
+   Bundles can be added to that database, or imported again into it, before it
+   is served. Each command runs only if the one before it succeeded, and from
+   the first until the last the database is "appending", which the web
+   application and both deploy scripts refuse:
+
+    export OPUS_CONFIG=/opt/opus/import/opus.toml
+    /opt/opus/import/opus_venv/bin/opus_import --import COISS_2115 &&
+    /opt/opus/import/opus_venv/bin/opus_import --finalize &&
+    /opt/opus/import/opus_venv/bin/opus_import --validate &&
+    /opt/opus/import/opus_venv/bin/opus_import --write-schema-version
+
+   A bundle that fails stops --finalize and --write-schema-version until it is
+   imported again or removed with `opus_import --delete-bundles <bundle>`.
+
 5. Build the installation that will serve, and switch to it.
 
     ./import_and_deploy/deploy_new_code_and_database.sh \
@@ -158,7 +172,7 @@ The database records its schema version, and both deploy scripts refuse,
 before writing anything, a release whose version differs from it. A refusal
 names the remedy: an import under the new release, or, for a database this
 release imported but did not finish, its finishing steps -- `opus_import
---finalize`, `--import-dictionary` and `--validate-perm` -- then
+--finalize`, `--import-dictionary` and `--validate` -- then
 `opus_import --write-schema-version`.
 
 

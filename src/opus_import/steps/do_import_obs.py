@@ -378,7 +378,7 @@ def import_observation_table(
         else:
             new_row[field_name] = row_val[0]  # Only a single value
 
-    if not ctx.args.import_ignore_geo_mismatch:
+    if not ctx.args.ignore_geo_mismatch:
         if table_name == 'obs_ring_geometry':
             # A geometry table is only ever filled by a class that mixes in the module
             # defining it, which every class in config_bundle_info does.

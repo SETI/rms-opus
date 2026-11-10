@@ -49,11 +49,10 @@ def test_a_context_starts_with_empty_state() -> None:
     assert ctx.current_index_row_number is None
     assert ctx.current_primary_filespec is None
     assert ctx.import_has_bad_data is False
-    assert ctx.try_cart_later is False
+    assert ctx.bundle_has_errors is False
     assert ctx.python_warning_list == []
     assert ctx.max_table_id_cache == {}
     assert ctx.mult_table_cache == {}
-    assert ctx.created_import_mult_tables == set()
     assert ctx.modified_mult_tables == set()
 
 
@@ -63,13 +62,11 @@ def test_two_contexts_share_no_state() -> None:
     second = make_context()
 
     first.mult_table_cache['mult_obs_general_mission_id'] = [{'id': 0}]
-    first.created_import_mult_tables.add('mult_obs_general_mission_id')
     first.modified_mult_tables.add('mult_obs_general_mission_id')
     first.max_table_id_cache['obs_general'] = 17
     first.log.nonrepeating_error('a bad thing')
 
     assert second.mult_table_cache == {}
-    assert second.created_import_mult_tables == set()
     assert second.modified_mult_tables == set()
     assert second.max_table_id_cache == {}
     assert second.import_has_bad_data is False
@@ -139,6 +136,18 @@ def test_a_nonrepeating_error_is_logged_once_however_the_position_changes(
 
     assert _messages(ctx, 'error') == ['[COISS_2002 index row 1] the same fault']
     assert ctx.import_has_bad_data is True
+
+
+def test_a_repeated_nonrepeating_error_still_marks_a_later_bundle(ctx: ImportContext) -> None:
+    """A second bundle that repeats the first one's error has errors, though nothing is logged."""
+    ctx.current_bundle_id = 'COISS_2002'
+    ctx.log.nonrepeating_error('the same fault')
+    ctx.bundle_has_errors = False
+    ctx.current_bundle_id = 'COISS_2008'
+    ctx.log.nonrepeating_error('the same fault')
+
+    assert _messages(ctx, 'error') == ['[COISS_2002] the same fault']
+    assert ctx.bundle_has_errors is True
 
 
 def test_a_nonrepeating_warning_is_logged_once(ctx: ImportContext) -> None:
@@ -285,7 +294,7 @@ def _mult_context() -> ImportContext:
     arguments stay what a real run would have.
     """
     ctx = make_context()
-    ctx.args.import_suppress_mult_messages = True
+    ctx.args.suppress_mult_messages = True
     return ctx
 
 
@@ -337,45 +346,35 @@ def test_one_context_s_mult_cache_is_invisible_to_another() -> None:
     assert second.modified_mult_tables == {'mult_obs_general_x'}
 
 
-def test_dumping_writes_only_the_modified_tables_and_clears_the_created_record() -> None:
-    """A table that has been written out is no longer an empty table to skip reading."""
+def test_writing_writes_only_the_modified_tables() -> None:
+    """A table this bundle read but added nothing to is not written back."""
     ctx = _mult_context()
-    written: list[tuple[str, str]] = []
+    written: list[str] = []
 
     class _FakeDatabase:
-        """Records the writes `dump_import_mult_tables` makes."""
+        """Records the writes `write_mult_tables` makes."""
 
         @staticmethod
-        def convert_raw_to_namespace(namespace: str, raw_table_name: str) -> str:
-            return f'{namespace}_{raw_table_name}'
-
-        @staticmethod
-        def upsert_rows(
-            namespace: str, raw_table_name: str, key_name: str, rows: list[dict[str, Any]]
-        ) -> None:
-            written.append((namespace, raw_table_name))
+        def upsert_rows(table_name: str, key_name: str, rows: list[dict[str, Any]]) -> None:
+            written.append(table_name)
 
     ctx.db = cast(ImportDBSuper, _FakeDatabase())
     do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
     ctx.mult_table_cache['mult_obs_general_untouched'] = []
-    ctx.created_import_mult_tables |= {'mult_obs_general_x', 'mult_obs_general_untouched'}
 
-    do_import_mult.dump_import_mult_tables(ctx)
+    do_import_mult.write_mult_tables(ctx)
 
-    assert written == [('import', 'mult_obs_general_x')]
-    assert ctx.created_import_mult_tables == {'mult_obs_general_untouched'}
+    assert written == ['mult_obs_general_x']
 
 
 def test_the_bundle_loop_clears_the_per_bundle_caches_and_not_the_per_run_one() -> None:
-    """Which cache each loop resets is what keeps mult ids stable across a run.
+    """Which cache each loop resets is what keeps one bundle's state out of the next.
 
-    `created_import_mult_tables` records the import mult tables created empty and not
-    yet written; clearing it per bundle would make the second bundle read an empty
-    import table instead of the populated permanent one. `mult_table_cache` and
-    `modified_mult_tables` are the opposite: carrying them across bundles would write
-    one bundle's values into another's tables. Driving the two loops needs holdings and
-    a database, so this reads the source instead -- but it fails if either reset is
-    dropped or moved to the wrong loop.
+    `mult_table_cache` and `modified_mult_tables` are reset per bundle: carrying them
+    across bundles would write one bundle's values into another's tables.
+    `import_has_bad_data` is reset per run, so one bad bundle fails the run. Driving the
+    two loops needs holdings and a database, so this reads the source instead -- but it
+    fails if either reset is dropped or moved to the wrong loop.
     """
     assigned = {}
     for func in (do_import.import_one_bundle, do_import.do_import_steps):
@@ -390,9 +389,10 @@ def test_the_bundle_loop_clears_the_per_bundle_caches_and_not_the_per_run_one() 
 
     assert 'ctx.mult_table_cache' in assigned['import_one_bundle']
     assert 'ctx.modified_mult_tables' in assigned['import_one_bundle']
-    assert 'ctx.created_import_mult_tables' not in assigned['import_one_bundle']
+    assert 'ctx.import_has_bad_data' not in assigned['import_one_bundle']
 
-    assert 'ctx.created_import_mult_tables' in assigned['do_import_steps']
+    assert 'ctx.import_has_bad_data' in assigned['do_import_steps']
+    assert 'ctx.bundle_has_errors' in assigned['do_import_steps']
 
 
 def test_a_timed_step_records_its_elapsed_time(
@@ -424,6 +424,6 @@ def test_a_timed_step_that_raises_is_still_recorded(
     """A failing step's time is kept, and its exception is not swallowed."""
     readings = iter([3.0, 3.75])
     monkeypatch.setattr('opus_import.context.time.perf_counter', lambda: next(readings))
-    with pytest.raises(RuntimeError, match='boom'), ctx.timed('validate_perm'):
+    with pytest.raises(RuntimeError, match='boom'), ctx.timed('validate'):
         raise RuntimeError('boom')
-    assert ctx.step_timings == {'validate_perm': 0.75}
+    assert ctx.step_timings == {'validate': 0.75}

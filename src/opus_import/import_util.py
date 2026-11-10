@@ -37,7 +37,6 @@ import pdsfile
 import pdsparser
 import pdstable
 
-from opus_config import get_config
 from opus_import import config_data, config_targets, instruments
 
 if TYPE_CHECKING:
@@ -337,7 +336,7 @@ def log_accumulated_warnings(ctx: ImportContext, title: str) -> bool:
         for w in ctx.python_warning_list:
             log_error(ctx, '  ' + w)
         ctx.python_warning_list = []
-        ctx.import_has_bad_data = True
+        ctx.mark_bad_data()
         return True
     return False
 
@@ -462,9 +461,10 @@ def safe_pdstable_read_pds3(
         return None, None
 
     rows = table.dicts_by_row()
-    label = table.info.label.as_dict()
-
-    return rows, label
+    label = table.info.label
+    # pdstable returns a dictionary only for a PDS4 table; a PDS3 table's is a parsed label.
+    assert not isinstance(label, dict)
+    return rows, label.as_dict()
 
 
 def safe_column(row: IndexRow, column_name: str, idx: int | None = None) -> Any:
@@ -638,7 +638,7 @@ def read_schema_for_table(
 
     Parameters:
         ctx: The import run's context, for the logger.
-        table_name: The table. An import prefix is stripped, and the name is lowercased.
+        table_name: The table, matched without regard to case.
         replace: Text substitutions to apply to the schema before parsing it, as
             ``(from, to)`` pairs.
 
@@ -650,7 +650,7 @@ def read_schema_for_table(
         json.JSONDecodeError: If the schema is not valid JSON. The table being
             read is logged first, since the parser's own message names no file.
     """
-    table_name = table_name.replace(get_config().import_.table_temp_prefix, '').lower()
+    table_name = table_name.lower()
     if table_name.startswith('obs_surface_geometry__'):
         assert not replace
         target_name = table_name.replace('obs_surface_geometry__', '')
@@ -693,30 +693,20 @@ def read_schema_for_existing_table(ctx: ImportContext, table_name: str) -> Table
 
 
 def find_max_table_id(ctx: ImportContext, table_name: str) -> Any:
-    """Return the largest row id a table holds in either namespace.
+    """Return the largest row id a table holds.
 
     Parameters:
         ctx: The import run's context, for the open database.
-        table_name: The table, without its namespace prefix.
+        table_name: The table.
 
     Returns:
-        The larger of the two namespaces' maxima, or -1 if the table exists in neither
-        or is empty in both.
+        The maximum, or -1 if the table does not exist or is empty.
     """
     assert ctx.db is not None
-    max1 = -1
-    max2 = -1
-    if ctx.db.table_exists('import', table_name):
-        max1 = ctx.db.find_column_max('import', table_name, 'id')
-    if ctx.db.table_exists('perm', table_name):
-        max2 = ctx.db.find_column_max('perm', table_name, 'id')
-    if max1 is None and max2 is None:
+    if not ctx.db.table_exists(table_name):
         return -1
-    if max1 is None:
-        return max2
-    if max2 is None:
-        return max1
-    return max(max1, max2)
+    max_id = ctx.db.find_column_max(table_name, 'id')
+    return -1 if max_id is None else max_id
 
 
 ################################################################################
@@ -892,7 +882,7 @@ def log_debug(ctx: ImportContext, msg: str, *args: Any) -> None:
 
 
 def log_nonrepeating_error(ctx: ImportContext, msg: str) -> None:
-    """Log an error the first time this run produces it, and ignore it after that.
+    """Log an error the first time this run produces it, and mark bad data every time.
 
     Parameters:
         ctx: The import run's context.

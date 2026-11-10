@@ -8,13 +8,20 @@
     {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
         "field_notnull": true,
         "comment": "This is the primary (surrogate) key linking the record to obs_general."
+    },
+    {
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ],
+            "on_delete": "cascade"
+        }
     },
     {
         "field_name": "opus_id",

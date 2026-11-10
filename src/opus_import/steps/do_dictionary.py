@@ -37,7 +37,7 @@ def fill_definitions(ctx: ImportContext, definitions_table: str, contexts_table:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        definitions_table: The permanent table to fill, already created from
+        definitions_table: The table to fill, already created from
             ``definitions``' schema with its foreign key onto ``contexts_table``.
         contexts_table: The ``contexts`` table being built beside it, which gains the
             mult tooltip contexts.
@@ -103,8 +103,8 @@ def fill_definitions(ctx: ImportContext, definitions_table: str, contexts_table:
         }
         mult_tp_ctx_rows.append(new_row)
 
-    db.insert_rows('perm', contexts_table, mult_tp_ctx_rows)
-    db.insert_rows('perm', definitions_table, rows)
+    db.insert_rows(contexts_table, mult_tp_ctx_rows)
+    db.insert_rows(definitions_table, rows)
 
     return True
 
@@ -117,7 +117,7 @@ def fill_contexts(ctx: ImportContext, new_table: str) -> bool:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        new_table: The permanent table to fill, already created from ``contexts``'
+        new_table: The table to fill, already created from ``contexts``'
             schema.
 
     Returns:
@@ -147,13 +147,13 @@ def fill_contexts(ctx: ImportContext, new_table: str) -> bool:
         logger.log('error', f'Failed to read {contexts_file}: {e.strerror}')
         return False
 
-    db.insert_rows('perm', new_table, rows)
+    db.insert_rows(new_table, rows)
 
     return True
 
 
 def do_dictionary(ctx: ImportContext) -> bool:
-    """Rebuild the permanent dictionary tables, driven by ``--import-dictionary``.
+    """Rebuild the dictionary tables, driven by ``--import-dictionary``.
 
     A failed build leaves the live tables as the previous run wrote them.
 

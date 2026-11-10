@@ -44,37 +44,32 @@ class _VersionDB:
         self.created: list[str] = []
         self.dropped: list[str] = []
 
-    def table_exists(self, namespace: str, table_name: str) -> bool:
+    def table_exists(self, table_name: str) -> bool:
         """Answer for the version table only."""
-        assert namespace == 'perm'
         return table_name == SCHEMA_VERSION_TABLE and self.rows is not None
 
-    def read_rows(self, namespace: str, table_name: str, columns: Sequence[str]) -> list[Any]:
+    def read_rows(self, table_name: str, columns: Sequence[str]) -> list[Any]:
         """Return the rows."""
-        assert (namespace, table_name, list(columns)) == (
-            'perm',
+        assert (table_name, list(columns)) == (
             SCHEMA_VERSION_TABLE,
             ['version', 'state'],
         )
         assert self.rows is not None
         return list(self.rows)
 
-    def create_table(
-        self, namespace: str, table_name: str, schema: Any, *, ignore_if_exists: bool
-    ) -> None:
+    def create_table(self, table_name: str, schema: Any, *, ignore_if_exists: bool) -> None:
         """Create the empty table from the packaged schema."""
         assert [column['field_name'] for column in schema] == ['version', 'state']
         self.created.append(table_name)
         self.rows = []
 
-    def insert_row(self, namespace: str, table_name: str, row: dict[str, Any]) -> None:
+    def insert_row(self, table_name: str, row: dict[str, Any]) -> None:
         """Append a row."""
         assert self.rows is not None
         self.rows.append((row['version'], row['state']))
 
     def update_row(
         self,
-        namespace: str,
         table_name: str,
         row: dict[str, Any],
         where: str,
@@ -91,13 +86,14 @@ class _VersionDB:
         """Quote as MySQL does."""
         return f'`{name}`'
 
-    def drop_table(self, namespace: str, table_name: str) -> None:
+    def drop_table(self, table_name: str) -> None:
         """Record the drop."""
         self.dropped.append(table_name)
 
-    def table_names(self, namespace: str, prefix: Sequence[str]) -> list[str]:
-        """Report the other tables an erase drops."""
-        return ['obs_general', 'obs_pds', 'cart', 'mult_obs_general_planet_id']
+    def table_names(self) -> list[str]:
+        """Report the tables an erase drops: the version table, while it exists, and others."""
+        version = [SCHEMA_VERSION_TABLE] if self.rows is not None else []
+        return [*version, 'obs_general', 'obs_pds', 'cart', 'mult_obs_general_planet_id']
 
 
 def _write(rows: list[tuple[Any, ...]] | None) -> tuple[bool, _VersionDB, RecordingLogger]:
@@ -201,16 +197,9 @@ def test_more_than_one_row_is_refused() -> None:
 def test_the_erase_drops_the_version_table_before_any_other() -> None:
     """An erase that stops part way leaves no version row."""
     db = _VersionDB([(SCHEMA_VERSION, SCHEMA_STATE_READY)])
-    do_import_tables.delete_all_obs_mult_tables(make_context(db=db), 'perm')
+    do_import_tables.delete_all_opus_tables(make_context(db=db))
     assert db.dropped[0] == SCHEMA_VERSION_TABLE
     assert set(db.dropped[1:]) == {'obs_general', 'obs_pds', 'cart', 'mult_obs_general_planet_id'}
-
-
-def test_emptying_the_import_tables_leaves_the_version_table_alone() -> None:
-    """The table exists only in the permanent namespace."""
-    db = _VersionDB([(SCHEMA_VERSION, SCHEMA_STATE_READY)])
-    do_import_tables.delete_all_obs_mult_tables(make_context(db=db), 'import')
-    assert SCHEMA_VERSION_TABLE not in db.dropped
 
 
 def test_the_module_imports_neither_django_nor_the_configuration() -> None:

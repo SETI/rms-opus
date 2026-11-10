@@ -62,7 +62,7 @@ def _defines_a_column(entry: dict[str, object]) -> bool:
 
 
 def _is_a_link(entry: dict[str, object]) -> bool:
-    """Say whether one schema entry is a constraint or a link rather than a column.
+    """Say whether one schema entry is a constraint, a foreign key or a link, not a column.
 
     Parameters:
         entry: The schema entry.
@@ -70,7 +70,7 @@ def _is_a_link(entry: dict[str, object]) -> bool:
     Returns:
         True if the entry deliberately defines no column.
     """
-    return 'constraint' in entry or 'pi_referred_slug' in entry
+    return 'constraint' in entry or 'foreign_key' in entry or 'pi_referred_slug' in entry
 
 
 def test_tab_data_sources_exist_only_in_obs_files() -> None:

@@ -186,7 +186,6 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('django.cache_location', '127.0.0.1:11211'),
         ('django.conn_max_age', 300),
         ('django.conn_health_checks', True),
-        ('import_.table_temp_prefix', 'imp_'),
         ('import_.bulk_load', True),
         ('import_.scratch_dir', None),
         ('import_.transaction_rows', 100_000),
@@ -578,5 +577,5 @@ def test_the_ci_fixture_is_a_valid_configuration(ci_config_path: Path) -> None:
     """
     config = load_config(ci_config_path)
     assert config.database.schema == 'opus_ci_db'
-    assert config.import_.table_temp_prefix == 'imp_'
+    assert config.import_.bulk_load is True
     assert config.paths.static_root is None

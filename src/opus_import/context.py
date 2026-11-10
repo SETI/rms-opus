@@ -78,7 +78,7 @@ class ImportLog:
             args: Further arguments passed to the underlying logger.
         """
         self._ctx.logger.log('error', self._position() + msg, *args)
-        self._ctx.import_has_bad_data = True
+        self._ctx.mark_bad_data()
 
     def warning(self, msg: str, *args: Any) -> None:
         """Log a message at warning level.
@@ -108,15 +108,20 @@ class ImportLog:
         self._ctx.logger.log('debug', self._position() + msg, *args)
 
     def nonrepeating_error(self, msg: str) -> None:
-        """Log an error the first time this run produces it, and ignore it after that.
+        """Log an error the first time this run produces it, and mark bad data every time.
+
+        Every call marks the bundle being imported as having errors, so a later bundle
+        that repeats an earlier bundle's error is recorded failed too.
 
         Parameters:
             msg: The message. Two calls with equal messages log once, even though their
                 position prefixes differ.
         """
-        if msg not in self._ctx.logged_import_errors:
-            self._ctx.logged_import_errors.append(msg)
-            self.error(msg)
+        if msg in self._ctx.logged_import_errors:
+            self._ctx.mark_bad_data()
+            return
+        self._ctx.logged_import_errors.append(msg)
+        self.error(msg)
 
     def nonrepeating_warning(self, msg: str) -> None:
         """Log a warning the first time this run produces it, and ignore it after that.
@@ -164,10 +169,13 @@ class ImportContext:
         logged_import_warnings: Messages `ImportLog.nonrepeating_warning` has already
             logged.
         import_has_bad_data: True once the run has produced data not worth keeping. The
-            run aborts on it unless ``--import-ignore-errors`` was given. Every `log`
-            error sets it, and a few sites outside `log` set it directly; but it is not
-            a complete record of the run's errors, because several steps log failures
-            straight to `logger` and leave it alone.
+            run aborts on it unless ``--ignore-errors`` was given. Every `log` error sets
+            it, and a few sites outside `log` set it through `mark_bad_data`; but it is
+            not a complete record of the run's errors, because several steps log
+            failures straight to `logger` and leave it alone.
+        bundle_has_errors: True once the bundle being imported has logged an error,
+            set with `import_has_bad_data` and cleared at the start of each bundle; it
+            decides whether the bundle registry records the bundle ``failed``.
         max_table_id_cache: The highest row id seen per table, so ids can be handed out
             without querying the database for each one. Cleared for each bundle.
         current_bundle_id: The bundle being imported, or None outside a bundle.
@@ -175,13 +183,8 @@ class ImportContext:
         current_primary_filespec: The primary filespec of the observation being imported,
             or None. It is unknown for part of each row, because some bundles take it
             from the supplemental index.
-        try_cart_later: True when creating the cart table failed because the permanent
-            tables did not exist yet, so it is worth one more attempt after the import.
         mult_table_cache: Each mult table read or created during this bundle, keyed by
             table name. Cleared for each bundle.
-        created_import_mult_tables: The import mult tables created empty and not yet
-            written out. A table in here has no rows worth reading, so the permanent
-            table is read instead. Cleared once per run, not once per bundle.
         modified_mult_tables: The mult tables this bundle added values to, and which
             therefore have to be written back. Cleared for each bundle.
         step_timings: Wall-clock seconds per step the run has timed with `timed`,
@@ -199,6 +202,7 @@ class ImportContext:
     logged_import_errors: list[str] = field(default_factory=list)
     logged_import_warnings: list[str] = field(default_factory=list)
     import_has_bad_data: bool = False
+    bundle_has_errors: bool = False
 
     max_table_id_cache: dict[str, int] = field(default_factory=dict)
 
@@ -206,10 +210,7 @@ class ImportContext:
     current_index_row_number: int | None = None
     current_primary_filespec: str | None = None
 
-    try_cart_later: bool = False
-
     mult_table_cache: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
-    created_import_mult_tables: set[str] = field(default_factory=set)
     modified_mult_tables: set[str] = field(default_factory=set)
 
     step_timings: dict[str, float] = field(default_factory=dict)
@@ -221,6 +222,11 @@ class ImportContext:
     def __post_init__(self) -> None:
         """Bind this context's `ImportLog`."""
         self.log = ImportLog(self)
+
+    def mark_bad_data(self) -> None:
+        """Record that the run, and the bundle it is importing, produced an error."""
+        self.import_has_bad_data = True
+        self.bundle_has_errors = True
 
     @contextlib.contextmanager
     def timed(self, step: str) -> Iterator[None]:

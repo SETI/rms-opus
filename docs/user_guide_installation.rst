@@ -413,10 +413,9 @@ for the moment it started. It runs **detached**, and prints the log file it is w
 to; with ``OPUS_IMPORT_MAIL_TO`` filled in, it mails that log when it ends.
 
 A full-holdings import is **hours to days**. What it runs is ``opus_import_all``, the
-installed command: every bundle set in order -- Galileo and New Horizons first, while the
-tables are small, because their bundles carry observations that appear in more than one
--- then the rest in roughly decreasing order of how long each takes, and finally the
-four steps that finish the database, the auxiliary tables, the dictionary, the
+installed command: every bundle set in order -- Galileo and New Horizons first, then the
+rest roughly from the quickest to the slowest, so that a run that is going to fail on a
+small set fails early -- and finally the four steps that finish the database, the auxiliary tables, the dictionary, the
 validation and the schema version row the web application checks for
 (:ref:`user_guide_deployment_schema_version`). The order lives in the release being installed rather than in the scripts, so
 it cannot disagree with the code importing.
@@ -457,7 +456,7 @@ then deploys the database that produced::
     # step 5 as usual, naming that database.
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI &&
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --import-dictionary &&
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate-perm &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate &&
     OPUS_CONFIG=/opt/opus/partial.toml opus_import --write-schema-version &&
     ./import_and_deploy/deploy_new_code_and_database.sh <database> ==<release>
 
@@ -710,10 +709,6 @@ entirely.
    * - Key
      - Required
      - Meaning
-   * - ``table_temp_prefix``
-     - optional
-     - The prefix of the import namespace's tables. Default ``"imp_"``. See
-       :ref:`dev_guide_import_two_namespaces`.
    * - ``log_file``, ``debug_log_file``
      - yes
      - The import pipeline's own logs. Their directory must already exist.

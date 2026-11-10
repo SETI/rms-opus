@@ -1,16 +1,16 @@
 """The database interface every import step runs through, independent of brand.
 
 `ImportDBSuper` defines the operations the pipeline needs -- creating and dropping
-tables, reading and writing rows, and copying a bundle from the import namespace to the
-permanent one -- and leaves the SQL to a subclass per database brand.
+tables, reading and writing rows, and building keys -- and leaves the SQL to a subclass
+per database brand.
 `opus_import.importdb.mysql` is the implemented one; every method here that a brand must
 supply raises `NotImplementedError`.
 
 Two behaviors are implemented here rather than per brand, because they are the same for
-any brand: `ImportDBSuper.convert_raw_to_namespace` and its inverse map a table's raw
-name to the namespace it is being used in, and `ImportDBSuper._operation` collects the
-Python warnings a database operation emits so they are reported together with the
-statements that produced them.
+any brand: `ImportDBSuper.build_indexes` runs key builds for several tables at once over
+sibling connections, and `ImportDBSuper._operation` collects the Python warnings a
+database operation emits so they are reported together with the statements that
+produced them.
 """
 
 from __future__ import annotations
@@ -22,10 +22,9 @@ import warnings
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from opus_config.config import DEFAULT_TRANSACTION_ROWS
-from opus_import.table_keys import is_key_filtered_table
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Iterator, Mapping, Sequence
@@ -34,17 +33,6 @@ if TYPE_CHECKING:
     import pdslogger
 
     from opus_import.table_keys import TableKey
-
-Namespace = Literal['import', 'perm', 'all']
-"""Which set of tables an operation applies to.
-
-An import into a schema with a version row writes to prefixed *import* tables and only
-copies them over the *perm* (permanent) tables the web application reads once the run
-has succeeded. A fresh import writes the observation and mult tables directly: with
-`ImportDBSuper.direct` set, ``'import'`` names the permanent observation and mult tables.
-``'all'`` means both, and is accepted only where reading both makes sense. When no import
-prefix is configured the two namespaces are the same tables.
-"""
 
 DBRow = dict[str, Any]
 """One row to write, keyed by column name."""
@@ -145,7 +133,7 @@ class ImportDBSuper:
     """The brand-independent half of the import pipeline's database interface.
 
     A subclass supplies the SQL for one database brand; this class holds the connection
-    parameters, the namespace mapping and the warning collection its methods share.
+    parameters and the warning collection its methods share.
     Instances are created through `opus_import.importdb.get_db` rather than directly.
 
     Attributes:
@@ -162,12 +150,6 @@ class ImportDBSuper:
         tables_created: The tables created through this instance, in creation order,
             so a caller can post-process the ones an import run made. A read-only run
             records the tables it would have created.
-        direct: True on a fresh import, which writes the permanent observation and mult
-            tables directly: ``'import'`` then names those tables in every method, and
-            `create_table` creates each of them with only the keys a load needs
-            (`opus_import.table_keys.create_time_keys`). Every other table keeps its
-            import namespace. Set by the import's choice of path, never by a caller
-            otherwise.
     """
 
     # Any DB-API 2.0 connection; the base class uses only `cursor()` and `commit()`, and
@@ -182,7 +164,6 @@ class ImportDBSuper:
         db_user: str,
         db_password: str,
         mult_form_types: Sequence[str] | None = None,
-        import_prefix: str | None = None,
         logger: pdslogger.PdsLogger | None = None,
         read_only: bool = False,
         bulk_load: bool = True,
@@ -200,8 +181,6 @@ class ImportDBSuper:
             db_password: That user's password.
             mult_form_types: The ``param_info`` form types that have a ``mult_`` table,
                 or None for none of them.
-            import_prefix: The prefix distinguishing an import table from its permanent
-                counterpart, or None to make the two namespaces the same tables.
             logger: Where to report progress, statements and warnings, or None to report
                 nothing. With None, the Python-warning collection below is also skipped,
                 since there would be nowhere to report the warnings.
@@ -226,7 +205,6 @@ class ImportDBSuper:
         self.db_schema = db_schema
         self.db_user = db_user
         self.db_password = db_password
-        self.import_prefix = import_prefix
         self.logger = logger
         self.read_only = read_only
         self._mult_form_types = [] if mult_form_types is None else mult_form_types
@@ -235,7 +213,6 @@ class ImportDBSuper:
         self.transaction_rows = transaction_rows
 
         self.tables_created: list[str] = []
-        self.direct = False
 
         self._enter_stack: list[str] = []
         self._cmds_executed: list[str] = []
@@ -249,107 +226,6 @@ class ImportDBSuper:
         # _old_warning_handler is reset to None on restore, so it cannot serve
         # as both the sentinel and the saved value.
         self._warning_handler_installed = False
-
-    def _is_prefixed(self, table_name: str) -> bool:
-        """Return whether a table name carries the import prefix.
-
-        Parameters:
-            table_name: The table name as the database spells it.
-
-        Returns:
-            True if an import prefix is configured and the name starts with it, matched
-            without regard to case.
-        """
-        if self.import_prefix is None:
-            return False
-        return table_name.lower().startswith(self.import_prefix.lower())
-
-    def _is_direct_table(self, raw_table_name: str) -> bool:
-        """Return whether ``'import'`` names a table's permanent copy in this run.
-
-        Parameters:
-            raw_table_name: The table's raw name.
-
-        Returns:
-            True when `direct` is set and the table is an observation or mult table.
-        """
-        return self.direct and is_key_filtered_table(raw_table_name)
-
-    def _is_import_namespace(self, table_name: str) -> bool:
-        """Return whether a table, as the database spells it, is in the import namespace.
-
-        Parameters:
-            table_name: The table name as the database spells it.
-
-        Returns:
-            With `direct` set, True for an unprefixed observation or mult table and False
-            for a prefixed one, which the permanent table stands in for. Otherwise, True
-            if an import prefix is configured and the name starts with it, matched
-            without regard to case; False when no prefix is configured, because then no
-            table belongs to the import namespace alone.
-        """
-        if self._is_prefixed(table_name):
-            raw = table_name[len(self.import_prefix or '') :]
-            return not self._is_direct_table(raw)
-        return self._is_direct_table(table_name)
-
-    def _is_perm_namespace(self, table_name: str) -> bool:
-        """Return whether a table name lacks the import prefix.
-
-        Parameters:
-            table_name: The table name as the database spells it.
-
-        Returns:
-            True if no import prefix is configured, or the name does not start with it.
-        """
-        if self.import_prefix is None:
-            return True
-        return not table_name.lower().startswith(self.import_prefix.lower())
-
-    def convert_raw_to_namespace(self, namespace: Namespace, raw_table_name: str) -> str:
-        """Return the name a table has when it is used in the given namespace.
-
-        Parameters:
-            namespace: The namespace to name the table in.
-            raw_table_name: The table name without any namespace prefix.
-
-        Returns:
-            The prefixed name for ``'import'``, and the unchanged name otherwise, when no
-            import prefix is configured, or for an observation or mult table under
-            `direct`.
-        """
-        if self.import_prefix is None or self._is_direct_table(raw_table_name):
-            return raw_table_name
-        if namespace == 'import':
-            return self.import_prefix + raw_table_name
-        elif namespace == 'perm' or namespace == 'all':
-            return raw_table_name
-        raise NotImplementedError
-
-    def convert_namespace_to_raw(self, namespace: Namespace, table_name: str) -> str:
-        """Return a table's raw name, stripping the prefix the namespace added.
-
-        Parameters:
-            namespace: The namespace the name is currently in.
-            table_name: The name as the database spells it.
-
-        Returns:
-            The name with the import prefix removed for ``'import'``, and the unchanged
-            name otherwise, when no import prefix is configured, or for an observation or
-            mult table under `direct`.
-        """
-        if self.import_prefix is None or (
-            not self._is_prefixed(table_name) and self._is_direct_table(table_name)
-        ):
-            return table_name
-        if namespace == 'import':
-            assert table_name.lower().startswith(self.import_prefix.lower())
-            return table_name.replace(self.import_prefix, '').replace(
-                self.import_prefix.lower(), ''
-            )
-        elif namespace == 'perm' or namespace == 'all':
-            return table_name
-        raise NotImplementedError
 
     def _execute(
         self,
@@ -529,7 +405,7 @@ class ImportDBSuper:
 
         The sibling has no logger: `_enter` and `_exit` swap the process-wide
         `warnings.showwarning`, which is not safe to do from several threads at once, so
-        a sibling reports nothing and its caller logs on its behalf. It shares `direct`.
+        a sibling reports nothing and its caller logs on its behalf.
 
         Returns:
             A new instance of this brand, connected.
@@ -544,14 +420,12 @@ class ImportDBSuper:
             self.db_user,
             self.db_password,
             mult_form_types=self._mult_form_types,
-            import_prefix=self.import_prefix,
             logger=None,
             read_only=self.read_only,
             bulk_load=self.bulk_load,
             scratch_dir=self.scratch_dir,
             transaction_rows=self.transaction_rows,
         )
-        sibling.direct = self.direct
         return sibling
 
     def build_indexes(
@@ -576,7 +450,7 @@ class ImportDBSuper:
         done.
 
         Parameters:
-            table_to_statements: Each table's statements, keyed by raw table name. A table
+            table_to_statements: Each table's statements, keyed by table name. A table
                 with none is skipped.
             workers: The most tables that build at once; at least 1.
             server_tmpdir: The directory on the database server's host its sorts write
@@ -722,6 +596,33 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::_size_index_sort must be overridden')
 
+    @contextlib.contextmanager
+    def foreign_keys_unchecked(self) -> Iterator[None]:
+        """Turn this connection's foreign key checks off while the body runs.
+
+        The checks are turned back on however the body ends. With them off a write is not
+        checked against the foreign keys, and a delete cascades nothing.
+
+        Yields:
+            Nothing; the body runs with the checks off.
+        """
+        self._set_foreign_key_checks(False)
+        try:
+            yield
+        finally:
+            self._set_foreign_key_checks(True)
+
+    def _set_foreign_key_checks(self, enabled: bool) -> None:
+        """Turn this connection's foreign key checks on or off.
+
+        Parameters:
+            enabled: True to check foreign keys, False not to.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::_set_foreign_key_checks must be overridden')
+
     def run_ddl(self, cmd: str) -> None:
         """Run one statement that changes a table's definition.
 
@@ -741,28 +642,22 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::close must be overridden')
 
-    def read_table_keys(self, namespace: Namespace) -> dict[str, list[TableKey]]:
-        """Return the keys every table of a namespace has, as the server reports them.
-
-        Parameters:
-            namespace: The namespace to read.
+    def read_table_keys(self) -> dict[str, list[TableKey]]:
+        """Return the keys every table in the schema has, as the server reports them.
 
         Returns:
-            Each table's keys, keyed by raw table name; a table with no key is absent.
+            Each table's keys, keyed by table name; a table with no key is absent.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::read_table_keys must be overridden')
 
-    def add_keys_statement(
-        self, namespace: Namespace, raw_table_name: str, keys: Sequence[TableKey]
-    ) -> str:
+    def add_keys_statement(self, table_name: str, keys: Sequence[TableKey]) -> str:
         """Return one statement that adds plain, unique or primary keys to a table.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             keys: The keys to add; no foreign key.
 
         Returns:
@@ -773,14 +668,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::add_keys_statement must be overridden')
 
-    def add_foreign_key_statement(
-        self, namespace: Namespace, raw_table_name: str, key: TableKey
-    ) -> str:
+    def add_foreign_key_statement(self, table_name: str, key: TableKey) -> str:
         """Return one statement that adds a foreign key to a table.
 
         Parameters:
-            namespace: The namespace holding the table and the one it references.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key: The foreign key.
 
         Returns:
@@ -807,16 +699,14 @@ class ImportDBSuper:
 
     def key_space_bytes(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         schema: Sequence[SchemaColumn],
         key: TableKey,
     ) -> int:
         """Estimate the temporary space the server's sort needs to build one key.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             schema: The table's schema, which gives its columns' widths.
             key: The key.
 
@@ -844,12 +734,11 @@ class ImportDBSuper:
         raise NotImplementedError('ImportDBSuper::index_space_budget must be overridden')
 
     def table_names(
-        self, namespace: Namespace, prefix: str | list[str] | tuple[str, ...] | None = None
+        self, prefix: str | list[str] | tuple[str, ...] | None = None
     ) -> Collection[str]:
-        """Return the names of the tables in a namespace.
+        """Return the names of the tables in the schema.
 
         Parameters:
-            namespace: The namespace to list.
             prefix: One prefix, or several, that a name must start with; None for every
                 name.
 
@@ -863,27 +752,25 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::table_names must be overridden')
 
-    def table_exists(self, namespace: Namespace, table_name: str) -> bool:
-        """Return whether a table exists in a namespace.
+    def table_exists(self, table_name: str) -> bool:
+        """Return whether a table exists in the schema.
 
         Parameters:
-            namespace: The namespace to look in.
-            table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Returns:
             True if a table of that name exists, matched without regard to case, because
             table names are case-sensitive on some operating systems and not others.
         """
         with self._operation('table_exists'):
-            table_names = [x.lower() for x in self.table_names(namespace)]
+            table_names = [x.lower() for x in self.table_names()]
         return table_name.lower() in table_names
 
-    def table_info(self, namespace: Namespace, raw_table_name: str) -> list[SchemaColumn]:
+    def table_info(self, table_name: str) -> list[SchemaColumn]:
         """Return the columns of a table as the database currently defines them.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Returns:
             One dictionary per column, in the table's column order.
@@ -893,14 +780,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::table_info must be overridden')
 
-    def drop_table(
-        self, namespace: Namespace, raw_table_name: str, ignore_if_not_exists: bool = True
-    ) -> None:
+    def drop_table(self, table_name: str, ignore_if_not_exists: bool = True) -> None:
         """Delete a table.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             ignore_if_not_exists: True to do nothing when the table is absent, False to
                 treat that as a failure.
 
@@ -911,7 +795,6 @@ class ImportDBSuper:
 
     def rename_tables_atomically(
         self,
-        namespace: Namespace,
         renames: Sequence[tuple[str, str]],
         *,
         lock_wait_timeout_s: int,
@@ -924,8 +807,7 @@ class ImportDBSuper:
         order, so a pair may name a table an earlier pair just freed.
 
         Parameters:
-            namespace: The namespace holding every table named.
-            renames: ``(from, to)`` raw table names, in the order they apply.
+            renames: ``(from, to)`` table names, in the order they apply.
             lock_wait_timeout_s: How long one attempt waits for the tables' locks, which
                 a reader's open transaction holds, before it gives up.
             attempts: How many times to try before the wait is a failure.
@@ -937,16 +819,14 @@ class ImportDBSuper:
 
     def create_table(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         schema: Sequence[SchemaColumn],
         ignore_if_exists: bool = True,
     ) -> bool:
         """Create a table from an OPUS table schema.
 
         Parameters:
-            namespace: The namespace to create the table in.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             schema: The column definitions, as `opus_import.import_util` read them from
                 the packaged JSON schema.
             ignore_if_exists: True to leave an existing table alone, False to attempt the
@@ -961,12 +841,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::create_table must be overridden')
 
-    def analyze_table(self, namespace: Namespace, raw_table_name: str) -> None:
+    def analyze_table(self, table_name: str) -> None:
         """Recompute a table's key distribution statistics.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
@@ -975,8 +854,7 @@ class ImportDBSuper:
 
     def read_rows(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         column_names: Sequence[str],
         where: str | None = None,
         where_params: Sequence[Any] | None = None,
@@ -984,8 +862,7 @@ class ImportDBSuper:
         """Return the given columns of the rows the WHERE clause selects.
 
         Parameters:
-            namespace: 'import', 'perm' or 'all'.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             column_names: The columns to read, quoted and validated here.
             where: The WHERE clause, or None for every row. Any value it
                 compares against must be a `%s` placeholder, never text.
@@ -995,8 +872,6 @@ class ImportDBSuper:
             One tuple per row, with the values in ``column_names`` order.
         """
         with self._operation('read_rows'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             q = self.quote_identifier
             columns = ','.join([q(c) for c in column_names])
 
@@ -1012,12 +887,11 @@ class ImportDBSuper:
             )
         return res
 
-    def insert_row(self, namespace: Namespace, raw_table_name: str, row: DBRow) -> None:
+    def insert_row(self, table_name: str, row: DBRow) -> None:
         """Insert one row.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             row: The values to write, keyed by column name.
 
         Raises:
@@ -1025,12 +899,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::insert_row must be overridden')
 
-    def insert_rows(self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]) -> None:
+    def insert_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
         """Insert many rows.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             rows: The rows to write. Every row must have the same columns.
 
         Raises:
@@ -1038,9 +911,7 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::insert_rows must be overridden')
 
-    def bulk_load_rows(
-        self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]
-    ) -> None:
+    def bulk_load_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
         """Write many rows the fastest way the server allows.
 
         A brand loads them from a scratch file where the server accepts one, at most
@@ -1048,8 +919,7 @@ class ImportDBSuper:
         row arrived unchanged; otherwise it writes them as `insert_rows` does.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             rows: The rows to write. Every row must have the same columns.
 
         Raises:
@@ -1059,8 +929,7 @@ class ImportDBSuper:
 
     def update_row(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         row: DBRow,
         where: str,
         where_params: Sequence[Any] | None = None,
@@ -1068,8 +937,7 @@ class ImportDBSuper:
         """Assign new values to the columns of the rows a WHERE clause selects.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             row: The values to assign, keyed by column name.
             where: The WHERE clause. Any value it compares against must be a `%s`
                 placeholder, never text.
@@ -1080,14 +948,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::update_row must be overridden')
 
-    def upsert_row(
-        self, namespace: Namespace, raw_table_name: str, key_name: str, row: DBRow
-    ) -> None:
+    def upsert_row(self, table_name: str, key_name: str, row: DBRow) -> None:
         """Insert one row, or update it if its key is already present.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key_name: The column identifying the row, which is written on an insert but
                 never assigned on an update.
             row: The values to write, keyed by column name.
@@ -1097,14 +962,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::upsert_row must be overridden')
 
-    def upsert_rows(
-        self, namespace: Namespace, raw_table_name: str, key_name: str, rows: Sequence[DBRow]
-    ) -> None:
+    def upsert_rows(self, table_name: str, key_name: str, rows: Sequence[DBRow]) -> None:
         """Insert many rows, updating each one whose key is already present.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key_name: The column identifying a row, which is written on an insert but
                 never assigned on an update.
             rows: The rows to write. They need not share a column set.
@@ -1116,8 +978,7 @@ class ImportDBSuper:
 
     def delete_rows(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         where: str | None = None,
         where_params: Sequence[Any] | None = None,
         *,
@@ -1126,8 +987,7 @@ class ImportDBSuper:
         """Delete the rows a WHERE clause selects, or every row when asked to.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             where: The WHERE clause. Any value it compares against must be a `%s`
                 placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
@@ -1138,29 +998,6 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::delete_rows must be overridden')
-
-    def copy_rows_between_namespaces(
-        self,
-        src_namespace: Namespace,
-        dest_namespace: Namespace,
-        raw_table_name: str,
-        where: str | None = None,
-        where_params: Sequence[Any] | None = None,
-    ) -> None:
-        """Copy rows of one table from one namespace to the same table in another.
-
-        Parameters:
-            src_namespace: The namespace to read from.
-            dest_namespace: The namespace to write to.
-            raw_table_name: The table, without its namespace prefix.
-            where: The WHERE clause selecting the rows to copy, or None for every row.
-                Any value it compares against must be a `%s` placeholder, never text.
-            where_params: The parameters that clause's placeholders consume.
-
-        Raises:
-            NotImplementedError: Always; a brand subclass must override this.
-        """
-        raise NotImplementedError('ImportDBSuper::copy_rows_between_namespaces must be overridden')
 
     def general_select(
         self, cmd: str, param_list: Sequence[Any] | None = None
@@ -1179,12 +1016,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::general_select must be overridden')
 
-    def find_column_max(self, namespace: Namespace, raw_table_name: str, column_name: str) -> Any:
+    def find_column_max(self, table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             column_name: The column to take the maximum of.
 
         Returns:

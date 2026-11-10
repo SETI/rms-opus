@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 def build_table_names_rows(
     table_exists: Callable[[str], bool], surface_geometry_table_names: Iterable[str]
 ) -> list[dict[str, Any]]:
-    """Return the ``table_names`` rows for a set of permanent tables, in display order.
+    """Return the ``table_names`` rows for a set of tables, in display order.
 
     ``obs_general`` comes first and is written whether or not the table is there; then
     the PDS, image, wavelength, profile, surface geometry name and surface geometry
@@ -44,7 +44,7 @@ def build_table_names_rows(
     ask the same question about the packaged schemas without a database.
 
     Parameters:
-        table_exists: Answers whether a permanent table of the given name is there.
+        table_exists: Answers whether a table of the given name is there.
         surface_geometry_table_names: The per-target surface geometry tables, named in
             full (``obs_surface_geometry__<target>``). They are sorted here.
 
@@ -192,34 +192,34 @@ def build_table_names_rows(
 
 
 def fill_table_names(ctx: ImportContext, new_table: str) -> bool:
-    """Fill an empty ``table_names`` table from the permanent tables that exist.
+    """Fill an empty ``table_names`` table from the tables that exist.
 
     The rows and their order come from `build_table_names_rows`; this function only
     asks the database which tables are there and writes what it gets back.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        new_table: The permanent table to fill, already created from ``table_names``'s
+        new_table: The table to fill, already created from ``table_names``'s
             schema.
 
     Returns:
-        True; every row is built from what the permanent tables hold.
+        True; every row is built from what the imported tables hold.
     """
     db = ctx.db
     assert db is not None
     ctx.logger.log('info', f'Filling {new_table}')
 
     rows = build_table_names_rows(
-        lambda name: db.table_exists('perm', name),
-        db.table_names('perm', prefix='obs_surface_geometry__'),
+        lambda name: db.table_exists(name),
+        db.table_names(prefix='obs_surface_geometry__'),
     )
 
-    db.insert_rows('perm', new_table, rows)
+    db.insert_rows(new_table, rows)
     return True
 
 
 def do_table_names(ctx: ImportContext) -> None:
-    """Rebuild the permanent ``table_names`` table, driven by ``--create-table-names``.
+    """Rebuild the ``table_names`` table, driven by ``--create-table-names``.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.

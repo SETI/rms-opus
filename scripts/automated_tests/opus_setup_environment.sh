@@ -101,7 +101,6 @@ fake_error404_probability = 0.0
 fake_error500_probability = 0.0
 
 [import]
-table_temp_prefix = "imp_"
 log_file = "$(toml_escape "${LOG_DIR}")/import_logs/opus_import.log"
 debug_log_file = "$(toml_escape "${LOG_DIR}")/import_logs/opus_import_debug.log"
 EOF

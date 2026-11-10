@@ -24,7 +24,7 @@ class _FakeDatabase:
     def __init__(self) -> None:
         self.inserted: list[tuple[str, list[dict[str, Any]]]] = []
 
-    def insert_rows(self, namespace: str, table_name: str, rows: list[dict[str, Any]]) -> None:
+    def insert_rows(self, table_name: str, rows: list[dict[str, Any]]) -> None:
         self.inserted.append((table_name, rows))
 
 

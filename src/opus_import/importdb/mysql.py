@@ -45,12 +45,12 @@ from opus_import.importdb.super import (
     ImportDBError,
     ImportDBSuper,
     IndexStatement,
-    Namespace,
     ResultRow,
     SchemaColumn,
 )
 from opus_import.table_keys import (
     KeyKind,
+    OnDelete,
     TableKey,
     create_time_keys,
     declared_keys,
@@ -274,7 +274,6 @@ class ImportDBMySQL(ImportDBSuper):
         db_user: str,
         db_password: str,
         mult_form_types: Sequence[str] | None = None,
-        import_prefix: str | None = None,
         logger: pdslogger.PdsLogger | None = None,
         read_only: bool = False,
         bulk_load: bool = True,
@@ -298,8 +297,6 @@ class ImportDBMySQL(ImportDBSuper):
             db_password: That user's password.
             mult_form_types: The ``param_info`` form types that have a ``mult_`` table,
                 or None for none of them.
-            import_prefix: The prefix distinguishing an import table from its permanent
-                counterpart, or None to make the two namespaces the same tables.
             logger: Where to report progress, statements and warnings, or None to report
                 nothing.
             read_only: True to log every mutating statement instead of executing it.
@@ -322,7 +319,6 @@ class ImportDBMySQL(ImportDBSuper):
             db_user,
             db_password,
             mult_form_types=mult_form_types,
-            import_prefix=import_prefix,
             logger=logger,
             read_only=read_only,
             bulk_load=bulk_load,
@@ -333,7 +329,7 @@ class ImportDBMySQL(ImportDBSuper):
         self._ddl_buffer_bounds: tuple[int, int, int] | None = None
         self._ddl_buffer_size: int | None = None
         with self._operation('__init__'):
-            self._table_info_cache: dict[tuple[Namespace, str], list[SchemaColumn]] = {}
+            self._table_info_cache: dict[str, list[SchemaColumn]] = {}
 
             if not MYSQLDB_AVAILABLE:
                 self.read_only = True
@@ -624,17 +620,14 @@ class ImportDBMySQL(ImportDBSuper):
         return ','.join(['%s'] * len(column_names))
 
     def table_names(
-        self, namespace: Namespace, prefix: str | list[str] | tuple[str, ...] | None = None
+        self, prefix: str | list[str] | tuple[str, ...] | None = None
     ) -> Collection[str]:
-        """Return the names of the tables in a namespace.
+        """Return the names of the tables in the schema.
 
         The names are read from the server once and cached, so a run that creates and
         drops tables through this instance never re-queries for them.
 
         Parameters:
-            namespace: The namespace to list. ``'import'`` and ``'perm'`` return raw
-                names, with the import prefix stripped; ``'all'`` returns the names as
-                the server spells them.
             prefix: One prefix, or several, that a name must start with; None for every
                 name.
 
@@ -642,9 +635,6 @@ class ImportDBMySQL(ImportDBSuper):
             The matching table names, sorted. That order is part of the contract, because
             a caller handing out row ids while iterating this would otherwise produce a
             different database on a different machine. Every path returns a new list.
-
-        Raises:
-            NotImplementedError: If the namespace is not one of the three.
         """
         with self._operation('table_names'):
             if self._table_names is None:
@@ -665,27 +655,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         # happened to return rows in. A caller that hands out row ids in this order --
         # `do_param_info` does -- would otherwise give the same database different ids on
         # different machines, which is a difference nothing else can explain.
-        #
-        # Sorted *after* the prefix comes off, not before: the prefix is matched without
-        # regard to case, so two tables can carry it in different spellings and stripping
-        # it would then undo an ordering established on the fuller names.
-        ret_names: Collection[str]
-        if namespace == 'all':
-            ret_names = sorted(self._table_names)
-        elif namespace == 'import':
-            ret_names = sorted(
-                self.convert_namespace_to_raw(namespace, x)
-                for x in self._table_names
-                if self._is_import_namespace(x)
-            )
-        elif namespace == 'perm':
-            ret_names = sorted(
-                self.convert_namespace_to_raw(namespace, x)
-                for x in self._table_names
-                if self._is_perm_namespace(x)
-            )
-        else:
-            raise NotImplementedError(namespace)
+        ret_names = sorted(self._table_names)
 
         if prefix is None:
             return ret_names
@@ -701,15 +671,14 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 
         return [x for x in ret_names if x.startswith(prefix)]
 
-    def table_info(self, namespace: Namespace, raw_table_name: str) -> list[SchemaColumn]:
+    def table_info(self, table_name: str) -> list[SchemaColumn]:
         """Return the columns of a table as the server currently defines them.
 
         The answer is cached per table and discarded whenever a table is created or
         dropped through this instance.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Returns:
             One dictionary per column, in the table's column order, each carrying
@@ -722,12 +691,9 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         Raises:
             NotImplementedError: If a column has a server type OPUS has no name for.
         """
-        cache_key = (namespace, raw_table_name)
-        if cache_key in self._table_info_cache:
-            return self._table_info_cache[cache_key]
+        if table_name in self._table_info_cache:
+            return self._table_info_cache[table_name]
         with self._operation('table_info'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             cmd = """
 SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`,
 `CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`
@@ -782,17 +748,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 }
                 column_list.append(column_dict)
 
-        self._table_info_cache[cache_key] = column_list
+        self._table_info_cache[table_name] = column_list
         return column_list
 
-    def drop_table(
-        self, namespace: Namespace, raw_table_name: str, ignore_if_not_exists: bool = True
-    ) -> None:
+    def drop_table(self, table_name: str, ignore_if_not_exists: bool = True) -> None:
         """Delete the given table if it exists.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             ignore_if_not_exists: True to do nothing when the table is absent.
 
         Raises:
@@ -800,10 +763,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 or the server rejects the statement.
         """
         with self._operation('drop_table'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             # table_exists caches the table names, which we need below for read_only
-            if not self.table_exists(namespace, raw_table_name):
+            if not self.table_exists(table_name):
                 if ignore_if_not_exists:
                     if self.logger:
                         self.logger.log('debug', f'drop_table "{table_name}" - no table found')
@@ -841,7 +802,6 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
     def rename_tables_atomically(
         self,
-        namespace: Namespace,
         renames: Sequence[tuple[str, str]],
         *,
         lock_wait_timeout_s: int,
@@ -859,8 +819,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         value is restored afterwards.
 
         Parameters:
-            namespace: The namespace holding every table named.
-            renames: ``(from, to)`` raw table names, in the order they apply.
+            renames: ``(from, to)`` table names, in the order they apply.
             lock_wait_timeout_s: How long one attempt waits for the tables' locks.
             attempts: How many times to try before the wait is a failure.
 
@@ -872,14 +831,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             raise ValueError(f'attempts must be at least 1, not {attempts}')
         with self._operation('rename_tables_atomically'):
             q = self.quote_identifier
-            pairs = [
-                (
-                    self.convert_raw_to_namespace(namespace, old),
-                    self.convert_raw_to_namespace(namespace, new),
-                )
-                for old, new in renames
-            ]
-            cmd = 'RENAME TABLE ' + ', '.join(f'{q(old)} TO {q(new)}' for old, new in pairs)
+            cmd = 'RENAME TABLE ' + ', '.join(f'{q(old)} TO {q(new)}' for old, new in renames)
             if self.read_only:
                 self._execute(cmd, mutates=True)
                 if self.logger:
@@ -913,7 +865,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             if self.logger:
                 self.logger.log('debug', f'Renamed tables: {cmd}')
             assert self._table_names is not None
-            for old, new in pairs:
+            for old, new in renames:
                 if old in self._table_names:
                     self._table_names.remove(old)
                 else:
@@ -923,20 +875,18 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
     def create_table(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         schema: Sequence[SchemaColumn],
         ignore_if_exists: bool = True,
     ) -> bool:
         """Create a new table from the given OPUS table schema.
 
         The table carries every key its schema declares, except an observation or mult
-        table under `direct`, which carries only the keys a load needs
-        (`opus_import.table_keys.create_time_keys`).
+        table, which carries only the keys a load needs
+        (`opus_import.table_keys.create_time_keys`); finalization adds the rest.
 
         Parameters:
-            namespace: The namespace to create the table in.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             schema: The column definitions, as `opus_import.import_util` read them from
                 the packaged JSON schema. An entry carrying ``constraint`` contributes
                 that text instead of a column; one carrying ``pi_referred_slug``
@@ -953,15 +903,16 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 for.
         """
         with self._operation('create_table'):
-            if ignore_if_exists and self.table_exists(namespace, raw_table_name):
+            if ignore_if_exists and self.table_exists(table_name):
                 return False
-
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
 
             cmd = ''
 
             for column in schema:
                 if 'pi_referred_slug' in column:
+                    continue
+                if 'field_name' not in column and 'constraint' not in column:
+                    # A table-level key, which the key clauses below render.
                     continue
 
                 if cmd != '':
@@ -982,7 +933,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     cmd += f'{width_type[1]}({width_type[2]})'
                 elif field_type == MYSQL_ENUM_FIELD_TYPE:
                     enum_str = column.get('field_enum_options', None)
-                    assert enum_str, (raw_table_name, column)
+                    assert enum_str, (table_name, column)
                     cmd += f'enum({enum_str})'
                 else:
                     raise NotImplementedError(field_type)
@@ -1016,11 +967,11 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 foreign_key = column.get('field_key_foreign', False)
                 assert not foreign_key or column.get('field_key') == 'foreign'
 
-            if self.direct and is_key_filtered_table(raw_table_name):
-                keys = create_time_keys(raw_table_name, schema)
+            if is_key_filtered_table(table_name):
+                keys = create_time_keys(table_name, schema)
             else:
                 keys = declared_keys(schema)
-            key_cmd = ',\n'.join(f'  {self._create_key_clause(namespace, key)}' for key in keys)
+            key_cmd = ',\n'.join(f'  {self._create_key_clause(key)}' for key in keys)
             if key_cmd != '':
                 cmd += ',\n' + key_cmd
             cmd = f'CREATE TABLE {self.quote_identifier(table_name)} (\n' + cmd + '\n)'
@@ -1049,15 +1000,13 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         return True
 
-    def _create_key_clause(self, namespace: Namespace, key: TableKey) -> str:
+    def _create_key_clause(self, key: TableKey) -> str:
         """Return a key as a ``CREATE TABLE`` clause names it.
 
         A plain or unique key is named after its first column, as the server would name
         it, and a foreign key is left for the server to name.
 
         Parameters:
-            namespace: The namespace of the table, and of the table a foreign key
-                references.
             key: The key.
 
         Returns:
@@ -1073,23 +1022,20 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             referenced_columns = ', '.join(q(column) for column in referenced)
             return (
                 f'FOREIGN KEY ({columns}) REFERENCES '
-                f'{q(self.convert_raw_to_namespace(namespace, table))}({referenced_columns}) '
-                'ON DELETE RESTRICT ON UPDATE CASCADE'
+                f'{q(table)}({referenced_columns}) '
+                f'ON DELETE {key.on_delete.upper()} ON UPDATE CASCADE'
             )
         prefix = 'UNIQUE KEY' if key.kind == 'unique' else 'KEY'
         return f'{prefix} {q(key.columns[0])} ({columns})'
 
-    def add_keys_statement(
-        self, namespace: Namespace, raw_table_name: str, keys: Sequence[TableKey]
-    ) -> str:
+    def add_keys_statement(self, table_name: str, keys: Sequence[TableKey]) -> str:
         """Return one ``ALTER TABLE`` that adds plain, unique or primary keys to a table.
 
         The keys are unnamed, so the server names each after its first column, as it
         would have in ``CREATE TABLE``, or with a suffix where that name is taken.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             keys: The keys to add; no foreign key.
 
         Returns:
@@ -1102,38 +1048,30 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             columns = ', '.join(q(column) for column in key.columns)
             kind = {'primary': 'PRIMARY KEY', 'unique': 'UNIQUE KEY', 'key': 'KEY'}[key.kind]
             clauses.append(f'ADD {kind} ({columns})')
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
         return f'ALTER TABLE {q(table_name)} ' + ', '.join(clauses)
 
-    def add_foreign_key_statement(
-        self, namespace: Namespace, raw_table_name: str, key: TableKey
-    ) -> str:
+    def add_foreign_key_statement(self, table_name: str, key: TableKey) -> str:
         """Return one ``ALTER TABLE`` that adds a foreign key to a table.
 
         Parameters:
-            namespace: The namespace holding the table and the one it references.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key: The foreign key.
 
         Returns:
             The statement, rendered as ``CREATE TABLE`` renders the key.
         """
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-        clause = self._create_key_clause(namespace, key)
+        clause = self._create_key_clause(key)
         return f'ALTER TABLE {self.quote_identifier(table_name)} ADD {clause}'
 
-    def read_table_keys(self, namespace: Namespace) -> dict[str, list[TableKey]]:
-        """Return the keys every table of a namespace has, from ``information_schema``.
+    def read_table_keys(self) -> dict[str, list[TableKey]]:
+        """Return the keys every table in the schema has, from ``information_schema``.
 
         Plain, unique and primary keys come from ``STATISTICS``, and foreign keys from
         ``KEY_COLUMN_USAGE`` joined to ``REFERENTIAL_CONSTRAINTS``; a ``FULLTEXT`` or
         spatial index is not a key here and is left out.
 
-        Parameters:
-            namespace: The namespace to read.
-
         Returns:
-            Each table's keys, keyed by raw table name, plain, unique and primary keys
+            Each table's keys, keyed by table name, plain, unique and primary keys
             first, in the order the server lists them; a table with no key is absent.
 
         Raises:
@@ -1150,7 +1088,7 @@ ORDER BY `TABLE_NAME`, `INDEX_NAME`, `SEQ_IN_INDEX`""",
         foreign_rows = self._execute_and_fetchall(
             """
 SELECT `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`COLUMN_NAME`,
-`k`.`REFERENCED_TABLE_NAME`, `k`.`REFERENCED_COLUMN_NAME`
+`k`.`REFERENCED_TABLE_NAME`, `k`.`REFERENCED_COLUMN_NAME`, `r`.`DELETE_RULE`
 FROM `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` `k`
 JOIN `INFORMATION_SCHEMA`.`REFERENTIAL_CONSTRAINTS` `r`
 ON `r`.`CONSTRAINT_SCHEMA`=`k`.`CONSTRAINT_SCHEMA`
@@ -1161,17 +1099,9 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             [self.db_schema],
         )
 
-        def in_namespace(table_name: str) -> bool:
-            """Return whether a table, as the server spells it, is in the namespace."""
-            if namespace == 'all':
-                return True
-            if namespace == 'import':
-                return self._is_import_namespace(table_name)
-            return self._is_perm_namespace(table_name)
-
         indexes: dict[tuple[str, str], tuple[KeyKind, list[str]]] = {}
         for table_name, index_name, non_unique, column_name, index_type in index_rows:
-            if not in_namespace(table_name) or index_type not in ('BTREE', 'HASH'):
+            if index_type not in ('BTREE', 'HASH'):
                 continue
             kind: KeyKind
             if index_name == 'PRIMARY':
@@ -1181,30 +1111,27 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             else:
                 kind = 'key'
             indexes.setdefault((table_name, index_name), (kind, []))[1].append(column_name)
-        foreign: dict[tuple[str, str], tuple[str, list[str], list[str]]] = {}
-        for table_name, constraint_name, column_name, ref_table, ref_column in foreign_rows:
-            if not in_namespace(table_name):
-                continue
-            entry = foreign.setdefault((table_name, constraint_name), (ref_table, [], []))
+        foreign: dict[tuple[str, str], tuple[str, list[str], list[str], OnDelete]] = {}
+        for table_name, constraint_name, column_name, ref_table, ref_column, rule in foreign_rows:
+            on_delete: OnDelete = 'cascade' if rule == 'CASCADE' else 'restrict'
+            entry = foreign.setdefault(
+                (table_name, constraint_name), (ref_table, [], [], on_delete)
+            )
             entry[1].append(column_name)
             entry[2].append(ref_column)
 
         keys: dict[str, list[TableKey]] = {}
         for (table_name, _index_name), (kind, columns) in indexes.items():
-            raw = self.convert_namespace_to_raw(namespace, table_name)
-            keys.setdefault(raw, []).append(TableKey(kind, tuple(columns)))
-        for (table_name, _constraint_name), (ref_table, columns, ref_columns) in foreign.items():
-            raw = self.convert_namespace_to_raw(namespace, table_name)
-            ref_raw = self.convert_namespace_to_raw(namespace, ref_table)
-            keys.setdefault(raw, []).append(
-                TableKey('foreign', tuple(columns), (ref_raw, tuple(ref_columns)))
+            keys.setdefault(table_name, []).append(TableKey(kind, tuple(columns)))
+        for (table_name, _name), (ref_table, columns, ref_columns, on_delete) in foreign.items():
+            keys.setdefault(table_name, []).append(
+                TableKey('foreign', tuple(columns), (ref_table, tuple(ref_columns)), on_delete)
             )
         return keys
 
     def key_space_bytes(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         schema: Sequence[SchemaColumn],
         key: TableKey,
     ) -> int:
@@ -1215,8 +1142,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         `MYSQL_KEY_BYTES`.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             schema: The table's schema, which gives its columns' types.
             key: The key.
 
@@ -1226,7 +1152,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         Raises:
             ImportDBError: If the server rejects the query.
         """
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
         res = self._execute_and_fetchall(
             'SELECT `TABLE_ROWS` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=%s '
             'AND `TABLE_NAME`=%s',
@@ -1402,15 +1327,20 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         timed: list[tuple[str, float]] = []
         if not statements:
             return timed
-        self._execute('SET SESSION foreign_key_checks = 0')
-        try:
+        with self.foreign_keys_unchecked():
             for statement in statements:
                 started = time.perf_counter()
                 self.run_ddl(statement.sql)
                 timed.append((statement.label, time.perf_counter() - started))
-        finally:
-            self._execute('SET SESSION foreign_key_checks = 1')
         return timed
+
+    def _set_foreign_key_checks(self, enabled: bool) -> None:
+        """Set the session's ``foreign_key_checks``.
+
+        Parameters:
+            enabled: True to check foreign keys, False not to.
+        """
+        self._execute(f'SET SESSION foreign_key_checks = {1 if enabled else 0}')
 
     def close(self) -> None:
         """Close the connection; an instance without the driver has none to close."""
@@ -1418,19 +1348,16 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             self.conn.close()
             self.conn = None
 
-    def analyze_table(self, namespace: Namespace, raw_table_name: str) -> None:
+    def analyze_table(self, table_name: str) -> None:
         """Analyze the given table. This recomputes key distribution.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Raises:
             ImportDBError: If the server rejects the statement.
         """
         with self._operation('analyze_table'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             cmd = f'ANALYZE TABLE {self.quote_identifier(table_name)}'
 
             try:
@@ -1446,20 +1373,17 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 else:
                     self.logger.log('debug', f'Analyzed table "{table_name}"')
 
-    def insert_row(self, namespace: Namespace, raw_table_name: str, row: DBRow) -> None:
+    def insert_row(self, table_name: str, row: DBRow) -> None:
         """Insert one row.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             row: The values to write, keyed by column name.
 
         Raises:
             ImportDBError: If the server rejects the statement.
         """
         with self._operation('insert_row'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             sorted_column_names = sorted(row.keys())
             param_list: list[Any] = []
             placeholders = self._row_placeholders(row, sorted_column_names, param_list)
@@ -1478,12 +1402,11 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                     self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
-    def insert_rows(self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]) -> None:
+    def insert_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
         """Insert multiple rows, a thousand at a time.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             rows: The rows to write. All rows must have the same columns; an empty
                 sequence writes nothing.
 
@@ -1495,8 +1418,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             return
 
         with self._operation('insert_rows'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             packet_size = 1000  # Limit number of rows at a time - MySQL barfs
 
             num_packets = ((len(rows) - 1) // packet_size) + 1
@@ -1530,9 +1451,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                         self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e}')
                     raise ImportDBError(e) from e
 
-    def bulk_load_rows(
-        self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]
-    ) -> None:
+    def bulk_load_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
         """Write many rows with ``LOAD DATA LOCAL INFILE``, or as `insert_rows` does.
 
         The rows go in chunks of at most `transaction_rows`. Each chunk is written to a
@@ -1549,8 +1468,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         log says so.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             rows: The rows to write. Every row must have the same columns; an empty
                 sequence writes nothing.
 
@@ -1561,10 +1479,9 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         if len(rows) == 0:
             return
         if self.bulk_load_path != BULK_LOAD_PATH_FILE:
-            self.insert_rows(namespace, raw_table_name, rows)
+            self.insert_rows(table_name, rows)
             return
         with self._operation('bulk_load_rows'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
             column_names = sorted(rows[0].keys())
             for start in range(0, len(rows), self.transaction_rows):
                 end = min(len(rows), start + self.transaction_rows)
@@ -1573,7 +1490,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 except _LocalInfileRefusedError as e:
                     self.bulk_load_path = BULK_LOAD_PATH_INSERT
                     self._log_bulk_load_path(f'the server refused a local file: {e}')
-                    self.insert_rows(namespace, raw_table_name, rows[start:])
+                    self.insert_rows(table_name, rows[start:])
                     return
 
     def _load_chunk(
@@ -1695,8 +1612,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
 
     def update_row(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         row: DBRow,
         where: str,
         where_params: Sequence[Any] | None = None,
@@ -1704,8 +1620,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         """Assign new values to the columns of the rows a WHERE clause selects.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             row: The values to assign, keyed by column name.
             where: The WHERE clause. Any value it compares against must be a `%s`
                 placeholder, never text.
@@ -1716,8 +1631,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             ImportDBError: If the server rejects the statement.
         """
         with self._operation('insert_row'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             sorted_column_names = sorted(row.keys())
             set_cmds = []
             param_list: list[Any] = []
@@ -1742,14 +1655,11 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                     self.logger.log('fatal', f'Failed to update row in "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
-    def upsert_row(
-        self, namespace: Namespace, raw_table_name: str, key_name: str, row: DBRow
-    ) -> None:
+    def upsert_row(self, table_name: str, key_name: str, row: DBRow) -> None:
         """Insert one row, or update it if its key is already present.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key_name: The column identifying the row. It is written on an insert and
                 never assigned on an update; a row of nothing but the key produces a
                 plain insert.
@@ -1759,8 +1669,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             ImportDBError: If the server rejects the statement.
         """
         with self._operation('upsert_row'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             sorted_column_names = sorted(row.keys())
             param_list: list[Any] = []
             placeholders = self._row_placeholders(row, sorted_column_names, param_list)
@@ -1794,14 +1702,11 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                     self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
-    def upsert_rows(
-        self, namespace: Namespace, raw_table_name: str, key_name: str, rows: Sequence[DBRow]
-    ) -> None:
+    def upsert_rows(self, table_name: str, key_name: str, rows: Sequence[DBRow]) -> None:
         """Insert or update multiple rows, a packet of rows per statement.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key_name: The column identifying a row. It is written on an insert and never
                 assigned on an update; rows of nothing but the key produce a plain
                 insert.
@@ -1817,8 +1722,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             return
 
         with self._operation('upsert_rows'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             # Group by column set so that every row in one statement contributes the
             # same VALUES tuple. In practice all the rows of a mult table match.
             groups: dict[tuple[str, ...], list[DBRow]] = {}
@@ -1835,11 +1738,11 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 # row's value for that column. The alternative spelling, VALUES(col), is
                 # deprecated as of 8.0.20. The alias is what puts the server floor at
                 # 8.0.19, which README.md and the developer guide's prerequisites state.
-                # MySQL requires the row alias to differ from the table name, and a
-                # `perm`-namespace name is the raw one, so a table called `new` would
-                # produce a syntax error deep inside an import. No OPUS table is called
-                # that, but the schema is data rather than a guarantee, so the one
-                # colliding name is answered here instead of being assumed away.
+                # MySQL requires the row alias to differ from the table name, so a
+                # table called `new` would produce a syntax error deep inside an import.
+                # No OPUS table is called that, but the schema is data rather than a
+                # guarantee, so the one colliding name is answered here instead of being
+                # assumed away.
                 # Compared case-insensitively: MySQL folds identifiers for this check
                 # even where the file system makes table names case-sensitive.
                 row_alias = self.quote_identifier(
@@ -1884,8 +1787,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
 
     def delete_rows(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         where: str | None = None,
         where_params: Sequence[Any] | None = None,
         *,
@@ -1897,8 +1799,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         whose clause came out empty deletes nothing instead of the whole table.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             where: The WHERE clause. Any value it compares against must be a `%s`
                 placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
@@ -1910,12 +1811,9 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         """
         if bool(where) == all_rows:
             raise ImportDBError(
-                f'delete_rows on "{raw_table_name}" needs a WHERE clause or all_rows=True, '
-                'and not both'
+                f'delete_rows on "{table_name}" needs a WHERE clause or all_rows=True, and not both'
             )
         with self._operation('delete_rows'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             # The table name is validated by quote_identifier (^[A-Za-z0-9_]+$). The
             # caller's `where` fragment is appended verbatim below and is not
             # validated; only the values inside it are bound, through where_params.
@@ -1929,55 +1827,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             except MySQLdb.Error as e:
                 if self.logger:
                     self.logger.log('fatal', f'Failed to delete rows from "{table_name}": {e}')
-                raise ImportDBError(e) from e
-
-    def copy_rows_between_namespaces(
-        self,
-        src_namespace: Namespace,
-        dest_namespace: Namespace,
-        raw_table_name: str,
-        where: str | None = None,
-        where_params: Sequence[Any] | None = None,
-    ) -> None:
-        """Copy rows of one table from one namespace to the same table in another.
-
-        Both tables must have the same columns in the same order, which they do because
-        both are created from the same OPUS table schema.
-
-        Parameters:
-            src_namespace: The namespace to read from.
-            dest_namespace: The namespace to write to.
-            raw_table_name: The table, without its namespace prefix.
-            where: The WHERE clause selecting the rows to copy, or None for every row.
-                Any value it compares against must be a `%s` placeholder, never text.
-            where_params: The parameters that clause's placeholders consume.
-
-        Raises:
-            ImportDBError: If the server rejects the statement.
-        """
-        with self._operation('copy_rows'):
-            src_table_name = self.convert_raw_to_namespace(src_namespace, raw_table_name)
-            dest_table_name = self.convert_raw_to_namespace(dest_namespace, raw_table_name)
-
-            # Both table names are validated by quote_identifier (^[A-Za-z0-9_]+$).
-            # The caller's `where` fragment is appended verbatim below and is not
-            # validated; only the values inside it are bound, through where_params.
-            # This method is for trusted callers.
-            cmd = (
-                f'INSERT INTO {self.quote_identifier(dest_table_name)} SELECT * '  # nosec B608
-                f'FROM {self.quote_identifier(src_table_name)}'
-            )
-            if where:
-                cmd += f' WHERE {where}'
-
-            try:
-                self._execute(cmd, list(where_params) if where_params else None, mutates=True)
-            except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log(
-                        'fatal',
-                        f'Failed to copy rows from "{src_table_name}" to "{dest_table_name}": {e}',
-                    )
                 raise ImportDBError(e) from e
 
     def general_select(
@@ -2001,12 +1850,11 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             res = self._execute_and_fetchall('SELECT ' + cmd, 'general_select', param_list)
         return res
 
-    def find_column_max(self, namespace: Namespace, raw_table_name: str, column_name: str) -> Any:
+    def find_column_max(self, table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             column_name: The column to take the maximum of.
 
         Returns:
@@ -2016,8 +1864,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             ImportDBError: If the server rejects the query.
         """
         with self._operation('find_column_max'):
-            table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
             # Column and table names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$).
             # This statement carries no values at all.
             cmd = (

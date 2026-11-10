@@ -18,10 +18,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
-    from opus_import.importdb.super import Namespace
 
 
-def validate_param_info(ctx: ImportContext, namespace: Namespace) -> None:
+def validate_param_info(ctx: ImportContext) -> None:
     """Report user-visible columns that ``param_info`` does not describe.
 
     Every column of every ``obs_`` table needs a ``param_info`` row, apart from the ones
@@ -39,7 +38,6 @@ def validate_param_info(ctx: ImportContext, namespace: Namespace) -> None:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        namespace: The namespace holding the tables to check.
     """
     # Every column in every obs_ table should have an entry in the param_info
     # table except for id and obs_general_id.
@@ -53,9 +51,9 @@ def validate_param_info(ctx: ImportContext, namespace: Namespace) -> None:
 
     logger.log('debug', 'Validating param_info table')
 
-    obs_table_names = sorted(db.table_names(namespace, prefix='obs_'))
+    obs_table_names = sorted(db.table_names(prefix='obs_'))
 
-    pi_table_name = db.convert_raw_to_namespace(namespace, 'param_info')
+    pi_table_name = 'param_info'
 
     q = db.quote_identifier
 
@@ -63,7 +61,7 @@ def validate_param_info(ctx: ImportContext, namespace: Namespace) -> None:
         if obs_table_name == 'obs_files':
             # Not really a user-visible table so no param_info needed
             continue
-        column_list = db.table_info(namespace, obs_table_name)
+        column_list = db.table_info(obs_table_name)
         field_names = [x['field_name'] for x in column_list]
         for column in column_list:
             field_name = column['field_name']
@@ -123,7 +121,7 @@ COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
         logger.log('error', f'PARAM_INFO field "{cat_name}.{field_name}" has duplicate slug')
 
 
-def validate_nulls(ctx: ImportContext, namespace: Namespace) -> None:
+def validate_nulls(ctx: ImportContext) -> None:
     """Report columns that allow NULL and never contain one.
 
     Such a column can be tightened to NOT NULL in its table schema, which lets the
@@ -135,7 +133,6 @@ def validate_nulls(ctx: ImportContext, namespace: Namespace) -> None:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        namespace: The namespace holding the tables to check.
     """
     # Look for columns in OBS tables that don't contain nulls and yet the
     # column is marked as NULLS-OK and suggest the column type be changed.
@@ -148,20 +145,20 @@ def validate_nulls(ctx: ImportContext, namespace: Namespace) -> None:
 
     logger.log('debug', 'Validating non-NULL columns')
 
-    obs_table_names = sorted(db.table_names(namespace, prefix='obs_'))
+    obs_table_names = sorted(db.table_names(prefix='obs_'))
     q = db.quote_identifier
 
     for obs_table_name in obs_table_names:
         if obs_table_name.startswith('obs_surface_geometry__'):
             continue
-        column_list = db.table_info(namespace, obs_table_name)
+        column_list = db.table_info(obs_table_name)
         for column in column_list:
             field_name = column['field_name']
             notnull = column['field_notnull']
             if notnull:
                 continue
             # OK the column allows nulls...are there any?
-            full_obs_table_name = db.convert_raw_to_namespace(namespace, obs_table_name)
+            full_obs_table_name = obs_table_name
             cmd = f"""
 count(*) FROM {q(full_obs_table_name)} WHERE {q(field_name)} is NULL"""
             res = db.general_select(cmd)
@@ -174,7 +171,7 @@ count(*) FROM {q(full_obs_table_name)} WHERE {q(field_name)} is NULL"""
                 )
 
 
-def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
+def validate_min_max_order(ctx: ImportContext) -> None:
     """Report paired columns whose minimum exceeds its maximum.
 
     A column named with a trailing ``1`` is the low end of a range and its ``2`` sibling
@@ -185,7 +182,6 @@ def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        namespace: The namespace holding the tables to check.
     """
     # Look for pairs of columns X1/X2 and check to make sure that X1 <= X2 in
     # all non-NULL cases.
@@ -196,15 +192,15 @@ def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
 
     logger.log('debug', 'Validating MIN/MAX columns')
 
-    obs_table_names = sorted(db.table_names(namespace, prefix='obs_'))
+    obs_table_names = sorted(db.table_names(prefix='obs_'))
 
-    pi_table_name = db.convert_raw_to_namespace(namespace, 'param_info')
+    pi_table_name = 'param_info'
 
     q = db.quote_identifier
 
     for obs_table_name in obs_table_names:
-        full_obs_table_name = db.convert_raw_to_namespace(namespace, obs_table_name)
-        column_list = db.table_info(namespace, obs_table_name)
+        full_obs_table_name = obs_table_name
+        column_list = db.table_info(obs_table_name)
         column_list.sort(key=lambda x: x['field_name'])
         for column in column_list:
             field_name1 = column['field_name']
@@ -253,7 +249,7 @@ def validate_min_max_order(ctx: ImportContext, namespace: Namespace) -> None:
                 )
 
 
-def validate_filter_wavelength_consistency(ctx: ImportContext, namespace: Namespace) -> None:
+def validate_filter_wavelength_consistency(ctx: ImportContext) -> None:
     """Report filters whose observations disagree about their wavelengths.
 
     Every observation taken through one filter should record the same wavelength range,
@@ -264,7 +260,6 @@ def validate_filter_wavelength_consistency(ctx: ImportContext, namespace: Namesp
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        namespace: The namespace holding the tables to check.
     """
     # For each mission and instrument, then for each filter, look at the
     # wavelength table and see if the wl1 and wl2 fields contain only a single
@@ -276,7 +271,7 @@ def validate_filter_wavelength_consistency(ctx: ImportContext, namespace: Namesp
 
     logger.log('debug', 'Validating filter/wavelength consistency')
 
-    obs_table_names = sorted(db.table_names(namespace, prefix='obs_'))
+    obs_table_names = sorted(db.table_names(prefix='obs_'))
 
     q = db.quote_identifier
     wl_table = q('obs_wavelength')
@@ -293,8 +288,8 @@ def validate_filter_wavelength_consistency(ctx: ImportContext, namespace: Namesp
     )
 
     for obs_table_name in obs_table_names:
-        full_obs_table_name = db.convert_raw_to_namespace(namespace, obs_table_name)
-        column_list = db.table_info(namespace, obs_table_name)
+        full_obs_table_name = obs_table_name
+        column_list = db.table_info(obs_table_name)
         for column in column_list:
             field_name = column['field_name']
             if field_name not in ('filter_name', 'combined_filter'):
@@ -334,17 +329,16 @@ LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
                         )
 
 
-def validate_orphans(ctx: ImportContext, namespace: Namespace) -> None:
+def validate_orphans(ctx: ImportContext) -> None:
     """Report rows whose ``obs_general`` row does not exist.
 
     Every observation table other than ``obs_general``, and ``cart``, is anti-joined
     against ``obs_general`` on ``obs_general_id``, and a table with any row left over is
     reported at error level with the count. Observation tables without ``obs_general``
-    are an error too; a namespace with no observation table at all has nothing to check.
+    are an error too; a schema with no observation table at all has nothing to check.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        namespace: The namespace holding the tables to check.
     """
     db = ctx.db
     assert db is not None
@@ -352,22 +346,20 @@ def validate_orphans(ctx: ImportContext, namespace: Namespace) -> None:
 
     logger.log('debug', 'Validating references to obs_general')
 
-    tables = [
-        name for name in sorted(db.table_names(namespace, prefix='obs_')) if name != 'obs_general'
-    ]
-    if not db.table_exists(namespace, 'obs_general'):
+    tables = [name for name in sorted(db.table_names(prefix='obs_')) if name != 'obs_general']
+    if not db.table_exists('obs_general'):
         if tables:
             logger.log(
                 'error',
                 f'Table "obs_general" is missing, but {len(tables)} other obs_ tables exist',
             )
         return
-    if db.table_exists(namespace, 'cart'):
+    if db.table_exists('cart'):
         tables.append('cart')
     q = db.quote_identifier
-    obs_general = q(db.convert_raw_to_namespace(namespace, 'obs_general'))
+    obs_general = q('obs_general')
     for table_name in tables:
-        child = q(db.convert_raw_to_namespace(namespace, table_name))
+        child = q(table_name)
         # Every interpolation is an identifier produced by quote_identifier
         # (^[A-Za-z0-9_]+$); the statement carries no values at all.
         cmd = f"""
@@ -381,7 +373,7 @@ WHERE {obs_general}.{q('id')} IS NULL"""  # nosec B608
             )
 
 
-def validate_unique_opus_ids(ctx: ImportContext, namespace: Namespace) -> None:
+def validate_unique_opus_ids(ctx: ImportContext) -> None:
     """Report OPUS IDs that more than one ``obs_general`` row carries.
 
     ``obs_general.opus_id`` carries a plain key, and finalization's duplicate step is what
@@ -390,15 +382,14 @@ def validate_unique_opus_ids(ctx: ImportContext, namespace: Namespace) -> None:
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        namespace: The namespace holding the tables to check.
     """
     db = ctx.db
     assert db is not None
     ctx.logger.log('debug', 'Validating that each OPUS ID has one obs_general row')
-    if not db.table_exists(namespace, 'obs_general'):
+    if not db.table_exists('obs_general'):
         return
     q = db.quote_identifier
-    obs_general = q(db.convert_raw_to_namespace(namespace, 'obs_general'))
+    obs_general = q('obs_general')
     # Every interpolation is an identifier produced by quote_identifier
     # (^[A-Za-z0-9_]+$); the statement carries no values at all.
     shared = (
@@ -419,26 +410,25 @@ def validate_unique_opus_ids(ctx: ImportContext, namespace: Namespace) -> None:
         )
 
 
-def do_validate(ctx: ImportContext, namespace: Namespace = 'perm') -> bool:
-    """Run every validation check, driven by ``--validate-perm``.
+def do_validate(ctx: ImportContext) -> bool:
+    """Run every validation check, driven by ``--validate``.
 
     Every check runs, so one run reports every failure; each is logged at error level.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
-        namespace: The namespace holding the tables to check.
 
     Returns:
         True if no check logged an error, False otherwise.
     """
     ctx.logger.open('Performing database validation', limits={'info': -1, 'debug': -1})
 
-    validate_param_info(ctx, namespace)
-    validate_nulls(ctx, namespace)
-    validate_min_max_order(ctx, namespace)
-    validate_filter_wavelength_consistency(ctx, namespace)
-    validate_orphans(ctx, namespace)
-    validate_unique_opus_ids(ctx, namespace)
+    validate_param_info(ctx)
+    validate_nulls(ctx)
+    validate_min_max_order(ctx)
+    validate_filter_wavelength_consistency(ctx)
+    validate_orphans(ctx)
+    validate_unique_opus_ids(ctx)
 
     fatal_count, error_count, _warning_count, _message_count = ctx.logger.close()
     return bool(fatal_count + error_count == 0)

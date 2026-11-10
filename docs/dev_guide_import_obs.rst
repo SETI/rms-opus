@@ -261,7 +261,7 @@ Construction and attributes
        dictionary object for the whole index file, mutated in place.** It is None while
        the tables are being created, before any observation has been read.
    * - ``_ignore_errors``
-     - ``--import-ignore-errors``, read off the run's arguments at construction rather
+     - ``--ignore-errors``, read off the run's arguments at construction rather
        than taken as a parameter, so that every construction site reaches the branches
        that consult it. Read eagerly, so a context built without real parsed arguments
        fails at construction rather than only on a rare error path.
@@ -424,7 +424,7 @@ Other helpers
     (:mod:`opus_import.config_targets.target_name_mapping`), and looks it up in
     ``TARGET_NAME_INFO`` (:mod:`opus_import.config_targets.target_name_info`). An unknown
     name is reported through :meth:`~opus_import.context.ImportLog.unknown_target_name`
-    and returns ``(None, None)`` -- or ``OTHER`` under ``--import-ignore-errors``, so the
+    and returns ``(None, None)`` -- or ``OTHER`` under ``--ignore-errors``, so the
     observation still imports.
 
 ``_get_planet_group_info(target_name)``
@@ -560,7 +560,7 @@ The methods fall into three groups:
   ``preview_images``. These are derived from the contract members above.
   ``preview_images`` is the interesting one: it asks ``rms-pdsfile`` for a view set
   through its ``viewset`` property and renders the result to JSON, and it honors
-  ``--import-ignore-missing-images`` and ``--import-fake-images``. **Its guard does real work**, because "no previews" reaches it in three different shapes: the
+  ``--ignore-missing-images`` and ``--fake-images``. **Its guard does real work**, because "no previews" reaches it in three different shapes: the
   property answers a miss with ``False`` rather than None, having converted it; a lookup
   that succeeds but finds nothing gives an *empty* view set, which is falsy and whose
   ``thumbnail`` raises rather than returning nothing; and the two exception branches set
@@ -672,7 +672,7 @@ Two things in it are not a plain read:
   bundle's ``temporal_camera`` flag is set, because such an observation legitimately
   spans enough time for those to vary, and it exempts a 0/360 pair on a longitude
   column. :func:`~opus_import.steps.do_import_obs.import_observation_table` calls it
-  unless ``--import-ignore-geo-mismatch``.
+  unless ``--ignore-geo-mismatch``.
 
 The three surface geometry modules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -682,7 +682,7 @@ Surface geometry is three tables, because it answers three different questions.
 :class:`~opus_import.obs.obs_surface_geometry.ObsSurfaceGeometry` -- ``obs_surface_geometry``
     **Which bodies the observation covered**, as one comma-separated list of display
     names built from the inventory file's target list. A single unknown target name
-    makes the whole column None. Under ``--import-report-inventory-mismatch`` it also
+    makes the whole column None. Under ``--report-inventory-mismatch`` it also
     builds the same list from the targets surface geometry rows were actually found for
     and warns when they differ -- retrying first with the central planets removed, since
     it is fine for the surface geometry to carry the central planet when the inventory
