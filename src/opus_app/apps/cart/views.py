@@ -93,7 +93,8 @@ log = logging.getLogger(__name__)
 #: The cart table's columns, in the order every write to it supplies them.
 _CART_COLUMNS = ('session_id', 'obs_general_id', 'opus_id', 'recycled')
 
-#: The alias of the derived table that numbers a session's cart in a sort order.
+#: The alias of the derived table that lists a session's cart in a sort order, giving each
+#: observation its position, 1, 2, 3, ..., in ``sort_order``.
 CART_ORDER_ALIAS = 'cart_order'
 
 
@@ -1321,10 +1322,13 @@ def _edit_cart_range(
         log.error('_edit_cart_range: Bad range format: %r', request.GET)
         raise Http400Error(http400_bad_or_missing_range(request))
 
-    # The derived table the range is numbered in, and the alias its columns are read
-    # through.
+    # The ordered list the range is taken from: the session's cart in the requested sort
+    # order for view=cart, or the search's stored results otherwise. Either way it is a
+    # derived table with one row per observation, holding the observation's id and its
+    # position in the list, sort_order, counting 1, 2, 3, ... with no gaps.
+    # ordered_alias is the name its columns are read through.
     query_source: sql_builder.Subquery
-    numbered_alias: str
+    ordered_alias: str
     if request.GET.get('view', 'browse') == 'cart':
         # This is for the cart page - we don't have any pre-done sort order
         # so we have to do it ourselves here
@@ -1353,11 +1357,11 @@ def _edit_cart_range(
         assert order_mult_tables is not None
         assert order_obs_tables is not None
 
-        # The cart numbered in the sort order, from 1 with no gaps -- the same
-        # shape as a search's results, so everything below reads it the same
-        # way. It is a derived table, computed by each statement that names it.
-        # The derived table's name embeds nothing, but the cart rows it numbers
-        # belong to the session, which get_session_id leaves None only where
+        # The session's cart as an ordered list: ROW_NUMBER() gives each observation
+        # its position in the sort order, the same columns a search's stored results
+        # have, so everything below reads either list the same way. The derived table
+        # is computed again by each statement that names it. It lists only this
+        # session's cart rows, and get_session_id leaves the session None only where
         # Django could not create a session key at all.
         assert session_id is not None
         order_select = sql_builder.Select()
@@ -1387,7 +1391,7 @@ def _edit_cart_range(
             ),
         )
         query_source = sql_builder.Subquery(order_select, CART_ORDER_ALIAS)
-        numbered_alias = CART_ORDER_ALIAS
+        ordered_alias = CART_ORDER_ALIAS
     else:
         # This is for the browse page - everything is based on the search's
         # results
@@ -1413,24 +1417,23 @@ def _edit_cart_range(
             )
             return HttpResponseServerError(http500_search_cache_failed(request))
         query_source = sql_builder.search_results_source(search_id)
-        numbered_alias = sql_builder.SEARCH_RESULTS_ALIAS
+        ordered_alias = sql_builder.SEARCH_RESULTS_ALIAS
 
     cursor = connection.cursor()
 
-    def numbered_join_condition() -> sql_builder.Expr:
-        """Return the condition matching obs_general rows to the numbered ones."""
+    def ordered_join_condition() -> sql_builder.Expr:
+        """Return the condition matching obs_general rows to the ordered list's rows."""
         return sql_builder.columns_equal(
-            sql_builder.column('id', numbered_alias), sql_builder.column('id', 'obs_general')
+            sql_builder.column('id', ordered_alias), sql_builder.column('id', 'obs_general')
         )
 
     sort_orders = []
     for opus_id in ids:
         sort_order_select = sql_builder.Select()
         sort_order_select.add_column(sql_builder.column('sort_order'))
-        # INNER JOIN because we only want rows that exist in the
-        # numbered table
+        # INNER JOIN because only observations in the ordered list are in range
         sort_order_select.add_from('obs_general').add_join(
-            'INNER', query_source, numbered_join_condition()
+            'INNER', query_source, ordered_join_condition()
         )
         sort_order_select.add_where(
             sql_builder.binary_op(
@@ -1452,7 +1455,7 @@ def _edit_cart_range(
                 )
         sort_orders.append(results[0][0])
 
-    sort_order_column = sql_builder.column('sort_order', numbered_alias)
+    sort_order_column = sql_builder.column('sort_order', ordered_alias)
     range_condition = sql_builder.join_exprs(
         [
             sql_builder.binary_op(sort_order_column, '>=', sql_builder.value(min(sort_orders))),
@@ -1464,9 +1467,8 @@ def _edit_cart_range(
     def range_from_source(restrict_to_cart: bool) -> sql_builder.FromSource:
         """Return the FROM clause selecting the observations in the range."""
         from_source = sql_builder.FromSource('obs_general')
-        # INNER JOIN because we only want rows that exist in the
-        # numbered table
-        from_source.add_join('INNER', query_source, numbered_join_condition())
+        # INNER JOIN because only observations in the ordered list are in range
+        from_source.add_join('INNER', query_source, ordered_join_condition())
         if restrict_to_cart:
             # Restrict to observations already in this session's cart
             from_source.add_join(
@@ -1575,16 +1577,16 @@ def _edit_cart_range(
             'INNER',
             query_source,
             sql_builder.columns_equal(
-                sql_builder.column('id', numbered_alias),
+                sql_builder.column('id', ordered_alias),
                 sql_builder.column('obs_general_id', 'cart'),
             ),
         )
         # The join above matches on obs_general_id alone, and the cart table
         # holds every session's rows, so the session has to be named here as
         # well or this deletes the observations in the range from every other
-        # user's cart too. The numbered table does not supply the restriction:
+        # user's cart too. The ordered list does not supply the restriction:
         # with view=browse it is the shared search's results, and even with
-        # view=cart, where it numbers only this session's cart, it only narrows
+        # view=cart, where it lists only this session's cart, it only narrows
         # which observations are in range -- another session's row for one of
         # those same observations still joins.
         delete_condition = sql_builder.join_exprs(

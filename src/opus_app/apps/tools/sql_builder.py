@@ -82,7 +82,7 @@ _SEPARATOR = ','
 
 #: The alias one search's rows of ``search_results`` are joined under
 #: (`search_results_source`), whose ``id`` is the observation's ``obs_general.id`` and
-#: whose ``sort_order`` numbers the search's results from 1 in its order.
+#: whose ``sort_order`` is the observation's position in the search's order, 1, 2, 3, ....
 SEARCH_RESULTS_ALIAS = 'results'
 
 
@@ -263,12 +263,12 @@ def between(expr: Expr, low: Any, high: Any) -> Expr:
 
 
 def sort_order_range(table: str, offset: int, count: int) -> Expr:
-    """Return the condition selecting one window of a table numbered by `sort_order`.
+    """Return the condition selecting one page of an ordered list by its `sort_order`.
 
-    A search's results (`search_results_source`), and the cart numbered by `row_number`,
-    number their rows from 1 with no gaps, so the rows after the first `offset` and
-    `count` of them are exactly those whose `sort_order` lies in the range, and a key on
-    `sort_order` reads only them.
+    In a search's results (`search_results_source`), and in the cart listed in a sort
+    order with `row_number`, `sort_order` is each row's position, counting 1, 2, 3, ...
+    with no gaps. So the `count` rows after the first `offset` are exactly those whose
+    `sort_order` lies in the range, and a key on `sort_order` reads only them.
 
     Parameters:
         table: The table, or the alias of the derived table, whose `sort_order` is
