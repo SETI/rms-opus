@@ -750,7 +750,9 @@ class ImportBench:
             log_dir=errors_log.parent,
             importer_log_dirs=[directory / 'logs' for directory in importer_dirs],
         )
-        self._record_idle(run, [directory / 'logs' for directory in importer_dirs])
+        self._record_idle(
+            run, [directory / 'logs' for directory in importer_dirs], joined_only=False
+        )
         timings = monitor.records[2].timings
         run['metrics']['import.registration.wall_s'] = monitor.records[1].wall_s
         run['details']['importers'] = importers
@@ -903,18 +905,23 @@ class ImportBench:
         returncode = process.wait()
         return lines, time.perf_counter(), returncode
 
-    def _record_idle(self, run: dict[str, Any], log_dirs: Sequence[Path]) -> None:
+    def _record_idle(
+        self, run: dict[str, Any], log_dirs: Sequence[Path], *, joined_only: bool = True
+    ) -> None:
         """Record each importer's idle time from its last bundle to the last exit.
 
         Parameters:
             run: The result run, which gains ``import.importer_idle_s.max`` and ``.sum``
                 and the per-importer list ``importer_idle_s`` in its details.
             log_dirs: The directories holding the importers' information logs.
+            joined_only: As `importer_logs.importer_logs` takes it.
 
         Raises:
             RunFailedError: If no importer's log is found.
         """
-        idle = importer_logs.importer_idle(importer_logs.importer_logs(log_dirs))
+        idle = importer_logs.importer_idle(
+            importer_logs.importer_logs(log_dirs, joined_only=joined_only)
+        )
         if len(idle) == 0:
             raise RunFailedError(f'no queue importer log in {[str(d) for d in log_dirs]}')
         seconds = [float(str(entry['idle_s'])) for entry in idle]

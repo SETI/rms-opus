@@ -109,6 +109,21 @@ def test_only_queue_importers_logs_are_read(tmp_path: Path) -> None:
     ]
 
 
+def test_an_importers_own_directory_is_read_whatever_its_log_is_named(tmp_path: Path) -> None:
+    """Each hand-started importer has a directory of its own, whose log may lack the suffix."""
+    for number, text in ((0, _IMPORTER_LOG), (1, _IDLE_LOG)):
+        directory = tmp_path / f'importer_{number}'
+        directory.mkdir()
+        _write(directory, 'opus_import_2026-11-11T08-00-00.log', text)
+        _write(directory, 'opus_import_debug_2026-11-11T08-00-00.log', text)
+    directories = [tmp_path / 'importer_0', tmp_path / 'importer_1']
+
+    logs = importer_logs.importer_logs(directories, joined_only=False)
+
+    assert [log.path.parent.name for log in logs] == ['importer_0', 'importer_1']
+    assert importer_logs.importer_logs(directories) == []
+
+
 _SPELLING = Spelling.from_help(
     '--import --finalize --validate --write-schema-version --yes --register-bundles --join'
 )

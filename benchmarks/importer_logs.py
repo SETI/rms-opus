@@ -126,12 +126,15 @@ def read_importer_log(path: Path) -> ImporterLog:
     return ImporterLog(path, stamps[0], stamps[-1], tuple(bundles))
 
 
-def importer_logs(log_dirs: Sequence[Path]) -> list[ImporterLog]:
+def importer_logs(log_dirs: Sequence[Path], *, joined_only: bool = True) -> list[ImporterLog]:
     """Read every queue importer's information log in some log directories.
 
     Parameters:
-        log_dirs: The directories; a queue importer's log carries
-            `build_run.JOIN_LOG_SUFFIX` in its name, and every other log is left out.
+        log_dirs: The directories.
+        joined_only: True when the directories hold other logs beside the importers':
+            only a log carrying `build_run.JOIN_LOG_SUFFIX` in its name is read. False
+            when each directory is one importer's own, whose log may be named without
+            the suffix (a side whose importers do not add it), and every log is read.
 
     Returns:
         One per importer, in the order the directories and the log names give.
@@ -141,7 +144,7 @@ def importer_logs(log_dirs: Sequence[Path]) -> list[ImporterLog]:
         read_importer_log(path)
         for log_dir in log_dirs
         for path in build_run.import_logs(log_dir)
-        if marker in path.name
+        if not joined_only or marker in path.name
     ]
 
 
