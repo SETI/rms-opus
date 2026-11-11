@@ -995,6 +995,11 @@ class _ScriptedConnection:
     def rollback(self) -> None:
         self.rollbacks += 1
 
+    @staticmethod
+    def fileno() -> None:
+        """Hold no socket, so a pool worker forked later in this process closes nothing."""
+        return None
+
 
 class _ConnectedDB(ImportDBMySQL):
     """An ImportDBMySQL over a scripted connection, running statements through it."""

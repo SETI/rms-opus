@@ -48,9 +48,9 @@ BUNDLE_DONE = 'done'
 #: A bundle whose import logged an error, or stopped.
 BUNDLE_FAILED = 'failed'
 
-#: How many ids a bundle's range holds for each row its labels declare: room for a
-#: re-imported bundle that has grown, and for an index row that yields several
-#: observations.
+#: How many ids a bundle's range holds for each row its labels declare. The margin is
+#: room for a re-imported bundle that has grown, and for an index row that yields
+#: several observations.
 ID_CAPACITY_FACTOR = 100
 
 #: The largest id ``obs_general.id``, an ``INT UNSIGNED``, can hold.

@@ -232,7 +232,7 @@ def registry_states(schema: str | None) -> list[tuple[str, str]]:
         registry.
 
     Raises:
-        opus_import.importdb.ImportDBError: If the schema cannot be read, which includes
+        opus_import.importdb.super.ImportDBError: If the schema cannot be read, which includes
             a schema that does not exist.
     """
     # Imported here, so that --help and --dry-run need neither a configuration nor the

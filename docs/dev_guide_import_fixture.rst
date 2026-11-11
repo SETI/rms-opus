@@ -258,7 +258,7 @@ Several importers
     the order given, and ``done``. The importers' logs must show the three first claims
     within one hold of each other, every volume claimed once, and no importer exiting
     before the last claim. Every goldened table must equal the main run's in the
-    mult-value mode of :func:`~import_tests.tools.golden_io.serialize_table`, which
+    mult-value mode of ``import_tests.tools.golden_io.serialize_table``, which
     writes each mult column as the value its id names, since several importers number a
     field's new values in the order they meet them; it writes each value as the server's
     collation compares it and sorts every table's rows. Registering the volumes in

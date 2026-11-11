@@ -422,7 +422,9 @@ class ImportDBSuper:
                 the final attempt fails.
         """
         attempts = len(RETRY_SLEEPS) + 1
-        for attempt in range(1, attempts + 1):
+        attempt = 0
+        while True:
+            attempt += 1
             try:
                 with self.failures_expected(), self.transaction():
                     return body()
@@ -444,7 +446,6 @@ class ImportDBSuper:
                         f'the statement: {statement}',
                     )
                 raise
-        raise AssertionError('unreachable')  # pragma: no cover
 
     def is_retryable_error(self, exc: BaseException) -> bool:
         """Return whether a failed transaction may succeed if it is run again.
@@ -474,8 +475,7 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::is_duplicate_key_error must be overridden')
 
-    @contextlib.contextmanager
-    def named_lock(self, name: str) -> Iterator[None]:
+    def named_lock(self, name: str) -> contextlib.AbstractContextManager[None]:
         """Hold a server-wide named lock while the body runs, waiting for it first.
 
         The lock belongs to the connection, not to a transaction, so it survives the
@@ -484,14 +484,13 @@ class ImportDBSuper:
         Parameters:
             name: The lock's name, from `opus_import.importdb.lock_name`.
 
-        Yields:
-            Nothing; the body runs holding the lock.
+        Returns:
+            A context manager the body runs inside, holding the lock.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::named_lock must be overridden')
-        yield  # pragma: no cover
 
     def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
         """Add one to a counter column of one row, and return the new value.
