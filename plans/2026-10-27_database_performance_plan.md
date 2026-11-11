@@ -6665,3 +6665,62 @@ Nothing above this line is rewritten by an executor.
   - A poller of the server's lock tables saw one wait between importers in 33 minutes
     of loading (an importer briefly waiting for another's `mult_field` counter row), and
     no stall like the one PR-16's eight-worker runs showed.
+- **CodeRabbit fixes (2026-11-11, first review, at d5cbdebb).** Each behavior fix has a
+  test that fails with it reverted (each checked by reverting it):
+  - *Interrupt while importers start.* `Coordinator._start` starts nothing once
+    interrupted, and an importer whose start an interrupt landed in (not yet in `_own`,
+    so the handler missed it) is sent one SIGINT once registered; at worst it gets two
+    and aborts, holding nothing yet.
+  - *Claims cleared by recovery; recovered bundles taken as unclaimable.* A pass
+    reads the registry first, runs `_track` on that reading, then recovers, and reads
+    again only when the recovery acted. An importer that claimed and died within one
+    tracking interval still shows its bundle in the first reading, so it is not counted
+    a failed start; a bundle this pass's recovery returns is not pending in it, so a
+    clean exit does not mark it unclaimable. A return by another coordinator between
+    two readings is still possible; the finishing coordinator's one extra round covers
+    it.
+  - *Second interrupt during the importer's start-up.* The handler also raises on the
+    second interrupt before the importer has begun recording itself
+    (`ImportContext.queue_entered`, set in `import_from_queue` before
+    `create_process_table`): it holds nothing then, and the holdings preload could
+    otherwise not be stopped. From that point until its loop, and after it, the second
+    is still only counted, as the review-fixes bullet decided. This extends that
+    decision rather than undoing it: it only adds the phase in which nothing is held.
+  - *No registry in `recover_lost_importers`* (`--status --recover` on a schema with
+    `import_process` only): the held-bundle read is skipped and lost importers are still
+    marked.
+  - *The holder connection's idle timeout.* The registry row is still held on a sibling
+    connection through the deletes, as decided above. That connection, idle while the
+    deletes run, is given `LOCK_CONNECTION_IDLE_SECONDS` as the lock connection is, so a
+    server's short `wait_timeout` cannot close it and free the row partway through. The
+    restructure CodeRabbit asked for, locking and checking in each delete chunk's own
+    transaction, was not done: it undoes that decision. The remaining case, the holder
+    dropped while its sibling on the same host keeps working, is not a real failure mode.
+  - *Harness interrupt.* `_run_stamped` starts `opus_import_all` in its own process group,
+    passes each KeyboardInterrupt on as SIGINT, reads to the end, and raises only after
+    the coordinator exits, so `server.running()` does not stop MySQL under its importers.
+  - *Result-file pins.* `importers` and `coordinator_importers` are pinned (defaults
+    None, as `import_keys`' is `{}`), and `bench_import` always records both, so a file
+    refuses a run with another count, or with a count against none, in either direction.
+  - *Docs.* `[import] importers`' default is 4, capped at the workers total, in the
+    `ImportConfig` docstring, `dev_guide_import_running.rst` and
+    `user_guide_deployment.rst`.
+  - *Test teardown.* The coordinator cases kill a recorded importer pid only if
+    `/proc/<pid>/environ` names the case's `OPUS_CONFIG`; a reused pid is left alone.
+    This changes no product behavior and has no test of its own.
+  - *Test stand-in and module size.* `RegistryDB` and the loop helpers moved to
+    `tests/opus_import/conftest.py`, matching every term of a clause (`row_selected`,
+    shared with `test_do_recover.py`), and the queue importer's tests moved to
+    `test_queue_importer.py`. A test there requires an importer whose bundle was given to
+    importer 2 not to mark it done; it fails with the old first-term-only matching.
+  - Skipped, coordinator read timeouts: a client read timeout on the coordinator's
+    connection would also cut the recovery's delete chunks, which run on that
+    connection. `get_db` has no timeout option, so this would be a database-layer
+    change. A peer that stops answering is bounded by TCP keepalive, as every other
+    connection is.
+  - Skipped, killing pool workers on abort: `ProcessPoolExecutor` has no public way to
+    terminate workers before Python 3.14 (the floor is 3.12). The wait is at most one
+    in-flight task (`worker_rows`, 500 by default), and a worker stuck in uninterruptible
+    I/O could not be killed anyway.
+  - Results: the gates pass (2,993 unit tests); the import suite 182 passed and 3
+    skipped. The import's output is unchanged, so the goldens were not regenerated.

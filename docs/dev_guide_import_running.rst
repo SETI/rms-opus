@@ -71,7 +71,8 @@ and the log locations all come from the configuration file, and the keys it uses
        :ref:`dev_guide_import_running_parallelism`.
    * - ``[import] importers``, ``stall_warning_minutes``, ``status_interval_minutes``
      - How ``opus_import_all`` runs a full import: how many importers it starts on this
-       computer (1 by default, capped at its total of workers), how long an importer may
+       computer (4 by default, capped at its total of workers, so one with the default
+       ``workers``), how long an importer may
        go without progress before it is reported as stalled (30 minutes by default), and
        how often the totals line is written when the output is not a terminal (5
        minutes by default). See :ref:`dev_guide_import_full_run`.
@@ -713,8 +714,10 @@ importer writes its own logs, named after its computer and process id
 
 **Interrupts.** The first Ctrl-C (SIGINT) drains: every importer finishes its bundle and
 claims nothing new, and the coordinator exits with failure without finalizing. A second
-aborts: every importer deletes its bundle's rows, returns it to ``pending``, and exits.
-Later interrupts do not interrupt the abort. Either way, running ``opus_import_all`` again resumes. The importers run in process
+aborts: every importer deletes its bundle's rows, returns it to ``pending``, and exits;
+an importer still reading the holdings, before it has recorded itself in
+``import_process``, holds nothing and stops where it is. Later interrupts do not
+interrupt the abort. Either way, running ``opus_import_all`` again resumes. The importers run in process
 groups of their own, so a terminal's Ctrl-C reaches the coordinator alone, which passes
 it on; under ``nohup``, ``kill -INT <coordinator>`` does the same.
 

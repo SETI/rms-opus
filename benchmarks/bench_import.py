@@ -70,6 +70,7 @@ import json
 import math
 import pstats
 import shutil
+import signal
 import subprocess  # nosec B404 - the harness runs the side's import
 import sys
 import time
@@ -883,6 +884,11 @@ class ImportBench:
     ) -> tuple[list[tuple[float, str]], float, int]:
         """Run the side's interpreter, stamping each line of its output as it is read.
 
+        The process runs in a process group of its own, so a terminal's Ctrl-C reaches
+        the harness alone, which passes each interrupt on to it as SIGINT and goes on
+        reading until it exits: the coordinator drains or aborts its importers, and the
+        server they write to is stopped only after.
+
         Parameters:
             config_file: The run's configuration.
             arguments: The command line after the interpreter.
@@ -891,6 +897,10 @@ class ImportBench:
             Each output line (standard error merged in) with the `time.perf_counter`
             reading it was read at, the reading when the process exited, and its exit
             status.
+
+        Raises:
+            KeyboardInterrupt: Once the process has exited, if the harness was
+                interrupted while it ran.
         """
         process = subprocess.Popen(  # nosec B603 - the side's interpreter and its own module
             [str(self.side.python), *arguments],
@@ -899,11 +909,24 @@ class ImportBench:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            process_group=0,
         )
         assert process.stdout is not None
-        lines = [(time.perf_counter(), line.rstrip('\n')) for line in process.stdout]
-        returncode = process.wait()
-        return lines, time.perf_counter(), returncode
+        lines: list[tuple[float, str]] = []
+        interrupted = False
+        while True:
+            try:
+                for line in process.stdout:
+                    lines.append((time.perf_counter(), line.rstrip('\n')))
+                returncode = process.wait()
+                break
+            except KeyboardInterrupt:
+                interrupted = True
+                process.send_signal(signal.SIGINT)
+        exited = time.perf_counter()
+        if interrupted:
+            raise KeyboardInterrupt
+        return lines, exited, returncode
 
     def _record_idle(
         self, run: dict[str, Any], log_dirs: Sequence[Path], *, joined_only: bool = True
@@ -1432,6 +1455,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         'import_scenario_hash': scenario_hash([scenario.path]),
         'import_start_method': DEFAULT_START_METHOD,
         'bulk_load_path': DEFAULT_BULK_LOAD_PATH,
+        'importers': args.importers,
+        'coordinator_importers': args.coordinator,
     }
     if args.importers is not None and spelling.join is None:
         sys.exit('this side has no --join: measure it without --importers, in one process')
@@ -1442,10 +1467,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         )
     if args.register_only and spelling.register_bundles is None:
         sys.exit('this side has no --register-bundles to time')
-    if args.importers is not None:
-        environment['importers'] = args.importers
-    if args.coordinator is not None:
-        environment['coordinator_importers'] = args.coordinator
     with server.running():
         environment.update(server_environment(server))
         if args.register_only:

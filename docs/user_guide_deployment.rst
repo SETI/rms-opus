@@ -437,7 +437,8 @@ Sharing a full import between processes or computers
 the largest bundle no other has taken, import it, and take the next, until none is left.
 ``--workers`` is the total of worker processes on the computer and ``--importers`` how
 many importers share them; ``[import] workers`` and ``[import] importers`` give the
-defaults, both 1. The total may not pass the ceiling of ``[import] cpu_fraction`` of the
+defaults, 1 and 4. The importers are capped at the total of workers, so the defaults
+start one importer of one worker. The total may not pass the ceiling of ``[import] cpu_fraction`` of the
 computer's cores. Six importers of four workers each, for one, need a ceiling of at
 least 24, which 30 cores give at a ``cpu_fraction`` of 0.8::
 

@@ -539,6 +539,7 @@ def import_from_queue(
         return False
     db = ctx.db
     assert db is not None
+    ctx.queue_entered = True
     import_processes.create_process_table(db)
     lock_db = db.open_sibling_connection()
     importer = import_processes.start_importer(lock_db, ctx.log_path or '')

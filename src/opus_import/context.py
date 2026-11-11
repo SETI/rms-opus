@@ -253,6 +253,9 @@ class ImportContext:
             ``import_process``; None until `opus_import.cli` opens it.
         interrupts: How many interrupts (SIGINT) an importer has received: after the
             first it claims nothing new, and the second aborts its bundle.
+        queue_entered: Whether a queue importer has begun recording itself in
+            ``import_process``; until then it holds nothing, and a second interrupt
+            stops it wherever it lands.
     """
 
     args: argparse.Namespace
@@ -287,6 +290,7 @@ class ImportContext:
     load_guard: BundleGuard | None = None
     log_path: str | None = None
     interrupts: int = 0
+    queue_entered: bool = False
 
     log: ImportLog = field(init=False)
 

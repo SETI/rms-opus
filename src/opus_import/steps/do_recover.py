@@ -10,7 +10,9 @@ Both delete the bundle's rows while a second connection holds the bundle's regis
 locked (``SELECT ... FOR UPDATE``), and both first check, under that lock, that the row
 still names the importer as ``importing``. The deletes run on the import connection, in
 transactions of their own, so the row lock has to be held elsewhere to last through
-them. Whichever of the two takes the row first acts; the other finds the row locked or
+them; the holding connection, idle while they run, is given the importer lock
+connection's idle timeout, so the server does not close it and free the row partway
+through. Whichever of the two takes the row first acts; the other finds the row locked or
 changed and does nothing. A recovery also checks again, under the row lock, that the
 importer's lock is free, and an importer's chunk holds the same row until it commits
 (`opus_import.import_processes.BundleGuard`), so a chunk can never commit after the
@@ -25,8 +27,10 @@ from opus_import import bundle_registry, import_processes, import_util
 from opus_import.steps import do_import_tables
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from opus_import.context import ImportContext
-    from opus_import.importdb.super import ImportDBSuper
+    from opus_import.importdb.super import ImportDBSuper, ResultRow
 
 #: How many times an importer may die holding a bundle before the bundle is ``failed``
 #: rather than returned to the queue: a bundle that kills its importer twice (memory, a
@@ -54,6 +58,28 @@ def _held_row(holder: ImportDBSuper, bundle_number: int) -> tuple[object, ...] |
         f'{q("bundle_number")}=%s',
         [bundle_number],
     )
+
+
+def _open_holder(db: ImportDBSuper) -> ImportDBSuper:
+    """Open the connection that holds a bundle's registry row through the bundle's delete.
+
+    It waits idle while the deletes run on the import connection, so its idle timeout is
+    raised to `opus_import.import_processes.LOCK_CONNECTION_IDLE_SECONDS`, as an
+    importer's lock connection's is.
+
+    Parameters:
+        db: The import connection.
+
+    Returns:
+        The holding connection, which the caller closes.
+    """
+    holder = db.open_sibling_connection()
+    try:
+        holder.set_idle_timeout(import_processes.LOCK_CONNECTION_IDLE_SECONDS)
+    except BaseException:
+        holder.close()
+        raise
+    return holder
 
 
 def _transition(
@@ -113,7 +139,7 @@ def release_bundle(
     """
     db = ctx.db
     assert db is not None
-    holder = db.open_sibling_connection()
+    holder = _open_holder(db)
     try:
         with holder.transaction():
             row = _held_row(holder, bundle_number)
@@ -152,7 +178,7 @@ def _recover_bundle(
     """
     db = ctx.db
     assert db is not None
-    holder = db.open_sibling_connection()
+    holder = _open_holder(db)
     try:
         with holder.transaction():
             row = _held_row(holder, bundle_number)
@@ -189,8 +215,9 @@ def recover_lost_importers(ctx: ImportContext) -> list[str]:
     `LOSSES_BEFORE_FAILED`th loss. An importer whose row is ``running`` while its lock is
     free is lost, and once it holds no bundle its row becomes ``lost``. Every move checks
     the state it moves from, so the recovery may run on any computer, any number of
-    times, at once. Whether ``import_process`` exists is read from the server, not taken
-    from what the connection has seen.
+    times, at once. Whether ``import_process`` and the registry exist is read from the
+    server, not taken from what the connection has seen; with no registry, only the
+    importers are marked.
 
     Parameters:
         ctx: The context whose connection reads, deletes and writes.
@@ -215,12 +242,14 @@ def recover_lost_importers(ctx: ImportContext) -> list[str]:
         return free[process_id]
 
     unsettled: set[int] = set()
-    held = db.read_rows(
-        bundle_registry.BUNDLE_REGISTRY_TABLE,
-        ['bundle_id', 'bundle_number', 'process_id'],
-        f'{q("state")}=%s AND {q("process_id")} IS NOT NULL',
-        [bundle_registry.BUNDLE_IMPORTING],
-    )
+    held: Sequence[ResultRow] = ()
+    if db.table_exists(bundle_registry.BUNDLE_REGISTRY_TABLE):
+        held = db.read_rows(
+            bundle_registry.BUNDLE_REGISTRY_TABLE,
+            ['bundle_id', 'bundle_number', 'process_id'],
+            f'{q("state")}=%s AND {q("process_id")} IS NOT NULL',
+            [bundle_registry.BUNDLE_IMPORTING],
+        )
     for bundle_id, bundle_number, found in held:
         process_id = int(found)
         if not lock_is_free(process_id):

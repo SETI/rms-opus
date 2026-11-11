@@ -204,6 +204,12 @@ def start_importer(arguments: list[str]) -> subprocess.Popen[bytes]:
     )
 
 
+def _send_interrupt(process: subprocess.Popen[bytes]) -> None:
+    """Send SIGINT to an importer, unless it has already gone."""
+    with contextlib.suppress(ProcessLookupError):
+        os.kill(process.pid, signal.SIGINT)
+
+
 @dataclass
 class _Importer:
     """One importer the coordinator started.
@@ -314,18 +320,24 @@ class Coordinator:
         self._shown = len(self._events)
 
     def _start(self, workers: int) -> None:
-        """Start one importer with the given workers, if the run may start more.
+        """Start one importer with the given workers, if the run may start more and has
+        not been interrupted.
+
+        An interrupt that arrives while the importer is being started finds it not yet
+        registered, so it is passed on to the importer once it is.
 
         Parameters:
             workers: Its workers.
         """
-        if self._starts_left <= 0:
+        if self._starts_left <= 0 or self.interrupts:
             return
         self._starts_left -= 1
         arguments = importer_step(self.schema, workers, self.extra_options, self.sets)
         process = start_importer(arguments)
         self._own.append(_Importer(process, workers, pending_at_start=self._pending))
         self._event(f'started importer {process.pid} with {workers} workers')
+        if self.interrupts:
+            _send_interrupt(process)
 
     def _interrupt(self, signum: int, frame: FrameType | None) -> None:
         """Pass an interrupt on to every running importer of its own.
@@ -336,10 +348,7 @@ class Coordinator:
         """
         self.interrupts += 1
         for importer in self._running():
-            try:
-                os.kill(importer.process.pid, signal.SIGINT)
-            except ProcessLookupError:
-                continue
+            _send_interrupt(importer.process)
         if self.interrupts == 1:
             self._event(
                 'Interrupted: the importers finish their bundles and claim nothing new; '
@@ -441,15 +450,18 @@ class Coordinator:
                 ctx.db = open_target_db(
                     self.config, self.schema, read_only=False, logger=self.logger
                 )
-            recovered = do_recover.recover_lost_importers(ctx)
             snapshot = import_processes.read_snapshot(ctx.db)
+            # Before the recovery, which clears a dead importer's hold on its bundle.
+            self._track(snapshot)
+            recovered = do_recover.recover_lost_importers(ctx)
+            if recovered:
+                snapshot = import_processes.read_snapshot(ctx.db)
         except importdb.ImportDBError as e:
             return self._reading_failed(ctx, e)
         self._failing_since = None
         for line in recovered:
             self._event(line, level=None)
         self._pending = _pending_numbers(snapshot)
-        self._track(snapshot)
         if not self.interrupts:
             self._replace(snapshot)
         self._report(snapshot)
@@ -504,9 +516,15 @@ class Coordinator:
         """Note each importer of its own's row, whether it has claimed a bundle, and what
         the exits since the last pass say.
 
+        It reads the pass's reading from before the recovery: an importer that claimed a
+        bundle and died since the last pass still holds it there, and a bundle the
+        recovery is about to return to the queue is not yet among the pending ones an
+        importer that exited cleanly may not claim.
+
         Parameters:
-            snapshot: The latest reading.
+            snapshot: The pass's reading, taken before its recovery.
         """
+        pending = _pending_numbers(snapshot)
         holders = {
             bundle.process_id for bundle in snapshot.bundles if bundle.process_id is not None
         }
@@ -527,7 +545,7 @@ class Coordinator:
                 self._failed_starts = 0
             if importer.process.poll() == 0:
                 # It found nothing it may claim; what was pending all its life it may not.
-                self._unclaimable |= importer.pending_at_start & self._pending
+                self._unclaimable |= importer.pending_at_start & pending
             elif not importer.claimed:
                 self._failed_starts += 1
                 self._stop_failed_starts(snapshot, importer)

@@ -8,7 +8,6 @@ recorded rather than run.
 from __future__ import annotations
 
 import contextlib
-import re
 from collections.abc import Iterator
 from typing import Any
 
@@ -17,7 +16,7 @@ import pytest
 from opus_import import import_processes
 from opus_import.steps import do_import_tables, do_recover
 
-from .conftest import make_context
+from .conftest import make_context, row_selected
 
 
 class _QueueDB:
@@ -29,6 +28,7 @@ class _QueueDB:
         locked_elsewhere: The bundle numbers whose registry row another session holds.
         held: The bundle numbers this stand-in's transactions hold, while they run.
         deleted: The bundles deleted, with the bundle rows held at the time.
+        idle_timeouts: Each idle timeout set on the connection, in seconds.
     """
 
     db_schema = 'opus_test'
@@ -39,6 +39,7 @@ class _QueueDB:
         self.locked_elsewhere: set[int] = set()
         self.held: set[int] = set()
         self.deleted: list[tuple[str, set[int]]] = []
+        self.idle_timeouts: list[int] = []
 
     def table_exists(self, table_name: str) -> bool:
         return table_name in self.tables
@@ -49,35 +50,17 @@ class _QueueDB:
     def quote_identifier(self, name: str) -> str:
         return f'`{name}`'
 
-    @staticmethod
-    def _selects(row: dict[str, Any], where: str, params: list[Any]) -> bool:
-        """Whether a row meets a conjunction of ```col`=%s`` and ```col` IS [NOT] NULL``."""
-        values = iter(params)
-        for term in where.split(' AND '):
-            column = re.match(r'`(\w+)`', term)
-            assert column is not None
-            value = row[column[1]]
-            if term.endswith('IS NOT NULL'):
-                matched = value is not None
-            elif term.endswith('IS NULL'):
-                matched = value is None
-            else:
-                matched = value == next(values)
-            if not matched:
-                return False
-        return True
-
     def read_rows(
         self, table_name: str, columns: list[str], where: str, params: list[Any]
     ) -> list[tuple[Any, ...]]:
         rows = self.tables[table_name]
-        return [tuple(r[c] for c in columns) for r in rows if self._selects(r, where, params)]
+        return [tuple(r[c] for c in columns) for r in rows if row_selected(r, where, params)]
 
     def update_row(
         self, table_name: str, row: dict[str, Any], where: str, params: list[Any]
     ) -> int:
         values = list(row.values())
-        matched = [r for r in self.tables[table_name] if self._selects(r, where, params)]
+        matched = [r for r in self.tables[table_name] if row_selected(r, where, params)]
         for existing in matched:
             existing.update(zip(row.keys(), values, strict=True))
         return len(matched)
@@ -107,6 +90,9 @@ class _QueueDB:
 
     def open_sibling_connection(self) -> _QueueDB:
         return self
+
+    def set_idle_timeout(self, seconds: int) -> None:
+        self.idle_timeouts.append(seconds)
 
     def close(self) -> None:
         return None
@@ -244,3 +230,30 @@ def test_a_bundle_that_left_the_importer_is_not_released(queue: _QueueDB) -> Non
     assert not do_recover.release_bundle(make_context(db=queue), 'B_2', 2, 2, 'pending')
     assert queue.deleted == []
     assert queue.bundle('B_2')['state'] == 'importing'
+
+
+@pytest.mark.parametrize('acting', ['recovery', 'release'])
+def test_the_connection_holding_the_row_outlasts_the_servers_idle_timeout(
+    acting: str, queue: _QueueDB
+) -> None:
+    """The holding connection waits idle through the whole delete, so it is given the
+    lock connection's idle timeout: a server's short ``wait_timeout`` cannot close it, and
+    free the row, partway through."""
+    ctx = make_context(db=queue)
+    if acting == 'recovery':
+        do_recover.recover_lost_importers(ctx)
+    else:
+        do_recover.release_bundle(ctx, 'B_2', 2, 2, 'pending')
+
+    assert queue.idle_timeouts == [import_processes.LOCK_CONNECTION_IDLE_SECONDS]
+
+
+def test_a_recovery_with_no_registry_still_marks_lost_importers(queue: _QueueDB) -> None:
+    """``--status --recover`` on a schema with ``import_process`` but no registry yet: no
+    bundle is read, and a running importer whose lock is free is lost."""
+    del queue.tables['import_bundle']
+
+    assert do_recover.recover_lost_importers(make_context(db=queue)) == [
+        'importer 1 is lost: its lock is free'
+    ]
+    assert queue.process(1)['state'] == 'lost'

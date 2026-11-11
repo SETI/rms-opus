@@ -7,12 +7,13 @@ an operator or a crash would: ``SIGKILL`` to an importer, ``SIGINT`` to the coor
 sites (``OPUS_IMPORT_FAULT``), so each act lands where the case needs it: after a claim,
 after a bundle's first chunk, or between an importer's row and its lock.
 
-Every process a case starts, and every importer recorded in its schema on this computer,
-is killed when the case ends, however it ends.
+Every process a case starts, and every importer recorded in its schema that is still
+running as one of the case's, is killed when the case ends, however it ends.
 """
 
 from __future__ import annotations
 
+import contextlib
 import os
 import signal
 import socket
@@ -29,6 +30,7 @@ from opus_import.steps import do_import
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
+    from pathlib import Path
 
     from import_tests.tools.golden_io import DatabaseCredentials
 
@@ -162,6 +164,28 @@ def _children(pid: int) -> list[int]:
     return [int(child) for child in text.split()]
 
 
+def _runs_for(pid: int, config_file: Path) -> bool:
+    """Return whether a process runs with a configuration, as Linux lists its environment.
+
+    A pid recorded for an importer that has exited may since name another process; only
+    one whose ``OPUS_CONFIG`` is the case's own is one of the case's importers.
+
+    Parameters:
+        pid: The process.
+        config_file: The case's configuration.
+
+    Returns:
+        True if the process is alive and its environment names the configuration.
+    """
+    try:
+        with open(f'/proc/{pid}/environ', 'rb') as environ:
+            entries = environ.read().split(b'\0')
+    except OSError:
+        return False
+    expected = f'{build_run.CONFIG_ENV_VAR}={config_file.resolve()}'.encode()
+    return expected in entries
+
+
 def _finish(process: Any, timeout: float = _TIMEOUT) -> tuple[int, str]:
     """Wait for a process, and return its status and its output."""
     status = process.wait(timeout=timeout)
@@ -176,7 +200,7 @@ def case(
     created_schemas: list[str],
 ) -> Iterator[Case]:
     """A schema and configuration of the case's own; every process it started is killed
-    at the end, and every importer its schema records on this computer.
+    at the end, and every importer its schema records that still runs as the case's.
 
     Yields:
         The case.
@@ -202,11 +226,9 @@ def case(
             host = socket.gethostname()
             hosts = dict(found.rows('SELECT process_id, host FROM import_process'))
             for process_id, pid, _state in recorded:
-                if hosts[process_id] == host:
-                    try:
+                if hosts[process_id] == host and _runs_for(pid, paths.config_file):
+                    with contextlib.suppress(ProcessLookupError):
                         os.kill(pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        continue
 
 
 def _register(case: Case, bundles: list[str]) -> None:

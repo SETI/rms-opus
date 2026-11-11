@@ -343,15 +343,29 @@ def test_an_importers_first_interrupt_drains_and_its_second_aborts() -> None:
     assert ctx.interrupts == 3
 
 
-def test_a_second_interrupt_before_or_after_the_importer_runs_is_only_counted() -> None:
-    """With no importer running (starting up, or recording its exit), nothing is raised:
-    the queue loop's check of the count stops it."""
+def test_a_second_interrupt_while_the_importer_records_itself_is_only_counted() -> None:
+    """Between the start of its record in ``import_process`` and its loop, or while it
+    records its exit, nothing is raised: the queue loop's check of the count stops it."""
     ctx = make_context()
+    ctx.queue_entered = True
     handler = cli._interrupt_handler(ctx)
 
     handler(signal.SIGINT, None)
     handler(signal.SIGINT, None)
     assert ctx.interrupts == 2
+
+
+def test_a_second_interrupt_before_the_importer_records_itself_stops_it() -> None:
+    """Reading the holdings or opening the database, it holds nothing a stop would leave
+    behind, so the second interrupt raises there too, and a third is only counted."""
+    ctx = make_context()
+    handler = cli._interrupt_handler(ctx)
+
+    handler(signal.SIGINT, None)
+    with pytest.raises(KeyboardInterrupt):
+        handler(signal.SIGINT, None)
+    handler(signal.SIGINT, None)
+    assert ctx.interrupts == 3
 
 
 def test_a_queue_importer_names_its_logs_after_its_computer_and_process(

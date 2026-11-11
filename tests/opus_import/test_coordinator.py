@@ -8,6 +8,8 @@ shows. ``import_tests/test_coordinator.py`` runs it against MySQL.
 from __future__ import annotations
 
 import datetime
+import os
+import signal
 import time
 from typing import Any
 
@@ -218,6 +220,30 @@ def test_an_interrupted_coordinator_starts_nothing_and_exits_unfinished(
     assert coordinator._pass(_FakeContext()) == 1  # type: ignore[arg-type]
 
 
+def test_an_interrupt_while_importers_start_reaches_the_one_starting_and_stops_the_rest(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An interrupt that lands while an importer is being started is passed on to it once
+    it is registered, and no importer after it is started."""
+    coordinator = _coordinator(workers=2)
+    coordinator._starts_left = 5
+    signalled: list[tuple[int, int]] = []
+    monkeypatch.setattr(os, 'kill', lambda pid, signum: signalled.append((pid, signum)))
+    started: list[_Process] = []
+
+    def start(arguments: list[str]) -> _Process:
+        started.append(_Process(None))
+        coordinator._interrupt(signal.SIGINT, None)
+        return started[-1]
+
+    monkeypatch.setattr(opus_coordinator, 'start_importer', start)
+    for workers in coordinator.division.per_importer:
+        coordinator._start(workers)
+
+    assert len(started) == 1
+    assert signalled == [(started[0].pid, signal.SIGINT)]
+
+
 def _record_starts(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
     """Make each importer started a running stand-in, and return their command lines."""
     started: list[list[str]] = []
@@ -308,6 +334,49 @@ def test_an_importer_that_claimed_resets_the_failed_starts(
     coordinator._pass(_FakeContext())  # type: ignore[arg-type]
 
     assert coordinator._failed_starts == 0
+    assert started == [['--join', '--workers', '1']]
+
+
+def test_an_importer_that_claimed_and_died_since_the_last_reading_is_not_a_failed_start(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The pass's recovery returns the bundle it held to the queue, but the reading before
+    the recovery still shows its claim: it is a lost importer, replaced, not a failed
+    start."""
+    coordinator = _coordinator(workers=2)
+    coordinator._starts_left = 50
+    coordinator._failed_starts = opus_coordinator.FAILED_STARTS_ALLOWED - 1
+    started = _record_starts(monkeypatch)
+    coordinator._own = [_exited(-9, set(), process_id=5)]
+    _patch_recovery(
+        monkeypatch,
+        Snapshot((_bundle('A', 'importing', 5),), (_process(5, alive=False),)),
+        Snapshot((_bundle('A', 'pending'),), (_process(5, alive=False),)),
+    )
+
+    assert coordinator._pass(_FakeContext()) is None  # type: ignore[arg-type]
+    assert coordinator._failed_starts == 0
+    assert started == [['--join', '--workers', '1']]
+
+
+def test_a_bundle_recovered_since_the_last_reading_is_not_taken_as_unclaimable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bundle pending when a clean importer started, then claimed by another importer
+    that died, is pending again after the pass's recovery; it was not pending throughout,
+    so it is started for."""
+    coordinator = _coordinator(finishing=False, workers=2)
+    coordinator._starts_left = 50
+    started = _record_starts(monkeypatch)
+    coordinator._own = [_exited(0, {1})]
+    _patch_recovery(
+        monkeypatch,
+        Snapshot((_bundle('A', 'importing', 9),), (_process(9, alive=False),)),
+        Snapshot((_bundle('A', 'pending'),), (_process(9, alive=False),)),
+    )
+
+    assert coordinator._pass(_FakeContext()) is None  # type: ignore[arg-type]
+    assert coordinator._unclaimable == frozenset()
     assert started == [['--join', '--workers', '1']]
 
 
@@ -424,6 +493,24 @@ def _patch_reading(monkeypatch: pytest.MonkeyPatch, snapshot: Snapshot) -> None:
 
     monkeypatch.setattr(import_processes, 'read_snapshot', lambda db: snapshot)
     monkeypatch.setattr(do_recover, 'recover_lost_importers', lambda ctx: [])
+
+
+def _patch_recovery(monkeypatch: pytest.MonkeyPatch, before: Snapshot, after: Snapshot) -> None:
+    """Make readings return `before` until a recovery returns a bundle, and `after` from
+    then on."""
+    from opus_import import import_processes
+    from opus_import.steps import do_recover
+
+    recovered: list[str] = []
+
+    def recover(ctx: object) -> list[str]:
+        recovered.append('A returned to the queue')
+        return recovered[-1:]
+
+    monkeypatch.setattr(
+        import_processes, 'read_snapshot', lambda db: after if recovered else before
+    )
+    monkeypatch.setattr(do_recover, 'recover_lost_importers', recover)
 
 
 class _CachingDB:

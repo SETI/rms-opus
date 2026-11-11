@@ -277,8 +277,9 @@ class ImportConfig:
         cpu_fraction: The share of the cores the ceiling allows, greater than 0 and at
             most 1. The default is 0.75.
         worker_rows: The index rows one worker task covers. The default is 500.
-        importers: How many importers ``opus_import_all`` starts on this computer, capped
-            at its total of workers. The default is 1.
+        importers: How many importers ``opus_import_all`` starts on this computer. The
+            default is 4. The importers started are capped at the total of workers, so
+            with the default of one worker a run starts one importer.
         stall_warning_minutes: How long an importer that is alive may go without
             committing a chunk before ``opus_import_all`` reports it as stalled. It is
             never stopped for it. The default is 30.
