@@ -206,7 +206,7 @@ worker_rows = 500
 # --workers, or workers above) is divided among them, and they are capped at that
 # total. opus_import_all --importers replaces it for one run. Optional; the default is
 # the value below.
-importers = 1
+importers = 4
 
 # The minutes an importer that is alive may go without committing a chunk of rows
 # before opus_import_all reports it as stalled. It is never stopped for it. Optional;

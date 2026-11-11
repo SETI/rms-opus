@@ -200,7 +200,7 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('import_.workers', 1),
         ('import_.cpu_fraction', 0.75),
         ('import_.worker_rows', 500),
-        ('import_.importers', 1),
+        ('import_.importers', 4),
         ('import_.stall_warning_minutes', 30),
         ('import_.status_interval_minutes', 5),
     ],

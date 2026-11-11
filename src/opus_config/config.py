@@ -103,7 +103,7 @@ DEFAULT_WORKER_ROWS = 500
 
 #: How many importers ``opus_import_all`` starts when neither its command line nor the
 #: file says, before it is capped at the total of workers.
-DEFAULT_IMPORTERS = 1
+DEFAULT_IMPORTERS = 4
 
 #: The minutes an importer may go without committing a chunk before ``opus_import_all``
 #: reports it as stalled, when the file does not say.

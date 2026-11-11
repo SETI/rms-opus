@@ -6604,3 +6604,30 @@ Nothing above this line is rewritten by an executor.
     suite 182 passed and 3 skipped; the goldens regenerate with no diff; the lock-case
     mutation (the chunk's lock check removed) fails as it should; the integration suite
     1,591 passed against `pr16alocal`, imported again at this head.
+- **The harness reads a hand-started importer's log whatever it is named**, since PR-16's
+  importers do not add the `_join_` suffix this section's do; each has a directory of
+  its own (`importer_logs.importer_logs(joined_only=False)`), found by the measurement's
+  first run.
+- **Measurement** (2026-11-11, test scale, twenty `workers` in all, a total 1, 2 and 4
+  divide evenly, since the before side's `--importers` refuses an uneven division; the
+  workstation's ceiling at the default `cpu_fraction` is 22; before at 97be1c93, PR-16's
+  importers started by the harness (`--importers M`); after at df7d3b95, the coordinator
+  (`--coordinator M`); two runs a configuration alternated; judged against the PR-00
+  floors by the guard rule):
+  - **Structural criterion, met:** `import.wall_s` one importer 152.0 s to 154.4 s
+    (+1.6%), two 97.0 s to 99.9 s (+3.0%), four 70.8 s to 74.4 s (+5.0%); each within the
+    guard's 5% beyond the 1.8% floor. The coordinator's 2 s to 4 s are its registration
+    (1.6 s to 2.0 s, the prepare run as a step of its own) and its tracking, which reads
+    the last importer's exit at its next pass, up to `TRACK_SECONDS` later.
+  - **Idle time** from each importer's last bundle to the last exit: at most 0.18 s with
+    four importers on either side, so the largest-first queue leaves the importers
+    finishing together at this scale.
+  - **`[import] importers` defaults to 4**, the fastest count measured; `workers` still
+    defaults to 1 and the importers are capped at it, so a default import is still one
+    process.
+  - The stall PR-16's four-importer runs showed at eight workers (one bundle on each of
+    three importers waiting 25 s to 65 s, all resuming within seconds of the fourth
+    importer's exit) did not recur in any of the four four-importer runs here, at five
+    workers an importer; a poller of the server's process list,
+    `performance_schema.metadata_locks` and `data_lock_waits` saw no lock wait during
+    them. Its cause is not determined.

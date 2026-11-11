@@ -191,7 +191,8 @@ The scripts
     installation a deploy can switch to. The import itself is ``opus_import_all``, the
     installed command, so the order the bundle sets are imported in comes from the
     release rather than from these scripts. It registers every bundle, imports them
-    with the importers ``[import] importers`` and ``workers`` ask for (one, by default),
+    with the importers ``[import] importers`` and ``workers`` ask for (one, by default,
+    since ``workers`` defaults to 1),
     and finishes the database; the database is new, so it erases nothing.
 
     What happens to the database afterwards is what ``deploy.env`` asked for: with

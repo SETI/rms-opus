@@ -429,8 +429,9 @@ the release being installed rather than in the scripts, so it cannot disagree wi
 code importing.
 
 How much of the computer it uses is ``[import] workers``, the total of worker processes,
-divided among ``[import] importers`` importers; both default to 1, so the import uses
-one process unless the configuration asks for more
+divided among ``[import] importers`` importers. ``workers`` defaults to 1 and the
+importers are capped at it, so the import uses one process unless the configuration asks
+for more
 (:ref:`user_guide_deployment_several_importers`).
 
 The database is new, so nothing is erased. ``opus_import_all`` erases the OPUS tables of
@@ -798,7 +799,7 @@ entirely.
    * - ``importers``
      - optional
      - How many importers ``opus_import_all`` starts on this computer, a whole number of
-       at least 1. Default ``1``. It is capped at the total of workers (``workers``, or
+       at least 1. Default ``4``. It is capped at the total of workers (``workers``, or
        ``opus_import_all --workers``), which is divided among them; ``opus_import_all
        --importers`` replaces it for one run. See
        :ref:`user_guide_deployment_several_importers`.
