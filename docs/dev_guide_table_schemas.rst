@@ -18,14 +18,11 @@ an installed OPUS finds them without a checkout.
 
 Some files are not tables. Two of them are not even column lists --
 ``param_info_ranges.json`` is a dictionary of range sets and
-``internal_def_product_types.json`` names no columns -- while the rest are
-perfectly good column lists that simply do not describe a table of their own:
+``internal_def_product_types.json`` names no columns -- while the other is a
+perfectly good column list that simply does not describe a table of its own:
 
 ``param_info_ranges.json``
     The named range sets a column's ``pi_ranges`` refers to.
-
-``mult_template.json``
-    The shape every ``mult_`` table is created with.
 
 ``obs_surface_geometry_target.json``
     A *template*: one surface-geometry table is created from it per target, with
@@ -101,10 +98,11 @@ Defining the column
      - True to add ``AUTO_INCREMENT``.
    * - ``field_key``
      - ``"primary"``, ``"unique"``, ``"foreign"``, or ``true`` for an ordinary index;
-       any other value is refused. ``"foreign"`` requires ``field_key_foreign``. An
-       observation or ``mult_`` table is created with only its primary key, its unique
-       keys and, in a table the per-bundle delete selects by ``bundle_id``, its
-       ``bundle_id`` key, on either write path, and finalization adds the others
+       any other value is refused. ``"foreign"`` requires ``field_key_foreign``. A
+       table whose name begins ``obs_`` or ``mult_`` is created with only its primary
+       key, its unique keys and, in a table the per-bundle delete selects by
+       ``bundle_id``, its ``bundle_id`` key, on either write path, and finalization adds
+       the others
        (:ref:`dev_guide_import_db_keys`); the finished table carries every key
        declared.
    * - ``field_key_foreign``
@@ -153,7 +151,7 @@ Defining the column
    * - ``key``
      - A table-level plain key over listed columns, in the same form:
        ``{"key": ["<column>", ...]}``. It is created and added like a column's plain
-       key: an observation or ``mult_`` table gains it at finalization.
+       key: a table whose name begins ``obs_`` or ``mult_`` gains it at finalization.
        ``obs_files`` declares its key ``(opus_id, short_name, version_name)`` this way,
        ``obs_general`` its keys ``(time1, opus_id)``, ``(right_asc, d_right_asc)`` and
        ``(declination1, declination2)``, and ``obs_ring_geometry`` a key over each
@@ -192,19 +190,19 @@ recognize raises :exc:`NotImplementedError` rather than being guessed at.
      - ``enum(...)``
      - Needs ``field_enum_options``.
    * - ``mult_idx``
-     - ``int unsigned``
-     - A row id in this column's ``mult_`` table.
+     - ``smallint unsigned``
+     - The id of a ``mult`` row of this column's mult field.
    * - ``mult_list``
      - ``JSON``
-     - A list of ``mult_`` row ids, for a column an observation can have several
-       values of.
+     - A list of ids of ``mult`` rows of this column's mult field, for a column an
+       observation can have several values of.
    * - ``json``
      - ``JSON``
      - Arbitrary JSON that is not a list of mult ids.
    * - ``flag_yesno`` ``flag_onoff``
-     - ``int unsigned``
+     - ``smallint unsigned``
      - Stored exactly like ``mult_idx``: the "Yes"/"No"/"N/A" and "On"/"Off"/"N/A"
-       values live in a ``mult_`` table like any other enumerated value.
+       values are ``mult`` rows like any other enumerated value.
    * - ``timestamp``
      - ``timestamp``
      - Always given ``DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP``,
@@ -336,12 +334,46 @@ field's dictionary terms.
 Enumerated values
 ~~~~~~~~~~~~~~~~~
 
-A ``GROUP`` or ``MULTIGROUP`` column's values live in a ``mult_`` table. Normally the
-import discovers them from the data. A column that instead carries ``mult_options``
-pins them: each entry is one row of that table, read into
-:class:`opus_import.import_util.MultOption`, which names the positions so that a
-reader does not have to count them. :mod:`opus_import.steps.do_update_mult_info` is
-what writes the pinned display details back over the table after an import.
+A ``GROUP`` or ``MULTIGROUP`` column's values are rows of the ``mult`` table, under the
+column's mult field (:ref:`dev_guide_database_schema_mult`). Normally the import
+discovers them from the data. Three keys of a column change that:
+
+``mult_options``
+    Pins the field's values. Each entry is one ``mult`` row, a list of seven values
+    ``[id, value, label, pin, display, grouping, group_pin]``, read by
+    :func:`opus_import.import_util.read_mult_option` into
+    :class:`~opus_import.import_util.MultOption`, which names the positions so that a
+    reader does not have to count them. ``pin`` is an integer, and ``group_pin`` an
+    integer or ``null``; a string of digits is refused. The ids are the ones the
+    observation rows hold, and a value the import meets that is not in the list is an
+    error. The field's ``pinned`` is 1, and finalization never deletes its rows.
+
+``mult_overrides``
+    Sets the presentation of values the import discovers, on a column that has no
+    ``mult_options``. It is a list of objects, each with a required ``value``, which
+    names the stored value, and any of ``label``, ``display`` (``"Y"`` or ``"N"``),
+    ``grouping`` and ``pin`` (an integer), each of which sets that column of the row.
+    Finalization and ``--update-mult-info`` apply them over the stored rows
+    (:ref:`dev_guide_import_steps_do_finalize_mult`); an override that names a value the
+    field does not hold is logged as a warning and skipped. A column entry renaming one
+    value carries, among its other keys:
+
+    .. code-block:: json
+
+        {
+            "mult_overrides": [
+                {"value": "SOME_VALUE", "label": "Some Value"}
+            ]
+        }
+
+``mult_field``
+    Names the column's mult field outright, so that several columns can share one. A
+    column without it has the field ``<table>.<column>``.
+
+:mod:`opus_import.steps.do_update_mult_info` writes the ``mult_options`` and the
+``mult_overrides`` over the stored rows of a database that is already imported, and the
+code-only deploy runs it, which is how a value is renamed without a re-import
+(:ref:`user_guide_deployment_rename_mult_value`).
 
 Keys nothing reads
 ------------------
@@ -394,7 +426,12 @@ one of four kinds, told apart by its keys -- a column (``field_name``), a link
   its ``pi_form_type`` names a unit :mod:`opus_support` knows, and its ``pi_ranges`` an
   entry of ``param_info_ranges.json``.
 * Every ``mult_options`` row has the seven values of
-  :class:`~opus_import.import_util.MultOption`, typed as it says, with distinct ids.
+  :class:`~opus_import.import_util.MultOption`, typed as it says, with distinct ids. Each
+  id fits ``mult.id``, and each pin and group pin is an integer, never a string.
+* Every ``mult_overrides`` entry is an object with a ``value`` and only the members
+  ``label``, ``display``, ``grouping`` and ``pin``, on a column that holds mult ids and
+  has no ``mult_options``.
+* Every ``mult_field`` key is a string, on a column that holds mult ids.
 * Every definition has a term and a context, no two share both, every context is one
   ``contexts.csv`` defines, and every ``pi_dict_name`` and ``pi_dict_context`` pair a
   column names, for the search form or the results, resolves to a definition the

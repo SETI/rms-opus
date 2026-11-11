@@ -10,11 +10,12 @@ it the thing to understand first, which is why it comes before both of them here
 
 It is one MySQL schema. Observation metadata lives in the ``obs_*`` tables, one row per
 observation and one table per group of fields the user interface offers as a "Constraints"
-menu; the enumerated values those rows point at live in ``mult_*`` tables; and a handful
-of auxiliary tables describe the fields themselves, hold the data dictionary, and carry
-what a user's session produces. No OPUS table is created by a Django migration: the
-import pipeline creates every one of them from a checked-in JSON description, and the
-only tables in the schema that a migration does create are Django's own contrib tables.
+menu; the enumerated values those rows point at live in the ``mult`` table, beside
+``mult_field`` and ``mult_group``; and a handful of auxiliary tables describe the fields
+themselves, hold the data dictionary, and carry what a user's session produces. No OPUS
+table is created by a Django migration: the import pipeline creates every one of them
+from a checked-in JSON description, and the only tables in the schema that a migration
+does create are Django's own contrib tables.
 
 .. toctree::
    :maxdepth: 1

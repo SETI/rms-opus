@@ -44,6 +44,14 @@ implementation, not what to import.
     The Cassini orbit ("rev") numbering, whose first few orbits are named rather than
     numbered.
 
+:mod:`opus_support.collation`
+    :func:`~opus_support.collation.collation_key`, the form of a string the database
+    server's collation compares, ignoring case and accents. The import keys its cache of
+    a mult field's values with it, and the web application keys its copies of the
+    import's tables with it, so that a lookup in memory finds what a query would.
+    :ref:`dev_guide_webapp_tools_import_constants` says where the key and the collation
+    differ.
+
 The package's header carries a standing demand for **100% test coverage**, and
 ``tests/opus_support/`` is where it is met. A new unit system, clock format or angle
 spelling comes with tests for its parse and its format, in both directions, including

@@ -211,11 +211,13 @@ Table schema
     table's rows hang off it. An ``obs_`` table corresponds one-for-one to a
     "Constraints" category in the user interface.
 
-``mult_`` table
-    The table of permitted values for one enumerated column. An ``obs_`` column whose
-    value comes from a fixed set stores an integer row id into its ``mult_`` table
-    rather than the value itself, which is what makes the checkbox searches fast.
-    "Mult" is short for *multiple choice*.
+Mult table
+    ``mult``, the table of permitted values for every enumerated column, beside
+    ``mult_field``, which names each column's **mult field**, and ``mult_group``, which
+    holds each field's groups. An ``obs_`` column whose value comes from a fixed set
+    stores the integer id of one of its field's ``mult`` rows rather than the value
+    itself, which is what makes the checkbox searches fast. "Mult" is short for
+    *multiple choice*.
 
 Slug
     The short field id an API call names a field by -- ``time1``, ``RINGGEOringradius1``

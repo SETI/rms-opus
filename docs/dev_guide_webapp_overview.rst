@@ -26,7 +26,7 @@ The request lifecycle
         U --> V[the view, wrapped in api_view]
         V --> P[url_to_search_params:<br/>the query string becomes<br/>selections and extras]
         P --> Q[get_search_id:<br/>register the search, and write<br/>its results once]
-        Q --> S[sql_builder.Select:<br/>join obs_, mult_ and the search's results]
+        Q --> S[sql_builder.Select:<br/>join obs_, mult and the search's results]
         S --> D[(MySQL)]
         D --> F[render as JSON, CSV or HTML]
         F --> RESP([HTTP response])
@@ -61,7 +61,7 @@ matching observations in ``search_results``, in sort order.
 
 **5. The wide joins are assembled, not written.**
 :mod:`opus_app.apps.tools.sql_builder` assembles every statement that joins the ``obs_``
-tables to each other, to the ``mult_`` tables holding their enumerated values, and to one
+tables to each other, to the ``mult`` table holding their enumerated values, and to one
 search's rows of ``search_results``. It is the one module allowed to turn Python values
 into SQL text.
 
@@ -354,9 +354,11 @@ cache. ``opus_manage prune`` removes the least recently used searches, so that
 **Process-local copies.** Each worker process keeps its own copy of what only an import
 changes, so that a request reads it from memory rather than from the database:
 
-- the ``table_names``, ``partables`` and ``mult_`` tables, each read whole on first use
-  by :mod:`opus_app.apps.tools.import_constants`, which also compares a label from a
-  request the way the database server's case- and accent-insensitive collation does;
+- the ``table_names`` and ``partables`` tables, each read whole on first use, and each
+  mult field's ``mult`` rows, read on first use of the field through its id in
+  ``mult_field``, all by :mod:`opus_app.apps.tools.import_constants`, which also
+  compares a label from a request the way the database server's case- and
+  accent-insensitive collation does;
 - the ``definitions`` table, read whole on first use by
   :mod:`opus_app.apps.tools.dictionary`;
 - the ``param_info`` rows :mod:`opus_app.apps.search.views` looks up, one dictionary
@@ -379,7 +381,8 @@ Two kinds of model
 ------------------
 
 ``src/opus_app/apps/search/models.py`` holds one Django model per OPUS table --
-including one per ``mult_`` table -- and is **generated**, by
+``Mult``, ``MultField`` and ``MultGroup`` among them, for the three mult tables, with
+``Mult`` keyed by the composite primary key ``(field_id, id)`` -- and is **generated**, by
 ``scripts/models/create_opus_models.sh``, from a populated database. A hand edit does not
 survive the next regeneration, which is why it is excluded from ruff, carries no
 docstrings, and is left out of the API reference. Add a column by adding it to the

@@ -135,8 +135,9 @@ exclude one another, so giving two of them switches on the union.
    * - ``--do-it-all``
      - ``--import``, then ``--finalize``, in one invocation.
    * - ``--finalize``
-     - The **finalization group**: ``--create-indexes``, the duplicate step (which has
-       no option of its own), ``--create-param-info``, ``--create-partables``,
+     - The **finalization group**: ``--create-indexes``, the duplicate step and the
+       mult step (neither has an option of its own), ``--create-param-info``,
+       ``--create-partables``,
        ``--create-table-names``, ``--create-cart``, ``--reset-search-tables`` and
        ``--analyze-tables``. It refuses to run while any bundle in the bundle registry is
        not ``done`` (below).
@@ -285,8 +286,8 @@ Import steps
        argument error, checked before the database is opened. ``opus_import`` never
        prompts.
    * - ``--analyze-tables``
-     - Recompute the key distributions of every ``obs_`` and ``mult_`` table, after the
-       auxiliary, cart and search tables are created.
+     - Recompute the key distributions of every ``obs_`` table and the mult tables,
+       after the auxiliary, cart and search tables are created.
 
 Parallelism
 ~~~~~~~~~~~
@@ -341,7 +342,8 @@ These change what the import does with awkward data rather than which steps run.
    * - ``--report-empty-products``
      - Report products ``rms-pdsfile`` returns under an empty key.
    * - ``--suppress-mult-messages``
-     - Say nothing about ``mult_`` table maintenance.
+     - Leave out the import's messages about reading a mult field and adding a value
+       to one.
 
 Auxiliary tables and other steps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -353,9 +355,9 @@ Auxiliary tables and other steps
    * - Option
      - Meaning
    * - ``--create-indexes``
-     - Add every key the table schemas declare and an observation or ``mult_`` table
-       lacks: the secondary keys a fresh import leaves for finalization. Different
-       tables build at once over ``[import] index_workers`` connections; the foreign
+     - Add every key the table schemas declare and an observation table lacks: the
+       secondary keys a fresh import leaves for finalization. Different tables build at
+       once over ``[import] index_workers`` connections; the foreign
        keys follow, one at a time. It does nothing on a schema that has them all. See
        :ref:`dev_guide_import_steps_create_indexes`.
    * - ``--create-param-info``
@@ -365,8 +367,10 @@ Auxiliary tables and other steps
    * - ``--create-table-names``
      - Build ``table_names``, the same way.
    * - ``--update-mult-info``
-     - Write the display details a schema pins for a ``mult_`` table back over the
-       table the import discovered.
+     - Write the table schemas' ``mult_options`` lists and ``mult_overrides`` over the
+       stored ``mult`` rows, and rank the fields they change again. No id or value
+       changes. The code-only deploy runs it
+       (:ref:`dev_guide_import_steps_do_update_mult_info`).
    * - ``--create-cart``
      - Drop and recreate the empty ``cart`` table. It needs ``obs_general``, and on a
        schema without one it logs an error and creates nothing.
@@ -462,7 +466,8 @@ whole shape. It:
     if it returns False.
 11. Under ``--finalize``, refuses with a fatal message and a non-zero exit, before any
     finalization step, while any bundle in the bundle registry is not ``done``.
-12. Runs ``--create-indexes``, then, under ``--finalize``, the duplicate step.
+12. Runs ``--create-indexes``, then, under ``--finalize``, the duplicate step and the
+    mult step (:ref:`dev_guide_import_steps_do_finalize_mult`).
 13. Builds the auxiliary tables that were asked for, in the order ``param_info``,
     ``partables``, ``table_names``, then runs ``--create-cart`` and
     ``--reset-search-tables``, then ``--analyze-tables``.

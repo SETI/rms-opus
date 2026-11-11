@@ -24,9 +24,10 @@ is read-only.
 ``GROUP_FORM_TYPES``
 ~~~~~~~~~~~~~~~~~~~~
 
-``['GROUP', 'MULTIGROUP']`` -- the ``param_info`` form types that have a ``mult_``
-table. A column whose ``pi_form_type`` names one of these stores a ``mult_`` row id
-rather than its value. :func:`opus_import.importdb.get_db` is handed this list, and
+``['GROUP', 'MULTIGROUP']`` -- the ``param_info`` form types whose columns hold mult
+ids. A column whose ``pi_form_type`` names one of these stores the id of a ``mult`` row
+rather than its value (:func:`opus_import.mult_fields.is_mult_column`).
+:func:`opus_import.importdb.get_db` is handed this list, and
 :func:`~opus_import.steps.do_import_obs.import_observation_table` tests against it to
 decide whether to route a value through
 :func:`~opus_import.steps.do_import_mult.update_mult_table`.
@@ -406,9 +407,11 @@ which module it lives in.
     ``'ERIS'``.
 
 ``PLANET_GROUP_MAPPING`` (:mod:`opus_import.config_targets.planet_group_mapping`)
-    Entries map a planet id -- plus ``OTHER`` and None -- to the label and sort key the
-    search form groups targets under. ``_get_planet_group_info`` reads it, and a target
-    with no planet, or one the tables do not describe, is grouped under ``OTHER``.
+    Entries map a planet id -- plus ``OTHER`` and None -- to the label the search form
+    groups targets under and the group's pin, an integer in ``disp_order`` that places
+    the group ahead of any group without one. ``_get_planet_group_info`` reads it, and a
+    target with no planet, or one the tables do not describe, is grouped under
+    ``OTHER``.
 
 ``STAR_RA_DEC`` (:mod:`opus_import.config_targets.star_ra_dec`)
     Entries map a star name to its ``(right ascension, declination)`` in degrees, J2000.

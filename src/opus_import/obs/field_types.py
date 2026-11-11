@@ -105,7 +105,7 @@ class MultField(TypedDict):
     `opus_import.obs.obs_base.ObsBase._create_mult` builds these and every group
     column's method returns one (or a list of them, for a ``MULTIGROUP`` column).
     `opus_import.steps.do_import_obs.import_observation_table` takes the keys apart into
-    /seti/newnav/capped-run.sh parallel lists and hands them to
+    parallel lists and hands them to
     `opus_import.steps.do_import_mult.update_mult_table`, which turns ``col_val`` into
     the id the ``obs_`` column actually stores.
 

@@ -176,10 +176,10 @@ supplies one when the URL has none, and ``FINAL_SORT_ORDER`` -- the OPUS ID -- i
 paging is stable.
 
 :func:`~opus_app.apps.search.views.create_order_by_terms` turns the parsed pair into
-ORDER BY terms and reports which ``obs_`` and ``mult_`` tables they require joined. A
-mult field sorts by the human-readable label in its mult table rather than by the id
-stored in the row, which is why sorting can pull in a join the search itself does not
-need.
+ORDER BY terms and reports which ``obs_`` tables and which ``mult`` joins they require.
+A mult field sorts by the text of the label its ``mult`` row carries rather than by the
+id stored in the row, and never by the row's ``disp_rank``, which is why sorting can
+pull in a join the search itself does not need.
 
 .. _dev_guide_webapp_search_cache:
 
@@ -232,8 +232,8 @@ Turning a search into SQL
 ``_search_select``
     Walks the selections in sorted order -- sorted so that the SQL a given search
     produces is reproducible, which is what the golden-response suite pins -- and
-    dispatches on each field's form type. It collects the ``obs_`` and ``mult_`` tables
-    the clauses and the ordering need, assembles the joins, and returns a
+    dispatches on each field's form type. It collects the ``obs_`` tables and the
+    ``mult`` joins the clauses and the ordering need, assembles the joins, and returns a
     :class:`~opus_app.apps.tools.sql_builder.Select` with no columns and no ORDER BY,
     together with the search's order as terms. ``_build_search_results`` adds the
     columns it stores: the search's number, ``ROW_NUMBER()`` over those terms, and
@@ -268,7 +268,7 @@ Four builders produce the clauses:
     wraps through zero, by ``OR``.
 
 Mult fields are handled inline in ``_search_select``: the user's readable labels are
-looked up in the worker's copy of the field's ``mult_`` table
+looked up in the worker's copy of the field's ``mult`` rows
 (:func:`~opus_app.apps.tools.import_constants.mult_table`) to get their ids, and a
 ``GROUP`` field becomes an ``IN`` test while a ``MULTIGROUP`` field becomes an OR of JSON
 containment tests, because it holds a list.
@@ -337,7 +337,10 @@ The join helpers
     tables must still appear in the result, with that table's columns null.
 
 :func:`~opus_app.apps.search.views.add_mult_table_joins`
-    LEFT JOINs each ``mult_`` table onto the ``obs_`` column holding its id. For a
+    LEFT JOINs ``mult`` onto each ``obs_`` column holding a mult id, once for each
+    column, under the column's alias
+    (:func:`~opus_app.apps.tools.app_utils.mult_alias`), matching both the field's
+    ``field_id`` and the id (:func:`~opus_app.apps.tools.sql_builder.mult_join`). For a
     MULTIGROUP column, which holds a JSON list, the join key is the list's first element.
 
 .. _dev_guide_webapp_search_forms:
@@ -375,14 +378,14 @@ The generated models
 Python file in the repository. Its model classes are:
 
 * one per ``obs_`` table;
-* one per ``mult_`` table;
+* ``Mult``, ``MultField`` and ``MultGroup``, one per mult table;
 * ``Partables``, ``TableNames`` and ``UserSearches``;
 * and a ``ZZ``-prefixed model for every other table the database happens to hold -- the
   Django contrib tables, and the OPUS tables that have hand-written models in the apps
   that own them.
 
-Two of the generated models are read through
-:mod:`~opus_app.apps.tools.import_constants`, whose signatures name them:
+Four of the generated models are read through
+:mod:`~opus_app.apps.tools.import_constants`:
 
 .. py:class:: opus_app.apps.search.models.TableNames
 
@@ -394,12 +397,25 @@ Two of the generated models are read through
    One row per trigger: an observation whose ``trigger_col`` in ``trigger_tab`` holds
    ``trigger_val`` brings the table ``partable`` into its results and its metadata.
 
+.. py:class:: opus_app.apps.search.models.MultField
+
+   One row per mult field: its ``field_id``, its ``qualified_name`` and whether its
+   values are pinned (:ref:`dev_guide_database_schema_mult`).
+
+.. py:class:: opus_app.apps.search.models.Mult
+
+   One row per value of a mult field, keyed by the composite primary key
+   ``(field_id, id)``: the value, its label, its ``disp_rank``, whether it is displayed
+   and its group. The search widget lists a field's displayed values in ``disp_rank``
+   order, and its groups in the ``group_rank`` order of ``MultGroup``.
+
 **The ``ZZ`` prefix is the generator's way of saying "a model exists for this table and
 nothing should use it."** The class name is otherwise the table name with each
 underscore-separated segment title-cased and the underscores removed, which is exactly
-the transformation the runtime lookups apply:
-:func:`~opus_app.apps.tools.db_utils.table_model_from_name` and the mult lookups both
-build a class name that way.
+the transformation the runtime lookup applies:
+:func:`~opus_app.apps.tools.db_utils.table_model_from_name` builds a class name that
+way. The mult lookups use the ``Mult`` model and select a field's rows by
+``field_id``.
 
 Regenerating it
 ~~~~~~~~~~~~~~~

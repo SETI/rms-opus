@@ -25,6 +25,7 @@ The order, and what forces it
         R{every bundle in the<br/>registry done?}
         K[do_indexes:<br/>the secondary keys]
         DU[do_duplicate_ids:<br/>one copy of each OPUS ID]
+        FM[do_finalize_mult:<br/>prune, override and rank the mult values]
         P[do_param_info]
         PT[do_partables]
         TN[do_table_names]
@@ -37,12 +38,12 @@ The order, and what forces it
         SV[do_schema_version]
 
         SE --> I --> R
-        R -->|yes| K --> DU --> P --> PT --> TN --> C --> DJ --> A --> UM --> V --> D --> SV
+        R -->|yes| K --> DU --> FM --> P --> PT --> TN --> C --> DJ --> A --> UM --> V --> D --> SV
         R -->|"no: --finalize refuses"| X[exit with failure]
 
 * **The erase and the deletes come first**, inside
   :func:`~opus_import.steps.do_import.do_import_steps`: ``--scorched-earth`` so that no
-  ``mult_`` table survives and the row ids start again, and ``--delete-bundles`` so that
+  ``mult`` row survives and the ids start again, and ``--delete-bundles`` so that
   an import in the same invocation does not resume a bundle being removed.
 * **Finalization refuses after the import and before its first step**: ``--finalize``
   exits with failure while any bundle in the bundle registry is not ``done``
@@ -52,6 +53,9 @@ The order, and what forces it
   because a fresh import loads its tables without them; the duplicate step follows,
   because it finds the copies through the key on ``opus_id`` and deletes them from the
   surface geometry name and per-target tables through their key on ``obs_general_id``.
+* **The mult step comes after the duplicate step and before the auxiliary tables**: the
+  duplicate step's deletions can leave a value that no observation holds, and
+  ``partables`` reads the ``mult`` rows.
 * **The auxiliary tables come after the import** because each is derived from which
   observation tables exist and from their schemas.
 * **The cart and search tables come after the import** because ``cart`` carries a
@@ -132,10 +136,10 @@ path it takes, the schema and its version
 (:ref:`dev_guide_import_write_paths` gives the reasons):
 
 * **no** ``schema_version`` **row, and none of the secondary keys finalization adds** on
-  any observation or ``mult_`` table -- an empty schema, or one a fresh import is part
-  way through, since a full import runs one invocation per bundle group: the **fresh
-  import**. Each observation and ``mult_`` table is created with only the keys a load
-  needs (:ref:`dev_guide_import_db_keys`);
+  any observation table -- an empty schema, or one a fresh import is part way through,
+  since a full import runs one invocation per bundle group: the **fresh import**. Each
+  observation table is created with only the keys a load needs
+  (:ref:`dev_guide_import_db_keys`);
 * **one row, holding this release's version, in the** ``ready`` **or** ``appending``
   **state**: the **append**, into the tables with their keys in place;
 * **a row of another version, more than one row, or another state**: refused, with a
@@ -161,8 +165,8 @@ live. In order:
    already refused without ``--yes``. It logs the warning
    ``** DELETING EVERY OPUS TABLE IN SCHEMA <schema> **`` and drops every table the
    import creates (:func:`~opus_import.steps.do_import_tables.delete_all_opus_tables`).
-   This has to happen first, so that there are no vestigial ``mult_`` tables and the row
-   ids start again from 1.
+   This has to happen first, so that no ``mult`` row survives, the mult fields are
+   numbered again, and the row ids start again from 1.
 3. **Delete the named bundles**, under ``--delete-bundles``: each one's rows from every
    observation table, then their rows in the bundle registry
    (:func:`~opus_import.bundle_registry.unregister_bundles`). It runs on any schema
@@ -280,7 +284,7 @@ Adds the secondary keys a fresh import left out. Option: ``--create-indexes``, t
 step of ``--finalize``.
 
 :func:`~opus_import.steps.do_indexes.create_indexes` compares, for every observation
-and ``mult_`` table, the keys
+table, the keys
 :func:`~opus_import.table_keys.add_secondary_indexes` derives from its schema with the
 keys the server reports (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.read_table_keys`),
 **by kind and ordered columns, never by name**, since the server names an unnamed key
@@ -361,6 +365,43 @@ that bundle's data. The step runs with foreign-key checks on, so ``cart``'s casc
 foreign key removes a cart row that names a deleted copy rather than leaving it
 orphaned, and ends by checking that no OPUS ID has two rows; a failure keeps the
 invocation from marking the schema ready, as a validation failure does.
+
+.. _dev_guide_import_steps_do_finalize_mult:
+
+opus_import.steps.do_finalize_mult
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Finalizes the mult fields (:ref:`dev_guide_database_schema_mult`). It has no option of its
+own: ``--finalize`` runs :func:`~opus_import.steps.do_finalize_mult.finalize_mult` after
+the duplicate step and before the auxiliary tables. An append invalidates it, since a
+bundle replaced or added can stop or start using any value, so the ``--finalize`` after
+every append runs it again. It has three parts, in this order:
+
+1. **Delete the values no observation holds.** In every field whose ``pinned`` is 0, the
+   ``mult`` rows whose id no observation column holds are deleted, and then every
+   ``mult_group`` row that no ``mult`` row of its field names.
+   :func:`~opus_import.steps.do_finalize_mult.referenced_mult_ids` finds the ids in use:
+   it reads each observation table once, through an unbuffered cursor
+   (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.stream_select`), and collects every
+   mult column's distinct ids, reading a ``mult_list`` column's ids out of its JSON list
+   in the same scan. A pinned field keeps every row, since its list is the intended set
+   of choices.
+2. **Apply the overrides.**
+   :func:`~opus_import.steps.do_finalize_mult.apply_mult_overrides` writes each column's
+   ``mult_overrides`` over its field's stored rows, so an override wins over the label
+   the import gave a value. An override sets any of ``label``, ``display``, ``grouping``
+   and ``pin`` of the row whose value it names. A ``grouping`` the field has no group for
+   gains a ``mult_group`` row with no pin. An override that names a value the field does
+   not hold is logged as a warning and skipped.
+3. **Rank every field.** :func:`~opus_import.steps.do_finalize_mult.rank_mult_fields`
+   computes every value's ``disp_rank`` and every group's ``group_rank`` by the rules of
+   :mod:`opus_import.mult_rank`, and writes only the rows whose rank changes. A column
+   with a unit gives the rules its unit parser, so when every ordinary value parses, the
+   values sort by the number they hold.
+
+The step always returns True: nothing in it fails the step. ``--update-mult-info``
+(:ref:`dev_guide_import_steps_do_update_mult_info`) applies the overrides and ranks the
+fields it touched with the same two functions.
 
 .. _dev_guide_import_steps_table_swap:
 
@@ -478,7 +519,7 @@ A row is ``(trigger_tab, trigger_col, trigger_val, partable)``. The rows are
      - One per ``obs_surface_geometry__*`` table that exists, triggering on
        ``obs_surface_geometry_name.target_name``.
 
-The first three groups store a ``mult_`` row id as the trigger value, because that is
+The first three groups store a ``mult`` row's id as the trigger value, because that is
 what the corresponding ``obs_general`` column holds; the surface geometry group stores
 the **target name itself**, because the web side compares the user's search text to it
 directly rather than running a database lookup. That asymmetry is the one thing to know
@@ -535,27 +576,31 @@ does need a row, or it has no section and its fields are invisible.
 opus_import.steps.do_update_mult_info
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Writes the display details a schema pins for a ``mult_`` table -- the label, the sort
-order, the display flag, the grouping -- back over the table the import discovered, so
-that editing a schema changes a label without a re-import. Option:
-``--update-mult-info``. **No aggregate option implies it.**
+Writes the presentation the table schemas give the mult fields over the stored ``mult``
+rows, so that editing a schema renames a value or reorders a list without a re-import.
+Option: ``--update-mult-info``. **No aggregate option implies it**; the code-only deploy
+gives it (:ref:`user_guide_deployment_rename_mult_value`).
 
-It writes ``label``, ``disp_order``, ``display``, ``grouping`` and
-``group_disp_order``, and deliberately **not** ``id`` or ``value``: the id is what the
-``obs_`` rows already reference, and the value is what a row means rather than how it is
-shown.
+:func:`~opus_import.steps.do_update_mult_info.update_mult_info` works in three parts:
 
-The hard part is splitting a mult table's name back into its observation table and its
-column, because both halves contain underscores. There is no rule that works: both
-``obs_surface_geometry`` and ``obs_surface_geometry_name`` are real tables, so
-``mult_obs_surface_geometry_name_target_name`` matches a schema at the shorter split and
-only the longer one leaves a column that exists. The step therefore tries every split
-and takes the one where the schema *and* the column both resolve.
+1. **The pinned lists.** For each column with ``mult_options`` whose field has rows in
+   this database, each entry's ``label``, ``pin``, ``display`` and ``grouping`` are
+   written over the row with that id, an entry with no row is inserted, and each entry's
+   group pin is written to its ``mult_group`` row. A pinned field with no rows is left
+   alone: no observation in this database uses it.
+2. **The overrides.** Every column's ``mult_overrides`` are applied, by
+   :func:`~opus_import.steps.do_finalize_mult.apply_mult_overrides`.
+3. **The ranks.** Every field either part changed is ranked again, by
+   :func:`~opus_import.steps.do_finalize_mult.rank_mult_fields`.
 
-A ``mult_options`` entry that does not carry exactly the seven values
-:class:`~opus_import.import_util.MultOption` names raises :exc:`TypeError`. That is a
-fault in the packaged schema, and stopping is better than writing a row built from
-values that landed in the wrong columns.
+It never writes ``id`` or ``value``: the id is what the ``obs_`` rows already hold, and
+the value is what a row means rather than how it is shown. So no observation row changes.
+
+A ``mult_options`` entry that :func:`~opus_import.import_util.read_mult_option` refuses
+-- one that does not carry exactly the seven values
+:class:`~opus_import.import_util.MultOption` names, or whose pin is not an integer --
+raises :exc:`TypeError`. That is a fault in the packaged schema, and stopping is better
+than writing a row built from values that landed in the wrong columns.
 
 .. _dev_guide_import_steps_do_validate:
 
@@ -698,19 +743,20 @@ them as a unit.
 opus_import.steps.do_import_tables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creating the ``obs_`` and ``mult_`` tables, deleting from them, and dropping every table
-the import creates.
+Creating the ``obs_`` and mult tables, deleting from them, and dropping every table the
+import creates. The mult tables are ``mult``, ``mult_field`` and ``mult_group``.
 
 The teardown and build orders are forced by foreign keys, and both are stated here once
 so no caller has to work them out:
 
 * **Teardown** -- every ``obs_`` table except ``obs_general``, then ``cart``, then
-  ``obs_general``, then the ``mult_`` tables.
+  ``obs_general``, then the mult tables.
 * **Build** -- the other way round.
 
-The ``mult_`` tables come last on teardown and first on build by the pipeline's own
-convention (an ``obs_`` row holds a ``mult_`` row id), not because a constraint forces
-it.
+The mult tables come last on teardown and first on build by the pipeline's own
+convention (an ``obs_`` row holds a ``mult`` row's id), not because a constraint forces
+it. Deleting a bundle leaves its ``mult`` rows in place; finalization deletes the values
+no observation holds (:ref:`dev_guide_import_steps_do_finalize_mult`).
 
 Its functions:
 
@@ -725,8 +771,9 @@ Its functions:
     (:ref:`dev_guide_import_steps_registry`).
 
 :func:`~opus_import.steps.do_import_tables.create_tables_for_import`
-    Creates every table a bundle needs that the schema lacks, and every ``mult_`` table
-    its GROUP-typed columns need. It returns the schemas it read and the table names in
+    Creates the mult tables if the schema lacks them
+    (:func:`~opus_import.mult_fields.create_mult_tables`), then every table a bundle
+    needs that the schema lacks. It returns the schemas it read and the table names in
     order, which is what the index importer walks. **The
     ``obs_surface_geometry__<TARGET>`` tables are deliberately not created here**: the
     target names are not known until the observations have been read, so the index
@@ -741,11 +788,11 @@ Its functions:
     (``opus_manage migrate``'s ``django_*`` and ``auth_*`` tables, ``django_session``
     among them). The tables are named by two constants, so nothing outside them is ever
     dropped, not even a table of no known name:
-    :data:`~opus_import.steps.do_import_tables.OPUS_TABLE_PREFIXES` (``obs_`` and
-    ``mult_``, which catch every observation and mult table however many there are)
-    and
+    :data:`~opus_import.steps.do_import_tables.OPUS_TABLE_PREFIXES` (``obs_``, which
+    catches every observation table however many there are, and ``mult_``, which
+    catches ``mult_field`` and ``mult_group``) and
     :data:`~opus_import.steps.do_import_tables.OPUS_TABLE_NAMES`, the other tables by
-    exact name -- ``schema_version``, ``cart``, ``import_bundle``, the auxiliary
+    exact name -- ``schema_version``, ``mult``, ``cart``, ``import_bundle``, the auxiliary
     tables, the dictionary's, ``user_searches``, ``search_results``, and the ``__new``
     and ``__old`` tables
     an interrupted swap can leave (:ref:`dev_guide_import_steps_table_swap`). A step that
@@ -753,8 +800,8 @@ Its functions:
     the foreign keys allow: ``schema_version`` first, so an erase that stops part way
     leaves a schema nothing serves or promotes; every ``obs_`` table but
     ``obs_general``; ``cart``; ``obs_general``; ``definitions`` and its swap tables,
-    which reference ``contexts``; every other exact name; and the ``mult_`` tables
-    last.
+    which reference ``contexts``; every other exact name but ``mult``; and ``mult``,
+    then every ``mult_`` table, last.
 
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`
     Deletes one bundle from every observation table, every other table before
@@ -782,7 +829,7 @@ Its functions:
     cart rows that name the bundle's observations.
 
 :func:`~opus_import.steps.do_import_tables.analyze_all_tables`
-    Runs the backend's analyze over every ``obs_`` and ``mult_`` table, for
+    Runs the backend's analyze over every ``obs_`` table and the mult tables, for
     ``--analyze-tables``, which :mod:`opus_import.cli` runs after the auxiliary, cart
     and search tables. ``cart`` and the auxiliary tables are not analyzed; each auxiliary
     table is analyzed by its swap.
@@ -798,9 +845,9 @@ Importing every observation one primary index file describes.
 :func:`~opus_import.steps.do_import_index.import_one_index`
     The whole of it: read the primary index, resolve ambiguous rows, discover and
     cross-reference the associated metadata files, compute every row through
-    :func:`~opus_import.steps.do_import_pool.compute_index`, then write the ``mult_``
-    tables and load what is left of the ``obs_`` rows. It returns False, abandoning the
-    index, when a pool worker failed.
+    :func:`~opus_import.steps.do_import_pool.compute_index`, then write the ``mult``
+    rows the index added and load what is left of the ``obs_`` rows. It returns False,
+    abandoning the index, when a pool worker failed.
 
 :class:`~opus_import.steps.do_import_index.IndexState`
     What every row of the index is computed from, built once the metadata is assembled
@@ -882,7 +929,7 @@ Otherwise it computes in a pool:
 
   - a new row id (:func:`~opus_import.import_util.next_table_id`) is a
     :class:`~opus_import.deferred.LocalId`, numbered from zero per table within the task;
-  - a ``mult_`` value (:func:`~opus_import.steps.do_import_mult.update_mult_table`) is
+  - a mult column's value (:func:`~opus_import.steps.do_import_mult.update_mult_table`) is
     recorded with its arguments and stands in the row as a
     :class:`~opus_import.deferred.MultRef`;
   - a ``mult_list`` column holding either is a :class:`~opus_import.deferred.DeferredJson`,
@@ -899,7 +946,7 @@ Otherwise it computes in a pool:
   **replays each task's events where the serial loop would have made them**. A
   :class:`~opus_import.deferred.LocalId` becomes the id the table had when the task's
   replay began, plus its number, plus one, and the table's cached id then moves past the
-  task's last; each recorded ``mult_`` value goes through
+  task's last; each recorded mult value goes through
   :func:`~opus_import.steps.do_import_mult.update_mult_table` in the serial order, so it
   gets the id the serial loop gives it; each log call is made on ``ctx.log`` with the
   recorded position, so the non-repeating variants deduplicate in the import's process
@@ -907,7 +954,7 @@ Otherwise it computes in a pool:
   location, against the registry of the module it came from, so the import's process's
   own filters decide whether it is shown -- a warning shown once per location is shown
   once however many workers met it -- and ``pdsfile`` calls go to the real logger. Each row then goes to the sink with every value final. **The
-  tables, their ids, the** ``mult_`` **ids and the log are therefore the same whatever the
+  tables, their ids, the mult ids and the log are therefore the same whatever the
   number of workers.**
 * **A worker's failure abandons the index**: the import's process logs an error naming
   the range of rows and the index file, replays nothing after it, and
@@ -949,8 +996,8 @@ dispatch and the validation; the three functions are:
 
 :func:`~opus_import.steps.do_import_obs.import_observation_table`
     Walks a table's schema, obtains each column's value, checks it, replaces an
-    enumerated value with its ``mult_`` row id, and assembles the row. It returns None
-    only when a group column's field method returned something that is not a mult
+    enumerated value with the id of its ``mult`` row, and assembles the row. It returns
+    None only when a group column's field method returned something that is not a mult
     specification, which is not recoverable -- the whole observation is discarded.
 
 :func:`~opus_import.steps.do_import_obs.field_function_name`
@@ -967,28 +1014,33 @@ dispatch and the validation; the three functions are:
 opus_import.steps.do_import_mult
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Reading, caching and writing the ``mult_`` tables that hold the enumerated values of
-the ``obs_`` columns. Its public functions:
-:func:`~opus_import.steps.do_import_mult.read_or_create_mult_table` fetches one table
+Reading, caching and writing the ``mult`` rows that hold the enumerated values of the
+``obs_`` columns (:ref:`dev_guide_database_schema_mult`). Its public functions:
+:func:`~opus_import.steps.do_import_mult.read_or_create_mult_table` reads one mult field
 into the run's cache, :func:`~opus_import.steps.do_import_mult.mult_table_lookup_id`
-finds an existing value's row id without adding one,
+finds an existing value's id without adding one,
 :func:`~opus_import.steps.do_import_mult.update_mult_table` finds or adds a value and
 returns the id an ``obs_`` column stores, and
-:func:`~opus_import.steps.do_import_mult.write_mult_tables` writes the modified tables
-back.
+:func:`~opus_import.steps.do_import_mult.write_mult_tables` writes the rows the bundle
+added.
 
-**Naming.** :func:`~opus_import.import_util.table_name_mult` builds
-``mult_<table>_<column>``, both lowercased --
-``mult_obs_general_planet_id``.
+**Naming.** :func:`~opus_import.import_util.mult_field_name` gives a column's field
+name: the column's ``mult_field`` key when it has one, otherwise ``<table>.<column>`` in
+lower case -- ``obs_general.planet_id``. :mod:`opus_import.mult_fields` holds the
+field ids: :func:`~opus_import.mult_fields.ensure_mult_fields` creates the mult tables
+if the schema lacks them and gives every field ``mult_field`` lacks the next id, and
+:func:`~opus_import.mult_fields.packaged_mult_columns` lists the columns of the packaged
+``obs_*.json`` schemas that hold mult ids. A column holds mult ids when its
+``pi_form_type`` is a group type and it is not marked ``put_mults_here``
+(:func:`~opus_import.mult_fields.is_mult_column`).
 
-**Caching.** Every table is read once per bundle into the
-context's cache and written back at the end of each index file, so importing an index of a
-hundred thousand rows does not query for the same enumeration a hundred thousand times.
-The cache lives in the import's own process: in a pool worker,
+**Caching.** Every field is read once per bundle into the context's cache, and the rows
+the bundle added are written at the end of each index file, so importing an index of a
+hundred thousand rows does not query for the same value a hundred thousand times. The
+cache lives in the import's own process: in a pool worker,
 :func:`~opus_import.steps.do_import_mult.update_mult_table` reads and changes nothing,
 and records its arguments for the import's process to resolve
-(:ref:`dev_guide_import_steps_do_import_pool`). Two collections track it, both cleared
-per bundle:
+(:ref:`dev_guide_import_steps_do_import_pool`). Three context fields track it:
 
 .. list-table::
    :header-rows: 1
@@ -996,37 +1048,58 @@ per bundle:
 
    * - Context field
      - Lifetime and meaning
+   * - :attr:`~opus_import.context.ImportContext.mult_fields`
+     - Every field's ``mult_field`` row, keyed by qualified name, read once a run.
    * - :attr:`~opus_import.context.ImportContext.mult_table_cache`
-     - Each table read or created during this bundle, keyed by its name. The returned
-       list *is* the cache: appending to it is how a value is added.
+     - Each field read during this bundle, keyed by qualified name, as a
+       :class:`~opus_import.steps.do_import_mult.MultFieldCache`. The returned cache
+       *is* the cache: adding to it is how a value is added. Cleared per bundle.
    * - :attr:`~opus_import.context.ImportContext.modified_mult_tables`
-     - The tables this bundle added values to, and which therefore have to be written
-       back.
+     - The fields this bundle added values to, or whose pinned rows it read, and which
+       therefore have to be written. Cleared per bundle.
 
-**Reading a table.** A table that exists is read, so a bundle sees every value the
-bundles before it added, on a fresh import and an append alike; a table that does not
-exist yet starts the cache empty, and the import fills it as it meets values. A column
-that pins its values with ``mult_options`` short-circuits this and is marked modified
-immediately.
+**Reading a field.** An unpinned field's rows are read from ``mult`` and its groups
+from ``mult_group``, so a bundle sees every value the bundles before it added, on a
+fresh import and an append alike; a field with no rows yet starts the cache empty, and
+the import fills it as it meets values. A column that pins its values with
+``mult_options`` takes its rows from the schema instead
+(:func:`~opus_import.import_util.read_mult_option`) and is marked modified at once.
 
-**Keying and id assignment.** Lookup is a linear scan comparing the stringified value.
-A new value is given ``max(existing ids) + 1``, or 0 in an empty table. A value absent
-from a table whose values are pinned by ``mult_options`` is an error, and returns 0.
+**Keying and id assignment.** A field's cache finds a value through a dictionary keyed
+by :func:`~opus_support.collation.collation_key`, the form of the value the server's
+collation compares, so a value the unique key ``(field_id, value)`` would call a
+duplicate finds the row already there, and a lookup costs the same however many values
+the field holds.
+A value is stored as a string, and an absent value (None) as the empty string. A value
+the field lacks is given the field's highest id plus one, or 0 in an empty field. A
+value that would need an id above
+:data:`~opus_import.steps.do_import_mult.MAX_MULT_ID` (the largest ``smallint
+unsigned``) raises :exc:`~opus_import.steps.do_import_mult.MultIdOverflowError`, whose
+message names the field.
 
-**The derived sort order** is where a value's position in the search form comes from
-when the schema pins none. The rules, in order: a null-ish label sorts to the end,
-keyed ``zzz`` for ``NULL``, ``zzy`` for ``N/A`` and ``zzx`` for ``NONE`` -- unless the
-column has a unit, in which case those three sort by their own text instead; a column
-with a unit sorts by the parsed number, zero-padded; a table whose labels are all
-numeric sorts numerically; ``Yes`` sorts before ``No`` and ``On`` before ``Off``;
-anything else sorts by its label.
+**A value the field already holds** keeps its stored row. In an unpinned field, when
+the incoming label, display or grouping differs from the stored row's and the column's
+``mult_overrides`` does not name the value, the stored row stays and a warning, logged
+once a run, names the field, the value and both labels, and points at
+``mult_overrides`` as the way to change the stored presentation.
 
-**Writing back.** :func:`~opus_import.steps.do_import_mult.write_mult_tables` upserts
-every modified table at the end of each index file, once every row has been computed and
+**A value outside a pinned list** is an error, logged once a run, which fails the
+bundle. The row is given the id of the field's absent value, which is added with the
+label ``N/A`` if the field lacks one, so a run with ``--ignore-errors`` carries on.
+
+**No order is computed here.** The import stores each value's ``pin`` as the obs class
+or the schema gives it, and finalization ranks every field
+(:ref:`dev_guide_import_steps_do_finalize_mult`).
+
+**Writing.** :func:`~opus_import.steps.do_import_mult.write_mult_tables` writes every
+modified field at the end of each index file, once every row has been computed and
 before the sink loads the ``obs_`` rows still waiting; a table whose rows filled a
-transaction during the index was loaded earlier, holding ids its ``mult_`` table gains
-only here. A bundle that is deleted leaves its values in the ``mult_`` tables,
-where an observation of another bundle may hold them too.
+transaction during the index was loaded earlier, holding ids its field gains only here.
+A pinned field's rows are written whole, and an existing row takes the schema's
+presentation; an unpinned field's rows the bundle added are inserted. Neither touches a
+row's ``disp_rank``. A bundle that is deleted leaves its values in ``mult``, where an
+observation of another bundle may hold them too; finalization deletes the ones no
+observation holds.
 
 API reference
 -------------
