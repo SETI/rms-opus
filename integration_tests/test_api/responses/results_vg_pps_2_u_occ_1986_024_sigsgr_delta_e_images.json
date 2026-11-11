@@ -26,7 +26,8 @@
             "full_alt_text": "PU1xxxDE_diagram_full.png",
             "full_size_bytes": 690484,
             "full_width": 1500,
-            "full_height": 1500
+            "full_height": 1500,
+            "ring_obs_id": null
         }
     ]
 }

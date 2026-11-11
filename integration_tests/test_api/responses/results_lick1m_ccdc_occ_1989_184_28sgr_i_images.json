@@ -26,7 +26,8 @@
             "full_alt_text": "LIC_IPD_full.jpg",
             "full_size_bytes": 253721,
             "full_width": 2577,
-            "full_height": 1000
+            "full_height": 1000,
+            "ring_obs_id": null
         }
     ]
 }

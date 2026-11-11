@@ -26,7 +26,8 @@
             "full_alt_text": "PS1xxx_diagram_full.png",
             "full_size_bytes": 649211,
             "full_width": 1500,
-            "full_height": 1500
+            "full_height": 1500,
+            "ring_obs_id": null
         }
     ]
 }

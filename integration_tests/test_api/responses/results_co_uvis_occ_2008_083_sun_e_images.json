@@ -26,7 +26,8 @@
             "full_alt_text": "uvis_euv_2008_083_solar_time_series_egress_preview_full.png",
             "full_size_bytes": 125228,
             "full_width": 1500,
-            "full_height": 1500
+            "full_height": 1500,
+            "ring_obs_id": null
         }
     ]
 }

@@ -26,7 +26,8 @@
             "full_alt_text": "IMG0408010000_FP1_full.jpg",
             "full_size_bytes": 102575,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408010000_FP1"
         },
         {
             "opus_id": "co-cirs-0408010000-fp3",
@@ -49,7 +50,8 @@
             "full_alt_text": "IMG0408010000_FP3_full.jpg",
             "full_size_bytes": 128637,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408010000_FP3"
         },
         {
             "opus_id": "co-cirs-0408010000-fp4",
@@ -72,7 +74,8 @@
             "full_alt_text": "IMG0408010000_FP4_full.jpg",
             "full_size_bytes": 110274,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408010000_FP4"
         },
         {
             "opus_id": "co-cirs-0408010657-fp1",
@@ -95,7 +98,8 @@
             "full_alt_text": "IMG0408010657_FP1_full.jpg",
             "full_size_bytes": 104227,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408010657_FP1"
         },
         {
             "opus_id": "co-cirs-0408010657-fp3",
@@ -118,7 +122,8 @@
             "full_alt_text": "IMG0408010657_FP3_full.jpg",
             "full_size_bytes": 132144,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408010657_FP3"
         },
         {
             "opus_id": "co-cirs-0408010657-fp4",
@@ -141,7 +146,8 @@
             "full_alt_text": "IMG0408010657_FP4_full.jpg",
             "full_size_bytes": 110910,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408010657_FP4"
         },
         {
             "opus_id": "co-cirs-0408011357-fp1",
@@ -164,7 +170,8 @@
             "full_alt_text": "IMG0408011357_FP1_full.jpg",
             "full_size_bytes": 117977,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408011357_FP1"
         },
         {
             "opus_id": "co-cirs-0408011357-fp3",
@@ -187,7 +194,8 @@
             "full_alt_text": "IMG0408011357_FP3_full.jpg",
             "full_size_bytes": 114527,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408011357_FP3"
         },
         {
             "opus_id": "co-cirs-0408011357-fp4",
@@ -210,7 +218,8 @@
             "full_alt_text": "IMG0408011357_FP4_full.jpg",
             "full_size_bytes": 122621,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408011357_FP4"
         },
         {
             "opus_id": "co-cirs-0408020122-fp1",
@@ -233,7 +242,8 @@
             "full_alt_text": "IMG0408020122_FP1_full.jpg",
             "full_size_bytes": 99139,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020122_FP1"
         },
         {
             "opus_id": "co-cirs-0408020122-fp3",
@@ -256,7 +266,8 @@
             "full_alt_text": "IMG0408020122_FP3_full.jpg",
             "full_size_bytes": 121310,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020122_FP3"
         },
         {
             "opus_id": "co-cirs-0408020122-fp4",
@@ -279,7 +290,8 @@
             "full_alt_text": "IMG0408020122_FP4_full.jpg",
             "full_size_bytes": 107240,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020122_FP4"
         },
         {
             "opus_id": "co-cirs-0408020159-fp1",
@@ -302,7 +314,8 @@
             "full_alt_text": "IMG0408020159_FP1_full.jpg",
             "full_size_bytes": 92282,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020159_FP1"
         },
         {
             "opus_id": "co-cirs-0408020159-fp3",
@@ -325,7 +338,8 @@
             "full_alt_text": "IMG0408020159_FP3_full.jpg",
             "full_size_bytes": 110536,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020159_FP3"
         },
         {
             "opus_id": "co-cirs-0408020159-fp4",
@@ -348,7 +362,8 @@
             "full_alt_text": "IMG0408020159_FP4_full.jpg",
             "full_size_bytes": 119764,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020159_FP4"
         },
         {
             "opus_id": "co-cirs-0408020209-fp1",
@@ -371,7 +386,8 @@
             "full_alt_text": "IMG0408020209_FP1_full.jpg",
             "full_size_bytes": 107574,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020209_FP1"
         },
         {
             "opus_id": "co-cirs-0408020209-fp3",
@@ -394,7 +410,8 @@
             "full_alt_text": "IMG0408020209_FP3_full.jpg",
             "full_size_bytes": 140055,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020209_FP3"
         },
         {
             "opus_id": "co-cirs-0408020209-fp4",
@@ -417,7 +434,8 @@
             "full_alt_text": "IMG0408020209_FP4_full.jpg",
             "full_size_bytes": 114395,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408020209_FP4"
         },
         {
             "opus_id": "co-cirs-0408021052-fp1",
@@ -440,7 +458,8 @@
             "full_alt_text": "IMG0408021052_FP1_full.jpg",
             "full_size_bytes": 118128,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408021052_FP1"
         },
         {
             "opus_id": "co-cirs-0408021052-fp3",
@@ -463,7 +482,8 @@
             "full_alt_text": "IMG0408021052_FP3_full.jpg",
             "full_size_bytes": 114621,
             "full_width": 720,
-            "full_height": 720
+            "full_height": 720,
+            "ring_obs_id": "S_SPEC_CO_CIRS_0408021052_FP3"
         }
     ]
 }

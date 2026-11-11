@@ -26,7 +26,8 @@
             "full_alt_text": "EUV2001_001_05_59_full.png",
             "full_size_bytes": 5534,
             "full_width": 1024,
-            "full_height": 1024
+            "full_height": 1024,
+            "ring_obs_id": "J_CO_UVIS_2001-001T05-59_EUV"
         }
     ]
 }

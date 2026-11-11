@@ -26,7 +26,8 @@
             "full_alt_text": "ES1_EPD_full.jpg",
             "full_size_bytes": 258405,
             "full_width": 2577,
-            "full_height": 1000
+            "full_height": 1000,
+            "ring_obs_id": null
         }
     ]
 }

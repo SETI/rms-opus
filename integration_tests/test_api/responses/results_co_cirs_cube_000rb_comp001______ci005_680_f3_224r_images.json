@@ -26,7 +26,8 @@
             "full_alt_text": "000RB_COMP001______CI005_680_F3_224R_full.jpg",
             "full_size_bytes": 97094,
             "full_width": 1280,
-            "full_height": 1024
+            "full_height": 1024,
+            "ring_obs_id": null
         }
     ]
 }

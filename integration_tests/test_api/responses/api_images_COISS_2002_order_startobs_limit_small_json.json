@@ -14,7 +14,8 @@
             "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538099_1_small.jpg",
             "path": "https://opus.pds-rings.seti.org/holdings/previews/",
             "img": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538099_1_small.jpg",
-            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538099_1_small.jpg"
+            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538099_1_small.jpg",
+            "ring_obs_id": "S_IMG_CO_ISS_1463538099_N"
         },
         {
             "opus_id": "co-iss-n1463538082",
@@ -25,7 +26,8 @@
             "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538082_1_small.jpg",
             "path": "https://opus.pds-rings.seti.org/holdings/previews/",
             "img": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538082_1_small.jpg",
-            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538082_1_small.jpg"
+            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538082_1_small.jpg",
+            "ring_obs_id": "S_IMG_CO_ISS_1463538082_N"
         },
         {
             "opus_id": "co-iss-n1463538065",
@@ -36,7 +38,8 @@
             "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538065_1_small.jpg",
             "path": "https://opus.pds-rings.seti.org/holdings/previews/",
             "img": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538065_1_small.jpg",
-            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538065_1_small.jpg"
+            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538065_1_small.jpg",
+            "ring_obs_id": "S_IMG_CO_ISS_1463538065_N"
         },
         {
             "opus_id": "co-iss-n1463538048",
@@ -47,7 +50,8 @@
             "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538048_1_small.jpg",
             "path": "https://opus.pds-rings.seti.org/holdings/previews/",
             "img": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538048_1_small.jpg",
-            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538048_1_small.jpg"
+            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538048_1_small.jpg",
+            "ring_obs_id": "S_IMG_CO_ISS_1463538048_N"
         },
         {
             "opus_id": "co-iss-n1463538031",
@@ -58,7 +62,8 @@
             "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538031_1_small.jpg",
             "path": "https://opus.pds-rings.seti.org/holdings/previews/",
             "img": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538031_1_small.jpg",
-            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538031_1_small.jpg"
+            "small": "COISS_2xxx/COISS_2002/data/1463530181_1463538454/N1463538031_1_small.jpg",
+            "ring_obs_id": "S_IMG_CO_ISS_1463538031_N"
         }
     ]
 }

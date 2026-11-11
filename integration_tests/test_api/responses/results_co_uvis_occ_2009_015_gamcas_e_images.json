@@ -26,7 +26,8 @@
             "full_alt_text": "UVIS_HSP_2009_015_GAMCAS_E_full.jpg",
             "full_size_bytes": 193188,
             "full_width": 1397,
-            "full_height": 1000
+            "full_height": 1000,
+            "ring_obs_id": null
         }
     ]
 }
