@@ -23,7 +23,7 @@ import pytest
 
 import opus_import
 from opus_import import bundle_registry, import_processes
-from opus_import.importdb.super import ImportDBError, ImportDBSuper
+from opus_import.importdb.super import ImportDBError, ImportDBSuper, RollbackError
 
 # mysqlclient is a runtime dependency, but `importdb/mysql.py` guards its own import so
 # the package stays importable without it. Skip the whole module rather than failing
@@ -1174,6 +1174,33 @@ def test_a_counter_row_that_is_absent_is_an_error() -> None:
         _ConnectedDB(conn).increment_counter('mult_field', 'last_id', 'field_id', 3)
 
 
+def test_a_read_only_counter_counts_on_from_the_stored_value_without_an_update() -> None:
+    """The UPDATE is logged as simulated, never sent; the stored value is read once and
+    each later count goes on from the last."""
+    conn = _ScriptedConnection({'SELECT `last_id`': [(4,)]})
+    db = _ConnectedDB(conn)
+    db.read_only = True
+    db.log_sql = True
+    db.logger = _Logger()
+
+    counted = [db.increment_counter('mult_field', 'last_id', 'field_id', 3) for _ in range(2)]
+
+    assert counted == [5, 6]
+    assert conn.executed == [('SELECT `last_id` FROM `mult_field` WHERE `field_id`=%s', [3])]
+    simulated = [message for _level, message in db.logger.messages if '[SIM]' in message]
+    assert len(simulated) == 2
+    assert 'UPDATE `mult_field` SET `last_id`' in simulated[0]
+
+
+def test_a_read_only_counter_row_that_is_absent_is_an_error() -> None:
+    """A field with no ``mult_field`` row is refused in a read-only run too."""
+    db = _ConnectedDB(_ScriptedConnection())
+    db.read_only = True
+
+    with pytest.raises(ImportDBError, match='no row whose field_id is 3'):
+        db.increment_counter('mult_field', 'last_id', 'field_id', 3)
+
+
 def test_the_claim_reads_one_row_skipping_locked_ones() -> None:
     """Both order terms descend, so the key serves the order and nothing is sorted."""
     conn = _ScriptedConnection({'SELECT `bundle_number`': [(4,)]})
@@ -1456,3 +1483,40 @@ def test_the_lock_queries_ask_who_holds_a_lock() -> None:
     assert db.holds_named_lock('opus:x') is True
     assert db.named_lock_holder('opus:x') == 42
     assert _ConnectedDB(_ScriptedConnection({'SELECT': [(None,)]})).named_lock_holder('x') is None
+
+
+class _RollbackFailingConnection(_ScriptedConnection):
+    """A connection whose rollback fails, as a broken one's does."""
+
+    def rollback(self) -> None:
+        raise MySQLdb.OperationalError(2013, 'Lost connection to MySQL server')
+
+
+@pytest.mark.parametrize(
+    ('code', 'wrapped'),
+    [(1213, True), (1062, True), (1213, False)],
+    ids=['retryable', 'expected', 'driver-error-retryable'],
+)
+def test_a_failed_rollback_is_fatal_naming_both_failures(
+    code: int, wrapped: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Neither retried nor passed to the caller as expected: the transaction's failure is
+    the one raised from, and the fatal line names it beside the rollback's."""
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', pytest.fail)
+    db = _ConnectedDB(_RollbackFailingConnection())
+    db.logger = _Logger()
+    driver_error = MySQLdb.OperationalError(code, 'the body failed')
+    failure: Exception = ImportDBError('the body failed') if wrapped else driver_error
+    if wrapped:
+        failure.__cause__ = driver_error
+
+    def body() -> None:
+        raise failure
+
+    with pytest.raises(RollbackError, match='Lost connection to MySQL server') as excinfo:
+        db.retrying('Claiming', body, expected=db.is_duplicate_key_error)
+
+    assert excinfo.value.__cause__ is failure
+    (fatal,) = [message for level, message in db.logger.messages if level == 'fatal']
+    assert fatal.startswith('Claiming failed on attempt 1 of 5')
+    assert 'the body failed' in fatal

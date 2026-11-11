@@ -280,6 +280,7 @@ def test_an_importer_that_finds_nothing_waits_for_a_registration_in_progress(
     bundle = main_run.bundles[-1]
     lock = importdb.lock_name(copy.schema, do_register.REGISTRATION_LOCK)
     holder = golden_io.connect(db_credentials, copy.schema)
+    importer: subprocess.Popen[str] | None = None
     try:
         cursor = holder.cursor()
         cursor.execute('SELECT GET_LOCK(%s, 0)', [lock])
@@ -300,9 +301,14 @@ def test_an_importer_that_finds_nothing_waits_for_a_registration_in_progress(
         cursor.execute("UPDATE import_bundle SET state = 'pending' WHERE bundle_id = %s", [bundle])
         holder.commit()
         cursor.execute('SELECT RELEASE_LOCK(%s)', [lock])
+        stdout, stderr = importer.communicate(timeout=600)
     finally:
         holder.close()
-    stdout, stderr = importer.communicate(timeout=600)
+        if importer is not None and importer.poll() is None:
+            # A failed or timed-out wait must not leave an importer writing to a schema
+            # the suite's teardown drops.
+            importer.kill()
+            importer.communicate()
 
     assert importer.returncode == 0, stderr[-2000:]
     assert f'{do_import.CLAIMED_PREFIX}{bundle}' in stdout

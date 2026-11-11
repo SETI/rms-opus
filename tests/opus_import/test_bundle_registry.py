@@ -9,6 +9,7 @@ state each bundle ends in.
 from __future__ import annotations
 
 import contextlib
+import datetime
 from collections.abc import Iterator
 from typing import Any
 
@@ -45,10 +46,15 @@ class _RegistryDB:
         self.db_schema = 'opus_test'
         self.events: list[str] = []
         self.on_lock: Any = None
+        self.read_only = False
 
     def table_exists(self, table_name: str) -> bool:
         """Say whether a table is held."""
         return table_name in self.tables
+
+    def forget_table_names(self) -> None:
+        """Record the table names being read again."""
+        self.events.append('reread tables')
 
     def table_names(self, prefix: Any = None) -> list[str]:
         """Return the tables, which hold no key a fresh import's check looks for."""
@@ -512,6 +518,38 @@ def test_an_empty_claim_waits_for_a_registration_and_claims_again(
     assert db.events[:3] == ['begin', 'commit', f'lock {lock}']
 
 
+def test_a_queue_importer_with_no_registry_to_claim_from_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Before its first claim it waits for a registration in progress and reads the
+    tables again; with still no registry it fails, naming the registration step."""
+    db = _RegistryDB()
+    succeeded, ctx = _run(db, [], monkeypatch, join=True)
+    assert not succeeded
+    lock = importdb.lock_name('opus_test', do_register.REGISTRATION_LOCK)
+    assert db.events == [f'lock {lock}', 'unlock', 'reread tables']
+    (message,) = ctx.logger.messages_at('fatal')
+    assert message.startswith('"opus_test" has no bundle registry, so there is nothing to claim')
+    assert '"opus_import --register-bundles"' in message
+
+
+def test_a_queue_importer_claims_from_a_registry_a_registration_in_progress_creates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A registry created while the importer waited on registration's lock is claimed
+    from, though the table names it read first lacked it."""
+    db = _RegistryDB()
+
+    def registration_commits() -> None:
+        db.tables['import_bundle'] = _registry({'B_1': 'pending'})
+        db.on_lock = None
+
+    db.on_lock = registration_commits
+    succeeded, _ctx = _run(db, [], monkeypatch, join=True)
+    assert succeeded
+    assert db.states() == {'B_1': 'done'}
+
+
 def test_a_queue_importer_honors_exclusions(monkeypatch: pytest.MonkeyPatch) -> None:
     """``--exclude-bundles`` with no bundles named still keeps the importer off them."""
     db = _RegistryDB({'import_bundle': _registry({'B_1': 'pending', 'B_2': 'pending'})})
@@ -732,6 +770,77 @@ def test_requeue_returns_only_failed_and_importing_bundles(
     else:
         assert db.events == []
         assert db.states() == states
+
+
+@pytest.mark.parametrize('taken_to', ['done', 'pending'], ids=['imported', 'requeued'])
+def test_requeue_deletes_nothing_of_a_bundle_another_process_took_after_the_check(
+    taken_to: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The requeue holds a bundle before deleting its rows: one that left ``failed``
+    after the states were read keeps its rows and its state."""
+    states = {'B_3': 'failed'}
+    db = _RegistryDB({'import_bundle': _registry(states)})
+    original = bundle_registry.registered_bundles
+
+    def read_then_taken(ctx: Any) -> list[tuple[str, str]]:
+        found = original(ctx)
+        db.tables['import_bundle'][0]['state'] = taken_to
+        return found
+
+    monkeypatch.setattr(bundle_registry, 'registered_bundles', read_then_taken)
+    succeeded, ctx = _run(db, ['B_3'], monkeypatch, do_import=False, requeue=True)
+    assert not succeeded
+    assert db.events == []
+    assert db.states() == {'B_3': taken_to}
+    (error,) = ctx.logger.messages_at('error')
+    assert error == 'B_3 changed state before it was requeued; nothing was deleted'
+
+
+def test_requeue_returns_a_bundle_only_while_its_own_hold_stands(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bundle taken from the requeue's hold while its rows were deleted is left as the
+    other process has it."""
+    db = _RegistryDB({'import_bundle': _registry({'B_4': 'importing'})})
+
+    def delete_then_lose(ctx: Any, bundle: str) -> None:
+        db.events.append(f'delete {bundle}')
+        db.tables['import_bundle'][0]['started_at'] = datetime.datetime(2000, 1, 1)
+
+    monkeypatch.setattr(do_import_tables, 'delete_bundle_from_obs_tables', delete_then_lose)
+    ctx = make_context(db=db)
+
+    assert not do_import.requeue_bundles(ctx, ['B_4'])
+
+    assert db.events == ['delete B_4']
+    assert db.states() == {'B_4': 'importing'}
+    (error,) = ctx.logger.messages_at('error')
+    assert error == 'B_4 changed state while it was requeued'
+
+
+def test_a_read_only_run_imports_a_new_bundle_from_the_range_it_planned(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Registration writes nothing, and the bundle's ids come from the range it would
+    have registered, after the last one the registry holds."""
+    db = _RegistryDB({'import_bundle': _registry({'B_1': 'done'})})
+    db.read_only = True
+    monkeypatch.setattr(db, 'insert_rows', lambda table_name, rows: None)
+    monkeypatch.setattr(do_register, 'size_estimate', lambda bundle: _SIZE)
+    monkeypatch.setattr(do_import_mult, 'register_pinned_fields', lambda ctx: None)
+    ctx = make_context(db=db)
+
+    do_register.register_bundles(ctx, ['B_1', 'B_2'], make_pending=False)
+
+    assert db.states() == {'B_1': 'done'}
+    ids = bundle_registry.bundle_ids(ctx, 'B_2')
+    assert ids is not None
+    capacity = bundle_registry.ID_CAPACITY_FACTOR * _SIZE
+    assert (ids.range.bundle_number, ids.range.first_id, ids.range.id_capacity) == (
+        2,
+        capacity,
+        capacity,
+    )
 
 
 @pytest.mark.parametrize('named', [[], ['GO_0001']], ids=['nothing-named', 'only-skipped'])

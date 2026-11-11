@@ -139,6 +139,31 @@ def importing_refusal(bundle_id: str) -> str:
     )
 
 
+def _remember_planned_ranges(
+    ctx: ImportContext,
+    registered: Iterable[bundle_registry.BundleRange],
+    new_rows: list[dict[str, str | int]],
+) -> None:
+    """Keep the rows a read-only registration does not write, numbered after the last one.
+
+    Parameters:
+        ctx: The import run's context, whose `ImportContext.planned_ranges` they join.
+        registered: The rows the registry holds.
+        new_rows: The rows planned for the bundles it lacks, in registration order.
+    """
+    last = max((row.bundle_number for row in registered), default=0)
+    for number, row in enumerate(new_rows, start=last + 1):
+        bundle_id = str(row['bundle_id'])
+        ctx.planned_ranges[bundle_id] = bundle_registry.BundleRange(
+            number,
+            bundle_id,
+            int(row['size_estimate']),
+            int(row['first_id']),
+            int(row['id_capacity']),
+            str(row['state']),
+        )
+
+
 def register_bundles(
     ctx: ImportContext, bundle_ids: Iterable[str], *, make_pending: bool
 ) -> Registration:
@@ -150,7 +175,8 @@ def register_bundles(
     that names bundles to import again marks them: a ``done`` or ``failed`` one is then
     returned to ``pending``, and an ``importing`` one, which another process holds,
     refuses the registration. The same transaction numbers any mult field ``mult_field``
-    lacks and writes the pinned fields' rows.
+    lacks and writes the pinned fields' rows. A read-only run writes nothing, and keeps
+    the rows it would have added in `ImportContext.planned_ranges`.
 
     Parameters:
         ctx: The import run's context, for the open database and the log.
@@ -184,6 +210,8 @@ def register_bundles(
             if bundle_id not in registered
         ]
         new_rows = bundle_registry.plan_ranges(start, estimates)
+        if db.read_only:
+            _remember_planned_ranges(ctx, registered.values(), new_rows)
         with db.transaction():
             if new_rows:
                 db.insert_rows(BUNDLE_REGISTRY_TABLE, new_rows)

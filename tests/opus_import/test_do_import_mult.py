@@ -64,6 +64,7 @@ class _Server:
         before_insert: Called with the row before each insert, to stand for another
             process writing first.
         insert_error: An error every insert raises instead, or None.
+        group_error: An error every group insert raises instead, or None.
     """
 
     def __init__(self, rows: dict[int, list[Row]]) -> None:
@@ -77,6 +78,10 @@ class _Server:
         self.before_insert: Callable[[dict[str, Any]], None] | None = None
         self.retried: list[tuple[str, Any]] = []
         self.insert_error: ImportDBError | None = None
+        self.group_error: ImportDBError | None = None
+        # The rows and groups the running transaction wrote, which a failure takes back.
+        self._written_rows: list[tuple[int, Row]] = []
+        self._written_groups = 0
 
     @staticmethod
     def quote_identifier(name: str) -> str:
@@ -99,8 +104,16 @@ class _Server:
         return stored
 
     def retrying(self, description: str, body: Callable[[], Any], expected: Any = None) -> Any:
+        """Run the body once as a transaction, taking back what it wrote if it fails."""
         self.retried.append((description, expected))
-        return body()
+        self._written_rows, self._written_groups = [], 0
+        try:
+            return body()
+        except ImportDBError:
+            for field_id, row in self._written_rows:
+                self.rows[field_id].remove(row)
+            del self.groups[len(self.groups) - self._written_groups :]
+            raise
 
     def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
         assert (table_name, column, key_column) == ('mult_field', 'last_id', 'field_id')
@@ -127,15 +140,25 @@ class _Server:
             for held in stored
         ):
             raise ImportDBError(f'Duplicate entry for {row}')
-        stored.append(
-            (row['id'], row['value'], row['label'], row['pin'], row['display'], row['grouping'])
+        written = (
+            row['id'],
+            row['value'],
+            row['label'],
+            row['pin'],
+            row['display'],
+            row['grouping'],
         )
+        stored.append(written)
+        self._written_rows.append((row['field_id'], written))
 
     def insert_rows_keeping_existing(
         self, table_name: str, key_name: str, rows: list[dict[str, Any]]
     ) -> None:
         assert (table_name, key_name) == ('mult_group', 'field_id')
+        if self.group_error is not None:
+            raise self.group_error
         self.groups += rows
+        self._written_groups += len(rows)
 
 
 #: The rows registration writes for `PINNED`.
@@ -204,7 +227,7 @@ def test_a_value_another_process_stored_first_takes_its_id_and_leaves_a_gap() ->
 
     def other_process_first(row: dict[str, Any]) -> None:
         server.before_insert = None
-        server.insert_row('mult', {**row, 'id': 9})
+        server.rows[QUALITY].append((9, row['value'], row['label'], None, 'Y', None))
 
     server.before_insert = other_process_first
 
@@ -440,9 +463,9 @@ def test_a_list_s_new_presentation_updates_only_the_presentation() -> None:
     ]
 
 
-def test_the_id_the_value_and_its_group_are_each_written_in_a_retried_transaction() -> None:
-    """A deadlock on any of the three writes runs that write again; a duplicate key on the
-    value's insert is expected, and read back rather than retried."""
+def test_the_id_and_the_value_with_its_group_are_two_retried_transactions() -> None:
+    """A deadlock on either transaction runs it again; a duplicate key on the value's
+    insert is expected, and read back rather than retried."""
     ctx = _context()
     server = _server(ctx)
 
@@ -451,8 +474,24 @@ def test_the_id_the_value_and_its_group_are_each_written_in_a_retried_transactio
     assert [description for description, _expected in server.retried] == [
         'Taking an id in mult field "obs_x.quality"',
         'Inserting a value into mult field "obs_x.quality"',
-        'Inserting a group into mult field "obs_x.quality"',
     ]
+    assert server.groups == [{'field_id': 1, 'grouping': 'Saturn', 'group_pin': 60}]
     insert_expected = server.retried[1][1]
     assert insert_expected is not None
     assert insert_expected(ImportDBError('Duplicate entry'))
+
+
+def test_a_value_whose_group_cannot_be_written_is_not_stored_either() -> None:
+    """The value and its group are one transaction, so a value is never left stored
+    without its group, which no later bundle that finds the value would write."""
+    ctx = _context()
+    server = _server(ctx)
+    server.group_error = ImportDBError('Lost connection to MySQL server')
+
+    with pytest.raises(ImportDBError):
+        _update(ctx, COLUMN, 'A', 'A', grouping='Saturn', group_pin=60)
+
+    assert server.rows[QUALITY] == []
+    server.group_error = None
+    assert _update(ctx, COLUMN, 'A', 'A', grouping='Saturn', group_pin=60) == 1
+    assert server.groups == [{'field_id': 1, 'grouping': 'Saturn', 'group_pin': 60}]

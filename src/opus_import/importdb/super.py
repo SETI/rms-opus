@@ -129,6 +129,15 @@ class ImportDBError(Exception):
     """Raised when a database operation fails; always aborts the import."""
 
 
+class RollbackError(ImportDBError):
+    """A failed transaction's rollback failed too, so the connection is in doubt.
+
+    The message names both failures, and the transaction's own is the exception this
+    one is raised from. `ImportDBSuper.retrying` never runs such a transaction again
+    and never treats it as a failure its caller expects.
+    """
+
+
 @dataclass(frozen=True)
 class IndexStatement:
     """One statement that adds keys to one table, for `ImportDBSuper.build_indexes`.
@@ -292,6 +301,9 @@ class ImportDBSuper:
         # True while a failure is expected and handled by the caller, so a write method
         # does not log it as fatal (`_log_failure`).
         self._failures_expected = False
+        # A read-only run's counters, keyed by table, column and row key, holding each
+        # value as the run's additions would have left it (`_simulated_count`).
+        self._simulated_counters: dict[tuple[str, str, Any], int] = {}
 
         self._enter_stack: list[str] = []
         self._cmds_executed: list[str] = []
@@ -410,15 +422,23 @@ class ImportDBSuper:
 
         Raises:
             ImportDBError: If a transaction is already open.
+            RollbackError: If the body failed and rolling it back failed too; the
+                body's failure is the one it is raised from.
         """
         if self._in_transaction:
             raise ImportDBError('A transaction is already open on this connection')
         self._in_transaction = True
         try:
             yield
-        except BaseException:
+        except BaseException as failure:
             self._in_transaction = False
-            self._rollback()
+            try:
+                self._rollback()
+            except Exception as rollback_failure:
+                raise RollbackError(
+                    f'Rolling back a failed transaction failed ({rollback_failure}); the '
+                    f'transaction failed with: {failure}'
+                ) from failure
             raise
         self._in_transaction = False
         self._commit()
@@ -443,7 +463,8 @@ class ImportDBSuper:
         error `is_retryable_error` accepts -- a deadlock, or a lock wait that timed out
         -- is rolled back and run again after the next of `RETRY_SLEEPS`; the attempt
         after the last sleep is the final one. Any other failure, or the final attempt's,
-        is logged as fatal with the last statement run and raised.
+        is logged as fatal with the last statement run and raised. An attempt whose
+        rollback failed (`RollbackError`) is always one of these.
 
         Parameters:
             description: What the transaction does, for the fatal message.
@@ -468,9 +489,10 @@ class ImportDBSuper:
                 with self.failures_expected(), self.transaction():
                     return body()
             except ImportDBError as e:
-                if expected is not None and expected(e):
+                rollback_failed = isinstance(e, RollbackError)
+                if not rollback_failed and expected is not None and expected(e):
                     raise
-                if attempt < attempts and self.is_retryable_error(e):
+                if not rollback_failed and attempt < attempts and self.is_retryable_error(e):
                     if self.logger:
                         self.logger.log(
                             'debug',
@@ -546,12 +568,42 @@ class ImportDBSuper:
             key: The row's key.
 
         Returns:
-            The counter's value after the addition, as this connection set it.
+            The counter's value after the addition, as this connection set it. A
+            read-only run changes nothing, and returns the stored value advanced by
+            every addition the run has made to that row (`_simulated_count`).
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::increment_counter must be overridden')
+
+    def _simulated_count(self, table_name: str, column: str, key_column: str, key: Any) -> int:
+        """Advance a read-only run's copy of a counter, read from the row the first time.
+
+        Parameters:
+            table_name: The table.
+            column: The counter column.
+            key_column: The column identifying the row.
+            key: The row's key.
+
+        Returns:
+            The value the counter would hold had the run's additions been made.
+
+        Raises:
+            ImportDBError: If no row has the key.
+        """
+        counter = (table_name, column, key)
+        if counter not in self._simulated_counters:
+            rows = self.read_rows(
+                table_name, [column], f'{self.quote_identifier(key_column)}=%s', [key]
+            )
+            if len(rows) == 0:
+                raise ImportDBError(
+                    f'"{table_name}" has no row whose {key_column} is {key!r} to count in'
+                )
+            self._simulated_counters[counter] = int(rows[0][0])
+        self._simulated_counters[counter] += 1
+        return self._simulated_counters[counter]
 
     def insert_rows_keeping_existing(
         self, table_name: str, key_name: str, rows: Sequence[DBRow]
@@ -1177,6 +1229,17 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::table_names must be overridden')
+
+    def forget_table_names(self) -> None:
+        """Make the next `table_names` read the tables from the server again.
+
+        A brand may cache the names; another process can create a table after they were
+        read, which a cached read would not show.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::forget_table_names must be overridden')
 
     def table_exists(self, table_name: str) -> bool:
         """Return whether a table exists in the schema.

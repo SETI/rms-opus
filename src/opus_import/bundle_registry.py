@@ -273,16 +273,23 @@ def bundle_range(ctx: ImportContext, bundle_id: str) -> BundleRange | None:
         bundle_id: The bundle.
 
     Returns:
-        Its row, or None when the registry does not hold it or is absent.
+        Its row; in a read-only run, the row its registration planned and did not write
+        (`ImportContext.planned_ranges`) when the registry does not hold it; otherwise
+        None when the registry does not hold it or is absent.
     """
     db = ctx.db
     assert db is not None
-    if not db.table_exists(BUNDLE_REGISTRY_TABLE):
-        return None
-    rows = db.read_rows(
-        BUNDLE_REGISTRY_TABLE, _RANGE_COLUMNS, f'{db.quote_identifier("bundle_id")}=%s', [bundle_id]
-    )
-    return _range(rows[0]) if rows else None
+    rows: Sequence[Sequence[object]] = []
+    if db.table_exists(BUNDLE_REGISTRY_TABLE):
+        rows = db.read_rows(
+            BUNDLE_REGISTRY_TABLE,
+            _RANGE_COLUMNS,
+            f'{db.quote_identifier("bundle_id")}=%s',
+            [bundle_id],
+        )
+    if rows:
+        return _range(rows[0])
+    return ctx.planned_ranges.get(bundle_id)
 
 
 def bundle_ids(ctx: ImportContext, bundle_id: str) -> BundleIds | None:
@@ -360,15 +367,19 @@ def _in_states(db: ImportDBSuper, states: Sequence[str]) -> str:
 _STARTABLE = (BUNDLE_PENDING, BUNDLE_DONE, BUNDLE_FAILED)
 
 
-def start_bundle(ctx: ImportContext, bundle_id: str) -> Claim | None:
+def start_bundle(
+    ctx: ImportContext, bundle_id: str, *, from_states: Sequence[str] = _STARTABLE
+) -> Claim | None:
     """Move a bundle an invocation names to ``importing``, unless another process holds it.
 
     Parameters:
         ctx: The import run's context, for the open database.
         bundle_id: The bundle.
+        from_states: The states it may be taken from. ``importing`` belongs here only
+            for ``--requeue``, which states that the process holding it has stopped.
 
     Returns:
-        The hold on the bundle, or None when it was ``importing`` already.
+        The hold on the bundle, or None when it was in none of `from_states`.
     """
     db = ctx.db
     assert db is not None
@@ -376,8 +387,8 @@ def start_bundle(ctx: ImportContext, bundle_id: str) -> Claim | None:
     changed = db.conditional_update(
         BUNDLE_REGISTRY_TABLE,
         columns,
-        f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, _STARTABLE)}',
-        [bundle_id, *_STARTABLE],
+        f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, from_states)}',
+        [bundle_id, *from_states],
     )
     if changed == 0:
         return None
@@ -391,12 +402,13 @@ def finish_bundle(ctx: ImportContext, claim: Claim, state: str) -> bool:
 
     The move happens only while the bundle is still ``importing`` under this hold: a
     bundle ``--requeue`` returned to the queue, perhaps taken since by another process,
-    is left as it is.
+    is left as it is. ``--requeue`` itself ends its hold by moving the bundle to
+    ``pending``.
 
     Parameters:
         ctx: The import run's context, for the open database.
         claim: The hold `start_bundle` or `claim_bundle` gave.
-        state: `BUNDLE_DONE` or `BUNDLE_FAILED`.
+        state: `BUNDLE_DONE`, `BUNDLE_FAILED` or, for ``--requeue``, `BUNDLE_PENDING`.
 
     Returns:
         Whether the bundle moved; False when this process no longer held it.
@@ -421,8 +433,8 @@ def return_to_pending(
     Parameters:
         ctx: The import run's context, for the open database.
         bundle_ids: The bundles; one the registry does not hold is ignored.
-        from_states: The states a bundle may be moved from. ``importing`` belongs here
-            only for ``--requeue``, which states that the process holding it has stopped.
+        from_states: The states a bundle may be moved from; never ``importing``, which
+            a process holds.
 
     Returns:
         The bundles moved, in the order given.

@@ -25,6 +25,7 @@ import shutil
 import site
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
@@ -947,6 +948,25 @@ def drop_schema(credentials: DatabaseCredentials, schema: str) -> None:
     golden_io.execute(credentials, None, f'DROP DATABASE IF EXISTS `{schema}`')
 
 
+def communicate_all(processes: Sequence[subprocess.Popen[str]]) -> list[tuple[str, str]]:
+    """Wait for every process to exit, draining all of their pipes at once.
+
+    Draining one process's pipes at a time would leave the others' undrained, and a
+    process that fills a pipe then blocks, holding whatever it holds -- a claimed bundle,
+    or a lock another of the processes waits for -- until its turn comes.
+
+    Parameters:
+        processes: Processes started with their standard output and error piped, as text.
+
+    Returns:
+        Each process's standard output and error, in the order of `processes`.
+    """
+    if len(processes) == 0:
+        return []
+    with ThreadPoolExecutor(max_workers=len(processes)) as executor:
+        return list(executor.map(lambda process: process.communicate(), processes))
+
+
 def run_concurrently(
     config_files: Sequence[Path],
     arguments: Sequence[str],
@@ -976,15 +996,12 @@ def run_concurrently(
                 text=True,
             )
         )
-    results = []
-    for process in processes:
-        stdout, stderr = process.communicate()
-        results.append(
-            StepResult(
-                arguments=tuple(arguments),
-                returncode=process.returncode,
-                stdout=stdout,
-                stderr=stderr,
-            )
+    return [
+        StepResult(
+            arguments=tuple(arguments),
+            returncode=process.returncode,
+            stdout=stdout,
+            stderr=stderr,
         )
-    return results
+        for process, (stdout, stderr) in zip(processes, communicate_all(processes), strict=True)
+    ]

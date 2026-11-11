@@ -520,7 +520,8 @@ def import_from_queue(
     A claim that finds nothing waits for any registration in progress, by taking and
     releasing registration's lock, and claims once more before the importer exits: a
     registration's transaction writes rows the claim's locking read passes over until it
-    commits.
+    commits. A schema with no registry is waited on the same way before the first claim,
+    and refused if it still has none.
 
     Parameters:
         ctx: The import run's context, with its path chosen.
@@ -530,8 +531,10 @@ def import_from_queue(
     Returns:
         True when the queue was emptied and every bundle the importer imported is
         ``done``; False when one failed, the importer lost its lock or its bundle, or it
-        was interrupted, which is logged as fatal.
+        was interrupted, or the schema has no registry, which is logged as fatal.
     """
+    if not _registry_present(ctx):
+        return False
     db = ctx.db
     assert db is not None
     import_processes.create_process_table(db)
@@ -558,9 +561,7 @@ def import_from_queue(
                     )
                 claim = bundle_registry.claim_bundle(ctx, among, excluding or (), importer)
                 if claim is None:
-                    registration = importdb.lock_name(db.db_schema, do_register.REGISTRATION_LOCK)
-                    with db.named_lock(registration):
-                        pass
+                    _wait_for_registration(ctx)
                     claim = bundle_registry.claim_bundle(ctx, among, excluding or (), importer)
                 if claim is None:
                     import_util.log_info(ctx, QUEUE_EMPTY_LINE)
@@ -583,6 +584,49 @@ def import_from_queue(
         )
         return False
     return True
+
+
+def _wait_for_registration(ctx: ImportContext) -> None:
+    """Wait until no registration holds registration's lock, by taking and releasing it.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+    """
+    db = ctx.db
+    assert db is not None
+    with db.named_lock(importdb.lock_name(db.db_schema, do_register.REGISTRATION_LOCK)):
+        pass
+
+
+def _registry_present(ctx: ImportContext) -> bool:
+    """Return whether the schema has a bundle registry for a queue importer to claim from.
+
+    When the table names read so far lack it, the importer waits for any registration
+    in progress and reads them from the server again, since another process may have
+    created it since.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the log.
+
+    Returns:
+        True when it has one; otherwise False, after a fatal message.
+    """
+    db = ctx.db
+    assert db is not None
+    if db.table_exists(bundle_registry.BUNDLE_REGISTRY_TABLE):
+        return True
+    _wait_for_registration(ctx)
+    db.forget_table_names()
+    if db.table_exists(bundle_registry.BUNDLE_REGISTRY_TABLE):
+        return True
+    ctx.logger.log(
+        'fatal',
+        f'"{db.db_schema}" has no bundle registry, so there is nothing to claim: '
+        '"opus_import --register-bundles" or "opus_import_all --prepare" registers the '
+        'bundles first',
+    )
+    ctx.import_has_bad_data = True
+    return False
 
 
 def _import_claimed_bundle(
@@ -693,7 +737,8 @@ def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
     Returns:
         True when every named bundle was returned. False, changing nothing, when a named
         bundle is not registered or is neither ``failed`` nor ``importing``, which is
-        logged as fatal naming each such bundle.
+        logged as fatal naming each such bundle; False too when one changed state while
+        it was requeued, which is logged as an error.
     """
     states = dict(bundle_registry.registered_bundles(ctx))
     returnable = (bundle_registry.BUNDLE_FAILED, bundle_registry.BUNDLE_IMPORTING)
@@ -716,8 +761,15 @@ def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
         return False
     returned = True
     for bundle_id in bundle_ids:
+        hold = bundle_registry.start_bundle(ctx, bundle_id, from_states=returnable)
+        if hold is None:
+            import_util.log_error(
+                ctx, f'{bundle_id} changed state before it was requeued; nothing was deleted'
+            )
+            returned = False
+            continue
         do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
-        if bundle_registry.return_to_pending(ctx, [bundle_id], returnable):
+        if bundle_registry.finish_bundle(ctx, hold, bundle_registry.BUNDLE_PENDING):
             import_util.log_info(ctx, f'Returned {bundle_id} to the queue')
         else:
             import_util.log_error(ctx, f'{bundle_id} changed state while it was requeued')

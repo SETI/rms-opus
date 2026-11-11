@@ -701,6 +701,11 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 
         return [x for x in ret_names if x.startswith(prefix)]
 
+    def forget_table_names(self) -> None:
+        """Read the table names from the server again, replacing the cached ones."""
+        self._table_names = None
+        self.table_names()
+
     def table_info(self, table_name: str) -> list[SchemaColumn]:
         """Return the columns of a table as the server currently defines them.
 
@@ -817,8 +822,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     else:
                         self.logger.log('debug', f'Dropped table "{table_name}"')
 
-                # __init__ populates the cache and nothing clears it, so it is a set from
-                # the moment the instance exists; the None is only the load-once sentinel.
+                # __init__ populates the cache and `forget_table_names` refills it at once,
+                # so it is a set from the moment the instance exists; the None is only the
+                # load-once sentinel.
                 assert self._table_names is not None
                 if table_name in self._table_names:
                     self._table_names.remove(table_name)
@@ -2213,7 +2219,9 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             key: The row's key.
 
         Returns:
-            The counter's new value.
+            The counter's new value. A read-only run logs the ``UPDATE`` instead of
+            sending it, and returns the stored value advanced by every addition the run
+            has made to that row.
 
         Raises:
             ImportDBError: If the server rejects a statement, or no row has the key.
@@ -2225,6 +2233,9 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 f'UPDATE {q(table_name)} SET {q(column)} = LAST_INSERT_ID({q(column)} + 1) '  # nosec B608
                 f'WHERE {q(key_column)} = %s'
             )
+            if not MYSQLDB_AVAILABLE or self.read_only:
+                self._execute(cmd, [key], mutates=True)
+                return self._simulated_count(table_name, column, key_column, key)
             try:
                 with self.conn.cursor() as cur:
                     self._execute(cmd, [key], cur=cur, mutates=True)

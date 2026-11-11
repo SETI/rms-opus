@@ -25,8 +25,9 @@ if TYPE_CHECKING:
 
 # from importdb.postgresql import ImportDBPostgreSQL
 
-# The package's surface: the pipeline opens a database with `get_db` and catches
-# `ImportDBError`. The brand classes are reached through their own modules.
+# The package's surface: the pipeline opens a database with `get_db`, names a
+# server-wide lock with `lock_name`, and catches `ImportDBError`. The brand classes are
+# reached through their own modules.
 __all__ = ['ImportDBError', 'get_db', 'lock_name']
 
 #: What every lock name `lock_name` returns starts with.

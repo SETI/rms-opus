@@ -714,7 +714,7 @@ class ImportBench:
             )
             for directory, config in zip(importer_dirs, importer_configs, strict=True)
         ]
-        outputs = [process.communicate() for process in processes]
+        outputs = build_run.communicate_all(processes)
         failed = [process.returncode for process in processes if process.returncode != 0]
         monitor.step_finished(
             build_run.StepResult(
