@@ -266,7 +266,7 @@ def register_pinned_fields(ctx: ImportContext) -> None:
 
     Bundle registration (`opus_import.steps.do_register`) runs this inside its one
     transaction, after the fields are numbered, so no import writes a pinned field's rows.
-    Each field's list is laid over its stored rows (`_lay_options_over`): an entry the
+    Each field's list is laid over its stored rows (`lay_options_over`): an entry the
     field lacks is inserted, a stored row whose presentation the list changes is updated
     by id, and each group is written with its pin. The field's ``last_id`` is then set to
     the highest id it holds, leaving out `PINNED_ABSENT_ID`.
@@ -283,7 +283,7 @@ def register_pinned_fields(ctx: ImportContext) -> None:
             continue
         cache = MultFieldCache(name, fields[name].field_id, pinned=True)
         _read_stored_rows(ctx, cache)
-        changes = _lay_options_over(ctx, cache, column.entry)
+        changes = lay_options_over(ctx, cache, column.entry)
         if changes.new_rows:
             db.insert_rows(
                 MULT_TABLE, [{'field_id': cache.field_id, **row} for row in changes.new_rows]
@@ -306,7 +306,7 @@ def register_pinned_fields(ctx: ImportContext) -> None:
             )
 
 
-def _lay_options_over(
+def lay_options_over(
     ctx: ImportContext, cache: MultFieldCache, column: dict[str, Any]
 ) -> OptionChanges:
     """Lay a pinned column's ``mult_options`` over the field's stored rows.

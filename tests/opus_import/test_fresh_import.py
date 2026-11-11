@@ -117,7 +117,7 @@ def test_a_child_is_created_with_only_the_keys_a_load_needs() -> None:
     """The primary key alone: no plain key, not even ``bundle_id``'s, and no foreign key."""
     db = _RecordingDB(set())
     cmd = _create_statement(db, 'obs_pds')
-    assert cmd.startswith('CREATE TABLE `obs_pds`')
+    assert cmd.startswith('CREATE TABLE IF NOT EXISTS `obs_pds`')
     assert 'PRIMARY KEY (`obs_general_id`)' in cmd
     assert '`bundle_id` (`bundle_id`)' not in cmd
     assert 'FOREIGN KEY' not in cmd
@@ -171,7 +171,7 @@ def test_a_table_level_foreign_key_renders_what_a_delete_does() -> None:
     db.create_table('cart', schema)
     (cmd,) = [cmd for cmd, _ in db.executed if cmd.startswith('CREATE TABLE')]
     assert cmd == (
-        'CREATE TABLE `cart` ( `obs_general_id` int unsigned NOT NULL, '
+        'CREATE TABLE IF NOT EXISTS `cart` ( `obs_general_id` int unsigned NOT NULL, '
         'CONSTRAINT one UNIQUE (obs_general_id) , FOREIGN KEY (`obs_general_id`) '
         'REFERENCES `obs_general`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ) ENGINE=INNODB'
     )
@@ -687,16 +687,24 @@ def test_an_interrupted_finalization_refuses_the_import() -> None:
 class _DeletingDB:
     """A stand-in that answers each table's ids for a bundle and records each delete."""
 
-    def __init__(self, ids: dict[str, list[Any]] | list[Any], tables: list[str]) -> None:
-        """Hold each table's ids for the bundle, and the tables.
+    def __init__(
+        self,
+        ids: dict[str, list[Any]] | list[Any],
+        tables: list[str],
+        id_range: tuple[int, int] | None = None,
+    ) -> None:
+        """Hold each table's ids for the bundle, the tables, and the bundle's range.
 
         Parameters:
             ids: Each table's ids, in order, keyed by table; or one list answering every
                 select, whatever it reads.
             tables: The ``obs_`` tables.
+            id_range: The bundle's registered first id and capacity, or None for a
+                bundle the registry does not hold.
         """
         self.ids = ids
         self.tables = tables
+        self.id_range = id_range
         self.transaction_rows = 2
         self.selects: list[str] = []
         self.deletes: list[tuple[str, str, list[Any]]] = []
@@ -709,12 +717,43 @@ class _DeletingDB:
         """Backtick-quote a name."""
         return f'`{name}`'
 
+    def table_exists(self, table: str) -> bool:
+        """Say whether the registry exists: only when the bundle has a range."""
+        assert table == 'import_bundle'
+        return self.id_range is not None
+
+    def read_rows(
+        self, table: str, columns: list[str], where: str, params: list[Any]
+    ) -> list[tuple[Any, ...]]:
+        """Return the bundle's registry row."""
+        assert self.id_range is not None
+        first_id, capacity = self.id_range
+        row = {
+            'bundle_number': 1,
+            'bundle_id': params[0],
+            'size_estimate': capacity // 100,
+            'first_id': first_id,
+            'id_capacity': capacity,
+            'state': 'importing',
+        }
+        return [tuple(row[column] for column in columns)]
+
+    def retrying(self, description: str, body: Any) -> Any:
+        """Run the body once."""
+        return body()
+
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any]]:
         """Return the ids of the table the query names, one page of them when it asks.
 
         A paged query's parameters end with the page size, after the bundle and, past
-        the first page, the id the page starts after.
+        the first page, the id the page starts after. A ``MAX`` over a range of
+        ``obs_general`` ids returns the highest of them.
         """
+        if cmd.startswith('MAX('):
+            first, last = params
+            ids = self.ids if isinstance(self.ids, list) else self.ids.get('obs_general', [])
+            inside = [i for i in ids if first <= i <= last]
+            return [(max(inside) if inside else None,)]
         self.selects.append(cmd)
         if isinstance(self.ids, list):
             ids = self.ids
@@ -732,12 +771,6 @@ class _DeletingDB:
         self.deletes.append((table, where, where_params))
 
     JOINED_PARENT_ALIAS = 'p'
-
-    def find_column_max(self, table: str, column: str) -> int | None:
-        """Return obs_general's highest id: the last of its ids, or None for none."""
-        assert (table, column) == ('obs_general', 'id')
-        ids = self.ids if isinstance(self.ids, list) else self.ids.get('obs_general', [])
-        return ids[-1] if ids else None
 
     def delete_joined_rows(
         self,
@@ -757,22 +790,23 @@ _IN_RANGE = '`bundle_id`=%s AND `id` BETWEEN %s AND %s'
 
 _PARENT_IN_RANGE = '`p`.`bundle_id` = %s AND `p`.`id` BETWEEN %s AND %s'
 
-_ABOVE_HIGHEST = '`obs_general_id` > %s'
+_ORPHANS = '`obs_general_id` BETWEEN %s AND %s'
 
 
 def test_a_bundle_is_deleted_a_chunk_of_obs_general_at_a_time_children_first() -> None:
     """Every child, the surface geometry table among them, through each chunk.
 
-    Before the chunks, every child loses its rows above ``obs_general``'s highest id. Each
-    chunk is `transaction_rows` of the bundle's ``obs_general`` ids: every child's rows
-    joining them go, then the chunk's ``obs_general`` rows.
+    Before the chunks, every child loses its rows in the bundle's range above the highest
+    ``obs_general`` id in it, and none outside the range, which another bundle's import
+    may be loading. Each chunk is `transaction_rows` of the bundle's ``obs_general`` ids:
+    every child's rows joining them go, then the chunk's ``obs_general`` rows.
     """
     tables = ['obs_files', 'obs_general', 'obs_pds', 'obs_surface_geometry_target']
-    db = _DeletingDB({'obs_general': [4, 7, 9]}, tables)
+    db = _DeletingDB({'obs_general': [4, 7, 9]}, tables, id_range=(0, 100))
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
     children = ['obs_files', 'obs_pds', 'obs_surface_geometry_target']
     assert db.deletes == [
-        *[(child, _ABOVE_HIGHEST, [9]) for child in children],
+        *[(child, _ORPHANS, [10, 99]) for child in children],
         *[(f'{child}~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 7]) for child in children],
         ('obs_general', _IN_RANGE, ['B_1', 4, 7]),
         *[(f'{child}~obs_general', _PARENT_IN_RANGE, ['B_1', 9, 9]) for child in children],
@@ -787,13 +821,25 @@ def test_a_bundle_is_deleted_a_chunk_of_obs_general_at_a_time_children_first() -
 
 
 def test_a_bundle_a_table_does_not_hold_deletes_nothing_there() -> None:
-    """No ids, no statement."""
-    db = _DeletingDB({}, ['obs_general', 'obs_pds', 'obs_surface_geometry_target'])
+    """No ids, no joined statement; a child's rows anywhere in the range go."""
+    db = _DeletingDB(
+        {}, ['obs_general', 'obs_pds', 'obs_surface_geometry_target'], id_range=(200, 100)
+    )
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
     # An empty obs_general leaves no row of a child that joins it.
     assert db.deletes == [
-        ('obs_pds', _ABOVE_HIGHEST, [0]),
-        ('obs_surface_geometry_target', _ABOVE_HIGHEST, [0]),
+        ('obs_pds', _ORPHANS, [200, 299]),
+        ('obs_surface_geometry_target', _ORPHANS, [200, 299]),
+    ]
+
+
+def test_a_bundle_the_registry_lacks_deletes_only_its_joined_rows() -> None:
+    """With no range there is nothing to bound the leftover rows by, so none are sought."""
+    db = _DeletingDB({'obs_general': [4]}, ['obs_general', 'obs_pds'])
+    do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
+    assert db.deletes == [
+        ('obs_pds~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 4]),
+        ('obs_general', _IN_RANGE, ['B_1', 4, 4]),
     ]
 
 

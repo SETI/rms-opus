@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from opus_import import cli, deferred, import_util
+from opus_import import bundle_registry, cli, deferred, import_util
 from opus_import.context import ImportContext
 from opus_import.deferred import Capture, DeferredJson, LocalId, MultRef
 from opus_import.mult_fields import MultFieldInfo
@@ -46,24 +46,12 @@ SCHEMAS = {
 
 
 class _FakeDB:
-    """A stand-in answering the two questions the first id a table hands out asks."""
+    """A stand-in holding the mult rows the import writes, and each field's id counter."""
 
-    def __init__(self, max_ids: dict[str, int]) -> None:
-        """Hold each table's largest id; a table not given does not exist.
-
-        Parameters:
-            max_ids: The largest id per table.
-        """
-        self.max_ids = max_ids
-
-    def table_exists(self, table_name: str) -> bool:
-        """Say whether a table exists."""
-        return table_name in self.max_ids
-
-    def find_column_max(self, table_name: str, column: str) -> int:
-        """Return a table's largest id."""
-        assert column == 'id'
-        return self.max_ids[table_name]
+    def __init__(self) -> None:
+        """Start with no mult row and every counter before its first id."""
+        self.mult: list[dict[str, Any]] = []
+        self.last_id: dict[int, int] = {}
 
     @staticmethod
     def quote_identifier(name: str) -> str:
@@ -72,8 +60,29 @@ class _FakeDB:
 
     @staticmethod
     def read_rows(*_args: Any) -> list[Any]:
-        """Return no rows: no mult field holds a value yet."""
+        """Return no rows: the cache asks before any value is stored in a field."""
         return []
+
+    def retrying(self, _description: str, body: Any) -> Any:
+        """Run the body once."""
+        return body()
+
+    def increment_counter(self, _table: str, _column: str, _key_column: str, key: int) -> int:
+        """Count on in a field."""
+        self.last_id[key] = self.last_id.get(key, -1) + 1
+        return self.last_id[key]
+
+    @contextlib.contextmanager
+    def failures_expected(self) -> Iterator[None]:
+        """Nothing to suppress."""
+        yield
+
+    def insert_row(self, _table: str, row: dict[str, Any]) -> None:
+        """Record a mult row."""
+        self.mult.append(row)
+
+    def insert_rows_keeping_existing(self, *_args: Any) -> None:
+        """Write no group: the stand-in values have none they must keep."""
 
 
 #: The field ids the stand-in mult columns' values carry.
@@ -83,10 +92,16 @@ MULT_FIELDS = {
 }
 
 
+#: The stand-in bundle's registered range: its ids start at 101.
+_RANGE = bundle_registry.BundleRange(1, 'TEST_0001', 10, 101, 1000, 'importing')
+
+
 def _pool_context() -> ImportContext:
-    """Return a context over the stand-in database, with the field ids read."""
-    ctx = make_context(db=_FakeDB({'obs_general': 100, 'obs_files': 1000}))
+    """Return a context over the stand-in database, with the field ids read and the
+    bundle's ids counted from its range."""
+    ctx = make_context(db=_FakeDB())
     ctx.mult_fields = dict(MULT_FIELDS)
+    ctx.bundle_ids = bundle_registry.BundleIds(_RANGE)
     return ctx
 
 
@@ -137,14 +152,7 @@ def _compute_row(
             'obs_surface_geometry__mimas',
             {'obs_general_id': general_id, 'target_name': target_name},
         )
-    emit(
-        'obs_files',
-        {
-            'id': import_util.next_table_id(ctx, 'obs_files'),
-            'obs_general_id': general_id,
-            'instrument_id': planet,
-        },
-    )
+    emit('obs_files', {'obs_general_id': general_id, 'instrument_id': planet})
 
 
 def _run(
@@ -182,9 +190,9 @@ def test_a_pool_computes_what_one_process_computes() -> None:
     assert pooled_rows == serial_rows
     assert pooled.logger.messages == serial.logger.messages
     assert pooled.python_warning_list == serial.python_warning_list == ['row seven warns']
-    assert pooled.max_table_id_cache == serial.max_table_id_cache
+    assert pooled.bundle_ids == serial.bundle_ids
     assert pooled.mult_table_cache == serial.mult_table_cache
-    assert pooled.modified_mult_tables == serial.modified_mult_tables
+    assert pooled.db.mult == serial.db.mult  # type: ignore[union-attr]
     assert pooled.logged_import_warnings == serial.logged_import_warnings
     assert pooled.capture is None
 
@@ -242,7 +250,7 @@ def test_the_rows_are_computed_in_forked_workers() -> None:
 
 
 def test_the_replayed_rows_hold_real_ids_and_no_placeholder() -> None:
-    """Ids continue from the table's largest; mult ids are the serial ones; lists are JSON."""
+    """Ids count on from the bundle's range; mult ids are the serial ones; lists are JSON."""
     _ctx, rows, _ok = _run(workers=3)
     general = [row for table, row in rows if table == 'obs_general']
     assert [row['id'] for row in general] == list(range(101, 124))

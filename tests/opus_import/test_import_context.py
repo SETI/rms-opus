@@ -51,9 +51,8 @@ def test_a_context_starts_with_empty_state() -> None:
     assert ctx.import_has_bad_data is False
     assert ctx.bundle_has_errors is False
     assert ctx.python_warning_list == []
-    assert ctx.max_table_id_cache == {}
+    assert ctx.bundle_ids is None
     assert ctx.mult_table_cache == {}
-    assert ctx.modified_mult_tables == set()
 
 
 def test_two_contexts_share_no_state() -> None:
@@ -64,13 +63,9 @@ def test_two_contexts_share_no_state() -> None:
     first.mult_table_cache['obs_general.mission_id'] = do_import_mult.MultFieldCache(
         'obs_general.mission_id', 1, pinned=True
     )
-    first.modified_mult_tables.add('obs_general.mission_id')
-    first.max_table_id_cache['obs_general'] = 17
     first.log.nonrepeating_error('a bad thing')
 
     assert second.mult_table_cache == {}
-    assert second.modified_mult_tables == set()
-    assert second.max_table_id_cache == {}
     assert second.import_has_bad_data is False
     assert second.logged_import_errors == set()
     assert _messages(second, 'error') == []
@@ -280,8 +275,7 @@ def test_the_warning_handler_follows_the_list_across_a_report() -> None:
     assert ctx.python_warning_list == ['after']
 
 
-#: A preprogrammed mult column, the one shape `read_or_create_mult_table` can serve
-#: without reading ``mult``: the values are in the schema instead of in the table.
+#: A preprogrammed mult column, whose one row registration has stored.
 _MULT_COLUMN = {'mult_options': [(0, 'COISS', 'Cassini ISS', 10, 'Y', None, None)]}
 
 #: The field `_MULT_COLUMN`'s values belong to.
@@ -304,24 +298,20 @@ def _mult_context() -> ImportContext:
 
 
 class _EmptyDatabase:
-    """A database holding no mult rows, recording the tables written to."""
+    """A database holding the one registered mult row, counting the reads of ``mult``."""
 
     def __init__(self) -> None:
-        self.written: list[tuple[str, list[dict[str, Any]]]] = []
+        self.reads = 0
 
     @staticmethod
     def quote_identifier(name: str) -> str:
         return f'`{name}`'
 
-    @staticmethod
-    def read_rows(*_args: Any) -> list[Any]:
-        return []
-
-    def insert_rows(self, table_name: str, rows: list[dict[str, Any]]) -> None:
-        self.written.append((table_name, rows))
-
-    def upsert_rows(self, table_name: str, _key: str, rows: list[dict[str, Any]]) -> None:
-        self.written.append((table_name, rows))
+    def read_rows(self, table_name: str, *_args: Any) -> list[Any]:
+        if table_name != 'mult':
+            return []
+        self.reads += 1
+        return [(0, 'COISS', 'Cassini ISS', 10, 'Y', None)]
 
 
 def test_a_mult_field_is_converted_once_and_then_served_from_the_context() -> None:
@@ -332,27 +322,15 @@ def test_a_mult_field_is_converted_once_and_then_served_from_the_context() -> No
     """
     ctx = _mult_context()
 
-    first = do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
-    second = do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
+    first = do_import_mult.read_mult_field(ctx, _FIELD, _MULT_COLUMN)
+    second = do_import_mult.read_mult_field(ctx, _FIELD, _MULT_COLUMN)
 
     assert first is second
+    assert cast(_EmptyDatabase, ctx.db).reads == 1
     assert ctx.mult_table_cache[_FIELD] is first
     assert first.field_id == 7
     assert [row['value'] for row in first.rows] == ['COISS']
     assert first.rows[0]['pin'] == 10
-
-
-def test_reading_a_mult_field_marks_it_modified_only_the_first_time() -> None:
-    """A preprogrammed field has to be written out once, not once per read."""
-    ctx = _mult_context()
-
-    do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
-    assert ctx.modified_mult_tables == {_FIELD}
-
-    ctx.modified_mult_tables = set()
-    do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
-
-    assert ctx.modified_mult_tables == set()
 
 
 def test_one_context_s_mult_cache_is_invisible_to_another() -> None:
@@ -360,33 +338,18 @@ def test_one_context_s_mult_cache_is_invisible_to_another() -> None:
     first = _mult_context()
     second = _mult_context()
 
-    first_rows = do_import_mult.read_or_create_mult_table(first, _FIELD, _MULT_COLUMN)
-    second_rows = do_import_mult.read_or_create_mult_table(second, _FIELD, _MULT_COLUMN)
+    first_rows = do_import_mult.read_mult_field(first, _FIELD, _MULT_COLUMN)
+    second_rows = do_import_mult.read_mult_field(second, _FIELD, _MULT_COLUMN)
 
     assert first_rows is not second_rows
-    assert second.modified_mult_tables == {_FIELD}
-
-
-def test_writing_writes_only_the_modified_fields() -> None:
-    """A field this bundle read but added nothing to is not written back."""
-    ctx = _mult_context()
-    written = cast(_EmptyDatabase, ctx.db).written
-    do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
-    ctx.mult_table_cache['obs_general.untouched'] = do_import_mult.MultFieldCache(
-        'obs_general.untouched', 8, pinned=False
-    )
-
-    do_import_mult.write_mult_tables(ctx)
-
-    assert [table for table, rows in written if rows] == ['mult']
-    assert [row['field_id'] for row in written[0][1]] == [7]
 
 
 def test_the_bundle_loop_clears_the_per_bundle_caches_and_not_the_per_run_one() -> None:
     """Which cache each loop resets is what keeps one bundle's state out of the next.
 
-    `mult_table_cache` and `modified_mult_tables` are reset per bundle: carrying them
-    across bundles would write one bundle's values into another's tables.
+    `mult_table_cache` and `bundle_ids` are reset per bundle: carrying the cache across
+    bundles would serve one bundle another's stale values, and carrying the ids would
+    give one bundle's observations ids from another's range.
     `import_has_bad_data` is reset per run, so one bad bundle fails the run. Driving the
     two loops needs holdings and a database, so this reads the source instead -- but it
     fails if either reset is dropped or moved to the wrong loop.
@@ -403,7 +366,7 @@ def test_the_bundle_loop_clears_the_per_bundle_caches_and_not_the_per_run_one() 
         }
 
     assert 'ctx.mult_table_cache' in assigned['import_one_bundle']
-    assert 'ctx.modified_mult_tables' in assigned['import_one_bundle']
+    assert 'ctx.bundle_ids' in assigned['import_one_bundle']
     assert 'ctx.import_has_bad_data' not in assigned['import_one_bundle']
 
     assert 'ctx.import_has_bad_data' in assigned['do_import_steps']
