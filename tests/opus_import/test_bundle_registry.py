@@ -438,6 +438,35 @@ def test_a_stale_holder_neither_finishes_nor_deletes_a_requeued_bundle(
     )
 
 
+def test_a_failed_bundle_is_deleted_under_its_hold_and_only_then_marked_failed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """While the cleanup deletes, the bundle is still importing under the importer's
+    hold, so no claim or plain import can take it and load rows the delete would take."""
+    db = _RegistryDB({'import_bundle': _registry({'B_1': 'pending'})})
+    deleted_in: list[str | None] = []
+
+    def failing_load(ctx: Any, bundle: str) -> bool:
+        import_util.log_error(ctx, f'{bundle} went wrong')
+        return True
+
+    monkeypatch.setattr(import_util, 'yield_import_bundle_ids', lambda ctx: iter([]))
+    monkeypatch.setattr(
+        do_import_tables,
+        'delete_bundle_from_obs_tables',
+        lambda ctx, bundle: deleted_in.append(db.states().get(bundle)),
+    )
+    monkeypatch.setattr(do_import, 'import_one_bundle', failing_load)
+    args = default_arguments()
+    args.join = True
+    ctx = make_context(db=db, args=args)
+
+    assert not do_import.do_import_steps(ctx)
+
+    assert deleted_in == ['importing', 'importing']
+    assert db.states() == {'B_1': 'failed'}
+
+
 def test_an_empty_claim_waits_for_a_registration_and_claims_again(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

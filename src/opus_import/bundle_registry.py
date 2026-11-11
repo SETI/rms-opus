@@ -410,6 +410,28 @@ def finish_bundle(ctx: ImportContext, claim: Claim, state: str) -> bool:
     return changed != 0
 
 
+def holds(ctx: ImportContext, claim: Claim) -> bool:
+    """Return whether a bundle is still ``importing`` under a process's hold.
+
+    Only ``--requeue``, naming the bundle as stopped, takes a bundle from that state, so
+    the answer stays true until the process finishes the bundle unless an operator
+    requeues it.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        claim: The hold `start_bundle` or `claim_bundle` gave.
+
+    Returns:
+        True while the registry row is ``importing`` under the hold's ``started_at``.
+    """
+    found = bundle_range(ctx, claim.bundle_id)
+    return (
+        found is not None
+        and found.state == BUNDLE_IMPORTING
+        and found.started_at == claim.started_at
+    )
+
+
 def return_to_pending(
     ctx: ImportContext, bundle_ids: Iterable[str], from_states: Sequence[str]
 ) -> list[str]:

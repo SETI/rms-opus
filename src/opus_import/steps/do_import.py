@@ -583,9 +583,11 @@ def _registry_present(ctx: ImportContext) -> bool:
 def _import_claimed_bundle(ctx: ImportContext, claim: bundle_registry.Claim) -> bool:
     """Delete, import and mark one claimed bundle; delete it again if its import fails.
 
-    A failed bundle is marked ``failed`` before its rows are deleted, and only while
-    this importer still holds it: a bundle ``--requeue`` returned to the queue meanwhile,
-    which another importer may have taken, is neither marked nor deleted.
+    A failed bundle's rows are deleted while it is still ``importing`` under this
+    importer's hold, which no claim and no plain ``--import`` takes, and it is marked
+    ``failed`` afterwards, only while the hold stands. A bundle ``--requeue`` returned to
+    the queue meanwhile, which another importer may have taken, is neither deleted nor
+    marked.
 
     Parameters:
         ctx: The import run's context.
@@ -614,10 +616,11 @@ def _import_claimed_bundle(ctx: ImportContext, claim: bundle_registry.Claim) -> 
         import_util.log_error(ctx, _lost_message(bundle_id))
         return False
     ctx.mark_bad_data()
-    if bundle_registry.finish_bundle(ctx, claim, bundle_registry.BUNDLE_FAILED):
+    if bundle_registry.holds(ctx, claim):
         do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
-    else:
-        import_util.log_error(ctx, _lost_message(bundle_id))
+        if bundle_registry.finish_bundle(ctx, claim, bundle_registry.BUNDLE_FAILED):
+            return False
+    import_util.log_error(ctx, _lost_message(bundle_id))
     return False
 
 

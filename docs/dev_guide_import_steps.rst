@@ -235,8 +235,12 @@ locking read passes over until they commit, and claims once more before the impo
 exits. Before the first claim, an importer whose schema has no registry waits the same
 way, reads the table names from the server again
 (:meth:`~opus_import.importdb.super.ImportDBSuper.forget_table_names`), and fails with a
-message naming ``--register-bundles`` if there is still none. A bundle whose import raises or logs an error is marked ``failed`` and its rows
-deleted, and the importer goes on; it is never claimed again, and the importer exits with failure at the end. Under the
+message naming ``--register-bundles`` if there is still none. A bundle whose import
+raises or logs an error has its rows deleted while it is still ``importing`` under the
+importer's hold, which no claim and no plain ``--import`` takes, and is then marked
+``failed`` if the hold still stands (:func:`~opus_import.bundle_registry.holds`); the
+importer goes on, the bundle is never claimed again, and the importer exits with failure
+at the end. Under the
 test-only fault ``OPUS_IMPORT_FAULT=hold_after_claim:<seconds>`` an importer sleeps
 that long after each claim commits (:ref:`the import's fault sites
 <dev_guide_testing_faults>`).
@@ -1107,8 +1111,11 @@ Otherwise it computes in a pool:
   number of workers.**
 * **A worker's failure abandons the index**: the import's process logs an error naming
   the range of rows and the index file, replays nothing after it, and
-  :func:`~opus_import.steps.do_import_index.import_one_index` returns False. Rows the sink
-  had already loaded stay until the bundle is imported again, which deletes it first.
+  :func:`~opus_import.steps.do_import_index.import_one_index` returns False. It first
+  deletes the rows the sink had already loaded
+  (:meth:`~opus_import.steps.do_import_index.TableRowSink.discard`), so none of the
+  index's ``obs_`` rows stays; the ``mult`` rows it added stay, for finalization to delete
+  those no observation holds.
 
 **What a worker does with what it inherited.** A worker exits by ``os._exit``, so nothing
 it inherited is ever closed or flushed on its way out, and its initializer is the only

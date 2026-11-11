@@ -6380,3 +6380,30 @@ Nothing above this line is rewritten by an executor.
   - Skipped: none.
   - Results: the gates pass (2,869 unit tests); the import suite 176 passed and 3
     skipped. Each new test was mutation-checked against its fix reverted.
+- **CodeRabbit fixes, round 2 (2026-11-11).**
+  - A queue importer's failed bundle is deleted while it is still `importing` under the
+    importer's hold, which no claim and no plain `--import` takes, and marked `failed`
+    afterwards only while the hold stands; no delete when the hold was already lost
+    (`bundle_registry.holds`). Of the two ways the coordinator offered, this one, over a
+    sibling connection holding the row lock, keeps PR-16 simple: only an operator's
+    `--requeue` of a live importer can still meet the delete, the case the requeue
+    already states cannot happen, and PR-16a's `release_bundle` replaces the path.
+  - `bench_import`'s incremental append no longer needs the bundle's largest
+    `obs_general.id` to grow, which the registered range does not give: every row of the
+    bundle must have a `timestamp` no earlier than the server's `NOW()` when the append
+    started, and there must be rows. The check uses no registry column, so a side from
+    before PR-16 is measured by it too.
+  - `bench_import --importers` reads the bulk-load paths from each importer's log
+    directory as well as the run's (`bulk_load_paths(*log_dirs)`).
+  - The mult tests' stand-in runs each transaction again after a deadlock on its first
+    attempt, taking back the attempt's rows, groups and counter; a test asserts the id,
+    the rows and the group after both transactions are retried.
+  - The overview's earlier passages describe a `mult` row as inserted when its value is
+    met, before any `obs_` row holding its id is loaded.
+  - The pool-failure inconsistency is fixed the other way from the review's suggestion:
+    `import_one_index` calls `TableRowSink.discard` on a worker's failure, which deletes
+    the index's loaded rows at once, so the pool section now says that, and the index
+    summary, which already did, stands.
+  - Skipped: none.
+  - Results: the gates pass (2,876 unit tests); the import suite 176 passed and 3
+    skipped. The new failed-bundle test fails with the round-1 `do_import.py`.

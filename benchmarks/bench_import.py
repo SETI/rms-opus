@@ -736,7 +736,15 @@ class ImportBench:
         if finalize:
             self._finalization(monitor, config_file, timing)
         require_empty_errors_log(errors_log, at_end=True)
-        self._fill_run(run, monitor, schema, before, full=finalize, log_dir=errors_log.parent)
+        self._fill_run(
+            run,
+            monitor,
+            schema,
+            before,
+            full=finalize,
+            log_dir=errors_log.parent,
+            importer_log_dirs=[directory / 'logs' for directory in importer_dirs],
+        )
         timings = monitor.records[2].timings
         run['metrics']['import.registration.wall_s'] = monitor.records[1].wall_s
         run['details']['importers'] = importers
@@ -782,9 +790,11 @@ class ImportBench:
         """Append the largest bundle to a copy of the finished schema, and finalize.
 
         The copy already holds the bundle, so the usual check that it has rows would
-        pass whether or not the append wrote anything; the bundle's largest
-        ``obs_general.id`` has to grow instead, since every row the append writes takes
-        a new id.
+        pass whether or not the append wrote anything, and a side whose ids come from
+        the bundle's registered range gives the reloaded rows the same ids. Every one of
+        the bundle's ``obs_general`` rows has to have been written during the append
+        instead: its ``timestamp``, which the server sets as a row is loaded, is no
+        earlier than the server's clock when the append started.
 
         Parameters:
             run: The result run to add the metrics to.
@@ -792,7 +802,8 @@ class ImportBench:
             source: The finished schema to copy.
 
         Raises:
-            RunFailedError: If the append left the bundle's rows as they were.
+            RunFailedError: If the bundle has no rows after the append, or holds a row
+                written before it.
         """
         bundle = self.scenario.largest
         assert bundle is not None
@@ -802,14 +813,14 @@ class ImportBench:
         config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
         monitor.expect_groups([bundle])
         monitor.expand_groups()
-        before_id = self._largest_id(schema, bundle)
         self.fresh_server(run, 'incremental')
+        started = self._server_now()
         self._invoke(monitor, config_file, [self.spelling.bundle_import, *timing, bundle])
-        after_id = self._largest_id(schema, bundle)
-        if after_id <= before_id:
+        rows, stale = self._rows_written_since(schema, bundle, started)
+        if rows == 0 or stale > 0:
             raise RunFailedError(
-                f'appending {bundle} to {schema} left its largest obs_general id at '
-                f'{after_id} (it was {before_id}): the append wrote no rows'
+                f'appending {bundle} to {schema} did not reload it: of its {rows} '
+                f'obs_general rows, {stale} were written before the append started'
             )
         self._finalization(monitor, config_file, timing)
         require_empty_errors_log(errors_log, at_end=True)
@@ -818,22 +829,30 @@ class ImportBench:
         run['details']['incremental'] = monitor.summary()
         drop_schema(self.server, schema)
 
-    def _largest_id(self, schema: str, bundle: str) -> int:
-        """Return a bundle's largest ``obs_general.id`` in a schema.
+    def _server_now(self) -> Any:
+        """Return the database server's clock, as a ``timestamp`` column compares it."""
+        with contextlib.closing(self.server.connect()) as connection:
+            return query(connection, 'SELECT NOW()')[0][0]
+
+    def _rows_written_since(self, schema: str, bundle: str, since: Any) -> tuple[int, int]:
+        """Count a bundle's ``obs_general`` rows, and those written before a moment.
 
         Parameters:
             schema: The schema.
             bundle: The bundle.
+            since: A value of the server's clock (`_server_now`).
 
         Returns:
-            The id, or 0 when the bundle has no rows.
+            How many rows the bundle has, and how many of them have a ``timestamp``
+            earlier than `since`.
         """
         statement = (
-            f'SELECT COALESCE(MAX(id), 0) FROM {quote_identifier(schema)}.obs_general '  # nosec B608 - quoted identifier
-            'WHERE bundle_id = %s'
+            f'SELECT COUNT(*), COALESCE(SUM(`timestamp` < %s), 0) '  # nosec B608 - quoted identifier
+            f'FROM {quote_identifier(schema)}.obs_general WHERE bundle_id = %s'
         )
         with contextlib.closing(self.server.connect()) as connection:
-            return int(query(connection, statement, [bundle])[0][0])
+            rows, stale = query(connection, statement, [since, bundle])[0]
+        return int(rows), int(stale)
 
     def _status(self) -> dict[str, int]:
         """Return the server's global counters now."""
@@ -849,6 +868,7 @@ class ImportBench:
         *,
         full: bool,
         log_dir: Path,
+        importer_log_dirs: Sequence[Path] = (),
     ) -> None:
         """Turn a finished run's records into its metrics and details.
 
@@ -860,6 +880,8 @@ class ImportBench:
             full: Whether the run was a full one, which alone gets ``import.wall_s``.
             log_dir: The run's log directory, whose information-level import logs
                 name the bulk-load path each invocation took.
+            importer_log_dirs: Each queue importer's own log directory, whose logs name
+                the paths the importers took; none for a run of one process.
         """
         metrics = run['metrics']
         records = monitor.records
@@ -908,7 +930,7 @@ class ImportBench:
         details = run['details']
         details.update(monitor.summary())
         details['schema'] = schema
-        details['bulk_load_paths'] = bulk_load_paths(log_dir)
+        details['bulk_load_paths'] = bulk_load_paths(log_dir, *importer_log_dirs)
         details['obs_general_rows'] = rows
         details['obs_general_rows_by_bundle'] = by_bundle
         details['bundle_count'] = len(by_bundle)
@@ -936,21 +958,23 @@ class ImportBench:
             run['metrics']['import.largest.import_s'] = run['metrics'][step]
 
 
-def bulk_load_paths(log_dir: Path) -> list[str]:
+def bulk_load_paths(*log_dirs: Path) -> list[str]:
     """Return the bulk-load paths a run's import logs name, each once, in the order named.
 
     Every invocation names its path when it connects, and again if the server refuses a
     load partway through, so a run's logs can name both.
 
     Parameters:
-        log_dir: The run's log directory (`build_run.import_logs`).
+        log_dirs: The run's log directories (`build_run.import_logs`), read in the order
+            given: the run's own, and each queue importer's.
 
     Returns:
         The paths, without the reason the log gives for one; empty when the side's
         import names none.
     """
     paths: list[str] = []
-    for import_log in build_run.import_logs(log_dir):
+    import_logs = [log for log_dir in log_dirs for log in build_run.import_logs(log_dir)]
+    for import_log in import_logs:
         for message in run_logs.read_messages(import_log):
             if message.startswith(BULK_LOAD_PATH_PREFIX):
                 path = message.removeprefix(BULK_LOAD_PATH_PREFIX).split(' (', 1)[0]
