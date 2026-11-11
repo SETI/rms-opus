@@ -75,7 +75,7 @@ def test_labels_equal_but_for_case_are_ordered_by_label_then_value() -> None:
     ]
     ranks = value_ranks(rows)
 
-    assert [row_id for row_id in sorted(ranks, key=ranks.__getitem__)] == [3, 2, 1]
+    assert sorted(ranks, key=ranks.__getitem__) == [3, 2, 1]
 
 
 def test_equal_numbers_are_ordered_by_label_then_value() -> None:

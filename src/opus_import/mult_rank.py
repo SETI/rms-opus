@@ -146,7 +146,7 @@ def group_ranks(groups: Sequence[RankedGroup]) -> dict[str, int]:
         groups: The field's groups.
 
     Returns:
-        Each group's rank keyed by its name, counting 1, 2, 3, ...: the pinned groups in
+        Each group's rank keyed by its name, counting from 1 with the pinned groups in
         order of their pin, then the others by case-folded name, the name breaking a tie.
     """
 

@@ -152,7 +152,7 @@ def _delete_empty_groups(ctx: ImportContext) -> None:
     group, value = q(MULT_GROUP_TABLE), q(MULT_TABLE)
     db.delete_rows(
         MULT_GROUP_TABLE,
-        f'NOT EXISTS (SELECT 1 FROM {value} WHERE {value}.{q("field_id")}='
+        f'NOT EXISTS (SELECT 1 FROM {value} WHERE {value}.{q("field_id")}='  # nosec B608
         f'{group}.{q("field_id")} AND {value}.{q("grouping")}={group}.{q("grouping")})',
     )
 

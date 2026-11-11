@@ -408,8 +408,8 @@ class AliasedTable:
 
 
 TableSource = str | Subquery | JSONTable | AliasedTable
-"""Anything a FROM clause or a join can name: a table, a `Subquery`, a `JSONTable` or an
-`AliasedTable`."""
+"""The sources a FROM clause or a join can name -- a table, a `Subquery`, a `JSONTable` or
+an `AliasedTable`."""
 
 
 def _render_source(source: TableSource) -> tuple[str, list[Any]]:

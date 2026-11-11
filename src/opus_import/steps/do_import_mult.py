@@ -173,7 +173,7 @@ def read_or_create_mult_table(
         table_column: The definition of a column whose values are the field's.
 
     Returns:
-        The field's cache itself: adding to it is how `update_mult_table` adds a value.
+        The field's cache itself, which `update_mult_table` adds a value to.
 
     Raises:
         KeyError: If no packaged schema declares the field.

@@ -139,8 +139,8 @@ def ensure_mult_fields(ctx: ImportContext) -> dict[str, MultFieldInfo]:
         ctx: The import run's context, for the open database and the field cache.
 
     Returns:
-        Each field's row, keyed by qualified name: every field ``mult_field`` holds,
-        which includes every field the packaged schemas declare.
+        Each field's row keyed by its qualified name, for every field ``mult_field``
+        holds, which includes every field the packaged schemas declare.
     """
     if ctx.mult_fields is not None:
         return ctx.mult_fields

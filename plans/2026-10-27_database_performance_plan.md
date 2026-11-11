@@ -5764,4 +5764,31 @@ Nothing above this line is rewritten by an executor.
 - The test tooling's schema copy (`build_run.SchemaCopy`, `copy_run_schema`) and
   `reimport_bundle_id` moved from `test_append.py` and `test_goldens.py` into
   `import_tests/tools/build_run.py`, which `test_mult.py` shares.
+- `models.py` is edited: `create_opus_models.sh` against the local integration database
+  imported with this head gives exactly the `Mult` (with its `CompositePrimaryKey`),
+  `MultField` and `MultGroup` classes written, which the script's `Mult*` keep rule
+  unhides, and the same field class for every mult column; the other differences are
+  older than this PR (nullability, column order, and `ObsFiles.instrument_id`'s width,
+  as PR-12 found).
+- The import goldens change in the mult tables (the per-column files give way to
+  `mult`, `mult_field` and `mult_group`), in `obs_profile` (the 24 rows above) and in
+  `schema_version`, nothing else. The fixture's 769 per-column rows become 766: the
+  three merged `quality_score` values, and no value pruned, since every value the
+  fixture's tables held is referenced. At test scale finalization pruned none either.
+  `test_mult.py`'s "no unreferenced value" check therefore cannot fail on the fixture
+  alone; its two planted cases (a value only the re-imported or deleted bundle held)
+  fail when the pruning is removed, and the rename case when the step's re-ranking is.
+- **No integration golden changed**: the suite passes against the local integration
+  database imported with this head. Its JSON comparisons ignore key order, so a run
+  with `TestCase.assertEqual` instrumented to report equal dictionaries whose keys
+  differ in order was made too: it found no `api/meta/mults` response, inline or
+  recorded, in a different order. Comparing PR-13's local integration database with
+  this one, the displayed order changes in three fields at test scale:
+  `obs_general.instrument_id`, whose pins sort as integers, so the ground-based
+  telescopes (pins from 1080) follow New Horizons (180) where the text keys put Caha
+  Calar Alto between Voyager UVS (`100`) and Hubble ACS (`110`);
+  `obs_instrument_couvis.dwell_time`, `1, 9, 64, 72` where the import-order keys gave
+  `1, 64, 72, 9`; and `obs_profile.quality_score`, merged as above.
+- Results: the gates pass (`run-all-checks.sh`, 2,752 unit tests); the import suite 191
+  passed and 3 skipped; the integration suite 1,586 passed against the local database.
 - `SCHEMA_VERSION` is 7.
