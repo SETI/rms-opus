@@ -194,8 +194,8 @@ live. In order:
    ``failed`` and is not named, in registration order, followed by the named bundles,
    and the version row is then set to ``appending``; on a fresh import they are the
    named bundles. A bundle OPUS skips is never registered.
-10. **Import each bundle.** It is moved from ``pending`` to ``importing`` -- a bundle
-    another process took meanwhile is an error, and is left to that process -- and
+10. **Import each bundle.** It is moved to ``importing`` -- a bundle another process
+    took meanwhile is an error, and is left to that process -- and
     :attr:`~opus_import.context.ImportContext.bundle_has_errors` is cleared; it is deleted
     from every observation table
     (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) with
@@ -298,9 +298,10 @@ afresh, after every other, when it is next imported. ``opus_import_all --prepare
 **Every move between states is conditional** on the state the bundle is expected to be
 in, by an ``UPDATE`` whose condition names it
 (:meth:`~opus_import.importdb.super.ImportDBSuper.conditional_update`), so that two
-processes never both hold one bundle. A bundle goes from ``pending`` to ``importing``
-only from ``pending`` (:func:`~opus_import.bundle_registry.start_bundle`,
-:func:`~opus_import.bundle_registry.claim_bundle`), and from ``importing`` to ``done`` or
+processes never both hold one bundle. A queue importer takes a bundle only from
+``pending`` (:func:`~opus_import.bundle_registry.claim_bundle`), and ``--import`` takes
+one it names from any state but ``importing``
+(:func:`~opus_import.bundle_registry.start_bundle`); a bundle goes from ``importing`` to ``done`` or
 ``failed`` only while it is still ``importing`` under the ``started_at`` the process
 wrote when it took it (:func:`~opus_import.bundle_registry.finish_bundle`), so a bundle
 ``--requeue`` returned to the queue and another process took is never finished, or

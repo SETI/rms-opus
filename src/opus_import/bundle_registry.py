@@ -339,15 +339,21 @@ def _in_states(db: ImportDBSuper, states: Sequence[str]) -> str:
     return f'{db.quote_identifier("state")} IN ({", ".join(["%s"] * len(states))})'
 
 
+#: The states a bundle an invocation names may be taken from: any but ``importing``,
+#: which another process holds. A bundle named twice in one invocation is ``done`` or
+#: ``failed`` by its second turn.
+_STARTABLE = (BUNDLE_PENDING, BUNDLE_DONE, BUNDLE_FAILED)
+
+
 def start_bundle(ctx: ImportContext, bundle_id: str) -> Claim | None:
-    """Move a ``pending`` bundle to ``importing``, unless another process took it first.
+    """Move a bundle an invocation names to ``importing``, unless another process holds it.
 
     Parameters:
         ctx: The import run's context, for the open database.
         bundle_id: The bundle.
 
     Returns:
-        The hold on the bundle, or None when it was not ``pending``.
+        The hold on the bundle, or None when it was ``importing`` already.
     """
     db = ctx.db
     assert db is not None
@@ -355,8 +361,8 @@ def start_bundle(ctx: ImportContext, bundle_id: str) -> Claim | None:
     changed = db.conditional_update(
         BUNDLE_REGISTRY_TABLE,
         columns,
-        f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, [BUNDLE_PENDING])}',
-        [bundle_id, BUNDLE_PENDING],
+        f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, _STARTABLE)}',
+        [bundle_id, *_STARTABLE],
     )
     if changed == 0:
         return None

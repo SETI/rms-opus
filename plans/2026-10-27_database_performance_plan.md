@@ -6118,9 +6118,12 @@ Nothing above this line is rewritten by an executor.
   `Poor`), and the observation columns hold the merged row's id either way, so the mode
   writes every value as `opus_support.collation_key` gives it. With several importers a
   case-merged value's stored spelling (`mult.value`) is therefore not fixed from run to
-  run; its label, which the interface shows, is. Not raised with the orchestrator before
-  the PR: the PR-14 merge is what makes it possible, and a binary collation on
-  `mult.value` (PR-14's rejected alternative) would remove it.
+  run. Its label is fixed in the fixture only because every bundle computes the same
+  one: in general an unpinned value's stored label, display, pin and grouping, and a new
+  group's `group_pin`, are whichever importer inserts the row first, the case the
+  conflict warning exists for, and they too can differ from run to run with several
+  importers. The orchestrator's ruling (2026-11-11): accepted, and the mult-value mode's
+  comparison by `collation_key` stands.
 - `tests/benchmarks/test_scenarios.py` compares the complete scale's groups with
   `import_all.BUNDLE_SETS`, since `import_steps` no longer has an `--import` per set; the
   harness still imports the groups one plain `--import` at a time, which registers them
@@ -6152,3 +6155,52 @@ Nothing above this line is rewritten by an executor.
   passed and 3 skipped; the integration suite 1,591 passed against the local database
   imported with this head (`import_for_tests.sh`, which registers its whole list first).
   **No integration golden changed.**
+- **Review fixes (2026-11-11).** An independent review found six faults, each fixed:
+  - **Two processes could hold one bundle.** Every state write was a plain `UPDATE ...
+    WHERE bundle_id = %s`. Each move is now conditional on the state expected
+    (`ImportDBSuper.conditional_update`, which returns the rows changed): a queue
+    importer takes a bundle only from `pending`, and a plain `--import` takes one it
+    names from any state but `importing` (`bundle_registry.start_bundle`; a bundle
+    named twice in one invocation, PR-07's negative case, is `done` by its second turn); `importing` to `done` or `failed` only while still `importing` under the
+    `started_at` the process wrote when it took the bundle (`finish_bundle`, the hold
+    being `bundle_registry.Claim`); `pending` only from `done` or `failed`, or from
+    `importing` under `--requeue` alone (`return_to_pending`). A queue importer whose
+    bundle was requeued and retaken logs an error and neither marks nor deletes it;
+    its failure path marks `failed` before deleting, and deletes only when the mark
+    took. `rows_done` is written only under the same `started_at`. A plain `--import`
+    refuses, before writing anything, a named bundle that is `importing`, naming the
+    `--requeue`; one another process takes between registration and its turn is an
+    error and is left alone. `--delete-bundles` refuses an `importing` bundle.
+    `started_at` is to the second, so a bundle requeued and retaken within the second
+    it was first taken is the one case the hold cannot tell apart; a token column
+    would close it, and PR-16a's `process_id` can serve as one.
+  - **`--register-bundles` returned done bundles to `pending` on the append path.**
+    Registration now leaves every registered bundle's state alone; only a bundle it adds
+    is `pending`, and it sets `appending` only when it added one
+    (`do_register.Registration.added`). A plain `--import` keeps its replace semantics
+    for the bundles it names. **`--register-bundles` does not refuse an `importing`
+    bundle**, though the review asked for it: it no longer changes that bundle, and
+    PR-16a's coordinator reruns `--prepare` before its recovery step, which a refusal
+    would block after an importer died. A rerun of the prepare step on a finished schema
+    changes no state and leaves the row `ready` (a unit test, which also found that
+    three ready-state tests compared a shared dictionary with itself; they copy it now).
+  - **The mult value and group inserts are retried** (`retrying` gains `expected`, for a
+    failure the caller handles: the value insert's duplicate key is raised at once,
+    unlogged, for the read-back). The bulk loads are not retried: at `READ COMMITTED`
+    the per-bundle deletes take no gap locks, every observation table's only unique key
+    is its primary key, which lies in the loading bundle's own range, and a load chunk
+    that failed has already been rolled back and raised by PR-04's check.
+  - **An importer could exit while a registration was committing**, its locking read
+    passing over the uncommitted rows. A claim that finds nothing now takes and
+    releases registration's named lock and claims once more; an `import_tests` case
+    holds the lock, waits until the importer is blocked on it, makes a bundle pending,
+    releases it, and requires the importer to claim and import that bundle.
+  - The notes' claim that a value's label is fixed from run to run is corrected above.
+  - `--join --exclude-bundles X` with no bundles named honors the exclusion
+    (`claim_bundle(excluding=...)`), and a failed `RELEASE_LOCK` after a failed body no
+    longer replaces the body's exception.
+  - The new tests are mutation-checked: 14 source mutations against the unit tests, one
+    against the waiting case; each fails.
+  - Results after the fixes: the gates pass (2,830 unit tests); the import suite 176
+    passed and 3 skipped; the integration suite 1,591 passed against `pr16local`,
+    imported again with the fixes' registration (the import's output is unchanged).
