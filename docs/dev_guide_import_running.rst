@@ -653,7 +653,8 @@ into a new schema and switched over afterwards rather than in place.
 
 The sequence itself is an installed command, :mod:`opus_import.import_all`, run as
 ``opus_import_all``. With no step named it is the **coordinator**, which runs the whole
-import on one computer:
+import on one computer; its tracking, recovery and table are
+:mod:`opus_import.coordinator`:
 
 1. **Prepare.** It registers every bundle the bundle sets expand to, in the order a full
    import takes them, as one ``opus_import --register-bundles`` invocation. Registering
@@ -687,10 +688,10 @@ import on one computer:
    importers here may not claim (``--sets``, ``--exclude-bundles``), and nothing is
    started for it; when such bundles are all that is left and nothing runs anywhere,
    one more round is started for them before the run stops naming them. Once
-   :data:`~opus_import.import_all.FAILED_STARTS_ALLOWED` importers in a row exit with
+   :data:`~opus_import.coordinator.FAILED_STARTS_ALLOWED` importers in a row exit with
    failure before claiming anything, no more are started. A pass whose reading of the
    database fails is logged, and the next opens a new connection; once readings have
-   failed for :data:`~opus_import.import_all.DATABASE_OUTAGE_SECONDS` in a row the
+   failed for :data:`~opus_import.coordinator.DATABASE_OUTAGE_SECONDS` in a row the
    coordinator stops, leaving its running importers to finish, and a rerun resumes.
 5. **Finish.** Once no bundle is ``pending`` or ``importing`` and no importer anywhere is
    alive, it runs ``--finish`` (below). If a bundle failed, it exits with failure

@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from opus_config import OPUS_CONFIG_ENV_VAR
+from opus_config.config import ImportConfig
 from opus_import import cli
 from opus_import.context import ImportContext
 
@@ -57,6 +58,27 @@ class RecordingLogger:
             The messages, oldest first.
         """
         return [msg for msg_level, msg in self.messages if msg_level == level]
+
+
+def import_table(**keys: object) -> ImportConfig:
+    """Return an ``[import]`` table with the keys given and every other default."""
+    values: dict[str, object] = {
+        'log_file': 'import.log',
+        'debug_log_file': 'import_debug.log',
+        'bulk_load': True,
+        'scratch_dir': None,
+        'transaction_rows': 100_000,
+        'index_workers': 1,
+        'server_tmpdir': None,
+        'workers': 1,
+        'cpu_fraction': 0.75,
+        'worker_rows': 500,
+        'importers': 1,
+        'stall_warning_minutes': 30,
+        'status_interval_minutes': 5,
+    }
+    values.update(keys)
+    return ImportConfig(**values)  # type: ignore[arg-type]
 
 
 def default_arguments() -> argparse.Namespace:

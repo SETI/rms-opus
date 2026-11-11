@@ -33,7 +33,7 @@ subprocess_coverage  # unused variable (pytest fixture requested for its effect)
 
 # `signum` and `frame` are the two positional parameters every `signal.signal` handler
 # receives. The SIGINT handlers in src/opus_import/cli.py (a queue importer's) and
-# src/opus_import/import_all.py (the coordinator's) act on the interrupt itself and read
+# src/opus_import/coordinator.py (the coordinator's) act on the interrupt itself and read
 # neither, but cannot drop them without breaking the handler signature.
 signum  # unused variable (signal handler signature)
 frame  # unused variable (signal handler signature)
