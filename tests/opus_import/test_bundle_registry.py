@@ -14,14 +14,20 @@ from typing import Any
 
 import pytest
 
-from opus_import import bundle_registry, cli, import_util, importdb
+from opus_import import bundle_registry, cli, import_processes, import_util, importdb
 from opus_import.schema_version import (
     SCHEMA_STATE_APPENDING,
     SCHEMA_STATE_READY,
     SCHEMA_VERSION,
     SCHEMA_VERSION_TABLE,
 )
-from opus_import.steps import do_import, do_import_mult, do_import_tables, do_register
+from opus_import.steps import (
+    do_import,
+    do_import_mult,
+    do_import_tables,
+    do_recover,
+    do_register,
+)
 
 from .conftest import default_arguments, make_context
 
@@ -92,10 +98,12 @@ class _RegistryDB:
 
     def update_row(
         self, table_name: str, row: dict[str, Any], where: str, where_params: list[Any]
-    ) -> None:
-        """Assign `row`'s values to the rows the clause selects."""
-        for existing in self._matching(table_name, where, where_params[0]):
+    ) -> int:
+        """Assign `row`'s values to the rows the clause selects, and count them."""
+        matched = self._matching(table_name, where, where_params[0])
+        for existing in matched:
             existing.update(row)
+        return len(matched)
 
     def delete_rows(self, table_name: str, where: str, where_params: list[Any]) -> None:
         """Delete the rows the clause selects."""
@@ -145,9 +153,31 @@ class _RegistryDB:
         finally:
             self.events.append('checks on')
 
+    def close(self) -> None:
+        """Record the connection closing."""
+        self.events.append('close')
+
+    logger = None
+
     def states(self) -> dict[str, str]:
         """Return each registered bundle's state."""
         return {row['bundle_id']: row['state'] for row in self.tables.get('import_bundle', [])}
+
+
+class _Importer:
+    """An importer that always holds its lock."""
+
+    process_id = 1
+    name = 'opus:lock'
+
+    @staticmethod
+    def held() -> bool:
+        """Say the lock is held."""
+        return True
+
+    @staticmethod
+    def exit() -> None:
+        """Exit, holding nothing."""
 
 
 #: The size estimate every bundle is given, so each range is a thousand ids.
@@ -165,6 +195,11 @@ def _registry(states: dict[str, str]) -> list[dict[str, Any]]:
             'first_id': (number - 1) * capacity,
             'id_capacity': capacity,
             'state': state,
+            'started_at': None,
+            'finished_at': None,
+            'process_id': None,
+            'rows_done': 0,
+            'losses': 0,
         }
         for number, (bundle, state) in enumerate(states.items(), start=1)
     ]
@@ -177,6 +212,7 @@ def _run(
     *,
     logging: tuple[str, ...] = (),
     failing: tuple[str, ...] = (),
+    during: dict[str, Any] | None = None,
     **arguments: Any,
 ) -> tuple[bool, Any]:
     """Run the import loop over `named`, each bundle's work recorded on `db`.
@@ -187,6 +223,7 @@ def _run(
         monkeypatch: Replaces the bundle's delete and load.
         logging: Bundles whose import logs an error and still returns True.
         failing: Bundles whose import returns False.
+        during: What to call, with the context, while a bundle imports, by bundle.
         arguments: Options to set, by attribute.
 
     Returns:
@@ -203,11 +240,23 @@ def _run(
 
     def load(ctx: Any, bundle: str) -> bool:
         db.events.append(f'load {bundle} ({db.states().get(bundle)})')
+        if during and bundle in during:
+            during[bundle](ctx)
         if bundle in logging:
             import_util.log_error(ctx, f'{bundle} went wrong')
         return bundle not in failing
 
     monkeypatch.setattr(do_import, 'import_one_bundle', load)
+    monkeypatch.setattr(import_processes, 'start_importer', lambda lock_db, log_path: _Importer())
+    monkeypatch.setattr(db, 'open_sibling_connection', lambda: db, raising=False)
+
+    def release(ctx: Any, bundle: str, number: int, process_id: int, state: str | None) -> bool:
+        do_import_tables.delete_bundle_from_obs_tables(ctx, bundle)
+        if state is not None:
+            db.update_row('import_bundle', {'state': state}, '`bundle_id`=%s', [bundle])
+        return True
+
+    monkeypatch.setattr(do_recover, 'release_bundle', release)
     args = default_arguments()
     args.do_import = not (arguments.get('join') or arguments.get('register_bundles'))
     for name, value in arguments.items():
@@ -454,6 +503,58 @@ def test_a_queue_importer_given_bundles_claims_only_those(monkeypatch: pytest.Mo
     succeeded, _ctx = _run(db, ['B_2'], monkeypatch, join=True, bundles=['B_2'])
     assert succeeded
     assert db.states() == {'B_1': 'pending', 'B_2': 'done'}
+    # The claim names the importer, and the bundle keeps it once done.
+    assert [row['process_id'] for row in db.tables['import_bundle']] == [None, 1]
+
+
+def _two_pending() -> _RegistryDB:
+    """Return a registry of B_1, the larger, and B_2, both pending."""
+    db = _RegistryDB({'import_bundle': _registry({'B_1': 'pending', 'B_2': 'pending'})})
+    db.tables['import_bundle'][0]['size_estimate'] = 50
+    return db
+
+
+def test_an_interrupted_importer_finishes_its_bundle_and_claims_nothing_more(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The first interrupt drains: B_1 is done, B_2 left pending, and the run fails."""
+    db = _two_pending()
+
+    def interrupt(ctx: Any) -> None:
+        ctx.interrupts = 1
+
+    succeeded, ctx = _run(db, [], monkeypatch, join=True, during={'B_1': interrupt})
+
+    assert not succeeded
+    assert db.states() == {'B_1': 'done', 'B_2': 'pending'}
+    assert ctx.logger.messages_at('fatal') == [
+        'Interrupted: this importer claims nothing more and exits'
+    ]
+
+
+@pytest.mark.parametrize(
+    'raised',
+    [KeyboardInterrupt(), import_processes.LostImporterError('lost "opus:lock"')],
+    ids=['second-interrupt', 'lost-lock'],
+)
+def test_an_aborted_bundle_goes_back_to_the_queue_on_a_fresh_connection(
+    raised: BaseException, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A second interrupt or a lost lock: the connection is closed and replaced, the
+    bundle's rows deleted and the bundle pending, nothing more claimed, and the run fails."""
+    db = _two_pending()
+
+    def stop(ctx: Any) -> None:
+        raise raised
+
+    succeeded, ctx = _run(db, [], monkeypatch, join=True, during={'B_1': stop})
+
+    assert not succeeded
+    assert db.states() == {'B_1': 'pending', 'B_2': 'pending'}
+    events = [event for event in db.events if event.startswith(('delete', 'load', 'close'))]
+    assert events == ['delete B_1', 'load B_1 (importing)', 'close', 'delete B_1']
+    (fatal,) = ctx.logger.messages_at('fatal')
+    assert fatal.startswith(('Interrupted twice', 'lost "opus:lock"'))
 
 
 @pytest.mark.parametrize(
@@ -472,6 +573,7 @@ def test_requeue_returns_only_failed_and_importing_bundles(
     if returned:
         assert db.events == ['delete B_3', 'delete B_4']
         assert db.states() == {**states, 'B_3': 'pending', 'B_4': 'pending'}
+        assert all(row['process_id'] is None for row in db.tables['import_bundle'])
     else:
         assert db.events == []
         assert db.states() == states
@@ -605,3 +707,26 @@ def test_a_lock_name_fits_mysqls_limit_and_belongs_to_its_schema() -> None:
     assert name != importdb.lock_name('other', 'register')
     assert name != importdb.lock_name(long_schema, 'importer', 1)
     assert importdb.lock_name('s', 'importer', 1) == importdb.lock_name('s', 'importer', '1')
+
+
+def test_requeue_refuses_a_bundle_whose_importer_holds_its_lock(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An importing bundle is returned only once its importer is gone."""
+    states = {'B_3': 'failed', 'B_4': 'importing'}
+    db = _RegistryDB({'import_bundle': _registry(states)})
+    db.tables['import_bundle'][1]['process_id'] = 5
+    alive = import_processes.importer_lock_name(db.db_schema, 5)
+    monkeypatch.setattr(
+        db, 'named_lock_holder', lambda name: 77 if name == alive else None, raising=False
+    )
+    succeeded, ctx = _run(db, ['B_3', 'B_4'], monkeypatch, do_import=False, requeue=True)
+    assert not succeeded
+    assert db.states() == states
+    (fatal,) = ctx.logger.messages_at('fatal')
+    assert 'B_4 (importing under importer 5, which holds its lock)' in fatal
+
+    monkeypatch.setattr(db, 'named_lock_holder', lambda name: None, raising=False)
+    succeeded, _ctx = _run(db, ['B_3', 'B_4'], monkeypatch, do_import=False, requeue=True)
+    assert succeeded
+    assert db.states() == {'B_3': 'pending', 'B_4': 'pending'}

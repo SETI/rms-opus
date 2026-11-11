@@ -22,6 +22,7 @@ from typing import Any
 import pytest
 
 import opus_import
+from opus_import import bundle_registry, import_processes
 from opus_import.importdb.super import ImportDBError, ImportDBSuper
 
 # mysqlclient is a runtime dependency, but `importdb/mysql.py` guards its own import so
@@ -37,12 +38,37 @@ from opus_import.importdb.mysql import (  # noqa: E402 - follows the skip
 )
 
 
+class _SilentConnection:
+    """A connection whose cursor runs nothing and whose server reports nothing."""
+
+    def cursor(self) -> _SilentConnection:
+        return self
+
+    def __enter__(self) -> _SilentConnection:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    @staticmethod
+    def info() -> None:
+        return None
+
+    def commit(self) -> None:
+        return None
+
+    @staticmethod
+    def fileno() -> None:
+        return None
+
+
 class _RecordingDB(ImportDBMySQL):
     """An ImportDBMySQL that records statements instead of running them."""
 
     def __init__(self) -> None:
         # Deliberately skips ImportDBMySQL.__init__, which connects to a server.
         ImportDBSuper.__init__(self, 'host', 'db', 'schema', 'user', 'password', logger=None)
+        self.conn = _SilentConnection()
         self.executed: list[tuple[str, list[Any] | None]] = []
 
     def _execute(
@@ -1209,3 +1235,170 @@ def test_a_named_lock_not_granted_is_an_error() -> None:
 
     with pytest.raises(ImportDBError, match='did not grant'):
         lock.__enter__()
+
+
+# ---------------------------------------------------------------------------
+# Importers: the startup on the lock connection, and each chunk's guard
+# ---------------------------------------------------------------------------
+
+
+class _CommitRecordingConnection(_ScriptedConnection):
+    """A scripted connection that records each commit and rollback among the statements,
+    and reports a matched row after each UPDATE."""
+
+    def __init__(
+        self, answers: dict[str, list[tuple[Any, ...]]] | None = None, matched: int = 1
+    ) -> None:
+        super().__init__(answers)
+        self.matched = matched
+
+    def commit(self) -> None:
+        super().commit()
+        self.executed.append(('COMMIT', None))
+
+    def rollback(self) -> None:
+        super().rollback()
+        self.executed.append(('ROLLBACK', None))
+
+    def info(self) -> str:
+        return f'Rows matched: {self.matched}  Changed: {self.matched}  Warnings: 0'
+
+
+def test_an_importers_startup_commits_its_row_only_once_it_holds_its_lock() -> None:
+    """SET SESSION wait_timeout, the insert, LAST_INSERT_ID(), GET_LOCK, then COMMIT."""
+    conn = _CommitRecordingConnection(
+        {'SELECT LAST_INSERT_ID()': [(7,)], 'SELECT GET_LOCK': [(1,)]}
+    )
+    db = _ConnectedDB(conn)
+
+    importer = import_processes.start_importer(db, '/logs/opus_import.log')
+
+    statements = [cmd.split(' (')[0] for cmd, _ in conn.executed]
+    assert statements == [
+        'SET SESSION wait_timeout = %s',
+        'INSERT INTO `import_process`',
+        'SELECT LAST_INSERT_ID()',
+        'SELECT GET_LOCK(%s, 0)',
+        'COMMIT',
+    ]
+    assert conn.executed[0][1] == [31_536_000]
+    assert conn.executed[3][1] == [import_processes.importer_lock_name('schema', 7)]
+    assert (importer.process_id, importer.name) == (7, conn.executed[3][1][0])
+
+
+def test_an_importer_refused_its_lock_commits_nothing() -> None:
+    """Another connection holding the lock rolls the row back."""
+    conn = _CommitRecordingConnection(
+        {'SELECT LAST_INSERT_ID()': [(7,)], 'SELECT GET_LOCK': [(0,)]}
+    )
+
+    with pytest.raises(ImportDBError, match='did not grant'):
+        import_processes.start_importer(_ConnectedDB(conn), 'log')
+
+    assert conn.commits == 0
+    assert conn.executed[-1] == ('ROLLBACK', None)
+
+
+def _guarded(
+    matched: int = 1, holds: int = 1, importer: bool = True
+) -> tuple[_ConnectedDB, _CommitRecordingConnection, import_processes.BundleGuard]:
+    """Return a connection writing by INSERT statements, its scripted connection, and a
+    guard for bundle 3 under importer 9 (or no importer)."""
+    conn = _CommitRecordingConnection(matched=matched)
+    db = _ConnectedDB(conn)
+    db.bulk_load_path = BULK_LOAD_PATH_INSERT
+    db.transaction_rows = 2
+    lock_conn = _ScriptedConnection({'SELECT IS_USED_LOCK': [(holds,)]})
+    lock = import_processes.ImporterLock(_ConnectedDB(lock_conn), 9, 'opus:lock')
+    ids = bundle_registry.BundleIds(bundle_registry.BundleRange(3, 'B_3', 10, 0, 1000, 'importing'))
+    return db, conn, import_processes.BundleGuard(ids, lock if importer else None)
+
+
+def test_each_guarded_chunk_records_its_progress_first_and_commits_last() -> None:
+    """Two chunks of obs_general, each one transaction: the registry, the progress, the
+    rows, then the commit; rows_done counts every committed row."""
+    db, conn, guard = _guarded()
+
+    db.bulk_load_rows('obs_general', [{'id': 1}, {'id': 2}, {'id': 3}], guard=guard)
+
+    shapes = [cmd.split(' SET ')[0].split(' (')[0] for cmd, _ in conn.executed]
+    chunk = ['UPDATE `import_bundle`', 'UPDATE `import_process`', 'INSERT INTO `obs_general`']
+    assert shapes == [*chunk, 'COMMIT', *chunk, 'COMMIT']
+    first_update, params = conn.executed[0]
+    assert first_update == (
+        'UPDATE `import_bundle` SET `rows_done`=%s WHERE `bundle_number`=%s AND `state`=%s '
+        'AND `process_id`=%s'
+    )
+    assert params == [2, 3, 'importing', 9]
+    assert conn.executed[4][1][0] == 3
+    assert guard.ids.rows_done == 3
+
+
+@pytest.mark.parametrize(('matched', 'holds'), [(0, 1), (1, 0)], ids=['bundle-lost', 'lock-lost'])
+def test_a_chunk_whose_importer_lost_its_bundle_or_its_lock_rolls_back(
+    matched: int, holds: int
+) -> None:
+    """Nothing commits, the count stays, and the importer hears it has lost."""
+    db, conn, guard = _guarded(matched=matched, holds=holds)
+
+    with pytest.raises(import_processes.LostImporterError, match='opus:lock'):
+        db.bulk_load_rows('obs_general', [{'id': 1}], guard=guard)
+
+    assert conn.commits == 0
+    assert conn.executed[-1] == ('ROLLBACK', None)
+    assert guard.ids.rows_done == 0
+
+
+def test_a_plain_imports_guard_counts_observations_and_checks_nothing() -> None:
+    """Only an obs_general chunk carries the count, matching no importer; another table's
+    chunk carries nothing."""
+    db, conn, guard = _guarded(holds=0, importer=False)
+
+    db.bulk_load_rows('obs_general', [{'id': 1}], guard=guard)
+    db.bulk_load_rows('obs_files', [{'obs_general_id': 1}], guard=guard)
+
+    assert [cmd.split(' (')[0] for cmd, _ in conn.executed] == [
+        'UPDATE `import_bundle` SET `rows_done`=%s WHERE `bundle_number`=%s AND '
+        '`process_id` IS NULL',
+        'INSERT INTO `obs_general`',
+        'COMMIT',
+        'INSERT INTO `obs_files`',
+        'COMMIT',
+    ]
+
+
+def test_an_update_reports_the_rows_it_matched_changed_or_not() -> None:
+    """Read from the server's report before the commit replaces it."""
+    conn = _CommitRecordingConnection(matched=0)
+    assert _ConnectedDB(conn).update_row('t', {'a': 1}, '`b`=%s', [2]) == 0
+    conn.matched = 1
+    assert _ConnectedDB(conn).update_row('t', {'a': 1}, '`b`=%s', [2]) == 1
+
+
+def test_a_row_is_locked_passing_over_one_another_session_holds() -> None:
+    """FOR UPDATE SKIP LOCKED, the columns asked for, and None for no row."""
+    conn = _ScriptedConnection({'SELECT `state`': [('importing', 4)]})
+    db = _ConnectedDB(conn)
+    assert db.lock_row('import_bundle', ['state', 'process_id'], '`bundle_number`=%s', [3]) == (
+        'importing',
+        4,
+    )
+    assert conn.executed == [
+        (
+            'SELECT `state`,`process_id` FROM `import_bundle` WHERE `bundle_number`=%s '
+            'FOR UPDATE SKIP LOCKED',
+            [3],
+        )
+    ]
+    assert _ConnectedDB(_ScriptedConnection()).lock_row('t', ['a'], '1=1', []) is None
+
+
+def test_the_lock_queries_ask_who_holds_a_lock() -> None:
+    """Whether this connection holds it, and which connection does."""
+    conn = _ScriptedConnection(
+        {'SELECT IS_USED_LOCK(%s) = CONNECTION_ID()': [(1,)], 'SELECT IS_USED_LOCK(%s)': [(42,)]}
+    )
+    db = _ConnectedDB(conn)
+    assert db.holds_named_lock('opus:x') is True
+    assert db.named_lock_holder('opus:x') == 42
+    assert _ConnectedDB(_ScriptedConnection({'SELECT': [(None,)]})).named_lock_holder('x') is None

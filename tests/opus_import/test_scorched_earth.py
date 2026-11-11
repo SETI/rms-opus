@@ -20,6 +20,7 @@ _EXACT_NAMES = (
     'mult',
     'cart',
     'import_bundle',
+    'import_process',
     'param_info',
     'partables',
     'table_names',
