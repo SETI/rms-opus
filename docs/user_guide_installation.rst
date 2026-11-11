@@ -239,9 +239,10 @@ partial import or a one-off report is run directly:
      - The import pipeline: reads the PDS holdings and builds the OPUS database.
    * - ``opus_import_all``
      - Runs a whole full-holdings import: registers every bundle set, in order, imports
-       them, and runs the steps that finish the database. Its steps also run one at a
-       time, for importing with several processes; it erases a database only with
-       ``--scorched-earth``. This is what an import deploy runs.
+       them with one or more importers it starts, tracks and restarts, and runs the
+       steps that finish the database. Its steps also run one at a time, so that another
+       computer can join an import; it erases a database only with ``--scorched-earth``.
+       This is what an import deploy runs.
    * - ``opus_manage``
      - Administers the web application -- creating its tables, gathering its static
        files, checking that its configuration works, and pruning its stored searches
@@ -416,25 +417,27 @@ for the moment it started. It runs **detached**, and prints the log file it is w
 to; with ``OPUS_IMPORT_MAIL_TO`` filled in, it mails that log when it ends.
 
 A full-holdings import is **hours to days**. What it runs is ``opus_import_all``, the
-installed command, in three steps. ``--prepare`` registers every bundle set in order --
-Galileo and New Horizons first, then the rest roughly from the quickest to the slowest
--- which fixes each bundle's number and the ids its observations take. ``--join`` runs
-an importer, which imports the registered bundles, the largest first, until none is
-left. ``--finish`` runs the four steps that finish the database, the auxiliary tables,
-the dictionary, the validation and the schema version row the web application checks for
-(:ref:`user_guide_deployment_schema_version`), and refuses while any bundle is not
-done. The deploy runs all three on one computer. The order lives in the release being
-installed rather than in the scripts, so it cannot disagree with the code importing.
+installed command. It registers every bundle set in order -- Galileo and New Horizons
+first, then the rest roughly from the quickest to the slowest -- which fixes each
+bundle's number and the ids its observations take. It then starts importers, each
+importing the registered bundles, the largest first, until none is left; it tracks
+them, and returns the bundle of an importer that dies to the queue and starts another.
+Last it runs the four steps that finish the database, the auxiliary tables, the
+dictionary, the validation and the schema version row the web application checks for
+(:ref:`user_guide_deployment_schema_version`), unless a bundle failed. The order lives in
+the release being installed rather than in the scripts, so it cannot disagree with the
+code importing.
+
+How much of the computer it uses is ``[import] workers``, the total of worker processes,
+divided among ``[import] importers`` importers; both default to 1, so the import uses
+one process unless the configuration asks for more
+(:ref:`user_guide_deployment_several_importers`).
 
 The database is new, so nothing is erased. ``opus_import_all`` erases the OPUS tables of
 the database it is pointed at only when given ``--scorched-earth``, and asks first;
 without it, running it again after an interruption imports only the bundles that are not
-done. Several importers, on one computer or several, can share the work of one import:
-``opus_import_all --prepare``, then ``opus_import_all --join`` on each computer, each
-with a configuration naming the same database server, database and holdings, then
-``opus_import_all --finish`` once every importer has exited.
-:ref:`dev_guide_import_full_run` describes each step, and ``opus_import_all --dry-run``
-prints what the given arguments would run without running it.
+done. :ref:`dev_guide_import_full_run` describes each step, and ``opus_import_all
+--dry-run`` prints what the given arguments would run without running it.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
 ``==<release>`` for a particular release, omitted for the newest. Give this step and
@@ -792,6 +795,22 @@ entirely.
        server sorts the indexes finalization builds. It names a path on the server, not
        on the computer running the import, and setting it needs an account that may set
        restricted session variables. Default: the server's own setting.
+   * - ``importers``
+     - optional
+     - How many importers ``opus_import_all`` starts on this computer, a whole number of
+       at least 1. Default ``1``. It is capped at the total of workers (``workers``, or
+       ``opus_import_all --workers``), which is divided among them; ``opus_import_all
+       --importers`` replaces it for one run. See
+       :ref:`user_guide_deployment_several_importers`.
+   * - ``stall_warning_minutes``
+     - optional
+     - How long an importer that is alive may go without committing any rows before
+       ``opus_import_all`` reports it as stalled, a whole number of at least 1. Default
+       ``30``. A stalled importer is reported, never stopped.
+   * - ``status_interval_minutes``
+     - optional
+     - How often ``opus_import_all`` writes its totals line when its output is not a
+       terminal, as under ``nohup``, a whole number of at least 1. Default ``5``.
 
 Where to go next
 ----------------

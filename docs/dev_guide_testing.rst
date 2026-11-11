@@ -151,6 +151,16 @@ and each site decides what its argument selects. The sites are:
     know that they hold bundles at the same time
     (:ref:`dev_guide_import_steps_do_import`).
 
+``hold_after_chunk``
+    After the first chunk of each bundle's rows commits; its argument is a number of
+    seconds. ``hold_after_chunk:5`` holds an import mid-bundle, so a test can kill an
+    importer or its lock connection there.
+
+``hold_before_lock``
+    Between an importer's ``import_process`` insert and its lock; its argument is a
+    number of seconds. ``hold_before_lock:5`` lets a test read the importers' table
+    while the row is written and not yet committed.
+
 Never set it outside a test.
 
 That plain form is the everyday one -- about two minutes, no coverage, with the three

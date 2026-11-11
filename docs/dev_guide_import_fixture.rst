@@ -266,6 +266,23 @@ Several importers
     plants a primary index label with no row count and requires registration to refuse
     it, naming the volume and the label, and to register nothing.
 
+The coordinator
+    Each case imports into a schema of its own with ``opus_import_all`` or
+    ``opus_import --join``, and acts on the importers from outside. One kills one of
+    three importers with ``SIGKILL`` while its pool runs, mid-bundle, held there at the
+    ``hold_after_chunk`` fault site, and requires its lock to be free within five seconds,
+    the coordinator to return its bundle to the queue, and the finished schema to equal
+    the main run's in the mult-value mode, which also leaves out the columns that depend
+    on how the importers shared the work. One kills the importer holding the same volume
+    twice and requires that volume ``failed``, named with its importer's log, and no
+    schema version row. One interrupts the coordinator twice and requires no volume left
+    ``importing`` and none counted lost, then runs it again and requires the main run's
+    result. One kills an importer's lock connection mid-volume and requires the importer
+    to exit with failure naming its lock, with the volume ``pending`` and none of its rows
+    left. One holds an importer between its row and its lock, at the
+    ``hold_before_lock`` fault site, and requires neither ``opus_import_all --status``
+    nor a ``READ COMMITTED`` read to see the row until the lock is held.
+
 What it cannot test
 -------------------
 

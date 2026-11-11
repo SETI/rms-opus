@@ -191,8 +191,8 @@ The scripts
     installation a deploy can switch to. The import itself is ``opus_import_all``, the
     installed command, so the order the bundle sets are imported in comes from the
     release rather than from these scripts. It registers every bundle, imports them
-    with one importer, and finishes the database; the database is new, so it erases
-    nothing.
+    with the importers ``[import] importers`` and ``workers`` ask for (one, by default),
+    and finishes the database; the database is new, so it erases nothing.
 
     What happens to the database afterwards is what ``deploy.env`` asked for: with
     ``OPUS_DB_DUMP_DIR`` empty the import ends when the database is built, which is
@@ -432,26 +432,41 @@ so bundles that share observations are deleted and imported again together.
 Sharing a full import between processes or computers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``opus_import_all`` imports with one process unless it is run step by step. To share a
-full import between several processes, on one computer or several, first register the
-bundles, once::
+``opus_import_all`` divides the import among **importers**, processes that each take
+the largest bundle no other has taken, import it, and take the next, until none is left.
+``--workers`` is the total of worker processes on the computer and ``--importers`` how
+many importers share them; ``[import] workers`` and ``[import] importers`` give the
+defaults, both 1. The total may not pass the ceiling of ``[import] cpu_fraction`` of the
+computer's cores. Six importers of four workers each, for one, need a ceiling of at
+least 24, which 30 cores give at a ``cpu_fraction`` of 0.8::
 
-    OPUS_CONFIG=<config> opus_import_all --prepare --override-db-schema <database>
+    OPUS_CONFIG=<config> opus_import_all --override-db-schema <database> --importers 6 --workers 24
 
-then start ``opus_import_all --join --override-db-schema <database>`` once for each
-importer, each with a configuration naming the same database server and the same
-holdings and a log directory of its own, adding ``--sets COISS,COVIMS`` on a computer
-that holds only those bundle sets. Each importer takes the largest bundle no other has
-taken, imports it, and takes the next, until none is left. Once every importer has
-exited, finish the database once::
+Adding ``--dry-run`` prints the division and each importer's command without running
+anything. The first line of the run states the cores, the fraction, the ceiling and the
+workers per importer. On a terminal it shows a table of the running importers and the
+totals; under ``nohup`` it writes a line per finished bundle and the totals every
+``[import] status_interval_minutes``. ``OPUS_CONFIG=<config> opus_import_all --status
+--override-db-schema <database>`` prints the same table from any computer.
 
-    OPUS_CONFIG=<config> opus_import_all --finish --override-db-schema <database>
+An importer that dies (killed, or out of memory) is noticed at once: its bundle's rows
+are deleted, the bundle goes back to the queue, and another importer is started in its
+place. A bundle whose importer dies twice is marked failed instead. A failed bundle
+stops the run before the database is finished, naming the bundle and its importer's
+log; after the fix, ``opus_import_all --requeue <bundle>`` and running
+``opus_import_all`` again import only what is left. Ctrl-C once (or ``kill -INT`` under
+``nohup``) lets every importer finish its bundle and stops; twice returns their bundles
+to the queue at once. Either way the database is left unfinished, and running the same
+command again resumes.
 
-``--finish`` refuses while any bundle is not done, naming each; a failed bundle, or one
-whose importer was killed, goes back to the queue with
-``opus_import_all --requeue <bundle>``, and another ``--join`` imports it. The database
-is the same whatever the number of importers, apart from the order in which a checkbox
-value new to the import is numbered.
+Another computer can join a running import: with a configuration naming the same
+database server, database and holdings, ``opus_import_all --join --override-db-schema
+<database> --importers <M> --workers <N>`` starts importers there under that computer's
+own ceiling, adding ``--sets COISS,COVIMS`` on a computer that holds only those bundle
+sets. It never registers or finishes anything, and it can stop at any time; the first
+computer waits for its importers before finishing. The database is the same whatever
+the number of importers, apart from the order in which a checkbox value new to the
+import is numbered.
 
 .. _user_guide_deployment_rename_mult_value:
 
