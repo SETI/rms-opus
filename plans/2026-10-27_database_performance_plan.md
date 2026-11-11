@@ -6332,11 +6332,11 @@ Nothing above this line is rewritten by an executor.
   - **`db.schema.data_bytes` 746.3 MB to 803.0 MB, +7.6%, regressed** (floor 0);
     `db.schema.index_bytes` 366.7 MB on both sides. One importer gives 801.9 MB and two
     794.6 MB, so concurrency is not the cause. The same 29,752 `obs_general` rows take ids
-    0 to 3,218,240 where the base's take 0 to 29,753, because each bundle's range starts
-    where the previous bundle's estimate ends and a queue importer claims the largest
-    bundle first, so even one importer inserts into the middle of every table's primary
-    key rather than at its end, and the pages it splits stay partly filled
-    (`obs_profile` 53 bytes a row against 89). Rebuilding every `obs_` table
+    0 to 3,218,240 where the base's take 0 to 29,753: the ranges follow `bundle_number`,
+    each holding `ID_CAPACITY_FACTOR` (100) ids for each row its labels declare, and a
+    queue importer claims the largest bundle first, so even one importer inserts into the
+    middle of every table's primary key rather than at its end, and the pages it splits
+    stay partly filled (`obs_profile` 53 bytes a row against 89). Rebuilding every `obs_` table
     (`ALTER TABLE ... FORCE`, 33.5 s) took the one-importer schema to 847.9 MB and the
     base's to 849.4 MB, so a rebuild in finalization would not recover the bytes. The
     orchestrator accepts the regression as the cost of the id ranges; the web guards,
