@@ -304,7 +304,7 @@ def test_a_platform_without_fork_computes_in_this_process(monkeypatch: pytest.Mo
     )
 
 
-def _drop_row(table_name: str, row: dict[str, Any], target: str | None) -> None:
+def _drop_row(table_name: str, row: dict[str, Any]) -> None:
     """Accept a replayed row and keep nothing."""
 
 

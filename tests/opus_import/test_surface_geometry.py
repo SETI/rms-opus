@@ -25,7 +25,13 @@ import pytest
 from opus_import import config_targets, import_util, surface_geometry
 from opus_import.context import ImportContext
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
-from opus_import.steps import do_import_index, do_param_info, do_table_names, do_validate
+from opus_import.steps import (
+    do_import_index,
+    do_import_obs,
+    do_param_info,
+    do_table_names,
+    do_validate,
+)
 from opus_import.surface_geometry import StoredTarget
 
 from .conftest import default_arguments, make_context
@@ -66,7 +72,7 @@ def _emitted(
     ) -> dict[str, Any]:
         return {'raw_name': meta['surface_geo_target_name']}
 
-    monkeypatch.setattr(do_import_index.do_import_obs, 'import_observation_table', compute)
+    monkeypatch.setattr(do_import_obs, 'import_observation_table', compute)
     state = do_import_index.IndexState(
         instrument_obj=ObsSurfaceGeometryTarget(ctx, bundle='TEST_0001', metadata=metadata),
         metadata=metadata,

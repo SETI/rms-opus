@@ -744,6 +744,7 @@ touching surface geometry:
    :func:`~opus_import.import_util.slug_name_for_sfc_target`. The substitution is plain
    text, applied to the file's contents before it is parsed. ``param_info``'s build
    reads each body's category this way, from the bodies the table holds.
+
 :func:`~opus_import.import_util.slug_name_for_sfc_target` carries a warning worth
 repeating: changing it means changing ``getSurfacegeoTargetSlug`` in the front end's
 ``utils.js`` too.

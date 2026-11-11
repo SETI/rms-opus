@@ -574,10 +574,6 @@ two generated groups. The order it emits is:
    ``obs_surface_geometry_target`` exists; ``obs_surface_geometry`` if it exists.
 3. One category per surface geometry body, ``obs_surface_geometry__<target>``, in order
    of encoded name, labeled from the decoded name.
-
-A surface geometry category's row names the table its rows are in, ``physical_table``,
-and a body's category the body's id, ``target_name``, which is how the web application
-reads the category (:ref:`dev_guide_database_schema`).
 4. ``obs_ring_geometry``, if it exists.
 5. One per mission table that exists, **generated** by looping
    ``MISSION_ID_TO_MISSION_TABLE_SFX``.
@@ -587,6 +583,10 @@ reads the category (:ref:`dev_guide_database_schema`).
 
 ``obs_files`` is deliberately absent: it holds one row per file rather than per
 observation, and users never search it.
+
+A surface geometry category's row names the table its rows are in, ``physical_table``,
+and a body's category the body's id, ``target_name``, which is how the web application
+reads the category (:ref:`dev_guide_database_schema`).
 
 The consequence for :ref:`dev_guide_import_extending`: **a new mission or instrument
 needs no change here**, because groups 5 and 6 generate its row already, and adding one

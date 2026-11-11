@@ -118,14 +118,14 @@ class ResolvedCategory:
 
     @property
     def source(self) -> sql_builder.TableSource:
-        """The table as a FROM clause or a join names it: under the alias when it differs."""
+        """The table as a FROM clause or a join names it, under the alias when it differs."""
         if self.table == self.alias:
             return self.table
         return sql_builder.AliasedTable(self.table, self.alias)
 
     @property
     def is_selector(self) -> bool:
-        """Whether the category is the selector: a table's every row, under another name.
+        """Whether the category is the selector, every row of a table under another name.
 
         Several of an observation's rows can be in such a category, so joining it onto
         ``obs_general`` would repeat the observation.
@@ -183,8 +183,8 @@ def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
         opus_id: The observation whose rows are wanted.
 
     Returns:
-        A queryset of the category's rows for the observation: at most one, except for
-        the surface geometry selector category, which holds one per body.
+        A queryset of the category's rows for the observation, which holds at most one
+        row except for the surface geometry selector category, which holds one per body.
 
     Raises:
         LookupError: If the `search` app has no model for the category's table.
