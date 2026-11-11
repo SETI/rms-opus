@@ -6308,3 +6308,39 @@ Nothing above this line is rewritten by an executor.
   for a value another importer stored first, as designed. The mult-value mode now leaves
   `mult_field.last_id` out as well; earlier runs had passed because the importers had
   not met a new value at the same moment.
+- The merge of PR-15's head after its review fixes (1c9b912b) brings the surface geometry
+  triggers keyed by mult id; nothing of this section's changed.
+- **Measurement** (2026-11-11, test scale, eight `workers` in all; before at 395965d7,
+  PR-15's head, one process; after at 507f6316; two runs a configuration alternated, and
+  one with `transaction_rows = 1000`; sessions `a` before, `i1`, `i2`, `i4` and `t4`
+  after; judged against the PR-00 floors):
+  - **Target, four importers:** `import.wall_s` 166.8 s to 113.1 s, -32.2% (floor 1.8%),
+    **improved**; `import.bundle_imports.wall_s` 140.2 s to 84.2 s. One importer 151.2 s
+    (-9.3%), two 141.5 s (-15.2%). Finalization 25.2 s to 26.0 s on every count.
+  - **Four importers with `transaction_rows = 1000`** (reported): 146.5 s, 29.5% slower
+    than the default four-importer run; the bundle imports 117.2 s against 84.2 s.
+  - **Registration:** 1.6 s to 1.7 s at test scale; every bundle of the complete
+    holdings in 21.6 s (`--register-only`, session `reg`).
+  - **Each bundle's time against its `size_estimate`:** Pearson 0.92 with one importer,
+    0.57 and 0.68 in the two four-importer runs. The difference is a stall: in each
+    four-importer run, a bundle on each importer waited 22 s to 50 s in the same window
+    of about 30 s, every one of them reading `pdsfile`'s pickle files (opening them, or
+    the `from_opus_id` that reads them), and resumed within seconds of the others;
+    `VG_2803` took 50.3 s and 61.5 s against 0.7 s with one importer. No importer waited
+    on the database there; the cause, most likely the holdings disk shared with the
+    server's writes, was not determined. The complete-scale run is where it would show.
+  - **`db.schema.data_bytes` 746.3 MB to 803.0 MB, +7.6%, regressed** (floor 0);
+    `db.schema.index_bytes` 366.7 MB on both sides. One importer gives 801.9 MB and two
+    794.6 MB, so concurrency is not the cause. The same 29,752 `obs_general` rows take ids
+    0 to 3,218,240 where the base's take 0 to 29,753, because each bundle's range starts
+    where the previous bundle's estimate ends and a queue importer claims the largest
+    bundle first, so even one importer inserts into the middle of every table's primary
+    key rather than at its end, and the pages it splits stay partly filled
+    (`obs_profile` 53 bytes a row against 89). Rebuilding every `obs_` table
+    (`ALTER TABLE ... FORCE`, 33.5 s) took the one-importer schema to 847.9 MB and the
+    base's to 849.4 MB, so a rebuild in finalization would not recover the bytes. The
+    orchestrator accepts the regression as the cost of the id ranges; the web guards,
+    which read these tables, held.
+  - **Web guards** (three runs a side alternated, against `bench_test_before_a_2` and
+    `bench_test_after_i4_2`): every guard held; app-cold search empty +0.8%, broad
+    +1.9%, surface geometry +1.5%, fan-out empty +1.8%, concurrency distinct p95 -12.8%.
