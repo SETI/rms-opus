@@ -2468,12 +2468,26 @@ def create_order_by_terms(
 ) -> tuple[list[tuple[Any, bool]] | None, set[tuple[str, bool, str, str]] | None, set[str] | None]:
     """Given params and descending lists, make the ORDER BY terms.
 
-    Returns a list of (expression, descending) pairs ready for
-    `sql_builder.Select.add_order_by`, plus the ``mult`` joins (as
-    `add_mult_table_joins` takes them) and the ``obs_`` tables the terms require the
-    caller to join in. A selector field (`opus_app.apps.tools.db_utils.ResolvedCategory.
-    is_selector`) sorts by `selector_label`, which asks for no join; `selections`, the
-    search's constraints or None for a list no search made, is what it reads.
+    A mult field sorts by the label of its ``mult`` row. A selector field
+    (`opus_app.apps.tools.db_utils.ResolvedCategory.is_selector`) sorts by
+    `selector_label`, which asks for no join.
+
+    Parameters:
+        order_params: The qualified names (``<category>.<field>``) to sort by, most
+            significant first; there is at least one.
+        descending_params: For each name in `order_params`, at the same position,
+            whether it sorts in descending order.
+        selections: The search's constraints, or None for a list no search made, such
+            as the cart. A selector field sorts by the first label among the bodies the
+            search selects in that field, or among all of an observation's bodies when
+            it selects none there or `selections` is None.
+
+    Returns:
+        The (expression, descending) pairs ready for `sql_builder.Select.add_order_by`,
+        in the order of `order_params`, then the ``mult`` joins the terms read, as
+        `add_mult_table_joins` takes them, then the ``obs_`` tables the caller has to
+        join in. All three are None when a name in `order_params` resolves to no
+        ``param_info`` row, which is logged.
     """
     order_mult_tables = set()
     order_obs_tables = set()

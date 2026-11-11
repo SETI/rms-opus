@@ -354,6 +354,10 @@ def scalar_subquery(select: 'Select') -> Expr:
 
     Parameters:
         select: The statement, which may name the outer statement's tables.
+
+    Returns:
+        An `Expr` whose SQL is the statement's in parentheses and whose parameters are
+        the statement's, in order.
     """
     sql, params = select.build()
     return Expr(f'({sql})', params)
@@ -441,6 +445,10 @@ def exists(source: TableSource, where: Expr) -> Expr:
         source: The table, or other `TableSource`, the rows are looked for in.
         where: The condition a row must meet, which may name the outer statement's
             tables.
+
+    Returns:
+        An `Expr` whose parameters are the source's followed by the condition's, in the
+        order their placeholders appear.
     """
     source_sql, params = _render_source(source)
     # The source is rendered from identifiers validated by quote_identifier, and the

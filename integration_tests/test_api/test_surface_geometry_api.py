@@ -11,7 +11,9 @@ of the selector's rows. What is worth pinning, and why:
   come from the body's rows of the shared table.
 
 The expected answers are computed from the database rather than recorded, since they
-are a property of whatever was imported.
+are a property of whatever was imported. That database is the local one, so against a
+remote server (``OPUS_TEST_GO_LIVE``) every test whose answer is computed from it is
+skipped.
 """
 
 import json
@@ -37,12 +39,29 @@ _SELECTOR_FIELD = 'obs_surface_geometry_name.target_name'
 
 
 def _labels() -> dict[int, str]:
-    """Return each body's label, keyed by its id."""
+    """Return each body's label, keyed by its id.
+
+    Returns:
+        Every row of the selector's mult field in the local database, as a mapping from
+        the row's id, which is what ``obs_surface_geometry_target.target_name`` holds, to
+        its label.
+    """
     return {row_id: row.label for row_id, row in mult_table(_SELECTOR_FIELD).rows.items()}
 
 
 def _bodies_of(opus_ids: list[str], target_ids: list[int] | None = None) -> dict[str, set[int]]:
-    """Return the bodies each observation has, among `target_ids` when given."""
+    """Return the bodies each observation has, among `target_ids` when given.
+
+    Parameters:
+        opus_ids: The observations.
+        target_ids: The bodies to keep to, as ids in the selector's mult field, or None
+            for every body.
+
+    Returns:
+        A mapping from each of `opus_ids` to the ids of the bodies its rows of
+        ``obs_surface_geometry_target`` in the local database are for, among
+        `target_ids` when given; an empty set for an observation with no such rows.
+    """
     rows = ObsSurfaceGeometryTarget.objects.filter(obs_general__opus_id__in=opus_ids)
     if target_ids is not None:
         rows = rows.filter(target_name__in=target_ids)
@@ -80,6 +99,15 @@ class ApiSurfaceGeometryTests(ApiTestHelper, TestCase):
         """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
+    def _require_local_database(self) -> None:
+        """Skip a test whose expected answer is computed from the local database.
+
+        A remote server serves a database of its own, which the local one does not
+        describe.
+        """
+        if go_live_target():  # pragma: no cover - remote server
+            self.skipTest('the expected answer is computed from the local database')
+
     def _page(self, url: str) -> dict[str, Any]:
         """Return a data request's decoded answer, after checking it succeeded."""
         response = self._get_response(url)
@@ -101,6 +129,7 @@ class ApiSurfaceGeometryTests(ApiTestHelper, TestCase):
 
     def test__api_data_selector_sort_with_its_constraint_is_one_row_each(self) -> None:
         "[test_surface_geometry_api.py] /api/data: sorting by the constrained selector"
+        self._require_local_database()
         url = (
             '/api/data.json?surfacegeometrytargetname=Saturn&cols=opusid'
             '&order=surfacegeometrytargetname,opusid&limit=50'
@@ -132,6 +161,7 @@ class ApiSurfaceGeometryTests(ApiTestHelper, TestCase):
 
     def test__api_data_selector_sort_over_two_bodies_is_one_row_each(self) -> None:
         "[test_surface_geometry_api.py] /api/data: sorting by the selector over two bodies"
+        self._require_local_database()
         both = (
             ObsSurfaceGeometryTarget.objects.values('obs_general_id')
             .annotate(bodies=Count('target_name'))
@@ -167,6 +197,7 @@ class ApiSurfaceGeometryTests(ApiTestHelper, TestCase):
 
     def test__api_data_selector_sort_without_a_constraint_is_one_row_each(self) -> None:
         "[test_surface_geometry_api.py] /api/data: sorting by the unconstrained selector"
+        self._require_local_database()
         url = (
             '/api/data.json?cols=opusid,surfacegeometrytargetname'
             '&order=-surfacegeometrytargetname,opusid&limit=100'
@@ -180,6 +211,7 @@ class ApiSurfaceGeometryTests(ApiTestHelper, TestCase):
 
     def test__api_stringsearchchoices_of_a_body_field_reads_the_bodys_rows(self) -> None:
         "[test_surface_geometry_api.py] /__api/stringsearchchoices: a body's field"
+        self._require_local_database()
         url = '/__api/stringsearchchoices/SURFACEGEOsaturn_phase1.json?reqno=1&limit=10'
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)

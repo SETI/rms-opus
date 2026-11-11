@@ -165,9 +165,10 @@ What each handler returns
     Which tables a search makes relevant. With no selections it is the ``BASE_TABLES``
     setting; otherwise it walks every ``partables`` row and fires a trigger when the
     search's observations all carry the triggering value. A surface geometry trigger is
-    the exception, compared as text rather than through a query --
-    :ref:`dev_guide_import_steps_do_partables` explains why. The result is ordered by the
-    ``table_names`` display order and cached.
+    the exception: it fires when its body is one of the bodies the search selects, each
+    resolved to its ``mult`` id whether the search names it by label or by value, rather
+    than through a query (:ref:`dev_guide_import_steps_do_partables`). The result is
+    ordered by the ``table_names`` display order and cached.
 
 :func:`~opus_app.apps.results.views.labels_for_slugs`
     A slug list to its display labels, with the unit appended. The cart app imports it
