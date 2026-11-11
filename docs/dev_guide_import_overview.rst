@@ -167,14 +167,19 @@ collected since they were last reported, the wall-clock of each step timed so fa
 (:attr:`~opus_import.context.ImportContext.step_timings`, which ``--timing-json``
 writes), and :attr:`~opus_import.context.ImportContext.import_has_bad_data`.
 
-Three of those are reset **per bundle**, and treating one as per run is a real bug:
+Four of those are reset **per bundle**, and treating one as per run is a real bug:
 :attr:`~opus_import.context.ImportContext.bundle_ids`, the observation ids the bundle
 hands out from its registered range,
-:attr:`~opus_import.context.ImportContext.mult_table_cache` and
+:attr:`~opus_import.context.ImportContext.mult_table_cache`,
+:attr:`~opus_import.context.ImportContext.python_warning_list`, the Python warnings
+collected since they were last reported, and
 :attr:`~opus_import.context.ImportContext.bundle_has_errors`, which says whether the
 bundle being imported has logged an error, beside
 :attr:`~opus_import.context.ImportContext.import_has_bad_data`, which says it for the
-whole run.
+whole run. The warnings are reported only when a PDS3 table is read, so one a bundle
+raises elsewhere -- ``rms-pdsfile`` opening an oversized preview image, for instance --
+is dropped at the next bundle's start rather than charged to that bundle; a bundle
+imported by an invocation of its own reports the same.
 
 Logging goes through :attr:`~opus_import.context.ImportContext.log`, an
 :class:`~opus_import.context.ImportLog` bound to the context. Its methods are the four

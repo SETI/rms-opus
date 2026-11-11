@@ -6287,3 +6287,24 @@ Nothing above this line is rewritten by an executor.
 - The merge of PR-15's head (395965d7) keeps PR-14's and PR-15's entries before this one,
   with PR-15's measurement bullets at the end of PR-15's last entry; `queries.sql` is
   PR-15's.
+- **A queue importer failed a bundle for another bundle's warning** (found by the
+  orchestrator's first test-scale `--importers 1` run, 2026-11-11). `pdsfile` reads a
+  viewable's shape with `PIL.Image.open`, and for `cassini_uvis_solarocc_beckerjarmak2023`'s
+  full-size preview PIL issues a `DecompressionBombWarning` (122,314,580 pixels against
+  its 89,478,485 limit). The import collects Python warnings in
+  `ImportContext.python_warning_list` and reports them only at a PDS3 table read
+  (`import_util.log_accumulated_warnings`); the bundle is PDS4, so nothing reported it.
+  An invocation that imports that bundle alone ends with the warning unreported, which
+  is what the one-process runs did; the queue importer went on to `HSTO0_7316`, whose
+  index read reported it as that bundle's error, failed it and deleted it. A plain
+  `--import` naming the two bundles in one invocation would have done the same. Each
+  bundle now starts with the list empty (`import_one_bundle`), so every path reports
+  what an invocation of the bundle alone reports; a unit test fails without the reset.
+  Charging the warning to the bundle that raised it would fail
+  `cassini_uvis_solarocc_beckerjarmak2023` on every path, a change of behavior this PR
+  does not make.
+- The same import-suite run failed the equality case once: `mult_field.last_id` of
+  `obs_profile.body_occ_flag` was 3 with three importers against 2 with one, an id taken
+  for a value another importer stored first, as designed. The mult-value mode now leaves
+  `mult_field.last_id` out as well; earlier runs had passed because the importers had
+  not met a new value at the same moment.

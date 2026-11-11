@@ -199,7 +199,12 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
         limits={'info': ctx.args.log_info_limit, 'debug': ctx.args.log_debug_limit},
     )
 
-    # Start fresh
+    # Start fresh. The Python warnings collected so far belong to the bundles before this
+    # one: they are reported only at a PDS3 table read, so a warning a bundle raised
+    # outside one -- pdsfile opening an oversized preview, for instance -- would
+    # otherwise be reported at this bundle's first table read and fail it, where an
+    # invocation that ended with that bundle never reports it.
+    ctx.python_warning_list = []
     ctx.mult_table_cache = {}
     ctx.current_bundle_id = bundle_id
     ctx.current_index_row_number = None

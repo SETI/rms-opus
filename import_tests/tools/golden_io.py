@@ -24,8 +24,9 @@ database, so what is saved is bytes and not coverage.
 The **mult-value mode** of `serialize_table` is the one used to compare two imports whose
 mult ids may differ: several import processes writing one schema give a field's new values
 ids in the order they arrive, so every mult column is written as the value its id names,
-the ``mult`` table without its ids, and the rows of every table sorted, since a key holding
-a mult id orders them by id. A value is written as the server's collation compares it,
+the ``mult`` table without its ids, ``mult_field`` without its counter, which leaves an
+id unused where two importers met one value, and the rows of every table sorted, since a
+key holding a mult id orders them by id. A value is written as the server's collation compares it,
 because of two values the field's unique key merges, the one stored is the one met first.
 No golden is written in that mode.
 
@@ -438,8 +439,9 @@ def serialize_table(
         schema: The schema to read.
         table: The table to read.
         mult_values: True for the mult-value mode: every mult column holds the value its
-            id names, ``mult`` is written without its ``id``, every value of a mult field
-            is written as its `opus_support.collation_key`, and the rows are sorted.
+            id names, ``mult`` is written without its ``id`` and ``mult_field`` without
+            its ``last_id``, every value of a mult field is written as its
+            `opus_support.collation_key`, and the rows are sorted.
 
     Returns:
         A header line of column names, then one line per row, ordered by primary key, or
@@ -448,6 +450,10 @@ def serialize_table(
     dropped = DERIVED_COLUMNS.get(table, frozenset()) | WALL_CLOCK_COLUMNS.get(table, frozenset())
     if mult_values and table == _MULT_TABLE:
         dropped |= {'id'}
+    if mult_values and table == _MULT_FIELD_TABLE:
+        # The counter counts ids taken, and an id taken for a value another importer
+        # stored first is left unused, so it depends on how the importers met.
+        dropped |= {'last_id'}
     columns = [
         name
         for name, data_type in table_columns(credentials, schema, table)
