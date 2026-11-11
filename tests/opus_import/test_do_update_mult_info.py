@@ -142,7 +142,7 @@ def test_each_group_s_pin_is_written_to_its_group() -> None:
     db, _logger = _run({'obs_general.instrument_id': _all_ids('obs_general.instrument_id')})
 
     field_id = _field_ids()['obs_general.instrument_id'].field_id
-    expected = {}
+    expected: dict[str, int | None] = {}
     for option in _packaged_options('obs_general.instrument_id'):
         if option[5] is not None:
             expected.setdefault(option[5], option[6])

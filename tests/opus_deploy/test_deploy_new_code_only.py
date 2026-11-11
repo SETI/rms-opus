@@ -104,13 +104,14 @@ def _run_deploy(
 
 @pytest.mark.skipif(_BASH is None, reason='needs bash')
 def test_the_plain_deploy_migrates_and_rebuilds_the_aux_tables(tmp_path: Path) -> None:
-    """Without the flag, Django migrates and the four tables are rebuilt."""
+    """Without the flag, Django migrates, the four tables are rebuilt, and the mult rows
+    take the release's presentation."""
     status, output, ran = _run_deploy(tmp_path, '==3.25.0')
     assert status == 0, output
     assert 'opus_manage migrate' in ran
     assert (
         'opus_import --create-param-info --create-partables --create-table-names '
-        '--import-dictionary'
+        '--import-dictionary --update-mult-info'
     ) in ran
 
 

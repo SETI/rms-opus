@@ -81,6 +81,10 @@ OPUS_TABLE_NAMES = (
 #: every other exact name.
 _DEFINITIONS_TABLES = ('definitions', 'definitions__new', 'definitions__old')
 
+#: The exact names dropped after every other one, beside the ``mult_`` tables: an
+#: observation row holds a ``mult`` row's id.
+_DROPPED_LAST = (MULT_TABLE,)
+
 
 def lookup_vol_info(bundle_id: str) -> BundleInfo | None:
     """Return what `opus_import.config_bundle_info` says about a bundle.
@@ -134,13 +138,10 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
     order = [schema_version.SCHEMA_VERSION_TABLE]
     order += [name for name in prefixed if name.startswith('obs_') and name != 'obs_general']
     order += ['cart', 'obs_general', *_DEFINITIONS_TABLES]
-    order += [
-        name
-        for name in OPUS_TABLE_NAMES
-        if name
-        not in (schema_version.SCHEMA_VERSION_TABLE, 'cart', MULT_TABLE, *_DEFINITIONS_TABLES)
-    ]
-    order += [MULT_TABLE, *(name for name in prefixed if name.startswith('mult_'))]
+    first = (schema_version.SCHEMA_VERSION_TABLE, 'cart', *_DEFINITIONS_TABLES)
+    order += [name for name in OPUS_TABLE_NAMES if name not in (*first, *_DROPPED_LAST)]
+    order += [name for name in OPUS_TABLE_NAMES if name in _DROPPED_LAST]
+    order += [name for name in prefixed if name.startswith('mult_')]
     for name in order:
         if name in present:
             db.drop_table(name)
