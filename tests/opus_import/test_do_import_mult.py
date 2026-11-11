@@ -16,7 +16,7 @@ from typing import Any, cast
 import pytest
 
 from opus_import.context import ImportContext
-from opus_import.importdb.super import ImportDBError, ImportDBSuper
+from opus_import.importdb.super import RETRY_SLEEPS, ImportDBError, ImportDBSuper
 from opus_import.mult_fields import MultFieldInfo
 from opus_import.steps import do_import_mult
 from opus_import.steps.do_import_mult import MAX_MULT_ID, PINNED_ABSENT_ID, MultIdOverflowError
@@ -110,10 +110,11 @@ class _Server:
 
     def retrying(self, description: str, body: Callable[[], Any], expected: Any = None) -> Any:
         """Run the body as a transaction, taking back what an attempt wrote if it fails,
-        and running it again after a deadlock."""
+        and running it again after a deadlock, as many times as `ImportDBSuper.retrying`
+        does before it raises."""
         self.retried.append((description, expected))
         conflict = self.conflict_first
-        while True:
+        for attempt in range(len(RETRY_SLEEPS) + 1):
             self.attempts.append(description)
             self._written_rows, self._written_groups = [], 0
             counters = dict(self.last_id)
@@ -128,8 +129,9 @@ class _Server:
                     self.rows[field_id].remove(row)
                 del self.groups[len(self.groups) - self._written_groups :]
                 self.last_id = counters
-                if 'Deadlock' not in str(e):
+                if 'Deadlock' not in str(e) or attempt == len(RETRY_SLEEPS):
                     raise
+        raise AssertionError('unreachable: the last attempt returns or raises')
 
     def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
         assert (table_name, column, key_column) == ('mult_field', 'last_id', 'field_id')

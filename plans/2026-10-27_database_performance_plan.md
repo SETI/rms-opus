@@ -6326,9 +6326,10 @@ Nothing above this line is rewritten by an executor.
     four-importer run, a bundle on each importer waited 22 s to 50 s in the same window
     of about 30 s, every one of them reading `pdsfile`'s pickle files (opening them, or
     the `from_opus_id` that reads them), and resumed within seconds of the others;
-    `VG_2803` took 50.3 s and 61.5 s against 0.7 s with one importer. No importer waited
-    on the database there; the cause, most likely the holdings disk shared with the
-    server's writes, was not determined. The complete-scale run is where it would show.
+    `VG_2803` took 50.3 s and 61.5 s against 0.7 s with one importer. The stalled
+    importers resumed within seconds of the fourth importer's exit, in both runs. The
+    holdings (a local SSD) and the server's data (a separate NVMe drive) share no disk,
+    and the cause was not determined. The complete-scale run is where it would show.
   - **`db.schema.data_bytes` 746.3 MB to 803.0 MB, +7.6%, regressed** (floor 0);
     `db.schema.index_bytes` 366.7 MB on both sides. One importer gives 801.9 MB and two
     794.6 MB, so concurrency is not the cause. The same 29,752 `obs_general` rows take ids
@@ -6407,3 +6408,12 @@ Nothing above this line is rewritten by an executor.
   - Skipped: none.
   - Results: the gates pass (2,876 unit tests); the import suite 176 passed and 3
     skipped. The new failed-bundle test fails with the round-1 `do_import.py`.
+- **CodeRabbit, round 3 (2026-11-11).** The import tests' stand-in for `retrying` gives up
+  after as many attempts as `ImportDBSuper.retrying` makes, so a persistent deadlock ends
+  a test rather than hanging it. Its request to serialize the failed-bundle cleanup
+  against `--requeue` as well is declined here: the cleanup runs while the bundle is
+  `importing` under the importer's own hold, which no claim and no plain `--import` can
+  take, and `--requeue` of an `importing` bundle is the operator's statement that its
+  importer is dead. PR-16a gives every importer a lock, refuses `--requeue` of a bundle
+  whose importer is recorded, and replaces the cleanup with a row-locked
+  `release_bundle`.
