@@ -112,9 +112,5 @@
         "field_autoincrement": true,
         "field_key": "primary",
         "field_notnull": true
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp"
     }
 ]

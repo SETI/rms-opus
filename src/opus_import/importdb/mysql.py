@@ -68,7 +68,9 @@ ERR_UNKNOWN_DATABASE = 1049
 
 #: The SQL type each fixed ``field_type`` of a table schema renders as. Two more forms
 #: are rendered by `create_table` itself: a width type (`MYSQL_WIDTH_FIELD_TYPE`), and
-#: ``enum``, whose values come from the column's ``field_enum_options``.
+#: ``enum``, whose values come from the column's ``field_enum_options``. A text column
+#: takes the schema's character set unless its ``field_charset`` names another
+#: (`MYSQL_CHARSET_SQL`).
 MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
     'int1': 'tinyint',
     'int2': 'smallint',
@@ -90,7 +92,6 @@ MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
     'flag_yesno': 'smallint unsigned',
     'flag_onoff': 'smallint unsigned',
     'mult_idx': 'smallint unsigned',
-    'timestamp': 'timestamp',
     'datetime': 'datetime',
     # A SHA-256 digest, stored as its bytes.
     'binary32': 'binary(32)',
@@ -99,9 +100,27 @@ MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
 #: The rows `ImportDBMySQL.stream_select` asks the server for at a time.
 STREAM_FETCH_ROWS = 10_000
 
-#: A ``field_type`` that names a character type and its width, such as ``char12`` or
-#: ``varchar255``: the type, then the width.
-MYSQL_WIDTH_FIELD_TYPE = re.compile(r'(char|varchar)([1-9][0-9]*)')
+#: A ``field_type`` that names a variable-width string and its most characters, such as
+#: ``varchar255``: the width is the group.
+MYSQL_WIDTH_FIELD_TYPE = re.compile(r'varchar([1-9][0-9]*)')
+
+#: The ``field_type`` of a text column whose values have no fixed most length.
+MYSQL_TEXT_FIELD_TYPE = 'text'
+
+#: What each ``field_charset`` a column may carry renders as. The column's values must
+#: all be in that character set: a value outside it fails the load that writes it. ASCII
+#: compares without case, as the schema's own collation does, and costs a byte a
+#: character where the schema's utf8mb4 may cost four.
+MYSQL_CHARSET_SQL: dict[str, str] = {
+    'ascii': 'CHARACTER SET ascii COLLATE ascii_general_ci',
+}
+
+#: The bytes one character of each ``field_charset`` may take; a column without one is
+#: utf8mb4, whose widest character is four bytes (`MYSQL_DEFAULT_CHARSET_BYTES`).
+MYSQL_CHARSET_BYTES: dict[str, int] = {'ascii': 1}
+
+#: The bytes one character of the schema's own character set, utf8mb4, may take.
+MYSQL_DEFAULT_CHARSET_BYTES = 4
 
 #: The ``field_type`` whose values a column lists in ``field_enum_options``.
 MYSQL_ENUM_FIELD_TYPE = 'enum'
@@ -140,11 +159,26 @@ def is_renderable_field_type(field_type: str) -> bool:
     )
 
 
+def takes_charset(field_type: str) -> bool:
+    """Return whether a column of a ``field_type`` holds text, and so may name a charset.
+
+    Parameters:
+        field_type: The value of a column's ``field_type``.
+
+    Returns:
+        True for a `MYSQL_WIDTH_FIELD_TYPE` or `MYSQL_TEXT_FIELD_TYPE`.
+    """
+    return (
+        MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type) is not None
+        or field_type == MYSQL_TEXT_FIELD_TYPE
+    )
+
+
 #: The bytes one value of a fixed ``field_type`` takes in an index entry, for the space
 #: estimate of an index build (`ImportDBMySQL.key_space_bytes`). A width type takes up to
-#: four bytes a character, utf8mb4's widest, and a ``varchar`` two more for its length; a
-#: type absent here cannot be indexed without a prefix and is estimated by
-#: `MYSQL_UNSIZED_KEY_BYTES`.
+#: its character set's widest character for each character (`MYSQL_CHARSET_BYTES`), and
+#: two more for its length; a type absent here cannot be indexed without a prefix and is
+#: estimated by `MYSQL_UNSIZED_KEY_BYTES`.
 MYSQL_KEY_BYTES: dict[str, int] = {
     'int1': 1,
     'int2': 2,
@@ -161,7 +195,6 @@ MYSQL_KEY_BYTES: dict[str, int] = {
     'flag_yesno': 2,
     'flag_onoff': 2,
     'mult_idx': 2,
-    'timestamp': 4,
     'datetime': 5,
     'enum': 2,
     'binary32': 32,
@@ -718,7 +751,9 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         Returns:
             One dictionary per column, in the table's column order, each carrying
             ``field_name``, ``field_default``, ``field_notnull`` and the OPUS
-            ``field_type`` the server's own type maps to. A table the server does not
+            ``field_type`` the server's own type maps to, and ``field_charset`` for a
+            text column in a character set of `MYSQL_CHARSET_SQL`, as `create_table`
+            would write the column. A table the server does not
             have produces no columns rather than an error. This is the cached list
             itself, so a caller that reorders or edits it changes what every later call
             returns.
@@ -731,7 +766,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         with self._operation('table_info'):
             cmd = """
 SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`,
-`CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`
+`CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`, `CHARACTER_SET_NAME`
 FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 `TABLE_NAME`=%s ORDER BY `ORDINAL_POSITION`"""
             rows = self._execute_and_fetchall(cmd, 'table_info', [self.db_schema, table_name])
@@ -739,7 +774,15 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             column_list = []
 
             for row in rows:
-                (column_name, column_default, is_nullable, data_type, char_len, column_type) = row
+                (
+                    column_name,
+                    column_default,
+                    is_nullable,
+                    data_type,
+                    char_len,
+                    column_type,
+                    charset,
+                ) = row
                 if data_type == 'tinyint':
                     field_type = 'int1'
                 elif data_type == 'smallint':
@@ -750,10 +793,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     field_type = 'int4'
                 elif data_type == 'bigint':
                     field_type = 'int8'
-                elif data_type == 'char':
-                    field_type = f'char({char_len})'
                 elif data_type == 'varchar':
-                    field_type = f'varchar({char_len})'
+                    field_type = f'varchar{char_len}'
                 elif data_type == 'float':
                     field_type = 'real4'
                 elif data_type == 'double':
@@ -762,8 +803,6 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     field_type = 'enum'
                 elif data_type == 'json':
                     field_type = 'json'
-                elif data_type == 'timestamp':
-                    field_type = 'timestamp'
                 elif data_type == 'datetime':
                     field_type = 'datetime'
                 elif data_type == 'binary' and char_len == 32:
@@ -783,6 +822,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     'field_notnull': is_nullable == 'NO',
                     'field_type': field_type,
                 }
+                if charset in MYSQL_CHARSET_SQL:
+                    column_dict['field_charset'] = charset
                 column_list.append(column_dict)
 
         self._table_info_cache[table_name] = column_list
@@ -964,13 +1005,18 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 if field_type in MYSQL_FIELD_TYPE_SQL:
                     cmd += MYSQL_FIELD_TYPE_SQL[field_type]
                 elif width_type is not None:
-                    cmd += f'{width_type[1]}({width_type[2]})'
+                    cmd += f'varchar({width_type[1]})'
                 elif field_type == MYSQL_ENUM_FIELD_TYPE:
                     enum_str = column.get('field_enum_options', None)
                     assert enum_str, (table_name, column)
                     cmd += f'enum({enum_str})'
                 else:
                     raise NotImplementedError(field_type)
+                charset = column.get('field_charset')
+                if charset is not None:
+                    if charset not in MYSQL_CHARSET_SQL or not takes_charset(field_type):
+                        raise NotImplementedError(f'{field_type} {charset}')
+                    cmd += ' ' + MYSQL_CHARSET_SQL[charset]
 
                 field_default = column.get('field_default', 'NULL')
                 if field_default is None:
@@ -980,23 +1026,13 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     if field_default == 'NULL':
                         field_default = ''
 
-                if field_type == 'timestamp':
-                    field_default = 'CURRENT_TIMESTAMP'
-
                 if field_default != '':
-                    if (
-                        field_default != 'NULL'
-                        and field_default != 'CURRENT_TIMESTAMP'
-                        and not field_default.removeprefix('-').isdigit()
-                    ):
+                    if field_default != 'NULL' and not field_default.removeprefix('-').isdigit():
                         field_default = "'" + field_default + "'"
                     cmd += f' DEFAULT {field_default}'
 
                 if column.get('field_autoincrement', False):
                     cmd += ' AUTO_INCREMENT'
-
-                if field_type == 'timestamp':
-                    cmd += ' ON UPDATE CURRENT_TIMESTAMP'
 
                 foreign_key = column.get('field_key_foreign', False)
                 assert not foreign_key or column.get('field_key') == 'foreign'
@@ -1198,10 +1234,8 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             [self.db_schema, table_name],
         )
         rows = int(res[0][0] or 0) if res else 0
-        types = {
-            column['field_name']: column['field_type']
-            for column in schema
-            if 'field_name' in column
+        columns_by_name = {
+            column['field_name']: column for column in schema if 'field_name' in column
         }
         primary = [k for k in declared_keys(schema) if k.kind == 'primary']
         primary_columns = primary[0].columns if primary else ()
@@ -1209,13 +1243,17 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         def width(columns: Sequence[str]) -> int:
             """Return the index-entry bytes of some columns' values together."""
             total = 0
-            for column in columns:
-                field_type = types.get(column, '')
+            for name in columns:
+                column = columns_by_name.get(name, {})
+                field_type = column.get('field_type', '')
                 width_type = MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type)
                 if field_type in MYSQL_KEY_BYTES:
                     total += MYSQL_KEY_BYTES[field_type]
                 elif width_type is not None:
-                    total += 4 * int(width_type[2]) + (2 if width_type[1] == 'varchar' else 0)
+                    char_bytes = MYSQL_CHARSET_BYTES.get(
+                        column.get('field_charset', ''), MYSQL_DEFAULT_CHARSET_BYTES
+                    )
+                    total += char_bytes * int(width_type[1]) + 2
                 else:
                     total += MYSQL_UNSIZED_KEY_BYTES
             return total

@@ -20,7 +20,8 @@
     },
     {
         "field_name": "obs_name",
-        "field_type": "char30",
+        "field_type": "varchar30",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -45,7 +46,7 @@
     },
     {
         "field_name": "rev_no",
-        "field_type": "char3",
+        "field_type": "varchar3",
         "field_default": null,
         "field_key": false,
         "data_source": "COMPUTE",
@@ -297,7 +298,8 @@
     },
     {
         "field_name": "activity_name",
-        "field_type": "char9",
+        "field_type": "varchar9",
+        "field_charset": "ascii",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
@@ -361,7 +363,8 @@
   },
     {
         "field_name": "sequence_id",
-        "field_type": "char4",
+        "field_type": "varchar4",
+        "field_charset": "ascii",
         "field_default": null,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
@@ -379,10 +382,5 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "comments": "Definition is from COISS label"
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

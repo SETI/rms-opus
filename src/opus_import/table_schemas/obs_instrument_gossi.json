@@ -20,7 +20,8 @@
     },
     {
         "field_name": "observation_id",
-        "field_type": "char20",
+        "field_type": "varchar20",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -43,7 +44,8 @@
     },
     {
         "field_name": "image_id",
-        "field_type": "char15",
+        "field_type": "varchar15",
+        "field_charset": "ascii",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_gossi",
@@ -234,10 +236,5 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

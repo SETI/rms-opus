@@ -129,10 +129,5 @@
         "pi_slug": "GALILEOspacecraftclockcount2",
         "pi_sub_heading": null,
         "pi_tooltip": ""
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

@@ -290,10 +290,5 @@
               [   0,  "IR",  "IR",    10, "Y", null, null],
               [   1, "VIS", "VIS",    20, "Y", null, null]
           ]
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

@@ -985,8 +985,7 @@ class ImportBench:
         pass whether or not the append wrote anything, and a side whose ids come from
         the bundle's registered range gives the reloaded rows the same ids. Every one of
         the bundle's ``obs_general`` rows has to have been written during the append
-        instead: its ``timestamp``, which the server sets as a row is loaded, is no
-        earlier than the server's clock when the append started.
+        instead (`_rows_written_since`).
 
         Parameters:
             run: The result run to add the metrics to.
@@ -1021,30 +1020,74 @@ class ImportBench:
         run['details']['incremental'] = monitor.summary()
         drop_schema(self.server, schema)
 
-    def _server_now(self) -> Any:
-        """Return the database server's clock, as a ``timestamp`` column compares it."""
-        with contextlib.closing(self.server.connect()) as connection:
-            return query(connection, 'SELECT NOW()')[0][0]
+    def _server_now(self) -> tuple[Any, Any]:
+        """Return the database server's clock, in its own time zone and in UTC.
 
-    def _rows_written_since(self, schema: str, bundle: str, since: Any) -> tuple[int, int]:
+        Returns:
+            The time as a ``timestamp`` column compares it, and as the bundle registry
+            records it.
+        """
+        with contextlib.closing(self.server.connect()) as connection:
+            local, utc = query(connection, 'SELECT NOW(), UTC_TIMESTAMP()')[0]
+        return local, utc
+
+    def _rows_written_since(
+        self, schema: str, bundle: str, since: tuple[Any, Any]
+    ) -> tuple[int, int]:
         """Count a bundle's ``obs_general`` rows, and those written before a moment.
+
+        A side whose ``obs_general`` has a ``timestamp`` column, which the server set as
+        each row was loaded, says when each row was written. A side without one has the
+        bundle registry instead: its rows were all written since the moment when the
+        bundle's row is ``done``, its latest import began no earlier, and that import
+        counted every row in ``rows_done``; otherwise every row counts as older.
 
         Parameters:
             schema: The schema.
             bundle: The bundle.
-            since: A value of the server's clock (`_server_now`).
+            since: The server's clock (`_server_now`).
 
         Returns:
-            How many rows the bundle has, and how many of them have a ``timestamp``
-            earlier than `since`.
+            How many rows the bundle has, and how many of them were written before
+            `since`.
         """
-        statement = (
-            f'SELECT COUNT(*), COALESCE(SUM(`timestamp` < %s), 0) '  # nosec B608 - quoted identifier
-            f'FROM {quote_identifier(schema)}.obs_general WHERE bundle_id = %s'
-        )
+        local, utc = since
+        q_schema = quote_identifier(schema)
         with contextlib.closing(self.server.connect()) as connection:
-            rows, stale = query(connection, statement, [since, bundle])[0]
-        return int(rows), int(stale)
+            has_timestamp = query(
+                connection,
+                'SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s '
+                "AND TABLE_NAME = 'obs_general' AND COLUMN_NAME = 'timestamp'",
+                [schema],
+            )[0][0]
+            if has_timestamp:
+                statement = (
+                    f'SELECT COUNT(*), COALESCE(SUM(`timestamp` < %s), 0) '  # nosec B608 - quoted identifier
+                    f'FROM {q_schema}.obs_general WHERE bundle_id = %s'
+                )
+                rows, stale = query(connection, statement, [local, bundle])[0]
+                return int(rows), int(stale)
+            rows = int(
+                query(
+                    connection,
+                    f'SELECT COUNT(*) FROM {q_schema}.obs_general WHERE bundle_id = %s',  # nosec B608 - quoted identifier
+                    [bundle],
+                )[0][0]
+            )
+            registry = query(
+                connection,
+                f'SELECT state, started_at, rows_done FROM {q_schema}.import_bundle '  # nosec B608 - quoted identifier
+                'WHERE bundle_id = %s',
+                [bundle],
+            )
+        reloaded = (
+            len(registry) == 1
+            and registry[0][0] == 'done'
+            and registry[0][1] is not None
+            and registry[0][1] >= utc
+            and int(registry[0][2]) == rows
+        )
+        return rows, 0 if reloaded else rows
 
     def _status(self) -> dict[str, int]:
         """Return the server's global counters now."""

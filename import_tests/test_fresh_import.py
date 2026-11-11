@@ -141,6 +141,36 @@ def test_the_finalized_schema_carries_exactly_the_declared_keys(
     assert _key_differences(db_credentials, main_run.schema) == {}
 
 
+def test_every_string_column_has_the_character_set_its_schema_names(
+    main_run: build_run.ImportRun, db_credentials: DatabaseCredentials
+) -> None:
+    """Each string column has its declared type, ASCII where it names ``field_charset``."""
+    found: dict[tuple[str, str], tuple[str, str]] = {
+        (str(table), str(column)): (str(data_type), str(charset))
+        for table, column, data_type, charset in golden_io.query(
+            db_credentials,
+            None,
+            'SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_SET_NAME '
+            'FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s '
+            'AND CHARACTER_SET_NAME IS NOT NULL',
+            [main_run.schema],
+        )
+    }
+    expected: dict[tuple[str, str], tuple[str, str]] = {}
+    for table in golden_io.list_tables(db_credentials, main_run.schema):
+        if not (_SCHEMA_DIR / f'{table}.json').is_file():
+            continue
+        for entry in _schema_for(table):
+            field_type = entry.get('field_type', '')
+            if field_type.startswith('varchar') or field_type in ('text', 'enum'):
+                expected[(table, entry['field_name'])] = (
+                    'varchar' if field_type.startswith('varchar') else field_type,
+                    entry.get('field_charset', 'utf8mb4'),
+                )
+    assert {('obs_general', 'opus_id'), ('cart', 'session_id')} <= expected.keys()
+    assert {key: found.get(key) for key in expected} == expected
+
+
 def test_every_main_run_import_took_the_fresh_path(main_run: build_run.ImportRun) -> None:
     """Each bundle invocation logged its path, and it was the fresh import's."""
     import_steps = [step for step in main_run.steps if '--import' in step.arguments]

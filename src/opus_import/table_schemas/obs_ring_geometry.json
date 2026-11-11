@@ -2496,10 +2496,5 @@
         "pi_slug": "RINGGEOringintercepttime2",
         "pi_sub_heading": "Timing",
         "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss"
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

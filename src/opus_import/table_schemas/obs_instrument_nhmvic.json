@@ -44,10 +44,5 @@
               [   1,     "LOSSY",          "Lossy",    20, "Y", null, null],
               [   2,   "NOTCOMP", "Not Compressed",    30, "Y", null, null]
           ]
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

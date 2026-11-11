@@ -8,7 +8,8 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char50",
+        "field_type": "varchar50",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -30,7 +31,8 @@
     },
     {
         "field_name": "bundle_id",
-        "field_type": "char75",
+        "field_type": "varchar75",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE"
@@ -547,10 +549,5 @@
         "pi_slug": "**previewimages",
         "pi_sub_heading": null,
         "pi_tooltip": null
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

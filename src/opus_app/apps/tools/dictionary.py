@@ -34,7 +34,6 @@ class Contexts(models.Model):
     name = models.CharField(unique=True, max_length=25)
     description = models.CharField(max_length=100)
     parent = models.CharField(max_length=25)
-    timestamp = models.DateTimeField()
 
     class Meta:
         """Model options: the table the rows come from, which Django does not manage."""
@@ -56,7 +55,6 @@ class Definitions(models.Model):
         to_field='name',
     )
     definition = models.TextField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         """Model options: the table the rows come from, which Django does not manage."""

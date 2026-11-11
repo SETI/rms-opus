@@ -1789,11 +1789,6 @@
         "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss"
     },
     {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
-    },
-    {
         "primary_key": [
             "target_name",
             "obs_general_id"
