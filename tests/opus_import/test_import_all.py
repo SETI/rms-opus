@@ -12,6 +12,7 @@ whether the run is over. ``import_tests/test_coordinator.py`` runs it against My
 from __future__ import annotations
 
 import datetime
+import time
 from typing import Any
 
 import pytest
@@ -433,9 +434,10 @@ def _bundle(
     rows_done: int = 0,
     size: int = 100,
 ) -> BundleStatus:
-    """Return a registry row."""
+    """Return a registry row, numbered from its id's letter (``A`` is 1)."""
     started = _NOW - datetime.timedelta(minutes=2) if state != 'pending' else None
-    return BundleStatus(1, bundle_id, state, size, rows_done, process_id, started, None)
+    number = ord(bundle_id[0]) - ord('A') + 1
+    return BundleStatus(number, bundle_id, state, size, rows_done, process_id, started, None)
 
 
 def _process(process_id: int, *, alive: bool, idle_minutes: int = 0) -> ProcessStatus:
@@ -458,9 +460,12 @@ class _Config:
     import_ = _import_table()
 
 
-def _coordinator(finishing: bool = True) -> import_all.Coordinator:
-    """Return a coordinator that has started nothing."""
-    division = import_all.resolve_division(_import_table(), None, 'auto', detected=8)
+def _coordinator(finishing: bool = True, workers: int = 1) -> import_all.Coordinator:
+    """Return a coordinator that has started nothing, of `workers` workers divided among
+    as many importers as allowed, up to two."""
+    division = import_all.resolve_division(
+        _import_table(workers=workers, importers=2), None, 'auto', detected=8
+    )
     coordinator = import_all.Coordinator(
         _Config(),  # type: ignore[arg-type]
         None,
@@ -510,6 +515,24 @@ def test_a_bundle_importing_outside_the_queue_stops_the_run(
     snapshot = Snapshot((_bundle('A', 'importing'),), ())
     assert _coordinator()._settle(snapshot) == 1
     assert 'importing outside the queue, with no importer: A' in capsys.readouterr().out
+
+
+def test_pending_bundles_no_importer_here_claims_end_the_run_after_one_more_start(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Once nothing runs anywhere, the bundles taken as unclaimable are started for once
+    more; if they are still pending after that, the run stops naming them."""
+    coordinator = _coordinator()
+    coordinator._starts_left = 5
+    coordinator._unclaimable = frozenset({1})
+    snapshot = Snapshot((_bundle('A', 'pending'),), ())
+
+    assert coordinator._settle(snapshot) is None
+    assert coordinator._unclaimable == frozenset()
+    assert coordinator._settle(snapshot) == 1
+    assert 'Bundles are pending that no importer started here claimed: A;' in (
+        capsys.readouterr().out
+    )
 
 
 def test_the_table_shows_each_live_importer_and_marks_a_stall() -> None:
@@ -568,18 +591,13 @@ class _Process:
 def test_a_lost_importer_is_replaced_while_bundles_are_pending(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Its exit, and a pending bundle, start one importer with the same workers."""
-    coordinator = _coordinator()
+    """Its exit, and a pending bundle, start one importer with the same workers; the
+    importer still running is busy with its own bundle."""
+    coordinator = _coordinator(workers=3)
     coordinator._starts_left = 5
-    started: list[list[str]] = []
-
-    def start(arguments: list[str]) -> _Process:
-        started.append(arguments)
-        return _Process(None)
-
-    monkeypatch.setattr(import_all, 'start_importer', start)
+    started = _record_starts(monkeypatch)
     dead = import_all._Importer(_Process(-9), 2)  # type: ignore[arg-type]
-    alive = import_all._Importer(_Process(None), 1)  # type: ignore[arg-type]
+    alive = import_all._Importer(_Process(None), 1, process_id=7)  # type: ignore[arg-type]
     coordinator._own = [dead, alive]
     snapshot = Snapshot((_bundle('A', 'pending'), _bundle('B', 'importing', 7)), ())
     _patch_reading(monkeypatch, snapshot)
@@ -602,10 +620,203 @@ def test_an_interrupted_coordinator_starts_nothing_and_exits_unfinished(
     assert coordinator._pass(_FakeContext()) == 1  # type: ignore[arg-type]
 
 
+def _record_starts(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
+    """Make each importer started a running stand-in, and return their command lines."""
+    started: list[list[str]] = []
+
+    def start(arguments: list[str]) -> _Process:
+        started.append(arguments)
+        return _Process(None)
+
+    monkeypatch.setattr(import_all, 'start_importer', start)
+    return started
+
+
+def _exited(code: int, pending_at_start: set[int], **fields: Any) -> import_all._Importer:
+    """Return an importer of one worker that exited with `code`, started while the
+    bundles numbered `pending_at_start` were pending."""
+    return import_all._Importer(
+        _Process(code),  # type: ignore[arg-type]
+        1,
+        pending_at_start=frozenset(pending_at_start),
+        **fields,
+    )
+
+
+def test_a_join_does_not_replace_importers_that_found_nothing_they_may_claim(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Bundles pending all the life of an importer that exited cleanly are others' to
+    claim (``--sets``), so a ``--join`` whose importers have exited is over."""
+    coordinator = _coordinator(finishing=False, workers=2)
+    coordinator._starts_left = 50
+    started = _record_starts(monkeypatch)
+    coordinator._own = [_exited(0, {1, 2}), _exited(0, {1, 2, 3}, claimed=True)]
+    _patch_reading(monkeypatch, Snapshot((_bundle('A', 'pending'), _bundle('B', 'pending')), ()))
+
+    assert coordinator._pass(_FakeContext()) == 0  # type: ignore[arg-type]
+    assert started == []
+
+
+def test_a_bundle_returned_to_the_queue_since_is_started_for_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bundle that became pending after the importers started may be theirs: one
+    importer is started for it, and none more while that one has not claimed."""
+    coordinator = _coordinator(finishing=False, workers=2)
+    coordinator._starts_left = 50
+    started = _record_starts(monkeypatch)
+    coordinator._own = [_exited(0, {1}), _exited(0, {1})]
+    _patch_reading(monkeypatch, Snapshot((_bundle('A', 'pending'), _bundle('C', 'pending')), ()))
+
+    assert coordinator._pass(_FakeContext()) is None  # type: ignore[arg-type]
+    assert coordinator._pass(_FakeContext()) is None  # type: ignore[arg-type]
+    assert started == [['--join', '--workers', '1']]
+
+
+def test_importers_that_fail_before_claiming_stop_being_started(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """After `FAILED_STARTS_ALLOWED` in a row, nothing more is started, which is logged."""
+    coordinator = _coordinator(workers=2)
+    coordinator._starts_left = 50
+    started = _record_starts(monkeypatch)
+    coordinator._own = [_exited(1, set()) for _ in range(import_all.FAILED_STARTS_ALLOWED)]
+    logged = _record_log(coordinator)
+    _patch_reading(monkeypatch, Snapshot((_bundle('A', 'pending'),), ()))
+
+    coordinator._pass(_FakeContext())  # type: ignore[arg-type]
+
+    assert started == []
+    assert coordinator._starts_left == 0
+    assert (
+        'error',
+        f'{import_all.FAILED_STARTS_ALLOWED} importers in a row exited with failure before '
+        'claiming a bundle, so no more are started',
+    ) in logged
+
+
+def test_an_importer_that_claimed_resets_the_failed_starts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failure after a claim is a lost importer, replaced however many there were."""
+    coordinator = _coordinator(workers=2)
+    coordinator._starts_left = 50
+    started = _record_starts(monkeypatch)
+    coordinator._failed_starts = import_all.FAILED_STARTS_ALLOWED - 1
+    coordinator._own = [_exited(-9, set(), claimed=True)]
+    _patch_reading(monkeypatch, Snapshot((_bundle('A', 'pending'),), ()))
+
+    coordinator._pass(_FakeContext())  # type: ignore[arg-type]
+
+    assert coordinator._failed_starts == 0
+    assert started == [['--join', '--workers', '1']]
+
+
+def test_the_end_of_a_run_on_a_terminal_is_printed_and_every_event_logged(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The failed bundles, named after the table's last redraw, still reach the screen."""
+    from opus_import import import_processes
+
+    coordinator = _coordinator()
+    coordinator.terminal = True
+    logged = _record_log(coordinator)
+    monkeypatch.setattr(import_all.Coordinator, '_context', lambda self: _FakeContext())
+    monkeypatch.setattr(import_processes, 'create_process_table', lambda db: None)
+    monkeypatch.setattr(import_all, 'start_importer', lambda arguments: _Process(0))
+    _patch_reading(monkeypatch, Snapshot((_bundle('B', 'failed', 4),), (_process(4, alive=False),)))
+
+    assert coordinator.run() == 1
+
+    printed = capsys.readouterr().out.rsplit(import_all._CLEAR_SCREEN, 1)[1]
+    assert "B (its importer's log: host:/logs/importer_4.log)" in printed.split('\n', 2)[2:][0]
+    assert [message for level, message in logged if level == 'warning'] == [
+        'Bundles failed, so the schema is not finalized; after the fix, '
+        '"opus_import_all --requeue <bundle>" and a rerun import them:\n'
+        "  B (its importer's log: host:/logs/importer_4.log)"
+    ]
+    assert ('info', f'importer {_Process._next_pid} exited with status 0') in logged
+
+
+def test_a_failed_reading_is_logged_and_the_next_pass_reconnects(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A transient failure costs a pass, not the run."""
+    from opus_import import import_processes, importdb
+
+    coordinator = _coordinator()
+    logged = _record_log(coordinator)
+    ctx = _FakeContext()
+    readings: list[object] = []
+
+    def read(db: object) -> Snapshot:
+        readings.append(db)
+        if len(readings) == 1:
+            raise importdb.ImportDBError('Lost connection to MySQL server')
+        return Snapshot((_bundle('A', 'importing', 3),), (_process(3, alive=True),))
+
+    _patch_reading(monkeypatch, Snapshot((), ()))
+    monkeypatch.setattr(import_processes, 'read_snapshot', read)
+    reopened = _FakeDB()
+    monkeypatch.setattr(import_all, '_open_db', lambda *args, **kwargs: reopened)
+
+    assert coordinator._pass(ctx) is None  # type: ignore[arg-type]
+    assert ctx.db is None
+    assert ('warning', 'The database could not be read: Lost connection to MySQL server') in (
+        logged
+    )
+    assert coordinator._pass(ctx) is None  # type: ignore[arg-type]
+    assert readings[1] is reopened
+    assert coordinator._failing_since is None
+
+
+def test_readings_failing_for_the_outage_limit_stop_the_coordinator(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A persistent failure ends the run, saying so, rather than being retried for ever."""
+    from opus_import import importdb
+
+    coordinator = _coordinator()
+    logged = _record_log(coordinator)
+    coordinator._failing_since = time.monotonic() - import_all.DATABASE_OUTAGE_SECONDS
+
+    def refuse(*args: Any, **kwargs: Any) -> None:
+        raise importdb.ImportDBError("Can't connect to MySQL server")
+
+    monkeypatch.setattr(import_all, '_open_db', refuse)
+    ctx = _FakeContext()
+    ctx.db = None
+
+    assert coordinator._pass(ctx) == 1  # type: ignore[arg-type]
+    (stopped,) = [message for level, message in logged if level == 'error']
+    assert stopped.startswith('The database has not been readable for 0:05:00')
+
+
+class _FakeDB:
+    """A connection that only closes."""
+
+    def close(self) -> None:
+        """Close nothing."""
+
+
 class _FakeContext:
     """A context whose database is never asked anything the patches below do not answer."""
 
-    db = object()
+    def __init__(self) -> None:
+        self.db: _FakeDB | None = _FakeDB()
+
+
+def _record_log(coordinator: import_all.Coordinator) -> list[tuple[str, str]]:
+    """Give the coordinator a logger recording ``(level, message)`` pairs, and return them."""
+    logged: list[tuple[str, str]] = []
+
+    class _Logger:
+        def log(self, level: str, message: str) -> None:
+            logged.append((level, message))
+
+    coordinator.logger = _Logger()
+    return logged
 
 
 def _patch_reading(monkeypatch: pytest.MonkeyPatch, snapshot: Snapshot) -> None:
@@ -615,3 +826,76 @@ def _patch_reading(monkeypatch: pytest.MonkeyPatch, snapshot: Snapshot) -> None:
 
     monkeypatch.setattr(import_processes, 'read_snapshot', lambda db: snapshot)
     monkeypatch.setattr(do_recover, 'recover_lost_importers', lambda ctx: [])
+
+
+class _CachingDB:
+    """A connection whose table names are cached until forgotten, holding one registry
+    row and no importer."""
+
+    db_schema = 'opus_test'
+
+    def __init__(self) -> None:
+        self.cached: set[str] = set()
+        self.closed = False
+
+    def forget_table_names(self) -> None:
+        """Read the table names again: the registry has been created since."""
+        self.cached = {'import_bundle'}
+
+    def table_exists(self, table_name: str) -> bool:
+        return table_name in self.cached
+
+    def quote_identifier(self, name: str) -> str:
+        return f'`{name}`'
+
+    def read_rows(self, table_name: str, columns: Any, where: str) -> list[tuple[Any, ...]]:
+        assert table_name == 'import_bundle'
+        return [(1, 'A', 'pending', 100, 0, None, None, None)]
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def test_a_reading_sees_tables_created_after_the_connection_opened() -> None:
+    """The registry, created by another process since, is read rather than taken as
+    absent from the names the connection cached."""
+    from opus_import import import_processes
+
+    snapshot = import_processes.read_snapshot(_CachingDB())  # type: ignore[arg-type]
+    assert [bundle.bundle_id for bundle in snapshot.bundles] == ['A']
+
+
+@pytest.mark.parametrize('watch', [True, False], ids=['watch', 'once'])
+def test_status_reports_a_failed_reading_and_a_watch_goes_on(
+    watch: bool, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A reading that fails (the tables dropped by a rerun) is reported without a
+    traceback; a watch reads again on a new connection, a single status exits 1."""
+    from opus_import import import_processes, importdb
+
+    opened: list[_CachingDB] = []
+
+    def open_db(*args: Any, **kwargs: Any) -> _CachingDB:
+        opened.append(_CachingDB())
+        return opened[-1]
+
+    def read(db: _CachingDB) -> Snapshot:
+        if len(opened) == 1:
+            raise importdb.ImportDBError("Table 'opus_test.import_bundle' doesn't exist")
+        return Snapshot((_bundle('A', 'pending'),), ())
+
+    def sleep(seconds: float) -> None:
+        if len(opened) == 2:
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(import_all, '_open_db', open_db)
+    monkeypatch.setattr(import_processes, 'read_snapshot', read)
+    monkeypatch.setattr(time, 'sleep', sleep)
+
+    status = import_all.show_status(_Config(), None, watch=watch, recover=False)  # type: ignore[arg-type]
+
+    captured = capsys.readouterr()
+    assert "the schema could not be read: Table 'opus_test.import_bundle'" in captured.err
+    assert opened[0].closed
+    assert status == (0 if watch else 1)
+    assert ('Bundles: 0 done, 0 importing, 1 pending' in captured.out) is watch

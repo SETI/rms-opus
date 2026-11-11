@@ -400,13 +400,54 @@ def test_an_importer_whose_lock_connection_is_killed_aborts_its_bundle(case: Cas
     assert case.rows('SELECT COUNT(*) FROM obs_files') == [(0,)]
 
 
+def test_a_recovery_deletes_rows_in_tables_created_after_it_connected(case: Case) -> None:
+    """A coordinator connected to a schema holding only the registry recovers a killed
+    importer's bundle: the rows the importer committed, in the tables it created since,
+    are deleted. The coordinator's own importers may not claim the bundle, so nothing
+    else deletes them."""
+    bundle_id = 'COCIRS_1101'
+    _register(case, [bundle_id])
+    coordinator = case.start(
+        'opus_import.import_all',
+        ['--sets', bundle_id, '--exclude-bundles', bundle_id, '--importers', '1'],
+    )
+    _wait(
+        lambda: 'exited with status 0' in coordinator.output_path.read_text(encoding='utf-8'),
+        "the coordinator's importer to find nothing it may claim",
+    )
+    assert not case.has('obs_general')
+    hold = f'{import_processes.HOLD_AFTER_CHUNK_FAULT_SITE}:5'
+    importer = case.start('opus_import', ['--join'], fault=hold)
+
+    def committed() -> int | None:
+        """The importer's ``process_id``, once a chunk of the bundle is committed."""
+        found = case.importers()
+        rows = found and case.has('obs_files') and case.rows('SELECT COUNT(*) FROM obs_files')[0][0]
+        return found[0][0] if rows else None
+
+    process_id = _wait(committed, "the bundle's first chunk")
+    importer.kill()
+    importer.wait()
+
+    status, output = _finish(coordinator)
+
+    assert status != 0
+    assert f'{bundle_id} returned to the queue: importer {process_id} died holding it' in output
+    assert case.bundle(bundle_id) == ('pending', None, 1)
+    assert case.rows('SELECT COUNT(*) FROM obs_general WHERE bundle_id = %s', (bundle_id,)) == [
+        (0,)
+    ]
+    assert case.rows('SELECT COUNT(*) FROM obs_files') == [(0,)]
+
+
 def test_no_reader_sees_an_importer_before_it_holds_its_lock(
     case: Case, main_run: build_run.ImportRun
 ) -> None:
-    """During the hold between an importer's row and its lock, neither ``--status`` nor a
-    ``READ COMMITTED`` read sees the row; after it, both see it with its lock held."""
+    """During the hold between an importer's row and its lock, a ``READ COMMITTED`` read
+    does not see the row and ``--status --recover`` finds no importer lost; after it,
+    ``--status`` shows the importer with its lock held, still ``running``."""
     _register(case, main_run.bundles)
-    hold = f'{import_processes.HOLD_BEFORE_LOCK_FAULT_SITE}:5'
+    hold = f'{import_processes.HOLD_BEFORE_LOCK_FAULT_SITE}:8'
     case.start('opus_import', ['--join', '--workers', '1'], fault=hold)
 
     def uncommitted_insert() -> bool:
@@ -422,8 +463,9 @@ def test_no_reader_sees_an_importer_before_it_holds_its_lock(
         return bool(found[0][0])
 
     _wait(uncommitted_insert, "the importer's uncommitted row")
-    status_during = _status(case)
     rows_during = _read_committed(case, 'SELECT COUNT(*) FROM import_process')
+    recovered_during = _status(case, '--recover')
+    recovered_in_the_hold = uncommitted_insert()
 
     process_id = _wait(
         lambda: case.importers()[0][0] if case.importers() else None, "the importer's row"
@@ -432,17 +474,19 @@ def test_no_reader_sees_an_importer_before_it_holds_its_lock(
     status_after = _status(case)
 
     assert rows_during == [(0,)]
-    assert len(status_during.splitlines()) == 2
+    assert recovered_in_the_hold
+    assert recovered_during.splitlines()[0] == 'No importer is lost'
     assert holder is not None
+    assert case.importers()[0][2] == 'running'
     importer_lines = status_after.splitlines()[2:]
     assert len(importer_lines) == 1
     assert importer_lines[0].startswith(f'{socket.gethostname()}:')
 
 
-def _status(case: Case) -> str:
-    """Return what ``opus_import_all --status`` prints."""
+def _status(case: Case, *options: str) -> str:
+    """Return what ``opus_import_all --status`` prints, with the options given."""
     finished = subprocess.run(  # nosec B603 - this interpreter and the pipeline's own module
-        [str(build_run.THIS_PYTHON), '-m', 'opus_import.import_all', '--status'],
+        [str(build_run.THIS_PYTHON), '-m', 'opus_import.import_all', '--status', *options],
         cwd=fixture_layout.REPO_ROOT,
         env=build_run.run_environment(case.paths.config_file),
         capture_output=True,

@@ -148,6 +148,10 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
 def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     """Delete one bundle's rows from every ``obs_`` table.
 
+    The tables are read from the server first, not taken from what the connection has
+    seen: another process importing into the schema may have created one since, and a
+    table left out would keep the bundle's rows.
+
     Every other table goes before ``obs_general``, in chunks, each chunk one statement and
     its own transaction, so no single statement holds a whole large bundle's undo:
 
@@ -183,6 +187,7 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
 
     db = ctx.db
     assert db is not None
+    db.forget_table_names()
     table_names = sorted(db.table_names(prefix=['obs_']))
     joined = [name for name in table_names if not table_keys.is_bundle_keyed_table(name)]
 

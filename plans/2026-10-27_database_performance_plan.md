@@ -6418,8 +6418,8 @@ Nothing above this line is rewritten by an executor.
   guard's statements first, its lock check last. `rows_done` advances only for
   `obs_general` chunks; `progress_at` advances with every chunk. PR-16's separate
   `record_rows_done` statement goes. A plain import's guard carries only the
-  `obs_general` chunks' `rows_done` update, matching `process_id IS NULL`, and checks
-  nothing, so its loads of other tables are as before.
+  `obs_general` chunks' `rows_done` update, matching the bundle's `started_at` from the
+  import's own claim, and checks nothing, so its loads of other tables are as before.
 - **"The `UPDATE` matched its row"** is read from the server's report (`Rows matched:` in
   `Connection.info()`, before the commit), since MySQLdb's `rowcount` counts changed rows
   and a chunk of another table leaves `rows_done` unchanged. `update_row` returns the
@@ -6508,3 +6508,55 @@ Nothing above this line is rewritten by an executor.
   requires `committing a chunk`: without it, the case passed with the chunk's lock check
   removed, since the move to `done` checks the lock too and the abort's delete leaves the
   same rows.
+- **Review fixes (2026-11-11).** PR-16's head at 00eba464 was merged in first, for its
+  `ImportDBSuper.forget_table_names` and its requeue hold. Each fix has a test that
+  fails with it reverted (all mutation-checked):
+  - *Stale table list (1, 6).* `delete_bundle_from_obs_tables`, `read_snapshot` and
+    `recover_lost_importers` reread the tables from the server
+    (`forget_table_names`), so a recovery or an importer's delete reaches tables created
+    after its connection opened, and a `--status --watch` started early sees the
+    registry once it exists. `--status` reports a failed reading on standard error
+    instead of a traceback; a watch reads again on a new connection, a single status
+    exits 1. The import case `test_a_recovery_deletes_rows_in_tables_created_after_it_connected`
+    runs a coordinator connected to a schema holding only the registry, whose own
+    importers may not claim the bundle (`--exclude-bundles`), kills a plain `--join`
+    importer after its first chunk, and requires no `obs_general` or `obs_files` row left.
+  - *Useless restarts (2).* The coordinator keeps up to `M` importers running while
+    bundles its importers may claim are pending, beyond its idle importers. An importer
+    exits 0 only once nothing it may claim is pending, so the bundles pending both at its
+    start and at its clean exit are recorded unclaimable (claimability is fixed by
+    `--sets` and `--exclude-bundles`); one more round is started for them when they are
+    all that is left and nothing runs anywhere, then the run stops naming them.
+    `FAILED_STARTS_ALLOWED` (3) importers in a row exiting non-zero before claiming stop
+    all starts. An importer's row is found by host, pid and `started_at`, and "claimed"
+    means a reading showed a bundle under its `process_id`.
+  - *Final explanation (3).* Every event is logged to `opus_import_all.log` (already
+    logged recovery lines are not logged twice), and the events after the terminal's
+    last redraw are printed when the run returns.
+  - *Requeue (4).* Chosen: refuse. `--requeue` refuses an `importing` bundle with a
+    non-NULL `process_id`, alive or not, naming the coordinator and `--status --recover`
+    as what returns it, and `start_bundle` takes a bundle from `importing` only while its
+    `process_id` is NULL, so a queue importer's claim landing after the check is never
+    taken. The hold is taken from the state the bundle was read in. This replaces the
+    `IS_USED_LOCK` refusal recorded above. Routing through `_recover_bundle` was not
+    chosen: it counts a loss, so a requeue could fail the bundle.
+  - *Interrupts (5).* The importer's handler raises only on the second interrupt and only
+    while `ctx.importer` is set; later ones are counted. The second, wherever it lands
+    (between a claim's commit and the work, in a failed bundle's release), aborts every
+    bundle the registry has `importing` under the importer, read on a fresh connection;
+    the fatal line names the bundles returned, or says it held none.
+  - *Pass loop (7).* A reading that raises `ImportDBError` is logged as a warning, the
+    connection closed and opened again on the next pass; after `DATABASE_OUTAGE_SECONDS`
+    (300) of failed readings in a row the coordinator exits 1, naming its importers that
+    still run, which a rerun tracks.
+  - *Minor.* The `--status` case asserted a line count that held whatever the order; it
+    runs `--status --recover` during the hold (8 s) instead, requires "No importer is lost",
+    the transaction still uncommitted afterwards, and the row `running` after the hold.
+    The plain-import guard note above is corrected (it matches `started_at`). The guides
+    say when a lock is freed for an importer on another computer (the server's TCP
+    keepalive, about 2 h 11 m on Linux's defaults; `KILL` frees it at once) instead of
+    "noticed at once".
+  - Skipped: the double fatal log of a lost lock found during a claim. `retrying` logs
+    only an `ImportDBError`, `LostImporterError` is not one, and the lock connection has
+    no logger, so the claim path logs it once, in `import_from_queue`.
+  - Results: the gates pass (2,947 unit tests).

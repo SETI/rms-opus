@@ -175,12 +175,14 @@ live. In order:
    a finished schema; no other state is changed.
 4. **Return bundles to the queue**, under ``--requeue``
    (:func:`~opus_import.steps.do_import.requeue_bundles`): every named bundle must be
-   ``failed`` or ``importing``, and an ``importing`` one's importer must not hold its
-   lock, or nothing changes and the invocation fails. Each is taken from ``failed`` or
-   ``importing`` as the invocation's own hold, under a new ``started_at``, deleted from
-   every observation table, and set ``pending`` only while that hold stands; a bundle
-   another process took after the states were read is left to it, with nothing deleted,
-   and the invocation fails.
+   ``failed``, or ``importing`` under no queue importer (``process_id`` NULL, as a plain
+   ``--import`` leaves one), or nothing changes and the invocation fails. A queue
+   importer's bundle is left to recovery, which checks the importer's lock under the
+   bundle's row lock. Each is taken from the state it was read in as the invocation's
+   own hold, under a new ``started_at`` (from ``importing`` only while ``process_id`` is
+   still NULL), deleted from every observation table, and set ``pending`` only while
+   that hold stands; a bundle another process took after the states were read is left
+   to it, with nothing deleted, and the invocation fails.
 5. Stop here unless ``--register-bundles``, ``--import`` or ``--join`` was given.
 6. **Choose the path**, as above, if :mod:`opus_import.cli` has not.
 7. Under ``--register-bundles``, **register the named bundles** in their order
@@ -260,8 +262,12 @@ the bundle's rows while a second connection holds the bundle's registry row and 
 checked that it still names the importer
 (:func:`~opus_import.steps.do_recover.release_bundle`); a coordinator's recovery of a
 lost importer's bundle does the same, after checking again that the importer's lock is
-free (:func:`~opus_import.steps.do_recover.recover_lost_importers`). After one interrupt
-an importer claims nothing new once its bundle is done; a second aborts the bundle. A
+free (:func:`~opus_import.steps.do_recover.recover_lost_importers`). Every bundle delete
+reads the schema's tables from the server first, so it reaches a table another importer
+created after this connection opened. After one interrupt an importer claims nothing new
+once its bundle is done; a second, wherever it lands, aborts every bundle the registry
+has ``importing`` under the importer, and any later one is only counted, so nothing
+interrupts the abort. A
 plain ``--import`` takes no lock: its bundles keep ``process_id`` NULL, and only its
 ``obs_general`` chunks carry ``rows_done``, matching no importer.
 
@@ -335,10 +341,10 @@ one it names from any state but ``importing``
 ``failed`` only while it is still ``importing`` under the ``started_at`` the process
 wrote when it took it (:func:`~opus_import.bundle_registry.finish_bundle`), so a bundle
 ``--requeue`` returned to the queue and another process took is never finished, or
-deleted, by the process that held it before; that process logs an error instead. Only
-``--requeue`` moves an ``importing`` bundle back to ``pending``: it takes the bundle
-from ``failed`` or ``importing`` as a hold of its own, and returns it under that hold
-once its rows are deleted. The hold is
+deleted, by the process that held it before; that process logs an error instead. Besides a queue importer's abort and a recovery, only
+``--requeue`` moves an ``importing`` bundle back to ``pending``, and only one no queue
+importer holds: it takes the bundle from ``failed`` or ``importing`` as a hold of its
+own, and returns it under that hold once its rows are deleted. The hold is
 ``started_at``, to the second, so a bundle requeued and taken again within the second it
 was first taken is the one case it cannot tell apart.
 

@@ -189,7 +189,8 @@ def recover_lost_importers(ctx: ImportContext) -> list[str]:
     `LOSSES_BEFORE_FAILED`th loss. An importer whose row is ``running`` while its lock is
     free is lost, and once it holds no bundle its row becomes ``lost``. Every move checks
     the state it moves from, so the recovery may run on any computer, any number of
-    times, at once.
+    times, at once. Whether ``import_process`` exists is read from the server, not taken
+    from what the connection has seen.
 
     Parameters:
         ctx: The context whose connection reads, deletes and writes.
@@ -199,6 +200,7 @@ def recover_lost_importers(ctx: ImportContext) -> list[str]:
     """
     db = ctx.db
     assert db is not None
+    db.forget_table_names()
     if not db.table_exists(import_processes.IMPORT_PROCESS_TABLE):
         return []
     q = db.quote_identifier

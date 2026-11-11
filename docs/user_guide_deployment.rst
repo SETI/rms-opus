@@ -449,22 +449,32 @@ totals; under ``nohup`` it writes a line per finished bundle and the totals ever
 ``[import] status_interval_minutes``. ``OPUS_CONFIG=<config> opus_import_all --status
 --override-db-schema <database>`` prints the same table from any computer.
 
-An importer that dies (killed, or out of memory) is noticed at once: its bundle's rows
-are deleted, the bundle goes back to the queue, and another importer is started in its
-place. A bundle whose importer dies twice is marked failed instead. A failed bundle
-stops the run before the database is finished, naming the bundle and its importer's
-log; after the fix, ``opus_import_all --requeue <bundle>`` and running
+An importer that dies (killed, or out of memory) on the computer it runs on is noticed
+within seconds: its bundle's rows are deleted, the bundle goes back to the queue, and
+another importer is started in its place. One whose computer loses power or its network
+is noticed only when the database server gives up on its connection, about two hours
+later with Linux's default keepalive settings; running ``KILL <id>`` on the server,
+with the ``<id>`` that ``SELECT IS_USED_LOCK('<lock>')`` returns for the lock the
+importer's log names, frees it at once. A bundle whose importer dies twice is marked
+failed instead. A failed bundle stops the run before the database is finished, naming
+the bundle and its importer's log; after the fix, ``opus_import_all --requeue <bundle>`` and running
 ``opus_import_all`` again import only what is left. Ctrl-C once (or ``kill -INT`` under
 ``nohup``) lets every importer finish its bundle and stops; twice returns their bundles
-to the queue at once. Either way the database is left unfinished, and running the same
-command again resumes.
+to the queue at once, and pressing it again does not interrupt that. Either way the
+database is left unfinished, and running the same command again resumes. The reason a
+run stops, with each failed bundle's importer log, is printed as it exits and written
+to ``opus_import_all_<time>.log`` in ``[paths] import_log_dir``. A bundle an importer
+of ``opus_import_all`` held is returned to the queue by the coordinator, or by
+``opus_import_all --status --recover``, once its importer is gone; ``--requeue``
+refuses it.
 
 Another computer can join a running import: with a configuration naming the same
 database server, database and holdings, ``opus_import_all --join --override-db-schema
 <database> --importers <M> --workers <N>`` starts importers there under that computer's
 own ceiling, adding ``--sets COISS,COVIMS`` on a computer that holds only those bundle
-sets. It never registers or finishes anything, and it can stop at any time; the first
-computer waits for its importers before finishing. The database is the same whatever
+sets. It never registers or finishes anything, starts importers only while there are
+bundles they may claim, and can stop at any time; the first computer waits for its
+importers before finishing. The database is the same whatever
 the number of importers, apart from how a checkbox value new to the import is numbered
 and, where bundles disagree about a value's spelling or label, which one is kept.
 

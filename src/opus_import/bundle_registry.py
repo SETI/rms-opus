@@ -376,19 +376,22 @@ def start_bundle(
         ctx: The import run's context, for the open database.
         bundle_id: The bundle.
         from_states: The states it may be taken from. ``importing`` belongs here only
-            for ``--requeue``, which states that the process holding it has stopped.
+            for ``--requeue``, which states that the process holding it has stopped, and
+            with it the bundle is taken only while its ``process_id`` is NULL: a queue
+            importer's bundle is never taken, since recovery returns it.
 
     Returns:
-        The hold on the bundle, or None when it was in none of `from_states`.
+        The hold on the bundle, or None when it was in none of `from_states`, or a queue
+        importer holds it.
     """
     db = ctx.db
     assert db is not None
     columns = _state_columns(BUNDLE_IMPORTING)
+    where = f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, from_states)}'
+    if BUNDLE_IMPORTING in from_states:
+        where += f' AND {db.quote_identifier("process_id")} IS NULL'
     changed = db.conditional_update(
-        BUNDLE_REGISTRY_TABLE,
-        columns,
-        f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, from_states)}',
-        [bundle_id, *from_states],
+        BUNDLE_REGISTRY_TABLE, columns, where, [bundle_id, *from_states]
     )
     if changed == 0:
         return None

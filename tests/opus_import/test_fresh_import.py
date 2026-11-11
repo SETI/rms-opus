@@ -692,26 +692,34 @@ class _DeletingDB:
         ids: dict[str, list[Any]] | list[Any],
         tables: list[str],
         id_range: tuple[int, int] | None = None,
+        seen: list[str] | None = None,
     ) -> None:
         """Hold each table's ids for the bundle, the tables, and the bundle's range.
 
         Parameters:
             ids: Each table's ids, in order, keyed by table; or one list answering every
                 select, whatever it reads.
-            tables: The ``obs_`` tables.
+            tables: The ``obs_`` tables the server has.
             id_range: The bundle's registered first id and capacity, or None for a
                 bundle the registry does not hold.
+            seen: The tables the connection's cached names hold until they are read
+                again, or None for all of `tables`.
         """
         self.ids = ids
-        self.tables = tables
+        self.server_tables = tables
+        self.tables = tables if seen is None else seen
         self.id_range = id_range
         self.transaction_rows = 2
         self.selects: list[str] = []
         self.deletes: list[tuple[str, str, list[Any]]] = []
 
     def table_names(self, prefix: Any = None) -> list[str]:
-        """Return the tables."""
+        """Return the tables the cached names hold."""
         return self.tables
+
+    def forget_table_names(self) -> None:
+        """Read the tables from the server again."""
+        self.tables = self.server_tables
 
     def quote_identifier(self, name: str) -> str:
         """Backtick-quote a name."""
@@ -831,6 +839,19 @@ def test_a_bundle_a_table_does_not_hold_deletes_nothing_there() -> None:
     assert db.deletes == [
         ('obs_pds', _ORPHANS, [200, 299]),
         ('obs_surface_geometry_target', _ORPHANS, [200, 299]),
+    ]
+
+
+def test_a_bundle_is_deleted_from_tables_created_after_the_connection_read_its_tables() -> None:
+    """Another importer's tables, created since, are read from the server and deleted from.
+
+    A recovery's connection that has seen no ``obs_`` table at all still deletes.
+    """
+    db = _DeletingDB({'obs_general': [4]}, ['obs_general', 'obs_pds'], seen=[])
+    do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
+    assert db.deletes == [
+        ('obs_pds~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 4]),
+        ('obs_general', _IN_RANGE, ['B_1', 4, 4]),
     ]
 
 

@@ -328,14 +328,29 @@ def test_step_timings_are_written_with_their_total(
 
 
 def test_an_importers_first_interrupt_drains_and_its_second_aborts() -> None:
-    """The first SIGINT is only counted; the second raises, which aborts the bundle."""
+    """The first SIGINT is only counted; the second raises, which aborts the bundle; a
+    third, arriving during the abort, is only counted."""
     ctx = make_context()
+    ctx.importer = object()  # type: ignore[assignment]
     handler = cli._interrupt_handler(ctx)
 
     handler(signal.SIGINT, None)
     assert ctx.interrupts == 1
     with pytest.raises(KeyboardInterrupt):
         handler(signal.SIGINT, None)
+    assert ctx.interrupts == 2
+    handler(signal.SIGINT, None)
+    assert ctx.interrupts == 3
+
+
+def test_a_second_interrupt_before_or_after_the_importer_runs_is_only_counted() -> None:
+    """With no importer running (starting up, or recording its exit), nothing is raised:
+    the queue loop's check of the count stops it."""
+    ctx = make_context()
+    handler = cli._interrupt_handler(ctx)
+
+    handler(signal.SIGINT, None)
+    handler(signal.SIGINT, None)
     assert ctx.interrupts == 2
 
 

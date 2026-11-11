@@ -115,15 +115,19 @@ class _RegistryDB:
     def conditional_update(
         self, table_name: str, row: dict[str, Any], where: str, where_params: list[Any]
     ) -> int:
-        """Assign `row` to the bundle the clause names if its state, and its start when
-        named, are the ones the clause expects; return how many rows changed."""
+        """Assign `row` to the bundle the clause names if its state, its start when
+        named, and a NULL ``process_id`` when asked for, are the ones the clause expects;
+        return how many rows changed."""
         bundle_id, *rest = where_params
         state_count = where.split(' IN (', 1)[1].split(')', 1)[0].count('%s')
         states, started = rest[:state_count], rest[state_count:]
+        unheld = where.endswith('`process_id` IS NULL')
         changed = 0
         for existing in self._matching(table_name, '`bundle_id`=%s', bundle_id):
-            if existing['state'] in states and (
-                not started or existing.get('started_at') == started[0]
+            if (
+                existing['state'] in states
+                and (not started or existing.get('started_at') == started[0])
+                and (not unheld or existing.get('process_id') is None)
             ):
                 existing.update(row)
                 changed += 1
@@ -745,7 +749,52 @@ def test_an_aborted_bundle_goes_back_to_the_queue_on_a_fresh_connection(
     events = [event for event in db.events if event.startswith(('delete', 'load', 'close'))]
     assert events == ['delete B_1', 'load B_1 (importing)', 'close', 'delete B_1']
     (fatal,) = ctx.logger.messages_at('fatal')
-    assert fatal.startswith(('Interrupted twice', 'lost "opus:lock"'))
+    assert fatal in (
+        'Interrupted twice: this importer returned B_1 to the queue, and exits',
+        'lost "opus:lock"',
+    )
+
+
+@pytest.mark.parametrize('where', ['after-claim', 'failure-path'])
+def test_a_second_interrupt_outside_the_import_still_aborts_the_bundle_it_holds(
+    where: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Between the claim's commit and the work, or in a failed bundle's own release, the
+    bundle the registry has under the importer is aborted, and the log says so."""
+    db = _two_pending()
+    during: dict[str, Any] = {}
+    if where == 'after-claim':
+
+        def interrupted_hold(site: str) -> str | None:
+            if site == do_import.HOLD_AFTER_CLAIM_FAULT_SITE:
+                raise KeyboardInterrupt
+            return None
+
+        monkeypatch.setattr(do_import, 'import_fault_argument', interrupted_hold)
+        expected = ['close', 'delete B_1']
+    else:
+
+        def interrupt_the_failed_release(ctx: Any) -> None:
+            release = do_recover.release_bundle
+
+            def interrupted(*args: Any) -> bool:
+                if args[-1] == bundle_registry.BUNDLE_FAILED:
+                    raise KeyboardInterrupt
+                return release(*args)
+
+            monkeypatch.setattr(do_recover, 'release_bundle', interrupted)
+
+        during['B_1'] = interrupt_the_failed_release
+        expected = ['delete B_1', 'close', 'delete B_1']
+
+    succeeded, ctx = _run(db, [], monkeypatch, join=True, failing=('B_1',), during=during)
+
+    assert not succeeded
+    assert db.states() == {'B_1': 'pending', 'B_2': 'pending'}
+    assert [event for event in db.events if event.startswith(('delete', 'close'))] == expected
+    assert ctx.logger.messages_at('fatal') == [
+        'Interrupted twice: this importer returned B_1 to the queue, and exits'
+    ]
 
 
 @pytest.mark.parametrize(
@@ -759,8 +808,8 @@ def test_requeue_returns_only_failed_and_importing_bundles(
     """Any other bundle named refuses the whole requeue, which then changes nothing."""
     states = {'B_1': 'done', 'B_2': 'pending', 'B_3': 'failed', 'B_4': 'importing'}
     db = _RegistryDB({'import_bundle': _registry(states)})
-    # Imported by importer 3, whose lock is free.
-    db.tables['import_bundle'][3]['process_id'] = 3
+    # Failed under importer 3; B_4 is importing under no queue importer.
+    db.tables['import_bundle'][2]['process_id'] = 3
     succeeded, _ctx = _run(db, named, monkeypatch, do_import=False, requeue=True)
     assert succeeded is returned
     if returned:
@@ -973,22 +1022,41 @@ def test_a_lock_name_fits_mysqls_limit_and_belongs_to_its_schema() -> None:
     assert importdb.lock_name('s', 'importer', 1) == importdb.lock_name('s', 'importer', '1')
 
 
-def test_requeue_refuses_a_bundle_whose_importer_holds_its_lock(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize('lock_holder', [77, None], ids=['alive', 'lock-free'])
+def test_requeue_refuses_a_bundle_a_queue_importer_holds(
+    lock_holder: int | None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """An importing bundle is returned only once its importer is gone."""
+    """A queue importer's bundle is left to recovery, whether its importer is alive or
+    not, and nothing named is returned."""
     states = {'B_3': 'failed', 'B_4': 'importing'}
     db = _RegistryDB({'import_bundle': _registry(states)})
     db.tables['import_bundle'][1]['process_id'] = 5
-    alive = import_processes.importer_lock_name(db.db_schema, 5)
-    monkeypatch.setattr(db, 'named_lock_holder', lambda name: 77 if name == alive else None)
+    monkeypatch.setattr(db, 'named_lock_holder', lambda name: lock_holder)
     succeeded, ctx = _run(db, ['B_3', 'B_4'], monkeypatch, do_import=False, requeue=True)
     assert not succeeded
+    assert db.events == []
     assert db.states() == states
     (fatal,) = ctx.logger.messages_at('fatal')
-    assert 'B_4 (importing under importer 5, which holds its lock)' in fatal
+    assert 'B_4 (importing under importer 5, whose bundle recovery returns' in fatal
 
-    monkeypatch.setattr(db, 'named_lock_holder', lambda name: None)
-    succeeded, _ctx = _run(db, ['B_3', 'B_4'], monkeypatch, do_import=False, requeue=True)
-    assert succeeded
-    assert db.states() == {'B_3': 'pending', 'B_4': 'pending'}
+
+def test_requeue_deletes_nothing_of_a_bundle_a_queue_importer_took_after_the_check(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bundle read ``importing`` under no importer, then returned and claimed by a
+    queue importer before the hold, is left to that importer with its rows."""
+    db = _RegistryDB({'import_bundle': _registry({'B_4': 'importing'})})
+    original = do_import._queue_holders
+
+    def checked_then_claimed(ctx: Any, bundle_ids: list[str]) -> list[tuple[str, int]]:
+        found = original(ctx, bundle_ids)
+        db.tables['import_bundle'][0]['process_id'] = 9
+        return found
+
+    monkeypatch.setattr(do_import, '_queue_holders', checked_then_claimed)
+    succeeded, ctx = _run(db, ['B_4'], monkeypatch, do_import=False, requeue=True)
+    assert not succeeded
+    assert db.events == []
+    assert db.tables['import_bundle'][0]['process_id'] == 9
+    (error,) = ctx.logger.messages_at('error')
+    assert error == 'B_4 changed state before it was requeued; nothing was deleted'

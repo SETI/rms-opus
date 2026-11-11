@@ -309,9 +309,11 @@ Import steps
    * - ``--requeue``
      - Return the named ``failed`` or ``importing`` bundles to ``pending``, after
        deleting their rows. Naming any other bundle refuses the whole invocation, which
-       then changes nothing. Naming an ``importing`` bundle states that the process that
-       claimed it has stopped. Each bundle is held while its rows are deleted, so one
-       another process takes first is left to it, with nothing deleted.
+       then changes nothing, and so does naming an ``importing`` bundle a queue importer
+       holds, which recovery returns (`How an importer is known to be alive`_). Naming
+       any other ``importing`` bundle states that the process that claimed it has
+       stopped. Each bundle is held while its rows are deleted, so one another process
+       takes first is left to it, with nothing deleted.
    * - ``--delete-bundles``
      - Delete the named bundles' rows from every observation table, and their bundle
        registry rows, before any bundle is imported. A ``ready`` schema of this release's
@@ -678,7 +680,18 @@ import on one computer:
    (`How an importer is known to be alive`_). Its bundle's rows are deleted, its
    ``losses`` counted, and it goes back to ``pending``; at its second loss it is
    ``failed`` instead, since a bundle that kills its importer twice would loop. The
-   coordinator replaces a lost importer of its own while bundles are pending.
+   coordinator keeps up to M importers of its own running while bundles are ``pending``
+   that they may claim, beyond the ones its idle importers are about to take. An
+   importer exits cleanly only once it finds nothing it may claim, so a bundle
+   ``pending`` both when one started and when it exited cleanly is taken as one the
+   importers here may not claim (``--sets``, ``--exclude-bundles``), and nothing is
+   started for it; when such bundles are all that is left and nothing runs anywhere,
+   one more round is started for them before the run stops naming them. Once
+   :data:`~opus_import.import_all.FAILED_STARTS_ALLOWED` importers in a row exit with
+   failure before claiming anything, no more are started. A pass whose reading of the
+   database fails is logged, and the next opens a new connection; once readings have
+   failed for :data:`~opus_import.import_all.DATABASE_OUTAGE_SECONDS` in a row the
+   coordinator stops, leaving its running importers to finish, and a rerun resumes.
 5. **Finish.** Once no bundle is ``pending`` or ``importing`` and no importer anywhere is
    alive, it runs ``--finish`` (below). If a bundle failed, it exits with failure
    instead, naming each failed bundle with its importer's log, and leaves the schema
@@ -689,14 +702,18 @@ The coordinator's first line states the division, as in::
 
     Parallelism: 30 cores detected, cpu_fraction 0.8, ceiling 24; workers 24 in all, importers 6, workers per importer 4, 4, 4, 4, 4, 4
 
-Its own log goes to ``opus_import_all_<time>.log`` in ``[paths] import_log_dir``; each
+Every event the coordinator reports (an importer started or exited, a bundle recovered
+or finished, a stall, an interrupt, the reason the run stopped) goes to its own log,
+``opus_import_all_<time>.log`` in ``[paths] import_log_dir``, and the events of the
+run's end are printed after the terminal's last redraw, so the failed bundles and their
+importers' logs are on the screen when it exits. Each
 importer writes its own logs, named after its computer and process id
 (:ref:`dev_guide_import_logs`).
 
 **Interrupts.** The first Ctrl-C (SIGINT) drains: every importer finishes its bundle and
 claims nothing new, and the coordinator exits with failure without finalizing. A second
 aborts: every importer deletes its bundle's rows, returns it to ``pending``, and exits.
-Either way, running ``opus_import_all`` again resumes. The importers run in process
+Later interrupts do not interrupt the abort. Either way, running ``opus_import_all`` again resumes. The importers run in process
 groups of their own, so a terminal's Ctrl-C reaches the coordinator alone, which passes
 it on; under ``nohup``, ``kill -INT <coordinator>`` does the same.
 
@@ -723,14 +740,19 @@ The steps also run alone when named:
     ``opus_import --finalize``, which is the finalization group alone.
 
 ``--requeue <bundles>``
-    Returns ``failed`` bundles, and ``importing`` ones whose importer is gone, to
+    Returns ``failed`` bundles, and ``importing`` ones no queue importer holds, to
     ``pending`` after deleting their rows, through ``opus_import --requeue``. An
-    ``importing`` bundle whose importer still holds its lock is refused.
+    ``importing`` bundle a queue importer holds is refused, alive or not: once its lock
+    is free, recovery returns it, which the coordinator does and ``--status --recover``
+    does on demand.
 
 ``--status``
     Prints the coordinator's table from any computer, reading only; ``--watch`` redraws
     it every few seconds until interrupted, and ``--recover`` first recovers lost
-    importers, as a coordinator would.
+    importers, as a coordinator would. Each reading sees the tables as they are, so a
+    watch started before the import created them shows them once it has. A reading that
+    fails, as one does while a rerun drops the tables, is reported on standard error: a
+    single ``--status`` exits with failure, and a watch reads again on a new connection.
 
 **Nothing is erased unless asked for.** ``opus_import_all --scorched-earth`` first runs
 ``opus_import --scorched-earth --yes`` as its own invocation, after asking for
@@ -771,8 +793,9 @@ limit the bundles an importer claims, which is how a computer holding only some 
 holdings joins, and ``--exclude-bundles`` keeps it off the ones it names. An importer
 that finds nothing to claim waits for any registration in progress and looks once more
 before it exits, and one started on a schema with no bundle registry waits the same
-way, then exits with failure if there is still none. An importer's first interrupt makes it finish its bundle and claim
-nothing new; a second makes it return its bundle to the queue and exit.
+way, then exits with failure if there is still none. An importer's first interrupt makes
+it finish its bundle and claim nothing new; a second makes it return its bundle to the
+queue and exit, and any later one is ignored until it has.
 
 A bundle is held by one process at a time. A plain ``opus_import --import`` and
 ``--delete-bundles`` refuse a bundle another process holds ``importing``, naming the
@@ -805,7 +828,13 @@ No timeout decides it. Each importer records itself as a row of ``import_process
 holds a server-wide named lock for its whole life, on a connection opened for that alone
 and never reconnected (:mod:`opus_import.import_processes`). The server frees the lock
 when that connection closes, however the process ends, so any computer can ask the
-server whether an importer is alive. The row is committed only once the lock is held, so
+server whether an importer is alive. A process that exits or is killed closes it at
+once. A computer that loses power or its network cannot close it, and the server frees
+the lock only when it finds the connection dead, which for an idle connection is when
+the server's TCP keepalive gives up: about two hours and ten minutes on Linux's defaults,
+since the lock connection's idle timeout is a year. Until then the importer counts as
+alive; ``KILL`` of its lock connection on the server frees the lock at once. A server
+restart frees every lock, so each bundle in flight is recovered, with a loss counted. The row is committed only once the lock is held, so
 no reader sees a ``running`` row whose lock is free unless its importer is gone.
 
 An importer commits nothing once it has lost its lock or its bundle. Each chunk of rows

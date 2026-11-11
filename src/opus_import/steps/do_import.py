@@ -514,8 +514,10 @@ def import_from_queue(
     Every chunk it commits, every claim and every move to ``done`` is committed only
     while it holds its lock and the registry still names it as holding the bundle. When
     either is lost, it aborts its bundle (`abort_bundle`) and stops. After one interrupt
-    it finishes its bundle and claims nothing new; a second aborts its bundle and stops.
-    Whichever way it ends, it records itself ``exited`` and frees its lock.
+    it finishes its bundle and claims nothing new; a second, wherever it lands, aborts
+    every bundle the registry has ``importing`` under the importer and stops, and any
+    later one is only counted, so nothing interrupts the abort. Whichever way it ends,
+    it records itself ``exited`` and frees its lock.
 
     A claim that finds nothing waits for any registration in progress, by taking and
     releasing registration's lock, and claims once more before the importer exits: a
@@ -540,12 +542,12 @@ def import_from_queue(
     import_processes.create_process_table(db)
     lock_db = db.open_sibling_connection()
     importer = import_processes.start_importer(lock_db, ctx.log_path or '')
-    ctx.importer = importer
-    import_util.log_info(
-        ctx, f'{IMPORTER_PREFIX}{importer.process_id}, holding the lock "{importer.name}"'
-    )
     failures: list[str] = []
     try:
+        ctx.importer = importer
+        import_util.log_info(
+            ctx, f'{IMPORTER_PREFIX}{importer.process_id}, holding the lock "{importer.name}"'
+        )
         with ctx.timed('import'):
             while True:
                 if ctx.interrupts:
@@ -573,7 +575,9 @@ def import_from_queue(
         ctx.logger.log('fatal', str(e))
         return False
     except KeyboardInterrupt:
-        ctx.logger.log('fatal', 'Interrupted twice: this importer aborted its bundle and exits')
+        aborted = _abort_held_bundles(ctx, importer)
+        held = f'returned {", ".join(aborted)} to the queue' if aborted else 'held no bundle'
+        ctx.logger.log('fatal', f'Interrupted twice: this importer {held}, and exits')
         return False
     finally:
         ctx.importer = None
@@ -650,7 +654,7 @@ def _import_claimed_bundle(
     Raises:
         opus_import.import_processes.LostImporterError: If the importer lost its lock or
             its bundle, after the bundle was aborted.
-        KeyboardInterrupt: On a second interrupt, after the bundle was aborted.
+        KeyboardInterrupt: On a second interrupt, which the caller aborts the bundle for.
     """
     db = ctx.db
     assert db is not None
@@ -674,7 +678,7 @@ def _import_claimed_bundle(
         if imported and not ctx.bundle_has_errors:
             bundle_registry.finish_claimed_bundle(ctx, number, importer)
             return True
-    except (import_processes.LostImporterError, KeyboardInterrupt):
+    except import_processes.LostImporterError:
         abort_bundle(ctx, bundle_id, number, importer)
         raise
     except Exception:
@@ -707,13 +711,7 @@ def abort_bundle(
         number: Its number.
         importer: The importer.
     """
-    old = ctx.db
-    assert old is not None
-    with contextlib.suppress(Exception):
-        old.close()
-    fresh = old.open_sibling_connection()
-    fresh.logger = old.logger
-    ctx.db = fresh
+    _replace_connection(ctx)
     if do_recover.release_bundle(
         ctx, bundle_id, number, importer.process_id, bundle_registry.BUNDLE_PENDING
     ):
@@ -724,11 +722,73 @@ def abort_bundle(
         import_util.log_info(ctx, f'Aborted {bundle_id}: it had already left this importer')
 
 
+def _replace_connection(ctx: ImportContext) -> None:
+    """Close the import connection, which rolls back whatever it held, and open another.
+
+    Parameters:
+        ctx: The import run's context, whose connection is replaced.
+    """
+    old = ctx.db
+    assert old is not None
+    with contextlib.suppress(Exception):
+        old.close()
+    fresh = old.open_sibling_connection()
+    fresh.logger = old.logger
+    ctx.db = fresh
+
+
+def _abort_held_bundles(ctx: ImportContext, importer: import_processes.ImporterLock) -> list[str]:
+    """Abort every bundle the registry has ``importing`` under the importer.
+
+    A second interrupt can land anywhere, including between a claim's commit and the
+    work on the bundle, so what is held is read from the registry, on a fresh connection,
+    rather than from where the interrupt landed (`abort_bundle`).
+
+    Parameters:
+        ctx: The import run's context, whose connection is replaced.
+        importer: The importer.
+
+    Returns:
+        The bundles returned to the queue, in registration order.
+    """
+    _replace_connection(ctx)
+    db = ctx.db
+    assert db is not None
+    rows = db.read_rows(
+        bundle_registry.BUNDLE_REGISTRY_TABLE,
+        ['bundle_id', 'bundle_number', 'state'],
+        f'{db.quote_identifier("process_id")}=%s',
+        [importer.process_id],
+    )
+    aborted = []
+    for bundle_id, number, state in sorted(rows, key=lambda row: int(row[1])):
+        if state != bundle_registry.BUNDLE_IMPORTING:
+            continue
+        if do_recover.release_bundle(
+            ctx, str(bundle_id), int(number), importer.process_id, bundle_registry.BUNDLE_PENDING
+        ):
+            import_util.log_info(
+                ctx, f'Aborted {bundle_id}: deleted its rows and returned it to the queue'
+            )
+            aborted.append(str(bundle_id))
+    return aborted
+
+
 def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
     """Return ``failed`` or ``importing`` bundles to ``pending``, after deleting their rows.
 
     Naming an ``importing`` bundle is the operator's statement that the process that
-    claimed it is no longer running; one whose importer still holds its lock is refused.
+    claimed it is no longer running. That is accepted only for a bundle no queue
+    importer holds (``process_id`` NULL), as a plain ``opus_import`` leaves one: a queue
+    importer's bundle is refused, because recovery returns it once the importer's lock
+    is free (`opus_import.steps.do_recover`), checking that lock under the bundle's row
+    lock, which a requeue's own check could not. Each bundle is first taken, from the
+    state it was read in, as a hold of this process's own
+    (`opus_import.bundle_registry.start_bundle`), which takes an ``importing`` bundle
+    only while no queue importer holds it; its rows are deleted under that hold, and it
+    moves to ``pending`` only while the hold stands
+    (`opus_import.bundle_registry.finish_bundle`). A bundle another process took after
+    the states were read is left to it, with nothing deleted, and logged as an error.
 
     Parameters:
         ctx: The import run's context, for the open database and the log.
@@ -736,9 +796,10 @@ def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
 
     Returns:
         True when every named bundle was returned. False, changing nothing, when a named
-        bundle is not registered or is neither ``failed`` nor ``importing``, which is
-        logged as fatal naming each such bundle; False too when one changed state while
-        it was requeued, which is logged as an error.
+        bundle is not registered, is neither ``failed`` nor ``importing``, or is
+        ``importing`` under a queue importer, which is logged as fatal naming each such
+        bundle; False too when one changed state while it was requeued, which is logged
+        as an error.
     """
     states = dict(bundle_registry.registered_bundles(ctx))
     returnable = (bundle_registry.BUNDLE_FAILED, bundle_registry.BUNDLE_IMPORTING)
@@ -748,20 +809,23 @@ def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
         if states.get(bundle_id) not in returnable
     ]
     refused += [
-        f'{bundle_id} (importing under importer {process_id}, which holds its lock)'
-        for bundle_id, process_id in _alive_holders(ctx, bundle_ids)
+        f'{bundle_id} (importing under importer {process_id}, whose bundle recovery returns '
+        'once its lock is free: the coordinator and "opus_import_all --status --recover" '
+        'run it)'
+        for bundle_id, process_id in _queue_holders(ctx, bundle_ids)
     ]
     if refused or not bundle_ids:
         ctx.logger.log(
             'fatal',
-            '--requeue returns only failed or importing bundles to the queue, and changes '
-            f'nothing otherwise: {", ".join(refused) or "no bundle was named"}',
+            '--requeue returns only failed bundles, and importing ones no queue importer '
+            'holds, to the queue, and changes nothing otherwise: '
+            f'{", ".join(refused) or "no bundle was named"}',
         )
         ctx.import_has_bad_data = True
         return False
     returned = True
     for bundle_id in bundle_ids:
-        hold = bundle_registry.start_bundle(ctx, bundle_id, from_states=returnable)
+        hold = bundle_registry.start_bundle(ctx, bundle_id, from_states=(states[bundle_id],))
         if hold is None:
             import_util.log_error(
                 ctx, f'{bundle_id} changed state before it was requeued; nothing was deleted'
@@ -777,8 +841,8 @@ def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
     return returned
 
 
-def _alive_holders(ctx: ImportContext, bundle_ids: list[str]) -> list[tuple[str, int]]:
-    """Return the named ``importing`` bundles whose importer holds its lock.
+def _queue_holders(ctx: ImportContext, bundle_ids: list[str]) -> list[tuple[str, int]]:
+    """Return the named ``importing`` bundles a queue importer holds.
 
     Parameters:
         ctx: The import run's context, for the open database.
@@ -789,19 +853,19 @@ def _alive_holders(ctx: ImportContext, bundle_ids: list[str]) -> list[tuple[str,
     """
     db = ctx.db
     assert db is not None
-    alive = []
-    for status in import_processes.read_snapshot(db).bundles:
-        if (
-            status.bundle_id in bundle_ids
-            and status.state == bundle_registry.BUNDLE_IMPORTING
-            and status.process_id is not None
-            and db.named_lock_holder(
-                import_processes.importer_lock_name(db.db_schema, status.process_id)
-            )
-            is not None
-        ):
-            alive.append((status.bundle_id, status.process_id))
-    return sorted(alive, key=lambda found: bundle_ids.index(found[0]))
+    if not db.table_exists(bundle_registry.BUNDLE_REGISTRY_TABLE):
+        return []
+    rows = db.read_rows(
+        bundle_registry.BUNDLE_REGISTRY_TABLE,
+        ['bundle_id', 'state', 'process_id'],
+        f'1=1 ORDER BY {db.quote_identifier("bundle_number")}',
+    )
+    held = {
+        str(bundle_id): int(process_id)
+        for bundle_id, state, process_id in rows
+        if state == bundle_registry.BUNDLE_IMPORTING and process_id is not None
+    }
+    return [(bundle_id, held[bundle_id]) for bundle_id in bundle_ids if bundle_id in held]
 
 
 def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str]:

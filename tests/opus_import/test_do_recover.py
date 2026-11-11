@@ -43,6 +43,9 @@ class _QueueDB:
     def table_exists(self, table_name: str) -> bool:
         return table_name in self.tables
 
+    def forget_table_names(self) -> None:
+        """Nothing is cached: every table is read where it is held."""
+
     def quote_identifier(self, name: str) -> str:
         return f'`{name}`'
 

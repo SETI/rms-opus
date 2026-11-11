@@ -405,13 +405,21 @@ def read_snapshot(db: ImportDBSuper) -> Snapshot:
     """Read every registry row and every importer's row, and ask whether each running
     importer's lock is held.
 
+    The tables present are read from the server each time, so a reader opened before
+    the registry or ``import_process`` was created sees them once they are.
+
     Parameters:
         db: The open database. Absent tables read as empty.
 
     Returns:
         The snapshot.
+
+    Raises:
+        opus_import.importdb.super.ImportDBError: If a read fails, as it does when a
+            table is dropped between the check that it exists and its read.
     """
     q = db.quote_identifier
+    db.forget_table_names()
     bundles: list[BundleStatus] = []
     if db.table_exists(bundle_registry.BUNDLE_REGISTRY_TABLE):
         for row in db.read_rows(

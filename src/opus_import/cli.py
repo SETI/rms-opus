@@ -73,12 +73,14 @@ def _interrupt_handler(ctx: ImportContext) -> Callable[[int, FrameType | None], 
 
     Returns:
         The handler. The first interrupt is only counted, and the importer claims
-        nothing new once its bundle is done; the second raises `KeyboardInterrupt`,
-        which aborts the bundle (`opus_import.steps.do_import.abort_bundle`).
+        nothing new once its bundle is done; the second raises `KeyboardInterrupt` while
+        the importer runs (`ImportContext.importer` is set), which aborts its bundle
+        (`opus_import.steps.do_import.import_from_queue`); every later one is only
+        counted, so that nothing interrupts the abort.
     """
 
     def handler(signum: int, frame: FrameType | None) -> None:
-        """Count the interrupt; raise on the second.
+        """Count the interrupt; raise on the second, while the importer runs.
 
         Parameters:
             signum: The signal.
@@ -88,7 +90,7 @@ def _interrupt_handler(ctx: ImportContext) -> Callable[[int, FrameType | None], 
             KeyboardInterrupt: On the second interrupt.
         """
         ctx.interrupts += 1
-        if ctx.interrupts > 1:
+        if ctx.interrupts == 2 and ctx.importer is not None:
             raise KeyboardInterrupt
 
     return handler
