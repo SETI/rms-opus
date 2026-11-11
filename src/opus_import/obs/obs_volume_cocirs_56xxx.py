@@ -63,21 +63,6 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_ring_obs_id(self) -> StrField:
-        instrument_id = self._index_col('DETECTOR_ID')
-        filename = self._index_col('SPECTRUM_FILE_SPECIFICATION').split('/')[-1]
-        if not filename.startswith('SPEC') or not filename.endswith('.DAT'):
-            self._log_nonrepeating_error(f'Bad format SPECTRUM_FILE_SPECIFICATION "{filename}"')
-            return None
-        image_num = filename[4:14]
-        planet = self._cassini_planet_id()
-        if planet == 'OTH':
-            pl_str = ''
-        else:
-            pl_str = planet[0]
-
-        return f'{pl_str}_SPEC_CO_CIRS_{image_num}_{instrument_id}'
-
     def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult(self._cassini_planet_id())
 

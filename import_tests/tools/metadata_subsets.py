@@ -255,9 +255,9 @@ def read_inventory_rows(csv_path: Path) -> list[dict[str, Any]]:
     with csv_path.open(encoding='utf-8', newline='') as handle:
         for csv_row in csv.reader(handle):
             if len(csv_row) > 2 and csv_row[2].count('-') > 1:
-                bundle, filespec, ring_obs_id, *targets = csv_row
+                bundle, filespec, opus_id, *targets = csv_row
             else:
-                ring_obs_id = ''
+                opus_id = ''
                 bundle, filespec, *targets = csv_row
             if len(targets) == 1:
                 targets = targets[0].split(',')
@@ -266,8 +266,8 @@ def read_inventory_rows(csv_path: Path) -> list[dict[str, Any]]:
                 'FILE_SPECIFICATION_NAME': filespec.strip(),
                 'TARGET_LIST': targets,
             }
-            if len(ring_obs_id) > 0:
-                row['OPUS_ID'] = ring_obs_id.strip()
+            if len(opus_id) > 0:
+                row['OPUS_ID'] = opus_id.strip()
             rows.append(row)
     return rows
 

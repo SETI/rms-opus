@@ -1574,8 +1574,6 @@ class ObsGeneral(models.Model):
     declination1 = models.FloatField(blank=True, null=True)
     declination2 = models.FloatField(blank=True, null=True)
     observation_type = models.PositiveIntegerField()
-    ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-    primary_filespec = models.CharField(max_length=240)
     preview_images = models.JSONField()
     timestamp = models.DateTimeField()
 

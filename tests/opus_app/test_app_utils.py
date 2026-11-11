@@ -50,7 +50,6 @@ from opus_app.apps.tools.app_utils import (
     get_session_id,
     http404_no_request,
     http404_unknown_opus_id,
-    is_old_format_ring_obs_id,
     json_response,
     sort_dictionary,
     strip_numeric_suffix,
@@ -163,22 +162,6 @@ def test_cols_to_slug_list(slugs: str | None, expected: list[str]) -> None:
 def test_get_mult_name() -> None:
     """A field's mult table is its qualified name with the dot turned into `mult_`."""
     assert get_mult_name('obs_general.planet_id') == 'mult_obs_general_planet_id'
-
-
-@pytest.mark.parametrize(
-    ('identifier', 'is_old'),
-    [
-        ('S_IMG_CO_ISS_1866145657_N', True),  # underscore in position 1
-        ('_IMG_CO_ISS_1866145657_N', True),  # underscore in position 0
-        ('co-iss-n1866145657', False),  # a modern opus id
-        ('vg-iss-2-s-c4360845', False),
-        ('S_', False),  # too short to be either
-        ('', False),
-    ],
-)
-def test_is_old_format_ring_obs_id(identifier: str, is_old: bool) -> None:
-    """A ringobsid is told from an opusid by an underscore in its first two places."""
-    assert is_old_format_ring_obs_id(identifier) is is_old
 
 
 def test_download_filename_is_safe_for_a_filesystem_and_a_suffix() -> None:

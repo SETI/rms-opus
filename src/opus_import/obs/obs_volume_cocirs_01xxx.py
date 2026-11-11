@@ -86,9 +86,6 @@ class ObsVolumeCOCIRS01xxx(ObsCassiniCommonPDS3):
     ### OVERRIDE FROM ObsGeneral ###
     ################################
 
-    def field_obs_general_ring_obs_id(self) -> StrField:
-        return None
-
     def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult('SAT')
 

@@ -73,7 +73,7 @@
         "field_name": "levels",
         "field_type": "uint4",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "definition": "The number of discrete values that can appear in a single data point. This is a property of the instrument and does not represent the actual contents of the observation. For example, a camera with 12-bit pixels will support 4096 levels.",
         "pi_category_name": "obs_type_image",

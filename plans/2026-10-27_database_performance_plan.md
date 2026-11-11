@@ -5627,3 +5627,41 @@ Nothing above this line is rewritten by an executor.
   - The orchestrator's decision on the stop-and-report (2026-11-10): the PR proceeds on
     the structural gains, the schema's smaller indexes and data, `obs_files`' two keys,
     and the children keyed on their observation, which PR-14 and PR-15 build on.
+
+### 2026-11-10, PR-13 (written against this file at afb570bb)
+
+- The branch is PR-12's, since the section builds on its keys and its table-level
+  `{"key": [...]}` entry, which PR-12 added; this PR only uses the entry.
+- The keys follow the section's table, with one departure:
+  `obs_mission_cassini.spacecraft_clock_count1` keeps its key. Its pair partner
+  `spacecraft_clock_count2` keeps one, so the section's pair rule keeps it too; the
+  table leaves it out without marking an exception.
+- The two-column keys are the section's: `(time1, opus_id)`, `(right_asc, d_right_asc)`
+  and `(declination1, declination2)` on `obs_general`, and one `(<col>, d_<col>)` key on
+  `obs_ring_geometry` for each of its twelve longitude columns with a `d_` partner, eight
+  of which had no key before. The surface geometry name and per-target tables are left
+  to PR-15, which replaces them.
+- No import code or management command filters, joins or groups by a column whose key
+  is dropped (a grep of `src/opus_import` and the management commands for each).
+- `ring_obs_id` goes from every site the section lists. `ui/views.py` keeps one check
+  that names `ringobsid`: a URL whose `cols` is exactly the old default list, which
+  begins with `ringobsid`, is given the current defaults with a message, as before. It
+  reads no column. The log analyzer drops a `ringobsid` field from a server's
+  definitions only when the server lists one, since the server it reads may run an
+  older release, and keeps recording `ringobsid` as `opusid`'s old slug; a new unit test
+  covers both.
+- The integration suite's `ringobsid` tests go, except that
+  `test__api_metadata_old_format_ring_obs_id_is_an_unknown_opusid` shows an old-format
+  id that used to resolve now gets the unknown-OPUS-ID 404. The two real-world bookmark
+  tests, whose `detail` is an old-format id, now expect it ignored with the unknown-OPUS-ID
+  message. Two tests used `**filespec`, the removed column's slug, as their field that
+  cannot be displayed; they use `**previewimages`.
+- The 102 API golden responses carrying the `ring_obs_id` key lose it and change in
+  nothing else; they are edited rather than regenerated, and the integration suite,
+  against a local database imported with this head, confirms them. The import goldens
+  change in `obs_general` (the two columns), `param_info` (their two rows, the later
+  rows' ids moving down), `definitions` (`RING_OBS_ID`'s row, likewise) and
+  `schema_version`.
+- `models.py` is edited: `ObsGeneral` loses the two fields, and `inspectdb` against the
+  local integration database gives the same fields.
+- `SCHEMA_VERSION` is 6.

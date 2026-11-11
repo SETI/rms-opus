@@ -865,12 +865,12 @@ def _is_mult(value: Any) -> bool:
 #: or a field method changes, and read a change as something to explain rather than to
 #: paper over.
 _EXPECTED_RETURNS: dict[str, tuple[int, int]] = {
-    'COISS': (228, 194),
-    'GOSSI': (213, 177),
-    'HSTWFPC2': (222, 162),
-    'NHLORRI': (207, 173),
-    'VGISS': (216, 175),
-    'eso-la_silla.1m04': (202, 163),
+    'COISS': (226, 192),
+    'GOSSI': (211, 175),
+    'HSTWFPC2': (220, 160),
+    'NHLORRI': (205, 171),
+    'VGISS': (214, 173),
+    'eso-la_silla.1m04': (200, 162),
 }
 
 

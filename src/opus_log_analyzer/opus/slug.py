@@ -449,8 +449,10 @@ class ToInfoMap:
         anything else is fetched over HTTP.
 
         The server groups the definitions by category.  In the result they are
-        flattened into a single map from field name to definition, the `ringobsid`
-        entry is removed, and `ringobsid` is recorded as the old name of `opusid`.
+        flattened into a single map from field name to definition, and `ringobsid`
+        is recorded as the old name of `opusid`, since the logs being read may name
+        it.  A server whose definitions still list `ringobsid` as a field of its own
+        has that entry removed.
 
         Parameters:
             url_prefix: The base URL of the server, or a `file://` URL naming a saved
@@ -478,13 +480,11 @@ class ToInfoMap:
             text = response.text
         info = json.loads(text)
 
-        # This is a known bug in the JSON.  We correct it before writing it out.
         data = info['data']
         new_data = {}
         for _cat, slug_info in data.items():
             new_data.update(slug_info)
         info['data'] = new_data
-        assert new_data['ringobsid']
-        del new_data['ringobsid']
+        new_data.pop('ringobsid', None)
         new_data['opusid']['old_slug'] = 'ringobsid'
         return cast(dict[str, Any], info)

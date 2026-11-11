@@ -71,7 +71,6 @@ from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
     cols_to_slug_list,
-    convert_ring_obs_id_to_opus_id,
     csv_response,
     download_filename,
     get_mult_name,
@@ -89,7 +88,6 @@ from opus_app.apps.tools.app_utils import (
     http404_no_request,
     http404_unknown_format,
     http404_unknown_opus_id,
-    http404_unknown_ring_obs_id,
     http500_database_error,
     http500_internal_error,
     http500_search_cache_failed,
@@ -520,8 +518,7 @@ def get_metadata(
         request: The request being served. `?cols=` limits the result to particular
             columns and `?cats=` limits it to particular categories; when both are
             given `?cols=` is used and `?cats=` is ignored.
-        opus_id: The observation to describe. An old-format ringobsid is converted
-            to an OPUS ID first.
+        opus_id: The observation to describe.
         fmt: The format to return: `'json'`, `'html'`, or `'csv'`.
         internal: Return the HTML the Details tab needs rather than the HTML the
             public endpoint returns. It affects the `'html'` format only.
@@ -544,15 +541,6 @@ def get_metadata(
 
     if not opus_id:  # pragma: no cover - configuration error
         raise Http400Error(http400_missing_opus_id(request))
-
-    # Backwards compatibility
-    orig_opus_id = opus_id
-    # The conversion returns None for a ringobsid that names no observation, and
-    # the next line turns that into an HTTP 404, so opus_id is a string everywhere
-    # the rest of this function reads it.
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)  # type: ignore[assignment]
-    if not opus_id:
-        raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
 
     cols: str | Literal[False] = request.GET.get('cols', False)
     if cols or cols == '':
@@ -893,7 +881,6 @@ def _api_get_images(
         request,
         cols='opusid,**previewimages',
         return_opusids=True,
-        return_ringobsids=True,
         api_code=api_code,
     )
     if error is not None:
@@ -912,12 +899,6 @@ def _api_get_images(
 
     if not image_list:
         log.error('_api_get_images: No image found for: %r', str(opus_ids[:50]))
-
-    # Backwards compatibility
-    ring_obs_ids = aux['ring_obs_ids']
-    ring_obs_id_dict: dict[str, str] = {}
-    for i in range(len(opus_ids)):
-        ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
     for image in image_list:
         if size is not None:
@@ -953,8 +934,6 @@ def _api_get_images(
             image['path'] = path
             image['img'] = img
             image[size] = img
-
-        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
     data: dict[str, Any] = {}
     if include_search:
@@ -1033,11 +1012,6 @@ def api_get_files(
 
     opus_ids: list[str] = []
     if opus_id:
-        # Backwards compatibility
-        orig_opus_id = opus_id
-        opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-        if not opus_id:
-            raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
         opus_ids = [opus_id]
     else:
         # No opus_id passed, get files from search results
@@ -1108,15 +1082,6 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
 
     if not opus_id:  # pragma: no cover - configuration error
         raise Http400Error(http400_missing_opus_id(request))
-
-    # Backwards compatibility
-    orig_opus_id = opus_id
-    # The conversion returns None for a ringobsid that names no observation, and
-    # the next line turns that into an HTTP 404, so opus_id is a string everywhere
-    # the rest of this function reads it.
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)  # type: ignore[assignment]
-    if not opus_id:
-        raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
 
     all_categories: list[dict[str, Any]] = []
     for tbl in table_names():
@@ -1213,15 +1178,6 @@ def api_get_product_types_for_opus_id(request: HttpRequest, opus_id: str) -> Htt
 
     if not opus_id:  # pragma: no cover - configuration error
         raise Http400Error(http400_missing_opus_id(request))
-
-    # Backwards compatibility
-    orig_opus_id = opus_id
-    # The conversion returns None for a ringobsid that names no observation, and
-    # the next line turns that into an HTTP 404, so opus_id is a string everywhere
-    # the rest of this function reads it.
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)  # type: ignore[assignment]
-    if not opus_id:
-        raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
 
     cursor = connection.cursor()
 
@@ -1413,7 +1369,6 @@ def get_search_results_chunk(
     opus_id: str | None = None,
     start_obs: int | None = None,
     return_opusids: bool = False,
-    return_ringobsids: bool = False,
     return_cart_states: bool = False,
     api_code: int | None = None,
 ) -> SearchResultsChunk:
@@ -1440,8 +1395,6 @@ def get_search_results_chunk(
             1-based observation number instead.
         return_opusids: Include `'opus_ids'` in the returned aux dict. This is a
             list of opus_ids 1:1 with the returned data.
-        return_ringobsids: Include `'ring_obs_ids'` in the returned aux dict, the
-            same way.
         return_cart_states: Include `'cart_states'` in the returned aux dict. This
             is a list 1:1 with the returned data holding, for each observation,
             False when it is not in this session's cart, `'recycle'` when it is in
@@ -1543,10 +1496,6 @@ def get_search_results_chunk(
 
     added_extra_columns = 0
     tables.add('obs_general')  # We must have obs_general since it owns the ids
-    if return_ringobsids and 'obs_general.ring_obs_id' not in column_names:  # pragma: no cover -
-        # this should not normally be a request field, but could be
-        column_names.append('obs_general.ring_obs_id')
-        added_extra_columns += 1  # So we know to strip it off later
     if return_cart_states:
         column_names.append('cart.opus_id')
         column_names.append('cart.recycled')
@@ -1803,11 +1752,6 @@ def get_search_results_chunk(
         opus_id_index = column_names.index('obs_general.opus_id')
         opus_ids = [o[opus_id_index] for o in results]
 
-    if return_ringobsids:
-        # And for backwards compatibility, ring_obs_ids
-        ring_obs_id_index = column_names.index('obs_general.ring_obs_id')
-        ring_obs_ids = [o[ring_obs_id_index] for o in results]
-
     if return_cart_states:
         # For retrieving cart states
         coll_index = column_names.index('cart.recycled')
@@ -1868,8 +1812,6 @@ def get_search_results_chunk(
     aux_dict: dict[str, Any] = {}
     if return_opusids:
         aux_dict['opus_ids'] = opus_ids
-    if return_ringobsids:
-        aux_dict['ring_obs_ids'] = ring_obs_ids
     if return_cart_states:
         aux_dict['cart_states'] = cart_states
 

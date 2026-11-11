@@ -75,19 +75,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     def field_obs_general_declination2(self) -> FloatField:
         return self._ring_geo_index_col('MAXIMUM_DECLINATION')
 
-    def field_obs_general_ring_obs_id(self) -> StrField:
-        filename = self._index_col('PRODUCT_ID')
-        image_num = filename[1:8]
-        inst_host_num = self._index_col('INSTRUMENT_HOST_NAME')[-1]
-        camera = self._index_col('INSTRUMENT_NAME')[0]
-        planet = self._planet_id()
-        if planet is None:
-            pl_str = ''
-        else:
-            pl_str = planet[0]
-
-        return f'{pl_str}_IMG_VG{inst_host_num}_ISS_{image_num}_{camera}'
-
     def field_obs_general_quantity(self) -> MultFieldRet:
         filter_name = self._index_col('FILTER_NAME')
         if filter_name == 'UV':

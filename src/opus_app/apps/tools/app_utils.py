@@ -31,16 +31,12 @@ from urllib.parse import quote
 from django.conf import settings
 from django.core.exceptions import (
     BadRequest,
-    MultipleObjectsReturned,
-    ObjectDoesNotExist,
     PermissionDenied,
     SuspiciousOperation,
 )
 from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.template import loader
 from django.utils.html import escape
-
-from opus_app.apps.search.models import ObsGeneral
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -517,48 +513,6 @@ def api_view(handler: Callable[..., HttpResponse]) -> Callable[..., HttpResponse
 ################################################################################
 
 
-def is_old_format_ring_obs_id(s: str) -> bool:
-    """Return True if the string is a valid old-format ringobsid.
-
-    Parameters:
-        s: The identifier to test.
-
-    Returns:
-        True if it has the shape of an old-format ringobsid.
-    """
-    return len(s) > 2 and (s[0] == '_' or s[1] == '_')
-
-
-def convert_ring_obs_id_to_opus_id(
-    ring_obs_id: str, force_ring_obs_id_fmt: bool = False
-) -> str | None:
-    """Given an old-format ringobsid, return the new opusid.
-
-    Parameters:
-        ring_obs_id: The identifier to convert.
-        force_ring_obs_id_fmt: Treat the argument as a ringobsid even when it
-            does not look like one.
-
-    Returns:
-        The opusid, the argument unchanged when it is not an old-format
-        ringobsid, or None when no observation has that ringobsid.
-    """
-    if not force_ring_obs_id_fmt and not is_old_format_ring_obs_id(ring_obs_id):
-        return ring_obs_id
-    try:
-        return ObsGeneral.objects.get(ring_obs_id=ring_obs_id).opus_id
-    except ObjectDoesNotExist:
-        log.error('No matching RING_OBS_ID for %r', ring_obs_id)
-        return None
-    except MultipleObjectsReturned:  # pragma: no cover - import error
-        log.exception('More than one matching RING_OBS_ID for %r', ring_obs_id)
-        first = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id).first()
-        # Reached only from MultipleObjectsReturned, so the queryset has at
-        # least two rows and .first() cannot be None.
-        assert first is not None
-        return first.opus_id
-
-
 def get_mult_name(param_qualified_name: str) -> str:
     """Returns mult widget foreign key table name.
 
@@ -696,11 +650,6 @@ def http400_unknown_slug(slug: object, r: HttpRequest | str | None) -> str:
 def http400_unknown_units(units: object, slug: object, r: HttpRequest | str | None) -> str:
     """The requested units are not valid for the given metadata field."""
     return f'Unknown units "{units}" for metadata field "{slug}" for {_request_path(r)}'
-
-
-def http404_unknown_ring_obs_id(ringobsid: object, r: HttpRequest | str | None) -> str:
-    """The old-format ringobsid in the URL path names no observation."""
-    return f'Unknown RINGOBSID "{ringobsid}" for {_request_path(r)}'
 
 
 def http404_unknown_opus_id(opusid: object, r: HttpRequest | str | None) -> str:

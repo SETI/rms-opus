@@ -133,7 +133,7 @@
         "field_name": "ascending_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -142,10 +142,16 @@
         "field_name": "d_ascending_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
+    },
+    {
+        "key": [
+            "ascending_longitude",
+            "d_ascending_longitude"
+        ]
     },
     {
         "field_name": "sub_solar_ring_ascending_long1",
@@ -204,7 +210,7 @@
         "field_name": "sub_solar_ring_ascending_long",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -213,10 +219,16 @@
         "field_name": "d_sub_solar_ring_ascending_long",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
+    },
+    {
+        "key": [
+            "sub_solar_ring_ascending_long",
+            "d_sub_solar_ring_ascending_long"
+        ]
     },
     {
         "field_name": "sub_observer_ring_ascending_long1",
@@ -288,6 +300,12 @@
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
+    },
+    {
+        "key": [
+            "sub_observer_ring_ascending_long",
+            "d_sub_observer_ring_ascending_long"
+        ]
     },
     {
         "field_name": "j2000_longitude1",
@@ -363,6 +381,12 @@
         "val_max": 180
     },
     {
+        "key": [
+            "j2000_longitude",
+            "d_j2000_longitude"
+        ]
+    },
+    {
         "field_name": "sub_solar_ring_j2000_long1",
         "field_type": "real8",
         "field_default": null,
@@ -434,6 +458,12 @@
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
+    },
+    {
+        "key": [
+            "sub_solar_ring_j2000_long",
+            "d_sub_solar_ring_j2000_long"
+        ]
     },
     {
         "field_name": "sub_observer_ring_j2000_long1",
@@ -509,6 +539,12 @@
         "val_max": 180
     },
     {
+        "key": [
+            "sub_observer_ring_j2000_long",
+            "d_sub_observer_ring_j2000_long"
+        ]
+    },
+    {
         "field_name": "solar_hour_angle1",
         "field_type": "real8",
         "field_default": null,
@@ -582,6 +618,12 @@
         "val_max": 180
     },
     {
+        "key": [
+            "solar_hour_angle",
+            "d_solar_hour_angle"
+        ]
+    },
+    {
         "field_name": "longitude_wrt_observer1",
         "field_type": "real8",
         "field_default": null,
@@ -640,7 +682,7 @@
         "field_name": "longitude_wrt_observer",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -649,10 +691,16 @@
         "field_name": "d_longitude_wrt_observer",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
+    },
+    {
+        "key": [
+            "longitude_wrt_observer",
+            "d_longitude_wrt_observer"
+        ]
     },
     {
         "field_name": "ring_azimuth_wrt_observer1",
@@ -713,7 +761,7 @@
         "field_name": "ring_azimuth_wrt_observer",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -722,10 +770,16 @@
         "field_name": "d_ring_azimuth_wrt_observer",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
+    },
+    {
+        "key": [
+            "ring_azimuth_wrt_observer",
+            "d_ring_azimuth_wrt_observer"
+        ]
     },
     {
         "field_name": "range_to_ring_intercept1",
@@ -947,7 +1001,7 @@
         "field_name": "projected_long_resolution_angle1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
@@ -974,7 +1028,7 @@
         "field_name": "projected_long_resolution_angle2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
@@ -998,7 +1052,7 @@
         "field_name": "projected_long_resolution1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
@@ -1025,7 +1079,7 @@
         "field_name": "projected_long_resolution2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
@@ -1104,7 +1158,7 @@
         "field_name": "incidence1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
@@ -1133,7 +1187,7 @@
         "field_name": "incidence2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
@@ -1159,7 +1213,7 @@
         "field_name": "emission1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1188,7 +1242,7 @@
         "field_name": "emission2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1379,7 +1433,7 @@
         "field_name": "observer_ring_elevation1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -1408,7 +1462,7 @@
         "field_name": "observer_ring_elevation2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -1489,7 +1543,7 @@
         "field_name": "ring_center_incidence1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
@@ -1518,7 +1572,7 @@
         "field_name": "ring_center_incidence2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
@@ -1544,7 +1598,7 @@
         "field_name": "ring_center_emission1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1573,7 +1627,7 @@
         "field_name": "ring_center_emission2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1599,7 +1653,7 @@
         "field_name": "ring_center_north_based_incidence1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1628,7 +1682,7 @@
         "field_name": "ring_center_north_based_incidence2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1654,7 +1708,7 @@
         "field_name": "ring_center_north_based_emission1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1683,7 +1737,7 @@
         "field_name": "ring_center_north_based_emission2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1709,7 +1763,7 @@
         "field_name": "solar_ring_opening_angle1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -1738,7 +1792,7 @@
         "field_name": "solar_ring_opening_angle2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -1764,7 +1818,7 @@
         "field_name": "observer_ring_opening_angle1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -1793,7 +1847,7 @@
         "field_name": "observer_ring_opening_angle2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -1942,6 +1996,12 @@
         "val_max": 180
     },
     {
+        "key": [
+            "edge_on_ascending_longitude",
+            "d_edge_on_ascending_longitude"
+        ]
+    },
+    {
         "field_name": "edge_on_j2000_longitude1",
         "field_type": "real8",
         "field_default": null,
@@ -2013,6 +2073,12 @@
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
+    },
+    {
+        "key": [
+            "edge_on_j2000_longitude",
+            "d_edge_on_j2000_longitude"
+        ]
     },
     {
         "field_name": "edge_on_solar_hour_angle1",
@@ -2088,10 +2154,16 @@
         "val_max": 180
     },
     {
+        "key": [
+            "edge_on_solar_hour_angle",
+            "d_edge_on_solar_hour_angle"
+        ]
+    },
+    {
         "field_name": "range_to_edge_on_point1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
@@ -2120,7 +2192,7 @@
         "field_name": "range_to_edge_on_point2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
@@ -2254,7 +2326,7 @@
         "field_name": "ring_pole_clock_angle",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -2279,7 +2351,7 @@
         "field_name": "ring_pole_position_angle",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -2328,7 +2400,7 @@
         "field_name": "center_x_coordinate",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -10000,
         "val_max": 10000,
@@ -2353,7 +2425,7 @@
         "field_name": "center_y_coordinate",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -10000,
         "val_max": 10000,
@@ -2378,7 +2450,7 @@
         "field_name": "ring_intercept_time1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -720000000.0,
         "val_max": 1000000000.0,
@@ -2405,7 +2477,7 @@
         "field_name": "ring_intercept_time2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -720000000.0,
         "val_max": 1000000000.0,

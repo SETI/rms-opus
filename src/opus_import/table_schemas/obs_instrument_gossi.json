@@ -100,7 +100,7 @@
         "field_name": "filter_number",
         "field_type": "mult_idx",
         "field_notnull": true,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 7,

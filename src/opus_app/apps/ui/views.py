@@ -53,7 +53,7 @@ from opus_app.apps.cart.models import Cart
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.results.views import get_triggered_tables
 from opus_app.apps.search.forms import SearchForm
-from opus_app.apps.search.models import ObsGeneral, TableNames
+from opus_app.apps.search.models import ObsGeneral, ObsPds, TableNames
 from opus_app.apps.search.views import (
     get_param_info_by_slug,
     is_single_column_range,
@@ -63,7 +63,6 @@ from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
     cols_to_slug_list,
-    convert_ring_obs_id_to_opus_id,
     get_git_version,
     get_mult_name,
     get_reqno,
@@ -806,7 +805,10 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
         obs_general.instrument_id,
         False,
     )
-    filespec = obs_general.primary_filespec
+    # Every observation has an obs_pds row, which holds its primary filespec.
+    filespec = ObsPds.objects.values_list('primary_filespec', flat=True).get(
+        obs_general_id=obs_general.id
+    )
     selection = filespec.split('/')[-1].split('.')[0]
 
     # See if this opus_id is in the cart
@@ -1130,9 +1132,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         handled_slugs.append(pi.slug + clause_num_str)
         if pi.old_slug:
             handled_slugs.append(pi.old_slug + clause_num_str)
-        if not pi_searchable.display and slug != 'ringobsid':
-            # Special exception for ringobsid - we don't have it marked
-            # searchable in param_info, but we want to allow it here
+        if not pi_searchable.display:
             msg = (
                 'Search field "'
                 + _escape_or_label_results(orig_slug, pi)
@@ -1245,23 +1245,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             search1 = pi.slug
             if slug + clause_num_str in original_slugs:
                 search1_val = original_slugs[slug + clause_num_str]
-                # If we're searching for ringobsid, convert it to opusid and
-                # also convert the parameter to the new opusid format
-                if pi.slug == 'ringobsid':
-                    search1 = 'opusid'
-                    new_search1_val = convert_ring_obs_id_to_opus_id(
-                        search1_val, force_ring_obs_id_fmt=True
-                    )
-                    if not new_search1_val:
-                        msg = (
-                            'RING OBS ID "'
-                            + escape(search1_val)
-                            + '" not found; the ringobsid search term has been '
-                            + 'removed.'
-                        )
-                        msg_list.append(msg)
-                        continue
-                    search1_val = new_search1_val
 
         ### Handle qtypes ###
 
@@ -1317,9 +1300,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
                 + 'it has been ignored.'
             )
             msg_list.append(msg)
-
-        if qtype_slug == 'qtype-ringobsid':
-            qtype_slug = 'qtype-opusid'
 
         ### Handle units ###
 
@@ -1498,11 +1478,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
 
         # Make sure that if we have values to search, that the search widget
         # is also enabled.
-        if pi.slug == 'ringobsid':
-            # Note we already convert the ringobsid search parameter above
-            required_widgets_list.append('opusid')
-        else:
-            required_widgets_list.append(strip_numeric_suffix(pi.slug))
+        required_widgets_list.append(strip_numeric_suffix(pi.slug))
 
     # Sort all the clauses for each slug key in numerical order
     # If there are duplicate numbers, do it in syntactic order
@@ -1555,8 +1531,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     for col in cols.split(','):
         if col == '':
             continue
-        if col == 'ringobsid':
-            col = 'opusid'
         pi, desired_units = get_param_info_by_slug(
             col, 'col', allow_units_override=True, check_valid_units=False
         )
@@ -1628,8 +1602,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     for widget in widgets.split(','):
         if widget == '':
             continue
-        if widget == 'ringobsid':
-            widget = 'opusid'
         pi = get_param_info_by_slug(widget, 'widget')
         if not pi and widget[-1] == '1':
             pi = get_param_info_by_slug(strip_numeric_suffix(widget), 'widget')
@@ -1690,8 +1662,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     for order_num, order in enumerate(order_split):
         if order == '':
             continue
-        if order == 'ringobsid':
-            order = 'opusid'
         desc = False
         if order[0] == '-':
             desc = True
@@ -1851,37 +1821,18 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     ### DETAIL
     detail_val = None
     if original_slugs.get('detail'):
-        opus_id = convert_ring_obs_id_to_opus_id(original_slugs['detail'])
-        if not opus_id:
+        opus_id = original_slugs['detail']
+        try:
+            _ = ObsGeneral.objects.get(opus_id=opus_id)
+        except ObjectDoesNotExist:
             msg = (
-                'You appear to be using an obsolete RINGOBS_ID ('
-                + escape(original_slugs['detail'])
-                + '), but it could not be converted '
-                + 'to a new OPUS_ID. It has been ignored.'
+                'The OPUS_ID specified for the "detail" tab '
+                + 'was not found in the current database; '
+                + 'it has been ignored.'
             )
             msg_list.append(msg)
         else:
-            if opus_id != original_slugs['detail']:
-                msg = (
-                    'You appear to be using an obsolete RINGOBS_ID ('
-                    + escape(original_slugs['detail'])
-                    + ') instead of the equivalent new '
-                    + 'OPUS_ID ('
-                    + opus_id
-                    + '); it has been converted for you.'
-                )
-                msg_list.append(msg)
-            try:
-                _ = ObsGeneral.objects.get(opus_id=opus_id)
-            except ObjectDoesNotExist:
-                msg = (
-                    'The OPUS_ID specified for the "detail" tab '
-                    + 'was not found in the current database; '
-                    + 'it has been ignored.'
-                )
-                msg_list.append(msg)
-            else:
-                detail_val = opus_id
+            detail_val = opus_id
     if detail_val is None:
         detail_val = ''
     new_url_suffix_list.append(('detail', detail_val))

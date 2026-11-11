@@ -665,11 +665,11 @@ def test_a_schema_no_import_may_append_to_is_refused(
 
 def test_an_interrupted_finalization_refuses_the_import() -> None:
     """No version row but a key finalization adds: refused, naming --finalize."""
-    keys = {'obs_general': [TableKey('primary', ('id',)), TableKey('key', ('time1',))]}
+    keys = {'obs_general': [TableKey('primary', ('id',)), TableKey('key', ('time1', 'opus_id'))]}
     chosen, ctx = _choose(_StateDB(None, keys, ['obs_general']))
     assert not chosen
     (message,) = ctx.logger.messages_at('fatal')
-    assert 'obs_general: KEY (time1)' in message
+    assert 'obs_general: KEY (time1, opus_id)' in message
     assert '--finalize' in message
 
 

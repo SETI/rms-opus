@@ -22,7 +22,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 #: The generation of the table schemas this release imports and serves.
-SCHEMA_VERSION: int = 5
+SCHEMA_VERSION: int = 6
 
 #: The table that holds a schema's version row.
 SCHEMA_VERSION_TABLE = 'schema_version'

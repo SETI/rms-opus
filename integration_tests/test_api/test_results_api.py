@@ -19,7 +19,6 @@ from opus_app.apps.tools.app_utils import (
     http400_unknown_category,
     http400_unknown_slug,
     http404_unknown_opus_id,
-    http404_unknown_ring_obs_id,
 )
 
 from .api_test_helper import ApiTestHelper, go_live_target
@@ -369,11 +368,6 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/metadata/vg-iss-2-s-c4360845.json'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
 
-    def test__api_metadata_vg_iss_2_s_c4360845_default_json_ringobsid(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: S_IMG_VG2_ISS_4360845_N default json"
-        url = '/api/metadata/S_IMG_VG2_ISS_4360845_N.json'
-        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
-
     def test__api_metadata_vg_iss_2_s_c4360845_default_html(self) -> None:
         "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default html"
         url = '/api/metadata/vg-iss-2-s-c4360845.html'
@@ -623,14 +617,14 @@ class ApiResultsTests(ApiTestHelper, TestCase):
             ),
         )
 
-    def test__api_metadata_bad_ringobsid_json(self) -> None:
-        "[test_results_api.py] /api/metadata: bad ringobsid json"
-        url = '/api/metadata/S_IMG_VG2_ISS_4360846_N.json'
+    def test__api_metadata_old_format_ring_obs_id_is_an_unknown_opusid(self) -> None:
+        "[test_results_api.py] /api/metadata: an old-format RING_OBS_ID is an unknown OPUS ID"
+        url = '/api/metadata/S_IMG_VG2_ISS_4360845_N.json'
         self._run_status_equal(
             url,
             404,
-            http404_unknown_ring_obs_id(
-                'S_IMG_VG2_ISS_4360846_N', '/api/metadata/S_IMG_VG2_ISS_4360846_N.json'
+            http404_unknown_opus_id(
+                'S_IMG_VG2_ISS_4360845_N', '/api/metadata/S_IMG_VG2_ISS_4360845_N.json'
             ),
         )
 
@@ -638,17 +632,6 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         "[test_results_api.py] /api/metadata_v2: bad opusid json"
         url = '/api/metadata_v2/vg-iss-2-s-,c4360845.json'
         self._run_status_equal(url, 404)
-
-    def test__api_metadata2_bad_ringobsid_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: bad ringobsid json"
-        url = '/api/metadata_v2/S_IMG_VG2_ISS_4360846_N.json'
-        self._run_status_equal(
-            url,
-            404,
-            http404_unknown_ring_obs_id(
-                'S_IMG_VG2_ISS_4360846_N', '/api/metadata_v2/S_IMG_VG2_ISS_4360846_N.json'
-            ),
-        )
 
     def test__api_metadata_bad_opusid_html(self) -> None:
         "[test_results_api.py] /api/metadata: bad opusid html"
@@ -788,13 +771,6 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/files/hst-11559-wfc3-ib4v12n6q.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_versions_ib4v12n6q.json')
 
-    def test__api_files_bad_ringobsid(self) -> None:
-        "[test_results_api.py] /api/files: bad ringobsid"
-        url = '/api/files/N_1_BAD.json'
-        self._run_status_equal(
-            url, 404, http404_unknown_ring_obs_id('N_1_BAD', '/api/files/N_1_BAD.json')
-        )
-
     def test__api_files_bad_search(self) -> None:
         "[test_results_api.py] /api/files: bad search"
         url = '/api/files.json?instrument=fred'
@@ -920,13 +896,6 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/categories/co-iss-w1866145657x.json'
         self._run_json_equal_file(url, 'api_categories_bad_opusid.json')
 
-    def test__api_categories_bad_ringobsid(self) -> None:
-        "[test_results_api.py] /api/categories: Bad ringobsid"
-        url = '/api/categories/_123.json'
-        self._run_status_equal(
-            url, 404, http404_unknown_ring_obs_id('_123', '/api/categories/_123.json')
-        )
-
     def test__api_categories_vg_iss_2_s_c4360004(self) -> None:
         "[test_results_api.py] /api/categories: vg-iss-2-s-c4360004"
         url = '/api/categories/vg-iss-2-s-c4360004.json'
@@ -955,13 +924,6 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         "[test_results_api.py] /api/product_types: Bad OPUSID"
         url = '/api/product_types/co-iss-w1866145657x.json'
         self._run_json_equal_file(url, 'api_product_types_bad_opusid.json')
-
-    def test__api_product_types_bad_ringobsid(self) -> None:
-        "[test_results_api.py] /api/product_types: Bad ringobsid"
-        url = '/api/product_types/_N_1_2_3.json'
-        self._run_status_equal(
-            url, 404, http404_unknown_ring_obs_id('_N_1_2_3', '/api/product_types/_N_1_2_3.json')
-        )
 
     def test__api_product_types_vg_iss_2_s_c4360004(self) -> None:
         "[test_results_api.py] /api/product_types: vg-iss-2-s-c4360004"
