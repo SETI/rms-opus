@@ -6265,3 +6265,25 @@ Nothing above this line is rewritten by an executor.
   - Results after the fixes: the gates pass (2,830 unit tests); the import suite 176
     passed and 3 skipped; the integration suite 1,591 passed against `pr16local`,
     imported again with the fixes' registration (the import's output is unchanged).
+- **The harness starts several importers** (2026-11-11, at the orchestrator's request,
+  for the section's measurement). `bench_import --importers N` runs a side's erase, one
+  `--register-bundles` of every scenario group in import order, N `--join` processes
+  started together, each with a configuration and log directory of its own and an equal
+  share of `--import-key workers=W` (1 when none is given; a total N does not divide is
+  refused, so the importers together use exactly the workers a one-process run of the
+  same total uses), and the finalization sequence. The importers' phase is one
+  invocation, `join`, from the first start to the last exit, counted in
+  `import.bundle_imports.wall_s`; the run also records `import.registration.wall_s` and
+  each bundle's `size_estimate`, `import_bundle` time (from the importers'
+  `--timing-json` files) and `rows_done`. Other `--import-key`s, `transaction_rows`
+  among them, reach every importer. A side without `--join` refuses the option and is
+  measured as one process, which is what the target compares against; a scenario group
+  with options of its own refuses it too. `bench_import --register-only` registers
+  every group into a scratch schema, which it drops, and records a run of kind
+  `register` with `import.registration.wall_s`. `benchmarks.sides.Spelling` gains
+  `register_bundles` and `join`. A fixture-scale smoke run on this side,
+  `--importers 2 --import-key workers=2 --runs 1`, recorded 16.6 s, registration 0.6 s,
+  the importers' phase 8.8 s, 24 bundles, 399 `obs_general` rows (session `smoke`).
+- The merge of PR-15's head (395965d7) keeps PR-14's and PR-15's entries before this one,
+  with PR-15's measurement bullets at the end of PR-15's last entry; `queries.sql` is
+  PR-15's.
