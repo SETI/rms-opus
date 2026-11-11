@@ -346,7 +346,7 @@ scenario group that carries options of its own refuses it too, since one registr
 cannot give a group options. The runs are of kind ``import`` and compare like any
 other::
 
-    /seti/newnav/capped-run.sh python -m benchmarks.bench_import --scale test --side after --pr <tag> \
+    python -m benchmarks.bench_import --scale test --side after --pr <tag> \
         --session a --python venv/bin/python --repo-root . \
         --importers 4 --import-key workers=8
 
