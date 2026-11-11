@@ -169,7 +169,7 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     Every statement selects by ``bundle_id`` and a range of ids, or by a range of
     ``obs_general_id``, through a key a table is created with, so none reads rows outside
     its range. Each is run again when the server reports a deadlock or a lock wait
-    /seti/newnav/capped-run.sh timeout (`ImportDBSuper.retrying`). The connection checks foreign keys while it
+    timeout (`ImportDBSuper.retrying`). The connection checks foreign keys while it
     deletes, so ``cart``'s cascade removes the cart rows that name the bundle's
     observations.
 
