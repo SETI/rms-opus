@@ -196,3 +196,67 @@ def test_a_search_on_the_selector_is_an_exists_and_joins_nothing() -> None:
         ' `obs_surface_geometry_name`.`target_name` IN (%s,%s))'
     )
     assert params == [3, 7]
+
+
+def _selector_param_info() -> None:
+    """Serve the selector's ``param_info`` row from the qualified-name cache."""
+    search_views._PARAMINFO_BY_NAME_CACHE[('obs_surface_geometry_name', 'target_name')] = ParamInfo(
+        category_name='obs_surface_geometry_name', name='target_name', form_type='GROUP'
+    )
+
+
+#: The selector's label for one observation, over the bodies the search selects.
+_SELECTED_LABEL = (
+    '(SELECT MIN(`mult_obs_surface_geometry_name_target_name`.`label`) FROM'
+    ' `obs_surface_geometry_target` AS `obs_surface_geometry_name` LEFT JOIN `mult` AS'
+    ' `mult_obs_surface_geometry_name_target_name` ON'
+    ' `mult_obs_surface_geometry_name_target_name`.`field_id` = %s AND'
+    ' `mult_obs_surface_geometry_name_target_name`.`id`='
+    '`obs_surface_geometry_name`.`target_name` WHERE'
+    ' `obs_surface_geometry_name`.`obs_general_id`=`obs_general`.`id` AND'
+    ' `obs_surface_geometry_name`.`target_name` IN (%s))'
+)
+
+
+def test_sorting_by_the_selector_is_one_label_per_observation_and_joins_nothing() -> None:
+    """The sort is the first selected body's label, so no observation is repeated."""
+    _selector_param_info()
+    terms, mult_tables, obs_tables = search_views.create_order_by_terms(
+        ['obs_surface_geometry_name.target_name'],
+        [False],
+        {'obs_surface_geometry_name.target_name': ['Saturn']},
+    )
+    assert terms == [(sql_builder.Expr(_SELECTED_LABEL, [TARGET_FIELD_ID, 7]), False)]
+    assert (mult_tables, obs_tables) == (set(), set())
+
+
+def test_without_a_constraint_the_selector_label_reads_every_body() -> None:
+    """With no selection of the field, or no search at all, every body counts."""
+    every_body = search_views.selector_label('obs_surface_geometry_name', 'target_name', None)
+    assert every_body.sql == _SELECTED_LABEL.replace(
+        ' AND `obs_surface_geometry_name`.`target_name` IN (%s)', ''
+    )
+    assert every_body.params == [TARGET_FIELD_ID]
+    unconstrained = search_views.selector_label(
+        'obs_surface_geometry_name', 'target_name', {'obs_general.planet_id': ['Saturn']}
+    )
+    assert unconstrained == every_body
+
+
+def test_a_body_category_keeps_a_statement_to_its_rows() -> None:
+    """``restrict`` adds the body's condition; a table of its own adds nothing."""
+    body = sql_builder.Select()
+    body.add_column(sql_builder.column('phase1', 'obs_surface_geometry__dione'))
+    category = resolve_category('obs_surface_geometry__dione')
+    body.add_from(category.source)
+    category.restrict(body)
+    assert body.build() == (
+        'SELECT `obs_surface_geometry__dione`.`phase1` FROM `obs_surface_geometry_target` AS'
+        ' `obs_surface_geometry__dione` WHERE `obs_surface_geometry__dione`.`target_name` = %s',
+        [3],
+    )
+    table = sql_builder.Select()
+    table.add_column(sql_builder.column('id', 'obs_general'))
+    table.add_from('obs_general')
+    resolve_category('obs_general').restrict(table)
+    assert table.build() == ('SELECT `obs_general`.`id` FROM `obs_general`', [])

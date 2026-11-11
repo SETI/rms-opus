@@ -358,9 +358,7 @@ def api_get_mult_counts(
             select.add_column(counted_column)
             select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
             select.add_from(category.source)
-        target_condition = category.target_condition()
-        if target_condition is not None:
-            select.add_where(target_condition)
+        category.restrict(select)
 
         search_id = get_search_id(selections, extras, api_code=api_code)
 
@@ -623,26 +621,22 @@ def api_get_range_endpoints(
             min_column = sql_builder.column(table_model._meta.get_field(param1).column, table_name)
             max_column = sql_builder.column(table_model._meta.get_field(param2).column, table_name)
 
-            # A surface geometry body's category is the body's rows of a table every
-            # body shares, so each statement keeps to them.
-            target_condition = category.target_condition()
-
             endpoints_select = sql_builder.Select()
             endpoints_select.add_column(sql_builder.min_of(min_column))
             endpoints_select.add_column(sql_builder.max_of(max_column))
             endpoints_select.add_from(category.source)
             endpoints_select.add_from(results_source)
             endpoints_select.add_where(cache_join)
-            if target_condition is not None:
-                endpoints_select.add_where(target_condition)
+            # A surface geometry body's category is the body's rows of a table every
+            # body shares, so each statement keeps to them.
+            category.restrict(endpoints_select)
 
             nulls_select = sql_builder.Select()
             nulls_select.add_column(sql_builder.count_star())
             nulls_select.add_from(category.source)
             nulls_select.add_from(results_source)
             nulls_select.add_where(cache_join)
-            if target_condition is not None:
-                nulls_select.add_where(target_condition)
+            category.restrict(nulls_select)
             nulls_select.add_where(sql_builder.is_null(min_column))
             nulls_select.add_where(sql_builder.is_null(max_column))
 

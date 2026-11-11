@@ -349,6 +349,16 @@ class Subquery:
         return f'({sql}) AS {quote_identifier(self.alias)}', params
 
 
+def scalar_subquery(select: 'Select') -> Expr:
+    """Return a `Select` of one column and at most one row as a value, `(SELECT ...)`.
+
+    Parameters:
+        select: The statement, which may name the outer statement's tables.
+    """
+    sql, params = select.build()
+    return Expr(f'({sql})', params)
+
+
 def search_results_source(search_id: int) -> Subquery:
     """Return one search's rows of ``search_results``, as a source to join.
 

@@ -5964,3 +5964,42 @@ Nothing above this line is rewritten by an executor.
 - Results: the gates pass (`run-all-checks.sh`, 2,780 unit tests); the import suite 169
   passed and 3 skipped; the integration suite 1,586 passed against the local database.
   The two new-target tests fail when finalization writes no body's `table_names` row.
+
+### 2026-11-10, PR-15 (written against this file at 6dfff149)
+
+- An independent review compared requests against PR-14's and PR-15's local databases
+  and found two regressions, each fixed on the branch.
+- **The selector as a sort order or a results column.** Sorting by
+  `surfacegeometrytargetname` while the search constrains it answered 500 (a duplicate
+  key in `search_results`): the constraint was the `EXISTS`, but the sort still joined
+  the selector's table with no body restriction. As a results column it repeated each
+  observation once per body, on PR-14 as well. The orchestrator's ruling (2026-11-10),
+  which supersedes this PR's earlier note that kept the join: the selector, as a column
+  or a sort, never multiplies rows. It is `search.views.selector_label`, a subquery
+  correlated with `obs_general` giving `MIN(mult.label)` -- the alphabetically first
+  label, which is what a mult field shows and sorts by, so the column and the sort agree
+  -- over the bodies the search selects when it constrains the field and over every body
+  otherwise (the cart included), NULL for an observation with none.
+  `create_order_by_terms` takes the search's selections for it, and the results page's
+  column select takes the selector's positions. The answers that change, each now one
+  row per observation: `api/data`-shaped requests (and the Details tab's column
+  requests through the same page builder) naming `surfacegeometrytargetname` in `cols`,
+  which repeated rows; sorts by it with no constraint on it or with several selected
+  bodies, which answered 500 on PR-14; and a cart sorted by it, which repeated its
+  observations in the order's numbering.
+- **`api_string_search_choices` read a body's category as a table** and answered 500
+  for a body's slug (`SURFACEGEO<target>_<field>`); it reads `resolve_category`'s source
+  now, kept to the body's rows. `ResolvedCategory.restrict(select)` adds a body's
+  condition to a statement, and every site that read `target_condition()` through an
+  `if` uses it, the trigger query included. A sweep of `src/opus_app` for `add_from(`,
+  `add_join(`, `table_model_from_name`, `apps.get_model` and `obs_surface_geometry__`
+  finds no other site that names a category's table itself.
+- `integration_tests/test_api/test_surface_geometry_api.py` pins the regression URL
+  (one row per observation, in order), the column case (`limit` rows, one value each),
+  a two-body sort and an unconstrained sort, each checking every row's label against
+  the database, and a body field's string choices. Its setup removes the stored
+  searches so each search is built by the code under test; all five fail against the
+  previous commit's code. `sql_builder.scalar_subquery` is new.
+- No golden changed. Results: the gates pass (2,783 unit tests); the import suite 169
+  passed and 3 skipped; the integration suite 1,591 passed against the local database,
+  which the fix did not need imported again.

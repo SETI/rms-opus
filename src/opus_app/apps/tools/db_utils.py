@@ -145,6 +145,17 @@ class ResolvedCategory:
             sql_builder.column(TARGET_COLUMN, self.alias), '=', sql_builder.value(self.target_name)
         )
 
+    def restrict(self, select: sql_builder.Select) -> None:
+        """Keep a statement reading the category to the category's rows.
+
+        Parameters:
+            select: A statement whose FROM clause names `source`; `target_condition` is
+                added to its WHERE clause, when there is one.
+        """
+        condition = self.target_condition()
+        if condition is not None:
+            select.add_where(condition)
+
 
 @functools.cache
 def _category_tables() -> dict[str, tuple[str, int | None]]:

@@ -179,7 +179,11 @@ paging is stable.
 ORDER BY terms and reports which ``obs_`` tables and which ``mult`` joins they require.
 A mult field sorts by the text of the label its ``mult`` row carries rather than by the
 id stored in the row, and never by the row's ``disp_rank``, which is why sorting can
-pull in a join the search itself does not need.
+pull in a join the search itself does not need. The surface geometry selector,
+``obs_surface_geometry_name.target_name``, is the exception: an observation has one of
+its rows per body, so it sorts by
+:func:`~opus_app.apps.search.views.selector_label`, one label per observation, and asks
+for no join.
 
 .. _dev_guide_webapp_search_cache:
 
@@ -277,6 +281,13 @@ rows of an observation, one per body, so its test is put as ``EXISTS (SELECT 1 F
 obs_surface_geometry_target AS obs_surface_geometry_name WHERE
 obs_surface_geometry_name.obs_general_id = obs_general.id AND ... IN (...))`` and asks for
 no join: a join would repeat an observation once for each selected body it has.
+
+:func:`~opus_app.apps.search.views.selector_label` is how the selector appears as a
+results column or a sort order, for the same reason: a subquery correlated with
+``obs_general`` giving the alphabetically first label (``MIN`` of ``mult.label``) of the
+observation's bodies -- of the bodies the search selects when it constrains the field,
+of every body otherwise, as for the cart -- and NULL for an observation with none. A
+mult field sorts by and shows its label, so the column and the sort agree.
 
 ``_valid_regex`` is how a user's regular expression is checked: **by asking the server**,
 since OPUS runs the expression through MySQL rather than through Python, and only MySQL

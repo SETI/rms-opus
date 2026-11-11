@@ -119,7 +119,9 @@ What each handler returns
 
 :func:`~opus_app.apps.results.views.api_get_data`
     The public tabular page: the labels, the rows, and how many observations the search
-    found. JSON, HTML or CSV.
+    found. JSON, HTML or CSV. A page has one row per observation: the surface geometry
+    selector, whose category holds one row per body, is selected as
+    :func:`~opus_app.apps.search.views.selector_label` rather than joined.
 
 :func:`~opus_app.apps.results.views.api_get_metadata` and :func:`~opus_app.apps.results.views.api_get_metadata_internal`
     One observation's metadata. Both delegate to

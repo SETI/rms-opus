@@ -267,6 +267,9 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         return json_response(cached_val)
 
     param_column = sql_builder.column(param_name, param_category)
+    # A surface geometry body's category is the body's rows of a table every body shares,
+    # read under the category's name; each statement keeps to those rows.
+    category = resolve_category(param_category)
     cursor = connection.cursor()
 
     final_results: list[Any] | None = None
@@ -284,11 +287,12 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         # that appear in them to cause result rows. The join is on
         # obs_general_id in practice: there are currently no string fields in
         # obs_general, so param_category is never obs_general here.
-        select.add_from(param_category).add_join(
+        select.add_from(category.source).add_join(
             'INNER',
             sql_builder.search_results_source(search.search_id),
             search_results_join_condition(param_category),
         )
+        category.restrict(select)
 
         if partial_query:
             # get_string_query returns both halves together or neither, and the
@@ -316,7 +320,8 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
         select = sql_builder.Select(distinct=True, max_execution_time=max_time)
         select.add_column(param_column)
-        select.add_from(param_category)
+        select.add_from(category.source)
+        category.restrict(select)
 
         if partial_query:
             # get_string_query returns both halves together or neither, and the
@@ -1737,7 +1742,7 @@ def _search_select(
         order_params, descending_params = extras['order']
 
         (order_terms, order_mult_tables, order_obs_tables) = create_order_by_terms(
-            order_params, descending_params
+            order_params, descending_params, selections
         )
         if order_terms is None:
             return None
@@ -2251,10 +2256,9 @@ def add_obs_table_joins(from_source: sql_builder.FromSource, obs_tables: Iterabl
     its table under the category's name, so that every ``<category>.<column>`` reference
     reads it; a surface geometry body's category adds the body's id to the condition,
     ``AND <category>.target_name = %s``, so a search naming two bodies joins the table
-    twice. A search's constraint on the selector category is put as an ``EXISTS``
-    (`_search_select`) and never asks for its join, since several of an observation's rows
-    are in it; a results column or a sort order naming the selector's field joins it, all
-    of its rows, as any other category's.
+    twice. The selector category is never asked for: several of an observation's rows
+    are in it, so a search's constraint on it is an ``EXISTS`` (`_search_select`) and a
+    results column or a sort order naming its field is `selector_label`.
 
     Parameters:
         from_source: The `sql_builder.FromSource` for obs_general.
@@ -2408,15 +2412,68 @@ def parse_order_slug(all_order: str | None) -> tuple[list[str] | None, list[bool
     return order_params, order_descending_params
 
 
+def selector_label(
+    category_name: str, field_name: str, selections: Mapping[str, Any] | None
+) -> sql_builder.Expr:
+    """Return the label a selector field shows for an observation, as one value.
+
+    A selector category holds one row per body an observation has, so joining it for a
+    results column or a sort order would repeat the observation once for each body.
+    This is instead a subquery correlated with ``obs_general``: the alphabetically
+    first label, ``MIN`` of ``mult.label``, of the observation's bodies -- of the bodies
+    the search selects when its selections constrain the field, of every body
+    otherwise -- and NULL for an observation with none. The label is what a mult field
+    sorts by and shows, so the column and the sort agree.
+
+    Parameters:
+        category_name: The selector category, such as ``obs_surface_geometry_name``.
+        field_name: Its field, such as ``target_name``.
+        selections: The search's constraints, or None for a list no search made, such as
+            the cart.
+
+    Returns:
+        ``(SELECT MIN(<alias>.label) FROM <table> AS <category> LEFT JOIN mult AS <alias>
+        ... WHERE <category>.obs_general_id=obs_general.id [AND <category>.<field> IN
+        (...)])``, with the field's id and the selected bodies' ids as parameters.
+
+    Raises:
+        LookupError: If the field has no ``mult_field`` row, or the `search` app no model
+            for the category's table.
+    """
+    qualified_name = f'{category_name}.{field_name}'
+    alias = mult_alias(qualified_name)
+    field_column = sql_builder.column(field_name, category_name)
+    select = sql_builder.Select()
+    select.add_column(sql_builder.min_of(sql_builder.column('label', alias)))
+    select.add_from(resolve_category(category_name).source).append_join(
+        sql_builder.mult_join(alias, import_constants.mult_field_id(qualified_name), field_column)
+    )
+    select.add_where(
+        sql_builder.columns_equal(
+            sql_builder.column('obs_general_id', category_name),
+            sql_builder.column('id', 'obs_general'),
+        )
+    )
+    if selections is not None and qualified_name in selections:
+        selected = import_constants.mult_table(qualified_name).ids_for(selections[qualified_name])
+        if selected:
+            select.add_where(sql_builder.in_values(field_column, selected))
+    return sql_builder.scalar_subquery(select)
+
+
 def create_order_by_terms(
-    order_params: list[str], descending_params: list[bool]
+    order_params: list[str],
+    descending_params: list[bool],
+    selections: Mapping[str, Any] | None = None,
 ) -> tuple[list[tuple[Any, bool]] | None, set[tuple[str, bool, str, str]] | None, set[str] | None]:
     """Given params and descending lists, make the ORDER BY terms.
 
     Returns a list of (expression, descending) pairs ready for
     `sql_builder.Select.add_order_by`, plus the ``mult`` joins (as
     `add_mult_table_joins` takes them) and the ``obs_`` tables the terms require the
-    caller to join in.
+    caller to join in. A selector field (`opus_app.apps.tools.db_utils.ResolvedCategory.
+    is_selector`) sorts by `selector_label`, which asks for no join; `selections`, the
+    search's constraints or None for a list no search made, is what it reads.
     """
     order_mult_tables = set()
     order_obs_tables = set()
@@ -2429,6 +2486,11 @@ def create_order_by_terms(
             log.error('create_order_by_terms: Unable to resolve order' + ' slug "%r"', order_slug)
             return None, None, None
         (form_type, _form_type_format, _form_type_unit_id) = parse_form_type(pi.form_type)
+        if form_type in settings.MULT_FORM_TYPES and resolve_category(pi.category_name).is_selector:
+            order_terms.append(
+                (selector_label(pi.category_name, pi.name, selections), descending_params[i])
+            )
+            continue
         order_column = sql_builder.column(pi.name, pi.category_name)
         order_obs_tables.add(pi.category_name)
         if form_type in settings.MULT_FORM_TYPES:

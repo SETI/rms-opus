@@ -403,6 +403,10 @@ The statement layer
     table holding several rows of one observation takes, so that the observation is not
     repeated once for each row a join would match.
 
+:func:`~opus_app.apps.tools.sql_builder.scalar_subquery`
+    A :class:`~opus_app.apps.tools.sql_builder.Select` of one column and at most one row
+    as a value, ``(SELECT ...)``, which may name the outer statement's tables.
+
 :func:`~opus_app.apps.tools.sql_builder.mult_join`
     The join that reads one mult column's labels:
     ``LEFT JOIN mult AS <alias> ON <alias>.field_id = %s AND <alias>.id = <column>``,
@@ -468,8 +472,9 @@ Model lookup by category name, and the labels behind the mult ids.
     row names a ``physical_table`` -- every surface geometry category -- is that table
     under the category's name, with the row's ``target_name``; any other is the table of
     its name. Every view that reads a category as a source, a join or a model resolves it
-    here. The ``table_names`` rows come from the worker's copy
-    (:mod:`~opus_app.apps.tools.import_constants`).
+    here; :meth:`~opus_app.apps.tools.db_utils.ResolvedCategory.restrict` adds a body's
+    condition to a statement that reads the category. The ``table_names`` rows come from
+    the worker's copy (:mod:`~opus_app.apps.tools.import_constants`).
 
 :func:`~opus_app.apps.tools.db_utils.query_table_for_opus_id`
     One category's rows for one observation, filtering on ``opus_id`` for

@@ -62,6 +62,7 @@ from opus_app.apps.search.views import (
     get_search_id,
     parse_order_slug,
     search_results_join_condition,
+    selector_label,
     url_to_search_params,
 )
 from opus_app.apps.tools import sql_builder
@@ -1312,7 +1313,11 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
 ################################################################################
 
 
-def _results_column_select(column_names: list[str]) -> sql_builder.Select:
+def _results_column_select(
+    column_names: list[str],
+    selector_columns: dict[int, tuple[str, str]],
+    selections: dict[str, Any] | None,
+) -> sql_builder.Select:
     """Return a Select over the requested "table.column" names, in order.
 
     The result rows are unpacked positionally by the caller, so the column order
@@ -1320,9 +1325,18 @@ def _results_column_select(column_names: list[str]) -> sql_builder.Select:
 
     Parameters:
         column_names: The columns to select, each written `<table>.<column>`.
+        selector_columns: The positions in `column_names` that name a selector field,
+            each with its category and field, which are selected as
+            `opus_app.apps.search.views.selector_label` rather than as a column.
+        selections: The search's constraints, or None for the cart, which
+            `selector_label` reads.
     """
     select = sql_builder.Select()
-    for qualified_name in column_names:
+    for position, qualified_name in enumerate(column_names):
+        if position in selector_columns:
+            category_name, field_name = selector_columns[position]
+            select.add_column(selector_label(category_name, field_name, selections))
+            continue
         table_name, _, column_name = qualified_name.partition('.')
         select.add_column(sql_builder.column(column_name, table_name))
     return select
@@ -1475,6 +1489,9 @@ def get_search_results_chunk(
 
     form_type_formats: list[tuple[ParamInfo, str | None, str | None, str | None, str | None]] = []
     column_names: list[str] = []
+    # The positions of the selector fields among the columns: an observation can have
+    # several of a selector's rows, so each is one value (selector_label), not a join.
+    selector_columns: dict[int, tuple[str, str]] = {}
     tables: set[str] = set()
     mult_tables: set[tuple[str, bool, str, str]] = set()
     for slug in cols_to_slug_list(cols):
@@ -1492,8 +1509,15 @@ def get_search_results_chunk(
             # This isn't needed for correctness, just cleanliness.
             table = 'obs_general'
             column = 'obs_general.opus_id'
-        tables.add(table)
         (form_type, form_type_format, form_type_unit_id) = parse_form_type(pi.form_type)
+        if form_type in settings.MULT_FORM_TYPES and resolve_category(table).is_selector:
+            selector_columns[len(column_names)] = (table, pi.name)
+            column_names.append(column)
+            form_type_formats.append(
+                (pi, form_type, form_type_format, form_type_unit_id, desired_units)
+            )
+            continue
+        tables.add(table)
         if form_type in settings.MULT_FORM_TYPES and form_type != 'MULTIGROUP':
             # For a mult field, we will have to join in its mult rows
             # and put their label here
@@ -1611,7 +1635,7 @@ def get_search_results_chunk(
             )
             return error_return(500, http500_search_cache_failed(request))
 
-        select = _results_column_select(column_names)
+        select = _results_column_select(column_names, selector_columns, selections)
         from_source = select.add_from('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
@@ -1700,7 +1724,7 @@ def get_search_results_chunk(
         assert order_mult_tables is not None
         assert order_obs_tables is not None
 
-        select = _results_column_select(column_names)
+        select = _results_column_select(column_names, selector_columns, None)
         from_source = select.add_from('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
@@ -2002,13 +2026,14 @@ def get_triggered_tables(
                 # and surface geometry (which is handled separately above), so
                 # only the obs_general arm of the join condition is reachable
                 # from here.
-                trigger_model = resolve_category(trigger_tab).model
-                trigger_column = trigger_model._meta.get_field(trigger_col).column
+                trigger = resolve_category(trigger_tab)
+                trigger_column = trigger.model._meta.get_field(trigger_col).column
                 select = sql_builder.Select(distinct=True)
                 select.add_column(sql_builder.column(trigger_column, trigger_tab))
-                select.add_from(trigger_tab)
+                select.add_from(trigger.source)
                 select.add_from(sql_builder.search_results_source(search_id))
                 select.add_where(search_results_join_condition(trigger_tab))
+                trigger.restrict(select)
                 sql, sql_params = select.build()
                 log.debug('get_triggered_tables SQL: %r *** PARAMS %r', sql, str(sql_params))
                 cursor = connection.cursor()
