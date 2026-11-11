@@ -415,6 +415,31 @@ def _as_mult_value(values: dict[tuple[str, int], str], field: tuple[str, bool], 
     return values[(name, int(stored))]
 
 
+#: The table whose ``trigger_val`` holds an id of the mult field its row's
+#: ``trigger_tab`` and ``trigger_col`` name, so which field a value belongs to varies by row.
+_TRIGGER_TABLE = 'partables'
+
+
+def _with_trigger_value(
+    values: dict[tuple[str, int], str], columns: Sequence[str], row: Sequence[Any]
+) -> tuple[Any, ...]:
+    """Return a ``partables`` row with its ``trigger_val`` given as the value its id names.
+
+    Parameters:
+        values: What `_mult_values` returned.
+        columns: The row's column names, in order.
+        row: The row as read.
+
+    Returns:
+        The row, its ``trigger_val`` replaced by the mult value of the field
+        ``<trigger_tab>.<trigger_col>``.
+    """
+    fields = dict(zip(columns, row, strict=True))
+    field = (f'{fields["trigger_tab"]}.{fields["trigger_col"]}', False)
+    fields['trigger_val'] = _as_mult_value(values, field, fields['trigger_val'])
+    return tuple(fields[column] for column in columns)
+
+
 def serialize_table(
     credentials: DatabaseCredentials, schema: str, table: str, *, mult_values: bool = False
 ) -> str:
@@ -439,8 +464,8 @@ def serialize_table(
         schema: The schema to read.
         table: The table to read.
         mult_values: True for the mult-value mode: every mult column holds the value its
-            id names, ``mult`` is written without its ``id`` and ``mult_field`` without
-            its ``last_id``, every value of a mult field is written as its
+            id names (``partables``' ``trigger_val`` among them), ``mult`` is written
+            without its ``id`` and ``mult_field`` without its ``last_id``, every value of a mult field is written as its
             `opus_support.collation_key`, and the rows are sorted.
 
     Returns:
@@ -467,7 +492,13 @@ def serialize_table(
     ordering = ', '.join(f'`{name}`' for name in order_by)
     rows = query(credentials, schema, f'SELECT {quoted} FROM `{table}` ORDER BY {ordering}')
     mult_columns = _mult_columns().get(table, {}) if mult_values else {}
-    values = _mult_values(credentials, schema) if mult_columns else {}
+    values = (
+        _mult_values(credentials, schema)
+        if mult_columns or (mult_values and table == _TRIGGER_TABLE)
+        else {}
+    )
+    if mult_values and table == _TRIGGER_TABLE:
+        rows = [_with_trigger_value(values, columns, row) for row in rows]
 
     def field_text(column: str, value: Any) -> str:
         """Return one field as the golden writes it."""

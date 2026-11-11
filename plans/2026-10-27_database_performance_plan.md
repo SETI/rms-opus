@@ -6344,3 +6344,10 @@ Nothing above this line is rewritten by an executor.
   - **Web guards** (three runs a side alternated, against `bench_test_before_a_2` and
     `bench_test_after_i4_2`): every guard held; app-cold search empty +0.8%, broad
     +1.9%, surface geometry +1.5%, fan-out empty +1.8%, concurrency distinct p95 -12.8%.
+- **With PR-15's triggers keyed by mult id, the equality case compared `partables` by
+  id**, and the three importers can number a body differently from the main run, so the
+  case failed once its importers met the bodies in another order. The mult-value mode
+  gives each `partables` row's `trigger_val` as the value of the field its
+  `trigger_tab` and `trigger_col` name (`golden_io`). Results on the final head: the
+  gates pass (2,854 unit tests), the import suite 176 passed and 3 skipped, and the
+  integration suite 1,591 passed against `pr16local`, imported again at this head.
