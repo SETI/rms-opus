@@ -5985,8 +5985,8 @@ Nothing above this line is rewritten by an executor.
   row per observation: `api/data`-shaped requests (and the Details tab's column
   requests through the same page builder) naming `surfacegeometrytargetname` in `cols`,
   which repeated rows; sorts by it with no constraint on it or with several selected
-  bodies, which answered 500 on PR-14; and a cart sorted by it, which repeated its
-  observations in the order's numbering.
+  bodies, which answered 500 on PR-14. A cart sorted by it uses the same label, over
+  every body; no test drives that request.
 - **`api_string_search_choices` read a body's category as a table** and answered 500
   for a body's slug (`SURFACEGEO<target>_<field>`); it reads `resolve_category`'s source
   now, kept to the body's rows. `ResolvedCategory.restrict(select)` adds a body's
