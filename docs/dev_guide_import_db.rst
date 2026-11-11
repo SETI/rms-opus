@@ -406,10 +406,11 @@ The bulk load
 rows: every ``obs_`` table's rows, the per-target surface geometry tables' and
 ``obs_files``'. :class:`~opus_import.steps.do_import_index.TableRowSink` loads a table
 each time ``[import] transaction_rows`` of its rows wait, and the rest at the end of
-:func:`~opus_import.steps.do_import_index.import_one_index`, after ``upsert_rows`` has
-written the ``mult`` and ``mult_group`` rows the index added. Those are upserted rather
-than loaded because a load cannot update a row it finds already there, and a pinned field's
-rows are written whole over the stored ones.
+:func:`~opus_import.steps.do_import_index.import_one_index`, after
+:func:`~opus_import.steps.do_import_mult.write_mult_tables` has inserted the ``mult``
+rows the index added and upserted its ``mult_group`` rows. A ``mult`` row is inserted
+rather than loaded or upserted because its value must never be written over another
+row's: a value the field's unique key finds already there stops the import.
 
 **The text.** The rows are written as the text ``LOAD DATA`` reads by default: fields
 separated by tabs, rows ended by newlines, ``\N`` for NULL, and a backslash before each

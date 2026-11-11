@@ -346,7 +346,12 @@ discovers them from the data. Three keys of a column change that:
     reader does not have to count them. ``pin`` is an integer, and ``group_pin`` an
     integer or ``null``; a string of digits is refused. The ids are the ones the
     observation rows hold, and a value the import meets that is not in the list is an
-    error. The field's ``pinned`` is 1, and finalization never deletes its rows.
+    error. The field's ``pinned`` is 1, and finalization never deletes a row its list
+    gives. An entry's id and value are what the observations hold and mean, so once
+    stored they do not change: an edit to an entry changes its label, pin, display or
+    grouping, and an entry that gives a stored id another value, or a stored value
+    another id, is an error. No entry may give the id 65535, which a pinned field's
+    absent value takes when its list has none.
 
 ``mult_overrides``
     Sets the presentation of values the import discovers, on a column that has no
@@ -427,7 +432,8 @@ one of four kinds, told apart by its keys -- a column (``field_name``), a link
   entry of ``param_info_ranges.json``.
 * Every ``mult_options`` row has the seven values of
   :class:`~opus_import.import_util.MultOption`, typed as it says, with distinct ids. Each
-  id fits ``mult.id``, and each pin and group pin is an integer, never a string.
+  id fits ``mult.id`` below 65535, and each pin and group pin is an integer, never a
+  string.
 * Every ``mult_overrides`` entry is an object with a ``value`` and only the members
   ``label``, ``display``, ``grouping`` and ``pin``, on a column that holds mult ids and
   has no ``mult_options``.

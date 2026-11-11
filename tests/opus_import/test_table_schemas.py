@@ -36,7 +36,7 @@ from opus_import.importdb.mysql import (
     MYSQL_FIELD_TYPE_SQL,
     is_renderable_field_type,
 )
-from opus_import.steps.do_import_mult import MAX_MULT_ID
+from opus_import.steps.do_import_mult import PINNED_ABSENT_ID
 from opus_import.table_keys import ON_DELETE_VALUES, TABLE_LEVEL_KEY_KINDS
 
 #: The packaged schema directory, as a path.
@@ -453,7 +453,8 @@ def test_every_mult_options_row_is_a_mult_row() -> None:
     """Seven values, typed as `import_util.MultOption` says, with integer orders.
 
     The pin and the group pin are integers, never strings of digits: the import refuses
-    a string. An id fits ``mult.id``, a ``SMALLINT UNSIGNED``.
+    a string. An id fits ``mult.id``, a ``SMALLINT UNSIGNED``, below its largest value,
+    which a pinned field's absent value takes when its list has none.
     """
     wrong: list[str] = []
     for name, column in _columns():
@@ -467,7 +468,7 @@ def test_every_mult_options_row_is_a_mult_row() -> None:
             option = import_util.MultOption(*row)
             if not (
                 _is_int(option.id)
-                and 0 <= option.id <= MAX_MULT_ID
+                and 0 <= option.id < PINNED_ABSENT_ID
                 and isinstance(option.value, str | None)
                 and isinstance(option.label, str)
                 and _is_int(option.pin)

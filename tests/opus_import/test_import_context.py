@@ -299,8 +299,29 @@ def _mult_context() -> ImportContext:
     ctx = make_context()
     ctx.args.suppress_mult_messages = True
     ctx.mult_fields = {_FIELD: MultFieldInfo(7, pinned=True)}
-    ctx.db = cast(ImportDBSuper, object())
+    ctx.db = cast(ImportDBSuper, _EmptyDatabase())
     return ctx
+
+
+class _EmptyDatabase:
+    """A database holding no mult rows, recording the tables written to."""
+
+    def __init__(self) -> None:
+        self.written: list[tuple[str, list[dict[str, Any]]]] = []
+
+    @staticmethod
+    def quote_identifier(name: str) -> str:
+        return f'`{name}`'
+
+    @staticmethod
+    def read_rows(*_args: Any) -> list[Any]:
+        return []
+
+    def insert_rows(self, table_name: str, rows: list[dict[str, Any]]) -> None:
+        self.written.append((table_name, rows))
+
+    def upsert_rows(self, table_name: str, _key: str, rows: list[dict[str, Any]]) -> None:
+        self.written.append((table_name, rows))
 
 
 def test_a_mult_field_is_converted_once_and_then_served_from_the_context() -> None:
@@ -349,16 +370,7 @@ def test_one_context_s_mult_cache_is_invisible_to_another() -> None:
 def test_writing_writes_only_the_modified_fields() -> None:
     """A field this bundle read but added nothing to is not written back."""
     ctx = _mult_context()
-    written: list[tuple[str, list[dict[str, Any]]]] = []
-
-    class _FakeDatabase:
-        """Records the writes `write_mult_tables` makes."""
-
-        @staticmethod
-        def upsert_rows(table_name: str, key_name: str, rows: list[dict[str, Any]]) -> None:
-            written.append((table_name, rows))
-
-    ctx.db = cast(ImportDBSuper, _FakeDatabase())
+    written = cast(_EmptyDatabase, ctx.db).written
     do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
     ctx.mult_table_cache['obs_general.untouched'] = do_import_mult.MultFieldCache(
         'obs_general.untouched', 8, pinned=False

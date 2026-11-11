@@ -312,10 +312,9 @@ def test_reimport_leaves_the_rest_of_the_database_untouched(
     """Every table holding none of that bundle's rows is byte-identical to its golden.
 
     That is every mult table, and every table the finalization and dictionary steps write
-    that carries no bundle of its own. A pinned mult field's rows are where the upsert
-    lands, so this is the assertion that says the update half of the upsert reproduced
-    what the insert half wrote, ids included: a second write of a value the field already
-    holds updates its row rather than adding a second one under a new id.
+    that carries no bundle of its own. The mult tables say the re-import found every
+    value the field held rather than adding a second row under a new id, and the other
+    tables that the update half of each upsert reproduced what the insert half wrote.
     """
     _holding, untouched = reimport
     differences = {}

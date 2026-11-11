@@ -22,9 +22,12 @@ from opus_import import importdb, mult_fields
 from opus_import.cli import _create_argument_parser
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
-from opus_import.steps import do_update_mult_info
+from opus_import.steps import do_finalize_mult, do_update_mult_info
+from opus_import.steps.do_import_mult import PINNED_ABSENT_ID
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from import_tests.tools.golden_io import DatabaseCredentials
 
 #: The unpinned field the planted value is added to.
@@ -220,6 +223,104 @@ def _logger() -> pdslogger.PdsLogger:
     return logger
 
 
+def _run_in_process(
+    credentials: DatabaseCredentials, schema: str, step: Callable[[ImportContext], bool]
+) -> bool:
+    """Run one step in this process against a schema, as ``opus_import`` would.
+
+    Parameters:
+        credentials: How to reach the server.
+        schema: The schema.
+        step: The step.
+
+    Returns:
+        What the step returned.
+    """
+    ctx = ImportContext(args=_create_argument_parser().parse_args([]), logger=_logger())
+    ctx.db = importdb.get_db(
+        'MySQL',
+        credentials.host,
+        '',
+        schema,
+        credentials.user,
+        credentials.password,
+        mult_form_types=GROUP_FORM_TYPES,
+        logger=_logger(),
+    )
+    try:
+        return step(ctx)
+    finally:
+        ctx.db.close()
+
+
+def _with_overrides(name: str, overrides: list[dict[str, Any]]) -> dict[str, Any]:
+    """Return the packaged mult columns with one column given ``mult_overrides``."""
+    columns = dict(mult_fields.packaged_mult_columns())
+    column = columns[name]
+    columns[name] = mult_fields.MultColumn(
+        column.qualified_name, column.table_name, {**column.entry, 'mult_overrides': overrides}
+    )
+    return columns
+
+
+def test_finalize_drops_what_an_override_empties_and_an_unused_pinned_absent_row(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The groups an override empties go in the same finalization, and so does a pinned
+    field's absent row no observation holds; the rows its list gives stay."""
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'mult_groups')
+    field_id = _field_id(db_credentials, copy.schema, _PLANTED_FIELD)
+    ((group, count),) = golden_io.query(
+        db_credentials,
+        copy.schema,
+        'SELECT `grouping`, COUNT(*) FROM `mult` WHERE `field_id` = %s AND `grouping` IS NOT NULL '
+        'GROUP BY `grouping` ORDER BY COUNT(*), `grouping` LIMIT 1',
+        [field_id],
+    )
+    moved = [
+        str(row[0])
+        for row in golden_io.query(
+            db_credentials,
+            copy.schema,
+            'SELECT `value` FROM `mult` WHERE `field_id` = %s AND `grouping` = %s',
+            [field_id, group],
+        )
+    ]
+    assert len(moved) == count
+    pinned_id = _field_id(db_credentials, copy.schema, _PINNED_FIELD)
+    golden_io.execute(
+        db_credentials,
+        copy.schema,
+        'INSERT INTO `mult` (`field_id`, `id`, `value`, `label`, `display`) '
+        "VALUES (%s, %s, '', 'N/A', 'Y')",
+        [pinned_id, PINNED_ABSENT_ID],
+    )
+    pinned_before = _values(db_credentials, copy.schema, _PINNED_FIELD)
+    overrides = [{'value': value, 'grouping': 'Moved by the mult test'} for value in moved]
+    columns = _with_overrides(_PLANTED_FIELD, overrides)
+    monkeypatch.setattr(mult_fields, 'packaged_mult_columns', lambda: columns)
+
+    assert _run_in_process(db_credentials, copy.schema, do_finalize_mult.finalize_mult)
+
+    groups = {
+        str(row[0])
+        for row in golden_io.query(
+            db_credentials,
+            copy.schema,
+            'SELECT `grouping` FROM `mult_group` WHERE `field_id` = %s',
+            [field_id],
+        )
+    }
+    assert group not in groups
+    assert 'Moved by the mult test' in groups
+    pinned_after = _values(db_credentials, copy.schema, _PINNED_FIELD)
+    assert '' in pinned_before
+    assert set(pinned_after) == set(pinned_before) - {''}
+
+
 def test_update_mult_info_renames_a_value_in_place(
     main_run: build_run.ImportRun,
     db_credentials: DatabaseCredentials,
@@ -238,29 +339,9 @@ def test_update_mult_info_renames_a_value_in_place(
     renamed = '!Renamed Saturn'
     assert before[value][2] != 1
 
-    columns = dict(mult_fields.packaged_mult_columns())
-    column = columns[_PLANTED_FIELD]
-    columns[_PLANTED_FIELD] = mult_fields.MultColumn(
-        column.qualified_name,
-        column.table_name,
-        {**column.entry, 'mult_overrides': [{'value': value, 'label': renamed}]},
-    )
+    columns = _with_overrides(_PLANTED_FIELD, [{'value': value, 'label': renamed}])
     monkeypatch.setattr(mult_fields, 'packaged_mult_columns', lambda: columns)
-    ctx = ImportContext(args=_create_argument_parser().parse_args([]), logger=_logger())
-    ctx.db = importdb.get_db(
-        'MySQL',
-        db_credentials.host,
-        '',
-        copy.schema,
-        db_credentials.user,
-        db_credentials.password,
-        mult_form_types=GROUP_FORM_TYPES,
-        logger=_logger(),
-    )
-    try:
-        do_update_mult_info.update_mult_info(ctx)
-    finally:
-        ctx.db.close()
+    assert _run_in_process(db_credentials, copy.schema, do_update_mult_info.update_mult_info)
 
     after = _values(db_credentials, copy.schema, _PLANTED_FIELD)
     assert after[value][0] == before[value][0]

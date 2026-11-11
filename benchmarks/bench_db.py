@@ -5,8 +5,9 @@ per-search tables an earlier web run left are not part of what the import built.
 it runs ``ANALYZE TABLE`` on every table and sets
 ``information_schema_stats_expiry = 0`` on its connection, so nothing it reads comes
 from stale statistics. Then it records, per table and for the schema: data and index
-bytes and the exact row count, the index count, and ``MAX(id)`` of every mult table
-with an ``id`` column; the schema's index bytes including InnoDB's ``FULLTEXT`` auxiliary tablespaces,
+bytes and the exact row count, the index count, and the largest mult id of each mult
+field (``MAX(id)`` of each per-field ``mult_`` table, or of each field's ``mult`` rows);
+the schema's index bytes including InnoDB's ``FULLTEXT`` auxiliary tablespaces,
 which ``information_schema.TABLES`` leaves out; the schema's total beside
 ``innodb_buffer_pool_size``; the size of ``obs_general.preview_images``; and the
 index-usage snapshot.
@@ -81,6 +82,24 @@ if TYPE_CHECKING:
 COMMITTED_CAPTURE = SCENARIOS_DIR / 'queries.sql'
 
 
+#: The table holding every mult field's values, and the table naming the fields.
+MULT_TABLE = 'mult'
+MULT_FIELD_TABLE = 'mult_field'
+
+
+def _tables_with_column(connection: Any, schema: str, column: str) -> set[str]:
+    """Return the tables of a schema that have a column of a given name."""
+    return {
+        str(row[0])
+        for row in query(
+            connection,
+            'SELECT TABLE_NAME FROM information_schema.COLUMNS '
+            'WHERE TABLE_SCHEMA = %s AND COLUMN_NAME = %s',
+            [schema, column],
+        )
+    }
+
+
 def table_statistics(connection: Any, schema: str) -> dict[str, dict[str, int]]:
     """Return each table's sizes, exact row count and index count.
 
@@ -89,9 +108,11 @@ def table_statistics(connection: Any, schema: str) -> dict[str, dict[str, int]]:
         schema: The schema.
 
     Returns:
-        Per table: ``data_bytes``, ``index_bytes``, ``rows``, ``index_count``, and for a
-        mult table with an ``id`` column (``mult``, or a ``mult_`` table of a schema that
-        has one per field) ``max_id``.
+        Per table: ``data_bytes``, ``index_bytes``, ``rows``, ``index_count``; for a
+        ``mult_`` table with an ``id`` column, in a schema that has one table per mult
+        field, ``max_id``; and for ``mult``, one ``max_id.<field>`` per mult field, keyed
+        by the field's qualified name from ``mult_field``, since ids are numbered per
+        field.
     """
     sizes = query(
         connection,
@@ -107,15 +128,8 @@ def table_statistics(connection: Any, schema: str) -> dict[str, dict[str, int]]:
             [schema],
         )
     )
-    with_id = {
-        str(row[0])
-        for row in query(
-            connection,
-            'SELECT TABLE_NAME FROM information_schema.COLUMNS '
-            "WHERE TABLE_SCHEMA = %s AND COLUMN_NAME = 'id'",
-            [schema],
-        )
-    }
+    with_id = _tables_with_column(connection, schema, 'id')
+    with_field_id = _tables_with_column(connection, schema, 'field_id')
     tables: dict[str, dict[str, int]] = {}
     for name, data, index in sizes:
         table = f'{quote_identifier(schema)}.{quote_identifier(str(name))}'
@@ -125,7 +139,16 @@ def table_statistics(connection: Any, schema: str) -> dict[str, dict[str, int]]:
             'rows': int(query(connection, f'SELECT COUNT(*) FROM {table}')[0][0]),  # nosec B608 - quoted identifiers
             'index_count': int(index_counts.get(name, 0)),
         }
-        if str(name).startswith('mult') and str(name) in with_id:
+        if str(name) == MULT_TABLE and MULT_FIELD_TABLE in with_field_id:
+            fields = f'{quote_identifier(schema)}.{quote_identifier(MULT_FIELD_TABLE)}'
+            for field, maximum in query(
+                connection,
+                f'SELECT `f`.`qualified_name`, MAX(`m`.`id`) FROM {table} AS `m` '  # nosec B608 - quoted identifiers
+                f'JOIN {fields} AS `f` ON `f`.`field_id` = `m`.`field_id` '
+                'GROUP BY `f`.`qualified_name`',
+            ):
+                entry[f'max_id.{field}'] = int(maximum)
+        elif str(name).startswith('mult_') and str(name) in with_id:
             maximum = query(connection, f'SELECT MAX(id) FROM {table}')[0][0]  # nosec B608 - quoted identifiers
             entry['max_id'] = 0 if maximum is None else int(maximum)
         tables[str(name)] = entry

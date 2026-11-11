@@ -22,8 +22,9 @@ from .conftest import RecordingLogger, make_context
 class _RecordingDatabase:
     """An `importdb` stand-in holding some fields' ids, recording every write."""
 
-    def __init__(self, stored: dict[int, set[int]]) -> None:
+    def __init__(self, stored: dict[int, dict[int, str]]) -> None:
         self._stored = stored
+        self.group_deletes = 0
         self.updates: list[tuple[int, int, dict[str, Any]]] = []
         self.inserts: list[dict[str, Any]] = []
         self.group_upserts: list[dict[str, Any]] = []
@@ -39,10 +40,10 @@ class _RecordingDatabase:
         where: str | None = None,
         where_params: list[Any] | None = None,
     ) -> list[tuple[Any, ...]]:
-        if table_name == 'mult' and list(column_names) == ['id']:
+        if table_name == 'mult' and list(column_names) == ['id', 'value']:
             assert where == '`field_id`=%s'
             assert where_params is not None
-            return [(row_id,) for row_id in sorted(self._stored.get(where_params[0], set()))]
+            return sorted(self._stored.get(where_params[0], {}).items())
         self.rank_reads.append((table_name, where, where_params))
         return []
 
@@ -66,6 +67,11 @@ class _RecordingDatabase:
         if table_name == 'mult_group':
             self.group_upserts += rows
 
+    def delete_rows(self, table_name: str, where: str) -> None:
+        assert table_name == 'mult_group'
+        assert where.startswith('NOT EXISTS')
+        self.group_deletes += 1
+
 
 def _field_ids() -> dict[str, MultFieldInfo]:
     """Return a numbering of every packaged mult field, as `ensure_mult_fields` makes."""
@@ -77,15 +83,33 @@ def _field_ids() -> dict[str, MultFieldInfo]:
     }
 
 
-def _run(stored: dict[str, set[int]]) -> tuple[_RecordingDatabase, RecordingLogger]:
-    """Run the step with each named field holding the given ids."""
+def _run(
+    stored: dict[str, set[int]], values: dict[str, dict[int, str]] | None = None
+) -> tuple[_RecordingDatabase, RecordingLogger, bool]:
+    """Run the step with each named field holding the given ids under its list's values.
+
+    `values` gives a field's stored values outright instead.
+    """
     fields = _field_ids()
-    db = _RecordingDatabase({fields[name].field_id: ids for name, ids in stored.items()})
+    held = {
+        fields[name].field_id: {
+            row_id: value for row_id, value in _option_values(name).items() if row_id in ids
+        }
+        for name, ids in stored.items()
+    }
+    for name, given in (values or {}).items():
+        held[fields[name].field_id] = given
+    db = _RecordingDatabase(held)
     logger = RecordingLogger()
     ctx: ImportContext = make_context(logger=logger, db=db)
     ctx.mult_fields = fields
-    do_update_mult_info.update_mult_info(ctx)
-    return db, logger
+    written = do_update_mult_info.update_mult_info(ctx)
+    return db, logger, written
+
+
+def _option_values(name: str) -> dict[int, str]:
+    """Return the value each id of a pinned field's list stands for, as stored."""
+    return {option[0]: option[1] or '' for option in _packaged_options(name)}
 
 
 def _packaged_options(name: str) -> list[list[Any]]:
@@ -105,7 +129,9 @@ def test_a_preprogrammed_field_is_updated_row_for_row() -> None:
     Driving it against the real ``obs_general.instrument_id`` options is what pins the
     step to the shape the schemas hold.
     """
-    db, logger = _run({'obs_general.instrument_id': _all_ids('obs_general.instrument_id')})
+    db, logger, _written = _run(
+        {'obs_general.instrument_id': _all_ids('obs_general.instrument_id')}
+    )
 
     options = _packaged_options('obs_general.instrument_id')
     field_id = _field_ids()['obs_general.instrument_id'].field_id
@@ -123,7 +149,9 @@ def test_every_pinned_presentation_column_is_written() -> None:
     the same NamedTuple the code under test decodes with would make this pass for any
     transposition inside it.
     """
-    db, _logger = _run({'obs_general.instrument_id': _all_ids('obs_general.instrument_id')})
+    db, _logger, _written = _run(
+        {'obs_general.instrument_id': _all_ids('obs_general.instrument_id')}
+    )
 
     by_id = {row_id: row for _field, row_id, row in db.updates}
     options = _packaged_options('obs_general.instrument_id')
@@ -139,7 +167,9 @@ def test_every_pinned_presentation_column_is_written() -> None:
 
 def test_each_group_s_pin_is_written_to_its_group() -> None:
     """The group pin of an entry goes to ``mult_group``, once per group."""
-    db, _logger = _run({'obs_general.instrument_id': _all_ids('obs_general.instrument_id')})
+    db, _logger, _written = _run(
+        {'obs_general.instrument_id': _all_ids('obs_general.instrument_id')}
+    )
 
     field_id = _field_ids()['obs_general.instrument_id'].field_id
     expected: dict[str, int | None] = {}
@@ -157,7 +187,7 @@ def test_an_entry_with_no_row_is_inserted_with_its_value() -> None:
     name = 'obs_profile.occ_type'
     options = _packaged_options(name)
     absent = next(option for option in options if option[1] is None)
-    db, _logger = _run({name: _all_ids(name) - {absent[0]}})
+    db, _logger, _written = _run({name: _all_ids(name) - {absent[0]}})
 
     assert db.inserts == [
         {
@@ -174,7 +204,7 @@ def test_an_entry_with_no_row_is_inserted_with_its_value() -> None:
 
 def test_a_pinned_field_the_schema_does_not_use_is_left_alone() -> None:
     """A field with no rows has no observation of this schema behind it."""
-    db, _logger = _run({})
+    db, _logger, _written = _run({})
 
     assert db.updates == []
     assert db.inserts == []
@@ -183,7 +213,7 @@ def test_a_pinned_field_the_schema_does_not_use_is_left_alone() -> None:
 
 def test_the_fields_written_are_ranked_again_and_no_others() -> None:
     """Only the touched fields' values and groups are read for ranking."""
-    db, _logger = _run({'obs_general.planet_id': _all_ids('obs_general.planet_id')})
+    db, _logger, _written = _run({'obs_general.planet_id': _all_ids('obs_general.planet_id')})
 
     field_id = _field_ids()['obs_general.planet_id'].field_id
     assert db.rank_reads == [
@@ -200,7 +230,7 @@ def test_every_pinned_field_is_written_entry_for_entry() -> None:
     """
     columns = mult_fields.packaged_mult_columns()
     pinned = [name for name, column in columns.items() if column.pinned]
-    db, logger = _run({name: _all_ids(name) for name in pinned})
+    db, logger, _written = _run({name: _all_ids(name) for name in pinned})
 
     assert logger.messages_at('error') == []
     fields = _field_ids()
@@ -243,7 +273,7 @@ def test_an_entry_of_the_wrong_shape_stops_the_step(
     monkeypatch.setattr(
         mult_fields, 'packaged_mult_columns', lambda: {'obs_general.instrument_id': column}
     )
-    db = _RecordingDatabase({1: {0}})
+    db = _RecordingDatabase({1: {0: 'COISS'}})
     ctx: ImportContext = make_context(logger=RecordingLogger(), db=db)
     ctx.mult_fields = {'obs_general.instrument_id': MultFieldInfo(1, pinned=True)}
 
@@ -258,3 +288,45 @@ def test_read_mult_option_names_the_seven_positions() -> None:
     option = import_util.read_mult_option([3, None, 'N/A', 40, 'Y', 'Group', 10])
 
     assert option == import_util.MultOption(3, None, 'N/A', 40, 'Y', 'Group', 10)
+
+
+def test_an_entry_whose_id_is_stored_under_another_value_fails_and_writes_nothing() -> None:
+    """Relabeling the row would change what every observation holding the id means."""
+    name = 'obs_profile.occ_type'
+    values = _option_values(name)
+    absent = next(row_id for row_id, value in values.items() if value == '')
+    db, logger, written = _run({}, {name: {**values, absent: 'SOMETHING ELSE'}})
+
+    assert written is False
+    assert db.updates == []
+    assert db.inserts == []
+    assert db.rank_reads == []
+    assert logger.messages_at('error') == [
+        f'mult_options of mult field "{name}" gives id {absent} the value "", but the '
+        'field stores "SOMETHING ELSE" under it',
+        '--update-mult-info wrote nothing',
+    ]
+
+
+def test_an_entry_whose_value_is_stored_under_another_id_fails_and_writes_nothing() -> None:
+    """Inserting it would hit the field's unique key part way through a deploy."""
+    name = 'obs_profile.occ_type'
+    values = _option_values(name)
+    absent = next(row_id for row_id, value in values.items() if value == '')
+    held = {row_id: value for row_id, value in values.items() if row_id != absent}
+    held[65535] = ''
+    db, logger, written = _run({}, {name: held})
+
+    assert written is False
+    assert db.inserts == []
+    assert logger.messages_at('error')[0] == (
+        f'mult_options of mult field "{name}" gives the value "" id {absent}, but the field '
+        'stores it under id 65535'
+    )
+
+
+def test_the_groups_left_empty_are_deleted_after_the_overrides() -> None:
+    db, _logger, written = _run({'obs_general.planet_id': _all_ids('obs_general.planet_id')})
+
+    assert written is True
+    assert db.group_deletes == 1

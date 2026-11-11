@@ -5822,3 +5822,46 @@ Nothing above this line is rewritten by an executor.
 - Results: the gates pass (`run-all-checks.sh`, 2,752 unit tests); the import suite 191
   passed and 3 skipped; the integration suite 1,586 passed against the local database.
 - `SCHEMA_VERSION` is 7.
+- The orchestrator's rulings (2026-11-10): the case-variant merge in
+  `obs_profile.quality_score` is accepted, since before it the widget offered "Fair",
+  "Poor" and "Good" twice each under identical labels (ids 3/5, 2/6, 4/7), so the merge
+  is a fix; and ids keep starting at 0, since the observation columns keep their values.
+- The review of the PR found five faults, each fixed:
+  - **A new value could rewrite another row.** The import wrote a field's rows with
+    `upsert_rows`, whose `ON DUPLICATE KEY UPDATE` fires on either unique key, so a new
+    row colliding on `(field_id, value)` with a row the cache missed (`collation_key`
+    is not the collation in full, `ø` against `o` for one) rewrote that row's value
+    while the observations stored the new id. A new row is inserted, never upserted, so
+    such a collision stops the import with a fatal message naming the field and the
+    values; before giving a value an id, a value the cache misses is asked of the server
+    (`SELECT ... WHERE field_id = %s AND value = %s`, under the server's collation); and
+    every later write of an existing row (a pinned list's presentation, a rank) is an
+    `UPDATE` by key of the presentation or rank columns only.
+  - **A pinned field's cache came from its schema alone**, so an out-of-list value's
+    absent row was added at the list's highest id plus one, where a later list entry
+    could land and relabel it. The cache holds what `mult` holds, with the list laid
+    over it: an entry relabels the row stored under its id only when the stored value is
+    the entry's value, and an entry whose id is stored under another value, or whose
+    value under another id, is an error that leaves the stored row alone. The absent
+    row of a pinned field whose list has none takes `PINNED_ABSENT_ID`, 65,535, which
+    the schema check refuses to any list entry, and finalization deletes it once no
+    observation holds it (the one row a pinned field loses). `--update-mult-info` checks
+    every entry the same way before writing anything; with any entry in error it logs
+    each, writes nothing and returns False, which `cli` counts as a failed step, so the
+    invocation exits with failure and the code-only deploy (`set -e`) stops before the
+    switch.
+  - **The conflict warning ignored the pin and the group pin**, so whichever bundle
+    stored a value first decided them silently; both are compared.
+  - **A group an override emptied survived one finalization**: the empty groups are
+    deleted after the overrides, and `--update-mult-info` deletes them too.
+  - **`bench_db`'s `max_id` for `mult` was the maximum over every field**: it records
+    one `max_id.<qualified name>` per field, read through `mult_field`, and keeps
+    `max_id` for a per-field `mult_` table.
+- A deleted id is free again: once finalization deletes a field's highest id, the next
+  value the import adds takes it, since a new id is the field's highest plus one. Nothing
+  in this plan relies on an id staying unused, and the guides say so. **For PR-16's
+  counter**: concurrent importers cannot take "highest plus one" from their own caches,
+  and whatever replaces it decides whether a deleted id may be handed out again.
+- The review's fixes change nothing the import writes at fixture scale (the import
+  goldens are unchanged); the local integration database was imported again with the
+  fixes, and the integration suite passes against it.

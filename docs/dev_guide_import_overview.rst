@@ -446,8 +446,9 @@ row rather than the value itself. The column's values form one mult field, named
 numbered within a field: they start at zero, and a value not already there is given one
 more than the field's current maximum -- unless the column's schema pins its values with
 ``mult_options``, in which case the ids are the ones listed and a value that is not
-among them is an error. A stored row's id never changes, so renaming a value rewrites no
-observation row.
+among them is an error. A stored row keeps its id and its value, so renaming a value
+rewrites no observation row. A deleted row's id is free again: after finalization deletes
+a value no observation holds, a value added later can take its id.
 
 The field ids are numbered once in each database, over every mult field of the packaged
 ``obs_*.json`` schemas in order of qualified name, and a field a later release adds takes
@@ -498,9 +499,12 @@ Invariants
   the end of the index.** The ``mult`` rows an index adds are written once every row has
   been computed, before the rows still waiting are loaded, and finalization deletes only
   the values no observation holds. No database constraint enforces it.
-* **A stored** ``mult`` **row's id never changes.** Neither ``--update-mult-info`` nor
-  finalization rewrites an id or a value, so renaming a value or reordering a field
-  touches no observation row.
+* **A stored** ``mult`` **row keeps its id and its value.** Neither the import,
+  ``--update-mult-info`` nor finalization rewrites the id or the value of a row it
+  holds: a new value is inserted, never written over another row, and a list entry that
+  disagrees with a stored row is an error. Renaming a value or reordering a field
+  touches no observation row. A row finalization deletes frees its id for a later
+  value.
 * **An import computes in many processes and writes from one.** Only the import's own
   process uses the database and writes the log; pool workers compute rows and record
   what they would have written, and that process replays it in index order, so the

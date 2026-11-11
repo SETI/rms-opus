@@ -431,13 +431,18 @@ change without an import:
    add an entry to its ``mult_overrides`` naming the stored ``value`` and the
    ``label`` to show -- or ``display``, ``grouping`` or ``pin`` -- or change the entry
    already there. For a column whose schema lists its values in ``mult_options``, change that
-   list's entry instead. :ref:`dev_guide_table_schemas` gives both formats.
+   list's entry instead, keeping its id and its value: only the label, the pin, the
+   display flag and the group of an entry change in place. :ref:`dev_guide_table_schemas`
+   gives both formats.
 2. **Release** the change (:ref:`user_guide_deployment_releasing`).
 3. **Deploy it** with ``deploy_new_code_only.sh ==<release>``. Its database step runs
    ``opus_import --update-mult-info``, which writes the schemas' ``mult_options`` and
    ``mult_overrides`` over the stored ``mult`` rows and ranks the changed fields again.
-   Ids never change, so no observation row is touched. The switch at the end restarts
-   the cache service and the web service, and the restarted workers read the label.
+   Ids and values never change, so no observation row is touched. If a ``mult_options``
+   entry gives a stored id another value, or a stored value another id, the step writes
+   nothing, logs each such entry in ``ERRORS.log``, and exits with failure, which stops
+   the deploy. The switch at the end restarts the cache service and the web service, and
+   the restarted workers read the label.
 
 ``deploy_new_code_only.sh --no-database`` skips the database step, so it renames
 nothing. A database a full import built already carries the overrides, because

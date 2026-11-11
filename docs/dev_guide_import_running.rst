@@ -368,8 +368,10 @@ Auxiliary tables and other steps
      - Build ``table_names``, the same way.
    * - ``--update-mult-info``
      - Write the table schemas' ``mult_options`` lists and ``mult_overrides`` over the
-       stored ``mult`` rows, and rank the fields they change again. No id or value
-       changes. The code-only deploy runs it
+       stored ``mult`` rows, and rank the fields they change again. No stored row's id
+       or value changes: a list entry that disagrees with a stored row is an error, and
+       then nothing is written and the invocation exits with failure. The code-only
+       deploy runs it
        (:ref:`dev_guide_import_steps_do_update_mult_info`).
    * - ``--create-cart``
      - Drop and recreate the empty ``cart`` table. It needs ``obs_general``, and on a
@@ -520,9 +522,10 @@ Verifying that a run succeeded
 
 **The exit status is not sufficient.** A non-zero status means the run stopped; a zero
 status does **not** mean it was clean. Several steps report failure through the log and
-still exit zero. Five are not among them: a failed ``--create-indexes``, duplicate step,
-``--create-param-info``, ``--import-dictionary`` or ``--validate`` makes the
-invocation exit with failure and keeps it from marking the schema ready.
+still exit zero. These are not among them: a failed ``--create-indexes``, duplicate
+step, ``--create-param-info``, ``--update-mult-info``, ``--import-dictionary`` or
+``--validate`` makes the invocation exit with failure and keeps it from marking the
+schema ready.
 
 The check that matters is, with ``<import_log_dir>`` standing for the directory that
 ``[paths] import_log_dir`` names::

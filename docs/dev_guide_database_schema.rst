@@ -249,8 +249,12 @@ The ``mult`` table has these columns:
 * ``id`` (``smallint unsigned``): What an observation's column holds for this value. Ids
   are numbered within a field: a field's ids start at 0, and a value the import finds
   takes the field's highest id plus one. A pinned field's ids are the ones its
-  ``mult_options`` gives. A stored row's id never changes, so no observation row has to
-  be rewritten when a value is renamed.
+  ``mult_options`` gives; if its list has no absent value and an observation needs one,
+  the import adds it under 65535, an id no list may give. A stored row keeps its id and
+  its value, so no observation row has to be rewritten when a value is renamed. An id
+  is not reserved once its row is deleted: finalization deletes the values no
+  observation holds, and the next value the import adds to the field takes the field's
+  highest id plus one, which can be an id a deleted value had.
 * ``value`` (``varchar(100)``): The value as the import read it. The absent value is
   stored as the empty string, never ``NULL``.
 * ``label`` (``varchar(100)``): The string to display in the UI.

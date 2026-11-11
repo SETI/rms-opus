@@ -5,19 +5,24 @@ tables, which read the ``mult`` rows; an append invalidates it, since a bundle r
 or added can stop or start referencing any value. It has three parts:
 
 1. In every field whose column does not list its values (``mult_field.pinned`` is 0), the
-   ``mult`` rows whose id no observation holds are deleted, and then every group left
-   with no value. The ids in use are read one scan per observation table, through an
-   unbuffered cursor, with each column's distinct ids collected here, so a table whose
-   mult columns carry no key is read once rather than once a column. A ``mult_list``
-   column's ids are read out of its JSON list in the same scan. A pinned field keeps
-   every row, since its list is the intended set of choices.
+   ``mult`` rows whose id no observation holds are deleted. The ids in use are read one
+   scan per observation table, through an unbuffered cursor, with each column's
+   distinct ids collected here, so a table whose mult columns carry no key is read once
+   rather than once a column. A ``mult_list`` column's ids are read out of its JSON list
+   in the same scan. A pinned field keeps every row its list gives, since the list is
+   the intended set of choices; the one row it may hold beyond them, the absent value
+   the import adds under `opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted
+   like any other once no observation holds it. A deleted id is free again: the next
+   value the import adds to the field takes the field's highest id plus one, which can
+   be an id deleted here.
 2. Each column's ``mult_overrides`` are applied over the stored rows
-   (`apply_mult_overrides`), so an override wins over a stored or computed label.
+   (`apply_mult_overrides`), so an override wins over a stored or computed label, and
+   then every group left with no value is deleted.
 3. Every field's values and groups are ranked (`rank_mult_fields`), as
    `opus_import.mult_rank` describes.
 
-``--update-mult-info`` (`opus_import.steps.do_update_mult_info`) applies the overrides
-and ranks the fields it touched with the same functions.
+``--update-mult-info`` (`opus_import.steps.do_update_mult_info`) applies the overrides,
+deletes the groups left empty and ranks the fields it touched with the same functions.
 """
 
 from __future__ import annotations
@@ -30,7 +35,7 @@ import opus_support
 from opus_import import import_util, mult_fields
 from opus_import.mult_fields import MULT_GROUP_TABLE, MULT_TABLE
 from opus_import.mult_rank import RankedGroup, RankedValue, group_ranks, value_ranks
-from opus_import.steps.do_import_mult import ABSENT_VALUE
+from opus_import.steps.do_import_mult import ABSENT_VALUE, option_rows
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Iterable
@@ -58,13 +63,15 @@ def finalize_mult(ctx: ImportContext) -> bool:
         True; every part reports what it changed and nothing here fails the step.
     """
     fields = mult_fields.ensure_mult_fields(ctx)
+    columns = mult_fields.packaged_mult_columns()
     used = referenced_mult_ids(ctx)
     for name, info in sorted(fields.items()):
-        if info.pinned:
-            continue
-        _delete_unreferenced(ctx, name, info.field_id, used.get(name, set()))
-    _delete_empty_groups(ctx)
+        kept = used.get(name, set())
+        if info.pinned and name in columns:
+            kept = kept | {row['id'] for row, _pin in option_rows(columns[name].entry)}
+        _delete_unreferenced(ctx, name, info.field_id, kept)
     apply_mult_overrides(ctx)
+    delete_empty_groups(ctx)
     rank_mult_fields(ctx)
     return True
 
@@ -110,13 +117,14 @@ def referenced_mult_ids(ctx: ImportContext) -> dict[str, set[int]]:
 
 
 def _delete_unreferenced(ctx: ImportContext, name: str, field_id: int, used: set[int]) -> None:
-    """Delete a field's ``mult`` rows whose id is not in use.
+    """Delete a field's ``mult`` rows whose id is not kept.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
         name: The field's qualified name, for the log.
         field_id: The field.
-        used: The ids the observation tables hold.
+        used: The ids kept: those the observation tables hold, and for a pinned field
+            those its list gives.
     """
     db = ctx.db
     assert db is not None
@@ -140,7 +148,7 @@ def _delete_unreferenced(ctx: ImportContext, name: str, field_id: int, used: set
         )
 
 
-def _delete_empty_groups(ctx: ImportContext) -> None:
+def delete_empty_groups(ctx: ImportContext) -> None:
     """Delete every ``mult_group`` row no ``mult`` row of its field names.
 
     Parameters:
@@ -264,7 +272,7 @@ def _in_fields(
 def rank_mult_fields(ctx: ImportContext, field_ids: Collection[int] | None = None) -> None:
     """Recompute ``disp_rank`` and ``group_rank`` for every field, or for some.
 
-    Only the rows whose rank changes are written.
+    Only the rows whose rank changes are written, each by its key and only its rank.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -281,22 +289,31 @@ def rank_mult_fields(ctx: ImportContext, field_ids: Collection[int] | None = Non
     for values in db.read_rows(MULT_TABLE, _RANK_COLUMNS, where, params):
         row = dict(zip(_RANK_COLUMNS, values, strict=True))
         by_field[int(row['field_id'])].append(row)
-    changed: list[dict[str, Any]] = []
+    q = db.quote_identifier
     for field_id, rows in sorted(by_field.items()):
         ranks = value_ranks(_ranked_values(rows), parsers.get(field_id))
-        changed += _with_new_ranks(rows, 'id', 'disp_rank', ranks)
-    db.upsert_rows(MULT_TABLE, 'id', changed)
+        for row in _with_new_ranks(rows, 'id', 'disp_rank', ranks):
+            db.update_row(
+                MULT_TABLE,
+                {'disp_rank': row['disp_rank']},
+                f'{q("field_id")}=%s AND {q("id")}=%s',
+                where_params=[field_id, row['id']],
+            )
 
     group_columns = ('field_id', 'grouping', 'group_pin', 'group_rank')
     groups: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for values in db.read_rows(MULT_GROUP_TABLE, group_columns, where, params):
         row = dict(zip(group_columns, values, strict=True))
         groups[int(row['field_id'])].append(row)
-    changed = []
-    for rows in groups.values():
+    for field_id, rows in sorted(groups.items()):
         ranked = group_ranks([RankedGroup(row['grouping'], row['group_pin']) for row in rows])
-        changed += _with_new_ranks(rows, 'grouping', 'group_rank', ranked)
-    db.upsert_rows(MULT_GROUP_TABLE, 'grouping', changed)
+        for row in _with_new_ranks(rows, 'grouping', 'group_rank', ranked):
+            db.update_row(
+                MULT_GROUP_TABLE,
+                {'group_rank': row['group_rank']},
+                f'{q("field_id")}=%s AND {q("grouping")}=%s',
+                where_params=[field_id, row['grouping']],
+            )
     import_util.log_info(ctx, f'Ranked the values and groups of {len(by_field)} mult field(s)')
 
 

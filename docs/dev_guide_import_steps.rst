@@ -166,7 +166,8 @@ live. In order:
    ``** DELETING EVERY OPUS TABLE IN SCHEMA <schema> **`` and drops every table the
    import creates (:func:`~opus_import.steps.do_import_tables.delete_all_opus_tables`).
    This has to happen first, so that no ``mult`` row survives, the mult fields are
-   numbered again, and the row ids start again from 1.
+   numbered again from 1, the row ids start again from 1, and each field's mult ids
+   start again from 0.
 3. **Delete the named bundles**, under ``--delete-bundles``: each one's rows from every
    observation table, then their rows in the bundle registry
    (:func:`~opus_import.bundle_registry.unregister_bundles`). It runs on any schema
@@ -378,21 +379,27 @@ bundle replaced or added can stop or start using any value, so the ``--finalize`
 every append runs it again. It has three parts, in this order:
 
 1. **Delete the values no observation holds.** In every field whose ``pinned`` is 0, the
-   ``mult`` rows whose id no observation column holds are deleted, and then every
-   ``mult_group`` row that no ``mult`` row of its field names.
+   ``mult`` rows whose id no observation column holds are deleted.
    :func:`~opus_import.steps.do_finalize_mult.referenced_mult_ids` finds the ids in use:
    it reads each observation table once, through an unbuffered cursor
    (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.stream_select`), and collects every
    mult column's distinct ids, reading a ``mult_list`` column's ids out of its JSON list
-   in the same scan. A pinned field keeps every row, since its list is the intended set
-   of choices.
+   in the same scan. A pinned field keeps every row its list gives, since the list is
+   the intended set of choices; the absent value the import adds to a pinned field whose
+   list has none, under
+   :data:`~opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted once no
+   observation holds it. A deleted id is free again: the next value the import adds to
+   the field takes the field's highest id plus one.
 2. **Apply the overrides.**
    :func:`~opus_import.steps.do_finalize_mult.apply_mult_overrides` writes each column's
    ``mult_overrides`` over its field's stored rows, so an override wins over the label
    the import gave a value. An override sets any of ``label``, ``display``, ``grouping``
    and ``pin`` of the row whose value it names. A ``grouping`` the field has no group for
    gains a ``mult_group`` row with no pin. An override that names a value the field does
-   not hold is logged as a warning and skipped.
+   not hold is logged as a warning and skipped. Then every ``mult_group`` row that no
+   ``mult`` row of its field names is deleted
+   (:func:`~opus_import.steps.do_finalize_mult.delete_empty_groups`), so a group an
+   override empties goes in the same run.
 3. **Rank every field.** :func:`~opus_import.steps.do_finalize_mult.rank_mult_fields`
    computes every value's ``disp_rank`` and every group's ``group_rank`` by the rules of
    :mod:`opus_import.mult_rank`, and writes only the rows whose rank changes. A column
@@ -401,7 +408,7 @@ every append runs it again. It has three parts, in this order:
 
 The step always returns True: nothing in it fails the step. ``--update-mult-info``
 (:ref:`dev_guide_import_steps_do_update_mult_info`) applies the overrides and ranks the
-fields it touched with the same two functions.
+fields it touched with the same functions.
 
 .. _dev_guide_import_steps_table_swap:
 
@@ -584,17 +591,26 @@ gives it (:ref:`user_guide_deployment_rename_mult_value`).
 :func:`~opus_import.steps.do_update_mult_info.update_mult_info` works in three parts:
 
 1. **The pinned lists.** For each column with ``mult_options`` whose field has rows in
-   this database, each entry's ``label``, ``pin``, ``display`` and ``grouping`` are
-   written over the row with that id, an entry with no row is inserted, and each entry's
-   group pin is written to its ``mult_group`` row. A pinned field with no rows is left
-   alone: no observation in this database uses it.
+   this database, every entry is checked against the stored rows first. An entry whose
+   id the field stores with the same value writes its ``label``, ``pin``, ``display``
+   and ``grouping`` over that row; an entry neither of whose id or value the field
+   stores is inserted, id and value with it; and each entry's group pin is written to
+   its ``mult_group`` row. An entry whose id the field stores under another value, or
+   whose value it stores under another id, is an error: writing it would change what
+   the observations holding the id mean, or break the field's unique key part way
+   through. **If any entry is in error, the step writes nothing**, logs each one, and
+   returns False, which makes the invocation exit with failure once its other steps
+   have run. A pinned field with no rows is left alone: no observation in this database
+   uses it.
 2. **The overrides.** Every column's ``mult_overrides`` are applied, by
-   :func:`~opus_import.steps.do_finalize_mult.apply_mult_overrides`.
+   :func:`~opus_import.steps.do_finalize_mult.apply_mult_overrides`, and the groups left
+   with no value are deleted.
 3. **The ranks.** Every field either part changed is ranked again, by
    :func:`~opus_import.steps.do_finalize_mult.rank_mult_fields`.
 
-It never writes ``id`` or ``value``: the id is what the ``obs_`` rows already hold, and
-the value is what a row means rather than how it is shown. So no observation row changes.
+It never changes the ``id`` or the ``value`` of a stored row: the id is what the
+``obs_`` rows already hold, and the value is what a row means rather than how it is
+shown. So no observation row changes.
 
 A ``mult_options`` entry that :func:`~opus_import.import_util.read_mult_option` refuses
 -- one that does not carry exactly the seven values
@@ -1055,21 +1071,29 @@ and records its arguments for the import's process to resolve
        :class:`~opus_import.steps.do_import_mult.MultFieldCache`. The returned cache
        *is* the cache: adding to it is how a value is added. Cleared per bundle.
    * - :attr:`~opus_import.context.ImportContext.modified_mult_tables`
-     - The fields this bundle added values to, or whose pinned rows it read, and which
-       therefore have to be written. Cleared per bundle.
+     - The fields with rows or groups to write since the last write: values added, or
+       a pinned field's list adding or relabeling rows. Cleared at each write and per
+       bundle.
 
-**Reading a field.** An unpinned field's rows are read from ``mult`` and its groups
-from ``mult_group``, so a bundle sees every value the bundles before it added, on a
-fresh import and an append alike; a field with no rows yet starts the cache empty, and
-the import fills it as it meets values. A column that pins its values with
-``mult_options`` takes its rows from the schema instead
-(:func:`~opus_import.import_util.read_mult_option`) and is marked modified at once.
+**Reading a field.** A field's rows are read from ``mult`` and its groups from
+``mult_group``, so a bundle sees every value the bundles before it added, on a fresh
+import and an append alike; a field with no rows yet starts the cache empty, and the
+import fills it as it meets values. A column that pins its values with ``mult_options``
+has its list laid over the stored rows
+(:func:`~opus_import.import_util.read_mult_option` reads each entry): an entry whose id
+is stored with the same value relabels that row, an entry neither of whose id or value
+is stored is a new row, and an entry whose id is stored under another value, or whose
+value is stored under another id, is an error, logged once a run, that leaves the stored
+row as it is.
 
 **Keying and id assignment.** A field's cache finds a value through a dictionary keyed
 by :func:`~opus_support.collation.collation_key`, the form of the value the server's
 collation compares, so a value the unique key ``(field_id, value)`` would call a
 duplicate finds the row already there, and a lookup costs the same however many values
-the field holds.
+the field holds. The key is not the collation in full, so a value the dictionary does
+not find is asked of the server (``SELECT ... WHERE field_id = %s AND value = %s``,
+compared by the server's own collation) before it is given an id, and the server's row
+is kept in the cache under the value's key.
 A value is stored as a string, and an absent value (None) as the empty string. A value
 the field lacks is given the field's highest id plus one, or 0 in an empty field. A
 value that would need an id above
@@ -1078,14 +1102,17 @@ unsigned``) raises :exc:`~opus_import.steps.do_import_mult.MultIdOverflowError`,
 message names the field.
 
 **A value the field already holds** keeps its stored row. In an unpinned field, when
-the incoming label, display or grouping differs from the stored row's and the column's
-``mult_overrides`` does not name the value, the stored row stays and a warning, logged
-once a run, names the field, the value and both labels, and points at
-``mult_overrides`` as the way to change the stored presentation.
+the incoming label, display, pin, grouping or group pin differs from the stored one and
+the column's ``mult_overrides`` does not name the value, the stored row stays and a
+warning, logged once a run, names the field, the value and both presentations, and
+points at ``mult_overrides`` as the way to change the stored presentation.
 
 **A value outside a pinned list** is an error, logged once a run, which fails the
-bundle. The row is given the id of the field's absent value, which is added with the
-label ``N/A`` if the field lacks one, so a run with ``--ignore-errors`` carries on.
+bundle. The row is given the id of the field's absent value, so a run with
+``--ignore-errors`` carries on. A list with no absent value has one added, labeled
+``N/A``, under :data:`~opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, the largest
+id, which no ``mult_options`` entry may give; so a value a later release adds to the list
+never lands on it, and finalization deletes it once no observation holds it.
 
 **No order is computed here.** The import stores each value's ``pin`` as the obs class
 or the schema gives it, and finalization ranks every field
@@ -1095,9 +1122,11 @@ or the schema gives it, and finalization ranks every field
 modified field at the end of each index file, once every row has been computed and
 before the sink loads the ``obs_`` rows still waiting; a table whose rows filled a
 transaction during the index was loaded earlier, holding ids its field gains only here.
-A pinned field's rows are written whole, and an existing row takes the schema's
-presentation; an unpinned field's rows the bundle added are inserted. Neither touches a
-row's ``disp_rank``. A bundle that is deleted leaves its values in ``mult``, where an
+A new row is inserted, never upserted: a value the server already holds under another
+id makes the insert fail on the field's unique key, and the import stops with a fatal
+message naming the field and the values, rather than rewriting that row. A pinned
+field's stored row its list relabels is updated by id, its ``label``, ``pin``,
+``display`` and ``grouping`` only. Nothing here touches a row's ``disp_rank``. A bundle that is deleted leaves its values in ``mult``, where an
 observation of another bundle may hold them too; finalization deletes the ones no
 observation holds.
 

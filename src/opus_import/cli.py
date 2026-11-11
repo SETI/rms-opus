@@ -513,8 +513,9 @@ def main() -> None:
             the observation import fails or is refused, ``--finalize`` or
             ``--write-schema-version`` refuses, an exception reaches the top-level
             handler, or -- unless ``--ignore-errors`` -- ``--create-indexes``, the
-            duplicate step, ``--create-param-info``, ``--import-dictionary`` or
-            ``--validate`` failed, after the invocation's other steps have run.
+            duplicate step, ``--create-param-info``, ``--update-mult-info``,
+            ``--import-dictionary`` or ``--validate`` failed, after the invocation's
+            other steps have run.
             **A non-zero status means the run stopped, not that a zero status means it
             was clean:** other steps report failure through the log and leave the
             status zero. Read ``ERRORS.log`` to judge whether a run was clean.
@@ -761,7 +762,8 @@ def main() -> None:
             )
 
             with ctx.timed('update_mult_info'):
-                do_update_mult_info.update_mult_info(ctx)
+                if not do_update_mult_info.update_mult_info(ctx):
+                    failed_steps.append('--update-mult-info')
 
             logger.close()
 
