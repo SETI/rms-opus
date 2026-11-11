@@ -215,7 +215,7 @@ def test_the_finalize_after_a_delete_drops_the_values_only_that_bundle_held(
 @functools.cache
 def _logger() -> pdslogger.PdsLogger:
     """Return a quiet logger; a `pdslogger.PdsLogger` name can be created once a process."""
-    logger = pdslogger.PdsLogger('opus_import.import_tests.mult')
+    logger = pdslogger.PdsLogger('opus_import_mult_tests')
     logger.set_level(logging.CRITICAL)
     return logger
 

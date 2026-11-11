@@ -5679,3 +5679,89 @@ Nothing above this line is rewritten by an executor.
 - `models.py` is edited: `ObsGeneral` loses the two fields, and `inspectdb` against the
   local integration database gives the same fields.
 - `SCHEMA_VERSION` is 6.
+
+### 2026-11-10, PR-14 (written against this file at 859f9650)
+
+- The branch is PR-13's, since the section builds on its keys and the children keyed on
+  `obs_general_id`.
+- **Id width: `SMALLINT UNSIGNED`.** PR-00's complete-scale `bench_db`
+  (`2026-11-05_PR-00_before_complete_mysql_a.json`) records `max_id` for every mult
+  table: the largest is 500 (`mult_obs_general_instrument_id` and
+  `mult_obs_profile_host`, both ids their `mult_options` lists give), and the largest
+  in a field the import numbers itself is 295 (`mult_obs_mission_cassini_rev_no`).
+  `mult.id`, every `mult_idx`, `flag_yesno` and `flag_onoff` column (the
+  `MYSQL_FIELD_TYPE_SQL` mapping), and `mult_field.field_id` are `SMALLINT UNSIGNED`;
+  the import raises `MultIdOverflowError`, naming the field, before handing out an id
+  above 65,535, and the schema validator refuses a `mult_options` id above it.
+- **Ids are today's, so they start at 0, not 1.** Every field's ids start at 0 today
+  (every `mult_options` list numbers from 0, and the import gave a field's first value
+  0), and the section's "the values in the observation columns are today's" rules out
+  renumbering them. A new value takes the field's highest id plus one. The sentinel the
+  section removes by starting at 1 goes another way: a value outside a pinned list no
+  longer returns 0 but the field's absent value, as the section asks under
+  `--ignore-errors`; a pinned field without one gains an empty-string value labeled
+  `N/A`.
+- The fields are the columns whose `pi_form_type` is `GROUP` or `MULTIGROUP`
+  (`mult_fields.is_mult_column`, the rule the import already used), not the section's
+  `mult_idx`, `flag_yesno`, `flag_onoff` and `mult_list` columns: that set misses
+  `obs_mission_cassini.rev_no`, a `char3` `GROUP` column holding its id as text, which
+  stays `char3`. The surface geometry template has no such column. `field_id` is
+  numbered from 1 in order of qualified name by `mult_fields.ensure_mult_fields`, which
+  also keeps `pinned` in step with the schema.
+- **`mult.value` compares under the schema's `utf8mb4_0900_ai_ci`, so the unique key
+  `(field_id, value)` merges values that differ only in case or accent.** The import's
+  cache keys a field's rows by `opus_support.collation_key` (moved there from
+  `import_constants`, which the import cannot import), so such a value finds the stored
+  row. The fixture's `obs_profile.quality_score` holds `FAIR`/`fair`, `POOR`/`poor` and
+  `GOOD`/`good` as six rows labeled alike; they become three, and the 24 `obs_profile`
+  rows that held the lowercase ids hold the uppercase ones (the import goldens' one
+  change outside the mult tables and `schema_version`). The local integration database
+  of PR-13 holds the same three pairs. **For the orchestrator's ruling**: the
+  alternative, a binary collation on `mult.value`, keeps six rows and today's ids but
+  needs a per-column collation the schema files cannot state, and leaves the widget
+  offering `Fair` twice.
+- `disp_rank` and `group_rank` default to 0, so the import writes rows without a rank
+  and finalization computes it; the import never writes either column.
+- The conflict warning is not raised for a pinned field, whose presentation is its
+  list (the obs classes pass no label for one, so every value would warn), nor for a
+  value the column's `mult_overrides` presents, whose stored label differs on purpose.
+  The fixture's golden path emits none, so nothing is whitelisted.
+- `finalize_mult` has no option of its own; `--finalize` runs it after the duplicate
+  step, whose deletions can leave a value unreferenced, and before the auxiliary
+  tables. Each table's mult columns are read in one scan through a new
+  `ImportDBSuper.stream_select` (an unbuffered server-side cursor); a `mult_list`
+  column's ids are parsed out of its JSON in Python within that scan rather than read
+  by a `JSON_TABLE`, which would scan `obs_general` a second time.
+- `--update-mult-info` skips a pinned field the schema holds no rows of (no
+  observation of that schema uses it), inserts a list entry a field in use lacks,
+  writes the label, pin, display and grouping of the others (never the value), writes
+  each group's pin, applies the overrides, and ranks the fields it touched. No
+  packaged schema carries `mult_overrides` yet, so `import_tests/test_mult.py` renames
+  a value by running the step in-process against a copy of the main run's schema with
+  the column's entry given an override, rather than through the command line.
+- The group pin of a `mult_options` entry is an integer too, rewritten by the same
+  committed script (`scripts/import/rewrite_mult_option_orders.py`) as the pin, and
+  `import_util.read_mult_option` refuses a string in either. `PLANET_GROUP_MAPPING`
+  keeps its `disp_order` key, holding integers.
+- Scorched earth names `mult` in `OPUS_TABLE_NAMES` and drops it after every other
+  exact name, beside the `mult_` tables (`mult_field` and `mult_group`), which the
+  prefix still finds.
+- The application joins `mult` once per mult column, under the alias the per-column
+  table had (`app_utils.mult_alias`, which replaces `get_mult_name`), through
+  `sql_builder.mult_join`, which returns a `Join` that `FromSource.append_join` adds;
+  the alias keeps every `<alias>.label` column reference as it was. A statement's
+  parameters gain the field id of each join, ahead of the WHERE clause's.
+- `import_constants.MultRow.is_absent` marks the absent value, the empty string, which
+  names no row by its value in `MultTable.ids_for`, as the NULL it was stored as named
+  none.
+- A column's `mult_field` key renames its field for the import only: the application
+  resolves a field by `ParamInfo.param_qualified_name()`, so PR-15's use of the key
+  needs the application to resolve it too.
+- `benchmarks/bench_db.py` records `max_id` for each table whose name starts with
+  `mult` and that has an `id` column, so it measures both a schema of per-column tables
+  and one with `mult`. `benchmarks/scenarios/queries.sql` is left for the measurement's
+  `--commit-capture` to rewrite.
+- The test tooling's schema copy (`build_run.SchemaCopy`, `copy_run_schema`) and
+  `reimport_bundle_id` moved from `test_append.py` and `test_goldens.py` into
+  `import_tests/tools/build_run.py`, which `test_mult.py` shares.
+- `SCHEMA_VERSION` is 7.
