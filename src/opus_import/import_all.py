@@ -216,7 +216,7 @@ def confirm(schema: str | None) -> bool:
         Whether `CONFIRMATION` was typed exactly.
     """
     target = schema if schema is not None else 'the schema named in $OPUS_CONFIG'
-    print('*** --scorched-earth ERASES every OPUS table in the schema before it starts. ***')
+    print('*** A full import ERASES every OPUS table in the schema before it starts. ***')
     print(f'*** About to erase and re-import: {target}')
     return input(f'>>> Type {CONFIRMATION} to continue: ') == CONFIRMATION
 
