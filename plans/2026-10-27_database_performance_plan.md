@@ -6724,3 +6724,114 @@ Nothing above this line is rewritten by an executor.
     I/O could not be killed anyway.
   - Results: the gates pass (2,993 unit tests); the import suite 182 passed and 3
     skipped. The import's output is unchanged, so the goldens were not regenerated.
+
+### 2026-11-11, PR-17 (written against this file at 227f74d3)
+
+- The branch is PR-16a's head (227f74d3), stacked on it, since the section's columns are
+  the rekeyed and merged tables'.
+- **The ASCII set, from PR-00's complete-scale baseline**
+  (`2026-11-05_PR-00_before_complete_mysql_a.json`, `runs[*].details.ascii_columns`: each
+  column's count of values for which `<col> <> CONVERT(<col> USING ascii)`). All 19
+  counts are 0. Mapped to the current schema:
+  - `obs_general.opus_id`; `obs_pds.opus_id`, `bundle_id`, `data_set_id`, `product_id`,
+    `primary_lid`, `primary_filespec` and `note`; `obs_instrument_gossi.observation_id`
+    and `image_id`; `obs_instrument_vgiss.image_id`; `obs_mission_cassini.obs_name`,
+    `activity_name` and `sequence_id`; `obs_mission_hubble.stsci_group_id`, `hst_pi_name`
+    and `hst_target_name`; `obs_surface_geometry.target_list` (a `text` column): each the
+    same table and column today, 0 each.
+  - `obs_general.ring_obs_id`: dropped, since PR-13 removed the column.
+  - PR-15 merged the per-target tables into `obs_surface_geometry_target`, whose template
+    has no `STRING` column; `obs_surface_geometry`, which holds `target_list`, is not one
+    of them.
+  - No `STRING` column was added since PR-00: the `pi_form_type` `STRING` columns of the
+    schemas are exactly the baseline's 18 that remain, so no column needed a decision.
+  - Beside these the section's identifiers carry it: `obs_general.bundle_id`,
+    `obs_files.opus_id` and `instrument_id`, `cart.opus_id` and `session_id`, and
+    `import_bundle.bundle_id`. The local integration database imported with this head
+    (`pr17local`) has exactly these 24 columns in `ascii` (`information_schema.COLUMNS`).
+- **`field_charset` accepts `"ascii"` only, on a `varcharNNN` or `text` column**;
+  `create_table` raises `NotImplementedError` for anything else, and the schema validator
+  refuses it. `tests/opus_import/test_table_schemas.py` also requires every `opus_id`,
+  `bundle_id` and `session_id` column to be ASCII.
+- **`charN` and `timestamp` are no longer field types**, not merely unused:
+  `MYSQL_WIDTH_FIELD_TYPE` matches `varcharN` alone, `MYSQL_FIELD_TYPE_SQL` loses
+  `timestamp`, `create_table` loses its `CURRENT_TIMESTAMP` default and `ON UPDATE`
+  rendering, and the validator refuses either in a schema. `table_info` returns a column
+  in the schema's own form (`varchar40`, with `field_charset` when the server reports a
+  set `create_table` renders), which is the mapping the section asks it to gain; it
+  raises on a `char` or `timestamp` column, which no table this release imports has. The
+  key-space estimate counts one byte a character for ASCII, four otherwise, and two
+  bytes of length.
+- **The import's string check reads `varcharN`** (`do_import_obs`): the type and length
+  check `charN` columns had applies to the columns that replace them. No observation
+  table had a `varchar` column before, so nothing else is checked.
+- **A non-ASCII value fails the load** through PR-04's check (`Incorrect string value ...
+  for column '<col>' at row <n>`), on the `LOAD DATA` path as a warning and on the
+  `INSERT` path as the strict-mode error. `import_tests/test_bulk_load.py` plants one on
+  each path and requires nothing loaded.
+- **The web application compares a caller's text with an ASCII column without error.**
+  MySQL refuses to compare an `ascii` column with a `utf8mb4` parameter holding a
+  character outside ASCII (error 1267, or 1270 for `IN`), for `=`, `LIKE`, `RLIKE` and
+  `IN` alike, which would have made any such OPUS ID or string search a 500.
+  `sql_builder.ascii_comparable` replaces each such character with `\x7f`, which no
+  stored identifier holds and `LIKE` and a regular expression read literally, so the
+  request answers as for any value the column lacks (`NOT LIKE` matches every row). Every
+  lookup by a caller's OPUS ID binds it so (`db_utils.query_table_for_opus_id` and
+  `targets_for_opus_id`, the product-types and files queries, the Details tab, the URL
+  normalizer's `detail`, the cart's `add`/`remove` and its range), and `get_string_query`
+  does for a column whose generated model names `ascii_general_ci`
+  (`db_utils.is_ascii_column`). `integration_tests/test_api/test_ascii_columns_api.py`
+  drives each endpoint with such text; each site's test fails with that site's
+  replacement removed (nine sites, checked one at a time, with the stored searches
+  cleared so each search is built by the code under test).
+  **For the orchestrator's ruling:** under `utf8mb4_0900_ai_ci` an identifier compared
+  without accents too, so an OPUS ID with an accented letter found the observation spelt
+  without it; it is now unknown. Case still never matters:
+  `test_ascii_columns_api.py`'s mixed-case cases (`api/metadata`, an `opusid` and a
+  `bundleid` search) fail when the three columns are altered to `ascii_bin`.
+- **`timestamp` goes from every table that had one**: the 22 observation tables
+  (`obs_surface_geometry_target`, the template, among them) and `cart`, `contexts`,
+  `definitions`, `param_info`, `partables` and `table_names`. The evidence: `grep -rn
+  "timestamp" src/opus_app src/opus_import --include=*.py` at 227f74d3 finds, beside the
+  generated `models.py` and two uses of the word for something else (a download's file
+  name in `app_utils`, a comment in `import_processes`), only the hand-written models that
+  declare the field
+  (`cart.models.Cart`, `paraminfo.models.ParamInfo`, `dictionary.Contexts` and
+  `Definitions`), `create_table`'s and `table_info`'s handling of the type,
+  `do_import_obs`'s skip of the column and `validate_param_info`'s exemption for it;
+  `grep -rn "\.timestamp\b" src` finds no read of the attribute. A declared field is not
+  a reader (Django selects it and nothing uses it), so the section's rule removes the
+  column from the dictionary tables, `param_info` and `cart` too, and the declarations
+  go with it. The one reader was outside those directories: `bench_import`'s incremental
+  append judged a reloaded bundle by `obs_general.timestamp`. It does so still on a side
+  that has the column, and on one without it reads the registry: the bundle `done`, its
+  `started_at` no earlier than the server's `UTC_TIMESTAMP()` when the append began, and
+  `rows_done` equal to its `obs_general` rows (unit tests drive both branches).
+  `golden_io` no longer drops `timestamp` columns, since none exists.
+- **`models.py` is edited, not regenerated**, as in PR-12 to PR-15:
+  `create_opus_models.sh` (run with its scratch files moved out of `/tmp`) against
+  `pr17local` gives `db_collation='ascii_general_ci'` on the 23 ASCII fields its classes
+  hold (`import_bundle` has no class) and no `timestamp` field, and each such field is
+  taken whole from that output, which also brings the regenerated width and nullability
+  of those fields (`ObsFiles.instrument_id` 60 rather than 12, and `ObsPds.data_set_id`,
+  `product_id` and `primary_lid` nullable, differences older than this PR); every other
+  difference of the output is left alone (nullability, column order, `ZZ` classes). The
+  hand-written `Cart` takes `session_id` 40 and `opus_id` 50, with the collation.
+- `django_session.session_key` stays `utf8mb4`: Django's migration creates the table,
+  not the import. PR-18's carry-over joins it to `cart.session_id`; MySQL converts the
+  ASCII side to `utf8mb4` for that comparison, which raises no error.
+- A `varchar` keeps a value's trailing spaces where a `char` dropped them on reading, and
+  `utf8mb4_0900_ai_ci` does not pad. No `varchar` column of `pr17local` holds a value with
+  a leading or trailing space (a `LIKE '% ' OR LIKE ' %'` count per column, all 0), and
+  the import goldens did not change.
+- `SCHEMA_VERSION` is 10.
+- **API goldens, for one ruling: one changed.** `api_help_bundles.html` lists Voyager
+  ISS's bundles as `VGISS_6210, VGISS_8201, VG_2810` where it listed `VG_2810` first: the
+  page orders by `bundle_id`, and `ascii_general_ci` sorts `_` (0x5F) after every letter,
+  which it folds to upper case, where `utf8mb4_0900_ai_ci` sorts punctuation before the
+  letters. The integration suite against `pr17local` found no other difference; `-` and
+  `/`, the punctuation of OPUS IDs and file specifications, sort before letters and digits
+  under both collations.
+- **Import goldens:** `schema_version.tsv` alone changed (9 to 10), regenerated with
+  `make_mini_goldens`. The dropped `timestamp` columns were already left out of every
+  golden, and a `char` and a `varchar` read back the same values from the fixture.

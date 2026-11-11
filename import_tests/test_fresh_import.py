@@ -49,6 +49,9 @@ _CHILD_ID_OFFSET = 1_000_000
 #: Where the packaged table schemas are.
 _SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
 
+#: The tables a schema file describes that Django's own migrations create, not the import.
+_CREATED_BY_DJANGO = {'django_session'}
+
 
 def _schema_for(table: str) -> list[dict[str, Any]]:
     """Return the schema an observation or mult table was created from.
@@ -158,7 +161,7 @@ def test_every_string_column_has_the_character_set_its_schema_names(
     }
     expected: dict[tuple[str, str], tuple[str, str]] = {}
     for table in golden_io.list_tables(db_credentials, main_run.schema):
-        if not (_SCHEMA_DIR / f'{table}.json').is_file():
+        if table in _CREATED_BY_DJANGO or not (_SCHEMA_DIR / f'{table}.json').is_file():
             continue
         for entry in _schema_for(table):
             field_type = entry.get('field_type', '')
