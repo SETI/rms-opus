@@ -1296,6 +1296,8 @@ def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]) -
     cached = cache.get(cache_key)
     if cached is not None:
         search_id, stamped_on = cached
+        # _stamp_last_used sets the row's last_used_at in the database to now. It runs on
+        # the search's first use each day; later uses the same day skip it.
         if stamped_on != today and _stamp_last_used(search_id):
             cache.set(cache_key, (search_id, today))
         return int(search_id)
@@ -1311,6 +1313,7 @@ def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]) -
         except UserSearches.DoesNotExist:  # pragma: no cover - pruned in between
             log.error('set_user_search_number: search pruned while registering')
             return None
+        # Sets the existing row's last_used_at in the database to now.
         stamped_on = today if _stamp_last_used(search_id) else None
     cache.set(cache_key, (search_id, stamped_on))
     return int(search_id)
