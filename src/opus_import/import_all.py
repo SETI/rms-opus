@@ -138,7 +138,7 @@ def divide(total: int, importers: int) -> list[int]:
         importers: The importers, from 1 to `total`.
 
     Returns:
-        Each importer's workers, in start order: the first ``total mod importers`` take
+        Each importer's workers, in start order. The first ``total mod importers`` take
         one more than the rest, and together they make `total`.
     """
     share, extra = divmod(total, importers)
@@ -200,7 +200,7 @@ def resolve_division(
         The division.
 
     Raises:
-        opus_config.ConfigError: If the total is above the ceiling, naming it.
+        opus_config.config.ConfigError: If the total is above the ceiling, naming it.
     """
     # Imported here, so that --help needs no configuration package state.
     from opus_config import resolve_parallelism
