@@ -1,14 +1,80 @@
 [
     {
+        "field_name": "bundle_number",
+        "field_type": "uint2",
+        "field_autoincrement": true,
+        "field_key": "primary",
+        "field_notnull": true,
+        "comment": "The bundle's place in registration order, which orders the id ranges."
+    },
+    {
         "field_name": "bundle_id",
         "field_type": "varchar75",
+        "field_key": "unique",
+        "field_notnull": true
+    },
+    {
+        "field_name": "size_estimate",
+        "field_type": "uint8",
         "field_notnull": true,
-        "field_key": "primary"
+        "comment": "The rows the bundle's primary index labels declare."
+    },
+    {
+        "field_name": "first_id",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "comment": "The obs_general id of the bundle's first observation."
+    },
+    {
+        "field_name": "id_capacity",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "comment": "How many obs_general ids, from first_id, the bundle may use."
     },
     {
         "field_name": "state",
         "field_type": "enum",
         "field_enum_options": "'pending','importing','done','failed'",
+        "field_default": "pending",
         "field_notnull": true
+    },
+    {
+        "field_name": "started_at",
+        "field_type": "datetime",
+        "field_default": null,
+        "comment": "When the bundle's latest import began, in UTC; NULL before the first."
+    },
+    {
+        "field_name": "finished_at",
+        "field_type": "datetime",
+        "field_default": null,
+        "comment": "When the bundle's latest import ended, in UTC; NULL until it does."
+    },
+    {
+        "field_name": "process_id",
+        "field_type": "uint4",
+        "field_default": null,
+        "comment": "The import_process row of the importer holding the bundle; NULL for an import run by hand."
+    },
+    {
+        "field_name": "rows_done",
+        "field_type": "uint8",
+        "field_default": "0",
+        "field_notnull": true,
+        "comment": "The obs_general rows the bundle's latest import has committed."
+    },
+    {
+        "field_name": "losses",
+        "field_type": "uint1",
+        "field_default": "0",
+        "field_notnull": true,
+        "comment": "How many importers died holding the bundle."
+    },
+    {
+        "key": [
+            "state",
+            "size_estimate",
+            "bundle_number"
+        ]
     }
 ]

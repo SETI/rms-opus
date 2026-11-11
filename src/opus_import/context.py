@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
     import pdslogger
 
+    from opus_import.bundle_registry import BundleIds
     from opus_import.deferred import Capture
     from opus_import.importdb.super import ImportDBSuper
     from opus_import.mult_fields import MultFieldInfo
@@ -214,8 +215,9 @@ class ImportContext:
         bundle_has_errors: True once the bundle being imported has logged an error,
             set with `import_has_bad_data` and cleared at the start of each bundle; it
             decides whether the bundle registry records the bundle ``failed``.
-        max_table_id_cache: The highest row id seen per table, so ids can be handed out
-            without querying the database for each one. Cleared for each bundle.
+        bundle_ids: The observation ids the bundle being imported hands out, from its
+            registered range (`opus_import.bundle_registry.BundleIds`), or None outside
+            a bundle.
         current_bundle_id: The bundle being imported, or None outside a bundle.
         current_index_row_number: The 1-based index row being imported, or None.
         current_primary_filespec: The primary filespec of the observation being imported,
@@ -224,11 +226,8 @@ class ImportContext:
         mult_fields: Every mult field's ``mult_field`` row, keyed by qualified name, once
             `opus_import.mult_fields.ensure_mult_fields` has read them; None before.
         mult_table_cache: Each mult field read during this bundle, keyed by qualified
-            name: its rows, a dictionary from value to row, and its highest id
+            name: its rows and a dictionary from value to row
             (`opus_import.steps.do_import_mult.MultFieldCache`). Cleared for each bundle.
-        modified_mult_tables: The mult fields this bundle added values to, or whose
-            preprogrammed rows it read, and which therefore have to be written. Cleared
-            for each bundle.
         step_timings: Wall-clock seconds per step the run has timed with `timed`,
             keyed by step name, which is what ``--timing-json`` writes out.
         import_path: The path an invocation that imports bundles takes, once
@@ -253,7 +252,7 @@ class ImportContext:
     import_has_bad_data: bool = False
     bundle_has_errors: bool = False
 
-    max_table_id_cache: dict[str, int] = field(default_factory=dict)
+    bundle_ids: BundleIds | None = None
 
     current_bundle_id: str | None = None
     current_index_row_number: int | None = None
@@ -261,7 +260,6 @@ class ImportContext:
 
     mult_fields: dict[str, MultFieldInfo] | None = None
     mult_table_cache: dict[str, MultFieldCache] = field(default_factory=dict)
-    modified_mult_tables: set[str] = field(default_factory=set)
 
     step_timings: dict[str, float] = field(default_factory=dict)
 

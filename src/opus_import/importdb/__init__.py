@@ -9,6 +9,7 @@ of filling it in and adding a branch here.
 
 from __future__ import annotations
 
+import hashlib
 from typing import TYPE_CHECKING
 
 from opus_config.config import DEFAULT_TRANSACTION_ROWS
@@ -26,7 +27,31 @@ if TYPE_CHECKING:
 
 # The package's surface: the pipeline opens a database with `get_db` and catches
 # `ImportDBError`. The brand classes are reached through their own modules.
-__all__ = ['ImportDBError', 'get_db']
+__all__ = ['ImportDBError', 'get_db', 'lock_name']
+
+#: What every lock name `lock_name` returns starts with.
+LOCK_NAME_PREFIX = 'opus:'
+
+
+def lock_name(schema: str, *parts: object) -> str:
+    """Return the name of a server-wide named lock belonging to one schema.
+
+    The name is `LOCK_NAME_PREFIX` followed by the hexadecimal SHA-1 of the schema and
+    the parts, joined by ``:``, so it fits MySQL's 64-character limit on a lock name
+    whatever the schema is called, and two schemas never share a lock.
+
+    Parameters:
+        schema: The schema the lock guards.
+        parts: What the lock is for within the schema, such as ``'register'``; each is
+            rendered with ``str``.
+
+    Returns:
+        The lock's name.
+    """
+    joined = ':'.join([schema, *(str(part) for part in parts)])
+    # SHA-1 makes a short, fixed-length name here, not a security property.
+    digest = hashlib.sha1(joined.encode('utf-8'), usedforsecurity=False).hexdigest()
+    return LOCK_NAME_PREFIX + digest
 
 
 def get_db(

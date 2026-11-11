@@ -59,6 +59,11 @@ handler makes the last two optional. Naming either shape would reject the other.
 """
 
 
+#: The seconds `ImportDBSuper.retrying` sleeps after each failed attempt but the last; one
+#: more attempt than there are sleeps is made in all.
+RETRY_SLEEPS = (0.5, 1.0, 2.0, 4.0)
+
+
 #: Every instance this process has created, so a forked pool worker can let go of the
 #: connections it inherited (`close_inherited_connections`).
 _OPEN_DATABASES: weakref.WeakSet[ImportDBSuper] = weakref.WeakSet()
@@ -251,6 +256,12 @@ class ImportDBSuper:
 
         self.tables_created: list[str] = []
 
+        # True while `transaction` holds one open, so a statement does not commit itself.
+        self._in_transaction = False
+        # True while a failure is expected and handled by the caller, so a write method
+        # does not log it as fatal (`_log_failure`).
+        self._failures_expected = False
+
         self._enter_stack: list[str] = []
         self._cmds_executed: list[str] = []
         self._log_sql_char_limit = 10000
@@ -272,6 +283,9 @@ class ImportDBSuper:
         mutates: bool = False,
     ) -> None:
         """Execute one statement, or log it and skip it in a read-only run.
+
+        Inside `transaction` a statement run without a cursor does not commit; the
+        transaction does.
 
         Parameters:
             cmd: The statement. Any value it compares against or writes must be a `%s`
@@ -305,7 +319,8 @@ class ImportDBSuper:
             else:
                 with self.conn.cursor() as cur:
                     cur.execute(cmd, param_list)
-                    self.conn.commit()
+                    if not self._in_transaction:
+                        self.conn.commit()
 
     def _execute_and_fetchall(
         self, cmd: str, func_name: str, param_list: Sequence[Any] | None = None
@@ -324,6 +339,226 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::_execute_and_fetchall must be overridden')
+
+    def _log_failure(self, message: str) -> None:
+        """Log a failed statement as fatal, unless the caller expects and handles it.
+
+        Parameters:
+            message: What failed, and the server's error.
+        """
+        if self.logger and not self._failures_expected:
+            self.logger.log('fatal', message)
+
+    @contextlib.contextmanager
+    def failures_expected(self) -> Iterator[None]:
+        """Keep the write methods from logging a failure the caller handles itself.
+
+        A duplicate key the caller reads back, or a deadlock `retrying` runs again, is
+        not a failure of the import; the caller logs what it decides is one.
+
+        Yields:
+            Nothing; the body runs with fatal logging of failed statements off.
+        """
+        before = self._failures_expected
+        self._failures_expected = True
+        try:
+            yield
+        finally:
+            self._failures_expected = before
+
+    @contextlib.contextmanager
+    def transaction(self) -> Iterator[None]:
+        """Run the body as one transaction: committed if it returns, rolled back if not.
+
+        Every statement the body runs through this instance's methods joins the
+        transaction instead of committing itself. A bulk load, which commits each chunk
+        itself, does not belong in one. Transactions do not nest.
+
+        Yields:
+            Nothing; the body runs inside the transaction.
+
+        Raises:
+            ImportDBError: If a transaction is already open.
+        """
+        if self._in_transaction:
+            raise ImportDBError('A transaction is already open on this connection')
+        self._in_transaction = True
+        try:
+            yield
+        except BaseException:
+            self._in_transaction = False
+            self._rollback()
+            raise
+        self._in_transaction = False
+        self._commit()
+
+    def _commit(self) -> None:
+        """Commit the connection's open transaction, if the driver is present."""
+        self.conn.commit()
+
+    def _rollback(self) -> None:
+        """Roll back the connection's open transaction, if the driver is present."""
+        self.conn.rollback()
+
+    def retrying[T](self, description: str, body: Callable[[], T]) -> T:
+        """Run a transaction, running it again when the server reports a lock conflict.
+
+        Each attempt runs `body` inside `transaction`. An attempt that fails with an
+        error `is_retryable_error` accepts -- a deadlock, or a lock wait that timed out
+        -- is rolled back and run again after the next of `RETRY_SLEEPS`; the attempt
+        after the last sleep is the final one. Any other failure, or the final attempt's,
+        is logged as fatal with the last statement run and raised.
+
+        Parameters:
+            description: What the transaction does, for the fatal message.
+            body: The transaction's statements. It may run more than once, so it reads
+                what it needs inside itself.
+
+        Returns:
+            What the successful attempt's `body` returned.
+
+        Raises:
+            ImportDBError: If an attempt fails with an error that is not retried, or
+                the final attempt fails.
+        """
+        attempts = len(RETRY_SLEEPS) + 1
+        for attempt in range(1, attempts + 1):
+            try:
+                with self.failures_expected(), self.transaction():
+                    return body()
+            except ImportDBError as e:
+                if attempt < attempts and self.is_retryable_error(e):
+                    if self.logger:
+                        self.logger.log(
+                            'debug',
+                            f'{description}: attempt {attempt} of {attempts} met a lock '
+                            f'conflict ({e}); running it again',
+                        )
+                    time.sleep(RETRY_SLEEPS[attempt - 1])
+                    continue
+                statement = self._cmds_executed[-1] if self._cmds_executed else '(none)'
+                if self.logger:
+                    self.logger.log(
+                        'fatal',
+                        f'{description} failed on attempt {attempt} of {attempts}: {e}; '
+                        f'the statement: {statement}',
+                    )
+                raise
+        raise AssertionError('unreachable')  # pragma: no cover
+
+    def is_retryable_error(self, exc: BaseException) -> bool:
+        """Return whether a failed transaction may succeed if it is run again.
+
+        Parameters:
+            exc: The failure, an `ImportDBError` or the driver's own error.
+
+        Returns:
+            True for a deadlock or a lock wait that timed out.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::is_retryable_error must be overridden')
+
+    def is_duplicate_key_error(self, exc: BaseException) -> bool:
+        """Return whether a failed insert met a row already holding one of its keys.
+
+        Parameters:
+            exc: The failure, an `ImportDBError` or the driver's own error.
+
+        Returns:
+            True for a duplicate primary or unique key.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::is_duplicate_key_error must be overridden')
+
+    @contextlib.contextmanager
+    def named_lock(self, name: str) -> Iterator[None]:
+        """Hold a server-wide named lock while the body runs, waiting for it first.
+
+        The lock belongs to the connection, not to a transaction, so it survives the
+        commits the body makes, and the server frees it when the connection closes.
+
+        Parameters:
+            name: The lock's name, from `opus_import.importdb.lock_name`.
+
+        Yields:
+            Nothing; the body runs holding the lock.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::named_lock must be overridden')
+        yield  # pragma: no cover
+
+    def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
+        """Add one to a counter column of one row, and return the new value.
+
+        The statement locks only the counter's row, and only until the caller's
+        transaction ends; the caller runs it inside `retrying`.
+
+        Parameters:
+            table_name: The table.
+            column: The counter column.
+            key_column: The column identifying the row.
+            key: The row's key.
+
+        Returns:
+            The counter's value after the addition, as this connection set it.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::increment_counter must be overridden')
+
+    def insert_rows_keeping_existing(
+        self, table_name: str, key_name: str, rows: Sequence[DBRow]
+    ) -> None:
+        """Insert rows, leaving alone any row whose key a stored row already holds.
+
+        Unlike an insert that ignores errors, a value a column cannot hold still fails.
+
+        Parameters:
+            table_name: The table.
+            key_name: A column of the key a stored row may already hold.
+            rows: The rows, all with the same columns; none writes nothing.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::insert_rows_keeping_existing must be overridden')
+
+    def lock_first_row(
+        self,
+        table_name: str,
+        column: str,
+        where: str,
+        where_params: Sequence[Any],
+        order_by: Sequence[str],
+    ) -> Any:
+        """Lock and return the first row a query selects that no other session has locked.
+
+        Rows another session holds are passed over rather than waited for. The lock lasts
+        until the caller's transaction ends, so this runs inside `transaction`.
+
+        Parameters:
+            table_name: The table.
+            column: The column to return.
+            where: The WHERE clause, with `%s` placeholders.
+            where_params: The values for those placeholders.
+            order_by: The columns to order by, each descending, so the first row is the
+                one with the highest values.
+
+        Returns:
+            The column's value in the row locked, or None when every selected row is
+            locked by another session or none is selected.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::lock_first_row must be overridden')
 
     @staticmethod
     def _make_warning_handler(warning_list: list[str]) -> WarningHandler:

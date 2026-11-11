@@ -191,6 +191,16 @@ MYSQL_MIN_DDL_BUFFER_SIZE = 65_536
 #: ``lock_wait_timeout`` seconds for a table another session holds.
 ERR_LOCK_WAIT_TIMEOUT = 1205
 
+#: The server's "deadlock found when trying to get lock", after which the transaction
+#: has been rolled back.
+ERR_DEADLOCK = 1213
+
+#: The errors after which a transaction may succeed if it is run again.
+ERRS_RETRYABLE = frozenset({ERR_DEADLOCK, ERR_LOCK_WAIT_TIMEOUT})
+
+#: The server's "duplicate entry for key".
+ERR_DUPLICATE_KEY = 1062
+
 #: The errors that mean the server or the connection refuses ``LOAD DATA LOCAL INFILE``:
 #: the server's "not allowed" (1148) and "loading local data is disabled" (3948), and the
 #: client library's own refusal of the server's file request (2068).
@@ -460,8 +470,15 @@ class ImportDBMySQL(ImportDBSuper):
                     cmd += "'"
                     self._execute(cmd)
                 except MySQLdb.Error as e:
-                    if self.logger:
-                        self.logger.log('fatal', f'Failed to set STRICT_ALL_TABLES mode: {e}')
+                    self._log_failure(f'Failed to set STRICT_ALL_TABLES mode: {e}')
+                    raise ImportDBError(e) from e
+
+                try:
+                    # Several import processes write one schema at once, so a locking
+                    # read locks only the rows it returns and takes no gap locks.
+                    self._execute('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED')
+                except MySQLdb.Error as e:
+                    self._log_failure(f'Failed to set the READ COMMITTED isolation level: {e}')
                     raise ImportDBError(e) from e
 
                 self._prepare_import_session()
@@ -569,12 +586,12 @@ class ImportDBMySQL(ImportDBSuper):
         try:
             with self.conn.cursor() as cur:
                 self._execute(cmd, param_list, cur=cur)
-                self.conn.commit()
+                if not self._in_transaction:
+                    self.conn.commit()
                 rows: Sequence[ResultRow] = cur.fetchall()
                 return rows
         except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed in {func_name}: {e}')
+            self._log_failure(f'Failed in {func_name}: {e}')
             raise ImportDBError(e) from e
 
     def quote_identifier(self, s: str) -> str:
@@ -779,18 +796,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     if self.logger:
                         self.logger.log('debug', f'drop_table "{table_name}" - no table found')
                 else:
-                    if self.logger:
-                        self.logger.log(
-                            'fatal', f'Attempted to drop table "{table_name}" that doesn\'t exist'
-                        )
+                    self._log_failure(f'Attempted to drop table "{table_name}" that doesn\'t exist')
                     raise ImportDBError()
             else:
                 try:
                     cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
                     self._execute(cmd, mutates=True)
                 except MySQLdb.Error as e:
-                    if self.logger:
-                        self.logger.log('fatal', f'Failed in drop_table on "{table_name}": {e}')
+                    self._log_failure(f'Failed in drop_table on "{table_name}": {e}')
                     raise ImportDBError(e) from e
 
                 if self.logger:
@@ -866,8 +879,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                                     f'(attempt {attempt} of {attempts}); trying again',
                                 )
                             continue
-                        if self.logger:
-                            self.logger.log('fatal', f'Failed in RENAME TABLE: {e}')
+                        self._log_failure(f'Failed in RENAME TABLE: {e}')
                         raise ImportDBError(e) from e
             finally:
                 self._execute('SET SESSION lock_wait_timeout = %s', [previous])
@@ -904,8 +916,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             ignore_if_exists: True to leave an existing table alone.
 
         Returns:
-            True if the table was created, False if it already existed and
-            ``ignore_if_exists`` was True.
+            True if the statement ran, False if this connection already knew the table
+            and ``ignore_if_exists`` was True. With ``ignore_if_exists`` the statement
+            leaves alone a table another process created meanwhile.
 
         Raises:
             ImportDBError: If the server rejects the statement.
@@ -963,7 +976,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     if (
                         field_default != 'NULL'
                         and field_default != 'CURRENT_TIMESTAMP'
-                        and not field_default.isdigit()
+                        and not field_default.removeprefix('-').isdigit()
                     ):
                         field_default = "'" + field_default + "'"
                     cmd += f' DEFAULT {field_default}'
@@ -984,14 +997,19 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             key_cmd = ',\n'.join(f'  {self._create_key_clause(key)}' for key in keys)
             if key_cmd != '':
                 cmd += ',\n' + key_cmd
-            cmd = f'CREATE TABLE {self.quote_identifier(table_name)} (\n' + cmd + '\n)'
+            # Another process importing into the schema may create the table between
+            # the check above and this statement, so leaving it alone is the server's
+            # decision, not the cache's.
+            if_not_exists = 'IF NOT EXISTS ' if ignore_if_exists else ''
+            cmd = (
+                f'CREATE TABLE {if_not_exists}{self.quote_identifier(table_name)} (\n' + cmd + '\n)'
+            )
             cmd += f' ENGINE={self.default_engine}\n'
 
             try:
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed to create table "{table_name}": {e}')
+                self._log_failure(f'Failed to create table "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
             if self.logger:
@@ -1261,8 +1279,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             try:
                 self._execute('SET SESSION innodb_tmpdir = %s', [server_tmpdir])
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed to prepare the session for index builds: {e}')
+                self._log_failure(f'Failed to prepare the session for index builds: {e}')
                 raise ImportDBError(e) from e
 
     def _size_index_sort(self, sort_bytes: int, key_count: int) -> None:
@@ -1295,8 +1312,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         try:
             self._execute('SET SESSION innodb_ddl_buffer_size = %s', [size])
         except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed to size the sort for an index build: {e}')
+            self._log_failure(f'Failed to size the sort for an index build: {e}')
             raise ImportDBError(e) from e
         self._ddl_buffer_size = size
 
@@ -1313,8 +1329,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             try:
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed in "{cmd}": {e}')
+                self._log_failure(f'Failed in "{cmd}": {e}')
                 raise ImportDBError(e) from e
             self._table_info_cache.clear()
 
@@ -1398,8 +1413,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             try:
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed to analyze table "{table_name}": {e}')
+                self._log_failure(f'Failed to analyze table "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
             if self.logger:
@@ -1433,8 +1447,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             try:
                 self._execute(cmd, param_list, mutates=True)
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e}')
+                self._log_failure(f'Failed to insert row into "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
     def insert_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
@@ -1482,8 +1495,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 try:
                     self._execute(cmd, param_list, mutates=True)
                 except MySQLdb.Error as e:
-                    if self.logger:
-                        self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e}')
+                    self._log_failure(f'Failed to insert row into "{table_name}": {e}')
                     raise ImportDBError(e) from e
 
     def bulk_load_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
@@ -1598,16 +1610,14 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 problem = self._check_load(cur, row_count)
                 if problem is not None:
                     self.conn.rollback()
-                    if self.logger:
-                        self.logger.log('fatal', f'Bulk load into "{table_name}": {problem}')
+                    self._log_failure(f'Bulk load into "{table_name}": {problem}')
                     raise ImportDBError(f'Bulk load into "{table_name}": {problem}')
                 self.conn.commit()
         except MySQLdb.Error as e:
             self.conn.rollback()
             if e.args and e.args[0] in ERRS_LOCAL_INFILE_REFUSED:
                 raise _LocalInfileRefusedError(e) from e
-            if self.logger:
-                self.logger.log('fatal', f'Failed to bulk load into "{table_name}": {e}')
+            self._log_failure(f'Failed to bulk load into "{table_name}": {e}')
             raise ImportDBError(e) from e
 
     def _check_load(self, cur: Any, row_count: int) -> str | None:
@@ -1686,8 +1696,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             try:
                 self._execute(cmd, param_list, mutates=True)
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed to update row in "{table_name}": {e}')
+                self._log_failure(f'Failed to update row in "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
     def upsert_row(self, table_name: str, key_name: str, row: DBRow) -> None:
@@ -1733,8 +1742,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             try:
                 self._execute(cmd, param_list + dup_param_list, mutates=True)
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e}')
+                self._log_failure(f'Failed to insert row into "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
     def upsert_rows(self, table_name: str, key_name: str, rows: Sequence[DBRow]) -> None:
@@ -1814,10 +1822,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                     try:
                         self._execute(cmd, param_list, mutates=True)
                     except MySQLdb.Error as e:
-                        if self.logger:
-                            self.logger.log(
-                                'fatal', f'Failed to insert row into "{table_name}": {e}'
-                            )
+                        self._log_failure(f'Failed to insert row into "{table_name}": {e}')
                         raise ImportDBError(e) from e
 
     def delete_rows(
@@ -1860,8 +1865,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             try:
                 self._execute(cmd, list(where_params) if where_params else None, mutates=True)
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed to delete rows from "{table_name}": {e}')
+                self._log_failure(f'Failed to delete rows from "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
     def delete_joined_rows(
@@ -1904,8 +1908,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             try:
                 self._execute(cmd, list(where_params), mutates=True)
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed to delete rows from "{table_name}": {e}')
+                self._log_failure(f'Failed to delete rows from "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
     def general_select(
@@ -1964,8 +1967,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                         yield from rows
                 self.conn.commit()
             except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log('fatal', f'Failed in stream_select: {e}')
+                self._log_failure(f'Failed in stream_select: {e}')
                 raise ImportDBError(e) from e
 
     def find_column_max(self, table_name: str, column_name: str) -> Any:
@@ -1990,3 +1992,195 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             )
             res = self._execute_and_fetchall(cmd, 'find_column_max')
         return res[0][0]
+
+    def _commit(self) -> None:
+        """Commit the connection's open transaction; nothing when the driver is absent."""
+        if MYSQLDB_AVAILABLE:
+            self.conn.commit()
+
+    def _rollback(self) -> None:
+        """Roll back the connection's open transaction; nothing when the driver is absent."""
+        if MYSQLDB_AVAILABLE:
+            self.conn.rollback()
+
+    @staticmethod
+    def _error_code(exc: BaseException) -> int | None:
+        """Return the server's error number behind a failure, or None.
+
+        Parameters:
+            exc: The driver's error, or an `ImportDBError` raised from one.
+
+        Returns:
+            The number, read from the driver's error or the one the failure was raised
+            from; None when neither is a driver error.
+        """
+        for candidate in (exc, exc.__cause__):
+            if MYSQLDB_AVAILABLE and isinstance(candidate, MySQLdb.Error):
+                code = candidate.args[0] if candidate.args else None
+                return code if isinstance(code, int) else None
+        return None
+
+    def is_retryable_error(self, exc: BaseException) -> bool:
+        """Return whether a failure is a deadlock (1213) or a lock wait timeout (1205).
+
+        Parameters:
+            exc: The driver's error, or an `ImportDBError` raised from one.
+
+        Returns:
+            True for either error.
+        """
+        return self._error_code(exc) in ERRS_RETRYABLE
+
+    def is_duplicate_key_error(self, exc: BaseException) -> bool:
+        """Return whether a failure is a duplicate primary or unique key (1062).
+
+        Parameters:
+            exc: The driver's error, or an `ImportDBError` raised from one.
+
+        Returns:
+            True for that error.
+        """
+        return self._error_code(exc) == ERR_DUPLICATE_KEY
+
+    @contextlib.contextmanager
+    def named_lock(self, name: str) -> Iterator[None]:
+        """Hold ``GET_LOCK(name)`` while the body runs, waiting for it as long as it takes.
+
+        Parameters:
+            name: The lock's name, at most 64 characters.
+
+        Yields:
+            Nothing; the body runs holding the lock, which ``RELEASE_LOCK`` frees
+            however the body ends.
+
+        Raises:
+            ImportDBError: If the server does not grant the lock.
+        """
+        if not MYSQLDB_AVAILABLE or self.read_only:
+            yield
+            return
+        # A negative timeout waits without limit.
+        granted = self._execute_and_fetchall('SELECT GET_LOCK(%s, -1)', 'named_lock', [name])
+        if not granted or granted[0][0] != 1:
+            message = f'The server did not grant the lock "{name}" ({granted!r})'
+            self._log_failure(message)
+            raise ImportDBError(message)
+        try:
+            yield
+        finally:
+            self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'named_lock', [name])
+
+    def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
+        """Add one to a counter column with ``LAST_INSERT_ID(column + 1)``, and read it back.
+
+        ``LAST_INSERT_ID()`` returns the value this connection set, whatever other
+        connections do, so no ``MAX()`` is read under a lock.
+
+        Parameters:
+            table_name: The table.
+            column: The counter column.
+            key_column: The column identifying the row.
+            key: The row's key.
+
+        Returns:
+            The counter's new value.
+
+        Raises:
+            ImportDBError: If the server rejects a statement, or no row has the key.
+        """
+        q = self.quote_identifier
+        with self._operation('increment_counter'):
+            # Identifiers are validated by quote_identifier; the key is bound.
+            cmd = (
+                f'UPDATE {q(table_name)} SET {q(column)} = LAST_INSERT_ID({q(column)} + 1) '  # nosec B608
+                f'WHERE {q(key_column)} = %s'
+            )
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(cmd, [key], cur=cur, mutates=True)
+                    if cur.rowcount != 1:
+                        raise ImportDBError(
+                            f'"{table_name}" has no row whose {key_column} is {key!r} to count in'
+                        )
+                    self._execute('SELECT LAST_INSERT_ID()', cur=cur)
+                    value = cur.fetchall()[0][0]
+                if not self._in_transaction:
+                    self.conn.commit()
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to count in "{table_name}": {e}')
+                raise ImportDBError(e) from e
+        return int(value)
+
+    def insert_rows_keeping_existing(
+        self, table_name: str, key_name: str, rows: Sequence[DBRow]
+    ) -> None:
+        """Insert rows with ``ON DUPLICATE KEY UPDATE key = key``, a no-op on a stored row.
+
+        Parameters:
+            table_name: The table.
+            key_name: A column of the key a stored row may already hold; it is assigned
+                to itself.
+            rows: The rows, all with the same columns; none writes nothing.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        if len(rows) == 0:
+            return
+        q = self.quote_identifier
+        with self._operation('insert_rows_keeping_existing'):
+            sorted_column_names = sorted(rows[0].keys())
+            param_list: list[Any] = []
+            value_tuples = [
+                f'({self._row_placeholders(row, sorted_column_names, param_list)})' for row in rows
+            ]
+            # Identifiers are validated by quote_identifier; every value is bound.
+            cmd = (
+                f'INSERT INTO {q(table_name)} '  # nosec B608
+                f'({self._quoted_column_list(sorted_column_names)}) VALUES '
+                + ','.join(value_tuples)
+                + f' ON DUPLICATE KEY UPDATE {q(key_name)} = {q(key_name)}'
+            )
+            try:
+                self._execute(cmd, param_list, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to insert row into "{table_name}": {e}')
+                raise ImportDBError(e) from e
+
+    def lock_first_row(
+        self,
+        table_name: str,
+        column: str,
+        where: str,
+        where_params: Sequence[Any],
+        order_by: Sequence[str],
+    ) -> Any:
+        """Lock the first row with ``FOR UPDATE SKIP LOCKED`` and return one column of it.
+
+        Under ``READ COMMITTED``, when a key serves both the WHERE clause and the order,
+        the statement reads and locks only the row it returns.
+
+        Parameters:
+            table_name: The table.
+            column: The column to return.
+            where: The WHERE clause, with `%s` placeholders.
+            where_params: The values for those placeholders.
+            order_by: The columns to order by, each descending.
+
+        Returns:
+            The column's value in the row locked, or None.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        q = self.quote_identifier
+        ordering = ', '.join(f'{q(name)} DESC' for name in order_by)
+        # Identifiers are validated by quote_identifier; the caller's `where` fragment is
+        # appended verbatim, and only its values are bound.
+        cmd = (
+            f'SELECT {q(column)} FROM {q(table_name)} WHERE {where} '  # nosec B608
+            f'ORDER BY {ordering} LIMIT 1 FOR UPDATE SKIP LOCKED'
+        )
+        with self._operation('lock_first_row'):
+            rows = self._execute_and_fetchall(cmd, 'lock_first_row', list(where_params))
+        return rows[0][0] if rows else None

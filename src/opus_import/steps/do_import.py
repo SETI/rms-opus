@@ -1,9 +1,13 @@
 """The observation import: read the PDS holdings and write the observation tables.
 
-This is the step behind ``--import``. It also owns two options that are not steps of
-their own, because each has to happen at a particular point in this sequence:
-``--scorched-earth``, which drops every table the import creates before anything else
-runs, and ``--delete-bundles``, which deletes the named bundles before any is imported.
+This is the step behind ``--import``, and behind ``--join``, which imports bundles from
+the bundle registry's queue so that several import processes, on one computer or
+several, can import into one schema at once (`import_from_queue`). It also owns the
+options that are not steps of their own, because each has to happen at a particular
+point in this sequence: ``--scorched-earth``, which drops every table the import creates
+before anything else runs; ``--delete-bundles``, which deletes the named bundles before
+any is imported; ``--requeue``, which returns bundles to the queue; and
+``--register-bundles``, which registers bundles without importing them.
 
 Which way an invocation that imports bundles writes depends on the target schema's state,
 which `choose_import_path` reads before the first bundle:
@@ -23,9 +27,10 @@ which `choose_import_path` reads before the first bundle:
   version row but with those keys**, whose finalization was interrupted, in favor of
   ``--finalize``.
 
-On both paths every bundle is recorded in the bundle registry
-(`opus_import.bundle_registry`) before the first one starts, and then deleted from the
-observation tables and loaded again, so a rerun is clean. A bundle that logs an error is
+On both paths every bundle is registered in the bundle registry
+(`opus_import.steps.do_register`) before the first one starts, which fixes the range its
+observation ids come from, and then deleted from the observation tables and loaded
+again, so a rerun is clean. A bundle that logs an error is
 recorded ``failed``, and finalization and the version step refuse to run until it is
 imported again or deleted; ``--ignore-errors`` records it ``done`` instead.
 
@@ -38,14 +43,13 @@ The per-bundle work is split across four modules that are not steps of their own
 
 from __future__ import annotations
 
-import os
+import time
+import traceback
 from typing import TYPE_CHECKING
 
-import pdsfile
-
-from opus_import import bundle_registry, import_util, schema_version
+from opus_import import bundle_registry, import_util, primary_index, schema_version
 from opus_import.import_fault import import_fault_argument
-from opus_import.steps import do_import_index, do_import_tables
+from opus_import.steps import do_import_index, do_import_tables, do_register
 from opus_import.table_keys import KEY_FILTERED_TABLE_PREFIXES, add_secondary_indexes
 
 if TYPE_CHECKING:
@@ -175,21 +179,20 @@ def choose_import_path(ctx: ImportContext) -> bool:
 def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
     """Import one bundle into the observation tables.
 
-    The bundle's primary index files are found by looking through its metadata
-    directories, and for PDS3 its own ``index`` directory as well, for the file names
-    `opus_import.config_bundle_info` says to expect. Every index found in the first
-    directory that has one is imported; later directories are not searched, so a bundle
-    whose indexes are split across directories imports only the first group.
+    The bundle's primary index files are found by `opus_import.primary_index.locate`,
+    and each is imported in name order. The bundle's observations take ids from its
+    registered range (`opus_import.bundle_registry.BundleIds`).
 
     Parameters:
         ctx: The import run's context, which is reset to this bundle here.
-        bundle_id: The bundle to import.
+        bundle_id: The bundle to import, registered unless OPUS deliberately ignores it.
 
     Returns:
         True if the bundle imported, and also if OPUS deliberately ignores it -- an
         entry with no instrument class is one OPUS knows about and does not import.
         False if the bundle is unknown, is not a bundle, has an unsupported PDS version,
-        no index file was found, or an index failed to import.
+        no index file was found, an index failed to import, or the bundle needs more
+        ids than its range holds.
     """
     ctx.logger.open(
         f'Importing {bundle_id}',
@@ -198,102 +201,68 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
 
     # Start fresh
     ctx.mult_table_cache = {}
-    ctx.modified_mult_tables = set()
-    ctx.max_table_id_cache = {}
     ctx.current_bundle_id = bundle_id
     ctx.current_index_row_number = None
     ctx.current_primary_filespec = None
+    try:
+        return _import_bundle_indexes(ctx, bundle_id)
+    finally:
+        ctx.logger.close()
+        ctx.bundle_ids = None
+        ctx.current_bundle_id = None
+        ctx.current_index_row_number = None
+        ctx.current_primary_filespec = None
 
+
+def _import_bundle_indexes(ctx: ImportContext, bundle_id: str) -> bool:
+    """Find a bundle's primary index files and import each; `import_one_bundle`'s body.
+
+    Parameters:
+        ctx: The import run's context, reset to this bundle.
+        bundle_id: The bundle.
+
+    Returns:
+        What `import_one_bundle` returns.
+    """
     if not do_import_tables.opus_imports_bundle(bundle_id):
         import_util.log_debug(ctx, f'Ignoring import of {bundle_id}')
-        ctx.logger.close()
-        ctx.current_bundle_id = None
         return True
     vol_info = do_import_tables.lookup_vol_info(bundle_id)
     if vol_info is None:
         import_util.log_error(ctx, f'No BUNDLE_INFO entry for {bundle_id}!')
-        ctx.logger.close()
-        ctx.current_bundle_id = None
         return False
     if import_fault_argument(LOG_ERROR_FAULT_SITE) == bundle_id:
         import_util.log_error(ctx, f'{LOG_ERROR_FAULT_SITE} fault injected into {bundle_id}')
 
-    if vol_info['pds_version'] == 3:
-        bundle_pdsfile = pdsfile.pds3file.Pds3File.from_path(bundle_id)
-    elif vol_info['pds_version'] == 4:
-        # This works fine for Uranus Occs Earthbased, where bundleset and bundle have
-        # different names
-        bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(bundle_id)
-        if not bundle_pdsfile.is_bundle:
-            # Handle the case where the bundleset and bundle have the same name, in
-            # which case PdsFile prefers the bundleset, but we want to prefer the bundle
-            bundle_pdsfile = pdsfile.pds4file.Pds4File.from_path(f'bundles/{bundle_id}/{bundle_id}')
-    else:
-        import_util.log_error(ctx, f'BUNDLE_INFO has illegal PDS version for {bundle_id}!')
+    ctx.bundle_ids = bundle_registry.bundle_ids(ctx, bundle_id)
+    if ctx.bundle_ids is None:
+        import_util.log_error(ctx, f'{bundle_id} is not in the bundle registry')
         return False
 
-    if not bundle_pdsfile.is_bundle:
-        import_util.log_error(ctx, f'{bundle_id} is not a bundle!')
-        ctx.logger.close()
-        ctx.current_bundle_id = None
+    try:
+        found = primary_index.locate(bundle_id, vol_info)
+    except primary_index.PrimaryIndexError as e:
+        import_util.log_error(ctx, str(e))
+        return False
+    if not found.files:
+        import_util.log_error(ctx, f'No index label file found: "{bundle_id}" - searched in:')
+        for path in found.searched:
+            import_util.log_error(ctx, f'    {path}')
         return False
 
-    ##################################
-    ### FIND PRIMARY INDEX FILE(s) ###
-    ##################################
-
-    # An entry has a primary index exactly when it has an instrument class, and the
-    # bundles with neither returned above.
-    primary_index = vol_info['primary_index']
-    assert primary_index is not None
-    primary_index_names = [x.replace('<BUNDLE>', bundle_id) for x in primary_index]
-
-    # These are the metadata directories
-    index_paths = bundle_pdsfile.associated_abspaths('metadata', must_exist=True)
-
-    if vol_info['pds_version'] == 3:
-        # These are the plain <volume>/index directories for PDS3 volumes that
-        # don't have a separate metadata directory
-        bundle_abspath = bundle_pdsfile.abspath
-        # A pdsfile below a merged or category-level directory has no absolute path, and
-        # neither is a bundle -- which the check above has already required this to be.
-        assert bundle_abspath is not None
-        index_paths.append(import_util.safe_join(bundle_abspath, 'INDEX'))
-        index_paths.append(import_util.safe_join(bundle_abspath, 'index'))
-    found_in_this_dir = False
-
-    for path in index_paths:
-        if not os.path.exists(path):
-            continue
-        # Sorted, because a bundle can have several primary indexes -- COCIRS_1xxx has
-        # one per cube geometry -- and row ids are handed out in the order rows are
-        # inserted. Taking them in `os.listdir` order makes every id in the database
-        # depend on how one filesystem happened to enumerate one directory, so two
-        # imports of identical holdings on two machines disagree about every id.
-        basenames = sorted(os.listdir(path))
-        ret = True
-        for basename in basenames:
-            if basename in primary_index_names:
-                bundle_label_path = import_util.safe_join(path, basename)
-                import_util.log_debug(ctx, f'Using index: {bundle_label_path}')
-                found_in_this_dir = True
-                ret = ret and do_import_index.import_one_index(
-                    ctx, bundle_id, vol_info, index_paths, bundle_label_path
-                )
-        if found_in_this_dir:
-            ctx.logger.close()
-            ctx.current_bundle_id = None
-            ctx.current_index_row_number = None
-            ctx.current_primary_filespec = None
-            return ret
-
-    import_util.log_error(ctx, f'No index label file found: "{bundle_id}" - searched in:')
-    for path in index_paths:
-        import_util.log_error(ctx, f'    {path}')
-    ctx.logger.close()
-    ctx.current_bundle_id = None
-
-    return False
+    for bundle_label_path in found.files:
+        import_util.log_debug(ctx, f'Using index: {bundle_label_path}')
+        try:
+            imported = do_import_index.import_one_index(
+                ctx, bundle_id, vol_info, found.searched, bundle_label_path
+            )
+        except bundle_registry.BundleIdRangeError as e:
+            import_util.log_error(ctx, str(e))
+            return False
+        if not imported:
+            # The later indexes are not imported: the bundle has failed.
+            return False
+    return True
 
 
 ################################################################################
@@ -307,21 +276,30 @@ def do_import_steps(ctx: ImportContext) -> bool:
     ``--scorched-earth`` drops every table the import creates first; ``--delete-bundles``
     then deletes the named bundles and their registry rows, setting a ``ready`` schema of
     this release's version to ``appending`` first, since the deletion unfinishes it as an
-    append does. An invocation that imports
-    bundles chooses its path from the schema's state (`choose_import_path`), unless
-    `opus_import.cli` chose it already, and records its bundles in the registry before
-    the first one starts: on the append path every bundle an earlier append left
-    unfinished and not named, in bundle order, followed by the ones named in their order;
-    on a fresh import the ones named. A bundle OPUS deliberately skips is never recorded,
-    and an append that records none leaves the schema's state alone.
+    append does; ``--requeue`` returns named ``failed`` or ``importing`` bundles to
+    ``pending`` after deleting their rows (`requeue_bundles`).
 
-    Each bundle is then marked ``importing``, deleted from the observation tables with
-    foreign keys checked, so ``cart``'s cascade removes the cart rows that name it, and
-    loaded with them unchecked, which validation's orphan count stands in for. It ends
-    ``done``, or ``failed`` when its import failed or logged an error, unless
-    ``--ignore-errors``, which records it ``done`` regardless. A bundle whose import
-    failed stops the loop and leaves the bundles after it ``pending``, again unless
-    ``--ignore-errors``.
+    An invocation that registers or imports bundles chooses its path from the schema's
+    state (`choose_import_path`), unless `opus_import.cli` chose it already.
+    ``--register-bundles`` registers the named bundles in their order
+    (`opus_import.steps.do_register`) and imports nothing: on the append path it also
+    returns the named bundles already registered to ``pending`` and sets the schema
+    ``appending``; on a fresh import it leaves registered bundles as they are.
+    ``--import`` registers its bundles before the first one starts, returning those
+    already registered to ``pending``: on the append path every bundle an earlier append
+    left ``pending`` or ``failed`` and not named, in registration order, followed by the
+    ones named in their order; on a fresh import the ones named. A bundle OPUS
+    deliberately skips is never registered, and an append that registers none leaves the
+    schema's state alone. ``--join`` imports bundles from the registry's queue instead
+    (`import_from_queue`).
+
+    Each bundle ``--import`` imports is marked ``importing``, deleted from the
+    observation tables with foreign keys checked, so ``cart``'s cascade removes the cart
+    rows that name it, and loaded with them unchecked, which validation's orphan count
+    stands in for. It ends ``done``, or ``failed`` when its import failed or logged an
+    error, unless ``--ignore-errors``, which records it ``done`` regardless. A bundle
+    whose import failed stops the loop and leaves the bundles after it ``pending``,
+    again unless ``--ignore-errors``.
 
     Each phase that runs is timed into `ImportContext.step_timings` under its own name,
     the bundle import also per bundle as ``delete_bundle:<bundle>`` and
@@ -332,12 +310,11 @@ def do_import_steps(ctx: ImportContext) -> bool:
         ctx: The import run's context, whose per-run caches are reset here.
 
     Returns:
-        True if everything asked for succeeded. False if the import was refused, or a
-        bundle failed or logged an error and errors are not being ignored, which is
-        logged.
+        True if everything asked for succeeded. False if a step was refused, a
+        registration was refused, or a bundle failed or logged an error and errors are
+        not being ignored, which is logged.
     """
     ctx.import_has_bad_data = False
-    ctx.max_table_id_cache = {}
     db = ctx.db
     assert db is not None
 
@@ -359,15 +336,30 @@ def do_import_steps(ctx: ImportContext) -> bool:
                 do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
             bundle_registry.unregister_bundles(ctx, named_bundles)
 
-    if not ctx.args.do_import:
+    if ctx.args.requeue and not requeue_bundles(ctx, named_bundles):
+        return False
+
+    if not (ctx.args.register_bundles or ctx.args.do_import or ctx.args.join):
         return True
     if ctx.import_path is None and not choose_import_path(ctx):
         return False
 
+    if ctx.args.register_bundles:
+        appending = ctx.import_path == IMPORT_PATH_APPEND
+        registered = _register(ctx, named_bundles, make_pending=appending)
+        if registered is None:
+            return False
+        if appending and registered:
+            _mark_appending(ctx)
+        return True
+
+    if ctx.args.join:
+        return import_from_queue(ctx, set(named_bundles) if ctx.args.bundles else None)
+
     bundle_id_list = _bundles_to_import(ctx, named_bundles)
-    registered = [b for b in bundle_id_list if do_import_tables.opus_imports_bundle(b)]
-    bundle_registry.create_registry(ctx)
-    bundle_registry.register_bundles(ctx, registered)
+    registered = _register(ctx, bundle_id_list, make_pending=True)
+    if registered is None:
+        return False
     # An append that has nothing to import leaves a finished schema as it is.
     if ctx.import_path == IMPORT_PATH_APPEND and registered:
         _mark_appending(ctx)
@@ -401,6 +393,147 @@ def do_import_steps(ctx: ImportContext) -> bool:
     return True
 
 
+def _register(ctx: ImportContext, bundle_ids: list[str], *, make_pending: bool) -> list[str] | None:
+    """Register bundles, logging a refusal.
+
+    Parameters:
+        ctx: The import run's context.
+        bundle_ids: The bundles, in import order.
+        make_pending: Whether a bundle already registered goes back to ``pending``.
+
+    Returns:
+        The bundles registered (`opus_import.steps.do_register.register_bundles`), or
+        None when registration was refused, which is logged as fatal.
+    """
+    try:
+        with ctx.timed('register_bundles'):
+            return do_register.register_bundles(ctx, bundle_ids, make_pending=make_pending)
+    except bundle_registry.RegistrationError as e:
+        ctx.logger.log('fatal', str(e))
+        ctx.import_has_bad_data = True
+        return None
+
+
+#: The `opus_import.import_fault` site after a queue importer's claim commits. Its
+#: argument is a number of seconds the importer sleeps there before importing.
+HOLD_AFTER_CLAIM_FAULT_SITE = 'hold_after_claim'
+
+#: How the log line naming a claimed bundle starts.
+CLAIMED_PREFIX = 'Claimed bundle '
+
+#: The log line a queue importer writes when no bundle is left for it.
+QUEUE_EMPTY_LINE = 'No pending bundle is left to claim; this importer exits'
+
+
+def import_from_queue(ctx: ImportContext, among: set[str] | None) -> bool:
+    """Import bundles from the registry's queue until none is left: one importer's run.
+
+    The importer claims the largest ``pending`` bundle no other process holds
+    (`opus_import.bundle_registry.claim_bundle`), deletes its rows and imports it, marks
+    it ``done``, and claims the next, until no bundle is ``pending``. It never erases or
+    finalizes anything. A bundle whose import raises or logs an error is marked
+    ``failed`` and its rows are deleted; the importer moves on to the next, and does not
+    claim the failed bundle again.
+
+    Parameters:
+        ctx: The import run's context, with its path chosen.
+        among: The only bundles the importer claims, or None for any.
+
+    Returns:
+        True when every bundle it imported is ``done``; False when one failed.
+    """
+    db = ctx.db
+    assert db is not None
+    failures: list[str] = []
+    with ctx.timed('import'):
+        while True:
+            bundle_id = bundle_registry.claim_bundle(ctx, among)
+            if bundle_id is None:
+                import_util.log_info(ctx, QUEUE_EMPTY_LINE)
+                break
+            import_util.log_info(ctx, f'{CLAIMED_PREFIX}{bundle_id}')
+            hold = import_fault_argument(HOLD_AFTER_CLAIM_FAULT_SITE)
+            if hold is not None:
+                time.sleep(float(hold))
+            if not _import_claimed_bundle(ctx, bundle_id):
+                failures.append(bundle_id)
+    if failures:
+        ctx.logger.log(
+            'fatal', f'This importer failed to import, and deleted: {", ".join(failures)}'
+        )
+        return False
+    return True
+
+
+def _import_claimed_bundle(ctx: ImportContext, bundle_id: str) -> bool:
+    """Delete, import and mark one claimed bundle; delete it again if its import fails.
+
+    Parameters:
+        ctx: The import run's context.
+        bundle_id: The bundle, ``importing``.
+
+    Returns:
+        True when the bundle ends ``done``; False when it ends ``failed``.
+    """
+    db = ctx.db
+    assert db is not None
+    ctx.bundle_has_errors = False
+    imported = False
+    try:
+        with ctx.timed(f'delete_bundle:{bundle_id}'):
+            do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
+        with ctx.timed(f'import_bundle:{bundle_id}'), db.foreign_keys_unchecked():
+            imported = import_one_bundle(ctx, bundle_id)
+    except Exception:
+        import_util.log_error(
+            ctx, f'Import of bundle {bundle_id} raised:\n{traceback.format_exc()}'
+        )
+    if imported and not ctx.bundle_has_errors:
+        bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_DONE)
+        return True
+    ctx.mark_bad_data()
+    do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
+    bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_FAILED)
+    return False
+
+
+def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
+    """Return ``failed`` or ``importing`` bundles to ``pending``, after deleting their rows.
+
+    Naming an ``importing`` bundle is the operator's statement that the process that
+    claimed it is no longer running.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the log.
+        bundle_ids: The bundles to return.
+
+    Returns:
+        True when every named bundle was returned. False, changing nothing, when a named
+        bundle is not registered or is neither ``failed`` nor ``importing``, which is
+        logged as fatal naming each such bundle.
+    """
+    states = dict(bundle_registry.registered_bundles(ctx))
+    returnable = (bundle_registry.BUNDLE_FAILED, bundle_registry.BUNDLE_IMPORTING)
+    refused = [
+        f'{bundle_id} ({states.get(bundle_id, "not registered")})'
+        for bundle_id in bundle_ids
+        if states.get(bundle_id) not in returnable
+    ]
+    if refused or not bundle_ids:
+        ctx.logger.log(
+            'fatal',
+            '--requeue returns only failed or importing bundles to the queue, and changes '
+            f'nothing otherwise: {", ".join(refused) or "no bundle was named"}',
+        )
+        ctx.import_has_bad_data = True
+        return False
+    for bundle_id in bundle_ids:
+        do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
+        bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_PENDING)
+        import_util.log_info(ctx, f'Returned {bundle_id} to the queue')
+    return True
+
+
 def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str]:
     """Return the bundles an invocation imports, in order.
 
@@ -409,14 +542,18 @@ def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str
         named_bundles: The bundles the command line's descriptors expand to.
 
     Returns:
-        On the append path, every bundle the registry holds that is not ``done`` and is
-        not named, in bundle order, then the named bundles in the order named; on a
-        fresh import, the named bundles. The named order is kept because it decides
-        which copy of a shared OPUS ID finalization keeps: the one imported last.
+        On the append path, every bundle the registry holds that is ``pending`` or
+        ``failed`` and is not named, in registration order, then the named bundles in
+        the order named; on a fresh import, the named bundles. A bundle left
+        ``importing`` is not resumed: ``--requeue`` returns it, once the process holding
+        it is known to have stopped.
     """
     if ctx.import_path != IMPORT_PATH_APPEND:
         return named_bundles
-    resumed = [bundle for bundle, _ in bundle_registry.unfinished_bundles(ctx)]
+    resumable = (bundle_registry.BUNDLE_PENDING, bundle_registry.BUNDLE_FAILED)
+    resumed = [
+        bundle for bundle, state in bundle_registry.unfinished_bundles(ctx) if state in resumable
+    ]
     if resumed:
         import_util.log_info(
             ctx, f'Resuming the unfinished bundles of an earlier append: {", ".join(resumed)}'

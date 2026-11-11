@@ -18,6 +18,13 @@
         "comment": "1 when the column's schema lists the field's values in mult_options, 0 otherwise."
     },
     {
+        "field_name": "last_id",
+        "field_type": "int4",
+        "field_default": "-1",
+        "field_notnull": true,
+        "comment": "The highest id handed out in the field, or -1 before the first; never lowered."
+    },
+    {
         "primary_key": [
             "field_id"
         ]

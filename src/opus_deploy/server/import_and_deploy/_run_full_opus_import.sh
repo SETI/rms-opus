@@ -71,12 +71,12 @@ echo
 echo
 
 echo "=========================="
-echo "=== IMPORT ALL VOLUMES ==="
+echo "=== IMPORT ALL BUNDLES ==="
 echo "=========================="
 echo
 echo "Start time:" `date`
 echo
-source ${IMPORT_SCRIPT_DIR}/_opus_import_volumes.sh
+source ${IMPORT_SCRIPT_DIR}/_opus_import_bundles.sh
 echo
 echo
 

@@ -3,15 +3,12 @@
 # Import every bundle set into the database this staged installation names.
 #
 # `opus_import_all` is the console script the installed distribution declares, found
-# on PATH through the activated virtualenv. It is the sequence itself -- the erase,
-# every bundle set in order, the auxiliary tables, the dictionary and the validation,
-# each as its own `opus_import` process, stopping at the first failure -- so the order
-# and the per-set options live in the release being installed rather than in a copy
-# here that could disagree with it.
-#
-# `--yes` answers the confirmation the command would otherwise ask for: this runs
-# under nohup, where nobody could, and the database it erases is the one this
-# installation just created for itself.
+# on PATH through the activated virtualenv. It is the sequence itself -- the
+# registration of every bundle set in order, the import, the auxiliary tables, the
+# dictionary and the validation, each as its own `opus_import` process, stopping at the
+# first failure -- so the order and the per-set options live in the release being
+# installed rather than in a copy here that could disagree with it. The database is the
+# one this installation just created for itself, so nothing needs erasing first.
 #
 # There is no `cd` into a source tree here: the pipeline is an installed package and
 # locates its configuration through OPUS_CONFIG, which _opus_setup_environment.sh
@@ -23,7 +20,7 @@ echo "** IMPORT ALL BUNDLE SETS **"
 echo
 echo "Start time:" `date`
 echo
-opus_import_all --yes
+opus_import_all
 if [ $? -ne 0 ]; then
     if [ -f ${OPUS_LOG_DIR}/ERRORS.log ]; then
         cat ${OPUS_LOG_DIR}/ERRORS.log

@@ -276,11 +276,11 @@ def _replay(
 ) -> None:
     """Replay one task's events in the import's process, where the serial loop made them.
 
-    A worker's id for a table is its position among that table's ids in the task, so it
-    becomes the id the table had when the task's replay began, plus that position, plus
-    one; the table's cached id then advances past the task's last. A mult value is
-    resolved by the call the serial loop makes, in the same order, so every value gets
-    the id the serial loop gives it.
+    A worker's id is its position among the task's observation ids, so it becomes the
+    first id of the block the task takes from the bundle's range, plus that position;
+    the blocks are taken in task order, so every observation gets the id the serial loop
+    gives it. A mult value is resolved by the call the serial loop makes, in the same
+    order, so every value gets the id the serial loop gives it.
 
     Parameters:
         ctx: The import run's context.
@@ -290,21 +290,19 @@ def _replay(
         emit: Where each row goes, with every value final.
     """
     events, id_counts = result
-    bases: dict[str, int] = {}
     mult_ids: list[Any] = []
-
-    def base(table_name: str) -> int:
-        """Return the id the table had when this task's replay began."""
-        if table_name not in bases:
-            if table_name not in ctx.max_table_id_cache:
-                ctx.max_table_id_cache[table_name] = import_util.find_max_table_id(ctx, table_name)
-            bases[table_name] = ctx.max_table_id_cache[table_name]
-        return bases[table_name]
+    # obs_general is the only table that numbers its own rows.
+    assert set(id_counts) <= {'obs_general'}, id_counts
+    count = id_counts.get('obs_general', 0)
+    first = 0
+    if count > 0:
+        assert ctx.bundle_ids is not None
+        first = ctx.bundle_ids.take(count)
 
     def resolve(value: Any) -> Any:
         """Return a value with any placeholder replaced by what it stands for."""
         if isinstance(value, LocalId):
-            return base(value.table) + value.number + 1
+            return first + value.number
         if isinstance(value, MultRef):
             return mult_ids[value.number]
         if isinstance(value, DeferredJson):
@@ -338,9 +336,6 @@ def _replay(
             owner, method, args, kwargs = event[3:]
             logger = loggers[owner][1]
             getattr(logger, method)(*args, **kwargs)
-
-    for table_name, count in id_counts.items():
-        ctx.max_table_id_cache[table_name] = base(table_name) + count
 
 
 class _ColumnLookup:

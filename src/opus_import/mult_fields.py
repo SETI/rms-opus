@@ -8,7 +8,8 @@ row and ``mult_group`` row of the field carries the field's number, ``field_id``
 
 Field ids are assigned once per schema, by `ensure_mult_fields`, over every mult field
 the packaged schemas declare, in order of qualified name; a field a later release
-declares takes the next id. Since ids within a field never change, neither do the values
+declares takes the next id. Bundle registration runs it, so an import only reads the
+fields (`read_mult_fields`). Since ids within a field never change, neither do the values
 the observation columns hold.
 """
 
@@ -126,6 +127,41 @@ def create_mult_tables(ctx: ImportContext) -> None:
         db.create_table(table_name, schema)
 
 
+def _read_fields(ctx: ImportContext) -> dict[str, MultFieldInfo]:
+    """Read every ``mult_field`` row.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+
+    Returns:
+        Each field's row keyed by its qualified name.
+    """
+    db = ctx.db
+    assert db is not None
+    return {
+        str(name): MultFieldInfo(int(field_id), bool(pinned))
+        for field_id, name, pinned in db.read_rows(
+            MULT_FIELD_TABLE, ['field_id', 'qualified_name', 'pinned']
+        )
+    }
+
+
+def read_mult_fields(ctx: ImportContext) -> dict[str, MultFieldInfo]:
+    """Return every mult field's id, as bundle registration numbered them.
+
+    The result is kept on the context, so only the first call of a run reads the table.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the field cache.
+
+    Returns:
+        Each field's row keyed by its qualified name.
+    """
+    if ctx.mult_fields is None:
+        ctx.mult_fields = _read_fields(ctx)
+    return ctx.mult_fields
+
+
 def ensure_mult_fields(ctx: ImportContext) -> dict[str, MultFieldInfo]:
     """Return every mult field's id, numbering any field ``mult_field`` lacks.
 
@@ -148,12 +184,7 @@ def ensure_mult_fields(ctx: ImportContext) -> dict[str, MultFieldInfo]:
     assert db is not None
     create_mult_tables(ctx)
     q = db.quote_identifier
-    fields = {
-        str(name): MultFieldInfo(int(field_id), bool(pinned))
-        for field_id, name, pinned in db.read_rows(
-            MULT_FIELD_TABLE, ['field_id', 'qualified_name', 'pinned']
-        )
-    }
+    fields = _read_fields(ctx)
     next_id = max((info.field_id for info in fields.values()), default=0) + 1
     added: list[dict[str, Any]] = []
     for name, column in packaged_mult_columns().items():

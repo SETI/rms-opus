@@ -10,9 +10,10 @@ order from the highest id already present. So a golden drops or reorders only wh
 named here, each justified where it is applied.
 
 Two of them are about values that are not stable: the columns MySQL fills in with the
-wall clock (`TIMESTAMP_DATA_TYPE`) are dropped, and one JSON list whose order pdsfile
-documents as unstable (`_UNORDERED_JSON_COLUMNS`) is sorted. Any *other* column that
-differs between two clean runs is a defect rather than a normalization candidate.
+wall clock (`TIMESTAMP_DATA_TYPE`), and the ones the import stamps with it
+(`WALL_CLOCK_COLUMNS`), are dropped, and one JSON list whose order pdsfile documents as
+unstable (`_UNORDERED_JSON_COLUMNS`) is sorted. Any *other* column that differs between
+two clean runs is a defect rather than a normalization candidate.
 
 The third is about a value that is perfectly stable and simply redundant:
 `DERIVED_COLUMNS` drops a column another column in the same row rebuilds. That is a size
@@ -21,8 +22,8 @@ asserted -- `import_tests.test_goldens` re-derives each dropped column against t
 database, so what is saved is bytes and not coverage.
 
 `without_surrogate_ids` is a fourth, and it is deliberately not part of writing or
-reading a golden: only the re-import comparison uses it, because only a re-import
-renumbers rows.
+reading a golden: only the re-import comparisons use it, because only a bundle deleted
+and imported again is renumbered.
 """
 
 from __future__ import annotations
@@ -50,6 +51,11 @@ _ESCAPES = (('\\', '\\\\'), ('\t', '\\t'), ('\r', '\\r'), ('\n', '\\n'))
 #: -- ``do_import_obs`` skips every ``timestamp`` field -- and MySQL fills them from the
 #: wall clock, so they differ between two identical runs by design.
 TIMESTAMP_DATA_TYPE = 'timestamp'
+
+#: The columns the import stamps with the wall clock, which the goldens drop: when each
+#: bundle's latest import began and ended. They differ between two identical runs by
+#: design.
+WALL_CLOCK_COLUMNS = {'import_bundle': frozenset({'started_at', 'finished_at'})}
 
 #: The extension every golden file carries.
 GOLDEN_EXT = '.tsv'
@@ -113,14 +119,15 @@ EXCLUDED_TABLES: dict[str, str] = {}
 #: value per path in this fixture but are not computed from it.
 DERIVED_COLUMNS = {'obs_files': frozenset({'url'})}
 
-#: The columns the server numbers rather than the import computing: ``id`` is the
-#: auto-incremented row id and ``obs_general_id`` names an observation's ``obs_general``
-#: row (a child table's primary key, or part of it). They are stable across two clean runs from an empty
-#: database, which is why the goldens carry them, and they are *not* stable across a
-#: re-import: the pipeline deletes the bundle's rows and loads them again, handing out ids
-#: from the largest present, so re-importing a bundle renumbers it.
-#: `without_surrogate_ids` is what the re-import comparison drops them with.
-SURROGATE_ID_COLUMNS = frozenset({'id', 'obs_general_id'})
+#: The columns numbered by the server or by the bundle registry rather than computed from
+#: the holdings: ``id`` is a row id, ``obs_general_id`` names an observation's
+#: ``obs_general`` row (a child table's primary key, or part of it), and
+#: ``bundle_number`` is the registry's auto-incremented number. They are stable across two
+#: clean runs from an empty database, which is why the goldens carry them, and they are
+#: *not* stable across a bundle deleted and imported again: it is registered afresh, with
+#: a new number and a range after every other, so its rows are renumbered.
+#: `without_surrogate_ids` is what the re-import comparisons drop them with.
+SURROGATE_ID_COLUMNS = frozenset({'id', 'obs_general_id', 'bundle_number'})
 
 #: The column naming the bundle a row came from, where a table has one.
 BUNDLE_COLUMN = 'bundle_id'
@@ -331,11 +338,12 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
     Every column MySQL declares as a timestamp is dropped: the import never writes one,
     and the server fills them from the wall clock. Which columns those are is read from
     the server rather than listed here, so a new timestamp column is handled the day it
-    appears. `DERIVED_COLUMNS` names the further columns dropped because the same value is
-    derivable from another column beside it, and one column is reordered rather than
-    dropped -- see `_UNORDERED_JSON_COLUMNS`. Nothing else is normalized: from an empty
-    database every other value the import writes is the same on every run, and one that is
-    not is a defect rather than a normalization candidate.
+    appears. `WALL_CLOCK_COLUMNS` names the columns the import itself stamps with the
+    clock, which are dropped too. `DERIVED_COLUMNS` names the further columns dropped
+    because the same value is derivable from another column beside it, and one column is
+    reordered rather than dropped -- see `_UNORDERED_JSON_COLUMNS`. Nothing else is
+    normalized: from an empty database every other value the import writes is the same on
+    every run, and one that is not is a defect rather than a normalization candidate.
 
     Both the generator and the comparison call this, so a golden and the run it is
     compared against are projected the same way by construction rather than by two lists
@@ -349,11 +357,11 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
     Returns:
         A header line of column names, then one line per row, ordered by primary key.
     """
-    derived = DERIVED_COLUMNS.get(table, frozenset())
+    dropped = DERIVED_COLUMNS.get(table, frozenset()) | WALL_CLOCK_COLUMNS.get(table, frozenset())
     columns = [
         name
         for name, data_type in table_columns(credentials, schema, table)
-        if data_type != TIMESTAMP_DATA_TYPE and name not in derived
+        if data_type != TIMESTAMP_DATA_TYPE and name not in dropped
     ]
     if len(columns) == 0:
         return '\n'

@@ -189,7 +189,8 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         help="""Finish the database after its bundles are imported; refused while any
                 bundle in the bundle registry is not done. This implies, in order:
                 --create-indexes,
-                the deletion of every copy of a duplicated OPUS ID but the last imported,
+                the deletion of every copy of a duplicated OPUS ID but the one from the
+                bundle registered last,
                 --create-param-info
                 --create-partables
                 --create-table-names
@@ -214,6 +215,28 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         default=False,
         help="Import the given bundles; the target schema's state chooses a fresh import "
         'or an append',
+    )
+    parser.add_argument(
+        '--register-bundles',
+        action='store_true',
+        default=False,
+        help='Register the given bundles in the bundle registry, in the order given, with '
+        'their id ranges, and import nothing; on an append also mark them pending',
+    )
+    parser.add_argument(
+        '--join',
+        action='store_true',
+        default=False,
+        help='Import bundles from the bundle registry, the largest pending first, until '
+        'none is pending; several processes on one computer or several may run at once. '
+        'Given bundles, claim only those; never erases or finalizes',
+    )
+    parser.add_argument(
+        '--requeue',
+        action='store_true',
+        default=False,
+        help='Return the given failed or importing bundles to pending, after deleting their '
+        'rows; naming an importing bundle states that its process has stopped',
     )
     parser.add_argument(
         '--workers',
@@ -474,6 +497,36 @@ def expand_aggregate_options(args: argparse.Namespace) -> None:
         args.analyze_tables = True
 
 
+#: The options ``--join`` is refused with: it imports from the queue and does nothing
+#: else, so an importer never erases, deletes, registers or finalizes.
+_JOIN_CONFLICTS = (
+    ('do_import', '--import'),
+    ('do_it_all', '--do-it-all'),
+    ('register_bundles', '--register-bundles'),
+    ('requeue', '--requeue'),
+    ('delete_bundles', '--delete-bundles'),
+    ('scorched_earth', '--scorched-earth'),
+    ('ignore_errors', '--ignore-errors'),
+    ('finalize', '--finalize'),
+    ('create_indexes', '--create-indexes'),
+    ('write_schema_version', '--write-schema-version'),
+)
+
+
+def _join_conflicts(args: argparse.Namespace) -> str:
+    """Name the options given with ``--join`` that it is refused with.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+
+    Returns:
+        The options, joined by commas; empty without ``--join`` or with none of them.
+    """
+    if not args.join:
+        return ''
+    return ', '.join(option for name, option in _JOIN_CONFLICTS if getattr(args, name))
+
+
 def _registry_finished(ctx: ImportContext, step: str) -> bool:
     """Return whether every bundle in the bundle registry is done, refusing a step if not.
 
@@ -591,6 +644,10 @@ def main() -> None:
     if args.yes and not args.scorched_earth:
         logger.log('fatal', '--yes confirms --scorched-earth and is refused without it')
         sys.exit(-1)
+    conflict = _join_conflicts(args)
+    if conflict:
+        logger.log('fatal', f'--join imports from the queue alone; it is refused with {conflict}')
+        sys.exit(-1)
 
     our_schema_name = config.database.schema
     if args.override_db_schema:
@@ -657,7 +714,8 @@ def main() -> None:
         # The path an import takes is chosen before anything else writes, so an import
         # refused for an interrupted finalization changes nothing. An invocation that
         # erases the schema first chooses after the erase, in do_import_steps.
-        if args.do_import and not args.scorched_earth and not do_import.choose_import_path(ctx):
+        imports = args.do_import or args.join or args.register_bundles
+        if imports and not args.scorched_earth and not do_import.choose_import_path(ctx):
             sys.exit(-1)
 
         if not do_import.do_import_steps(ctx):
