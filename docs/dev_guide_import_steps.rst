@@ -283,8 +283,8 @@ step of ``--finalize``.
 and ``mult_`` table, the keys
 :func:`~opus_import.table_keys.add_secondary_indexes` derives from its schema with the
 keys the server reports (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.read_table_keys`),
-**by kind and ordered columns, never by name**, since the server names an unnamed
-composite key itself (``time1_2``). Only the missing keys are added, so the step is
+**by kind and ordered columns, never by name**, since the server names an unnamed key
+itself, after its first column and with a numeric suffix when that name is taken. Only the missing keys are added, so the step is
 idempotent: after an interruption it adds what is left, and on a finished schema it
 logs that every table has every key and does nothing -- which is what it finds after an
 append into tables that already have them, while a table the append created is keyed

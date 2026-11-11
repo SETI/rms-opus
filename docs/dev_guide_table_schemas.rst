@@ -407,21 +407,23 @@ Choosing a column's keys
 ------------------------
 
 An index speeds up the searches that read it, but it costs disk space, buffer-pool
-memory and import time, so an observation column carries a key only when something reads
-it. Give a column a single-column key (``"field_key": true``) when one of these holds:
+memory and import time, so an observation column carries a single-column key
+(``"field_key": true``) only when one of these holds:
 
-* a search or a results page filters or sorts by the column often enough to matter, as
-  production's index statistics show for the existing columns;
+* searches or results pages filter or sort by the column often, as production's index
+  statistics show;
 * the import, finalization or a management command reads rows by it;
 * a foreign key needs it;
 * it is an autocomplete column, a searchable field with the ``STRING`` form type, whose
   prefix match reads the key;
-* it is one half of a ``1``/``2`` range pair and the other half has a key.
+* it is one half of a ``1``/``2`` range pair, and the other half has a key.
 
-Give a set of columns that are filtered or sorted together a table-level ``key`` entry
-instead. The default sort, ``time1`` then ``opus_id``, is ``(time1, opus_id)``: MySQL
-reads the observations already in that order. A column that leads such a key needs no key
-of its own, because the longer key serves every read the shorter one would.
+Not every column that meets one of these has a key: production's statistics decide, and
+a few keys are kept by choice. Columns that are filtered or sorted together get a
+table-level ``key`` entry instead. The default sort, ``time1`` then ``opus_id``, has the
+key ``(time1, opus_id)``, which holds the observations in that order. A column that leads
+such a key needs no key of its own, because the longer key serves every read the shorter
+one would.
 
 Adding a column
 ---------------

@@ -152,22 +152,23 @@ def validate_nulls(ctx: ImportContext) -> None:
     for obs_table_name in obs_table_names:
         if obs_table_name.startswith('obs_surface_geometry__'):
             continue
-        column_list = db.table_info(obs_table_name)
-        for column in column_list:
-            field_name = column['field_name']
-            notnull = column['field_notnull']
-            if notnull:
-                continue
-            # OK the column allows nulls...are there any?
-            full_obs_table_name = obs_table_name
-            cmd = f"""
-count(*) FROM {q(full_obs_table_name)} WHERE {q(field_name)} is NULL"""
-            res = db.general_select(cmd)
-            count = res[0][0]
-            if count == 0:
+        nullable = [
+            column['field_name']
+            for column in db.table_info(obs_table_name)
+            if not column['field_notnull']
+        ]
+        if not nullable:
+            continue
+        # One scan of the table counts the NULLs in every nullable column, so the
+        # check costs the same whichever columns carry a key. An empty table's sums
+        # are NULL, which counts as none found.
+        counts = ', '.join(f'SUM({q(name)} IS NULL)' for name in nullable)
+        (row,) = db.general_select(f'{counts} FROM {q(obs_table_name)}')
+        for field_name, count in zip(nullable, row, strict=True):
+            if not count:
                 logger.log(
                     'info',
-                    f'Column "{full_obs_table_name}.{field_name}" allows NULLs but none found '
+                    f'Column "{obs_table_name}.{field_name}" allows NULLs but none found '
                     + '- suggest changing column attributes',
                 )
 

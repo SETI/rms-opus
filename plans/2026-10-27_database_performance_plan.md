@@ -5641,8 +5641,13 @@ Nothing above this line is rewritten by an executor.
   `obs_ring_geometry` for each of its twelve longitude columns with a `d_` partner, eight
   of which had no key before. The surface geometry name and per-target tables are left
   to PR-15, which replaces them.
-- No import code or management command filters, joins or groups by a column whose key
-  is dropped (a grep of `src/opus_import` and the management commands for each).
+- No import step or management command needs a dropped key to find its rows (a grep of
+  `src/opus_import` and the management commands for each). Validation reads every
+  column, though: `validate_nulls` counted each nullable column's NULLs with a query of
+  its own, a table scan for every column without a key. It now counts every nullable
+  column of a table in one query, one scan of the table whatever its keys.
+  `validate_min_max_order` compares a pair's two columns, which no key serves, so its
+  cost does not change.
 - `ring_obs_id` goes from every site the section lists. `ui/views.py` keeps one check
   that names `ringobsid`: a URL whose `cols` is exactly the old default list, which
   begins with `ringobsid`, is given the current defaults with a message, as before. It
@@ -5650,9 +5655,12 @@ Nothing above this line is rewritten by an executor.
   definitions only when the server lists one, since the server it reads may run an
   older release, and keeps recording `ringobsid` as `opusid`'s old slug; a new unit test
   covers both.
-- The integration suite's `ringobsid` tests go, except that
-  `test__api_metadata_old_format_ring_obs_id_is_an_unknown_opusid` shows an old-format
-  id that used to resolve now gets the unknown-OPUS-ID 404. The two real-world bookmark
+- An old-format id gets what any unknown OPUS ID gets, which is the section's 404 only
+  from `api/metadata` and `api/metadata_v2`: `api/files` answers with the id and no
+  files, and `api/categories` and `api/product_types` with an empty list, all with
+  status 200. The integration suite's `ringobsid` tests go, and four tests, one per
+  endpoint (`test__api_*_old_format_ring_obs_id_is_an_unknown_opusid`), show an
+  old-format id that used to resolve now getting those answers. The two real-world bookmark
   tests, whose `detail` is an old-format id, now expect it ignored with the unknown-OPUS-ID
   message. Two tests used `**filespec`, the removed column's slug, as their field that
   cannot be displayed; they use `**previewimages`.

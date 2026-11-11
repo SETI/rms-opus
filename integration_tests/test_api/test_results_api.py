@@ -771,6 +771,15 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/files/hst-11559-wfc3-ib4v12n6q.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_versions_ib4v12n6q.json')
 
+    def test__api_files_old_format_ring_obs_id_is_an_unknown_opusid(self) -> None:
+        "[test_results_api.py] /api/files: an old-format RING_OBS_ID is an unknown OPUS ID"
+        url = '/api/files/S_IMG_VG2_ISS_4360845_N.json'
+        expected: dict[str, dict[str, dict[str, str]]] = {
+            'data': {'S_IMG_VG2_ISS_4360845_N': {}},
+            'versions': {'S_IMG_VG2_ISS_4360845_N': {}},
+        }
+        self._run_json_equal(url, expected)
+
     def test__api_files_bad_search(self) -> None:
         "[test_results_api.py] /api/files: bad search"
         url = '/api/files.json?instrument=fred'
@@ -896,6 +905,11 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/categories/co-iss-w1866145657x.json'
         self._run_json_equal_file(url, 'api_categories_bad_opusid.json')
 
+    def test__api_categories_old_format_ring_obs_id_is_an_unknown_opusid(self) -> None:
+        "[test_results_api.py] /api/categories: an old-format RING_OBS_ID is an unknown OPUS ID"
+        url = '/api/categories/S_IMG_VG2_ISS_4360845_N.json'
+        self._run_json_equal_file(url, 'api_categories_bad_opusid.json')
+
     def test__api_categories_vg_iss_2_s_c4360004(self) -> None:
         "[test_results_api.py] /api/categories: vg-iss-2-s-c4360004"
         url = '/api/categories/vg-iss-2-s-c4360004.json'
@@ -923,6 +937,11 @@ class ApiResultsTests(ApiTestHelper, TestCase):
     def test__api_product_types_bad_opusid(self) -> None:
         "[test_results_api.py] /api/product_types: Bad OPUSID"
         url = '/api/product_types/co-iss-w1866145657x.json'
+        self._run_json_equal_file(url, 'api_product_types_bad_opusid.json')
+
+    def test__api_product_types_old_format_ring_obs_id_is_an_unknown_opusid(self) -> None:
+        "[test_results_api.py] /api/product_types: an old-format RING_OBS_ID is an unknown OPUS ID"
+        url = '/api/product_types/S_IMG_VG2_ISS_4360845_N.json'
         self._run_json_equal_file(url, 'api_product_types_bad_opusid.json')
 
     def test__api_product_types_vg_iss_2_s_c4360004(self) -> None:

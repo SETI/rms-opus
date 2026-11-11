@@ -127,8 +127,7 @@ Besides the keys shown, ``obs_general`` has three keys over two columns each:
 ``(time1, opus_id)``, which serves the default sort, ``(right_asc, d_right_asc)`` and
 ``(declination1, declination2)``. ``DESC`` marks only a key's first column, which is why
 ``d_right_asc`` shows no key. Most columns of the other observation tables have no key of
-their own: a column has one only when searches, the import or a foreign key read it
-(:ref:`dev_guide_table_schemas`).
+their own; :ref:`dev_guide_table_schemas` says which columns get one.
 
 ``opus_id`` carries a plain key rather than a unique one. Two bundles can produce the same OPUS ID, and an import loads both copies side by side; the import's finalization then keeps the copy imported last and deletes the others, so a finished database has one row per OPUS ID.
 
