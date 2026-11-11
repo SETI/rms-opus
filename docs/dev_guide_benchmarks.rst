@@ -326,10 +326,42 @@ largest bundle refuses it::
     python -m benchmarks.bench_import --scale test --side after --pr <tag> \
         --session sweep --python venv/bin/python --repo-root . --workers-sweep 1,2,4,8,16
 
+``--importers N`` times an import by several queue importers instead of one process,
+for a side whose ``opus_import`` has ``--join``. Each run is the side's erase, one
+``opus_import --register-bundles`` of every group of the scenario in import order,
+``N`` ``opus_import --join`` processes started together, and the finalization sequence.
+Each importer has a configuration and a log directory of its own and an equal share of
+the ``workers`` total ``--import-key workers=W`` gives, or of 1 when none is given; a
+total that ``N`` does not divide is refused, so the importers together use exactly the
+workers a one-process run of the same total uses. Every other ``--import-key``, such as
+``transaction_rows=1000``, reaches every importer. The importers' phase is recorded as
+one invocation, ``join``, timed from the first importer's start to the last one's exit,
+with the memory of every importer's process tree; ``import.bundle_imports.wall_s``
+counts it, so the run's ``import.wall_s`` lines up with a one-process run's. The run
+also records ``import.registration.wall_s`` and, in its details, the importer count,
+each importer's workers, and each bundle's ``size_estimate``, its ``import_bundle`` time
+from the importers' timings and its ``rows_done``. A side without ``--join`` refuses
+the option and is measured as one process with the same ``--import-key workers=W``. A
+scenario group that carries options of its own refuses it too, since one registration
+cannot give a group options. The runs are of kind ``import`` and compare like any
+other::
+
+    python -m benchmarks.bench_import --scale test --side after --pr <tag> \
+        --session a --python venv/bin/python --repo-root . \
+        --importers 4 --import-key workers=8
+
+``--register-only`` times the registration alone: it registers every group of the
+scenario into a scratch schema, which it drops afterwards, and records a run of kind
+``register`` holding ``import.registration.wall_s``. Registration reads each bundle's
+primary index labels, so at the complete scale this is the cost of preparing a full
+import before any importer starts. It takes no other mode, and a side without
+``--register-bundles`` refuses it.
+
 **A run that fails records nothing.** It fails when an invocation exits non-zero; when
 a bundle-import invocation leaves any bundle it imports without a row in
 ``obs_general`` (the bundles are its descriptors expanded by the side's own code, less
-the ones the import deliberately skips); or when the run's ``ERRORS.log`` is not empty,
+the ones the import deliberately skips); when the importers of an ``--importers`` run
+leave a registered bundle that is not ``done``; or when the run's ``ERRORS.log`` is not empty,
 because several steps log an error and still exit zero. Each run starts with a log
 directory of its own, and an ``ERRORS.log`` already holding anything fails it before it
 starts.

@@ -103,6 +103,7 @@ from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_produ
 from opus_app.apps.tools.import_constants import (
     collates_as_key,
     displayed_table_names,
+    mult_table,
     partables,
     table_names,
     table_names_collate_as_keys,
@@ -1330,6 +1331,10 @@ def _results_column_select(
             `opus_app.apps.search.views.selector_label` rather than as a column.
         selections: The search's constraints, or None for the cart, which
             `selector_label` reads.
+
+    Returns:
+        A Select with one column per name in `column_names`, in that order, and no FROM
+        clause; the caller adds the tables and joins the columns read.
     """
     select = sql_builder.Select()
     for position, qualified_name in enumerate(column_names):
@@ -1942,6 +1947,10 @@ def _get_metadata_by_slugs(
         raise Http404(http404_unknown_format(fmt, request))
 
 
+#: The selector field whose selected bodies trigger their surface geometry categories.
+_SURFACE_GEOMETRY_SELECTOR = 'obs_surface_geometry_name.target_name'
+
+
 def get_triggered_tables(
     selections: dict[str, list[Any]], extras: dict[str, Any], api_code: int | None = None
 ) -> list[str] | None:
@@ -1954,8 +1963,10 @@ def get_triggered_tables(
 
     Returns:
         The names of the triggered tables, in the order they are displayed in, or
-        the base tables sorted by name when there are no selections. It is None when
-        the search's results could not be built.
+        the base tables sorted by name when there are no selections. A surface
+        geometry body's category is among them when the body is one of the bodies the
+        search selects, named by its label or its value. It is None when the search's
+        results could not be built.
     """
     if not selections:
         return sorted(settings.BASE_TABLES)
@@ -1982,6 +1993,14 @@ def get_triggered_tables(
 
     triggered_tables = settings.BASE_TABLES[:]
 
+    # A surface geometry trigger holds its body's mult id, and a selected body may be
+    # named by its label or its value, so both sides compare as ids.
+    selected_bodies: set[int] = set()
+    if _SURFACE_GEOMETRY_SELECTOR in selections:
+        selected_bodies = set(
+            mult_table(_SURFACE_GEOMETRY_SELECTOR).ids_for(selections[_SURFACE_GEOMETRY_SELECTOR])
+        )
+
     # Now see if any more tables are triggered from query
     queries: dict[str, list[Any]] = {}
     for partable in partables():
@@ -2002,16 +2021,10 @@ def get_triggered_tables(
             continue  # Already triggered, no need to check
 
         if trigger_tab == 'obs_surface_geometry_name':
-            # Surface geometry has multiple targets per observation
-            # so we just want to know if our val is in the result
-            # (not the only result)
-            if (
-                'obs_surface_geometry_name.target_name' in selections
-                and trigger_val.upper()
-                == selections['obs_surface_geometry_name.target_name'][0].upper()
-            ):
-                # If the selected surfacegeo target has no result, we
-                # still want to have the related menu item displayed.
+            # An observation has geometry for many bodies, so a body's category is
+            # triggered by the body being selected rather than by the search's
+            # results; a selected body with no results still has its menu item.
+            if int(trigger_val) in selected_bodies:
                 triggered_tables.append(partable_name)
         else:
             if trigger_tab + trigger_col in queries:

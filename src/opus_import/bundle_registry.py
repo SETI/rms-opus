@@ -58,7 +58,15 @@ ID_CAPACITY_FACTOR = 100
 MAX_OBSERVATION_ID = 4_294_967_295
 
 #: The columns `registered_ranges` reads.
-_RANGE_COLUMNS = ('bundle_number', 'bundle_id', 'size_estimate', 'first_id', 'id_capacity', 'state')
+_RANGE_COLUMNS = (
+    'bundle_number',
+    'bundle_id',
+    'size_estimate',
+    'first_id',
+    'id_capacity',
+    'state',
+    'started_at',
+)
 
 
 class RegistrationError(Exception):
@@ -80,6 +88,7 @@ class BundleRange:
         first_id: The ``obs_general`` id of its first observation.
         id_capacity: How many ids, from `first_id`, it may use.
         state: Its state, one of the ``BUNDLE_`` constants.
+        started_at: When its latest import began, or None before the first.
     """
 
     bundle_number: int
@@ -88,6 +97,7 @@ class BundleRange:
     first_id: int
     id_capacity: int
     state: str
+    started_at: datetime.datetime | None = None
 
     @property
     def end(self) -> int:
@@ -205,7 +215,7 @@ def registered_ranges(db: ImportDBSuper) -> list[BundleRange]:
 
 def _range(row: Sequence[object]) -> BundleRange:
     """Return a `BundleRange` from a row of `_RANGE_COLUMNS`."""
-    number, bundle_id, size_estimate, first_id, capacity, state = row
+    number, bundle_id, size_estimate, first_id, capacity, state, started_at = row
     return BundleRange(
         int(str(number)),
         str(bundle_id),
@@ -213,6 +223,7 @@ def _range(row: Sequence[object]) -> BundleRange:
         int(str(first_id)),
         int(str(capacity)),
         str(state),
+        started_at if isinstance(started_at, datetime.datetime) else None,
     )
 
 
@@ -304,7 +315,14 @@ def _state_columns(state: str) -> dict[str, object]:
         The columns and their values.
     """
     if state == BUNDLE_IMPORTING:
-        return {'state': state, 'started_at': _now(), 'finished_at': None, 'rows_done': 0}
+        # A plain import names no importer; a queue importer's claim sets its own.
+        return {
+            'state': state,
+            'started_at': _now(),
+            'finished_at': None,
+            'rows_done': 0,
+            'process_id': None,
+        }
     if state == BUNDLE_PENDING:
         return {
             'state': state,
@@ -316,30 +334,120 @@ def _state_columns(state: str) -> dict[str, object]:
     return {'state': state, 'finished_at': _now()}
 
 
-def set_bundle_state(ctx: ImportContext, bundle_id: str, state: str) -> None:
-    """Move one registered bundle to a new state.
+@dataclass(frozen=True)
+class Claim:
+    """One process's hold on a bundle it moved to ``importing``.
 
-    Moving to ``importing`` stamps ``started_at`` and starts ``rows_done`` again;
-    ``done`` and ``failed`` stamp ``finished_at``; ``pending`` clears both times.
+    Attributes:
+        bundle_id: The bundle.
+        started_at: The ``started_at`` the move wrote. A bundle returned to ``pending``
+            and taken again has another, so the process that held it first can no longer
+            finish it (`finish_bundle`).
+    """
+
+    bundle_id: str
+    started_at: datetime.datetime
+
+
+def _in_states(db: ImportDBSuper, states: Sequence[str]) -> str:
+    """Return the condition ``state IN (...)``, with one placeholder per state."""
+    return f'{db.quote_identifier("state")} IN ({", ".join(["%s"] * len(states))})'
+
+
+#: The states a bundle an invocation names may be taken from: any but ``importing``,
+#: which another process holds. A bundle named twice in one invocation is ``done`` or
+#: ``failed`` by its second turn.
+_STARTABLE = (BUNDLE_PENDING, BUNDLE_DONE, BUNDLE_FAILED)
+
+
+def start_bundle(ctx: ImportContext, bundle_id: str) -> Claim | None:
+    """Move a bundle an invocation names to ``importing``, unless another process holds it.
 
     Parameters:
         ctx: The import run's context, for the open database.
         bundle_id: The bundle.
-        state: Its new state, one of the ``BUNDLE_`` constants.
+
+    Returns:
+        The hold on the bundle, or None when it was ``importing`` already.
     """
     db = ctx.db
     assert db is not None
-    db.update_row(
+    columns = _state_columns(BUNDLE_IMPORTING)
+    changed = db.conditional_update(
+        BUNDLE_REGISTRY_TABLE,
+        columns,
+        f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, _STARTABLE)}',
+        [bundle_id, *_STARTABLE],
+    )
+    if changed == 0:
+        return None
+    started_at = columns['started_at']
+    assert isinstance(started_at, datetime.datetime)
+    return Claim(bundle_id, started_at)
+
+
+def finish_bundle(ctx: ImportContext, claim: Claim, state: str) -> bool:
+    """Move a bundle this process holds from ``importing`` to ``done`` or ``failed``.
+
+    The move happens only while the bundle is still ``importing`` under this hold: a
+    bundle ``--requeue`` returned to the queue, perhaps taken since by another process,
+    is left as it is.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        claim: The hold `start_bundle` or `claim_bundle` gave.
+        state: `BUNDLE_DONE` or `BUNDLE_FAILED`.
+
+    Returns:
+        Whether the bundle moved; False when this process no longer held it.
+    """
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    changed = db.conditional_update(
         BUNDLE_REGISTRY_TABLE,
         _state_columns(state),
-        f'{db.quote_identifier("bundle_id")}=%s',
-        [bundle_id],
+        f'{q("bundle_id")}=%s AND {_in_states(db, [BUNDLE_IMPORTING])} AND {q("started_at")}=%s',
+        [claim.bundle_id, BUNDLE_IMPORTING, claim.started_at],
     )
+    return changed != 0
+
+
+def return_to_pending(
+    ctx: ImportContext, bundle_ids: Iterable[str], from_states: Sequence[str]
+) -> list[str]:
+    """Move registered bundles in the given states back to ``pending``.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        bundle_ids: The bundles; one the registry does not hold is ignored.
+        from_states: The states a bundle may be moved from. ``importing`` belongs here
+            only for ``--requeue``, which states that the process holding it has stopped.
+
+    Returns:
+        The bundles moved, in the order given.
+    """
+    db = ctx.db
+    assert db is not None
+    moved = []
+    for bundle_id in bundle_ids:
+        changed = db.conditional_update(
+            BUNDLE_REGISTRY_TABLE,
+            _state_columns(BUNDLE_PENDING),
+            f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, from_states)}',
+            [bundle_id, *from_states],
+        )
+        if changed != 0:
+            moved.append(bundle_id)
+    return moved
 
 
 def claim_bundle(
-    ctx: ImportContext, among: Collection[str] | None = None, importer: ImporterLock | None = None
-) -> str | None:
+    ctx: ImportContext,
+    among: Collection[str] | None = None,
+    excluding: Collection[str] = (),
+    importer: ImporterLock | None = None,
+) -> Claim | None:
     """Take the largest ``pending`` bundle no other process holds, and mark it ``importing``.
 
     The claim is one transaction: a locking read of one row through the registry's key
@@ -352,11 +460,12 @@ def claim_bundle(
     Parameters:
         ctx: The import run's context, for the open database.
         among: The only bundles that may be claimed, or None for any.
+        excluding: Bundles never claimed.
         importer: The importer claiming, or None for a process that holds no lock.
 
     Returns:
-        The bundle claimed, or None when no bundle is ``pending`` (of `among`) that
-        another process has not claimed first.
+        The hold on the bundle claimed, or None when no bundle is ``pending`` (of
+        `among`, and not of `excluding`) that another process has not claimed first.
 
     Raises:
         opus_import.import_processes.LostImporterError: If the importer's lock is lost;
@@ -375,9 +484,12 @@ def claim_bundle(
             return None
         where += f' AND {q("bundle_id")} IN ({", ".join(["%s"] * len(among))})'
         params += sorted(among)
+    if excluding:
+        where += f' AND {q("bundle_id")} NOT IN ({", ".join(["%s"] * len(excluding))})'
+        params += sorted(excluding)
 
-    def claim() -> str | None:
-        """Lock the row, move it to ``importing``, and return its bundle."""
+    def claim() -> Claim | None:
+        """Lock the row, move it to ``importing``, and return the hold."""
         number = db.lock_first_row(
             BUNDLE_REGISTRY_TABLE,
             'bundle_number',
@@ -397,7 +509,9 @@ def claim_bundle(
         rows = db.read_rows(
             BUNDLE_REGISTRY_TABLE, ['bundle_id'], f'{q("bundle_number")}=%s', [number]
         )
-        return str(rows[0][0])
+        started_at = columns['started_at']
+        assert isinstance(started_at, datetime.datetime)
+        return Claim(str(rows[0][0]), started_at)
 
     return db.retrying('Claiming a pending bundle', claim)
 
@@ -434,17 +548,6 @@ def finish_claimed_bundle(ctx: ImportContext, bundle_number: int, importer: Impo
             raise import_processes.LostImporterError(
                 import_processes.lost_lock_message(importer, import_processes.WHILE_FINISHING)
             )
-
-
-def set_pending(ctx: ImportContext, bundle_ids: Iterable[str]) -> None:
-    """Return registered bundles to ``pending``, so the next import takes them.
-
-    Parameters:
-        ctx: The import run's context, for the open database.
-        bundle_ids: The bundles; one the registry does not hold is ignored.
-    """
-    for bundle_id in bundle_ids:
-        set_bundle_state(ctx, bundle_id, BUNDLE_PENDING)
 
 
 def unregister_bundles(ctx: ImportContext, bundle_ids: Iterable[str]) -> None:

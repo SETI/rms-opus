@@ -169,7 +169,8 @@ live. In order:
 3. **Delete the named bundles**, under ``--delete-bundles``: each one's rows from every
    observation table, then their rows in the bundle registry
    (:func:`~opus_import.bundle_registry.unregister_bundles`). It runs on any schema
-   state. A schema whose version row is this release's version and ``ready`` is set to
+   state, and refuses, before deleting anything, a named bundle another process holds
+   ``importing``. A schema whose version row is this release's version and ``ready`` is set to
    ``appending`` before the first delete, as an append sets it, since the deletion changes
    a finished schema; no other state is changed.
 4. **Return bundles to the queue**, under ``--requeue``
@@ -180,17 +181,22 @@ live. In order:
 5. Stop here unless ``--register-bundles``, ``--import`` or ``--join`` was given.
 6. **Choose the path**, as above, if :mod:`opus_import.cli` has not.
 7. Under ``--register-bundles``, **register the named bundles** in their order
-   (:ref:`dev_guide_import_steps_registry`) and stop. On the append path the ones already
-   registered go back to ``pending`` and the version row is set to ``appending``; on a
-   fresh import they are left as they are, so a rerun keeps what is ``done``.
+   (:ref:`dev_guide_import_steps_registry`) and stop. A bundle already registered keeps
+   its state, so a rerun keeps what is ``done`` and moves nothing another process holds;
+   on the append path the version row is set to ``appending`` only when a bundle was
+   added.
 8. Under ``--join``, **import from the queue** until no bundle is ``pending``
    (:func:`~opus_import.steps.do_import.import_from_queue`, below) and stop.
-9. **Register the bundles**, returning those already registered to ``pending``. On the
+9. **Register the bundles**, returning those already registered and ``done`` or
+   ``failed`` to ``pending``, and refusing, before anything is written, a named bundle
+   another process holds ``importing``, with a message naming the ``--requeue`` that
+   returns it once that process has stopped. On the
    append path the bundles are every bundle the registry holds that is ``pending`` or
    ``failed`` and is not named, in registration order, followed by the named bundles,
    and the version row is then set to ``appending``; on a fresh import they are the
    named bundles. A bundle OPUS skips is never registered.
-10. **Import each bundle.** It is marked ``importing`` and
+10. **Import each bundle.** It is moved to ``importing`` -- a bundle another process
+    took meanwhile is an error, and is left to that process -- and
     :attr:`~opus_import.context.ImportContext.bundle_has_errors` is cleared; it is deleted
     from every observation table
     (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) with
@@ -227,9 +233,12 @@ scanned from its highest entry, of the first ``pending`` row no other session ho
 ``process_id``, committed only while the importer holds its lock.
 Under ``READ COMMITTED`` the read locks only the row it returns, so several importers
 claiming at once each take a different bundle, the largest left, and none waits for
-another. Positional bundle descriptors limit the bundles claimed. A bundle whose import
-raises or logs an error is deleted again and marked ``failed``, and the importer goes
-on; it is never claimed again, and the importer exits with failure at the end. Under the
+another. Positional bundle descriptors limit the bundles claimed, and ``--exclude-bundles``
+keeps it off the bundles it names. A claim that finds nothing takes and releases
+registration's lock, so it waits for a registration in progress, whose new rows the
+locking read passes over until they commit, and claims once more before the importer
+exits. A bundle whose import raises or logs an error is marked ``failed`` and its rows
+deleted, and the importer goes on; it is never claimed again, and the importer exits with failure at the end. Under the
 test-only fault ``OPUS_IMPORT_FAULT=hold_after_claim:<seconds>`` an importer sleeps
 that long after each claim commits (:ref:`the import's fault sites
 <dev_guide_testing_faults>`).
@@ -285,8 +294,9 @@ table's creation commits on its own, and then, in one transaction:
   observations, and ``first_id`` is where the last registered range ends, so the ranges
   ascend in ``bundle_number`` order. A range that would pass ``obs_general.id``'s
   largest value refuses the registration;
-* returns the bundles it holds to ``pending`` when the caller asks, which ``--import``
-  and an append's ``--register-bundles`` do;
+* leaves the bundles it holds as they are, unless the caller asks for them back, which
+  ``--import`` does: a ``done`` or ``failed`` one returns to ``pending``, and an
+  ``importing`` one refuses the registration;
 * numbers every mult field ``mult_field`` lacks
   (:func:`~opus_import.mult_fields.ensure_mult_fields`) and writes the rows and groups of
   every pinned field from its ``mult_options``
@@ -308,6 +318,21 @@ already registered keeps its number and range, since its rows are deleted before
 written again; one deleted with ``--delete-bundles`` loses its row, and is registered
 afresh, after every other, when it is next imported. ``opus_import_all --prepare`` and
 ``import_for_tests.sh`` register their whole list before anything is imported.
+
+**Every move between states is conditional** on the state the bundle is expected to be
+in, by an ``UPDATE`` whose condition names it
+(:meth:`~opus_import.importdb.super.ImportDBSuper.conditional_update`), so that two
+processes never both hold one bundle. A queue importer takes a bundle only from
+``pending`` (:func:`~opus_import.bundle_registry.claim_bundle`), and ``--import`` takes
+one it names from any state but ``importing``
+(:func:`~opus_import.bundle_registry.start_bundle`); a bundle goes from ``importing`` to ``done`` or
+``failed`` only while it is still ``importing`` under the ``started_at`` the process
+wrote when it took it (:func:`~opus_import.bundle_registry.finish_bundle`), so a bundle
+``--requeue`` returned to the queue and another process took is never finished, or
+deleted, by the process that held it before; that process logs an error instead. Only
+``--requeue`` moves an ``importing`` bundle back to ``pending``. The hold is
+``started_at``, to the second, so a bundle requeued and taken again within the second it
+was first taken is the one case it cannot tell apart.
 
 A bundle moves through these states:
 
@@ -358,9 +383,10 @@ neither step is refused. ``opus_import_all --finish`` gives its own account of t
 refusal before it runs any of its invocations.
 
 **The registry is the one record of an append in flight.** The invocation that names an
-append's bundles -- a plain ``--import``, or ``--register-bundles`` before several
-``--join`` importers -- sets the version row ``appending`` and those bundles
-``pending``, registering any that are new. A failed append leaves the schema
+append's bundles sets the version row ``appending``: a plain ``--import``, which also
+returns those bundles to ``pending``, or ``--register-bundles`` before several
+``--join`` importers, which registers the ones that are new and does so only when there
+are any. A bundle already ``done`` is imported again by a plain ``--import`` naming it. A failed append leaves the schema
 ``appending``, the bundle it was on ``importing`` or ``failed`` and the bundles after it
 ``pending``. The next ``--import`` on the append path resumes every bundle that is
 ``pending`` or ``failed`` and is not named, in registration order, before the ones it
@@ -636,11 +662,12 @@ A row is ``(trigger_tab, trigger_col, trigger_val, partable)``. The rows are
        ``obs_surface_geometry_name.target_name`` and revealing the body's category,
        ``obs_surface_geometry__<target>``.
 
-The first three groups store a ``mult`` row's id as the trigger value, because that is
-what the corresponding ``obs_general`` column holds; the surface geometry group stores
-the **target name itself**, because the web side compares the user's search text to it
-directly rather than running a database lookup. That asymmetry is the one thing to know
-before adding a trigger of a new kind.
+Every group stores a ``mult`` row's id as the trigger value, because that is what the
+column it triggers on holds. The web side tests the two kinds differently: an
+``obs_general`` trigger fires when every observation the search finds holds its id, and
+a surface geometry trigger fires when its body is one of the bodies the search selects,
+whether the search names the body by its label or by its value. That difference is the
+one thing to know before adding a trigger of a new kind.
 
 Because the first three groups are generated, a mission or instrument that was never
 imported still gets a row.
@@ -1245,8 +1272,8 @@ or the schema gives it, and finalization ranks every field
 (:ref:`dev_guide_import_steps_do_finalize_mult`).
 
 **Writing.** A new value is written the moment it is met, in a second short transaction,
-and a new group with it, by an insert that leaves a group another importer wrote first
-as it is. A new row is inserted, never upserted. When the insert meets the field's
+and a new group with it in a third, by an insert that leaves a group another importer
+wrote first as it is; each is run again on a deadlock or a lock wait timeout. A new row is inserted, never upserted. When the insert meets the field's
 unique key on ``(field_id, value)``, another importer stored the value first, since the
 server was asked for it just before: its row is read back and its id used, and the id
 taken is left unused, a gap in the field's ids that nothing depends on. With one importer

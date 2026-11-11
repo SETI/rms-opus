@@ -222,8 +222,8 @@ class BundleGuard:
     hold; otherwise `LostImporterError` rolls it back.
 
     For a plain ``opus_import`` (no importer) only an ``obs_general`` chunk carries the
-    ``rows_done`` update, matching the bundle with ``process_id`` NULL, and nothing is
-    checked.
+    ``rows_done`` update, matching the bundle only while it keeps the ``started_at`` the
+    import began with, and nothing is checked.
 
     Attributes:
         ids: The bundle's id counter, which holds its committed ``rows_done``.
@@ -257,8 +257,8 @@ class BundleGuard:
                 db.update_row(
                     bundle_registry.BUNDLE_REGISTRY_TABLE,
                     {'rows_done': self._pending_rows},
-                    f'{q("bundle_number")}=%s AND {q("process_id")} IS NULL',
-                    [number],
+                    f'{q("bundle_number")}=%s AND {q("started_at")}=%s',
+                    [number, self.ids.range.started_at],
                 )
             return
         matched = db.update_row(

@@ -118,7 +118,13 @@ class ResolvedCategory:
 
     @property
     def source(self) -> sql_builder.TableSource:
-        """The table as a FROM clause or a join names it, under the alias when it differs."""
+        """The table as a FROM clause or a join names it, under the alias when it differs.
+
+        Returns:
+            The table's name when the alias is the table's own name; otherwise an
+            `opus_app.apps.tools.sql_builder.AliasedTable` naming the table under the
+            alias.
+        """
         if self.table == self.alias:
             return self.table
         return sql_builder.AliasedTable(self.table, self.alias)
@@ -129,6 +135,10 @@ class ResolvedCategory:
 
         Several of an observation's rows can be in such a category, so joining it onto
         ``obs_general`` would repeat the observation.
+
+        Returns:
+            True when the category reads a table under another name and keeps to no
+            body's rows; False for a table of its own and for a body's category.
         """
         return self.table != self.alias and self.target_name is None
 
@@ -159,7 +169,14 @@ class ResolvedCategory:
 
 @functools.cache
 def _category_tables() -> dict[str, tuple[str, int | None]]:
-    """Return the table and body id of every category that is not a table of its own."""
+    """Return the table and body id of every category that is not a table of its own.
+
+    Returns:
+        The ``table_names`` rows that name a ``physical_table``, as a mapping from the
+        category to that table and the row's ``target_name``, which is None for a
+        category holding every row of the table. A category that is a table of its own
+        has no entry.
+    """
     return {
         row.table_name: (row.physical_table, row.target_name)
         for row in table_names()

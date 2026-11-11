@@ -6,10 +6,9 @@ mission table. The web application reads this to decide which sections of the se
 form to offer, so a mission or instrument with no row here has no searchable columns of
 its own.
 
-Most triggers name the id of a ``mult`` row, because that is what the corresponding
-``obs_general`` column holds. Surface geometry targets are the exception: their trigger
-value is the target name itself, since the web side compares the user's search text to
-it directly.
+Every trigger names the id of a ``mult`` row, because that is what the column it
+triggers on holds: an ``obs_general`` column for a mission, an instrument or an
+instrument host, and the surface geometry selector for a body.
 
 The table is built beside the live one and swapped in (`opus_import.table_swap`), so the
 step can run on a schema that is being served.
@@ -52,8 +51,8 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
     One row per mission, per instrument and per instrument host, each keyed by the
     mult id of the corresponding ``obs_general`` value, plus one per surface
     geometry body the surface geometry table holds
-    (`opus_import.surface_geometry.stored_targets`), keyed by the body's name and
-    revealing the body's category. An HST instrument points at the Hubble
+    (`opus_import.surface_geometry.stored_targets`), keyed by the body's id in the
+    selector's mult field and revealing the body's category. An HST instrument points at the Hubble
     mission table, because HST keeps its columns there rather than in an instrument
     table of its own.
 
@@ -146,16 +145,10 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
     # rows.append(entry)
 
     for target in surface_geometry.stored_targets(ctx):
-        target_name = import_util.decode_target_name(target.encoded_name).upper()
-        # For surface_geometry targets, we don't find the mult id for the target name
-        # but instead put the target name string directly in the partable. This is
-        # because get_triggered_tables compares the user search string against the
-        # partable trigger_val directly instead of doing a database search like it does
-        # for other types of triggered tables.
         entry = {
             'trigger_tab': surface_geometry.SELECTOR_CATEGORY,
             'trigger_col': surface_geometry.TARGET_COLUMN,
-            'trigger_val': target_name,
+            'trigger_val': str(target.target_id),
             'partable': surface_geometry.target_category(target.encoded_name),
         }
         rows.append(entry)

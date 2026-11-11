@@ -5865,6 +5865,32 @@ Nothing above this line is rewritten by an executor.
 - The review's fixes change nothing the import writes at fixture scale (the import
   goldens are unchanged); the local integration database was imported again with the
   fixes, and the integration suite passes against it.
+- PR-14's measurement (2026-11-10, test scale; before at c9247eca, PR-13's head, after at
+  466ca7f7). Three fixture imports a side alternated A B B A A B, one test-scale import a
+  side, A B, each side serving its own schema, three web runs a side alternated, then
+  `bench_db --dump-queries` once a side. The target is structural, and is met: one
+  `mult` table with `mult_field` and `mult_group`, ranks computed at finalization, no
+  unreferenced value, and no changed integration golden to rule on.
+  - Every guard held. The gunicorn workers' peak RSS, the section's own guard, is about
+    1.6% lower in every scenario (for example 137.4 MB against 135.1 MB for the empty
+    search, app-cold).
+  - The schema's table count is 181 against 94; the mult tables' data 1.88 MB against
+    0.13 MB; the schema's data 788.7 MB against 784.5 MB (-0.5%) and indexes 398.6 MB
+    against 398.0 MB.
+  - The test-scale import was 330.9 s against 338.1 s (+2.2%, its floor 0.9%; the
+    comparison holds the guard), the bundles' phase 263.3 s against 269.9 s, the larger
+    bundles 2.5% to 4.7% slower each, and finalization's new mult step 1.0 s. The
+    fixture imports were 40.3 s against 39.8 s.
+  - Reported: the empty fan-out's app-cold p50 305.6 ms against 323.0 ms (+5.7%, floor
+    38.8%), its target mult counts 37.3 ms against 29.3 ms and its widget menu 72.4 ms
+    against 92.1 ms (+27%, floor 56%). The planet widget's app-cold p50 was 23.7 ms
+    against 51.6 ms (+118%, floor 54%) and its db-cold p50 38.7 ms against 64.0 ms, with
+    small spreads and one more statement, the field-id map's read of `mult_field`. Its
+    SQL is otherwise the same shape, reading `mult` by its key, and the slowdown did not
+    reproduce through Django's test client against the two local integration databases:
+    the planet widget as the first mult request after a non-mult request took 41.5 ms
+    on PR-13's database and 31.3 ms on this head's, with the same modules imported
+    during it.
 
 ### 2026-11-10, PR-15 (written against this file at 466ca7f7)
 
@@ -6003,6 +6029,41 @@ Nothing above this line is rewritten by an executor.
 - No golden changed. Results: the gates pass (2,783 unit tests); the import suite 169
   passed and 3 skipped; the integration suite 1,591 passed against the local database,
   which the fix did not need imported again.
+- PR-15's measurement (2026-11-11, test scale; before at 1e55f88a, PR-14's head, after at
+  2d01553f). Three fixture imports a side alternated A B B A A B, one test-scale import a
+  side, A B, each side serving its own schema, three web runs a side alternated, then
+  `bench_db --dump-queries` once a side. The target is structural, and is met: one
+  surface geometry table, one model, and the new-target test passing.
+  - The schema's tables 94 against 45; the import's `Com_create_table` 94 against 45 and
+    `Com_alter_table` 157 against 59; `models.py` 10,485 lines and 144 classes against
+    968 and 43. The schema's data 784.5 MB against 746.3 MB (-4.9%) and indexes 398.0 MB
+    against 366.7 MB (-7.9%); the surface geometry data 51.9 MB in the per-body tables
+    against 30.0 MB in the one table, and its indexes 111.2 MB against 94.7 MB.
+  - The test-scale import was 330.4 s against 307.4 s (-7.0%).
+  - The categories call: app-cold p50 94.0 ms against 22.4 ms (-76.2%), db-cold 213.6 ms
+    against 45.2 ms (-78.8%), warm 16.0 ms against 5.8 ms. The gunicorn workers' peak RSS
+    about 12.8% lower in every scenario (135.2 MB against 117.9 MB for the empty search,
+    app-cold). The empty fan-out's db-cold buffer-pool reads 539 against 409.
+  - The surface geometry search (Saturn, planetographic latitude): db-cold p50 279.2 ms
+    against 214.0 ms (-23.3%; the section's own guard, held); its plan examines 45,460
+    rows against 30,630 (-32.6%) and takes 24.9 ms against 16.2 ms. The plan reads
+    Saturn's rows through the primary key's `target_name` prefix and filters the
+    latitudes, since `planetographic_latitude1` and `planetographic_latitude2` carry no
+    key in the template, before or after this PR; the section's "one index range on
+    `(target_name, col)`" holds for the keyed columns.
+  - **One guard regressed:** that search's app-cold p50, 123.0 ms against 166.6 ms
+    (+35.4%, floor 20.7%), with buffer-pool reads 456 against 1,063. The app-cold pass
+    runs every scenario on a server not restarted since the db-cold pass's last
+    scenario, so a scenario reads from disk whatever the scenarios before it in that
+    pass have not; Saturn's rows in the one table were not among them, where the
+    per-body table's mostly were. With the buffer pool warm (Django's test client
+    against the two local integration databases, the search's stored results cleared
+    first) the same search took 260.9 ms against 106.4 ms, the `INSERT ... SELECT` 241 ms
+    against 85 ms, with the same count.
+  - The orchestrator's ruling (2026-11-11): the regression is reported and explained,
+    not a stop-and-report, since the section's own guard on this search (db-cold)
+    improved and the warm search is faster; it is flagged in the PR's description for
+    the user's review before merge.
 
 ### 2026-11-10, PR-16 (written against this file at 2d01553f)
 
@@ -6118,9 +6179,12 @@ Nothing above this line is rewritten by an executor.
   `Poor`), and the observation columns hold the merged row's id either way, so the mode
   writes every value as `opus_support.collation_key` gives it. With several importers a
   case-merged value's stored spelling (`mult.value`) is therefore not fixed from run to
-  run; its label, which the interface shows, is. Not raised with the orchestrator before
-  the PR: the PR-14 merge is what makes it possible, and a binary collation on
-  `mult.value` (PR-14's rejected alternative) would remove it.
+  run. Its label is fixed in the fixture only because every bundle computes the same
+  one: in general an unpinned value's stored label, display, pin and grouping, and a new
+  group's `group_pin`, are whichever importer inserts the row first, the case the
+  conflict warning exists for, and they too can differ from run to run with several
+  importers. The orchestrator's ruling (2026-11-11): accepted, and the mult-value mode's
+  comparison by `collation_key` stands.
 - `tests/benchmarks/test_scenarios.py` compares the complete scale's groups with
   `import_all.BUNDLE_SETS`, since `import_steps` no longer has an `--import` per set; the
   harness still imports the groups one plain `--import` at a time, which registers them
@@ -6152,6 +6216,142 @@ Nothing above this line is rewritten by an executor.
   passed and 3 skipped; the integration suite 1,591 passed against the local database
   imported with this head (`import_for_tests.sh`, which registers its whole list first).
   **No integration golden changed.**
+- **Review fixes (2026-11-11).** An independent review found six faults, each fixed:
+  - **Two processes could hold one bundle.** Every state write was a plain `UPDATE ...
+    WHERE bundle_id = %s`. Each move is now conditional on the state expected
+    (`ImportDBSuper.conditional_update`, which returns the rows changed): a queue
+    importer takes a bundle only from `pending`, and a plain `--import` takes one it
+    names from any state but `importing` (`bundle_registry.start_bundle`; a bundle
+    named twice in one invocation, PR-07's negative case, is `done` by its second turn); `importing` to `done` or `failed` only while still `importing` under the
+    `started_at` the process wrote when it took the bundle (`finish_bundle`, the hold
+    being `bundle_registry.Claim`); `pending` only from `done` or `failed`, or from
+    `importing` under `--requeue` alone (`return_to_pending`). A queue importer whose
+    bundle was requeued and retaken logs an error and neither marks nor deletes it;
+    its failure path marks `failed` before deleting, and deletes only when the mark
+    took. `rows_done` is written only under the same `started_at`. A plain `--import`
+    refuses, before writing anything, a named bundle that is `importing`, naming the
+    `--requeue`; one another process takes between registration and its turn is an
+    error and is left alone. `--delete-bundles` refuses an `importing` bundle.
+    `started_at` is to the second, so a bundle requeued and retaken within the second
+    it was first taken is the one case the hold cannot tell apart; a token column
+    would close it, and PR-16a's `process_id` can serve as one.
+  - **`--register-bundles` returned done bundles to `pending` on the append path.**
+    Registration now leaves every registered bundle's state alone; only a bundle it adds
+    is `pending`, and it sets `appending` only when it added one
+    (`do_register.Registration.added`). A plain `--import` keeps its replace semantics
+    for the bundles it names. **`--register-bundles` does not refuse an `importing`
+    bundle**, though the review asked for it: it no longer changes that bundle, and
+    PR-16a's coordinator reruns `--prepare` before its recovery step, which a refusal
+    would block after an importer died. A rerun of the prepare step on a finished schema
+    changes no state and leaves the row `ready` (a unit test, which also found that
+    three ready-state tests compared a shared dictionary with itself; they copy it now).
+  - **The mult value and group inserts are retried** (`retrying` gains `expected`, for a
+    failure the caller handles: the value insert's duplicate key is raised at once,
+    unlogged, for the read-back). The bulk loads are not retried: at `READ COMMITTED`
+    the per-bundle deletes take no gap locks, every observation table's only unique key
+    is its primary key, which lies in the loading bundle's own range, and a load chunk
+    that failed has already been rolled back and raised by PR-04's check.
+  - **An importer could exit while a registration was committing**, its locking read
+    passing over the uncommitted rows. A claim that finds nothing now takes and
+    releases registration's named lock and claims once more; an `import_tests` case
+    holds the lock, waits until the importer is blocked on it, makes a bundle pending,
+    releases it, and requires the importer to claim and import that bundle.
+  - The notes' claim that a value's label is fixed from run to run is corrected above.
+  - `--join --exclude-bundles X` with no bundles named honors the exclusion
+    (`claim_bundle(excluding=...)`), and a failed `RELEASE_LOCK` after a failed body no
+    longer replaces the body's exception.
+  - The new tests are mutation-checked: 14 source mutations against the unit tests, one
+    against the waiting case; each fails.
+  - Results after the fixes: the gates pass (2,830 unit tests); the import suite 176
+    passed and 3 skipped; the integration suite 1,591 passed against `pr16local`,
+    imported again with the fixes' registration (the import's output is unchanged).
+- **The harness starts several importers** (2026-11-11, at the orchestrator's request,
+  for the section's measurement). `bench_import --importers N` runs a side's erase, one
+  `--register-bundles` of every scenario group in import order, N `--join` processes
+  started together, each with a configuration and log directory of its own and an equal
+  share of `--import-key workers=W` (1 when none is given; a total N does not divide is
+  refused, so the importers together use exactly the workers a one-process run of the
+  same total uses), and the finalization sequence. The importers' phase is one
+  invocation, `join`, from the first start to the last exit, counted in
+  `import.bundle_imports.wall_s`; the run also records `import.registration.wall_s` and
+  each bundle's `size_estimate`, `import_bundle` time (from the importers'
+  `--timing-json` files) and `rows_done`. Other `--import-key`s, `transaction_rows`
+  among them, reach every importer. A side without `--join` refuses the option and is
+  measured as one process, which is what the target compares against; a scenario group
+  with options of its own refuses it too. `bench_import --register-only` registers
+  every group into a scratch schema, which it drops, and records a run of kind
+  `register` with `import.registration.wall_s`. `benchmarks.sides.Spelling` gains
+  `register_bundles` and `join`. A fixture-scale smoke run on this side,
+  `--importers 2 --import-key workers=2 --runs 1`, recorded 16.6 s, registration 0.6 s,
+  the importers' phase 8.8 s, 24 bundles, 399 `obs_general` rows (session `smoke`).
+- The merge of PR-15's head (395965d7) keeps PR-14's and PR-15's entries before this one,
+  with PR-15's measurement bullets at the end of PR-15's last entry; `queries.sql` is
+  PR-15's.
+- **A queue importer failed a bundle for another bundle's warning** (found by the
+  orchestrator's first test-scale `--importers 1` run, 2026-11-11). `pdsfile` reads a
+  viewable's shape with `PIL.Image.open`, and for `cassini_uvis_solarocc_beckerjarmak2023`'s
+  full-size preview PIL issues a `DecompressionBombWarning` (122,314,580 pixels against
+  its 89,478,485 limit). The import collects Python warnings in
+  `ImportContext.python_warning_list` and reports them only at a PDS3 table read
+  (`import_util.log_accumulated_warnings`); the bundle is PDS4, so nothing reported it.
+  An invocation that imports that bundle alone ends with the warning unreported, which
+  is what the one-process runs did; the queue importer went on to `HSTO0_7316`, whose
+  index read reported it as that bundle's error, failed it and deleted it. A plain
+  `--import` naming the two bundles in one invocation would have done the same. Each
+  bundle now starts with the list empty (`import_one_bundle`), so every path reports
+  what an invocation of the bundle alone reports; a unit test fails without the reset.
+  Charging the warning to the bundle that raised it would fail
+  `cassini_uvis_solarocc_beckerjarmak2023` on every path, a change of behavior this PR
+  does not make.
+- The same import-suite run failed the equality case once: `mult_field.last_id` of
+  `obs_profile.body_occ_flag` was 3 with three importers against 2 with one, an id taken
+  for a value another importer stored first, as designed. The mult-value mode now leaves
+  `mult_field.last_id` out as well; earlier runs had passed because the importers had
+  not met a new value at the same moment.
+- The merge of PR-15's head after its review fixes (1c9b912b) brings the surface geometry
+  triggers keyed by mult id; nothing of this section's changed.
+- **Measurement** (2026-11-11, test scale, eight `workers` in all; before at 395965d7,
+  PR-15's head, one process; after at 507f6316; two runs a configuration alternated, and
+  one with `transaction_rows = 1000`; sessions `a` before, `i1`, `i2`, `i4` and `t4`
+  after; judged against the PR-00 floors):
+  - **Target, four importers:** `import.wall_s` 166.8 s to 113.1 s, -32.2% (floor 1.8%),
+    **improved**; `import.bundle_imports.wall_s` 140.2 s to 84.2 s. One importer 151.2 s
+    (-9.3%), two 141.5 s (-15.2%). Finalization 25.2 s to 26.0 s on every count.
+  - **Four importers with `transaction_rows = 1000`** (reported): 146.5 s, 29.5% slower
+    than the default four-importer run; the bundle imports 117.2 s against 84.2 s.
+  - **Registration:** 1.6 s to 1.7 s at test scale; every bundle of the complete
+    holdings in 21.6 s (`--register-only`, session `reg`).
+  - **Each bundle's time against its `size_estimate`:** Pearson 0.92 with one importer,
+    0.57 and 0.68 in the two four-importer runs. The difference is a stall: in each
+    four-importer run, a bundle on each importer waited 22 s to 50 s in the same window
+    of about 30 s, every one of them reading `pdsfile`'s pickle files (opening them, or
+    the `from_opus_id` that reads them), and resumed within seconds of the others;
+    `VG_2803` took 50.3 s and 61.5 s against 0.7 s with one importer. No importer waited
+    on the database there; the cause, most likely the holdings disk shared with the
+    server's writes, was not determined. The complete-scale run is where it would show.
+  - **`db.schema.data_bytes` 746.3 MB to 803.0 MB, +7.6%, regressed** (floor 0);
+    `db.schema.index_bytes` 366.7 MB on both sides. One importer gives 801.9 MB and two
+    794.6 MB, so concurrency is not the cause. The same 29,752 `obs_general` rows take ids
+    0 to 3,218,240 where the base's take 0 to 29,753: the ranges follow `bundle_number`,
+    each holding `ID_CAPACITY_FACTOR` (100) ids for each row its labels declare, and a
+    queue importer claims the largest bundle first, so even one importer inserts into the
+    middle of every table's primary key rather than at its end, and the pages it splits
+    stay partly filled (`obs_profile` 53 bytes a row against 89). Rebuilding every `obs_` table
+    (`ALTER TABLE ... FORCE`, 33.5 s) took the one-importer schema to 847.9 MB and the
+    base's to 849.4 MB, so a rebuild in finalization would not recover the bytes. The
+    orchestrator accepts the regression as the cost of the id ranges; the web guards,
+    which read these tables, held.
+  - **Web guards** (three runs a side alternated, against `bench_test_before_a_2` and
+    `bench_test_after_i4_2`): every guard held; app-cold search empty +0.8%, broad
+    +1.9%, surface geometry +1.5%, fan-out empty +1.8%, concurrency distinct p95 -12.8%.
+- **With PR-15's triggers keyed by mult id, the equality case compared `partables` by
+  id**, and the three importers can number a body differently from the main run, so the
+  case failed once its importers met the bodies in another order. The mult-value mode
+  gives each `partables` row's `trigger_val` as the value of the field its
+  `trigger_tab` and `trigger_col` name (`golden_io`). Results on the final head: the
+  gates pass (2,854 unit tests), the import suite 176 passed and 3 skipped, and the
+  integration suite 1,591 passed against `pr16local`, imported again at this head.
+
 
 ### 2026-11-11, PR-16a (written against this file at 6441f344)
 

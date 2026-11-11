@@ -64,7 +64,7 @@ class _FakeDB:
         """Return no rows: the cache asks before any value is stored in a field."""
         return []
 
-    def retrying(self, _description: str, body: Any) -> Any:
+    def retrying(self, _description: str, body: Any, expected: Any = None) -> Any:
         """Run the body once."""
         return body()
 
@@ -77,6 +77,11 @@ class _FakeDB:
     def failures_expected(self) -> Iterator[None]:
         """Nothing to suppress."""
         yield
+
+    @staticmethod
+    def is_duplicate_key_error(_exc: BaseException) -> bool:
+        """No insert here ever fails."""
+        return False
 
     def insert_row(self, _table: str, row: dict[str, Any]) -> None:
         """Record a mult row."""

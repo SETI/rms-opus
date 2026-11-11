@@ -367,6 +367,7 @@ def test_the_bundle_loop_clears_the_per_bundle_caches_and_not_the_per_run_one() 
 
     assert 'ctx.mult_table_cache' in assigned['import_one_bundle']
     assert 'ctx.bundle_ids' in assigned['import_one_bundle']
+    assert 'ctx.python_warning_list' in assigned['import_one_bundle']
     assert 'ctx.import_has_bad_data' not in assigned['import_one_bundle']
 
     assert 'ctx.import_has_bad_data' in assigned['do_import_steps']
@@ -405,3 +406,20 @@ def test_a_timed_step_that_raises_is_still_recorded(
     with pytest.raises(RuntimeError, match='boom'), ctx.timed('validate'):
         raise RuntimeError('boom')
     assert ctx.step_timings == {'validate': 0.75}
+
+
+def test_a_warning_an_earlier_bundle_left_does_not_fail_the_next() -> None:
+    """A warning no table read reported in its own bundle is not charged to the next.
+
+    A queue importer imports bundle after bundle in one process, where a single-bundle
+    invocation ends with the bundle that raised the warning and never reports it; the
+    next bundle starts with none, so both report the same.
+    """
+    ctx = make_context()
+    ctx.python_warning_list = ['Image size exceeds limit, could be decompression bomb']
+
+    # GO_0001 is a bundle OPUS deliberately skips, so nothing past the reset runs.
+    assert do_import.import_one_bundle(ctx, 'GO_0001')
+
+    assert ctx.python_warning_list == []
+    assert not ctx.import_has_bad_data

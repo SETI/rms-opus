@@ -298,8 +298,8 @@ Import steps
        deleted from the observation tables first, so importing it again replaces it.
    * - ``--register-bundles``
      - Register the named bundles in the bundle registry, in the order named, and import
-       nothing. A bundle already registered keeps its number and range; on an append it
-       goes back to ``pending``, and the schema is set to ``appending``.
+       nothing. A bundle already registered keeps its number, its range and its state;
+       on an append that adds a bundle, the schema is set to ``appending``.
    * - ``--join``
      - Import bundles from the bundle registry, the largest ``pending`` first, until none
        is ``pending``; several processes may run at once (`Several import processes`_).
@@ -766,10 +766,19 @@ An importer never erases or finalizes. A bundle whose import raises or logs an e
 marked ``failed`` and its rows are deleted; the importer goes on to the next and does
 not claim it again, and exits with failure at the end. Positional bundle descriptors
 limit the bundles an importer claims, which is how a computer holding only some of the
-holdings joins. An importer's first interrupt makes it finish its bundle and claim
+holdings joins, and ``--exclude-bundles`` keeps it off the ones it names. An importer
+that finds nothing to claim waits for any registration in progress and looks once more
+before it exits. An importer's first interrupt makes it finish its bundle and claim
 nothing new; a second makes it return its bundle to the queue and exit.
 
-Nothing the importers write depends on which one imports a bundle or when:
+A bundle is held by one process at a time. A plain ``opus_import --import`` and
+``--delete-bundles`` refuse a bundle another process holds ``importing``, naming the
+``opus_import --requeue`` that returns it once that process has stopped, and
+``--register-bundles`` leaves every registered bundle's state as it is. A bundle
+requeued while its first importer still ran is left to whichever importer took it next:
+the first logs an error, and neither marks nor deletes it.
+
+Almost nothing the importers write depends on which one imports a bundle or when:
 
 * A bundle's observation ids come from its registered range.
 * A mult value new to its field takes the next id of the field's counter,
@@ -777,10 +786,14 @@ Nothing the importers write depends on which one imports a bundle or when:
   When another importer wrote the same value first, the stored row's id is used and the
   id taken is left unused. So with several importers a field's new values may number
   differently from one run to the next, and its ids may have gaps; with one, they number
-  as the serial import does.
-* Every import connection reads at ``READ COMMITTED``, and a claim, a mult id, and each
-  statement of a bundle's delete are run again, up to five attempts with growing
-  pauses, when the server reports a deadlock or a lock wait timeout.
+  as the serial import does. The value's stored row is the first importer's: of two
+  spellings the server's collation calls one value, and of two labels or group pins
+  computed for it, the stored one is the one met first, as the conflict warning
+  reports.
+* Every import connection reads at ``READ COMMITTED``, and a claim, a mult id, a mult
+  value's and a group's insert, and each statement of a bundle's delete are run again,
+  up to five attempts with growing pauses, when the server reports a deadlock or a lock
+  wait timeout.
 
 How an importer is known to be alive
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -52,6 +52,7 @@ from opus_import import (
     bundle_registry,
     import_processes,
     import_util,
+    importdb,
     primary_index,
     schema_version,
 )
@@ -206,7 +207,12 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
         limits={'info': ctx.args.log_info_limit, 'debug': ctx.args.log_debug_limit},
     )
 
-    # Start fresh
+    # Start fresh. The Python warnings collected so far belong to the bundles before this
+    # one: they are reported only at a PDS3 table read, so a warning a bundle raised
+    # outside one -- pdsfile opening an oversized preview, for instance -- would
+    # otherwise be reported at this bundle's first table read and fail it, where an
+    # invocation that ended with that bundle never reports it.
+    ctx.python_warning_list = []
     ctx.mult_table_cache = {}
     ctx.current_bundle_id = bundle_id
     ctx.current_index_row_number = None
@@ -291,16 +297,22 @@ def do_import_steps(ctx: ImportContext) -> bool:
     An invocation that registers or imports bundles chooses its path from the schema's
     state (`choose_import_path`), unless `opus_import.cli` chose it already.
     ``--register-bundles`` registers the named bundles in their order
-    (`opus_import.steps.do_register`) and imports nothing: on the append path it also
-    returns the named bundles already registered to ``pending`` and sets the schema
-    ``appending``; on a fresh import it leaves registered bundles as they are.
-    ``--import`` registers its bundles before the first one starts, returning those
-    already registered to ``pending``: on the append path every bundle an earlier append
+    (`opus_import.steps.do_register`) and imports nothing: a bundle already registered
+    keeps its state, and on the append path the schema is set ``appending`` only when a
+    bundle was added. ``--import`` registers its bundles before the first one starts,
+    returning those already registered and ``done`` or ``failed`` to ``pending``, and
+    refusing, before anything is written, a named bundle another process holds
+    ``importing``: on the append path every bundle an earlier append
     left ``pending`` or ``failed`` and not named, in registration order, followed by the
     ones named in their order; on a fresh import the ones named. A bundle OPUS
     deliberately skips is never registered, and an append that registers none leaves the
     schema's state alone. ``--join`` imports bundles from the registry's queue instead
     (`import_from_queue`).
+
+    ``--delete-bundles`` refuses, before deleting anything, a named bundle another
+    process holds ``importing``. Every move between states is conditional on the state
+    the bundle is expected to be in (`opus_import.bundle_registry`), so two processes
+    never both hold one bundle.
 
     Each bundle ``--import`` imports is marked ``importing``, deleted from the
     observation tables with foreign keys checked, so ``cart``'s cascade removes the cart
@@ -338,6 +350,8 @@ def do_import_steps(ctx: ImportContext) -> bool:
         ctx.mult_fields = None
 
     if ctx.args.delete_bundles:
+        if not _none_importing(ctx, named_bundles, '--delete-bundles'):
+            return False
         if named_bundles and _schema_is_ready(ctx):
             _mark_appending(ctx)
         with ctx.timed('delete_bundles'):
@@ -354,30 +368,39 @@ def do_import_steps(ctx: ImportContext) -> bool:
         return False
 
     if ctx.args.register_bundles:
-        appending = ctx.import_path == IMPORT_PATH_APPEND
-        registered = _register(ctx, named_bundles, make_pending=appending)
-        if registered is None:
+        registration = _register(ctx, named_bundles, make_pending=False)
+        if registration is None:
             return False
-        if appending and registered:
+        # Registered bundles keep their states, so a rerun changes nothing on a finished
+        # schema; only a bundle added to it is new work.
+        if ctx.import_path == IMPORT_PATH_APPEND and registration.added:
             _mark_appending(ctx)
         return True
 
     if ctx.args.join:
-        return import_from_queue(ctx, set(named_bundles) if ctx.args.bundles else None)
+        among = set(named_bundles) if ctx.args.bundles else None
+        return import_from_queue(ctx, among, _excluded_bundles(ctx))
 
     bundle_id_list = _bundles_to_import(ctx, named_bundles)
-    registered = _register(ctx, bundle_id_list, make_pending=True)
-    if registered is None:
+    registration = _register(ctx, bundle_id_list, make_pending=True)
+    if registration is None:
         return False
+    registered = registration.bundles
     # An append that has nothing to import leaves a finished schema as it is.
     if ctx.import_path == IMPORT_PATH_APPEND and registered:
         _mark_appending(ctx)
 
     with ctx.timed('import'):
         for bundle_id in bundle_id_list:
-            is_registered = bundle_id in registered
-            if is_registered:
-                bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_IMPORTING)
+            claim = None
+            if bundle_id in registered:
+                claim = bundle_registry.start_bundle(ctx, bundle_id)
+                if claim is None:
+                    # Another process took the bundle after registration.
+                    import_util.log_error(ctx, do_register.importing_refusal(bundle_id))
+                    if not ctx.args.ignore_errors:
+                        break
+                    continue
             ctx.bundle_has_errors = False
             with ctx.timed(f'delete_bundle:{bundle_id}'):
                 do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
@@ -386,13 +409,11 @@ def do_import_steps(ctx: ImportContext) -> bool:
             if not imported:
                 ctx.logger.log('fatal', f'Import of bundle {bundle_id} failed - Aborting')
                 ctx.mark_bad_data()
-            if is_registered:
+            if claim is not None:
                 failed = ctx.bundle_has_errors and not ctx.args.ignore_errors
-                bundle_registry.set_bundle_state(
-                    ctx,
-                    bundle_id,
-                    bundle_registry.BUNDLE_FAILED if failed else bundle_registry.BUNDLE_DONE,
-                )
+                state = bundle_registry.BUNDLE_FAILED if failed else bundle_registry.BUNDLE_DONE
+                if not bundle_registry.finish_bundle(ctx, claim, state):
+                    import_util.log_error(ctx, _lost_message(bundle_id))
             if not imported and not ctx.args.ignore_errors:
                 break
 
@@ -402,7 +423,46 @@ def do_import_steps(ctx: ImportContext) -> bool:
     return True
 
 
-def _register(ctx: ImportContext, bundle_ids: list[str], *, make_pending: bool) -> list[str] | None:
+def _lost_message(bundle_id: str) -> str:
+    """Return the error for a bundle this process no longer held when it finished it."""
+    return (
+        f'Bundle {bundle_id} was returned to the queue while this process imported it, so '
+        'its state is left to the process that holds it now'
+    )
+
+
+def _none_importing(ctx: ImportContext, bundle_ids: list[str], option: str) -> bool:
+    """Return whether no named bundle is ``importing``, refusing an option if one is.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the log.
+        bundle_ids: The bundles named.
+        option: The option refused, as the message names it.
+
+    Returns:
+        True when none is; otherwise False, after a fatal message naming each.
+    """
+    states = dict(bundle_registry.registered_bundles(ctx))
+    held = [
+        bundle for bundle in bundle_ids if states.get(bundle) == bundle_registry.BUNDLE_IMPORTING
+    ]
+    if not held:
+        return True
+    for bundle_id in held:
+        ctx.logger.log('fatal', f'{option} refused: {do_register.importing_refusal(bundle_id)}')
+    ctx.import_has_bad_data = True
+    return False
+
+
+def _excluded_bundles(ctx: ImportContext) -> set[str]:
+    """Return the bundles ``--exclude-bundles`` names."""
+    text = ctx.args.exclude_bundles
+    return set(text.split(',')) if text else set()
+
+
+def _register(
+    ctx: ImportContext, bundle_ids: list[str], *, make_pending: bool
+) -> do_register.Registration | None:
     """Register bundles, logging a refusal.
 
     Parameters:
@@ -411,8 +471,8 @@ def _register(ctx: ImportContext, bundle_ids: list[str], *, make_pending: bool) 
         make_pending: Whether a bundle already registered goes back to ``pending``.
 
     Returns:
-        The bundles registered (`opus_import.steps.do_register.register_bundles`), or
-        None when registration was refused, which is logged as fatal.
+        What `opus_import.steps.do_register.register_bundles` returned, or None when
+        registration was refused, which is logged as fatal.
     """
     try:
         with ctx.timed('register_bundles'):
@@ -437,7 +497,9 @@ QUEUE_EMPTY_LINE = 'No pending bundle is left to claim; this importer exits'
 IMPORTER_PREFIX = 'Importer '
 
 
-def import_from_queue(ctx: ImportContext, among: set[str] | None) -> bool:
+def import_from_queue(
+    ctx: ImportContext, among: set[str] | None, excluding: set[str] | None = None
+) -> bool:
     """Import bundles from the registry's queue until none is left: one importer's run.
 
     The importer first records itself in ``import_process`` and takes its lock, on a
@@ -455,9 +517,15 @@ def import_from_queue(ctx: ImportContext, among: set[str] | None) -> bool:
     it finishes its bundle and claims nothing new; a second aborts its bundle and stops.
     Whichever way it ends, it records itself ``exited`` and frees its lock.
 
+    A claim that finds nothing waits for any registration in progress, by taking and
+    releasing registration's lock, and claims once more before the importer exits: a
+    registration's transaction writes rows the claim's locking read passes over until it
+    commits.
+
     Parameters:
         ctx: The import run's context, with its path chosen.
         among: The only bundles the importer claims, or None for any.
+        excluding: Bundles it never claims, from ``--exclude-bundles``, or None.
 
     Returns:
         True when the queue was emptied and every bundle the importer imported is
@@ -488,13 +556,18 @@ def import_from_queue(ctx: ImportContext, among: set[str] | None) -> bool:
                             importer, import_processes.WHILE_CLAIMING
                         )
                     )
-                bundle_id = bundle_registry.claim_bundle(ctx, among, importer)
-                if bundle_id is None:
+                claim = bundle_registry.claim_bundle(ctx, among, excluding or (), importer)
+                if claim is None:
+                    registration = importdb.lock_name(db.db_schema, do_register.REGISTRATION_LOCK)
+                    with db.named_lock(registration):
+                        pass
+                    claim = bundle_registry.claim_bundle(ctx, among, excluding or (), importer)
+                if claim is None:
                     import_util.log_info(ctx, QUEUE_EMPTY_LINE)
                     break
-                import_util.log_info(ctx, f'{CLAIMED_PREFIX}{bundle_id}')
-                if not _import_claimed_bundle(ctx, bundle_id, importer):
-                    failures.append(bundle_id)
+                import_util.log_info(ctx, f'{CLAIMED_PREFIX}{claim.bundle_id}')
+                if not _import_claimed_bundle(ctx, claim, importer):
+                    failures.append(claim.bundle_id)
     except import_processes.LostImporterError as e:
         ctx.logger.log('fatal', str(e))
         return False
@@ -513,13 +586,18 @@ def import_from_queue(ctx: ImportContext, among: set[str] | None) -> bool:
 
 
 def _import_claimed_bundle(
-    ctx: ImportContext, bundle_id: str, importer: import_processes.ImporterLock
+    ctx: ImportContext, claim: bundle_registry.Claim, importer: import_processes.ImporterLock
 ) -> bool:
     """Delete, import and mark one claimed bundle; delete it again if its import fails.
 
+    The delete before the import, and a failed bundle's delete and move to ``failed``,
+    happen only while the registry still names this importer as importing the bundle
+    (`opus_import.steps.do_recover.release_bundle`): a bundle returned to the queue
+    meanwhile, which another importer may have taken, is neither deleted nor marked.
+
     Parameters:
         ctx: The import run's context.
-        bundle_id: The bundle, ``importing`` under the importer.
+        claim: The hold on the bundle, ``importing`` under the importer.
         importer: The importer.
 
     Returns:
@@ -532,6 +610,7 @@ def _import_claimed_bundle(
     """
     db = ctx.db
     assert db is not None
+    bundle_id = claim.bundle_id
     registered = bundle_registry.bundle_range(ctx, bundle_id)
     assert registered is not None
     number = registered.bundle_number
@@ -635,11 +714,15 @@ def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
         )
         ctx.import_has_bad_data = True
         return False
+    returned = True
     for bundle_id in bundle_ids:
         do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
-        bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_PENDING)
-        import_util.log_info(ctx, f'Returned {bundle_id} to the queue')
-    return True
+        if bundle_registry.return_to_pending(ctx, [bundle_id], returnable):
+            import_util.log_info(ctx, f'Returned {bundle_id} to the queue')
+        else:
+            import_util.log_error(ctx, f'{bundle_id} changed state while it was requeued')
+            returned = False
+    return returned
 
 
 def _alive_holders(ctx: ImportContext, bundle_ids: list[str]) -> list[tuple[str, int]]:

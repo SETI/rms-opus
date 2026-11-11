@@ -465,8 +465,8 @@ database server, database and holdings, ``opus_import_all --join --override-db-s
 own ceiling, adding ``--sets COISS,COVIMS`` on a computer that holds only those bundle
 sets. It never registers or finishes anything, and it can stop at any time; the first
 computer waits for its importers before finishing. The database is the same whatever
-the number of importers, apart from the order in which a checkbox value new to the
-import is numbered.
+the number of importers, apart from how a checkbox value new to the import is numbered
+and, where bundles disagree about a value's spelling or label, which one is kept.
 
 .. _user_guide_deployment_rename_mult_value:
 

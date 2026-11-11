@@ -24,8 +24,9 @@ database, so what is saved is bytes and not coverage.
 The **mult-value mode** of `serialize_table` is the one used to compare two imports whose
 mult ids may differ: several import processes writing one schema give a field's new values
 ids in the order they arrive, so every mult column is written as the value its id names,
-the ``mult`` table without its ids, and the rows of every table sorted, since a key holding
-a mult id orders them by id. A value is written as the server's collation compares it,
+the ``mult`` table without its ids, ``mult_field`` without its counter, which leaves an
+id unused where two importers met one value, and the rows of every table sorted, since a
+key holding a mult id orders them by id. A value is written as the server's collation compares it,
 because of two values the field's unique key merges, the one stored is the one met first.
 No golden is written in that mode.
 
@@ -70,12 +71,8 @@ TIMESTAMP_DATA_TYPE = 'timestamp'
 WALL_CLOCK_COLUMNS = {'import_bundle': frozenset({'started_at', 'finished_at'})}
 
 #: The columns the mult-value mode also drops, which depend on how several importers
-#: shared the work: which importer imported each bundle and how many died holding it, and
-#: each mult field's counter, which passes the ids an importer took and never wrote.
-IMPORTER_COLUMNS = {
-    'import_bundle': frozenset({'process_id', 'losses'}),
-    'mult_field': frozenset({'last_id'}),
-}
+#: shared the work: which importer imported each bundle, and how many died holding it.
+IMPORTER_COLUMNS = {'import_bundle': frozenset({'process_id', 'losses'})}
 
 #: The extension every golden file carries.
 GOLDEN_EXT = '.tsv'
@@ -422,6 +419,31 @@ def _as_mult_value(values: dict[tuple[str, int], str], field: tuple[str, bool], 
     return values[(name, int(stored))]
 
 
+#: The table whose ``trigger_val`` holds an id of the mult field its row's
+#: ``trigger_tab`` and ``trigger_col`` name, so which field a value belongs to varies by row.
+_TRIGGER_TABLE = 'partables'
+
+
+def _with_trigger_value(
+    values: dict[tuple[str, int], str], columns: Sequence[str], row: Sequence[Any]
+) -> tuple[Any, ...]:
+    """Return a ``partables`` row with its ``trigger_val`` given as the value its id names.
+
+    Parameters:
+        values: What `_mult_values` returned.
+        columns: The row's column names, in order.
+        row: The row as read.
+
+    Returns:
+        The row, its ``trigger_val`` replaced by the mult value of the field
+        ``<trigger_tab>.<trigger_col>``.
+    """
+    fields = dict(zip(columns, row, strict=True))
+    field = (f'{fields["trigger_tab"]}.{fields["trigger_col"]}', False)
+    fields['trigger_val'] = _as_mult_value(values, field, fields['trigger_val'])
+    return tuple(fields[column] for column in columns)
+
+
 def serialize_table(
     credentials: DatabaseCredentials, schema: str, table: str, *, mult_values: bool = False
 ) -> str:
@@ -446,9 +468,10 @@ def serialize_table(
         schema: The schema to read.
         table: The table to read.
         mult_values: True for the mult-value mode: every mult column holds the value its
-            id names, ``mult`` is written without its ``id``, every value of a mult field
-            is written as its `opus_support.collation_key`, `IMPORTER_COLUMNS` are
-            dropped, and the rows are sorted.
+            id names (``partables``' ``trigger_val`` among them), ``mult`` is written
+            without its ``id`` and ``mult_field`` without its ``last_id``,
+            `IMPORTER_COLUMNS` are dropped, every value of a mult field is written as its
+            `opus_support.collation_key`, and the rows are sorted.
 
     Returns:
         A header line of column names, then one line per row, ordered by primary key, or
@@ -459,6 +482,11 @@ def serialize_table(
         dropped |= IMPORTER_COLUMNS.get(table, frozenset())
     if mult_values and table == _MULT_TABLE:
         dropped |= {'id'}
+    if mult_values and table == _MULT_FIELD_TABLE:
+        # The counter counts ids taken, and an id taken for a value another importer
+        # stored first, or by an importer that died, is left unused, so it depends on
+        # how the importers met.
+        dropped |= {'last_id'}
     columns = [
         name
         for name, data_type in table_columns(credentials, schema, table)
@@ -472,7 +500,13 @@ def serialize_table(
     ordering = ', '.join(f'`{name}`' for name in order_by)
     rows = query(credentials, schema, f'SELECT {quoted} FROM `{table}` ORDER BY {ordering}')
     mult_columns = _mult_columns().get(table, {}) if mult_values else {}
-    values = _mult_values(credentials, schema) if mult_columns else {}
+    values = (
+        _mult_values(credentials, schema)
+        if mult_columns or (mult_values and table == _TRIGGER_TABLE)
+        else {}
+    )
+    if mult_values and table == _TRIGGER_TABLE:
+        rows = [_with_trigger_value(values, columns, row) for row in rows]
 
     def field_text(column: str, value: Any) -> str:
         """Return one field as the golden writes it."""

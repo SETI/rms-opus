@@ -25,6 +25,11 @@ finalization sequence on it. `benchmarks.compare` then holds the two sides'
 finalization times to the ceiling the comparison applies in place of the import
 guards.
 
+``--importers N`` replaces the bundle-import invocations with one registration of every
+group and ``N`` queue importers (``opus_import --join``) started together, each with its
+share of the ``workers`` total (`ImportBench.run_importers`), for a side that has them;
+``--register-only`` times that registration alone (`ImportBench.run_registration`).
+
 Every timed import starts on a **freshly restarted server**: the owned mysqld is shut
 down cleanly, which flushes its dirty pages and checkpoints its redo log, and started
 again, before each full run, before the largest bundle's import alone, and between the
@@ -589,6 +594,181 @@ class ImportBench:
         drop_schema(self.server, schema)
         return run
 
+    def _group_descriptors(self) -> list[str]:
+        """Return the scale's bundle groups, in import order, as descriptors.
+
+        Returns:
+            One descriptor per group: each fixture bundle at fixture scale, the scenario's
+            groups at the holdings scales.
+
+        Raises:
+            RunFailedError: If a group carries options of its own, which one registration
+                and the importers cannot give it alone.
+        """
+        if self.label.scale == 'fixture':
+            return build_run.fixture_bundles()
+        groups = self.scenario.groups
+        with_options = [group.bundles for group in groups if len(group.options) > 0]
+        if with_options:
+            raise RunFailedError(
+                f'the groups {with_options} carry options of their own, which several '
+                'importers cannot give to one group alone'
+            )
+        return [group.bundles for group in groups]
+
+    def run_registration(self) -> dict[str, Any]:
+        """Register the scale's bundles alone into a scratch schema, and time it.
+
+        Registration reads only the bundles' primary index labels, so this times what
+        ``opus_import_all --prepare`` costs before any importer starts.
+
+        Returns:
+            The result run, of kind ``register``, with ``import.registration.wall_s``
+            and the bundles registered.
+        """
+        register = self.spelling.register_bundles
+        assert register is not None
+        schema = self.schema_name('register')
+        drop_schema(self.server, schema)
+        run_dir = self.label.scratch_dir / 'register'
+        config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
+        run = new_run('register')
+        self._invoke(monitor, config_file, [register, *timing, *self._group_descriptors()])
+        require_empty_errors_log(errors_log, at_end=True)
+        record = monitor.records[-1]
+        run['metrics']['import.registration.wall_s'] = record.wall_s
+        run['details'] = {**monitor.summary(), 'bundles': len(self._registry(schema))}
+        drop_schema(self.server, schema)
+        return run
+
+    def run_importers(
+        self, index: int | str, importers: int, *, finalize: bool = True
+    ) -> tuple[dict[str, Any], str]:
+        """Import the scale's bundles with several queue importers at once, and record it.
+
+        The run is the side's erase, one registration of every group in import order,
+        `importers` ``--join`` processes started together, each with a configuration
+        and a log directory of its own and its share of the ``[import] workers`` total
+        (`divide_workers`), and then the finalization sequence. The importers' phase is
+        recorded as one invocation, ``join``, whose wall-clock runs from the first
+        importer's start to the last one's exit and whose memory is the whole tree of
+        importers; its timings are the per-bundle steps every importer wrote.
+
+        Parameters:
+            index: The run's index.
+            importers: How many importers to start.
+            finalize: False to stop after the importers.
+
+        Returns:
+            The result run, of kind ``import`` (``import_unfinalized`` without the
+            finalization), and the schema it built.
+
+        Raises:
+            RunFailedError: If an importer exits non-zero, or a registered bundle is not
+                ``done`` when the importers have exited.
+        """
+        register, join = self.spelling.register_bundles, self.spelling.join
+        assert register is not None
+        assert join is not None
+        shares = divide_workers(self.extra_import.get('workers', 1), importers)
+        descriptors = self._group_descriptors()
+        schema = self.schema_name(index)
+        drop_schema(self.server, schema)
+        run_dir = self.label.scratch_dir / f'import_{index}'
+        config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
+        pds3, pds4 = holdings_for(self.label)
+        importer_dirs = [run_dir / f'importer_{number}' for number in range(importers)]
+        importer_configs = [
+            write_opus_config(
+                directory / 'opus.toml',
+                schema=schema,
+                pds3_holdings=pds3,
+                pds4_holdings=pds4,
+                run_dir=directory,
+                cache_location=self.cache_location,
+                extra_import={**self.extra_import, 'workers': share},
+            )
+            for directory, share in zip(importer_dirs, shares, strict=True)
+        ]
+        run = new_run('import' if finalize else 'import_unfinalized')
+        self.fresh_server(run, 'run')
+        before = self._status()
+        self._invoke(monitor, config_file, [*self.spelling.erase, *timing])
+        self._invoke(monitor, config_file, [register, *timing, *descriptors])
+        join_arguments = [join]
+        monitor.step_started(join_arguments)
+        processes = [
+            subprocess.Popen(  # nosec B603 - the side's interpreter and its own module
+                [
+                    str(self.side.python),
+                    '-m',
+                    'opus_import',
+                    join,
+                    *self.spelling.timing_args(directory / 'timing.json'),
+                ],
+                cwd=self.side.repo_root,
+                env=build_run.run_environment(config),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            for directory, config in zip(importer_dirs, importer_configs, strict=True)
+        ]
+        outputs = [process.communicate() for process in processes]
+        failed = [process.returncode for process in processes if process.returncode != 0]
+        monitor.step_finished(
+            build_run.StepResult(
+                arguments=tuple(join_arguments),
+                returncode=failed[0] if failed else 0,
+                stdout=''.join(stdout for stdout, _ in outputs),
+                stderr=''.join(stderr for _, stderr in outputs),
+            )
+        )
+        monitor.records[-1].timings = merged_bundle_timings(
+            [directory / 'timing.json' for directory in importer_dirs]
+        )
+        registry = self._registry(schema)
+        unfinished = [row['bundle_id'] for row in registry if row['state'] != 'done']
+        if unfinished:
+            raise RunFailedError(f'the importers left {unfinished} unfinished')
+        for directory in importer_dirs:
+            require_empty_errors_log(directory / 'logs' / build_run.ERRORS_LOG, at_end=True)
+        if finalize:
+            self._finalization(monitor, config_file, timing)
+        require_empty_errors_log(errors_log, at_end=True)
+        self._fill_run(run, monitor, schema, before, full=finalize, log_dir=errors_log.parent)
+        timings = monitor.records[2].timings
+        run['metrics']['import.registration.wall_s'] = monitor.records[1].wall_s
+        run['details']['importers'] = importers
+        run['details']['workers_per_importer'] = shares
+        run['details']['bundles'] = [
+            {
+                'bundle_id': row['bundle_id'],
+                'size_estimate': row['size_estimate'],
+                'import_s': timings.get(f'import_bundle:{row["bundle_id"]}'),
+                'rows_done': row['rows_done'],
+            }
+            for row in registry
+        ]
+        return run, schema
+
+    def _registry(self, schema: str) -> list[dict[str, Any]]:
+        """Return a schema's bundle registry, in registration order.
+
+        Parameters:
+            schema: The schema.
+
+        Returns:
+            Each bundle's ``bundle_id``, ``size_estimate``, ``state`` and ``rows_done``.
+        """
+        columns = ('bundle_id', 'size_estimate', 'state', 'rows_done')
+        statement = (
+            f'SELECT {", ".join(columns)} FROM {quote_identifier(schema)}.import_bundle '  # nosec B608 - quoted identifier
+            'ORDER BY bundle_number'
+        )
+        with contextlib.closing(self.server.connect()) as connection:
+            return [dict(zip(columns, row, strict=True)) for row in query(connection, statement)]
+
     def _rows(self, schema: str, bundle: str) -> int:
         """Return how many ``obs_general`` rows a bundle has in a schema."""
         statement = (
@@ -691,7 +871,9 @@ class ImportBench:
                     phases[step] = phases.get(step, 0.0) + seconds
         for step, seconds in phases.items():
             metrics[f'import.phase.{step}_s'] = seconds
-        bundle_wall = sum(r.wall_s for r in records if monitor.is_bundle_import(r.arguments))
+        bundle_wall = sum(
+            r.wall_s for r in records if monitor.is_bundle_import(r.arguments) or r.name == 'join'
+        )
         finalization = [r for r in records if r.name in FINALIZATION_ROLES]
         if full:
             metrics['import.wall_s'] = sum(r.wall_s for r in records)
@@ -920,11 +1102,48 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         'import_sweep, in a session '
         'of its own, to choose a count rather than to be judged',
     )
+    parser.add_argument(
+        '--importers',
+        metavar='N',
+        type=int,
+        default=None,
+        help='import with N queue importers at once (opus_import --join), after one '
+        'registration, dividing the --import-key workers total evenly among them; for a '
+        'side that has --join',
+    )
+    parser.add_argument(
+        '--register-only',
+        action='store_true',
+        help="instead of the timed runs, register the scale's bundles into a scratch "
+        'schema and time it; recorded as kind register, for a side that has '
+        '--register-bundles',
+    )
     args = parser.parse_args(argv)
     try:
         args.import_keys = parse_import_keys(args.import_key)
     except ValueError as e:
         parser.error(str(e))
+    if args.importers is not None:
+        if args.importers < 1:
+            parser.error('--importers takes a count of at least 1')
+        try:
+            args.worker_shares = divide_workers(args.import_keys.get('workers', 1), args.importers)
+        except ValueError as e:
+            parser.error(str(e))
+        if (
+            args.reuse_schema is not None
+            or args.workers_sweep is not None
+            or args.profile
+            or args.register_only
+        ):
+            parser.error('--importers times full runs and takes no other mode')
+    if args.register_only and (
+        args.reuse_schema is not None
+        or args.workers_sweep is not None
+        or args.profile
+        or args.stop_before_finalization
+    ):
+        parser.error('--register-only times the registration alone and takes no other mode')
     if args.workers_sweep is not None:
         try:
             requested = [int(text) for text in args.workers_sweep.split(',')]
@@ -984,8 +1203,20 @@ def main(argv: Sequence[str] | None = None) -> None:
         'import_start_method': DEFAULT_START_METHOD,
         'bulk_load_path': DEFAULT_BULK_LOAD_PATH,
     }
+    if args.importers is not None and spelling.join is None:
+        sys.exit('this side has no --join: measure it without --importers, in one process')
+    if args.register_only and spelling.register_bundles is None:
+        sys.exit('this side has no --register-bundles to time')
+    if args.importers is not None:
+        environment['importers'] = args.importers
     with server.running():
         environment.update(server_environment(server))
+        if args.register_only:
+            run = bench.run_registration()
+            path = append_runs(label, environment, [run])
+            wall = run['metrics']['import.registration.wall_s']
+            sys.stdout.write(f'registration: {wall:.1f} s, recorded in {path}\n')
+            return
         if args.reuse_schema is not None:
             if args.finalize_only:
                 run, schema = bench.run_finalize_only(args.reuse_schema)
@@ -1026,7 +1257,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             sys.stdout.write(f'warm-up import recorded in {path}\n')
         for offset in range(count):
             index = existing + offset + 1
-            if args.scale == 'fixture':
+            if args.importers is not None:
+                run, schema = bench.run_importers(index, args.importers, finalize=finalize)
+            elif args.scale == 'fixture':
                 run, schema = bench.run_fixture(index, finalize=finalize)
             else:
                 run, schema = bench.run_holdings(index, profile=args.profile, finalize=finalize)
@@ -1039,6 +1272,57 @@ def main(argv: Sequence[str] | None = None) -> None:
                 'import.wall_s', run['metrics']['import.bundle_imports.wall_s']
             )
             sys.stdout.write(f'import run {index}: {wall:.1f} s, recorded in {path}\n')
+
+
+def divide_workers(total: object, importers: int) -> list[int]:
+    """Divide a total of ``[import] workers`` evenly among importers.
+
+    Parameters:
+        total: The ``workers`` key the session sets, or 1, the configuration's default.
+        importers: How many importers share it.
+
+    Returns:
+        Each importer's share, all equal.
+
+    Raises:
+        ValueError: If the total is not a whole number, or does not divide evenly, so
+            the importers together would use other than the total asked for.
+    """
+    if isinstance(total, bool) or not isinstance(total, int) or total < 1:
+        raise ValueError(
+            f'--importers divides a whole number of workers, not {total!r}: give '
+            '--import-key workers=N'
+        )
+    if total % importers != 0:
+        raise ValueError(
+            f'--importers {importers} cannot divide {total} workers evenly: give a total '
+            'that is a multiple of the importers'
+        )
+    return [total // importers] * importers
+
+
+def merged_bundle_timings(timing_files: Sequence[Path]) -> dict[str, float]:
+    """Merge several importers' step timings into the per-bundle steps they wrote.
+
+    Each bundle is imported by one importer, so its ``delete_bundle:<bundle>`` and
+    ``import_bundle:<bundle>`` steps come from one file. The steps every importer times
+    for itself (``import``, ``total``) overlap in time and are left out.
+
+    Parameters:
+        timing_files: Each importer's ``--timing-json`` file; one that is absent counts
+            for nothing.
+
+    Returns:
+        The per-bundle steps, keyed as the files key them.
+    """
+    merged: dict[str, float] = {}
+    for path in timing_files:
+        if not path.exists():
+            continue
+        for step, seconds in json.loads(path.read_text(encoding='utf-8')).items():
+            if ':' in step:
+                merged[step] = merged.get(step, 0.0) + float(seconds)
+    return merged
 
 
 def sweep_counts(

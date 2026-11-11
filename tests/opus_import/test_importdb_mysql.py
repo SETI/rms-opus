@@ -1237,6 +1237,61 @@ def test_a_named_lock_not_granted_is_an_error() -> None:
         lock.__enter__()
 
 
+def test_a_conditional_update_counts_the_rows_it_changed() -> None:
+    """The condition is the WHERE clause; 0 rows changed means it did not hold."""
+    conn = _ScriptedConnection()
+    conn.rowcount = 0
+    db = _ConnectedDB(conn)
+
+    changed = db.conditional_update(
+        'import_bundle', {'state': 'done'}, '`bundle_id`=%s AND `state` IN (%s)', ['B', 'importing']
+    )
+
+    assert changed == 0
+    assert conn.executed == [
+        (
+            'UPDATE `import_bundle` SET `state`=%s WHERE `bundle_id`=%s AND `state` IN (%s)',
+            ['done', 'B', 'importing'],
+        )
+    ]
+    assert conn.commits == 1
+
+
+def test_an_expected_failure_is_neither_retried_nor_logged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A duplicate key the caller reads back is raised at once, with no fatal line."""
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', pytest.fail)
+    db = _ConnectedDB(_ScriptedConnection())
+    db.logger = _Logger()
+
+    with pytest.raises(ImportDBError):
+        db.retrying('Inserting', _failing([1062]), expected=db.is_duplicate_key_error)
+
+    assert db.logger.messages == []
+
+
+class _DyingConnection(_ScriptedConnection):
+    """A connection whose every statement after GET_LOCK fails, as a broken one does."""
+
+    def cursor(self) -> _ScriptedCursor:
+        if self.executed and self.executed[-1][0].startswith('SELECT GET_LOCK'):
+            raise MySQLdb.OperationalError(2013, 'Lost connection to MySQL server')
+        return _ScriptedCursor(self)
+
+
+def test_a_failed_release_does_not_replace_the_bodys_failure() -> None:
+    """The body's own exception reaches the caller when the release fails too."""
+    db = _ConnectedDB(_DyingConnection({'SELECT GET_LOCK': [(1,)]}))
+
+    def body() -> None:
+        with db.named_lock('opus:abc'):
+            raise RuntimeError('the body failed')
+
+    with pytest.raises(RuntimeError, match='the body failed'):
+        body()
+
+
 # ---------------------------------------------------------------------------
 # Importers: the startup on the lock connection, and each chunk's guard
 # ---------------------------------------------------------------------------
@@ -1350,16 +1405,15 @@ def test_a_chunk_whose_importer_lost_its_bundle_or_its_lock_rolls_back(
 
 
 def test_a_plain_imports_guard_counts_observations_and_checks_nothing() -> None:
-    """Only an obs_general chunk carries the count, matching no importer; another table's
-    chunk carries nothing."""
+    """Only an obs_general chunk carries the count, matching the bundle's hold, its
+    ``started_at``; another table's chunk carries nothing."""
     db, conn, guard = _guarded(holds=0, importer=False)
 
     db.bulk_load_rows('obs_general', [{'id': 1}], guard=guard)
     db.bulk_load_rows('obs_files', [{'obs_general_id': 1}], guard=guard)
 
     assert [cmd.split(' (')[0] for cmd, _ in conn.executed] == [
-        'UPDATE `import_bundle` SET `rows_done`=%s WHERE `bundle_number`=%s AND '
-        '`process_id` IS NULL',
+        'UPDATE `import_bundle` SET `rows_done`=%s WHERE `bundle_number`=%s AND `started_at`=%s',
         'INSERT INTO `obs_general`',
         'COMMIT',
         'INSERT INTO `obs_files`',

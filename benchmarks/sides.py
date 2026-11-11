@@ -231,6 +231,10 @@ class Spelling:
         timing_json: The option that writes step timings, or None where the side has
             none.
         skipped_steps: The steps the side does not have at all, by name.
+        register_bundles: The option that registers bundles without importing them, or
+            None where the side has none.
+        join: The option that runs one importer drawing bundles from the registry, or
+            None where the side has none; a side without it imports in one process.
     """
 
     erase: tuple[str, ...]
@@ -241,6 +245,8 @@ class Spelling:
     write_schema_version: tuple[str, ...]
     timing_json: str | None
     skipped_steps: tuple[str, ...]
+    register_bundles: str | None = None
+    join: str | None = None
 
     @classmethod
     def from_help(cls, help_text: str) -> Spelling:
@@ -257,8 +263,10 @@ class Spelling:
             the validation is ``--validate`` when listed, else ``--validate-perm``; the
             erase is ``--scorched-earth --yes`` when ``--yes`` is listed, else
             ``--drop-permanent-tables --scorched-earth``; the version step is
-            ``--write-schema-version`` when listed, else skipped; and timings are
-            asked for with ``--timing-json`` when listed, else skipped.
+            ``--write-schema-version`` when listed, else skipped; timings are asked
+            for with ``--timing-json`` when listed, else skipped; and the registration
+            and the queue importer are ``--register-bundles`` and ``--join`` when
+            listed, else None.
         """
         listed = listed_options(help_text)
 
@@ -289,6 +297,8 @@ class Spelling:
             write_schema_version=version,
             timing_json=timing,
             skipped_steps=tuple(skipped),
+            register_bundles='--register-bundles' if '--register-bundles' in listed else None,
+            join='--join' if '--join' in listed else None,
         )
 
     def role(self, arguments: Sequence[str]) -> str:
@@ -302,14 +312,18 @@ class Spelling:
 
         Returns:
             ``bundle_import:<group>`` (the group being the last argument), ``erase``,
-            ``finalize``, ``import_dictionary``, ``migrate``, ``validate``,
-            ``write_schema_version``, ``reset_search_tables``, or, for anything else,
-            its options joined by spaces.
+            ``register_bundles``, ``join``, ``finalize``, ``import_dictionary``,
+            ``migrate``, ``validate``, ``write_schema_version``, ``reset_search_tables``,
+            or, for anything else, its options joined by spaces.
         """
         if self.bundle_import in arguments:
             return f'bundle_import:{arguments[-1]}'
         if 'migrate' in arguments:
             return 'migrate'
+        if self.register_bundles is not None and self.register_bundles in arguments:
+            return 'register_bundles'
+        if self.join is not None and self.join in arguments:
+            return 'join'
         roles = (
             (set(self.erase), 'erase'),
             ({self.finalize}, 'finalize'),
