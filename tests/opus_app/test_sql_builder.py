@@ -23,7 +23,7 @@ What is worth pinning here, and why:
 
 from unittest import TestCase
 
-from opus_app.apps.tools import sql_builder
+from opus_app.apps.tools import db_utils, sql_builder
 
 
 class SQLBuilderIdentifierTests(TestCase):
@@ -504,3 +504,35 @@ class SQLBuilderStatementTests(TestCase):
         )
         self.assertEqual(sql, 'UPDATE `cart` SET `recycled`=%s WHERE `cart`.`session_id` = %s')
         self.assertEqual(params, [0, 'sess'])
+
+
+class SQLBuilderASCIITests(TestCase):
+    """Text bound for a comparison with an ASCII column, and which columns are ASCII."""
+
+    def test__ascii_comparable_keeps_ascii(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: ASCII text, case and punctuation kept"
+        self.assertEqual(
+            sql_builder.ascii_comparable('CO-ISS-n1460960653_%\\'), 'CO-ISS-n1460960653_%\\'
+        )
+
+    def test__ascii_comparable_replaces_every_other_character(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: each character outside ASCII, one for one"
+        unstored = sql_builder.UNSTORED_ASCII_CHARACTER
+        self.assertEqual(
+            sql_builder.ascii_comparable('cö-iss-ñ°🪐'), f'c{unstored}-iss-{unstored * 3}'
+        )
+        self.assertTrue(unstored.isascii())
+
+    def test__generated_models_declare_the_ascii_columns(self) -> None:
+        "[test_sql_builder.py] is_ascii_column: identifiers and STRING columns, not file names"
+        for table, column in (
+            ('obs_general', 'opus_id'),
+            ('obs_general', 'bundle_id'),
+            ('obs_pds', 'note'),
+            ('obs_files', 'opus_id'),
+        ):
+            with self.subTest(table=table, column=column):
+                self.assertTrue(db_utils.is_ascii_column(table, column))
+        for table, column in (('obs_files', 'short_name'), ('obs_general', 'time1')):
+            with self.subTest(table=table, column=column):
+                self.assertFalse(db_utils.is_ascii_column(table, column))

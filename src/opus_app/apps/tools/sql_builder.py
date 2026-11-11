@@ -140,6 +140,33 @@ def value(val: Any) -> Expr:
     return Expr('%s', [val])
 
 
+#: The character `ascii_comparable` puts in place of each one outside ASCII. No stored
+#: identifier holds it, and ``LIKE`` and a regular expression each read it as itself.
+UNSTORED_ASCII_CHARACTER = '\x7f'
+
+#: The collation of a column in the ASCII character set, as a generated model's
+#: ``db_collation`` names it.
+ASCII_COLLATION = 'ascii_general_ci'
+
+
+def ascii_comparable(text: str) -> str:
+    """Return text as it may be compared with a column in the ASCII character set.
+
+    MySQL refuses to compare an ASCII column with text holding any other character
+    ("illegal mix of collations"), and such a character matches nothing the column holds.
+    Each one becomes `UNSTORED_ASCII_CHARACTER`, which matches nothing either, so the
+    comparison finds what it finds for any value the column does not hold: ``=`` and
+    ``LIKE`` no row with the character, ``NOT LIKE`` every row.
+
+    Parameters:
+        text: A value the caller gave, to be bound as a parameter.
+
+    Returns:
+        The text, with every character outside ASCII replaced.
+    """
+    return ''.join(c if c.isascii() else UNSTORED_ASCII_CHARACTER for c in text)
+
+
 def count_star() -> Expr:
     """Return `COUNT(*)`."""
     return Expr('COUNT(*)', [])

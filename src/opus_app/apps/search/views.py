@@ -62,6 +62,7 @@ from opus_app.apps.tools.app_utils import (
 )
 from opus_app.apps.tools.db_utils import (
     MYSQL_EXECUTION_TIME_EXCEEDED,
+    is_ascii_column,
     is_deadlock_error,
     is_lock_timeout_error,
     resolve_category,
@@ -1826,6 +1827,9 @@ def get_string_query(
         matches
         excludes
 
+    A value searched for in an ASCII column has each character outside ASCII replaced
+    (`sql_builder.ascii_comparable`), since no value of the column holds one.
+
     Returns an `sql_builder.Expr`, which is a `(sql, params)` pair, or the pair
     `(None, None)` if the query cannot be built.
     """
@@ -1846,6 +1850,7 @@ def get_string_query(
     cat_name = param_info.category_name
     name = param_info.name
     param_column = sql_builder.column(name, cat_name)
+    ascii_column = is_ascii_column(resolve_category(cat_name).table, name)
 
     if len(qtypes) == 0:
         qtypes = ['contains'] * len(values)
@@ -1866,6 +1871,8 @@ def get_string_query(
     for idx in range(len(values)):
         value = values[idx]
         qtype = qtypes[idx]
+        if ascii_column:
+            value = sql_builder.ascii_comparable(value)
 
         if qtype != 'regex':
             value = value.replace('\\', '\\\\')

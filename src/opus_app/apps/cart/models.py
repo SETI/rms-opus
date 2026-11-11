@@ -13,11 +13,10 @@ from django.db import models
 class Cart(models.Model):
     """One observation held by one session, in its cart or in its recycle bin."""
 
-    session_id = models.CharField(max_length=80)
+    session_id = models.CharField(max_length=40, db_collation='ascii_general_ci')
     obs_general = models.ForeignKey('search.ObsGeneral', models.DO_NOTHING)
-    opus_id = models.CharField(max_length=40)
+    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
     recycled = models.IntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         """Model options: the table the rows come from, which Django does not manage."""

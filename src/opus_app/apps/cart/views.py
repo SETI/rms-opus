@@ -372,7 +372,8 @@ def api_edit_cart(
         if not opus_id_str:  # Also catches empty string
             log.error('api_edit_cart: Missing opusid: %r', request.GET)
             raise Http400Error(http400_missing_opus_id(request))
-        opus_id = opus_id_str.split(',')
+        # Every query below compares these with an ASCII column.
+        opus_id = [sql_builder.ascii_comparable(x) for x in opus_id_str.split(',')]
 
     recycle_bin_str = request.GET.get('recyclebin', 0)
     try:
@@ -1437,7 +1438,9 @@ def _edit_cart_range(
         )
         sort_order_select.add_where(
             sql_builder.binary_op(
-                sql_builder.column('opus_id', 'obs_general'), '=', sql_builder.value(opus_id)
+                sql_builder.column('opus_id', 'obs_general'),
+                '=',
+                sql_builder.value(sql_builder.ascii_comparable(opus_id)),
             )
         )
         sql, values = sort_order_select.build()
