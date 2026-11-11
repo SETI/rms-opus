@@ -13,9 +13,12 @@ and why:
 * **The selector never repeats an observation.** An observation with geometry for two
   selected bodies has two rows in the selector's table; its constraint is an ``EXISTS``
   rather than a join, so a search's results hold the observation once.
+* **Every selected body triggers its category.** A body's ``partables`` trigger holds its
+  id, and a search may name a body by its label or its value, so each selected name is
+  resolved to an id before it is compared.
 
-These stand fakes in for ``table_names``, ``param_info``, ``mult_field`` and ``mult``,
-so they run wherever ``pytest`` does.
+These stand fakes in for ``table_names``, ``param_info``, ``partables``, ``mult_field``
+and ``mult``, so they run wherever ``pytest`` does.
 """
 
 from collections.abc import Iterator
@@ -25,12 +28,14 @@ import pytest
 from django.db.models import Q
 
 from opus_app.apps.paraminfo.models import ParamInfo
+from opus_app.apps.results import views as results_views
 from opus_app.apps.search import views as search_views
 from opus_app.apps.search.models import (
     Mult,
     MultField,
     ObsGeneral,
     ObsSurfaceGeometryTarget,
+    Partables,
     TableNames,
 )
 from opus_app.apps.tools import db_utils, import_constants, sql_builder
@@ -39,8 +44,13 @@ from opus_app.apps.tools.db_utils import resolve_category
 #: The selector's field id in the fake ``mult_field``.
 TARGET_FIELD_ID = 9
 
-#: The selector's fake ``mult`` rows: id, value, label, disp_rank.
-TARGET_ROWS = [(3, 'DIONE', 'Dione', 1), (7, 'SATURN', 'Saturn', 2)]
+#: The selector's fake ``mult`` rows: id, value, label, disp_rank. Vega's label is not a
+#: spelling of its value.
+TARGET_ROWS = [
+    (3, 'DIONE', 'Dione', 1),
+    (7, 'SATURN', 'Saturn', 2),
+    (11, 'ALF_LYR', 'Alp Lyr (Vega)', 3),
+]
 
 
 class _TableNamesManager:
@@ -54,6 +64,7 @@ class _TableNamesManager:
             ('obs_surface_geometry_name', 'obs_surface_geometry_target', None),
             ('obs_surface_geometry__dione', 'obs_surface_geometry_target', 3),
             ('obs_surface_geometry__saturn', 'obs_surface_geometry_target', 7),
+            ('obs_surface_geometry__alf_lyr', 'obs_surface_geometry_target', 11),
         ]
         return [
             TableNames(
@@ -97,12 +108,39 @@ class _MultFieldManager:
         return [('obs_surface_geometry_name.target_name', TARGET_FIELD_ID)]
 
 
+class _PartablesManager:
+    """Stands in for the manager of ``partables``: one trigger per body, on its id."""
+
+    def all(self) -> list[Partables]:
+        """Return every row."""
+        return [
+            Partables(
+                trigger_tab='obs_surface_geometry_name',
+                trigger_col='target_name',
+                trigger_val=str(row_id),
+                partable=f'obs_surface_geometry__{value.lower()}',
+            )
+            for row_id, value, _label, _rank in TARGET_ROWS
+        ]
+
+
+class _NoCache:
+    """Stands in for the Django cache, holding nothing."""
+
+    def get(self, key: str) -> None:
+        """Find nothing."""
+
+    def set(self, key: str, value: Any) -> None:
+        """Keep nothing."""
+
+
 @pytest.fixture(autouse=True)
 def _categories(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """Serve the fake tables, starting and ending every test with nothing cached."""
 
     def clear() -> None:
         import_constants.table_names.cache_clear()
+        import_constants.partables.cache_clear()
         import_constants.mult_table.cache_clear()
         import_constants._mult_field_ids.cache_clear()
         db_utils._category_tables.cache_clear()
@@ -112,6 +150,7 @@ def _categories(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setattr(TableNames, 'objects', _TableNamesManager())
     monkeypatch.setattr(Mult, 'objects', _MultManager())
     monkeypatch.setattr(MultField, 'objects', _MultFieldManager())
+    monkeypatch.setattr(Partables, 'objects', _PartablesManager())
     yield
     clear()
 
@@ -260,3 +299,24 @@ def test_a_body_category_keeps_a_statement_to_its_rows() -> None:
     table.add_from('obs_general')
     resolve_category('obs_general').restrict(table)
     assert table.build() == ('SELECT `obs_general`.`id` FROM `obs_general`', [])
+
+
+@pytest.mark.parametrize(
+    ('names', 'triggered'),
+    [
+        (['Saturn', 'Dione'], ['obs_surface_geometry__dione', 'obs_surface_geometry__saturn']),
+        (['Alp Lyr (Vega)'], ['obs_surface_geometry__alf_lyr']),
+        (['alf_lyr', 'SATURN'], ['obs_surface_geometry__saturn', 'obs_surface_geometry__alf_lyr']),
+    ],
+    ids=['two-bodies-by-label', 'label-unlike-value', 'values-in-any-case'],
+)
+def test_every_selected_body_triggers_its_category(
+    monkeypatch: pytest.MonkeyPatch, names: list[str], triggered: list[str]
+) -> None:
+    """Each selected body's category is triggered, whether named by label or by value."""
+    monkeypatch.setattr(results_views, 'get_search_id', lambda *args, **kwargs: 1)
+    monkeypatch.setattr(results_views, 'cache', _NoCache())
+    tables = results_views.get_triggered_tables(
+        {'obs_surface_geometry_name.target_name': names}, {}
+    )
+    assert tables == ['obs_general', 'obs_surface_geometry_name', *triggered]

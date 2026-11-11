@@ -3,8 +3,8 @@
 Every body's surface geometry is a row of one table, and its category -- the
 ``table_names``, ``param_info`` and ``partables`` rows the web application serves it
 through -- is written by finalization from the bodies that table holds. So a body new to
-the database is served as soon as an import and its finalization have run: no table is
-created for it, no model is generated, nothing is redeployed.
+the database is served by a web application started after an import and its finalization
+have run: no table is created for it, no model is generated, no code changes.
 
 The run renames one body of one observation's surface geometry summary to a body the
 fixture has no geometry for (`import_tests.tools.negative_cases.NEW_TARGET_CASE`), then
@@ -90,7 +90,7 @@ def _serve(run: ImportRun) -> dict[str, Any]:
 def test_the_new_body_has_its_category_rows(
     new_target_run: ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
-    """Finalization wrote the body's category from the rows the table holds."""
+    """Finalization wrote the body's category, its trigger the body's mult id."""
     rows = golden_io.query(
         db_credentials,
         new_target_run.schema,
@@ -98,13 +98,21 @@ def test_the_new_body_has_its_category_rows(
         [_CATEGORY],
     )
     assert rows == [('obs_surface_geometry_target', 'Ymir Surface Geometry Constraints')]
+    body_ids = golden_io.query(
+        db_credentials,
+        new_target_run.schema,
+        'SELECT `m`.`id` FROM `mult` `m` JOIN `mult_field` `f` ON `f`.`field_id` = `m`.`field_id`'
+        ' WHERE `f`.`qualified_name` = %s AND `m`.`value` = %s',
+        ['obs_surface_geometry_name.target_name', 'YMIR'],
+    )
+    assert len(body_ids) == 1
     partables = golden_io.query(
         db_credentials,
         new_target_run.schema,
         'SELECT `trigger_val` FROM `partables` WHERE `partable` = %s',
         [_CATEGORY],
     )
-    assert partables == [('YMIR',)]
+    assert partables == [(str(body_ids[0][0]),)]
 
 
 def test_the_web_application_serves_the_new_body(new_target_run: ImportRun) -> None:

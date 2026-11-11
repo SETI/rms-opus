@@ -533,11 +533,12 @@ A row is ``(trigger_tab, trigger_col, trigger_val, partable)``. The rows are
        ``obs_surface_geometry_name.target_name`` and revealing the body's category,
        ``obs_surface_geometry__<target>``.
 
-The first three groups store a ``mult`` row's id as the trigger value, because that is
-what the corresponding ``obs_general`` column holds; the surface geometry group stores
-the **target name itself**, because the web side compares the user's search text to it
-directly rather than running a database lookup. That asymmetry is the one thing to know
-before adding a trigger of a new kind.
+Every group stores a ``mult`` row's id as the trigger value, because that is what the
+column it triggers on holds. The web side tests the two kinds differently: an
+``obs_general`` trigger fires when every observation the search finds holds its id, and
+a surface geometry trigger fires when its body is one of the bodies the search selects,
+whether the search names the body by its label or by its value. That difference is the
+one thing to know before adding a trigger of a new kind.
 
 Because the first three groups are generated, a mission or instrument that was never
 imported still gets a row.

@@ -47,8 +47,11 @@ with them. These are the imported data.
 
 **The auxiliary tables** -- ``param_info``, ``table_names``, ``partables``,
 ``contexts`` and ``definitions``. These describe the search form rather than the
-observations, and only ``param_info`` is really derived from what was imported; the
-others come from the checked-in table schemas and configuration maps.
+observations. ``param_info``, ``table_names`` and ``partables`` are derived in part from
+what was imported: each has rows for every body the surface geometry table holds
+(:func:`~opus_import.surface_geometry.stored_targets`), and ``param_info`` has rows for
+the ``obs_`` tables the import created. Their other rows, and all of ``contexts`` and
+``definitions``, come from the checked-in table schemas and configuration maps.
 :ref:`dev_guide_database_schema` describes each of them.
 
 **The support tables** -- ``cart``, ``user_searches`` and ``search_results``. The web
