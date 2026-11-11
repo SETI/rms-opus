@@ -65,6 +65,9 @@ class _Server:
             process writing first.
         insert_error: An error every insert raises instead, or None.
         group_error: An error every group insert raises instead, or None.
+        conflict_first: Whether each transaction's first attempt meets a deadlock as it
+            ends, so `retrying` takes back what it wrote and runs it again.
+        attempts: Each transaction attempt, by description.
     """
 
     def __init__(self, rows: dict[int, list[Row]]) -> None:
@@ -79,6 +82,8 @@ class _Server:
         self.retried: list[tuple[str, Any]] = []
         self.insert_error: ImportDBError | None = None
         self.group_error: ImportDBError | None = None
+        self.conflict_first = False
+        self.attempts: list[str] = []
         # The rows and groups the running transaction wrote, which a failure takes back.
         self._written_rows: list[tuple[int, Row]] = []
         self._written_groups = 0
@@ -104,16 +109,27 @@ class _Server:
         return stored
 
     def retrying(self, description: str, body: Callable[[], Any], expected: Any = None) -> Any:
-        """Run the body once as a transaction, taking back what it wrote if it fails."""
+        """Run the body as a transaction, taking back what an attempt wrote if it fails,
+        and running it again after a deadlock."""
         self.retried.append((description, expected))
-        self._written_rows, self._written_groups = [], 0
-        try:
-            return body()
-        except ImportDBError:
-            for field_id, row in self._written_rows:
-                self.rows[field_id].remove(row)
-            del self.groups[len(self.groups) - self._written_groups :]
-            raise
+        conflict = self.conflict_first
+        while True:
+            self.attempts.append(description)
+            self._written_rows, self._written_groups = [], 0
+            counters = dict(self.last_id)
+            try:
+                result = body()
+                if conflict:
+                    conflict = False
+                    raise ImportDBError('Deadlock found when trying to get lock')
+                return result
+            except ImportDBError as e:
+                for field_id, row in self._written_rows:
+                    self.rows[field_id].remove(row)
+                del self.groups[len(self.groups) - self._written_groups :]
+                self.last_id = counters
+                if 'Deadlock' not in str(e):
+                    raise
 
     def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
         assert (table_name, column, key_column) == ('mult_field', 'last_id', 'field_id')
@@ -494,4 +510,27 @@ def test_a_value_whose_group_cannot_be_written_is_not_stored_either() -> None:
     assert server.rows[QUALITY] == []
     server.group_error = None
     assert _update(ctx, COLUMN, 'A', 'A', grouping='Saturn', group_pin=60) == 1
+    assert server.groups == [{'field_id': 1, 'grouping': 'Saturn', 'group_pin': 60}]
+
+
+def test_a_deadlock_on_each_transaction_runs_it_again_to_the_same_result() -> None:
+    """Each attempt that meets a deadlock is taken back whole, counter included, so the
+    retried transactions give the id, the row and the group one attempt would."""
+    ctx = _context([(3, 'GOOD', 'Good', None, 'Y', None)])
+    server = _server(ctx)
+    server.conflict_first = True
+
+    assert _update(ctx, COLUMN, 'POOR', 'Poor', grouping='Saturn', group_pin=60) == 4
+
+    assert server.attempts == [
+        'Taking an id in mult field "obs_x.quality"',
+        'Taking an id in mult field "obs_x.quality"',
+        'Inserting a value into mult field "obs_x.quality"',
+        'Inserting a value into mult field "obs_x.quality"',
+    ]
+    assert server.last_id[QUALITY] == 4
+    assert server.rows[QUALITY] == [
+        (3, 'GOOD', 'Good', None, 'Y', None),
+        (4, 'POOR', 'Poor', None, 'Y', 'Saturn'),
+    ]
     assert server.groups == [{'field_id': 1, 'grouping': 'Saturn', 'group_pin': 60}]

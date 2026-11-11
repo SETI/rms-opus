@@ -149,6 +149,25 @@ def test_bulk_load_paths_reads_each_path_once_in_order(tmp_path: Path) -> None:
     ]
 
 
+def test_bulk_load_paths_reads_every_queue_importer_s_logs_too(tmp_path: Path) -> None:
+    """A run of several importers names the paths in its own logs and each importer's."""
+    own, importer = tmp_path / 'logs', tmp_path / 'importer_0' / 'logs'
+    own.mkdir()
+    importer.mkdir(parents=True)
+    (own / 'opus_import_2026-11-06T22-13-27.log').write_text(
+        _log_line('  Bulk load path: LOAD DATA LOCAL INFILE') + '\n', encoding='utf-8'
+    )
+    (importer / 'opus_import_2026-11-06T22-13-28.log').write_text(
+        _log_line('  Bulk load path: insert_rows packets (the server refused a file)') + '\n',
+        encoding='utf-8',
+    )
+
+    assert bench_import.bulk_load_paths(own, importer) == [
+        mysql.BULK_LOAD_PATH_FILE,
+        mysql.BULK_LOAD_PATH_INSERT,
+    ]
+
+
 def test_bulk_load_paths_is_empty_for_a_side_that_names_none(tmp_path: Path) -> None:
     """A side from before the bulk load names no path, which the default then stands for."""
     (tmp_path / 'opus_import_2026-11-06T22-13-27.log').write_text(

@@ -326,12 +326,12 @@ tables, their ids and the log are the same whatever the number of workers
 
 **Each finished row goes to a sink** that loads a table's rows as soon as
 ``[import] transaction_rows`` of them are waiting, so an index is never held in memory
-whole. Once every row has been computed, the ``mult`` rows the index added go out, and
-then the ``obs_`` rows still waiting, table by table in order with ``obs_general`` first.
-An ``obs_`` row stores the id its value was given in the column's mult field, and a table
-that filled a transaction during the index was loaded before the ``mult`` rows were
-written; nothing enforces the order, because a ``mult_idx`` column carries no foreign
-key, and the bundle loads with foreign key checks off.
+whole. Once every row has been computed, the ``obs_`` rows still waiting go out, table
+by table in order with ``obs_general`` first. An ``obs_`` row stores the id its value was
+given in the column's mult field, and each ``mult`` row is inserted when its value is
+met, as the row is computed or replayed, so it is written before any ``obs_`` row that
+holds its id is loaded. Nothing enforces the order, because a ``mult_idx`` column carries
+no foreign key, and the bundle loads with foreign key checks off.
 
 Where the surface geometry comes from varies. Most bundles have separate summary files
 per target. Some -- COCIRS_[01]xxx among them -- carry it inline in the primary index
@@ -463,9 +463,9 @@ The field ids are numbered once in each database, over every mult field of the p
 ``obs_*.json`` schemas in order of qualified name, and a field a later release adds takes
 the next id (:mod:`opus_import.mult_fields`).
 
-Nothing enforces the reference: a ``mult_idx`` column carries **no foreign key**, so a
-table's rows can be loaded before the ``mult`` rows they name are written, which happens
-at the end of each index. A pool worker cannot know a value's id
+Nothing enforces the reference: a ``mult_idx`` column carries **no foreign key**. The
+order keeps it instead: a ``mult`` row is inserted when its value is met, before any
+``obs_`` row that holds its id is loaded. A pool worker cannot know a value's id
 either; it records the value, and the import's process resolves each one in the order
 the serial loop meets them, so every value gets the id the serial loop gives it.
 

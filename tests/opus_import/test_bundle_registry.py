@@ -504,6 +504,45 @@ def test_a_stale_holder_neither_finishes_nor_deletes_a_requeued_bundle(
     )
 
 
+def test_a_failed_bundle_is_deleted_under_its_hold_and_only_then_marked_failed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """While the cleanup deletes, the bundle is still importing under the importer, its
+    registry row held, so no claim or plain import can take it and load rows the delete
+    would take (`do_recover.release_bundle`)."""
+    db = _RegistryDB({'import_bundle': _registry({'B_1': 'pending'})})
+    deleted_in: list[str | None] = []
+
+    def failing_load(ctx: Any, bundle: str) -> bool:
+        import_util.log_error(ctx, f'{bundle} went wrong')
+        return True
+
+    def lock_row(
+        table_name: str, columns: list[str], where: str, where_params: list[Any]
+    ) -> tuple[Any, ...] | None:
+        rows = db._matching(table_name, where, where_params[0])
+        return tuple(rows[0][column] for column in columns) if rows else None
+
+    monkeypatch.setattr(import_util, 'yield_import_bundle_ids', lambda ctx: iter([]))
+    monkeypatch.setattr(
+        do_import_tables,
+        'delete_bundle_from_obs_tables',
+        lambda ctx, bundle: deleted_in.append(db.states().get(bundle)),
+    )
+    monkeypatch.setattr(do_import, 'import_one_bundle', failing_load)
+    monkeypatch.setattr(import_processes, 'start_importer', lambda lock_db, log_path: _Importer())
+    monkeypatch.setattr(db, 'open_sibling_connection', lambda: db, raising=False)
+    monkeypatch.setattr(db, 'lock_row', lock_row, raising=False)
+    args = default_arguments()
+    args.join = True
+    ctx = make_context(db=db, args=args)
+
+    assert not do_import.do_import_steps(ctx)
+
+    assert deleted_in == ['importing', 'importing']
+    assert db.states() == {'B_1': 'failed'}
+
+
 def test_an_empty_claim_waits_for_a_registration_and_claims_again(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
