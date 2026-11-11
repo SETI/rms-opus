@@ -5679,6 +5679,36 @@ Nothing above this line is rewritten by an executor.
 - `models.py` is edited: `ObsGeneral` loses the two fields, and `inspectdb` against the
   local integration database gives the same fields.
 - `SCHEMA_VERSION` is 6.
+- PR-13's measurement (2026-11-10, test scale; before at a01011e4, PR-12's head, after at
+  b94159b2, whose code a1687bde only adds the query capture to). Session `a`: three fixture
+  imports a side alternated A B B A A B, one test-scale import a side, A B, each side
+  serving its own schema, three web runs a side alternated, then `bench_db
+  --dump-queries` once a side. Session `b`: five web runs a side alternated against
+  session `a`'s schemas, since the target's change in session `a` landed within twice
+  its floor (§2.6). Another session's tests shared the workstation during part of
+  session `b` (one-minute load averages from 3 to 11 at the runs' starts).
+  - **The target did not improve**, in either session:
+    `web.app-cold.search.empty.wall_s` was 160.4 ms against 186.8 ms in session `a`
+    (+16.4%, floor 24.9%) and 196.7 ms against 172.3 ms in session `b` (-12.4%). The
+    db-cold empty search was 309.3 ms against 289.4 ms in session `b` (-6.4%).
+  - **The plan of the empty search build** is the one the section predicted: the base
+    reads `obs_general` by a table scan and sorts; this head reads the `(time1,
+    opus_id)` key by an index scan and still sorts for `ROW_NUMBER()`. The sort spills
+    on both sides (`Sort_merge_passes` 1) at the harness's 256 KiB `sort_buffer_size`;
+    at test scale it fits in memory from 4 MiB and spills at 2 MiB. In session `a`'s
+    app-cold run the empty search read 119 pages against 4, the new key being one no
+    earlier scenario had read into the buffer pool.
+  - Every guard held, the section's own among them: the selective search's app-cold
+    p50 -7.1% in session `b` (+5.5% in session `a`), the broad search's +4.7% and its
+    last page's -16.9%, the import +0.8% faster (331.0 s against 328.3 s).
+  - Schema size: data 799.2 MB to 788.7 MB (-1.3%), indexes 412.9 MB to 398.6 MB
+    (-3.5%); `obs_general`'s data 40.4 MB to 29.9 MB and indexes 28.2 MB to 19.1 MB;
+    `obs_ring_geometry`'s indexes 25.0 MB to 26.4 MB, its twelve two-column keys
+    outweighing the single-column keys dropped. Finalization's key additions 31.4 s to
+    29.7 s, validation 4.1 s to 3.8 s; the fixture imports within noise.
+  - The orchestrator's ruling (2026-11-10): the section's purpose is structural (the
+    keys production never read, the two columns, `ring_obs_id`'s API), so the target's
+    result is reported and is not a stop-and-report.
 
 ### 2026-11-10, PR-14 (written against this file at 859f9650)
 
