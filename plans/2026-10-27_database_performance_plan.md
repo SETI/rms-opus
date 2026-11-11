@@ -5656,7 +5656,7 @@ Nothing above this line is rewritten by an executor.
   older release, and keeps recording `ringobsid` as `opusid`'s old slug; a new unit test
   covers both.
 - An old-format id gets what any unknown OPUS ID gets, which is the section's 404 only
-  from `api/metadata` and `api/metadata_v2`: `api/files` answers with the id and no
+  from `api/metadata`: `api/files` answers with the id and no
   files, and `api/categories` and `api/product_types` with an empty list, all with
   status 200. The integration suite's `ringobsid` tests go, and four tests, one per
   endpoint (`test__api_*_old_format_ring_obs_id_is_an_unknown_opusid`), show an
@@ -5670,6 +5670,12 @@ Nothing above this line is rewritten by an executor.
   change in `obs_general` (the two columns), `param_info` (their two rows, the later
   rows' ids moving down), `definitions` (`RING_OBS_ID`'s row, likewise) and
   `schema_version`.
+- At the orchestrator's direction (2026-11-10), the `api/metadata_v2` route, an alias of
+  `api/metadata` that answered identically apart from the path its error messages name,
+  goes with `ring_obs_id`: a second deliberate break of the public API. Its one test
+  becomes a check that the route answers 404, and the `api/metadata` tests whose
+  descriptions named `api/metadata_v2` name the route they request. The log analyzer
+  keeps its pattern for `__api/metadata_v2`, since the logs it reads predate the change.
 - `models.py` is edited: `ObsGeneral` loses the two fields, and `inspectdb` against the
   local integration database gives the same fields.
 - `SCHEMA_VERSION` is 6.

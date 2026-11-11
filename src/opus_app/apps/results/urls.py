@@ -32,8 +32,6 @@ urlpatterns = [
     re_path(
         r'^__api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata_internal
     ),
-    # Backwards compatibility
-    re_path(r'^api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata),
     re_path(
         r'^api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)$',
         api_get_images_by_size,
