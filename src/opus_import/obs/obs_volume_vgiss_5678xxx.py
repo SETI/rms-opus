@@ -201,12 +201,6 @@ class ObsVolumeVGISS5678xxx(ObsVolumeVoyagerCommon):
     ### FIELD METHODS FOR obs_instrument_vgiss ###
     ##############################################
 
-    def field_obs_instrument_vgiss_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_instrument_vgiss_bundle_id(self) -> StrField:
-        return self.bundle
-
     def field_obs_instrument_vgiss_image_id(self) -> StrField:
         return cast(StrField, self._index_col('IMAGE_ID'))
 

@@ -258,9 +258,21 @@ def _plant_copy(
                 where, assign = '`id` = %s', '`id` = %s, `bundle_id` = %s'
                 params = [copy_id, bundle]
             else:
+                # A child keyed on its observation takes the copy's id; the surface
+                # geometry tables, which number their own rows and hold the bundle, move
+                # their ids clear of the originals' and name the bundle too.
                 where = '`obs_general_id` = %s'
-                assign = '`id` = `id` + %s, `obs_general_id` = %s, `bundle_id` = %s'
-                params = [_CHILD_ID_OFFSET + copy_id, copy_id, bundle]
+                columns = {
+                    name for name, _type in golden_io.table_columns(credentials, schema, table)
+                }
+                parts, params = ['`obs_general_id` = %s'], [copy_id]
+                if 'id' in columns:
+                    parts.insert(0, '`id` = `id` + %s')
+                    params.insert(0, _CHILD_ID_OFFSET + copy_id)
+                if 'bundle_id' in columns:
+                    parts.append('`bundle_id` = %s')
+                    params.append(bundle)
+                assign = ', '.join(parts)
             cursor.execute(
                 f'CREATE TEMPORARY TABLE `plant` AS SELECT * FROM `{table}` WHERE {where}',
                 [original_id],

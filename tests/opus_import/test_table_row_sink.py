@@ -15,7 +15,11 @@ class _LoadingDB:
     def __init__(self, transaction_rows: int) -> None:
         """Hold the load size the sink reads."""
         self.transaction_rows = transaction_rows
-        self.events: list[tuple[str, str, int]] = []
+        self.events: list[tuple[str, str, Any]] = []
+
+    def quote_identifier(self, name: str) -> str:
+        """Backtick-quote a name."""
+        return f'`{name}`'
 
     def create_table(self, table_name: str, schema: Any) -> bool:
         """Record a table created."""
@@ -27,9 +31,10 @@ class _LoadingDB:
         self.events.append(('load', table_name, len(rows)))
 
     def delete_rows(self, table_name: str, where: str, where_params: list[Any]) -> None:
-        """Record a delete and the id it starts from."""
-        assert where == '`id` >= %s'
-        self.events.append(('delete', table_name, where_params[0]))
+        """Record a delete, the column it selects by and the id it starts from."""
+        column, rest = where.split(' ', 1)
+        assert rest == '>= %s'
+        self.events.append(('delete', table_name, (column, where_params[0])))
 
 
 ORDER = ['obs_general', 'obs_surface_geometry__<TARGET>', 'obs_files']
@@ -58,9 +63,9 @@ def test_the_finish_loads_every_table_in_order_and_targets_by_name() -> None:
     """Targets load in their template's place, sorted by target name, each created first."""
     sink, db = _sink(100)
     sink.add('obs_general', {'id': 1}, None)
-    sink.add('obs_surface_geometry__titan', {'id': 1}, 'TITAN')
-    sink.add('obs_surface_geometry__dione', {'id': 1}, 'DIONE')
-    sink.add('obs_files', {'id': 1}, None)
+    sink.add('obs_surface_geometry__titan', {'id': 1, 'obs_general_id': 1}, 'TITAN')
+    sink.add('obs_surface_geometry__dione', {'id': 1, 'obs_general_id': 1}, 'DIONE')
+    sink.add('obs_files', {'obs_general_id': 1}, None)
     sink.finish()
     assert [(kind, table) for kind, table, _size in db.events] == [
         ('load', 'obs_general'),
@@ -75,8 +80,8 @@ def test_the_finish_loads_every_table_in_order_and_targets_by_name() -> None:
 def test_a_new_target_is_logged_once_and_its_table_created_once() -> None:
     """The first row of a target names it; a table loaded twice is created only before the first."""
     sink, db = _sink(1)
-    sink.add('obs_surface_geometry__mimas', {'id': 1}, 'MIMAS')
-    sink.add('obs_surface_geometry__mimas', {'id': 2}, 'MIMAS')
+    sink.add('obs_surface_geometry__mimas', {'id': 1, 'obs_general_id': 1}, 'MIMAS')
+    sink.add('obs_surface_geometry__mimas', {'id': 2, 'obs_general_id': 2}, 'MIMAS')
     sink.finish()
     assert [event[:2] for event in db.events if event[1].endswith('mimas')] == [
         ('create', 'obs_surface_geometry__mimas'),
@@ -89,17 +94,41 @@ def test_a_new_target_is_logged_once_and_its_table_created_once() -> None:
 
 
 def test_a_failed_index_takes_back_what_it_loaded_children_first() -> None:
-    """Each table loses its rows from the first id loaded; nothing waiting is loaded after."""
+    """Each table loses its rows from the first one loaded; nothing waiting is loaded after.
+
+    ``obs_general`` and a surface geometry table, which number their own rows, are
+    selected by ``id``, and every other table by ``obs_general_id``, the observation its
+    row belongs to.
+    """
     sink, db = _sink(2)
-    for number in range(10, 13):
+    sink.add('obs_general', {'id': 10}, None)
+    for number in range(11, 13):
         sink.add('obs_general', {'id': number}, None)
-        sink.add('obs_files', {'id': number + 100}, None)
-    sink.add('obs_surface_geometry__titan', {'id': 7}, 'TITAN')
+        sink.add('obs_files', {'obs_general_id': number, 'file_number': 1}, None)
+    sink.add('obs_surface_geometry__titan', {'id': 7, 'obs_general_id': 12}, 'TITAN')
+    sink.add('obs_surface_geometry__titan', {'id': 8, 'obs_general_id': 12}, 'TITAN')
     sink.discard()
     sink.finish()
     deletes = [event for event in db.events if event[0] == 'delete']
-    assert deletes == [('delete', 'obs_files', 110), ('delete', 'obs_general', 10)]
+    assert deletes == [
+        ('delete', 'obs_surface_geometry__titan', ('`id`', 7)),
+        ('delete', 'obs_files', ('`obs_general_id`', 11)),
+        ('delete', 'obs_general', ('`id`', 10)),
+    ]
     assert [event for event in db.events if event[0] == 'load' and event[2] > 0] == [
         ('load', 'obs_general', 2),
         ('load', 'obs_files', 2),
+        ('load', 'obs_surface_geometry__titan', 2),
     ]
+
+
+def test_the_take_back_deletes_obs_general_last_even_when_it_loaded_after_a_child() -> None:
+    """A table with many rows per observation can load first; obs_general still goes last."""
+    sink, db = _sink(2)
+    sink.add('obs_files', {'obs_general_id': 20, 'file_number': 1}, None)
+    sink.add('obs_files', {'obs_general_id': 20, 'file_number': 2}, None)
+    sink.add('obs_general', {'id': 20}, None)
+    sink.add('obs_general', {'id': 21}, None)
+    sink.discard()
+    deletes = [event[1] for event in db.events if event[0] == 'delete']
+    assert deletes == ['obs_files', 'obs_general']

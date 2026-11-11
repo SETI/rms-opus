@@ -30,9 +30,6 @@ class ObsPds(ObsBase):
     def field_obs_pds_bundle_id(self) -> StrField:
         return self.bundle
 
-    def field_obs_pds_instrument_id(self) -> StrField:
-        return self.instrument_id
-
     def field_obs_pds_primary_filespec(self) -> StrField:
         return self.primary_filespec
 

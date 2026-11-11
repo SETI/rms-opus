@@ -284,6 +284,29 @@ def test_where_clause_values_travel_as_parameters(db: _RecordingDB) -> None:
     ]
 
 
+def test_a_joined_delete_deletes_the_rows_of_the_parents_it_selects(db: _RecordingDB) -> None:
+    """The child is aliased ``c`` and the parent `JOINED_PARENT_ALIAS`; only ``c`` loses rows."""
+    q = db.quote_identifier
+    parent = q(db.JOINED_PARENT_ALIAS)
+    db.delete_joined_rows(
+        'obs_pds',
+        'obs_general_id',
+        'obs_general',
+        'id',
+        f'{parent}.{q("bundle_id")} = %s AND {parent}.{q("id")} BETWEEN %s AND %s',
+        ['COISS_2002', 4, 9],
+    )
+
+    assert db.executed == [
+        (
+            'DELETE `c` FROM `obs_pds` AS `c` JOIN `obs_general` AS `p` '
+            'ON `p`.`id` = `c`.`obs_general_id` '
+            'WHERE `p`.`bundle_id` = %s AND `p`.`id` BETWEEN %s AND %s',
+            ['COISS_2002', 4, 9],
+        )
+    ]
+
+
 def test_a_where_clause_with_no_parameters_passes_none(db: _RecordingDB) -> None:
     """An empty parameter list would make MySQLdb interpolate, so pass None."""
     db.delete_rows('obs_general', '`id` > 0')
@@ -346,9 +369,10 @@ class _FailingDB(_RecordingDB):
     ('method', 'args'),
     [
         ('delete_rows', ('obs_general', '`id`=%s', [1])),
+        ('delete_joined_rows', ('obs_pds', 'obs_general_id', 'obs_general', 'id', '1', [])),
         ('upsert_rows', ('mult_x', 'id', [{'id': 0, 'value': 'a'}])),
     ],
-    ids=['delete_rows', 'upsert_rows'],
+    ids=['delete_rows', 'delete_joined_rows', 'upsert_rows'],
 )
 def test_a_failed_statement_becomes_an_import_db_error(method: str, args: tuple[Any, ...]) -> None:
     """Every mutating method reports a server failure as ImportDBError.

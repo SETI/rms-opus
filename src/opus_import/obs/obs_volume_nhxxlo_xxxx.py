@@ -174,12 +174,6 @@ class ObsVolumeNHxxLOXxxx(ObsVolumeNewHorizonsCommon):
     ### FIELD METHODS FOR obs_instrument_nhlorri ###
     ################################################
 
-    def field_obs_instrument_nhlorri_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_instrument_nhlorri_bundle_id(self) -> StrField:
-        return self.bundle
-
     def field_obs_instrument_nhlorri_instrument_compression_type(self) -> MultFieldRet:
         compression_type = self._supp_index_col('INSTRUMENT_COMPRESSION_TYPE')
         return self._create_mult(compression_type)

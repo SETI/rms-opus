@@ -14,12 +14,12 @@ Two layers, because either one alone can be satisfied by a mistake:
    a string where its column says a number.
 
 **What layer 2 does not cover, so nobody reads its green as more than it is.** It drives
-6 of the 25 leaf classes in `opus_import.config_bundle_info`, whose method resolution
-orders between them reach 27 of the 57 modules here: **669 of the 1185 field method
-definitions, 56%, are in modules it cannot instantiate** -- the whole PDS4 branch and all
-three ``obs_bundle_*`` leaves among them. A further **49** are inside modules it does
-reach but are shadowed by an override in every driven leaf, so **718 definitions are
-never executed here**, and the module count is the optimistic way to say it. A wrong
+one leaf class per mission out of the many in `opus_import.config_bundle_info`, whose
+method resolution orders between them reach about half of the modules here: **more than
+half of the field method definitions are in modules it cannot instantiate** -- the whole
+PDS4 branch and all three ``obs_bundle_*`` leaves among them. Dozens more are inside
+modules it does reach but are shadowed by an override in every driven leaf, so the
+module count is the optimistic way to say how much is **never executed here**. A wrong
 runtime type in one of those is caught by layer 1 only insofar as the schema can see it,
 which is not at all. Widening this needs holdings-free fixtures that can instantiate
 the rest of the hierarchy, which do not exist yet; until they do, the honest claim is
@@ -865,12 +865,12 @@ def _is_mult(value: Any) -> bool:
 #: or a field method changes, and read a change as something to explain rather than to
 #: paper over.
 _EXPECTED_RETURNS: dict[str, tuple[int, int]] = {
-    'COISS': (249, 215),
-    'GOSSI': (233, 197),
-    'HSTWFPC2': (241, 181),
-    'NHLORRI': (228, 194),
-    'VGISS': (236, 195),
-    'eso-la_silla.1m04': (218, 179),
+    'COISS': (228, 194),
+    'GOSSI': (213, 177),
+    'HSTWFPC2': (222, 162),
+    'NHLORRI': (207, 173),
+    'VGISS': (216, 175),
+    'eso-la_silla.1m04': (202, 163),
 }
 
 

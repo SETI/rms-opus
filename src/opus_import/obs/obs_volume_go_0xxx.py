@@ -304,12 +304,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
     ### FIELD METHODS FOR obs_instrument_gossi ###
     ##############################################
 
-    def field_obs_instrument_gossi_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_instrument_gossi_bundle_id(self) -> StrField:
-        return self.bundle
-
     def field_obs_instrument_gossi_observation_id(self) -> StrField:
         return cast(StrField, self._index_col('OBSERVATION_ID'))
 

@@ -194,12 +194,6 @@ class ObsVolumeCOCIRS56xxx(ObsCassiniCommonPDS3):
     ### FIELD METHODS FOR obs_instrument_cocirs ###
     ###############################################
 
-    def field_obs_instrument_cocirs_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_instrument_cocirs_bundle_id(self) -> StrField:
-        return self.bundle
-
     def field_obs_instrument_cocirs_detector_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('DETECTOR_ID'))
 

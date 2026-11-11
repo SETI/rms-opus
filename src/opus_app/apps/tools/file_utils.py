@@ -160,8 +160,8 @@ def get_pds_products(
     select.add_order_by(obs_files_column('version_number'), descending=True)
     select.add_order_by(obs_files_column('sort_order'))
     select.add_order_by(obs_files_column('product_order'))
-    # Keep individual files in original order
-    select.add_order_by(obs_files_column('id'))
+    # Keep individual files in the order the import wrote them
+    select.add_order_by(obs_files_column('file_number'))
 
     sql, values = select.build()
     log.debug('get_pds_products SQL: %r %r', sql, values)

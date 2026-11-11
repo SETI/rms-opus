@@ -100,9 +100,8 @@ def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
     """
     # This can throw LookupError
     table_model = table_model_from_name(table_name)
-    # opus_id is the primary key for obs_general, but a foreign key for all
-    # other tables. Due to Django's design, we have to handle these cases
-    # separately.
+    # obs_general holds opus_id itself; every other table reaches it through its
+    # obs_general relation, so the two need different lookups.
     # The model class is chosen by name, so its manager and everything that comes
     # off it are untyped; both returns are that table's queryset.
     if table_name == 'obs_general':

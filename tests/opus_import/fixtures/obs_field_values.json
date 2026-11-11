@@ -96,7 +96,6 @@
   ],
   "obs_general/field_obs_general_time1": 157809632.0,
   "obs_general/field_obs_general_time2": 157809642.0,
-  "obs_instrument_coiss/field_obs_instrument_coiss_bundle_id": "TEST_BUNDLE",
   "obs_instrument_coiss/field_obs_instrument_coiss_camera": {
    "aliases": null,
    "col_val": "N",
@@ -169,7 +168,6 @@
    "tooltip": null
   },
   "obs_instrument_coiss/field_obs_instrument_coiss_missing_lines": 0,
-  "obs_instrument_coiss/field_obs_instrument_coiss_opus_id": "co-iss-n1294561143",
   "obs_instrument_coiss/field_obs_instrument_coiss_shutter_mode_id": {
    "aliases": null,
    "col_val": "NACONLY",
@@ -201,7 +199,6 @@
    "tooltip": null
   },
   "obs_mission_cassini/field_obs_mission_cassini_activity_name": "MOONSWATCH",
-  "obs_mission_cassini/field_obs_mission_cassini_bundle_id": "TEST_BUNDLE",
   "obs_mission_cassini/field_obs_mission_cassini_cassini_target_code": {
    "aliases": null,
    "col_val": "SA",
@@ -224,7 +221,6 @@
   },
   "obs_mission_cassini/field_obs_mission_cassini_ert1": 157896032.0,
   "obs_mission_cassini/field_obs_mission_cassini_ert2": 157896042.0,
-  "obs_mission_cassini/field_obs_mission_cassini_instrument_id": "COISS",
   "obs_mission_cassini/field_obs_mission_cassini_is_prime": {
    "aliases": null,
    "col_val": "Yes",
@@ -246,7 +242,6 @@
    "tooltip": null
   },
   "obs_mission_cassini/field_obs_mission_cassini_obs_name": "ISS_00ASA_MOONSWATCH001_PRIME",
-  "obs_mission_cassini/field_obs_mission_cassini_opus_id": "co-iss-n1294561143",
   "obs_mission_cassini/field_obs_mission_cassini_prime_inst_id": {
    "aliases": null,
    "col_val": "ISS",
@@ -273,7 +268,6 @@
   "obs_mission_cassini/field_obs_mission_cassini_spacecraft_clock_count2": 1294561153.488281,
   "obs_pds/field_obs_pds_bundle_id": "TEST_BUNDLE",
   "obs_pds/field_obs_pds_data_set_id": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
-  "obs_pds/field_obs_pds_instrument_id": "COISS",
   "obs_pds/field_obs_pds_note": "N/A",
   "obs_pds/field_obs_pds_opus_id": "co-iss-n1294561143",
   "obs_pds/field_obs_pds_primary_filespec": "TEST_BUNDLE/data/1294561143_1295221348/N1294561143_1.LBL",
@@ -290,7 +284,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_bundle_id": "TEST_BUNDLE",
   "obs_profile/field_obs_profile_host": {
    "aliases": null,
    "col_val": null,
@@ -301,7 +294,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_instrument_id": "COISS",
   "obs_profile/field_obs_profile_occ_dir": {
    "aliases": null,
    "col_val": null,
@@ -324,7 +316,6 @@
   },
   "obs_profile/field_obs_profile_optical_depth1": null,
   "obs_profile/field_obs_profile_optical_depth2": null,
-  "obs_profile/field_obs_profile_opus_id": "co-iss-n1294561143",
   "obs_profile/field_obs_profile_quality_score": {
    "aliases": null,
    "col_val": null,
@@ -358,7 +349,6 @@
   },
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude1": 79.89,
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude2": 57.68,
-  "obs_ring_geometry/field_obs_ring_geometry_bundle_id": "TEST_BUNDLE",
   "obs_ring_geometry/field_obs_ring_geometry_center_x_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_center_y_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_edge_on_altitude1": 52.32,
@@ -377,7 +367,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_emission2": 47.94,
   "obs_ring_geometry/field_obs_ring_geometry_incidence1": 48.59,
   "obs_ring_geometry/field_obs_ring_geometry_incidence2": 69.56,
-  "obs_ring_geometry/field_obs_ring_geometry_instrument_id": "COISS",
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude1": 40.66,
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude2": 72.84,
   "obs_ring_geometry/field_obs_ring_geometry_longitude_wrt_observer1": 29.42,
@@ -390,7 +379,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_elevation2": 35.34,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle1": 53.75,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle2": 64.26,
-  "obs_ring_geometry/field_obs_ring_geometry_opus_id": "co-iss-n1294561143",
   "obs_ring_geometry/field_obs_ring_geometry_phase1": 12.76,
   "obs_ring_geometry/field_obs_ring_geometry_phase2": 16.63,
   "obs_ring_geometry/field_obs_ring_geometry_projected_long_resolution1": null,
@@ -440,9 +428,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_ascending_long2": 259.86044,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long1": 86.19,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long2": 30.45,
-  "obs_surface_geometry/field_obs_surface_geometry_bundle_id": "TEST_BUNDLE",
-  "obs_surface_geometry/field_obs_surface_geometry_instrument_id": "COISS",
-  "obs_surface_geometry/field_obs_surface_geometry_opus_id": "co-iss-n1294561143",
   "obs_surface_geometry/field_obs_surface_geometry_target_list": "Saturn",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_bundle_id": "TEST_BUNDLE",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_center_distance1": 59.46,
@@ -519,7 +504,6 @@
    "grouping": "Saturn",
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_bundle_id": "TEST_BUNDLE",
   "obs_type_image/field_obs_type_image_duration": 1.2,
   "obs_type_image/field_obs_type_image_greater_pixel_size": 1024,
   "obs_type_image/field_obs_type_image_image_type_id": {
@@ -532,13 +516,8 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_instrument_id": "COISS",
   "obs_type_image/field_obs_type_image_lesser_pixel_size": 1024,
   "obs_type_image/field_obs_type_image_levels": 4096,
-  "obs_type_image/field_obs_type_image_opus_id": "co-iss-n1294561143",
-  "obs_wavelength/field_obs_wavelength_bundle_id": "TEST_BUNDLE",
-  "obs_wavelength/field_obs_wavelength_instrument_id": "COISS",
-  "obs_wavelength/field_obs_wavelength_opus_id": "co-iss-n1294561143",
   "obs_wavelength/field_obs_wavelength_polarization_type": {
    "aliases": null,
    "col_val": "NONE",
@@ -666,7 +645,6 @@
   ],
   "obs_general/field_obs_general_time1": -110980770.0,
   "obs_general/field_obs_general_time2": -110980760.0,
-  "obs_instrument_gossi/field_obs_instrument_gossi_bundle_id": "TEST_BUNDLE",
   "obs_instrument_gossi/field_obs_instrument_gossi_compression_type": {
    "aliases": null,
    "col_val": "BARC",
@@ -729,9 +707,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_instrument_gossi/field_obs_instrument_gossi_opus_id": "co-iss-n1294561143",
-  "obs_mission_galileo/field_obs_mission_galileo_bundle_id": "TEST_BUNDLE",
-  "obs_mission_galileo/field_obs_mission_galileo_opus_id": "co-iss-n1294561143",
   "obs_mission_galileo/field_obs_mission_galileo_orbit_number": {
    "aliases": null,
    "col_val": "G1",
@@ -746,7 +721,6 @@
   "obs_mission_galileo/field_obs_mission_galileo_spacecraft_clock_count2": null,
   "obs_pds/field_obs_pds_bundle_id": "TEST_BUNDLE",
   "obs_pds/field_obs_pds_data_set_id": "GO-J/JSA-SSI-2-REDR-V1.0",
-  "obs_pds/field_obs_pds_instrument_id": "GOSSI",
   "obs_pds/field_obs_pds_note": "GALSOS",
   "obs_pds/field_obs_pds_opus_id": "co-iss-n1294561143",
   "obs_pds/field_obs_pds_primary_filespec": "TEST_BUNDLE/C0349632000R.LBL",
@@ -763,7 +737,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_bundle_id": "TEST_BUNDLE",
   "obs_profile/field_obs_profile_host": {
    "aliases": null,
    "col_val": null,
@@ -774,7 +747,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_instrument_id": "GOSSI",
   "obs_profile/field_obs_profile_occ_dir": {
    "aliases": null,
    "col_val": null,
@@ -797,7 +769,6 @@
   },
   "obs_profile/field_obs_profile_optical_depth1": null,
   "obs_profile/field_obs_profile_optical_depth2": null,
-  "obs_profile/field_obs_profile_opus_id": "co-iss-n1294561143",
   "obs_profile/field_obs_profile_quality_score": {
    "aliases": null,
    "col_val": null,
@@ -831,7 +802,6 @@
   },
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude1": 79.89,
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude2": 57.68,
-  "obs_ring_geometry/field_obs_ring_geometry_bundle_id": "TEST_BUNDLE",
   "obs_ring_geometry/field_obs_ring_geometry_center_x_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_center_y_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_edge_on_altitude1": 52.32,
@@ -850,7 +820,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_emission2": 47.94,
   "obs_ring_geometry/field_obs_ring_geometry_incidence1": 48.59,
   "obs_ring_geometry/field_obs_ring_geometry_incidence2": 69.56,
-  "obs_ring_geometry/field_obs_ring_geometry_instrument_id": "GOSSI",
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude1": 40.66,
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude2": 72.84,
   "obs_ring_geometry/field_obs_ring_geometry_longitude_wrt_observer1": 29.42,
@@ -863,7 +832,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_elevation2": 35.34,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle1": 53.75,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle2": 64.26,
-  "obs_ring_geometry/field_obs_ring_geometry_opus_id": "co-iss-n1294561143",
   "obs_ring_geometry/field_obs_ring_geometry_phase1": 12.76,
   "obs_ring_geometry/field_obs_ring_geometry_phase2": 16.63,
   "obs_ring_geometry/field_obs_ring_geometry_projected_long_resolution1": null,
@@ -913,9 +881,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_ascending_long2": 28.507021,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long1": 86.19,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long2": 30.45,
-  "obs_surface_geometry/field_obs_surface_geometry_bundle_id": "TEST_BUNDLE",
-  "obs_surface_geometry/field_obs_surface_geometry_instrument_id": "GOSSI",
-  "obs_surface_geometry/field_obs_surface_geometry_opus_id": "co-iss-n1294561143",
   "obs_surface_geometry/field_obs_surface_geometry_target_list": "Saturn",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_bundle_id": "TEST_BUNDLE",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_center_distance1": 59.46,
@@ -992,7 +957,6 @@
    "grouping": "Saturn",
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_bundle_id": "TEST_BUNDLE",
   "obs_type_image/field_obs_type_image_duration": 0.195,
   "obs_type_image/field_obs_type_image_greater_pixel_size": 800,
   "obs_type_image/field_obs_type_image_image_type_id": {
@@ -1005,13 +969,8 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_instrument_id": "GOSSI",
   "obs_type_image/field_obs_type_image_lesser_pixel_size": 800,
   "obs_type_image/field_obs_type_image_levels": 256,
-  "obs_type_image/field_obs_type_image_opus_id": "co-iss-n1294561143",
-  "obs_wavelength/field_obs_wavelength_bundle_id": "TEST_BUNDLE",
-  "obs_wavelength/field_obs_wavelength_instrument_id": "GOSSI",
-  "obs_wavelength/field_obs_wavelength_opus_id": "co-iss-n1294561143",
   "obs_wavelength/field_obs_wavelength_polarization_type": {
    "aliases": null,
    "col_val": "NONE",
@@ -1149,7 +1108,6 @@
    "grouping": "WFPC2",
    "tooltip": null
   },
-  "obs_mission_hubble/field_obs_mission_hubble_bundle_id": "TEST_BUNDLE",
   "obs_mission_hubble/field_obs_mission_hubble_detector_id": {
    "aliases": null,
    "col_val": "WFPC2-PC1",
@@ -1213,7 +1171,6 @@
   "obs_mission_hubble/field_obs_mission_hubble_hst_pi_name": "KARKOSCHKA, ERICH",
   "obs_mission_hubble/field_obs_mission_hubble_hst_proposal_id": 6030,
   "obs_mission_hubble/field_obs_mission_hubble_hst_target_name": "SATURN",
-  "obs_mission_hubble/field_obs_mission_hubble_instrument_id": "HSTWFPC2",
   "obs_mission_hubble/field_obs_mission_hubble_instrument_mode_id": {
    "aliases": null,
    "col_val": null,
@@ -1234,7 +1191,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_mission_hubble/field_obs_mission_hubble_opus_id": "co-iss-n1294561143",
   "obs_mission_hubble/field_obs_mission_hubble_pc1_flag": {
    "aliases": null,
    "col_val": null,
@@ -1299,7 +1255,6 @@
   },
   "obs_pds/field_obs_pds_bundle_id": "TEST_BUNDLE",
   "obs_pds/field_obs_pds_data_set_id": "HST-S-WFPC2-2-EDR-V1.0",
-  "obs_pds/field_obs_pds_instrument_id": "HSTWFPC2",
   "obs_pds/field_obs_pds_note": null,
   "obs_pds/field_obs_pds_opus_id": "co-iss-n1294561143",
   "obs_pds/field_obs_pds_primary_filespec": "TEST_BUNDLE/DATA/VISIT_01/U2NO0102T.LBL",
@@ -1316,7 +1271,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_bundle_id": "TEST_BUNDLE",
   "obs_profile/field_obs_profile_host": {
    "aliases": null,
    "col_val": null,
@@ -1327,7 +1281,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_instrument_id": "HSTWFPC2",
   "obs_profile/field_obs_profile_occ_dir": {
    "aliases": null,
    "col_val": null,
@@ -1350,7 +1303,6 @@
   },
   "obs_profile/field_obs_profile_optical_depth1": null,
   "obs_profile/field_obs_profile_optical_depth2": null,
-  "obs_profile/field_obs_profile_opus_id": "co-iss-n1294561143",
   "obs_profile/field_obs_profile_quality_score": {
    "aliases": null,
    "col_val": null,
@@ -1384,7 +1336,6 @@
   },
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude1": 79.89,
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude2": 57.68,
-  "obs_ring_geometry/field_obs_ring_geometry_bundle_id": "TEST_BUNDLE",
   "obs_ring_geometry/field_obs_ring_geometry_center_x_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_center_y_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_edge_on_altitude1": 52.32,
@@ -1403,7 +1354,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_emission2": 47.94,
   "obs_ring_geometry/field_obs_ring_geometry_incidence1": 48.59,
   "obs_ring_geometry/field_obs_ring_geometry_incidence2": 69.56,
-  "obs_ring_geometry/field_obs_ring_geometry_instrument_id": "HSTWFPC2",
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude1": 40.66,
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude2": 72.84,
   "obs_ring_geometry/field_obs_ring_geometry_longitude_wrt_observer1": 29.42,
@@ -1416,7 +1366,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_elevation2": 35.34,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle1": 53.75,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle2": 64.26,
-  "obs_ring_geometry/field_obs_ring_geometry_opus_id": "co-iss-n1294561143",
   "obs_ring_geometry/field_obs_ring_geometry_phase1": 12.76,
   "obs_ring_geometry/field_obs_ring_geometry_phase2": 16.63,
   "obs_ring_geometry/field_obs_ring_geometry_projected_long_resolution1": null,
@@ -1466,9 +1415,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_ascending_long2": null,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long1": 86.19,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long2": 30.45,
-  "obs_surface_geometry/field_obs_surface_geometry_bundle_id": "TEST_BUNDLE",
-  "obs_surface_geometry/field_obs_surface_geometry_instrument_id": "HSTWFPC2",
-  "obs_surface_geometry/field_obs_surface_geometry_opus_id": "co-iss-n1294561143",
   "obs_surface_geometry/field_obs_surface_geometry_target_list": "Saturn",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_bundle_id": "TEST_BUNDLE",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_center_distance1": 59.46,
@@ -1545,7 +1491,6 @@
    "grouping": "Saturn",
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_bundle_id": "TEST_BUNDLE",
   "obs_type_image/field_obs_type_image_duration": 100.0,
   "obs_type_image/field_obs_type_image_greater_pixel_size": 800,
   "obs_type_image/field_obs_type_image_image_type_id": {
@@ -1558,13 +1503,8 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_instrument_id": "HSTWFPC2",
   "obs_type_image/field_obs_type_image_lesser_pixel_size": 800,
   "obs_type_image/field_obs_type_image_levels": 4096,
-  "obs_type_image/field_obs_type_image_opus_id": "co-iss-n1294561143",
-  "obs_wavelength/field_obs_wavelength_bundle_id": "TEST_BUNDLE",
-  "obs_wavelength/field_obs_wavelength_instrument_id": "HSTWFPC2",
-  "obs_wavelength/field_obs_wavelength_opus_id": "co-iss-n1294561143",
   "obs_wavelength/field_obs_wavelength_polarization_type": {
    "aliases": null,
    "col_val": "NONE",
@@ -1702,7 +1642,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_instrument_nhlorri/field_obs_instrument_nhlorri_bundle_id": "TEST_BUNDLE",
   "obs_instrument_nhlorri/field_obs_instrument_nhlorri_instrument_compression_type": {
    "aliases": null,
    "col_val": "LOSSLESS",
@@ -1713,9 +1652,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_instrument_nhlorri/field_obs_instrument_nhlorri_opus_id": "co-iss-n1294561143",
-  "obs_mission_new_horizons/field_obs_mission_new_horizons_bundle_id": "TEST_BUNDLE",
-  "obs_mission_new_horizons/field_obs_mission_new_horizons_instrument_id": "NHLORRI",
   "obs_mission_new_horizons/field_obs_mission_new_horizons_mission_phase": {
    "aliases": null,
    "col_val": "JUPITER ENCOUNTER",
@@ -1726,12 +1662,10 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_mission_new_horizons/field_obs_mission_new_horizons_opus_id": "co-iss-n1294561143",
   "obs_mission_new_horizons/field_obs_mission_new_horizons_spacecraft_clock_count1": 30597859.0,
   "obs_mission_new_horizons/field_obs_mission_new_horizons_spacecraft_clock_count2": 30597869.0,
   "obs_pds/field_obs_pds_bundle_id": "TEST_BUNDLE",
   "obs_pds/field_obs_pds_data_set_id": "NH-J-LORRI-2-JUPITER-V1.0",
-  "obs_pds/field_obs_pds_instrument_id": "NHLORRI",
   "obs_pds/field_obs_pds_note": "Jupiter ring observation",
   "obs_pds/field_obs_pds_opus_id": "co-iss-n1294561143",
   "obs_pds/field_obs_pds_primary_filespec": "TEST_BUNDLE/data/20070108_003059/lor_0030597859_0x630_eng.lbl",
@@ -1748,7 +1682,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_bundle_id": "TEST_BUNDLE",
   "obs_profile/field_obs_profile_host": {
    "aliases": null,
    "col_val": null,
@@ -1759,7 +1692,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_instrument_id": "NHLORRI",
   "obs_profile/field_obs_profile_occ_dir": {
    "aliases": null,
    "col_val": null,
@@ -1782,7 +1714,6 @@
   },
   "obs_profile/field_obs_profile_optical_depth1": null,
   "obs_profile/field_obs_profile_optical_depth2": null,
-  "obs_profile/field_obs_profile_opus_id": "co-iss-n1294561143",
   "obs_profile/field_obs_profile_quality_score": {
    "aliases": null,
    "col_val": null,
@@ -1816,7 +1747,6 @@
   },
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude1": 79.89,
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude2": 57.68,
-  "obs_ring_geometry/field_obs_ring_geometry_bundle_id": "TEST_BUNDLE",
   "obs_ring_geometry/field_obs_ring_geometry_center_x_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_center_y_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_edge_on_altitude1": 52.32,
@@ -1835,7 +1765,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_emission2": 47.94,
   "obs_ring_geometry/field_obs_ring_geometry_incidence1": 48.59,
   "obs_ring_geometry/field_obs_ring_geometry_incidence2": 69.56,
-  "obs_ring_geometry/field_obs_ring_geometry_instrument_id": "NHLORRI",
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude1": 40.66,
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude2": 72.84,
   "obs_ring_geometry/field_obs_ring_geometry_longitude_wrt_observer1": 29.42,
@@ -1848,7 +1777,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_elevation2": 35.34,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle1": 53.75,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle2": 64.26,
-  "obs_ring_geometry/field_obs_ring_geometry_opus_id": "co-iss-n1294561143",
   "obs_ring_geometry/field_obs_ring_geometry_phase1": 12.76,
   "obs_ring_geometry/field_obs_ring_geometry_phase2": 16.63,
   "obs_ring_geometry/field_obs_ring_geometry_projected_long_resolution1": null,
@@ -1898,9 +1826,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_ascending_long2": 28.507021,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long1": 86.19,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long2": 30.45,
-  "obs_surface_geometry/field_obs_surface_geometry_bundle_id": "TEST_BUNDLE",
-  "obs_surface_geometry/field_obs_surface_geometry_instrument_id": "NHLORRI",
-  "obs_surface_geometry/field_obs_surface_geometry_opus_id": "co-iss-n1294561143",
   "obs_surface_geometry/field_obs_surface_geometry_target_list": "Saturn",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_bundle_id": "TEST_BUNDLE",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_center_distance1": 59.46,
@@ -1977,7 +1902,6 @@
    "grouping": "Saturn",
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_bundle_id": "TEST_BUNDLE",
   "obs_type_image/field_obs_type_image_duration": 0.075,
   "obs_type_image/field_obs_type_image_greater_pixel_size": 1024,
   "obs_type_image/field_obs_type_image_image_type_id": {
@@ -1990,13 +1914,8 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_instrument_id": "NHLORRI",
   "obs_type_image/field_obs_type_image_lesser_pixel_size": 1024,
   "obs_type_image/field_obs_type_image_levels": 4096,
-  "obs_type_image/field_obs_type_image_opus_id": "co-iss-n1294561143",
-  "obs_wavelength/field_obs_wavelength_bundle_id": "TEST_BUNDLE",
-  "obs_wavelength/field_obs_wavelength_instrument_id": "NHLORRI",
-  "obs_wavelength/field_obs_wavelength_opus_id": "co-iss-n1294561143",
   "obs_wavelength/field_obs_wavelength_polarization_type": {
    "aliases": null,
    "col_val": "NONE",
@@ -2124,7 +2043,6 @@
   ],
   "obs_general/field_obs_general_time1": null,
   "obs_general/field_obs_general_time2": null,
-  "obs_instrument_vgiss/field_obs_instrument_vgiss_bundle_id": "TEST_BUNDLE",
   "obs_instrument_vgiss/field_obs_instrument_vgiss_camera": {
    "aliases": null,
    "col_val": "N",
@@ -2176,7 +2094,6 @@
    "tooltip": null
   },
   "obs_instrument_vgiss/field_obs_instrument_vgiss_image_id": null,
-  "obs_instrument_vgiss/field_obs_instrument_vgiss_opus_id": "co-iss-n1294561143",
   "obs_instrument_vgiss/field_obs_instrument_vgiss_scan_mode": {
    "aliases": null,
    "col_val": null,
@@ -2199,7 +2116,6 @@
   },
   "obs_instrument_vgiss/field_obs_instrument_vgiss_usable_lines": 800,
   "obs_instrument_vgiss/field_obs_instrument_vgiss_usable_samples": 800,
-  "obs_mission_voyager/field_obs_mission_voyager_bundle_id": "TEST_BUNDLE",
   "obs_mission_voyager/field_obs_mission_voyager_ert": -579175180.0,
   "obs_mission_voyager/field_obs_mission_voyager_mission_phase_name": {
    "aliases": null,
@@ -2211,12 +2127,10 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_mission_voyager/field_obs_mission_voyager_opus_id": "co-iss-n1294561143",
   "obs_mission_voyager/field_obs_mission_voyager_spacecraft_clock_count1": 38545.916667,
   "obs_mission_voyager/field_obs_mission_voyager_spacecraft_clock_count2": 38545.95,
   "obs_pds/field_obs_pds_bundle_id": "TEST_BUNDLE",
   "obs_pds/field_obs_pds_data_set_id": "VG2-SR/UR/NR-ISS-2-EDR-V1.0",
-  "obs_pds/field_obs_pds_instrument_id": "VGISS",
   "obs_pds/field_obs_pds_note": "N/A",
   "obs_pds/field_obs_pds_opus_id": "co-iss-n1294561143",
   "obs_pds/field_obs_pds_primary_filespec": "TEST_BUNDLE/DATA/C13854XX/C1385455_RAW.LBL",
@@ -2233,7 +2147,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_bundle_id": "TEST_BUNDLE",
   "obs_profile/field_obs_profile_host": {
    "aliases": null,
    "col_val": null,
@@ -2244,7 +2157,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_instrument_id": "VGISS",
   "obs_profile/field_obs_profile_occ_dir": {
    "aliases": null,
    "col_val": null,
@@ -2267,7 +2179,6 @@
   },
   "obs_profile/field_obs_profile_optical_depth1": null,
   "obs_profile/field_obs_profile_optical_depth2": null,
-  "obs_profile/field_obs_profile_opus_id": "co-iss-n1294561143",
   "obs_profile/field_obs_profile_quality_score": {
    "aliases": null,
    "col_val": null,
@@ -2301,7 +2212,6 @@
   },
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude1": 79.89,
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude2": 57.68,
-  "obs_ring_geometry/field_obs_ring_geometry_bundle_id": "TEST_BUNDLE",
   "obs_ring_geometry/field_obs_ring_geometry_center_x_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_center_y_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_edge_on_altitude1": 52.32,
@@ -2320,7 +2230,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_emission2": 47.94,
   "obs_ring_geometry/field_obs_ring_geometry_incidence1": 48.59,
   "obs_ring_geometry/field_obs_ring_geometry_incidence2": 69.56,
-  "obs_ring_geometry/field_obs_ring_geometry_instrument_id": "VGISS",
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude1": 40.66,
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude2": 72.84,
   "obs_ring_geometry/field_obs_ring_geometry_longitude_wrt_observer1": 29.42,
@@ -2333,7 +2242,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_elevation2": 35.34,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle1": 53.75,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle2": 64.26,
-  "obs_ring_geometry/field_obs_ring_geometry_opus_id": "co-iss-n1294561143",
   "obs_ring_geometry/field_obs_ring_geometry_phase1": 12.76,
   "obs_ring_geometry/field_obs_ring_geometry_phase2": 16.63,
   "obs_ring_geometry/field_obs_ring_geometry_projected_long_resolution1": null,
@@ -2383,9 +2291,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_ascending_long2": 259.86044,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long1": 86.19,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long2": 30.45,
-  "obs_surface_geometry/field_obs_surface_geometry_bundle_id": "TEST_BUNDLE",
-  "obs_surface_geometry/field_obs_surface_geometry_instrument_id": "VGISS",
-  "obs_surface_geometry/field_obs_surface_geometry_opus_id": "co-iss-n1294561143",
   "obs_surface_geometry/field_obs_surface_geometry_target_list": "Saturn",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_bundle_id": "TEST_BUNDLE",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_center_distance1": 59.46,
@@ -2462,7 +2367,6 @@
    "grouping": "Saturn",
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_bundle_id": "TEST_BUNDLE",
   "obs_type_image/field_obs_type_image_duration": 1.92,
   "obs_type_image/field_obs_type_image_greater_pixel_size": 800,
   "obs_type_image/field_obs_type_image_image_type_id": {
@@ -2475,13 +2379,8 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_instrument_id": "VGISS",
   "obs_type_image/field_obs_type_image_lesser_pixel_size": 800,
   "obs_type_image/field_obs_type_image_levels": 256,
-  "obs_type_image/field_obs_type_image_opus_id": "co-iss-n1294561143",
-  "obs_wavelength/field_obs_wavelength_bundle_id": "TEST_BUNDLE",
-  "obs_wavelength/field_obs_wavelength_instrument_id": "VGISS",
-  "obs_wavelength/field_obs_wavelength_opus_id": "co-iss-n1294561143",
   "obs_wavelength/field_obs_wavelength_polarization_type": {
    "aliases": null,
    "col_val": "NONE",
@@ -2611,7 +2510,6 @@
   "obs_general/field_obs_general_time2": -331286376.0,
   "obs_pds/field_obs_pds_bundle_id": "TEST_BUNDLE",
   "obs_pds/field_obs_pds_data_set_id": "EBROCC-SR/UR/NR-RSS-4-OCC-V1.0",
-  "obs_pds/field_obs_pds_instrument_id": "eso-la_silla.1m04",
   "obs_pds/field_obs_pds_note": null,
   "obs_pds/field_obs_pds_opus_id": "co-iss-n1294561143",
   "obs_pds/field_obs_pds_primary_filespec": "TEST_BUNDLE/DATA/ESO1M/ES1_EPD.LBL",
@@ -2628,7 +2526,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_bundle_id": "TEST_BUNDLE",
   "obs_profile/field_obs_profile_host": {
    "aliases": null,
    "col_val": "eso-la_silla.1m04",
@@ -2639,7 +2536,6 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_profile/field_obs_profile_instrument_id": "eso-la_silla.1m04",
   "obs_profile/field_obs_profile_occ_dir": {
    "aliases": null,
    "col_val": null,
@@ -2662,7 +2558,6 @@
   },
   "obs_profile/field_obs_profile_optical_depth1": null,
   "obs_profile/field_obs_profile_optical_depth2": null,
-  "obs_profile/field_obs_profile_opus_id": "co-iss-n1294561143",
   "obs_profile/field_obs_profile_quality_score": {
    "aliases": null,
    "col_val": "UNASSIGNED",
@@ -2696,7 +2591,6 @@
   },
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude1": 79.89,
   "obs_ring_geometry/field_obs_ring_geometry_ascending_longitude2": 57.68,
-  "obs_ring_geometry/field_obs_ring_geometry_bundle_id": "TEST_BUNDLE",
   "obs_ring_geometry/field_obs_ring_geometry_center_x_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_center_y_coordinate": null,
   "obs_ring_geometry/field_obs_ring_geometry_edge_on_altitude1": 52.32,
@@ -2715,7 +2609,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_emission2": 100.0,
   "obs_ring_geometry/field_obs_ring_geometry_incidence1": 80.0,
   "obs_ring_geometry/field_obs_ring_geometry_incidence2": 80.0,
-  "obs_ring_geometry/field_obs_ring_geometry_instrument_id": "eso-la_silla.1m04",
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude1": 40.66,
   "obs_ring_geometry/field_obs_ring_geometry_j2000_longitude2": 72.84,
   "obs_ring_geometry/field_obs_ring_geometry_longitude_wrt_observer1": 29.42,
@@ -2728,7 +2621,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_elevation2": 10.0,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle1": 10.0,
   "obs_ring_geometry/field_obs_ring_geometry_observer_ring_opening_angle2": 10.0,
-  "obs_ring_geometry/field_obs_ring_geometry_opus_id": "co-iss-n1294561143",
   "obs_ring_geometry/field_obs_ring_geometry_phase1": 180.0,
   "obs_ring_geometry/field_obs_ring_geometry_phase2": 180.0,
   "obs_ring_geometry/field_obs_ring_geometry_projected_long_resolution1": null,
@@ -2778,9 +2670,6 @@
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_ascending_long2": 259.86044,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long1": 86.19,
   "obs_ring_geometry/field_obs_ring_geometry_sub_solar_ring_j2000_long2": 30.45,
-  "obs_surface_geometry/field_obs_surface_geometry_bundle_id": "TEST_BUNDLE",
-  "obs_surface_geometry/field_obs_surface_geometry_instrument_id": "eso-la_silla.1m04",
-  "obs_surface_geometry/field_obs_surface_geometry_opus_id": "co-iss-n1294561143",
   "obs_surface_geometry/field_obs_surface_geometry_target_list": "Saturn",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_bundle_id": "TEST_BUNDLE",
   "obs_surface_geometry__saturn/field_obs_surface_geometry_target_center_distance1": 59.46,
@@ -2857,7 +2746,6 @@
    "grouping": "Saturn",
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_bundle_id": "TEST_BUNDLE",
   "obs_type_image/field_obs_type_image_duration": null,
   "obs_type_image/field_obs_type_image_greater_pixel_size": null,
   "obs_type_image/field_obs_type_image_image_type_id": {
@@ -2870,13 +2758,8 @@
    "grouping": null,
    "tooltip": null
   },
-  "obs_type_image/field_obs_type_image_instrument_id": "eso-la_silla.1m04",
   "obs_type_image/field_obs_type_image_lesser_pixel_size": null,
   "obs_type_image/field_obs_type_image_levels": null,
-  "obs_type_image/field_obs_type_image_opus_id": "co-iss-n1294561143",
-  "obs_wavelength/field_obs_wavelength_bundle_id": "TEST_BUNDLE",
-  "obs_wavelength/field_obs_wavelength_instrument_id": "eso-la_silla.1m04",
-  "obs_wavelength/field_obs_wavelength_opus_id": "co-iss-n1294561143",
   "obs_wavelength/field_obs_wavelength_polarization_type": {
    "aliases": null,
    "col_val": "NONE",

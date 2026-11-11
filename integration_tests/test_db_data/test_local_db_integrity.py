@@ -63,21 +63,21 @@ class DBIntegrityTest(TestCase):
         )
         self.assertEqual(list(obs), list(pds))
         img = (
-            ObsTypeImage.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsTypeImage.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         self.assertEqual(list(obs), list(img))
         wl: Any = (
-            ObsWavelength.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsWavelength.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         self.assertEqual(list(obs), list(wl))
         wl = (
-            ObsProfile.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsProfile.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         self.assertEqual(list(obs), list(wl))
 
@@ -94,9 +94,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionCassini.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionCassini.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -117,9 +117,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionGalileo.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionGalileo.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -140,9 +140,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionHubble.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionHubble.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -163,9 +163,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionNewHorizons.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionNewHorizons.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -186,9 +186,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionVoyager.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionVoyager.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -211,9 +211,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentCocirs.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentCocirs.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -236,9 +236,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentCoiss.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentCoiss.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -262,9 +262,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentCouvis.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentCouvis.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -287,9 +287,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentCovims.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentCovims.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -312,9 +312,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentGossi.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentGossi.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -337,9 +337,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentNhlorri.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentNhlorri.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -362,9 +362,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentNhmvic.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentNhmvic.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -387,9 +387,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentVgiss.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentVgiss.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))

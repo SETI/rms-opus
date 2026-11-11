@@ -1859,6 +1859,50 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                     self.logger.log('fatal', f'Failed to delete rows from "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
+    def delete_joined_rows(
+        self,
+        table_name: str,
+        join_column: str,
+        parent_table: str,
+        parent_column: str,
+        where: str,
+        where_params: Sequence[Any],
+    ) -> None:
+        """Delete the rows of a table that join a parent row a WHERE clause selects.
+
+        Renders ``DELETE c FROM <table> AS c JOIN <parent> AS p ON p.<parent_column> =
+        c.<join_column> WHERE <where>``.
+
+        Parameters:
+            table_name: The table rows are deleted from.
+            join_column: Its column naming a parent row.
+            parent_table: The parent table.
+            parent_column: The parent's column `join_column` holds.
+            where: The WHERE clause selecting parent rows, over the parent's columns
+                qualified by `JOINED_PARENT_ALIAS`. Any value it compares against must be
+                a `%s` placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        q = self.quote_identifier
+        child, parent = q('c'), q(self.JOINED_PARENT_ALIAS)
+        with self._operation('delete_joined_rows'):
+            # Every identifier is validated by quote_identifier; the caller's `where`
+            # fragment is appended verbatim, and only its values are bound.
+            cmd = (
+                f'DELETE {child} FROM {q(table_name)} AS {child} '  # nosec B608
+                f'JOIN {q(parent_table)} AS {parent} '
+                f'ON {parent}.{q(parent_column)} = {child}.{q(join_column)} WHERE {where}'
+            )
+            try:
+                self._execute(cmd, list(where_params), mutates=True)
+            except MySQLdb.Error as e:
+                if self.logger:
+                    self.logger.log('fatal', f'Failed to delete rows from "{table_name}": {e}')
+                raise ImportDBError(e) from e
+
     def general_select(
         self, cmd: str, param_list: Sequence[Any] | None = None
     ) -> Sequence[ResultRow]:

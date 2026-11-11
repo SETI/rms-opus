@@ -5,7 +5,7 @@ Cassini UVIS stellar ring occultation profiles.
 
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet
 from opus_import.obs.obs_volume_couvis_covims_occ_common import ObsVolumeUVISVIMSOccCommon
 
 
@@ -91,12 +91,6 @@ class ObsVolumeCOUVIS8xxx(ObsVolumeUVISVIMSOccCommon):
     ###############################################
     ### FIELD METHODS FOR obs_instrument_couvis ###
     ###############################################
-
-    def field_obs_instrument_couvis_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_instrument_couvis_bundle_id(self) -> StrField:
-        return self.bundle
 
     def field_obs_instrument_couvis_observation_type(self) -> MultFieldRet:
         return self._create_mult('NONE')

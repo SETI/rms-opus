@@ -8,7 +8,7 @@ outright.
 """
 
 from opus_import import config_targets
-from opus_import.obs.field_types import FloatField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_base import ObsBase, TargetInfo
 
 
@@ -70,17 +70,6 @@ class ObsProfile(ObsBase):
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
-
-    ### Don't override these ###
-
-    def field_obs_profile_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_profile_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_profile_instrument_id(self) -> StrField:
-        return self.instrument_id
 
     ################################
     ### ! Might override these ! ###

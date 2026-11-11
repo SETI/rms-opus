@@ -432,8 +432,9 @@ Model lookup by table name, and the labels behind the ``mult_`` tables.
     static type, because the class depends on the name.
 
 :func:`~opus_app.apps.tools.db_utils.query_table_for_opus_id`
-    One table's rows for one observation, filtering on ``opus_id`` for ``obs_general``
-    -- where it is the primary key -- and on the foreign key for every other table.
+    One table's rows for one observation, filtering on ``opus_id`` for ``obs_general``,
+    which holds it, and on ``obs_general``'s ``opus_id`` through the ``obs_general``
+    relation for every other table.
 
 :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult` and :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult_list`
     A mult column stores a row id, so displaying it means a second lookup, which reads
@@ -504,7 +505,10 @@ size and the checksum are columns the import wrote from a shelf.
     on-disk path, ``'raw'`` a dictionary carrying both plus the checksum, the size and
     the category. A requested product type may carry ``@<version>``; a bare type matches
     the current version only, matching the download endpoint's behavior. Every requested
-    OPUS ID appears in the result even if it has no files.
+    OPUS ID appears in the result even if it has no files. The files are read newest
+    version first, then by the product types' display order, and last by
+    ``file_number``, so the files of one product type keep the order the import wrote
+    them in.
 
 :func:`~opus_app.apps.tools.file_utils.get_pds_preview_images`
     The preview images at one or more of the four sizes, from the JSON view set the

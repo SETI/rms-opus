@@ -594,8 +594,8 @@ ObsPds -- ``obs_pds``
 :class:`opus_import.obs.obs_pds.ObsPds`
 
 What the PDS archive says about the product: its data set, its product id, and when it
-was made. ``opus_id``, ``bundle_id``, ``instrument_id`` and ``primary_filespec`` are
-derived; ``data_set_id``, ``product_id``, ``product_creation_time`` and ``primary_lid``
+was made. ``opus_id``, ``bundle_id`` and ``primary_filespec`` are derived;
+``data_set_id``, ``product_id``, ``product_creation_time`` and ``primary_lid``
 raise; ``note`` defaults to None.
 
 The two variants split on identity: a PDS3 product has a data set id and a product id
@@ -611,9 +611,8 @@ ObsTypeImage -- ``obs_type_image``
 
 :class:`opus_import.obs.obs_type_image.ObsTypeImage`
 
-An image's dimensions and its intensity levels. Everything but the three derived id
-columns defaults to None or to a null mult, because an observation that is not an image
-fills none of it. Module constants give the number of distinct intensity levels a
+An image's dimensions and its intensity levels. Every column defaults to None or to a
+null mult, because an observation that is not an image fills none of it. Module constants give the number of distinct intensity levels a
 detector of a given bit depth records: ``EIGHT_BIT_IMAGE_LEVELS``,
 ``TWELVE_BIT_IMAGE_LEVELS`` and ``SIXTEEN_BIT_IMAGE_LEVELS``.
 
@@ -641,7 +640,7 @@ ObsProfile -- ``obs_profile``
 :class:`opus_import.obs.obs_profile.ObsProfile`
 
 What an occultation profile records: its direction, its source, and its optical depth.
-Every field method beyond the standard identifiers raises here, and both PDS-version
+Every field method raises here, and both PDS-version
 variants (:class:`~opus_import.obs.obs_profile_pds3.ObsProfilePDS3` and
 :class:`~opus_import.obs.obs_profile_pds4.ObsProfilePDS4`) concretize them all with empty
 defaults -- because the table has a row for *every* observation, so a bundle that

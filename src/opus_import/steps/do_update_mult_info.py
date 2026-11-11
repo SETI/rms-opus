@@ -73,7 +73,7 @@ def update_mult_info(ctx: ImportContext) -> None:
                 table_schema = trial_schema
             mult_field_name = '_'.join(splits[n_splits:])
             for trial_column in trial_schema:
-                if trial_column['field_name'] == mult_field_name:
+                if trial_column.get('field_name') == mult_field_name:
                     table_schema, column = trial_schema, trial_column
                     break
             if column is not None:
