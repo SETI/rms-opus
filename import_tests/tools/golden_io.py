@@ -24,7 +24,10 @@ database, so what is saved is bytes and not coverage.
 The **mult-value mode** of `serialize_table` is the one used to compare two imports whose
 mult ids may differ: several import processes writing one schema give a field's new values
 ids in the order they arrive, so every mult column is written as the value its id names,
-and the ``mult`` table without its ids. No golden is written in that mode.
+the ``mult`` table without its ids, and the rows of every table sorted, since a key holding
+a mult id orders them by id. A value is written as the server's collation compares it,
+because of two values the field's unique key merges, the one stored is the one met first.
+No golden is written in that mode.
 
 `without_surrogate_ids` is a fourth, and it is deliberately not part of writing or
 reading a golden: only the re-import comparisons use it, because only a bundle deleted
@@ -43,6 +46,7 @@ from typing import TYPE_CHECKING, Any
 import MySQLdb
 
 from opus_import import import_util, mult_fields
+from opus_support import collation_key
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -345,15 +349,25 @@ _MULT_TABLE = 'mult'
 _MULT_FIELD_TABLE = 'mult_field'
 
 
+#: The columns outside the observation tables that hold a mult id: a surface geometry
+#: category's body in ``table_names``, an id of the selector's field.
+_OTHER_MULT_COLUMNS = {
+    'table_names': {'target_name': ('obs_surface_geometry_name.target_name', False)},
+}
+
+
 @functools.cache
 def _mult_columns() -> dict[str, dict[str, tuple[str, bool]]]:
-    """Return every column of a packaged observation schema that holds mult ids.
+    """Return every column of a packaged observation schema that holds mult ids, and the
+    `_OTHER_MULT_COLUMNS`.
 
     Returns:
         For each table, each such column's field (its qualified name) and whether the
         column holds a JSON list of ids rather than one.
     """
-    columns: dict[str, dict[str, tuple[str, bool]]] = {}
+    columns: dict[str, dict[str, tuple[str, bool]]] = {
+        table: dict(table_columns) for table, table_columns in _OTHER_MULT_COLUMNS.items()
+    }
     for schema_file in import_util.table_schema_files('obs_*.json'):
         table = schema_file.name.removesuffix('.json')
         for entry in json.loads(schema_file.read_text(encoding='utf-8')):
@@ -365,14 +379,20 @@ def _mult_columns() -> dict[str, dict[str, tuple[str, bool]]]:
 
 
 def _mult_values(credentials: DatabaseCredentials, schema: str) -> dict[tuple[str, int], str]:
-    """Return every mult value a schema holds, keyed by its field's name and its id."""
+    """Return every mult value a schema holds, keyed by its field's name and its id.
+
+    Each value is given as the server's collation compares it
+    (`opus_support.collation_key`): the unique key on ``(field_id, value)`` merges values
+    that differ only in case or accent, and which spelling the merged row keeps is the
+    first one met, which with several importers is the order they met them in.
+    """
     rows = query(
         credentials,
         schema,
         f'SELECT f.qualified_name, m.id, m.value FROM `{_MULT_TABLE}` m '  # nosec B608
         f'JOIN `{_MULT_FIELD_TABLE}` f ON f.field_id = m.field_id',
     )
-    return {(str(name), int(mult_id)): str(value) for name, mult_id, value in rows}
+    return {(str(name), int(mult_id)): collation_key(str(value)) for name, mult_id, value in rows}
 
 
 def _as_mult_value(values: dict[tuple[str, int], str], field: tuple[str, bool], stored: Any) -> Any:
@@ -417,13 +437,13 @@ def serialize_table(
         credentials: How to reach the server.
         schema: The schema to read.
         table: The table to read.
-        mult_values: True for the mult-value mode: every mult column of an observation
-            table holds the value its id names, and ``mult`` is written without its
-            ``id``, its rows sorted.
+        mult_values: True for the mult-value mode: every mult column holds the value its
+            id names, ``mult`` is written without its ``id``, every value of a mult field
+            is written as its `opus_support.collation_key`, and the rows are sorted.
 
     Returns:
         A header line of column names, then one line per row, ordered by primary key, or
-        sorted for ``mult`` in the mult-value mode.
+        sorted in the mult-value mode.
     """
     dropped = DERIVED_COLUMNS.get(table, frozenset()) | WALL_CLOCK_COLUMNS.get(table, frozenset())
     if mult_values and table == _MULT_TABLE:
@@ -447,13 +467,16 @@ def serialize_table(
         """Return one field as the golden writes it."""
         if column in mult_columns:
             value = _as_mult_value(values, mult_columns[column], value)
+        elif mult_values and table == _MULT_TABLE and column == 'value':
+            value = collation_key(str(value))
         return encode_value(_ordered(table, column, value))
 
     lines = [
         '\t'.join(field_text(column, value) for column, value in zip(columns, row, strict=True))
         for row in rows
     ]
-    if mult_values and table == _MULT_TABLE:
+    if mult_values:
+        # A key holding a mult id orders rows by id, which the mode leaves out.
         lines.sort()
     return '\n'.join(['\t'.join(columns), *lines]) + '\n'
 

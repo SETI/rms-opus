@@ -260,9 +260,11 @@ Several importers
     before the last claim. Every goldened table must equal the main run's in the
     mult-value mode of :func:`~import_tests.tools.golden_io.serialize_table`, which
     writes each mult column as the value its id names, since several importers number a
-    field's new values in the order they meet them. A last case plants a primary index
-    label with no row count and requires registration to refuse it, naming the volume
-    and the label, and to register nothing.
+    field's new values in the order they meet them; it writes each value as the server's
+    collation compares it and sorts every table's rows. Registering the volumes in
+    reverse must number them, and lay out their ranges, in that order. A last case
+    plants a primary index label with no row count and requires registration to refuse
+    it, naming the volume and the label, and to register nothing.
 
 What it cannot test
 -------------------

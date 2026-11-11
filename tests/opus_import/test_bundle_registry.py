@@ -451,8 +451,7 @@ def test_a_queue_importer_takes_the_largest_first_and_goes_on_past_a_failure(
 def test_a_queue_importer_given_bundles_claims_only_those(monkeypatch: pytest.MonkeyPatch) -> None:
     """The bundles named, as ``--sets`` names them, are the only ones claimed."""
     db = _RegistryDB({'import_bundle': _registry({'B_1': 'pending', 'B_2': 'pending'})})
-    args = {'join': True, 'bundles': ['B_2']}
-    succeeded, _ctx = _run(db, ['B_2'], monkeypatch, **args)
+    succeeded, _ctx = _run(db, ['B_2'], monkeypatch, join=True, bundles=['B_2'])
     assert succeeded
     assert db.states() == {'B_1': 'pending', 'B_2': 'done'}
 

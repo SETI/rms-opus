@@ -12,6 +12,7 @@ main run's, which one process imported a bundle at a time.
 from __future__ import annotations
 
 import datetime
+import difflib
 import os
 import re
 from dataclasses import dataclass
@@ -178,8 +179,11 @@ def test_three_importers_import_what_one_does(
         one = golden_io.serialize_table(db_credentials, main_run.schema, table, mult_values=True)
         three = golden_io.serialize_table(db_credentials, join_run.schema, table, mult_values=True)
         if one != three:
-            differences[table] = three[:2000]
-    assert differences == {}
+            lines = difflib.unified_diff(
+                one.splitlines(), three.splitlines(), 'one', 'three', lineterm='', n=0
+            )
+            differences[table] = '\n'.join(list(lines)[:40])
+    assert differences == {}, '\n\n'.join(f'{t}:\n{d}' for t, d in differences.items())
 
 
 def test_a_label_with_no_row_count_refuses_registration(
@@ -216,3 +220,32 @@ def test_a_label_with_no_row_count_refuses_registration(
     assert f'Bundle {bad} cannot be registered' in refused.stdout
     assert f'{bad}_index.lbl declares no row count' in refused.stdout
     assert golden_io.query(db_credentials, schema, 'SELECT COUNT(*) FROM import_bundle') == [(0,)]
+
+
+def test_registration_numbers_bundles_in_the_order_given(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """The import order, not the bundle ids' order: reversed, the numbers and ranges follow."""
+    schema = fixture_layout.schema_name(os.getpid(), 'register_order')
+    created_schemas.append(schema)
+    paths = build_run.sibling_paths(main_run, 'register_order')
+    paths.log_dir.mkdir(parents=True, exist_ok=True)
+    build_run.write_opus_config(paths, schema, db_credentials)
+    reversed_bundles = list(reversed(main_run.bundles))
+
+    registered = build_run.run_pipeline_step(
+        paths.config_file, [*build_run.REGISTER_ARGS, ','.join(reversed_bundles)]
+    )
+
+    assert registered.returncode == 0, registered.stderr[-2000:]
+    rows = golden_io.query(
+        db_credentials,
+        schema,
+        'SELECT bundle_id, first_id, id_capacity FROM import_bundle ORDER BY bundle_number',
+    )
+    assert [str(bundle) for bundle, _first, _capacity in rows] == reversed_bundles
+    assert [int(first) for _bundle, first, _capacity in rows] == [
+        sum(int(capacity) for _b, _f, capacity in rows[:index]) for index in range(len(rows))
+    ]
