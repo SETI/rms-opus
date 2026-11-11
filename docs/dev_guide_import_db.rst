@@ -405,11 +405,11 @@ The bulk load
 :meth:`~opus_import.importdb.mysql.ImportDBMySQL.bulk_load_rows` writes the observation
 rows: every ``obs_`` table's rows, ``obs_files``' among them. :class:`~opus_import.steps.do_import_index.TableRowSink` loads a table
 each time ``[import] transaction_rows`` of its rows wait, and the rest at the end of
-:func:`~opus_import.steps.do_import_index.import_one_index`, after
-:func:`~opus_import.steps.do_import_mult.write_mult_tables` has inserted the ``mult``
-rows the index added and upserted its ``mult_group`` rows. A ``mult`` row is inserted
-rather than loaded or upserted because its value must never be written over another
-row's: a value the field's unique key finds already there stops the import.
+:func:`~opus_import.steps.do_import_index.import_one_index`. Each load of ``obs_general``
+rows is followed by the bundle's ``rows_done`` in the bundle registry. The ``mult`` rows
+are not loaded: each is inserted the moment its value is met
+(:ref:`dev_guide_import_steps_do_import_mult`), because its value must never be written
+over another row's.
 
 **The text.** The rows are written as the text ``LOAD DATA`` reads by default: fields
 separated by tabs, rows ended by newlines, ``\N`` for NULL, and a backslash before each
@@ -591,16 +591,10 @@ Schemas
     file returns None, which is how a bundle ends up with only the tables its instrument
     has columns in.
 
-:func:`~opus_import.import_util.find_max_table_id`
-    The largest ``id`` the table holds, or -1 when the table does not exist or is
-    empty. A bundle is deleted before it is written, so its new rows are numbered above
-    every row that remains.
-
 :func:`~opus_import.import_util.next_table_id`
-    Hands out a table's next row id: one more than
-    :func:`~opus_import.import_util.find_max_table_id` the first time a bundle asks, one
-    more than the last after that, kept in
-    :attr:`~opus_import.context.ImportContext.max_table_id_cache`. In a pool worker it
+    Hands out the next observation id, from the bundle's registered range
+    (:attr:`~opus_import.context.ImportContext.bundle_ids`): the range's first id, then
+    one more each time. ``obs_general`` is the only table that asks. In a pool worker it
     returns a :class:`~opus_import.deferred.LocalId` instead, which the import's process
     rebases onto the real id (:ref:`dev_guide_import_steps_do_import_pool`). A ``MAX_ID``
     column takes its ids from it.

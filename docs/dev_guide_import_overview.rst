@@ -111,11 +111,13 @@ its earlier rows rather than adding a second copy, and a failed bundle is repair
 importing it again.
 
 **The bundle registry keeps an unfinished import from being finished.** Every invocation
-that imports bundles records each of them in ``import_bundle`` before the first starts,
-and moves each from ``pending`` through ``importing`` to ``done``, or to ``failed`` when
-it logged an error. ``--finalize`` refuses to run, and ``--write-schema-version``
-refuses to mark the schema ready, while any bundle there is not ``done``. An append
-resumes every bundle an earlier append left unfinished before the ones it names.
+that imports bundles registers each of them in ``import_bundle`` before the first starts,
+which fixes the range its observation ids come from, and moves each from ``pending``
+through ``importing`` to ``done``, or to ``failed`` when it logged an error.
+``--finalize`` refuses to run, and ``--write-schema-version`` refuses to mark the schema
+ready, while any bundle there is not ``done``. An append resumes every bundle an earlier
+append left ``pending`` or ``failed`` before the ones it names. The registry is also the
+queue several import processes draw from at once (``opus_import --join``).
 :ref:`dev_guide_import_steps_registry` gives the rules.
 
 The other tables are not the import's to protect. Finalization's cart and search-table
@@ -165,10 +167,10 @@ collected since they were last reported, the wall-clock of each step timed so fa
 (:attr:`~opus_import.context.ImportContext.step_timings`, which ``--timing-json``
 writes), and :attr:`~opus_import.context.ImportContext.import_has_bad_data`.
 
-Four of those are reset **per bundle**, and treating one as per run is a real bug:
-:attr:`~opus_import.context.ImportContext.max_table_id_cache`,
-:attr:`~opus_import.context.ImportContext.mult_table_cache`,
-:attr:`~opus_import.context.ImportContext.modified_mult_tables` and
+Three of those are reset **per bundle**, and treating one as per run is a real bug:
+:attr:`~opus_import.context.ImportContext.bundle_ids`, the observation ids the bundle
+hands out from its registered range,
+:attr:`~opus_import.context.ImportContext.mult_table_cache` and
 :attr:`~opus_import.context.ImportContext.bundle_has_errors`, which says whether the
 bundle being imported has logged an error, beside
 :attr:`~opus_import.context.ImportContext.import_has_bad_data`, which says it for the
@@ -416,37 +418,37 @@ database server.
 them that is the whole primary key, since such a table holds at most one row per
 observation; ``obs_files`` adds ``file_number``, the file's position among its
 observation's files; and ``obs_surface_geometry_target``, which holds one row per
-observation and body, adds ``target_name``, the body. The pipeline assigns the ids: a
-``MAX_ID`` column gets one more than the largest id used in that table so far, an
+observation and body, adds ``target_name``, the body. The pipeline assigns the ids: the
+``MAX_ID`` column, ``obs_general.id``, gets the next id of the bundle's range, an
 ``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this observation
 already produced, and ``file_number`` counts from 1 in the order the files are written.
 
-The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, the
-largest id the table holds. Each bundle is deleted before it is written, so its new rows
-are numbered above every row that remains: a bundle imported again into a finished
-schema is renumbered above the rest of the table, which is a documented consequence
-rather than an accident, and one whose rows were the highest in the table can take the
-ids its earlier rows had.
-
-The run keeps the running maximum in
-:attr:`~opus_import.context.ImportContext.max_table_id_cache` rather than querying for
-each row, and clears it per bundle. **Ids therefore depend on the order rows are
-produced in**, which is why the pipeline sorts every directory listing and every table
-name it iterates. A pool worker cannot know the running maximum, so it numbers its ids
-from zero per table within its task, and the import's process rebases them onto the
-maximum as it replays the tasks in index order; the ids are the ones the serial loop
-gives.
+**A bundle's ids come from its range in the bundle registry**
+(:ref:`dev_guide_import_steps_registry`). Registration gives each bundle a range of
+``obs_general`` ids, a hundred for each row its labels declare, the ranges ascending in
+registration order, and the bundle's observations take the range's first id and those
+after it, in the order they are produced. So ids depend only on the labels and the
+registration order, never on which process imports a bundle or when, and several
+processes can import into one schema at once. A bundle imported again keeps its range,
+and its observations their ids; one deleted and imported again is registered afresh,
+after every other bundle. Within a bundle **ids depend on the order rows are produced
+in**, which is why the pipeline sorts every directory listing and every table name it
+iterates. A pool worker numbers its ids from zero within its task, and the import's
+process rebases them onto the bundle's range as it replays the tasks in index order; the
+ids are the ones the serial loop gives.
 
 **The mult id.** A column whose value comes from a fixed set stores the id of a ``mult``
 row rather than the value itself. The column's values form one mult field, named
 ``<table>.<column>`` unless the column's schema gives a ``mult_field`` key, and every
 ``mult`` row of the field carries the field's ``field_id`` from ``mult_field``. Ids are
-numbered within a field: they start at zero, and a value not already there is given one
-more than the field's current maximum -- unless the column's schema pins its values with
-``mult_options``, in which case the ids are the ones listed and a value that is not
-among them is an error. A stored row keeps its id and its value, so renaming a value
-rewrites no observation row. A deleted row's id is free again: after finalization deletes
-a value no observation holds, a value added later can take its id.
+numbered within a field: they start at zero, and a value not already there takes the
+next id of the field's counter, ``mult_field.last_id`` -- unless the column's schema pins
+its values with ``mult_options``, in which case the ids are the ones listed and a value
+that is not among them is an error. A stored row keeps its id and its value, so renaming
+a value rewrites no observation row. The counter only goes up, so an id finalization
+deletes is never handed out again. With several processes importing at once, a field's
+new values number in the order they arrive, and may leave gaps where two processes met
+the same value; with one, they number as the serial import does.
 
 The field ids are numbered once in each database, over every mult field of the packaged
 ``obs_*.json`` schemas in order of qualified name, and a field a later release adds takes

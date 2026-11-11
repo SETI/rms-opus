@@ -238,8 +238,10 @@ partial import or a one-off report is run directly:
    * - ``opus_import``
      - The import pipeline: reads the PDS holdings and builds the OPUS database.
    * - ``opus_import_all``
-     - Runs a whole full-holdings import: every bundle set, in order, and the steps
-       that finish the database. This is what an import deploy runs.
+     - Runs a whole full-holdings import: registers every bundle set, in order, imports
+       them, and runs the steps that finish the database. Its steps also run one at a
+       time, for importing with several processes; it erases a database only with
+       ``--scorched-earth``. This is what an import deploy runs.
    * - ``opus_manage``
      - Administers the web application -- creating its tables, gathering its static
        files, checking that its configuration works, and pruning its stored searches
@@ -414,12 +416,25 @@ for the moment it started. It runs **detached**, and prints the log file it is w
 to; with ``OPUS_IMPORT_MAIL_TO`` filled in, it mails that log when it ends.
 
 A full-holdings import is **hours to days**. What it runs is ``opus_import_all``, the
-installed command: every bundle set in order -- Galileo and New Horizons first, then the
-rest roughly from the quickest to the slowest, so that a run that is going to fail on a
-small set fails early -- and finally the four steps that finish the database, the auxiliary tables, the dictionary, the
-validation and the schema version row the web application checks for
-(:ref:`user_guide_deployment_schema_version`). The order lives in the release being installed rather than in the scripts, so
-it cannot disagree with the code importing.
+installed command, in three steps. ``--prepare`` registers every bundle set in order --
+Galileo and New Horizons first, then the rest roughly from the quickest to the slowest
+-- which fixes each bundle's number and the ids its observations take. ``--join`` runs
+an importer, which imports the registered bundles, the largest first, until none is
+left. ``--finish`` runs the four steps that finish the database, the auxiliary tables,
+the dictionary, the validation and the schema version row the web application checks for
+(:ref:`user_guide_deployment_schema_version`), and refuses while any bundle is not
+done. The deploy runs all three on one computer. The order lives in the release being
+installed rather than in the scripts, so it cannot disagree with the code importing.
+
+The database is new, so nothing is erased. ``opus_import_all`` erases the OPUS tables of
+the database it is pointed at only when given ``--scorched-earth``, and asks first;
+without it, running it again after an interruption imports only the bundles that are not
+done. Several importers, on one computer or several, can share the work of one import:
+``opus_import_all --prepare``, then ``opus_import_all --join`` on each computer, each
+with a configuration naming the same database server, database and holdings, then
+``opus_import_all --finish`` once every importer has exited.
+:ref:`dev_guide_import_full_run` describes each step, and ``opus_import_all --dry-run``
+prints what the given arguments would run without running it.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
 ``==<release>`` for a particular release, omitted for the newest. Give this step and

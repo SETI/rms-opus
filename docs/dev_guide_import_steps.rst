@@ -157,42 +157,51 @@ schema first chooses after the erase.
 whether or not ``--import`` was given, because it is where the erase and the deletes
 live. In order:
 
-1. Reset :attr:`~opus_import.context.ImportContext.import_has_bad_data` and
-   :attr:`~opus_import.context.ImportContext.max_table_id_cache`, and expand the bundle
-   descriptors into a list of bundle ids.
+1. Reset :attr:`~opus_import.context.ImportContext.import_has_bad_data`, and expand the
+   bundle descriptors into a list of bundle ids.
 2. **Erase the schema**, under ``--scorched-earth``, which :mod:`opus_import.cli` has
    already refused without ``--yes``. It logs the warning
    ``** DELETING EVERY OPUS TABLE IN SCHEMA <schema> **`` and drops every table the
    import creates (:func:`~opus_import.steps.do_import_tables.delete_all_opus_tables`).
    This has to happen first, so that no ``mult`` row survives, the mult fields are
-   numbered again from 1, the row ids start again from 1, and each field's mult ids
-   start again from 0.
+   numbered again from 1, the bundles are numbered again and the first one's id range
+   starts again from 0, and each field's mult ids start again from 0.
 3. **Delete the named bundles**, under ``--delete-bundles``: each one's rows from every
    observation table, then their rows in the bundle registry
    (:func:`~opus_import.bundle_registry.unregister_bundles`). It runs on any schema
    state. A schema whose version row is this release's version and ``ready`` is set to
    ``appending`` before the first delete, as an append sets it, since the deletion changes
    a finished schema; no other state is changed.
-4. Stop here unless ``--import`` was given.
-5. **Choose the path**, as above, if :mod:`opus_import.cli` has not.
-6. **Record the bundles** in the bundle registry, creating its table first if the schema
-   lacks it (:ref:`dev_guide_import_steps_registry`). On the append path the bundles are
-   every bundle the registry holds that is not ``done``, in bundle order, followed by
-   each named bundle not among them, and the version row is then set to ``appending``;
-   on a fresh import they are the named bundles. A bundle OPUS skips is never recorded.
-7. **Import each bundle.** It is marked ``importing`` and
-   :attr:`~opus_import.context.ImportContext.bundle_has_errors` is cleared; it is deleted
-   from every observation table
-   (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) with
-   foreign key checks on, so ``cart``'s cascading foreign key removes the cart rows that
-   name its observations; it is imported through
-   :func:`~opus_import.steps.do_import.import_one_bundle` with the checks off
-   (:meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked`), which
-   validation's orphan count stands in for; and it is marked ``done``, or ``failed``
-   when it logged an error, unless ``--ignore-errors``. Deleting first is what makes
-   importing a bundle again, in the same invocation or a later one, replace it rather
-   than load a second copy. A bundle whose import fails stops the loop, leaving the ones
-   after it ``pending``, unless ``--ignore-errors``.
+4. **Return bundles to the queue**, under ``--requeue``
+   (:func:`~opus_import.steps.do_import.requeue_bundles`): every named bundle must be
+   ``failed`` or ``importing``, or nothing changes and the invocation fails; each is
+   deleted from every observation table and set ``pending``.
+5. Stop here unless ``--register-bundles``, ``--import`` or ``--join`` was given.
+6. **Choose the path**, as above, if :mod:`opus_import.cli` has not.
+7. Under ``--register-bundles``, **register the named bundles** in their order
+   (:ref:`dev_guide_import_steps_registry`) and stop. On the append path the ones already
+   registered go back to ``pending`` and the version row is set to ``appending``; on a
+   fresh import they are left as they are, so a rerun keeps what is ``done``.
+8. Under ``--join``, **import from the queue** until no bundle is ``pending``
+   (:func:`~opus_import.steps.do_import.import_from_queue`, below) and stop.
+9. **Register the bundles**, returning those already registered to ``pending``. On the
+   append path the bundles are every bundle the registry holds that is ``pending`` or
+   ``failed`` and is not named, in registration order, followed by the named bundles,
+   and the version row is then set to ``appending``; on a fresh import they are the
+   named bundles. A bundle OPUS skips is never registered.
+10. **Import each bundle.** It is marked ``importing`` and
+    :attr:`~opus_import.context.ImportContext.bundle_has_errors` is cleared; it is deleted
+    from every observation table
+    (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) with
+    foreign key checks on, so ``cart``'s cascading foreign key removes the cart rows that
+    name its observations; it is imported through
+    :func:`~opus_import.steps.do_import.import_one_bundle` with the checks off
+    (:meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked`), which
+    validation's orphan count stands in for; and it is marked ``done``, or ``failed``
+    when it logged an error, unless ``--ignore-errors``. Deleting first is what makes
+    importing a bundle again, in the same invocation or a later one, replace it rather
+    than load a second copy. A bundle whose import fails stops the loop, leaving the ones
+    after it ``pending``, unless ``--ignore-errors``.
 
 Any error at all makes the function return False once the loop ends, unless
 ``--ignore-errors``, and the invocation exits with failure. Neither path finalizes. A
@@ -200,49 +209,106 @@ failed fresh import leaves a schema with no version row and a failed append leav
 ``appending``, and a web application that loads either refuses to serve it, as both
 deploy scripts refuse to promote it.
 
+**The queue.** Under ``--join``,
+:func:`~opus_import.steps.do_import.import_from_queue` claims a bundle
+(:func:`~opus_import.bundle_registry.claim_bundle`), logs ``Claimed bundle <bundle>``,
+deletes and imports it as above, and marks it ``done``; it then claims the next, and
+logs ``No pending bundle is left to claim; this importer exits`` when none is left. A
+claim is one transaction: a locking read, through the registry's key on ``(state,
+size_estimate, bundle_number)`` scanned from its highest entry, of the first ``pending``
+row no other session holds (``FOR UPDATE SKIP LOCKED``), then the move to ``importing``.
+Under ``READ COMMITTED`` the read locks only the row it returns, so several importers
+claiming at once each take a different bundle, the largest left, and none waits for
+another. Positional bundle descriptors limit the bundles claimed. A bundle whose import
+raises or logs an error is deleted again and marked ``failed``, and the importer goes
+on; it is never claimed again, and the importer exits with failure at the end. Under the
+test-only fault ``OPUS_IMPORT_FAULT=hold_after_claim:<seconds>`` an importer sleeps
+that long after each claim commits (:ref:`the import's fault sites
+<dev_guide_testing_faults>`).
+
 :func:`~opus_import.steps.do_import.import_one_bundle` is the per-bundle driver
 described in :ref:`dev_guide_import_per_bundle`. It resets the per-bundle caches, skips
 a bundle OPUS deliberately ignores
 (:func:`~opus_import.steps.do_import_tables.opus_imports_bundle`), looks the bundle up
-in ``BUNDLE_INFO``, finds the primary index files and imports each one. Under the
+in ``BUNDLE_INFO``, takes the bundle's registered id range
+(:func:`~opus_import.bundle_registry.bundle_ids`), finds the primary index files
+(:func:`~opus_import.primary_index.locate`) and imports each one. A bundle that needs
+more observation ids than its range holds fails, the error naming the bundle, its
+capacity and the rows its labels declared. Under the
 test-only fault ``OPUS_IMPORT_FAULT=log_error:<bundle>`` it logs one error inside that
 bundle and carries on (:ref:`the import's fault sites <dev_guide_testing_faults>`).
 
 .. _dev_guide_import_steps_registry:
 
-The bundle registry: opus_import.bundle_registry
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The bundle registry: opus_import.bundle_registry and opus_import.steps.do_register
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :mod:`opus_import.bundle_registry` is the import's record of its work: one table,
-``import_bundle``, holding a row per bundle and its state
-(:ref:`dev_guide_database_schema_import_bundle`). Every invocation that imports bundles
-creates the table when it is absent, with every key its schema declares
-(:func:`~opus_import.bundle_registry.create_registry`), on both write paths, so that the
-refusals below gate a fresh import as they gate an append.
+``import_bundle``, holding a row per bundle with its number, its id range and its state
+(:ref:`dev_guide_database_schema_import_bundle`). The states are also the work queue the
+importers draw from.
+
+**Registration.** :func:`~opus_import.steps.do_register.register_bundles` registers
+bundles in the order given, which is the import order. It holds a server-wide named lock
+(``GET_LOCK`` on the name :func:`opus_import.importdb.lock_name` gives the schema and
+``register``) for its whole length, so two registrations never interleave. Under the lock
+it first creates the registry and the mult tables where the schema lacks them, since a
+table's creation commits on its own, and then, in one transaction:
+
+* adds each bundle the registry lacks, as ``pending``, with the next ``bundle_number``,
+  a ``size_estimate`` and an id range: ``id_capacity`` is a hundred times the size
+  estimate, room for a bundle that has grown and for an index row that gives several
+  observations, and ``first_id`` is where the last registered range ends, so the ranges
+  ascend in ``bundle_number`` order. A range that would pass ``obs_general.id``'s
+  largest value refuses the registration;
+* returns the bundles it holds to ``pending`` when the caller asks, which ``--import``
+  and an append's ``--register-bundles`` do;
+* numbers every mult field ``mult_field`` lacks
+  (:func:`~opus_import.mult_fields.ensure_mult_fields`) and writes the rows and groups of
+  every pinned field from its ``mult_options``
+  (:func:`~opus_import.steps.do_import_mult.register_pinned_fields`).
+
+The size estimate is the row count the bundle's primary index labels declare, read from
+the labels alone (:func:`~opus_import.primary_index.declared_rows`): ``ROWS`` in a PDS3
+label, ``<records>`` in the ``.xml`` label beside a PDS4 index, and, for a PDS4 index
+with no label, as the ones OPUS reads have, the index's own rows. A bundle OPUS imports
+with no ``BUNDLE_INFO`` entry, no primary index file, or a label declaring no row count
+refuses the whole registration, naming the bundle and the label, before anything is
+written.
+
+**Why registration order fixes every id.** A bundle's observations take ``first_id``
+and the ids after it, in the order they are computed
+(:class:`~opus_import.bundle_registry.BundleIds`), so ids depend only on the labels and
+the registration order, never on which process imports a bundle or when. A bundle
+already registered keeps its number and range, since its rows are deleted before it is
+written again; one deleted with ``--delete-bundles`` loses its row, and is registered
+afresh, after every other, when it is next imported. ``opus_import_all --prepare`` and
+``import_for_tests.sh`` register their whole list before anything is imported.
 
 A bundle moves through these states:
 
 ``pending``
-    Recorded for import and not yet started.
-    :func:`~opus_import.bundle_registry.register_bundles` sets every bundle an
-    invocation is about to import to it, adding the rows the registry does not hold.
+    Registered for import and not yet started.
 
 ``importing``
-    Being deleted and loaded.
+    Being deleted and loaded. Moving to it stamps ``started_at`` and starts
+    ``rows_done`` again, which every load of the bundle's ``obs_general`` rows advances.
 
 ``done``
-    Imported without logging an error, or under ``--ignore-errors``.
+    Imported without logging an error, or under ``--ignore-errors``. ``finished_at`` is
+    stamped.
 
 ``failed``
-    Its import failed, or logged an error.
+    Its import failed, or logged an error. ``finished_at`` is stamped.
 
-**A bundle OPUS skips is never recorded.**
+**A bundle OPUS skips is never registered.**
 :func:`~opus_import.steps.do_import_tables.opus_imports_bundle` is False exactly when
 the bundle's ``BUNDLE_INFO`` entry exists and has no instrument class (``grep -n
 "'instrument_class': None" src/opus_import/config_bundle_info.py`` lists them; the
-``GALILEO`` and ``COCIRS`` shorthands expand to some), and both the import's skip and the
-registration call it, so no row waits for an import that will never come. A bundle with
-no entry at all is recorded, and its import fails.
+``GALILEO`` and ``COCIRS`` shorthands expand to some), and both the import's skip and
+registration (:func:`~opus_import.steps.do_register.registrable_bundles`, which logs
+``Ignoring registration of <bundle>`` at debug level) call it, so no row waits for an
+import that will never come.
 
 **What a bundle's errors do.** A bundle has errors when its import fails or anything
 logs an error while it runs: every site that marks the run as having produced bad data
@@ -263,15 +329,23 @@ or remove them with ``--delete-bundles``; the invocation exits with failure and 
 version row stays as it is, so a failed append followed by its closing invocations stays
 ``appending``. :mod:`opus_import.cli` checks after the invocation's own deletes and
 import, which can finish the registry. With the table absent, or every bundle ``done``,
-neither step is refused.
+neither step is refused. ``opus_import_all --finish`` gives its own account of the same
+refusal before it runs any of its invocations.
 
-**Resuming.** A failed append leaves the schema ``appending``, the bundle it was on
-``importing`` or ``failed`` and the bundles after it ``pending``. The next import on the
-append path resumes every bundle that is not ``done`` and is not named, in bundle order,
-before the ones it names, which keep their named order, and logs the list; because each bundle is deleted before it is written, the
-rerun is clean. A fresh import resumes nothing on its own: a failed bundle is imported
-again by naming it. A failed bundle's rows stay until it is next imported, which
-deletes them first, or until ``--delete-bundles`` deletes them and its registry row.
+**The registry is the one record of an append in flight.** The invocation that names an
+append's bundles -- a plain ``--import``, or ``--register-bundles`` before several
+``--join`` importers -- sets the version row ``appending`` and those bundles
+``pending``, registering any that are new. A failed append leaves the schema
+``appending``, the bundle it was on ``importing`` or ``failed`` and the bundles after it
+``pending``. The next ``--import`` on the append path resumes every bundle that is
+``pending`` or ``failed`` and is not named, in registration order, before the ones it
+names, which keep their named order, and logs the list; because each bundle is deleted
+before it is written, the rerun is clean. A bundle left ``importing`` is resumed only
+once ``--requeue`` returns it to ``pending``, since the registry cannot tell a process
+that stopped from one still importing. A fresh import resumes nothing on its own: a
+failed bundle is imported again by naming it. A failed bundle's rows stay until it is
+next imported, which deletes them first, or until ``--delete-bundles`` deletes them and
+its registry row; a queue importer deletes them itself.
 
 ``--scorched-earth`` drops ``import_bundle`` with every other table the import creates.
 
@@ -352,9 +426,13 @@ unique one, so both copies load side by side; no import looks for them while it 
 :func:`~opus_import.steps.do_duplicate_ids.delete_duplicate_opus_ids` finds every OPUS
 ID with more than one ``obs_general`` row, **keeps the row with the highest id**, and
 deletes the others' rows from every observation table by ``obs_general_id``, children
-first. Row ids are handed out in import order, so the copy kept is the one imported
-last: a duplicate between bundles is settled in favor of the later bundle's copy, on a
-fresh import and an append alike. This step is the only place a duplicate between
+first. A bundle's ids come from its registered range and the ranges ascend in
+registration order, so the copy kept is the one from the bundle registered later, which
+on a full import is the later bundle in import order. Importing a bundle again does not
+change which copy that is, since the bundle keeps its number and range; that is why
+bundles that share OPUS ids are deleted and imported again together. The same holds on a
+fresh import and an append alike, and whatever the order several importers claim and
+finish the bundles in. This step is the only place a duplicate between
 bundles is settled, and an append invalidates it, so the ``--finalize`` after every
 append runs it again.
 
@@ -386,8 +464,8 @@ every append runs it again. It has three parts, in this order:
    the intended set of choices; the absent value the import adds to a pinned field whose
    list has none, under
    :data:`~opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted once no
-   observation holds it. A deleted id is free again: the next value the import adds to
-   the field takes the field's highest id plus one.
+   observation holds it. A deleted id is never handed out again: a new value takes the
+   next id of the field's counter, ``mult_field.last_id``, which only goes up.
 2. **Apply the overrides.**
    :func:`~opus_import.steps.do_finalize_mult.apply_mult_overrides` writes each column's
    ``mult_overrides`` over its field's stored rows, so an override wins over the label
@@ -837,11 +915,13 @@ Its functions:
 
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`
     Deletes one bundle from every observation table, every other table before
-    ``obs_general``, in chunks. First every other table loses its rows above ``obs_general``'s highest ``id``: rows of observations
-    whose ``obs_general`` rows were never loaded, which a run that stopped partway
-    through an index leaves, since each table is loaded once a transaction's worth of
-    its rows wait; the bundle's ids, handed out again from ``obs_general``'s highest,
-    would otherwise collide with them. Then the bundle's ``obs_general`` ids are read
+    ``obs_general``, in chunks. First every other table loses its rows in the bundle's
+    registered id range above the highest ``obs_general`` id in that range: rows of
+    observations whose ``obs_general`` rows were never loaded, which a run that stopped
+    partway through an index leaves, since each table is loaded once a transaction's
+    worth of its rows wait; the bundle's ids, handed out again from the start of its
+    range, would otherwise collide with them. No other bundle's rows lie in the range,
+    so an importer loading another bundle at the same time loses nothing. Then the bundle's ``obs_general`` ids are read
     ``[import] transaction_rows`` at a time through ``obs_general``'s ``bundle_id`` key,
     and for each chunk every other table's rows of those observations go in one
     statement per table that joins ``obs_general`` on ``obs_general_id``
@@ -907,12 +987,13 @@ Importing every observation one primary index file describes.
     their checks off (:ref:`dev_guide_import_steps_do_import`). An index that fails
     partway is taken back by
     :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes every
-    table's rows from the first one the sink loaded: by ``id`` in ``obs_general``, which
-    numbers its own rows, and by ``obs_general_id`` in every other table, with ``obs_general`` after the
-    tables whose rows refer to it. Ids are handed out from each table's highest and the
-    import's process is the only writer, so those are exactly the index's rows. None may
-    be left: the index's mult values are never written, so a row of it left behind would
-    hold a mult id a later bundle gives to another value.
+    table's rows from the first one the sink loaded to the end of the bundle's range: by
+    ``id`` in ``obs_general``, which numbers its own rows, and by ``obs_general_id`` in
+    every other table, with ``obs_general`` after the tables whose rows refer to it. Ids
+    are handed out in ascending order from the bundle's own range, which no other
+    process writes, so those are exactly the index's rows, and a failed index leaves
+    none. The mult values it added stay, and finalization deletes those no observation
+    holds.
 
 :func:`~opus_import.steps.do_import_index.get_opus_products_rows_for_filespec`
     The ``obs_files`` rows for one observation: one row per file of one product type at
@@ -1044,31 +1125,34 @@ opus_import.steps.do_import_mult
 
 Reading, caching and writing the ``mult`` rows that hold the enumerated values of the
 ``obs_`` columns (:ref:`dev_guide_database_schema_mult`). Its public functions:
-:func:`~opus_import.steps.do_import_mult.read_or_create_mult_table` reads one mult field
-into the run's cache, :func:`~opus_import.steps.do_import_mult.mult_table_lookup_id`
-finds an existing value's id without adding one,
+:func:`~opus_import.steps.do_import_mult.read_mult_field` reads one mult field into the
+run's cache, :func:`~opus_import.steps.do_import_mult.mult_table_lookup_id` finds an
+existing value's id without adding one,
 :func:`~opus_import.steps.do_import_mult.update_mult_table` finds or adds a value and
 returns the id an ``obs_`` column stores, and
-:func:`~opus_import.steps.do_import_mult.write_mult_tables` writes the rows the bundle
-added.
+:func:`~opus_import.steps.do_import_mult.register_pinned_fields` writes the pinned
+fields' rows for bundle registration.
 
 **Naming.** :func:`~opus_import.import_util.mult_field_name` gives a column's field
 name: the column's ``mult_field`` key when it has one, otherwise ``<table>.<column>`` in
 lower case -- ``obs_general.planet_id``. :mod:`opus_import.mult_fields` holds the
-field ids: :func:`~opus_import.mult_fields.ensure_mult_fields` creates the mult tables
-if the schema lacks them and gives every field ``mult_field`` lacks the next id, and
+field ids: :func:`~opus_import.mult_fields.ensure_mult_fields`, which bundle
+registration runs, creates the mult tables if the schema lacks them and gives every
+field ``mult_field`` lacks the next id; an import reads them
+(:func:`~opus_import.mult_fields.read_mult_fields`); and
 :func:`~opus_import.mult_fields.packaged_mult_columns` lists the columns of the packaged
 ``obs_*.json`` schemas that hold mult ids. A column holds mult ids when its
 ``pi_form_type`` is a group type and it is not marked ``put_mults_here``
 (:func:`~opus_import.mult_fields.is_mult_column`).
 
-**Caching.** Every field is read once per bundle into the context's cache, and the rows
-the bundle added are written at the end of each index file, so importing an index of a
-hundred thousand rows does not query for the same value a hundred thousand times. The
-cache lives in the import's own process: in a pool worker,
+**Caching.** Every field is read once per bundle into the context's cache, so importing
+an index of a hundred thousand rows does not query for the same value a hundred thousand
+times. No value is deleted or given another id before finalization, so a value the cache
+holds is always right, even while other importers add values to the field. The cache
+lives in the import's own process: in a pool worker,
 :func:`~opus_import.steps.do_import_mult.update_mult_table` reads and changes nothing,
 and records its arguments for the import's process to resolve
-(:ref:`dev_guide_import_steps_do_import_pool`). Three context fields track it:
+(:ref:`dev_guide_import_steps_do_import_pool`). Two context fields track it:
 
 .. list-table::
    :header-rows: 1
@@ -1082,21 +1166,22 @@ and records its arguments for the import's process to resolve
      - Each field read during this bundle, keyed by qualified name, as a
        :class:`~opus_import.steps.do_import_mult.MultFieldCache`. The returned cache
        *is* the cache: adding to it is how a value is added. Cleared per bundle.
-   * - :attr:`~opus_import.context.ImportContext.modified_mult_tables`
-     - The fields with rows or groups to write since the last write: values added, or
-       a pinned field's list adding or relabeling rows. Cleared at each write and per
-       bundle.
 
 **Reading a field.** A field's rows are read from ``mult`` and its groups from
 ``mult_group``, so a bundle sees every value the bundles before it added, on a fresh
 import and an append alike; a field with no rows yet starts the cache empty, and the
-import fills it as it meets values. A column that pins its values with ``mult_options``
-has its list laid over the stored rows
-(:func:`~opus_import.import_util.read_mult_option` reads each entry): an entry whose id
+import fills it as it meets values.
+
+**A pinned field's rows are registration's.** For a column that pins its values with
+``mult_options``, bundle registration lays the list over the stored rows
+(:func:`~opus_import.steps.do_import_mult.lay_options_over`;
+:func:`~opus_import.import_util.read_mult_option` reads each entry): an entry whose id
 is stored with the same value relabels that row, an entry neither of whose id or value
 is stored is a new row, and an entry whose id is stored under another value, or whose
 value is stored under another id, is an error, logged once a run, that leaves the stored
-row as it is.
+row as it is. It writes the rows and groups that changes, and sets the field's
+``last_id`` to the highest id it holds. No import writes a pinned field's rows, except
+the absent value below.
 
 **Keying and id assignment.** A field's cache finds a value through a dictionary keyed
 by :func:`~opus_support.collation.collation_key`, the form of the value the server's
@@ -1107,7 +1192,11 @@ not find is asked of the server (``SELECT ... WHERE field_id = %s AND value = %s
 compared by the server's own collation) before it is given an id, and the server's row
 is kept in the cache under the value's key.
 A value is stored as a string, and an absent value (None) as the empty string. A value
-the field lacks is given the field's highest id plus one, or 0 in an empty field. A
+the field lacks takes the next id of the field's counter, ``mult_field.last_id``, which
+holds the highest id handed out in the field, or -1 before the first, so a field's first
+value is 0. The id is taken in a short transaction of its own
+(:meth:`~opus_import.importdb.super.ImportDBSuper.increment_counter`, run again on a
+deadlock), which locks the counter's row for one statement and reads no ``MAX``. A
 value that would need an id above
 :data:`~opus_import.steps.do_import_mult.MAX_MULT_ID` (the largest ``smallint
 unsigned``) raises :exc:`~opus_import.steps.do_import_mult.MultIdOverflowError`, whose
@@ -1130,17 +1219,17 @@ never lands on it, and finalization deletes it once no observation holds it.
 or the schema gives it, and finalization ranks every field
 (:ref:`dev_guide_import_steps_do_finalize_mult`).
 
-**Writing.** :func:`~opus_import.steps.do_import_mult.write_mult_tables` writes every
-modified field at the end of each index file, once every row has been computed and
-before the sink loads the ``obs_`` rows still waiting; a table whose rows filled a
-transaction during the index was loaded earlier, holding ids its field gains only here.
-A new row is inserted, never upserted: a value the server already holds under another
-id makes the insert fail on the field's unique key, and the import stops with a fatal
-message naming the field and the values, rather than rewriting that row. A pinned
-field's stored row its list relabels is updated by id, its ``label``, ``pin``,
-``display`` and ``grouping`` only. Nothing here touches a row's ``disp_rank``. A bundle that is deleted leaves its values in ``mult``, where an
-observation of another bundle may hold them too; finalization deletes the ones no
-observation holds.
+**Writing.** A new value is written the moment it is met, in a second short transaction,
+and a new group with it, by an insert that leaves a group another importer wrote first
+as it is. A new row is inserted, never upserted. When the insert meets the field's
+unique key on ``(field_id, value)``, another importer stored the value first, since the
+server was asked for it just before: its row is read back and its id used, and the id
+taken is left unused, a gap in the field's ids that nothing depends on. With one importer
+no id is left unused, so a field's ids are those the serial import gives. Any other
+failure stops the import with a fatal message naming the field, the value and the id.
+Nothing here touches a row's ``disp_rank``. A bundle that is deleted leaves its values
+in ``mult``, where an observation of another bundle may hold them too; finalization
+deletes the ones no observation holds.
 
 API reference
 -------------

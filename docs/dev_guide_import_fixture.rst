@@ -167,17 +167,16 @@ The re-import path
     the *update* half of every upsert on the main run's schema, which is the documented
     re-import operational mode.
 
-    A re-import does not leave the database bit-for-bit as it was, and the comparison
-    splits in two because of it. The pipeline deletes the bundle's rows and loads them
-    again, handing out row ids from the largest present, so re-importing a bundle
-    renumbers it. Every table
+    The comparison splits in two. The pipeline deletes the bundle's rows and loads them
+    again, under ids from the bundle's registered range. Every table
     that holds none of that bundle's rows -- every mult table, and everything the
     dictionary and finalization steps write -- is therefore required to be byte-identical
     to its golden, ids included, which is what says the upsert updated the row it found
     rather than adding another. Every table that does hold them -- one whose
     ``bundle_id`` names the bundle, or whose ``obs_general_id`` names one of its
     ``obs_general`` rows -- is required to hold the same rows with the same values once
-    the two server-numbered columns, ``id`` and ``obs_general_id``, are dropped. A third assertion checks that neither half is empty,
+    the numbered columns, ``id``, ``obs_general_id`` and the registry's
+    ``bundle_number``, are dropped. A third assertion checks that neither half is empty,
     so a bundle id matching nothing cannot make both pass.
 
 Every obs function
@@ -248,6 +247,22 @@ The pool of workers
     fault site (:ref:`the import's fault sites <dev_guide_testing_faults>`), kills the
     import's process, and requires that no worker and no database session of the run
     outlive it; it reads ``/proc``, and runs on Linux only.
+
+Several importers
+    A schema of its own has the fixture's volumes registered in the main run's order,
+    and three ``opus_import --join`` processes, each with a configuration and a log
+    directory of its own, then import them at once, each holding every volume it claims
+    for a few seconds at the ``hold_after_claim`` fault site
+    (:ref:`the import's fault sites <dev_guide_testing_faults>`); the schema is then
+    finished as the main run's is. Every registry row must be a volume OPUS imports, in
+    the order given, and ``done``. The importers' logs must show the three first claims
+    within one hold of each other, every volume claimed once, and no importer exiting
+    before the last claim. Every goldened table must equal the main run's in the
+    mult-value mode of :func:`~import_tests.tools.golden_io.serialize_table`, which
+    writes each mult column as the value its id names, since several importers number a
+    field's new values in the order they meet them. A last case plants a primary index
+    label with no row count and requires registration to refuse it, naming the volume
+    and the label, and to register nothing.
 
 What it cannot test
 -------------------

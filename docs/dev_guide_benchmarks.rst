@@ -28,7 +28,7 @@ Three **scales**, each named by a file under ``benchmarks/scenarios/``:
     holdings. The same database the integration suite's API goldens are pinned to.
 
 ``complete`` (``import_complete.toml``)
-    Every bundle set, in the order ``opus_import_all`` imports them. Hours.
+    Every bundle set, in the order ``opus_import_all`` registers them. Hours.
 
 ``tests/benchmarks/test_scenarios.py`` checks that the two holdings scales' groups
 agree with the script and with :mod:`opus_import.import_all`.

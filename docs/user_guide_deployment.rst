@@ -190,7 +190,9 @@ The scripts
     release being deployed rather than under whatever is serving, and the result is an
     installation a deploy can switch to. The import itself is ``opus_import_all``, the
     installed command, so the order the bundle sets are imported in comes from the
-    release rather than from these scripts.
+    release rather than from these scripts. It registers every bundle, imports them
+    with one importer, and finishes the database; the database is new, so it erases
+    nothing.
 
     What happens to the database afterwards is what ``deploy.env`` asked for: with
     ``OPUS_DB_DUMP_DIR`` empty the import ends when the database is built, which is
@@ -347,9 +349,9 @@ what users see, so it is done deliberately.
    automated run gates on ``ERRORS.log`` being empty. A failed ``param_info`` build,
    dictionary import or validation does stop the run, before the schema is marked ready.
    :ref:`dev_guide_import_verifying` is the full check.
-3. **Compare the new database against the one being served.** Both are named before
-   anything is erased: ``opus_import_all`` names the one it is about to build, and the
-   one being served is the ``schema`` line of ``deployed/opus.toml``. Neither prints row
+3. **Compare the new database against the one being served.** The new one is named by
+   the installation ``import`` points at (``basename "$(readlink /opt/opus/import)"``),
+   and the one being served is the ``schema`` line of ``deployed/opus.toml``. Neither prints row
    counts; comparing those is a separate query you run yourself.
 4. **Exercise the new database before switching the public site to it.** The staged
    installation is a complete OPUS pointed at it, and naming its own ``opus.toml`` is
@@ -413,9 +415,43 @@ re-imported under this one instead.
 import records every bundle it takes on, and one whose import fails or logs an error is
 recorded as failed: ``--finalize`` and ``--write-schema-version`` both refuse, naming
 it, and the database stays ``appending``. Either import it again -- the next
-``opus_import --import`` takes up every unfinished bundle before the ones it names --
-or remove it with ``opus_import --delete-bundles <bundle>``, which deletes its rows and
-its record. Then run the three closing commands again.
+``opus_import --import`` takes up every failed or pending bundle before the ones it
+names -- or remove it with ``opus_import --delete-bundles <bundle>``, which deletes its
+rows and its record. Then run the three closing commands again. A bundle left
+``importing`` by an import that was killed is taken up only after
+``opus_import --requeue <bundle>`` returns it.
+
+**A bundle imported again keeps its observations' ids.** Two bundles can hold the same
+observation -- a calibrated bundle and its raw counterpart -- and the finished database
+keeps the copy from the bundle that was registered later, which on a full import is the
+later one in import order. Importing a bundle again does not change which copy that is,
+so bundles that share observations are deleted and imported again together.
+
+.. _user_guide_deployment_several_importers:
+
+Sharing a full import between processes or computers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``opus_import_all`` imports with one process unless it is run step by step. To share a
+full import between several processes, on one computer or several, first register the
+bundles, once::
+
+    OPUS_CONFIG=<config> opus_import_all --prepare --override-db-schema <database>
+
+then start ``opus_import_all --join --override-db-schema <database>`` once for each
+importer, each with a configuration naming the same database server and the same
+holdings and a log directory of its own, adding ``--sets COISS,COVIMS`` on a computer
+that holds only those bundle sets. Each importer takes the largest bundle no other has
+taken, imports it, and takes the next, until none is left. Once every importer has
+exited, finish the database once::
+
+    OPUS_CONFIG=<config> opus_import_all --finish --override-db-schema <database>
+
+``--finish`` refuses while any bundle is not done, naming each; a failed bundle, or one
+whose importer was killed, goes back to the queue with
+``opus_import_all --requeue <bundle>``, and another ``--join`` imports it. The database
+is the same whatever the number of importers, apart from the order in which a checkbox
+value new to the import is numbered.
 
 .. _user_guide_deployment_rename_mult_value:
 
