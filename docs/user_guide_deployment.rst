@@ -450,8 +450,9 @@ exited, finish the database once::
 ``--finish`` refuses while any bundle is not done, naming each; a failed bundle, or one
 whose importer was killed, goes back to the queue with
 ``opus_import_all --requeue <bundle>``, and another ``--join`` imports it. The database
-is the same whatever the number of importers, apart from the order in which a checkbox
-value new to the import is numbered.
+is the same whatever the number of importers, apart from how a checkbox value new to the
+import is numbered and, where bundles disagree about a value's spelling or label, which
+one is kept.
 
 .. _user_guide_deployment_rename_mult_value:
 

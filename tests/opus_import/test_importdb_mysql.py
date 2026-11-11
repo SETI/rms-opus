@@ -1209,3 +1209,58 @@ def test_a_named_lock_not_granted_is_an_error() -> None:
 
     with pytest.raises(ImportDBError, match='did not grant'):
         lock.__enter__()
+
+
+def test_a_conditional_update_counts_the_rows_it_changed() -> None:
+    """The condition is the WHERE clause; 0 rows changed means it did not hold."""
+    conn = _ScriptedConnection()
+    conn.rowcount = 0
+    db = _ConnectedDB(conn)
+
+    changed = db.conditional_update(
+        'import_bundle', {'state': 'done'}, '`bundle_id`=%s AND `state` IN (%s)', ['B', 'importing']
+    )
+
+    assert changed == 0
+    assert conn.executed == [
+        (
+            'UPDATE `import_bundle` SET `state`=%s WHERE `bundle_id`=%s AND `state` IN (%s)',
+            ['done', 'B', 'importing'],
+        )
+    ]
+    assert conn.commits == 1
+
+
+def test_an_expected_failure_is_neither_retried_nor_logged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A duplicate key the caller reads back is raised at once, with no fatal line."""
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', pytest.fail)
+    db = _ConnectedDB(_ScriptedConnection())
+    db.logger = _Logger()
+
+    with pytest.raises(ImportDBError):
+        db.retrying('Inserting', _failing([1062]), expected=db.is_duplicate_key_error)
+
+    assert db.logger.messages == []
+
+
+class _DyingConnection(_ScriptedConnection):
+    """A connection whose every statement after GET_LOCK fails, as a broken one does."""
+
+    def cursor(self) -> _ScriptedCursor:
+        if self.executed and self.executed[-1][0].startswith('SELECT GET_LOCK'):
+            raise MySQLdb.OperationalError(2013, 'Lost connection to MySQL server')
+        return _ScriptedCursor(self)
+
+
+def test_a_failed_release_does_not_replace_the_bodys_failure() -> None:
+    """The body's own exception reaches the caller when the release fails too."""
+    db = _ConnectedDB(_DyingConnection({'SELECT GET_LOCK': [(1,)]}))
+
+    def body() -> None:
+        with db.named_lock('opus:abc'):
+            raise RuntimeError('the body failed')
+
+    with pytest.raises(RuntimeError, match='the body failed'):
+        body()

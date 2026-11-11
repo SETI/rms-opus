@@ -15,14 +15,17 @@ import datetime
 import difflib
 import os
 import re
+import subprocess  # nosec B404
+import sys
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
 
 from import_tests.tools import build_run, fixture_layout, golden_io
-from opus_import import import_fault
-from opus_import.steps import do_import, do_import_tables
+from opus_import import import_fault, importdb
+from opus_import.steps import do_import, do_import_tables, do_register
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -249,3 +252,64 @@ def test_registration_numbers_bundles_in_the_order_given(
     assert [int(first) for _bundle, first, _capacity in rows] == [
         sum(int(capacity) for _b, _f, capacity in rows[:index]) for index in range(len(rows))
     ]
+
+
+def _waiting_for_a_lock(credentials: DatabaseCredentials, schema: str) -> bool:
+    """Return whether another session of the server is waiting in ``GET_LOCK``."""
+    rows = golden_io.query(
+        credentials,
+        schema,
+        'SELECT COUNT(*) FROM information_schema.PROCESSLIST '
+        "WHERE INFO LIKE 'SELECT GET_LOCK(%%' AND ID <> CONNECTION_ID()",
+    )
+    return int(rows[0][0]) > 0
+
+
+def test_an_importer_that_finds_nothing_waits_for_a_registration_in_progress(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """An importer started while a registration holds its lock claims what it registers.
+
+    The registration's lock is held from a connection of the test's own; the importer
+    finds no pending bundle, waits on the lock, and the test makes one bundle pending
+    before it lets go, as a registration's commit would.
+    """
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'join_waits')
+    bundle = main_run.bundles[-1]
+    lock = importdb.lock_name(copy.schema, do_register.REGISTRATION_LOCK)
+    holder = golden_io.connect(db_credentials, copy.schema)
+    try:
+        cursor = holder.cursor()
+        cursor.execute('SELECT GET_LOCK(%s, 0)', [lock])
+        assert cursor.fetchall() == ((1,),)
+        importer = subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's module
+            [sys.executable, '-m', 'opus_import', *build_run.JOIN_ARGS],
+            cwd=fixture_layout.REPO_ROOT,
+            env=build_run.run_environment(copy.paths.config_file),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        deadline = time.monotonic() + 120
+        while not _waiting_for_a_lock(db_credentials, copy.schema):
+            assert importer.poll() is None, importer.communicate()
+            assert time.monotonic() < deadline
+            time.sleep(0.5)
+        cursor.execute("UPDATE import_bundle SET state = 'pending' WHERE bundle_id = %s", [bundle])
+        holder.commit()
+        cursor.execute('SELECT RELEASE_LOCK(%s)', [lock])
+    finally:
+        holder.close()
+    stdout, stderr = importer.communicate(timeout=600)
+
+    assert importer.returncode == 0, stderr[-2000:]
+    assert f'{do_import.CLAIMED_PREFIX}{bundle}' in stdout
+    state = golden_io.query(
+        db_credentials,
+        copy.schema,
+        'SELECT state FROM import_bundle WHERE bundle_id = %s',
+        [bundle],
+    )
+    assert state == [('done',)]

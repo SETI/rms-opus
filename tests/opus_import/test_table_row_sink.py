@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 from typing import Any
 
 from opus_import import bundle_registry
@@ -36,7 +37,8 @@ class _LoadingDB:
         self, table_name: str, row: dict[str, Any], where: str, where_params: list[Any]
     ) -> None:
         """Record the bundle's progress."""
-        assert (table_name, where) == ('import_bundle', '`bundle_number`=%s')
+        assert (table_name, where) == ('import_bundle', '`bundle_number`=%s AND `started_at`=%s')
+        assert where_params[1] == _RANGE.started_at
         self.events.append(('progress', str(where_params[0]), row['rows_done']))
 
 
@@ -44,7 +46,9 @@ ORDER = ['obs_general', 'obs_surface_geometry_target', 'obs_files']
 
 
 #: The bundle's registered range: ids 10 to 99.
-_RANGE = bundle_registry.BundleRange(7, 'B_7', 1, 10, 90, 'importing')
+_RANGE = bundle_registry.BundleRange(
+    7, 'B_7', 1, 10, 90, 'importing', datetime.datetime(2026, 11, 10, 12, 0, 0)
+)
 
 
 def _sink(transaction_rows: int) -> tuple[TableRowSink, _LoadingDB]:

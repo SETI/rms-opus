@@ -735,6 +735,7 @@ class _DeletingDB:
             'first_id': first_id,
             'id_capacity': capacity,
             'state': 'importing',
+            'started_at': None,
         }
         return [tuple(row[column] for column in columns)]
 

@@ -75,6 +75,7 @@ class _Server:
         self.groups: list[dict[str, Any]] = []
         self.updates: list[tuple[str, dict[str, Any], list[Any]]] = []
         self.before_insert: Callable[[dict[str, Any]], None] | None = None
+        self.retried: list[tuple[str, Any]] = []
         self.insert_error: ImportDBError | None = None
 
     @staticmethod
@@ -97,7 +98,8 @@ class _Server:
             return [row for row in stored if _server_key(row[1]) == _server_key(params[1])]
         return stored
 
-    def retrying(self, _description: str, body: Callable[[], Any]) -> Any:
+    def retrying(self, description: str, body: Callable[[], Any], expected: Any = None) -> Any:
+        self.retried.append((description, expected))
         return body()
 
     def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
@@ -436,3 +438,21 @@ def test_a_list_s_new_presentation_updates_only_the_presentation() -> None:
     assert changes.updated_rows == [
         {'id': 0, 'value': 'A', 'label': 'Alpha', 'pin': 10, 'display': 'Y', 'grouping': None}
     ]
+
+
+def test_the_id_the_value_and_its_group_are_each_written_in_a_retried_transaction() -> None:
+    """A deadlock on any of the three writes runs that write again; a duplicate key on the
+    value's insert is expected, and read back rather than retried."""
+    ctx = _context()
+    server = _server(ctx)
+
+    _update(ctx, COLUMN, 'A', 'A', grouping='Saturn', group_pin=60)
+
+    assert [description for description, _expected in server.retried] == [
+        'Taking an id in mult field "obs_x.quality"',
+        'Inserting a value into mult field "obs_x.quality"',
+        'Inserting a group into mult field "obs_x.quality"',
+    ]
+    insert_expected = server.retried[1][1]
+    assert insert_expected is not None
+    assert insert_expected(ImportDBError('Duplicate entry'))

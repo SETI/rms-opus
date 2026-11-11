@@ -21,6 +21,7 @@ labels cannot be sized is refused, with nothing registered.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from opus_import import bundle_registry, import_util, importdb, mult_fields, primary_index
@@ -108,17 +109,48 @@ def create_registration_tables(ctx: ImportContext) -> None:
     mult_fields.create_mult_tables(ctx)
 
 
+@dataclass(frozen=True)
+class Registration:
+    """What one registration did.
+
+    Attributes:
+        bundles: The bundles OPUS imports among those given (`registrable_bundles`), in
+            order.
+        added: The ones the registry did not hold before, in order.
+    """
+
+    bundles: list[str]
+    added: list[str]
+
+
+def importing_refusal(bundle_id: str) -> str:
+    """Return the refusal of a bundle another process holds ``importing``.
+
+    Parameters:
+        bundle_id: The bundle.
+
+    Returns:
+        The message, naming the bundle and the command that returns it to the queue.
+    """
+    return (
+        f'Bundle {bundle_id} is importing in another process, so it is not imported again '
+        f'here; once that process has stopped, "opus_import --requeue {bundle_id}" returns '
+        'it to the queue'
+    )
+
+
 def register_bundles(
     ctx: ImportContext, bundle_ids: Iterable[str], *, make_pending: bool
-) -> list[str]:
+) -> Registration:
     """Register bundles in the order given, under registration's lock, in one transaction.
 
     A bundle the registry lacks is added as ``pending`` with the next number and an id
     range that starts where the last registered range ends. A bundle it holds keeps its
-    number and range; with `make_pending` it is returned to ``pending`` as well, which is
-    how an invocation that names bundles to import again marks them. The same
-    transaction numbers any mult field ``mult_field`` lacks and writes the pinned fields'
-    rows.
+    number, its range and its state, unless `make_pending`, which is how an invocation
+    that names bundles to import again marks them: a ``done`` or ``failed`` one is then
+    returned to ``pending``, and an ``importing`` one, which another process holds,
+    refuses the registration. The same transaction numbers any mult field ``mult_field``
+    lacks and writes the pinned fields' rows.
 
     Parameters:
         ctx: The import run's context, for the open database and the log.
@@ -126,11 +158,12 @@ def register_bundles(
         make_pending: Whether a bundle already registered goes back to ``pending``.
 
     Returns:
-        The bundles OPUS imports among those given (`registrable_bundles`), in order.
+        The bundles registered, and the ones added.
 
     Raises:
-        RegistrationError: If a new bundle cannot be sized, or a range would pass the
-            largest observation id; nothing is registered then.
+        RegistrationError: If a new bundle cannot be sized, a range would pass the
+            largest observation id, or, with `make_pending`, a bundle is ``importing``;
+            nothing is registered then.
     """
     db = ctx.db
     assert db is not None
@@ -139,6 +172,11 @@ def register_bundles(
         # Before the transaction: creating a table commits on its own.
         create_registration_tables(ctx)
         registered = {row.bundle_id: row for row in bundle_registry.registered_ranges(db)}
+        if make_pending:
+            for bundle_id in bundles:
+                held = registered.get(bundle_id)
+                if held is not None and held.state == bundle_registry.BUNDLE_IMPORTING:
+                    raise RegistrationError(importing_refusal(bundle_id))
         start = max((row.end for row in registered.values()), default=0)
         estimates = [
             (bundle_id, size_estimate(bundle_id))
@@ -150,8 +188,10 @@ def register_bundles(
             if new_rows:
                 db.insert_rows(BUNDLE_REGISTRY_TABLE, new_rows)
             if make_pending:
-                bundle_registry.set_pending(
-                    ctx, [bundle_id for bundle_id in bundles if bundle_id in registered]
+                bundle_registry.return_to_pending(
+                    ctx,
+                    [bundle_id for bundle_id in bundles if bundle_id in registered],
+                    (bundle_registry.BUNDLE_DONE, bundle_registry.BUNDLE_FAILED),
                 )
             do_import_mult.register_pinned_fields(ctx)
     for row in new_rows:
@@ -160,4 +200,4 @@ def register_bundles(
             f'Registered {row["bundle_id"]}: {row["size_estimate"]} rows declared, ids '
             f'{row["first_id"]} to {int(row["first_id"]) + int(row["id_capacity"]) - 1}',
         )
-    return bundles
+    return Registration(bundles, [str(row['bundle_id']) for row in new_rows])

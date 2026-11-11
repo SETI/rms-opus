@@ -221,7 +221,7 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         action='store_true',
         default=False,
         help='Register the given bundles in the bundle registry, in the order given, with '
-        'their id ranges, and import nothing; on an append also mark them pending',
+        'their id ranges, and import nothing; a bundle already registered keeps its state',
     )
     parser.add_argument(
         '--join',

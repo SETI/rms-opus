@@ -509,9 +509,7 @@ class TableRowSink:
         bundle_ids = self.ctx.bundle_ids
         if waiting and table_name == 'obs_general' and bundle_ids is not None:
             bundle_ids.rows_done += len(waiting)
-            bundle_registry.record_rows_done(
-                self.ctx, bundle_ids.range.bundle_number, bundle_ids.rows_done
-            )
+            bundle_registry.record_rows_done(self.ctx, bundle_ids.range, bundle_ids.rows_done)
 
 
 def import_index_row(

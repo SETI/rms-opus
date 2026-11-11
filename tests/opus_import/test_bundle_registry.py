@@ -9,6 +9,7 @@ state each bundle ends in.
 from __future__ import annotations
 
 import contextlib
+import datetime
 from collections.abc import Iterator
 from typing import Any
 
@@ -38,6 +39,7 @@ class _RegistryDB:
         self.tables = {} if tables is None else tables
         self.db_schema = 'opus_test'
         self.events: list[str] = []
+        self.on_lock: Any = None
 
     def table_exists(self, table_name: str) -> bool:
         """Say whether a table is held."""
@@ -97,6 +99,23 @@ class _RegistryDB:
         for existing in self._matching(table_name, where, where_params[0]):
             existing.update(row)
 
+    def conditional_update(
+        self, table_name: str, row: dict[str, Any], where: str, where_params: list[Any]
+    ) -> int:
+        """Assign `row` to the bundle the clause names if its state, and its start when
+        named, are the ones the clause expects; return how many rows changed."""
+        bundle_id, *rest = where_params
+        state_count = where.split(' IN (', 1)[1].split(')', 1)[0].count('%s')
+        states, started = rest[:state_count], rest[state_count:]
+        changed = 0
+        for existing in self._matching(table_name, '`bundle_id`=%s', bundle_id):
+            if existing['state'] in states and (
+                not started or existing.get('started_at') == started[0]
+            ):
+                existing.update(row)
+                changed += 1
+        return changed
+
     def delete_rows(self, table_name: str, where: str, where_params: list[Any]) -> None:
         """Delete the rows the clause selects."""
         doomed = self._matching(table_name, where, where_params[0])
@@ -104,9 +123,11 @@ class _RegistryDB:
 
     @contextlib.contextmanager
     def named_lock(self, name: str) -> Iterator[None]:
-        """Record the lock being held."""
+        """Record the lock being held, and run `on_lock` while it is."""
         self.events.append(f'lock {name}')
         try:
+            if self.on_lock is not None:
+                self.on_lock()
             yield
         finally:
             self.events.append('unlock')
@@ -118,7 +139,7 @@ class _RegistryDB:
         yield
         self.events.append('commit')
 
-    def retrying(self, description: str, body: Any) -> Any:
+    def retrying(self, description: str, body: Any, expected: Any = None) -> Any:
         """Run the body once, as a transaction."""
         with self.transaction():
             return body()
@@ -127,11 +148,16 @@ class _RegistryDB:
         self, table_name: str, column: str, where: str, where_params: list[Any], order_by: list[str]
     ) -> Any:
         """Return the first pending row of the ones the claim may take, highest first."""
-        state, *among = where_params
+        state, *names = where_params
+        excluded_count = where.split('NOT IN (', 1)[1].count('%s') if 'NOT IN' in where else 0
+        among = names[: len(names) - excluded_count]
+        excluded = names[len(names) - excluded_count :]
         rows = [
             row
             for row in self.tables[table_name]
-            if row['state'] == state and (not among or row['bundle_id'] in among)
+            if row['state'] == state
+            and (not among or row['bundle_id'] in among)
+            and row['bundle_id'] not in excluded
         ]
         rows.sort(key=lambda row: tuple(row[name] for name in order_by), reverse=True)
         return rows[0][column] if rows else None
@@ -165,6 +191,7 @@ def _registry(states: dict[str, str]) -> list[dict[str, Any]]:
             'first_id': (number - 1) * capacity,
             'id_capacity': capacity,
             'state': state,
+            'started_at': None,
         }
         for number, (bundle, state) in enumerate(states.items(), start=1)
     ]
@@ -305,29 +332,22 @@ def test_an_append_resumes_the_pending_and_failed_bundles_first(
         {
             SCHEMA_VERSION_TABLE: [{'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}],
             'import_bundle': _registry(
-                {
-                    'B_1': 'done',
-                    'B_7': 'pending',
-                    'B_4': 'failed',
-                    'B_5': 'importing',
-                    'B_6': 'importing',
-                }
+                {'B_1': 'done', 'B_7': 'pending', 'B_4': 'failed', 'B_6': 'importing'}
             ),
         }
     )
-    succeeded, ctx = _run(db, ['B_9', 'B_5'], monkeypatch)
+    succeeded, ctx = _run(db, ['B_9', 'B_1'], monkeypatch)
     assert succeeded
     assert ctx.import_path == do_import.IMPORT_PATH_APPEND
     assert [event for event in db.events if event.startswith('delete')] == [
         'delete B_7',
         'delete B_4',
         'delete B_9',
-        'delete B_5',
+        'delete B_1',
     ]
     assert db.states() == {
         'B_1': 'done',
         'B_4': 'done',
-        'B_5': 'done',
         'B_6': 'importing',
         'B_7': 'done',
         'B_9': 'done',
@@ -335,6 +355,108 @@ def test_an_append_resumes_the_pending_and_failed_bundles_first(
     assert db.tables[SCHEMA_VERSION_TABLE] == [
         {'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_APPENDING}
     ]
+
+
+@pytest.mark.parametrize(
+    'arguments',
+    [{}, {'do_import': False, 'delete_bundles': True}],
+    ids=['import', 'delete-bundles'],
+)
+def test_a_bundle_another_process_holds_is_refused_and_nothing_changes(
+    arguments: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``--import`` and ``--delete-bundles`` name an importing bundle: refused, naming it
+    and the requeue, before anything is deleted or moved."""
+    states = {'B_1': 'done', 'B_5': 'importing'}
+    db = _RegistryDB({'import_bundle': _registry(states)})
+    succeeded, ctx = _run(db, ['B_1', 'B_5'], monkeypatch, **arguments)
+    assert not succeeded
+    assert db.states() == states
+    assert not [event for event in db.events if event.startswith(('delete', 'load'))]
+    (message,) = ctx.logger.messages_at('fatal')
+    assert 'Bundle B_5 is importing in another process' in message
+    assert '"opus_import --requeue B_5"' in message
+
+
+def test_a_bundle_taken_after_registration_is_not_imported_twice(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The move to importing is conditional: a bundle another importer claimed between
+    this invocation's registration and its turn is left to that importer."""
+    db = _RegistryDB({'import_bundle': _registry({'B_1': 'done'})})
+    original = do_register.register_bundles
+
+    def register_then_lose(*args: Any, **kwargs: Any) -> Any:
+        registration = original(*args, **kwargs)
+        db.tables['import_bundle'][0]['state'] = 'importing'
+        return registration
+
+    monkeypatch.setattr(do_register, 'register_bundles', register_then_lose)
+    succeeded, _ctx = _run(db, ['B_1'], monkeypatch)
+    assert not succeeded
+    assert db.states() == {'B_1': 'importing'}
+    assert not [event for event in db.events if event.startswith(('delete', 'load'))]
+
+
+def test_a_stale_holder_neither_finishes_nor_deletes_a_requeued_bundle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bundle requeued and taken again while its first importer ran is left to the
+    second: the first's failure deletes nothing and moves nothing."""
+    db = _RegistryDB({'import_bundle': _registry({'B_1': 'pending'})})
+
+    def requeued_and_retaken(ctx: Any, bundle: str) -> bool:
+        db.events.append(f'load {bundle}')
+        row = db.tables['import_bundle'][0]
+        row['started_at'] = datetime.datetime(2000, 1, 1)
+        import_util.log_error(ctx, f'{bundle} went wrong')
+        return True
+
+    monkeypatch.setattr(import_util, 'yield_import_bundle_ids', lambda ctx: iter([]))
+    monkeypatch.setattr(
+        do_import_tables,
+        'delete_bundle_from_obs_tables',
+        lambda ctx, bundle: db.events.append(f'delete {bundle}'),
+    )
+    monkeypatch.setattr(do_import, 'import_one_bundle', requeued_and_retaken)
+    args = default_arguments()
+    args.join = True
+    ctx = make_context(db=db, args=args)
+    assert not do_import.do_import_steps(ctx)
+    assert db.states() == {'B_1': 'importing'}
+    assert [event for event in db.events if event.startswith(('delete', 'load'))] == [
+        'delete B_1',
+        'load B_1',
+    ]
+    assert any(
+        'was returned to the queue' in message for message in ctx.logger.messages_at('error')
+    )
+
+
+def test_an_empty_claim_waits_for_a_registration_and_claims_again(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bundle a registration commits while the first claim found nothing is claimed."""
+    db = _RegistryDB({'import_bundle': _registry({'B_1': 'done'})})
+
+    def registration_commits() -> None:
+        db.tables['import_bundle'].append({**_registry({'B_2': 'pending'})[0], 'bundle_number': 2})
+        db.on_lock = None
+
+    db.on_lock = registration_commits
+    succeeded, _ctx = _run(db, [], monkeypatch, join=True)
+    assert succeeded
+    assert db.states() == {'B_1': 'done', 'B_2': 'done'}
+    lock = importdb.lock_name('opus_test', do_register.REGISTRATION_LOCK)
+    assert db.events[:3] == ['begin', 'commit', f'lock {lock}']
+
+
+def test_a_queue_importer_honors_exclusions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``--exclude-bundles`` with no bundles named still keeps the importer off them."""
+    db = _RegistryDB({'import_bundle': _registry({'B_1': 'pending', 'B_2': 'pending'})})
+    succeeded, _ctx = _run(db, [], monkeypatch, join=True, exclude_bundles='B_2')
+    assert succeeded
+    assert db.states() == {'B_1': 'done', 'B_2': 'pending'}
 
 
 def test_registration_numbers_new_bundles_in_order_after_the_last_range(
@@ -367,23 +489,42 @@ def test_registration_numbers_new_bundles_in_order_after_the_last_range(
     ]
 
 
-def test_registration_on_an_append_returns_named_bundles_to_pending(
+def test_registration_leaves_registered_bundles_as_they_are(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The run that names the bundles of an append marks them, and the schema, for import."""
+    """On a finished schema a bundle added becomes pending and the schema appending; the
+    registered ones keep their states, importing among them."""
     db = _RegistryDB(
         {
             SCHEMA_VERSION_TABLE: [{'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}],
-            'import_bundle': _registry({'B_1': 'done', 'B_2': 'done'}),
+            'import_bundle': _registry({'B_1': 'done', 'B_2': 'done', 'B_4': 'importing'}),
         }
     )
-    succeeded, _ctx = _run(db, ['B_2', 'B_3'], monkeypatch, register_bundles=True)
+    succeeded, _ctx = _run(db, ['B_2', 'B_4', 'B_3'], monkeypatch, register_bundles=True)
     assert succeeded
-    assert db.states() == {'B_1': 'done', 'B_2': 'pending', 'B_3': 'pending'}
+    assert db.states() == {'B_1': 'done', 'B_2': 'done', 'B_4': 'importing', 'B_3': 'pending'}
     assert db.tables[SCHEMA_VERSION_TABLE] == [
         {'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_APPENDING}
     ]
     assert not [event for event in db.events if event.startswith(('delete', 'load'))]
+
+
+def test_registering_again_changes_nothing_on_a_finished_schema(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A rerun of the registration ``opus_import_all --prepare`` runs adds nothing, moves
+    no bundle, and leaves the schema ready."""
+    ready = [{'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}]
+    db = _RegistryDB(
+        {
+            SCHEMA_VERSION_TABLE: [dict(row) for row in ready],
+            'import_bundle': _registry({'B_1': 'done', 'B_2': 'done'}),
+        }
+    )
+    succeeded, _ctx = _run(db, ['B_1', 'B_2'], monkeypatch, register_bundles=True)
+    assert succeeded
+    assert db.states() == {'B_1': 'done', 'B_2': 'done'}
+    assert db.tables[SCHEMA_VERSION_TABLE] == ready
 
 
 def test_registration_refused_for_a_label_registers_nothing(
@@ -483,7 +624,7 @@ def test_an_append_with_nothing_to_import_leaves_the_schema_ready(
 ) -> None:
     """Nothing unfinished and nothing OPUS imports named: no bundle, and still ``ready``."""
     ready = [{'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}]
-    db = _RegistryDB({SCHEMA_VERSION_TABLE: list(ready), 'import_bundle': []})
+    db = _RegistryDB({SCHEMA_VERSION_TABLE: [dict(row) for row in ready], 'import_bundle': []})
     succeeded, _ctx = _run(db, named, monkeypatch)
     assert succeeded
     assert db.tables[SCHEMA_VERSION_TABLE] == ready
@@ -533,7 +674,7 @@ def test_deleting_bundles_from_a_finished_schema_unfinishes_it(
 def test_deleting_nothing_leaves_a_finished_schema_ready(monkeypatch: pytest.MonkeyPatch) -> None:
     """With no bundle named there is nothing to delete, so nothing changes."""
     ready = [{'version': SCHEMA_VERSION, 'state': SCHEMA_STATE_READY}]
-    db = _RegistryDB({SCHEMA_VERSION_TABLE: list(ready)})
+    db = _RegistryDB({SCHEMA_VERSION_TABLE: [dict(row) for row in ready]})
     succeeded, _ctx = _run(db, [], monkeypatch, do_import=False, delete_bundles=True)
     assert succeeded
     assert db.tables[SCHEMA_VERSION_TABLE] == ready

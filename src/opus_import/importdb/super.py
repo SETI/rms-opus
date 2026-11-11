@@ -400,7 +400,12 @@ class ImportDBSuper:
         """Roll back the connection's open transaction, if the driver is present."""
         self.conn.rollback()
 
-    def retrying[T](self, description: str, body: Callable[[], T]) -> T:
+    def retrying[T](
+        self,
+        description: str,
+        body: Callable[[], T],
+        expected: Callable[[BaseException], bool] | None = None,
+    ) -> T:
         """Run a transaction, running it again when the server reports a lock conflict.
 
         Each attempt runs `body` inside `transaction`. An attempt that fails with an
@@ -413,6 +418,9 @@ class ImportDBSuper:
             description: What the transaction does, for the fatal message.
             body: The transaction's statements. It may run more than once, so it reads
                 what it needs inside itself.
+            expected: Says whether a failure is one the caller handles, such as a
+                duplicate key it reads back; such a failure is raised without being
+                logged or retried. None expects none.
 
         Returns:
             What the successful attempt's `body` returned.
@@ -429,6 +437,8 @@ class ImportDBSuper:
                 with self.failures_expected(), self.transaction():
                     return body()
             except ImportDBError as e:
+                if expected is not None and expected(e):
+                    raise
                 if attempt < attempts and self.is_retryable_error(e):
                     if self.logger:
                         self.logger.log(
@@ -1241,6 +1251,27 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::update_row must be overridden')
+
+    def conditional_update(
+        self, table_name: str, row: DBRow, where: str, where_params: Sequence[Any]
+    ) -> int:
+        """Assign new values to the rows a WHERE clause selects, and count the rows changed.
+
+        Parameters:
+            table_name: The table.
+            row: The values to assign, keyed by column name.
+            where: The WHERE clause, the condition the change depends on. Any value it
+                compares against must be a `%s` placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+
+        Returns:
+            How many rows the statement changed; 0 when no row met the condition. A
+            read-only run changes nothing and returns -1.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::conditional_update must be overridden')
 
     def upsert_row(self, table_name: str, key_name: str, row: DBRow) -> None:
         """Insert one row, or update it if its key is already present.

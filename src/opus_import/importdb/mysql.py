@@ -1699,6 +1699,50 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 self._log_failure(f'Failed to update row in "{table_name}": {e}')
                 raise ImportDBError(e) from e
 
+    def conditional_update(
+        self, table_name: str, row: DBRow, where: str, where_params: Sequence[Any]
+    ) -> int:
+        """Run an ``UPDATE`` whose WHERE clause is its condition, and count the rows changed.
+
+        Parameters:
+            table_name: The table.
+            row: The values to assign, keyed by column name.
+            where: The WHERE clause. Any value it compares against must be a `%s`
+                placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+
+        Returns:
+            The rows the server reports changed; -1 in a read-only run, which sends
+            nothing.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        q = self.quote_identifier
+        names = sorted(row.keys())
+        # Identifiers are validated by quote_identifier; the caller's `where` fragment
+        # is appended verbatim, and every value is bound.
+        cmd = (
+            f'UPDATE {q(table_name)} SET '  # nosec B608
+            + ','.join(f'{q(name)}=%s' for name in names)
+            + f' WHERE {where}'
+        )
+        params = [row[name] for name in names] + list(where_params)
+        if not MYSQLDB_AVAILABLE or self.read_only:
+            self._execute(cmd, params, mutates=True)
+            return -1
+        with self._operation('conditional_update'):
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(cmd, params, cur=cur, mutates=True)
+                    changed = int(cur.rowcount)
+                if not self._in_transaction:
+                    self.conn.commit()
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to update rows in "{table_name}": {e}')
+                raise ImportDBError(e) from e
+        return changed
+
     def upsert_row(self, table_name: str, key_name: str, row: DBRow) -> None:
         """Insert one row, or update it if its key is already present.
 
@@ -2051,7 +2095,8 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
 
         Yields:
             Nothing; the body runs holding the lock, which ``RELEASE_LOCK`` frees
-            however the body ends.
+            however the body ends. When the body raises, a release that fails as well is
+            not reported, so the body's failure is the one raised.
 
         Raises:
             ImportDBError: If the server does not grant the lock.
@@ -2067,8 +2112,14 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             raise ImportDBError(message)
         try:
             yield
-        finally:
-            self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'named_lock', [name])
+        except BaseException:
+            # The body's failure is the one to report: a release that fails too, on a
+            # connection the failure broke, must not replace it, and the server frees the
+            # lock when the connection closes.
+            with self.failures_expected(), contextlib.suppress(ImportDBError):
+                self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'named_lock', [name])
+            raise
+        self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'named_lock', [name])
 
     def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
         """Add one to a counter column with ``LAST_INSERT_ID(column + 1)``, and read it back.
