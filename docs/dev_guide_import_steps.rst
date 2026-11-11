@@ -835,9 +835,9 @@ Importing every observation one primary index file describes.
     their own rows (``obs_general`` and the surface geometry name and per-target tables)
     and by ``obs_general_id`` in every other table, with ``obs_general`` after the
     tables whose rows refer to it. Ids are handed out from each table's highest and the
-    import's process is the only writer, so those are exactly the index's rows. None may be left: the index's mult values are never
-    written, so a row of it left behind would hold a mult id a later bundle gives to
-    another value.
+    import's process is the only writer, so those are exactly the index's rows. None may
+    be left: the index's mult values are never written, so a row of it left behind would
+    hold a mult id a later bundle gives to another value.
 
 :func:`~opus_import.steps.do_import_index.get_opus_products_rows_for_filespec`
     The ``obs_files`` rows for one observation: one row per file of one product type at

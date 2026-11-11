@@ -120,3 +120,15 @@ def test_a_failed_index_takes_back_what_it_loaded_children_first() -> None:
         ('load', 'obs_files', 2),
         ('load', 'obs_surface_geometry__titan', 2),
     ]
+
+
+def test_the_take_back_deletes_obs_general_last_even_when_it_loaded_after_a_child() -> None:
+    """A table with many rows per observation can load first; obs_general still goes last."""
+    sink, db = _sink(2)
+    sink.add('obs_files', {'obs_general_id': 20, 'file_number': 1}, None)
+    sink.add('obs_files', {'obs_general_id': 20, 'file_number': 2}, None)
+    sink.add('obs_general', {'id': 20}, None)
+    sink.add('obs_general', {'id': 21}, None)
+    sink.discard()
+    deletes = [event[1] for event in db.events if event[0] == 'delete']
+    assert deletes == ['obs_files', 'obs_general']

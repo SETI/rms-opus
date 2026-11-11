@@ -488,13 +488,19 @@ class TableRowSink:
         Ids are handed out from each table's highest, and the import's process is the
         only writer, so this index's rows are those from the first it loaded up: by
         ``id`` in a table that numbers its own rows, and by ``obs_general_id``, the
-        observation's id, in every other table. The tables are emptied of them in the reverse of the
-        order they were first loaded, so ``obs_general`` goes after the tables whose rows
-        refer to it.
+        observation's id, in every other table. The tables are emptied of them in the
+        reverse of the order they were first loaded, except that ``obs_general`` always
+        goes last, after every table whose rows refer to it: a table with many rows per
+        observation, such as ``obs_files``, can fill a transaction and load before
+        ``obs_general`` does.
         """
         db = self.ctx.db
         assert db is not None
-        for table_name, first_id in reversed(self.first_loaded.items()):
+        in_order = [name for name in reversed(self.first_loaded) if name != 'obs_general']
+        if 'obs_general' in self.first_loaded:
+            in_order.append('obs_general')
+        for table_name in in_order:
+            first_id = self.first_loaded[table_name]
             column = db.quote_identifier(_observation_id_column(table_name))
             db.delete_rows(table_name, f'{column} >= %s', [first_id])
         self.first_loaded.clear()
