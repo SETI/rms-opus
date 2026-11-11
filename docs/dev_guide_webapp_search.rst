@@ -271,7 +271,12 @@ Mult fields are handled inline in ``_search_select``: the user's readable labels
 looked up in the worker's copy of the field's ``mult`` rows
 (:func:`~opus_app.apps.tools.import_constants.mult_table`) to get their ids, and a
 ``GROUP`` field becomes an ``IN`` test while a ``MULTIGROUP`` field becomes an OR of JSON
-containment tests, because it holds a list.
+containment tests, because it holds a list. The surface geometry selector,
+``obs_surface_geometry_name.target_name``, is the one field whose category holds several
+rows of an observation, one per body, so its test is put as ``EXISTS (SELECT 1 FROM
+obs_surface_geometry_target AS obs_surface_geometry_name WHERE
+obs_surface_geometry_name.obs_general_id = obs_general.id AND ... IN (...))`` and asks for
+no join: a join would repeat an observation once for each selected body it has.
 
 ``_valid_regex`` is how a user's regular expression is checked: **by asking the server**,
 since OPUS runs the expression through MySQL rather than through Python, and only MySQL
@@ -332,9 +337,15 @@ The join helpers
 ----------------
 
 :func:`~opus_app.apps.search.views.add_obs_table_joins`
-    LEFT JOINs each ``obs_`` table onto ``obs_general`` on the ``obs_general_id`` it
+    LEFT JOINs each category's table onto ``obs_general`` on the ``obs_general_id`` it
     carries. **The joins are LEFT** because an observation with no row in one of those
-    tables must still appear in the result, with that table's columns null.
+    tables must still appear in the result, with that table's columns null. A category
+    is resolved by :func:`~opus_app.apps.tools.db_utils.resolve_category`, from the
+    worker's copy of ``table_names``: a table is its own category, and a surface geometry
+    category is ``obs_surface_geometry_target`` joined under the category's name, so that
+    every ``<category>.<column>`` reference reads it. A body's category,
+    ``obs_surface_geometry__<target>``, adds ``AND <category>.target_name = %s`` with the
+    body's id, so a search naming two bodies joins the table twice, once for each.
 
 :func:`~opus_app.apps.search.views.add_mult_table_joins`
     LEFT JOINs ``mult`` onto each ``obs_`` column holding a mult id, once for each
@@ -374,8 +385,8 @@ The generated models
 --------------------
 
 ``src/opus_app/apps/search/models.py`` is **machine-written** by
-``scripts/models/create_opus_models.sh`` from a populated database, and it is the largest
-Python file in the repository. Its model classes are:
+``scripts/models/create_opus_models.sh`` from a populated database. Its model classes
+are:
 
 * one per ``obs_`` table;
 * ``Mult``, ``MultField`` and ``MultGroup``, one per mult table;
@@ -389,8 +400,10 @@ Four of the generated models are read through
 
 .. py:class:: opus_app.apps.search.models.TableNames
 
-   One row per observation table: its label, whether the interface shows it
-   (``display``), and its place in the display order (``disp_order``).
+   One row per category: its label, whether the interface shows it (``display``), its
+   place in the display order (``disp_order``), and for a category that is not a table of
+   its own the table its rows are in (``physical_table``) and the surface geometry body
+   it keeps to (``target_name``).
 
 .. py:class:: opus_app.apps.search.models.Partables
 
@@ -437,6 +450,13 @@ Consequences worth knowing:
   out, naming it on the reference's landing page so that a reader who cannot find it is
   told why.
 * **A new OPUS table does not exist to the web application until this has been run.**
+  A surface geometry body an import brings is not a table: its category is rows of
+  ``table_names``, ``param_info`` and ``partables`` read through the one
+  ``ObsSurfaceGeometryTarget`` model, so it needs no regeneration.
+* ``inspectdb`` writes a composite primary key as ``CompositePrimaryKey`` and its foreign
+  key column as a ``ForeignKey`` named ``obs_general``, which the repairs above annotate,
+  as in ``ObsFiles`` and ``ObsSurfaceGeometryTarget``. The foreign keys exist only once
+  finalization has added them, so the database it runs against is a finalized one.
 * ``search_results`` is read through no model: every query joins one search's rows of
   it as a derived table, which is the reason :mod:`opus_app.apps.tools.sql_builder`
   exists.

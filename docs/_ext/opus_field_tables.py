@@ -10,7 +10,10 @@ the documentation build needs neither a database nor PDS holdings.
 The schemas hold the same ``pi_*`` metadata `opus_import.steps.do_param_info` writes
 into ``param_info``, and the category names and their order come from
 `opus_import.steps.do_table_names.build_table_names_rows`, which is what fills
-``table_names``. The remaining rules -- which columns are listed, how a linked field is
+``table_names``. Each category's fields are the entries of its schema the import gives it
+(`opus_import.surface_geometry.category_columns`): a surface geometry body's are the
+``obs_surface_geometry_target`` template's with the body's name filled in, and the
+selector category's is the template's ``target_name``. The remaining rules -- which columns are listed, how a linked field is
 labelled, and how the per-target surface geometry categories are collapsed -- follow
 `opus_app.apps.metadata.views.get_fields_info`, which is what the application renders
 the same table from.
@@ -24,8 +27,9 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, NamedTuple
 
-from opus_import import import_util
+from opus_import import import_util, surface_geometry
 from opus_import.steps.do_table_names import build_table_names_rows
+from opus_import.surface_geometry import StoredTarget
 from opus_support import get_valid_units, parse_form_type
 
 if TYPE_CHECKING:
@@ -43,15 +47,8 @@ if TYPE_CHECKING:
 #: application says.
 COLLAPSED_SURFACE_GEO_TARGET = 'saturn'
 
-#: The table the collapsed surface geometry fields are read from.
-COLLAPSED_SURFACE_GEO_TABLE = f'obs_surface_geometry__{COLLAPSED_SURFACE_GEO_TARGET}'
-
-#: Schemas that define no ``obs_`` table of their own.
-#:
-#: ``obs_surface_geometry_target`` is the template every per-target surface geometry
-#: table is made from rather than a table, and is read under
-#: `COLLAPSED_SURFACE_GEO_TABLE` instead.
-_TEMPLATE_SCHEMAS = frozenset({'obs_surface_geometry_target'})
+#: The category the collapsed surface geometry fields are read from.
+COLLAPSED_SURFACE_GEO_TABLE = surface_geometry.target_category(COLLAPSED_SURFACE_GEO_TARGET)
 
 #: The suffixes that turn a category label into the name a linked field is qualified
 #: with, as ``body_qualified_label_results`` in ``opus_app.apps.paraminfo.models``
@@ -85,33 +82,34 @@ def _packaged_obs_table_names() -> list[str]:
     """Return the ``obs_`` tables the packaged schemas define.
 
     Returns:
-        One name per ``obs_*.json`` schema that defines a table of its own, plus
-        `COLLAPSED_SURFACE_GEO_TABLE` in place of the per-target template.
+        One name per ``obs_*.json`` schema.
     """
-    names = [
+    return [
         entry.name.removesuffix('.json') for entry in import_util.table_schema_files('obs_*.json')
     ]
-    names = [name for name in names if name not in _TEMPLATE_SCHEMAS]
-    names.append(COLLAPSED_SURFACE_GEO_TABLE)
-    return names
 
 
-def _read_schema(table_name: str) -> list[dict[str, Any]]:
-    """Read one table's packaged schema, with the surface geometry target substituted.
+def _read_category_columns(table_name: str) -> list[dict[str, Any]]:
+    """Read the schema entries that describe one category's fields.
 
-    This is `opus_import.import_util.read_schema_for_table` without the parts that
-    need an import run: no configuration is read and nothing is logged.
+    This is `opus_import.surface_geometry.read_category_schema` and
+    `opus_import.surface_geometry.category_columns` without the parts that need an
+    import run: no configuration is read and nothing is logged.
 
     Parameters:
-        table_name: The table whose schema to read.
+        table_name: The category: a table, a surface geometry body's category or the
+            selector category.
 
     Returns:
-        The column definitions in the order the schema lists them.
+        The entries in the order the schema lists them.
     """
+    category = table_name
     replace: list[tuple[str, str]] = []
-    if table_name.startswith('obs_surface_geometry__'):
-        target_name = table_name.removeprefix('obs_surface_geometry__')
-        table_name = 'obs_surface_geometry_target'
+    if table_name == surface_geometry.SELECTOR_CATEGORY:
+        table_name = surface_geometry.SURFACE_GEOMETRY_TABLE
+    elif surface_geometry.is_target_category(table_name):
+        target_name = table_name.removeprefix(surface_geometry.TARGET_CATEGORY_PREFIX)
+        table_name = surface_geometry.SURFACE_GEOMETRY_TABLE
         replace = [
             ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
             ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name)),
@@ -119,8 +117,7 @@ def _read_schema(table_name: str) -> list[dict[str, Any]]:
     contents = (import_util.TABLE_SCHEMA_DIR / (table_name + '.json')).read_text(encoding='utf-8')
     for old, new in replace:
         contents = contents.replace(old, new)
-    schema: list[dict[str, Any]] = json.loads(contents)
-    return schema
+    return surface_geometry.category_columns(json.loads(contents), category)
 
 
 def _collapse_category(label: str) -> str:
@@ -233,8 +230,7 @@ def build_field_rows() -> list[FieldRow]:
     """
     table_names = _packaged_obs_table_names()
     ordered_tables = build_table_names_rows(
-        table_names.__contains__,
-        [name for name in table_names if name.startswith('obs_surface_geometry__')],
+        table_names.__contains__, [StoredTarget(0, COLLAPSED_SURFACE_GEO_TARGET)]
     )
     label_by_table = {row['table_name']: row['label'] for row in ordered_tables}
 
@@ -245,11 +241,7 @@ def build_field_rows() -> list[FieldRow]:
     by_slug: dict[str, tuple[dict[str, Any], str]] = {}
     by_old_slug: dict[str, tuple[dict[str, Any], str]] = {}
     for table_name in label_by_table:
-        columns = [
-            column
-            for column in _read_schema(table_name)
-            if column.get('pi_category_name') is not None
-        ]
+        columns = _read_category_columns(table_name)
         columns_by_table[table_name] = columns
         for column in columns:
             if column.get('pi_slug'):
@@ -257,9 +249,9 @@ def build_field_rows() -> list[FieldRow]:
             if column.get('pi_old_slug'):
                 by_old_slug.setdefault(column['pi_old_slug'], (column, table_name))
 
-    # Two tables share the label "Surface Geometry Constraints", and the guide shows
-    # their fields as one category, so the grouping is by label rather than by table.
-    # A shared category takes the display position of whichever of its tables comes
+    # Two categories share the label "Surface Geometry Constraints", and the guide shows
+    # their fields as one category, so the grouping is by label rather than by category.
+    # A shared category takes the display position of whichever of its categories comes
     # last in ParamInfo order, which is the alphabetically last category name.
     entries: dict[str, list[tuple[tuple[Any, ...], FieldRow]]] = {}
     position: dict[str, int] = {}

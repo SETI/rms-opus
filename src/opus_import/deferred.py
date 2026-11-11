@@ -146,18 +146,16 @@ class Capture:
         self.mult_count += 1
         return reference
 
-    def row(
-        self, position: tuple[Any, Any], table: str, row: dict[str, Any], target: str | None
-    ) -> None:
+    def row(self, position: tuple[Any, Any], table: str, row: dict[str, Any]) -> None:
         """Record a computed row.
 
         Parameters:
             position: The index row number and primary filespec the worker is on.
-            table: The table the row goes into.
+            table: The table the row goes into, or the surface geometry category it was
+                computed under.
             row: The row, which may hold placeholders.
-            target: The surface geometry target the row is for, or None.
         """
-        self.events.append(('row', *position, table, row, target))
+        self.events.append(('row', *position, table, row))
 
     def log(self, position: tuple[Any, Any], method: str, args: tuple[Any, ...]) -> None:
         """Record a call of one of `opus_import.context.ImportLog`'s methods.

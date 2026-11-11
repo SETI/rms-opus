@@ -205,3 +205,26 @@ def ignore_errors_run(
         extra_import_args=['--ignore-errors'],
         finalize=False,
     )
+
+
+@pytest.fixture(scope='session')
+def new_target_run(
+    tmp_path_factory: pytest.TempPathFactory,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    subprocess_coverage: None,
+) -> build_run.ImportRun:
+    """Import a fixture whose surface geometry names a body the fixture has none of.
+
+    Returns:
+        A run of the one perturbed bundle, finalized and validated, in a schema and a log
+        directory of its own.
+    """
+    root = tmp_path_factory.mktemp('mini_holdings_new_target')
+    recipe = negative_cases.load_recipe(negative_cases.NEW_TARGET_CASE)
+    overlay = negative_cases.build_overlay(recipe, root / 'overlay')
+    schema = fixture_layout.schema_name(os.getpid(), negative_cases.NEW_TARGET_CASE)
+    created_schemas.append(schema)
+    return build_run.perform_run(
+        root / 'run', schema, db_credentials, overlay=overlay, bundle_groups=[[recipe.bundle]]
+    )

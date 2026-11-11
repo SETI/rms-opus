@@ -17,18 +17,64 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from opus_import import surface_geometry
+
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
+    from opus_import.importdb.super import ImportDBSuper
+
+
+def _body_category(db: ImportDBSuper) -> str | None:
+    """Return the surface geometry body category that stands for every body's.
+
+    Every body's category describes the surface geometry table's columns the same way,
+    so the first in order of name describes them for all.
+
+    Parameters:
+        db: The open database.
+
+    Returns:
+        The first ``obs_surface_geometry__`` category ``param_info`` holds, or None when it
+        holds none, which is when the surface geometry table holds no rows.
+    """
+    q = db.quote_identifier
+    res = db.general_select(
+        f'MIN({q("category_name")}) FROM {q("param_info")} WHERE {q("category_name")} LIKE %s',
+        [surface_geometry.TARGET_CATEGORY_PREFIX.replace('_', '\\_') + '%'],
+    )
+    category = res[0][0] if res else None
+    return None if category is None else str(category)
+
+
+def _param_info_category(table_name: str, field_name: str, body_category: str | None) -> str | None:
+    """Return the ``param_info`` category a column of an ``obs_`` table is described under.
+
+    Parameters:
+        table_name: The table.
+        field_name: The column.
+        body_category: What `_body_category` returned.
+
+    Returns:
+        The table's own name, except for the surface geometry table: the selector category
+        for its ``target_name``, and `body_category` for every other column.
+    """
+    if table_name != surface_geometry.SURFACE_GEOMETRY_TABLE:
+        return table_name
+    if field_name == surface_geometry.TARGET_COLUMN:
+        return surface_geometry.SELECTOR_CATEGORY
+    return body_category
 
 
 def validate_param_info(ctx: ImportContext) -> None:
     """Report user-visible columns that ``param_info`` does not describe.
 
-    Every column of every ``obs_`` table needs a ``param_info`` row, apart from the ones
-    users never search or see: ``id``, ``timestamp``, ``obs_general_id``, the ``d_``
-    (delta) columns and any column that has one, the ``mult_`` id columns, ``opus_id``
-    outside ``obs_general``, ``bundle_id`` outside ``obs_pds``, ``instrument_id``
-    outside ``obs_general``, and everything in ``obs_files``. A column with no row is
+    Every column of every ``obs_`` table needs a ``param_info`` row, under the category
+    `_param_info_category` gives it, apart from the ones users never search or see:
+    ``id``, ``timestamp``, ``obs_general_id``, the ``d_`` (delta) columns and any column
+    that has one, the ``mult_`` id columns, ``opus_id`` outside ``obs_general``,
+    ``bundle_id`` outside ``obs_pds``, ``instrument_id`` outside ``obs_general``, and
+    everything in ``obs_files``. A surface geometry column other than ``target_name`` is
+    skipped when ``param_info`` has no body's category. A column with no row is
     reported; a column with more than one is not, since the check tests only for
     absence.
 
@@ -53,6 +99,7 @@ def validate_param_info(ctx: ImportContext) -> None:
     logger.log('debug', 'Validating param_info table')
 
     obs_table_names = sorted(db.table_names(prefix='obs_'))
+    body_category = _body_category(db)
 
     pi_table_name = 'param_info'
 
@@ -80,10 +127,13 @@ def validate_param_info(ctx: ImportContext) -> None:
                 continue
             if field_name == 'instrument_id' and obs_table_name != 'obs_general':
                 continue
+            category = _param_info_category(obs_table_name, field_name, body_category)
+            if category is None:
+                continue
             cmd = f"""
 COUNT(*) FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
 {q('name')}=%s"""
-            res = db.general_select(cmd, [obs_table_name, field_name])
+            res = db.general_select(cmd, [category, field_name])
             count = res[0][0]
             if count == 0:
                 logger.log(
@@ -128,17 +178,14 @@ def validate_nulls(ctx: ImportContext) -> None:
     Such a column can be tightened to NOT NULL in its table schema, which lets the
     database enforce what the data already satisfies. The suggestion is logged at info
     level, because it is an observation about the schema rather than a fault in the
-    data. The ``obs_surface_geometry__`` tables are skipped: they are all generated from
-    one template, so a column that happens to be full for one target says nothing about
-    the template.
+    data. The surface geometry table is counted once, over every body's rows, so a column
+    is reported only when no body's rows hold a NULL in it.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
     """
     # Look for columns in OBS tables that don't contain nulls and yet the
     # column is marked as NULLS-OK and suggest the column type be changed.
-    # We ignore obs_surface_geometry__ tables because they all come from a
-    # single template so are harder to analyze.
 
     db = ctx.db
     assert db is not None
@@ -150,8 +197,6 @@ def validate_nulls(ctx: ImportContext) -> None:
     q = db.quote_identifier
 
     for obs_table_name in obs_table_names:
-        if obs_table_name.startswith('obs_surface_geometry__'):
-            continue
         nullable = [
             column['field_name']
             for column in db.table_info(obs_table_name)
@@ -181,7 +226,9 @@ def validate_min_max_order(ctx: ImportContext) -> None:
     and a pair with no ``param_info`` row or more than one, are reported too. Longitude
     pairs are exempt: a longitude range wraps, so the low end legitimately exceeds the
     high end. A bad row is named by its OPUS ID, which a table other than
-    ``obs_general`` reads from the ``obs_general`` row it joins.
+    ``obs_general`` reads from the ``obs_general`` row it joins. A pair's ``param_info``
+    row is looked up under the category `_param_info_category` gives it, and a surface
+    geometry pair is skipped when ``param_info`` has no body's category.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -196,6 +243,7 @@ def validate_min_max_order(ctx: ImportContext) -> None:
     logger.log('debug', 'Validating MIN/MAX columns')
 
     obs_table_names = sorted(db.table_names(prefix='obs_'))
+    body_category = _body_category(db)
 
     pi_table_name = 'param_info'
 
@@ -219,10 +267,13 @@ def validate_min_max_order(ctx: ImportContext) -> None:
                 continue
 
             # Check param_info to see if this is a longitude field
+            category = _param_info_category(obs_table_name, field_name1, body_category)
+            if category is None:
+                continue
             cmd = f"""
 {q('form_type')} FROM {q(pi_table_name)} WHERE {q('category_name')}=%s AND
 {q('name')}=%s"""
-            res = db.general_select(cmd, [obs_table_name, field_name1])
+            res = db.general_select(cmd, [category, field_name1])
             if len(res) == 0:
                 logger.log(
                     'error', f'No param_info entry for "{full_obs_table_name}.{field_name1}"'

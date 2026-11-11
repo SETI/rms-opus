@@ -64,6 +64,7 @@ from opus_app.apps.tools.db_utils import (
     MYSQL_EXECUTION_TIME_EXCEEDED,
     is_deadlock_error,
     is_lock_timeout_error,
+    resolve_category,
 )
 
 if TYPE_CHECKING:
@@ -1664,8 +1665,27 @@ def _search_select(
                         ],
                         'OR',
                     )
+                category = resolve_category(cat_name)
+                if category.is_selector:
+                    # The selector's table holds one row per body an observation has
+                    # geometry for, so a join would repeat an observation once for each
+                    # selected body it has; the observation matches when any row does.
+                    mult_clause = sql_builder.exists(
+                        category.source,
+                        sql_builder.join_exprs(
+                            [
+                                sql_builder.columns_equal(
+                                    sql_builder.column('obs_general_id', cat_name),
+                                    sql_builder.column('id', 'obs_general'),
+                                ),
+                                mult_clause,
+                            ],
+                            'AND',
+                        ),
+                    )
+                else:
+                    obs_tables.add(cat_name)
                 clauses.append(mult_clause)
-                obs_tables.add(cat_name)
 
         elif form_type in settings.RANGE_FORM_TYPES:
             # This prevents range queries from getting through twice.
@@ -2223,26 +2243,38 @@ def get_longitude_query(
 
 
 def add_obs_table_joins(from_source: sql_builder.FromSource, obs_tables: Iterable[str]) -> None:
-    """LEFT JOIN each ``obs_`` table onto ``obs_general``.
+    """LEFT JOIN each category's table onto ``obs_general``, under the category's name.
 
     The joins are LEFT because an observation that has no row in one of these
-    tables must still appear in the result, with that table's columns NULL.
+    tables must still appear in the result, with that table's columns NULL. A category
+    that is not a table of its own (`opus_app.apps.tools.db_utils.resolve_category`) joins
+    its table under the category's name, so that every ``<category>.<column>`` reference
+    reads it; a surface geometry body's category adds the body's id to the condition,
+    ``AND <category>.target_name = %s``, so a search naming two bodies joins the table
+    twice. A search's constraint on the selector category is put as an ``EXISTS``
+    (`_search_select`) and never asks for its join, since several of an observation's rows
+    are in it; a results column or a sort order naming the selector's field joins it, all
+    of its rows, as any other category's.
 
     Parameters:
         from_source: The `sql_builder.FromSource` for obs_general.
-        obs_tables: The tables to join, in the order they should appear.
+        obs_tables: The categories to join, in the order they should appear.
             obs_general itself is skipped: it is the source, not a join.
+
+    Raises:
+        LookupError: If the `search` app has no model for a category's table.
     """
     for table in obs_tables:
         if table == 'obs_general':
             continue
-        from_source.add_join(
-            'LEFT',
-            table,
-            sql_builder.columns_equal(
-                sql_builder.column('id', 'obs_general'), sql_builder.column('obs_general_id', table)
-            ),
+        category = resolve_category(table)
+        condition = sql_builder.columns_equal(
+            sql_builder.column('id', 'obs_general'), sql_builder.column('obs_general_id', table)
         )
+        target_condition = category.target_condition()
+        if target_condition is not None:
+            condition = sql_builder.join_exprs([condition, target_condition], 'AND')
+        from_source.add_join('LEFT', category.source, condition)
 
 
 def add_mult_table_joins(

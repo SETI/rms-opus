@@ -88,6 +88,28 @@ class SQLBuilderExpressionTests(TestCase):
         self.assertEqual(expr.sql, '`obs_general`.`id`=`obs_pds`.`obs_general_id`')
         self.assertEqual(expr.params, [])
 
+    def test__exists_renders_its_source_and_condition_with_their_params(self) -> None:
+        "[test_sql_builder.py] exists: an aliased source, a condition naming the outer table"
+        expr = sql_builder.exists(
+            sql_builder.AliasedTable('obs_surface_geometry_target', 's'),
+            sql_builder.join_exprs(
+                [
+                    sql_builder.columns_equal(
+                        sql_builder.column('obs_general_id', 's'),
+                        sql_builder.column('id', 'obs_general'),
+                    ),
+                    sql_builder.in_values(sql_builder.column('target_name', 's'), [3, 7]),
+                ],
+                'AND',
+            ),
+        )
+        self.assertEqual(
+            expr.sql,
+            'EXISTS (SELECT 1 FROM `obs_surface_geometry_target` AS `s` WHERE '
+            '`s`.`obs_general_id`=`obs_general`.`id` AND `s`.`target_name` IN (%s,%s))',
+        )
+        self.assertEqual(expr.params, [3, 7])
+
     def test__columns_equal_rejects_a_parameter(self) -> None:
         "[test_sql_builder.py] columns_equal: a join condition never carries data"
         with self.assertRaises(ValueError):

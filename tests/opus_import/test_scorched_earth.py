@@ -44,7 +44,7 @@ _EXACT_NAMES = (
 _PREFIXED = (
     'obs_general',
     'obs_pds',
-    'obs_surface_geometry__saturn',
+    'obs_surface_geometry_target',
     'mult_field',
     'mult_group',
 )
@@ -99,7 +99,7 @@ def test_the_drop_order_follows_the_foreign_keys() -> None:
     position = {table: index for index, table in enumerate(db.dropped)}
     assert db.dropped[0] == 'schema_version'
     assert position['obs_pds'] < position['cart'] < position['obs_general']
-    assert position['obs_surface_geometry__saturn'] < position['cart']
+    assert position['obs_surface_geometry_target'] < position['cart']
     for definitions in ('definitions', 'definitions__new', 'definitions__old'):
         assert position['obs_general'] < position[definitions] < position['contexts']
     assert sorted(db.dropped[-len(_MULT_TABLES) :]) == sorted(_MULT_TABLES)

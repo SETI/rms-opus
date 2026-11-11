@@ -132,12 +132,14 @@ whose name begins ``obs_`` or ``mult_``
 (:data:`~opus_import.table_keys.KEY_FILTERED_TABLE_PREFIXES`) with **the keep set**,
 :func:`~opus_import.table_keys.create_time_keys`, exactly: the primary key, every unique
 key, every ``{"constraint": ...}`` entry (rendered raw, as always), and the keys the
-per-bundle delete reads: the ``bundle_id`` key of ``obs_general`` and of the surface
-geometry name and per-target tables, the tables it selects by ``bundle_id``
-(:func:`~opus_import.table_keys.is_bundle_keyed_table`). Every other observation table
-is keyed on ``obs_general_id``, which the delete reaches by joining ``obs_general``, so
-it is created with its primary key alone, and ``obs_pds``'s ``bundle_id`` key waits for
-finalization like any other plain key. It does so on both write paths, so a table first
+per-bundle delete reads: the ``bundle_id`` key of ``obs_general``, the one table it
+selects by ``bundle_id`` (:func:`~opus_import.table_keys.is_bundle_keyed_table`), and in
+every other observation table a plain key on ``obs_general_id`` alone where the table
+declares one. Every other observation table is reached by joining ``obs_general`` on
+``obs_general_id``, which leads its primary key -- or, in
+``obs_surface_geometry_target``, whose primary key starts with ``target_name``, the
+plain key on ``obs_general_id`` it is created with -- and ``obs_pds``'s ``bundle_id``
+key waits for finalization like any other plain key. It does so on both write paths, so a table first
 created by an append is keyed by the ``--finalize`` that follows, as every table of a
 fresh import is. ``mult_field`` and ``mult_group`` declare only a primary key and unique
 keys, so the keep set is every key they have. A table of neither kind, ``mult`` among
@@ -148,10 +150,8 @@ and ``search_results`` its keys over two columns, from the start.
 
 :func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
 tables: the declared keys the keep set leaves out, plain keys first and foreign keys
-last, plus a plain key on each foreign-key column no other key leads (the
-``obs_general_id`` of the surface geometry name and per-target tables; every other
-table's primary key leads with it), so the index each foreign key needs already
-exists when the foreign key is added.
+last, plus a plain key on each foreign-key column no other key leads, so the index each
+foreign key needs already exists when the foreign key is added.
 Finalization's ``--create-indexes`` adds what it lists
 (:ref:`dev_guide_import_steps_create_indexes`). Both read the same column entries, so
 the two can never disagree; a unit test checks that they partition the keys of every
@@ -403,8 +403,7 @@ The bulk load
 ~~~~~~~~~~~~~
 
 :meth:`~opus_import.importdb.mysql.ImportDBMySQL.bulk_load_rows` writes the observation
-rows: every ``obs_`` table's rows, the per-target surface geometry tables' and
-``obs_files``'. :class:`~opus_import.steps.do_import_index.TableRowSink` loads a table
+rows: every ``obs_`` table's rows, ``obs_files``' among them. :class:`~opus_import.steps.do_import_index.TableRowSink` loads a table
 each time ``[import] transaction_rows`` of its rows wait, and the rest at the end of
 :func:`~opus_import.steps.do_import_index.import_one_index`, after
 :func:`~opus_import.steps.do_import_mult.write_mult_tables` has inserted the ``mult``
@@ -564,8 +563,9 @@ Table names
     is title-cased afterwards.
 
 :func:`~opus_import.import_util.table_name_for_sfc_target` and :func:`~opus_import.import_util.slug_name_for_sfc_target`
-    The two forms a surface geometry target takes: the table-name suffix, and the slug
-    the web application's search parameters embed. The slug form carries a warning about
+    The two forms a surface geometry target takes: the suffix of its category's name,
+    ``obs_surface_geometry__<target>``, and the slug the web application's search
+    parameters embed. The slug form carries a warning about
     the front end; see :ref:`dev_guide_import_obs_target_template`.
 
 Schemas
@@ -583,9 +583,11 @@ Schemas
     is what lets an installed OPUS find them without a checkout.
 
 :func:`~opus_import.import_util.read_schema_for_table`
-    Reads and parses one schema, matching the table's name without regard to case. It is
-    the only place the ``<TARGET>``/``<SLUGTARGET>`` substitution happens, and the
-    substitution is plain text applied before the JSON is parsed. A name with no schema
+    Reads and parses one schema, matching the table's name without regard to case. A
+    surface geometry body's category reads as the ``obs_surface_geometry_target``
+    template with the body filled in: it is the only place the
+    ``<TARGET>``/``<SLUGTARGET>`` substitution happens, and the substitution is plain
+    text applied before the JSON is parsed. A name with no schema
     file returns None, which is how a bundle ends up with only the tables its instrument
     has columns in.
 

@@ -3,7 +3,6 @@
 from typing import Any
 from unittest import TestCase
 
-from django.apps import apps
 from django.db import connection
 from django.db.models import Count, QuerySet
 
@@ -26,8 +25,7 @@ from opus_app.apps.search.models import (
     ObsMissionVoyager,
     ObsPds,
     ObsProfile,
-    ObsSurfaceGeometryMimas,
-    ObsSurfaceGeometryName,
+    ObsSurfaceGeometryTarget,
     ObsTypeImage,
     ObsWavelength,
     Partables,
@@ -432,50 +430,48 @@ class DBIntegrityTest(TestCase):
         cursor.close()
         self.assertEqual(result[0], 0)
 
-    def test__all_sfc_geo_models_should_have_same_fields_as_each_other(self) -> None:
-        """DB Integrity: all surface geometry tables have same fields
-        Find all surface geo models by inspecting the param_info table and
-        check that they each have the same parameters defined in the
-        Django models.
+    def test__every_surface_geometry_body_has_its_category_rows(self) -> None:
+        """DB Integrity: each body the surface geometry table holds has its category rows
+        Every distinct target_name of obs_surface_geometry_target has a table_names row
+        naming the table and the body, a partables row revealing that category, and the
+        template's param_info rows under it, as many as every other body's.
         """
-        # Mimas sets the standard template
-        expected_fields = sorted(ObsSurfaceGeometryMimas.__dict__)
-        param_info = ParamInfo.objects.filter(category_name__contains='surface_geometry__')
-        all_category_names = sorted({p.category_name for p in param_info})
-        for cat_name in all_category_names:
-            model_name = cat_name.title().replace('_', '')
-            print(f'Working on {model_name}')
-            model = apps.get_model('search', model_name)
-            fields = sorted(model.__dict__)
-            print(f'Found {len(fields)} fields expected {len(expected_fields)}')
-            self.assertEqual(expected_fields, fields)
+        targets = set(ObsSurfaceGeometryTarget.objects.values_list('target_name', flat=True))
+        categories = {
+            row.target_name: row.table_name
+            for row in TableNames.objects.filter(physical_table='obs_surface_geometry_target')
+            if row.target_name is not None
+        }
+        self.assertEqual(set(categories), targets)
+        partables = set(
+            Partables.objects.filter(trigger_tab='obs_surface_geometry_name').values_list(
+                'partable', flat=True
+            )
+        )
+        self.assertEqual(partables, set(categories.values()))
+        field_counts = {
+            row['category_name']: row['fields']
+            for row in ParamInfo.objects.filter(category_name__in=categories.values())
+            .values('category_name')
+            .annotate(fields=Count('id'))
+        }
+        self.assertEqual(set(field_counts), set(categories.values()))
+        self.assertEqual(len(set(field_counts.values())), 1)
 
-    def test__partables_has_all_surface_geo_tables(self) -> None:
-        """DB Integrity: partables table has an entry for each surface_geo table"""
-        count_partables = (
-            Partables.objects.filter(partable__contains='surface_geometry__')
-            .values('partable')
-            .distinct()
-            .count()
+    def test__the_selector_category_reads_every_row_of_the_surface_geometry_table(self) -> None:
+        """DB Integrity: the selector category names the table and no body"""
+        row = TableNames.objects.get(table_name='obs_surface_geometry_name')
+        self.assertEqual(
+            (row.physical_table, row.target_name), ('obs_surface_geometry_target', None)
         )
-        count_surface_geo = ObsSurfaceGeometryName.objects.values('target_name').distinct().count()
-        self.assertEqual(count_partables, count_surface_geo)
-
-    def test__tablenames_has_all_surface_geo_tables(self) -> None:
-        """DB Integrity: table_names table has an entry for each surface_geo table"""
-        count_partables = (
-            Partables.objects.filter(partable__contains='surface_geometry__')
-            .values('partable')
-            .distinct()
-            .count()
+        self.assertEqual(
+            list(
+                ParamInfo.objects.filter(category_name='obs_surface_geometry_name').values_list(
+                    'name', 'slug'
+                )
+            ),
+            [('target_name', 'surfacegeometrytargetname')],
         )
-        count_tablenames = (
-            TableNames.objects.filter(table_name__contains='surface_geometry__')
-            .values('table_name')
-            .distinct()
-            .count()
-        )
-        self.assertEqual(count_partables, count_tablenames)
 
     def test__planets_properly_ordered(self) -> None:
         "DB Integrity: planets are properly ordered by their rank"

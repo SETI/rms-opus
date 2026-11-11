@@ -1,10 +1,12 @@
 """Perturb the fixture on the way into a run, for the cases that must go wrong.
 
-A negative case is a hand-authored recipe naming one edit to one index row: which
-registered type's volume, which row, which column, and what to write into it. Naming the
-type rather than a bundle id is what lets the recipe follow the recorder's choice of
-representative instead of going stale the day that choice changes, and the edit is
-applied to a copy in a scratch overlay -- the checked-in fixture is never touched.
+A negative case is a hand-authored recipe naming one edit to one of a volume's metadata
+tables: which registered type's volume, and either one row and column of its primary
+index and what to write into it, or one body of a surface geometry summary and the body
+to rename it to. Naming the type rather than a bundle id is what lets the recipe follow
+the recorder's choice of representative instead of going stale the day that choice
+changes, and the edit is applied to a copy in a scratch overlay -- the checked-in fixture
+is never touched.
 
 The result is an overlay tree `import_tests.tools.build_run` copies over the built
 holdings once it is complete, so a case perturbs the run and nothing else.
@@ -30,6 +32,7 @@ _COLUMN_BLOCK_RE = re.compile(
 #: one it is also its recipe's file name.
 DUPLICATE_ID_CASE = 'dupid'
 IGNORE_ERRORS_CASE = 'ignore_errors'
+NEW_TARGET_CASE = 'new_target'
 
 #: The registered type whose volume is imported twice in one invocation, which would put
 #: two copies of every OPUS id in the observation tables if the second import did not
@@ -37,12 +40,19 @@ IGNORE_ERRORS_CASE = 'ignore_errors'
 #: observations.
 DUPLICATE_ID_INSTRUMENT_CLASS = 'ObsVolumeGO0xxx'
 
-#: What a recipe can ask for: overwrite one column of one row, which is how an unknown
-#: value is put where the import has to decide what to do with it. The replacement is
+#: What a recipe can ask for. `SET_COLUMN` overwrites one column of one row of the primary
+#: index, which is how an unknown value is put where the import has to decide what to do
+#: with it. `RENAME_BODY` renames every row of one body in one surface geometry summary,
+#: which is how a body the fixture has no geometry for gains some. Either replacement is
 #: padded to the column's own width, so every field after it stays where the label says
 #: it is.
 SET_COLUMN = 'set_column'
-OPERATIONS = (SET_COLUMN,)
+RENAME_BODY = 'rename_body'
+OPERATIONS = (SET_COLUMN, RENAME_BODY)
+
+#: The fields every recipe holds, and the further fields each operation needs.
+_REQUIRED_FIELDS = {'instrument_class', 'operation', 'column', 'value'}
+_OPERATION_FIELDS = {SET_COLUMN: {'row'}, RENAME_BODY: {'summary', 'body'}}
 
 
 @dataclass(frozen=True)
@@ -53,12 +63,16 @@ class Recipe:
         name: The case's name, which is also its schema suffix.
         instrument_class: The registered type whose fixture volume is perturbed.
         bundle: The fixture bundle that type is represented by.
-        label: The primary index label in the fixture, before the edit.
+        label: The label of the table edited in the fixture, before the edit: the primary
+            index for `SET_COLUMN`, the summary for `RENAME_BODY`.
         table: The table file beside it.
-        operation: `SET_COLUMN`.
-        row: The zero-based row of the fixture's subsetted table to edit.
+        operation: `SET_COLUMN` or `RENAME_BODY`.
         column: The column to overwrite.
         value: The text to write into it.
+        row: For `SET_COLUMN`, the zero-based row of the fixture's subsetted table to
+            edit; None otherwise.
+        body: For `RENAME_BODY`, the body whose rows are renamed to `value`; None
+            otherwise.
     """
 
     name: str
@@ -67,9 +81,10 @@ class Recipe:
     label: Path
     table: Path
     operation: str
-    row: int
-    column: str | None
-    value: str | None
+    column: str
+    value: str
+    row: int | None = None
+    body: str | None = None
 
 
 def _fixture_index_files(bundle: str) -> tuple[Path, Path]:
@@ -97,6 +112,27 @@ def _fixture_index_files(bundle: str) -> tuple[Path, Path]:
             if table.is_file():
                 return label, table
     raise ValueError(f'The fixture holds no PDS3 primary index for {bundle}')
+
+
+def _fixture_summary_files(bundle: str, summary: str) -> tuple[Path, Path]:
+    """Return the fixture's label and table of one of a bundle's summaries.
+
+    Parameters:
+        bundle: The bundle id.
+        summary: What the summary's file name ends in after the bundle id, such as
+            ``moon_summary``.
+
+    Returns:
+        The label and the table beside it.
+
+    Raises:
+        ValueError: If the fixture holds no such summary for that bundle.
+    """
+    for label in sorted(fixture_layout.PDS3_METADATA.glob(f'*/{bundle}/{bundle}_{summary}.lbl')):
+        table = label.with_suffix('.tab')
+        if table.is_file():
+            return label, table
+    raise ValueError(f'The fixture holds no {summary} for {bundle}')
 
 
 def bundle_for_class(instrument_class: str) -> str:
@@ -142,14 +178,18 @@ def load_recipe(name: str) -> Recipe:
             continue
         key, _, value = line.partition('\t')
         fields[key.strip()] = value
-    missing = {'instrument_class', 'operation', 'row'} - set(fields)
+    operation = fields.get('operation')
+    if operation is not None and operation not in OPERATIONS:
+        raise ValueError(f'{path.name} names an unknown operation: {operation}')
+    missing = (_REQUIRED_FIELDS | _OPERATION_FIELDS.get(operation or '', set())) - set(fields)
     if len(missing) > 0:
         raise ValueError(f'{path.name} is missing {sorted(missing)}')
-    operation = fields['operation']
-    if operation not in OPERATIONS:
-        raise ValueError(f'{path.name} names an unknown operation: {operation}')
+    assert operation is not None
     bundle = bundle_for_class(fields['instrument_class'])
-    label, table = _fixture_index_files(bundle)
+    if operation == RENAME_BODY:
+        label, table = _fixture_summary_files(bundle, fields['summary'])
+    else:
+        label, table = _fixture_index_files(bundle)
     return Recipe(
         name=name,
         instrument_class=fields['instrument_class'],
@@ -157,9 +197,10 @@ def load_recipe(name: str) -> Recipe:
         label=label,
         table=table,
         operation=operation,
-        row=int(fields['row']),
-        column=fields.get('column'),
-        value=fields.get('value'),
+        column=fields['column'],
+        value=fields['value'],
+        row=int(fields['row']) if 'row' in fields else None,
+        body=fields.get('body'),
     )
 
 
@@ -221,22 +262,18 @@ def _edited_table(recipe: Recipe) -> bytes:
         recipe: The case's recipe.
 
     Returns:
-        The table with the edit applied.
+        The table with the edit applied: for `SET_COLUMN` to the recipe's row, and for
+        `RENAME_BODY` to every row whose column holds the recipe's body.
 
     Raises:
-        ValueError: If the row is past the end of the table, or the replacement value is
-            wider than the column it goes in -- which would shift every field after it.
+        ValueError: If the row is past the end of the table, no row holds the body, or
+            the replacement value is wider than the column it goes in -- which would
+            shift every field after it.
     """
     label_bytes = recipe.label.read_bytes()
     record_bytes = table_subsets.read_record_bytes(label_bytes)
     data = bytearray(recipe.table.read_bytes())
     total = len(data) // record_bytes
-    if recipe.row >= total:
-        raise ValueError(f'Row {recipe.row} is past the end of a {total}-row table')
-    start = recipe.row * record_bytes
-
-    assert recipe.column is not None
-    assert recipe.value is not None
     offset, width = _column_span(recipe.label, recipe.column)
     replacement = recipe.value.encode('ascii')
     if len(replacement) > width:
@@ -244,7 +281,27 @@ def _edited_table(recipe: Recipe) -> bytes:
             f'"{recipe.value}" does not fit in the {width}-byte column {recipe.column}'
         )
     replacement = replacement.ljust(width)
-    data[start + offset : start + offset + width] = replacement
+
+    if recipe.operation == RENAME_BODY:
+        assert recipe.body is not None
+        rows = [
+            row
+            for row in range(total)
+            if bytes(data[row * record_bytes + offset : row * record_bytes + offset + width])
+            .decode('ascii')
+            .strip()
+            == recipe.body
+        ]
+        if len(rows) == 0:
+            raise ValueError(f'No row of {recipe.table.name} holds the body {recipe.body}')
+    else:
+        assert recipe.row is not None
+        if recipe.row >= total:
+            raise ValueError(f'Row {recipe.row} is past the end of a {total}-row table')
+        rows = [recipe.row]
+    for row in rows:
+        start = row * record_bytes + offset
+        data[start : start + width] = replacement
     return bytes(data)
 
 

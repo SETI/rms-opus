@@ -579,7 +579,7 @@ def mult_field_name(table_name: str, field_name: str, schema_entry: dict[str, An
 
 
 def encode_target_name(target_name: str) -> str:
-    """Return a target name in the form a surface geometry table name uses.
+    """Return a target name in the form a surface geometry category name uses.
 
     Parameters:
         target_name: The target name as a PDS label spells it.
@@ -596,7 +596,7 @@ def encode_target_name(target_name: str) -> str:
 
 
 def decode_target_name(target_name: str) -> str:
-    """Return the target name an encoded surface geometry table name was made from.
+    """Return the target name an encoded surface geometry category name was made from.
 
     Parameters:
         target_name: The encoded name.
@@ -611,7 +611,7 @@ def decode_target_name(target_name: str) -> str:
 
 
 def table_name_for_sfc_target(target_name: str) -> str:
-    """Return the encoded target name a surface geometry table is named for.
+    """Return the encoded target name a surface geometry category is named for.
 
     Parameters:
         target_name: The target name as a PDS label spells it.
@@ -670,9 +670,13 @@ def read_schema_for_table(
 ) -> TableSchema | None:
     """Read the packaged JSON schema that defines one OPUS table.
 
+    A surface geometry category, ``obs_surface_geometry__<target>``, reads as the
+    ``obs_surface_geometry_target`` template with the target's name in its labels and
+    slugs.
+
     Parameters:
         ctx: The import run's context, for the logger.
-        table_name: The table, matched without regard to case.
+        table_name: The table or category, matched without regard to case.
         replace: Text substitutions to apply to the schema before parsing it, as
             ``(from, to)`` pairs.
 
@@ -713,12 +717,11 @@ def read_schema_for_existing_table(ctx: ImportContext, table_name: str) -> Table
 
     Parameters:
         ctx: The import run's context, for the logger.
-        table_name: The table's raw name, such as ``obs_instrument_coiss``,
-            ``obs_surface_geometry__titan`` or ``mult_field``.
+        table_name: The table's raw name, such as ``obs_instrument_coiss`` or
+            ``mult_field``.
 
     Returns:
-        The table's own schema, or the surface geometry template with the target filled
-        in; None for a table no packaged schema describes.
+        The table's own schema; None for a table no packaged schema describes.
     """
     return read_schema_for_table(ctx, table_name)
 

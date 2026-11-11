@@ -57,15 +57,10 @@ def _schema_for(table: str) -> list[dict[str, Any]]:
         table: The table's name.
 
     Returns:
-        Its schema file's entries, the template standing for the per-target surface
-        geometry tables.
+        Its schema file's entries.
     """
-    if table.startswith('obs_surface_geometry__'):
-        name = 'obs_surface_geometry_target'
-    else:
-        name = table
     schema: list[dict[str, Any]] = json.loads(
-        (_SCHEMA_DIR / f'{name}.json').read_text(encoding='utf-8')
+        (_SCHEMA_DIR / f'{table}.json').read_text(encoding='utf-8')
     )
     return schema
 

@@ -5,8 +5,12 @@ belongs in the search form, and what the data dictionary calls it. The web appli
 reads nothing else to decide what the search form contains, so a column that has no
 ``param_info`` row is invisible to users no matter what the import wrote into it.
 
-The rows are derived from the packaged table schemas of the ``obs_`` tables,
-which is why this step has to run after the import rather than alongside it. The table is
+The rows are derived from the packaged table schemas of the ``obs_`` tables and from the
+surface geometry bodies the import wrote, which is why this step has to run after the
+import rather than alongside it. Each surface geometry body's category,
+``obs_surface_geometry__<target>``, gets the ``obs_surface_geometry_target`` template's
+rows with the body's name in their labels and slugs, and the selector category,
+``obs_surface_geometry_name``, the template's ``target_name`` row. The table is
 built beside the live one and swapped in (`opus_import.table_swap`), so the step can run
 on a schema that is being served.
 """
@@ -17,17 +21,19 @@ import json
 from typing import TYPE_CHECKING, Any
 
 import opus_support
-from opus_import import import_util, table_swap
+from opus_import import import_util, surface_geometry, table_swap
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
 
 
 def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
-    """Fill an empty ``param_info`` table from the ``obs_`` tables' schemas.
+    """Fill an empty ``param_info`` table from the categories' schemas.
 
-    Every column of every ``obs_`` table that carries a ``pi_category_name``
-    contributes one row. A column's ``pi_ranges`` names an entry in the packaged
+    The categories are the ``obs_`` tables and the surface geometry categories
+    (`opus_import.surface_geometry.category_names`), taken in order of name. Every entry
+    of a category's schema whose ``pi_category_name`` is the category contributes one
+    row. An entry's ``pi_ranges`` names an entry in the packaged
     ``param_info_ranges.json``, which is stored as JSON text in the row.
 
     Parameters:
@@ -50,8 +56,11 @@ def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
 
     logger.log('info', f'Filling {new_table}')
 
-    # The obs_ tables that exist determine what goes into param_info
-    table_names = db.table_names(prefix='obs_')
+    # The obs_ tables that exist, and the bodies the surface geometry table holds,
+    # determine what goes into param_info
+    categories = surface_geometry.category_names(
+        list(db.table_names(prefix='obs_')), surface_geometry.stored_targets(ctx)
+    )
 
     # read json file for ranges info
     ranges_file = import_util.TABLE_SCHEMA_DIR / 'param_info_ranges.json'
@@ -64,15 +73,12 @@ def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
         raise
 
     rows: list[dict[str, Any]] = []
-    for table_name in table_names:
-        table_schema = import_util.read_schema_for_table(ctx, table_name)
+    for category_name in categories:
+        table_schema = surface_geometry.read_category_schema(ctx, category_name)
         if table_schema is None:
-            logger.log('error', f'Unable to read table schema for "{table_name}"')
+            logger.log('error', f'Unable to read table schema for "{category_name}"')
             return False
-        for column in table_schema:
-            category_name = column.get('pi_category_name', None)
-            if category_name is None:
-                continue
+        for column in surface_geometry.category_columns(table_schema, category_name):
             field_name = column.get('field_name', None)
             form_type_str = column.get('pi_form_type', None)
             (_form_type, _form_type_format, form_type_unit_id) = opus_support.parse_form_type(

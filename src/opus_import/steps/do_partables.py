@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from opus_import import config_data, import_util, table_swap
+from opus_import import config_data, import_util, surface_geometry, table_swap
 from opus_import.steps.do_import_mult import mult_table_lookup_id
 
 if TYPE_CHECKING:
@@ -51,7 +51,9 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
 
     One row per mission, per instrument and per instrument host, each keyed by the
     mult id of the corresponding ``obs_general`` value, plus one per surface
-    geometry target keyed by the target name. An HST instrument points at the Hubble
+    geometry body the surface geometry table holds
+    (`opus_import.surface_geometry.stored_targets`), keyed by the body's name and
+    revealing the body's category. An HST instrument points at the Hubble
     mission table, because HST keeps its columns there rather than in an instrument
     table of its own.
 
@@ -143,20 +145,18 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
     # }
     # rows.append(entry)
 
-    surface_geo_table_names = db.table_names(prefix='obs_surface_geometry__')
-    for table_name in sorted(surface_geo_table_names):
-        target_name = table_name.replace('obs_surface_geometry__', '')
-        target_name = import_util.decode_target_name(target_name).upper()
+    for target in surface_geometry.stored_targets(ctx):
+        target_name = import_util.decode_target_name(target.encoded_name).upper()
         # For surface_geometry targets, we don't find the mult id for the target name
         # but instead put the target name string directly in the partable. This is
         # because get_triggered_tables compares the user search string against the
         # partable trigger_val directly instead of doing a database search like it does
         # for other types of triggered tables.
         entry = {
-            'trigger_tab': 'obs_surface_geometry_name',
-            'trigger_col': 'target_name',
+            'trigger_tab': surface_geometry.SELECTOR_CATEGORY,
+            'trigger_col': surface_geometry.TARGET_COLUMN,
             'trigger_val': target_name,
-            'partable': table_name,
+            'partable': surface_geometry.target_category(target.encoded_name),
         }
         rows.append(entry)
 

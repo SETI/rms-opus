@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING, Any
 
 import pdsfile
 
-from opus_import import import_util
+from opus_import import import_util, surface_geometry
 from opus_import.deferred import Capture, DeferredJson, Event, LocalId, MultRef
 from opus_import.import_fault import InjectedImportFaultError, import_fault_argument
 from opus_import.importdb.super import close_inherited_connections
@@ -62,9 +62,9 @@ PR_SET_PDEATHSIG = 1
 #: process holds a bounded number of results rather than a whole index's.
 TASKS_AHEAD_PER_WORKER = 2
 
-#: Where a computed row goes -- its table, the row, and the surface geometry target it is
-#: for, or None.
-RowEmitter = Callable[[str, dict[str, Any], str | None], None]
+#: Where a computed row goes -- its table, or the surface geometry category it was computed
+#: under, and the row.
+RowEmitter = Callable[[str, dict[str, Any]], None]
 
 #: Computes one index row, given the context, what the index's rows are computed from, the
 #: row's position, and where its rows go.
@@ -254,10 +254,10 @@ def _compute_task(bounds: tuple[int, int]) -> TaskResult:
     capture = Capture()
     ctx.capture = capture
 
-    def record_row(table_name: str, row: dict[str, Any], target: str | None) -> None:
+    def record_row(table_name: str, row: dict[str, Any]) -> None:
         """Record one computed row at the position the worker is on."""
         position = (ctx.current_index_row_number, ctx.current_primary_filespec)
-        capture.row(position, table_name, row, target)
+        capture.row(position, table_name, row)
 
     try:
         for index_row_num in range(*bounds):
@@ -316,8 +316,8 @@ def _replay(
         ctx.current_index_row_number = row_number
         ctx.current_primary_filespec = filespec
         if kind == 'row':
-            table_name, row, target = event[3:]
-            emit(table_name, {key: resolve(value) for key, value in row.items()}, target)
+            table_name, row = event[3:]
+            emit(table_name, {key: resolve(value) for key, value in row.items()})
         elif kind == 'mult':
             table_name, field_name, values = event[3:]
             column = columns.find(table_name, field_name)
@@ -350,29 +350,25 @@ class _ColumnLookup:
         """Index the index's table schemas.
 
         Parameters:
-            table_schemas: Each table's column definitions; every surface geometry
-                target's table shares the ``<TARGET>`` template's.
+            table_schemas: Each table's column definitions.
         """
         self._schemas = table_schemas
-        self._template = next((name for name in table_schemas if '<TARGET>' in name), None)
         self._found: dict[tuple[str, str], dict[str, Any]] = {}
 
     def find(self, table_name: str, field_name: str) -> dict[str, Any]:
         """Return a column's definition.
 
         Parameters:
-            table_name: The table, or a surface geometry target's table.
+            table_name: The table, or the surface geometry category the column's row was
+                computed under.
             field_name: The column.
 
         Returns:
-            The column's definition, from the table's schema or the template's.
+            The column's definition, from the schema of the table the row is written to.
         """
         key = (table_name, field_name)
         if key not in self._found:
-            schema_name = table_name
-            if table_name not in self._schemas:
-                assert self._template is not None, table_name
-                schema_name = self._template
+            schema_name = surface_geometry.physical_table(table_name)
             self._found[key] = next(
                 column
                 for column in self._schemas[schema_name]

@@ -396,7 +396,8 @@ class AliasedTable:
     """A table joined under an alias, rendered `<table> AS <alias>`.
 
     The ``mult`` table is joined once for each mult column a statement reads, each time
-    under its own alias.
+    under its own alias, and the surface geometry table once for each surface geometry
+    category, under the category's name.
     """
 
     table: str
@@ -417,6 +418,27 @@ def _render_source(source: TableSource) -> tuple[str, list[Any]]:
     if isinstance(source, str):
         return quote_identifier(source), []
     return source.render()
+
+
+def exists(source: TableSource, where: Expr) -> Expr:
+    """Return a condition that holds when a source has a row meeting another condition.
+
+    Renders `EXISTS (SELECT 1 FROM <source> WHERE <where>)`. A condition on a table that
+    can hold several rows of one observation is put this way rather than as a join, which
+    would repeat the observation once for each row it matched.
+
+    Parameters:
+        source: The table, or other `TableSource`, the rows are looked for in.
+        where: The condition a row must meet, which may name the outer statement's
+            tables.
+    """
+    source_sql, params = _render_source(source)
+    # The source is rendered from identifiers validated by quote_identifier, and the
+    # condition's own values are %s placeholders in where.params.
+    return Expr(
+        f'EXISTS (SELECT 1 FROM {source_sql} WHERE {where.sql})',  # nosec B608
+        params + list(where.params),
+    )
 
 
 @dataclass(frozen=True)

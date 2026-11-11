@@ -211,10 +211,11 @@ This is the bundle recipe plus the configuration data that says the instrument e
 Adding a surface geometry target
 --------------------------------
 
-There is nothing to do. The ``obs_surface_geometry__<TARGET>`` tables are created from
-one template as the targets are discovered, their ``table_names`` rows and their
-``partables`` triggers are generated from the tables that exist, and their search
-parameters are named by the slug form of the target name.
+There is nothing to do. Every target's surface geometry is rows of one table,
+``obs_surface_geometry_target``, and finalization writes each target's category -- its
+``table_names`` row, its ``partables`` trigger and its ``param_info`` rows -- from the
+targets that table holds, with search parameters named by the slug form of the target
+name. No table is created, no model is generated and nothing is redeployed.
 :ref:`dev_guide_import_obs_target_template` describes the mechanism.
 
 The one thing that is **not** automatic: adding the target to ``TARGET_NAME_INFO`` if it

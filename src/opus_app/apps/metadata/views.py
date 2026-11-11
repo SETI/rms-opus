@@ -33,7 +33,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
@@ -71,6 +70,7 @@ from opus_app.apps.tools.app_utils import (
     json_response,
     strip_numeric_suffix,
 )
+from opus_app.apps.tools.db_utils import TARGET_COLUMN, resolve_category
 from opus_app.apps.tools.import_constants import get_table_name, mult_table
 from opus_support import (
     format_unit_value,
@@ -326,13 +326,11 @@ def api_get_mult_counts(
             return HttpResponseServerError(http500_internal_error(request))
 
         try:
-            table_model = apps.get_model('search', table_name.title().replace('_', ''))
+            category = resolve_category(table_name)
         except LookupError:  # pragma: no cover - configuration error
-            log.exception(
-                'api_get_mult_counts: Could not get_model for %r',
-                table_name.title().replace('_', ''),
-            )
+            log.exception('api_get_mult_counts: Could not get_model for category %r', table_name)
             return HttpResponseServerError(http500_internal_error(request))
+        table_model = category.model
 
         cursor = connection.cursor()
 
@@ -349,7 +347,7 @@ def api_get_mult_counts(
             counted_column = sql_builder.column('_mult_val_', table_name)
             select.add_column(counted_column)
             select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
-            select.add_from(table_name).add_join(
+            select.add_from(category.source).add_join(
                 'INNER',
                 sql_builder.JSONTable(
                     source_column=param_column, value_column='_mult_val_', alias=table_name
@@ -359,7 +357,10 @@ def api_get_mult_counts(
             counted_column = param_column
             select.add_column(counted_column)
             select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
-            select.add_from(table_name)
+            select.add_from(category.source)
+        target_condition = category.target_condition()
+        if target_condition is not None:
+            select.add_where(target_condition)
 
         search_id = get_search_id(selections, extras, api_code=api_code)
 
@@ -546,13 +547,11 @@ def api_get_range_endpoints(
     (form_type, form_type_format, form_type_unit_id) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
     try:
-        table_model = apps.get_model('search', table_name.title().replace('_', ''))
+        category = resolve_category(table_name)
     except LookupError:  # pragma: no cover - configuration error
-        log.exception(
-            'api_get_range_endpoints: Could not get_model for %r',
-            table_name.title().replace('_', ''),
-        )
+        log.exception('api_get_range_endpoints: Could not get_model for category %r', table_name)
         return HttpResponseServerError(http500_internal_error(request))
+    table_model = category.model
 
     param_no_num = strip_numeric_suffix(param_name)
     param1 = param_no_num + '1'
@@ -624,18 +623,26 @@ def api_get_range_endpoints(
             min_column = sql_builder.column(table_model._meta.get_field(param1).column, table_name)
             max_column = sql_builder.column(table_model._meta.get_field(param2).column, table_name)
 
+            # A surface geometry body's category is the body's rows of a table every
+            # body shares, so each statement keeps to them.
+            target_condition = category.target_condition()
+
             endpoints_select = sql_builder.Select()
             endpoints_select.add_column(sql_builder.min_of(min_column))
             endpoints_select.add_column(sql_builder.max_of(max_column))
-            endpoints_select.add_from(table_name)
+            endpoints_select.add_from(category.source)
             endpoints_select.add_from(results_source)
             endpoints_select.add_where(cache_join)
+            if target_condition is not None:
+                endpoints_select.add_where(target_condition)
 
             nulls_select = sql_builder.Select()
             nulls_select.add_column(sql_builder.count_star())
-            nulls_select.add_from(table_name)
+            nulls_select.add_from(category.source)
             nulls_select.add_from(results_source)
             nulls_select.add_where(cache_join)
+            if target_condition is not None:
+                nulls_select.add_where(target_condition)
             nulls_select.add_where(sql_builder.is_null(min_column))
             nulls_select.add_where(sql_builder.is_null(max_column))
 
@@ -651,13 +658,16 @@ def api_get_range_endpoints(
             cursor.execute(sql, params)
             range_endpoints['nulls'] = cursor.fetchone()[0]
         else:
-            # There are no selections, so hit the whole table
-            results = table_model.objects
-            range_endpoints = results.all().aggregate(min=Min(param1), max=Max(param2))
+            # There are no selections, so hit the whole category: the whole table, or a
+            # surface geometry body's rows of the table every body shares
+            results = table_model.objects.all()
+            if category.target_name is not None:
+                results = results.filter(**{TARGET_COLUMN: category.target_name})
+            range_endpoints = results.aggregate(min=Min(param1), max=Max(param2))
             # For a single-column range param1 and param2 are the same column, so
             # this is one condition rather than two.
             null_filter = {f'{param1}__isnull': True, f'{param2}__isnull': True}
-            range_endpoints['nulls'] = results.all().filter(**null_filter).count()
+            range_endpoints['nulls'] = results.filter(**null_filter).count()
 
         # The returned range endpoints are converted to the destination
         # unit

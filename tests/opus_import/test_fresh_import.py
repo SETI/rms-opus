@@ -125,12 +125,18 @@ def test_a_child_is_created_with_only_the_keys_a_load_needs() -> None:
     assert '`opus_id` (`opus_id`)' not in cmd
 
 
-def test_a_table_the_delete_selects_by_bundle_is_created_with_the_bundle_key() -> None:
-    """The surface geometry tables keep the ``bundle_id`` key the delete reads them by."""
+def test_the_surface_geometry_table_is_created_with_the_key_the_delete_reads() -> None:
+    """Its primary key starts with the body, so it keeps a key on ``obs_general_id``."""
     db = _RecordingDB(set())
-    cmd = _create_statement(db, 'obs_surface_geometry__titan')
-    assert 'KEY `bundle_id` (`bundle_id`)' in cmd
-    assert '`opus_id` (`opus_id`)' not in cmd
+    schema = import_util.read_schema_for_table(make_context(), 'obs_surface_geometry_target')
+    assert schema is not None
+    db.create_table('obs_surface_geometry_target', schema)
+    (cmd,) = [cmd for cmd, _ in db.executed if cmd.startswith('CREATE TABLE')]
+    assert 'PRIMARY KEY (`target_name`, `obs_general_id`)' in cmd
+    assert 'KEY `obs_general_id` (`obs_general_id`)' in cmd
+    assert 'bundle_id' not in cmd
+    assert 'FOREIGN KEY' not in cmd
+    assert '`center_distance1`' not in cmd.split('PRIMARY KEY')[1]
 
 
 def test_a_table_outside_the_filter_is_created_with_every_declared_key() -> None:
@@ -755,50 +761,39 @@ _ABOVE_HIGHEST = '`obs_general_id` > %s'
 
 
 def test_a_bundle_is_deleted_a_chunk_of_obs_general_at_a_time_children_first() -> None:
-    """The surface geometry tables by their own ids; every other child through each chunk.
+    """Every child, the surface geometry table among them, through each chunk.
 
-    Before the chunks, every other child loses its rows above ``obs_general``'s highest
-    id. Each chunk is `transaction_rows` of the bundle's ``obs_general`` ids: every other
-    child's rows joining them go, then the chunk's ``obs_general`` rows.
+    Before the chunks, every child loses its rows above ``obs_general``'s highest id. Each
+    chunk is `transaction_rows` of the bundle's ``obs_general`` ids: every child's rows
+    joining them go, then the chunk's ``obs_general`` rows.
     """
-    db = _DeletingDB(
-        {'obs_general': [4, 7, 9], 'obs_surface_geometry__titan': [10, 11, 12]},
-        ['obs_files', 'obs_general', 'obs_pds', 'obs_surface_geometry__titan'],
-    )
+    tables = ['obs_files', 'obs_general', 'obs_pds', 'obs_surface_geometry_target']
+    db = _DeletingDB({'obs_general': [4, 7, 9]}, tables)
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
+    children = ['obs_files', 'obs_pds', 'obs_surface_geometry_target']
     assert db.deletes == [
-        ('obs_surface_geometry__titan', _IN_RANGE, ['B_1', 10, 11]),
-        ('obs_surface_geometry__titan', _IN_RANGE, ['B_1', 12, 12]),
-        ('obs_files', _ABOVE_HIGHEST, [9]),
-        ('obs_pds', _ABOVE_HIGHEST, [9]),
-        ('obs_files~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 7]),
-        ('obs_pds~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 7]),
+        *[(child, _ABOVE_HIGHEST, [9]) for child in children],
+        *[(f'{child}~obs_general', _PARENT_IN_RANGE, ['B_1', 4, 7]) for child in children],
         ('obs_general', _IN_RANGE, ['B_1', 4, 7]),
-        ('obs_files~obs_general', _PARENT_IN_RANGE, ['B_1', 9, 9]),
-        ('obs_pds~obs_general', _PARENT_IN_RANGE, ['B_1', 9, 9]),
+        *[(f'{child}~obs_general', _PARENT_IN_RANGE, ['B_1', 9, 9]) for child in children],
         ('obs_general', _IN_RANGE, ['B_1', 9, 9]),
     ]
-    # Only obs_general and the surface geometry table are read, each by its bundle key.
-    assert {cmd.split('FROM `')[1].split('`')[0] for cmd in db.selects} == {
-        'obs_general',
-        'obs_surface_geometry__titan',
-    }
+    # Only obs_general is read, by its bundle key.
+    assert {cmd.split('FROM `')[1].split('`')[0] for cmd in db.selects} == {'obs_general'}
     assert all('WHERE `bundle_id`=%s' in cmd for cmd in db.selects)
     assert all(cmd.endswith('ORDER BY `id` LIMIT %s') for cmd in db.selects)
     # A full page asks for the next one, after its last id; a short page ends the table.
-    assert sum('`id` > %s' in cmd for cmd in db.selects) == 2
+    assert sum('`id` > %s' in cmd for cmd in db.selects) == 1
 
 
 def test_a_bundle_a_table_does_not_hold_deletes_nothing_there() -> None:
     """No ids, no statement."""
-    db = _DeletingDB(
-        {'obs_surface_geometry_name': [3]}, ['obs_general', 'obs_pds', 'obs_surface_geometry_name']
-    )
+    db = _DeletingDB({}, ['obs_general', 'obs_pds', 'obs_surface_geometry_target'])
     do_import_tables.delete_bundle_from_obs_tables(make_context(db=db), 'B_1')
     # An empty obs_general leaves no row of a child that joins it.
     assert db.deletes == [
-        ('obs_surface_geometry_name', _IN_RANGE, ['B_1', 3, 3]),
         ('obs_pds', _ABOVE_HIGHEST, [0]),
+        ('obs_surface_geometry_target', _ABOVE_HIGHEST, [0]),
     ]
 
 
@@ -999,10 +994,10 @@ def test_rows_whose_obs_general_row_is_missing_are_errors() -> None:
 
 
 class _NullCountDB:
-    """A stand-in with two nullable columns and one NOT NULL column in obs_pds."""
+    """A stand-in with two nullable columns in each of obs_pds and the surface table."""
 
     def __init__(self, counts: tuple[int | None, ...]) -> None:
-        """Hold the NULL counts the one query returns, column by column."""
+        """Hold the NULL counts each table's one query returns, column by column."""
         self.counts = counts
         self.queries: list[str] = []
 
@@ -1011,15 +1006,21 @@ class _NullCountDB:
         return f'`{name}`'
 
     def table_names(self, prefix: str) -> list[str]:
-        """Name obs_pds and a per-target table, which the check skips."""
-        return ['obs_pds', 'obs_surface_geometry__saturn']
+        """Name obs_pds and the surface geometry table."""
+        return ['obs_pds', 'obs_surface_geometry_target']
 
     def table_info(self, table: str) -> list[dict[str, Any]]:
-        """Describe obs_pds's columns."""
+        """Describe a table's columns: one NOT NULL key column, then two nullable ones."""
+        if table == 'obs_pds':
+            return [
+                {'field_name': 'obs_general_id', 'field_notnull': True},
+                {'field_name': 'note', 'field_notnull': False},
+                {'field_name': 'primary_lid', 'field_notnull': False},
+            ]
         return [
-            {'field_name': 'obs_general_id', 'field_notnull': True},
-            {'field_name': 'note', 'field_notnull': False},
-            {'field_name': 'primary_lid', 'field_notnull': False},
+            {'field_name': 'target_name', 'field_notnull': True},
+            {'field_name': 'phase1', 'field_notnull': False},
+            {'field_name': 'phase2', 'field_notnull': False},
         ]
 
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[int | None, ...]]:
@@ -1029,13 +1030,21 @@ class _NullCountDB:
 
 
 def test_one_query_a_table_counts_the_nulls_of_every_nullable_column() -> None:
-    """A nullable column that holds no NULL is reported; NOT NULL columns are not counted."""
+    """A nullable column that holds no NULL is reported; NOT NULL columns are not counted.
+
+    The surface geometry table is counted once, over every body's rows.
+    """
     db = _NullCountDB((0, 5))
     ctx = make_context(db=db)
     do_validate.validate_nulls(ctx)
-    assert db.queries == ['SUM(`note` IS NULL), SUM(`primary_lid` IS NULL) FROM `obs_pds`']
+    assert db.queries == [
+        'SUM(`note` IS NULL), SUM(`primary_lid` IS NULL) FROM `obs_pds`',
+        'SUM(`phase1` IS NULL), SUM(`phase2` IS NULL) FROM `obs_surface_geometry_target`',
+    ]
     assert ctx.logger.messages_at('info') == [
-        'Column "obs_pds.note" allows NULLs but none found - suggest changing column attributes'
+        'Column "obs_pds.note" allows NULLs but none found - suggest changing column attributes',
+        'Column "obs_surface_geometry_target.phase1" allows NULLs but none found - suggest '
+        'changing column attributes',
     ]
 
 
@@ -1044,7 +1053,7 @@ def test_an_empty_tables_nullable_columns_are_reported() -> None:
     db = _NullCountDB((None, None))
     ctx = make_context(db=db)
     do_validate.validate_nulls(ctx)
-    assert len(ctx.logger.messages_at('info')) == 2
+    assert len(ctx.logger.messages_at('info')) == 4
 
 
 @pytest.mark.parametrize(

@@ -44,7 +44,6 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any, Literal
 
-from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
 from django.db import DatabaseError, connection
@@ -96,6 +95,8 @@ from opus_app.apps.tools.db_utils import (
     lookup_pretty_value_for_mult,
     lookup_pretty_value_for_mult_list,
     query_table_for_opus_id,
+    resolve_category,
+    targets_for_opus_id,
 )
 from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_products
 from opus_app.apps.tools.import_constants import (
@@ -606,6 +607,9 @@ def get_metadata(
             log.error('get_metadata: Unknown category name in "%r"', cats)
             raise Http400Error(http400_unknown_category(request))
 
+    # The bodies the observation has rows of, per table the bodies' categories share
+    targets: dict[str, frozenset[int]] = {}
+
     # Now find all params and their values in each of these tables
     for table in all_tables:
         table_label = table.label
@@ -643,6 +647,14 @@ def get_metadata(
             data_all_info[table_label] = all_info
 
             try:
+                category = resolve_category(table_name)
+                if category.target_name is not None:
+                    # A body's category is asked about only when the observation has
+                    # rows of the body, which one query per shared table answers.
+                    if category.table not in targets:
+                        targets[category.table] = targets_for_opus_id(category.table, opus_id)
+                    if category.target_name not in targets[category.table]:
+                        continue
                 results = query_table_for_opus_id(table_name, opus_id)
             except LookupError:  # pragma: no cover - configuration error
                 log.exception(
@@ -1082,6 +1094,8 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
         raise Http400Error(http400_missing_opus_id(request))
 
     all_categories: list[dict[str, Any]] = []
+    # The bodies the observation has rows of, per table the bodies' categories share
+    targets: dict[str, frozenset[int]] = {}
     for tbl in table_names():
         table_name = tbl.table_name
         if table_name == 'obs_surface_geometry_name':
@@ -1090,13 +1104,19 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
             continue
 
         try:
-            results = query_table_for_opus_id(table_name, opus_id)
+            category = resolve_category(table_name)
+            if category.target_name is not None:
+                if category.table not in targets:
+                    targets[category.table] = targets_for_opus_id(category.table, opus_id)
+                found = category.target_name in targets[category.table]
+            else:
+                found = query_table_for_opus_id(table_name, opus_id).exists()
         except LookupError:  # pragma: no cover - configuration error
             log.exception(
                 'api_get_categories_for_opus_id: Unable to find ' + 'table %r', table_name
             )
             continue
-        if results.exists():
+        if found:
             cat = {'table_name': table_name, 'label': tbl.label}
             all_categories.append(cat)
 
@@ -1985,7 +2005,7 @@ def get_triggered_tables(
                 # and surface geometry (which is handled separately above), so
                 # only the obs_general arm of the join condition is reachable
                 # from here.
-                trigger_model = apps.get_model('search', ''.join(trigger_tab.title().split('_')))
+                trigger_model = resolve_category(trigger_tab).model
                 trigger_column = trigger_model._meta.get_field(trigger_col).column
                 select = sql_builder.Select(distinct=True)
                 select.add_column(sql_builder.column(trigger_column, trigger_tab))

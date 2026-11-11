@@ -10,6 +10,13 @@ table added to `opus_import.config_data` needs a row adding here too or it will 
 section. ``obs_files`` is deliberately absent: it holds one row per file rather than per
 observation and users never search it.
 
+A row whose category is not a table of its own names the table its rows are in,
+``physical_table``, and for a surface geometry body's category the body's id in the
+selector's mult field, ``target_name``: every surface geometry category reads the one
+table ``obs_surface_geometry_target``, the selector category ``obs_surface_geometry_name``
+all of it and a body's category ``obs_surface_geometry__<target>`` the body's rows. The
+bodies come from the rows the table holds (`opus_import.surface_geometry.stored_targets`).
+
 The table is built beside the live one and swapped in (`opus_import.table_swap`), so the
 step can run on a schema that is being served.
 """
@@ -18,24 +25,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from opus_import import config_data, import_util, table_swap
+from opus_import import config_data, import_util, surface_geometry, table_swap
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from opus_import.context import ImportContext
+    from opus_import.surface_geometry import StoredTarget
 
 
 def build_table_names_rows(
-    table_exists: Callable[[str], bool], surface_geometry_table_names: Iterable[str]
+    table_exists: Callable[[str], bool], targets: Iterable[StoredTarget]
 ) -> list[dict[str, Any]]:
     """Return the ``table_names`` rows for a set of tables, in display order.
 
     ``obs_general`` comes first and is written whether or not the table is there; then
-    the PDS, image, wavelength, profile, surface geometry name and surface geometry
-    tables, each only if it exists; then one row per surface geometry target in
-    alphabetical order; then ring geometry; then the mission tables and the instrument
-    tables. The HST instrument tables are written with ``display`` set to ``'N'``: HST
+    the PDS, image, wavelength and profile tables, each only if it exists; then the
+    surface geometry selector category if ``obs_surface_geometry_target`` exists, and the
+    ``obs_surface_geometry`` table if it does; then one category per surface geometry body
+    in order of encoded name; then ring geometry; then the mission tables and the
+    instrument tables. The HST instrument tables are written with ``display`` set to ``'N'``: HST
     puts its columns in the mission table, so its instrument tables would be empty
     sections.
 
@@ -45,12 +54,13 @@ def build_table_names_rows(
 
     Parameters:
         table_exists: Answers whether a table of the given name is there.
-        surface_geometry_table_names: The per-target surface geometry tables, named in
-            full (``obs_surface_geometry__<target>``). They are sorted here.
+        targets: The surface geometry bodies. They are sorted here.
 
     Returns:
-        One row per table, carrying ``table_name``, ``label``, ``display`` and a
-        ``disp_order`` counting up from zero in the order returned.
+        One row per category, carrying ``table_name``, ``label``, ``display``, a
+        ``disp_order`` counting up from zero in the order returned, ``physical_table``
+        (``obs_surface_geometry_target`` for a surface geometry category, None for a
+        table) and ``target_name`` (a body's id for a body's category, None otherwise).
     """
     # We use the entries in data_config to determine what
     # goes into table_names. The order we do things here matters because we're
@@ -111,9 +121,10 @@ def build_table_names_rows(
         disp_order += 1
         rows.append(entry)
 
-    if table_exists('obs_surface_geometry_name'):
+    if table_exists(surface_geometry.SURFACE_GEOMETRY_TABLE):
         entry = {
-            'table_name': 'obs_surface_geometry_name',
+            'table_name': surface_geometry.SELECTOR_CATEGORY,
+            'physical_table': surface_geometry.SURFACE_GEOMETRY_TABLE,
             'label': 'Surface Geometry Constraints',
             'display': 'Y',
             'disp_order': disp_order,
@@ -131,14 +142,15 @@ def build_table_names_rows(
         disp_order += 1
         rows.append(entry)
 
-    for table_name in sorted(surface_geometry_table_names):
-        target_name = table_name.replace('obs_surface_geometry__', '')
-        target_name = import_util.decode_target_name(target_name).title()
+    for target in sorted(targets, key=lambda target: target.encoded_name):
+        target_label = import_util.decode_target_name(target.encoded_name).title()
         entry = {
-            'table_name': table_name,
-            'label': target_name + ' Surface Geometry Constraints',
+            'table_name': surface_geometry.target_category(target.encoded_name),
+            'label': target_label + ' Surface Geometry Constraints',
             'display': 'Y',
             'disp_order': disp_order,
+            'physical_table': surface_geometry.SURFACE_GEOMETRY_TABLE,
+            'target_name': target.target_id,
         }
         disp_order += 1
         rows.append(entry)
@@ -188,14 +200,15 @@ def build_table_names_rows(
             disp_order += 1
             rows.append(entry)
 
-    return rows
+    return [{'physical_table': None, 'target_name': None, **row} for row in rows]
 
 
 def fill_table_names(ctx: ImportContext, new_table: str) -> bool:
-    """Fill an empty ``table_names`` table from the tables that exist.
+    """Fill an empty ``table_names`` table from the tables that exist and the bodies.
 
     The rows and their order come from `build_table_names_rows`; this function only
-    asks the database which tables are there and writes what it gets back.
+    asks the database which tables are there and which bodies the surface geometry table
+    holds, and writes what it gets back.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -210,8 +223,7 @@ def fill_table_names(ctx: ImportContext, new_table: str) -> bool:
     ctx.logger.log('info', f'Filling {new_table}')
 
     rows = build_table_names_rows(
-        lambda name: db.table_exists(name),
-        db.table_names(prefix='obs_surface_geometry__'),
+        lambda name: db.table_exists(name), surface_geometry.stored_targets(ctx)
     )
 
     db.insert_rows(new_table, rows)

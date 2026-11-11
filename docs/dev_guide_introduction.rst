@@ -134,8 +134,8 @@ primary index on the primary file specification:
      - Sky (right ascension and declination) geometry, at most one row per observation.
    * - ``<bundle>_<body>_summary.lbl``
      - Surface geometry, **one row per target per observation**, so these are collected
-       into a per-observation dictionary keyed by target name. Fills the
-       ``obs_surface_geometry__<TARGET>`` tables.
+       into a per-observation dictionary keyed by target name. Fills
+       ``obs_surface_geometry_target``.
    * - ``<bundle>_inventory.lbl``
      - The list of targets each observation covers. It is CSV rather than a fixed-width
        PDS table, so it is parsed with :mod:`csv` rather than with ``pdstable``.

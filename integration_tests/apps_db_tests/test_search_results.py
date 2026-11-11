@@ -15,6 +15,9 @@ is worth pinning, and why:
 * **A pruned search registers afresh.** The cache can still name a search the pruner
   removed; the search is then registered again under a new id.
 * **The pruner removes what it should and nothing else.**
+* **Selecting two surface geometry bodies keeps an observation once.** An observation
+  with geometry for both has a row of the surface geometry table for each, and
+  ``search_results`` holds an observation once per search.
 
 These tests require the following volumes, imported in this order:
 COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,GO_0017,VGISS_6210,VGISS_8201,
@@ -37,16 +40,19 @@ from django.contrib.sessions.models import Session
 from django.core.cache import cache, caches
 from django.core.management import CommandError, call_command
 from django.db import connection, connections, transaction
+from django.db.models import Count
 from django.utils import timezone
 
 from opus_app.apps.search import views as search_views
 from opus_app.apps.search.management.commands import prune
+from opus_app.apps.search.models import ObsSurfaceGeometryTarget
 from opus_app.apps.search.views import (
     get_search_results,
     search_hash,
     search_number_cache_key,
     url_to_search_params,
 )
+from opus_app.apps.tools.import_constants import mult_table
 
 #: The query string of the search these tests build: Cassini ISS observations of Saturn.
 _SEARCH = 'instrument=Cassini+ISS&planet=Saturn'
@@ -174,6 +180,43 @@ class SearchResultsTests(TestCase):
         """Leave no stored search behind, and restore the build's lock wait."""
         settings.SEARCH_BUILD_TIMEOUT = self._timeout
         self.setUp()
+
+    def test_two_selected_bodies_one_observation_has_both_of_count_it_once(self) -> None:
+        """The observation is one result, and the count is the observations, not the rows."""
+        both = (
+            ObsSurfaceGeometryTarget.objects.values('obs_general_id')
+            .annotate(bodies=Count('target_name'))
+            .filter(bodies__gte=2)
+            .order_by('obs_general_id')
+            .first()
+        )
+        assert both is not None
+        observation = both['obs_general_id']
+        target_ids = sorted(
+            ObsSurfaceGeometryTarget.objects.filter(obs_general_id=observation).values_list(
+                'target_name', flat=True
+            )
+        )[:2]
+        rows = mult_table('obs_surface_geometry_name.target_name').rows
+        labels = ','.join(rows[target_id].label for target_id in target_ids)
+        selections, extras = _search(f'surfacegeometrytargetname={labels}')
+        built = get_search_results(selections, extras)
+        assert built is not None
+        search_id, count = built
+        expected = (
+            ObsSurfaceGeometryTarget.objects.filter(target_name__in=target_ids)
+            .values('obs_general_id')
+            .distinct()
+            .count()
+        )
+        self.assertEqual(count, expected)
+        self.assertEqual(_result_rows(search_id), count)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'SELECT COUNT(*) FROM search_results WHERE search_id = %s AND obs_general_id = %s',
+                [search_id, observation],
+            )
+            self.assertEqual(cursor.fetchone()[0], 1)
 
     def test_two_requests_for_one_new_search_build_it_once(self) -> None:
         """The second waits for the first's row lock and reads its count."""

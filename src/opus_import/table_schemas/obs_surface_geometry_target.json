@@ -1,39 +1,32 @@
 [
     {
+        "field_name": "target_name",
+        "field_type": "mult_idx",
+        "field_notnull": true,
+        "mult_field": "obs_surface_geometry_name.target_name",
+        "data_source": "COMPUTE",
+        "definition": "The name of the target for which surface geometry parameters will be searchable. Once a target is selected, new search parameters specific to that target will appear. Only one target may be selected at a time. To perform more complex searches on the list of bodies in the field of view, use Multiple Target List.",
+        "pi_category_name": "obs_surface_geometry_name",
+        "pi_dict_context": "SURFACE_GEO",
+        "pi_dict_name": "TARGET_NAME",
+        "pi_disp_order": 10,
+        "pi_display": 1,
+        "pi_display_results": 0,
+        "pi_form_type": "GROUP",
+        "pi_intro": "Select a target below and the results will be limited to observations from supported instruments that contain that body in the field of view. More search options for that target will appear in the left menu.",
+        "pi_label": "Surface Geometry Target Selector",
+        "pi_label_results": "Surface Geometry Target Selector",
+        "pi_slug": "surfacegeometrytargetname",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "comments": "With obs_general_id, the primary key; the body's id in the selector's mult field. Definition is from SURFACE_GEO label."
+    },
+    {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
         "field_notnull": true,
         "data_source": "OBS_GENERAL_ID",
-        "comments": "This is the primary (surrogate) key linking the record to obs_general."
-    },
-    {
-        "field_name": "opus_id",
-        "field_type": "char50",
-        "field_key": true,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "This is the secondary key linking the record to obs_general."
-    },
-    {
-        "field_name": "bundle_id",
-        "field_type": "char75",
-        "field_key": true,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The bundle_id is included here for ease of database manipulation only."
-    },
-    {
-        "field_name": "instrument_id",
-        "field_type": "char60",
-        "field_key": false,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The instrument_id is included here for ease of database manipulation only."
+        "comments": "With target_name, the primary key; it links the record to obs_general."
     },
     {
         "field_name": "planetographic_latitude1",
@@ -94,7 +87,7 @@
         "field_name": "sub_solar_planetographic_latitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -123,7 +116,7 @@
         "field_name": "sub_solar_planetographic_latitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -148,7 +141,7 @@
         "field_name": "sub_observer_planetographic_latitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -177,7 +170,7 @@
         "field_name": "sub_observer_planetographic_latitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -257,7 +250,7 @@
         "field_name": "sub_solar_planetocentric_latitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -286,7 +279,7 @@
         "field_name": "sub_solar_planetocentric_latitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -311,7 +304,7 @@
         "field_name": "sub_observer_planetocentric_latitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -340,7 +333,7 @@
         "field_name": "sub_observer_planetocentric_latitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
@@ -438,7 +431,7 @@
         "field_name": "sub_solar_iau_west_longitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -467,7 +460,7 @@
         "field_name": "sub_solar_iau_west_longitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -492,7 +485,7 @@
         "field_name": "sub_solar_iau_west_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -501,7 +494,7 @@
         "field_name": "d_sub_solar_iau_west_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
@@ -510,7 +503,7 @@
         "field_name": "sub_observer_iau_west_longitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -539,7 +532,7 @@
         "field_name": "sub_observer_iau_west_longitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -564,7 +557,7 @@
         "field_name": "sub_observer_iau_west_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -573,7 +566,7 @@
         "field_name": "d_sub_observer_iau_west_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
@@ -582,7 +575,7 @@
         "field_name": "observer_west_longitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
@@ -611,7 +604,7 @@
         "field_name": "observer_west_longitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
@@ -637,7 +630,7 @@
         "field_name": "observer_west_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -646,7 +639,7 @@
         "field_name": "d_observer_west_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
@@ -726,7 +719,7 @@
         "field_name": "sub_solar_iau_east_longitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -755,7 +748,7 @@
         "field_name": "sub_solar_iau_east_longitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -780,7 +773,7 @@
         "field_name": "sub_solar_iau_east_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -789,7 +782,7 @@
         "field_name": "d_sub_solar_iau_east_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
@@ -798,7 +791,7 @@
         "field_name": "sub_observer_iau_east_longitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -827,7 +820,7 @@
         "field_name": "sub_observer_iau_east_longitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -852,7 +845,7 @@
         "field_name": "sub_observer_iau_east_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -861,7 +854,7 @@
         "field_name": "d_sub_observer_iau_east_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
@@ -870,7 +863,7 @@
         "field_name": "observer_east_longitude1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
@@ -898,7 +891,7 @@
         "field_name": "observer_east_longitude2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
@@ -923,7 +916,7 @@
         "field_name": "observer_east_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -932,7 +925,7 @@
         "field_name": "d_observer_east_longitude",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
@@ -941,10 +934,10 @@
         "field_name": "range_to_body1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e+18,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
@@ -970,10 +963,10 @@
         "field_name": "range_to_body2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e+18,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context_results": "SURFACE_GEO",
@@ -996,10 +989,10 @@
         "field_name": "center_distance1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e+18,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
@@ -1025,10 +1018,10 @@
         "field_name": "center_distance2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e+18,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context_results": "SURFACE_GEO",
@@ -1050,10 +1043,10 @@
         "field_name": "finest_resolution1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e+18,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
@@ -1079,10 +1072,10 @@
         "field_name": "finest_resolution2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e+18,
         "val_sentinel": -999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context_results": "SURFACE_GEO",
@@ -1105,7 +1098,7 @@
         "field_name": "coarsest_resolution1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
@@ -1134,7 +1127,7 @@
         "field_name": "coarsest_resolution2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
@@ -1160,10 +1153,10 @@
         "field_name": "center_resolution1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e+18,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
         "pi_dict_name": "CENTER_RESOLUTION",
@@ -1188,10 +1181,10 @@
         "field_name": "center_resolution2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e18,
+        "val_max": 1e+18,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context_results": "SURFACE_GEO",
         "pi_dict_name_results": "MAXIMUM_CENTER_RESOLUTION",
@@ -1212,7 +1205,7 @@
         "field_name": "center_phase_angle1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1240,7 +1233,7 @@
         "field_name": "center_phase_angle2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1264,7 +1257,7 @@
         "field_name": "phase1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1293,7 +1286,7 @@
         "field_name": "phase2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1319,7 +1312,7 @@
         "field_name": "incidence1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1348,7 +1341,7 @@
         "field_name": "incidence2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
@@ -1374,7 +1367,7 @@
         "field_name": "emission1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
@@ -1403,7 +1396,7 @@
         "field_name": "emission2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
@@ -1429,7 +1422,7 @@
         "field_name": "solar_hour_angle1",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -1458,7 +1451,7 @@
         "field_name": "solar_hour_angle2",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
@@ -1484,7 +1477,7 @@
         "field_name": "solar_hour_angle",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
@@ -1493,7 +1486,7 @@
         "field_name": "d_solar_hour_angle",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
@@ -1624,7 +1617,7 @@
         "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -10000,
-        "val_max": 1e9,
+        "val_max": 1000000000.0,
         "val_sentinel": -99999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
@@ -1652,7 +1645,7 @@
         "field_key": false,
         "data_source": "COMPUTE",
         "val_min": -10000,
-        "val_max": 1e9,
+        "val_max": 1000000000.0,
         "val_sentinel": -99999,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context_results": "SURFACE_GEO",
@@ -1677,7 +1670,7 @@
         "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
-        "val_max": 1e32,
+        "val_max": 1e+32,
         "pi_category_name": "obs_surface_geometry__<TARGET>",
         "pi_dict_context": "SURFACE_GEO",
         "pi_dict_name": "DIAMETER_IN_PIXELS",
@@ -1796,15 +1789,361 @@
         "pi_tooltip": "UTC Format (you may omit the T):<br>YYYY-MM-DD<strong>T</strong>HH:MM:SS.sss  <strong>or</strong>  YYY-DDD<strong>T</strong>HH:MM:SS.sss"
     },
     {
-        "field_name": "id",
-        "field_type": "uint4",
-        "field_key": "primary",
-        "field_notnull": true,
-        "data_source": "MAX_ID"
-    },
-    {
         "field_name": "timestamp",
         "field_type": "timestamp",
         "field_notnull": true
+    },
+    {
+        "primary_key": [
+            "target_name",
+            "obs_general_id"
+        ]
+    },
+    {
+        "key": [
+            "obs_general_id"
+        ]
+    },
+    {
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_planetographic_latitude1",
+            "sub_solar_planetographic_latitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_planetographic_latitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_planetographic_latitude1",
+            "sub_observer_planetographic_latitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_planetographic_latitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_planetocentric_latitude1",
+            "sub_solar_planetocentric_latitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_planetocentric_latitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_planetocentric_latitude1",
+            "sub_observer_planetocentric_latitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_planetocentric_latitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_iau_west_longitude1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_iau_west_longitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_iau_west_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "d_sub_solar_iau_west_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_iau_west_longitude1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_iau_west_longitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_iau_west_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "d_sub_observer_iau_west_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "observer_west_longitude1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "observer_west_longitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "observer_west_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "d_observer_west_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_iau_east_longitude1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_iau_east_longitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_solar_iau_east_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "d_sub_solar_iau_east_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_iau_east_longitude1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_iau_east_longitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "sub_observer_iau_east_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "d_sub_observer_iau_east_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "observer_east_longitude1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "observer_east_longitude2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "observer_east_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "d_observer_east_longitude"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "range_to_body1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "range_to_body2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "center_distance1",
+            "center_distance2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "center_distance2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "finest_resolution1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "finest_resolution2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "coarsest_resolution1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "coarsest_resolution2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "center_resolution1",
+            "center_resolution2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "center_resolution2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "center_phase_angle1",
+            "center_phase_angle2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "center_phase_angle2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "phase1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "phase2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "incidence1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "incidence2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "emission1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "emission2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "solar_hour_angle1"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "solar_hour_angle2"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "solar_hour_angle"
+        ]
+    },
+    {
+        "key": [
+            "target_name",
+            "d_solar_hour_angle"
+        ]
     }
 ]
