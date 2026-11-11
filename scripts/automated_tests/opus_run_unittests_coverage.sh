@@ -40,7 +40,7 @@ rm -f .coverage .coverage.*
 # single run.
 #
 # Deliberately serial: no -n. These suites share one database and mutate it -- one of
-# them drops the cache_* tables between tests -- so they are not parallel-safe. The
+# them empties the search tables between tests -- so they are not parallel-safe. The
 # holdings-free suite in tests/ is the one that runs under -n auto.
 pytest --cov --cov-config=integration_tests/.coveragerc \
        tests/opus_support tests/opus_app integration_tests

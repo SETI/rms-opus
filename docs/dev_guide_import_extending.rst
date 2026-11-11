@@ -200,8 +200,8 @@ This is the bundle recipe plus the configuration data that says the instrument e
    for its bundles as above.
 7. **Regenerate the Django models**: ``scripts/models/create_opus_models.sh`` rewrites
    ``src/opus_app/apps/search/models.py`` from a populated database. New tables do not
-   exist to the web application until it has been run, and the script refuses to run
-   while any ``cache_*`` table is present. See :ref:`dev_guide_webapp_search`.
+   exist to the web application until it has been run. See
+   :ref:`dev_guide_webapp_search`.
 
 .. _dev_guide_extending_target:
 

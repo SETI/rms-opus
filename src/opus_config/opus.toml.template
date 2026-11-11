@@ -109,6 +109,18 @@ conn_max_age = 300
 # replaced if the server has dropped it. Optional; the default is the value below.
 conn_health_checks = true
 
+# How many seconds a request building a search's results waits for another web worker
+# already building the same search before it gives up. Keep it at least 30 seconds
+# below the web server's worker timeout (gunicorn's --timeout, uWSGI's harakiri,
+# Apache's Timeout): a worker killed partway through a build loses the build, and the
+# next request waiting for it starts over. Optional; the default is the value below.
+search_build_timeout = 270
+
+# The rows "opus_manage prune" cuts the search_results table down to by default,
+# removing the least recently used searches first. Optional; the default is the value
+# below.
+search_results_max_rows = 50000000
+
 # The public URL of this OPUS installation.
 public_url = "https://opus.pds-rings.seti.org/"
 

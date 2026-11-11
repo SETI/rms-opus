@@ -131,9 +131,10 @@ key, every ``{"constraint": ...}`` entry (rendered raw, as always), and the keys
 per-bundle delete reads, which is each table's ``bundle_id`` key. It does so on
 both write paths, so a table first created by an append is keyed by the ``--finalize``
 that follows, as every table of a fresh import is. Every other table is created with
-every key its schema declares, a table-level ``foreign_key`` entry's included
-(:ref:`dev_guide_table_schemas`), which is how ``cart`` has its cascading foreign key
-from the start.
+every key its schema declares, table-level ``foreign_key``, ``primary_key`` and
+``unique`` entries included (:ref:`dev_guide_table_schemas`), which is how ``cart`` has
+its cascading foreign key, and ``search_results`` its keys over two columns, from the
+start.
 
 :func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
 tables: the declared keys the keep set leaves out, plain keys first and foreign keys

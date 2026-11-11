@@ -189,11 +189,11 @@ opus_app.apps.tools.sql_builder
 -------------------------------
 
 Most of the OPUS API is served by hand-written SQL rather than by the ORM, for two
-reasons the module's own docstring states: the search results live in a cache table whose
-name is computed at runtime and which therefore **has no Django model at all**, so any
-query joining a search to its results cannot be expressed with the ORM; and the queries
-that remain are wide joins over the generated ``obs_*`` tables that are far clearer as
-SQL.
+reasons the module's own docstring states: the search results live in
+``search_results``, which **has no Django model** and is joined as one search's rows in a
+derived table (:func:`~opus_app.apps.tools.sql_builder.search_results_source`); and the
+queries that join a search to its results are wide joins over the generated ``obs_*``
+tables that are far clearer as SQL.
 
 **This module is the one place allowed to turn Python values into SQL text.** Every call
 site elsewhere describes the *structure* of its statement and lets this module render it,
@@ -204,8 +204,7 @@ which gives three properties uniformly:
 ``[A-Za-z0-9_]`` before handing the name to the backend's quoting. Django's ``quote_name``
 wraps a name in backticks but does not escape a backtick *inside* one, so validation, not
 quoting, is what closes that hole -- and it matters because several identifiers are
-computed at run time: the cache table name and the column names that come out of
-``param_info``.
+computed at run time: the column names that come out of ``param_info``.
 
 **Values are always parameters.** Anything that is data is rendered as a placeholder and
 collected into a parameter list. There are exactly **two** exceptions, and both are
@@ -362,8 +361,9 @@ parameters its placeholders consume. Everything below returns one.
      - A range test with both bounds as parameters, and the window of a table numbered
        by ``sort_order`` that a page reads.
    * - :func:`~opus_app.apps.tools.sql_builder.row_number`
-     - ``ROW_NUMBER() OVER (ORDER BY ...)``, which numbers the cart in a sort order with
-       a cache table's shape.
+     - ``ROW_NUMBER() OVER (ORDER BY ...)``, or ``ROW_NUMBER() OVER ()`` given no
+       terms. It numbers a search's results as they are stored, and numbers the cart in
+       a sort order the same way.
 
 The statement layer
 ~~~~~~~~~~~~~~~~~~~
@@ -380,11 +380,21 @@ The statement layer
 :class:`~opus_app.apps.tools.sql_builder.FromSource` and :class:`~opus_app.apps.tools.sql_builder.Join`
     One table source and the joins hanging off it. A statement may have more than one
     source, rendered comma-separated -- and **the comma binds more loosely than JOIN**,
-    which is what the cart's download summary and the cache-table queries rely on.
+    which is what the cart's download summary and the queries that join a search to its
+    results rely on.
 
 :class:`~opus_app.apps.tools.sql_builder.Subquery`
     A :class:`~opus_app.apps.tools.sql_builder.Select` used as a table source, under a
     mandatory alias.
+
+:func:`~opus_app.apps.tools.sql_builder.search_results_source`
+    One search's rows of ``search_results`` as a
+    :class:`~opus_app.apps.tools.sql_builder.Subquery`: ``(SELECT obs_general_id AS id,
+    sort_order FROM search_results WHERE search_id = %s)`` under
+    :data:`~opus_app.apps.tools.sql_builder.SEARCH_RESULTS_ALIAS`. The server merges a
+    derived table this simple into the statement that names it, so a join on ``id``
+    reads the table's ``(search_id, obs_general_id)`` key and a range of ``sort_order``
+    its primary key.
 
 :class:`~opus_app.apps.tools.sql_builder.JSONTable`
     Turns each element of a MULTIGROUP column's JSON list into its own row, so the
@@ -394,11 +404,10 @@ The statement layer
     Raised when a name about to be used as an identifier is unsafe.
 
 The module-level functions that render whole statements are
-:func:`~opus_app.apps.tools.sql_builder.create_table_from_select_sql` (for the one caller
-whose SELECT is already rendered),
-:func:`~opus_app.apps.tools.sql_builder.count_rows`,
 :func:`~opus_app.apps.tools.sql_builder.delete_from`,
 :func:`~opus_app.apps.tools.sql_builder.delete_joined`,
+:func:`~opus_app.apps.tools.sql_builder.insert_into_select` (which stores a search's
+results in ``search_results``),
 :func:`~opus_app.apps.tools.sql_builder.replace_into_values`,
 :func:`~opus_app.apps.tools.sql_builder.replace_into_select` and
 :func:`~opus_app.apps.tools.sql_builder.update`.
@@ -410,10 +419,6 @@ table, and making it optional would let a caller emit one by leaving an argument
 And the cart's writes go through ``REPLACE INTO`` rather than a delete followed by an
 insert, because the cart table's unique key over the session and the observation turns a
 concurrent second write into a replacement instead of a duplicate.
-
-:data:`~opus_app.apps.tools.sql_builder.CACHE_TABLE_COLUMN_DEFS` is the column definition
-a ``cache_NNN`` table is created with: ``sort_order`` numbering the results from 1 in the
-search's order, and ``id`` joining back to ``obs_general``.
 
 .. _dev_guide_webapp_tools_db_utils:
 
@@ -435,10 +440,13 @@ Model lookup by table name, and the labels behind the ``mult_`` tables.
     the worker's copy of the field's ``mult_`` table from
     :mod:`~opus_app.apps.tools.import_constants`.
 
-Three MySQL error numbers are declared here for callers to match a database exception
-against: ``MYSQL_TABLE_NOT_EXISTS``, ``MYSQL_TABLE_ALREADY_EXISTS`` -- which is how the
-cache-table race is resolved -- and ``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
-autocomplete endpoint learns its restricted query timed out.
+The MySQL error numbers declared here for callers to match a database exception against
+are ``MYSQL_TABLE_NOT_EXISTS``; ``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
+autocomplete endpoint learns its restricted query timed out; and
+``MYSQL_LOCK_WAIT_TIMEOUT``, which
+:func:`~opus_app.apps.tools.db_utils.is_lock_timeout_error` matches, and which is how a
+request learns that it waited too long for another request storing the same search's
+results.
 
 .. _dev_guide_webapp_tools_import_constants:
 

@@ -115,10 +115,15 @@ itself.
     WantedBy=multi-user.target
 
 Two of those options are chosen rather than default. ``--timeout 300`` is generous
-because building a cart archive of thousands of files is a slow request. The worker count
-should be tuned to the machine; every worker holds its own copy of the process-local
-caches described in :ref:`dev_guide_webapp_caching`, and **restarting the service is what
-clears them**, which is why ``ExecReload`` matters after an import.
+because building a cart archive of thousands of files is a slow request. **The
+configuration's** ``[django] search_build_timeout`` **has to be at least 30 seconds below
+it** (:ref:`user_guide_installation_configuring`). That is how long a request waits while
+another worker stores the same search's results, and if gunicorn kills a worker partway
+through storing them, nothing is stored and the next request has to start over. The
+default, ``270``, fits ``--timeout 300``; lowering ``--timeout`` means lowering it too.
+The worker count should be tuned to the machine; every worker holds its own copy of the
+process-local caches described in :ref:`dev_guide_webapp_caching`, and **restarting the
+service is what clears them**, which is why ``ExecReload`` matters after an import.
 
 The nginx server block
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -239,8 +244,10 @@ its own unit with the same line or a ``/etc/tmpfiles.d`` entry, since ``/run`` d
 survive a reboot. And ``chown-socket`` is what lets nginx reach the socket at all.
 
 ``harakiri`` is uWSGI's request timeout and plays the role gunicorn's ``--timeout``
-plays above. ``touch-reload`` is worth adding if you want a file touch rather than a
-service restart to recycle the workers after an import.
+plays above, so the same rule holds: ``[django] search_build_timeout`` has to be at least
+30 seconds below ``harakiri``, for the same reason. ``touch-reload`` is worth adding if
+you want a file touch rather than a service restart to recycle the workers after an
+import.
 
 .. _user_guide_web_server_apache:
 
@@ -355,6 +362,11 @@ The vhost
 
 ``WSGIApplicationGroup %{GLOBAL}`` puts the application in the main interpreter, which is
 what C extensions -- the MySQL driver among them -- want.
+
+``Timeout`` is how long Apache waits on a request here, and the same rule holds as for
+gunicorn's ``--timeout``: ``[django] search_build_timeout`` has to be at least 30 seconds
+below it, so that a request waiting while another worker stores the same search's
+results gives up and answers before Apache gives up on it.
 
 The ``wsgi.py`` path
 ~~~~~~~~~~~~~~~~~~~~

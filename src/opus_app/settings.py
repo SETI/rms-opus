@@ -38,13 +38,23 @@ try:  # pragma: no cover
 except ImportError:  # pragma: no cover
     pass
 
+# The seconds a connection to memcached, or one reply from it, may take before the
+# attempt counts as a failure. memcached answers in well under a millisecond, so this
+# only ever matters when it is unreachable or hung.
+_memcache_timeout = 1.0
+
 # Now check to see if memcached is actually running
 if _has_memcache:
     try:
         _cache_host, _, _cache_port = CACHE_LOCATION.rpartition(':')
-        _memcache_client = pymemcache.client.base.Client((_cache_host, int(_cache_port)))
+        _memcache_client = pymemcache.client.base.Client(
+            (_cache_host, int(_cache_port)),
+            connect_timeout=_memcache_timeout,
+            timeout=_memcache_timeout,
+        )
         _memcache_client.set('__test_key__', 'test_val')
-    except ConnectionRefusedError:
+        _memcache_client.close()
+    except (OSError, pymemcache.exceptions.MemcacheError):
         _has_memcache = False
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
@@ -87,6 +97,10 @@ PDS4_DATA_DIR = _config.paths.pds4_holdings
 # Static files and public URLs.
 OPUS_STATIC_ROOT = _config.paths.opus_static_root
 CACHE_SERVER_PREFIX = _config.django.cache_server_prefix
+# The seconds a search build waits for another worker's build of the same search, and
+# the rows `opus_manage prune` cuts search_results down to by default.
+SEARCH_BUILD_TIMEOUT = _config.django.search_build_timeout
+SEARCH_RESULTS_MAX_ROWS = _config.django.search_results_max_rows
 PUBLIC_OPUS_URL = _config.django.public_url
 PRODUCT_HTTP_PATH = _config.django.product_http_path
 VIEWMASTER_ROOT_PATH = _config.django.viewmaster_url
@@ -262,6 +276,15 @@ if _has_memcache:  # pragma: no cover
             'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
             'LOCATION': CACHE_LOCATION,
             'TIMEOUT': None,
+            # A memcached that stops or hangs while the site runs must not fail
+            # requests: with ignore_exc, every read that cannot reach it is a miss
+            # and every write is skipped, so the site runs uncached, from the
+            # database, until it is back.
+            'OPTIONS': {
+                'ignore_exc': True,
+                'connect_timeout': _memcache_timeout,
+                'timeout': _memcache_timeout,
+            },
         },
     }
 else:
@@ -492,11 +515,11 @@ DEFAULT_STRINGCHOICE_LIMIT = 100
 
 SQL_MAX_LIMIT = 100000000  # Max size for a LIMIT clause
 
-# More than this many rows in the cache table -> don't join it
+# More than this many results in the search -> don't join them
 STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000
-# Timeout for SELECT when joined with cache table
+# Timeout for SELECT when joined with the search's results
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500  # ms
-# Timeout for SELECT When not joined with cache table
+# Timeout for SELECT When not joined with the search's results
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500  # ms
 
 THUMBNAIL_NOT_FOUND = 'https://opus.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'

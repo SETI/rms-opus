@@ -190,6 +190,8 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('django.cache_location', '127.0.0.1:11211'),
         ('django.conn_max_age', 300),
         ('django.conn_health_checks', True),
+        ('django.search_build_timeout', 270),
+        ('django.search_results_max_rows', 50_000_000),
         ('import_.bulk_load', True),
         ('import_.scratch_dir', None),
         ('import_.transaction_rows', 100_000),
@@ -222,6 +224,8 @@ def test_load_config_defaults_every_optional_key(
         ('django', 'cache_location', '"cache.example.org:21211"', 'cache.example.org:21211'),
         ('django', 'conn_max_age', '0', 0),
         ('django', 'conn_health_checks', 'false', False),
+        ('django', 'search_build_timeout', '60', 60),
+        ('django', 'search_results_max_rows', '1000', 1000),
         ('import', 'bulk_load', 'false', False),
         ('import', 'scratch_dir', '"/scratch/opus"', '/scratch/opus'),
         ('import', 'transaction_rows', '5', 5),
@@ -337,6 +341,14 @@ def test_load_config_accepts_a_whole_number_probability(
         (
             adding('django', 'conn_max_age', 'true'),
             "[django] 'conn_max_age' must be a whole number, not bool",
+        ),
+        (
+            adding('django', 'search_build_timeout', '0'),
+            "[django] 'search_build_timeout' must be at least 1, not 0",
+        ),
+        (
+            adding('django', 'search_results_max_rows', '-1'),
+            "[django] 'search_results_max_rows' must be at least 0, not -1",
         ),
         (
             adding('import', 'transaction_rows', '0'),
@@ -457,6 +469,8 @@ def test_load_config_accepts_a_whole_number_probability(
         'connection-lifetime-negative',
         'connection-lifetime-given-a-string',
         'connection-lifetime-given-a-boolean',
+        'search-build-timeout-zero',
+        'search-results-max-rows-negative',
         'transaction-rows-zero',
         'transaction-rows-negative',
         'transaction-rows-not-whole',

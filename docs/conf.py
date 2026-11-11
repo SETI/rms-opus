@@ -191,6 +191,9 @@ REFERENCE_ALIASES = {
     'QuerySet': 'django.db.models.query.QuerySet',
     'Traversable': 'importlib.resources.abc.Traversable',
     'json.decoder.JSONDecodeError': 'json.JSONDecodeError',
+    'ArgumentParser': 'argparse.ArgumentParser',
+    'CommandError': 'django.core.management.CommandError',
+    'django.core.management.base.BaseCommand': 'django.core.management.BaseCommand',
 }
 
 

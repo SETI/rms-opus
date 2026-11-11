@@ -667,6 +667,18 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::run_ddl must be overridden')
 
+    def set_next_id(self, table_name: str, next_id: int) -> None:
+        """Make the next row a table's auto-increment key hands out take a given id.
+
+        Parameters:
+            table_name: The table, whose primary key is an auto-increment column.
+            next_id: The id the next row is given.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::set_next_id must be overridden')
+
     def close(self) -> None:
         """Close the connection.
 

@@ -6,7 +6,7 @@ Table Schemas
 ``src/opus_import/table_schemas/`` holds one JSON file per OPUS table, named after the
 table. A file is a list of objects in the order the columns appear in the table --
 mostly one per column, plus the occasional entry that deliberately defines no column:
-a ``constraint``, a table-level ``foreign_key``, or a ``pi_referred_slug`` link to a
+a ``constraint``, a table-level key, or a ``pi_referred_slug`` link to a
 field defined in another table. This is the single description of the database: the
 import pipeline creates every table from it, computes its schema-driven values from it, validates the result
 against it, and derives from it what the web application's search form contains.
@@ -130,6 +130,18 @@ Defining the column
        well. ``cart`` declares its key onto ``obs_general`` this way, with
        ``"cascade"``, so deleting a bundle's observations deletes the cart rows that
        name them rather than being refused.
+   * - ``primary_key``
+     - A table-level primary key, in an entry of its own that defines no column:
+       ``{"primary_key": ["<column>", ...]}``, listing its columns in order. It is how
+       a key over several columns is declared, which ``field_key`` cannot express, and
+       :func:`~opus_import.table_keys.declared_keys` reads it as a
+       :class:`~opus_import.table_keys.TableKey` beside the column-level keys.
+       ``search_results`` declares its primary key ``(search_id, sort_order)`` this way.
+   * - ``unique``
+     - A table-level unique key over listed columns, in the same form:
+       ``{"unique": ["<column>", ...]}``. ``search_results`` declares its unique key
+       ``(search_id, obs_general_id)`` this way. A ``primary_key`` or ``unique`` entry
+       whose value is not a non-empty list of column names is refused.
    * - ``comments``
      - A note for whoever reads the schema. Nothing consumes it.
 
@@ -182,6 +194,9 @@ recognize raises :exc:`NotImplementedError` rather than being guessed at.
    * - ``datetime``
      - ``datetime``
      -
+   * - ``binary32``
+     - ``binary(32)``
+     - A SHA-256 digest, stored as its bytes.
 
 Filling the column
 ~~~~~~~~~~~~~~~~~~

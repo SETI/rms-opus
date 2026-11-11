@@ -135,7 +135,9 @@ def test_a_child_gains_its_foreign_key_on_obs_general_id_and_none_on_opus_id() -
     ]
 
 
-@pytest.mark.parametrize('table', ['param_info', 'cart', 'definitions', 'contexts'])
+@pytest.mark.parametrize(
+    'table', ['param_info', 'cart', 'definitions', 'contexts', 'search_results', 'user_searches']
+)
 def test_any_other_table_is_created_with_every_key_it_declares(table: str) -> None:
     """Outside the observation and mult tables nothing waits for finalization."""
     schema = _schema(TABLE_SCHEMA_DIR / f'{table}.json')
@@ -155,13 +157,31 @@ def test_keys_compare_by_kind_and_columns_not_name() -> None:
     [
         ({'field_name': 'x', 'field_key': 'sideways'}, "unknown field_key 'sideways'"),
         ({'field_name': 'x', 'field_key': 'foreign'}, 'names its table and column'),
+        ({'primary_key': []}, 'lists its columns by name'),
+        ({'unique': 'a'}, 'lists its columns by name'),
+        ({'unique': ['a', 1]}, 'lists its columns by name'),
     ],
-    ids=['unknown-kind', 'foreign-without-target'],
+    ids=[
+        'unknown-kind',
+        'foreign-without-target',
+        'primary-without-columns',
+        'unique-not-a-list',
+        'unique-not-names',
+    ],
 )
 def test_a_key_the_schema_cannot_declare_is_refused(entry: dict[str, object], message: str) -> None:
     """A malformed key is an error rather than a key silently left out."""
     with pytest.raises(ValueError, match=message):
         table_keys.declared_keys([entry])
+
+
+def test_a_table_level_key_lists_its_columns_in_order() -> None:
+    """``search_results`` keys a search's rows by position and by observation."""
+    schema = _schema(TABLE_SCHEMA_DIR / 'search_results.json')
+    assert table_keys.declared_keys(schema) == [
+        TableKey('primary', ('search_id', 'sort_order')),
+        TableKey('unique', ('search_id', 'obs_general_id')),
+    ]
 
 
 def test_describe_names_the_kind_and_columns() -> None:

@@ -1015,7 +1015,7 @@ _GROUP = (
     'create_partables',
     'create_table_names',
     'create_cart',
-    'drop_cache_tables',
+    'reset_search_tables',
     'analyze_tables',
 )
 

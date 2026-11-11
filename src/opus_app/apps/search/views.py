@@ -15,8 +15,9 @@
 `url_to_search_params` parses a request's query string into the `(selections,
 extras)` pair the rest of the search path works in, and `construct_query_string`
 renders that pair as a SELECT through `opus_app.apps.tools.sql_builder`.
-`get_user_query_table` runs the search and caches its results in a per-search
-`cache_<n>` table that the results, metadata and cart views then join against.
+`get_search_id` registers the search in ``user_searches`` and builds its ordered results
+into ``search_results`` once, which the results, metadata and cart views then join as
+`sql_builder.search_results_source`.
 """
 
 from __future__ import annotations
@@ -28,16 +29,17 @@ import json
 import logging
 import re
 import time
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple, overload
 
 # This is used instead of "re" because it's closer to the ICU regex library
 # used by MySQL.
 import regex
 from django.conf import settings
 from django.core.cache import cache
-from django.db import DatabaseError, connection
+from django.db import DatabaseError, connection, transaction
 from django.db.utils import IntegrityError
 from django.http import Http404, HttpResponseServerError
+from django.utils import timezone
 
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import UserSearches
@@ -58,7 +60,11 @@ from opus_app.apps.tools.app_utils import (
     sort_dictionary,
     strip_numeric_suffix,
 )
-from opus_app.apps.tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED, MYSQL_TABLE_ALREADY_EXISTS
+from opus_app.apps.tools.db_utils import (
+    MYSQL_EXECUTION_TIME_EXCEEDED,
+    is_deadlock_error,
+    is_lock_timeout_error,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -229,10 +235,10 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
     partial_query = selections[param_qualified_name][0]
     del selections[param_qualified_name]
 
-    user_query_table = get_user_query_table(selections, extras, api_code=api_code)
-    if not user_query_table:  # pragma: no cover - internal or database failure
+    search = get_search_results(selections, extras, api_code=api_code)
+    if search is None:  # pragma: no cover - internal or database failure
         log.error(
-            'api_string_search_choices: get_user_query_table failed '
+            'api_string_search_choices: get_search_results failed '
             + '*** Selections %r *** Extras %r',
             str(selections),
             str(extras),
@@ -250,24 +256,9 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         log.error('api_string_search_choices: Bad limit for' + ' request %r', str(request.GET))
         raise Http400Error(http400_bad_limit(limit, request))
 
-    # We do this because the user may have included characters that aren't
-    # allowed in a cache key
-    partial_query_hash = hashlib.md5(str.encode(partial_query), usedforsecurity=False).hexdigest()
-
     # Is this result already cached?
-    cache_key = (
-        settings.CACHE_SERVER_PREFIX
-        + settings.CACHE_KEY_PREFIX
-        + ':stringsearchchoices:'
-        + param_qualified_name
-        + ':'
-        + partial_query_hash
-        + ':'
-        + user_query_table
-        + ':'
-        + query_qtype
-        + ':'
-        + str(limit)
+    cache_key = string_choices_cache_key(
+        param_qualified_name, partial_query, search.search_id, query_qtype, limit
     )
     cached_val = cache.get(cache_key)
     if cached_val is not None:
@@ -275,38 +266,27 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         return json_response(cached_val)
 
     param_column = sql_builder.column(param_name, param_category)
-
-    # Check the size of the cache table to see if we can afford to do a
-    # search retricted by the cache table contents. The JOIN of the cache
-    # table can be slow if it has too many entries and gives a bad user
-    # experience.
-    sql = sql_builder.count_rows(user_query_table)
-
     cursor = connection.cursor()
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    if len(results) != 1 or len(results[0]) != 1:  # pragma: no cover - database error
-        log.error('api_string_search_choices: SQL failure: %r', sql)
-        return HttpResponseServerError(http500_database_error(request))
 
     final_results: list[Any] | None = None
     truncated_results = False
 
-    do_simple_search = False
-    count = int(results[0][0])
-    if count >= settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD:
-        do_simple_search = True
+    # A search with too many results makes the join to them slow enough to spoil the
+    # autocompletion, so the choices then come from every observation instead.
+    do_simple_search = search.result_count >= settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
 
     if not do_simple_search:
         max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD
         select = sql_builder.Select(distinct=True, max_execution_time=max_time)
         select.add_column(param_column)
-        # The cache table is an INNER JOIN because we only want opus_ids
-        # that appear in the cache table to cause result rows. The join is on
+        # The search's results are an INNER JOIN because we only want opus_ids
+        # that appear in them to cause result rows. The join is on
         # obs_general_id in practice: there are currently no string fields in
         # obs_general, so param_category is never obs_general here.
         select.add_from(param_category).add_join(
-            'INNER', user_query_table, search_cache_join_condition(param_category, user_query_table)
+            'INNER',
+            sql_builder.search_results_source(search.search_id),
+            search_results_join_condition(param_category),
         )
 
         if partial_query:
@@ -329,7 +309,7 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
             do_simple_search = True
 
     if do_simple_search:
-        # Same thing but no cache table join
+        # Same thing but no join to the search's results
         # This will give more results than we really want, but will be much
         # faster
         max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
@@ -396,6 +376,29 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
     cache.set(cache_key, result)
     result['reqno'] = reqno
     return json_response(result)
+
+
+def string_choices_cache_key(
+    param_qualified_name: str, partial_query: str, search_id: int, qtype: str, limit: int
+) -> str:
+    """Return the cache key of one answer of `api_string_search_choices`.
+
+    The variable parts are hashed to a fixed width: the partial query is the user's own
+    text, and the whole could otherwise outgrow memcached's limit on a key's length.
+
+    Parameters:
+        param_qualified_name: The string field being completed.
+        partial_query: What the user has typed so far.
+        search_id: The search the choices are restricted to.
+        qtype: The query type the choices match by.
+        limit: How many choices the answer holds at most.
+    """
+    digest = hashlib.sha256(
+        json.dumps([param_qualified_name, partial_query, search_id, qtype, limit]).encode()
+    ).hexdigest()
+    return (
+        settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX + ':stringsearchchoices:' + digest
+    )
 
 
 ################################################################################
@@ -969,251 +972,398 @@ def url_to_search_params(
     return selections, extras
 
 
-def get_user_query_table(
-    selections: dict[str, Any], extras: dict[str, Any], api_code: int | None = None
-) -> str | None:
-    """Perform a data search and create a table of matching IDs.
+class SearchResults(NamedTuple):
+    """A search whose results are built: its ``user_searches`` row and its result count."""
 
-    This is THE main data query place.
+    search_id: int
+    result_count: int
 
-    - Look in the "user_searches" table to see if this search has already
-      been requested before. If so, retrieve the cache table number. If not,
-      create the entry in "user_searches", which assigns a cache table number.
-    - See if the cache table name has been cached in memory. (This means that
-      we are SURE the table actually exists and don't have to check again)
 
-      - If so, return the cached table name.
+class _SearchPrunedError(Exception):
+    """The ``user_searches`` row a search was registered as is gone or is another search's.
 
-    - Otherwise, try to perform the search and store the results in the
-      cache_NNN table.
-
-      - If the table already existed, or was in the process of being created
-        by another process, this will throw an error (after possibly waiting for
-        the lock to clear), which we ignore.
-
-    - Store the cache table name in the memory cache and return it. (At this
-      point we KNOW the table exists and has been fully populated)
-
-    The cache_NNN table has two columns::
-
-        1) sort_order: A unique, monotonically increasing id that gives the
-           order of the results based on the sort order requested when the
-           search was done.
-        2) id: A unique is corresponding to the obs_general.id of the
-           observation.
-
-    Note: `url_to_search_params` takes the user HTTP request object and creates the
-    data objects that are passed to this function.
+    The pruner removes rows, and an entry cached by a request in flight across a reset of
+    the search tables can name an id the re-created table has not handed out, or one a
+    later search was given.
     """
-    cursor = connection.cursor()
 
-    # Create a cache key
-    cache_table_num, _cache_new_flag = set_user_search_number(selections, extras)
-    if cache_table_num is None:  # pragma: no cover - database error
+
+def get_search_id(
+    selections: dict[str, Any], extras: dict[str, Any], api_code: int | None = None
+) -> int | None:
+    """Return a search's ``user_searches`` id, building its results if no one has.
+
+    This is THE main data query place. The results, metadata and cart views join the
+    search's rows of ``search_results`` as `sql_builder.search_results_source` of the id.
+
+    Parameters:
+        selections: The search's constraints, as `url_to_search_params` returns them.
+        extras: Its query types, units and order.
+        api_code: The API call number to log the search build under.
+
+    Returns:
+        The id, or None when the search could not be registered or built.
+    """
+    results = get_search_results(selections, extras, api_code=api_code)
+    return None if results is None else results.search_id
+
+
+def get_search_results(
+    selections: dict[str, Any], extras: dict[str, Any], api_code: int | None = None
+) -> SearchResults | None:
+    """Register a search, build its results if no worker has, and return its id and count.
+
+    The search is registered in ``user_searches`` (`set_user_search_number`), and its
+    row, read by primary key, says whether its results are built. If they are not,
+    `_build_search_results` builds them under the row's lock, so that concurrent
+    requests for one new search build it once. A search whose row the pruner removed
+    after the cache named it is registered afresh, once.
+
+    Parameters:
+        selections: The search's constraints.
+        extras: Its query types, units and order.
+        api_code: The API call number to log the search build under.
+
+    Returns:
+        The search's id and result count, or None when the search could not be
+        registered or built.
+    """
+    # Registration and the build each commit on their own, and the build's row lock must
+    # end with its own transaction; inside a caller's transaction neither would.
+    assert not connection.in_atomic_block, 'a search is built outside any transaction'
+    digest = search_hash(selections, extras)
+    for _attempt in range(2):
+        search_id = set_user_search_number(selections, extras)
+        if search_id is None:  # pragma: no cover - pruned during registration
+            continue
+        try:
+            count = _built_count(search_id, digest)
+            if count is None:
+                count = _build_search_results(search_id, digest, selections, extras, api_code)
+        except _SearchPrunedError:
+            cache.delete(search_number_cache_key(digest))
+            continue
+        if count is None:
+            return None
+        return SearchResults(search_id, count)
+    log.error(  # pragma: no cover - the pruner removed the search twice in a row
+        'get_search_results: search pruned while registering *** Selections %r *** Extras %r',
+        str(selections),
+        str(extras),
+    )
+    return None  # pragma: no cover - ditto
+
+
+def _built_count(search_id: int, digest: bytes) -> int | None:
+    """Return a search's result count, or None if its results are not built yet.
+
+    Parameters:
+        search_id: The search's row.
+        digest: The search's `search_hash`, which the row has to hold.
+
+    Raises:
+        _SearchPrunedError: If the search has no row, or the row is another search's.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            'SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = %s',
+            [search_id],
+        )
+        row = cursor.fetchone()
+    return _count_from_row(search_id, digest, row)
+
+
+def _count_from_row(search_id: int, digest: bytes, row: tuple[Any, ...] | None) -> int | None:
+    """Return a search's result count, or None if its results are not stored yet.
+
+    Parameters:
+        search_id: The search's row.
+        digest: The search's `search_hash`, which the row has to hold.
+        row: The row's ``result_count``, ``results_built_at`` and ``search_hash``, in
+            that order, or None if there is no row.
+
+    Raises:
+        _SearchPrunedError: If there is no row, or it is another search's.
+    """
+    if row is None or bytes(row[2]) != digest:
+        raise _SearchPrunedError(search_id)
+    return None if row[1] is None else int(row[0])
+
+
+def _build_search_results(
+    search_id: int,
+    digest: bytes,
+    selections: dict[str, Any],
+    extras: dict[str, Any],
+    api_code: int | None,
+) -> int | None:
+    """Write a search's rows of ``search_results`` under its row's lock, unless built.
+
+    The row lock is the point concurrent builders serialize on: a second builder of
+    the same search waits on ``FOR UPDATE`` until the first commits, then reads the
+    committed count and returns it. The wait is bounded by ``[django]
+    search_build_timeout``, set as the session's ``innodb_lock_wait_timeout`` for the
+    build only and restored afterward. The rows are numbered by ``ROW_NUMBER()`` in the
+    search's order, and the count, ``results_built_at`` and ``last_used_at`` are
+    written in the transaction that writes them, so a build that fails or a worker
+    that dies leaves the search unbuilt. Django's MySQL connection runs at ``READ
+    COMMITTED``, so the ``INSERT ... SELECT`` takes no shared locks on the rows it
+    reads.
+
+    Parameters:
+        search_id: The search's row.
+        digest: The search's `search_hash`, which the row has to hold.
+        selections: The search's constraints.
+        extras: Its query types, units and order.
+        api_code: The API call number to log the build under.
+
+    Returns:
+        The search's result count, or None when the search cannot be rendered, the
+        wait for another builder timed out, or a statement failed.
+
+    Raises:
+        _SearchPrunedError: If the search has no row, or the row is another search's.
+    """
+    search = _search_select(selections, extras)
+    if search is None:  # pragma: no cover - already caught by previous checks
         log.error(
-            'get_user_query_table: Failed to make entry in user_searches'
+            '_build_search_results: the search cannot be rendered'
             + ' *** Selections %r *** Extras %r',
             str(selections),
             str(extras),
         )
         return None
-    cache_table_name = get_user_search_table_name(cache_table_num)
-
-    # Is this key set in the cache?
-    cache_key = (
-        settings.CACHE_SERVER_PREFIX
-        + settings.CACHE_KEY_PREFIX
-        + ':cache_table:'
-        + str(cache_table_num)
+    select, order_terms = search
+    select.add_column(sql_builder.value(search_id))
+    select.add_column(sql_builder.row_number(order_terms))
+    select.add_column(sql_builder.column('id', 'obs_general'))
+    insert_sql, params = sql_builder.insert_into_select(
+        'search_results', ('search_id', 'sort_order', 'obs_general_id'), select
     )
-    cached_val: str | None = cache.get(cache_key)
-    if cached_val:
-        return cached_val
 
-    # Try to create the table using the selection criteria.
-    # If the table already exists from earlier, this will throw a
-    # MYSQL_TABLE_ALREADY_EXISTS exception and we can just return the table
-    # name.
-    # If the table is in the process of being created by another process,
-    # the CREATE TABLE will hang due to the lock and eventually return
-    # when the CREATE TABLE is finished, at which point it will throw
-    # a MYSQL_TABLE_ALREADY_EXISTS exception and we can just return the table
-    # name.
-    sql, params = construct_query_string(selections, extras)
-    if sql is None:  # pragma: no cover - already caught by previous checks
-        log.error(
-            'get_user_query_table: construct_query_string failed'
-            + ' *** Selections %r *** Extras %r',
-            str(selections),
-            str(extras),
-        )
-        return None
-
-    if not sql:  # pragma: no cover - not possible
-        log.error(
-            'get_user_query_table: Query string is empty' + ' *** Selections %r *** Extras %r',
-            str(selections),
-            str(extras),
-        )
-        return None
-
-    # With this we can create a table that contains the single column
-    create_sql = sql_builder.create_table_from_select_sql(
-        cache_table_name, sql, column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS
-    )
-    # construct_query_string returns both halves together or neither, and the
-    # caller checked the SQL half above.
-    assert params is not None
-    try:
-        time1 = time.time()
-        cursor.execute(create_sql, tuple(params))
-    except DatabaseError as e:  # pragma: no cover -
-        # This can only happen when multiple processes are accessing the
-        # database at the same time
-        if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:  # pragma: no cover - ditto
-            cache.set(cache_key, cache_table_name)
-            return cache_table_name
-        log.exception(
-            'get_user_query_table: "%r" with params "%r" failed', create_sql, str(tuple(params))
-        )
-        return None
+    with connection.cursor() as cursor:
+        # How long this session waits for a row lock, raised for this transaction only.
+        cursor.execute('SELECT @@SESSION.innodb_lock_wait_timeout')
+        (previous_wait,) = cursor.fetchone()
+        cursor.execute('SET SESSION innodb_lock_wait_timeout = %s', [settings.SEARCH_BUILD_TIMEOUT])
+        try:
+            with transaction.atomic():
+                # Lock the search's row. A request already storing this search's results
+                # holds the lock, so this waits until that request commits.
+                cursor.execute(
+                    'SELECT result_count, results_built_at, search_hash FROM user_searches '
+                    'WHERE id = %s FOR UPDATE',
+                    [search_id],
+                )
+                built = _count_from_row(search_id, digest, cursor.fetchone())
+                if built is not None:
+                    # Another worker built the search while this one waited.
+                    return built
+                time1 = time.time()
+                cursor.execute(insert_sql, params)
+                count = int(cursor.rowcount)
+                cursor.execute(
+                    'UPDATE user_searches SET result_count = %s, '
+                    'results_built_at = UTC_TIMESTAMP(), last_used_at = UTC_TIMESTAMP() '
+                    'WHERE id = %s',
+                    [count, search_id],
+                )
+        except DatabaseError as e:
+            if is_lock_timeout_error(e):
+                log.error(
+                    '_build_search_results: timed out after %d s waiting for another build'
+                    + ' of search %d',
+                    settings.SEARCH_BUILD_TIMEOUT,
+                    search_id,
+                )
+            else:  # pragma: no cover - database error
+                log.exception(
+                    '_build_search_results: "%r" with params "%r" failed',
+                    insert_sql,
+                    str(tuple(params)),
+                )
+            return None
+        finally:
+            _restore_lock_wait(cursor, previous_wait)
     log.debug(
-        'API %r (%.3f) get_user_query_table: %r *** PARAMS %r',
+        'API %r (%.3f) _build_search_results: %r *** PARAMS %r',
         str(api_code),
         time.time() - time1,
-        create_sql,
+        insert_sql,
         str(params),
     )
-
-    cache.set(cache_key, cache_table_name)
-    return cache_table_name
+    return count
 
 
-def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]) -> tuple[int, bool]:
-    """Creates a new row in the user_searches table for each search request.
+def _restore_lock_wait(cursor: Any, previous_wait: int) -> None:
+    """Set the session's lock wait back after a build, closing a connection that fails.
 
-    This table lists query params+values plus any extra info needed to
-    run a data search query.
-    This method looks in user_searches table for current selections.
-    If none exist, creates it.
+    The restore must not replace the error a build already logged and answered, so a
+    connection that cannot take it is closed, and Django opens a fresh one, with the
+    server's default wait, for the next statement.
 
-    Returns the number of the cache table that should be used along with a flag
-    indicating if this is a new entry in user_searches so the cache table
-    shouldn't exist yet.
+    Parameters:
+        cursor: The build's cursor.
+        previous_wait: The wait the build replaced.
     """
-    selections_json = str(json.dumps(sort_dictionary(selections)))
-    selections_hash = hashlib.md5(str.encode(selections_json), usedforsecurity=False).hexdigest()
-
-    qtypes_json = None
-    qtypes_hash = 'NONE'  # Needed for UNIQUE constraint to work
-    if 'qtypes' in extras:
-        qtypes = extras['qtypes']
-        # Remove qtypes that aren't used for searching because they don't
-        # do anything to make the search unique
-        new_qtypes = {}
-        for qtype, val in qtypes.items():
-            qtype_no_num = strip_numeric_suffix(qtype)
-            if (
-                qtype_no_num in selections
-                or qtype_no_num + '1' in selections
-                or qtype_no_num + '2' in selections
-            ):
-                new_qtypes[qtype] = val
-        if len(new_qtypes):
-            qtypes_json = str(json.dumps(sort_dictionary(new_qtypes)))
-            qtypes_hash = hashlib.md5(str.encode(qtypes_json), usedforsecurity=False).hexdigest()
-
-    units_json = None
-    units_hash = 'NONE'  # Needed for UNIQUE constraint to work
-    if 'units' in extras:
-        units = extras['units']
-        # Remove units that aren't used for searching because they don't
-        # do anything to make the search unique
-        new_units = {}
-        for unit, val in units.items():
-            unit_no_num = strip_numeric_suffix(unit)
-            if (
-                unit_no_num in selections
-                or unit_no_num + '1' in selections
-                or unit_no_num + '2' in selections
-            ):
-                new_units[unit] = val
-        if len(new_units):
-            units_json = str(json.dumps(sort_dictionary(new_units)))
-            units_hash = hashlib.md5(str.encode(units_json), usedforsecurity=False).hexdigest()
-
-    order_json = None
-    order_hash = 'NONE'  # Needed for UNIQUE constraint to work
-    if 'order' in extras and extras['order'][0]:
-        order_json = str(json.dumps(extras['order']))
-        order_hash = hashlib.md5(str.encode(order_json), usedforsecurity=False).hexdigest()
-
-    cache_key = (
-        settings.CACHE_SERVER_PREFIX
-        + settings.CACHE_KEY_PREFIX
-        + ':usersearchno:selections_hash:'
-        + str(selections_hash)
-        + ':qtypes_hash:'
-        + str(qtypes_hash)
-        + ':units_hash:'
-        + str(units_hash)
-        + ':order_hash:'
-        + str(order_hash)
-    )
-    cached_val = cache.get(cache_key)
-    if cached_val is not None:
-        return cached_val, False
-
-    # This operation has to be atomic because multiple threads may be trying
-    # to lookup/create the same selections entry at the same time. Thus,
-    # rather than looking it up, and then creating it if it doesn't exist
-    # (which leaves a nice hole for two threads to try to create it
-    # simultaneously), instead we go ahead and try to create it and let the
-    # UNIQUE CONSTRAINT on the hash fields throw an error if it already exists.
-    # That gives us an atomic write.
-    new_entry = False
-    s = UserSearches(
-        selections_json=selections_json,
-        selections_hash=selections_hash,
-        qtypes_json=qtypes_json,
-        qtypes_hash=qtypes_hash,
-        units_json=units_json,
-        units_hash=units_hash,
-        order_json=order_json,
-        order_hash=order_hash,
-    )
     try:
-        s.save()
-        new_entry = True
-    except IntegrityError:
-        # This means it's already there and we tried to duplicate the constraint
-        s = UserSearches.objects.get(
-            selections_hash=selections_hash,
-            qtypes_hash=qtypes_hash,
-            units_hash=units_hash,
-            order_hash=order_hash,
-        )
-    except UserSearches.MultipleObjectsReturned:  # pragma: no cover -
-        # This would only happen if the database is corrupted
-        duplicates = UserSearches.objects.filter(
-            selections_hash=selections_hash,
-            qtypes_hash=qtypes_hash,
-            units_hash=units_hash,
-            order_hash=order_hash,
-        )
-        s = duplicates[0]
-        log.exception(
-            'set_user_search_number: Multiple entries in user_searches'
-            + ' for *** Selections %r *** Qtypes %r *** Units %r '
-            + ' *** Order %r',
-            str(selections_json),
-            str(qtypes_json),
-            str(units_json),
-            str(order_json),
-        )
+        cursor.execute('SET SESSION innodb_lock_wait_timeout = %s', [previous_wait])
+    except DatabaseError:  # pragma: no cover - the connection failed during the build
+        log.exception('_build_search_results: could not restore the lock wait; reconnecting')
+        connection.close()
 
-    cache.set(cache_key, s.id)
-    return s.id, new_entry
+
+def _search_strings(
+    selections: dict[str, Any], extras: dict[str, Any]
+) -> tuple[str, str | None, str | None, str | None]:
+    """Return the four strings that identify a search.
+
+    Two requests are the same search exactly when these agree: the selections; the
+    query types and the units of the parameters it constrains, each None when there are
+    none; and the order, None when the request names none.
+
+    Parameters:
+        selections: The search's constraints.
+        extras: Its query types, units and order.
+
+    Returns:
+        The selections, query types, units and order, each as sorted JSON.
+    """
+    selections_json = json.dumps(sort_dictionary(selections))
+
+    def constrained(values: dict[str, Any]) -> str | None:
+        """Return the entries for constrained parameters as sorted JSON, or None."""
+        kept = {}
+        for name, val in values.items():
+            name_no_num = strip_numeric_suffix(name)
+            if (
+                name_no_num in selections
+                or name_no_num + '1' in selections
+                or name_no_num + '2' in selections
+            ):
+                kept[name] = val
+        return json.dumps(sort_dictionary(kept)) if kept else None
+
+    qtypes_json = constrained(extras['qtypes']) if 'qtypes' in extras else None
+    units_json = constrained(extras['units']) if 'units' in extras else None
+    order_json = None
+    if 'order' in extras and extras['order'][0]:
+        order_json = json.dumps(extras['order'])
+    return selections_json, qtypes_json, units_json, order_json
+
+
+def search_hash(selections: dict[str, Any], extras: dict[str, Any]) -> bytes:
+    """Return the SHA-256 digest that identifies a search in ``user_searches``.
+
+    Parameters:
+        selections: The search's constraints.
+        extras: Its query types, units and order.
+
+    Returns:
+        The 32-byte digest of the JSON list of `_search_strings`.
+    """
+    return hashlib.sha256(json.dumps(list(_search_strings(selections, extras))).encode()).digest()
+
+
+def search_number_cache_key(digest: bytes) -> str:
+    """Return the cache key holding a search's id and the day its row was last stamped."""
+    return (
+        settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX + ':usersearchno:' + digest.hex()
+    )
+
+
+def set_user_search_number(selections: dict[str, Any], extras: dict[str, Any]) -> int | None:
+    """Return a search's ``user_searches`` id, registering the search if it is new.
+
+    The cache maps the search's hash to its id and the day its row was last stamped.
+    A hit on a later day stamps the row's ``last_used_at`` (`_stamp_last_used`), so a
+    search in daily use is never pruned and no request writes more than once a day.
+    A miss inserts the row, letting the unique key on ``search_hash`` refuse a
+    duplicate a concurrent request inserted first, and reads that row back instead.
+    Either statement commits on its own, before any search build.
+
+    Parameters:
+        selections: The search's constraints.
+        extras: Its query types, units and order.
+
+    Returns:
+        The id, or None if the row a duplicate insert ran into was pruned before it
+        could be read.
+    """
+    digest = search_hash(selections, extras)
+    cache_key = search_number_cache_key(digest)
+    today = timezone.now().date().isoformat()
+    cached = cache.get(cache_key)
+    if cached is not None:
+        search_id, stamped_on = cached
+        # _stamp_last_used sets the row's last_used_at in the database to now. It runs on
+        # the search's first use each day; later uses the same day skip it.
+        if stamped_on != today and _stamp_last_used(search_id):
+            cache.set(cache_key, (search_id, today))
+        return int(search_id)
+
+    entry = UserSearches(search_hash=digest, last_used_at=timezone.now())
+    try:
+        _save_registration(entry)
+        search_id, stamped_on = entry.id, today
+    except IntegrityError:
+        # A concurrent request registered the search first.
+        try:
+            search_id = UserSearches.objects.values_list('id', flat=True).get(search_hash=digest)
+        except UserSearches.DoesNotExist:  # pragma: no cover - pruned in between
+            log.error('set_user_search_number: search pruned while registering')
+            return None
+        # Sets the existing row's last_used_at in the database to now.
+        stamped_on = today if _stamp_last_used(search_id) else None
+    cache.set(cache_key, (search_id, stamped_on))
+    return int(search_id)
+
+
+def _save_registration(entry: UserSearches) -> None:
+    """Insert a search's new row, trying once more if the insert deadlocked.
+
+    Two requests inserting the same digest just after the pruner removed its row can
+    deadlock on the removed row's index entry; the server rolls one back, and its second
+    attempt finds the other's row.
+
+    Parameters:
+        entry: The unsaved row.
+
+    Raises:
+        IntegrityError: If a row with the digest exists.
+    """
+    try:
+        entry.save()
+    except DatabaseError as e:  # pragma: no cover - two registrations deadlocked
+        if not is_deadlock_error(e):
+            raise
+        entry.save()
+
+
+def _stamp_last_used(search_id: int) -> bool:
+    """Set a search's ``last_used_at`` to now, unless a search build holds its row.
+
+    The stamp is its own short transaction and never waits: a row a search build has
+    locked is skipped, and the build's own update stamps it.
+
+    Parameters:
+        search_id: The search's row.
+
+    Returns:
+        Whether the row was stamped.
+    """
+    with transaction.atomic(), connection.cursor() as cursor:
+        # SKIP LOCKED returns no row, rather than waiting, when a request storing the
+        # search's results holds the lock.
+        cursor.execute(
+            'SELECT id FROM user_searches WHERE id = %s FOR UPDATE SKIP LOCKED', [search_id]
+        )
+        if cursor.fetchone() is None:
+            return False
+        cursor.execute(
+            'UPDATE user_searches SET last_used_at = UTC_TIMESTAMP() WHERE id = %s', [search_id]
+        )
+    return True
 
 
 # get_param_info_by_slug is called a LOT and turns out to take a significant
@@ -1413,6 +1563,34 @@ def construct_query_string(
     selections: dict[str, Any], extras: dict[str, Any]
 ) -> tuple[str | None, list[Any] | None]:
     """Given a set selections,extras generate the appropriate SQL SELECT"""
+    search = _search_select(selections, extras)
+    if search is None:
+        return None, None
+    select, order_terms = search
+    select.add_column(sql_builder.column('id', 'obs_general'))
+    for order_column, descending in order_terms:
+        select.add_order_by(order_column, descending=descending)
+
+    sql, clause_params = select.build()
+    log.debug('SEARCH SQL: %r *** PARAMS %r', sql, str(clause_params))
+    return sql, clause_params
+
+
+def _search_select(
+    selections: dict[str, Any], extras: dict[str, Any]
+) -> tuple[sql_builder.Select, list[tuple[Any, bool]]] | None:
+    """Return the FROM and WHERE of a search, and the terms it is ordered by.
+
+    Parameters:
+        selections: The search's constraints, as `url_to_search_params` returns them.
+        extras: Its query types, units and order.
+
+    Returns:
+        A `sql_builder.Select` of ``obs_general`` with the tables the search reads
+        joined and its constraints as the WHERE, but no columns and no ORDER BY; and the
+        search's order as `(expression, descending)` pairs. None when a constraint or
+        the order cannot be rendered.
+    """
     all_qtypes = extras.get('qtypes', [])
     all_units = extras.get('units', [])
     finished_ranges = []  # Ranges are done for both sides at once so track
@@ -1439,7 +1617,7 @@ def construct_query_string(
                 str(selections),
                 str(extras),
             )
-            return None, None
+            return None
         cat_name = param_info.category_name
 
         if param_qualified_name_no_num in all_qtypes:
@@ -1468,7 +1646,7 @@ def construct_query_string(
                     str(selections),
                     str(extras),
                 )
-                return None, None
+                return None
             if mult_values:
                 mult_column = sql_builder.column(param_info.name, cat_name)
                 mult_clause: sql_builder.Expr
@@ -1510,7 +1688,7 @@ def construct_query_string(
                 clause, params = get_range_query(selections, param_qualified_name, qtypes, units)
 
             if clause is None:
-                return None, None
+                return None
             # These builders return both halves together or neither.
             assert params is not None
             clauses.append(sql_builder.Expr(clause, params))
@@ -1519,7 +1697,7 @@ def construct_query_string(
         elif form_type == 'STRING':
             clause, params = get_string_query(selections, param_qualified_name, qtypes)
             if clause is None:
-                return None, None
+                return None
             # These builders return both halves together or neither.
             assert params is not None
             clauses.append(sql_builder.Expr(clause, params))
@@ -1531,7 +1709,7 @@ def construct_query_string(
                 form_type,
                 param_qualified_name,
             )
-            return None, None
+            return None
 
     # Make the ordering terms
     order_terms: list[tuple[Any, bool]] | None = []
@@ -1542,7 +1720,7 @@ def construct_query_string(
             order_params, descending_params
         )
         if order_terms is None:
-            return None, None
+            return None
         # create_order_by_terms returns all three or none, and the check above
         # ruled out none.
         assert order_mult_tables is not None
@@ -1551,7 +1729,6 @@ def construct_query_string(
         obs_tables |= order_obs_tables
 
     select = sql_builder.Select()
-    select.add_column(sql_builder.column('id', 'obs_general'))
     from_source = select.add_from('obs_general')
 
     # Now JOIN all the obs_ tables together
@@ -1563,16 +1740,10 @@ def construct_query_string(
     if clauses:
         select.add_where(sql_builder.combine_exprs(clauses, 'AND'))
 
-    # Add in the ORDER BY clause
     # order_terms starts as [] and is only replaced by a non-None list, since the
     # None case returned above.
     assert order_terms is not None
-    for order_column, descending in order_terms:
-        select.add_order_by(order_column, descending=descending)
-
-    sql, clause_params = select.build()
-    log.debug('SEARCH SQL: %r *** PARAMS %r', sql, str(clause_params))
-    return sql, clause_params
+    return select, order_terms
 
 
 @functools.lru_cache(maxsize=_REGEX_CACHE_SIZE)
@@ -2051,11 +2222,6 @@ def get_longitude_query(
     return sql_builder.combine_exprs(clauses, 'OR')
 
 
-def get_user_search_table_name(num: int | str) -> str:
-    """pass cache_no, returns user search table name"""
-    return 'cache_' + str(num)
-
-
 def add_obs_table_joins(from_source: sql_builder.FromSource, obs_tables: Iterable[str]) -> None:
     """LEFT JOIN each ``obs_`` table onto ``obs_general``.
 
@@ -2102,26 +2268,24 @@ def add_mult_table_joins(
         )
 
 
-def search_cache_join_condition(table_name: str, cache_table_name: str) -> sql_builder.Expr:
+def search_results_join_condition(table_name: str) -> sql_builder.Expr:
     """Return the condition that ties a table's rows to a search's results.
 
-    A search cache table holds one row per matching observation, keyed by
-    obs_general.id. obs_general therefore joins to it on its own primary key,
-    while every other ``obs_`` table joins on the ``obs_general_id`` it carries.
-
-    The cache table is created by raw DDL under a name computed at runtime and has
-    no Django model, which is why the queries that need this condition cannot be
-    written with the ORM.
+    A search's results (`sql_builder.search_results_source`) hold one row per matching
+    observation, whose ``id`` is its obs_general.id. obs_general therefore joins to them
+    on its own primary key, while every other ``obs_`` table joins on the
+    ``obs_general_id`` it carries.
 
     Parameters:
         table_name: The ``obs_`` table being tied to the search.
-        cache_table_name: The cache table holding the search results.
     """
     if table_name == 'obs_general':
         own_column = sql_builder.column('id', table_name)
     else:
         own_column = sql_builder.column('obs_general_id', table_name)
-    return sql_builder.columns_equal(own_column, sql_builder.column('id', cache_table_name))
+    return sql_builder.columns_equal(
+        own_column, sql_builder.column('id', sql_builder.SEARCH_RESULTS_ALIAS)
+    )
 
 
 ################################################################################

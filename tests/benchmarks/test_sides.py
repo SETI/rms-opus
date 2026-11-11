@@ -91,7 +91,7 @@ def test_timing_options_name_the_file() -> None:
     [
         ('bundle_import', '--import'),
         ('finalize', '--finalize'),
-        ('reset_search_tables', '--drop-cache-tables'),
+        ('reset_search_tables', '--reset-search-tables'),
         ('validate', '--validate'),
         ('erase', ('--scorched-earth', '--yes')),
         ('timing_json', '--timing-json'),

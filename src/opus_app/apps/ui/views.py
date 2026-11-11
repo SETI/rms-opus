@@ -2033,7 +2033,7 @@ def _get_menu_labels(
         selections = None
 
     # get_triggered_tables answers None when it could not build the search's
-    # cache table, which the two queries below would then fail on.
+    # results, which the two queries below would then fail on.
     triggered_tables: list[str] | None
     if not selections:
         # Makes a copy of settings.BASE_TABLES

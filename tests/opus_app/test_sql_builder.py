@@ -334,35 +334,40 @@ class SQLBuilderSelectTests(TestCase):
 class SQLBuilderStatementTests(TestCase):
     """The statements built around a SELECT: INSERT ... SELECT, DELETE and the rest."""
 
-    def test__count_rows(self) -> None:
-        "[test_sql_builder.py] count_rows"
-        self.assertEqual(sql_builder.count_rows('cache_12'), 'SELECT COUNT(*) FROM `cache_12`')
-
-    def test__create_table_from_select_sql_with_column_defs(self) -> None:
-        "[test_sql_builder.py] create_table_from_select_sql: the cache-table shape"
-        self.assertEqual(
-            sql_builder.create_table_from_select_sql(
-                'cache_12',
-                'SELECT `obs_general`.`id` FROM `obs_general`',
-                column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS,
+    def test__search_results_source(self) -> None:
+        "[test_sql_builder.py] search_results_source: one search's rows, shaped id and sort_order"
+        select = sql_builder.Select()
+        select.add_column(sql_builder.column('sort_order', sql_builder.SEARCH_RESULTS_ALIAS))
+        select.add_from('obs_general').add_join(
+            'INNER',
+            sql_builder.search_results_source(12),
+            sql_builder.columns_equal(
+                sql_builder.column('id', sql_builder.SEARCH_RESULTS_ALIAS),
+                sql_builder.column('id', 'obs_general'),
             ),
-            'CREATE TABLE `cache_12`(sort_order INT NOT NULL AUTO_INCREMENT,'
-            ' PRIMARY KEY(sort_order), id INT UNSIGNED, UNIQUE KEY(id)) '
-            'SELECT `obs_general`.`id` FROM `obs_general`',
         )
+        sql, params = select.build()
+        self.assertEqual(
+            sql,
+            'SELECT `results`.`sort_order` FROM `obs_general` INNER JOIN'
+            ' (SELECT `search_results`.`obs_general_id` AS `id`,`search_results`.`sort_order`'
+            ' FROM `search_results` WHERE `search_results`.`search_id` = %s) AS `results`'
+            ' ON `results`.`id`=`obs_general`.`id`',
+        )
+        self.assertEqual(params, [12])
 
     def test__between(self) -> None:
         "[test_sql_builder.py] between: both bounds are parameters, after the expression's"
         self.assertEqual(
-            sql_builder.between(sql_builder.column('sort_order', 'cache_12'), 3, 7),
-            sql_builder.Expr('`cache_12`.`sort_order` BETWEEN %s AND %s', [3, 7]),
+            sql_builder.between(sql_builder.column('sort_order', 'results'), 3, 7),
+            sql_builder.Expr('`results`.`sort_order` BETWEEN %s AND %s', [3, 7]),
         )
 
     def test__sort_order_range(self) -> None:
         "[test_sql_builder.py] sort_order_range: the window after an offset, numbered from 1"
         self.assertEqual(
-            sql_builder.sort_order_range('cache_12', 200, 100),
-            sql_builder.Expr('`cache_12`.`sort_order` BETWEEN %s AND %s', [201, 300]),
+            sql_builder.sort_order_range('results', 200, 100),
+            sql_builder.Expr('`results`.`sort_order` BETWEEN %s AND %s', [201, 300]),
         )
 
     def test__row_number(self) -> None:
@@ -385,12 +390,9 @@ class SQLBuilderStatementTests(TestCase):
             ),
         )
 
-    def test__create_table_from_select_sql(self) -> None:
-        "[test_sql_builder.py] create_table_from_select_sql: the pre-rendered SELECT"
-        self.assertEqual(
-            sql_builder.create_table_from_select_sql('cache_12', 'SELECT 1'),
-            'CREATE TABLE `cache_12` SELECT 1',
-        )
+    def test__row_number_without_an_order(self) -> None:
+        "[test_sql_builder.py] row_number: no order terms number the rows in no stated order"
+        self.assertEqual(sql_builder.row_number([]), sql_builder.Expr('ROW_NUMBER() OVER ()', []))
 
     def test__delete_from(self) -> None:
         "[test_sql_builder.py] delete_from"
@@ -434,6 +436,26 @@ class SQLBuilderStatementTests(TestCase):
             sql_builder.replace_into_values('cart', ('session_id', 'opus_id')),
             'REPLACE INTO `cart` (`session_id`,`opus_id`) VALUES (%s,%s)',
         )
+
+    def test__insert_into_select(self) -> None:
+        "[test_sql_builder.py] insert_into_select: a search build's statement"
+        select = sql_builder.Select()
+        select.add_column(sql_builder.value(12))
+        select.add_column(
+            sql_builder.row_number([(sql_builder.column('opus_id', 'obs_general'), False)])
+        )
+        select.add_column(sql_builder.column('id', 'obs_general'))
+        select.add_from('obs_general')
+        sql, params = sql_builder.insert_into_select(
+            'search_results', ('search_id', 'sort_order', 'obs_general_id'), select
+        )
+        self.assertEqual(
+            sql,
+            'INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`)'
+            ' SELECT %s,ROW_NUMBER() OVER (ORDER BY `obs_general`.`opus_id` ASC),'
+            '`obs_general`.`id` FROM `obs_general`',
+        )
+        self.assertEqual(params, [12])
 
     def test__replace_into_select(self) -> None:
         "[test_sql_builder.py] replace_into_select"

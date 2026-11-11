@@ -39,9 +39,9 @@ if TYPE_CHECKING:
     from opus_import.context import ImportContext
     from opus_import.import_util import TableSchema
 
-#: The prefixes of the tables the import creates in any number -- the observation tables,
-#: the mult tables, and the web application's per-search cache tables.
-OPUS_TABLE_PREFIXES = ('obs_', 'mult_', 'cache_')
+#: The prefixes of the tables the import creates in any number -- the observation tables
+#: and the mult tables.
+OPUS_TABLE_PREFIXES = ('obs_', 'mult_')
 
 #: The other tables the import creates, by exact name, including the tables a rebuild
 #: that stopped part way leaves beside the live ones (`opus_import.table_swap`).
@@ -55,6 +55,7 @@ OPUS_TABLE_NAMES = (
     'contexts',
     'definitions',
     'user_searches',
+    'search_results',
     'param_info__new',
     'param_info__old',
     'partables__new',
@@ -110,8 +111,7 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
     in an order the foreign keys allow: ``schema_version`` first, so an erase that stops
     part way leaves a schema nothing serves or deploys onto; then every ``obs_`` table
     but ``obs_general``; ``cart``; ``obs_general``; the ``definitions`` tables, which
-    reference ``contexts``; every other exact name and every ``cache_`` table; and the
-    ``mult_`` tables last.
+    reference ``contexts``; every other exact name; and the ``mult_`` tables last.
 
     Parameters:
         ctx: The import run's context, for the open database.
@@ -129,7 +129,6 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
         for name in OPUS_TABLE_NAMES
         if name not in (schema_version.SCHEMA_VERSION_TABLE, 'cart', *_DEFINITIONS_TABLES)
     ]
-    order += [name for name in prefixed if name.startswith('cache_')]
     order += [name for name in prefixed if name.startswith('mult_')]
     for name in order:
         if name in present:

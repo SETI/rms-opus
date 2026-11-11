@@ -66,21 +66,24 @@ validation. For the same reason a ``matches`` query type is downgraded to ``cont
 while suggesting.
 
 **It has two query strategies, and says which one it used.** The restricted one joins the
-field's table to the search's cache table and is used when the cache table has fewer rows
-than the configured threshold. If the cache table is larger than that, or if the
-restricted query exceeds its execution-time hint, it falls back to querying the whole
-database and reports ``full_search: true``. Both queries carry a
-``MAX_EXECUTION_TIME`` hint, because an autocomplete that takes seconds is worse than one
-that answers approximately.
+field's table to the search's results and is used when the search has fewer results than
+the configured threshold, a count it reads from the search's ``user_searches`` row. If
+the search has more than that, or if the restricted query exceeds its execution-time
+hint, it falls back to querying the whole database and reports ``full_search: true``.
+Both queries carry a ``MAX_EXECUTION_TIME`` hint, because an autocomplete that takes
+seconds is worse than one that answers approximately.
 
 **The matched portion is highlighted** by re-applying the user's pattern to each
 suggestion. It uses the third-party ``regex`` module rather than :mod:`re`, because that
 is closer to the ICU regular expression library MySQL uses; and a pattern that fails to
 compile here is swallowed, because the highlighting is cosmetic and the results are not.
 
-Results are cached in the Django cache, keyed by the field, a hash of the partial query,
-the cache table, the query type and the limit. ``reqno`` is added after the caching, so
-it is never cached.
+Results are cached in the Django cache, under a key
+(:func:`~opus_app.apps.search.views.string_choices_cache_key`) whose variable part is the
+SHA-256 of the field, the partial query, the search's id, the query type and the limit --
+hashed to a fixed width, because the partial query is the user's own text and the key
+could otherwise outgrow memcached's limit on a key's length. ``reqno`` is added after the
+caching, so it is never cached.
 
 .. _dev_guide_webapp_search_url_to_params:
 
@@ -180,34 +183,65 @@ need.
 
 .. _dev_guide_webapp_search_cache:
 
-Building the cache table
-------------------------
+Storing a search's results
+--------------------------
+
+:ref:`dev_guide_webapp_search_flow` explains how a search's results are stored; these are
+the functions that do it.
+
+:func:`~opus_app.apps.search.views.search_hash`
+    Returns the SHA-256 hash that identifies a search: the hash of a JSON list of its
+    selections, qtypes, units and sort order. Qtypes and units for fields that are not
+    being searched are left out.
 
 :func:`~opus_app.apps.search.views.set_user_search_number`
-    Maps a search to a small integer through the ``user_searches`` table, as described in
-    :ref:`dev_guide_webapp_search_flow`. Returns the number and whether the row was newly
-    created.
+    Returns the search's number, its ``user_searches`` ``id``, adding a row if the search
+    is new. It looks in the Django cache first, under
+    :func:`~opus_app.apps.search.views.search_number_cache_key`. If the search is not
+    there, it inserts a row, and if another request inserted the same search first, it
+    reads that row instead. It updates ``last_used_at`` at most once a day, and never
+    waits for a request that is writing the search's results. Returns None only when the
+    other request's row was pruned before it could be read. Without memcached each worker
+    has its own cache, so each worker looks the search up in the database once.
 
-:func:`~opus_app.apps.search.views.get_user_search_table_name`
-    The number becomes ``cache_<n>``. One line, and the only place that name is formed.
+:func:`~opus_app.apps.search.views.get_search_results`
+    Returns the search's number and result count, first storing its results if they are
+    not stored yet, or None if either fails. ``_build_search_results`` stores them: it
+    locks the search's ``user_searches`` row, writes the results with one ``INSERT INTO
+    search_results ... SELECT``, and fills in ``result_count``, ``results_built_at`` and
+    ``last_used_at``, all in one transaction. A second request for the same new search
+    waits for the lock, for up to ``[django] search_build_timeout`` seconds, and then
+    uses the first request's results. If the wait runs out it returns None, which the
+    caller answers with a 500
+    (:func:`~opus_app.apps.tools.app_utils.http500_search_cache_failed`). If the search's
+    row is gone, or holds another search's hash, the search is added again, once. It
+    must not be called inside a transaction, because adding the search and storing its
+    results each commit on their own.
 
-:func:`~opus_app.apps.search.views.get_user_query_table`
-    Finds or builds the table, and returns its name or None. It memoizes the name in the
-    Django cache once the table's existence is certain, and handles two processes racing
-    to create it.
+:func:`~opus_app.apps.search.views.get_search_id`
+    The same, returning only the number. The results, metadata and cart views join the
+    search's results through it, as
+    :func:`~opus_app.apps.tools.sql_builder.search_results_source`.
 
-:func:`~opus_app.apps.search.views.search_cache_join_condition`
+:func:`~opus_app.apps.search.views.search_results_join_condition`
     The condition that ties a table's rows to a search's results.
 
 Turning a search into SQL
 -------------------------
 
-:func:`~opus_app.apps.search.views.construct_query_string`
+``_search_select``
     Walks the selections in sorted order -- sorted so that the SQL a given search
     produces is reproducible, which is what the golden-response suite pins -- and
     dispatches on each field's form type. It collects the ``obs_`` and ``mult_`` tables
-    the clauses and the ordering need, assembles the joins, and returns the statement and
-    its parameters. **The SELECT list is one column, ``obs_general.id``.**
+    the clauses and the ordering need, assembles the joins, and returns a
+    :class:`~opus_app.apps.tools.sql_builder.Select` with no columns and no ORDER BY,
+    together with the search's order as terms. ``_build_search_results`` adds the
+    columns it stores: the search's number, ``ROW_NUMBER()`` over those terms, and
+    ``obs_general.id``.
+
+:func:`~opus_app.apps.search.views.construct_query_string`
+    The same search as a plain statement and its parameters: the one column
+    ``obs_general.id``, ordered by the search's order.
 
 Four builders produce the clauses:
 
@@ -233,8 +267,7 @@ Four builders produce the clauses:
     longitude becomes a pair of plain comparisons joined by ``AND`` or, for a range that
     wraps through zero, by ``OR``.
 
-Mult fields are handled inline in
-:func:`~opus_app.apps.search.views.construct_query_string`: the user's readable labels are
+Mult fields are handled inline in ``_search_select``: the user's readable labels are
 looked up in the worker's copy of the field's ``mult_`` table
 (:func:`~opus_app.apps.tools.import_constants.mult_table`) to get their ids, and a
 ``GROUP`` field becomes an ``IN`` test while a ``MULTIGROUP`` field becomes an OR of JSON
@@ -372,9 +405,10 @@ Regenerating it
 ~~~~~~~~~~~~~~~
 
 ``scripts/models/create_opus_models.sh``, run from the repository root against a fully
-imported database. It runs Django's ``inspectdb``, **refuses to continue if any**
-``cache_*`` **table is present** -- so the per-search tables can never be captured as
-models -- applies the prefixing and the foreign-key repairs, and formats the result.
+imported database. It runs Django's ``inspectdb``, applies the prefixing and the
+foreign-key repairs, makes ``UserSearches.search_hash`` a ``BinaryField`` (``inspectdb``
+reads a ``BINARY`` column as text, which would not return a digest's bytes unaltered),
+and formats the result.
 
 Consequences worth knowing:
 
@@ -383,12 +417,13 @@ Consequences worth knowing:
   out, naming it on the reference's landing page so that a reader who cannot find it is
   told why.
 * **A new OPUS table does not exist to the web application until this has been run.**
-* The ``cache_NNN`` tables are never modeled at all, which is the reason
-  :mod:`opus_app.apps.tools.sql_builder` exists.
+* ``search_results`` is read through no model: every query joins one search's rows of
+  it as a derived table, which is the reason :mod:`opus_app.apps.tools.sql_builder`
+  exists.
 
-``UserSearches`` is the one generated model worth reading: its unique key over the four
-hashes is what makes a search's cache table number stable, and
-:ref:`dev_guide_webapp_search_flow` describes how that is used.
+``UserSearches`` is the one generated model worth reading: its unique ``search_hash`` is
+what makes a search's number stable, and :ref:`dev_guide_webapp_search_flow` describes
+how that is used.
 
 API reference
 -------------

@@ -5482,3 +5482,80 @@ Nothing above this line is rewritten by an executor.
   it again, though the SQL the scenarios issue changed. It is rewritten from this PR's head
   (2026-11-10, `bench_db --dump-queries --commit-capture`, session `capture`, test
   scale, `bench_test_before_a_3`): the same 67 blocks, 500 statements against 1,977.
+
+### 2026-11-10, PR-11 (written against this file at 4440d93c)
+
+- A search's rows are joined as a derived table, `(SELECT obs_general_id AS id,
+  sort_order FROM search_results WHERE search_id = %s) AS results`
+  (`sql_builder.search_results_source`), which has the shape the cache tables had, so
+  every consumer reads `results.id` and `results.sort_order` as it read the cache
+  table's columns, and the server merges it into the statement. The join condition is
+  therefore `search_results_join_condition(table)`, without the id the section gives
+  it: the source carries the id.
+- `inspectdb` reads `BINARY(32)` as a `CharField`, not the `BinaryField` the section
+  expects, and a `CharField` does not return a digest's bytes unaltered;
+  `create_opus_models.sh` rewrites `UserSearches.search_hash` to a `BinaryField`.
+  `search_results` gets no model class, hidden or not: `models.py` lacks the other
+  tables added since it was last generated too.
+- Times are written with `UTC_TIMESTAMP()`, and the registration's `last_used_at` with
+  `timezone.now()`: Django stores UTC under `USE_TZ`, and the server's `NOW()` is local
+  time.
+- The review of the PR found three ways a search could be served wrong, each fixed:
+  - **A request in flight against the pruner.** A request that read a search just
+    before the pruner removed it could read half its rows, and the cart's add-all
+    could add half of them. The pruner leaves a removed search's results to the next
+    run, whose first step removes them, before it removes any search; and under the row
+    lock it reads the last use again, leaving a search used since its snapshot. The
+    table therefore holds, until the next run, the rows of the searches the last run
+    removed, which `--stats` reports. The deployment guide's cron line takes `flock` so
+    that runs do not overlap.
+  - **A cached id across a reset.** An entry a request in flight cached across a reset
+    named an id the re-created `user_searches` would hand to another search.
+    `reset_search_tables` starts the ids above the old table's highest
+    (`ImportDBSuper.set_next_id`), and every read of a search's row checks that it holds
+    the search's own digest.
+  - **Two registrations of a just-pruned search** can deadlock on the removed row's
+    index entry; the insert is retried once. A row pruned between a duplicate insert
+    and its read-back sends `get_search_results` round its loop rather than to a 500,
+    and a search is refused inside a caller's transaction, where neither registration
+    nor the build would commit on its own.
+- `[django] search_results_max_rows` accepts 0, as `--max-rows` does.
+- `benchmarks/scenarios/queries.sql` is rewritten from this head: the same 67 blocks,
+  701 statements against PR-10's 500.
+- PR-11's measurement (2026-11-10, session `b`, test scale; `bench_db --dump-queries`
+  once a side, three `bench_web` runs a side alternated, before at 4440d93c, after at
+  5ef683ba; both sides served `bench_test_before_a_3`, each resetting the search tables
+  with its own option). A session `a` was stopped after its before side's first run
+  to fix the review's findings; its before file is not used.
+  - **The target did not improve: a stop-and-report** (§2.5).
+    `web.app-cold.concurrency.distinct.p95_s` was 435.1 ms against 440.1 ms (+1.1%,
+    floor 11.2%). Every guard held; the shared search's app-cold p95 +8.4% (floor
+    19.4%).
+  - Reported: the distinct searches' throughput fell, app-cold 91.8 to 65.8 requests a
+    second (-28.4%) and db-cold 78.6 to 66.2 (-15.8%), their median request rising from
+    0.14 s to 0.18 s with the slowest unchanged; the shared search's db-cold throughput
+    rose 10.9%. Each concurrency scenario executes about 40% more statements: the
+    build's lock-wait setting and transaction, and a read of the search's row by
+    primary key in every request where the cache answered before. Single-user cold
+    searches did not slow: db-cold -1.0% to -6.5%. The table count is 183 in every
+    scenario, against 181 to 198.
+  - **Why the throughput fell** (a diagnostic outside the harness, on the harness's
+    server and `bench_test_before_a_3`, three rounds alternated): sixteen concurrent
+    builds of the concurrency scenario's distinct searches, 17,119 rows each, took
+    0.26 to 0.28 s into per-search tables and 0.33 to 0.37 s into `search_results`; one
+    build alone took 0.12 to 0.14 s either way. Into a `search_results` with only its
+    primary key, sixteen took 0.25 to 0.26 s and one 0.09 s. The cost is the unique key
+    on `(search_id, obs_general_id)`, which every concurrent build inserts into at its
+    right-hand edge.
+  - `search_results` takes 63.4 bytes a row, data and indexes (2,023,136 rows of 68
+    searches of every test-scale observation, after `ANALYZE TABLE`): 63 MB a million
+    rows, about 3.2 GB at the default 50,000,000.
+  - Pruning 1,000 planted searches of 100 rows each took 2.8 s, and the next run's
+    removal of their 100,000 rows 3.1 s, each including Django's start (the local
+    integration database, on the workstation's own server).
+  - The orchestrator's decision on the stop-and-report (2026-11-10): the unique key on
+    `(search_id, obs_general_id)` stays, as the section requires, for the cart range
+    editor's probe and for a join that duplicates an observation to fail loudly, and
+    the PR proceeds on the structural gains the section's cost model names: no DDL in
+    a request, a bounded table count, statement digests that describe the searches, the
+    stored count, the pruner, and the fixed-width cache keys.

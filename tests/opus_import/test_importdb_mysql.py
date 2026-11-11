@@ -409,6 +409,30 @@ def test_create_table_records_the_table_without_a_logger(db: _RecordingDB) -> No
     assert db.create_table('cart', [{'field_name': 'id', 'field_type': 'uint4'}]) is False
 
 
+def test_create_table_renders_table_level_keys_and_a_digest_column(db: _RecordingDB) -> None:
+    """``search_results`` gets its two-column keys, ``user_searches`` its ``BINARY(32)``."""
+    db._table_names = set()
+    db._table_info_cache = {}
+    db.default_engine = 'INNODB'
+
+    for table in ('search_results', 'user_searches'):
+        schema_path = Path(opus_import.__file__).parent / 'table_schemas' / f'{table}.json'
+        db.create_table(table, json.loads(schema_path.read_text(encoding='utf-8')))
+
+    search_results, user_searches = (cmd for cmd, _ in db.executed)
+    assert 'PRIMARY KEY (`search_id`, `sort_order`)' in search_results
+    assert 'UNIQUE KEY `search_id` (`search_id`, `obs_general_id`)' in search_results
+    assert '`search_hash` binary(32) NOT NULL' in user_searches
+    assert 'UNIQUE KEY `search_hash` (`search_hash`)' in user_searches
+
+
+def test_set_next_id_sets_the_tables_auto_increment(db: _RecordingDB) -> None:
+    """The next row the table's key hands out takes the given id."""
+    db._table_info_cache = {}
+    db.set_next_id('user_searches', 501)
+    assert db.executed == [('ALTER TABLE `user_searches` AUTO_INCREMENT = 501', None)]
+
+
 def test_a_server_error_with_one_argument_is_reported() -> None:
     """An error carrying only a message is reported as itself, not as an IndexError."""
 
@@ -501,9 +525,15 @@ def _schema_field_types() -> set[str]:
     return types
 
 
+#: The field types no load writes: ``binary32`` is held only by ``user_searches``, which
+#: the web application writes and the import only creates, and `load_data_text` refuses
+#: bytes.
+_UNLOADED_FIELD_TYPES = {'binary32'}
+
+
 def test_every_schema_field_type_has_a_case() -> None:
     """A field type added to a schema needs a case below before it can be trusted."""
-    assert _schema_field_types() == set(_FIELD_TYPE_CASES)
+    assert _schema_field_types() - _UNLOADED_FIELD_TYPES == set(_FIELD_TYPE_CASES)
 
 
 @pytest.mark.parametrize('field_type', sorted(_FIELD_TYPE_CASES))
@@ -863,7 +893,7 @@ def test_a_read_only_connection_does_not_create_an_absent_schema(
 
 @pytest.mark.parametrize(
     ('data_type', 'char_len', 'field_type'),
-    [('varchar', 40, 'varchar(40)'), ('datetime', None, 'datetime')],
+    [('varchar', 40, 'varchar(40)'), ('datetime', None, 'datetime'), ('binary', 32, 'binary32')],
 )
 def test_table_info_names_every_type_create_table_renders(
     data_type: str, char_len: int | None, field_type: str

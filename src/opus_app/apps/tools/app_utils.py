@@ -748,7 +748,7 @@ def wrap_http500_string(s: str) -> str:
 def http500_search_cache_failed(
     r: HttpRequest | str | None,
 ) -> str:  # pragma: no cover - database error
-    """The search cache table could not be found or created."""
+    """A search's results could not be built."""
     return wrap_http500_string(f'Internal database error for {_request_path(r)}')
 
 

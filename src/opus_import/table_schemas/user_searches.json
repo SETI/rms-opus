@@ -7,54 +7,28 @@
         "field_notnull": true
     },
     {
-        "field_name": "selections_json",
-        "field_type": "text",
+        "field_name": "search_hash",
+        "field_type": "binary32",
+        "field_key": "unique",
+        "field_notnull": true,
+        "comment": "The SHA-256 of the search's selections, query types, units and order."
+    },
+    {
+        "field_name": "result_count",
+        "field_type": "uint4",
         "field_default": null,
-        "field_notnull": true
+        "comment": "The rows the search's build wrote to search_results; NULL until it is built."
     },
     {
-        "field_name": "selections_hash",
-        "field_type": "varchar32",
+        "field_name": "results_built_at",
+        "field_type": "datetime",
         "field_default": null,
-        "field_key": true,
-        "field_notnull": true
+        "comment": "When the search's results were built; NULL until they are."
     },
     {
-        "field_name": "qtypes_json",
-        "field_type": "text",
-        "field_default": null
-    },
-    {
-        "field_name": "qtypes_hash",
-        "field_type": "varchar32",
-        "field_default": null
-    },
-    {
-        "field_name": "units_json",
-        "field_type": "text",
-        "field_default": null
-    },
-    {
-        "field_name": "units_hash",
-        "field_type": "varchar32",
-        "field_default": null
-    },
-    {
-        "field_name": "order_json",
-        "field_type": "text",
-        "field_default": null
-    },
-    {
-        "field_name": "order_hash",
-        "field_type": "varchar32",
-        "field_default": null
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_default": null
-    },
-    {
-        "constraint": "CONSTRAINT hash_fields UNIQUE (selections_hash,qtypes_hash,units_hash,order_hash)"
+        "field_name": "last_used_at",
+        "field_type": "datetime",
+        "field_notnull": true,
+        "comment": "When the search was registered or last used, stamped at most once a day."
     }
 ]

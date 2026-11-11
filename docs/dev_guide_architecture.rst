@@ -106,8 +106,8 @@ The web application
 -------------------
 
 A request arrives at one of the routes :mod:`opus_app.urls` assembles, is answered by a
-view, and -- for anything that searches -- reaches the database through a cache table
-built once per distinct search.
+view, and -- for anything that searches -- reaches the database through the rows of
+``search_results`` stored once for each distinct search.
 
 .. mermaid::
     :zoom:
@@ -116,7 +116,7 @@ built once per distinct search.
         R([HTTP request]) --> U[opus_app.urls:<br/>each app contributes its routes]
         U --> V[The view, wrapped in api_view]
         V --> P[url_to_search_params:<br/>the query string becomes<br/>selections and extras]
-        P --> Q[get_user_query_table:<br/>find or build cache_NNN<br/>for this search]
+        P --> Q[get_search_id:<br/>register the search, and write<br/>its results once]
         Q --> S[sql_builder.Select:<br/>join the obs_ and mult_ tables]
         S --> D[(MySQL)]
         D --> F[Format as JSON, CSV or HTML]
@@ -135,13 +135,14 @@ exceptions Django answers specifically are re-raised rather than absorbed, so ea
 the response and the logging Django gives it. :ref:`dev_guide_webapp_errors` is the
 detail.
 
-**A search becomes a cache table.**
+**A search becomes rows of** ``search_results``.
 :func:`~opus_app.apps.search.views.url_to_search_params` turns the query string into the
 two dictionaries the rest of the search code works with, and
-:func:`~opus_app.apps.search.views.get_user_query_table` then finds or builds a
-``cache_NNN`` table holding the ids of the matching observations in sort order. Every
-later query -- a page of results, a count, a set of file URLs -- joins against that table
-rather than re-running the search. :ref:`dev_guide_webapp_search_flow` walks all four
+:func:`~opus_app.apps.search.views.get_search_id` then registers the search in
+``user_searches`` and, the first time anyone makes it, writes the ids of the matching
+observations into ``search_results`` in sort order. Every later query -- a page of
+results, a count, a set of file URLs -- joins against those rows rather than re-running
+the search. :ref:`dev_guide_webapp_search_flow` walks all four
 steps.
 
 **The wide joins are assembled, not written.**
@@ -192,8 +193,9 @@ The division of responsibility, in one table, because several questions turn on 
    * - ``cart``
      - the web application (created by the import)
      - the web application
-   * - ``user_searches`` and ``cache_*``
-     - the web application (reset by the import)
+   * - ``user_searches`` and ``search_results``
+     - the web application (created and reset by the import, pruned by
+       ``opus_manage prune``)
      - the web application
    * - Django's contrib tables
      - ``opus_manage migrate``

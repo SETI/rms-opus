@@ -32,24 +32,20 @@ class ResultsTests(TestCase):
     """The results views, and which tables a given search has to join against."""
 
     def _empty_user_searches(self) -> None:
-        """Delete every recorded search and the cache tables they created.
+        """Delete every stored search and its results.
 
-        A search records itself in `user_searches` and materializes its results into a
-        `cache_<number>` table named after that row, so leaving either behind would let
-        one test answer another's query. The counter is reset too, because the table
-        name is derived from it and the tests assert on whole responses.
+        A search records itself in `user_searches` and its results in `search_results`,
+        so leaving either behind would let one test answer another's query. The counter
+        is reset too, because the cache keys and the tests' expectations name searches
+        by their ids.
 
         It also empties the Django cache and builds the request factory these tests
         call the views with, because `setUp` calls this instead of doing either.
         """
         cursor = connection.cursor()
+        cursor.execute('DELETE FROM search_results')
         cursor.execute('DELETE FROM user_searches')
         cursor.execute('ALTER TABLE user_searches AUTO_INCREMENT = 1')
-        cursor.execute('SHOW TABLES LIKE %s', ['cache_%'])
-        for row in cursor:
-            q = 'DROP TABLE ' + row[0]
-            print(q)
-            cursor.execute(q)
         cache.clear()
         self.factory = RequestFactory()
 
@@ -60,8 +56,8 @@ class ResultsTests(TestCase):
         so every suite resets them; a suite that did not would see its own API calls
         fail at random.
 
-        It also calls `_empty_user_searches`, which clears the rows and cache tables a
-        search leaves behind and builds this suite's request factory.
+        It also calls `_empty_user_searches`, which clears the rows a search leaves
+        behind and builds this suite's request factory.
         """
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -73,8 +69,8 @@ class ResultsTests(TestCase):
     def tearDown(self) -> None:
         """Empty the user-search table again, and restore logging.
 
-        Clearing it on the way out as well as on the way in is what keeps the cache
-        tables a test created from reaching whatever runs next.
+        Clearing it on the way out as well as on the way in is what keeps the searches
+        a test stored from reaching whatever runs next.
         """
         self._empty_user_searches()
         logging.disable(logging.NOTSET)

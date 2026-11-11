@@ -10,11 +10,10 @@
 """Assemble raw SQL from structure instead of from string concatenation.
 
 Most of the OPUS API is served by hand-written SQL rather than by the ORM: the
-search results live in a per-search cache table whose name is computed at runtime
-(``cache_<n>``) and which therefore has no Django model, so any query that joins a
-search to its results cannot be expressed with the ORM at all. The queries that
-remain are wide joins over the generated ``obs_*`` tables that are far clearer as
-SQL than as ORM expressions.
+search results live in ``search_results``, which has no Django model and is joined as
+one search's rows (:func:`search_results_source`), and the queries that join a search
+to its results are wide joins over the generated ``obs_*`` tables that are far clearer
+as SQL than as ORM expressions.
 
 This module is the one place allowed to turn Python values into SQL text. Every
 call site elsewhere describes the *structure* of its statement -- these columns,
@@ -27,16 +26,15 @@ by inspection:
   ``[A-Za-z0-9_]`` before handing the name to the database backend's quoting.
   Django's ``quote_name`` wraps a name in backticks but does not escape a backtick
   *inside* it, so validation, not quoting, is what closes that hole. It matters
-  here because several identifiers are computed at runtime: the cache table name
-  (``cache_<n>``) and the column names that come from the ``param_info`` table.
+  here because several identifiers are computed at runtime: the column names that come
+  from the ``param_info`` table.
 * **Values are always parameters.** Anything that is data is rendered as ``%s``
   and collected into a parameter list; the module never formats a value into SQL
   text. There are exactly **two** exceptions, and both are numbers that shape the
   statement rather than data it operates on, so both are checked with
   ``isinstance(..., int)`` before being rendered literally: ``LIMIT``/``OFFSET``
   (see :meth:`Select.limit`) and the ``MAX_EXECUTION_TIME`` optimizer hint (given to
-  the :class:`Select` constructor). A third raw-text path exists for one caller -- see
-  :func:`create_table_from_select_sql` -- and takes no values at all.
+  the :class:`Select` constructor).
 
   Note that "MySQL will not accept a placeholder there" would be the wrong reason,
   at least for ``LIMIT``: the server takes one, and so does mysqlclient given an
@@ -82,13 +80,10 @@ _BINARY_OPERATORS = frozenset(['=', '<', '<=', '>', '>=', '+', '-', 'LIKE', 'NOT
 #: text of statements built here, so the separator is pinned rather than free.
 _SEPARATOR = ','
 
-#: The column definitions of a search cache table -- `sort_order` numbers the results
-#: from 1 in the search's order, and `id` joins back to `obs_general`.
-CACHE_TABLE_COLUMN_DEFS = (
-    'sort_order INT NOT NULL AUTO_INCREMENT, '
-    'PRIMARY KEY(sort_order), id INT UNSIGNED, '
-    'UNIQUE KEY(id)'
-)
+#: The alias one search's rows of ``search_results`` are joined under
+#: (`search_results_source`), whose ``id`` is the observation's ``obs_general.id`` and
+#: whose ``sort_order`` is the observation's position in the search's order, 1, 2, 3, ....
+SEARCH_RESULTS_ALIAS = 'results'
 
 
 class SQLIdentifierError(ValueError):
@@ -268,12 +263,12 @@ def between(expr: Expr, low: Any, high: Any) -> Expr:
 
 
 def sort_order_range(table: str, offset: int, count: int) -> Expr:
-    """Return the condition selecting one window of a table numbered by `sort_order`.
+    """Return the condition selecting one page of an ordered list by its `sort_order`.
 
-    A search's cache table, and the cart numbered by `row_number`, number their rows
-    from 1 with no gaps, so the rows after the first `offset` and `count` of them are
-    exactly those whose `sort_order` lies in the range, and a key on `sort_order`
-    reads only them.
+    In a search's results (`search_results_source`), and in the cart listed in a sort
+    order with `row_number`, `sort_order` is each row's position, counting 1, 2, 3, ...
+    with no gaps. So the `count` rows after the first `offset` are exactly those whose
+    `sort_order` lies in the range, and a key on `sort_order` reads only them.
 
     Parameters:
         table: The table, or the alias of the derived table, whose `sort_order` is
@@ -290,8 +285,11 @@ def row_number(order_terms: Sequence[tuple[Expr, bool | None]]) -> Expr:
     Parameters:
         order_terms: The sort, as `(expression, descending)` pairs; descending is
             True for DESC, False for ASC, or None for no keyword, as in
-            `Select.add_order_by`.
+            `Select.add_order_by`. With none, the rows are numbered in no stated order,
+            as `ROW_NUMBER() OVER ()`.
     """
+    if not order_terms:
+        return Expr('ROW_NUMBER() OVER ()', [])
     terms: list[str] = []
     params: list[Any] = []
     for expr, descending in order_terms:
@@ -349,6 +347,25 @@ class Subquery:
         """Return the `(sql, params)` of this source as it appears in a FROM clause."""
         sql, params = self.select.build()
         return f'({sql}) AS {quote_identifier(self.alias)}', params
+
+
+def search_results_source(search_id: int) -> Subquery:
+    """Return one search's rows of ``search_results``, as a source to join.
+
+    The source is ``(SELECT obs_general_id AS id, sort_order FROM search_results WHERE
+    search_id = %s)`` under `SEARCH_RESULTS_ALIAS`. The server merges a derived table
+    this simple into the statement that names it, so a join on ``id`` reads the table's
+    ``(search_id, obs_general_id)`` key and a range of ``sort_order`` its primary key.
+
+    Parameters:
+        search_id: The search's ``user_searches`` row.
+    """
+    select = Select()
+    select.add_column(column('obs_general_id', 'search_results'), 'id')
+    select.add_column(column('sort_order', 'search_results'))
+    select.add_from('search_results')
+    select.add_where(binary_op(column('search_id', 'search_results'), '=', value(search_id)))
+    return Subquery(select, SEARCH_RESULTS_ALIAS)
 
 
 @dataclass(frozen=True)
@@ -411,7 +428,7 @@ class FromSource:
     A statement may have more than one of these, rendered comma-separated. The
     comma binds more loosely than JOIN, so `a, b INNER JOIN c ON ...` joins c to b
     and then cross-joins the result with a -- which is what the cart's download
-    summary and the queries that join a search to its cache table rely on.
+    summary and the queries that join a search to its results rely on.
     """
 
     source: str | Subquery | JSONTable
@@ -592,39 +609,6 @@ class Select:
         return sql, params
 
 
-def create_table_from_select_sql(
-    table_name: str, select_sql: str, column_defs: str | None = None
-) -> str:
-    """Return the SQL of a CREATE TABLE ... SELECT, given the SELECT as text.
-
-    This is for the one caller that receives its SELECT already rendered --
-    `construct_query_string` returns the search query as `(sql, params)` -- and
-    that text must itself have come from this module.
-
-    Parameters:
-        table_name: The table to create.
-        select_sql: The rendered SELECT whose result becomes the table's contents.
-        column_defs: Literal column definitions to declare ahead of the SELECT,
-            or None to let the columns come from the SELECT alone. The only value
-            ever passed is `CACHE_TABLE_COLUMN_DEFS`.
-    """
-    statement = f'CREATE TABLE {quote_identifier(table_name)}'
-    if column_defs is not None:
-        statement += f'({column_defs}) '
-    else:
-        statement += ' '
-    return statement + select_sql
-
-
-def count_rows(table_name: str) -> str:
-    """Return the SQL of `SELECT COUNT(*) FROM <table>`."""
-    select = Select()
-    select.add_column(count_star())
-    select.add_from(table_name)
-    sql, _params = select.build()
-    return sql
-
-
 def delete_from(table_name: str, where: Expr) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a DELETE from one table.
 
@@ -686,6 +670,17 @@ def replace_into_values(table_name: str, column_names: tuple[str, ...] | list[st
     return (
         f'REPLACE INTO {quote_identifier(table_name)}'
         f' ({_quoted_column_list(column_names)}) VALUES ({placeholders})'
+    )
+
+
+def insert_into_select(
+    table_name: str, column_names: tuple[str, ...] | list[str], select: Select
+) -> tuple[str, list[Any]]:
+    """Return the `(sql, params)` of an `INSERT INTO <table> (...) SELECT ...`."""
+    sql, params = select.build()
+    return (
+        f'INSERT INTO {quote_identifier(table_name)} ({_quoted_column_list(column_names)}) {sql}',
+        params,
     )
 
 

@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 
 from opus_import import import_util
+from opus_import.table_keys import TABLE_LEVEL_KEY_KINDS
 
 #: The schema files the chapter says are not tables. It also says which two of them
 #: are not even column lists.
@@ -62,15 +63,21 @@ def _defines_a_column(entry: dict[str, object]) -> bool:
 
 
 def _is_a_link(entry: dict[str, object]) -> bool:
-    """Say whether one schema entry is a constraint, a foreign key or a link, not a column.
+    """Say whether one schema entry is a constraint, a key or a link, not a column.
 
     Parameters:
         entry: The schema entry.
 
     Returns:
-        True if the entry deliberately defines no column.
+        True if the entry deliberately defines no column: a constraint, a table-level
+        foreign, primary or unique key, or a link.
     """
-    return 'constraint' in entry or 'foreign_key' in entry or 'pi_referred_slug' in entry
+    return (
+        'constraint' in entry
+        or 'foreign_key' in entry
+        or any(name in entry for name in TABLE_LEVEL_KEY_KINDS)
+        or 'pi_referred_slug' in entry
+    )
 
 
 def test_tab_data_sources_exist_only_in_obs_files() -> None:

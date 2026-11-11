@@ -28,7 +28,7 @@ An import run turns the index tables of a set of bundles into the whole OPUS dat
         OBS[(Observation tables:<br/>obs_*, mult_*)]
         REG[(Bundle registry:<br/>import_bundle)]
         AUX[(Auxiliary tables:<br/>param_info, table_names,<br/>partables, contexts, definitions)]
-        SUP[(Support tables:<br/>cart, user_searches)]
+        SUP[(Support tables:<br/>cart, user_searches,<br/>search_results)]
 
         H --> BI
         BI --> OB
@@ -50,9 +50,9 @@ observations, and only ``param_info`` is really derived from what was imported; 
 others come from the checked-in table schemas and configuration maps.
 :ref:`dev_guide_database_schema` describes each of them.
 
-**The support tables** -- ``cart``, ``user_searches`` and the ``cache_*`` tables. The
-web application owns their contents; the import only resets them, because an import
-changes what a search means.
+**The support tables** -- ``cart``, ``user_searches`` and ``search_results``. The web
+application owns their contents; the import only resets them, because an import changes
+what a search means.
 
 **The import's own records** -- ``import_bundle``, the bundle registry, which records
 each bundle an import takes on and how far it got
@@ -90,7 +90,7 @@ scripts refuse to promote it until ``--write-schema-version`` sets it back to
 ``ready``. **An append never finalizes the schema itself**: ``--finalize``,
 ``--validate`` and ``--write-schema-version`` follow as invocations of their own, as
 they do after a fresh import. Each finalization step then either does its work again, because an append
-invalidates it -- the duplicate step, the auxiliary tables, the cart and cache tables,
+invalidates it -- the duplicate step, the auxiliary tables, the cart and search tables,
 ``ANALYZE`` and validation -- or finds nothing to do, as ``--create-indexes`` does on
 tables that already carry every key. A table first created by an append, because its
 bundle is the first to need it, is created with only the keys a load needs and keyed by
@@ -117,9 +117,9 @@ refuses to mark the schema ready, while any bundle there is not ``done``. An app
 resumes every bundle an earlier append left unfinished before the ones it names.
 :ref:`dev_guide_import_steps_registry` gives the rules.
 
-The other tables are not the import's to protect. Finalization's cart and cache steps
-drop and recreate ``cart`` and ``user_searches`` empty and drop the ``cache_*`` tables,
-because an import changes what a search means; ``--scorched-earth`` drops every table the
+The other tables are not the import's to protect. Finalization's cart and search-table
+steps drop and recreate ``cart``, ``user_searches`` and ``search_results`` empty, and
+flush the web application's cache, because an import changes what a search means; ``--scorched-earth`` drops every table the
 import creates before anything else runs.
 
 On either path a run can be **resumed rather than restarted**: the bundles already

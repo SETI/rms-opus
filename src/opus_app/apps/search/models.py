@@ -11833,17 +11833,11 @@ class TableNames(models.Model):
 
 
 class UserSearches(models.Model):
-    selections_json = models.TextField()
-    selections_hash = models.CharField(max_length=32)
-    qtypes_json = models.TextField(blank=True, null=True)
-    qtypes_hash = models.CharField(max_length=32, blank=True, null=True)
-    units_json = models.TextField(blank=True, null=True)
-    units_hash = models.CharField(max_length=32, blank=True, null=True)
-    order_json = models.TextField(blank=True, null=True)
-    order_hash = models.CharField(max_length=32, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
+    search_hash = models.BinaryField(unique=True, max_length=32)
+    result_count = models.PositiveIntegerField(blank=True, null=True)
+    results_built_at = models.DateTimeField(blank=True, null=True)
+    last_used_at = models.DateTimeField()
 
     class Meta:
         managed = False
         db_table = 'user_searches'
-        unique_together = (('selections_hash', 'qtypes_hash', 'units_hash', 'order_hash'),)

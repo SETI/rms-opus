@@ -5,8 +5,10 @@ A table schema declares most of its keys on its columns: ``field_key`` is ``"pri
 column) or true for a plain key. A foreign key may instead be a table-level entry,
 ``{"foreign_key": {"columns": [...], "references": ["<table>", "<column>", ...],
 "on_delete": "cascade" | "restrict"}}``, which is how one says what deleting the row it
-references does; ``on_delete`` is optional and ``"restrict"`` when absent. `declared_keys`
-reads both as `TableKey` values, which the brand renders and which compare by kind,
+references does; ``on_delete`` is optional and ``"restrict"`` when absent. A key over
+several columns is a table-level entry too: ``{"primary_key": [...]}`` or
+``{"unique": [...]}``, each listing its columns in order. `declared_keys` reads all of
+them as `TableKey` values, which the brand renders and which compare by kind,
 ordered columns and, for a foreign key, what it references and does on delete -- never by
 name, because the server names an unnamed key itself.
 
@@ -131,6 +133,33 @@ def _table_level_foreign_key(entry: SchemaColumn) -> TableKey:
     return TableKey('foreign', columns, (references[0], references[1:]), on_delete)
 
 
+#: The table-level entries that declare a primary or unique key over listed columns, and
+#: the kind of key each declares.
+TABLE_LEVEL_KEY_KINDS: dict[str, KeyKind] = {'primary_key': 'primary', 'unique': 'unique'}
+
+
+def _table_level_key(entry_name: str, columns: object) -> TableKey:
+    """Return the key a table-level ``primary_key`` or ``unique`` entry declares.
+
+    Parameters:
+        entry_name: The entry's name, a key of `TABLE_LEVEL_KEY_KINDS`.
+        columns: The entry's value.
+
+    Returns:
+        The key.
+
+    Raises:
+        ValueError: If the value is not a non-empty list of column names.
+    """
+    if (
+        not isinstance(columns, list)
+        or not columns
+        or not all(isinstance(column, str) for column in columns)
+    ):
+        raise ValueError(f'{entry_name} {columns!r}: a key lists its columns by name')
+    return TableKey(TABLE_LEVEL_KEY_KINDS[entry_name], tuple(columns))
+
+
 def declared_keys(schema: Sequence[SchemaColumn]) -> list[TableKey]:
     """Return the keys a table schema declares, in the order of its entries.
 
@@ -139,17 +168,23 @@ def declared_keys(schema: Sequence[SchemaColumn]) -> list[TableKey]:
 
     Returns:
         One key per column whose ``field_key`` declares one, and one per table-level
-        ``foreign_key`` entry. Other entries without ``field_name`` (constraints, and
-        ``param_info`` rows of another table) declare none.
+        ``foreign_key``, ``primary_key`` or ``unique`` entry. Other entries without
+        ``field_name`` (constraints, and ``param_info`` rows of another table) declare
+        none.
 
     Raises:
-        ValueError: If a ``field_key`` is not one of the values a schema may hold, or a
-            foreign key does not name its table and column.
+        ValueError: If a ``field_key`` is not one of the values a schema may hold, a
+            foreign key does not name its table and column, or a table-level key does
+            not list its columns.
     """
     keys: list[TableKey] = []
     for column in schema:
         if 'foreign_key' in column:
             keys.append(_table_level_foreign_key(column['foreign_key']))
+            continue
+        level_entry = next((name for name in TABLE_LEVEL_KEY_KINDS if name in column), None)
+        if level_entry is not None:
+            keys.append(_table_level_key(level_entry, column[level_entry]))
             continue
         if 'field_name' not in column:
             continue

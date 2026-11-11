@@ -404,8 +404,8 @@ answered: a scenario answered entirely from a cache executes none.
 What bench_db records
 ~~~~~~~~~~~~~~~~~~~~~
 
-It first empties the search tables with the side's own option, since per-search tables
-left by an earlier web run are not part of what the import built. Then, after
+It first empties the search tables with the side's own option, since the searches an
+earlier web run stored are not part of what the import wrote. Then, after
 ``ANALYZE TABLE`` on every table, with the statistics cache off: each table's data
 and index bytes, exact row count and index count, and each ``mult_`` table's largest
 id; the schema's totals, its ``FULLTEXT`` tablespaces, and its size against the buffer
