@@ -6641,3 +6641,27 @@ Nothing above this line is rewritten by an executor.
     workers an importer; a poller of the server's process list,
     `performance_schema.metadata_locks` and `data_lock_waits` saw no lock wait during
     them. Its cause is not determined.
+- **The complete-scale import with six importers of four workers** (2026-11-11, at
+  299f4800, `bench_import --scale complete --coordinator 6 --import-key workers=24
+  --import-key cpu_fraction=0.8`, the holdings PR-00's baseline read; session
+  `full6x4b`), against PR-00's one-process baseline (`2026-11-05_PR-00_before_complete
+  _mysql_a.json`), the same 985 bundles and 1,627,081 `obs_general` rows:
+  - `import.wall_s` 18,234.7 s to 4,856.9 s, 3.75 times faster: registration 13.6 s;
+    the bundle imports 17,620.3 s to 1,997.5 s (8.8 times); finalization 613.1 s to
+    2,844.4 s, since PR-07 builds the secondary keys there rather than during the loads.
+  - **Finalization's key step took 2,654.7 s on one connection** (`index_workers` 1):
+    `obs_files` 1,642.5 s, `obs_pds` 314.4 s, `obs_ring_geometry` 229.9 s,
+    `obs_surface_geometry_target` 169.3 s, `obs_general` 167.4 s,
+    `obs_mission_cassini` 67.4 s, and the other nine tables 64 s together. With two
+    connections the step would take about as long as `obs_files` alone, saving up to
+    the other tables' 1,012 s less what halving `obs_files`' sort memory costs; a third
+    would save nothing. Validation took 167.1 s.
+  - The importers' idle time from their last bundle to the last exit was at most 0.25 s.
+  - **Memory:** the run's cgroup peaked at 42.4 GB, the harness's server included (its
+    buffer pool sized from the harness's budget, 23 GB resident), and the import's
+    process tree at 16.6 GB PSS; each importer and pool worker holds about 2.4 GB
+    resident, `pdsfile`'s preload of the complete holdings among it. PR-00's run peaked
+    at 3.1 GB PSS. A run under a 31 GB memory ceiling was killed after ten minutes.
+  - A poller of the server's lock tables saw one wait between importers in 33 minutes
+    of loading (an importer briefly waiting for another's `mult_field` counter row), and
+    no stall like the one PR-16's eight-worker runs showed.
