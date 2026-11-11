@@ -21,6 +21,11 @@ decision rather than a stability one, and it is only safe because the rebuilding
 asserted -- `import_tests.test_goldens` re-derives each dropped column against the
 database, so what is saved is bytes and not coverage.
 
+The **mult-value mode** of `serialize_table` is the one used to compare two imports whose
+mult ids may differ: several import processes writing one schema give a field's new values
+ids in the order they arrive, so every mult column is written as the value its id names,
+and the ``mult`` table without its ids. No golden is written in that mode.
+
 `without_surrogate_ids` is a fourth, and it is deliberately not part of writing or
 reading a golden: only the re-import comparisons use it, because only a bundle deleted
 and imported again is renumbered.
@@ -29,12 +34,15 @@ and imported again is renumbered.
 from __future__ import annotations
 
 import datetime
+import functools
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import MySQLdb
+
+from opus_import import import_util, mult_fields
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -332,7 +340,63 @@ def encode_value(value: Any) -> str:
     return text
 
 
-def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -> str:
+#: The table holding every mult field's values, and the one naming the fields.
+_MULT_TABLE = 'mult'
+_MULT_FIELD_TABLE = 'mult_field'
+
+
+@functools.cache
+def _mult_columns() -> dict[str, dict[str, tuple[str, bool]]]:
+    """Return every column of a packaged observation schema that holds mult ids.
+
+    Returns:
+        For each table, each such column's field (its qualified name) and whether the
+        column holds a JSON list of ids rather than one.
+    """
+    columns: dict[str, dict[str, tuple[str, bool]]] = {}
+    for schema_file in import_util.table_schema_files('obs_*.json'):
+        table = schema_file.name.removesuffix('.json')
+        for entry in json.loads(schema_file.read_text(encoding='utf-8')):
+            if mult_fields.is_mult_column(entry):
+                name = import_util.mult_field_name(table, entry['field_name'], entry)
+                is_list = entry['field_type'] == 'mult_list'
+                columns.setdefault(table, {})[entry['field_name']] = (name, is_list)
+    return columns
+
+
+def _mult_values(credentials: DatabaseCredentials, schema: str) -> dict[tuple[str, int], str]:
+    """Return every mult value a schema holds, keyed by its field's name and its id."""
+    rows = query(
+        credentials,
+        schema,
+        f'SELECT f.qualified_name, m.id, m.value FROM `{_MULT_TABLE}` m '  # nosec B608
+        f'JOIN `{_MULT_FIELD_TABLE}` f ON f.field_id = m.field_id',
+    )
+    return {(str(name), int(mult_id)): str(value) for name, mult_id, value in rows}
+
+
+def _as_mult_value(values: dict[tuple[str, int], str], field: tuple[str, bool], stored: Any) -> Any:
+    """Return a mult column's stored id, or JSON list of ids, as the values they name.
+
+    Parameters:
+        values: What `_mult_values` returned.
+        field: The column's field and whether it holds a list.
+        stored: The column's value: an id, an id as text, a JSON list of ids, or NULL.
+
+    Returns:
+        The value, or the JSON list of values; NULL stays NULL.
+    """
+    name, is_list = field
+    if stored is None:
+        return None
+    if is_list:
+        return json.dumps([values[(name, int(mult_id))] for mult_id in json.loads(stored)])
+    return values[(name, int(stored))]
+
+
+def serialize_table(
+    credentials: DatabaseCredentials, schema: str, table: str, *, mult_values: bool = False
+) -> str:
     """Read one table and render it as its golden text.
 
     Every column MySQL declares as a timestamp is dropped: the import never writes one,
@@ -353,11 +417,17 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
         credentials: How to reach the server.
         schema: The schema to read.
         table: The table to read.
+        mult_values: True for the mult-value mode: every mult column of an observation
+            table holds the value its id names, and ``mult`` is written without its
+            ``id``, its rows sorted.
 
     Returns:
-        A header line of column names, then one line per row, ordered by primary key.
+        A header line of column names, then one line per row, ordered by primary key, or
+        sorted for ``mult`` in the mult-value mode.
     """
     dropped = DERIVED_COLUMNS.get(table, frozenset()) | WALL_CLOCK_COLUMNS.get(table, frozenset())
+    if mult_values and table == _MULT_TABLE:
+        dropped |= {'id'}
     columns = [
         name
         for name, data_type in table_columns(credentials, schema, table)
@@ -370,15 +440,22 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
     quoted = ', '.join(f'`{name}`' for name in columns)
     ordering = ', '.join(f'`{name}`' for name in order_by)
     rows = query(credentials, schema, f'SELECT {quoted} FROM `{table}` ORDER BY {ordering}')
-    lines = ['\t'.join(columns)]
-    lines += [
-        '\t'.join(
-            encode_value(_ordered(table, column, value))
-            for column, value in zip(columns, row, strict=True)
-        )
+    mult_columns = _mult_columns().get(table, {}) if mult_values else {}
+    values = _mult_values(credentials, schema) if mult_columns else {}
+
+    def field_text(column: str, value: Any) -> str:
+        """Return one field as the golden writes it."""
+        if column in mult_columns:
+            value = _as_mult_value(values, mult_columns[column], value)
+        return encode_value(_ordered(table, column, value))
+
+    lines = [
+        '\t'.join(field_text(column, value) for column, value in zip(columns, row, strict=True))
         for row in rows
     ]
-    return '\n'.join(lines) + '\n'
+    if mult_values and table == _MULT_TABLE:
+        lines.sort()
+    return '\n'.join(['\t'.join(columns), *lines]) + '\n'
 
 
 def without_surrogate_ids(text: str) -> str:

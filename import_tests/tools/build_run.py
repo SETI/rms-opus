@@ -68,6 +68,11 @@ DICTIONARY_ARGS = ('--import-dictionary',)
 VALIDATE_ARGS = ('--validate',)
 VERSION_ARGS = ('--write-schema-version',)
 
+#: The registration of a whole bundle list, and one queue importer, which several
+#: processes can run at once against one schema.
+REGISTER_ARGS = ('--register-bundles',)
+JOIN_ARGS = ('--join',)
+
 #: The Django migration's command line after the interpreter, run in the checkout.
 MIGRATE_ARGS = ('manage.py', 'migrate')
 
@@ -932,3 +937,46 @@ def drop_schema(credentials: DatabaseCredentials, schema: str) -> None:
         schema: The schema to drop.
     """
     golden_io.execute(credentials, None, f'DROP DATABASE IF EXISTS `{schema}`')
+
+
+def run_concurrently(
+    config_files: Sequence[Path],
+    arguments: Sequence[str],
+    *,
+    extra_environment: Mapping[str, str] | None = None,
+) -> list[StepResult]:
+    """Start one ``opus_import`` invocation per configuration at once, and wait for all.
+
+    Parameters:
+        config_files: Each process's configuration, which names its own log directory.
+        arguments: The command line every process runs, after ``python -m opus_import``.
+        extra_environment: Variables added to every process's environment, or None.
+
+    Returns:
+        What each invocation did, in the order of `config_files`.
+    """
+    processes = []
+    for config_file in config_files:
+        environment = {**run_environment(config_file), **(extra_environment or {})}
+        processes.append(
+            subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's own module
+                [str(THIS_PYTHON), '-m', 'opus_import', *arguments],
+                cwd=fixture_layout.REPO_ROOT,
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        )
+    results = []
+    for process in processes:
+        stdout, stderr = process.communicate()
+        results.append(
+            StepResult(
+                arguments=tuple(arguments),
+                returncode=process.returncode,
+                stdout=stdout,
+                stderr=stderr,
+            )
+        )
+    return results
