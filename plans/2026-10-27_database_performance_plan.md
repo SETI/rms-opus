@@ -5865,3 +5865,29 @@ Nothing above this line is rewritten by an executor.
 - The review's fixes change nothing the import writes at fixture scale (the import
   goldens are unchanged); the local integration database was imported again with the
   fixes, and the integration suite passes against it.
+- PR-14's measurement (2026-11-10, test scale; before at c9247eca, PR-13's head, after at
+  466ca7f7). Three fixture imports a side alternated A B B A A B, one test-scale import a
+  side, A B, each side serving its own schema, three web runs a side alternated, then
+  `bench_db --dump-queries` once a side. The target is structural, and is met: one
+  `mult` table with `mult_field` and `mult_group`, ranks computed at finalization, no
+  unreferenced value, and no changed integration golden to rule on.
+  - Every guard held. The gunicorn workers' peak RSS, the section's own guard, is about
+    1.6% lower in every scenario (for example 137.4 MB against 135.1 MB for the empty
+    search, app-cold).
+  - The schema's table count is 181 against 94; the mult tables' data 1.88 MB against
+    0.13 MB; the schema's data 788.7 MB against 784.5 MB (-0.5%) and indexes 398.6 MB
+    against 398.0 MB.
+  - The test-scale import was 330.9 s against 338.1 s (+2.2%, its floor 0.9%; the
+    comparison holds the guard), the bundles' phase 263.3 s against 269.9 s, the larger
+    bundles 2.5% to 4.7% slower each, and finalization's new mult step 1.0 s. The
+    fixture imports were 40.3 s against 39.8 s.
+  - Reported: the empty fan-out's app-cold p50 305.6 ms against 323.0 ms (+5.7%, floor
+    38.8%), its target mult counts 37.3 ms against 29.3 ms and its widget menu 72.4 ms
+    against 92.1 ms (+27%, floor 56%). The planet widget's app-cold p50 was 23.7 ms
+    against 51.6 ms (+118%, floor 54%) and its db-cold p50 38.7 ms against 64.0 ms, with
+    small spreads and one more statement, the field-id map's read of `mult_field`. Its
+    SQL is otherwise the same shape, reading `mult` by its key, and the slowdown did not
+    reproduce through Django's test client against the two local integration databases:
+    the planet widget as the first mult request after a non-mult request took 41.5 ms
+    on PR-13's database and 31.3 ms on this head's, with the same modules imported
+    during it.
