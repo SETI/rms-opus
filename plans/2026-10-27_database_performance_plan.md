@@ -6724,3 +6724,99 @@ Nothing above this line is rewritten by an executor.
     I/O could not be killed anyway.
   - Results: the gates pass (2,993 unit tests); the import suite 182 passed and 3
     skipped. The import's output is unchanged, so the goldens were not regenerated.
+
+### 2026-11-11, PR-18 (written against this file at 227f74d3)
+
+- The branch is PR-16a's head (227f74d3), to be stacked on PR-17; PR-17 is merged in
+  when it lands, and the carry-over tests run again on the merge.
+- **The carry-over SQL departs from the section's in four places**, each so that it does
+  not depend on either schema's `cart` (the two schemas are different releases', and
+  PR-17 changes `cart.session_id` and the identifier character sets and drops
+  `timestamp`):
+  - It names the columns (`session_key, session_data, expire_date`; `session_id,
+    obs_general_id, opus_id, recycled`) instead of `SELECT *`.
+  - It writes the target's own values, `s.session_key` and `n.opus_id`, not the source's
+    `c.session_id` and `c.opus_id`, so the source's text is only compared, never stored
+    in a column of another character set. The joins compare the two schemas' columns;
+    MySQL converts the ASCII side to `utf8mb4`, so they hold in either direction.
+  - A session is unexpired when `expire_date > UTC_TIMESTAMP()`, not `NOW()`: Django
+    stores `expire_date` in UTC under `USE_TZ` (as PR-11's note says of
+    `last_used_at`), and the server's `NOW()` is local time.
+  - The source's `django_session` and `cart` are read before the target is truncated,
+    so a source without them fails before anything is written; the two `INSERT ...
+    SELECT` statements commit together. The statements live in
+    `ImportDBMySQL.carry_over_sessions` (the brand boundary), with a
+    `NotImplementedError` stub in `ImportDBSuper` and a `CarriedOver` result.
+- **`--carry-over-sessions-from` runs alone.** It is refused, before the database opens,
+  with every step option, bundle descriptors and `--read-only`
+  (`cli.CARRY_OVER_CONFLICTS`), as well as with the target's own schema as the section
+  asks; and such an invocation skips the holdings preload, which at complete scale would
+  sit inside the window the web service is stopped for. A unit test requires every
+  `store_true` option of the parser to be refused with it or named a modifier, so a step
+  added later is refused too.
+- **`warm_search`'s requests**, in `warm_requests`: the empty search's result count; its
+  first page through both `api/data.json` (what the harness's `pages.empty` and the
+  public API ask for) and `__api/dataimages.json` (what the landing page asks for); the
+  range endpoints of each `DEFAULT_WIDGETS` entry that is a range (none today: the three
+  defaults are mults); the menu, which lists the triggered tables; and the mult counts of
+  every **searchable** mult field (`param_info.display` 1, the fields the search menu
+  offers as widgets), the defaults first. "Every mult field" is read as every one a user
+  can open. Against the local integration database (`pr18local`) it issued 94 requests,
+  90 of them mult counts, all answered 200, against a memcached started for the check.
+  The search hash of a request like the user interface's landing request (its `cols`,
+  `widgets`, explicit default `order`, `view` and the rest) equals the warm-up's, checked
+  with `url_to_search_params` and `search_hash` on that database.
+- **The fan-out scenario's `endpoints_time1` is not warmed**: `time1` is not a default
+  widget, and the landing page does not ask for it. The fan-out's db-cold number with the
+  warm-up therefore still holds one cold request; its per-request latencies show it.
+- The command's test client is made with `raise_request_exception=False`, so a failing
+  view answers 500 rather than raising; every request is issued, and the command exits
+  with failure naming the ones that did not answer 200. Its own exit is the shell
+  function's to turn into a warning.
+- **`deploy_new_code_only.sh --no-database` skips the warm-up** (it exports
+  `OPUS_WARM_SEARCH=false`, which `_promote.sh` reads): the warm-up's requests register
+  a search and create a session, and `--no-database` promises to write nothing to the
+  database. The section does not mention the option. The code-only deploy's test records
+  the variable through its `_promote.sh` stub.
+- **`_promote_steps.sh`** names its functions `previous_db_name`, `carry_over_sessions`
+  and `warm_search`. The service command is `${OPUS_SERVICE_COMMAND:-sudo systemctl}`
+  inside the function rather than a variable assigned at the top, so the file executes
+  nothing at top level (its test checks that every top-level line opens a function).
+  `_promote.sh` sources the file itself, since the code-only deploy does not;
+  `deploy_new_code_and_database.sh` gains the section's three lines after
+  `INSTALL_DIR=...` and sources it again harmlessly through `_promote.sh`.
+- `opus_app.manage.main`'s docstring said OPUS adds no management command of its own,
+  already untrue of `prune`; it names both.
+- The import test plants three cart rows rather than two: one for an observation the
+  target holds, one for an observation it lacks, and one of an expired session, so it
+  counts two drops. A parametrized case alters the source's `cart` identifiers to the
+  other character set from the target's and adds a `TIMESTAMP` column the target's lacks;
+  a third case drops the source's `cart` and requires the target's rows untouched.
+- **The harness** (`bench_web`):
+  - `web.toml` gains `[warm]` with `db-cold` and `app-cold`, both false, and
+    `--warm STATE` (repeatable) sets one for an invocation, so one session can measure
+    both without editing the scenario file whose hash the result records. A warmed state
+    runs the side's `opus_manage warm_search` (as `opus_app.manage.main`, through the
+    side's interpreter) after memcached's restart; its wall-clock goes in the run's
+    details as `warm_search_s`, and its statements are not counted in the scenario's.
+    A failed warm-up fails the run.
+  - `--promotion-carts N` times a promotion window before each run's passes:
+    `web.promotion.carry_over_s` (the side's `opus_import --carry-over-sessions-from`,
+    interpreter start included) and `web.promotion.window_s` (from the application's
+    stop to its start: the carry-over, then memcached's restart; the symlink rename is
+    not simulated, and gunicorn's start, which waits for every worker to load the
+    application, is outside it, as `systemctl start` returns before mod_wsgi loads
+    anything). The source is `<schema>_carry_source`, holding `django_session` and
+    `cart` made `LIKE` the served schema's (no foreign key), with N cart rows naming the
+    served schema's first observations, 100 to an unexpired session; the carry-over
+    leaves those rows in the served schema, which both sides serve. The source is
+    dropped when the command ends.
+  - A side without `warm_search` (found by `importlib.util.find_spec` through its
+    interpreter) or without `--carry-over-sessions-from` in its `--help` skips the step,
+    named in `skipped_steps` as `warm_search` or `carry_over_sessions`; the base of this
+    PR has neither, so its runs are the ones "without the warm-up".
+  - `warm_states` and `promotion_carts` are recorded in the environment and pinned
+    within a result file, with no default, since a label's import runs record neither.
+  - The harness additions are unit-tested with stand-in servers; the promotion schema's
+    statements and a 10,000-row carry-over were run by hand against the local server, not
+    through a harness session, which is the orchestrator's.

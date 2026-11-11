@@ -27,6 +27,15 @@ Before anything is measured the harness asks the side's settings, in the same
 environment, which cache backend they chose, and **refuses to run** on Django's
 local-memory fallback; after each run it refuses the run if memcached served nothing.
 
+**After a deploy.** A cold state ``web.toml``'s ``[warm]`` flags, or ``--warm``, name
+ends its reset with the side's ``opus_manage warm_search``, as a deploy does once its
+workers start, so the state shows what a visitor meets after a deploy; its wall-clock
+goes in the run's details. With ``--promotion-carts N`` each run first times a
+promotion's window, from the application's stop to its start: the side's
+``opus_import --carry-over-sessions-from`` from a schema holding N planted cart rows
+into the served schema, then memcached's restart. A side without the command or the
+option skips the step, and the result names it among its skipped steps.
+
 Example, one side's web runs at fixture scale against the schema its import built::
 
     python -m benchmarks.bench_web --scale fixture --side before --pr PR-nn \\
@@ -81,6 +90,7 @@ from benchmarks.results import (
 )
 from benchmarks.sides import Side, SideError, Spelling, require_no_pythonpath
 from benchmarks.web_scenarios import (
+    COLD_STATES,
     PAGE_LIMIT,
     Concurrency,
     Request,
@@ -114,6 +124,12 @@ LOCMEM_MARKER = 'locmem'
 
 #: How many rounds the warm-up may take to have every worker serve every request.
 WARMUP_MAX_ROUNDS = 50
+
+#: The planted cart rows of one session, in the schema a promotion carries over from.
+PROMOTION_CART_ROWS_PER_SESSION = 100
+
+#: What the schema a promotion carries over from is named after the served one.
+PROMOTION_SOURCE_SUFFIX = '_carry_source'
 
 
 class WebRunError(Exception):
@@ -541,6 +557,7 @@ class WebBench:
         schema: str,
         holdings: tuple[Path, Path],
         single_worker: bool = False,
+        warm_states: frozenset[str] = frozenset(),
     ) -> None:
         """Prepare the servers for one side; nothing is started.
 
@@ -556,6 +573,8 @@ class WebBench:
             single_worker: Start gunicorn with one worker of one thread instead of
                 ``web.toml``'s, so that every request is served by the same process and
                 thread, as the query capture needs.
+            warm_states: The cold states whose resets end with the side's
+                ``warm_search``.
         """
         self.server = server
         self.memcached = memcached
@@ -588,6 +607,8 @@ class WebBench:
         )
         self._connection: Any = None
         self._cache_gets = 0
+        self.warm_states = warm_states
+        self.promotion_source: str | None = None
 
     @property
     def connection(self) -> Any:
@@ -642,11 +663,15 @@ class WebBench:
             self.server, self.schema, self.side, self.spelling, self.env, self.errors_log
         )
 
-    def reset(self, state: str) -> None:
+    def reset(self, state: str) -> float | None:
         """Bring the servers to a cold state before a scenario.
 
         Parameters:
             state: ``db-cold`` or ``app-cold``.
+
+        Returns:
+            The wall-clock of the side's ``warm_search``, which runs last when the state
+            is one of `warm_states`; None when it does not run.
         """
         self.reset_search_tables()
         self.gunicorn.stop()
@@ -655,6 +680,106 @@ class WebBench:
             self.server.restart()
         self.gunicorn.start()
         self.memcached.restart()
+        if state not in self.warm_states:
+            return None
+        return self.warm_search()
+
+    def warm_search(self) -> float:
+        """Run the side's ``opus_manage warm_search`` against the served schema.
+
+        Returns:
+            Its wall-clock.
+
+        Raises:
+            WebRunError: If it exits non-zero, since the state would then not be the one
+                the run sets out to measure.
+        """
+        started = time.perf_counter()
+        finished = self.side.warm_search(self.env)
+        seconds = time.perf_counter() - started
+        if finished.returncode != 0:
+            raise WebRunError(
+                f'warm_search exited {finished.returncode}:\n'
+                f'{(finished.stdout + finished.stderr)[-4000:]}'
+            )
+        return seconds
+
+    def prepare_promotion(self, cart_rows: int) -> int:
+        """Make the schema a promotion carries sessions and carts over from.
+
+        It holds ``django_session`` and ``cart`` only, as the served schema declares them
+        (``CREATE TABLE ... LIKE`` copies no foreign key), with `cart_rows` cart rows
+        naming the served schema's first observations, `PROMOTION_CART_ROWS_PER_SESSION`
+        to an unexpired session.
+
+        Parameters:
+            cart_rows: The cart rows to plant.
+
+        Returns:
+            The cart rows planted: fewer than asked when the served schema holds fewer
+            observations.
+        """
+        source = f'{self.schema}{PROMOTION_SOURCE_SUFFIX}'
+        served = f'`{self.schema}`'
+        quoted = f'`{source}`'
+        self.drop_promotion_source(source)
+        # Named before it exists, so that a failure below still has it dropped.
+        self.promotion_source = source
+        statements = (
+            f'CREATE DATABASE {quoted}',
+            f'CREATE TABLE {quoted}.django_session LIKE {served}.django_session',
+            f'CREATE TABLE {quoted}.cart LIKE {served}.cart',
+            # The names are the harness's own; the row count is bound.
+            f'INSERT INTO {quoted}.cart (session_id, obs_general_id, opus_id, recycled) '  # nosec B608
+            "SELECT CONCAT('bench-carry-', (ROW_NUMBER() OVER (ORDER BY id) - 1) DIV "
+            f'{PROMOTION_CART_ROWS_PER_SESSION}), id, opus_id, 0 FROM {served}.obs_general '
+            'ORDER BY id LIMIT %s',
+            f'INSERT INTO {quoted}.django_session (session_key, session_data, expire_date) '  # nosec B608
+            f"SELECT DISTINCT session_id, '', UTC_TIMESTAMP() + INTERVAL 1 DAY FROM {quoted}.cart",
+        )
+        for statement in statements:
+            query(self.connection, statement, [cart_rows] if '%s' in statement else [])
+        planted = query(self.connection, f'SELECT COUNT(*) FROM {quoted}.cart')  # nosec B608
+        return int(planted[0][0])
+
+    def drop_promotion_source(self, source: str | None = None) -> None:
+        """Drop the schema a promotion carries over from.
+
+        Parameters:
+            source: The schema, or None for the one `prepare_promotion` made, if any.
+        """
+        source = self.promotion_source if source is None else source
+        if source is not None:
+            query(self.connection, f'DROP DATABASE IF EXISTS `{source}`')
+        self.promotion_source = None
+
+    def time_promotion(self, run: dict[str, Any]) -> None:
+        """Time a promotion's window, from the application's stop to its start.
+
+        The window holds the side's carry-over from `promotion_source` into the served
+        schema, then memcached's restart, as ``_promote.sh`` holds them between the web
+        service's stop and start (its symlink switch, one rename, is not simulated).
+
+        Parameters:
+            run: The run to record ``web.promotion.window_s`` and
+                ``web.promotion.carry_over_s`` into.
+
+        Raises:
+            WebRunError: If the carry-over exits non-zero or logs an error.
+        """
+        assert self.promotion_source is not None
+        assert self.spelling.carry_over is not None
+        self.gunicorn.stop()
+        started = time.perf_counter()
+        run_import_step(
+            self.side, [self.spelling.carry_over, self.promotion_source], self.env, self.errors_log
+        )
+        carried = time.perf_counter()
+        self.memcached.restart()
+        ended = time.perf_counter()
+        self.gunicorn.start()
+        run['metrics']['web.promotion.carry_over_s'] = carried - started
+        run['metrics']['web.promotion.window_s'] = ended - started
 
     def require_cold(self) -> None:
         """Check that no worker has served a request since the application started.
@@ -841,9 +966,14 @@ class WebBench:
         base_url = self.gunicorn.base_url
         concurrency = self.config.concurrency
         warmups = run['details'].setdefault('warmup', {})
-        for state in ('db-cold', 'app-cold'):
+        warm_searches = run['details'].setdefault('warm_search_s', {})
+        if self.promotion_source is not None:
+            self.time_promotion(run)
+        for state in COLD_STATES:
             for scenario in self.config.scenarios:
-                self.reset(state)
+                warmed = self.reset(state)
+                if warmed is not None:
+                    warm_searches[f'web.{state}.{scenario.name}'] = warmed
                 self.require_cold()
                 # One cookie jar per scenario, emptied only by the reset.
                 client = Client(base_url)
@@ -855,7 +985,9 @@ class WebBench:
                 continue
             # Each half starts cold, so neither is measured on what the other loaded.
             for half in ('distinct', 'shared'):
-                self.reset(state)
+                warmed = self.reset(state)
+                if warmed is not None:
+                    warm_searches[f'web.{state}.concurrency.{half}'] = warmed
                 self.require_cold()
                 clients = [Client(base_url) for _ in range(concurrency.users)]
                 issued = self.run_concurrency_half(state, concurrency, half, run, clients)
@@ -868,6 +1000,52 @@ class WebBench:
                 'is not using the harness memcached'
             )
         return run
+
+
+@dataclass(frozen=True)
+class DeploySteps:
+    """The steps of a deploy a side's web runs simulate.
+
+    Attributes:
+        warm_states: The cold states whose resets end with the side's ``warm_search``.
+        promotion_carts: The cart rows each run's timed promotion carries over, or None
+            for no promotion.
+        skipped: The steps asked for that the side does not have, by name.
+    """
+
+    warm_states: frozenset[str]
+    promotion_carts: int | None
+    skipped: tuple[str, ...]
+
+
+def deploy_steps(
+    warm_states: frozenset[str],
+    promotion_carts: int | None,
+    *,
+    has_warm_search: bool,
+    spelling: Spelling,
+) -> DeploySteps:
+    """Choose which of the deploy steps asked for a side runs.
+
+    Parameters:
+        warm_states: The cold states asked to warm.
+        promotion_carts: The cart rows asked for in a timed promotion, or None.
+        has_warm_search: Whether the side has ``opus_manage warm_search``.
+        spelling: The side's import options, which name its carry-over, if any.
+
+    Returns:
+        What the side runs: no warm-up without the command and no promotion without the
+        option, each then named among the skipped steps, ``warm_search`` and
+        ``carry_over_sessions``.
+    """
+    skipped = []
+    if len(warm_states) > 0 and not has_warm_search:
+        skipped.append('warm_search')
+        warm_states = frozenset()
+    if promotion_carts is not None and spelling.carry_over is None:
+        skipped.append('carry_over_sessions')
+        promotion_carts = None
+    return DeploySteps(warm_states, promotion_carts, tuple(skipped))
 
 
 def side_schema(label: Label, override: str | None) -> tuple[str, tuple[Path, Path]]:
@@ -917,6 +1095,22 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument('--repo-root', type=Path, required=True)
     parser.add_argument('--runs', type=int, default=None, help="default: web.toml's for the scale")
     parser.add_argument('--schema', default=None, help="serve this schema instead of the import's")
+    parser.add_argument(
+        '--warm',
+        action='append',
+        choices=COLD_STATES,
+        default=[],
+        help="end this cold state's reset with the side's warm_search, as after a deploy, "
+        "beside the states web.toml's [warm] names; repeatable",
+    )
+    parser.add_argument(
+        '--promotion-carts',
+        type=int,
+        default=None,
+        metavar='N',
+        help="time each run's promotion window: the side's carry-over of N planted cart "
+        'rows into the served schema, and the cache restart',
+    )
     return parser.parse_args(argv)
 
 
@@ -943,6 +1137,13 @@ def main(argv: Sequence[str] | None = None) -> None:
         pr=args.pr, side=args.side, scale=args.scale, session=args.session, date=args.date
     )
     schema, holdings = side_schema(label, args.schema)
+    warm_states = config.warm | frozenset(args.warm)
+    steps = deploy_steps(
+        warm_states,
+        args.promotion_carts,
+        has_warm_search=len(warm_states) > 0 and side.has_warm_search(),
+        spelling=spelling,
+    )
     bench = WebBench(
         server=server,
         memcached=memcached,
@@ -952,6 +1153,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         config=config,
         schema=schema,
         holdings=holdings,
+        warm_states=steps.warm_states,
     )
     count = config.runs[args.scale] if args.runs is None else args.runs
     with server.running():
@@ -959,7 +1161,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             **host_environment(),
             **side.environment(),
             **server_environment(server),
-            'skipped_steps': list(spelling.skipped_steps),
+            'skipped_steps': [*spelling.skipped_steps, *steps.skipped],
+            'warm_states': sorted(warm_states),
+            'promotion_carts': args.promotion_carts,
             'web_scenario_hash': scenario_hash([config.path]),
             'server_model': bench.gunicorn.server_model,
             'app_loading': 'eager',
@@ -978,6 +1182,8 @@ def main(argv: Sequence[str] | None = None) -> None:
                     'memcached_limit_maxbytes': int(memcached.stats()['limit_maxbytes']),
                 }
             )
+            if steps.promotion_carts is not None:
+                environment['promotion_cart_rows'] = bench.prepare_promotion(steps.promotion_carts)
             for position in range(count):
                 run = bench.one_run()
                 path = append_runs(label, environment, [run])
@@ -987,6 +1193,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         finally:
             bench.gunicorn.stop()
             memcached.stop()
+            bench.drop_promotion_source()
 
 
 if __name__ == '__main__':

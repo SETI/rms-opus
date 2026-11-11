@@ -54,6 +54,9 @@ export OPUS_SRC_DIR=${OPUS_DIR}/staged
 # rebuild.
 export OPUS_DIR_NAME=${OPUS_DB_NAME}_`date +%Y%m%dT%H%M%S`
 INSTALL_DIR=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
+source ${IMPORT_SCRIPT_DIR}/_promote_steps.sh
+export OPUS_PREVIOUS_DB_NAME=$(previous_db_name "${OPUS_DIR}/deployed/opus.toml" "${OPUS_DB_NAME}")
+echo "Sessions and carts carried over from: ${OPUS_PREVIOUS_DB_NAME:-(none)}"
 
 mkdir -p ${OPUS_LOG_DIR}
 # The application's log outlives the installation that wrote it, so a file left by a
@@ -107,8 +110,9 @@ opus_manage collectstatic --noinput
 # search tables of any searches made while the staged installation was being tried out.
 opus_import --import-dictionary --reset-search-tables
 
-# The staged installation is complete. Switch to it, empty the shared cache, and
-# restart the workers.
+# The staged installation is complete. Carry the sessions and carts over from the
+# schema being served, switch to it, empty the shared cache, restart the workers, and
+# warm the landing page.
 source ${IMPORT_SCRIPT_DIR}/_promote.sh
 
 echo

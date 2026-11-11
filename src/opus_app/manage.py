@@ -28,8 +28,9 @@ def main() -> None:
     """Run the Django management command named on the command line.
 
     The subcommands are Django's own -- ``check``, ``migrate``, ``collectstatic``,
-    ``shell``, ``diffsettings`` and the rest -- because OPUS adds none of its own. The
-    import pipeline is ``opus_import``, and the test suites are run with ``pytest``.
+    ``shell``, ``diffsettings`` and the rest -- and the two the ``search`` app adds,
+    ``prune`` and ``warm_search``. The import pipeline is ``opus_import``, and the test
+    suites are run with ``pytest``.
 
     The settings module is set rather than forced, as :mod:`opus_app.wsgi` sets it: a
     value already in the environment is left alone, so a deployment can still point

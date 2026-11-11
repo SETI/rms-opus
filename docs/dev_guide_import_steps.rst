@@ -86,6 +86,35 @@ foreign key cascades on delete (:ref:`dev_guide_table_schemas`), so deleting a b
 on either write path or under ``--delete-bundles``, deletes the cart rows that name its
 observations rather than being refused.
 
+.. _dev_guide_import_steps_do_carry_over:
+
+opus_import.steps.do_carry_over
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Carries the sessions and carts of the schema being served over into the schema a deploy
+promotes. Option: ``--carry-over-sessions-from SCHEMA``, which runs alone and is outside
+the sequence above; ``deploy_new_code_and_database.sh`` runs it while the web service is
+stopped (:ref:`user_guide_deployment_carry_over`).
+
+:func:`~opus_import.steps.do_carry_over.carry_over_sessions` calls
+:meth:`~opus_import.importdb.super.ImportDBSuper.carry_over_sessions` and logs what it
+copied. The MySQL implementation reads the source's ``django_session`` and counts its
+``cart`` first, so a source without them fails before anything is written. It then
+truncates the target's ``cart`` and ``django_session``, so a second run gives the same
+result, and runs two ``INSERT ... SELECT`` statements committed together: the sessions
+whose ``expire_date`` is later than ``UTC_TIMESTAMP()`` (Django stores it in UTC), then
+each source cart row joined to the target's ``obs_general`` by ``opus_id`` and to the
+copied sessions by its session. The rows are written with the target's own
+``obs_general_id``, ``opus_id`` and session key, and only the columns every release's
+``cart`` shares are named, so the copy does not depend on either schema's character sets
+or on a column one release's ``cart`` has and another's lacks. A cart row's own ``id`` is
+not copied. The cart rows the source held and the target did not take, because their
+session expired or their observation is gone, are logged as dropped.
+
+The command line refuses the option with any other step and when ``SCHEMA`` is the
+schema it writes into, before the database is opened, since emptying the target would
+then empty the source.
+
 .. _dev_guide_import_steps_do_django:
 
 opus_import.steps.do_django

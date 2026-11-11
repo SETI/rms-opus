@@ -62,8 +62,8 @@ BRANDS = ('mysql',)
 HIGHER_IS_BETTER_SUFFIX = '_per_s'
 
 #: Environment entries that must not change within one result file: a file whose runs
-#: came from two commits, two interpreters, two servers, or imports shared among
-#: importers in two ways is not one label's runs.
+#: came from two commits, two interpreters, two servers, imports shared among importers
+#: in two ways, or web runs that warmed or promoted differently is not one label's runs.
 PINNED_ENVIRONMENT_KEYS = (
     'git_sha',
     'git_dirty',
@@ -75,11 +75,14 @@ PINNED_ENVIRONMENT_KEYS = (
     'import_keys',
     'importers',
     'coordinator_importers',
+    'warm_states',
+    'promotion_carts',
 )
 
 #: What a pinned entry is compared as in a file whose earlier runs do not record it: a
 #: run that records no ``import_keys`` set none, and one that records no importer count
-#: imported in one process.
+#: imported in one process. The web runs' entries have none, since a file's import runs
+#: record neither.
 PINNED_ENVIRONMENT_DEFAULTS: dict[str, Any] = {
     'import_keys': {},
     'importers': None,

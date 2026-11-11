@@ -230,6 +230,48 @@ the functions that do it.
 :func:`~opus_app.apps.search.views.search_results_join_condition`
     The condition that ties a table's rows to a search's results.
 
+.. _dev_guide_webapp_search_warm:
+
+Warming the landing page
+------------------------
+
+The empty search, in the default sort, is the search every visitor starts with, and its
+result count, its first page and its mult counts are cached until the next import. A
+deploy empties memcached, so the first visitor after it would pay for all of them.
+``opus_manage warm_search``
+(:mod:`opus_app.apps.search.management.commands.warm_search`) asks for them once, from
+the deploy, instead.
+
+It issues ordinary requests through Django's test client rather than computing cache
+keys itself: a key depends on the search's hash, which depends on
+``DEFAULT_SORT_ORDER``, on how ``parse_order_slug`` resolves it through ``param_info``,
+on :func:`~opus_app.apps.tools.app_utils.sort_dictionary` and on
+:func:`~opus_app.apps.tools.app_utils.strip_numeric_suffix`, so only the views compute it
+correctly. No view knows it is being warmed, and nothing is stored that a visitor's
+request would not store.
+
+:func:`~opus_app.apps.search.management.commands.warm_search.warm_requests`
+    The requests, in order: the empty search's result count; its first page through
+    ``api/data.json`` and through ``__api/dataimages.json``; the range endpoints of each
+    widget in ``DEFAULT_WIDGETS`` that is a range; the menu, which lists the triggered
+    tables, for the empty search the base tables; and the mult counts of every searchable
+    mult field, the default widgets first.
+
+:func:`~opus_app.apps.search.management.commands.warm_search.searchable_fields`
+    The fields those mult counts are chosen from: every ``param_info`` row the search
+    menu offers (``display`` 1), with its form type.
+
+:func:`~opus_app.apps.search.management.commands.warm_search.warm_host`
+    The client's ``HTTP_HOST``: the first ``ALLOWED_HOSTS`` entry that is not ``*``, or
+    ``localhost`` when every entry is. The test client's own default host is not in
+    ``ALLOWED_HOSTS``, and every request would be answered 400.
+
+The command refuses Django's local-memory cache, which would hold the answers only in its
+own process, and it warms memcached and the database's buffer pool, not the workers: each
+worker still loads its per-process caches (:ref:`dev_guide_webapp_search_paraminfo_cache`)
+on its first request. A request that does not answer 200 makes it exit with failure after
+the others; the deploy reports that as a warning.
+
 Turning a search into SQL
 -------------------------
 

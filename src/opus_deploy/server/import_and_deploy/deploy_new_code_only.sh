@@ -161,6 +161,11 @@ if ! ${NO_DATABASE}; then
     opus_import --create-param-info --create-partables --create-table-names --import-dictionary --update-mult-info
 fi
 
+# The warm-up after the switch writes a search and a session, as a first visitor does.
+if ${NO_DATABASE}; then
+    export OPUS_WARM_SEARCH=false
+fi
+
 source ${IMPORT_SCRIPT_DIR}/_promote.sh
 
 echo

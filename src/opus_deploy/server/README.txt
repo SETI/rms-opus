@@ -185,10 +185,29 @@ release imported but did not finish, its finishing steps -- `opus_import
   AFTER A DEPLOY
 --------------------------------------------------------------------------------
 
+Every deploy ends with `opus_manage warm_search`, which asks the landing
+page's questions once so that the first visitor finds them cached. A failure of
+it is a warning, not a failed deploy. --no-database skips it, since it writes
+a search and a session as a visitor's first requests do.
+
+deploy_new_code_and_database.sh also carries the sessions and carts over from
+the database being served into the new one, while the web server is stopped.
+A cart row whose session has expired, or whose observation the new database
+lacks, is dropped, and the log counts them. If the carry-over fails, the web
+server is started again on the installation that was serving, and nothing has
+switched.
+
 The installation that was replaced is still under staged/. Going back to it is
 moving the deployed symlink onto it and restarting the web server -- there is
-nothing to rebuild. Old installations are deleted by hand, once the one after
-them has been trusted for a while.
+nothing to rebuild. Going back that way skips the carry-over, so the sessions
+and carts made since the deploy stay behind in the newer database. To carry
+them back, redeploy the previous database instead:
+
+    ./import_and_deploy/deploy_new_code_and_database.sh \
+        <previous database> <its version specifier>
+
+Old installations are deleted by hand, once the one after them has been trusted
+for a while.
 
 
 --------------------------------------------------------------------------------
@@ -207,7 +226,8 @@ them has been trusted for a while.
     _*.sh                             Sourced by those: the deploy
                                       configuration, the virtual environment,
                                       the version check, one installation, the
-                                      import, and the switch.
+                                      import, the switch, and the switch's
+                                      steps that can fail on their own.
 
   database/                           dump_db.sh and load_db.sh: copy a finished
                                       database to the server OPUS_PEER_DB_HOST

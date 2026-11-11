@@ -40,7 +40,8 @@ Running it from the command line
 
 Django management commands are how the application is administered: creating its contrib
 tables, gathering its static files, opening a shell with the models loaded, running
-the development server, and pruning its stored searches. There are three ways to reach them. The first two are the same
+the development server, pruning its stored searches, and warming the landing page after a
+deploy. There are three ways to reach them. The first two are the same
 program under two names; the third is Django's own command, and is the only one that
 needs a second environment variable.
 
@@ -112,8 +113,9 @@ to do the second time.
 The commands worth knowing
 --------------------------
 
-All but ``prune`` are Django's own; ``prune`` is OPUS's, defined by the ``search`` app in
-:mod:`opus_app.apps.search.management.commands.prune`. Each one below takes
+All but ``prune`` and ``warm_search`` are Django's own; those two are OPUS's, defined by
+the ``search`` app in :mod:`opus_app.apps.search.management.commands.prune` and
+:mod:`opus_app.apps.search.management.commands.warm_search`. Each one below takes
 ``opus_manage`` or ``python manage.py`` in front of it.
 
 .. list-table::
@@ -148,6 +150,15 @@ All but ``prune`` are Django's own; ``prune`` is OPUS's, defined by the ``search
        reports that and changes nothing. A server runs it from cron;
        :ref:`user_guide_deployment_prune` gives the options, their defaults and the
        sizing rule.
+   * - ``warm_search``
+     - Issues the landing page's requests once through Django's test client -- the empty
+       search's result count and first page, the default widgets' fan-out, and the empty
+       search's counts for every searchable mult field -- so memcached holds their
+       answers and the database's buffer pool their rows. It prints each request's time
+       and the total, exits with failure if a request does not answer 200, and refuses
+       Django's local-memory cache. Both deploy scripts run it after the switch;
+       :ref:`user_guide_deployment_warm_search` says when, and
+       :ref:`dev_guide_webapp_search_warm` what it warms.
 
 **The test suites are not run through any of them** -- ``pytest`` runs the holdings-free
 suite and ``pytest integration_tests`` the live-database ones; see

@@ -42,6 +42,7 @@ except ImportError:
 
 from opus_config.config import DEFAULT_TRANSACTION_ROWS
 from opus_import.importdb.super import (
+    CarriedOver,
     DBRow,
     ImportDBError,
     ImportDBSuper,
@@ -1343,6 +1344,73 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 self._log_failure(f'Failed in "{cmd}": {e}')
                 raise ImportDBError(e) from e
             self._table_info_cache.clear()
+
+    def carry_over_sessions(self, source_schema: str) -> CarriedOver:
+        """Replace this schema's sessions and cart rows with another schema's.
+
+        The source's two tables are read first, so a source without them fails before
+        anything is written. ``django_session`` and ``cart`` are then truncated and filled
+        by two ``INSERT ... SELECT`` statements committed together. Django stores ``expire_date`` in UTC, so
+        a session is unexpired when it is later than ``UTC_TIMESTAMP()``. A cart row is
+        joined to this schema's ``obs_general`` by ``opus_id`` and to the sessions just
+        copied by its session, and is written with this schema's own values of both, so
+        the copy compares the two schemas' columns but never stores the source's text in
+        a column of another character set. Only the columns the two releases' ``cart``
+        tables share are named.
+
+        Parameters:
+            source_schema: The schema to copy from, on the same server.
+
+        Returns:
+            The sessions and cart rows copied, and the cart rows the source held.
+
+        Raises:
+            ImportDBError: If the server rejects a statement, for instance because the
+                source lacks one of the tables.
+        """
+        q = self.quote_identifier
+        source = q(source_schema)
+        writes = (
+            'TRUNCATE TABLE `cart`',
+            'TRUNCATE TABLE `django_session`',
+            # Identifiers are validated by quote_identifier; the statements carry no values.
+            'INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) '  # nosec B608
+            f'SELECT `session_key`, `session_data`, `expire_date` FROM {source}.`django_session` '
+            'WHERE `expire_date` > UTC_TIMESTAMP()',
+            'INSERT INTO `cart` (`session_id`, `obs_general_id`, `opus_id`, `recycled`) '  # nosec B608
+            'SELECT `s`.`session_key`, `n`.`id`, `n`.`opus_id`, `c`.`recycled` '
+            f'FROM {source}.`cart` AS `c` '
+            'JOIN `obs_general` AS `n` ON `n`.`opus_id` = `c`.`opus_id` '
+            'JOIN `django_session` AS `s` ON `s`.`session_key` = `c`.`session_id`',
+        )
+        # Identifiers are validated by quote_identifier; the statements carry no values.
+        reads = (
+            f'SELECT 1 FROM {source}.`django_session` LIMIT 1',  # nosec B608
+            f'SELECT COUNT(*) FROM {source}.`cart`',  # nosec B608
+        )
+        with self._operation('carry_over_sessions'):
+            if not MYSQLDB_AVAILABLE:
+                return CarriedOver(sessions=0, cart_rows=0, source_cart_rows=0)
+            try:
+                with self.conn.cursor() as cur:
+                    for cmd in reads:
+                        self._execute(cmd, cur=cur)
+                        rows = cur.fetchall()
+                    source_cart_rows = rows[0][0]
+                    counts = []
+                    for cmd in writes:
+                        self._execute(cmd, cur=cur, mutates=True)
+                        counts.append(cur.rowcount)
+                self.conn.commit()
+            except MySQLdb.Error as e:
+                self._rollback()
+                self._log_failure(f'Failed to carry sessions and carts over from {source}: {e}')
+                raise ImportDBError(e) from e
+        return CarriedOver(
+            sessions=int(counts[2]),
+            cart_rows=int(counts[3]),
+            source_cart_rows=int(source_cart_rows),
+        )
 
     def set_next_id(self, table_name: str, next_id: int) -> None:
         """Make the next row a table's auto-increment key hands out take a given id.

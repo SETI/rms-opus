@@ -485,6 +485,32 @@ Two caches answer some requests before a view runs: Django's per-URL site cache,
 views' own memcached entries. The statements-executed count is how to tell which
 answered: a scenario answered entirely from a cache executes none.
 
+**What a visitor meets after a deploy.** A deploy warms the landing page once its workers
+start (:ref:`user_guide_deployment_warm_search`). ``web.toml``'s ``[warm]`` table has a
+flag for each cold state, ``db-cold`` and ``app-cold``, both false; a state whose flag is
+true, or that ``--warm STATE`` names (repeatable), ends its reset with the side's
+``opus_manage warm_search``, after memcached's restart and before the scenario. The
+warm-up's wall-clock is in the run's details under ``warm_search_s``, and its statements
+are not counted in the scenario's, since the statement statistics are emptied after it.
+A warm-up that fails fails the run.
+
+``--promotion-carts N`` times a promotion's window before each run's passes: a schema
+named after the served one with ``_carry_source`` is made once, holding only
+``django_session`` and ``cart`` as the served schema declares them, with ``N`` cart rows
+naming the served schema's first observations, a hundred to an unexpired session. Each
+run stops the application, runs the side's ``opus_import --carry-over-sessions-from``
+from that schema into the served one, restarts memcached, and starts the application
+again, recording ``web.promotion.carry_over_s`` and ``web.promotion.window_s``, the
+second from the stop to the start. The carry-over leaves the planted sessions and cart
+rows in the served schema. The rows planted are in the environment as
+``promotion_cart_rows``; the schema is dropped when the command ends.
+
+A side without ``warm_search``, or whose ``opus_import --help`` lists no
+``--carry-over-sessions-from``, skips that step, and the result's ``skipped_steps``
+names it (``warm_search``, ``carry_over_sessions``). The environment records the states
+asked to warm as ``warm_states`` and the cart rows asked for as ``promotion_carts``, and
+a result file refuses web runs that differ in either.
+
 What bench_db records
 ~~~~~~~~~~~~~~~~~~~~~
 

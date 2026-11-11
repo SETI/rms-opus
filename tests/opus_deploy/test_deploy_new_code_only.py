@@ -25,12 +25,12 @@ if TYPE_CHECKING:
 _SCRIPT = 'import_and_deploy/deploy_new_code_only.sh'
 
 #: The helpers the script sources, each replaced by a stub. The deploy.env reader names
-#: the OPUS directory; the others do nothing.
+#: the OPUS directory, the promotion records whether it would warm the landing page, and
+#: the others do nothing.
 _STUBBED_HELPERS = (
     '_activate_deploy_venv.sh',
     '_chain_version.sh',
     '_opus_setup_environment.sh',
-    '_promote.sh',
 )
 
 #: The commands the script runs, each a fake that records how it was called.
@@ -71,13 +71,16 @@ def _run_deploy(
     (helpers / '_read_deploy_env.sh').write_text(f'OPUS_DIR={opus_dir}\n', encoding='utf-8')
     for helper in _STUBBED_HELPERS:
         (helpers / helper).write_text(':\n', encoding='utf-8')
+    calls = tmp_path / 'calls'
+    (helpers / '_promote.sh').write_text(
+        f'echo "promote warm=${{OPUS_WARM_SEARCH:-true}}" >> {calls}\n', encoding='utf-8'
+    )
     (helpers / '_check_schema_version.sh').write_text(
         'check_schema_version() { return 0; }\n', encoding='utf-8'
     )
 
     fake_bin = tmp_path / 'bin'
     fake_bin.mkdir()
-    calls = tmp_path / 'calls'
     for command in _FAKE_COMMANDS:
         status = (
             f'[[ "$*" == "migrate --plan --check" ]] && {{ {_MIGRATION_CHECKS[migration_check]}; }}'
@@ -109,6 +112,7 @@ def test_the_plain_deploy_migrates_and_rebuilds_the_aux_tables(tmp_path: Path) -
     status, output, ran = _run_deploy(tmp_path, '==3.25.0')
     assert status == 0, output
     assert 'opus_manage migrate' in ran
+    assert ran[-1] == 'promote warm=true'
     assert (
         'opus_import --create-param-info --create-partables --create-table-names '
         '--import-dictionary --update-mult-info'
@@ -126,6 +130,8 @@ def test_no_database_writes_nothing_to_the_database(tmp_path: Path) -> None:
         'opus_manage collectstatic --noinput',
     ]
     assert 'nothing will be written to served' in output
+    # The warm-up registers a search and a session, as a visitor's first requests do.
+    assert ran[-1] == 'promote warm=false'
 
 
 @pytest.mark.skipif(_BASH is None, reason='needs bash')
