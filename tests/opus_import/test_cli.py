@@ -126,15 +126,19 @@ def test_no_help_text_names_the_permanent_tables_or_a_namespace() -> None:
             '--scorched-earth drops every OPUS table in the schema; give --yes to confirm',
         ),
         (['--yes'], '--yes confirms --scorched-earth and is refused without it'),
+        (
+            ['--join', '--read-only'],
+            '--join imports from the queue alone; it is refused with --read-only',
+        ),
     ],
-    ids=['erase-without-yes', 'yes-without-erase'],
+    ids=['erase-without-yes', 'yes-without-erase', 'join-read-only'],
 )
-def test_an_unconfirmed_erase_or_a_stray_yes_is_refused_before_the_database_opens(
+def test_a_refused_combination_of_options_exits_before_the_database_opens(
     arguments: list[str],
     message: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Both refusals exit non-zero, logged, and neither connects."""
+    """Each refusal exits non-zero, logged, and none connects."""
     monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
     logger = _HandlerlessLogger()
     monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)

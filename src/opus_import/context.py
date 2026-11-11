@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
     import pdslogger
 
-    from opus_import.bundle_registry import BundleIds
+    from opus_import.bundle_registry import BundleIds, BundleRange
     from opus_import.deferred import Capture
     from opus_import.importdb.super import ImportDBSuper
     from opus_import.mult_fields import MultFieldInfo
@@ -218,6 +218,9 @@ class ImportContext:
         bundle_ids: The observation ids the bundle being imported hands out, from its
             registered range (`opus_import.bundle_registry.BundleIds`), or None outside
             a bundle.
+        planned_ranges: The registry rows a read-only run's registration planned and,
+            being read-only, did not write, keyed by bundle, so the run imports a new
+            bundle from the range it would have registered.
         current_bundle_id: The bundle being imported, or None outside a bundle.
         current_index_row_number: The 1-based index row being imported, or None.
         current_primary_filespec: The primary filespec of the observation being imported,
@@ -253,6 +256,7 @@ class ImportContext:
     bundle_has_errors: bool = False
 
     bundle_ids: BundleIds | None = None
+    planned_ranges: dict[str, BundleRange] = field(default_factory=dict)
 
     current_bundle_id: str | None = None
     current_index_row_number: int | None = None

@@ -175,8 +175,11 @@ live. In order:
    a finished schema; no other state is changed.
 4. **Return bundles to the queue**, under ``--requeue``
    (:func:`~opus_import.steps.do_import.requeue_bundles`): every named bundle must be
-   ``failed`` or ``importing``, or nothing changes and the invocation fails; each is
-   deleted from every observation table and set ``pending``.
+   ``failed`` or ``importing``, or nothing changes and the invocation fails. Each is
+   taken from ``failed`` or ``importing`` as the invocation's own hold, under a new
+   ``started_at``, deleted from every observation table, and set ``pending`` only while
+   that hold stands; a bundle another process took after the states were read is left
+   to it, with nothing deleted, and the invocation fails.
 5. Stop here unless ``--register-bundles``, ``--import`` or ``--join`` was given.
 6. **Choose the path**, as above, if :mod:`opus_import.cli` has not.
 7. Under ``--register-bundles``, **register the named bundles** in their order
@@ -229,7 +232,10 @@ another. Positional bundle descriptors limit the bundles claimed, and ``--exclud
 keeps it off the bundles it names. A claim that finds nothing takes and releases
 registration's lock, so it waits for a registration in progress, whose new rows the
 locking read passes over until they commit, and claims once more before the importer
-exits. A bundle whose import raises or logs an error is marked ``failed`` and its rows
+exits. Before the first claim, an importer whose schema has no registry waits the same
+way, reads the table names from the server again
+(:meth:`~opus_import.importdb.super.ImportDBSuper.forget_table_names`), and fails with a
+message naming ``--register-bundles`` if there is still none. A bundle whose import raises or logs an error is marked ``failed`` and its rows
 deleted, and the importer goes on; it is never claimed again, and the importer exits with failure at the end. Under the
 test-only fault ``OPUS_IMPORT_FAULT=hold_after_claim:<seconds>`` an importer sleeps
 that long after each claim commits (:ref:`the import's fault sites
@@ -306,7 +312,9 @@ one it names from any state but ``importing``
 wrote when it took it (:func:`~opus_import.bundle_registry.finish_bundle`), so a bundle
 ``--requeue`` returned to the queue and another process took is never finished, or
 deleted, by the process that held it before; that process logs an error instead. Only
-``--requeue`` moves an ``importing`` bundle back to ``pending``. The hold is
+``--requeue`` moves an ``importing`` bundle back to ``pending``: it takes the bundle
+from ``failed`` or ``importing`` as a hold of its own, and returns it under that hold
+once its rows are deleted. The hold is
 ``started_at``, to the second, so a bundle requeued and taken again within the second it
 was first taken is the one case it cannot tell apart.
 
@@ -980,9 +988,13 @@ Importing every observation one primary index file describes.
 :func:`~opus_import.steps.do_import_index.import_one_index`
     The whole of it: read the primary index, resolve ambiguous rows, discover and
     cross-reference the associated metadata files, compute every row through
-    :func:`~opus_import.steps.do_import_pool.compute_index`, then write the ``mult``
-    rows the index added and load what is left of the ``obs_`` rows. It returns False,
-    abandoning the index, when a pool worker failed.
+    :func:`~opus_import.steps.do_import_pool.compute_index`, then load what is left of
+    the ``obs_`` rows. Each ``mult`` row the index adds is inserted as its value is met,
+    by :func:`~opus_import.steps.do_import_mult.update_mult_table`, during the serial
+    computation or a pool's replay, so it is written before any ``obs_`` row that holds
+    its id. It returns False, abandoning the index, when a pool worker failed; the
+    index's ``obs_`` rows are then deleted, and the ``mult`` rows it added stay, for
+    finalization to delete those no observation holds.
 
 :class:`~opus_import.steps.do_import_index.IndexState`
     What every row of the index is computed from, built once the metadata is assembled
@@ -1080,9 +1092,10 @@ Otherwise it computes in a pool:
   tasks queued ahead of the one it is replaying
   (:data:`~opus_import.steps.do_import_pool.TASKS_AHEAD_PER_WORKER` per worker), and
   **replays each task's events where the serial loop would have made them**. A
-  :class:`~opus_import.deferred.LocalId` becomes the id the table had when the task's
-  replay began, plus its number, plus one, and the table's cached id then moves past the
-  task's last; each recorded mult value goes through
+  replay takes a block of ``obs_general`` ids from the bundle's range
+  (:attr:`~opus_import.context.ImportContext.bundle_ids`), one for each id the task
+  numbered, and a zero-based :class:`~opus_import.deferred.LocalId` becomes the block's
+  first id plus its number; each recorded mult value goes through
   :func:`~opus_import.steps.do_import_mult.update_mult_table` in the serial order, so it
   gets the id the serial loop gives it; each log call is made on ``ctx.log`` with the
   recorded position, so the non-repeating variants deduplicate in the import's process
@@ -1246,9 +1259,11 @@ never lands on it, and finalization deletes it once no observation holds it.
 or the schema gives it, and finalization ranks every field
 (:ref:`dev_guide_import_steps_do_finalize_mult`).
 
-**Writing.** A new value is written the moment it is met, in a second short transaction,
-and a new group with it in a third, by an insert that leaves a group another importer
-wrote first as it is; each is run again on a deadlock or a lock wait timeout. A new row is inserted, never upserted. When the insert meets the field's
+**Writing.** A new value is written the moment it is met, in a second short transaction
+that also writes its group when the field lacks it, by an insert that leaves a group
+another importer wrote first as it is; the transaction is run again on a deadlock or a
+lock wait timeout, and a value is never stored without its group. A new row is inserted,
+never upserted. When the insert meets the field's
 unique key on ``(field_id, value)``, another importer stored the value first, since the
 server was asked for it just before: its row is read back and its id used, and the id
 taken is left unused, a gap in the field's ids that nothing depends on. With one importer

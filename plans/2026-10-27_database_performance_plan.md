@@ -6351,3 +6351,32 @@ Nothing above this line is rewritten by an executor.
   `trigger_tab` and `trigger_col` name (`golden_io`). Results on the final head: the
   gates pass (2,854 unit tests), the import suite 176 passed and 3 skipped, and the
   integration suite 1,591 passed against `pr16local`, imported again at this head.
+- **CodeRabbit fixes (2026-11-11).** Fixed, each with a test that fails without it:
+  - `--requeue` holds a bundle before deleting its rows: it takes it from `failed` or
+    `importing` with `start_bundle(from_states=...)`, a fresh `started_at`, deletes, and
+    returns it to `pending` through `finish_bundle` only while that hold stands, so a
+    plain `--import` that took the bundle after the state check keeps its rows. The
+    one-second `started_at` limit recorded above still applies; no token column is added.
+  - A mult value and its new group are one `retrying` transaction, so a failed group
+    insert leaves no value without its group. No repair on the duplicate-value path: the
+    importer that stored the value stored its group in the same transaction.
+  - A read-only import of a new bundle works: registration keeps the rows it would have added in
+    `ImportContext.planned_ranges`, which `bundle_range` falls back to, and
+    `increment_counter` logs its `UPDATE` and counts on from the stored `last_id`
+    (`ImportDBSuper._simulated_count`). `--join` is refused with `--read-only`, which
+    would claim the same bundle for ever.
+  - A queue importer on a schema with no registry waits on registration's lock, rereads
+    the table names (`ImportDBSuper.forget_table_names`), and fails naming
+    `--register-bundles`, instead of a 1146 from the claim's locking read.
+  - A failed rollback raises `RollbackError`, naming both failures and raised from the
+    body's; `retrying` never retries it or hands it to `expected`.
+  - Both harnesses drain every importer's pipes at once (`build_run.communicate_all`),
+    and the waiting `import_tests` case kills and reaps its importer however it ends.
+  - The guides and the `do_import_index` docstring describe immediate mult writes, the
+    replay's ids from `ctx.bundle_ids`, `MAX_ID` from the bundle's range, ids never
+    reused, and the importdb chapter's whole surface: `lock_name`, the new brand
+    methods, `transaction`/`retrying`/`failures_expected`, `READ COMMITTED` and
+    `RETRY_SLEEPS`.
+  - Skipped: none.
+  - Results: the gates pass (2,869 unit tests); the import suite 176 passed and 3
+    skipped. Each new test was mutation-checked against its fix reverted.

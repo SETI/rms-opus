@@ -365,8 +365,9 @@ For every other column it dispatches on the schema's ``data_source``:
      - The ``id`` of this observation's ``obs_general`` row, which is how every other
        table hangs off it.
    * - ``MAX_ID``
-     - One more than the largest id used in this table so far, from the run's
-       per-table id cache.
+     - The next id of the bundle's registered range
+       (:attr:`~opus_import.context.ImportContext.bundle_ids`), which
+       ``obs_general.id``, the one column that uses it, takes.
    * - ``LONGITUDE_FIELD``
      - :meth:`~opus_import.obs.obs_base.ObsBase.compute_longitude_field`.
    * - ``D_LONGITUDE_FIELD``
@@ -504,15 +505,15 @@ Invariants
   design rests on. A web application already serving a schema does not check it again,
   so appends and deletions go to a schema nothing is serving.
 * **Every mult id an** ``obs_`` **row holds names a** ``mult`` **row of its field by
-  the end of the index.** The ``mult`` rows an index adds are written once every row has
-  been computed, before the rows still waiting are loaded, and finalization deletes only
+  the end of the index.** Each ``mult`` row an index adds is inserted as its value is
+  met, before any ``obs_`` row holding its id is loaded, and finalization deletes only
   the values no observation holds. No database constraint enforces it.
 * **A stored** ``mult`` **row keeps its id and its value.** Neither the import,
   ``--update-mult-info`` nor finalization rewrites the id or the value of a row it
   holds: a new value is inserted, never written over another row, and a list entry that
   disagrees with a stored row is an error. Renaming a value or reordering a field
-  touches no observation row. A row finalization deletes frees its id for a later
-  value.
+  touches no observation row. A row finalization deletes does not free its id:
+  ``mult_field.last_id`` never goes down, so the id is never handed out again.
 * **An import computes in many processes and writes from one.** Only the import's own
   process uses the database and writes the log; pool workers compute rows and record
   what they would have written, and that process replays it in index order, so the

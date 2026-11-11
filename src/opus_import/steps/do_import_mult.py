@@ -579,11 +579,11 @@ def _add_value(
 ) -> int:
     """Write a new value to its field, and its group if the field lacks it.
 
-    The row is inserted in a transaction of its own, and its group in another, each run
-    again when the server reports a deadlock or a lock wait timeout. If another process
-    inserted the same value first, the insert meets the field's unique key on
-    ``(field_id, value)``; that row is read back and its id used, and the id taken here
-    is left unused.
+    The row and its group are inserted in one transaction, run again when the server
+    reports a deadlock or a lock wait timeout, so a stored value always has its group.
+    If another process inserted the same value first, the insert meets the field's
+    unique key on ``(field_id, value)``; that row, which that process stored with its
+    own group, is read back and its id used, and the id taken here is left unused.
 
     Parameters:
         ctx: The import run's context, for the open database, the arguments and the log.
@@ -612,10 +612,22 @@ def _add_value(
     db = ctx.db
     assert db is not None
     row = {'id': new_id, **incoming}
+    grouping = row['grouping']
+    new_group = (
+        grouping if grouping is not None and collation_key(grouping) not in cache.groups else None
+    )
+    group = None if new_group is None else _group_row(cache, new_group, group_pin)
+
+    def insert() -> None:
+        """Insert the row, and its group when the field lacks it."""
+        db.insert_row(MULT_TABLE, {'field_id': cache.field_id, **row})
+        if group is not None:
+            db.insert_rows_keeping_existing(MULT_GROUP_TABLE, 'field_id', [group])
+
     try:
         db.retrying(
             f'Inserting a value into mult field "{cache.name}"',
-            lambda: db.insert_row(MULT_TABLE, {'field_id': cache.field_id, **row}),
+            insert,
             expected=db.is_duplicate_key_error,
         )
     except ImportDBError as e:
@@ -634,14 +646,8 @@ def _add_value(
         )
         return int(stored['id'])
     cache.remember(row)
-    grouping = row['grouping']
-    if grouping is not None and collation_key(grouping) not in cache.groups:
-        cache.remember_group(grouping, group_pin)
-        group = _group_row(cache, grouping, group_pin)
-        db.retrying(
-            f'Inserting a group into mult field "{cache.name}"',
-            lambda: db.insert_rows_keeping_existing(MULT_GROUP_TABLE, 'field_id', [group]),
-        )
+    if new_group is not None:
+        cache.remember_group(new_group, group_pin)
     if not ctx.args.suppress_mult_messages:
         import_util.log_info(
             ctx,

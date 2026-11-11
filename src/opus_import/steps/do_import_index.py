@@ -15,10 +15,11 @@ body the observation has geometry for, are computed after the other tables' rows
 deferred past even that, because it needs the ``obs_general`` and ``obs_pds`` rows and
 contributes many rows per observation rather than one.
 
-Nothing is written to the database until every row has been computed. The new ``mult``
-rows go out first, because an ``obs_`` row stores the id a value was given in its mult
-field and that row has to exist to be looked up -- by convention rather than by a database
-constraint, since a ``mult_idx`` column carries no foreign key.
+Each new ``mult`` row is inserted as its value is met (`opus_import.steps.do_import_mult`),
+and an ``obs_`` row is loaded only after it has been computed, so a ``mult`` row is
+always written before an ``obs_`` row that stores its id -- the order a lookup needs, kept
+by convention rather than by a database constraint, since a ``mult_idx`` column carries
+no foreign key.
 
 These are the per-index internals of `opus_import.steps.do_import`, not a step of their
 own.

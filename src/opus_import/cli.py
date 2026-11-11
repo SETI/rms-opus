@@ -498,7 +498,8 @@ def expand_aggregate_options(args: argparse.Namespace) -> None:
 
 
 #: The options ``--join`` is refused with: it imports from the queue and does nothing
-#: else, so an importer never erases, deletes, registers or finalizes.
+#: else, so an importer never erases, deletes, registers or finalizes. A read-only
+#: importer would claim the same pending bundle for ever, its claims never written.
 _JOIN_CONFLICTS = (
     ('do_import', '--import'),
     ('do_it_all', '--do-it-all'),
@@ -510,6 +511,7 @@ _JOIN_CONFLICTS = (
     ('finalize', '--finalize'),
     ('create_indexes', '--create-indexes'),
     ('write_schema_version', '--write-schema-version'),
+    ('read_only', '--read-only'),
 )
 
 

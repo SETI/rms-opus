@@ -298,12 +298,14 @@ Import steps
      - Import bundles from the bundle registry, the largest ``pending`` first, until none
        is ``pending``; several processes may run at once (`Several import processes`_).
        Named bundles limit the ones claimed. Refused with any option that erases,
-       deletes, registers or finalizes, and with ``--ignore-errors``.
+       deletes, registers or finalizes, and with ``--ignore-errors`` and
+       ``--read-only``.
    * - ``--requeue``
      - Return the named ``failed`` or ``importing`` bundles to ``pending``, after
        deleting their rows. Naming any other bundle refuses the whole invocation, which
        then changes nothing. Naming an ``importing`` bundle states that the process that
-       claimed it has stopped.
+       claimed it has stopped. Each bundle is held while its rows are deleted, so one
+       another process takes first is left to it, with nothing deleted.
    * - ``--delete-bundles``
      - Delete the named bundles' rows from every observation table, and their bundle
        registry rows, before any bundle is imported. A ``ready`` schema of this release's
@@ -698,7 +700,9 @@ rows are deleted; the importer goes on to the next and does not claim it again, 
 exits with failure at the end. Positional bundle descriptors limit the bundles an
 importer claims, which is how a computer holding only some of the holdings joins, and
 ``--exclude-bundles`` keeps it off the ones it names. An importer that finds nothing to
-claim waits for any registration in progress and looks once more before it exits.
+claim waits for any registration in progress and looks once more before it exits, and
+one started on a schema with no bundle registry waits the same way, then exits with
+failure if there is still none.
 
 A bundle is held by one process at a time. A plain ``opus_import --import`` and
 ``--delete-bundles`` refuse a bundle another process holds ``importing``, naming the
@@ -720,7 +724,7 @@ Almost nothing the importers write depends on which one imports a bundle or when
   computed for it, the stored one is the one met first, as the conflict warning
   reports.
 * Every import connection reads at ``READ COMMITTED``, and a claim, a mult id, a mult
-  value's and a group's insert, and each statement of a bundle's delete are run again,
+  value's insert with its group's, and each statement of a bundle's delete are run again,
   up to five attempts with growing pauses, when the server reports a deadlock or a lock
   wait timeout.
 
