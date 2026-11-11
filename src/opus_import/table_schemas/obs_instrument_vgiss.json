@@ -60,12 +60,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [  0,  "1:1",  "1:1", "010", "Y", null, null],
-              [  1,  "2:1",  "2:1", "020", "Y", null, null],
-              [  2,  "3:1",  "3:1", "030", "Y", null, null],
-              [  3,  "5:1",  "5:1", "040", "Y", null, null],
-              [  4, "10:1", "10:1", "050", "Y", null, null],
-              [  5,  null,   "N/A", "060", "Y", null, null]
+              [  0,  "1:1",  "1:1",    10, "Y", null, null],
+              [  1,  "2:1",  "2:1",    20, "Y", null, null],
+              [  2,  "3:1",  "3:1",    30, "Y", null, null],
+              [  3,  "5:1",  "5:1",    40, "Y", null, null],
+              [  4, "10:1", "10:1",    50, "Y", null, null],
+              [  5,  null,   "N/A",    60, "Y", null, null]
           ]
     },
     {
@@ -89,14 +89,14 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "NAONLY", "NAONLY", "010", "Y", null, null],
-              [   1, "WAONLY", "WAONLY", "020", "Y", null, null],
-              [   2, "BOTSIM", "BOTSIM", "030", "Y", null, null],
-              [   3, "BODARK", "BODARK", "040", "Y", null, null],
-              [   4, "BOTALT", "BOTALT", "050", "Y", null, null],
-              [   5, "BSIMAN", "BSIMAN", "060", "Y", null, null],
-              [   6, "NOSHUT", "NOSHUT", "070", "Y", null, null],
-              [   7,     null,    "N/A", "080", "Y", null, null]
+              [   0, "NAONLY", "NAONLY",    10, "Y", null, null],
+              [   1, "WAONLY", "WAONLY",    20, "Y", null, null],
+              [   2, "BOTSIM", "BOTSIM",    30, "Y", null, null],
+              [   3, "BODARK", "BODARK",    40, "Y", null, null],
+              [   4, "BOTALT", "BOTALT",    50, "Y", null, null],
+              [   5, "BSIMAN", "BSIMAN",    60, "Y", null, null],
+              [   6, "NOSHUT", "NOSHUT",    70, "Y", null, null],
+              [   7,     null,    "N/A",    80, "Y", null, null]
           ]
     },
     {
@@ -120,9 +120,9 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,  "LOW",  "Low", "010", "Y", null, null],
-              [   1, "HIGH", "High", "020", "Y", null, null],
-              [   2,   null,  "N/A", "030", "Y", null, null]
+              [   0,  "LOW",  "Low",    10, "Y", null, null],
+              [   1, "HIGH", "High",    20, "Y", null, null],
+              [   2,   null,  "N/A",    30, "Y", null, null]
           ]
     },
     {
@@ -146,17 +146,17 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [  0,  "1:1",  "1:1", "010", "Y", null, null],
-              [  1,  "3:4",  "3:4", "020", "Y", null, null],
-              [  2,  "2:3",  "2:3", "030", "Y", null, null],
-              [  3,  "3:5",  "3:5", "040", "Y", null, null],
-              [  4,  "1:2",  "1:2", "050", "Y", null, null],
-              [  5,  "2:5",  "2:5", "060", "Y", null, null],
-              [  6,  "1:3",  "1:3", "070", "Y", null, null],
-              [  7,  "1:5",  "1:5", "080", "Y", null, null],
-              [  8, "1:10", "1:10", "090", "Y", null, null],
-              [  9, "1:32", "1:32", "100", "Y", null, null],
-              [ 10,   null,  "N/A", "110", "Y", null, null]
+              [  0,  "1:1",  "1:1",    10, "Y", null, null],
+              [  1,  "3:4",  "3:4",    20, "Y", null, null],
+              [  2,  "2:3",  "2:3",    30, "Y", null, null],
+              [  3,  "3:5",  "3:5",    40, "Y", null, null],
+              [  4,  "1:2",  "1:2",    50, "Y", null, null],
+              [  5,  "2:5",  "2:5",    60, "Y", null, null],
+              [  6,  "1:3",  "1:3",    70, "Y", null, null],
+              [  7,  "1:5",  "1:5",    80, "Y", null, null],
+              [  8, "1:10", "1:10",    90, "Y", null, null],
+              [  9, "1:32", "1:32",   100, "Y", null, null],
+              [ 10,   null,  "N/A",   110, "Y", null, null]
           ]
     },
     {
@@ -180,15 +180,15 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,  "CLEAR",       "Clear", "010", "Y", null, null],
-              [   1,     "UV",          "UV", "020", "Y", null, null],
-              [   2, "VIOLET",      "Violet", "030", "Y", null, null],
-              [   3,   "BLUE",        "Blue", "040", "Y", null, null],
-              [   4,  "GREEN",       "Green", "050", "Y", null, null],
-              [   5,  "CH4_U",   "Methane-U", "060", "Y", null, null],
-              [   6, "SODIUM",    "Sodium-D", "070", "Y", null, null],
-              [   7, "ORANGE",      "Orange", "080", "Y", null, null],
-              [   8, "CH4_JS", "Methane-JST", "090", "Y", null, null]
+              [   0,  "CLEAR",       "Clear",    10, "Y", null, null],
+              [   1,     "UV",          "UV",    20, "Y", null, null],
+              [   2, "VIOLET",      "Violet",    30, "Y", null, null],
+              [   3,   "BLUE",        "Blue",    40, "Y", null, null],
+              [   4,  "GREEN",       "Green",    50, "Y", null, null],
+              [   5,  "CH4_U",   "Methane-U",    60, "Y", null, null],
+              [   6, "SODIUM",    "Sodium-D",    70, "Y", null, null],
+              [   7, "ORANGE",      "Orange",    80, "Y", null, null],
+              [   8, "CH4_JS", "Methane-JST",    90, "Y", null, null]
           ]
     },
     {
@@ -212,14 +212,14 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "0", "0", "010", "Y", null, null],
-              [   1, "1", "1", "020", "Y", null, null],
-              [   2, "2", "2", "030", "Y", null, null],
-              [   3, "3", "3", "040", "Y", null, null],
-              [   4, "4", "4", "050", "Y", null, null],
-              [   5, "5", "5", "060", "Y", null, null],
-              [   6, "6", "6", "070", "Y", null, null],
-              [   7, "7", "7", "080", "Y", null, null]
+              [   0, "0", "0",    10, "Y", null, null],
+              [   1, "1", "1",    20, "Y", null, null],
+              [   2, "2", "2",    30, "Y", null, null],
+              [   3, "3", "3",    40, "Y", null, null],
+              [   4, "4", "4",    50, "Y", null, null],
+              [   5, "5", "5",    60, "Y", null, null],
+              [   6, "6", "6",    70, "Y", null, null],
+              [   7, "7", "7",    80, "Y", null, null]
           ]
     },
     {
@@ -243,9 +243,9 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,  "N", "Narrow Angle", "010", "Y", null, null],
-              [   1,  "W",   "Wide Angle", "020", "Y", null, null],
-              [   2, null,          "N/A", "030", "Y", null, null]
+              [   0,  "N", "Narrow Angle",    10, "Y", null, null],
+              [   1,  "W",   "Wide Angle",    20, "Y", null, null],
+              [   2, null,          "N/A",    30, "Y", null, null]
           ]
     },
     {
