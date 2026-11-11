@@ -57,12 +57,10 @@ def _schema_for(table: str) -> list[dict[str, Any]]:
         table: The table's name.
 
     Returns:
-        Its schema file's entries, the templates standing for the per-target surface
-        geometry tables and the mult tables.
+        Its schema file's entries, the template standing for the per-target surface
+        geometry tables.
     """
-    if table.startswith('mult_'):
-        name = 'mult_template'
-    elif table.startswith('obs_surface_geometry__'):
+    if table.startswith('obs_surface_geometry__'):
         name = 'obs_surface_geometry_target'
     else:
         name = table

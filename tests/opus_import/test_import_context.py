@@ -3,10 +3,9 @@
 Several properties matter and are pinned here. The log prefixes each message with the
 position the run has reached, so a line read out of an import log names the observation
 that produced it. A message that would otherwise repeat once per index row is logged
-once. The mult caches keep their two lifetimes -- per bundle for the tables being
-filled, per run for the record of which import tables were created empty -- and a
-cached table is served as the list itself, because callers add values by appending to
-it. And two contexts share nothing, so a second run in the same process neither sees
+once. The mult caches keep their two lifetimes -- per bundle for the fields being
+filled, per run for the field ids -- and a cached field is served as the cache itself,
+because callers add values through it. And two contexts share nothing, so a second run in the same process neither sees
 nor corrupts the first one's caches.
 """
 
@@ -22,6 +21,7 @@ from opus_import import import_util
 from opus_import.cli import _make_warning_handler
 from opus_import.context import ImportContext
 from opus_import.importdb.super import ImportDBSuper
+from opus_import.mult_fields import MultFieldInfo
 from opus_import.obs.obs_base import ObsBase
 from opus_import.steps import do_import, do_import_mult
 
@@ -61,8 +61,10 @@ def test_two_contexts_share_no_state() -> None:
     first = make_context()
     second = make_context()
 
-    first.mult_table_cache['mult_obs_general_mission_id'] = [{'id': 0}]
-    first.modified_mult_tables.add('mult_obs_general_mission_id')
+    first.mult_table_cache['obs_general.mission_id'] = do_import_mult.MultFieldCache(
+        'obs_general.mission_id', 1, pinned=True
+    )
+    first.modified_mult_tables.add('obs_general.mission_id')
     first.max_table_id_cache['obs_general'] = 17
     first.log.nonrepeating_error('a bad thing')
 
@@ -70,7 +72,7 @@ def test_two_contexts_share_no_state() -> None:
     assert second.modified_mult_tables == set()
     assert second.max_table_id_cache == {}
     assert second.import_has_bad_data is False
-    assert second.logged_import_errors == []
+    assert second.logged_import_errors == set()
     assert _messages(second, 'error') == []
 
 
@@ -279,11 +281,11 @@ def test_the_warning_handler_follows_the_list_across_a_report() -> None:
 
 
 #: A preprogrammed mult column, the one shape `read_or_create_mult_table` can serve
-#: without a database: the values are in the schema instead of in a table. The row is a
-#: 7-tuple because a schema's `mult_options` carries no `aliases` field -- all 410 rows
-#: in the packaged table_schemas are this shape, and an 8-tuple would drive the branch
-#: that reads a row back from SQL instead.
-_MULT_COLUMN = {'mult_options': [(0, 'COISS', 'Cassini ISS', 0, 'Y', None, None)]}
+#: without reading ``mult``: the values are in the schema instead of in the table.
+_MULT_COLUMN = {'mult_options': [(0, 'COISS', 'Cassini ISS', 10, 'Y', None, None)]}
+
+#: The field `_MULT_COLUMN`'s values belong to.
+_FIELD = 'obs_general.x'
 
 
 def _mult_context() -> ImportContext:
@@ -291,80 +293,81 @@ def _mult_context() -> ImportContext:
 
     Built from the real CLI's defaults with the one option this needs turned on,
     rather than from a namespace holding only that option: the rest of the run's
-    arguments stay what a real run would have.
+    arguments stay what a real run would have. The field ids are given, as
+    `opus_import.mult_fields.ensure_mult_fields` would have read them.
     """
     ctx = make_context()
     ctx.args.suppress_mult_messages = True
+    ctx.mult_fields = {_FIELD: MultFieldInfo(7, pinned=True)}
+    ctx.db = cast(ImportDBSuper, object())
     return ctx
 
 
-def test_a_mult_table_is_converted_once_and_then_served_from_the_context() -> None:
-    """The second read returns the cached list itself, so callers can append to it.
+def test_a_mult_field_is_converted_once_and_then_served_from_the_context() -> None:
+    """The second read returns the cached field itself, so callers can add to it.
 
-    `update_mult_table` adds a value by appending to the list this returns, and the
-    appended value has to be visible to the next reader and to the eventual write-out.
+    `update_mult_table` adds a value through the cache this returns, and the added value
+    has to be visible to the next reader and to the eventual write-out.
     """
     ctx = _mult_context()
 
-    first = do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
-    second = do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
+    first = do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
+    second = do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
 
     assert first is second
-    assert ctx.mult_table_cache['mult_obs_general_x'] is first
-    assert [row['value'] for row in first] == ['COISS']
-    # A schema row carries no aliases field, so the conversion supplies None. The length
-    # check is what pins the branch: `aliases is None` alone would still hold for an
-    # 8-tuple ending in None, which is the SQL-read shape this fixture must not have.
-    assert len(_MULT_COLUMN['mult_options'][0]) == 7
-    assert first[0]['aliases'] is None
+    assert ctx.mult_table_cache[_FIELD] is first
+    assert first.field_id == 7
+    assert [row['value'] for row in first.rows] == ['COISS']
+    assert first.rows[0]['pin'] == 10
 
 
-def test_reading_a_mult_table_marks_it_modified_only_the_first_time() -> None:
-    """A preprogrammed table has to be written out once, not once per read."""
+def test_reading_a_mult_field_marks_it_modified_only_the_first_time() -> None:
+    """A preprogrammed field has to be written out once, not once per read."""
     ctx = _mult_context()
 
-    do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
-    assert ctx.modified_mult_tables == {'mult_obs_general_x'}
+    do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
+    assert ctx.modified_mult_tables == {_FIELD}
 
     ctx.modified_mult_tables = set()
-    do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
+    do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
 
     assert ctx.modified_mult_tables == set()
 
 
 def test_one_context_s_mult_cache_is_invisible_to_another() -> None:
-    """Two runs in one process do not serve each other stale mult tables."""
+    """Two runs in one process do not serve each other stale mult fields."""
     first = _mult_context()
     second = _mult_context()
 
-    first_rows = do_import_mult.read_or_create_mult_table(first, 'mult_obs_general_x', _MULT_COLUMN)
-    second_rows = do_import_mult.read_or_create_mult_table(
-        second, 'mult_obs_general_x', _MULT_COLUMN
-    )
+    first_rows = do_import_mult.read_or_create_mult_table(first, _FIELD, _MULT_COLUMN)
+    second_rows = do_import_mult.read_or_create_mult_table(second, _FIELD, _MULT_COLUMN)
 
     assert first_rows is not second_rows
-    assert second.modified_mult_tables == {'mult_obs_general_x'}
+    assert second.modified_mult_tables == {_FIELD}
 
 
-def test_writing_writes_only_the_modified_tables() -> None:
-    """A table this bundle read but added nothing to is not written back."""
+def test_writing_writes_only_the_modified_fields() -> None:
+    """A field this bundle read but added nothing to is not written back."""
     ctx = _mult_context()
-    written: list[str] = []
+    written: list[tuple[str, list[dict[str, Any]]]] = []
 
     class _FakeDatabase:
         """Records the writes `write_mult_tables` makes."""
 
         @staticmethod
         def upsert_rows(table_name: str, key_name: str, rows: list[dict[str, Any]]) -> None:
-            written.append(table_name)
+            written.append((table_name, rows))
 
     ctx.db = cast(ImportDBSuper, _FakeDatabase())
-    do_import_mult.read_or_create_mult_table(ctx, 'mult_obs_general_x', _MULT_COLUMN)
-    ctx.mult_table_cache['mult_obs_general_untouched'] = []
+    do_import_mult.read_or_create_mult_table(ctx, _FIELD, _MULT_COLUMN)
+    ctx.mult_table_cache['obs_general.untouched'] = do_import_mult.MultFieldCache(
+        'obs_general.untouched', 8, pinned=False
+    )
 
     do_import_mult.write_mult_tables(ctx)
 
-    assert written == ['mult_obs_general_x']
+    assert [table for table, rows in written if rows] == ['mult']
+    assert [row['field_id'] for row in written[0][1]] == [7]
 
 
 def test_the_bundle_loop_clears_the_per_bundle_caches_and_not_the_per_run_one() -> None:

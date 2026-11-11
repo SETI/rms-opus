@@ -623,7 +623,7 @@ def perform_run(
             dictionary, the Django migration, the validation and the schema version.
             True is the production sequence and what the main run uses. False stops
             after the imports, which is all a negative case needs: a fresh import writes
-            the observation tables directly, so ``obs_general`` and the mult tables the
+            the observation tables directly, so ``obs_general`` and the mult rows the
             negative assertions read exist without any of the later steps, and none of
             those assertions reads a table only a later step creates. A run
             that stops early leaves `ImportRun.django_tables` empty, so it can never be
@@ -786,6 +786,33 @@ def closing_steps(config_file: Path) -> list[StepResult]:
     return results
 
 
+#: The registered type whose fixture volume is imported a second time. Imaging carries
+#: the widest set of tables of any single volume, so re-importing it exercises the update
+#: half of the most upserts for one bundle's worth of work.
+REIMPORT_INSTRUMENT_CLASS = 'ObsVolumeCOISS12xxx'
+
+
+def reimport_bundle_id(run: ImportRun) -> str:
+    """Return the fixture bundle imported a second time.
+
+    Parameters:
+        run: The completed run.
+
+    Returns:
+        The bundle id representing `REIMPORT_INSTRUMENT_CLASS`.
+
+    Raises:
+        ValueError: If the fixture carries no bundle for that type.
+    """
+    for entry in holdings_survey.registry_entries():
+        if entry.instrument_class_name != REIMPORT_INSTRUMENT_CLASS:
+            continue
+        for bundle in run.bundles:
+            if re.fullmatch(entry.pattern, bundle):
+                return bundle
+    raise ValueError(f'The fixture carries no bundle for {REIMPORT_INSTRUMENT_CLASS}')
+
+
 def reimport_bundle(
     run: ImportRun, bundle: str, credentials: DatabaseCredentials
 ) -> list[StepResult]:
@@ -815,6 +842,58 @@ def reimport_bundle(
     if imported.returncode != 0:
         return [imported]
     return [imported, *closing_steps(paths.config_file)]
+
+
+@dataclass
+class SchemaCopy:
+    """A copy of a finished run's schema, with a configuration and logs of its own.
+
+    Attributes:
+        schema: The copy.
+        paths: Its configuration file and log directory, over the run's tree.
+    """
+
+    schema: str
+    paths: RunPaths
+
+    def step(self, *arguments: str) -> StepResult:
+        """Run one ``opus_import`` invocation against the copy.
+
+        Parameters:
+            arguments: The options.
+
+        Returns:
+            What the invocation did.
+        """
+        return run_pipeline_step(self.paths.config_file, arguments)
+
+    def errors(self) -> str:
+        """Return what the copy's error log holds so far."""
+        path = self.paths.errors_log
+        return path.read_text(encoding='utf-8') if path.exists() else ''
+
+
+def copy_run_schema(
+    run: ImportRun, credentials: DatabaseCredentials, created_schemas: list[str], case: str
+) -> SchemaCopy:
+    """Copy a finished run's schema for one case.
+
+    Parameters:
+        run: The finished run, usually the main run.
+        credentials: How to reach the server.
+        created_schemas: The session's schemas, which the copy joins, so the session
+            drops it.
+        case: What distinguishes the copy's schema, configuration and logs.
+
+    Returns:
+        The copy.
+    """
+    schema = fixture_layout.schema_name(os.getpid(), case)
+    created_schemas.append(schema)
+    clone_schema(credentials, run.schema, schema)
+    paths = sibling_paths(run, case)
+    write_opus_config(paths, schema, credentials)
+    return SchemaCopy(schema, paths)
 
 
 def clone_schema(credentials: DatabaseCredentials, source: str, target: str) -> None:

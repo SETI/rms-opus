@@ -44,13 +44,13 @@ from opus_app.apps.tools.app_utils import (
     csv_response,
     download_filename,
     get_git_version,
-    get_mult_name,
     get_numeric_suffix,
     get_reqno,
     get_session_id,
     http404_no_request,
     http404_unknown_opus_id,
     json_response,
+    mult_alias,
     sort_dictionary,
     strip_numeric_suffix,
     wrap_http500_string,
@@ -159,9 +159,9 @@ def test_cols_to_slug_list(slugs: str | None, expected: list[str]) -> None:
     assert cols_to_slug_list(slugs) == expected
 
 
-def test_get_mult_name() -> None:
-    """A field's mult table is its qualified name with the dot turned into `mult_`."""
-    assert get_mult_name('obs_general.planet_id') == 'mult_obs_general_planet_id'
+def test_mult_alias() -> None:
+    """A field's join alias is ``mult_`` and its qualified name, the dot an underscore."""
+    assert mult_alias('obs_general.planet_id') == 'mult_obs_general_planet_id'
 
 
 def test_download_filename_is_safe_for_a_filesystem_and_a_suffix() -> None:

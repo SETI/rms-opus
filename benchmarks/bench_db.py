@@ -5,8 +5,8 @@ per-search tables an earlier web run left are not part of what the import built.
 it runs ``ANALYZE TABLE`` on every table and sets
 ``information_schema_stats_expiry = 0`` on its connection, so nothing it reads comes
 from stale statistics. Then it records, per table and for the schema: data and index
-bytes and the exact row count, the index count, and ``MAX(id)`` of every ``mult_``
-table; the schema's index bytes including InnoDB's ``FULLTEXT`` auxiliary tablespaces,
+bytes and the exact row count, the index count, and ``MAX(id)`` of every mult table
+with an ``id`` column; the schema's index bytes including InnoDB's ``FULLTEXT`` auxiliary tablespaces,
 which ``information_schema.TABLES`` leaves out; the schema's total beside
 ``innodb_buffer_pool_size``; the size of ``obs_general.preview_images``; and the
 index-usage snapshot.
@@ -90,7 +90,8 @@ def table_statistics(connection: Any, schema: str) -> dict[str, dict[str, int]]:
 
     Returns:
         Per table: ``data_bytes``, ``index_bytes``, ``rows``, ``index_count``, and for a
-        ``mult_`` table ``max_id``.
+        mult table with an ``id`` column (``mult``, or a ``mult_`` table of a schema that
+        has one per field) ``max_id``.
     """
     sizes = query(
         connection,
@@ -106,6 +107,15 @@ def table_statistics(connection: Any, schema: str) -> dict[str, dict[str, int]]:
             [schema],
         )
     )
+    with_id = {
+        str(row[0])
+        for row in query(
+            connection,
+            'SELECT TABLE_NAME FROM information_schema.COLUMNS '
+            "WHERE TABLE_SCHEMA = %s AND COLUMN_NAME = 'id'",
+            [schema],
+        )
+    }
     tables: dict[str, dict[str, int]] = {}
     for name, data, index in sizes:
         table = f'{quote_identifier(schema)}.{quote_identifier(str(name))}'
@@ -115,7 +125,7 @@ def table_statistics(connection: Any, schema: str) -> dict[str, dict[str, int]]:
             'rows': int(query(connection, f'SELECT COUNT(*) FROM {table}')[0][0]),  # nosec B608 - quoted identifiers
             'index_count': int(index_counts.get(name, 0)),
         }
-        if str(name).startswith('mult_'):
+        if str(name).startswith('mult') and str(name) in with_id:
             maximum = query(connection, f'SELECT MAX(id) FROM {table}')[0][0]  # nosec B608 - quoted identifiers
             entry['max_id'] = 0 if maximum is None else int(maximum)
         tables[str(name)] = entry

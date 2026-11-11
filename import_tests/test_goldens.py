@@ -27,16 +27,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from import_tests.tools import build_run, fixture_layout, golden_io, holdings_survey, run_logs
+from import_tests.tools import build_run, fixture_layout, golden_io, run_logs
 
 if TYPE_CHECKING:
     from import_tests.tools.build_run import ImportRun
     from import_tests.tools.golden_io import DatabaseCredentials
-
-#: The registered type whose fixture volume is imported a second time. Imaging carries
-#: the widest set of tables of any single volume, so re-importing it exercises the update
-#: half of the most upserts for one bundle's worth of work.
-REIMPORT_INSTRUMENT_CLASS = 'ObsVolumeCOISS12xxx'
 
 #: The tables the goldens cover, read at collection time so each one is its own test and
 #: a failure names the table rather than the suite.
@@ -104,27 +99,6 @@ def _unified_diff(table: str, expected: str, actual: str) -> str:
         remaining = len(lines) - DIFF_LINE_LIMIT
         lines = [*lines[:DIFF_LINE_LIMIT], f'... and {remaining} more difference lines']
     return '\n'.join(lines)
-
-
-def reimport_bundle_id(run: ImportRun) -> str:
-    """Return the fixture bundle imported a second time.
-
-    Parameters:
-        run: The completed run.
-
-    Returns:
-        The bundle id representing `REIMPORT_INSTRUMENT_CLASS`.
-
-    Raises:
-        ValueError: If the fixture carries no bundle for that type.
-    """
-    for entry in holdings_survey.registry_entries():
-        if entry.instrument_class_name != REIMPORT_INSTRUMENT_CLASS:
-            continue
-        for bundle in run.bundles:
-            if re.fullmatch(entry.pattern, bundle):
-                return bundle
-    raise ValueError(f'The fixture carries no bundle for {REIMPORT_INSTRUMENT_CLASS}')
 
 
 @pytest.fixture(scope='session')
@@ -317,7 +291,7 @@ def reimport(
     Raises:
         AssertionError: If an invocation exited non-zero or logged an error.
     """
-    bundle = reimport_bundle_id(main_run)
+    bundle = build_run.reimport_bundle_id(main_run)
     for step in build_run.reimport_bundle(main_run, bundle, db_credentials):
         assert step.returncode == 0, (
             f'{" ".join(step.arguments)} exited {step.returncode}: {step.stderr[-2000:]}'
@@ -338,10 +312,10 @@ def test_reimport_leaves_the_rest_of_the_database_untouched(
     """Every table holding none of that bundle's rows is byte-identical to its golden.
 
     That is every mult table, and every table the finalization and dictionary steps write
-    that carries no bundle of its own. The mult tables are where the upsert lands, so this is the assertion that
-    says the update half of the upsert reproduced what the insert half wrote, ids
-    included: a second write of a value the table already holds updates its row rather
-    than adding a second one under a new id.
+    that carries no bundle of its own. A pinned mult field's rows are where the upsert
+    lands, so this is the assertion that says the update half of the upsert reproduced
+    what the insert half wrote, ids included: a second write of a value the field already
+    holds updates its row rather than adding a second one under a new id.
     """
     _holding, untouched = reimport
     differences = {}

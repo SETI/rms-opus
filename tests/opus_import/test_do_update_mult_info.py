@@ -7,33 +7,44 @@ disagreement between the shape the schemas hold and the shape the step read out 
 which a hand-written schema fixture could not have shown.
 """
 
-import json
-from pathlib import Path
 from typing import Any
 
 import pytest
 
-from opus_import import import_util
+from opus_import import import_util, mult_fields
 from opus_import.context import ImportContext
+from opus_import.mult_fields import MultFieldInfo
 from opus_import.steps import do_update_mult_info
 
 from .conftest import RecordingLogger, make_context
 
-_SCHEMA_DIR = Path(import_util.__file__).parent / 'table_schemas'
-
 
 class _RecordingDatabase:
-    """An `importdb` stand-in that records the updates the step issues."""
+    """An `importdb` stand-in holding some fields' ids, recording every write."""
 
-    def __init__(self, table_names: list[str]) -> None:
-        self._table_names = table_names
-        self.updates: list[tuple[str, dict[str, Any], list[Any]]] = []
-
-    def table_names(self, prefix: str | None = None) -> list[str]:
-        return [name for name in self._table_names if prefix is None or name.startswith(prefix)]
+    def __init__(self, stored: dict[int, set[int]]) -> None:
+        self._stored = stored
+        self.updates: list[tuple[int, int, dict[str, Any]]] = []
+        self.inserts: list[dict[str, Any]] = []
+        self.group_upserts: list[dict[str, Any]] = []
+        self.rank_reads: list[tuple[str, str | None, list[Any] | None]] = []
 
     def quote_identifier(self, name: str) -> str:
         return f'`{name}`'
+
+    def read_rows(
+        self,
+        table_name: str,
+        column_names: list[str],
+        where: str | None = None,
+        where_params: list[Any] | None = None,
+    ) -> list[tuple[Any, ...]]:
+        if table_name == 'mult' and list(column_names) == ['id']:
+            assert where == '`field_id`=%s'
+            assert where_params is not None
+            return [(row_id,) for row_id in sorted(self._stored.get(where_params[0], set()))]
+        self.rank_reads.append((table_name, where, where_params))
+        return []
 
     def update_row(
         self,
@@ -42,190 +53,208 @@ class _RecordingDatabase:
         where: str,
         where_params: list[Any] | None = None,
     ) -> None:
-        assert where == '`id`=%s'
+        assert table_name == 'mult'
+        assert where == '`field_id`=%s AND `id`=%s'
         assert where_params is not None
-        self.updates.append((table_name, row, where_params))
+        self.updates.append((where_params[0], where_params[1], row))
+
+    def insert_rows(self, table_name: str, rows: list[dict[str, Any]]) -> None:
+        assert table_name == 'mult'
+        self.inserts += rows
+
+    def upsert_rows(self, table_name: str, key_name: str, rows: list[dict[str, Any]]) -> None:
+        if table_name == 'mult_group':
+            self.group_upserts += rows
 
 
-def _run(table_names: list[str]) -> tuple[_RecordingDatabase, RecordingLogger]:
-    """Run the step over `table_names` and return the recorder and the logger."""
-    db = _RecordingDatabase(table_names)
+def _field_ids() -> dict[str, MultFieldInfo]:
+    """Return a numbering of every packaged mult field, as `ensure_mult_fields` makes."""
+    return {
+        name: MultFieldInfo(field_id, column.pinned)
+        for field_id, (name, column) in enumerate(
+            mult_fields.packaged_mult_columns().items(), start=1
+        )
+    }
+
+
+def _run(stored: dict[str, set[int]]) -> tuple[_RecordingDatabase, RecordingLogger]:
+    """Run the step with each named field holding the given ids."""
+    fields = _field_ids()
+    db = _RecordingDatabase({fields[name].field_id: ids for name, ids in stored.items()})
     logger = RecordingLogger()
     ctx: ImportContext = make_context(logger=logger, db=db)
+    ctx.mult_fields = fields
     do_update_mult_info.update_mult_info(ctx)
     return db, logger
 
 
-def _packaged_options(table: str, column: str) -> list[list[Any]]:
-    """Return the ``mult_options`` the packaged schema pins for one column."""
-    schema = import_util.read_schema_for_table(make_context(), table)
-    assert schema is not None
-    for entry in schema:
-        if entry['field_name'] == column:
-            options: list[list[Any]] = entry['mult_options']
-            return options
-    raise AssertionError(f'no column {column} in {table}')
+def _packaged_options(name: str) -> list[list[Any]]:
+    """Return the ``mult_options`` the packaged schema pins for one field."""
+    options: list[list[Any]] = mult_fields.packaged_mult_columns()[name].entry['mult_options']
+    return options
 
 
-def test_a_preprogrammed_table_is_updated_row_for_row() -> None:
+def _all_ids(name: str) -> set[int]:
+    """Return every id a pinned field's list gives."""
+    return {option[0] for option in _packaged_options(name)}
+
+
+def test_a_preprogrammed_field_is_updated_row_for_row() -> None:
     """Every packaged entry produces one update, keyed by the id the schema gives it.
 
-    This is the regression test for the fault that made ``--update-mult-info``
-    unusable: the step unpacked six values out of entries that carry seven, so it
-    raised before writing anything at all. Driving it against the real
-    ``obs_general.instrument_id`` options is what pins the two shapes together.
+    Driving it against the real ``obs_general.instrument_id`` options is what pins the
+    step to the shape the schemas hold.
     """
-    db, logger = _run(['mult_obs_general_instrument_id'])
+    db, logger = _run({'obs_general.instrument_id': _all_ids('obs_general.instrument_id')})
 
-    options = _packaged_options('obs_general', 'instrument_id')
-    assert len(db.updates) == len(options)
-    assert [where[0] for _table, _row, where in db.updates] == [o[0] for o in options]
-    assert {table for table, _row, _where in db.updates} == {'mult_obs_general_instrument_id'}
+    options = _packaged_options('obs_general.instrument_id')
+    field_id = _field_ids()['obs_general.instrument_id'].field_id
+    assert [(field, row_id) for field, row_id, _row in db.updates] == [
+        (field_id, option[0]) for option in options
+    ]
+    assert db.inserts == []
     assert logger.messages_at('error') == []
 
 
 def test_every_pinned_presentation_column_is_written() -> None:
-    """A row carries the label, the sort key, the display flag and the grouping pair.
+    """A row carries the label, the pin, the display flag and the grouping.
 
-    Writing only some of them would leave a schema edit half-applied, and the grouping
-    pair is the half most easily missed: the packaged ``obs_general.instrument_id``
-    options put the ground-based telescopes in a named group, which is exactly what an
-    update stopping at ``display`` would lose.
+    Indexed by position rather than through `MultOption`: decoding the expectation with
+    the same NamedTuple the code under test decodes with would make this pass for any
+    transposition inside it.
     """
-    db, _logger = _run(['mult_obs_general_instrument_id'])
+    db, _logger = _run({'obs_general.instrument_id': _all_ids('obs_general.instrument_id')})
 
-    by_id = {where[0]: row for _table, row, where in db.updates}
-    options = _packaged_options('obs_general', 'instrument_id')
-    grouped = [o for o in options if o[5] is not None]
-    assert grouped, 'the packaged schema no longer groups any instrument_id value'
-
-    # Indexed by position rather than through `MultOption`. Decoding the expectation
-    # with the same NamedTuple the code under test decodes with would make this pass
-    # for any transposition inside it -- which is the same kind of fault as the
-    # six-values-for-seven one this file exists for.
-    for option in options:
-        row_id, _value, label, disp_order, display, grouping, group_disp_order = option
+    by_id = {row_id: row for _field, row_id, row in db.updates}
+    options = _packaged_options('obs_general.instrument_id')
+    assert [o for o in options if o[5] is not None], 'no instrument_id value is grouped'
+    for row_id, _value, label, pin, display, grouping, _group_pin in options:
         assert by_id[row_id] == {
             'label': str(label),
-            'disp_order': disp_order,
+            'pin': pin,
             'display': display,
             'grouping': grouping,
-            'group_disp_order': group_disp_order,
         }
 
 
-def test_a_column_without_pinned_options_is_left_alone() -> None:
-    """A mult table the import discovered is not overwritten from the schema."""
-    db, logger = _run(['mult_obs_general_target_name'])
+def test_each_group_s_pin_is_written_to_its_group() -> None:
+    """The group pin of an entry goes to ``mult_group``, once per group."""
+    db, _logger = _run({'obs_general.instrument_id': _all_ids('obs_general.instrument_id')})
+
+    field_id = _field_ids()['obs_general.instrument_id'].field_id
+    expected = {}
+    for option in _packaged_options('obs_general.instrument_id'):
+        if option[5] is not None:
+            expected.setdefault(option[5], option[6])
+    assert db.group_upserts == [
+        {'field_id': field_id, 'grouping': grouping, 'group_pin': group_pin}
+        for grouping, group_pin in expected.items()
+    ]
+
+
+def test_an_entry_with_no_row_is_inserted_with_its_value() -> None:
+    """A value a release adds to a list in use is written, absent value as ``''``."""
+    name = 'obs_profile.occ_type'
+    options = _packaged_options(name)
+    absent = next(option for option in options if option[1] is None)
+    db, _logger = _run({name: _all_ids(name) - {absent[0]}})
+
+    assert db.inserts == [
+        {
+            'field_id': _field_ids()[name].field_id,
+            'id': absent[0],
+            'value': '',
+            'label': absent[2],
+            'pin': absent[3],
+            'display': absent[4],
+            'grouping': absent[5],
+        }
+    ]
+
+
+def test_a_pinned_field_the_schema_does_not_use_is_left_alone() -> None:
+    """A field with no rows has no observation of this schema behind it."""
+    db, _logger = _run({})
 
     assert db.updates == []
-    assert logger.messages_at('error') == []
+    assert db.inserts == []
+    assert db.rank_reads == []
 
 
-def test_an_unknown_mult_table_is_reported_and_the_rest_still_run() -> None:
-    """One unmatchable table name does not stop the tables after it."""
-    db, logger = _run(['mult_obs_nosuchtable_x', 'mult_obs_general_instrument_id'])
+def test_the_fields_written_are_ranked_again_and_no_others() -> None:
+    """Only the touched fields' values and groups are read for ranking."""
+    db, _logger = _run({'obs_general.planet_id': _all_ids('obs_general.planet_id')})
 
-    assert db.updates, 'the second table was skipped along with the first'
-    assert logger.messages_at('error') == [
-        'Unable to find table schema for mult "mult_obs_nosuchtable_x"'
+    field_id = _field_ids()['obs_general.planet_id'].field_id
+    assert db.rank_reads == [
+        ('mult', '`field_id` IN (%s)', [field_id]),
+        ('mult_group', '`field_id` IN (%s)', [field_id]),
     ]
 
 
-def test_an_unknown_column_is_reported() -> None:
-    """A table whose schema exists but has no such column is named in the error."""
-    _db, logger = _run(['mult_obs_general_nosuchcolumn'])
+def test_every_pinned_field_is_written_entry_for_entry() -> None:
+    """No pinned field a real database would hold is missed or mis-read.
 
-    assert logger.messages_at('error') == [
-        'Unable to find a column matching mult table "mult_obs_general_nosuchcolumn"'
-    ]
-
-
-def test_a_table_whose_name_is_also_a_shorter_table_still_resolves() -> None:
-    """The split between table name and column name is decided by both resolving.
-
-    `obs_surface_geometry` and `obs_surface_geometry_name` are both real tables, so
-    ``mult_obs_surface_geometry_name_target_name`` matches a schema at the shorter split
-    -- and only at the longer one is what remains a column that exists. Taking the first
-    schema that matched left this table structurally unreachable: the step reported
-    ``Unable to find field "name_target_name"`` and skipped it on every run.
+    Driven over every field the packaged schemas declare rather than over names chosen
+    here, each holding every id its list gives, and compared by position.
     """
-    _db, logger = _run(['mult_obs_surface_geometry_name_target_name'])
+    columns = mult_fields.packaged_mult_columns()
+    pinned = [name for name, column in columns.items() if column.pinned]
+    db, logger = _run({name: _all_ids(name) for name in pinned})
 
     assert logger.messages_at('error') == []
-
-
-def test_every_mult_table_the_schemas_imply_resolves() -> None:
-    """No mult table a real database would hold is unreachable.
-
-    Driven over every ``mult_`` table the packaged schemas imply -- one per GROUP or
-    MULTIGROUP column -- rather than over names chosen here, because the fault this
-    guards against was a name-splitting rule that contrived names never exercised.
-    """
-    implied = []
-    for path in sorted(_SCHEMA_DIR.glob('obs_*.json')):
-        for column in json.loads(path.read_text(encoding='utf-8')):
-            if not isinstance(column, dict) or not column.get('field_name'):
-                continue
-            form_type = column.get('pi_form_type')
-            head = form_type.split(':')[0] if isinstance(form_type, str) else form_type
-            if head in ('GROUP', 'MULTIGROUP'):
-                implied.append(import_util.table_name_mult(path.stem, column['field_name']))
-    # Exact, not a floor: a floor cannot see a table dropping out, which is what the
-    # name-splitting fault looked like. Regenerate deliberately when a schema changes.
-    assert len(implied) == 90
-
-    db, logger = _run(implied)
-
-    assert logger.messages_at('error') == []
-    # 55 of the 90 pin their values in the schema; the other 35 are left exactly as the
-    # import wrote them, which is the step doing nothing rather than failing.
-    assert len({table for table, _row, _where in db.updates}) == 55
-    assert len(db.updates) == 410
-
-    # Every row, against its schema entry by position -- not just the one table the
-    # test above checks, and not through `MultOption`.
+    fields = _field_ids()
     expected = {}
-    for path in sorted(_SCHEMA_DIR.glob('obs_*.json')):
-        for column in json.loads(path.read_text(encoding='utf-8')):
-            if not isinstance(column, dict) or not column.get('mult_options'):
-                continue
-            table = import_util.table_name_mult(path.stem, column['field_name'])
-            for option in column['mult_options']:
-                row_id, _value, label, disp_order, display, grouping, gdo = option
-                expected[(table, row_id)] = {
-                    'label': str(label),
-                    'disp_order': disp_order,
-                    'display': display,
-                    'grouping': grouping,
-                    'group_disp_order': gdo,
-                }
-    written = {(table, where[0]): row for table, row, where in db.updates}
-
-    assert written == expected
+    for name in pinned:
+        for row_id, _value, label, pin, display, grouping, _gp in _packaged_options(name):
+            expected[(fields[name].field_id, row_id)] = {
+                'label': str(label),
+                'pin': pin,
+                'display': display,
+                'grouping': grouping,
+            }
+    assert {(field, row_id): row for field, row_id, row in db.updates} == expected
+    assert len(db.updates) == len(expected)
 
 
-def test_an_entry_of_the_wrong_length_stops_the_step(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A schema entry that is not seven values raises rather than writing a mangled row.
+@pytest.mark.parametrize(
+    'entry',
+    [
+        [0, 'COISS', 'Cassini ISS', 10, 'Y', None],
+        [0, 'COISS', 'Cassini ISS', '010', 'Y', None, None],
+        [0, 'COISS', 'Cassini ISS', 10, 'Y', 'Group', '010'],
+        [0, 'COISS', 'Cassini ISS', True, 'Y', None, None],
+    ],
+    ids=['six values', 'a string pin', 'a string group pin', 'a boolean pin'],
+)
+def test_an_entry_of_the_wrong_shape_stops_the_step(
+    monkeypatch: pytest.MonkeyPatch, entry: list[Any]
+) -> None:
+    """An entry that is not seven values, or whose order is not an integer, raises.
 
-    An entry one value short would otherwise leave ``group_disp_order`` unset while
-    every other value landed one column too far along, which is a fault in the schema
-    rather than something the step can paper over. Nothing is written before it raises.
+    Nothing is written before it raises: a row built from values that landed in the wrong
+    columns, or an order read as text, is a fault in the schema.
     """
-    short_entry = [0, 'COISS', 'Cassini ISS', '010', 'Y', None]
-    monkeypatch.setattr(
-        import_util,
-        'read_schema_for_table',
-        lambda ctx, name, replace=None: (
-            [{'field_name': 'instrument_id', 'mult_options': [short_entry]}]
-            if name == 'obs_general'
-            else None
-        ),
+    column = mult_fields.MultColumn(
+        'obs_general.instrument_id',
+        'obs_general',
+        {'field_name': 'instrument_id', 'mult_options': [entry]},
     )
-
-    db = _RecordingDatabase(['mult_obs_general_instrument_id'])
+    monkeypatch.setattr(
+        mult_fields, 'packaged_mult_columns', lambda: {'obs_general.instrument_id': column}
+    )
+    db = _RecordingDatabase({1: {0}})
     ctx: ImportContext = make_context(logger=RecordingLogger(), db=db)
+    ctx.mult_fields = {'obs_general.instrument_id': MultFieldInfo(1, pinned=True)}
 
-    with pytest.raises(TypeError, match='MultOption'):
+    with pytest.raises(TypeError):
         do_update_mult_info.update_mult_info(ctx)
     assert db.updates == []
+    assert db.inserts == []
+
+
+def test_read_mult_option_names_the_seven_positions() -> None:
+    """The reader returns the positions under their names."""
+    option = import_util.read_mult_option([3, None, 'N/A', 40, 'Y', 'Group', 10])
+
+    assert option == import_util.MultOption(3, None, 'N/A', 40, 'Y', 'Group', 10)

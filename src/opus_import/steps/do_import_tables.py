@@ -1,11 +1,13 @@
-"""Create the ``obs_`` and ``mult_`` tables an import writes into, and delete from them.
+"""Create the ``obs_`` and mult tables an import writes into, and delete from them.
 
 A bundle is replaced by deleting its rows from every ``obs_`` table and loading them
-again. What fixes the order of a deletion is that the other ``obs_`` tables and ``cart``
-carry foreign keys onto ``obs_general``, so a teardown goes other tables, then ``cart``,
-then ``obs_general``, then the ``mult_`` tables, and a build goes the other way. The
-``mult_`` tables come last on teardown and first on build by the same convention the
-import follows -- an ``obs_`` row holds a ``mult_`` row id -- but no database constraint
+again; its ``mult`` rows stay, and finalization deletes the values no observation
+references (`opus_import.steps.do_finalize_mult`). What fixes the order of a deletion is
+that the other ``obs_`` tables and ``cart`` carry foreign keys onto ``obs_general``, so a
+teardown goes other tables, then ``cart``, then ``obs_general``, then the mult tables,
+and a build goes the other way. The mult tables (``mult``, ``mult_field`` and
+``mult_group``) come last on teardown and first on build by the same convention the
+import follows -- an ``obs_`` row holds a ``mult`` row's id -- but no database constraint
 enforces that one.
 
 Scorched earth (`delete_all_opus_tables`) drops every table the import creates, which is
@@ -31,9 +33,11 @@ from opus_import import (
     config_bundle_info,
     config_data,
     import_util,
+    mult_fields,
     schema_version,
     table_keys,
 )
+from opus_import.mult_fields import MULT_TABLE
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -43,14 +47,15 @@ if TYPE_CHECKING:
     from opus_import.import_util import TableSchema
     from opus_import.importdb.super import ImportDBSuper
 
-#: The prefixes of the tables the import creates in any number -- the observation tables
-#: and the mult tables.
+#: The prefixes of the tables the import creates in any number or under a ``mult_`` name
+#: -- the observation tables, and ``mult_field`` and ``mult_group``.
 OPUS_TABLE_PREFIXES = ('obs_', 'mult_')
 
 #: The other tables the import creates, by exact name, including the tables a rebuild
 #: that stopped part way leaves beside the live ones (`opus_import.table_swap`).
 OPUS_TABLE_NAMES = (
     schema_version.SCHEMA_VERSION_TABLE,
+    MULT_TABLE,
     'cart',
     bundle_registry.BUNDLE_REGISTRY_TABLE,
     'param_info',
@@ -115,7 +120,8 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
     in an order the foreign keys allow: ``schema_version`` first, so an erase that stops
     part way leaves a schema nothing serves or deploys onto; then every ``obs_`` table
     but ``obs_general``; ``cart``; ``obs_general``; the ``definitions`` tables, which
-    reference ``contexts``; every other exact name; and the ``mult_`` tables last.
+    reference ``contexts``; every other exact name but ``mult``; and ``mult`` and every
+    ``mult_`` table, ``mult_field`` and ``mult_group`` among them, last.
 
     Parameters:
         ctx: The import run's context, for the open database.
@@ -131,9 +137,10 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
     order += [
         name
         for name in OPUS_TABLE_NAMES
-        if name not in (schema_version.SCHEMA_VERSION_TABLE, 'cart', *_DEFINITIONS_TABLES)
+        if name
+        not in (schema_version.SCHEMA_VERSION_TABLE, 'cart', MULT_TABLE, *_DEFINITIONS_TABLES)
     ]
-    order += [name for name in prefixed if name.startswith('mult_')]
+    order += [MULT_TABLE, *(name for name in prefixed if name.startswith('mult_'))]
     for name in order:
         if name in present:
             db.drop_table(name)
@@ -270,11 +277,11 @@ def create_tables_for_import(
 ) -> tuple[dict[str, TableSchema], list[str]]:
     """Create the tables one bundle needs, and return the schemas that describe them.
 
-    Each table `opus_import.config_data` lists is created if a packaged schema defines
-    it, with the mission and instrument placeholders filled in for this bundle, along
-    with the ``mult_`` tables the columns of those tables reference. A table with no
-    schema is skipped, which is how a bundle ends up with only the tables its instrument
-    has columns in.
+    The mult tables are created first if the schema lacks them, and then each table
+    `opus_import.config_data` lists is created if a packaged schema defines it, with the
+    mission and instrument placeholders filled in for this bundle. A table with no schema
+    is skipped, which is how a bundle ends up with only the tables its instrument has
+    columns in.
 
     The ``obs_surface_geometry__<TARGET>`` tables are deliberately **not** created: the
     target names are not known until the observations have been read. Its template
@@ -303,9 +310,7 @@ def create_tables_for_import(
     instrument_id = instrument_obj.instrument_id
     mission_name = config_data.MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
 
-    mult_table_schema = import_util.read_schema_for_table(ctx, 'mult_template')
-    # mult_template.json is packaged with opus_import, so the schema is always found.
-    assert mult_table_schema is not None
+    mult_fields.create_mult_tables(ctx)
 
     table_schemas: dict[str, TableSchema] = {}
     table_names_in_order = []
@@ -333,33 +338,19 @@ def create_tables_for_import(
             # Skip surface geo tables until they are needed
             continue
 
-        # Create the referenced mult_ tables
-        for table_column in table_schema:
-            if 'field_name' not in table_column or table_column.get('put_mults_here', False):
-                # A param_info row of another table's column, or a table-level key.
-                continue
-            field_name = table_column['field_name']
-            pi_form_type = table_column.get('pi_form_type', None)
-            if pi_form_type is not None and pi_form_type.find(':') != -1:
-                pi_form_type = pi_form_type[: pi_form_type.find(':')]
-            if pi_form_type in config_data.GROUP_FORM_TYPES:
-                mult_name = import_util.table_name_mult(table_name, field_name)
-                schema = mult_table_schema
-                db.create_table(mult_name, schema)
-
         db.create_table(table_name, table_schema)
 
     return table_schemas, table_names_in_order
 
 
 def analyze_all_tables(ctx: ImportContext) -> None:
-    """Recompute the key distribution statistics of every ``obs_`` and ``mult_`` table.
+    """Recompute the key distribution statistics of every ``obs_`` and mult table.
 
     Parameters:
         ctx: The import run's context, for the open database.
     """
     db = ctx.db
     assert db is not None
-    table_names = sorted(db.table_names(prefix=['obs_', 'mult_']))
+    table_names = sorted(db.table_names(prefix=['obs_', *mult_fields.MULT_TABLES]))
     for table_name in table_names:
         db.analyze_table(table_name)

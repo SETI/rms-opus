@@ -72,7 +72,6 @@ from opus_app.apps.tools.app_utils import (
     cols_to_slug_list,
     csv_response,
     download_filename,
-    get_mult_name,
     get_reqno,
     get_session_id,
     http400_bad_limit,
@@ -91,6 +90,7 @@ from opus_app.apps.tools.app_utils import (
     http500_internal_error,
     http500_search_cache_failed,
     json_response,
+    mult_alias,
 )
 from opus_app.apps.tools.db_utils import (
     lookup_pretty_value_for_mult,
@@ -100,13 +100,12 @@ from opus_app.apps.tools.db_utils import (
 from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_products
 from opus_app.apps.tools.import_constants import (
     collates_as_key,
-    collation_key,
     displayed_table_names,
     partables,
     table_names,
     table_names_collate_as_keys,
 )
-from opus_support import format_unit_value, parse_form_type
+from opus_support import collation_key, format_unit_value, parse_form_type
 
 if TYPE_CHECKING:
     from collections.abc import Collection
@@ -1479,11 +1478,11 @@ def get_search_results_chunk(
         tables.add(table)
         (form_type, form_type_format, form_type_unit_id) = parse_form_type(pi.form_type)
         if form_type in settings.MULT_FORM_TYPES and form_type != 'MULTIGROUP':
-            # For a mult field, we will have to join in the mult table
-            # and put the mult column here
-            mult_table = get_mult_name(pi.param_qualified_name())
-            mult_tables.add((mult_table, False, table, pi.name))
-            column_names.append(mult_table + '.label')
+            # For a mult field, we will have to join in its mult rows
+            # and put their label here
+            alias = mult_alias(pi.param_qualified_name())
+            mult_tables.add((alias, False, table, pi.name))
+            column_names.append(alias + '.label')
         else:
             # For a non-mult column or a MULTIGROUP mult. In the latter case we don't want
             # to return the .label because it's a JSON list of multiple IDs. So just
@@ -1606,8 +1605,8 @@ def get_search_results_chunk(
         # PYTHONHASHSEED. The join order carries no meaning either way.
         add_obs_table_joins(from_source, sorted(tables))
 
-        # Now JOIN in all the mult_ tables.
-        for _mult_table, is_multigroup, _table, _field_name in mult_tables:
+        # Now JOIN mult once for each mult column.
+        for _alias, is_multigroup, _table, _field_name in mult_tables:
             # We can't have a MULTIGROUP here because those fields are simply
             # added as columns above to be mapped later
             assert not is_multigroup
@@ -1692,7 +1691,7 @@ def get_search_results_chunk(
         # just full of NULLs.
         add_obs_table_joins(from_source, sorted(tables | order_obs_tables))
 
-        # Now JOIN in all the mult_ tables.
+        # Now JOIN mult once for each mult column.
         # If is_multigroup is True, this must have been from order_mult_tables.
         # This is OK, because a multigroup field will never show up in mult_tables
         # (see above), so this field will only be used for sorting.

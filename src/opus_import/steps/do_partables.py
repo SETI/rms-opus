@@ -6,7 +6,7 @@ mission table. The web application reads this to decide which sections of the se
 form to offer, so a mission or instrument with no row here has no searchable columns of
 its own.
 
-Most triggers name a ``mult_`` table row id, because that is what the corresponding
+Most triggers name the id of a ``mult`` row, because that is what the corresponding
 ``obs_general`` column holds. Surface geometry targets are the exception: their trigger
 value is the target name itself, since the web side compares the user's search text to
 it directly.
@@ -50,7 +50,7 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
     """Fill an empty ``partables`` table with every trigger OPUS knows.
 
     One row per mission, per instrument and per instrument host, each keyed by the
-    ``mult_`` id of the corresponding ``obs_general`` value, plus one per surface
+    mult id of the corresponding ``obs_general`` value, plus one per surface
     geometry target keyed by the target name. An HST instrument points at the Hubble
     mission table, because HST keeps its columns there rather than in an instrument
     table of its own.

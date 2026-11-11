@@ -25,11 +25,8 @@ TABLE_SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
 _SCHEMAS = sorted(TABLE_SCHEMA_DIR.glob('*.json'))
 
 #: The ones whose tables a fresh import creates with only the keys a load needs. The
-#: surface geometry template stands for every per-target table, and the mult template for
-#: every mult table.
-_FILTERED = [
-    path for path in _SCHEMAS if path.stem.startswith('obs_') or path.stem == 'mult_template'
-]
+#: surface geometry template stands for every per-target table.
+_FILTERED = [path for path in _SCHEMAS if table_keys.is_key_filtered_table(path.stem)]
 
 
 def _table_name(path: Path) -> str:
@@ -41,8 +38,6 @@ def _table_name(path: Path) -> str:
     Returns:
         The raw table name.
     """
-    if path.stem == 'mult_template':
-        return 'mult_obs_general_planet_id'
     if path.stem == 'obs_surface_geometry_target':
         return 'obs_surface_geometry__titan'
     return path.stem

@@ -34,6 +34,7 @@ from opus_import.steps import (
     do_dictionary,
     do_django,
     do_duplicate_ids,
+    do_finalize_mult,
     do_import,
     do_import_tables,
     do_indexes,
@@ -347,7 +348,8 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--update-mult-info',
         action='store_true',
         default=False,
-        help='Update the details of preprogrammed mult tables',
+        help='Write the mult_options lists and the mult_overrides of the table schemas over '
+        'the stored mult rows, and rank the fields they change again',
     )
 
     # Functions other than main import
@@ -674,8 +676,8 @@ def main() -> None:
         failed_steps: list[str] = []
 
         # The finalization group's sequence, which later steps extend in place: the keys,
-        # then the duplicate step, then the auxiliary tables, the cart and the cache
-        # tables, then ANALYZE.
+        # then the duplicate step, then the mult step, then the auxiliary tables, the cart
+        # and the cache tables, then ANALYZE.
         if args.create_indexes:
             logger.open(
                 'Creating secondary keys',
@@ -697,6 +699,18 @@ def main() -> None:
             with ctx.timed('duplicate_step'):
                 if not do_duplicate_ids.delete_duplicate_opus_ids(ctx):
                     failed_steps.append('the duplicate step of --finalize')
+            logger.close()
+
+        # After the duplicate step, whose deletions can leave a value unreferenced, and
+        # before the auxiliary tables, which read the mult rows.
+        if args.finalize:
+            logger.open(
+                'Finalizing the mult fields',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
+            with ctx.timed('finalize_mult'):
+                if not do_finalize_mult.finalize_mult(ctx):
+                    failed_steps.append('the mult step of --finalize')
             logger.close()
 
         # After the import, since the imported tables are what determine what goes into
@@ -742,7 +756,7 @@ def main() -> None:
 
         if args.update_mult_info:
             logger.open(
-                'Updating preprogrammed mult tables',
+                'Updating the mult fields from the table schemas',
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
 

@@ -21,7 +21,6 @@ from opus_import.table_keys import TABLE_LEVEL_KEY_KINDS
 #: are not even column lists.
 NOT_TABLES = {
     'param_info_ranges.json',
-    'mult_template.json',
     'obs_surface_geometry_target.json',
     'internal_def_product_types.json',
 }
@@ -92,7 +91,7 @@ def test_tab_data_sources_exist_only_in_obs_files() -> None:
 
 
 def test_the_files_that_are_not_column_lists_are_exactly_these() -> None:
-    """Defends: "Four files are not tables", and the two-of-four split."""
+    """Defends: "Some files are not tables", and which two are not column lists."""
     not_a_list = set()
     names_no_columns = set()
     for path in _schema_files():

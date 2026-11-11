@@ -5,8 +5,8 @@ Five unrelated groups of helper live here:
 * expanding the bundle descriptors given on the command line into bundle ids, and
   reading a PDS index table -- where a bad PDS3 label is reported and turned into a
   ``(None, None)`` result, while the PDS4 reader has no such handling and propagates;
-* naming things -- the ``obs_``/``mult_`` table for a mission, instrument or surface
-  geometry target, and the encoded and slug forms of a target name;
+* naming things -- the ``obs_`` table for a mission, instrument or surface geometry
+  target, the mult field of a column, and the encoded and slug forms of a target name;
 * reading the packaged ``table_schemas`` JSON that defines every OPUS table;
 * logging, as thin ``log_*`` wrappers over `opus_import.context.ImportLog` so a step can
   log without reaching through the context, plus `NoDupLogger` for the PdsFile warnings
@@ -61,34 +61,60 @@ aliases are spelled separately so that neither package has to import the other.
 class MultOption(NamedTuple):
     """One entry of a column's ``mult_options`` list, named rather than positional.
 
-    A column whose schema carries ``mult_options`` has its ``mult_`` table pinned there
-    instead of being discovered from the data, and each entry is one row of that table.
-    The JSON holds a list, so a reader has to know what each position means; building
-    one of these from it is what turns that knowledge into something a checker and a
-    reader can both see, and an entry of the wrong length raises `TypeError` here rather
-    than being silently mis-assigned further on.
-
-    The ``aliases`` column every ``mult_`` table also has is deliberately absent: a
-    schema pins no aliases, and `opus_import.steps.do_import_mult` fills that column in
-    as None.
+    A column whose schema carries ``mult_options`` has its field's values pinned there
+    instead of being discovered from the data, and each entry is one ``mult`` row of
+    that field. The JSON holds a list, so a reader has to know what each position means;
+    building one of these from it is what turns that knowledge into something a checker
+    and a reader can both see, and an entry of the wrong length raises `TypeError` here
+    rather than being silently mis-assigned further on.
 
     Attributes:
         id: The row id the ``obs_`` column stores.
         value: The column value this row stands for, or None for the absent value.
         label: How the web application shows the value.
-        disp_order: The sort key, as text or as a number.
+        pin: The value's position in its field's list, an integer.
         display: ``'Y'`` to offer the value in the search form, ``'N'`` to hide it.
         grouping: The group the value belongs to in the search form, or None.
-        group_disp_order: The group's sort key, or None.
+        group_pin: The group's position among the field's groups, an integer, or None.
     """
 
     id: int
     value: str | None
     label: str
-    disp_order: str | int
+    pin: int
     display: str
     grouping: str | None
-    group_disp_order: str | None
+    group_pin: int | None
+
+
+def read_mult_option(entry: Sequence[Any]) -> MultOption:
+    """Read one ``mult_options`` entry, refusing an order element that is not an integer.
+
+    Parameters:
+        entry: The entry as the JSON holds it, ``[id, value, label, pin, display,
+            grouping, group_pin]``.
+
+    Returns:
+        The entry, named.
+
+    Raises:
+        TypeError: If the entry does not carry exactly seven values, or its ``pin`` is
+            not an integer, or its ``group_pin`` is neither an integer nor None. A string
+            such as ``"010"`` is refused rather than converted: the order is a number.
+    """
+    option = MultOption(*entry)
+    if not _is_int(option.pin):
+        raise TypeError(f'mult_options entry {list(entry)!r}: the pin must be an integer')
+    if option.group_pin is not None and not _is_int(option.group_pin):
+        raise TypeError(
+            f'mult_options entry {list(entry)!r}: the group pin must be an integer or null'
+        )
+    return option
+
+
+def _is_int(value: object) -> bool:
+    """Return whether a JSON value is an integer, which a boolean is not."""
+    return isinstance(value, int) and not isinstance(value, bool)
 
 
 # Data that ships inside the package, located through importlib.resources rather than
@@ -531,17 +557,25 @@ def table_name_obs_instrument(inst_name: str) -> str:
     return 'obs_instrument_' + inst_name.lower()
 
 
-def table_name_mult(table_name: str, field_name: str) -> str:
-    """Return the name of the ``mult_`` table holding one column's enumerated values.
+def mult_field_name(table_name: str, field_name: str, schema_entry: dict[str, Any]) -> str:
+    """Return the qualified name of the mult field holding one column's values.
+
+    Every group column's values are rows of the ``mult`` table, under the field this
+    name identifies in ``mult_field``.
 
     Parameters:
         table_name: The observation table the column belongs to.
         field_name: The column.
+        schema_entry: The column's schema entry. A ``mult_field`` key in it names the
+            field outright, so that several columns can share one.
 
     Returns:
-        The table name, such as ``'mult_obs_general_planet_id'``.
+        The entry's ``mult_field`` when it has one; otherwise ``<table>.<column>``,
+        lowercased, such as ``'obs_general.planet_id'``.
     """
-    return 'mult_' + table_name.lower() + '_' + field_name.lower()
+    if 'mult_field' in schema_entry:
+        return str(schema_entry['mult_field'])
+    return f'{table_name.lower()}.{field_name.lower()}'
 
 
 def encode_target_name(target_name: str) -> str:
@@ -680,15 +714,12 @@ def read_schema_for_existing_table(ctx: ImportContext, table_name: str) -> Table
     Parameters:
         ctx: The import run's context, for the logger.
         table_name: The table's raw name, such as ``obs_instrument_coiss``,
-            ``obs_surface_geometry__titan`` or ``mult_obs_general_planet_id``.
+            ``obs_surface_geometry__titan`` or ``mult_field``.
 
     Returns:
-        The table's own schema, the surface geometry template with the target filled
-        in, or the mult template for a mult table; None for a table no packaged schema
-        describes.
+        The table's own schema, or the surface geometry template with the target filled
+        in; None for a table no packaged schema describes.
     """
-    if table_name.lower().startswith('mult_'):
-        return read_schema_for_table(ctx, 'mult_template')
     return read_schema_for_table(ctx, table_name)
 
 

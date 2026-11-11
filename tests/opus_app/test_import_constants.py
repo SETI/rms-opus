@@ -26,18 +26,16 @@ from collections.abc import Iterable, Iterator
 from typing import Any
 
 import pytest
-from django.apps import apps
 from django.db import DatabaseError
 from django.db.models import Q
 
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search import views as search_views
-from opus_app.apps.search.models import Partables, TableNames
+from opus_app.apps.search.models import Mult, MultField, Partables, TableNames
 from opus_app.apps.tools import dictionary, import_constants
 from opus_app.apps.tools.dictionary import Definitions, get_def_for_tooltip, get_definition
 from opus_app.apps.tools.import_constants import (
     MultTable,
-    collation_key,
     displayed_table_names,
     get_table_name,
     mult_table,
@@ -45,59 +43,81 @@ from opus_app.apps.tools.import_constants import (
     table_names,
 )
 
-#: The rows of a fake mult table: id, value, label, disp_order.
+#: The field id the fake ``mult_field`` gives ``obs_general.planet_id``.
+PLANET_FIELD_ID = 3
+
+#: The fake field's ``mult`` rows: id, value, label, disp_rank.
 PLANET_ROWS = [
-    (0, None, 'N/A', '000'),
-    (1, 'JUP', 'Jupiter', '010'),
-    (2, 'SAT', 'Saturn', '020'),
-    (3, 'URA', 'Uranus', '030'),
+    (0, '', 'N/A', 5),
+    (1, 'JUP', 'Jupiter', 1),
+    (2, 'SAT', 'Saturn', 2),
+    (3, 'URA', 'Uranus', 3),
     # A label that is another row's value.
-    (4, 'OTHER', 'SAT', '040'),
+    (4, 'OTHER', 'SAT', 4),
 ]
 
 
 class FakeQuerySet:
-    """Stands in for the queryset a fake mult table's `filter` returns."""
+    """Stands in for the queryset the server's lookup of a name returns."""
 
     def __init__(self, ids: list[int]) -> None:
         self.ids = ids
 
     def values_list(self, field: str, *, flat: bool) -> list[int]:
-        """Return the matched ids, as `values_list('pk', flat=True)` would."""
-        assert field == 'pk'
+        """Return the matched ids, as `values_list('id', flat=True)` would."""
+        assert field == 'id'
         assert flat
         return self.ids
 
 
-class FakeMultManager:
-    """Stands in for a mult model's manager, counting the queries it answers."""
+class FakeFieldRows:
+    """Stands in for one field's rows of ``mult``, as `filter(field_id=...)` returns them."""
 
-    def __init__(self, rows: list[tuple[int, str | None, str, str]]) -> None:
-        self.rows = rows
-        self.queries = 0
+    def __init__(self, manager: 'FakeMultManager') -> None:
+        self.manager = manager
 
-    def values_list(self, *fields: str) -> list[tuple[int, str | None, str, str]]:
+    def values_list(self, *fields: str) -> list[tuple[int, str, str, int]]:
         """Return every row, as the loader asks for them."""
-        assert fields == ('id', 'value', 'label', 'disp_order')
-        self.queries += 1
-        return self.rows
+        assert fields == ('id', 'value', 'label', 'disp_rank')
+        self.manager.queries += 1
+        return self.manager.rows
 
     def filter(self, condition: Q) -> FakeQuerySet:
-        """Answer the server's lookup of a name, comparing exactly."""
-        self.queries += 1
-        names: set[str] = set()
-        for child in condition.children:
-            assert isinstance(child, tuple)
-            names.update(child[1])
-        ids = [row[0] for row in self.rows if row[1] in names or row[2] in names]
+        """Answer the server's lookup of names, comparing exactly."""
+        self.manager.queries += 1
+        names = {column: set(values) for column, values in condition.children}  # type: ignore[misc]
+        ids = [
+            row[0]
+            for row in self.manager.rows
+            if row[1] in names['value__in'] or row[2] in names['label__in']
+        ]
         return FakeQuerySet(ids)
 
 
-class FakeMultModel:
-    """Stands in for a mult model, holding only its manager."""
+class FakeMultManager:
+    """Stands in for ``Mult.objects``, counting the queries it answers."""
 
-    def __init__(self, rows: list[tuple[int, str | None, str, str]]) -> None:
-        self.objects = FakeMultManager(rows)
+    def __init__(self, rows: list[tuple[int, str, str, int]]) -> None:
+        self.rows = rows
+        self.queries = 0
+
+    def filter(self, *, field_id: int) -> FakeFieldRows:
+        """Return one field's rows."""
+        assert field_id == PLANET_FIELD_ID
+        return FakeFieldRows(self)
+
+
+class FakeMultFieldManager:
+    """Stands in for ``MultField.objects``, which names one field."""
+
+    def __init__(self) -> None:
+        self.queries = 0
+
+    def values_list(self, *fields: str) -> list[tuple[str, int]]:
+        """Return every field's name and id."""
+        assert fields == ('qualified_name', 'field_id')
+        self.queries += 1
+        return [('obs_general.planet_id', PLANET_FIELD_ID)]
 
 
 @pytest.fixture(autouse=True)
@@ -111,6 +131,7 @@ def _empty_caches() -> Iterator[None]:
         import_constants._table_names_by_name.cache_clear()
         partables.cache_clear()
         mult_table.cache_clear()
+        import_constants._mult_field_ids.cache_clear()
         dictionary._definitions.cache_clear()
         search_views._PARAMINFO_BY_NAME_CACHE.clear()
         search_views._server_accepts_regex.cache_clear()
@@ -121,50 +142,45 @@ def _empty_caches() -> Iterator[None]:
 
 
 @pytest.fixture
-def planet_model(monkeypatch: pytest.MonkeyPatch) -> FakeMultModel:
-    """Make `obs_general.planet_id`'s mult table a fake with `PLANET_ROWS`."""
-    model = FakeMultModel(PLANET_ROWS)
-
-    def get_model(app_label: str, model_name: str) -> FakeMultModel:
-        assert (app_label, model_name) == ('search', 'MultObsGeneralPlanetId')
-        return model
-
-    monkeypatch.setattr(apps, 'get_model', get_model)
-    return model
+def planet_model(monkeypatch: pytest.MonkeyPatch) -> FakeMultManager:
+    """Make `obs_general.planet_id`'s ``mult`` rows a fake holding `PLANET_ROWS`."""
+    return _fake_mult(monkeypatch, PLANET_ROWS)
 
 
-# collation_key
-
-
-@pytest.mark.parametrize(
-    ('first', 'second'),
-    [('Saturn', 'saturn'), ('Saturn', 'SATURN'), ('Jupiter', 'Jupitér'), ('Straße', 'STRASSE')],
-    ids=['lower', 'upper', 'accent', 'sharp-s'],
-)
-def test__collation_key_ignores_case_and_accents(first: str, second: str) -> None:
-    assert collation_key(first) == collation_key(second)
-
-
-@pytest.mark.parametrize(
-    ('first', 'second'),
-    [('Saturn', 'Saturn '), ('Saturn', 'Saturns'), ('N/A', 'NA')],
-    ids=['trailing-space', 'plural', 'punctuation'],
-)
-def test__collation_key_keeps_what_the_server_compares(first: str, second: str) -> None:
-    assert collation_key(first) != collation_key(second)
+def _fake_mult(
+    monkeypatch: pytest.MonkeyPatch, rows: list[tuple[int, str, str, int]]
+) -> FakeMultManager:
+    """Stand fakes in for ``mult_field`` and ``mult``, the latter holding `rows`."""
+    manager = FakeMultManager(rows)
+    monkeypatch.setattr(Mult, 'objects', manager)
+    monkeypatch.setattr(MultField, 'objects', FakeMultFieldManager())
+    return manager
 
 
 # mult_table
 
 
-def test__mult_table_reads_the_fields_table_once(planet_model: FakeMultModel) -> None:
+def test__mult_table_reads_the_fields_rows_once(planet_model: FakeMultManager) -> None:
     first = mult_table('obs_general.planet_id')
     second = mult_table('obs_general.planet_id')
     assert first is second
-    assert planet_model.objects.queries == 1
-    assert first.model_name == 'MultObsGeneralPlanetId'
-    assert first.rows[2] == import_constants.MultRow(2, 'SAT', 'Saturn', '020')
-    assert first.rows[0].value is None
+    assert planet_model.queries == 1
+    assert first.field_id == PLANET_FIELD_ID
+    assert first.rows[2] == import_constants.MultRow(2, 'SAT', 'Saturn', 2)
+    assert first.rows[0].is_absent
+    assert not first.rows[2].is_absent
+
+
+def test__an_unknown_mult_field_is_a_lookup_error(planet_model: FakeMultManager) -> None:
+    with pytest.raises(LookupError, match=r'obs_general\.nosuchfield'):
+        mult_table('obs_general.nosuchfield')
+
+
+def test__the_absent_value_names_no_row_by_its_value(planet_model: FakeMultManager) -> None:
+    # The absent value is stored as the empty string, and an empty name matched the
+    # NULL it was stored as before: nothing.
+    table = mult_table('obs_general.planet_id')
+    assert table.ids_for(['']) == []
 
 
 @pytest.mark.parametrize(
@@ -188,24 +204,24 @@ def test__mult_table_reads_the_fields_table_once(planet_model: FakeMultModel) ->
         'mixed',
         'two-names-one-row',
         'one-name-two-rows',
-        'null-row',
+        'absent-row',
         'none',
     ],
 )
 def test__ids_for_matches_labels_and_values_without_a_query(
-    planet_model: FakeMultModel, names: list[str], expected: list[int]
+    planet_model: FakeMultManager, names: list[str], expected: list[int]
 ) -> None:
     table = mult_table('obs_general.planet_id')
     assert table.ids_for(names) == expected
-    assert planet_model.objects.queries == 1
+    assert planet_model.queries == 1
 
 
 def test__ids_for_asks_the_server_about_a_name_it_does_not_hold(
-    planet_model: FakeMultModel,
+    planet_model: FakeMultManager,
 ) -> None:
     table = mult_table('obs_general.planet_id')
     assert table.ids_for(['Saturn', 'Pluto']) == [2]
-    assert planet_model.objects.queries == 2
+    assert planet_model.queries == 2
 
 
 @pytest.mark.parametrize(
@@ -214,12 +230,12 @@ def test__ids_for_asks_the_server_about_a_name_it_does_not_hold(
     ids=['accent', 'diaeresis-sign', 'control'],
 )
 def test__a_name_that_is_not_printable_ascii_asks_the_server(
-    planet_model: FakeMultModel, name: str
+    planet_model: FakeMultManager, name: str
 ) -> None:
     # The fake server compares exactly, so none of these matches there.
     table = mult_table('obs_general.planet_id')
     assert table.ids_for([name]) == []
-    assert planet_model.objects.queries == 2
+    assert planet_model.queries == 2
 
 
 def test__ids_for_returns_what_the_server_matched_on_a_miss(
@@ -227,19 +243,18 @@ def test__ids_for_returns_what_the_server_matched_on_a_miss(
 ) -> None:
     # A name the server's collation matches but this module's key does not: the
     # server's answer is the one returned.
-    class Lenient(FakeMultManager):
+    class Lenient(FakeFieldRows):
         def filter(self, condition: Q) -> FakeQuerySet:
-            self.queries += 1
+            self.manager.queries += 1
             return FakeQuerySet([3, 1])
 
-    model = FakeMultModel(PLANET_ROWS)
-    model.objects = Lenient(PLANET_ROWS)
-    monkeypatch.setattr(apps, 'get_model', lambda _app, _name: model)
-    table = MultTable('MultObsGeneralPlanetId', {}, {}, ascii_only=True)
+    manager = _fake_mult(monkeypatch, PLANET_ROWS)
+    monkeypatch.setattr(manager, 'filter', lambda *, field_id: Lenient(manager))
+    table = MultTable(PLANET_FIELD_ID, {}, {}, ascii_only=True)
     assert table.ids_for(['anything']) == [1, 3]
 
 
-def test__ids_for_accepts_any_iterable(planet_model: FakeMultModel) -> None:
+def test__ids_for_accepts_any_iterable(planet_model: FakeMultManager) -> None:
     names: Iterable[str] = (name for name in ['Jupiter', 'Saturn'])
     assert mult_table('obs_general.planet_id').ids_for(names) == [1, 2]
 
@@ -264,12 +279,11 @@ def test__only_printable_ascii_collates_as_its_key(text: str, expected: bool) ->
 def test__a_table_holding_a_control_character_asks_the_server(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    model = FakeMultModel([*PLANET_ROWS, (5, 'SAT2', 'Sat\x01urn', '050')])
-    monkeypatch.setattr(apps, 'get_model', lambda _app, _name: model)
+    manager = _fake_mult(monkeypatch, [*PLANET_ROWS, (5, 'SAT2', 'Sat\x01urn', 6)])
     table = mult_table('obs_general.planet_id')
     assert not table.ascii_only
     assert table.ids_for(['Saturn']) == [2]
-    assert model.objects.queries == 2
+    assert manager.queries == 2
 
 
 def test__table_names_collate_as_keys_only_when_all_are_printable_ascii(
@@ -290,12 +304,11 @@ def test__a_table_holding_a_name_that_is_not_ascii_asks_the_server(
 ) -> None:
     # The key does not ignore what the collation ignores, so a non-ASCII stored name
     # could be matched by the server and missed here.
-    model = FakeMultModel([*PLANET_ROWS, (5, 'SAT\u00adURN', 'Sat\u00adurn', '050')])
-    monkeypatch.setattr(apps, 'get_model', lambda _app, _name: model)
+    manager = _fake_mult(monkeypatch, [*PLANET_ROWS, (5, 'SAT\u00adURN', 'Sat\u00adurn', 6)])
     table = mult_table('obs_general.planet_id')
     assert not table.ascii_only
     assert table.ids_for(['Jupiter']) == [1]
-    assert model.objects.queries == 2
+    assert manager.queries == 2
 
 
 # table_names and partables

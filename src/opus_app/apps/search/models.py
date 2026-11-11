@@ -170,1354 +170,43 @@ class ZZDjangoSite(models.Model):
         db_table = 'django_site'
 
 
-class MultObsGeneralInstHostId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
+class Mult(models.Model):
+    pk = models.CompositePrimaryKey('field_id', 'id')
+    field_id = models.PositiveSmallIntegerField()
+    id = models.PositiveSmallIntegerField()
+    value = models.CharField(max_length=100)
     label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
+    pin = models.PositiveSmallIntegerField(blank=True, null=True)
+    disp_rank = models.PositiveSmallIntegerField()
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_general_inst_host_id'
+        db_table = 'mult'
+        unique_together = (('field_id', 'value'),)
 
 
-class MultObsGeneralInstrumentId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_instrument_id'
-
-
-class MultObsGeneralMissionId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_mission_id'
-
-
-class MultObsGeneralObservationType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_observation_type'
-
-
-class MultObsGeneralPlanetId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_planet_id'
-
-
-class MultObsGeneralQuantity(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_quantity'
-
-
-class MultObsGeneralTargetClass(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_target_class'
-
-
-class MultObsGeneralTargetName(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_general_target_name'
-
-
-class MultObsInstrumentCocirsDetectorId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_cocirs_detector_id'
-
-
-class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_cocirs_instrument_mode_all_flag'
-
-
-class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_cocirs_instrument_mode_blinking_flag'
-
-
-class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_cocirs_instrument_mode_centers_flag'
-
-
-class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_cocirs_instrument_mode_even_flag'
-
-
-class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_cocirs_instrument_mode_odd_flag'
-
-
-class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_cocirs_instrument_mode_pairs_flag'
-
-
-class MultObsInstrumentCoissCamera(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_camera'
-
-
-class MultObsInstrumentCoissCombinedFilter(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_combined_filter'
-
-
-class MultObsInstrumentCoissCompressionType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_compression_type'
-
-
-class MultObsInstrumentCoissDataConversionType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_data_conversion_type'
-
-
-class MultObsInstrumentCoissGainModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_gain_mode_id'
-
-
-class MultObsInstrumentCoissImageObservationType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_image_observation_type'
-
-
-class MultObsInstrumentCoissInstrumentModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_instrument_mode_id'
-
-
-class MultObsInstrumentCoissShutterModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_shutter_mode_id'
-
-
-class MultObsInstrumentCoissShutterStateId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_shutter_state_id'
-
-
-class MultObsInstrumentCoissTargetDesc(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_coiss_target_desc'
-
-
-class MultObsInstrumentCouvisChannel(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_channel'
-
-
-class MultObsInstrumentCouvisCompressionType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_compression_type'
-
-
-class MultObsInstrumentCouvisDwellTime(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_dwell_time'
-
-
-class MultObsInstrumentCouvisObservationType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_observation_type'
-
-
-class MultObsInstrumentCouvisOccultationPortState(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_occultation_port_state'
-
-
-class MultObsInstrumentCouvisSlitState(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_slit_state'
-
-
-class MultObsInstrumentCouvisTestPulseState(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_couvis_test_pulse_state'
-
-
-class MultObsInstrumentCovimsChannel(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_channel'
-
-
-class MultObsInstrumentCovimsInstrumentModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_instrument_mode_id'
-
-
-class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_ir_sampling_mode_id'
-
-
-class MultObsInstrumentCovimsSpectralEditing(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_spectral_editing'
-
-
-class MultObsInstrumentCovimsSpectralSumming(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_spectral_summing'
-
-
-class MultObsInstrumentCovimsStarTracking(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_star_tracking'
-
-
-class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_covims_vis_sampling_mode_id'
-
-
-class MultObsInstrumentGossiCompressionType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_compression_type'
-
-
-class MultObsInstrumentGossiFilterName(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_filter_name'
-
-
-class MultObsInstrumentGossiFilterNumber(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_filter_number'
-
-
-class MultObsInstrumentGossiFrameDuration(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_frame_duration'
-
-
-class MultObsInstrumentGossiGainModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_gain_mode_id'
-
-
-class MultObsInstrumentGossiObstructionId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_gossi_obstruction_id'
-
-
-class MultObsInstrumentNhlorriBinningMode(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_nhlorri_binning_mode'
-
-
-class MultObsInstrumentNhlorriInstrumentCompressionType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_nhlorri_instrument_compression_type'
-
-
-class MultObsInstrumentNhmvicInstrumentCompressionType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_nhmvic_instrument_compression_type'
-
-
-class MultObsInstrumentVgissCamera(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_camera'
-
-
-class MultObsInstrumentVgissEditMode(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_edit_mode'
-
-
-class MultObsInstrumentVgissFilterName(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_filter_name'
-
-
-class MultObsInstrumentVgissFilterNumber(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_filter_number'
-
-
-class MultObsInstrumentVgissGainMode(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_gain_mode'
-
-
-class MultObsInstrumentVgissScanMode(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_scan_mode'
-
-
-class MultObsInstrumentVgissShutterMode(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_instrument_vgiss_shutter_mode'
-
-
-class MultObsMissionCassiniCassiniTargetCode(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_cassini_cassini_target_code'
-
-
-class MultObsMissionCassiniCassiniTargetName(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_cassini_cassini_target_name'
-
-
-class MultObsMissionCassiniIsPrime(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_cassini_is_prime'
-
-
-class MultObsMissionCassiniMissionPhaseName(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_cassini_mission_phase_name'
-
-
-class MultObsMissionCassiniPrimeInstId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_cassini_prime_inst_id'
-
-
-class MultObsMissionCassiniRevNo(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_cassini_rev_no'
-
-
-class MultObsMissionGalileoOrbitNumber(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_galileo_orbit_number'
-
-
-class MultObsMissionHubbleApertureType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_aperture_type'
-
-
-class MultObsMissionHubbleDetectorId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_detector_id'
-
-
-class MultObsMissionHubbleExposureType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_exposure_type'
-
-
-class MultObsMissionHubbleFilterName(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_filter_name'
-
-
-class MultObsMissionHubbleFilterType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_filter_type'
-
-
-class MultObsMissionHubbleFineGuidanceSystemLockType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_fine_guidance_system_lock_type'
-
-
-class MultObsMissionHubbleGainModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_gain_mode_id'
-
-
-class MultObsMissionHubbleInstrumentModeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_instrument_mode_id'
-
-
-class MultObsMissionHubbleOpticalElement(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_optical_element'
-
-
-class MultObsMissionHubblePc1Flag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_pc1_flag'
-
-
-class MultObsMissionHubbleProposedApertureType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_proposed_aperture_type'
-
-
-class MultObsMissionHubbleTargetedDetectorId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_targeted_detector_id'
-
-
-class MultObsMissionHubbleWf2Flag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_wf2_flag'
-
-
-class MultObsMissionHubbleWf3Flag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_wf3_flag'
-
-
-class MultObsMissionHubbleWf4Flag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_hubble_wf4_flag'
-
-
-class MultObsMissionNewHorizonsMissionPhase(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_new_horizons_mission_phase'
-
-
-class MultObsMissionVoyagerMissionPhaseName(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_mission_voyager_mission_phase_name'
-
-
-class MultObsProfileBodyOccFlag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_profile_body_occ_flag'
-
-
-class MultObsProfileHost(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_profile_host'
-
-
-class MultObsProfileOccDir(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_profile_occ_dir'
-
-
-class MultObsProfileOccType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_profile_occ_type'
-
-
-class MultObsProfileQualityScore(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_profile_quality_score'
-
-
-class MultObsProfileSource(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_profile_source'
-
-
-class MultObsProfileWlBand(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_profile_wl_band'
-
-
-class MultObsSurfaceGeometryNameTargetName(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_surface_geometry_name_target_name'
-
-
-class MultObsTypeImageImageTypeId(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'mult_obs_type_image_image_type_id'
-
-
-class MultObsWavelengthPolarizationType(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
+class MultField(models.Model):
+    field_id = models.PositiveSmallIntegerField(primary_key=True)
+    qualified_name = models.CharField(unique=True, max_length=100)
+    pinned = models.IntegerField()
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_wavelength_polarization_type'
+        db_table = 'mult_field'
 
 
-class MultObsWavelengthSpecFlag(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=100)
-    disp_order = models.CharField(max_length=100)
-    display = models.CharField(max_length=1)
-    grouping = models.CharField(max_length=100, blank=True, null=True)
-    group_disp_order = models.CharField(max_length=100, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
+class MultGroup(models.Model):
+    pk = models.CompositePrimaryKey('field_id', 'grouping')
+    field_id = models.PositiveSmallIntegerField()
+    grouping = models.CharField(max_length=100)
+    group_pin = models.PositiveSmallIntegerField(blank=True, null=True)
+    group_rank = models.PositiveSmallIntegerField()
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_wavelength_spec_flag'
+        db_table = 'mult_group'
 
 
 class ObsFiles(models.Model):
@@ -1557,23 +246,23 @@ class ObsGeneral(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
-    instrument_id = models.PositiveIntegerField()
-    mission_id = models.PositiveIntegerField()
-    inst_host_id = models.PositiveIntegerField()
-    planet_id = models.PositiveIntegerField()
+    instrument_id = models.PositiveSmallIntegerField()
+    mission_id = models.PositiveSmallIntegerField()
+    inst_host_id = models.PositiveSmallIntegerField()
+    planet_id = models.PositiveSmallIntegerField()
     target_name = models.JSONField()
     target_class = models.JSONField()
     time1 = models.FloatField(blank=True, null=True)
     time2 = models.FloatField(blank=True, null=True)
     observation_duration = models.FloatField(blank=True, null=True)
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveSmallIntegerField()
     right_asc1 = models.FloatField(blank=True, null=True)
     right_asc2 = models.FloatField(blank=True, null=True)
     right_asc = models.FloatField(blank=True, null=True)
     d_right_asc = models.FloatField(blank=True, null=True)
     declination1 = models.FloatField(blank=True, null=True)
     declination2 = models.FloatField(blank=True, null=True)
-    observation_type = models.PositiveIntegerField()
+    observation_type = models.PositiveSmallIntegerField()
     preview_images = models.JSONField()
     timestamp = models.DateTimeField()
 
@@ -1590,13 +279,13 @@ class ObsInstrumentCocirs(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    detector_id = models.PositiveIntegerField()
-    instrument_mode_blinking_flag = models.PositiveIntegerField(blank=True, null=True)
-    instrument_mode_even_flag = models.PositiveIntegerField(blank=True, null=True)
-    instrument_mode_odd_flag = models.PositiveIntegerField(blank=True, null=True)
-    instrument_mode_centers_flag = models.PositiveIntegerField(blank=True, null=True)
-    instrument_mode_pairs_flag = models.PositiveIntegerField(blank=True, null=True)
-    instrument_mode_all_flag = models.PositiveIntegerField(blank=True, null=True)
+    detector_id = models.PositiveSmallIntegerField()
+    instrument_mode_blinking_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    instrument_mode_even_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    instrument_mode_odd_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    instrument_mode_centers_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    instrument_mode_pairs_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    instrument_mode_all_flag = models.PositiveSmallIntegerField(blank=True, null=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1612,18 +301,18 @@ class ObsInstrumentCoiss(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    data_conversion_type = models.PositiveIntegerField()
-    compression_type = models.PositiveIntegerField()
-    gain_mode_id = models.PositiveIntegerField()
-    image_observation_type = models.PositiveIntegerField()
+    data_conversion_type = models.PositiveSmallIntegerField()
+    compression_type = models.PositiveSmallIntegerField()
+    gain_mode_id = models.PositiveSmallIntegerField()
+    image_observation_type = models.PositiveSmallIntegerField()
     missing_lines = models.SmallIntegerField(blank=True, null=True)
-    shutter_mode_id = models.PositiveIntegerField()
-    shutter_state_id = models.PositiveIntegerField()
+    shutter_mode_id = models.PositiveSmallIntegerField()
+    shutter_state_id = models.PositiveSmallIntegerField()
     image_number = models.IntegerField()
-    instrument_mode_id = models.PositiveIntegerField()
-    target_desc = models.PositiveIntegerField()
-    combined_filter = models.PositiveIntegerField()
-    camera = models.PositiveIntegerField()
+    instrument_mode_id = models.PositiveSmallIntegerField()
+    target_desc = models.PositiveSmallIntegerField()
+    combined_filter = models.PositiveSmallIntegerField()
+    camera = models.PositiveSmallIntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1639,14 +328,14 @@ class ObsInstrumentCouvis(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    observation_type = models.PositiveIntegerField()
+    observation_type = models.PositiveSmallIntegerField()
     integration_duration = models.FloatField(blank=True, null=True)
-    compression_type = models.PositiveIntegerField()
-    occultation_port_state = models.PositiveIntegerField()
-    slit_state = models.PositiveIntegerField()
-    test_pulse_state = models.PositiveIntegerField(blank=True, null=True)
-    dwell_time = models.PositiveIntegerField(blank=True, null=True)
-    channel = models.PositiveIntegerField()
+    compression_type = models.PositiveSmallIntegerField()
+    occultation_port_state = models.PositiveSmallIntegerField()
+    slit_state = models.PositiveSmallIntegerField()
+    test_pulse_state = models.PositiveSmallIntegerField(blank=True, null=True)
+    dwell_time = models.PositiveSmallIntegerField(blank=True, null=True)
+    channel = models.PositiveSmallIntegerField()
     band1 = models.IntegerField(blank=True, null=True)
     band2 = models.IntegerField(blank=True, null=True)
     band_bin = models.IntegerField(blank=True, null=True)
@@ -1669,17 +358,17 @@ class ObsInstrumentCovims(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    instrument_mode_id = models.PositiveIntegerField()
-    spectral_editing = models.PositiveIntegerField()
-    spectral_summing = models.PositiveIntegerField()
-    star_tracking = models.PositiveIntegerField()
+    instrument_mode_id = models.PositiveSmallIntegerField()
+    spectral_editing = models.PositiveSmallIntegerField()
+    spectral_summing = models.PositiveSmallIntegerField()
+    star_tracking = models.PositiveSmallIntegerField()
     swath_width = models.PositiveSmallIntegerField()
     swath_length = models.PositiveSmallIntegerField()
     ir_exposure = models.FloatField(blank=True, null=True)
-    ir_sampling_mode_id = models.PositiveIntegerField()
+    ir_sampling_mode_id = models.PositiveSmallIntegerField()
     vis_exposure = models.FloatField(blank=True, null=True)
-    vis_sampling_mode_id = models.PositiveIntegerField()
-    channel = models.PositiveIntegerField()
+    vis_sampling_mode_id = models.PositiveSmallIntegerField()
+    channel = models.PositiveSmallIntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1697,12 +386,12 @@ class ObsInstrumentGossi(models.Model):
     )
     observation_id = models.CharField(max_length=20)
     image_id = models.CharField(max_length=15)
-    filter_name = models.PositiveIntegerField()
-    filter_number = models.PositiveIntegerField()
-    gain_mode_id = models.PositiveIntegerField()
-    frame_duration = models.PositiveIntegerField()
-    obstruction_id = models.PositiveIntegerField()
-    compression_type = models.PositiveIntegerField()
+    filter_name = models.PositiveSmallIntegerField()
+    filter_number = models.PositiveSmallIntegerField()
+    gain_mode_id = models.PositiveSmallIntegerField()
+    frame_duration = models.PositiveSmallIntegerField()
+    obstruction_id = models.PositiveSmallIntegerField()
+    compression_type = models.PositiveSmallIntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1718,8 +407,8 @@ class ObsInstrumentNhlorri(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    instrument_compression_type = models.PositiveIntegerField()
-    binning_mode = models.PositiveIntegerField()
+    instrument_compression_type = models.PositiveSmallIntegerField()
+    binning_mode = models.PositiveSmallIntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1735,7 +424,7 @@ class ObsInstrumentNhmvic(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    instrument_compression_type = models.PositiveIntegerField()
+    instrument_compression_type = models.PositiveSmallIntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1752,13 +441,13 @@ class ObsInstrumentVgiss(models.Model):
         db_column='obs_general_id',
     )
     image_id = models.CharField(max_length=10)
-    scan_mode = models.PositiveIntegerField()
-    shutter_mode = models.PositiveIntegerField()
-    gain_mode = models.PositiveIntegerField()
-    edit_mode = models.PositiveIntegerField()
-    filter_name = models.PositiveIntegerField()
-    filter_number = models.PositiveIntegerField()
-    camera = models.PositiveIntegerField()
+    scan_mode = models.PositiveSmallIntegerField()
+    shutter_mode = models.PositiveSmallIntegerField()
+    gain_mode = models.PositiveSmallIntegerField()
+    edit_mode = models.PositiveSmallIntegerField()
+    filter_name = models.PositiveSmallIntegerField()
+    filter_number = models.PositiveSmallIntegerField()
+    camera = models.PositiveSmallIntegerField()
     usable_lines = models.SmallIntegerField(blank=True, null=True)
     usable_samples = models.SmallIntegerField(blank=True, null=True)
     timestamp = models.DateTimeField()
@@ -1779,16 +468,16 @@ class ObsMissionCassini(models.Model):
     obs_name = models.CharField(max_length=30)
     rev_no = models.CharField(max_length=3, blank=True, null=True)
     rev_no_int = models.IntegerField(blank=True, null=True)
-    is_prime = models.PositiveIntegerField()
-    prime_inst_id = models.PositiveIntegerField()
+    is_prime = models.PositiveSmallIntegerField()
+    prime_inst_id = models.PositiveSmallIntegerField()
     spacecraft_clock_count1 = models.FloatField(blank=True, null=True)
     spacecraft_clock_count2 = models.FloatField(blank=True, null=True)
     ert1 = models.FloatField(blank=True, null=True)
     ert2 = models.FloatField(blank=True, null=True)
-    cassini_target_code = models.PositiveIntegerField(blank=True, null=True)
-    cassini_target_name = models.PositiveIntegerField(blank=True, null=True)
+    cassini_target_code = models.PositiveSmallIntegerField(blank=True, null=True)
+    cassini_target_name = models.PositiveSmallIntegerField(blank=True, null=True)
     activity_name = models.CharField(max_length=9, blank=True, null=True)
-    mission_phase_name = models.PositiveIntegerField(blank=True, null=True)
+    mission_phase_name = models.PositiveSmallIntegerField(blank=True, null=True)
     sequence_id = models.CharField(max_length=4, blank=True, null=True)
     timestamp = models.DateTimeField()
 
@@ -1805,7 +494,7 @@ class ObsMissionGalileo(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    orbit_number = models.PositiveIntegerField(blank=True, null=True)
+    orbit_number = models.PositiveSmallIntegerField(blank=True, null=True)
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
     timestamp = models.DateTimeField()
@@ -1826,23 +515,23 @@ class ObsMissionHubble(models.Model):
     stsci_group_id = models.CharField(max_length=9)
     hst_proposal_id = models.IntegerField()
     hst_pi_name = models.CharField(max_length=24)
-    detector_id = models.PositiveIntegerField()
+    detector_id = models.PositiveSmallIntegerField()
     publication_date = models.FloatField()
     hst_target_name = models.CharField(max_length=31)
-    fine_guidance_system_lock_type = models.PositiveIntegerField()
-    filter_name = models.PositiveIntegerField()
-    filter_type = models.PositiveIntegerField()
-    aperture_type = models.PositiveIntegerField()
-    proposed_aperture_type = models.PositiveIntegerField(blank=True, null=True)
-    exposure_type = models.PositiveIntegerField()
-    gain_mode_id = models.PositiveIntegerField()
-    instrument_mode_id = models.PositiveIntegerField()
-    pc1_flag = models.PositiveIntegerField(blank=True, null=True)
-    wf2_flag = models.PositiveIntegerField(blank=True, null=True)
-    wf3_flag = models.PositiveIntegerField(blank=True, null=True)
-    wf4_flag = models.PositiveIntegerField(blank=True, null=True)
-    targeted_detector_id = models.PositiveIntegerField(blank=True, null=True)
-    optical_element = models.PositiveIntegerField(blank=True, null=True)
+    fine_guidance_system_lock_type = models.PositiveSmallIntegerField()
+    filter_name = models.PositiveSmallIntegerField()
+    filter_type = models.PositiveSmallIntegerField()
+    aperture_type = models.PositiveSmallIntegerField()
+    proposed_aperture_type = models.PositiveSmallIntegerField(blank=True, null=True)
+    exposure_type = models.PositiveSmallIntegerField()
+    gain_mode_id = models.PositiveSmallIntegerField()
+    instrument_mode_id = models.PositiveSmallIntegerField()
+    pc1_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    wf2_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    wf3_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    wf4_flag = models.PositiveSmallIntegerField(blank=True, null=True)
+    targeted_detector_id = models.PositiveSmallIntegerField(blank=True, null=True)
+    optical_element = models.PositiveSmallIntegerField(blank=True, null=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1860,7 +549,7 @@ class ObsMissionNewHorizons(models.Model):
     )
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
-    mission_phase = models.PositiveIntegerField()
+    mission_phase = models.PositiveSmallIntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1879,7 +568,7 @@ class ObsMissionVoyager(models.Model):
     ert = models.FloatField(blank=True, null=True)
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
-    mission_phase_name = models.PositiveIntegerField()
+    mission_phase_name = models.PositiveSmallIntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -1918,16 +607,16 @@ class ObsProfile(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    occ_type = models.PositiveIntegerField(blank=True, null=True)
-    occ_dir = models.PositiveIntegerField(blank=True, null=True)
-    body_occ_flag = models.PositiveIntegerField(blank=True, null=True)
+    occ_type = models.PositiveSmallIntegerField(blank=True, null=True)
+    occ_dir = models.PositiveSmallIntegerField(blank=True, null=True)
+    body_occ_flag = models.PositiveSmallIntegerField(blank=True, null=True)
     temporal_sampling = models.FloatField(blank=True, null=True)
-    quality_score = models.PositiveIntegerField(blank=True, null=True)
+    quality_score = models.PositiveSmallIntegerField(blank=True, null=True)
     optical_depth1 = models.FloatField(blank=True, null=True)
     optical_depth2 = models.FloatField(blank=True, null=True)
-    wl_band = models.PositiveIntegerField(blank=True, null=True)
-    source = models.PositiveIntegerField(blank=True, null=True)
-    host = models.PositiveIntegerField(blank=True, null=True)
+    wl_band = models.PositiveSmallIntegerField(blank=True, null=True)
+    source = models.PositiveSmallIntegerField(blank=True, null=True)
+    host = models.PositiveSmallIntegerField(blank=True, null=True)
     timestamp = models.DateTimeField()
 
     class Meta:
@@ -11677,7 +10366,7 @@ class ObsSurfaceGeometryName(models.Model):
     opus_id = models.CharField(max_length=50)
     bundle_id = models.CharField(max_length=75)
     instrument_id = models.CharField(max_length=12)
-    target_name = models.PositiveIntegerField()
+    target_name = models.PositiveSmallIntegerField()
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
@@ -11694,7 +10383,7 @@ class ObsTypeImage(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    image_type_id = models.PositiveIntegerField(blank=True, null=True)
+    image_type_id = models.PositiveSmallIntegerField(blank=True, null=True)
     duration = models.FloatField(blank=True, null=True)
     levels = models.PositiveIntegerField(blank=True, null=True)
     greater_pixel_size = models.PositiveIntegerField(blank=True, null=True)
@@ -11722,9 +10411,9 @@ class ObsWavelength(models.Model):
     wave_no2 = models.FloatField(blank=True, null=True)
     wave_no_res1 = models.FloatField(blank=True, null=True)
     wave_no_res2 = models.FloatField(blank=True, null=True)
-    spec_flag = models.PositiveIntegerField()
+    spec_flag = models.PositiveSmallIntegerField()
     spec_size = models.PositiveIntegerField(blank=True, null=True)
-    polarization_type = models.PositiveIntegerField()
+    polarization_type = models.PositiveSmallIntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:

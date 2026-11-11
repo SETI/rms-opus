@@ -4,7 +4,7 @@ A table's schema names, for each column, where its value comes from: a Python me
 the bundle's obs class (``COMPUTE``), the ``obs_general`` row this observation already
 produced, one of two longitude computations, or the next id in sequence. This module
 walks the schema, obtains each value, checks it against the type and range the schema
-declares, replaces an enumerated value with its ``mult_`` table id, and assembles the
+declares, replaces an enumerated value with the id of its ``mult`` row, and assembles the
 row.
 
 Validation reports rather than raises, so one bad row does not end the run: a flag with
@@ -52,8 +52,8 @@ def import_observation_table(
     and an entry with no ``field_name`` -- a ``pi_referred_slug`` entry, which describes
     a search parameter rather than a column, or a table-level key.
 
-    A column whose form type is a GROUP type stores a ``mult_`` table id rather than the
-    value, and the value is added to that table if it is new. A ``mult_list`` column
+    A column whose form type is a GROUP type stores the id of a ``mult`` row rather than
+    the value, and the value is added to its mult field if it is new. A ``mult_list`` column
     holds several values and is written as a JSON array, with a missing value omitted
     rather than stored as null; every other column holds exactly one value.
 
@@ -106,12 +106,11 @@ def import_observation_table(
 
             column_val_list = None
             mult_label_list: list[Any] | None = None
-            aliases_list: list[Any] | None = None
             disp_list: list[Any] | None = None
             # Might be set with mult_label but not otherwise
-            disp_order_list: list[Any] | None = None
+            pin_list: list[Any] | None = None
             grouping_list: list[Any] | None = None
-            group_disp_order_list: list[Any] | None = None
+            group_pin_list: list[Any] | None = None
 
             if data_source == 'OBS_GENERAL_ID':
                 obs_general_row = metadata['obs_general_row']
@@ -132,11 +131,10 @@ def import_observation_table(
                     if isinstance(ret[0], dict):
                         column_val_list = [x['col_val'] for x in ret]
                         mult_label_list = [x['disp_name'] for x in ret]
-                        aliases_list = [x['aliases'] for x in ret]
                         disp_list = [x['disp'] for x in ret]
-                        disp_order_list = [x['disp_order'] for x in ret]
+                        pin_list = [x['pin'] for x in ret]
                         grouping_list = [x['grouping'] for x in ret]
-                        group_disp_order_list = [x['group_disp_order'] for x in ret]
+                        group_pin_list = [x['group_pin'] for x in ret]
                     else:
                         column_val_list = ret
                 else:
@@ -309,7 +307,7 @@ def import_observation_table(
                                 import_util.log_nonrepeating_error(ctx, msg)
                             column_val = None
 
-            ### CHECK TO SEE IF THERE IS AN ASSOCIATED MULT_ TABLE ###
+            ### CHECK TO SEE IF THE COLUMN HOLDS MULT IDS ###
 
             form_type = table_column.get('pi_form_type', None)
             if form_type is not None and form_type.find(':') != -1:
@@ -326,13 +324,12 @@ def import_observation_table(
                         f'table "{table_name}" - bad data type returned for mult',
                     )
                     return None
-                # The seven lists are assigned together in the full-spec mult branch
-                # above, so the check just made establishes the other five as well.
-                assert aliases_list is not None
+                # The lists are assigned together in the full-spec mult branch above,
+                # so the check just made establishes the others as well.
                 assert disp_list is not None
-                assert disp_order_list is not None
+                assert pin_list is not None
                 assert grouping_list is not None
-                assert group_disp_order_list is not None
+                assert group_pin_list is not None
                 mult_label = mult_label_list[column_val_num]
                 if mult_label is None:
                     if column_val is None:
@@ -351,11 +348,10 @@ def import_observation_table(
                     table_column,
                     column_val,
                     mult_label,
-                    aliases_list[column_val_num],
                     disp_list[column_val_num],
-                    disp_order_list[column_val_num],
+                    pin_list[column_val_num],
                     grouping_list[column_val_num],
-                    group_disp_order_list[column_val_num],
+                    group_pin_list[column_val_num],
                 )
 
             if field_type != 'mult_list' or column_val is not None:

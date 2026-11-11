@@ -215,7 +215,7 @@ class ImportDBSuper:
             db_schema: The schema (MySQL database) holding the OPUS tables.
             db_user: The user to connect as.
             db_password: That user's password.
-            mult_form_types: The ``param_info`` form types that have a ``mult_`` table,
+            mult_form_types: The ``param_info`` form types whose columns hold mult ids,
                 or None for none of them.
             logger: Where to report progress, statements and warnings, or None to report
                 nothing. With None, the Python-warning collection below is also skipped,
@@ -1105,6 +1105,24 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::general_select must be overridden')
+
+    def stream_select(
+        self, cmd: str, param_list: Sequence[Any] | None = None
+    ) -> Iterator[ResultRow]:
+        """Run a query the caller assembled and yield its rows as the server sends them.
+
+        Parameters:
+            cmd: Everything after the SELECT keyword.
+            param_list: The parameters that query's placeholders consume.
+
+        Yields:
+            One tuple per row, in the order the query named its columns. The caller
+            reads every row before it issues another statement on this connection.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::stream_select must be overridden')
 
     def find_column_max(self, table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.

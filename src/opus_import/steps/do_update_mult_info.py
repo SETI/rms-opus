@@ -1,108 +1,100 @@
-"""Write the checked-in display details back over the ``mult_`` tables.
+"""Write the checked-in presentation of the mult fields over the stored ``mult`` rows.
 
-A ``mult_`` table holds the enumerated values one column can take, along with how the
-web application should present them. Where a table schema pins those presentation
-details in a ``mult_options`` entry, this step copies them over whatever the import
-wrote, so that editing a schema is enough to change a label or a sort order without
-re-importing.
+A column's schema can state how its field's values are presented in two ways: a
+``mult_options`` list, which pins the field's values, ids, labels and order, and a
+``mult_overrides`` list, which sets the label, display, grouping or pin of values the
+import discovered. This step writes both over the rows in place and re-ranks the fields it
+touched, so that editing a schema and deploying the code is enough to rename a value or
+reorder a list, with no re-import: the ids, which the observation rows hold, never change.
 
-The step runs only when ``--update-mult-info`` is given; nothing else calls it, and
-``--do-it-all`` does not imply it.
+The step runs only when ``--update-mult-info`` is given; the code-only deploy gives it.
+Finalization applies the overrides itself (`opus_import.steps.do_finalize_mult`), and
+``--do-it-all`` does not imply this step.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from opus_import import import_util
-from opus_import.import_util import MultOption
+from opus_import import import_util, mult_fields
+from opus_import.mult_fields import MULT_GROUP_TABLE, MULT_TABLE
+from opus_import.steps import do_finalize_mult
+from opus_import.steps.do_import_mult import ABSENT_VALUE
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
 
 
 def update_mult_info(ctx: ImportContext) -> None:
-    """Update every ``mult_`` table whose schema pins its values.
+    """Write every pinned field's list and every override, then re-rank what changed.
 
-    The table's name says which schema and which column it belongs to, so the name is
-    split apart and matched against the packaged schemas. A table whose schema or column
-    cannot be found is reported and skipped rather than aborting the run, and a column
-    with no ``mult_options`` entry is left exactly as the import wrote it.
-
-    Every presentation column a schema pins is written: the label, the sort key, whether
-    the value is offered in the search form, the group it belongs to and that group's
-    sort key. The value itself and the row id are not touched -- the id is what the
-    ``obs_`` rows already reference, and the value is what a row means rather than how it
-    is shown.
+    A pinned field this schema holds no rows of is left alone: no observation of this
+    schema uses it. For one it does, each ``mult_options`` entry's label, pin, display
+    and grouping are written over the row with that id, an entry with no row is inserted,
+    and each entry's group pin is written to its group. The value of an existing row is
+    never touched -- it is what the row means rather than how it is shown. Then every
+    column's ``mult_overrides`` is applied
+    (`opus_import.steps.do_finalize_mult.apply_mult_overrides`), and the values and
+    groups of every field either changed are ranked again.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
 
     Raises:
-        TypeError: If a ``mult_options`` entry does not carry exactly the seven values
-            `opus_import.import_util.MultOption` names. That is a fault in the packaged
-            schema, and stopping is better than writing a row built from values that
-            landed in the wrong columns.
+        TypeError: If a ``mult_options`` entry is not the shape
+            `opus_import.import_util.read_mult_option` accepts. That is a fault in the
+            packaged schema, and stopping is better than writing a row built from values
+            that landed in the wrong columns.
     """
     db = ctx.db
     assert db is not None
-    logger = ctx.logger
+    q = db.quote_identifier
+    fields = mult_fields.ensure_mult_fields(ctx)
+    touched: set[int] = set()
 
-    # Find all the mult_ tables
-    table_names = db.table_names(prefix='mult_')
-
-    for table_name in table_names:
-        # A mult table's name is its observation table's name joined to its column's,
-        # and both halves contain underscores, so where the split falls has to be
-        # decided by trying them. A table name alone is not enough to decide it: both
-        # `obs_surface_geometry` and `obs_surface_geometry_name` are real tables, so
-        # `mult_obs_surface_geometry_name_target_name` matches a schema at the shorter
-        # split and only the longer one leaves a column that exists. The split is
-        # therefore the one where the schema *and* the column both resolve.
-        splits = table_name.split('_')
-        table_schema = None
-        column = None
-        for n_splits in range(3, len(splits)):
-            trial_name = '_'.join(splits[1:n_splits])
-            trial_schema = import_util.read_schema_for_table(ctx, trial_name)
-            if trial_schema is None:
-                continue
-            if table_schema is None:
-                # Remembered so that a table whose column resolves nowhere is reported
-                # against a schema that exists, rather than as an unknown table.
-                table_schema = trial_schema
-            mult_field_name = '_'.join(splits[n_splits:])
-            for trial_column in trial_schema:
-                if trial_column.get('field_name') == mult_field_name:
-                    table_schema, column = trial_schema, trial_column
-                    break
-            if column is not None:
-                break
-        if table_schema is None:
-            logger.log('error', f'Unable to find table schema for mult "{table_name}"')
+    for name, column in mult_fields.packaged_mult_columns().items():
+        if not column.pinned:
             continue
-        if column is None:
-            logger.log('error', f'Unable to find a column matching mult table "{table_name}"')
+        field_id = fields[name].field_id
+        in_field = f'{q("field_id")}=%s'
+        stored = {int(row[0]) for row in db.read_rows(MULT_TABLE, ['id'], in_field, [field_id])}
+        if not stored:
             continue
-
-        mult_options = column.get('mult_options', False)
-        if not mult_options:
-            continue
-
-        for mult_info in mult_options:
-            option = MultOption(*mult_info)
-
-            row_dict = {
+        added: list[dict[str, Any]] = []
+        groups: dict[str, int | None] = {}
+        for entry in column.entry['mult_options']:
+            option = import_util.read_mult_option(entry)
+            presentation = {
                 'label': str(option.label),
-                'disp_order': option.disp_order,
+                'pin': option.pin,
                 'display': option.display,
                 'grouping': option.grouping,
-                'group_disp_order': option.group_disp_order,
             }
+            if option.id in stored:
+                db.update_row(
+                    MULT_TABLE,
+                    presentation,
+                    f'{in_field} AND {q("id")}=%s',
+                    where_params=[field_id, option.id],
+                )
+            else:
+                value = ABSENT_VALUE if option.value is None else option.value
+                added.append(
+                    {'field_id': field_id, 'id': option.id, 'value': value, **presentation}
+                )
+            if option.grouping is not None:
+                groups.setdefault(option.grouping, option.group_pin)
+        if added:
+            db.insert_rows(MULT_TABLE, added)
+        db.upsert_rows(
+            MULT_GROUP_TABLE,
+            'grouping',
+            [
+                {'field_id': field_id, 'grouping': grouping, 'group_pin': group_pin}
+                for grouping, group_pin in groups.items()
+            ],
+        )
+        touched.add(field_id)
 
-            db.update_row(
-                table_name,
-                row_dict,
-                f'{db.quote_identifier("id")}=%s',
-                where_params=[option.id],
-            )
+    touched |= do_finalize_mult.apply_mult_overrides(ctx)
+    do_finalize_mult.rank_mult_fields(ctx, touched)

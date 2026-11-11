@@ -1,6 +1,6 @@
 """Per-process copies of the tables that change only when an import runs.
 
-``table_names``, ``partables`` and the ``mult_`` tables hold the same rows from one
+``table_names``, ``partables``, ``mult_field`` and ``mult`` hold the same rows from one
 import to the next, so each worker process reads each of them once, on first use, and
 answers from memory after that. Nothing here notices a new import: the deploy restarts
 the workers after one, and a restarted worker starts with no copies.
@@ -24,34 +24,16 @@ that is not printable ASCII are therefore asked of the server, which decides the
 from __future__ import annotations
 
 import functools
-import unicodedata
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from django.apps import apps
 from django.db.models import Q
 
-from opus_app.apps.search.models import Partables, TableNames
-from opus_app.apps.tools.app_utils import get_mult_name
+from opus_app.apps.search.models import Mult, MultField, Partables, TableNames
+from opus_support import collation_key
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
-
-
-def collation_key(text: str) -> str:
-    """Return the form of a string that the server's collation compares.
-
-    The server compares strings with ``utf8mb4_0900_ai_ci``, which ignores case and
-    accents, so two strings it calls equal have the same key here.
-
-    Parameters:
-        text: The string to compare.
-
-    Returns:
-        The string with its accents removed and its case folded.
-    """
-    decomposed = unicodedata.normalize('NFKD', text)
-    return ''.join(char for char in decomposed if not unicodedata.combining(char)).casefold()
 
 
 def collates_as_key(text: str) -> bool:
@@ -144,36 +126,71 @@ def partables() -> tuple[Partables, ...]:
     return tuple(Partables.objects.all())
 
 
+#: The value a ``mult`` row stores for an absent value.
+ABSENT_MULT_VALUE = ''
+
+
+@functools.cache
+def _mult_field_ids() -> dict[str, int]:
+    """Return every ``mult_field`` row's id, keyed by its qualified name."""
+    return dict(MultField.objects.values_list('qualified_name', 'field_id'))
+
+
+def mult_field_id(param_qualified_name: str) -> int:
+    """Return the ``mult_field`` id of a mult field.
+
+    Parameters:
+        param_qualified_name: The field's ``<table>.<column>`` name.
+
+    Returns:
+        The id every ``mult`` row of the field carries.
+
+    Raises:
+        LookupError: If ``mult_field`` has no row of that name.
+    """
+    field_ids = _mult_field_ids()
+    if param_qualified_name not in field_ids:
+        raise LookupError(f'No mult field "{param_qualified_name}"')
+    return field_ids[param_qualified_name]
+
+
 @dataclass(frozen=True)
 class MultRow:
-    """One row of a ``mult_`` table: one value a mult field can hold.
+    """One ``mult`` row: one value a mult field can hold.
 
     Attributes:
         id: What an observation's column holds for this value.
-        value: The value as the importer read it, which is None for the null row.
+        value: The value as the importer read it, which is the empty string for the
+            absent value.
         label: The value as the interface shows it.
-        disp_order: Where the value comes in the field's list.
+        disp_rank: Where the value comes in the field's list, counting from 1.
     """
 
     id: int
-    value: str | None
+    value: str
     label: str
-    disp_order: str
+    disp_rank: int
+
+    @property
+    def is_absent(self) -> bool:
+        """Whether the row is the field's absent value."""
+        return self.value == ABSENT_MULT_VALUE
 
 
 @dataclass(frozen=True)
 class MultTable:
-    """A ``mult_`` table, held in memory.
+    """One mult field's ``mult`` rows, held in memory.
 
     Attributes:
-        model_name: The name of the table's model in the ``search`` app.
+        field_id: The field's ``mult_field`` id.
         rows: The rows keyed by id.
-        ids_by_key: The ids of the rows whose label or value has each `collation_key`.
-        ascii_only: Whether every label and value in the table `collates_as_key`, which
+        ids_by_key: The ids of the rows whose label or value has each `collation_key`;
+            the absent value, the empty string, is not a key.
+        ascii_only: Whether every label and value in the field `collates_as_key`, which
             is when `ids_by_key` finds every row the server would.
     """
 
-    model_name: str
+    field_id: int
     rows: Mapping[int, MultRow]
     ids_by_key: Mapping[str, frozenset[int]]
     ascii_only: bool
@@ -182,10 +199,11 @@ class MultTable:
         """Return the ids of the rows a list of labels and values names.
 
         A row is named when its label or its value is one of the names, as the server
-        compares them; that is what the query this replaces asked for. The names are
-        looked up on the server instead when one of them is not printable ASCII or has
-        no row under its key here, or when the table holds a name that is not printable
-        ASCII; in each of those a key could disagree with the server's collation.
+        compares them; the absent value, the empty string, names no row by its value.
+        The names are looked up on the server instead when one of them is not printable
+        ASCII or has no row under its key here, or when the field holds a name that is
+        not printable ASCII; in each of those a key could disagree with the server's
+        collation.
 
         Parameters:
             names: The labels and values, in any mix.
@@ -202,38 +220,42 @@ class MultTable:
                 else None
             )
             if matched is None:
-                model = apps.get_model('search', self.model_name)
-                rows = model.objects.filter(Q(label__in=names) | Q(value__in=names))
-                return sorted(rows.values_list('pk', flat=True))
+                values = [name for name in names if name != ABSENT_MULT_VALUE]
+                rows = Mult.objects.filter(field_id=self.field_id).filter(
+                    Q(label__in=names) | Q(value__in=values)
+                )
+                return sorted(rows.values_list('id', flat=True))
             ids |= matched
         return sorted(ids)
 
 
 @functools.cache
 def mult_table(param_qualified_name: str) -> MultTable:
-    """Return the ``mult_`` table that holds a mult field's values.
+    """Return a mult field's ``mult`` rows.
 
     Parameters:
         param_qualified_name: The field's ``<table>.<column>`` name.
 
     Returns:
-        The table, read in full on the first call for that field.
+        The field's rows, read in full on the first call for that field.
+
+    Raises:
+        LookupError: If ``mult_field`` has no row of that name.
     """
-    model_name = get_mult_name(param_qualified_name).title().replace('_', '')
-    model = apps.get_model('search', model_name)
+    field_id = mult_field_id(param_qualified_name)
     rows: dict[int, MultRow] = {}
     ids_by_key: dict[str, set[int]] = {}
     ascii_only = True
-    for row_id, value, label, disp_order in model.objects.values_list(
-        'id', 'value', 'label', 'disp_order'
+    for row_id, value, label, disp_rank in Mult.objects.filter(field_id=field_id).values_list(
+        'id', 'value', 'label', 'disp_rank'
     ):
-        rows[row_id] = MultRow(row_id, value, label, disp_order)
+        rows[row_id] = MultRow(row_id, value, label, disp_rank)
         for name in (label, value):
-            if name is not None:
+            if name != ABSENT_MULT_VALUE:
                 ids_by_key.setdefault(collation_key(name), set()).add(row_id)
                 ascii_only = ascii_only and collates_as_key(name)
     return MultTable(
-        model_name,
+        field_id,
         rows,
         {key: frozenset(ids) for key, ids in ids_by_key.items()},
         ascii_only,

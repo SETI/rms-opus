@@ -17,6 +17,7 @@ _DJANGO_TABLES = ('django_session', 'django_migrations', 'auth_user')
 #: the constant, so that a name dropped from the constant fails these tests.
 _EXACT_NAMES = (
     'schema_version',
+    'mult',
     'cart',
     'import_bundle',
     'param_info',
@@ -38,13 +39,18 @@ _EXACT_NAMES = (
     'definitions__old',
 )
 
-#: One table of each prefix the import creates in any number.
+#: One table of each prefix the import creates in any number, and the two mult tables
+#: the ``mult_`` prefix finds.
 _PREFIXED = (
     'obs_general',
     'obs_pds',
     'obs_surface_geometry__saturn',
-    'mult_obs_general_planet_id',
+    'mult_field',
+    'mult_group',
 )
+
+#: The mult tables, which go last.
+_MULT_TABLES = ('mult', 'mult_field', 'mult_group')
 
 
 class _DroppingDB:
@@ -96,9 +102,11 @@ def test_the_drop_order_follows_the_foreign_keys() -> None:
     assert position['obs_surface_geometry__saturn'] < position['cart']
     for definitions in ('definitions', 'definitions__new', 'definitions__old'):
         assert position['obs_general'] < position[definitions] < position['contexts']
-    assert db.dropped[-1] == 'mult_obs_general_planet_id'
-    assert position['import_bundle'] < position['mult_obs_general_planet_id']
-    assert position['search_results'] < position['mult_obs_general_planet_id']
+    assert sorted(db.dropped[-len(_MULT_TABLES) :]) == sorted(_MULT_TABLES)
+    for mult_table in _MULT_TABLES:
+        assert position['obs_general'] < position[mult_table]
+        assert position['import_bundle'] < position[mult_table]
+        assert position['search_results'] < position[mult_table]
 
 
 def test_an_absent_table_is_not_asked_for() -> None:

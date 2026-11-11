@@ -7,7 +7,7 @@ as the import's process would, through the same code, but records every database
 and log write on its context's `opus_import.deferred.Capture` instead of making it. The
 import's process takes the workers' results in index order and replays each event where
 the serial loop would have produced it -- rebasing the workers' row ids onto the real
-ones, resolving each ``mult_`` value through
+ones, resolving each mult value through
 `opus_import.steps.do_import_mult.update_mult_table` in the serial order, and logging
 each message with the position it was recorded at -- so the tables and the log come out
 the same whatever the number of workers.

@@ -22,7 +22,7 @@ import logging
 
 from django.db import models
 
-from opus_app.apps.tools.import_constants import collation_key
+from opus_support import collation_key
 
 log = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 """The pool computes an index exactly as one process does, without a server.
 
 A stand-in row function exercises everything a real one does that a worker cannot do
-itself -- row ids, ``mult_`` values, a ``mult_list`` column, surface geometry targets,
+itself -- row ids, mult values, a ``mult_list`` column, surface geometry targets,
 log messages deduplicated and not, and a Python warning -- and the index is computed once
 in this process and once across a forked pool. Everything the import's process ends up
 holding must be the same either way.
@@ -23,14 +23,15 @@ import pytest
 from opus_import import cli, deferred, import_util
 from opus_import.context import ImportContext
 from opus_import.deferred import Capture, DeferredJson, LocalId, MultRef
+from opus_import.mult_fields import MultFieldInfo
 from opus_import.steps import do_import_mult, do_import_pool
 
 from .conftest import make_context
 
-#: The ``mult_`` column every stand-in observation fills.
+#: The mult column every stand-in observation fills.
 PLANET = {'field_name': 'planet', 'pi_form_type': 'GROUP'}
 
-#: The ``mult_`` column of the stand-in target's table.
+#: The mult column of the stand-in target's table.
 TARGET = {'field_name': 'target_class', 'pi_form_type': 'GROUP'}
 
 #: The schemas the pool looks a mult event's column up in.
@@ -60,6 +61,30 @@ class _FakeDB:
         assert column == 'id'
         return self.max_ids[table_name]
 
+    @staticmethod
+    def quote_identifier(name: str) -> str:
+        """Quote an identifier."""
+        return f'`{name}`'
+
+    @staticmethod
+    def read_rows(*_args: Any) -> list[Any]:
+        """Return no rows: no mult field holds a value yet."""
+        return []
+
+
+#: The field ids the stand-in mult columns' values carry.
+MULT_FIELDS = {
+    'obs_general.planet': MultFieldInfo(1, pinned=False),
+    'obs_surface_geometry__mimas.target_class': MultFieldInfo(2, pinned=False),
+}
+
+
+def _pool_context() -> ImportContext:
+    """Return a context over the stand-in database, with the field ids read."""
+    ctx = make_context(db=_FakeDB({'obs_general': 100, 'obs_files': 1000}))
+    ctx.mult_fields = dict(MULT_FIELDS)
+    return ctx
+
 
 @dataclass
 class _Index:
@@ -83,7 +108,7 @@ def _compute_row(
         PLANET,
         f'P{index_row_num % 4}',
         f'Planet {index_row_num % 4}',
-        disp_order=f'{index_row_num % 4:03d}',
+        pin=index_row_num % 4,
     )
     if index_row_num % 5 == 0:
         import_util.log_nonrepeating_warning(ctx, 'a fault every fifth row shares')
@@ -104,7 +129,7 @@ def _compute_row(
             TARGET,
             'MOON',
             'Moon',
-            disp_order='a',
+            group_pin=1,
         )
         emit(
             'obs_surface_geometry__mimas',
@@ -126,7 +151,7 @@ def _run(
     workers: int, worker_rows: int = 4, rows: int = 23
 ) -> tuple[ImportContext, list[Any], bool]:
     """Compute the stand-in index with the given pool, returning what the process holds."""
-    ctx = make_context(db=_FakeDB({'obs_general': 100, 'obs_files': 1000}))
+    ctx = _pool_context()
     ctx.current_bundle_id = 'TEST_0001'
     ctx.workers = workers
     ctx.worker_rows = worker_rows
@@ -237,7 +262,7 @@ def test_a_worker_that_fails_abandons_the_index() -> None:
             raise RuntimeError('row nine breaks')
         _compute_row(ctx, index, index_row_num, emit)
 
-    ctx = make_context(db=_FakeDB({'obs_general': 100, 'obs_files': 1000}))
+    ctx = _pool_context()
     ctx.current_bundle_id = 'TEST_0001'
     ctx.workers = 2
     ctx.worker_rows = 4
@@ -316,7 +341,7 @@ def test_a_capturing_context_records_its_log_calls_instead_of_making_them() -> N
 
     assert ctx.logger.messages == []
     assert ctx.import_has_bad_data is False
-    assert ctx.logged_import_errors == []
+    assert ctx.logged_import_errors == set()
     assert ctx.capture.events == [
         ('log', 4, 'DATA/X.LBL', 'error', ('bad %s', 'thing')),
         ('log', 4, 'DATA/X.LBL', 'nonrepeating_error', ('once',)),

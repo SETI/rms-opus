@@ -15,11 +15,10 @@ to mention, and ``obs_files`` is deferred past even those, because it needs the
 ``obs_general`` and ``obs_pds`` rows and contributes many rows per observation rather
 than one.
 
-Nothing is written to the database until every row has been computed. The ``mult_``
-tables go out first, because an ``obs_`` row stores the row id a value was given in its
-``mult_`` table and that row has to exist to be looked up -- by convention rather than by
-a database constraint, since a ``mult_idx`` column carries a plain index and no foreign
-key.
+Nothing is written to the database until every row has been computed. The new ``mult``
+rows go out first, because an ``obs_`` row stores the id a value was given in its mult
+field and that row has to exist to be looked up -- by convention rather than by a database
+constraint, since a ``mult_idx`` column carries no foreign key.
 
 These are the per-index internals of `opus_import.steps.do_import`, not a step of their
 own.
@@ -376,9 +375,9 @@ def import_one_index(
     ctx.current_index_row_number = None
     ctx.current_primary_filespec = None
 
-    # The mult tables go out before the last of the rows: an obs_ row holds the id its
-    # value was given in the mult_ table, so that row has to be there to be looked up.
-    # Nothing enforces it -- a mult_idx column is a plain index, not a foreign key.
+    # The mult rows go out before the last of the rows: an obs_ row holds the id its
+    # value was given in its mult field, so that row has to be there to be looked up.
+    # Nothing enforces it -- a mult_idx column carries no foreign key.
     do_import_mult.write_mult_tables(ctx)
     sink.finish()
 

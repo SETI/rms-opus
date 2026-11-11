@@ -1,15 +1,19 @@
-"""Read, cache and write the ``mult_`` tables holding the ``obs_`` columns' values.
+"""Read, cache and write the ``mult`` rows holding the ``obs_`` columns' values.
 
-A column whose values come from a fixed set stores a row id into a ``mult_`` table
-rather than the value itself, and that table carries how the web application should
-present each value: its label, its sort key, whether it is displayed, and which group it
-belongs to. A value the import has never seen before is appended to the table as it is
-encountered, which is why the tables are built alongside the observations rather than
-ahead of them.
+A column whose values come from a fixed set stores the id of a ``mult`` row rather than
+the value itself, and that row carries how the web application presents the value: its
+label, its pin, whether it is displayed, and which group it belongs to. The column's
+values form one mult field (`opus_import.mult_fields`), whose rows the import reads by
+``field_id``. A value the import has never seen before is added to its field as it is
+encountered, which is why the rows are written alongside the observations rather than
+ahead of them. The import computes no order: finalization ranks every field's values
+(`opus_import.steps.do_finalize_mult`).
 
-Every table is read once per bundle into `opus_import.context.ImportContext`'s cache and
-written back at the end of the bundle, so importing an index of a hundred thousand rows
-does not query for the same enumeration a hundred thousand times.
+Every field is read once per bundle into `opus_import.context.ImportContext`'s cache and
+its new rows written at the end of the bundle, so importing an index of a hundred thousand
+rows does not query for the same value a hundred thousand times. A field's cache finds a
+value through a dictionary keyed as the server's collation compares the stored value, so a
+lookup costs the same however many values the field holds.
 
 These are the mult-handling internals of `opus_import.steps.do_import`, not a step of
 their own.
@@ -17,154 +21,231 @@ their own.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-import opus_support
-from opus_import import import_util
+from opus_import import import_util, mult_fields
+from opus_import.mult_fields import MULT_GROUP_TABLE, MULT_TABLE
+from opus_support import collation_key
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from opus_import.context import ImportContext
 
 MultRow = dict[str, Any]
-"""One row of a ``mult_`` table: a value, its id, and how it is presented."""
+"""One ``mult`` row: ``id``, ``value``, ``label``, ``pin``, ``display`` and ``grouping``."""
+
+#: The columns of ``mult`` the import reads and writes; ``field_id`` is added on writing,
+#: and ``disp_rank`` is finalization's.
+MULT_ROW_COLUMNS = ('id', 'value', 'label', 'pin', 'display', 'grouping')
+
+#: The value a field stores for an absent value. A unique key does not deduplicate
+#: NULLs, so the absent value is the empty string, never NULL.
+ABSENT_VALUE = ''
+
+#: The label of the absent value when a field has to be given one.
+ABSENT_LABEL = 'N/A'
+
+#: The largest id ``mult.id`` and the observation columns that hold it can store, a
+#: ``SMALLINT UNSIGNED``.
+MAX_MULT_ID = 65_535
 
 
-def _mult_table_column_names() -> list[str]:
-    """Return the list of columns every mult table has.
+class MultIdOverflowError(ValueError):
+    """A field has run out of ids: a new value would need one above `MAX_MULT_ID`."""
 
-    Every mult table has the same columns, the grouping pair included; they are not
-    added for the ``*_target_name`` tables alone.
 
-    Returns:
-        The column names, in the order the tables are read and written in.
+@dataclass
+class MultFieldCache:
+    """One mult field's rows, as the import holds them while it imports a bundle.
+
+    Attributes:
+        name: The field's qualified name.
+        field_id: The field's ``mult_field`` id.
+        pinned: Whether the field's values are its column's ``mult_options``.
+        rows: Every row, in the order it was read or added.
+        by_value: The rows keyed by the `opus_support.collation_key` of their value, so a
+            value the server would call equal to a stored one finds it; where two rows
+            share a key, the first.
+        max_id: The highest id among the rows, or -1 for a field with none.
+        groups: Each group's pin, keyed by the `collation_key` of its name.
+        new_rows: The rows this bundle added, which are written at its end.
+        new_groups: The groups this bundle added, as ``mult_group`` rows.
+        overridden: The `collation_key` of every value the column's ``mult_overrides``
+            presents, whose stored presentation finalization sets.
     """
 
-    return [
-        'id',
-        'value',
-        'label',
-        'disp_order',
-        'display',
-        'grouping',
-        'group_disp_order',
-        'aliases',
-    ]
+    name: str
+    field_id: int
+    pinned: bool
+    rows: list[MultRow] = field(default_factory=list)
+    by_value: dict[str, MultRow] = field(default_factory=dict)
+    max_id: int = -1
+    groups: dict[str, int | None] = field(default_factory=dict)
+    new_rows: list[MultRow] = field(default_factory=list)
+    new_groups: list[dict[str, Any]] = field(default_factory=list)
+    overridden: frozenset[str] = frozenset()
+
+    def remember(self, row: MultRow) -> None:
+        """Add a row read from the database or the schema to the cache.
+
+        Parameters:
+            row: The row, keyed by `MULT_ROW_COLUMNS`.
+        """
+        self.rows.append(row)
+        self.by_value.setdefault(collation_key(row['value']), row)
+        self.max_id = max(self.max_id, row['id'])
+
+    def remember_group(self, grouping: str, group_pin: int | None) -> None:
+        """Add a group read from the database or the schema to the cache.
+
+        Parameters:
+            grouping: The group's name.
+            group_pin: The group's pin, or None.
+        """
+        self.groups.setdefault(collation_key(grouping), group_pin)
+
+    def find(self, value: str) -> MultRow | None:
+        """Return the row a value is stored under, or None if the field has none.
+
+        Parameters:
+            value: The value, as it would be stored.
+
+        Returns:
+            The first row whose value the server's collation calls equal to it.
+        """
+        return self.by_value.get(collation_key(value))
 
 
-def _convert_sql_response_to_mult_table(rows: Sequence[Sequence[Any]]) -> list[MultRow]:
-    """Convert queried or preprogrammed mult rows into the internal representation.
+def _stored_value(val: Any) -> str:
+    """Return a value in the form a ``mult`` row stores it.
 
     Parameters:
-        rows: The rows, each holding the columns `_mult_table_column_names` names, in
-            that order. A row of seven values instead of eight is a preprogrammed
-            ``mult_options`` entry from a table schema, which carries no aliases; the
-            other seven are `opus_import.import_util.MultOption` either way.
+        val: The value an obs class computed, or None.
 
     Returns:
-        One dictionary per row, keyed by column name, with the label rendered as a
-        string and a missing aliases column filled in as None.
+        The value as a string; `ABSENT_VALUE` for None.
+    """
+    return ABSENT_VALUE if val is None else str(val)
+
+
+def _option_rows(column: dict[str, Any]) -> list[tuple[MultRow, int | None]]:
+    """Return a pinned column's ``mult_options`` as rows, each with its group's pin.
+
+    Parameters:
+        column: The column's schema entry, which carries ``mult_options``.
+
+    Returns:
+        One row per entry, in the entry's order, beside the group pin it gives.
 
     Raises:
-        TypeError: If a row carries neither seven nor eight values, since it then names
-            neither shape.
+        TypeError: If an entry is not the shape `opus_import.import_util.read_mult_option`
+            accepts.
     """
-    mult_rows = []
-    for row in rows:
-        aliases: Any = None
-        if len(row) == 8:
-            *option_values, aliases = row
-        else:
-            # preprogrammed mult options list doesn't have aliases field
-            option_values = list(row)
-        option = import_util.MultOption(*option_values)
-
-        row_dict = {
+    rows = []
+    for entry in column['mult_options']:
+        option = import_util.read_mult_option(entry)
+        row = {
             'id': option.id,
-            'value': option.value,
+            'value': _stored_value(option.value),
             'label': str(option.label),
-            'aliases': aliases,
-            'disp_order': option.disp_order,
+            'pin': option.pin,
             'display': option.display,
             'grouping': option.grouping,
-            'group_disp_order': option.group_disp_order,
         }
-        mult_rows.append(row_dict)
-    return mult_rows
+        rows.append((row, option.group_pin))
+    return rows
 
 
 def read_or_create_mult_table(
-    ctx: ImportContext, mult_table_name: str, table_column: dict[str, Any]
-) -> list[MultRow]:
-    """Return a mult table's rows, reading them into the cache the first time.
+    ctx: ImportContext, field_name: str, table_column: dict[str, Any]
+) -> MultFieldCache:
+    """Return a mult field's rows, reading them into the cache the first time.
 
     A column whose schema carries ``mult_options`` has its values fixed there, so those
-    are used and the table is marked for writing. Otherwise the rows come from the
-    table, and a table that does not exist yet starts out with no rows, which the import
-    fills as it meets values.
+    are used and the field is marked for writing. Otherwise the rows come from ``mult``,
+    and a field with no rows yet starts out empty, which the import fills as it meets
+    values. The first call of a run numbers the fields (`opus_import.mult_fields`).
 
     Parameters:
         ctx: The import run's context, for the open database, the caches and the
             arguments.
-        mult_table_name: The mult table.
-        table_column: The definition of the column the table belongs to.
+        field_name: The field's qualified name.
+        table_column: The definition of a column whose values are the field's.
 
     Returns:
-        The table's rows, which are the cache itself -- appending to the returned list is
-        how `update_mult_table` adds a value.
+        The field's cache itself: adding to it is how `update_mult_table` adds a value.
+
+    Raises:
+        KeyError: If no packaged schema declares the field.
     """
-    if mult_table_name in ctx.mult_table_cache:
-        return ctx.mult_table_cache[mult_table_name]
+    if field_name in ctx.mult_table_cache:
+        return ctx.mult_table_cache[field_name]
 
-    if 'mult_options' in table_column:
-        if not ctx.args.suppress_mult_messages:
-            import_util.log_debug(ctx, f'Using preprogrammed mult table "{mult_table_name}"')
-        mult_rows = _convert_sql_response_to_mult_table(table_column['mult_options'])
-        ctx.mult_table_cache[mult_table_name] = mult_rows
-        ctx.modified_mult_tables.add(mult_table_name)
-        return mult_rows
-
+    info = mult_fields.ensure_mult_fields(ctx)[field_name]
+    cache = MultFieldCache(
+        field_name,
+        info.field_id,
+        pinned='mult_options' in table_column,
+        overridden=frozenset(
+            collation_key(_stored_value(override['value']))
+            for override in table_column.get('mult_overrides', [])
+        ),
+    )
     db = ctx.db
     assert db is not None
-    if db.table_exists(mult_table_name):
-        if not ctx.args.suppress_mult_messages:
-            import_util.log_debug(ctx, f'Reading from mult table "{mult_table_name}"')
-        rows = db.read_rows(mult_table_name, _mult_table_column_names())
-        mult_rows = _convert_sql_response_to_mult_table(rows)
-        ctx.mult_table_cache[mult_table_name] = mult_rows
-        return mult_rows
 
-    empty_rows: list[MultRow] = []
-    ctx.mult_table_cache[mult_table_name] = empty_rows
-    return empty_rows
+    if cache.pinned:
+        if not ctx.args.suppress_mult_messages:
+            import_util.log_debug(ctx, f'Using preprogrammed mult field "{field_name}"')
+        for row, group_pin in _option_rows(table_column):
+            cache.remember(row)
+            if row['grouping'] is not None:
+                cache.remember_group(row['grouping'], group_pin)
+                cache.new_groups.append(_group_row(cache, row['grouping'], group_pin))
+            cache.new_rows.append(row)
+        ctx.modified_mult_tables.add(field_name)
+    else:
+        if not ctx.args.suppress_mult_messages:
+            import_util.log_debug(ctx, f'Reading mult field "{field_name}"')
+        q = db.quote_identifier
+        in_field = f'{q("field_id")}=%s'
+        for values in db.read_rows(
+            MULT_TABLE, MULT_ROW_COLUMNS, f'{in_field} ORDER BY {q("id")}', [info.field_id]
+        ):
+            cache.remember(dict(zip(MULT_ROW_COLUMNS, values, strict=True)))
+        for grouping, group_pin in db.read_rows(
+            MULT_GROUP_TABLE, ['grouping', 'group_pin'], in_field, [info.field_id]
+        ):
+            cache.remember_group(grouping, group_pin)
+
+    ctx.mult_table_cache[field_name] = cache
+    return cache
+
+
+def _group_row(cache: MultFieldCache, grouping: str, group_pin: int | None) -> dict[str, Any]:
+    """Return the ``mult_group`` row of one group of a field."""
+    return {'field_id': cache.field_id, 'grouping': grouping, 'group_pin': group_pin}
 
 
 def mult_table_lookup_id(
     ctx: ImportContext, table_name: str, field_name: str, table_column: dict[str, Any], val: Any
-) -> Any:
-    """Return the id a mult table already gives a value, without adding it.
+) -> int | None:
+    """Return the id a mult field already gives a value, without adding it.
 
     Parameters:
         ctx: The import run's context, for the open database and the caches.
         table_name: The observation table the column belongs to.
         field_name: The column.
         table_column: The definition of that column.
-        val: The value to look up. It is compared as a string, which is how mult tables
-            store their values; None matches a row whose value is None.
+        val: The value to look up. It is compared as a string, as the server's collation
+            compares the stored value; None matches the absent value.
 
     Returns:
-        The row id, or None if the table has no row for that value.
+        The row id, or None if the field has no row for that value.
     """
-    mult_table_name = import_util.table_name_mult(table_name, field_name)
-    mult_table = read_or_create_mult_table(ctx, mult_table_name, table_column)
-    if val is not None:
-        val = str(val)
-    for entry in mult_table:
-        if entry['value'] == val:
-            # The value is already in the mult table, so we're done here
-            return entry['id']
-    return None
+    name = import_util.mult_field_name(table_name, field_name, table_column)
+    row = read_or_create_mult_table(ctx, name, table_column).find(_stored_value(val))
+    return None if row is None else int(row['id'])
 
 
 def update_mult_table(
@@ -174,21 +255,22 @@ def update_mult_table(
     table_column: dict[str, Any],
     val: Any,
     label: Any,
-    aliases: str | None = None,
     disp: str = 'Y',
-    disp_order: Any = None,
+    pin: int | None = None,
     grouping: str | None = None,
-    group_disp_order: Any = None,
+    group_pin: int | None = None,
 ) -> Any:
-    """Return the id a mult table gives a value, adding a row for it if it is new.
+    """Return the id a mult field gives a value, adding a row for it if it is new.
 
-    A new row is appended to the cached table and the table is marked for writing at the
-    end of the bundle. When no ``disp_order`` is given, one is made up so that the web
-    application's ordering is sensible without every schema having to state it: the
-    values are sorted numerically if they all parse as numbers or the column has a unit,
-    and ``Yes`` sorts before ``No`` and ``On`` before ``Off``. The absent-value labels
-    sort to the end, ``None`` then ``N/A`` then ``NULL`` -- but only for a column with no
-    unit, since a column that has one sorts them by their own text instead.
+    A new row is added to the field's cache, numbered one above the field's highest id,
+    and written at the end of the bundle. Nothing here orders the values: finalization
+    ranks them.
+
+    A value the field already holds keeps its row. When the field is not pinned, the
+    column's ``mult_overrides`` does not present the value, and the incoming label,
+    display or grouping differs from the stored row's, the stored row stays and a
+    warning, logged once a run, names the field, the value and both labels, and points at
+    ``mult_overrides`` as the way to set the stored presentation.
 
     Parameters:
         ctx: The import run's context, for the open database, the caches and the
@@ -196,149 +278,135 @@ def update_mult_table(
         table_name: The observation table the column belongs to.
         field_name: The column.
         table_column: The definition of that column.
-        val: The value to find or add. It is stored as a string.
-        label: How the value is shown to users. It is rendered with ``str``, so None
-            becomes ``'None'`` and sorts with the other absent-value labels; a caller
-            that wants ``'N/A'`` passes it.
-        aliases: Other spellings a search should accept for this value.
+        val: The value to find or add. It is stored as a string, and None as the absent
+            value, the empty string.
+        label: How the value is shown to users. It is rendered with ``str``.
         disp: ``'Y'`` to show the value in the search form, ``'N'`` to hide it.
-        disp_order: The sort key, or None to derive one as described above.
+        pin: The value's pin, or None.
         grouping: The group the value belongs to in the search form, or None.
-        group_disp_order: The group's sort key, or None to sort groups by name.
+        group_pin: The group's pin, or None.
 
     Returns:
-        The row id -- the existing one if the table already had the value, the new one if
-        a row was added, and 0 if the value is missing from a preprogrammed table, which
-        is reported as an error because such a table cannot be added to. In a pool
-        worker, the `opus_import.deferred.MultRef` standing for the call, which the
-        import's process makes where the serial loop would have.
+        The row id. A value missing from a pinned field is an error, logged once a run,
+        which fails the bundle; the row is given the id of the field's absent value,
+        which is added if the field lacks one, so an import run with
+        ``--ignore-errors`` carries on. In a pool worker, the
+        `opus_import.deferred.MultRef` standing for the call, which the import's process
+        makes where the serial loop would have.
+
+    Raises:
+        MultIdOverflowError: If a new value would need an id above `MAX_MULT_ID`. The
+            message names the field.
     """
     if ctx.capture is not None:
-        values = (val, label, aliases, disp, disp_order, grouping, group_disp_order)
+        values = (val, label, disp, pin, grouping, group_pin)
         position = (ctx.current_index_row_number, ctx.current_primary_filespec)
         return ctx.capture.mult(position, table_name, field_name, values)
-    mult_table_name = import_util.table_name_mult(table_name, field_name)
-    mult_table = read_or_create_mult_table(ctx, mult_table_name, table_column)
-    if val is not None:
-        val = str(val)
-    for entry in mult_table:
-        if entry['value'] == val:
-            # The value is already in the mult table, so we're done here
-            return entry['id']
-
-    if 'mult_options' in table_column:
-        import_util.log_nonrepeating_error(
-            ctx, f'Unable to add value "{val}" to preprogrammed mult table "{mult_table_name}"'
-        )
-        return 0
-
+    name = import_util.mult_field_name(table_name, field_name, table_column)
+    cache = read_or_create_mult_table(ctx, name, table_column)
+    value = _stored_value(val)
     label = str(label)
 
-    if disp_order is None:
-        # No disp_order specified, so make one up
-        # Update the display_order
-        (_form_type, _form_type_format, form_type_unit_id) = opus_support.parse_form_type(
-            table_column['pi_form_type']
+    existing = cache.find(value)
+    if existing is not None:
+        if (not cache.pinned and collation_key(value) not in cache.overridden) and (
+            existing['label'] != label
+            or existing['display'] != disp
+            or existing['grouping'] != grouping
+        ):
+            import_util.log_nonrepeating_warning(
+                ctx,
+                f'Mult field "{name}" holds value "{value}" as "{existing["label"]}" '
+                f'(display {existing["display"]}, grouping {existing["grouping"]}); the '
+                f'stored row stays, and "{label}" (display {disp}, grouping {grouping}) is '
+                "ignored. A mult_overrides entry in the column's schema sets the label",
+            )
+        return existing['id']
+
+    if cache.pinned:
+        import_util.log_nonrepeating_error(
+            ctx, f'Unable to add value "{value}" to preprogrammed mult field "{name}"'
         )
-        parse_func = opus_support.get_single_parse_function(form_type_unit_id)
+        absent = cache.find(ABSENT_VALUE)
+        if absent is not None:
+            return absent['id']
+        return _add_value(ctx, cache, ABSENT_VALUE, ABSENT_LABEL, 'Y', None, None, None)
 
-        # See if all values in the mult table are numeric
-        all_numeric = True
-        for row in mult_table:
-            if (
-                row['label'] is None
-                or str(row['label']).upper() == 'NONE'
-                or str(row['label']).upper() == 'NULL'
-            ):
-                continue
-            try:
-                float(row['label'])
-            except ValueError:
-                all_numeric = False
-                break
-        try:
-            float(label)
-        except ValueError:
-            all_numeric = False
+    return _add_value(ctx, cache, value, label, disp, pin, grouping, group_pin)
 
-        # Null always comes last. N/A always comes before that.
-        # None always comes before that.
-        # Yes comes before No. On comes before Off.
-        if label in [None, 'NULL', 'Null']:
-            if parse_func is not None:
-                disp_order = label
-            else:
-                disp_order = 'zzz' + str(label)
-        elif label == 'N/A':
-            if parse_func is not None:
-                disp_order = label
-            else:
-                disp_order = 'zzy' + str(label)
-        elif label in ['NONE', 'None']:
-            if parse_func is not None:
-                disp_order = label
-            else:
-                disp_order = 'zzx' + str(label)
-        elif parse_func:
-            try:
-                disp_order = f'{parse_func(str(val)):030.9f}'
-            except Exception as e:
-                import_util.log_nonrepeating_error(
-                    ctx, f'Unable to parse "{label}" for unit type "{form_type_unit_id}": {e}'
-                )
-                disp_order = label
-        elif all_numeric:
-            disp_order = f'{float(label):20.9f}'
-        elif label in ('Yes', 'On'):
-            disp_order = 'zzAYes'
-        elif label in ('No', 'Off'):
-            disp_order = 'zzBNo'
-        else:
-            disp_order = label
 
-    if isinstance(disp_order, (int, float)):
-        disp_order = f'{disp_order:030.9f}'
-    if len(mult_table) == 0:
-        next_id = 0
-    else:
-        next_id = max([x['id'] for x in mult_table]) + 1
-    if label is None:
-        label = 'N/A'
+def _add_value(
+    ctx: ImportContext,
+    cache: MultFieldCache,
+    value: str,
+    label: str,
+    disp: str,
+    pin: int | None,
+    grouping: str | None,
+    group_pin: int | None,
+) -> int:
+    """Add a value to a field's cache, and its group if the field lacks it.
 
-    # If we didn't specify the group_disp_order, we will order groups
-    # alphabetically
-    if grouping is not None and group_disp_order is None:
-        group_disp_order = grouping
+    Parameters:
+        ctx: The import run's context, for the arguments and the modified fields.
+        cache: The field's cache.
+        value: The value as stored.
+        label: Its label.
+        disp: Its display.
+        pin: Its pin, or None.
+        grouping: Its group, or None.
+        group_pin: The group's pin, or None.
 
-    new_entry = {
+    Returns:
+        The new row's id.
+
+    Raises:
+        MultIdOverflowError: If the id would exceed `MAX_MULT_ID`.
+    """
+    next_id = cache.max_id + 1
+    if next_id > MAX_MULT_ID:
+        raise MultIdOverflowError(
+            f'Mult field "{cache.name}" has no id left for value "{value}": its ids '
+            f'are a SMALLINT UNSIGNED, whose largest is {MAX_MULT_ID}'
+        )
+    row = {
         'id': next_id,
-        'value': val,
+        'value': value,
         'label': label,
-        'aliases': aliases,
-        'disp_order': disp_order,
-        'display': disp,  # default display: 'Y'
+        'pin': pin,
+        'display': disp,
         'grouping': grouping,
-        'group_disp_order': group_disp_order,
     }
-    mult_table.append(new_entry)
-
-    ctx.modified_mult_tables.add(mult_table_name)
+    cache.remember(row)
+    cache.new_rows.append(row)
+    if grouping is not None and collation_key(grouping) not in cache.groups:
+        cache.remember_group(grouping, group_pin)
+        cache.new_groups.append(_group_row(cache, grouping, group_pin))
+    ctx.modified_mult_tables.add(cache.name)
     if not ctx.args.suppress_mult_messages:
         import_util.log_info(
-            ctx, f'Added new value "{val}" ("{label}") to mult table ' + f'"{mult_table_name}"'
+            ctx, f'Added new value "{value}" ("{label}") to mult field "{cache.name}"'
         )
-
     return next_id
 
 
 def write_mult_tables(ctx: ImportContext) -> None:
-    """Write every mult table this bundle changed out to the database.
+    """Write the rows and groups this bundle added to its fields out to the database.
+
+    A pinned field's rows are written whole, and an existing row of one takes the
+    schema's presentation; an unpinned field's new rows are inserted. Neither touches a
+    row's ``disp_rank``, which finalization computes.
 
     Parameters:
         ctx: The import run's context, for the open database and the caches.
     """
     db = ctx.db
     assert db is not None
-    for mult_table_name in sorted(ctx.modified_mult_tables):
-        import_util.log_debug(ctx, f'Writing mult table "{mult_table_name}"')
-        db.upsert_rows(mult_table_name, 'id', ctx.mult_table_cache[mult_table_name])
+    for name in sorted(ctx.modified_mult_tables):
+        cache = ctx.mult_table_cache[name]
+        import_util.log_debug(ctx, f'Writing mult field "{name}"')
+        rows = [{'field_id': cache.field_id, **row} for row in cache.new_rows]
+        db.upsert_rows(MULT_TABLE, 'id', rows)
+        db.upsert_rows(MULT_GROUP_TABLE, 'grouping', cache.new_groups)
+        cache.new_rows = []
+        cache.new_groups = []

@@ -154,8 +154,11 @@ if ! ${NO_DATABASE}; then
     # the release's own configuration, so a release that renamed a field or moved it
     # between categories describes itself correctly against the database it inherited.
     # Each is built beside the live table and swapped in, so the running workers never
-    # find one missing or partly filled.
-    opus_import --create-param-info --create-partables --create-table-names --import-dictionary
+    # find one missing or partly filled. --update-mult-info writes the release's
+    # mult_options and mult_overrides over the mult rows in place, so a release that
+    # renames a value shows the new label once the restarts below reload the workers;
+    # it changes no id, so the rebuilt partables, which hold ids, do not depend on it.
+    opus_import --create-param-info --create-partables --create-table-names --import-dictionary --update-mult-info
 fi
 
 source ${IMPORT_SCRIPT_DIR}/_promote.sh

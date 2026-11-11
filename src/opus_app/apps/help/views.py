@@ -42,12 +42,13 @@ from django.shortcuts import render
 from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
 
-from opus_app.apps.search.models import MultObsGeneralInstrumentId, ObsGeneral
+from opus_app.apps.search.models import ObsGeneral
 from opus_app.apps.tools.app_utils import (
     api_view,
     get_git_version,
     http404_no_request,
 )
+from opus_app.apps.tools.import_constants import mult_table
 
 log = logging.getLogger(__name__)
 
@@ -128,15 +129,14 @@ def api_bundles(request: HttpRequest, fmt: str) -> HttpResponse:
         raise Http404(http404_no_request(f'/__help/bundles.{fmt}'))
 
     all_bundles: dict[str, list[str]] = {}
+    instruments = mult_table('obs_general.instrument_id')
     for d in (
         ObsGeneral.objects.values('instrument_id', 'bundle_id')
         .order_by('instrument_id', 'bundle_id')
         .distinct()
     ):
-        instrument_name = MultObsGeneralInstrumentId.objects.values('label').filter(
-            id=d['instrument_id']
-        )
-        all_bundles.setdefault(instrument_name[0]['label'], []).append(d['bundle_id'])
+        instrument_name = instruments.rows[d['instrument_id']].label
+        all_bundles.setdefault(instrument_name, []).append(d['bundle_id'])
     joined_bundles: dict[str, str] = {}
     for k, _v in all_bundles.items():
         joined_bundles[k] = ', '.join(all_bundles[k])

@@ -322,7 +322,7 @@ def api_get_mult_counts(
         try:
             mult_rows = mult_table(param_qualified_name).rows
         except LookupError:  # pragma: no cover - configuration error
-            log.exception('api_get_mult_counts: No mult table for %r', param_qualified_name)
+            log.exception('api_get_mult_counts: No mult field %r', param_qualified_name)
             return HttpResponseServerError(http500_internal_error(request))
 
         try:
@@ -400,7 +400,8 @@ def api_get_mult_counts(
                 )
                 return HttpResponseServerError(http500_internal_error(request))
 
-            mult_result_list.append((mult.disp_order, (mult.label, row[1])))
+            mult_result_list.append((mult.disp_rank, (mult.label, row[1])))
+        # The rank is an integer, unique within the field, so the sort is total.
         mult_result_list.sort()
 
         mults = {}  # info to return

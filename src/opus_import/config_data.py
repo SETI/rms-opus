@@ -7,7 +7,7 @@ and so on. Everything is a plain module-level constant; the import reads them an
 writes them.
 """
 
-# param_info form types that invoke mult_ tables
+# param_info form types whose columns hold the ids of mult rows
 GROUP_FORM_TYPES = ['GROUP', 'MULTIGROUP']
 
 # A list of all tables we populate, in order, for each observation index row.
