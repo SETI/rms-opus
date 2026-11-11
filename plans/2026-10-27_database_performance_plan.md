@@ -6586,4 +6586,21 @@ Nothing above this line is rewritten by an executor.
   - Skipped: the double fatal log of a lost lock found during a claim. `retrying` logs
     only an `ImportDBError`, `LostImporterError` is not one, and the lock connection has
     no logger, so the claim path logs it once, in `import_from_queue`.
-  - Results: the gates pass (2,947 unit tests).
+  - *PR-16's final head (97be1c93)* was merged after these fixes. Its failed-bundle path
+    (delete under the hold, then `failed` if `bundle_registry.holds`) is
+    `do_recover.release_bundle` here, which deletes under the `process_id`-checked row
+    lock and marks `failed` in the same hold, so `holds` is dropped and PR-16's ordering
+    test runs against `release_bundle`.
+  - *Module size.* The coordinator, its table, `start_importer` and `--status` moved to
+    `opus_import.coordinator` (744 lines), leaving `opus_import.import_all` (776) the
+    command line, the division and the steps; `import_all._open_db` is
+    `open_target_db`, which both use. Its unit tests moved to
+    `tests/opus_import/test_coordinator.py`.
+  - The fresh-schema case first failed only on its own assertion, naming the coordinator's
+    exited importer (row 1) for the killed one (row 2); it names the running row. With
+    both table rereads (the delete's and the recovery's) reverted it fails with 7
+    `obs_files` rows left; with either one alone it passes.
+  - Results, on the merged and split head: the gates pass (2,954 unit tests); the import
+    suite 182 passed and 3 skipped; the goldens regenerate with no diff; the lock-case
+    mutation (the chunk's lock check removed) fails as it should; the integration suite
+    1,591 passed against `pr16alocal`, imported again at this head.
