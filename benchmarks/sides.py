@@ -204,6 +204,19 @@ class Side:
             raise SideError(f'{self.python} -m opus_import --help failed:\n{finished.stderr}')
         return finished.stdout
 
+    def has_coordinator(self) -> bool:
+        """Return whether the side's ``opus_import_all`` starts and divides importers.
+
+        Returns:
+            True when ``python -m opus_import.import_all --help`` succeeds and lists both
+            ``--importers`` and ``--sets``, which a run under the coordinator gives it;
+            False for a side without the module or without either option.
+        """
+        finished = self.run(['-m', 'opus_import.import_all', '--help'])
+        if finished.returncode != 0:
+            return False
+        return {'--importers', '--sets'} <= listed_options(finished.stdout)
+
 
 def listed_options(help_text: str) -> frozenset[str]:
     """Return every option string a help text shows as a whole token.
