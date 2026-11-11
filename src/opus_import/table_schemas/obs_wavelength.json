@@ -272,8 +272,8 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,   "LINEAR",   "Linear",      10, "Y", null, null],
-              [   1,     "NONE",     "None",      20, "Y", null, null]
+              [   0,   "LINEAR",   "Linear",   "010", "Y", null, null],
+              [   1,     "NONE",     "None",   "020", "Y", null, null]
           ]
     },
     {
