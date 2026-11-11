@@ -479,8 +479,8 @@ def test_every_bundle_done_and_no_importer_alive_lets_it_finish() -> None:
 
 
 def test_an_importer_alive_on_another_computer_is_waited_for() -> None:
-    """A joined computer's importer holds a bundle: not over yet."""
-    snapshot = Snapshot((_bundle('A', 'importing', 2),), (_process(2, alive=True),))
+    """A joined computer's importer is alive, between bundles: not over yet."""
+    snapshot = Snapshot((_bundle('A', 'done', 2),), (_process(2, alive=True),))
     assert _coordinator()._settle(snapshot) is None
 
 

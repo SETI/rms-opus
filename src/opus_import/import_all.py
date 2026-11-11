@@ -631,7 +631,7 @@ class Coordinator:
         Parameters:
             workers: Its workers.
         """
-        if self._starts_left <= 0 or self.interrupts:
+        if self._starts_left <= 0:
             return
         self._starts_left -= 1
         arguments = importer_step(self.schema, workers, self.extra_options, self.sets)

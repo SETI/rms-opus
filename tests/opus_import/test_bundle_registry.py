@@ -153,6 +153,11 @@ class _RegistryDB:
         finally:
             self.events.append('checks on')
 
+    @staticmethod
+    def named_lock_holder(name: str) -> int | None:
+        """Report every named lock free."""
+        return None
+
     def close(self) -> None:
         """Record the connection closing."""
         self.events.append('close')
@@ -568,6 +573,8 @@ def test_requeue_returns_only_failed_and_importing_bundles(
     """Any other bundle named refuses the whole requeue, which then changes nothing."""
     states = {'B_1': 'done', 'B_2': 'pending', 'B_3': 'failed', 'B_4': 'importing'}
     db = _RegistryDB({'import_bundle': _registry(states)})
+    # Imported by importer 3, whose lock is free.
+    db.tables['import_bundle'][3]['process_id'] = 3
     succeeded, _ctx = _run(db, named, monkeypatch, do_import=False, requeue=True)
     assert succeeded is returned
     if returned:
@@ -717,16 +724,14 @@ def test_requeue_refuses_a_bundle_whose_importer_holds_its_lock(
     db = _RegistryDB({'import_bundle': _registry(states)})
     db.tables['import_bundle'][1]['process_id'] = 5
     alive = import_processes.importer_lock_name(db.db_schema, 5)
-    monkeypatch.setattr(
-        db, 'named_lock_holder', lambda name: 77 if name == alive else None, raising=False
-    )
+    monkeypatch.setattr(db, 'named_lock_holder', lambda name: 77 if name == alive else None)
     succeeded, ctx = _run(db, ['B_3', 'B_4'], monkeypatch, do_import=False, requeue=True)
     assert not succeeded
     assert db.states() == states
     (fatal,) = ctx.logger.messages_at('fatal')
     assert 'B_4 (importing under importer 5, which holds its lock)' in fatal
 
-    monkeypatch.setattr(db, 'named_lock_holder', lambda name: None, raising=False)
+    monkeypatch.setattr(db, 'named_lock_holder', lambda name: None)
     succeeded, _ctx = _run(db, ['B_3', 'B_4'], monkeypatch, do_import=False, requeue=True)
     assert succeeded
     assert db.states() == {'B_3': 'pending', 'B_4': 'pending'}
