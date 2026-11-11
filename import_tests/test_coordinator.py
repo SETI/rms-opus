@@ -420,10 +420,13 @@ def test_a_recovery_deletes_rows_in_tables_created_after_it_connected(case: Case
     importer = case.start('opus_import', ['--join'], fault=hold)
 
     def committed() -> int | None:
-        """The importer's ``process_id``, once a chunk of the bundle is committed."""
-        found = case.importers()
-        rows = found and case.has('obs_files') and case.rows('SELECT COUNT(*) FROM obs_files')[0][0]
-        return found[0][0] if rows else None
+        """The running importer's ``process_id``, once a chunk of the bundle is committed;
+        the coordinator's own importer, which exited, has a row too."""
+        running = [p for p, _pid, state in case.importers() if state == 'running']
+        rows = (
+            running and case.has('obs_files') and case.rows('SELECT COUNT(*) FROM obs_files')[0][0]
+        )
+        return running[0] if rows else None
 
     process_id = _wait(committed, "the bundle's first chunk")
     importer.kill()
