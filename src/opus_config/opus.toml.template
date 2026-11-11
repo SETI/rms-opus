@@ -201,6 +201,22 @@ cpu_fraction = 0.75
 # default is the value below.
 worker_rows = 500
 
+# How many importers opus_import_all starts on this computer, each an opus_import
+# process drawing bundles from one queue. Its total of workers (opus_import_all
+# --workers, or workers above) is divided among them, and they are capped at that
+# total. opus_import_all --importers replaces it for one run. Optional; the default is
+# the value below.
+importers = 1
+
+# The minutes an importer that is alive may go without committing a chunk of rows
+# before opus_import_all reports it as stalled. It is never stopped for it. Optional;
+# the default is the value below.
+stall_warning_minutes = 30
+
+# The minutes between opus_import_all's totals lines when its output is not a
+# terminal, as under nohup. Optional; the default is the value below.
+status_interval_minutes = 5
+
 # A directory on the database server's host, writable by mysqld, where the server
 # sorts the indexes finalization builds, when its own temporary directory is too
 # small. It names a path on the server, not on the computer running the import.

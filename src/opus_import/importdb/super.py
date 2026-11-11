@@ -24,7 +24,7 @@ import weakref
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 from opus_config.config import DEFAULT_TRANSACTION_ROWS
 
@@ -57,6 +57,37 @@ The parameter list is left open because the two sides of that assignment disagre
 it: the warnings machinery always passes six arguments, while the standard library's own
 handler makes the last two optional. Naming either shape would reject the other.
 """
+
+
+class LoadGuard(Protocol):
+    """What a bulk load runs in each chunk's transaction, around the chunk's rows.
+
+    An importer drawing bundles from the queue passes one to
+    `ImportDBSuper.bulk_load_rows`, so that a chunk commits only while the importer still
+    holds its bundle and its lock (`opus_import.import_processes.BundleGuard`).
+    """
+
+    def begin(self, db: ImportDBSuper, table_name: str, row_count: int) -> None:
+        """Run the chunk transaction's first statements, before its rows are written.
+
+        Parameters:
+            db: The connection the chunk is written on, inside its transaction.
+            table_name: The table the chunk goes into.
+            row_count: How many rows the chunk holds.
+        """
+
+    def confirm(self, db: ImportDBSuper) -> None:
+        """Check, after the rows are written and before the commit, that it may commit.
+
+        Parameters:
+            db: The connection the chunk is written on, inside its transaction.
+
+        Raises:
+            Exception: Any failure, which rolls the chunk back.
+        """
+
+    def committed(self) -> None:
+        """Hear that the chunk committed."""
 
 
 #: The seconds `ImportDBSuper.retrying` sleeps after each failed attempt but the last; one
@@ -558,6 +589,97 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::lock_first_row must be overridden')
+
+    def lock_row(
+        self, table_name: str, columns: Sequence[str], where: str, where_params: Sequence[Any]
+    ) -> ResultRow | None:
+        """Lock one row unless another session holds it, and return its columns.
+
+        The lock lasts until the caller's transaction ends, so this runs inside
+        `transaction`. A row another session has locked is passed over, not waited for.
+
+        Parameters:
+            table_name: The table.
+            columns: The columns to return.
+            where: The WHERE clause, with `%s` placeholders, selecting at most one row.
+            where_params: The values for those placeholders.
+
+        Returns:
+            The row's columns, or None when no row is selected or another session holds
+            it.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::lock_row must be overridden')
+
+    def set_idle_timeout(self, seconds: int) -> None:
+        """Set how long the server keeps this connection open while it sends nothing.
+
+        Parameters:
+            seconds: The idle time after which the server closes the connection.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::set_idle_timeout must be overridden')
+
+    def last_insert_id(self) -> int:
+        """Return the automatic key this connection's last insert generated.
+
+        Returns:
+            The key.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::last_insert_id must be overridden')
+
+    def try_named_lock(self, name: str) -> bool:
+        """Take a server-wide named lock for this connection's life, without waiting.
+
+        Unlike `named_lock`, the lock is not released when a body ends: the server frees
+        it when this connection closes, however the process holding it ends.
+
+        Parameters:
+            name: The lock's name, from `opus_import.importdb.lock_name`.
+
+        Returns:
+            True if the lock was granted; False if another connection holds it.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::try_named_lock must be overridden')
+
+    def holds_named_lock(self, name: str) -> bool:
+        """Return whether this connection holds a named lock.
+
+        Parameters:
+            name: The lock's name.
+
+        Returns:
+            True if this connection holds it; False if no connection or another does.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::holds_named_lock must be overridden')
+
+    def named_lock_holder(self, name: str) -> int | None:
+        """Return the server's id of the connection holding a named lock, or None.
+
+        Parameters:
+            name: The lock's name.
+
+        Returns:
+            The holding connection's id, which ``KILL`` takes; None when the lock is
+            free, which it is once its holder's connection has closed.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::named_lock_holder must be overridden')
 
     @staticmethod
     def _make_warning_handler(warning_list: list[str]) -> WarningHandler:
@@ -1205,7 +1327,9 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::insert_rows must be overridden')
 
-    def bulk_load_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
+    def bulk_load_rows(
+        self, table_name: str, rows: Sequence[DBRow], guard: LoadGuard | None = None
+    ) -> None:
         """Write many rows the fastest way the server allows.
 
         A brand loads them from a scratch file where the server accepts one, at most
@@ -1215,6 +1339,9 @@ class ImportDBSuper:
         Parameters:
             table_name: The table.
             rows: The rows to write. Every row must have the same columns.
+            guard: What each chunk's transaction runs first and checks last, or None.
+                With a guard, every chunk is one transaction on either path, ``INSERT``
+                statements included, and a failure of the guard rolls the chunk back.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
@@ -1227,7 +1354,7 @@ class ImportDBSuper:
         row: DBRow,
         where: str,
         where_params: Sequence[Any] | None = None,
-    ) -> None:
+    ) -> int:
         """Assign new values to the columns of the rows a WHERE clause selects.
 
         Parameters:
@@ -1236,6 +1363,10 @@ class ImportDBSuper:
             where: The WHERE clause. Any value it compares against must be a `%s`
                 placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
+
+        Returns:
+            How many rows the WHERE clause matched, whether or not their values changed;
+            0 in a run that does not execute it.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.

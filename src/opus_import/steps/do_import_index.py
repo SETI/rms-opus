@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import pdsfile
 
-from opus_import import bundle_registry, import_util, surface_geometry, table_keys
+from opus_import import import_util, surface_geometry, table_keys
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import do_import_obs, do_import_pool, do_import_tables
 
@@ -477,10 +477,19 @@ class TableRowSink:
         goes last, after every table whose rows refer to it: a table with many rows per
         observation, such as ``obs_files``, can fill a transaction and load before
         ``obs_general`` does.
+
+        An importer drawing from the queue takes back nothing here: it deletes the whole
+        failed bundle while it holds the bundle's registry row
+        (`opus_import.steps.do_recover.release_bundle`), so its delete can never reach a
+        bundle another importer has taken since.
         """
         db = self.ctx.db
         assert db is not None
         assert self.ctx.bundle_ids is not None
+        if self.ctx.importer is not None:
+            self.first_loaded.clear()
+            self.rows.clear()
+            return
         end = self.ctx.bundle_ids.range.end
         in_order = [name for name in reversed(self.first_loaded) if name != 'obs_general']
         if 'obs_general' in self.first_loaded:
@@ -493,7 +502,12 @@ class TableRowSink:
         self.rows.clear()
 
     def _load(self, table_name: str) -> None:
-        """Load one table's waiting rows, and record the bundle's progress after ``obs_general``.
+        """Load one table's waiting rows, each chunk under the bundle's guard.
+
+        The guard (`opus_import.import_processes.BundleGuard`) records the bundle's
+        progress in the registry inside each chunk's transaction, and for an importer
+        drawing from the queue commits the chunk only while it holds its lock and its
+        bundle.
 
         Parameters:
             table_name: The table.
@@ -504,14 +518,8 @@ class TableRowSink:
         waiting = self.rows.get(table_name, [])
         if waiting:
             self.first_loaded.setdefault(table_name, waiting[0][_observation_id_column(table_name)])
-        db.bulk_load_rows(table_name, waiting)
+        db.bulk_load_rows(table_name, waiting, guard=self.ctx.load_guard)
         self.rows[table_name] = []
-        bundle_ids = self.ctx.bundle_ids
-        if waiting and table_name == 'obs_general' and bundle_ids is not None:
-            bundle_ids.rows_done += len(waiting)
-            bundle_registry.record_rows_done(
-                self.ctx, bundle_ids.range.bundle_number, bundle_ids.rows_done
-            )
 
 
 def import_index_row(

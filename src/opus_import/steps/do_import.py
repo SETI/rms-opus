@@ -43,13 +43,20 @@ The per-bundle work is split across four modules that are not steps of their own
 
 from __future__ import annotations
 
+import contextlib
 import time
 import traceback
 from typing import TYPE_CHECKING
 
-from opus_import import bundle_registry, import_util, primary_index, schema_version
+from opus_import import (
+    bundle_registry,
+    import_processes,
+    import_util,
+    primary_index,
+    schema_version,
+)
 from opus_import.import_fault import import_fault_argument
-from opus_import.steps import do_import_index, do_import_tables, do_register
+from opus_import.steps import do_import_index, do_import_tables, do_recover, do_register
 from opus_import.table_keys import KEY_FILTERED_TABLE_PREFIXES, add_secondary_indexes
 
 if TYPE_CHECKING:
@@ -209,6 +216,7 @@ def import_one_bundle(ctx: ImportContext, bundle_id: str) -> bool:
     finally:
         ctx.logger.close()
         ctx.bundle_ids = None
+        ctx.load_guard = None
         ctx.current_bundle_id = None
         ctx.current_index_row_number = None
         ctx.current_primary_filespec = None
@@ -238,6 +246,7 @@ def _import_bundle_indexes(ctx: ImportContext, bundle_id: str) -> bool:
     if ctx.bundle_ids is None:
         import_util.log_error(ctx, f'{bundle_id} is not in the bundle registry')
         return False
+    ctx.load_guard = import_processes.BundleGuard(ctx.bundle_ids, ctx.importer)
 
     try:
         found = primary_index.locate(bundle_id, vol_info)
@@ -424,39 +433,75 @@ CLAIMED_PREFIX = 'Claimed bundle '
 #: The log line a queue importer writes when no bundle is left for it.
 QUEUE_EMPTY_LINE = 'No pending bundle is left to claim; this importer exits'
 
+#: How the log line naming a queue importer's ``import_process`` row starts.
+IMPORTER_PREFIX = 'Importer '
+
 
 def import_from_queue(ctx: ImportContext, among: set[str] | None) -> bool:
     """Import bundles from the registry's queue until none is left: one importer's run.
 
-    The importer claims the largest ``pending`` bundle no other process holds
+    The importer first records itself in ``import_process`` and takes its lock, on a
+    connection of its own (`opus_import.import_processes.start_importer`). It then
+    claims the largest ``pending`` bundle no other process holds
     (`opus_import.bundle_registry.claim_bundle`), deletes its rows and imports it, marks
     it ``done``, and claims the next, until no bundle is ``pending``. It never erases or
     finalizes anything. A bundle whose import raises or logs an error is marked
     ``failed`` and its rows are deleted; the importer moves on to the next, and does not
     claim the failed bundle again.
 
+    Every chunk it commits, every claim and every move to ``done`` is committed only
+    while it holds its lock and the registry still names it as holding the bundle. When
+    either is lost, it aborts its bundle (`abort_bundle`) and stops. After one interrupt
+    it finishes its bundle and claims nothing new; a second aborts its bundle and stops.
+    Whichever way it ends, it records itself ``exited`` and frees its lock.
+
     Parameters:
         ctx: The import run's context, with its path chosen.
         among: The only bundles the importer claims, or None for any.
 
     Returns:
-        True when every bundle it imported is ``done``; False when one failed.
+        True when the queue was emptied and every bundle the importer imported is
+        ``done``; False when one failed, the importer lost its lock or its bundle, or it
+        was interrupted, which is logged as fatal.
     """
     db = ctx.db
     assert db is not None
+    import_processes.create_process_table(db)
+    lock_db = db.open_sibling_connection()
+    importer = import_processes.start_importer(lock_db, ctx.log_path or '')
+    ctx.importer = importer
+    import_util.log_info(
+        ctx, f'{IMPORTER_PREFIX}{importer.process_id}, holding the lock "{importer.name}"'
+    )
     failures: list[str] = []
-    with ctx.timed('import'):
-        while True:
-            bundle_id = bundle_registry.claim_bundle(ctx, among)
-            if bundle_id is None:
-                import_util.log_info(ctx, QUEUE_EMPTY_LINE)
-                break
-            import_util.log_info(ctx, f'{CLAIMED_PREFIX}{bundle_id}')
-            hold = import_fault_argument(HOLD_AFTER_CLAIM_FAULT_SITE)
-            if hold is not None:
-                time.sleep(float(hold))
-            if not _import_claimed_bundle(ctx, bundle_id):
-                failures.append(bundle_id)
+    try:
+        with ctx.timed('import'):
+            while True:
+                if ctx.interrupts:
+                    ctx.logger.log(
+                        'fatal', 'Interrupted: this importer claims nothing more and exits'
+                    )
+                    return False
+                if not importer.held():
+                    raise import_processes.LostImporterError(
+                        import_processes.lost_lock_message(importer)
+                    )
+                bundle_id = bundle_registry.claim_bundle(ctx, among, importer)
+                if bundle_id is None:
+                    import_util.log_info(ctx, QUEUE_EMPTY_LINE)
+                    break
+                import_util.log_info(ctx, f'{CLAIMED_PREFIX}{bundle_id}')
+                if not _import_claimed_bundle(ctx, bundle_id, importer):
+                    failures.append(bundle_id)
+    except import_processes.LostImporterError as e:
+        ctx.logger.log('fatal', str(e))
+        return False
+    except KeyboardInterrupt:
+        ctx.logger.log('fatal', 'Interrupted twice: this importer aborted its bundle and exits')
+        return False
+    finally:
+        ctx.importer = None
+        importer.exit()
     if failures:
         ctx.logger.log(
             'fatal', f'This importer failed to import, and deleted: {", ".join(failures)}'
@@ -465,43 +510,98 @@ def import_from_queue(ctx: ImportContext, among: set[str] | None) -> bool:
     return True
 
 
-def _import_claimed_bundle(ctx: ImportContext, bundle_id: str) -> bool:
+def _import_claimed_bundle(
+    ctx: ImportContext, bundle_id: str, importer: import_processes.ImporterLock
+) -> bool:
     """Delete, import and mark one claimed bundle; delete it again if its import fails.
 
     Parameters:
         ctx: The import run's context.
-        bundle_id: The bundle, ``importing``.
+        bundle_id: The bundle, ``importing`` under the importer.
+        importer: The importer.
 
     Returns:
         True when the bundle ends ``done``; False when it ends ``failed``.
+
+    Raises:
+        opus_import.import_processes.LostImporterError: If the importer lost its lock or
+            its bundle, after the bundle was aborted.
+        KeyboardInterrupt: On a second interrupt, after the bundle was aborted.
     """
     db = ctx.db
     assert db is not None
+    registered = bundle_registry.bundle_range(ctx, bundle_id)
+    assert registered is not None
+    number = registered.bundle_number
     ctx.bundle_has_errors = False
     imported = False
     try:
+        hold = import_fault_argument(HOLD_AFTER_CLAIM_FAULT_SITE)
+        if hold is not None:
+            time.sleep(float(hold))
         with ctx.timed(f'delete_bundle:{bundle_id}'):
-            do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
+            if not do_recover.release_bundle(ctx, bundle_id, number, importer.process_id, None):
+                raise import_processes.LostImporterError(
+                    import_processes.lost_lock_message(importer)
+                )
         with ctx.timed(f'import_bundle:{bundle_id}'), db.foreign_keys_unchecked():
             imported = import_one_bundle(ctx, bundle_id)
+        if imported and not ctx.bundle_has_errors:
+            bundle_registry.finish_claimed_bundle(ctx, number, importer)
+            return True
+    except (import_processes.LostImporterError, KeyboardInterrupt):
+        abort_bundle(ctx, bundle_id, number, importer)
+        raise
     except Exception:
         import_util.log_error(
             ctx, f'Import of bundle {bundle_id} raised:\n{traceback.format_exc()}'
         )
-    if imported and not ctx.bundle_has_errors:
-        bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_DONE)
-        return True
     ctx.mark_bad_data()
-    do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
-    bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_FAILED)
+    if not do_recover.release_bundle(
+        ctx, bundle_id, number, importer.process_id, bundle_registry.BUNDLE_FAILED
+    ):
+        raise import_processes.LostImporterError(import_processes.lost_lock_message(importer))
     return False
+
+
+def abort_bundle(
+    ctx: ImportContext, bundle_id: str, number: int, importer: import_processes.ImporterLock
+) -> None:
+    """Delete an importer's bundle's rows and return it to the queue, if it still holds it.
+
+    The import connection may be part way through a statement when an interrupt arrives,
+    so it is closed, which rolls back whatever it held, and a fresh one does the deletes.
+    A bundle a recovery has already returned, or another importer holds, is left alone
+    (`opus_import.steps.do_recover.release_bundle`).
+
+    Parameters:
+        ctx: The import run's context, whose connection is replaced.
+        bundle_id: The bundle.
+        number: Its number.
+        importer: The importer.
+    """
+    old = ctx.db
+    assert old is not None
+    with contextlib.suppress(Exception):
+        old.close()
+    fresh = old.open_sibling_connection()
+    fresh.logger = old.logger
+    ctx.db = fresh
+    if do_recover.release_bundle(
+        ctx, bundle_id, number, importer.process_id, bundle_registry.BUNDLE_PENDING
+    ):
+        import_util.log_info(
+            ctx, f'Aborted {bundle_id}: deleted its rows and returned it to the queue'
+        )
+    else:
+        import_util.log_info(ctx, f'Aborted {bundle_id}: it had already left this importer')
 
 
 def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
     """Return ``failed`` or ``importing`` bundles to ``pending``, after deleting their rows.
 
     Naming an ``importing`` bundle is the operator's statement that the process that
-    claimed it is no longer running.
+    claimed it is no longer running; one whose importer still holds its lock is refused.
 
     Parameters:
         ctx: The import run's context, for the open database and the log.
@@ -519,6 +619,10 @@ def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
         for bundle_id in bundle_ids
         if states.get(bundle_id) not in returnable
     ]
+    refused += [
+        f'{bundle_id} (importing under importer {process_id}, which holds its lock)'
+        for bundle_id, process_id in _alive_holders(ctx, bundle_ids)
+    ]
     if refused or not bundle_ids:
         ctx.logger.log(
             'fatal',
@@ -532,6 +636,33 @@ def requeue_bundles(ctx: ImportContext, bundle_ids: list[str]) -> bool:
         bundle_registry.set_bundle_state(ctx, bundle_id, bundle_registry.BUNDLE_PENDING)
         import_util.log_info(ctx, f'Returned {bundle_id} to the queue')
     return True
+
+
+def _alive_holders(ctx: ImportContext, bundle_ids: list[str]) -> list[tuple[str, int]]:
+    """Return the named ``importing`` bundles whose importer holds its lock.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        bundle_ids: The bundles.
+
+    Returns:
+        Each such bundle with its importer's ``process_id``, in the order named.
+    """
+    db = ctx.db
+    assert db is not None
+    alive = []
+    for status in import_processes.read_snapshot(db).bundles:
+        if (
+            status.bundle_id in bundle_ids
+            and status.state == bundle_registry.BUNDLE_IMPORTING
+            and status.process_id is not None
+            and db.named_lock_holder(
+                import_processes.importer_lock_name(db.db_schema, status.process_id)
+            )
+            is not None
+        ):
+            alive.append((status.bundle_id, status.process_id))
+    return sorted(alive, key=lambda found: bundle_ids.index(found[0]))
 
 
 def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str]:

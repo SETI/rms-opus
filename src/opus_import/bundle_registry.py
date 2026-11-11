@@ -31,6 +31,7 @@ from opus_import import import_util
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
+    from opus_import.import_processes import ImporterLock
     from opus_import.importdb.super import ImportDBSuper
 
 #: The table holding the registry.
@@ -101,8 +102,9 @@ class BundleIds:
     Attributes:
         range: The bundle's registry row.
         used: How many ids have been handed out.
-        rows_done: How many ``obs_general`` rows the import has loaded, which it records
-            in the registry after each load (`record_rows_done`).
+        rows_done: How many ``obs_general`` rows the import has committed, which each
+            chunk's transaction records in the registry
+            (`opus_import.import_processes.BundleGuard`).
     """
 
     range: BundleRange
@@ -304,7 +306,13 @@ def _state_columns(state: str) -> dict[str, object]:
     if state == BUNDLE_IMPORTING:
         return {'state': state, 'started_at': _now(), 'finished_at': None, 'rows_done': 0}
     if state == BUNDLE_PENDING:
-        return {'state': state, 'started_at': None, 'finished_at': None, 'rows_done': 0}
+        return {
+            'state': state,
+            'started_at': None,
+            'finished_at': None,
+            'rows_done': 0,
+            'process_id': None,
+        }
     return {'state': state, 'finished_at': _now()}
 
 
@@ -329,40 +337,34 @@ def set_bundle_state(ctx: ImportContext, bundle_id: str, state: str) -> None:
     )
 
 
-def record_rows_done(ctx: ImportContext, bundle_number: int, rows_done: int) -> None:
-    """Record how many ``obs_general`` rows a bundle's import has committed so far.
-
-    Parameters:
-        ctx: The import run's context, for the open database.
-        bundle_number: The bundle's number.
-        rows_done: The rows committed since the import took the bundle.
-    """
-    db = ctx.db
-    assert db is not None
-    db.update_row(
-        BUNDLE_REGISTRY_TABLE,
-        {'rows_done': rows_done},
-        f'{db.quote_identifier("bundle_number")}=%s',
-        [bundle_number],
-    )
-
-
-def claim_bundle(ctx: ImportContext, among: Collection[str] | None = None) -> str | None:
+def claim_bundle(
+    ctx: ImportContext, among: Collection[str] | None = None, importer: ImporterLock | None = None
+) -> str | None:
     """Take the largest ``pending`` bundle no other process holds, and mark it ``importing``.
 
     The claim is one transaction: a locking read of one row through the registry's key
     on ``(state, size_estimate, bundle_number)``, scanned from its highest entry, that
-    passes over rows another process has locked, then the move to ``importing``. It is
-    run again if the server reports a lock conflict (`ImportDBSuper.retrying`).
+    passes over rows another process has locked, then the move to ``importing``, naming
+    the importer in ``process_id``. An importer's claim commits only while its lock
+    connection holds its lock. It is run again if the server reports a lock conflict
+    (`ImportDBSuper.retrying`).
 
     Parameters:
         ctx: The import run's context, for the open database.
         among: The only bundles that may be claimed, or None for any.
+        importer: The importer claiming, or None for a process that holds no lock.
 
     Returns:
         The bundle claimed, or None when no bundle is ``pending`` (of `among`) that
         another process has not claimed first.
+
+    Raises:
+        opus_import.import_processes.LostImporterError: If the importer's lock is lost;
+            nothing is claimed then.
     """
+    # Imported here: import_processes reads this module's table and states.
+    from opus_import.import_processes import LostImporterError, lost_lock_message
+
     db = ctx.db
     assert db is not None
     q = db.quote_identifier
@@ -385,18 +387,49 @@ def claim_bundle(ctx: ImportContext, among: Collection[str] | None = None) -> st
         )
         if number is None:
             return None
-        db.update_row(
-            BUNDLE_REGISTRY_TABLE,
-            _state_columns(BUNDLE_IMPORTING),
-            f'{q("bundle_number")}=%s',
-            [number],
-        )
+        columns = _state_columns(BUNDLE_IMPORTING)
+        columns['process_id'] = None if importer is None else importer.process_id
+        db.update_row(BUNDLE_REGISTRY_TABLE, columns, f'{q("bundle_number")}=%s', [number])
+        if importer is not None and not importer.held():
+            raise LostImporterError(lost_lock_message(importer))
         rows = db.read_rows(
             BUNDLE_REGISTRY_TABLE, ['bundle_id'], f'{q("bundle_number")}=%s', [number]
         )
         return str(rows[0][0])
 
     return db.retrying('Claiming a pending bundle', claim)
+
+
+def finish_claimed_bundle(ctx: ImportContext, bundle_number: int, importer: ImporterLock) -> None:
+    """Mark an importer's bundle ``done``, only while it is ``importing`` under the importer.
+
+    One transaction: the move to ``done``, matching the bundle only in that state and
+    under that importer, committed only while the importer's lock connection holds its
+    lock.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        bundle_number: The bundle's number.
+        importer: The importer holding it.
+
+    Raises:
+        opus_import.import_processes.LostImporterError: If the registry no longer names
+            the importer, or its lock is lost; the bundle is left as it was.
+    """
+    from opus_import.import_processes import LostImporterError, lost_lock_message
+
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    with db.transaction():
+        matched = db.update_row(
+            BUNDLE_REGISTRY_TABLE,
+            _state_columns(BUNDLE_DONE),
+            f'{q("bundle_number")}=%s AND {q("state")}=%s AND {q("process_id")}=%s',
+            [bundle_number, BUNDLE_IMPORTING, importer.process_id],
+        )
+        if matched != 1 or not importer.held():
+            raise LostImporterError(lost_lock_message(importer))
 
 
 def set_pending(ctx: ImportContext, bundle_ids: Iterable[str]) -> None:

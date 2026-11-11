@@ -90,6 +90,11 @@ WARNINGS_LOG = 'WARNINGS.log'
 #: started (``opus_import_2026-11-06T22-13-27.log``), so `import_logs` finds them.
 IMPORT_LOG = 'opus_import.log'
 
+#: What a queue importer's log names carry after the time, before its computer and process
+#: id (``opus_import_2026-11-06T22-13-27_join_<host>_<pid>.log``), as
+#: `opus_import.cli.JOIN_LOG_SUFFIX` names it.
+JOIN_LOG_SUFFIX = 'join'
+
 #: What `reimport_bundle` names the configuration and logs it writes beside the first
 #: run's (`sibling_paths`).
 REIMPORT_NAME = 'reimport'
@@ -296,7 +301,8 @@ def import_logs(log_dir: Path) -> list[Path]:
     """Return the information-level import logs in a log directory, oldest first.
 
     The pipeline names each invocation's log after `IMPORT_LOG` and the time it
-    started, so the names sort in the order the invocations ran.
+    started, so the names sort in the order the invocations ran; a queue importer's
+    name also carries `JOIN_LOG_SUFFIX`, its computer and its process id.
 
     Parameters:
         log_dir: The run's log directory.
@@ -305,7 +311,9 @@ def import_logs(log_dir: Path) -> list[Path]:
         The logs; none when the directory holds none.
     """
     stem = Path(IMPORT_LOG).stem
-    pattern = re.compile(rf'{re.escape(stem)}(_\d{{4}}-\d{{2}}-\d{{2}}T[\d-]+)?\.log')
+    pattern = re.compile(
+        rf'{re.escape(stem)}(_\d{{4}}-\d{{2}}-\d{{2}}T[\d-]+)?(_{JOIN_LOG_SUFFIX}_[^/]+)?\.log'
+    )
     return sorted(path for path in log_dir.glob('*.log') if pattern.fullmatch(path.name))
 
 

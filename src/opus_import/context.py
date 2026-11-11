@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
     from opus_import.bundle_registry import BundleIds
     from opus_import.deferred import Capture
+    from opus_import.import_processes import BundleGuard, ImporterLock
     from opus_import.importdb.super import ImportDBSuper
     from opus_import.mult_fields import MultFieldInfo
     from opus_import.steps.do_import_mult import MultFieldCache
@@ -240,6 +241,15 @@ class ImportContext:
         index_workers: How many tables finalization builds indexes on at once.
         capture: The record a pool worker keeps in place of database calls and log
             writes (`opus_import.deferred`), or None in the import's own process.
+        importer: This process's row and lock as an importer drawing from the queue
+            (`opus_import.import_processes.ImporterLock`), or None for a plain import.
+        load_guard: What each chunk of the bundle being imported runs in its
+            transaction (`opus_import.import_processes.BundleGuard`), or None outside a
+            bundle.
+        log_path: The run's information log, which an importer records in
+            ``import_process``; None until `opus_import.cli` opens it.
+        interrupts: How many interrupts (SIGINT) an importer has received: after the
+            first it claims nothing new, and the second aborts its bundle.
     """
 
     args: argparse.Namespace
@@ -269,6 +279,10 @@ class ImportContext:
     worker_rows: int = DEFAULT_WORKER_ROWS
     index_workers: int = DEFAULT_INDEX_WORKERS
     capture: Capture | None = None
+    importer: ImporterLock | None = None
+    load_guard: BundleGuard | None = None
+    log_path: str | None = None
+    interrupts: int = 0
 
     log: ImportLog = field(init=False)
 

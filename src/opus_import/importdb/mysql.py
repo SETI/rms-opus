@@ -46,6 +46,7 @@ from opus_import.importdb.super import (
     ImportDBError,
     ImportDBSuper,
     IndexStatement,
+    LoadGuard,
     ResultRow,
     SchemaColumn,
 )
@@ -218,6 +219,10 @@ _LOAD_INFO_RE = re.compile(
     r'Records:\s*(?P<records>\d+)\s+Deleted:\s*\d+\s+Skipped:\s*(?P<skipped>\d+)\s+'
     r'Warnings:\s*(?P<warnings>\d+)'
 )
+
+# The rows an UPDATE matched, as `Connection.info` reports them after the statement:
+# "Rows matched: 1  Changed: 0  Warnings: 0". An unchanged row counts as matched.
+_UPDATE_INFO_RE = re.compile(r'Rows matched:\s*(?P<matched>\d+)')
 
 # The characters LOAD DATA's default escape rules need escaped in a field: the escape
 # character itself, the field and line terminators, and the two control characters a
@@ -1498,7 +1503,9 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                     self._log_failure(f'Failed to insert row into "{table_name}": {e}')
                     raise ImportDBError(e) from e
 
-    def bulk_load_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
+    def bulk_load_rows(
+        self, table_name: str, rows: Sequence[DBRow], guard: LoadGuard | None = None
+    ) -> None:
         """Write many rows with ``LOAD DATA LOCAL INFILE``, or as `insert_rows` does.
 
         The rows go in chunks of at most `transaction_rows`. Each chunk is written to a
@@ -1514,10 +1521,15 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         this load, this chunk and every later one are written by `insert_rows`, and the
         log says so.
 
+        With a guard, each chunk is one transaction on either path: the guard's
+        statements first, then the chunk's rows, then the guard's check, then the
+        commit, and a chunk the guard refuses is rolled back.
+
         Parameters:
             table_name: The table.
             rows: The rows to write. Every row must have the same columns; an empty
                 sequence writes nothing.
+            guard: What each chunk's transaction runs first and checks last, or None.
 
         Raises:
             ImportDBError: If a load is refused for any other reason, or does not write
@@ -1525,20 +1537,68 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         """
         if len(rows) == 0:
             return
-        if self.bulk_load_path != BULK_LOAD_PATH_FILE:
+        if guard is None and self.bulk_load_path != BULK_LOAD_PATH_FILE:
             self.insert_rows(table_name, rows)
             return
         with self._operation('bulk_load_rows'):
             column_names = sorted(rows[0].keys())
             for start in range(0, len(rows), self.transaction_rows):
                 end = min(len(rows), start + self.transaction_rows)
+                if guard is not None:
+                    self._load_guarded_chunk(table_name, column_names, rows, start, end, guard)
+                    continue
                 try:
                     self._load_chunk(table_name, column_names, rows, start, end)
                 except _LocalInfileRefusedError as e:
-                    self.bulk_load_path = BULK_LOAD_PATH_INSERT
-                    self._log_bulk_load_path(f'the server refused a local file: {e}')
+                    self._refused_local_file(e)
                     self.insert_rows(table_name, rows[start:])
                     return
+
+    def _refused_local_file(self, error: Exception) -> None:
+        """Switch every later load to ``INSERT`` statements, and log why.
+
+        Parameters:
+            error: The server's or the connection's refusal.
+        """
+        self.bulk_load_path = BULK_LOAD_PATH_INSERT
+        self._log_bulk_load_path(f'the server refused a local file: {error}')
+
+    def _load_guarded_chunk(
+        self,
+        table_name: str,
+        column_names: Sequence[str],
+        rows: Sequence[DBRow],
+        start: int,
+        end: int,
+        guard: LoadGuard,
+    ) -> None:
+        """Write rows ``start`` to ``end`` as one transaction the guard opens and checks.
+
+        Parameters:
+            table_name: The table.
+            column_names: The columns, in the order a scratch file holds them.
+            rows: Every row of the load.
+            start: The first row of the chunk.
+            end: One past its last row.
+            guard: What the transaction runs first and checks last.
+
+        Raises:
+            ImportDBError: If the load fails or does not write every row unchanged.
+        """
+        with self.transaction():
+            guard.begin(self, table_name, end - start)
+            if self.bulk_load_path == BULK_LOAD_PATH_FILE:
+                try:
+                    self._load_chunk(table_name, column_names, rows, start, end)
+                except _LocalInfileRefusedError as e:
+                    # A refused statement leaves the transaction open, the guard's
+                    # statements in it, so the rows follow as INSERT statements.
+                    self._refused_local_file(e)
+                    self.insert_rows(table_name, rows[start:end])
+            else:
+                self.insert_rows(table_name, rows[start:end])
+            guard.confirm(self)
+        guard.committed()
 
     def _load_chunk(
         self,
@@ -1589,9 +1649,12 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             path: The scratch file.
             row_count: How many rows the file holds.
 
+        Inside `transaction` the load neither commits nor rolls back: the transaction
+        does.
+
         Raises:
             ImportDBError: If the load fails or does not write every row unchanged; the
-                transaction is rolled back first.
+                transaction is rolled back first, unless `transaction` holds it.
             _LocalInfileRefusedError: If the server or the connection refuses the file.
         """
         # The table and column names are validated by quote_identifier
@@ -1609,12 +1672,15 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 self._execute(cmd, [path], cur=cur, mutates=True)
                 problem = self._check_load(cur, row_count)
                 if problem is not None:
-                    self.conn.rollback()
+                    if not self._in_transaction:
+                        self.conn.rollback()
                     self._log_failure(f'Bulk load into "{table_name}": {problem}')
                     raise ImportDBError(f'Bulk load into "{table_name}": {problem}')
-                self.conn.commit()
+                if not self._in_transaction:
+                    self.conn.commit()
         except MySQLdb.Error as e:
-            self.conn.rollback()
+            if not self._in_transaction:
+                self.conn.rollback()
             if e.args and e.args[0] in ERRS_LOCAL_INFILE_REFUSED:
                 raise _LocalInfileRefusedError(e) from e
             self._log_failure(f'Failed to bulk load into "{table_name}": {e}')
@@ -1661,7 +1727,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         row: DBRow,
         where: str,
         where_params: Sequence[Any] | None = None,
-    ) -> None:
+    ) -> int:
         """Assign new values to the columns of the rows a WHERE clause selects.
 
         Parameters:
@@ -1671,6 +1737,10 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 placeholder, never text.
             where_params: The parameters that clause's placeholders consume. They follow
                 the assigned values in the statement's parameter list.
+
+        Returns:
+            How many rows the clause matched, as the server reports after the statement,
+            changed or not; 0 when the statement is not executed.
 
         Raises:
             ImportDBError: If the server rejects the statement.
@@ -1693,11 +1763,20 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             )
             param_list += list(where_params or [])
 
-            try:
+            if not MYSQLDB_AVAILABLE or self.read_only:
                 self._execute(cmd, param_list, mutates=True)
+                return 0
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(cmd, param_list, cur=cur, mutates=True)
+                    # Read before the commit, which replaces the connection's report.
+                    match = _UPDATE_INFO_RE.search(self.conn.info() or '')
+                if not self._in_transaction:
+                    self.conn.commit()
             except MySQLdb.Error as e:
                 self._log_failure(f'Failed to update row in "{table_name}": {e}')
                 raise ImportDBError(e) from e
+            return int(match['matched']) if match is not None else 0
 
     def upsert_row(self, table_name: str, key_name: str, row: DBRow) -> None:
         """Insert one row, or update it if its key is already present.
@@ -2184,3 +2263,114 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         with self._operation('lock_first_row'):
             rows = self._execute_and_fetchall(cmd, 'lock_first_row', list(where_params))
         return rows[0][0] if rows else None
+
+    def lock_row(
+        self, table_name: str, columns: Sequence[str], where: str, where_params: Sequence[Any]
+    ) -> ResultRow | None:
+        """Lock one row with ``FOR UPDATE SKIP LOCKED`` and return its columns.
+
+        Parameters:
+            table_name: The table.
+            columns: The columns to return.
+            where: The WHERE clause, with `%s` placeholders, selecting at most one row.
+            where_params: The values for those placeholders.
+
+        Returns:
+            The row's columns, or None when no row is selected or another session holds
+            it.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        # Identifiers are validated by quote_identifier; the caller's `where` fragment is
+        # appended verbatim, and only its values are bound.
+        cmd = (
+            f'SELECT {self._quoted_column_list(columns)} FROM '  # nosec B608
+            f'{self.quote_identifier(table_name)} WHERE {where} FOR UPDATE SKIP LOCKED'
+        )
+        with self._operation('lock_row'):
+            rows = self._execute_and_fetchall(cmd, 'lock_row', list(where_params))
+        return tuple(rows[0]) if rows else None
+
+    def set_idle_timeout(self, seconds: int) -> None:
+        """Set the session's ``wait_timeout``, the idle seconds before the server closes it.
+
+        Parameters:
+            seconds: The timeout. ``interactive_timeout`` is left alone: the import does
+                not connect as an interactive client, so it does not apply.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        if not MYSQLDB_AVAILABLE:
+            return
+        with self._operation('set_idle_timeout'):
+            try:
+                # A session setting, not a change to commit: run without a commit.
+                with self.conn.cursor() as cur:
+                    self._execute('SET SESSION wait_timeout = %s', [seconds], cur=cur)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to set wait_timeout: {e}')
+                raise ImportDBError(e) from e
+
+    def last_insert_id(self) -> int:
+        """Return ``LAST_INSERT_ID()``, the key this connection's last insert generated.
+
+        Returns:
+            The key.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        rows = self._execute_and_fetchall('SELECT LAST_INSERT_ID()', 'last_insert_id')
+        return int(rows[0][0])
+
+    def try_named_lock(self, name: str) -> bool:
+        """Take ``GET_LOCK(name, 0)``, which does not wait.
+
+        Parameters:
+            name: The lock's name, at most 64 characters.
+
+        Returns:
+            True if the lock was granted.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        granted = self._execute_and_fetchall('SELECT GET_LOCK(%s, 0)', 'try_named_lock', [name])
+        return bool(granted) and granted[0][0] == 1
+
+    def holds_named_lock(self, name: str) -> bool:
+        """Return whether ``IS_USED_LOCK(name)`` is this connection's ``CONNECTION_ID()``.
+
+        Parameters:
+            name: The lock's name.
+
+        Returns:
+            True if this connection holds the lock; False if it is free or another
+            connection holds it.
+
+        Raises:
+            ImportDBError: If the query fails, as it does once the connection is gone.
+        """
+        held = self._execute_and_fetchall(
+            'SELECT IS_USED_LOCK(%s) = CONNECTION_ID()', 'holds_named_lock', [name]
+        )
+        return bool(held) and held[0][0] == 1
+
+    def named_lock_holder(self, name: str) -> int | None:
+        """Return ``IS_USED_LOCK(name)``: the holding connection's id, or None when free.
+
+        Parameters:
+            name: The lock's name.
+
+        Returns:
+            The id, or None.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        holder = self._execute_and_fetchall('SELECT IS_USED_LOCK(%s)', 'named_lock_holder', [name])
+        if not holder or holder[0][0] is None:
+            return None
+        return int(holder[0][0])

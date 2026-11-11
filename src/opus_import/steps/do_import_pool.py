@@ -214,6 +214,10 @@ def _initialize_worker(parent_pid: int) -> None:
     * on Linux, the kernel is asked to kill the worker when the import's process dies,
       and a worker whose parent died before that request exits at once; elsewhere a
       worker outlives a killed parent;
+    * an interrupt (SIGINT) is ignored, since it is the import's process that decides
+      what an interrupt means -- a terminal's Ctrl-C reaches every process of the
+      foreground group, workers included -- and a worker that died of it would break the
+      pool;
     * Python warnings and the ``pdsfile`` classes' loggers are recorded on the task's
       capture rather than written to the import's log files, which the worker shares.
 
@@ -223,6 +227,7 @@ def _initialize_worker(parent_pid: int) -> None:
     assert _STATE is not None
     close_inherited_connections()
     _STATE.ctx.db = None
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     if sys.platform.startswith('linux'):
         libc = ctypes.CDLL(None, use_errno=True)
         libc.prctl(PR_SET_PDEATHSIG, signal.SIGKILL)

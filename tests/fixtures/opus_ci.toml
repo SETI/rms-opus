@@ -63,3 +63,6 @@ debug_log_file = "/tmp/opus_ci_import_debug.log"
 bulk_load = true
 transaction_rows = 100000
 index_workers = 1
+importers = 1
+stall_warning_minutes = 30
+status_interval_minutes = 5
