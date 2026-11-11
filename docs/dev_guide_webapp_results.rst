@@ -34,8 +34,7 @@ observations goes through :func:`~opus_app.apps.results.views.get_search_results
    * - ``api/data.(json|html|csv)``, ``__api/data.csv``
      - public
      - :func:`~opus_app.apps.results.views.api_get_data`
-   * - ``api/metadata/<opus_id>.(json|html|csv)``,
-       ``api/metadata_v2/<opus_id>.(json|html|csv)``
+   * - ``api/metadata/<opus_id>.(json|html|csv)``
      - public
      - :func:`~opus_app.apps.results.views.api_get_metadata`
    * - ``__api/metadata/<opus_id>.(json|html|csv)``

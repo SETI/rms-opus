@@ -11,7 +11,6 @@
 #    Format: __api/data.(?P<fmt>csv)
 #
 #    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
-#    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 #
 #    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
 #    Format: api/images.(json|html|csv)
