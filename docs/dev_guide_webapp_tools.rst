@@ -477,9 +477,10 @@ Model lookup by category name, and the labels behind the mult ids.
     ``obs_general`` relation for every other table, and for a surface geometry body's
     category on the body's id as well.
 
-:func:`~opus_app.apps.tools.db_utils.targets_for_opus_id`
+:func:`~opus_app.apps.tools.db_utils.targets_for_opus_id` and :func:`~opus_app.apps.tools.db_utils.observation_has_body`
     The surface geometry bodies one observation has rows of, in one query, which answers
-    for every body's category at once.
+    for every body's category at once; the second asks it once per table and answers
+    for one body's category from the result.
 
 :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult` and :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult_list`
     A mult column stores the id of a ``mult`` row, so displaying it means a second

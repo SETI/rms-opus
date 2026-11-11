@@ -203,6 +203,29 @@ def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
     return rows  # type: ignore[no-any-return]
 
 
+def observation_has_body(
+    category: ResolvedCategory, opus_id: str, targets: dict[str, frozenset[int]]
+) -> bool:
+    """Return whether one observation has rows of a surface geometry body's category.
+
+    Parameters:
+        category: A body's category, whose `ResolvedCategory.target_name` is not None.
+        opus_id: The observation.
+        targets: The bodies the observation has rows of, per table, which this fills from
+            `targets_for_opus_id` the first time a table is asked about, so one query
+            answers for every body's category of the table.
+
+    Returns:
+        True if the observation has a row holding the category's body.
+
+    Raises:
+        LookupError: If the `search` app has no model for the category's table.
+    """
+    if category.table not in targets:
+        targets[category.table] = targets_for_opus_id(category.table, opus_id)
+    return category.target_name in targets[category.table]
+
+
 def targets_for_opus_id(table: str, opus_id: str) -> frozenset[int]:
     """Return the bodies one observation has rows of in a table the bodies' categories share.
 

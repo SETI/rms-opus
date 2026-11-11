@@ -94,9 +94,9 @@ from opus_app.apps.tools.app_utils import (
 from opus_app.apps.tools.db_utils import (
     lookup_pretty_value_for_mult,
     lookup_pretty_value_for_mult_list,
+    observation_has_body,
     query_table_for_opus_id,
     resolve_category,
-    targets_for_opus_id,
 )
 from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_products
 from opus_app.apps.tools.import_constants import (
@@ -648,13 +648,12 @@ def get_metadata(
 
             try:
                 category = resolve_category(table_name)
-                if category.target_name is not None:
-                    # A body's category is asked about only when the observation has
-                    # rows of the body, which one query per shared table answers.
-                    if category.table not in targets:
-                        targets[category.table] = targets_for_opus_id(category.table, opus_id)
-                    if category.target_name not in targets[category.table]:
-                        continue
+                # A body's category is asked about only when the observation has rows
+                # of the body, which one query per shared table answers.
+                if category.target_name is not None and not observation_has_body(
+                    category, opus_id, targets
+                ):
+                    continue
                 results = query_table_for_opus_id(table_name, opus_id)
             except LookupError:  # pragma: no cover - configuration error
                 log.exception(
@@ -1106,9 +1105,7 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
         try:
             category = resolve_category(table_name)
             if category.target_name is not None:
-                if category.table not in targets:
-                    targets[category.table] = targets_for_opus_id(category.table, opus_id)
-                found = category.target_name in targets[category.table]
+                found = observation_has_body(category, opus_id, targets)
             else:
                 found = query_table_for_opus_id(table_name, opus_id).exists()
         except LookupError:  # pragma: no cover - configuration error

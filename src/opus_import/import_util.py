@@ -665,9 +665,7 @@ def table_schema_files(pattern: str) -> list[Traversable]:
     )
 
 
-def read_schema_for_table(
-    ctx: ImportContext, table_name: str, replace: Sequence[tuple[str, str]] | None = None
-) -> TableSchema | None:
+def read_schema_for_table(ctx: ImportContext, table_name: str) -> TableSchema | None:
     """Read the packaged JSON schema that defines one OPUS table.
 
     A surface geometry category, ``obs_surface_geometry__<target>``, reads as the
@@ -677,8 +675,6 @@ def read_schema_for_table(
     Parameters:
         ctx: The import run's context, for the logger.
         table_name: The table or category, matched without regard to case.
-        replace: Text substitutions to apply to the schema before parsing it, as
-            ``(from, to)`` pairs.
 
     Returns:
         The column definitions in the order the schema lists them, or None if there is
@@ -689,8 +685,8 @@ def read_schema_for_table(
             read is logged first, since the parser's own message names no file.
     """
     table_name = table_name.lower()
+    replace: list[tuple[str, str]] = []
     if table_name.startswith('obs_surface_geometry__'):
-        assert not replace
         target_name = table_name.replace('obs_surface_geometry__', '')
         table_name = 'obs_surface_geometry_target'
         replace = [
@@ -702,9 +698,8 @@ def read_schema_for_table(
         return None
     contents = schema_file.read_text(encoding='utf-8')
     try:
-        if replace:
-            for r in replace:
-                contents = contents.replace(r[0], r[1])
+        for old, new in replace:
+            contents = contents.replace(old, new)
         schema: TableSchema = json.loads(contents)
         return schema
     except json.decoder.JSONDecodeError:
