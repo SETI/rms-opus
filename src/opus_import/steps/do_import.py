@@ -484,7 +484,9 @@ def import_from_queue(ctx: ImportContext, among: set[str] | None) -> bool:
                     return False
                 if not importer.held():
                     raise import_processes.LostImporterError(
-                        import_processes.lost_lock_message(importer)
+                        import_processes.lost_lock_message(
+                            importer, import_processes.WHILE_CLAIMING
+                        )
                     )
                 bundle_id = bundle_registry.claim_bundle(ctx, among, importer)
                 if bundle_id is None:
@@ -542,7 +544,7 @@ def _import_claimed_bundle(
         with ctx.timed(f'delete_bundle:{bundle_id}'):
             if not do_recover.release_bundle(ctx, bundle_id, number, importer.process_id, None):
                 raise import_processes.LostImporterError(
-                    import_processes.lost_lock_message(importer)
+                    import_processes.lost_lock_message(importer, import_processes.WHILE_DELETING)
                 )
         with ctx.timed(f'import_bundle:{bundle_id}'), db.foreign_keys_unchecked():
             imported = import_one_bundle(ctx, bundle_id)
@@ -560,7 +562,9 @@ def _import_claimed_bundle(
     if not do_recover.release_bundle(
         ctx, bundle_id, number, importer.process_id, bundle_registry.BUNDLE_FAILED
     ):
-        raise import_processes.LostImporterError(import_processes.lost_lock_message(importer))
+        raise import_processes.LostImporterError(
+            import_processes.lost_lock_message(importer, import_processes.WHILE_DELETING)
+        )
     return False
 
 

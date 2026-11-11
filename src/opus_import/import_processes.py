@@ -187,18 +187,26 @@ def start_importer(lock_db: ImportDBSuper, log_path: str) -> ImporterLock:
     return ImporterLock(lock_db, process_id, name)
 
 
-def lost_lock_message(importer: ImporterLock) -> str:
+#: What `lost_lock_message` says the importer was doing, for each check that can fail.
+WHILE_COMMITTING_A_CHUNK = 'committing a chunk'
+WHILE_CLAIMING = 'claiming a bundle'
+WHILE_FINISHING = 'marking its bundle done'
+WHILE_DELETING = 'deleting its bundle'
+
+
+def lost_lock_message(importer: ImporterLock, doing: str) -> str:
     """Return the fatal message of an importer that lost its lock or its bundle.
 
     Parameters:
         importer: The importer.
+        doing: What it was doing when a check failed, one of the ``WHILE_`` constants.
 
     Returns:
         The message, naming the lock.
     """
     return (
         f'This importer (import_process {importer.process_id}) lost its lock "{importer.name}" '
-        'or its bundle, so it commits nothing more'
+        f'or its bundle while {doing}, so it commits nothing more'
     )
 
 
@@ -260,7 +268,7 @@ class BundleGuard:
             [number, bundle_registry.BUNDLE_IMPORTING, self.importer.process_id],
         )
         if matched != 1:
-            raise LostImporterError(lost_lock_message(self.importer))
+            raise LostImporterError(lost_lock_message(self.importer, WHILE_COMMITTING_A_CHUNK))
         db.update_row(
             IMPORT_PROCESS_TABLE,
             {'progress_at': now()},
@@ -278,7 +286,7 @@ class BundleGuard:
             LostImporterError: If it does not, or the lock connection is gone.
         """
         if self.importer is not None and not self.importer.held():
-            raise LostImporterError(lost_lock_message(self.importer))
+            raise LostImporterError(lost_lock_message(self.importer, WHILE_COMMITTING_A_CHUNK))
 
     def committed(self) -> None:
         """Keep the committed ``rows_done``, and hold after the first chunk if a test asks."""

@@ -363,7 +363,7 @@ def claim_bundle(
             nothing is claimed then.
     """
     # Imported here: import_processes reads this module's table and states.
-    from opus_import.import_processes import LostImporterError, lost_lock_message
+    from opus_import import import_processes
 
     db = ctx.db
     assert db is not None
@@ -391,7 +391,9 @@ def claim_bundle(
         columns['process_id'] = None if importer is None else importer.process_id
         db.update_row(BUNDLE_REGISTRY_TABLE, columns, f'{q("bundle_number")}=%s', [number])
         if importer is not None and not importer.held():
-            raise LostImporterError(lost_lock_message(importer))
+            raise import_processes.LostImporterError(
+                import_processes.lost_lock_message(importer, import_processes.WHILE_CLAIMING)
+            )
         rows = db.read_rows(
             BUNDLE_REGISTRY_TABLE, ['bundle_id'], f'{q("bundle_number")}=%s', [number]
         )
@@ -416,7 +418,7 @@ def finish_claimed_bundle(ctx: ImportContext, bundle_number: int, importer: Impo
         opus_import.import_processes.LostImporterError: If the registry no longer names
             the importer, or its lock is lost; the bundle is left as it was.
     """
-    from opus_import.import_processes import LostImporterError, lost_lock_message
+    from opus_import import import_processes
 
     db = ctx.db
     assert db is not None
@@ -429,7 +431,9 @@ def finish_claimed_bundle(ctx: ImportContext, bundle_number: int, importer: Impo
             [bundle_number, BUNDLE_IMPORTING, importer.process_id],
         )
         if matched != 1 or not importer.held():
-            raise LostImporterError(lost_lock_message(importer))
+            raise import_processes.LostImporterError(
+                import_processes.lost_lock_message(importer, import_processes.WHILE_FINISHING)
+            )
 
 
 def set_pending(ctx: ImportContext, bundle_ids: Iterable[str]) -> None:

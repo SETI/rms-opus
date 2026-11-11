@@ -6152,3 +6152,130 @@ Nothing above this line is rewritten by an executor.
   passed and 3 skipped; the integration suite 1,591 passed against the local database
   imported with this head (`import_for_tests.sh`, which registers its whole list first).
   **No integration golden changed.**
+
+### 2026-11-11, PR-16a (written against this file at 6441f344)
+
+- The branch is PR-16's head (6441f344), stacked on it; PR-16's review fixes are merged in
+  when they land.
+- **Telling the coordinator "6 importers × 4 workers"** needs no new option:
+  `opus_import_all --importers 6 --workers 24` divides 24 among 6 (`import_all.divide`,
+  the first `N mod M` taking one more), and `--dry-run` prints the division line first,
+  then each importer's `opus_import --join --workers <share>` command line. The total is
+  refused above PR-09's ceiling, as the section says, so on the workstation's 30 cores
+  at the default `cpu_fraction = 0.75` (ceiling 22) the run needs `cpu_fraction = 0.8` (or
+  higher) in its `OPUS_CONFIG`; no key states the cores. `--workers max` asks for the
+  ceiling. The coordinator resolves the total through `resolve_parallelism`, so
+  `[import] index_workers` is checked against the same ceiling.
+- **`--dry-run` reads the configuration file** (for the ceiling and the defaults) whenever
+  it would start importers, which PR-16's dry run did not need; it still connects to
+  nothing and reads no holdings.
+- **`--sets` with `--prepare` or no step registers those descriptors in place of
+  `BUNDLE_SETS`** (with `--join` it limits the claims, as in PR-16). The coordinator does
+  not pass it to its importers: the queue holds only what was registered. The section
+  has no way to run the coordinator over less than the whole holdings, which the
+  `import_tests` cases and a partial site import both need.
+- **`opus_import_all --join` is a coordinator without `--prepare` or `--finish`**: it
+  starts `--importers` importers (default 1) dividing its own `--workers` (default
+  `[import] workers`, which defaults to 1, where the section says "default 1"), tracks and
+  recovers like the coordinator, and exits once its own importers have, non-zero if any
+  exited non-zero. It replaces its lost importers while bundles are pending.
+- **`[import] importers` defaults to 1** until PR-16a's measurement sets it, which is the
+  orchestrator's; the plain default run is therefore one importer of one worker, as before.
+- **Every chunk of every table carries the guard, not only `obs_general`'s.** A recovered
+  bundle's `obs_files` chunk committing late would otherwise collide with, or survive,
+  the next importer's rows. `ImportDBSuper.bulk_load_rows` takes a `LoadGuard`
+  (`import_processes.BundleGuard`): with one, each chunk is one transaction on either
+  path (the `INSERT` fallback included, whose packets otherwise commit one by one), the
+  guard's statements first, its lock check last. `rows_done` advances only for
+  `obs_general` chunks; `progress_at` advances with every chunk. PR-16's separate
+  `record_rows_done` statement goes. A plain import's guard carries only the
+  `obs_general` chunks' `rows_done` update, matching `process_id IS NULL`, and checks
+  nothing, so its loads of other tables are as before.
+- **"The `UPDATE` matched its row"** is read from the server's report (`Rows matched:` in
+  `Connection.info()`, before the commit), since MySQLdb's `rowcount` counts changed rows
+  and a chunk of another table leaves `rows_done` unchanged. `update_row` returns the
+  rows matched.
+- **The row lock is held on a second connection through the deletes.** The section's
+  abort and recovery take `SELECT ... FOR UPDATE` on the registry row "in the abort's
+  transaction", but the per-bundle delete commits chunk by chunk, which would release a
+  lock on the same connection. `do_recover.release_bundle` (the importer's abort, its
+  failure path, and also its delete before each import, which could otherwise reach a
+  bundle another importer took after a recovery) and `_recover_bundle` lock the row on a
+  sibling connection with `FOR UPDATE SKIP LOCKED`, check it still names the importer as
+  `importing` (and, for a recovery, that the lock is still free), run the delete on the
+  import connection, then write the new state on the sibling and commit. A row another
+  session holds is left alone (the recovery tries again on its next pass). Every state
+  write matches the state it moves from, as the orchestrator asked.
+- **Recovery returns any `importing` bundle whose importer's lock is free**, whatever the
+  importer's row says, not only those of `running` rows: an importer interrupted between
+  its claim's commit and its bundle's abortable region exits `exited` still naming the
+  bundle. (That window, and the cost of a loss counted for it, is the one gap; the hold
+  of `hold_after_claim` was moved inside the abortable region so the interrupt test does
+  not land in it.) A `running` row with a free lock and no bundle left becomes `lost`.
+- **A `failed` bundle keeps its `process_id`**, so the coordinator can name the importer's
+  log (`host:log_path`); a return to `pending` clears it.
+- **An importer's failed index takes nothing back itself** (`TableRowSink.discard` returns
+  at once for a queue importer): the whole bundle is deleted under the row lock on the
+  failure path, and the range delete could reach another importer's rows after a
+  recovery.
+- **The abort closes the import connection and opens a fresh one** before deleting: a
+  second interrupt (a `KeyboardInterrupt` raised by the handler) can arrive mid-statement,
+  and closing rolls back whatever the connection held, its row locks included.
+- **Signals.** An importer's handler (installed for `--join`, explicitly, since a
+  background job starts with SIGINT ignored) counts the first interrupt and raises on the
+  second. PR-09's pool workers now ignore SIGINT: a terminal's Ctrl-C reaches every
+  process of the foreground group, and a worker dying of it broke the pool. The
+  coordinator starts each importer in a process group of its own (`process_group=0`), so a
+  terminal's Ctrl-C reaches the coordinator alone, which passes each interrupt on; under
+  `nohup`, `kill -INT <coordinator>` does the same. The importers' standard output, which
+  duplicates their logs and would break a terminal's table, is discarded; their standard
+  error is inherited.
+- **Each importer's info and debug logs carry `_join_<host>_<pid>` after their time**,
+  since several importers started in one second would otherwise append to one file;
+  `build_run.import_logs` accepts the suffix. The coordinator writes its own
+  `opus_import_all_<time>.log` in `[paths] import_log_dir` (and `ERRORS.log`) and its
+  lines to standard output; "the log's first line" is the division line it prints first.
+- **`--status` without `--recover` opens a read-only connection and does not create
+  `import_process`** (an absent table reads as no importer), so that it is read-only as
+  the section says; `--status --recover` creates it, as the coordinator and `--join` do.
+  The remaining-time estimate is the rows done since the tracker's first reading over the
+  time since, so a single `--status` prints "not yet estimated"; `--watch` estimates
+  after its first redraw.
+- **Replacement is bounded**: a coordinator starts at most `M` plus the number of
+  registered bundles importers in all, which ends a run whose importers cannot start;
+  a bundle lost twice is failed, which bounds the loops the section describes. When
+  nothing runs and bundles are pending it starts the division again (a joined
+  computer's importer may have died after the coordinator's own exited).
+- **A bundle `importing` with `process_id` NULL** (a plain `opus_import` running, or one
+  that died) cannot be recovered; once no importer anywhere is alive the coordinator
+  exits non-zero naming it, with the `--requeue` remedy. `--requeue` refuses an
+  `importing` bundle whose importer holds its lock, by `IS_USED_LOCK`.
+- **Stalls are judged by each computer's clock** (`progress_at` and the coordinator's now,
+  both UTC); computers whose clocks disagree by minutes would mis-report.
+- **The mult-value mode also drops `import_bundle.process_id` and `losses`, and
+  `mult_field.last_id`** (`golden_io.IMPORTER_COLUMNS`): which importer imported a
+  bundle and how many died holding it depend on how the work was shared, and a killed
+  importer's taken-but-unwritten mult ids advance the counter. The first run of the kill
+  test found `last_id` differing.
+- **The kill test runs three importers at `--workers 4` (2, 1 and 1 workers) with
+  `cpu_fraction = 1.0`**, not each at `workers = 2`: a coordinator's six workers would be
+  refused on a GitHub-hosted runner's four cores. It kills the importer that has a pool
+  (`/proc/<pid>/task/<pid>/children`), mid-bundle (rows of the bundle committed, held at
+  `hold_after_chunk:5`), and requires its lock free within five seconds, the bundle
+  returned and imported again (`losses` 1), the importer `lost`, `schema_version` ready,
+  and the mult-value comparison with the main run equal. The double-loss case kills the
+  importer holding `VG_2801` twice (`hold_after_claim:3`, one importer of one worker);
+  the interrupt case runs two importers, interrupts twice, and reruns; the lock case
+  `KILL`s the lock connection of one `opus_import --join` at `hold_after_chunk:5` and
+  requires the importer's non-zero exit naming the lock, the bundle `pending` and no
+  `obs_general` or `obs_files` row; the last case detects the hold of `hold_before_lock:5`
+  through `information_schema.innodb_trx` (an uncommitted transaction with rows modified
+  on the schema), so it needs an account with `PROCESS`. The cases skip `manage.py
+  migrate`, which nothing they compare needs.
+- `import_process`'s `DESC` in `dev_guide_database_schema.rst` was taken from a table the
+  code created, not written by hand.
+- **The lost-lock message says what the importer was doing** (`committing a chunk`,
+  `claiming a bundle`, `marking its bundle done`, `deleting its bundle`). The lock case
+  requires `committing a chunk`: without it, the case passed with the chunk's lock check
+  removed, since the move to `done` checks the lock too and the abort's delete leaves the
+  same rows.

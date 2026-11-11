@@ -388,7 +388,11 @@ def test_an_importer_whose_lock_connection_is_killed_aborts_its_bundle(case: Cas
     status, output = _finish(importer)
 
     assert status != 0
-    assert f'lost its lock "{lock}"' in output
+    # The first chunk after the hold found the lock gone; none committed after it.
+    assert (
+        f'lost its lock "{lock}" or its bundle while '
+        f'{import_processes.WHILE_COMMITTING_A_CHUNK}' in output
+    )
     assert case.bundle(bundle_id)[:2] == ('pending', None)
     assert case.rows('SELECT COUNT(*) FROM obs_general WHERE bundle_id = %s', (bundle_id,)) == [
         (0,)
