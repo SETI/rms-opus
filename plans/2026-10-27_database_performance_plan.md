@@ -5865,6 +5865,32 @@ Nothing above this line is rewritten by an executor.
 - The review's fixes change nothing the import writes at fixture scale (the import
   goldens are unchanged); the local integration database was imported again with the
   fixes, and the integration suite passes against it.
+- PR-14's measurement (2026-11-10, test scale; before at c9247eca, PR-13's head, after at
+  466ca7f7). Three fixture imports a side alternated A B B A A B, one test-scale import a
+  side, A B, each side serving its own schema, three web runs a side alternated, then
+  `bench_db --dump-queries` once a side. The target is structural, and is met: one
+  `mult` table with `mult_field` and `mult_group`, ranks computed at finalization, no
+  unreferenced value, and no changed integration golden to rule on.
+  - Every guard held. The gunicorn workers' peak RSS, the section's own guard, is about
+    1.6% lower in every scenario (for example 137.4 MB against 135.1 MB for the empty
+    search, app-cold).
+  - The schema's table count is 181 against 94; the mult tables' data 1.88 MB against
+    0.13 MB; the schema's data 788.7 MB against 784.5 MB (-0.5%) and indexes 398.6 MB
+    against 398.0 MB.
+  - The test-scale import was 330.9 s against 338.1 s (+2.2%, its floor 0.9%; the
+    comparison holds the guard), the bundles' phase 263.3 s against 269.9 s, the larger
+    bundles 2.5% to 4.7% slower each, and finalization's new mult step 1.0 s. The
+    fixture imports were 40.3 s against 39.8 s.
+  - Reported: the empty fan-out's app-cold p50 305.6 ms against 323.0 ms (+5.7%, floor
+    38.8%), its target mult counts 37.3 ms against 29.3 ms and its widget menu 72.4 ms
+    against 92.1 ms (+27%, floor 56%). The planet widget's app-cold p50 was 23.7 ms
+    against 51.6 ms (+118%, floor 54%) and its db-cold p50 38.7 ms against 64.0 ms, with
+    small spreads and one more statement, the field-id map's read of `mult_field`. Its
+    SQL is otherwise the same shape, reading `mult` by its key, and the slowdown did not
+    reproduce through Django's test client against the two local integration databases:
+    the planet widget as the first mult request after a non-mult request took 41.5 ms
+    on PR-13's database and 31.3 ms on this head's, with the same modules imported
+    during it.
 
 ### 2026-11-10, PR-15 (written against this file at 466ca7f7)
 
@@ -6003,6 +6029,41 @@ Nothing above this line is rewritten by an executor.
 - No golden changed. Results: the gates pass (2,783 unit tests); the import suite 169
   passed and 3 skipped; the integration suite 1,591 passed against the local database,
   which the fix did not need imported again.
+- PR-15's measurement (2026-11-11, test scale; before at 1e55f88a, PR-14's head, after at
+  2d01553f). Three fixture imports a side alternated A B B A A B, one test-scale import a
+  side, A B, each side serving its own schema, three web runs a side alternated, then
+  `bench_db --dump-queries` once a side. The target is structural, and is met: one
+  surface geometry table, one model, and the new-target test passing.
+  - The schema's tables 94 against 45; the import's `Com_create_table` 94 against 45 and
+    `Com_alter_table` 157 against 59; `models.py` 10,485 lines and 144 classes against
+    968 and 43. The schema's data 784.5 MB against 746.3 MB (-4.9%) and indexes 398.0 MB
+    against 366.7 MB (-7.9%); the surface geometry data 51.9 MB in the per-body tables
+    against 30.0 MB in the one table, and its indexes 111.2 MB against 94.7 MB.
+  - The test-scale import was 330.4 s against 307.4 s (-7.0%).
+  - The categories call: app-cold p50 94.0 ms against 22.4 ms (-76.2%), db-cold 213.6 ms
+    against 45.2 ms (-78.8%), warm 16.0 ms against 5.8 ms. The gunicorn workers' peak RSS
+    about 12.8% lower in every scenario (135.2 MB against 117.9 MB for the empty search,
+    app-cold). The empty fan-out's db-cold buffer-pool reads 539 against 409.
+  - The surface geometry search (Saturn, planetographic latitude): db-cold p50 279.2 ms
+    against 214.0 ms (-23.3%; the section's own guard, held); its plan examines 45,460
+    rows against 30,630 (-32.6%) and takes 24.9 ms against 16.2 ms. The plan reads
+    Saturn's rows through the primary key's `target_name` prefix and filters the
+    latitudes, since `planetographic_latitude1` and `planetographic_latitude2` carry no
+    key in the template, before or after this PR; the section's "one index range on
+    `(target_name, col)`" holds for the keyed columns.
+  - **One guard regressed:** that search's app-cold p50, 123.0 ms against 166.6 ms
+    (+35.4%, floor 20.7%), with buffer-pool reads 456 against 1,063. The app-cold pass
+    runs every scenario on a server not restarted since the db-cold pass's last
+    scenario, so a scenario reads from disk whatever the scenarios before it in that
+    pass have not; Saturn's rows in the one table were not among them, where the
+    per-body table's mostly were. With the buffer pool warm (Django's test client
+    against the two local integration databases, the search's stored results cleared
+    first) the same search took 260.9 ms against 106.4 ms, the `INSERT ... SELECT` 241 ms
+    against 85 ms, with the same count.
+  - The orchestrator's ruling (2026-11-11): the regression is reported and explained,
+    not a stop-and-report, since the section's own guard on this search (db-cold)
+    improved and the warm search is faster; it is flagged in the PR's description for
+    the user's review before merge.
 
 ### 2026-11-10, PR-16 (written against this file at 2d01553f)
 
