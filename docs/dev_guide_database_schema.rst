@@ -383,7 +383,7 @@ The web application presents the table as one category per body, named ``obs_sur
     |        1 |
     +----------+
 
-The bodies are the values the table holds, so a body's category exists exactly when some observation has geometry for it. An import that brings a body the database has not held writes the body's mult value and its geometry rows, and its finalization writes the body's ``table_names``, ``param_info`` and ``partables`` rows: no table is created and no code changes.
+The bodies are the values the table holds, so a body's category exists exactly when some observation has geometry for it. An import that brings a body the database has not held writes the body's mult value and its geometry rows, and its finalization writes the body's ``table_names``, ``param_info`` and ``partables`` rows.
 
 To remove a bundle, the import deletes the table's rows by joining ``obs_general`` on ``obs_general_id``, as for every other ``obs_*`` table.
 

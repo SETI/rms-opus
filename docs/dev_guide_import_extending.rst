@@ -215,7 +215,7 @@ There is nothing to do. Every target's surface geometry is rows of one table,
 ``obs_surface_geometry_target``, and finalization writes each target's category -- its
 ``table_names`` row, its ``partables`` trigger and its ``param_info`` rows -- from the
 targets that table holds, with search parameters named by the slug form of the target
-name. No table is created, no model is generated and no code changes. Each web worker
+name. Each web worker
 reads those rows once and keeps them, so a running worker serves the target after it is
 restarted, which the steps that follow every import do
 (:ref:`user_guide_deployment_after_import`).

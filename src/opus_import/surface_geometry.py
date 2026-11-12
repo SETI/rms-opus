@@ -5,9 +5,9 @@ Every body an observation has surface geometry for contributes one row to one ta
 the observation. The web application presents the rows as one **category** per body,
 ``obs_surface_geometry__<target>``, whose fields are the template's columns with the
 body's name in their labels and slugs, and one more category,
-``obs_surface_geometry_name``, whose one field is the selector that chooses a body. A
-category is data, not a table: ``table_names``, ``param_info`` and ``partables`` carry its
-rows, and ``table_names`` names the table and the body each category reads.
+``obs_surface_geometry_name``, whose one field is the selector that chooses a body.
+``table_names``, ``param_info`` and ``partables`` carry a category's rows, and
+``table_names`` names the table and the body each category reads.
 
 The bodies are the values the table holds (`stored_targets`), so a category exists
 exactly when an observation has geometry for its body.
