@@ -402,7 +402,24 @@ There are two types of surface geometry tables. The first, called simply ``obs_s
     | timestamp      | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +----------------+--------------+------+-----+-------------------+
 
-The second, ``obs_surface_geometry_target``, holds every body's surface geometry: one row per observation and body for which geometry information is available. Normally only a few bodies have a row for a given OPUS ID, since only a small number of bodies are in the field of view. Its columns are:
+The second, ``obs_surface_geometry_target``, holds every body's surface geometry: one row per observation and body for which geometry information is available. Normally only a few bodies have a row for a given OPUS ID, since only a small number of bodies are in the field of view. Its schema starts:
+
+::
+
+    mysql> DESC obs_surface_geometry_target;
+    +---------------------------------------+-------------------+------+-----+---------+
+    | Field                                 | Type              | Null | Key | Default |
+    +---------------------------------------+-------------------+------+-----+---------+
+    | target_name                           | smallint unsigned | NO   | PRI | NULL    |
+    | obs_general_id                        | int unsigned      | NO   | PRI | NULL    |
+    | planetographic_latitude1              | double            | YES  |     | NULL    |
+    | planetographic_latitude2              | double            | YES  |     | NULL    |
+    | sub_solar_planetographic_latitude1    | double            | YES  |     | NULL    |
+    | sub_solar_planetographic_latitude2    | double            | YES  |     | NULL    |
+    | ...                                   |                   |      |     |         |
+    +---------------------------------------+-------------------+------+-----+---------+
+
+The fields are:
 
 * ``target_name``: The body, as the id of its value in the mult field of the ``Surface Geometry Target Selector`` (``obs_surface_geometry_name.target_name``, `The Encoding of Checkbox IDs and the mult Tables`_). The column's schema entry names that field with its ``mult_field`` key, since the column's own qualified name would name another one.
 * ``obs_general_id``: The observation, a foreign key onto ``obs_general.id``.
@@ -410,7 +427,7 @@ The second, ``obs_surface_geometry_target``, holds every body's surface geometry
 
 The primary key is ``(target_name, obs_general_id)``, so one body's rows are next to each other in the table. A plain key on ``obs_general_id`` serves the foreign key, the lookups of one observation's bodies, and the deletion of a bundle's rows. Every other key starts with ``target_name``: a pair of displayed range columns that both carry a key in the template is one key over the body and both columns, and every other keyed column has a key over the body and the column. The keys are listed in the schema file, ``obs_surface_geometry_target.json``.
 
-The web application presents the table as one category per body, named ``obs_surface_geometry__<body>``, and one more category, ``obs_surface_geometry_name``, whose one field is the ``Surface Geometry Target Selector``. A category is data, not a table: ``table_names`` names the table and the body each category reads (`The table_names Table`_), and ``param_info`` and ``partables`` carry the category's rows. A statement reads a body's category as the table under the category's name, keeping to the body's rows:
+The web application presents the table as one category per body, named ``obs_surface_geometry__<body>``, and one more category, ``obs_surface_geometry_name``, whose one field is the ``Surface Geometry Target Selector``. ``table_names`` names the table and the body each category reads (`The table_names Table`_), and ``param_info`` and ``partables`` carry the category's rows. A statement reads a body's category as the table under the category's name, keeping to the body's rows:
 
 ::
 
@@ -427,7 +444,7 @@ The web application presents the table as one category per body, named ``obs_sur
     |        1 |
     +----------+
 
-The bodies are the values the table holds, so a body's category exists exactly when some observation has geometry for it. An import that brings a body the database has not held writes the body's mult value and its geometry rows, and its finalization writes the body's ``table_names``, ``param_info`` and ``partables`` rows.
+A body's category exists exactly when some observation has geometry for it: finalization writes its ``table_names``, ``param_info`` and ``partables`` rows from the bodies the table holds.
 
 To remove a bundle, the import deletes the table's rows by joining ``obs_general`` on ``obs_general_id``, as for every other ``obs_*`` table.
 
