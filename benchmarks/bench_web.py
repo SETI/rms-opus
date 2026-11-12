@@ -34,8 +34,9 @@ visitor meets after a deploy. The warm-up's wall-clock goes in the run's details
 ``--promotion-carts N`` each run first times a promotion's window, from the
 application's stop until it has started again: the side's ``opus_import
 --carry-over-sessions-from`` from a schema holding N planted cart rows into the served
-schema, then memcached's restart; the planted rows are then deleted from the served
-schema, so every run starts from the same tables. A side without the command or the
+schema, then memcached's restart. The served schema's own sessions and cart rows are
+saved before the window and put back after it, so every run starts from the same tables.
+The harness drops only a schema it made itself. A side without the command or the
 option skips the step, and the result names it among its skipped steps.
 
 Example, one side's web runs at fixture scale against the schema its import built::
@@ -140,6 +141,17 @@ PROMOTION_SESSION_PREFIX = 'bench-carry-'
 
 #: What the schema a promotion carries over from is named after the served one.
 PROMOTION_SOURCE_SUFFIX = '_carry_source'
+
+#: The empty table that marks a schema as one the harness made to carry over from; a
+#: schema of that name without it is never dropped.
+PROMOTION_SOURCE_MARK = 'bench_web_promotion_source'
+
+#: The tables a promotion replaces in the served schema, in the order they are filled.
+PROMOTION_TABLES = ('django_session', 'cart')
+
+#: What the served schema's own copy of each of `PROMOTION_TABLES` is saved under, in the
+#: schema a promotion carries over from, while a promotion is timed.
+PROMOTION_SAVED_PREFIX = 'saved_'
 
 
 class WebRunError(Exception):
@@ -717,10 +729,15 @@ class WebBench:
     def prepare_promotion(self, cart_rows: int) -> int:
         """Make the schema a promotion carries sessions and carts over from.
 
-        It holds ``django_session`` and ``cart`` only, as the served schema declares them
-        (``CREATE TABLE ... LIKE`` copies no foreign key), with `cart_rows` cart rows
-        naming the served schema's first observations, `PROMOTION_CART_ROWS_PER_SESSION`
-        to an unexpired session.
+        The schema is named after the served one with `PROMOTION_SOURCE_SUFFIX`. A schema
+        of that name left by an earlier run of the harness, which holds the
+        `PROMOTION_SOURCE_MARK` table, is dropped first; any other schema of that name is
+        refused and left as it is. The schema made holds that mark, ``django_session``
+        and ``cart`` as the served schema declares them (``CREATE TABLE ... LIKE`` copies
+        no foreign key), with `cart_rows` cart rows naming the served schema's first
+        observations, `PROMOTION_CART_ROWS_PER_SESSION` to an unexpired session, and an
+        empty copy of each of the two tables named with `PROMOTION_SAVED_PREFIX`, which
+        `time_promotion` saves the served schema's own rows into.
 
         Parameters:
             cart_rows: The cart rows to plant.
@@ -728,17 +745,24 @@ class WebBench:
         Returns:
             The cart rows planted: fewer than asked when the served schema holds fewer
             observations.
+
+        Raises:
+            WebRunError: Naming the schema, if one of its name exists without the mark.
         """
         source = f'{self.schema}{PROMOTION_SOURCE_SUFFIX}'
         served = f'`{self.schema}`'
         quoted = f'`{source}`'
-        self.drop_promotion_source(source)
-        # Named before it exists, so that a failure below still has it dropped.
+        self.drop_leftover_promotion_source(source)
+        query(self.connection, f'CREATE DATABASE {quoted}')
+        # Named as soon as it exists, so that a failure below still has it dropped.
         self.promotion_source = source
         statements = (
-            f'CREATE DATABASE {quoted}',
-            f'CREATE TABLE {quoted}.django_session LIKE {served}.django_session',
-            f'CREATE TABLE {quoted}.cart LIKE {served}.cart',
+            f'CREATE TABLE {quoted}.`{PROMOTION_SOURCE_MARK}` (`id` INT)',
+            *(
+                f'CREATE TABLE {quoted}.`{prefix}{table}` LIKE {served}.`{table}`'
+                for table in PROMOTION_TABLES
+                for prefix in ('', PROMOTION_SAVED_PREFIX)
+            ),
             # The names are the harness's own; the row count is bound.
             f'INSERT INTO {quoted}.cart (session_id, obs_general_id, opus_id, recycled) '  # nosec B608
             f"SELECT CONCAT('{PROMOTION_SESSION_PREFIX}', (ROW_NUMBER() OVER (ORDER BY id) - 1) DIV "
@@ -752,15 +776,41 @@ class WebBench:
         planted = query(self.connection, f'SELECT COUNT(*) FROM {quoted}.cart')  # nosec B608
         return int(planted[0][0])
 
-    def drop_promotion_source(self, source: str | None = None) -> None:
-        """Drop the schema a promotion carries over from.
+    def drop_leftover_promotion_source(self, source: str) -> None:
+        """Drop a schema an earlier run of the harness made to carry over from.
 
         Parameters:
-            source: The schema, or None for the one `prepare_promotion` made, if any.
+            source: The schema's name.
+
+        Raises:
+            WebRunError: Naming the schema, if it exists without the
+                `PROMOTION_SOURCE_MARK` table, so that the harness did not make it; it is
+                left as it is.
         """
-        source = self.promotion_source if source is None else source
-        if source is not None:
-            query(self.connection, f'DROP DATABASE IF EXISTS `{source}`')
+        found = query(
+            self.connection,
+            'SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = %s',
+            [source],
+        )
+        if int(found[0][0]) == 0:
+            return
+        marked = query(
+            self.connection,
+            'SELECT COUNT(*) FROM information_schema.TABLES '
+            'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+            [source, PROMOTION_SOURCE_MARK],
+        )
+        if int(marked[0][0]) == 0:
+            raise WebRunError(
+                f'schema {source} exists and the harness did not make it (it holds no '
+                f'{PROMOTION_SOURCE_MARK} table): drop or rename it to time a promotion'
+            )
+        query(self.connection, f'DROP DATABASE `{source}`')
+
+    def drop_promotion_source(self) -> None:
+        """Drop the schema `prepare_promotion` made, if it made one."""
+        if self.promotion_source is not None:
+            query(self.connection, f'DROP DATABASE IF EXISTS `{self.promotion_source}`')
         self.promotion_source = None
 
     def time_promotion(self, run: dict[str, Any]) -> None:
@@ -773,10 +823,12 @@ class WebBench:
         switch, one rename, is not simulated). ``web.promotion.carry_over_s`` is the
         carry-over alone.
 
-        Once the window has closed, the rows the carry-over copied, which are the planted
-        ones, are deleted from the served schema, so the next run and the other side find
-        its ``cart`` and ``django_session`` as before. They are deleted however the
-        window ends, a failed step included.
+        Before the window opens, the served schema's ``cart`` and ``django_session`` are
+        saved into `promotion_source` (`save_served_rows`); once it has closed, however
+        it closes, a failed step included, they are put back (`restore_served_rows`), so
+        the next run and the other side find those tables as before. Neither is timed. A
+        save that fails raises before the application is stopped, and nothing is put
+        back.
 
         Parameters:
             run: The run to record ``web.promotion.window_s`` and
@@ -788,6 +840,7 @@ class WebBench:
         """
         assert self.promotion_source is not None
         assert self.spelling.carry_over is not None
+        self.save_served_rows()
         started = time.perf_counter()
         try:
             self.gunicorn.stop()
@@ -803,20 +856,68 @@ class WebBench:
             self.gunicorn.start()
             ended = time.perf_counter()
         finally:
-            self.remove_planted_rows()
+            self.restore_served_rows()
         run['metrics']['web.promotion.carry_over_s'] = carried - stopped
         run['metrics']['web.promotion.window_s'] = ended - started
 
-    def remove_planted_rows(self) -> None:
-        """Delete the planted sessions and cart rows from the served schema."""
-        served = f'`{self.schema}`'
-        for table, column in (('cart', 'session_id'), ('django_session', 'session_key')):
-            query(
-                self.connection,
-                # The names are the harness's own; the prefix is bound.
-                f'DELETE FROM {served}.{table} WHERE {column} LIKE %s',  # nosec B608
-                [f'{PROMOTION_SESSION_PREFIX}%'],
-            )
+    def save_served_rows(self) -> None:
+        """Copy the served schema's sessions and cart rows into `promotion_source`.
+
+        Each of `PROMOTION_TABLES` replaces the rows of its copy named with
+        `PROMOTION_SAVED_PREFIX`, which `prepare_promotion` made, in one transaction.
+        """
+        self._replace_rows(self._saved_tables(), self._served_tables())
+
+    def restore_served_rows(self) -> None:
+        """Put back the served schema's sessions and cart rows `save_served_rows` saved.
+
+        The served schema's `PROMOTION_TABLES` are emptied and filled from the saved
+        copies in one transaction, so their rows are either all put back or left as the
+        promotion left them.
+        """
+        self._replace_rows(self._served_tables(), self._saved_tables())
+
+    def _served_tables(self) -> dict[str, str]:
+        """Return each of `PROMOTION_TABLES`' qualified name in the served schema."""
+        return {table: f'`{self.schema}`.`{table}`' for table in PROMOTION_TABLES}
+
+    def _saved_tables(self) -> dict[str, str]:
+        """Return the qualified name of each of `PROMOTION_TABLES`' saved copy."""
+        return {
+            table: f'`{self.promotion_source}`.`{PROMOTION_SAVED_PREFIX}{table}`'
+            for table in PROMOTION_TABLES
+        }
+
+    def _replace_rows(self, target: Mapping[str, str], source: Mapping[str, str]) -> None:
+        """Replace the rows of each of `PROMOTION_TABLES` with another table's, atomically.
+
+        The tables are emptied in the reverse of `PROMOTION_TABLES`' order and filled in
+        it, in one transaction that is rolled back if a statement fails.
+
+        Parameters:
+            target: The qualified name of each table whose rows are replaced.
+            source: The qualified name of each table its rows are copied from, which has
+                the same columns in the same order.
+        """
+        # The names are the harness's own; the statements carry no values.
+        statements = [
+            *(
+                f'DELETE FROM {target[table]}'  # nosec B608
+                for table in reversed(PROMOTION_TABLES)
+            ),
+            *(
+                f'INSERT INTO {target[table]} SELECT * FROM {source[table]}'  # nosec B608
+                for table in PROMOTION_TABLES
+            ),
+        ]
+        query(self.connection, 'START TRANSACTION')
+        try:
+            for statement in statements:
+                query(self.connection, statement)
+        except Exception:
+            query(self.connection, 'ROLLBACK')
+            raise
+        query(self.connection, 'COMMIT')
 
     def require_cold(self) -> None:
         """Check that no worker has served a request since the application started.

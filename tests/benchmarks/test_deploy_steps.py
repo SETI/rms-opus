@@ -164,18 +164,29 @@ def test_a_failed_warm_up_fails_the_run() -> None:
 
 
 #: What each step of a promotion costs on the test's clock, in seconds, each a distinct
-#: power of two so that every sum of them names the steps it holds.
+#: power of two so that every sum of them names the steps it holds. A statement costs its
+#: verb's.
 _STEP_SECONDS = {
     'gunicorn.stop': 1.0,
     'carry_over': 2.0,
     'memcached.restart': 4.0,
     'gunicorn.start': 8.0,
     'DELETE': 16.0,
+    'INSERT': 32.0,
 }
 
 
+class _StatementError(Exception):
+    """Raised by the stand-in query for the statement a test makes fail."""
+
+
 def _promotion_bench(
-    monkeypatch: pytest.MonkeyPatch, calls: list[str], *, failing: str | None = None
+    monkeypatch: pytest.MonkeyPatch,
+    calls: list[str],
+    *,
+    failing: str | None = None,
+    failing_statement: str | None = None,
+    rows: dict[str, int] | None = None,
 ) -> WebBench:
     """Return a WebBench ready to time a promotion over stand-ins, on a clock of its steps.
 
@@ -187,8 +198,13 @@ def _promotion_bench(
         calls: The list every step is recorded into: a server's method as
             ``<server>.<method>``, the carry-over as ``carry_over``, and a statement as
             its text followed by its parameters.
-        failing: A server's step, as recorded (``<server>.<method>``), that raises
-            `ServerError` once recorded; None for none.
+        failing: A step, as recorded (``<server>.<method>`` or ``carry_over``), that
+            raises once recorded, `ServerError` for a server's and `WebRunError` for the
+            carry-over; None for none.
+        failing_statement: The beginning of a statement that raises `_StatementError`
+            once recorded; None for none.
+        rows: The single count a statement returns, by a part of its text; any other
+            statement returns no rows.
 
     Returns:
         The bench, its promotion source ``bench_x_carry_source`` and its schema
@@ -200,14 +216,26 @@ def _promotion_bench(
     bench._connection = object()
 
     def carry_over(side: object, arguments: list[str], env: object, errors_log: object) -> None:
-        """Record the carry-over as ``carry_over`` and then its arguments."""
+        """Record the carry-over as ``carry_over`` and then its arguments.
+
+        Raises:
+            WebRunError: After recording, when the carry-over is the failing step.
+        """
         calls.append('carry_over')
         calls.append(' '.join(arguments))
+        if failing == 'carry_over':
+            raise WebRunError('carry_over failed')
 
     def record_query(connection: object, statement: str, parameters: Any = ()) -> list[Any]:
-        """Record a statement and its parameters, and return no rows."""
+        """Record a statement and its parameters, and return its rows.
+
+        Raises:
+            _StatementError: After recording, when the statement is the failing one.
+        """
         calls.append(f'{statement} {list(parameters)}')
-        return []
+        if failing_statement is not None and statement.startswith(failing_statement):
+            raise _StatementError(statement)
+        return [(count,) for part, count in (rows or {}).items() if part in statement]
 
     def now() -> float:
         """Return the seconds the steps recorded so far have taken."""
@@ -215,40 +243,59 @@ def _promotion_bench(
             seconds
             for call in calls
             for step, seconds in _STEP_SECONDS.items()
-            if call == step or (step == 'DELETE' and call.startswith(step))
+            if call == step or call.startswith(f'{step} ')
         )
 
     monkeypatch.setattr(bench_web, 'run_import_step', carry_over)
     monkeypatch.setattr(bench_web, 'query', record_query)
     monkeypatch.setattr(bench_web, 'time', SimpleNamespace(perf_counter=now))
-    if failing is not None:
+    if failing is not None and failing != 'carry_over':
         server, method = failing.split('.')
         setattr(bench, server, _Recorder(server, calls, failing=method))
     return bench
 
 
-#: The statements that delete the planted rows, as `_promotion_bench` records them.
-_DELETES = [
-    "DELETE FROM `bench_x`.cart WHERE session_id LIKE %s ['bench-carry-%']",
-    "DELETE FROM `bench_x`.django_session WHERE session_key LIKE %s ['bench-carry-%']",
-]
+#: The served schema's tables, as the statements `_promotion_bench` records name them.
+_SERVED = {table: f'`bench_x`.`{table}`' for table in ('cart', 'django_session')}
+
+#: Their saved copies in the promotion source, likewise.
+_SAVED = {table: f'`bench_x_carry_source`.`saved_{table}`' for table in ('cart', 'django_session')}
+
+
+def _replacing(target: dict[str, str], source: dict[str, str]) -> list[str]:
+    """Return the statements that replace two tables' rows with others', as recorded."""
+    return [
+        'START TRANSACTION []',
+        f'DELETE FROM {target["cart"]} []',
+        f'DELETE FROM {target["django_session"]} []',
+        f'INSERT INTO {target["django_session"]} SELECT * FROM {source["django_session"]} []',
+        f'INSERT INTO {target["cart"]} SELECT * FROM {source["cart"]} []',
+        'COMMIT []',
+    ]
+
+
+#: The statements that save the served schema's rows, and that put them back.
+_SAVE = _replacing(_SAVED, _SERVED)
+_RESTORE = _replacing(_SERVED, _SAVED)
 
 
 def test_the_promotion_window_runs_from_the_applications_stop_to_its_start(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The stop, the carry-over, the cache restart and the start, as ``_promote.sh`` has
-    them; the planted rows go once the window has closed, so their deletion is not in it."""
+    them; the served schema's own rows are saved before the window opens and put back
+    after it has closed, so neither is in it."""
     calls: list[str] = []
     run: dict[str, Any] = {'metrics': {}}
     _promotion_bench(monkeypatch, calls).time_promotion(run)
     assert calls == [
+        *_SAVE,
         'gunicorn.stop',
         'carry_over',
         '--carry-over-sessions-from bench_x_carry_source',
         'memcached.restart',
         'gunicorn.start',
-        *_DELETES,
+        *_RESTORE,
     ]
     assert run['metrics'] == {
         'web.promotion.window_s': 15.0,
@@ -256,13 +303,142 @@ def test_the_promotion_window_runs_from_the_applications_stop_to_its_start(
     }
 
 
-@pytest.mark.parametrize('failing', ['memcached.restart', 'gunicorn.start'])
-def test_the_planted_rows_are_deleted_when_a_restart_fails(
-    monkeypatch: pytest.MonkeyPatch, failing: str
+@pytest.mark.parametrize(
+    ('failing', 'error', 'last'),
+    [
+        ('carry_over', WebRunError, '--carry-over-sessions-from bench_x_carry_source'),
+        ('memcached.restart', ServerError, 'memcached.restart'),
+        ('gunicorn.start', ServerError, 'gunicorn.start'),
+    ],
+)
+def test_the_served_rows_are_put_back_when_a_step_fails(
+    monkeypatch: pytest.MonkeyPatch, failing: str, error: type[Exception], last: str
 ) -> None:
     """The served schema is left as it was found, and the failure reaches the caller."""
     calls: list[str] = []
     bench = _promotion_bench(monkeypatch, calls, failing=failing)
-    with pytest.raises(ServerError, match=f'{failing} failed'):
+    with pytest.raises(error, match=f'{failing} failed'):
         bench.time_promotion({'metrics': {}})
-    assert calls[-3:] == [failing, *_DELETES]
+    assert calls[-len(_RESTORE) - 1 :] == [last, *_RESTORE]
+
+
+def test_a_save_that_fails_stops_nothing_and_puts_nothing_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Its transaction is rolled back, and the saved copies, which may be stale, are never
+    copied over the served schema's rows."""
+    calls: list[str] = []
+    bench = _promotion_bench(monkeypatch, calls, failing_statement=f'INSERT INTO {_SAVED["cart"]}')
+    with pytest.raises(_StatementError):
+        bench.time_promotion({'metrics': {}})
+    assert calls == [*_SAVE[:-1], 'ROLLBACK []']
+
+
+def test_a_restore_that_fails_is_rolled_back_and_raised(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The served tables are either all put back or left as the promotion left them."""
+    calls: list[str] = []
+    bench = _promotion_bench(monkeypatch, calls, failing_statement=f'INSERT INTO {_SERVED["cart"]}')
+    with pytest.raises(_StatementError):
+        bench.time_promotion({'metrics': {}})
+    assert calls[-len(_RESTORE) :] == [*_RESTORE[:-1], 'ROLLBACK []']
+
+
+#: The statement that asks whether the promotion source exists, as recorded.
+_SOURCE_EXISTS = (
+    'SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = %s '
+    "['bench_x_carry_source']"
+)
+
+#: The statement that asks whether it holds the harness's mark, as recorded.
+_SOURCE_MARKED = (
+    'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND '
+    "TABLE_NAME = %s ['bench_x_carry_source', 'bench_web_promotion_source']"
+)
+
+
+def _schema_statements(calls: list[str]) -> list[str]:
+    """Return the statements recorded that make, drop or inspect a schema or table."""
+    return [
+        call
+        for call in calls
+        if call.startswith(('CREATE', 'DROP')) or 'information_schema' in call
+    ]
+
+
+#: The statements that make the promotion source, as recorded.
+_MAKE_SOURCE = [
+    'CREATE DATABASE `bench_x_carry_source` []',
+    'CREATE TABLE `bench_x_carry_source`.`bench_web_promotion_source` (`id` INT) []',
+    'CREATE TABLE `bench_x_carry_source`.`django_session` LIKE `bench_x`.`django_session` []',
+    'CREATE TABLE `bench_x_carry_source`.`saved_django_session` LIKE `bench_x`.`django_session` []',
+    'CREATE TABLE `bench_x_carry_source`.`cart` LIKE `bench_x`.`cart` []',
+    'CREATE TABLE `bench_x_carry_source`.`saved_cart` LIKE `bench_x`.`cart` []',
+]
+
+
+@pytest.mark.parametrize(
+    ('exists', 'dropped'),
+    [
+        (0, []),
+        (1, [_SOURCE_MARKED, 'DROP DATABASE `bench_x_carry_source` []']),
+    ],
+    ids=['absent', 'leftover'],
+)
+def test_the_promotion_source_is_made_after_dropping_the_harnesss_leftover(
+    monkeypatch: pytest.MonkeyPatch, exists: int, dropped: list[str]
+) -> None:
+    """A schema of its name that holds the harness's mark is an earlier run's, and goes;
+    the source made holds the mark, and the planted rows are counted."""
+    calls: list[str] = []
+    bench = _promotion_bench(
+        monkeypatch,
+        calls,
+        rows={
+            'SCHEMATA': exists,
+            'information_schema.TABLES': 1,
+            'FROM `bench_x_carry_source`.cart': 7,
+        },
+    )
+    bench.promotion_source = None
+    assert bench.prepare_promotion(10) == 7
+    assert _schema_statements(calls) == [_SOURCE_EXISTS, *dropped, *_MAKE_SOURCE]
+    assert bench.promotion_source == 'bench_x_carry_source'
+
+
+def test_a_schema_of_the_sources_name_the_harness_did_not_make_is_refused_and_kept(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Without the mark it is someone else's: nothing is dropped or made, then or when the
+    command ends."""
+    calls: list[str] = []
+    bench = _promotion_bench(
+        monkeypatch, calls, rows={'SCHEMATA': 1, 'information_schema.TABLES': 0}
+    )
+    bench.promotion_source = None
+    with pytest.raises(
+        WebRunError,
+        match='schema bench_x_carry_source exists and the harness did not make it',
+    ):
+        bench.prepare_promotion(10)
+    bench.drop_promotion_source()
+    assert calls == [_SOURCE_EXISTS, _SOURCE_MARKED]
+
+
+def test_a_source_whose_making_fails_is_dropped_when_the_command_ends(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """It is named as soon as it exists, so the drop at the end finds it."""
+    calls: list[str] = []
+    bench = _promotion_bench(
+        monkeypatch,
+        calls,
+        rows={'SCHEMATA': 0},
+        failing_statement='CREATE TABLE `bench_x_carry_source`.`bench_web',
+    )
+    bench.promotion_source = None
+    with pytest.raises(_StatementError):
+        bench.prepare_promotion(10)
+    bench.drop_promotion_source()
+    assert calls[-1] == 'DROP DATABASE IF EXISTS `bench_x_carry_source` []'

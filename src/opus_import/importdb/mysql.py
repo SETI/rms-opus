@@ -1410,9 +1410,10 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             ImportDBError: Before any statement, if the source's name is not a safe
                 identifier, if it names this schema (compared without regard to case, as a
                 server with ``lower_case_table_names`` set compares them), whose emptying
-                would empty the source, or if the MySQLdb driver is not installed, so that
-                nothing could be copied; or if the server rejects a statement, for instance
-                because the source lacks one of the tables. Each is logged.
+                would empty the source, or if the connection is read-only or the MySQLdb
+                driver is not installed, so that nothing could be copied; or if the server
+                rejects a statement, for instance because the source lacks one of the
+                tables. Each is logged.
         """
         with self._operation('carry_over_sessions'):
             try:
@@ -1425,6 +1426,8 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             refusal = None
             if source_schema.lower() == self.db_schema.lower():
                 refusal = f'{source} is the schema it would write into'
+            elif self.read_only:
+                refusal = 'the connection is read-only, so nothing would be copied'
             elif not MYSQLDB_AVAILABLE:
                 refusal = 'the MySQLdb driver is not installed'
             if refusal is not None:

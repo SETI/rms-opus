@@ -10,6 +10,7 @@ to do. Each step is called the way its caller calls it.
 
 from __future__ import annotations
 
+import shlex
 import shutil
 import subprocess  # nosec B404
 from typing import TYPE_CHECKING
@@ -73,16 +74,18 @@ def _run_step(
         fake = fake_bin / command
         fake.write_text(
             f'#!/bin/bash\nif [[ $1 == --help ]]; then echo "{help_text}"; exit {help_status}; fi\n'
-            f'echo "{command} $*" >> {calls}\nexit {status}\n',
+            f'echo "{command} $*" >> {shlex.quote(str(calls))}\nexit {status}\n',
             encoding='utf-8',
         )
         fake.chmod(0o755)
     recorder = fake_bin / 'record_service'
-    recorder.write_text(f'#!/bin/bash\necho "$*" >> {services}\n', encoding='utf-8')
+    recorder.write_text(
+        f'#!/bin/bash\necho "$*" >> {shlex.quote(str(services))}\n', encoding='utf-8'
+    )
     recorder.chmod(0o755)
     assert _BASH is not None
     finished = subprocess.run(  # nosec B603 - bash and the packaged file
-        [_BASH, '-c', f'set -e; source "{chain / _STEPS}"; {call}'],
+        [_BASH, '-c', f'set -e; source {shlex.quote(str(chain / _STEPS))}; {call}'],
         env={
             'PATH': f'{fake_bin}:/usr/bin:/bin',
             'OPUS_SERVICE_COMMAND': str(recorder),

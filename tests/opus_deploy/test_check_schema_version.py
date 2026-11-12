@@ -8,6 +8,7 @@ keep the served database from being served.
 
 from __future__ import annotations
 
+import shlex
 import shutil
 import subprocess  # nosec B404
 import textwrap
@@ -58,7 +59,7 @@ def _run_check(tmp_path: Path, problem: str, *, unreadable: bool = False) -> tup
     fake_python.chmod(0o755)
     assert _BASH is not None
     finished = subprocess.run(  # nosec B603 - bash and a fixed script
-        [_BASH, '-c', f'source "{chain / _CHECK}"; check_schema_version'],
+        [_BASH, '-c', f'source {shlex.quote(str(chain / _CHECK))}; check_schema_version'],
         env={'PATH': f'{fake_bin}:/usr/bin:/bin', 'OPUS_CONFIG': str(tmp_path / 'opus.toml')},
         capture_output=True,
         text=True,

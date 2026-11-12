@@ -12,6 +12,7 @@ own.
 
 from __future__ import annotations
 
+import shlex
 import shutil
 import subprocess  # nosec B404
 from typing import TYPE_CHECKING
@@ -82,14 +83,15 @@ def run_deploy(
     deployed.mkdir(parents=True)
     (deployed / 'opus.toml').write_text('schema = "served"\n', encoding='utf-8')
     (helpers / '_read_deploy_env.sh').write_text(
-        f'OPUS_DIR={opus_dir(tmp_path)}\n', encoding='utf-8'
+        f'OPUS_DIR={shlex.quote(str(opus_dir(tmp_path)))}\n', encoding='utf-8'
     )
     for helper in _STUBBED_HELPERS:
         (helpers / helper).write_text(':\n', encoding='utf-8')
     calls = tmp_path / 'calls'
+    recorded = shlex.quote(str(calls))
     (helpers / '_promote.sh').write_text(
         'if flock -n "${OPUS_DIR}/deploy.lock" true; then lock=free; else lock=held; fi\n'
-        f'echo "promote warm=${{OPUS_WARM_SEARCH:-true}} lock=${{lock}}" >> {calls}\n',
+        f'echo "promote warm=${{OPUS_WARM_SEARCH:-true}} lock=${{lock}}" >> {recorded}\n',
         encoding='utf-8',
     )
     (helpers / '_check_schema_version.sh').write_text(
@@ -106,7 +108,8 @@ def run_deploy(
         )
         fake = fake_bin / command
         fake.write_text(
-            f'#!/bin/bash\necho "{command} $*" >> {calls}\n{status}\nexit 0\n', encoding='utf-8'
+            f'#!/bin/bash\necho "{command} $*" >> {recorded}\n{status}\nexit 0\n',
+            encoding='utf-8',
         )
         fake.chmod(0o755)
 

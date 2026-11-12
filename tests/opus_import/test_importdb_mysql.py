@@ -1589,6 +1589,25 @@ def test_the_carry_over_refuses_its_own_schema_before_any_statement(source: str)
     ]
 
 
+def test_the_carry_over_refuses_a_read_only_connection_before_any_statement() -> None:
+    """A read-only connection would skip every write and report counts for a copy that never
+    happened, so it fails instead, before reading the source."""
+    conn = _ScriptedConnection()
+    db = _ConnectedDB(conn)
+    db.logger = _Logger()
+    db.read_only = True
+    with pytest.raises(ImportDBError, match='the connection is read-only'):
+        db.carry_over_sessions('opus_served')
+    assert conn.executed == []
+    assert db.logger.messages == [
+        (
+            'fatal',
+            'Failed to carry sessions and carts over from `opus_served`: '
+            'the connection is read-only, so nothing would be copied',
+        )
+    ]
+
+
 def test_the_carry_over_refuses_to_run_without_the_driver(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

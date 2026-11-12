@@ -7231,6 +7231,42 @@ Nothing above this line is rewritten by an executor.
     refusal removed or made case-sensitive; zero counts without the driver.
   - Results, at c7c95cbc: the gates pass (3,068 unit tests). The import suite and the
     integration job are left for the orchestrator's run after the next merge.
+- **CodeRabbit's second review (2026-11-12).**
+  - *A schema the harness did not make* (`WebBench.prepare_promotion`). The harness
+    dropped any schema named after the served one with `_carry_source` before making
+    its own. The source it makes holds an empty `bench_web_promotion_source` table, and
+    `drop_leftover_promotion_source` drops a schema of that name only when it holds the
+    mark, which a harness run that did not finish leaves behind; one without it is
+    refused, naming it, and kept. The source is named for the final drop once
+    `CREATE DATABASE` has made it, not before. Checked against a local server too: an
+    unmarked schema refused and kept, a marked leftover dropped and made again.
+  - *The served schema's own rows* (`WebBench.time_promotion`). The carry-over replaces
+    the served `cart` and `django_session` with the planted rows, and deleting those
+    left neither the planted rows nor the schema's own. `save_served_rows` copies both
+    tables into `saved_cart` and `saved_django_session` in the source, in one
+    transaction, before the window opens; `restore_served_rows` puts them back in one
+    transaction in the `finally`, once the window has closed. A save that fails raises
+    before the stop and restores nothing, so stale copies never overwrite the schema's
+    rows. This replaces the planted rows' deletion above. The module docstring and the
+    benchmarks guide say so.
+  - *A read-only carry-over* (`ImportDBMySQL.carry_over_sessions`). The method refuses
+    `read_only`, logged, before any statement, as it refuses its own schema and a
+    missing driver; it read the source and reported counts for writes `_execute`
+    skipped. The command line already refuses `--read-only` with the option.
+  - *Unquoted paths in the deploy stand-ins* (`tests/opus_deploy/conftest.py`). Each
+    scratch path written into a generated script is quoted with `shlex.quote`, and the
+    same in `test_promote_steps.py` and `test_check_schema_version.py`. The deploy chain
+    itself sources its helpers through unquoted paths and word-splits
+    `OPUS_SERVICE_COMMAND`, so the deploy tests do not all pass under a scratch
+    directory with a space; the chain is installed under fixed server paths and is left
+    as it is.
+  - Mutations, each failing its test: the leftover dropped without its mark; the source
+    named only after its tables are made; the restore removed, or the save moved inside
+    the window; the restore's rollback removed; the read-only refusal removed. Under a
+    scratch directory with a space the stand-ins' own failures are gone, 15 failing
+    before and 10 after, each of those in the chain's own unquoted expansions.
+  - Results, at 3258605c: the gates pass (3,083 unit tests); the import suite 192
+    passed and 3 skipped.
 - **Measurement** (2026-11-11, test scale; one schema, `bench_test_after_b_3`, imported
   by PR-17's head 45ccaebb, since this PR changes no schema; before PR-17's head serving
   it, which has neither step; after this PR's head e5e71573 with `--warm db-cold --warm
