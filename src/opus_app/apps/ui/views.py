@@ -812,11 +812,13 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
     )
     selection = filespec.split('/')[-1].split('.')[0]
 
-    # See if this opus_id is in the cart
+    # See if this opus_id is in the cart. This lookup and the preview images' take the
+    # stored OPUS ID: the caller's may differ in case or accents, and one with accents
+    # cannot be compared with an ASCII column.
     in_cart = True
     try:
         session_id = get_session_id(request)
-        Cart.objects.get(opus_id=opus_id, session_id=session_id, recycled=0)
+        Cart.objects.get(opus_id=obs_general.opus_id, session_id=session_id, recycled=0)
     except ObjectDoesNotExist:
         in_cart = False
 
@@ -832,7 +834,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
 
     # The medium image is what's displayed on the Detail page
     # XXX This should be replaced with a viewset query and pixel size
-    preview_med_list = get_pds_preview_images(opus_id, None, 'med')
+    preview_med_list = get_pds_preview_images(obs_general.opus_id, None, 'med')
     if len(preview_med_list) != 1:  # pragma: no cover - data error
         log.error('Failed to find single med size image for "%r"', opus_id)
         preview_med_url = ''
@@ -840,7 +842,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
         preview_med_url = preview_med_list[0]['med_url']
 
     # The full-size image is provided in case the user clicks on the medium one
-    preview_full_list = get_pds_preview_images(opus_id, None, 'full')
+    preview_full_list = get_pds_preview_images(obs_general.opus_id, None, 'full')
     if len(preview_full_list) != 1:  # pragma: no cover - data error
         log.error('Failed to find single full size image for "%r"', opus_id)
         preview_full_url = ''

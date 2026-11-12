@@ -30,12 +30,13 @@ local-memory fallback; after each run it refuses the run if memcached served not
 **After a deploy.** ``web.toml``'s ``[warm]`` table and the ``--warm`` option name cold
 states to warm. Each such state's reset ends with the side's ``opus_manage
 warm_search``, as a deploy does once its workers start, so the state shows what a
-visitor meets after a deploy. The warm-up's wall-clock goes in the run's details. With ``--promotion-carts N`` each run first times a
-promotion's window, from the application's stop to its start: the side's
-``opus_import --carry-over-sessions-from`` from a schema holding N planted cart rows
-into the served schema, then memcached's restart; the planted rows are then deleted
-from the served schema, so every run starts from the same tables. A side without the
-command or the option skips the step, and the result names it among its skipped steps.
+visitor meets after a deploy. The warm-up's wall-clock goes in the run's details. With
+``--promotion-carts N`` each run first times a promotion's window, from the
+application's stop until it has started again: the side's ``opus_import
+--carry-over-sessions-from`` from a schema holding N planted cart rows into the served
+schema, then memcached's restart; the planted rows are then deleted from the served
+schema, so every run starts from the same tables. A side without the command or the
+option skips the step, and the result names it among its skipped steps.
 
 Example, one side's web runs at fixture scale against the schema its import built::
 
@@ -765,13 +766,17 @@ class WebBench:
     def time_promotion(self, run: dict[str, Any]) -> None:
         """Time a promotion's window, from the application's stop to its start.
 
-        The window holds the side's carry-over from `promotion_source` into the served
-        schema, then memcached's restart, as ``_promote.sh`` holds them between the web
-        service's stop and start (its symlink switch, one rename, is not simulated).
+        The window opens as the application is told to stop and closes when it has
+        started again, which is when every worker has loaded the application. Between
+        the two it holds what ``_promote.sh`` holds there: the side's carry-over from
+        `promotion_source` into the served schema, then memcached's restart (the symlink
+        switch, one rename, is not simulated). ``web.promotion.carry_over_s`` is the
+        carry-over alone.
 
-        Afterwards the rows the carry-over copied, which are the planted ones, are
-        deleted from the served schema, so the next run and the other side find its
-        ``cart`` and ``django_session`` as before.
+        Once the window has closed, the rows the carry-over copied, which are the planted
+        ones, are deleted from the served schema, so the next run and the other side find
+        its ``cart`` and ``django_session`` as before. They are deleted however the
+        window ends, a failed step included.
 
         Parameters:
             run: The run to record ``web.promotion.window_s`` and
@@ -779,20 +784,27 @@ class WebBench:
 
         Raises:
             WebRunError: If the carry-over exits non-zero or logs an error.
+            ServerError: If memcached or the application does not start again.
         """
         assert self.promotion_source is not None
         assert self.spelling.carry_over is not None
-        self.gunicorn.stop()
         started = time.perf_counter()
-        run_import_step(
-            self.side, [self.spelling.carry_over, self.promotion_source], self.env, self.errors_log
-        )
-        carried = time.perf_counter()
-        self.memcached.restart()
-        ended = time.perf_counter()
-        self.remove_planted_rows()
-        self.gunicorn.start()
-        run['metrics']['web.promotion.carry_over_s'] = carried - started
+        try:
+            self.gunicorn.stop()
+            stopped = time.perf_counter()
+            run_import_step(
+                self.side,
+                [self.spelling.carry_over, self.promotion_source],
+                self.env,
+                self.errors_log,
+            )
+            carried = time.perf_counter()
+            self.memcached.restart()
+            self.gunicorn.start()
+            ended = time.perf_counter()
+        finally:
+            self.remove_planted_rows()
+        run['metrics']['web.promotion.carry_over_s'] = carried - stopped
         run['metrics']['web.promotion.window_s'] = ended - started
 
     def remove_planted_rows(self) -> None:
@@ -1143,8 +1155,9 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         type=int,
         default=None,
         metavar='N',
-        help="time each run's promotion window: the side's carry-over of N planted cart "
-        'rows into the served schema, and the cache restart',
+        help="time each run's promotion window, from the application's stop to its start: "
+        "the side's carry-over of N planted cart rows into the served schema, and the "
+        'cache restart',
     )
     return parser.parse_args(argv)
 

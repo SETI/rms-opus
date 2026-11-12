@@ -143,7 +143,9 @@ deploy against another release's application.
     cd /opt/opus/deploy
     ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
 
-Then the deploy itself, and which one it is depends on the release.
+Then the deploy itself, and which one it is depends on the release. One deploy
+runs at a time: each takes a lock on deploy.lock in OPUS_DIR before it reads
+anything, and a second deploy started meanwhile stops at once, changing nothing.
 
   * The release does NOT change the database schema -- a bug-fix release. The
     database already being served is still the right one:
@@ -195,9 +197,11 @@ the database being served into the new one, while the web server is stopped.
 Only sessions that own a cart row are copied: a session holds nothing else a
 visitor would miss. A cart row whose session has expired, or whose observation
 the new database lacks, is dropped, and the log counts them. The copy is one
-transaction. If it fails, the web server is started again on the installation
-that was serving, and nothing has switched. A release without the option, such
-as an older one, warns and switches without carrying anything.
+transaction. If it fails, or if the release's `opus_import --help` fails, so
+that whether it has the option is unknown, the web server is started again on
+the installation that was serving, and nothing has switched. A release whose
+help lists no such option, such as an older one, warns and switches without
+carrying anything.
 
 The installation that was replaced is still under staged/. Going back to it is
 moving the deployed symlink onto it and restarting the web server -- there is
@@ -227,10 +231,11 @@ for a while.
     deploy_new_code_only.sh           Deploys a release against the database
                                       already being served.
     _*.sh                             Sourced by those: the deploy
-                                      configuration, the virtual environment,
-                                      the version check, one installation, the
-                                      import, the switch, and the switch's
-                                      steps that can fail on their own.
+                                      configuration, the deploy lock, the
+                                      virtual environment, the version check,
+                                      one installation, the import, the switch,
+                                      and the switch's steps that can fail on
+                                      their own.
 
   database/                           dump_db.sh and load_db.sh: copy a finished
                                       database to the server OPUS_PEER_DB_HOST

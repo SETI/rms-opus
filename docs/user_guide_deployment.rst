@@ -36,6 +36,7 @@ in place, and two symbolic links say which installation is which:
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
     /opt/opus/deployed  -> staged/<database>_<timestamp>   # what the web server serves
     /opt/opus/import    -> staged/<database>_<timestamp>   # what an import is using
+    /opt/opus/deploy.lock                                  # held by the deploy running
 
 That shape is what makes a deploy safe to run against a live site, and it follows from
 one fact about OPUS: **a release that changes the table schemas cannot read a database
@@ -118,9 +119,13 @@ Either way the installation being replaced stays under ``staged/``, so going bac
 moving the ``deployed`` symlink onto it and restarting -- there is nothing to rebuild.
 Going back by hand skips the carry-over, so the sessions and carts made since the deploy
 stay behind in the newer database; redeploying the previous database with
-``deploy_new_code_and_database.sh <previous database>`` carries them back when that
-release can carry sessions over (:ref:`user_guide_deployment_carry_over`). Old installations are removed by hand, when
-the one after them has been trusted for a while.
+``deploy_new_code_and_database.sh <previous database> ==<previous release>`` carries them
+back when that release can carry sessions over (:ref:`user_guide_deployment_carry_over`).
+The version specifier names the release that imported the previous database: left off,
+the newest release is installed, and the schema version check
+(:ref:`user_guide_deployment_schema_version`) refuses the database when that release
+carries another schema version. Old installations are removed by hand, when the one
+after them has been trusted for a while.
 
 The scripts
 -----------
@@ -222,6 +227,20 @@ The scripts
 The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==<release>`` for a particular release, omitted for the newest.
 
+**One deploy runs at a time.** Each deploy script takes an exclusive ``flock`` on
+``deploy.lock`` in ``OPUS_DIR`` right after reading ``deploy.env``, before it reads which
+database is being served, and holds it until the switch is done. A deploy started while
+another holds it stops at once, having changed nothing, with::
+
+    ERROR: another deploy holds /opt/opus/deploy.lock; wait for it to finish.
+
+Otherwise a deploy that switched while another was building would leave the other
+carrying sessions and carts over from a database that had stopped being served, and the
+two would move the ``deployed`` symlink in turn. The lock goes with the deploy's shell, so
+a deploy that failed or was interrupted leaves nothing to remove.
+``run_full_opus_import.sh`` does not take it: an import builds beside the served
+installation, and runs while deploys come and go.
+
 ``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
 a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from
 ``OPUS_DB_HOST``, the second loads it into ``OPUS_PEER_DB_HOST``. Neither knows the name
@@ -292,16 +311,19 @@ API that sends no cookie, so copying them would lengthen the time the site is do
   of the database already being served. ``deploy_new_code_only.sh`` keeps the database, so
   it has nothing to carry.
 * **If the carry-over fails**, the workers are started again on the installation that was
-  serving, nothing has switched, and the deploy exits with failure.
+  serving, nothing has switched, and the deploy exits with failure. The deploy first reads
+  the release's ``opus_import --help`` to learn whether it has the option; if that fails,
+  the deploy stops the same way.
 * **A release without the option**, such as an older one being deployed again, cannot
-  carry sessions over. The deploy warns, leaves the sessions and carts where they are, and
-  switches.
+  carry sessions over: its ``opus_import --help`` succeeds and lists no
+  ``--carry-over-sessions-from``. The deploy warns, leaves the sessions and carts where
+  they are, and switches.
 * **Going back by moving the** ``deployed`` **symlink by hand** skips the carry-over, so
   the sessions and carts made since the deploy stay in the newer database. Redeploying
-  the previous database with ``deploy_new_code_and_database.sh <previous database>``
-  carries them back, since the step empties its target first and so runs in either
-  direction, but only when the release being deployed has
-  ``--carry-over-sessions-from``.
+  the previous database with ``deploy_new_code_and_database.sh <previous database>
+  ==<previous release>``, naming the release that imported it, carries them back, since
+  the step empties its target first and so runs in either direction, but only when that
+  release has ``--carry-over-sessions-from``.
 
 ``--carry-over-sessions-from`` refuses to run with any other step, and refuses a database
 that is the one it would write into, before it changes anything.

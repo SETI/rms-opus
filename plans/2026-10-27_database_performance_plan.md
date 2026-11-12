@@ -6905,8 +6905,10 @@ Nothing above this line is rewritten by an executor.
     `ascii_general_ci` ignores case, and what the character-set test checks (every table
     the import creates from a schema file of its own, `mult` among them).
   - `queries.sql` is the orchestrator's capture (f74c2115).
-  - Not fixed here: `api/files` and `__initdetail` answering 500 for a mixed-case OPUS ID
-    (`get_pds_products` keys its answer by the caller's spelling), which predates this PR.
+  - `api/files` and `__initdetail` answered 500 for a mixed-case OPUS ID, a KeyError in
+    `get_pds_products`, which searched with the caller's spelling and keyed its answer by
+    it but filled it by the stored ID; that predates this PR, and an accented OPUS ID
+    answered the same once the search folded it. Fixed in the CodeRabbit review below.
   - `db-perf-pr-16a` (1566313f, with PR-15's range-endpoint tests and the selector
     assertion) is merged in, keeping the earlier PRs' entries before this one.
   - `pr17local` was dropped and imported again at this head; its ASCII columns are the
@@ -6918,6 +6920,49 @@ Nothing above this line is rewritten by an executor.
     `tests/opus_app` and `integration_tests`, with coverage) 2,866 passed against
     `pr17local` at 100% coverage, PR-15's merged tests reaching the two lines the 99%
     bullet above names.
+- **CodeRabbit review (2026-11-12)**, at the orchestrator's decisions; each behavior fix
+  has a test that fails with it reverted (mutation-checked):
+  - *Incremental reload check.* `bench_import` waits, before taking the append's start,
+    until the server's `UTC_TIMESTAMP()` is later than the copied bundle's `started_at`
+    (polled, bounded at `CLOCK_WAIT_LIMIT_S`), so a copied row begun in the same second
+    is not taken for the reload (`tests/benchmarks/test_incremental.py`).
+  - *Live target.* `test_ascii_columns_api._path_response` asks a live server through
+    `_get_response`, as every other request does; the path is already percent-encoded,
+    which `requests` sends unchanged. Django's client remains the local path.
+  - *Regex folding.* `ascii_comparable(..., compatibility=False)` folds with NFD, and
+    `get_string_query` uses it for `regex`: the accents go, but a full-width `．` becomes
+    DEL rather than the operator `.`. Unit test of the fold and an integration case
+    (`regex` `VGISS．6210` finds nothing, `VGÍSS.6210` what `VGISS.6210` does).
+  - *Files keyed by spelling.* `get_pds_products` gathers each stored ID's products under
+    `sql_builder.ascii_collation_key` (folded, trailing spaces dropped, lower case, which
+    two strings share exactly when `ascii_general_ci` calls their folded forms equal,
+    checked on the server for every pair of ASCII characters) and returns them under
+    every requested spelling that has that key. Integration cases for an accented and a
+    mixed-case OPUS ID on `api/files` and `__initdetail`, and a `get_pds_products` case
+    with several spellings of one ID.
+  - *`__initdetail`'s other lookups.* The cart lookup and both `get_pds_preview_images`
+    calls take `obs_general.opus_id` (the `__initdetail` case above, with the observation
+    in the cart).
+  - *DEL in a `text` column.* The check covers any string bound for an ASCII column,
+    `varchar` or `text`, after the type checks (`test_do_import_obs.py`, a synthetic ASCII
+    `text` column).
+  - *DEL under `--ignore-errors`.* After logging the error the value is stored with DEL
+    removed, so no stored value holds it whatever the error policy; the docstring and the
+    import overview, table schemas and database schema guides say so.
+  - *Test helpers.* The incremental tests' stand-in `query` and `_rows_written` carry
+    docstrings with `Parameters:`, and the fake records each statement's parameters: the
+    `timestamp` query binds `since[0]` and the bundle.
+  - *Measurement wording.* The bullet below says what `Sort_merge_passes` 1 means.
+  - Mutation checks: each source change reverted fails its tests, but for one equivalent
+    mutant: keying the gathered products by the stored ID itself rather than its
+    collation key survives, since every stored OPUS ID is already its own key (lower
+    case, ASCII, no trailing space). The live-target branch of `_path_response` is not
+    run here (no live server). With `file_utils.py` and `ui/views.py` at 17286809, the
+    four new `api/files` and `__initdetail` cases each answer 500.
+  - `pr17local` was not imported again: the DEL removal changes no fixture value.
+  - Results after the fixes: the gates pass (3,021 unit tests); the import suite 185
+    passed and 3 skipped; the integration job's run 2,872 passed against `pr17local` at
+    100% coverage.
 - **Measurement** (2026-11-11, test scale; web runs and the first import with before at
   227f74d3, PR-16a's head, and after at 54ebdb75; the repeated imports with before at
   1566313f, PR-16a's head after its merges, and after at 45ccaebb; each side imports its
@@ -6925,8 +6970,9 @@ Nothing above this line is rewritten by an executor.
   imports, `b`; judged against the PR-00 floors):
   - **Target, the db-cold build of the broad default-sort search:** 0.2254 s to
     0.2275 s, +0.9% (floor 10.4%), **not improved**. `Sort_merge_passes` 1 and
-    `Created_tmp_disk_tables` 0 on both sides: at test scale the sort fits in memory, so
-    the narrower sort keys have nothing to save.
+    `Created_tmp_disk_tables` 0 on both sides: on either side the filesort wrote its sort
+    files and merged them once, and no temporary table went to disk, so the narrower sort
+    keys did not remove the merge pass and the build time did not move.
   - **Size:** `db.schema.data_bytes` 746.3 MB to 441.5 MB (-40.8%) and
     `db.schema.index_bytes` 366.7 MB to 237.6 MB (-35.2%); `obs_files` data 628.1 MB to
     342.7 MB, `obs_pds` 22.6 MB to 6.8 MB, `obs_general` 30.0 MB to 26.8 MB.
@@ -7122,23 +7168,93 @@ Nothing above this line is rewritten by an executor.
     (3,056 unit tests); the import suite 192 passed and 3 skipped; the integration job's
     run (`tests/opus_support`, `tests/opus_app` and `integration_tests`, with coverage)
     2,875 passed against `pr18local`, imported again at this head, at 100% coverage.
+- **CodeRabbit review (2026-11-12).**
+  - *The promotion window* (`bench_web`). `web.promotion.window_s` opened after gunicorn
+    had stopped and closed before it started, leaving both out, while the section's "web
+    stop to web start" and the method's docstring include them. It opens before the stop
+    and closes when `gunicorn.start` returns, every worker having loaded the application;
+    `web.promotion.carry_over_s` is still the carry-over alone. This replaces "gunicorn's
+    start ... is outside it" above: `systemctl start` returning before mod_wsgi loads
+    anything does not shorten what a visitor waits, since each worker's first request
+    pays the load. The window was measured again for it (Measurement, below).
+  - *The planted rows when a restart fails* (`bench_web`). They are deleted in a
+    `finally` once the window has closed, after the application's start (which replaces
+    "before the application starts" above), so a failed memcached restart or gunicorn
+    start leaves none behind, and their deletion is never inside the window. The tests
+    time the steps on a clock each advances by a distinct power of two, so the window's
+    sum names the steps it holds, and fail each restart in turn.
+  - *`promotion_cart_rows` is pinned* within a result file beside `promotion_carts`: the
+    same request plants fewer rows against a schema with fewer observations.
+  - *The rollback commands* in the deployment guide name the previous release
+    (`==<previous release>`): without it the newest release is installed, and the schema
+    version check refuses a database another schema version imported. Docs only.
+  - *The target's comparison* (Measurement, below). The reviewer is right: the target is
+    the head's db-cold first page against its own warm, as the section ("expected to
+    approach the warm number") and the measurement note above define it, and the bullet
+    reported the before-against-after db-cold change under the target's name. It reports
+    the defined comparison, with the before-against-after change beside it; no measured
+    number changed.
+  - *A failing help probe* (`_promote_steps.sh`). A failing `opus_import --help` was read
+    as a release without the option, so the promotion switched without carrying
+    anything. It fails the step as a failed carry-over does (the web service started
+    again on the unchanged installation, return 1); only a help that succeeds and lists
+    no `--carry-over-sessions-from` warns and goes on. The deployment guide and
+    `README.txt` say so.
+  - *A deploy lock* (`deploy_new_code_and_database.sh`). Accepted, in both deploy
+    scripts: a deploy that switches during another's build leaves the other carrying
+    over from a schema that has stopped being served, and the same gap lets two deploys
+    move the `deployed` symlink in turn, which a lock in one script alone would not
+    close. A sourced `_deploy_lock.sh` defines `take_deploy_lock`, an exclusive `flock -n`
+    on `${OPUS_DIR}/deploy.lock` through a descriptor the deploy's shell keeps open, taken
+    right after `_read_deploy_env.sh` and so held through `_promote.sh`; a second deploy
+    stops at once, having changed nothing. `run_full_opus_import.sh` takes no lock. The
+    code-only deploy test's stand-in runner moved into `tests/opus_deploy/conftest.py`,
+    shared with `test_deploy_lock.py`; its `_promote.sh` stub records whether another
+    process finds the lock held during the promotion. The deployment guide (a paragraph
+    and its layout block) and `README.txt` document it.
+  - *The carry-over of its own schema* (`ImportDBMySQL.carry_over_sessions`). The method
+    refuses a source equal to its schema, without regard to case, logged, before any
+    statement; the command line's refusal stays, before the database opens.
+  - *Without MySQLdb* the method raises a logged `ImportDBError` rather than returning
+    zero counts, which `do_carry_over` reported as a success.
+  - *Docstrings* on every stand-in method of `tests/benchmarks/test_deploy_steps.py`.
+  - *Outside the diff: `resolve_parallelism` before the carry-over* (`cli.py`).
+    Declined. A full-import deploy first runs `opus_import --import-dictionary
+    --reset-search-tables` on the same host with the same configuration, which resolves
+    the same counts, so a configuration above the host's ceiling stops the deploy there,
+    before the web service stops; skipping the check for the carry-over alone would
+    change no deploy's outcome.
+  - Mutations, each failing its test: the window opened after the stop or closed before
+    the start; the deletion inside the window or outside the `finally`; the pin removed;
+    a failing probe read as absence; the lock's call removed from either script, the
+    `flock` skipped, or the lock taken after the served schema is read; the method's
+    refusal removed or made case-sensitive; zero counts without the driver.
+  - Results, at c7c95cbc: the gates pass (3,068 unit tests). The import suite and the
+    integration job are left for the orchestrator's run after the next merge.
 - **Measurement** (2026-11-11, test scale; one schema, `bench_test_after_b_3`, imported
   by PR-17's head 45ccaebb, since this PR changes no schema; before PR-17's head serving
   it, which has neither step; after this PR's head e5e71573 with `--warm db-cold --warm
   app-cold --promotion-carts 10000`; six web runs alternated, three a side, session `a`;
   judged against the PR-00 floors; load averages 1.3 to 6.9, the PR-19 executor working
   beside the runs):
-  - **Target, the empty search's first page db-cold:** 24.8 ms to 18.6 ms, -25.0%, **not
-    improved** beyond its floor (52.0%, the web family's jitter of 12.9 ms over a small
-    median). Warm, the head's first page takes 10.7 ms. Behind the target, the warm-up
-    did what it is for: the empty search's db-cold result count 194.9 ms to 11.2 ms
-    (-94.2%), and the page's db-cold `Innodb_buffer_pool_reads` 220 to 0 and
-    `Sort_merge_passes` 1 to 0.
+  - **Target, the head's db-cold first page of the empty search against its own warm:**
+    18.6 ms against 10.7 ms, 7.9 ms apart, within the web family's jitter of 12.9 ms, the
+    distance at which §2.6 counts two medians of a time metric as agreeing; by that
+    measure the target is met. Beside it, before against after, db-cold, which the target
+    does not judge: 24.8 ms to 18.6 ms, -25.0%, not beyond its floor (52.0%, the same
+    jitter over a small median). Behind the target, the warm-up did what it is for: the
+    empty search's db-cold result count 194.9 ms to 11.2 ms (-94.2%), and the page's
+    db-cold `Innodb_buffer_pool_reads` 220 to 0 and `Sort_merge_passes` 1 to 0.
   - **Two requests the warm-up does not issue:** the empty search's tenth page db-cold,
     9.1 ms to 27.7 ms (reported; floor 198%); the planet widget db-cold, 39.0 ms to
     28.3 ms (-27.5%, within its floor).
   - **Promotion window** (head only, 10,000 planted cart rows): `web.promotion.window_s`
-    1.43 s, of which the carry-over `web.promotion.carry_over_s` 0.66 s.
+    2.48 s, of which the carry-over `web.promotion.carry_over_s` 0.62 s, measured by one
+    run after the review's fixes (at e2f3f136, session `w`, 2026-11-12, `--warm db-cold
+    --warm app-cold --promotion-carts 10000` against the same schema; load averages 3.9
+    to 11.2), since the window opens before the application's stop and closes once its
+    start returns. The runs above, which left out the stop and the start, gave 1.43 s and
+    0.66 s.
   - **Guard regressed, accepted:** `web.app-cold.concurrency.shared.p95_s` 0.177 s to
     0.227 s (+28.1%; floor 19.4%), every head run above every base run. The head serves
     requests with the same code as the base; what differs is the warm-up, which builds

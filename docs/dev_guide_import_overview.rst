@@ -388,9 +388,11 @@ reports rather than raises**, so one bad row does not end the run:
   NULL and logs an error;
 * a ``varcharNNN`` column keeps a value of the right type, without trailing spaces --
   an over-long string is truncated, a non-string becomes the empty string -- and logs an
-  error either way. An ASCII column's value holding DEL logs an error too. Any other
-  character outside an ASCII column's character set is not checked here: the load that
-  writes the row fails, naming the column and the row;
+  error either way;
+* a string bound for an ASCII column, ``varcharNNN`` or ``text``, that holds DEL logs an
+  error and is stored with the DEL removed, so no stored value holds it even in a run
+  that ignores errors. Any other character outside an ASCII column's character set is
+  not checked here: the load that writes the row fails, naming the column and the row;
 * a numeric column's value must parse, must not equal a ``val_sentinel``, and must lie
   between ``val_min`` and ``val_max``. It becomes NULL if it does not. A column carrying
   ``val_set_invalid_to_null`` logs an out-of-range value at **debug** level instead of

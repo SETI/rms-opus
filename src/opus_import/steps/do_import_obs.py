@@ -97,6 +97,11 @@ def import_observation_table(
     The row is left on ``metadata`` under ``<table_name>_row`` as well as returned, so
     that a later table's field functions can read what an earlier one computed.
 
+    A string bound for an ASCII column (``field_charset`` ``"ascii"``, a ``varcharNNN`` or
+    ``text`` column) that holds DEL (`opus_support.UNSTORED_ASCII_CHARACTER`) logs an
+    error naming the column, and is stored with the DEL removed, so no stored value holds
+    it whether or not the run ignores errors.
+
     Parameters:
         ctx: The import run's context.
         instrument_obj: The obs class instance for this bundle, whose
@@ -262,19 +267,6 @@ def import_observation_table(
                                 + f'"{column_val}" is too long',
                             )
                             column_val = column_val[:field_size]
-                        if (
-                            table_column.get('field_charset') == 'ascii'
-                            and UNSTORED_ASCII_CHARACTER in column_val
-                        ):
-                            # The web application binds this character for one a
-                            # caller gave that has no ASCII form, so no stored value
-                            # may hold it.
-                            import_util.log_nonrepeating_error(
-                                ctx,
-                                f'Column "{field_name}" in table "{table_name}" '
-                                + f'is ASCII but value {column_val!r} holds the '
-                                + 'character DEL, which no ASCII column may hold',
-                            )
                 elif (
                     field_type.startswith('real')
                     or field_type.startswith('int')
@@ -353,6 +345,21 @@ def import_observation_table(
                                 )
                                 import_util.log_nonrepeating_error(ctx, msg)
                             column_val = None
+                if (
+                    table_column.get('field_charset') == 'ascii'
+                    and isinstance(column_val, str)
+                    and UNSTORED_ASCII_CHARACTER in column_val
+                ):
+                    # The web application binds this character for one a caller gave
+                    # that has no ASCII form, so no stored value may hold it, even when
+                    # the run ignores errors.
+                    import_util.log_nonrepeating_error(
+                        ctx,
+                        f'Column "{field_name}" in table "{table_name}" '
+                        + f'is ASCII but value {column_val!r} holds the '
+                        + 'character DEL, which no ASCII column may hold',
+                    )
+                    column_val = column_val.replace(UNSTORED_ASCII_CHARACTER, '')
 
             ### CHECK TO SEE IF THE COLUMN HOLDS MULT IDS ###
 

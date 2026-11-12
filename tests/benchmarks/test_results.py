@@ -200,6 +200,19 @@ def test_web_runs_that_warmed_or_promoted_another_way_are_refused_within_a_file(
         results.append_runs(label, {**warmed, 'promotion_carts': None}, [_run()])
 
 
+def test_web_runs_that_planted_another_number_of_rows_are_refused_within_a_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The same request plants fewer rows against a schema with fewer observations, so
+    the rows planted are pinned beside the rows asked for."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-11', 'PR-18', 'after', 'test', 'mysql', 'a')
+    asked = {'warm_states': [], 'promotion_carts': 10000}
+    results.append_runs(label, {**asked, 'promotion_cart_rows': 10000}, [_run()])
+    with pytest.raises(ResultError, match='promotion_cart_rows was 10000 and is now 9000'):
+        results.append_runs(label, {**asked, 'promotion_cart_rows': 9000}, [_run()])
+
+
 @pytest.mark.parametrize(
     ('content', 'message'),
     [

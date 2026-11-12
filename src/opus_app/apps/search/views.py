@@ -1827,8 +1827,10 @@ def get_string_query(
         matches
         excludes
 
-    A value searched for in an ASCII column has each character outside ASCII replaced
-    (`sql_builder.ascii_comparable`), since no value of the column holds one.
+    A value searched for in an ASCII column is folded to ASCII
+    (`sql_builder.ascii_comparable`), since no value of the column holds any other
+    character; a regular expression is folded without mapping compatibility characters,
+    which could become operators.
 
     Returns an `sql_builder.Expr`, which is a `(sql, params)` pair, or the pair
     `(None, None)` if the query cannot be built.
@@ -1872,7 +1874,7 @@ def get_string_query(
         value = values[idx]
         qtype = qtypes[idx]
         if ascii_column:
-            value = sql_builder.ascii_comparable(value)
+            value = sql_builder.ascii_comparable(value, compatibility=qtype != 'regex')
 
         if qtype != 'regex':
             value = value.replace('\\', '\\\\')
