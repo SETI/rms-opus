@@ -148,31 +148,60 @@ def value(val: Any) -> Expr:
 ASCII_COLLATION = 'ascii_general_ci'
 
 
-def ascii_comparable(text: str) -> str:
+def ascii_comparable(text: str, *, compatibility: bool = True) -> str:
     """Return text as it may be compared with a column in the ASCII character set.
 
     MySQL refuses to compare an ASCII column with text holding any other character
     ("illegal mix of collations"). The text is folded toward ASCII as the accent-blind
     ``utf8mb4_0900_ai_ci`` compares it: decomposed (NFKD), with the combining marks
-    dropped, so ``Müller`` compares as ``Muller`` and the ASCII column's own collation
-    ignores the case. A character that still has no ASCII form becomes
+    dropped, so ``Müller`` compares as ``Muller``, the ligature U+FB01 as ``fi`` and the
+    full-width U+FF21 as ``A``, and the ASCII column's own collation ignores the case. A
+    character that still has no ASCII form becomes
     `opus_support.UNSTORED_ASCII_CHARACTER`, which the import refuses in an ASCII column
     and ``LIKE`` and a regular expression read as itself, so it matches nothing and the
     comparison finds what it finds for any value the column does not hold: ``=`` and
     ``LIKE`` no row with the character, ``NOT LIKE`` every row.
 
+    A regular expression is folded with canonical decomposition alone (NFD,
+    `compatibility` False): the accents still go, but a compatibility character is not
+    mapped onto its ASCII form, which may be an operator (the full-width full stop U+FF0E
+    would be ``.``, which matches any character). Such a character becomes
+    `opus_support.UNSTORED_ASCII_CHARACTER` and matches only itself, which no stored
+    value holds.
+
     Parameters:
         text: A value the caller gave, to be bound as a parameter.
+        compatibility: True to decompose compatibility characters as well (NFKD), for a
+            value compared literally; False for canonical decomposition alone (NFD), for
+            a regular expression.
 
     Returns:
         The folded text, in ASCII.
     """
-    decomposed = unicodedata.normalize('NFKD', text)
+    decomposed = unicodedata.normalize('NFKD' if compatibility else 'NFD', text)
     return ''.join(
         c if c.isascii() else UNSTORED_ASCII_CHARACTER
         for c in decomposed
         if not unicodedata.combining(c)
     )
+
+
+def ascii_collation_key(text: str) -> str:
+    """Return the form of text that a comparison with an ASCII column sees.
+
+    Two strings have equal keys exactly when an ASCII column's ``ascii_general_ci``
+    collation calls their `ascii_comparable` forms equal: the folded text, its trailing
+    spaces dropped (the collation pads with spaces) and its letters in lower case (the
+    collation ignores case). A value read from such a column is its own folded form, so
+    a stored OPUS ID and every caller's spelling that finds it have the same key.
+
+    Parameters:
+        text: A value the caller gave, or one read from an ASCII column.
+
+    Returns:
+        The key, in ASCII.
+    """
+    return ascii_comparable(text).rstrip(' ').lower()
 
 
 def count_star() -> Expr:
