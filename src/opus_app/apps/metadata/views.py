@@ -357,7 +357,17 @@ def api_get_mult_counts(
             counted_column = param_column
             select.add_column(counted_column)
             select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
-            select.add_from(category.source)
+            source = category.source
+            if category.is_selector:
+                # The selector counts every row of its table by the primary key's first
+                # column. Left to itself the server groups by reading the primary key,
+                # which is the whole table; every other key of the table starts with the
+                # same column and holds the primary key, so it covers the count in a
+                # fraction of the pages.
+                source = sql_builder.AliasedTable(
+                    category.table, category.alias, ignore_for_group_by=('PRIMARY',)
+                )
+            select.add_from(source)
         category.restrict(select)
 
         search_id = get_search_id(selections, extras, api_code=api_code)

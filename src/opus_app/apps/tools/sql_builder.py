@@ -476,14 +476,22 @@ class AliasedTable:
     The ``mult`` table is joined once for each mult column a statement reads, each time
     under its own alias, and ``obs_surface_geometry_target`` once for each surface geometry
     category, under the category's name.
+
+    `ignore_for_group_by` names keys the server is not to use for the statement's
+    grouping, rendered as MySQL's `IGNORE INDEX FOR GROUP BY (...)` after the alias.
     """
 
     table: str
     alias: str
+    ignore_for_group_by: tuple[str, ...] = ()
 
     def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this source as it appears in a FROM clause."""
-        return f'{quote_identifier(self.table)} AS {quote_identifier(self.alias)}', []
+        sql = f'{quote_identifier(self.table)} AS {quote_identifier(self.alias)}'
+        if self.ignore_for_group_by:
+            keys = ','.join(quote_identifier(key) for key in self.ignore_for_group_by)
+            sql += f' IGNORE INDEX FOR GROUP BY ({keys})'
+        return sql, []
 
 
 TableSource = str | Subquery | JSONTable | AliasedTable
