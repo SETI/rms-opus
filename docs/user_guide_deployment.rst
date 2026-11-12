@@ -118,9 +118,13 @@ Either way the installation being replaced stays under ``staged/``, so going bac
 moving the ``deployed`` symlink onto it and restarting -- there is nothing to rebuild.
 Going back by hand skips the carry-over, so the sessions and carts made since the deploy
 stay behind in the newer database; redeploying the previous database with
-``deploy_new_code_and_database.sh <previous database>`` carries them back when that
-release can carry sessions over (:ref:`user_guide_deployment_carry_over`). Old installations are removed by hand, when
-the one after them has been trusted for a while.
+``deploy_new_code_and_database.sh <previous database> ==<previous release>`` carries them
+back when that release can carry sessions over (:ref:`user_guide_deployment_carry_over`).
+The version specifier names the release that imported the previous database: left off,
+the newest release is installed, and the schema version check
+(:ref:`user_guide_deployment_schema_version`) refuses the database when that release
+carries another schema version. Old installations are removed by hand, when the one
+after them has been trusted for a while.
 
 The scripts
 -----------
@@ -298,10 +302,10 @@ API that sends no cookie, so copying them would lengthen the time the site is do
   switches.
 * **Going back by moving the** ``deployed`` **symlink by hand** skips the carry-over, so
   the sessions and carts made since the deploy stay in the newer database. Redeploying
-  the previous database with ``deploy_new_code_and_database.sh <previous database>``
-  carries them back, since the step empties its target first and so runs in either
-  direction, but only when the release being deployed has
-  ``--carry-over-sessions-from``.
+  the previous database with ``deploy_new_code_and_database.sh <previous database>
+  ==<previous release>``, naming the release that imported it, carries them back, since
+  the step empties its target first and so runs in either direction, but only when that
+  release has ``--carry-over-sessions-from``.
 
 ``--carry-over-sessions-from`` refuses to run with any other step, and refuses a database
 that is the one it would write into, before it changes anything.
