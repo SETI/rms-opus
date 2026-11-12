@@ -5891,3 +5891,9 @@ Nothing above this line is rewritten by an executor.
     the planet widget as the first mult request after a non-mult request took 41.5 ms
     on PR-13's database and 31.3 ms on this head's, with the same modules imported
     during it.
+
+### 2026-11-12, PR-14 (written against this file at 1e55f88a)
+
+- `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
+  applied (a run changes no file), and `import_util.read_mult_option` refuses a string pin
+  or group pin, naming the entry.
