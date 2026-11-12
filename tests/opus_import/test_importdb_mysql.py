@@ -1568,3 +1568,40 @@ def test_a_failed_rollback_is_fatal_naming_both_failures(
     (fatal,) = [message for level, message in db.logger.messages if level == 'fatal']
     assert fatal.startswith('Claiming failed on attempt 1 of 5')
     assert 'the body failed' in fatal
+
+
+@pytest.mark.parametrize('source', ['schema', 'SCHEMA'], ids=['same-case', 'other-case'])
+def test_the_carry_over_refuses_its_own_schema_before_any_statement(source: str) -> None:
+    """Emptying the target first would empty the source, so nothing runs; a server with
+    ``lower_case_table_names`` set treats names differing in case as one."""
+    conn = _ScriptedConnection()
+    db = _ConnectedDB(conn)
+    db.logger = _Logger()
+    with pytest.raises(ImportDBError, match='is the schema it would write into'):
+        db.carry_over_sessions(source)
+    assert conn.executed == []
+    assert db.logger.messages == [
+        (
+            'fatal',
+            f'Failed to carry sessions and carts over from `{source}`: '
+            f'`{source}` is the schema it would write into',
+        )
+    ]
+
+
+def test_the_carry_over_refuses_to_run_without_the_driver(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Without MySQLdb nothing could be copied, so it fails rather than reporting no rows."""
+    monkeypatch.setattr('opus_import.importdb.mysql.MYSQLDB_AVAILABLE', False)
+    db = _ConnectedDB(_ScriptedConnection())
+    db.logger = _Logger()
+    with pytest.raises(ImportDBError, match='the MySQLdb driver is not installed'):
+        db.carry_over_sessions('opus_served')
+    assert db.logger.messages == [
+        (
+            'fatal',
+            'Failed to carry sessions and carts over from `opus_served`: '
+            'the MySQLdb driver is not installed',
+        )
+    ]

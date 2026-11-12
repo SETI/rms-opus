@@ -1407,9 +1407,12 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             The sessions and cart rows copied, and the cart rows the source held.
 
         Raises:
-            ImportDBError: If the source's name is not a safe identifier, or the server
-                rejects a statement, for instance because the source lacks one of the
-                tables; either is logged.
+            ImportDBError: Before any statement, if the source's name is not a safe
+                identifier, if it names this schema (compared without regard to case, as a
+                server with ``lower_case_table_names`` set compares them), whose emptying
+                would empty the source, or if the MySQLdb driver is not installed, so that
+                nothing could be copied; or if the server rejects a statement, for instance
+                because the source lacks one of the tables. Each is logged.
         """
         with self._operation('carry_over_sessions'):
             try:
@@ -1419,6 +1422,15 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                     f'Failed to carry sessions and carts over from {source_schema!r}: {e}'
                 )
                 raise
+            refusal = None
+            if source_schema.lower() == self.db_schema.lower():
+                refusal = f'{source} is the schema it would write into'
+            elif not MYSQLDB_AVAILABLE:
+                refusal = 'the MySQLdb driver is not installed'
+            if refusal is not None:
+                message = f'Failed to carry sessions and carts over from {source}: {refusal}'
+                self._log_failure(message)
+                raise ImportDBError(message)
             # Identifiers are validated by quote_identifier; the statements carry no values.
             reads = (
                 f'SELECT 1 FROM {source}.`django_session` LIMIT 1',  # nosec B608
@@ -1437,8 +1449,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 'JOIN `obs_general` AS `n` ON `n`.`opus_id` = `c`.`opus_id` '
                 'JOIN `django_session` AS `s` ON `s`.`session_key` = `c`.`session_id`',
             )
-            if not MYSQLDB_AVAILABLE:
-                return CarriedOver(sessions=0, cart_rows=0, source_cart_rows=0)
             try:
                 with self.conn.cursor() as cur:
                     for cmd in reads:

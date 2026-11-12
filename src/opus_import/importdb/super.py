@@ -1118,10 +1118,12 @@ class ImportDBSuper:
         again gives the same result, and a failure leaves them as they were. The source's
         unexpired sessions that own a cart row are copied, then each source cart row
         whose observation (by OPUS ID) and session are both in this schema, with this
-        schema's ``obs_general_id``; a cart row's own id is not copied.
+        schema's ``obs_general_id``; a cart row's own id is not copied. A source that is
+        this schema is refused before anything is written, since emptying this schema's
+        tables would empty the source.
 
         Parameters:
-            source_schema: The schema to copy from, on the same server.
+            source_schema: The schema to copy from, on the same server; not this one.
 
         Returns:
             The sessions and cart rows copied, and the cart rows the source held.
