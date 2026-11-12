@@ -6918,6 +6918,28 @@ Nothing above this line is rewritten by an executor.
     `tests/opus_app` and `integration_tests`, with coverage) 2,866 passed against
     `pr17local` at 100% coverage, PR-15's merged tests reaching the two lines the 99%
     bullet above names.
+- **Measurement** (2026-11-11, test scale; web runs and the first import with before at
+  227f74d3, PR-16a's head, and after at 54ebdb75; the repeated imports with before at
+  1566313f, PR-16a's head after its merges, and after at 45ccaebb; each side imports its
+  own schema; web runs alternated, three a side; sessions `a` and, for the repeated
+  imports, `b`; judged against the PR-00 floors):
+  - **Target, the db-cold build of the broad default-sort search:** 0.2254 s to
+    0.2275 s, +0.9% (floor 10.4%), **not improved**. `Sort_merge_passes` 1 and
+    `Created_tmp_disk_tables` 0 on both sides: at test scale the sort fits in memory, so
+    the narrower sort keys have nothing to save.
+  - **Size:** `db.schema.data_bytes` 746.3 MB to 441.5 MB (-40.8%) and
+    `db.schema.index_bytes` 366.7 MB to 237.6 MB (-35.2%); `obs_files` data 628.1 MB to
+    342.7 MB, `obs_pds` 22.6 MB to 6.8 MB, `obs_general` 30.0 MB to 26.8 MB.
+  - **Warm broad results page, first page:** 10.4 ms to 10.7 ms, within its floor.
+  - **Import:** one run a side put `import.largest.import_s` at +9.2% (72.2 s to
+    78.9 s), beyond its guard, so the imports were repeated at three runs a side, which
+    replace the first: `import.wall_s` 322.9 s to 327.1 s (+1.3%) and
+    `import.largest.import_s` 75.4 s to 78.6 s (+4.3%), both **held**. The bundle loads
+    are a few percent slower (the largest bundle alone in the warm-up runs, 75.8 s to
+    82.0 s); finalization 25.2 s to 22.0 s, and the server wrote 2.06 GB against 1.33 GB
+    (`Innodb_data_written`). Where the bundle loads spend the extra time was not
+    profiled. The third pair of import runs overlapped other work on the workstation
+    (load averages to 5), which widens that session's spread.
 
 ### 2026-11-11, PR-18 (written against this file at 227f74d3)
 
@@ -7100,6 +7122,31 @@ Nothing above this line is rewritten by an executor.
     (3,056 unit tests); the import suite 192 passed and 3 skipped; the integration job's
     run (`tests/opus_support`, `tests/opus_app` and `integration_tests`, with coverage)
     2,875 passed against `pr18local`, imported again at this head, at 100% coverage.
+- **Measurement** (2026-11-11, test scale; one schema, `bench_test_after_b_3`, imported
+  by PR-17's head 45ccaebb, since this PR changes no schema; before PR-17's head serving
+  it, which has neither step; after this PR's head e5e71573 with `--warm db-cold --warm
+  app-cold --promotion-carts 10000`; six web runs alternated, three a side, session `a`;
+  judged against the PR-00 floors; load averages 1.3 to 6.9, the PR-19 executor working
+  beside the runs):
+  - **Target, the empty search's first page db-cold:** 24.8 ms to 18.6 ms, -25.0%, **not
+    improved** beyond its floor (52.0%, the web family's jitter of 12.9 ms over a small
+    median). Warm, the head's first page takes 10.7 ms. Behind the target, the warm-up
+    did what it is for: the empty search's db-cold result count 194.9 ms to 11.2 ms
+    (-94.2%), and the page's db-cold `Innodb_buffer_pool_reads` 220 to 0 and
+    `Sort_merge_passes` 1 to 0.
+  - **Two requests the warm-up does not issue:** the empty search's tenth page db-cold,
+    9.1 ms to 27.7 ms (reported; floor 198%); the planet widget db-cold, 39.0 ms to
+    28.3 ms (-27.5%, within its floor).
+  - **Promotion window** (head only, 10,000 planted cart rows): `web.promotion.window_s`
+    1.43 s, of which the carry-over `web.promotion.carry_over_s` 0.66 s.
+  - **Guard regressed, accepted:** `web.app-cold.concurrency.shared.p95_s` 0.177 s to
+    0.227 s (+28.1%; floor 19.4%), every head run above every base run. The head serves
+    requests with the same code as the base; what differs is the warm-up, which builds
+    the empty search 1.5 s before sixteen users build the shared search together. A
+    check session `nowarmapp`, one run a side with the head warming db-cold only, gave
+    0.175 s against the base's 0.174 s. The regression is the harness measuring a
+    scenario right after the warm-up's writes, which a deploy does once; the
+    orchestrator accepts it. Every other guard held.
 
 ### 2026-11-11, PR-19 (written against this file at e5e71573)
 
