@@ -7297,3 +7297,39 @@ Nothing above this line is rewritten by an executor.
   - `bench_db`'s `ratio_to_obs_general_data` divides by `obs_general`'s data length, which
     holds the column on a base side and not on a head side; `details.preview_images.table`
     tells the two apart.
+- **Measurement** (2026-11-11, test scale; base at e5e71573 and head at 6189530e, each
+  importing its own schema, `bench_test_before_a_1` and `bench_test_after_a_1`, session
+  `a`; judged against the PR-00 floors):
+  - **Target, the target search db-cold:** the first three runs a side gave 112.0 ms to
+    101.7 ms (-9.2%; floor 15.7%), within twice the floor, so the web runs were repeated
+    five a side, alternated, in session `r` (load averages 3.1 to 14.0), and the repeat
+    replaces them: 107.2 ms to 99.65 ms, -7.0%, **not improved** beyond its floor (16.4%,
+    an absolute 17.6 ms). The search-build's cold read did change:
+    `web.db-cold.search.target.server.Innodb_pages_read` 1,753 to 471 (-73.1%), of which
+    `Innodb_buffer_pool_read_ahead` 1,536 to 256; `Innodb_buffer_pool_reads` 217 to 215.
+    The gate's measurement repeated on the two A/B schemas (the search-build `SELECT`'s
+    `EXPLAIN ANALYZE` on its first execution after a restart, 12 restarts alternated)
+    gave 32.5 ms (31.1 to 33.9) to 21.65 ms (20.7 to 22.6), -33.4%, every head run below
+    every base run, with 1,657.5 pages read to 375. At test scale the request's wall time
+    carries the HTTP round trip and the cold reads of the rest of the request, whose
+    floor is wider than the build's gain. **A stop-and-report under §2.5**, for the
+    orchestrator's decision.
+  - **App-cold, the scenarios that scan `obs_general`:** `web.app-cold.search.target.wall_s`
+    70.0 ms to 71.4 ms (+2.0%); the mult counts of `fanout.empty` -6.4% to -9.5%; its menu
+    -1.4%; `fanout.selected`'s menu +60.8% (floor 70.8%) and its mult counts +0.6% to
+    -39.4%. All within their floors; the schema fits the buffer pool at this scale, so
+    app-cold the target search reads one or two pages from disk on either side.
+  - **The preview-image reads**, `previews.empty`'s `wall_s`: warm +5.8%, app-cold +2.7%,
+    db-cold +1.3%, each within its floor, as is every request of it in every state. The
+    plans (`db.plan.previews.empty/<request>`) read `obs_preview` in one statement for a
+    page, a single-row lookup on its primary key for each of the page's rows, and for
+    the Detail page `obs_general` by its `opus_id` key then one `obs_preview` row by its
+    primary key; their times are within their floors. App-cold
+    the scenario reads 23 pages against 4 (the head's `obs_preview` pages), db-cold 265
+    against 258.
+  - **Sizes:** `db.table.obs_general.data_bytes` 26,787,840 to 5,783,552 (-78.4%);
+    `obs_preview` 21,544,960; `db.schema.data_bytes` +0.1% and `db.schema.index_bytes`
+    +0.0%, held.
+  - **Imports** (one test-scale import a side): `import.wall_s` 330.0 s to 325.7 s
+    (-1.3%), `import.largest.import_s` 81.2 s to 78.8 s (-3.0%),
+    `import.peak_tree_pss_kb` -0.8%, all held. Every web guard held in both sessions.
