@@ -193,3 +193,59 @@ def test_a_scenario_that_evicted_from_memcached_fails_the_run() -> None:
 def test_a_clean_scenario_passes() -> None:
     """No failures and no evictions is a scenario measured as asked."""
     bench_web.require_clean_scenario('web.warm.search.empty', [], 0)
+
+
+class _FakeGunicorn:
+    """A gunicorn with no workers to read a resident set from."""
+
+    def worker_pids(self) -> list[int]:
+        """Return no workers."""
+        return []
+
+
+class _CountingMemcached:
+    """A memcached whose statistics never move."""
+
+    def stats(self) -> dict[str, str]:
+        """Return statistics with nothing fetched and nothing evicted."""
+        return {'cmd_get': '0', 'evictions': '0'}
+
+
+def test_a_scenario_records_the_pages_read_ahead_beside_the_misses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Read-ahead pages are not buffer-pool misses, so a cold scan's reads need both."""
+    before = {
+        'Innodb_buffer_pool_reads': 100,
+        'Innodb_buffer_pool_read_ahead': 1000,
+        'Innodb_pages_read': 1100,
+    }
+    after = {
+        'Innodb_buffer_pool_reads': 120,
+        'Innodb_buffer_pool_read_ahead': 1640,
+        'Innodb_pages_read': 1760,
+    }
+    monkeypatch.setattr(bench_web, 'global_status', lambda _connection: after)
+    monkeypatch.setattr(
+        bench_web,
+        'query',
+        lambda _connection, statement, _parameters=(): [] if 'DIGEST_TEXT' in statement else [(0,)],
+    )
+    bench = WebBench.__new__(WebBench)
+    bench._connection = object()
+    bench.schema = 'schema'
+    bench.memcached = _CountingMemcached()  # type: ignore[assignment]  # a stand-in memcached
+    bench.gunicorn = _FakeGunicorn()  # type: ignore[assignment]  # a stand-in gunicorn
+    bench._cache_gets = 0
+    run: dict[str, Any] = {'metrics': {}, 'details': {}}
+
+    bench._scenario_end('web.db-cold.search.target', run, (before, _CountingMemcached().stats()))
+
+    server = {
+        key.rsplit('.', 1)[1]: value for key, value in run['metrics'].items() if '.server.' in key
+    }
+    assert server == {
+        'Innodb_buffer_pool_reads': 20,
+        'Innodb_buffer_pool_read_ahead': 640,
+        'Innodb_pages_read': 660,
+    }

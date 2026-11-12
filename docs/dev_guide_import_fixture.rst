@@ -145,7 +145,7 @@ The goldens
     path here but are not computed from it, and which are what the golden is for in this
     table, together with their linkage to an OPUS id.
 
-    One further thing is normalized: ``obs_general.preview_images`` has its JSON list
+    One further thing is normalized: ``obs_preview.preview_images`` has its JSON list
     sorted, because it is a ``PdsViewSet`` rendered to a dictionary and ``pdsfile``
     documents that its members come out in the iteration order of a Python set, which is
     not stable across processes. Another measure sits outside the goldens: the suite pins

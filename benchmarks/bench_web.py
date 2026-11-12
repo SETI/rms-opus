@@ -106,8 +106,13 @@ if TYPE_CHECKING:
 
 
 #: The server counters whose movement over each scenario a web result records.
+#: ``Innodb_buffer_pool_reads`` counts the reads a request waited on, and leaves out the
+#: pages InnoDB's read-ahead brought in beside them, which ``Innodb_buffer_pool_read_ahead``
+#: counts; ``Innodb_pages_read`` counts every page read from disk, read-ahead included.
 SCENARIO_COUNTERS = (
     'Innodb_buffer_pool_reads',
+    'Innodb_buffer_pool_read_ahead',
+    'Innodb_pages_read',
     'Connections',
     'Sort_merge_passes',
     'Created_tmp_disk_tables',

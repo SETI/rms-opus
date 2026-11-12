@@ -74,7 +74,7 @@ General Overview
 
 Each "Constraints" section corresponds to one ``obs_*`` table. Each ``obs_*`` table has columns representing a series of metadata fields. Each row of a table represents a single observation identified by a unique OPUS ID.
 
-A row for an OPUS ID does not need to be present in each table, and in fact never is. For example, a Cassini ISS observation will not have a row in the New Horizons LORRI table. However, the ``obs_general`` table, representing the "General Constraints", is guaranteed to have a row for every OPUS ID and as a result is considered the master table. The "PDS Constraints" table ``obs_pds``, "Image Constraints" table ``obs_type_image``, and "Wavelength Constraints" table ``obs_wavelength`` also have a row for every observation. Other tables have rows only for the observations that are relevant:
+A row for an OPUS ID does not need to be present in each table, and in fact never is. For example, a Cassini ISS observation will not have a row in the New Horizons LORRI table. However, the ``obs_general`` table, representing the "General Constraints", is guaranteed to have a row for every OPUS ID and as a result is considered the master table. The "PDS Constraints" table ``obs_pds``, "Image Constraints" table ``obs_type_image``, and "Wavelength Constraints" table ``obs_wavelength`` also have a row for every observation, as does ``obs_preview``, which holds each observation's preview images and is no "Constraints" section (:ref:`dev_guide_database_schema_obs_preview`). Other tables have rows only for the observations that are relevant:
 
 * "Occultation/Reflectance Profiles Constraints" (``obs_profile``) has rows only for observations that are occultations or reflectance profiles.
 * The various Mission Constraints (e.g. "Cassini Mission Constraints", ``obs_mission_cassini``) have rows only for observations that were part of that mission.
@@ -118,7 +118,6 @@ Here is an example of the schema for the ``obs_general`` table (note this may ch
     | declination1         | double            | YES  | MUL | NULL    |
     | declination2         | double            | YES  | MUL | NULL    |
     | observation_type     | smallint unsigned | NO   |     | NULL    |
-    | preview_images       | json              | NO   |     | NULL    |
     +----------------------+-------------------+------+-----+---------+
 
 Besides the keys shown, ``obs_general`` has three keys over two columns each:
@@ -129,7 +128,7 @@ their own; :ref:`dev_guide_table_schemas` says which columns get one.
 
 ``opus_id`` carries a plain key rather than a unique one. Two bundles can produce the same OPUS ID, and an import loads both copies side by side; the import's finalization then keeps the copy with the highest ``id``, which is the copy from the bundle registered later (:ref:`dev_guide_database_schema_import_bundle`), and deletes the others, so a finished database has one row per OPUS ID.
 
-Most of these fields should be self-evident. Some numeric fields have ``1`` and ``2`` versions. These are the minimum and maximum values of the metadata for a "dual column range". ``right_asc`` has two extra fields (``right_asc`` and ``d_right_asc``). These are internal fields that are used to help speed up searching on wrap-around longitudes. Also, ``obs_general`` has a hidden field ``preview_images`` which stores information (in the form of a JSON encoded PdsViewSet) about all of the preview images for each observation so that they can be rapidly retrieved when displaying the Gallery View without needing to join tables together.
+Most of these fields should be self-evident. Some numeric fields have ``1`` and ``2`` versions. These are the minimum and maximum values of the metadata for a "dual column range". ``right_asc`` has two extra fields (``right_asc`` and ``d_right_asc``). These are internal fields that are used to help speed up searching on wrap-around longitudes.
 
 ``obs_pds`` is a simple example of a secondary table that depends on ``obs_general``:
 
@@ -475,6 +474,13 @@ And as predicted a single OPUS ID is likely to appear more than once:
     | coiss_calib  | calibrated/CO.../data/146096065...3_1_CALIB.IMG            | 4202496 |  NULL |   NULL |
     +--------------+--------------...---------------...-------------------------+---------+-------+--------+
 
+.. _dev_guide_database_schema_obs_preview:
+
+The ``obs_preview`` Table
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``obs_preview`` holds one row for every observation: its ``obs_general_id``, the primary key and a foreign key onto ``obs_general``, and ``preview_images``, a JSON encoded PdsViewSet describing every preview image the observation has. The results gallery, the image API calls and the Detail page read an observation's preview images from it. A page of results, which is also what each image API call reads, joins it to ``obs_general`` by primary key; the Detail page looks up the observation's row by its OPUS ID. ``preview_images`` is described in ``param_info`` under the category ``obs_preview``, with the slug ``**previewimages``, which is neither searchable nor shown. ``obs_preview`` has no ``table_names`` row, so it is no section of the Details tab and appears in no category list.
+
 The ``param_info`` Table
 ------------------------
 
@@ -522,7 +528,7 @@ The fields are:
     * ``%.nf`` means a floating point value with ``n`` digits to the right of the decimal point.
   * When specified, ``units`` is a descriptor of the encoding of the value, including what the default units are, what other units are available, and how to convert the value between units. The list of available units is given in the ``src/opus_support/units.py`` module. For example, ``form_type="RANGE%.4f:duration"`` means to use the ``duration`` type of units, which has a default unit of ``seconds`` and support for ``microseconds``, ``milliseconds``, ``minutes``, ``hours``, and ``days``. The values are displayed numerically and the precision of the default ``%.3f`` is adjusted based on the factor needed to convert from unit to unit. Another example is ``form_type="RANGE:range_cassini_sclk"``. In this case, the "units" are really a way of indicating the conversion to and from the Cassini Spacecraft Clock Count, which has the format ``dddddddddd.sss`` where ``sss`` can be between 0 and 255 inclusive. There is no need to specify a precision because it is already implied by ``range_cassini_sclk``. Likewise there are no units available other than the default units, since there is no other way to display this metadata.
 * ``display``: A boolean value indicating whether this metadata is available for searching in the UI. The primary reason to hide a metadata value from searching is because a min/max pair of ``XXX1`` and ``XXX2`` really only represents a single UI search widget. By convention we mark the ``1`` field as displayed and the ``2`` field hidden.
-* ``display_results``: A boolean value indicating whether this metadata is available for viewing. This is set to ``False`` only in rare occasions, such as the hidden ``preview_images`` field which is only for internal use.
+* ``display_results``: A boolean value indicating whether this metadata is available for viewing. This is set to ``False`` only in rare occasions, such as ``obs_preview.preview_images``, which is only for internal use.
 * ``disp_order``: An integer indicating how the metadata fields within a given category should be sorted for display. Smaller values will appear higher in the list.
 * ``label``: The English name of the metadata field as displayed in the title of a search widget, such as ``Right Ascension``.
 * ``label_results``: The English name of the metadata field as displayed as a result, such as ``Right Ascension (Min)`` or ``Right Ascension (Max)``.

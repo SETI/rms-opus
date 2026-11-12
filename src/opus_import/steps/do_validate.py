@@ -10,7 +10,8 @@ maximum are really in that order, and that observations sharing a filter agree a
 that filter's wavelengths -- and at the one a constraint expresses but does not check:
 a foreign key added with ``foreign_key_checks`` off, as finalization adds them, never
 reads the rows already there, so every row's ``obs_general`` row is counted here, and
-``obs_pds``'s copy of each row's bundle is compared with ``obs_general``'s.
+``obs_pds``'s copy of each row's bundle is compared with ``obs_general``'s. Every
+observation's ``obs_preview`` row, which the results pages read, is counted too.
 """
 
 from __future__ import annotations
@@ -464,6 +465,33 @@ WHERE {q('p')}.{q('bundle_id')} <> {q('g')}.{q('bundle_id')}"""  # nosec B608
         )
 
 
+def validate_previews(ctx: ImportContext) -> None:
+    """Report ``obs_general`` rows that have no ``obs_preview`` row.
+
+    The import writes one ``obs_preview`` row for every observation, and the results
+    pages read an observation's preview images from it, so an observation without one
+    is an error, with the count.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
+    db = ctx.db
+    assert db is not None
+    ctx.logger.log('debug', 'Validating that each observation has an obs_preview row')
+    if not (db.table_exists('obs_general') and db.table_exists('obs_preview')):
+        return
+    q = db.quote_identifier
+    # Every interpolation is an identifier produced by quote_identifier
+    # (^[A-Za-z0-9_]+$); the statement carries no values at all.
+    cmd = f"""
+COUNT(*) FROM {q('obs_general')} {q('g')}
+LEFT JOIN {q('obs_preview')} {q('p')} ON {q('p')}.{q('obs_general_id')} = {q('g')}.{q('id')}
+WHERE {q('p')}.{q('obs_general_id')} IS NULL"""  # nosec B608
+    count = db.general_select(cmd)[0][0]
+    if count:
+        ctx.logger.log('error', f'{count} obs_general rows have no obs_preview row')
+
+
 def validate_unique_opus_ids(ctx: ImportContext) -> None:
     """Report OPUS IDs that more than one ``obs_general`` row carries.
 
@@ -520,6 +548,7 @@ def do_validate(ctx: ImportContext) -> bool:
     validate_filter_wavelength_consistency(ctx)
     validate_orphans(ctx)
     validate_pds_bundle_ids(ctx)
+    validate_previews(ctx)
     validate_unique_opus_ids(ctx)
 
     fatal_count, error_count, _warning_count, _message_count = ctx.logger.close()

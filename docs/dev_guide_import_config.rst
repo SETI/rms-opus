@@ -40,6 +40,7 @@ The tables OPUS fills for each observation, **in the order it fills them**:
 .. code-block:: text
 
     obs_general
+    obs_preview
     obs_pds
     obs_mission_<MISSION>
     obs_instrument_<INST>
@@ -86,7 +87,7 @@ a table nobody fills.
 The volume sets that have browse products: the Cassini ISS and CIRS sets, the Cassini UVIS
 and VIMS sets, EBROCC, Galileo, the Hubble sets, the New Horizons sets, and the Voyager
 ISS sets. **Nothing reads it.**
-:meth:`~opus_import.obs.obs_general.ObsGeneral.field_obs_general_preview_images` decides
+:meth:`~opus_import.obs.obs_preview.ObsPreview.field_obs_preview_preview_images` decides
 whether an observation has previews by asking ``rms-pdsfile`` for a view set, not by
 consulting this list.
 

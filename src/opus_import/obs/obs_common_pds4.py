@@ -6,6 +6,7 @@ modules with the PDS4 variants of the three that have one.
 
 from opus_import.obs.obs_general_pds4 import ObsGeneralPDS4
 from opus_import.obs.obs_pds_pds4 import ObsPdsPDS4
+from opus_import.obs.obs_preview import ObsPreview
 from opus_import.obs.obs_profile_pds4 import ObsProfilePDS4
 from opus_import.obs.obs_ring_geometry import ObsRingGeometry
 from opus_import.obs.obs_surface_geometry import ObsSurfaceGeometry
@@ -16,6 +17,7 @@ from opus_import.obs.obs_wavelength import ObsWavelength
 
 class ObsCommonPDS4(
     ObsGeneralPDS4,
+    ObsPreview,
     ObsPdsPDS4,
     ObsTypeImage,
     ObsWavelength,

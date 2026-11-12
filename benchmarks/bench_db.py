@@ -9,8 +9,8 @@ bytes and the exact row count, the index count, and the largest mult id of each 
 field (``MAX(id)`` of each per-field ``mult_`` table, or of each field's ``mult`` rows);
 the schema's index bytes including InnoDB's ``FULLTEXT`` auxiliary tablespaces,
 which ``information_schema.TABLES`` leaves out; the schema's total beside
-``innodb_buffer_pool_size``; the size of ``obs_general.preview_images``; and the
-index-usage snapshot.
+``innodb_buffer_pool_size``; the size of ``preview_images``, in ``obs_preview`` or, on a
+schema without that table, in ``obs_general``; and the index-usage snapshot.
 
 ``--dump-queries`` captures the statements each web scenario's requests issue against
 this side's own schema (`benchmarks.query_capture`) into the session's scratch
@@ -188,28 +188,44 @@ def like_literal(text: str) -> str:
     return text.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
 
-def preview_images(connection: Any, schema: str, obs_general_data_bytes: int) -> dict[str, float]:
-    """Return the size of ``obs_general.preview_images`` beside ``obs_general``'s data.
+#: The tables that may hold ``preview_images``, in the order they are looked for: a schema
+#: holds the column in ``obs_preview`` where it has that table, and in ``obs_general``
+#: otherwise.
+PREVIEW_TABLES = ('obs_preview', 'obs_general')
 
-    Both ``DATA_LENGTH`` and ``JSON_STORAGE_SIZE`` count a large value's off-page pages,
-    which a scan of the other columns never reads, so the ratio overstates what moving
-    the column would save a scan.
+
+def preview_images(
+    connection: Any, schema: str, statistics: Mapping[str, Mapping[str, int]]
+) -> dict[str, Any] | None:
+    """Return the size of ``preview_images`` beside ``obs_general``'s data.
+
+    The column is read from the first of `PREVIEW_TABLES` the schema has, so a schema of
+    either shape is measured. Both ``DATA_LENGTH`` and ``JSON_STORAGE_SIZE`` count a large
+    value's off-page pages, which a scan of ``obs_general``'s other columns never reads,
+    so the ratio overstates what holding the column elsewhere saves a scan.
 
     Parameters:
         connection: The harness's connection.
         schema: The schema.
-        obs_general_data_bytes: ``obs_general``'s data length.
+        statistics: What `table_statistics` returned for the schema.
 
     Returns:
-        The average and total storage size, and the total's ratio to the data length.
+        The table holding the column, the column's average and total storage size, and
+        the total's ratio to ``obs_general``'s data length; None when the schema has
+        neither table.
     """
+    table = next((name for name in PREVIEW_TABLES if name in statistics), None)
+    if table is None:
+        return None
     average, total = query(
         connection,
         'SELECT COALESCE(AVG(JSON_STORAGE_SIZE(preview_images)), 0), '
         'COALESCE(SUM(JSON_STORAGE_SIZE(preview_images)), 0) '
-        f'FROM {quote_identifier(schema)}.obs_general',  # nosec B608 - quoted identifier
+        f'FROM {quote_identifier(schema)}.{quote_identifier(table)}',  # nosec B608 - quoted
     )[0]
+    obs_general_data_bytes = statistics.get('obs_general', {}).get('data_bytes', 0)
     return {
+        'table': table,
         'average_bytes': float(average),
         'total_bytes': float(total),
         'ratio_to_obs_general_data': float(total) / obs_general_data_bytes
@@ -491,10 +507,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             for name, entry in statistics.items():
                 for key, value in entry.items():
                     metrics[f'db.table.{name}.{key}'] = value
-            if 'obs_general' in statistics:
-                details['preview_images'] = preview_images(
-                    connection, schema, statistics['obs_general']['data_bytes']
-                )
+            previews = preview_images(connection, schema, statistics)
+            if previews is not None:
+                details['preview_images'] = previews
             details['index_usage'] = index_usage(connection, schema)
             if args.ascii_columns:
                 details['ascii_columns'] = ascii_columns(connection, schema)

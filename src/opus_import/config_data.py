@@ -14,6 +14,7 @@ GROUP_FORM_TYPES = ['GROUP', 'MULTIGROUP']
 # If you change something here, be sure to update do_table_names.py as well.
 TABLES_TO_POPULATE = [
     'obs_general',
+    'obs_preview',
     'obs_pds',
     'obs_mission_<MISSION>',
     'obs_instrument_<INST>',
@@ -26,7 +27,7 @@ TABLES_TO_POPULATE = [
     'obs_surface_geometry_target',
 ]
 
-# Also modify populate_obs_general_preview_images as necessary
+# Nothing reads this; ObsPreview.field_obs_preview_preview_images asks rms-pdsfile instead
 VOLSETS_WITH_PREVIEWS = [
     'COISS_1xxx',
     'COISS_2xxx',

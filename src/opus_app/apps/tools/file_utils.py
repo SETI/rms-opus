@@ -23,7 +23,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
 
-from opus_app.apps.search.models import ObsGeneral
+from opus_app.apps.search.models import ObsPreview
 from opus_app.apps.tools import sql_builder
 
 if TYPE_CHECKING:
@@ -271,8 +271,9 @@ def get_pds_preview_images(
     Parameters:
         opus_id_list: One opus_id, or a list or tuple of them; nothing at all is
             also accepted and gives an empty list back.
-        preview_jsons: The `obs_general.preview_images` entry for each opus_id, in
-            the same order, or nothing at all to look each one up.
+        preview_jsons: The `obs_preview.preview_images` entry for each opus_id, in
+            the same order, or nothing at all to look each one up, by the observation's
+            `obs_general` row and its `obs_preview` row.
         sizes: One image size, or a collection of them, out of `'thumb'`,
             `'small'`, `'med'` and `'full'`; all four when omitted.
         ignore_missing: When true, an observation with no preview image is reported
@@ -312,10 +313,10 @@ def get_pds_preview_images(
             preview_json = preview_jsons[idx]
         else:
             try:
-                preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
+                preview_json = ObsPreview.objects.get(obs_general__opus_id=opus_id).preview_images
             except ObjectDoesNotExist:  # pragma: no cover - import error
                 log.error(
-                    'get_pds_preview_images: Failed to find opus_id "%r" ' + 'in obs_general',
+                    'get_pds_preview_images: Failed to find opus_id "%r" ' + 'in obs_preview',
                     opus_id,
                 )
         viewset = None

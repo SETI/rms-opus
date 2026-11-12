@@ -18,12 +18,12 @@ Five kinds of module
 * **The PDS-version split**, `opus_import.obs.obs_base_pds3` and
   `opus_import.obs.obs_base_pds4`, which answer the questions only a PDS version can:
   where a file specification comes from, and what the time columns are called.
-* **One module per OPUS table** -- general, pds, profile, wavelength, type_image, ring
-  geometry, and the three surface geometry modules -- each holding that table's field
+* **One module per OPUS table** -- general, preview, pds, profile, wavelength,
+  type_image, ring geometry, and the surface geometry modules -- each holding that table's field
   methods, some of them with a ``_pds3``/``_pds4`` variant of its own. Two assembly
   classes, `opus_import.obs.obs_common_pds3.ObsCommonPDS3` and
   `opus_import.obs.obs_common_pds4.ObsCommonPDS4`, combine all of them so that a mission
-  class names one base instead of nine.
+  class names one base instead of every table module.
 * **One module per mission** -- Cassini, Galileo, Hubble, New Horizons, Voyager -- for
   what an instrument's volumes share: a spacecraft clock format, an observation-name
   grammar, a mission phase.

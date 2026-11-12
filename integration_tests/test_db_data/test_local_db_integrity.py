@@ -24,6 +24,7 @@ from opus_app.apps.search.models import (
     ObsMissionNewHorizons,
     ObsMissionVoyager,
     ObsPds,
+    ObsPreview,
     ObsProfile,
     ObsSurfaceGeometryTarget,
     ObsTypeImage,
@@ -56,7 +57,7 @@ class DBIntegrityTest(TestCase):
     def test__pds_image_wl_bundle_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_pds, obs_type_image, obs_wavelength, obs_profile
         Test that the observation count per bundle is the same in
-        obs_general, obs_pds, obs_type_image, and obs_wavelength, since
+        obs_general, obs_pds, obs_type_image, obs_wavelength, and obs_preview, since
         these tables should all include the exact same set of observations.
         """
         self.maxDiff = None
@@ -89,6 +90,12 @@ class DBIntegrityTest(TestCase):
             .order_by('obs_general__bundle_id')
         )
         self.assertEqual(list(obs), list(wl))
+        preview = (
+            ObsPreview.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
+        )
+        self.assertEqual(list(obs), list(preview))
 
     def test__cassini_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_mission_cassini

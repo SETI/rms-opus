@@ -770,7 +770,8 @@ two generated groups. The order it emits is:
    ``display`` set to ``N``, for the same reason as in ``partables``.
 
 ``obs_files`` is deliberately absent: it holds one row per file rather than per
-observation, and users never search it.
+observation, and users never search it. So is ``obs_preview``: its one column is the
+preview images' JSON, which the results pages read and no user searches or shows.
 
 A surface geometry category's row names the table its rows are in, ``physical_table``,
 and a body's category the body's id, ``target_name``, which is how the web application
@@ -891,6 +892,11 @@ The checks, in this order:
     ``obs_general.bundle_id``, which the per-bundle delete selects by, so a search by
     bundle and the delete would otherwise see different bundles. Any such row is an
     error.
+
+:func:`~opus_import.steps.do_validate.validate_previews`
+    Counts the ``obs_general`` rows with no ``obs_preview`` row, by an anti-join. The
+    import writes one for every observation, and the results pages read an
+    observation's preview images from it. Any such row is an error.
 
 :func:`~opus_import.steps.do_validate.validate_unique_opus_ids`
     Groups ``obs_general`` by ``opus_id`` and reports any OPUS ID more than one row

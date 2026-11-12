@@ -8,7 +8,8 @@ order a user sees.
 **The set of tables is written out by hand here, not derived from the schemas**, so a
 table added to `opus_import.config_data` needs a row adding here too or it will have no
 section. ``obs_files`` is deliberately absent: it holds one row per file rather than per
-observation and users never search it.
+observation and users never search it. So is ``obs_preview``: its one column is the
+preview images' JSON, which the results pages read and no user searches or shows.
 
 A row whose category is not a table of its own names the table its rows are in,
 ``physical_table``, and for a surface geometry body's category the body's id in the

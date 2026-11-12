@@ -115,7 +115,10 @@ What each handler returns
 :func:`~opus_app.apps.results.views.api_get_data_and_images`
     One page of the browse or cart grid: per observation an OPUS ID, the metadata column
     values, the four preview images with their dimensions, and whether the observation is
-    in the cart, in the recycle bin, or neither. It is the busiest endpoint in OPUS.
+    in the cart, in the recycle bin, or neither. It is the busiest endpoint in OPUS. The
+    preview JSON is the column ``**previewimages``, which the page reads from
+    ``obs_preview``, joined to ``obs_general`` by ``obs_general_id`` as any other
+    category's table is.
 
 :func:`~opus_app.apps.results.views.api_get_data`
     The public tabular page: the labels, the rows, and how many observations the search
@@ -138,7 +141,7 @@ What each handler returns
 :func:`~opus_app.apps.results.views.api_get_images_by_size`, :func:`~opus_app.apps.results.views.api_get_images` and :func:`~opus_app.apps.results.views.api_get_image`
     The preview images for a search at one size, for a search at every size, and for one
     observation. All three share ``_api_get_images``, which reads the preview JSON out of
-    ``obs_general`` and hands it to
+    ``obs_preview``, joined to the page by ``obs_general_id``, and hands it to
     :func:`~opus_app.apps.tools.file_utils.get_pds_preview_images`. The single-observation
     form works by injecting an OPUS ID constraint into a copy of the query string, so that
     one code path serves both.
