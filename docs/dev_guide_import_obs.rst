@@ -116,6 +116,7 @@ The shape of it
         ObsProfile <|-- ObsProfilePDS4
         ObsBasePDS4 <|-- ObsProfilePDS4
         ObsGeneralPDS3 <|-- ObsCommonPDS3
+        ObsPreview <|-- ObsCommonPDS3
         ObsPdsPDS3 <|-- ObsCommonPDS3
         ObsTypeImage <|-- ObsCommonPDS3
         ObsWavelength <|-- ObsCommonPDS3
@@ -124,6 +125,7 @@ The shape of it
         ObsSurfaceGeometry <|-- ObsCommonPDS3
         ObsSurfaceGeometryTarget <|-- ObsCommonPDS3
         ObsGeneralPDS4 <|-- ObsCommonPDS4
+        ObsPreview <|-- ObsCommonPDS4
         ObsPdsPDS4 <|-- ObsCommonPDS4
         ObsTypeImage <|-- ObsCommonPDS4
         ObsWavelength <|-- ObsCommonPDS4
@@ -196,8 +198,9 @@ Reading a Cassini ISS volume's order off the tree gives:
     ObsVolumeCOISS12xxx     the volume set
     ObsCassiniCommonPDS3    the mission, PDS3 half
     ObsCommonPDS3           the assembly class
-    ObsGeneralPDS3, ObsGeneral, ObsPdsPDS3, ObsPds, ObsTypeImage, ObsWavelength,
-    ObsProfilePDS3, ObsProfile      one per table, in the order ObsCommonPDS3 lists them
+    ObsGeneralPDS3, ObsGeneral, ObsPreview, ObsPdsPDS3, ObsPds, ObsTypeImage,
+    ObsWavelength, ObsProfilePDS3, ObsProfile
+                            one per table, in the order ObsCommonPDS3 lists them
     ObsBasePDS3             the PDS3 base, released here by the last table module
                             above that derives from it
     ObsRingGeometry, ObsSurfaceGeometry,

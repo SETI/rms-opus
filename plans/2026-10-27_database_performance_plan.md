@@ -7183,7 +7183,9 @@ Nothing above this line is rewritten by an executor.
 - The import goldens change in `obs_general` (the column), the new `obs_preview` (the
   same values, keyed by each observation's id, checked by a script: every `obs_general`
   row equal less the column, and the old column equal to the new table), `param_info`
-  (the one row's category; every other row the same, in the same order) and
+  (the one row's category; every other row the same, in the same order, though
+  `param_info.id` shifts down by one for the rows after the moved one, which take 17 to
+  139 while the moved row goes from 17 to 140; nothing keys on those ids) and
   `schema_version`, nothing else. `tests/opus_import/fixtures/obs_field_values.json` is
   regenerated: the method moves from `obs_general/` to `obs_preview/` with its value.
 - `integration_tests/test_db_data/test_local_db_integrity.py` checks `obs_preview`'s
@@ -7225,3 +7227,26 @@ Nothing above this line is rewritten by an executor.
     `obs_general` then `obs_preview`'s primary key).
   - Sizes: `db.table.obs_general.data_bytes`, `db.table.obs_preview.data_bytes`, and
     `details.preview_images` (its `table` names where each side holds the column).
+- **Review fixes (2026-11-11).** An independent review found no functional defect in
+  the import, the joins or the API output; these were fixed:
+  - **A missing `obs_preview` row failed every page holding the observation.** The two
+    page readers parsed the LEFT JOIN's NULL with `json.loads` and answered 500, while
+    the Detail page showed the not-found placeholder. They read the column through
+    `results.views.page_preview_json`, which returns None for NULL, so a missing row
+    shows the placeholder everywhere, and `validate_previews` reports it.
+    `tests/opus_app/test_preview_readers.py` drives the gallery and an image call with a
+    page whose second row is NULL; each fails with its reader's `json.loads` restored.
+  - `validate_previews`' test pins the `FROM` table and the whole `ON` condition; a join
+    on `g.opus_id` or from `obs_pds` fails it.
+  - The obs-module guide's class diagram gains `ObsPreview` as a base of both assembly
+    classes, and its Cassini ISS order is what `ObsVolumeCOISS12xxx.__mro__` prints:
+    `ObsGeneralPDS3, ObsGeneral, ObsPreview, ObsPdsPDS3, ...`. `field_types.StrField`
+    names `obs_preview.preview_images`; `do_table_names` and the import-steps guide name
+    every reader of the JSON. Three test docstrings describe the schema shapes as they
+    are.
+  - Validation's cost: `validate_previews` reads `obs_general`'s and `obs_preview`'s
+    primary keys once more, beside `validate_orphans`' anti-join over `obs_preview`; at
+    complete scale that is one more pass over both keys.
+  - `bench_db`'s `ratio_to_obs_general_data` divides by `obs_general`'s data length, which
+    holds the column on a base side and not on a head side; `details.preview_images.table`
+    tells the two apart.

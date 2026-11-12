@@ -1265,12 +1265,13 @@ def test_an_observation_without_an_obs_preview_row_is_an_error(count: int, error
         ['4 obs_general rows have no obs_preview row'] * errors
     )
     (query,) = db.queries
-    assert 'LEFT JOIN `obs_preview` `p`' in query
-    assert '`p`.`obs_general_id` IS NULL' in query
+    assert query.startswith('COUNT(*) FROM `obs_general` `g` ')
+    assert 'LEFT JOIN `obs_preview` `p` ON `p`.`obs_general_id` = `g`.`id` ' in query
+    assert query.endswith('WHERE `p`.`obs_general_id` IS NULL')
 
 
 def test_a_schema_without_obs_preview_has_no_previews_to_check() -> None:
-    """Without either table there is nothing to join."""
+    """Without obs_preview there is nothing to join obs_general to."""
     db = _OrphanDB(4, ['obs_general'])
     ctx = make_context(db=db)
     do_validate.validate_previews(ctx)

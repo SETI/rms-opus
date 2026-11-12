@@ -84,7 +84,7 @@ def _previews(
 def test_previews_are_read_from_obs_preview_where_the_schema_has_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Measured beside obs_general's data, which no longer holds the column."""
+    """A schema with obs_preview holds the column there; the ratio is to obs_general's data."""
     previews, statements = _previews(
         monkeypatch, {'obs_general': {'data_bytes': 12800}, 'obs_preview': {'data_bytes': 9000}}
     )
@@ -103,7 +103,7 @@ def test_previews_are_read_from_obs_preview_where_the_schema_has_it(
 def test_previews_are_read_from_obs_general_on_a_schema_without_obs_preview(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A base side before the column moved holds it in obs_general."""
+    """A schema without obs_preview holds the column in obs_general."""
     previews, statements = _previews(monkeypatch, {'obs_general': {'data_bytes': 64000}})
 
     assert previews is not None

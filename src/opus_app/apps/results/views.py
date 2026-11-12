@@ -139,6 +139,23 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 
+def page_preview_json(value: str | None) -> Any:
+    """Return one observation's preview images as a page of results read them.
+
+    A page LEFT JOINs ``obs_preview``, so an observation without a row reads NULL. That
+    is returned as None, for which `get_pds_preview_images` gives the not-found
+    placeholder, as it does on the Detail page.
+
+    Parameters:
+        value: The page's ``**previewimages`` column for the observation: the view set
+            as JSON text, or None.
+
+    Returns:
+        The decoded view set, or None.
+    """
+    return None if value is None else json.loads(value)
+
+
 @never_cache
 @api_view
 def api_get_data_and_images(request: HttpRequest, *, api_code: int) -> HttpResponse:
@@ -217,7 +234,7 @@ def api_get_data_and_images(request: HttpRequest, *, api_code: int) -> HttpRespo
     assert page is not None
     assert aux is not None
 
-    preview_jsons = [json.loads(x[-1]) for x in page]
+    preview_jsons = [page_preview_json(x[-1]) for x in page]
     opus_ids = aux['opus_ids']
     image_list = get_pds_preview_images(opus_ids, preview_jsons, ['thumb', 'small', 'med', 'full'])
 
@@ -901,7 +918,7 @@ def _api_get_images(
     assert page is not None
     assert aux is not None
 
-    preview_jsons = [json.loads(x[1]) for x in page]
+    preview_jsons = [page_preview_json(x[1]) for x in page]
     opus_ids = aux['opus_ids']
     if size is None:
         image_list = get_pds_preview_images(opus_ids, preview_jsons, ignore_missing=True)

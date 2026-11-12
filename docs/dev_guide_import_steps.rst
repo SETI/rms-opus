@@ -771,7 +771,8 @@ two generated groups. The order it emits is:
 
 ``obs_files`` is deliberately absent: it holds one row per file rather than per
 observation, and users never search it. So is ``obs_preview``: its one column is the
-preview images' JSON, which the results pages read and no user searches or shows.
+preview images' JSON, which the results pages, the image API calls and the Detail page
+read and no user searches or shows.
 
 A surface geometry category's row names the table its rows are in, ``physical_table``,
 and a body's category the body's id, ``target_name``, which is how the web application
