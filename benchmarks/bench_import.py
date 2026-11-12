@@ -159,6 +159,14 @@ BULK_LOAD_PATH_PREFIX = 'Bulk load path: '
 #: What the result records as the start method while the import reports none.
 DEFAULT_START_METHOD = 'not reported by the import'
 
+#: The seconds between reads of the server's clock while the incremental append waits for
+#: it to pass the copied bundle's registered start (`ImportBench._wait_past_registered_start`).
+CLOCK_POLL_S = 0.1
+
+#: The seconds that wait may last. The start was registered by an earlier import, so the
+#: clock passes it within a second unless the two clocks disagree.
+CLOCK_WAIT_LIMIT_S = 5
+
 #: The roles of the finalization sequence's invocations (`Spelling.role`).
 FINALIZATION_ROLES = (
     'finalize',
@@ -985,7 +993,8 @@ class ImportBench:
         pass whether or not the append wrote anything, and a side whose ids come from
         the bundle's registered range gives the reloaded rows the same ids. Every one of
         the bundle's ``obs_general`` rows has to have been written during the append
-        instead (`_rows_written_since`).
+        instead (`_rows_written_since`), whose start is taken once the server's clock has
+        passed the copy's registered start (`_wait_past_registered_start`).
 
         Parameters:
             run: The result run to add the metrics to.
@@ -994,7 +1003,8 @@ class ImportBench:
 
         Raises:
             RunFailedError: If the bundle has no rows after the append, or holds a row
-                written before it.
+                written before it, or if the server's clock does not pass the copy's
+                registered start.
         """
         bundle = self.scenario.largest
         assert bundle is not None
@@ -1005,6 +1015,7 @@ class ImportBench:
         monitor.expect_groups([bundle])
         monitor.expand_groups()
         self.fresh_server(run, 'incremental')
+        self._wait_past_registered_start(schema, bundle)
         started = self._server_now()
         self._invoke(monitor, config_file, [self.spelling.bundle_import, *timing, bundle])
         rows, stale = self._rows_written_since(schema, bundle, started)
@@ -1019,6 +1030,50 @@ class ImportBench:
         run['metrics']['import.incremental.wall_s'] = sum(r.wall_s for r in monitor.records)
         run['details']['incremental'] = monitor.summary()
         drop_schema(self.server, schema)
+
+    def _wait_past_registered_start(self, schema: str, bundle: str) -> None:
+        """Wait until the server's UTC clock is later than a bundle's registered start.
+
+        A copied schema keeps its source's bundle registry, ``started_at`` included, and
+        the column holds whole seconds. An append whose start (`_server_now`) fell in the
+        same second as the copied ``started_at`` would find the copied row ``done`` and
+        begun no earlier than the append, and take it for the reload
+        (`_rows_written_since`). The clock is read every `CLOCK_POLL_S` seconds. A schema
+        without the registry, or a bundle with no ``started_at`` in it, waits for nothing.
+
+        Parameters:
+            schema: The copied schema.
+            bundle: The bundle about to be appended.
+
+        Raises:
+            RunFailedError: If the clock has not passed the start after
+                `CLOCK_WAIT_LIMIT_S` seconds.
+        """
+        deadline = time.monotonic() + CLOCK_WAIT_LIMIT_S
+        with contextlib.closing(self.server.connect()) as connection:
+            has_registry = query(
+                connection,
+                'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s '
+                "AND TABLE_NAME = 'import_bundle'",
+                [schema],
+            )[0][0]
+            if not has_registry:
+                return
+            statement = (
+                'SELECT UTC_TIMESTAMP() > started_at '  # nosec B608 - quoted identifier
+                f'FROM {quote_identifier(schema)}.import_bundle '
+                'WHERE bundle_id = %s AND started_at IS NOT NULL'
+            )
+            while True:
+                rows = query(connection, statement, [bundle])
+                if len(rows) == 0 or rows[0][0]:
+                    return
+                if time.monotonic() >= deadline:
+                    raise RunFailedError(
+                        f'the server clock did not pass the registered start of {bundle} '
+                        f'in {schema} within {CLOCK_WAIT_LIMIT_S} s'
+                    )
+                time.sleep(CLOCK_POLL_S)
 
     def _server_now(self) -> tuple[Any, Any]:
         """Return the database server's clock, in its own time zone and in UTC.
