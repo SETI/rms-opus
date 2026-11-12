@@ -28,6 +28,30 @@ class ObsPreview(ObsBase):
     ### Don't override these ###
 
     def field_obs_preview_preview_images(self) -> StrField:
+        """Return the observation's preview images as JSON text.
+
+        The images are the view set ``rms-pdsfile`` gives the observation's primary
+        filespec, encoded as ``PdsViewSet.to_dict`` encodes it: an object whose
+        ``viewables`` list holds, for each image, its ``url``, ``width``, ``height`` and
+        ``bytes``, and its ``name`` when it has one, with a ``priority`` when that is not
+        zero. Unless ``--ignore-missing-images`` is given, a warning is logged for each of
+        the thumbnail, small, medium and full-size images the set lacks.
+
+        An observation without a primary filespec gets ``{"viewables": []}``, with a
+        warning. When ``rms-pdsfile`` gives no view set or an empty one, or raises
+        ``ValueError`` or ``OSError`` asking for it (each logged as a warning), the result
+        is ``{"viewables": []}``, with a warning unless ``--ignore-missing-images`` is
+        given, or, with ``--fake-images``, four made-up images. Each is named after the
+        product's logical path without its extension, under ``holdings/``, with
+        ``volumes`` replaced by ``previews`` (for a CIRS product by ``diagrams``, and
+        ``DATA/APODSPEC/SPEC`` by ``BROWSE/TARGETS/IMG``), suffixed ``_thumb``,
+        ``_small``, ``_med`` and ``_full`` (the last also named ``full``), as ``.png`` for
+        a VIMS or UVIS product and ``.jpg`` otherwise; they are 100, 256, 512 and 1024
+        pixels square.
+
+        Returns:
+            The view set as JSON text.
+        """
         ### XXX Review this
         filespec = self.primary_filespec
         if filespec is None:
