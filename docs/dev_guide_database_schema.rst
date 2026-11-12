@@ -341,17 +341,21 @@ Some columns (like ``OPUS ID``) must always contain a valid value, while others 
 String Columns and Character Sets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Every string column is a ``varchar(NNN)``, which stores as many characters as a value has, up to ``NNN``, or a ``text``. No column is a fixed-width ``char``.
+Every string column is a ``varchar(NNN)``, which stores as many characters as a value has, up to ``NNN``, or a ``text``. No column is a fixed-width ``char``. The import drops a value's trailing spaces before it stores it in a ``varchar`` column, so a value reads back as it would from a ``char``.
 
 A string column takes the schema's character set, ``utf8mb4``, whose collation ``utf8mb4_0900_ai_ci`` compares without case or accents. A column whose schema entry carries ``"field_charset": "ascii"`` is ``CHARACTER SET ascii COLLATE ascii_general_ci`` instead: it compares without case, as the default does, and it costs one byte a character where ``utf8mb4`` may cost four, in the row, in every index entry and in every sort. The ASCII columns are these:
 
 * every ``opus_id`` and ``bundle_id`` column, and ``obs_files.instrument_id``;
 * ``cart.session_id``, which holds Django's session key;
-* every column whose ``pi_form_type`` is ``STRING`` and whose values are all ASCII in the complete holdings.
+* every column whose ``pi_form_type`` is ``STRING``, whose values are all ASCII in the complete holdings, and which is an identifier rather than free text.
 
-``grep -l '"field_charset": "ascii"' src/opus_import/table_schemas/*.json`` lists the schemas that have one. The ``mult`` table's ``value`` and ``label``, the dictionary, ``param_info`` and the other free text stay ``utf8mb4``.
+``grep -l '"field_charset": "ascii"' src/opus_import/table_schemas/*.json`` lists the schemas that have one. Free text stays ``utf8mb4``, because a PDS4 label is UTF-8 and a name or a note may hold any character: the ``mult`` table's ``value`` and ``label``, the dictionary, ``param_info``, ``obs_pds.note`` and ``obs_mission_hubble.hst_pi_name``.
 
-A value with a character outside ASCII cannot be stored in an ASCII column: the import's load of its row fails, naming the column and the row. A search for text with such a character finds nothing in an ASCII column, and an OPUS ID with one is unknown: MySQL refuses to compare an ASCII column with text holding any other character, so the web application replaces each such character, before it compares, with one no stored value holds (:func:`~opus_app.apps.tools.sql_builder.ascii_comparable`). It does so where the column's generated model names the ASCII collation (:func:`~opus_app.apps.tools.db_utils.is_ascii_column`).
+A value with a character outside ASCII cannot be stored in an ASCII column: the import's load of its row fails, naming the column and the row. Nor can the ASCII character DEL: the import logs an error for a value holding it, which fails its bundle.
+
+MySQL refuses to compare an ASCII column with text holding any other character, so the web application folds a caller's text before it compares it with one (:func:`~opus_app.apps.tools.sql_builder.ascii_comparable`), as the accent-blind ``utf8mb4_0900_ai_ci`` would: it decomposes the text and drops the accents, so ``VGÍSS_6210`` finds ``VGISS_6210``. A character with no ASCII form, such as ``ß`` or ``°``, becomes DEL, which no stored value holds: a search for it with ``matches``, ``contains``, ``begins``, ``ends`` or ``regex`` finds nothing, one with ``excludes`` finds every row, and an OPUS ID holding it is unknown. The folding applies where the column's generated model names the ASCII collation (:func:`~opus_app.apps.tools.db_utils.is_ascii_column`).
+
+An ASCII column pads with spaces when it compares, as ``utf8mb4_0900_ai_ci`` does not, so a value with trailing spaces equals the value without them.
 
 The two collations sort punctuation differently. ``ascii_general_ci`` compares the characters' codes with the letters folded to upper case, so ``_`` sorts after every letter and digit, and ``-`` and ``/`` before them; ``utf8mb4_0900_ai_ci`` sorts every punctuation mark before the letters and digits. ``VGISS_6210`` therefore sorts before ``VG_2810``.
 

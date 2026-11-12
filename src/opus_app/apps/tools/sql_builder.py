@@ -60,11 +60,14 @@ constructs those call sites do not use.
 """
 
 import re
+import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, NamedTuple
 
 from django.db import connection
+
+from opus_support import UNSTORED_ASCII_CHARACTER
 
 #: The only identifier shape OPUS uses. Table, column and alias names come from
 #: the generated models, from the `param_info` table, and from names computed at
@@ -140,10 +143,6 @@ def value(val: Any) -> Expr:
     return Expr('%s', [val])
 
 
-#: The character `ascii_comparable` puts in place of each one outside ASCII. No stored
-#: identifier holds it, and ``LIKE`` and a regular expression each read it as itself.
-UNSTORED_ASCII_CHARACTER = '\x7f'
-
 #: The collation of a column in the ASCII character set, as a generated model's
 #: ``db_collation`` names it.
 ASCII_COLLATION = 'ascii_general_ci'
@@ -153,8 +152,12 @@ def ascii_comparable(text: str) -> str:
     """Return text as it may be compared with a column in the ASCII character set.
 
     MySQL refuses to compare an ASCII column with text holding any other character
-    ("illegal mix of collations"), and such a character matches nothing the column holds.
-    Each one becomes `UNSTORED_ASCII_CHARACTER`, which matches nothing either, so the
+    ("illegal mix of collations"). The text is folded toward ASCII as the accent-blind
+    ``utf8mb4_0900_ai_ci`` compares it: decomposed (NFKD), with the combining marks
+    dropped, so ``Müller`` compares as ``Muller`` and the ASCII column's own collation
+    ignores the case. A character that still has no ASCII form becomes
+    `opus_support.UNSTORED_ASCII_CHARACTER`, which the import refuses in an ASCII column
+    and ``LIKE`` and a regular expression read as itself, so it matches nothing and the
     comparison finds what it finds for any value the column does not hold: ``=`` and
     ``LIKE`` no row with the character, ``NOT LIKE`` every row.
 
@@ -162,9 +165,14 @@ def ascii_comparable(text: str) -> str:
         text: A value the caller gave, to be bound as a parameter.
 
     Returns:
-        The text, with every character outside ASCII replaced.
+        The folded text, in ASCII.
     """
-    return ''.join(c if c.isascii() else UNSTORED_ASCII_CHARACTER for c in text)
+    decomposed = unicodedata.normalize('NFKD', text)
+    return ''.join(
+        c if c.isascii() else UNSTORED_ASCII_CHARACTER
+        for c in decomposed
+        if not unicodedata.combining(c)
+    )
 
 
 def count_star() -> Expr:

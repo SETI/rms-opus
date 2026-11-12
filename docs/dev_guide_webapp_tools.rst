@@ -374,10 +374,12 @@ parameters its placeholders consume. Everything below returns one.
 
 :func:`~opus_app.apps.tools.sql_builder.ascii_comparable` is not an expression but the
 value to bind for one: a caller's text, to be compared with a column in the ASCII
-character set, with each character outside ASCII replaced by
-``UNSTORED_ASCII_CHARACTER``, which no stored value holds. MySQL refuses to compare an
-ASCII column with text holding any other character, and such a character matches nothing
-there, so the comparison finds what it finds for any value the column does not hold. Every
+character set. MySQL refuses that comparison for text holding any other character, so the
+text is folded as the accent-blind ``utf8mb4_0900_ai_ci`` compares it -- decomposed
+(NFKD), its combining marks dropped -- and a character that still has no ASCII form is
+replaced by ``opus_support.UNSTORED_ASCII_CHARACTER``, DEL, which the import refuses in
+an ASCII column, so the comparison finds what it finds for any value the column does not
+hold. Every
 lookup by a caller's OPUS ID binds it this way, and a string search does for a column
 :func:`~opus_app.apps.tools.db_utils.is_ascii_column` names
 (:ref:`dev_guide_database_schema`).

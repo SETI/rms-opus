@@ -5,10 +5,13 @@ the ASCII character set and compares without case. What is worth pinning, and wh
 
 * **Case never matters.** An OPUS ID given in any case finds its observation, as it did
   under the schema's case-insensitive utf8mb4 collation.
-* **Text outside ASCII finds nothing and is no error.** MySQL refuses to compare an ASCII
-  column with such text, so every request that compares a caller's text with one of these
-  columns replaces the characters first (`sql_builder.ascii_comparable`). Each request
-  here answers as it answers for an OPUS ID or a string the database does not hold.
+* **Accents do not matter either.** MySQL refuses to compare an ASCII column with text
+  holding any other character, so every request that compares a caller's text with one of
+  these columns folds it first (`sql_builder.ascii_comparable`), as the schema's
+  accent-blind utf8mb4 collation compared it: ``VGÍSS_6210`` is ``VGISS_6210``.
+* **Text with no ASCII form finds nothing and is no error.** Each such request answers as
+  it answers for an OPUS ID or a string the database does not hold.
+* **A session key is ASCII and fits the cart's column**, or the request is refused.
 """
 
 import json
@@ -23,17 +26,19 @@ from django.db import connection
 from django.test import Client
 from rest_framework.test import RequestsClient
 
+from opus_app.apps.tools.app_utils import http400_bad_session_id
+
 from .api_test_helper import ApiTestHelper, go_live_target
 
 #: An OPUS ID the test database holds.
 OPUS_ID = 'vg-iss-2-s-c4360845'
 
-#: That OPUS ID with a letter outside ASCII appended, as it travels in a URL. A URL's
-#: OPUS ID is word characters and hyphens, and an accented letter is a word character.
-NON_ASCII_OPUS_ID = OPUS_ID + '%C3%A9'
+#: That OPUS ID with a letter appended that has no ASCII form, as it travels in a URL. A
+#: URL's OPUS ID is word characters and hyphens, and a sharp s is a word character.
+NON_ASCII_OPUS_ID = OPUS_ID + '%C3%9F'
 
 #: The OPUS ID's decoded form, as the API echoes it.
-NON_ASCII_OPUS_ID_TEXT = OPUS_ID + 'é'
+NON_ASCII_OPUS_ID_TEXT = OPUS_ID + '\u00df'
 
 #: The cart's answer when an OPUS ID it was given is not in the database.
 CART_NOT_FOUND = 'Internal Error: One or more OPUS_IDs not found; nothing added to cart'
@@ -127,10 +132,46 @@ class ApiAsciiColumnsTests(ApiTestHelper, TestCase):
 
     def test__api_result_count_bundleid_in_lower_case(self) -> None:
         "[test_ascii_columns_api.py] /api/meta/result_count: a bundle ID matches in any case"
+        count = self._count('bundleid=VGISS_6210&qtype-bundleid=matches')
+        self.assertGreater(count, 0)
+        self.assertEqual(self._count('bundleid=vgiss_6210&qtype-bundleid=matches'), count)
+
+    ################################
+    ######### ACCENT TESTS #########
+    ################################
+
+    def test__api_metadata_opusid_with_accents(self) -> None:
+        "[test_ascii_columns_api.py] /api/metadata: an OPUS ID with accents finds its observation"
+        plain = self._path_response(f'/api/metadata/{OPUS_ID}.json')
+        accented = self._path_response('/api/metadata/vg-%C3%AD%C5%9B%C5%9B-2-s-c4360845.json')
+        self.assertEqual(plain.status_code, 200)
+        self.assertEqual(accented.status_code, 200)
+        self.assertEqual(json.loads(accented.content), json.loads(plain.content))
+
+    def test__api_result_count_bundleid_with_accents(self) -> None:
+        "[test_ascii_columns_api.py] /api/meta/result_count: a bundle ID with an accent matches"
+        count = self._count('bundleid=VGISS_6210&qtype-bundleid=matches')
+        self.assertGreater(count, 0)
+        self.assertEqual(self._count('bundleid=VG%C3%8DSS_6210&qtype-bundleid=matches'), count)
         self.assertEqual(
-            self._count('bundleid=vgiss_6210&qtype-bundleid=matches'),
-            self._count('bundleid=VGISS_6210&qtype-bundleid=matches'),
+            self._count('bundleid=v%C7%B5iss&qtype-bundleid=begins'),
+            self._count('bundleid=VGISS&qtype-bundleid=begins'),
         )
+
+    ##################################
+    ######### SESSION TESTS ##########
+    ##################################
+
+    def test__api_cart_status_session_id_outside_ascii_is_refused(self) -> None:
+        "[test_ascii_columns_api.py] /__cart/status: a __sessionid outside ASCII is a 400"
+        url = '/__cart/status.json?reqno=1&__sessionid=sess%C3%A9'
+        self._run_status_equal(url, 400, http400_bad_session_id('/__cart/status.json'))
+
+    def test__api_cart_status_session_id_too_long_is_refused(self) -> None:
+        "[test_ascii_columns_api.py] /__cart/status: a __sessionid longer than the column is a 400"
+        self._json(f'/__cart/status.json?reqno=1&__sessionid={"s" * 40}')
+        url = f'/__cart/status.json?reqno=1&__sessionid={"s" * 41}'
+        self._run_status_equal(url, 400, http400_bad_session_id('/__cart/status.json'))
 
     ###################################
     ######### NON-ASCII TESTS #########
@@ -192,7 +233,7 @@ class ApiAsciiColumnsTests(ApiTestHelper, TestCase):
             ('bundleid=%E2%82%AC0&qtype-bundleid=ends', 0),
             ('bundleid=VG_%E2%82%AC&qtype-bundleid=regex', 0),
             ('bundleid=%E2%82%AC&qtype-bundleid=excludes', everything),
-            ('note=%C3%A9&qtype-note=contains', 0),
+            ('productid=%E2%82%AC&qtype-productid=contains', 0),
         ):
             with self.subTest(query=query):
                 self.assertEqual(self._count(query), count)

@@ -503,7 +503,7 @@ class ObsMissionHubble(models.Model):
     )
     stsci_group_id = models.CharField(max_length=9, db_collation='ascii_general_ci')
     hst_proposal_id = models.IntegerField()
-    hst_pi_name = models.CharField(max_length=24, db_collation='ascii_general_ci')
+    hst_pi_name = models.CharField(max_length=24)
     detector_id = models.PositiveSmallIntegerField()
     publication_date = models.FloatField()
     hst_target_name = models.CharField(max_length=31, db_collation='ascii_general_ci')
@@ -583,7 +583,7 @@ class ObsPds(models.Model):
     )
     product_creation_time = models.FloatField(blank=True, null=True)
     primary_filespec = models.CharField(max_length=240, db_collation='ascii_general_ci')
-    note = models.CharField(max_length=255, db_collation='ascii_general_ci', blank=True, null=True)
+    note = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False

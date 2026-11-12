@@ -32,10 +32,47 @@ from opus_import.obs.obs_base import ObsBase
 from opus_import.obs.obs_ring_geometry import ObsRingGeometry
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import do_import_mult
+from opus_support import UNSTORED_ASCII_CHARACTER
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
     from opus_import.import_util import TableSchema
+
+
+def stored_text(value: str) -> str:
+    """Return a string as a ``varcharNNN`` column of the import stores it.
+
+    A ``varchar`` keeps the trailing spaces a fixed-width ``char`` dropped when it was
+    read, so they are dropped before the value is loaded, and the database returns what
+    it returned when the column was a ``char``.
+
+    Parameters:
+        value: The value computed for the column.
+
+    Returns:
+        The value without trailing spaces.
+    """
+    return value.rstrip(' ')
+
+
+def strip_stored_text(row: dict[str, Any], table_schema: TableSchema) -> dict[str, Any]:
+    """Apply `stored_text` to every string a row holds for a ``varcharNNN`` column.
+
+    Parameters:
+        row: The row, keyed by column name, which is changed in place.
+        table_schema: The table's column definitions.
+
+    Returns:
+        The row.
+    """
+    for entry in table_schema:
+        name = entry.get('field_name')
+        if not isinstance(name, str):
+            continue
+        value = row.get(name)
+        if isinstance(value, str) and str(entry.get('field_type', '')).startswith('varchar'):
+            row[name] = stored_text(value)
+    return row
 
 
 def import_observation_table(
@@ -215,14 +252,29 @@ def import_observation_table(
                             + f'type "{type(column_val)}"',
                         )
                         column_val = ''
-                    elif len(column_val) > field_size:
-                        import_util.log_nonrepeating_error(
-                            ctx,
-                            f'Column "{field_name}" in table "{table_name}" '
-                            + f'has VARCHAR size {field_size} but value '
-                            + f'"{column_val}" is too long',
-                        )
-                        column_val = column_val[:field_size]
+                    else:
+                        column_val = stored_text(column_val)
+                        if len(column_val) > field_size:
+                            import_util.log_nonrepeating_error(
+                                ctx,
+                                f'Column "{field_name}" in table "{table_name}" '
+                                + f'has VARCHAR size {field_size} but value '
+                                + f'"{column_val}" is too long',
+                            )
+                            column_val = column_val[:field_size]
+                        if (
+                            table_column.get('field_charset') == 'ascii'
+                            and UNSTORED_ASCII_CHARACTER in column_val
+                        ):
+                            # The web application binds this character for one a
+                            # caller gave that has no ASCII form, so no stored value
+                            # may hold it.
+                            import_util.log_nonrepeating_error(
+                                ctx,
+                                f'Column "{field_name}" in table "{table_name}" '
+                                + f'is ASCII but value {column_val!r} holds the '
+                                + 'character DEL, which no ASCII column may hold',
+                            )
                 elif (
                     field_type.startswith('real')
                     or field_type.startswith('int')

@@ -98,7 +98,8 @@ Defining the column
        ascii COLLATE ascii_general_ci``, which compares without case; any other value,
        or the key on another type, is refused. A column without it takes the schema's
        ``utf8mb4``. A value with a character outside ASCII fails the load that writes
-       it. :ref:`dev_guide_database_schema` says which columns carry it.
+       it, and one holding DEL is an error. :ref:`dev_guide_database_schema` says which
+       columns carry it.
    * - ``field_notnull``
      - True to declare the column ``NOT NULL``.
    * - ``field_default``
@@ -195,7 +196,7 @@ recognize raises :exc:`NotImplementedError` rather than being guessed at.
    * - ``varcharNNN``
      - ``varchar(NNN)``
      - The most characters a value may have is part of the type name. The import
-       truncates a longer value and logs an error.
+       drops a value's trailing spaces, then truncates a longer value and logs an error.
    * - ``text``
      - ``text``
      -

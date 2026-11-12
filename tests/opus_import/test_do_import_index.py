@@ -1,8 +1,11 @@
-"""`get_opus_products_rows_for_filespec` returns an empty list, never a bare `None`.
+"""`get_opus_products_rows_for_filespec`: no `None` on a failed conversion, no trailing spaces.
 
 When the filespec cannot be converted, the function logs the error and returns no rows.
 Its only caller iterates the result, so a `None` would turn a recoverable, logged error
 into ``TypeError: 'NoneType' object is not iterable`` and abort the whole index import.
+
+A row it returns holds each ``varchar`` value without trailing spaces, as the ``char``
+column it replaced returned it.
 """
 
 from typing import Any, Literal
@@ -75,3 +78,64 @@ def test_a_failed_filespec_conversion_can_be_iterated_by_the_caller(
         emitted.append(row)
 
     assert emitted == []
+
+
+class _File:
+    """One file of a product, with the attributes the row builder reads."""
+
+    version_rank = 1
+    version_id = ''
+    logical_path = 'volumes/COISS_2xxx/COISS_2002/data/N1460960653_1.IMG'
+    is_index = False
+    url = '/holdings/volumes/COISS_2xxx/COISS_2002/data/N1460960653_1.IMG'
+    checksum = '0123456789abcdef0123456789abcdef  '
+    size_bytes = 1024
+    width = None
+    height = None
+
+
+class _AcceptingPdsFile:
+    """A `Pds4File` stand-in whose one product type has names padded with spaces."""
+
+    @staticmethod
+    def from_filespec(filespec: str, **_kwargs: object) -> '_AcceptingPdsFile':
+        """Accept any filespec."""
+        return _AcceptingPdsFile()
+
+    def opus_products(self) -> dict[tuple[Any, ...], list[list[_File]]]:
+        """Return one product type of one file."""
+        return {('standard', 10, 'coiss_raw  ', 'Raw Image  ', True): [[_File()]]}
+
+
+class _AcceptingPdsFiles:
+    """Stands in for the `pdsfile` package with the accepting class."""
+
+    class pds3file:  # noqa: N801 - mirrors the real module's name
+        Pds3File = _AcceptingPdsFile
+
+    class pds4file:  # noqa: N801 - mirrors the real module's name
+        Pds4File = _AcceptingPdsFile
+
+
+def test_a_files_strings_are_stored_without_trailing_spaces(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Each ``varchar`` value loses its trailing spaces; a ``text`` value keeps its own."""
+    monkeypatch.setattr(do_import_index, 'pdsfile', _AcceptingPdsFiles)
+    (row,) = do_import_index.get_opus_products_rows_for_filespec(
+        make_context(),
+        4,
+        'COISS_2002/data/N1460960653_1.LBL',
+        1,
+        'co-iss-n0',
+        'COISS_2002',
+        'COISS ',
+    )
+
+    assert (row['short_name'], row['full_name'], row['checksum'], row['instrument_id']) == (
+        'coiss_raw',
+        'Raw Image',
+        '0123456789abcdef0123456789abcdef',
+        'COISS',
+    )
+    assert row['url'] == _File.url.strip('/')
