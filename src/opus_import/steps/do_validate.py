@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 def _body_category(db: ImportDBSuper) -> str | None:
     """Return the surface geometry body category that stands for every body's.
 
-    Every body's category describes the surface geometry table's columns the same way,
+    Every body's category describes ``obs_surface_geometry_target``'s columns the same way,
     so the first in order of name describes them for all.
 
     Parameters:
@@ -36,7 +36,7 @@ def _body_category(db: ImportDBSuper) -> str | None:
 
     Returns:
         The first ``obs_surface_geometry__`` category ``param_info`` holds, or None when it
-        holds none, which is when the surface geometry table holds no rows.
+        holds none, which is when ``obs_surface_geometry_target`` holds no rows.
     """
     q = db.quote_identifier
     res = db.general_select(
@@ -56,7 +56,7 @@ def _param_info_category(table_name: str, field_name: str, body_category: str | 
         body_category: What `_body_category` returned.
 
     Returns:
-        The table's own name, except for the surface geometry table: the selector category
+        The table's own name, except for ``obs_surface_geometry_target``: the selector category
         for its ``target_name``, and `body_category` for every other column.
     """
     if table_name != surface_geometry.SURFACE_GEOMETRY_TABLE:
@@ -178,7 +178,7 @@ def validate_nulls(ctx: ImportContext) -> None:
     Such a column can be tightened to NOT NULL in its table schema, which lets the
     database enforce what the data already satisfies. The suggestion is logged at info
     level, because it is an observation about the schema rather than a fault in the
-    data. The surface geometry table is counted once, over every body's rows, so a column
+    data. ``obs_surface_geometry_target`` is counted once, over every body's rows, so a column
     is reported only when no body's rows hold a NULL in it.
 
     Parameters:
