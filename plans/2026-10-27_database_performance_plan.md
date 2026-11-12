@@ -7267,6 +7267,27 @@ Nothing above this line is rewritten by an executor.
     before and 10 after, each of those in the chain's own unquoted expansions.
   - Results, at 3258605c: the gates pass (3,083 unit tests); the import suite 192
     passed and 3 skipped.
+- **CodeRabbit's third review (2026-11-12).**
+  - *A leftover holding the only copy of the served rows*
+    (`WebBench.drop_leftover_promotion_source`). A harness run that ended between its
+    save and its restore left the served schema with the planted rows and the source
+    with the only copy of its own, and the next promotion dropped that source on its mark
+    alone. The save puts a row into the mark, made `ENGINE=InnoDB`, in its transaction
+    and the restore empties it in its own, so a row means a restore is pending. A
+    leftover whose mark holds a row has its saved rows put back, in that same
+    transaction, before it is dropped, and the command says so; a restore there that
+    fails raises naming the schema and keeps it. Checked against a local server in a
+    throwaway schema: a save, a carry-over and a fresh harness put the served rows back
+    and made the source again; a restore failing on a foreign key left the planted rows,
+    the source and its row in place, and once the bad row went the next run recovered.
+  - *A failed restore's backup* (`WebBench.drop_promotion_source`). The command's final
+    drop deleted the source after `restore_served_rows` had rolled back.
+    `restore_pending` is set when the save commits and cleared when the restore commits;
+    while it is set the drop raises naming the schema and keeps it, for the next
+    promotion to put back. The module docstring and the benchmarks guide say so.
+  - Mutations, each failing its test: the leftover's row ignored; the final drop
+    ignoring `restore_pending`; the flag never set, or never cleared.
+  - Results, at ac849e9a: the gates pass (3,086 unit tests).
 - **Measurement** (2026-11-11, test scale; one schema, `bench_test_after_b_3`, imported
   by PR-17's head 45ccaebb, since this PR changes no schema; before PR-17's head serving
   it, which has neither step; after this PR's head e5e71573 with `--warm db-cold --warm

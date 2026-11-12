@@ -36,8 +36,9 @@ application's stop until it has started again: the side's ``opus_import
 --carry-over-sessions-from`` from a schema holding N planted cart rows into the served
 schema, then memcached's restart. The served schema's own sessions and cart rows are
 saved before the window and put back after it, so every run starts from the same tables.
-The harness drops only a schema it made itself. A side without the command or the
-option skips the step, and the result names it among its skipped steps.
+The harness drops only a schema it made itself, and never one that still holds saved rows
+it has not put back: the next promotion puts them back first. A side without the command
+or the option skips the step, and the result names it among its skipped steps.
 
 Example, one side's web runs at fixture scale against the schema its import built::
 
@@ -142,8 +143,9 @@ PROMOTION_SESSION_PREFIX = 'bench-carry-'
 #: What the schema a promotion carries over from is named after the served one.
 PROMOTION_SOURCE_SUFFIX = '_carry_source'
 
-#: The empty table that marks a schema as one the harness made to carry over from; a
-#: schema of that name without it is never dropped.
+#: The table that marks a schema as one the harness made to carry over from; a schema of
+#: that name without it is never dropped. It holds a row while the served schema's saved
+#: rows wait to be put back, and is empty otherwise.
 PROMOTION_SOURCE_MARK = 'bench_web_promotion_source'
 
 #: The tables a promotion replaces in the served schema, in the order they are filled.
@@ -631,6 +633,7 @@ class WebBench:
         self._cache_gets = 0
         self.warm_states = warm_states
         self.promotion_source: str | None = None
+        self.restore_pending = False
 
     @property
     def connection(self) -> Any:
@@ -731,13 +734,15 @@ class WebBench:
 
         The schema is named after the served one with `PROMOTION_SOURCE_SUFFIX`. A schema
         of that name left by an earlier run of the harness, which holds the
-        `PROMOTION_SOURCE_MARK` table, is dropped first; any other schema of that name is
-        refused and left as it is. The schema made holds that mark, ``django_session``
-        and ``cart`` as the served schema declares them (``CREATE TABLE ... LIKE`` copies
-        no foreign key), with `cart_rows` cart rows naming the served schema's first
-        observations, `PROMOTION_CART_ROWS_PER_SESSION` to an unexpired session, and an
-        empty copy of each of the two tables named with `PROMOTION_SAVED_PREFIX`, which
-        `time_promotion` saves the served schema's own rows into.
+        `PROMOTION_SOURCE_MARK` table, is dropped first, once any saved rows it holds are
+        put back (`drop_leftover_promotion_source`); any other schema of that name is
+        refused and left as it is. The schema made holds that mark, empty and
+        transactional, ``django_session`` and ``cart`` as the served schema declares them
+        (``CREATE TABLE ... LIKE`` copies no foreign key), with `cart_rows` cart rows
+        naming the served schema's first observations, `PROMOTION_CART_ROWS_PER_SESSION`
+        to an unexpired session, and an empty copy of each of the two tables named with
+        `PROMOTION_SAVED_PREFIX`, which `time_promotion` saves the served schema's own
+        rows into.
 
         Parameters:
             cart_rows: The cart rows to plant.
@@ -747,7 +752,8 @@ class WebBench:
             observations.
 
         Raises:
-            WebRunError: Naming the schema, if one of its name exists without the mark.
+            WebRunError: Naming the schema, if one of its name exists without the mark, or
+                holds saved rows that cannot be put back.
         """
         source = f'{self.schema}{PROMOTION_SOURCE_SUFFIX}'
         served = f'`{self.schema}`'
@@ -757,7 +763,7 @@ class WebBench:
         # Named as soon as it exists, so that a failure below still has it dropped.
         self.promotion_source = source
         statements = (
-            f'CREATE TABLE {quoted}.`{PROMOTION_SOURCE_MARK}` (`id` INT)',
+            f'CREATE TABLE {quoted}.`{PROMOTION_SOURCE_MARK}` (`id` INT) ENGINE=InnoDB',
             *(
                 f'CREATE TABLE {quoted}.`{prefix}{table}` LIKE {served}.`{table}`'
                 for table in PROMOTION_TABLES
@@ -779,13 +785,19 @@ class WebBench:
     def drop_leftover_promotion_source(self, source: str) -> None:
         """Drop a schema an earlier run of the harness made to carry over from.
 
+        When its `PROMOTION_SOURCE_MARK` table holds a row, that run saved the served
+        schema's sessions and cart rows and ended before it put them back, so the served
+        schema holds the planted rows and the schema the only copy of its own. They are put
+        back first (`restore_served_rows`'s transaction), and the schema is dropped only
+        once they are.
+
         Parameters:
             source: The schema's name.
 
         Raises:
             WebRunError: Naming the schema, if it exists without the
-                `PROMOTION_SOURCE_MARK` table, so that the harness did not make it; it is
-                left as it is.
+                `PROMOTION_SOURCE_MARK` table, so that the harness did not make it, or if
+                putting back the rows it saved fails; either way it is left as it is.
         """
         found = query(
             self.connection,
@@ -805,12 +817,48 @@ class WebBench:
                 f'schema {source} exists and the harness did not make it (it holds no '
                 f'{PROMOTION_SOURCE_MARK} table): drop or rename it to time a promotion'
             )
+        # The name is the harness's own; the statement carries no values.
+        pending = query(
+            self.connection,
+            f'SELECT COUNT(*) FROM `{source}`.`{PROMOTION_SOURCE_MARK}`',  # nosec B608
+        )
+        if int(pending[0][0]) > 0:
+            try:
+                self._restore_rows(source)
+            except Exception as err:
+                raise WebRunError(
+                    f'schema {source} holds the sessions and cart rows a promotion saved from '
+                    f'schema {self.schema} and did not put back, and putting them back failed '
+                    f'({err}): copy them from its {PROMOTION_SAVED_PREFIX}* tables into '
+                    f'{self.schema}, then drop {source}'
+                ) from err
+            sys.stdout.write(
+                f'put back the sessions and cart rows schema {source} held for schema '
+                f'{self.schema}, saved by a promotion that did not finish\n'
+            )
         query(self.connection, f'DROP DATABASE `{source}`')
 
     def drop_promotion_source(self) -> None:
-        """Drop the schema `prepare_promotion` made, if it made one."""
-        if self.promotion_source is not None:
-            query(self.connection, f'DROP DATABASE IF EXISTS `{self.promotion_source}`')
+        """Drop the schema `prepare_promotion` made, if it made one.
+
+        A schema whose saved rows were not put back (`restore_pending`) holds the only copy
+        of the served schema's sessions and cart rows, and is kept.
+
+        Raises:
+            WebRunError: Naming the schema, when it is kept; the next run that times a
+                promotion puts its rows back (`drop_leftover_promotion_source`).
+        """
+        source = self.promotion_source
+        if source is None:
+            return
+        if self.restore_pending:
+            raise WebRunError(
+                f'schema {source} is kept: it holds the only copy of the sessions and cart '
+                f'rows of schema {self.schema}, which were not put back; the next run with '
+                f'--promotion-carts puts them back, or copy them from its '
+                f'{PROMOTION_SAVED_PREFIX}* tables'
+            )
+        query(self.connection, f'DROP DATABASE IF EXISTS `{source}`')
         self.promotion_source = None
 
     def time_promotion(self, run: dict[str, Any]) -> None:
@@ -828,7 +876,7 @@ class WebBench:
         it closes, a failed step included, they are put back (`restore_served_rows`), so
         the next run and the other side find those tables as before. Neither is timed. A
         save that fails raises before the application is stopped, and nothing is put
-        back.
+        back. A restore that fails leaves `restore_pending` set, so the source is kept.
 
         Parameters:
             run: The run to record ``web.promotion.window_s`` and
@@ -864,40 +912,77 @@ class WebBench:
         """Copy the served schema's sessions and cart rows into `promotion_source`.
 
         Each of `PROMOTION_TABLES` replaces the rows of its copy named with
-        `PROMOTION_SAVED_PREFIX`, which `prepare_promotion` made, in one transaction.
+        `PROMOTION_SAVED_PREFIX`, which `prepare_promotion` made, and a row goes into the
+        `PROMOTION_SOURCE_MARK` table, in one transaction; `restore_pending` is set once it
+        has committed.
         """
-        self._replace_rows(self._saved_tables(), self._served_tables())
+        source = self.promotion_source
+        assert source is not None
+        self._replace_rows(
+            self._saved_tables(source),
+            self._served_tables(),
+            f'INSERT INTO `{source}`.`{PROMOTION_SOURCE_MARK}` (`id`) VALUES (1)',  # nosec B608
+        )
+        self.restore_pending = True
 
     def restore_served_rows(self) -> None:
         """Put back the served schema's sessions and cart rows `save_served_rows` saved.
 
         The served schema's `PROMOTION_TABLES` are emptied and filled from the saved
-        copies in one transaction, so their rows are either all put back or left as the
-        promotion left them.
+        copies, and the `PROMOTION_SOURCE_MARK` table is emptied, in one transaction, so
+        their rows are either all put back, with no restore left pending, or left as the
+        promotion left them, with the restore still pending; `restore_pending` is cleared
+        once it has committed.
         """
-        self._replace_rows(self._served_tables(), self._saved_tables())
+        assert self.promotion_source is not None
+        self._restore_rows(self.promotion_source)
+        self.restore_pending = False
+
+    def _restore_rows(self, source: str) -> None:
+        """Put back the served schema's rows a schema saved, and clear its mark's row.
+
+        Parameters:
+            source: The schema that holds the saved copies.
+        """
+        self._replace_rows(
+            self._served_tables(),
+            self._saved_tables(source),
+            f'DELETE FROM `{source}`.`{PROMOTION_SOURCE_MARK}`',  # nosec B608
+        )
 
     def _served_tables(self) -> dict[str, str]:
         """Return each of `PROMOTION_TABLES`' qualified name in the served schema."""
         return {table: f'`{self.schema}`.`{table}`' for table in PROMOTION_TABLES}
 
-    def _saved_tables(self) -> dict[str, str]:
-        """Return the qualified name of each of `PROMOTION_TABLES`' saved copy."""
+    @staticmethod
+    def _saved_tables(source: str) -> dict[str, str]:
+        """Return the qualified name of each of `PROMOTION_TABLES`' saved copy.
+
+        Parameters:
+            source: The schema that holds the saved copies.
+
+        Returns:
+            Each table's saved copy, by the table's name.
+        """
         return {
-            table: f'`{self.promotion_source}`.`{PROMOTION_SAVED_PREFIX}{table}`'
-            for table in PROMOTION_TABLES
+            table: f'`{source}`.`{PROMOTION_SAVED_PREFIX}{table}`' for table in PROMOTION_TABLES
         }
 
-    def _replace_rows(self, target: Mapping[str, str], source: Mapping[str, str]) -> None:
+    def _replace_rows(
+        self, target: Mapping[str, str], source: Mapping[str, str], mark: str
+    ) -> None:
         """Replace the rows of each of `PROMOTION_TABLES` with another table's, atomically.
 
         The tables are emptied in the reverse of `PROMOTION_TABLES`' order and filled in
-        it, in one transaction that is rolled back if a statement fails.
+        it, and `mark` runs last, in one transaction that is rolled back if a statement
+        fails.
 
         Parameters:
             target: The qualified name of each table whose rows are replaced.
             source: The qualified name of each table its rows are copied from, which has
                 the same columns in the same order.
+            mark: The statement that records, in the `PROMOTION_SOURCE_MARK` table,
+                whether a restore is pending once the rows are replaced.
         """
         # The names are the harness's own; the statements carry no values.
         statements = [
@@ -909,6 +994,7 @@ class WebBench:
                 f'INSERT INTO {target[table]} SELECT * FROM {source[table]}'  # nosec B608
                 for table in PROMOTION_TABLES
             ),
+            mark,
         ]
         query(self.connection, 'START TRANSACTION')
         try:

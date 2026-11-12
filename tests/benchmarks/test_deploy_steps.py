@@ -212,6 +212,7 @@ def _promotion_bench(
     """
     bench = _bench(calls, frozenset())
     bench.promotion_source = 'bench_x_carry_source'
+    bench.restore_pending = False
     bench.schema = 'bench_x'
     bench._connection = object()
 
@@ -261,8 +262,11 @@ _SERVED = {table: f'`bench_x`.`{table}`' for table in ('cart', 'django_session')
 #: Their saved copies in the promotion source, likewise.
 _SAVED = {table: f'`bench_x_carry_source`.`saved_{table}`' for table in ('cart', 'django_session')}
 
+#: The promotion source's mark, likewise.
+_MARK = '`bench_x_carry_source`.`bench_web_promotion_source`'
 
-def _replacing(target: dict[str, str], source: dict[str, str]) -> list[str]:
+
+def _replacing(target: dict[str, str], source: dict[str, str], mark: str) -> list[str]:
     """Return the statements that replace two tables' rows with others', as recorded."""
     return [
         'START TRANSACTION []',
@@ -270,13 +274,18 @@ def _replacing(target: dict[str, str], source: dict[str, str]) -> list[str]:
         f'DELETE FROM {target["django_session"]} []',
         f'INSERT INTO {target["django_session"]} SELECT * FROM {source["django_session"]} []',
         f'INSERT INTO {target["cart"]} SELECT * FROM {source["cart"]} []',
+        f'{mark} []',
         'COMMIT []',
     ]
 
 
-#: The statements that save the served schema's rows, and that put them back.
-_SAVE = _replacing(_SAVED, _SERVED)
-_RESTORE = _replacing(_SERVED, _SAVED)
+#: The statements that save the served schema's rows, marking a restore pending, and that
+#: put them back, clearing the mark.
+_SAVE = _replacing(_SAVED, _SERVED, f'INSERT INTO {_MARK} (`id`) VALUES (1)')
+_RESTORE = _replacing(_SERVED, _SAVED, f'DELETE FROM {_MARK}')
+
+#: The statement that drops the promotion source when the command ends, as recorded.
+_DROP_SOURCE = 'DROP DATABASE IF EXISTS `bench_x_carry_source` []'
 
 
 def test_the_promotion_window_runs_from_the_applications_stop_to_its_start(
@@ -314,12 +323,15 @@ def test_the_promotion_window_runs_from_the_applications_stop_to_its_start(
 def test_the_served_rows_are_put_back_when_a_step_fails(
     monkeypatch: pytest.MonkeyPatch, failing: str, error: type[Exception], last: str
 ) -> None:
-    """The served schema is left as it was found, and the failure reaches the caller."""
+    """The served schema is left as it was found, the failure reaches the caller, and
+    nothing is left to put back, so the source is dropped when the command ends."""
     calls: list[str] = []
     bench = _promotion_bench(monkeypatch, calls, failing=failing)
     with pytest.raises(error, match=f'{failing} failed'):
         bench.time_promotion({'metrics': {}})
     assert calls[-len(_RESTORE) - 1 :] == [last, *_RESTORE]
+    bench.drop_promotion_source()
+    assert calls[-1] == _DROP_SOURCE
 
 
 def test_a_save_that_fails_stops_nothing_and_puts_nothing_back(
@@ -331,7 +343,9 @@ def test_a_save_that_fails_stops_nothing_and_puts_nothing_back(
     bench = _promotion_bench(monkeypatch, calls, failing_statement=f'INSERT INTO {_SAVED["cart"]}')
     with pytest.raises(_StatementError):
         bench.time_promotion({'metrics': {}})
-    assert calls == [*_SAVE[:-1], 'ROLLBACK []']
+    assert calls == [*_SAVE[:-2], 'ROLLBACK []']
+    bench.drop_promotion_source()
+    assert calls[-1] == _DROP_SOURCE
 
 
 def test_a_restore_that_fails_is_rolled_back_and_raised(
@@ -342,7 +356,23 @@ def test_a_restore_that_fails_is_rolled_back_and_raised(
     bench = _promotion_bench(monkeypatch, calls, failing_statement=f'INSERT INTO {_SERVED["cart"]}')
     with pytest.raises(_StatementError):
         bench.time_promotion({'metrics': {}})
-    assert calls[-len(_RESTORE) :] == [*_RESTORE[:-1], 'ROLLBACK []']
+    assert calls[-len(_RESTORE) + 1 :] == [*_RESTORE[:-2], 'ROLLBACK []']
+
+
+def test_a_source_whose_restore_failed_is_kept_and_named(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """It holds the only copy of the served schema's rows, so the drop at the end raises
+    naming it and drops nothing."""
+    calls: list[str] = []
+    bench = _promotion_bench(monkeypatch, calls, failing_statement=f'INSERT INTO {_SERVED["cart"]}')
+    with pytest.raises(_StatementError):
+        bench.time_promotion({'metrics': {}})
+    recorded = len(calls)
+    with pytest.raises(WebRunError, match='schema bench_x_carry_source is kept'):
+        bench.drop_promotion_source()
+    assert len(calls) == recorded
+    assert bench.promotion_source == 'bench_x_carry_source'
 
 
 #: The statement that asks whether the promotion source exists, as recorded.
@@ -357,6 +387,9 @@ _SOURCE_MARKED = (
     "TABLE_NAME = %s ['bench_x_carry_source', 'bench_web_promotion_source']"
 )
 
+#: The statement that asks whether its saved rows wait to be put back, as recorded.
+_SOURCE_PENDING = f'SELECT COUNT(*) FROM {_MARK} []'
+
 
 def _schema_statements(calls: list[str]) -> list[str]:
     """Return the statements recorded that make, drop or inspect a schema or table."""
@@ -370,7 +403,7 @@ def _schema_statements(calls: list[str]) -> list[str]:
 #: The statements that make the promotion source, as recorded.
 _MAKE_SOURCE = [
     'CREATE DATABASE `bench_x_carry_source` []',
-    'CREATE TABLE `bench_x_carry_source`.`bench_web_promotion_source` (`id` INT) []',
+    'CREATE TABLE `bench_x_carry_source`.`bench_web_promotion_source` (`id` INT) ENGINE=InnoDB []',
     'CREATE TABLE `bench_x_carry_source`.`django_session` LIKE `bench_x`.`django_session` []',
     'CREATE TABLE `bench_x_carry_source`.`saved_django_session` LIKE `bench_x`.`django_session` []',
     'CREATE TABLE `bench_x_carry_source`.`cart` LIKE `bench_x`.`cart` []',
@@ -398,6 +431,7 @@ def test_the_promotion_source_is_made_after_dropping_the_harnesss_leftover(
         rows={
             'SCHEMATA': exists,
             'information_schema.TABLES': 1,
+            _SOURCE_PENDING[: -len(' []')]: 0,
             'FROM `bench_x_carry_source`.cart': 7,
         },
     )
@@ -405,6 +439,67 @@ def test_the_promotion_source_is_made_after_dropping_the_harnesss_leftover(
     assert bench.prepare_promotion(10) == 7
     assert _schema_statements(calls) == [_SOURCE_EXISTS, *dropped, *_MAKE_SOURCE]
     assert bench.promotion_source == 'bench_x_carry_source'
+
+
+def test_a_leftover_holding_saved_rows_puts_them_back_before_it_is_dropped(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An earlier run that ended between its save and its restore left the served schema
+    with the planted rows and the leftover with the only copy of its own: they are put
+    back, and the mark's row cleared, before the leftover goes."""
+    calls: list[str] = []
+    bench = _promotion_bench(
+        monkeypatch,
+        calls,
+        rows={
+            'SCHEMATA': 1,
+            'information_schema.TABLES': 1,
+            _SOURCE_PENDING[: -len(' []')]: 1,
+            'FROM `bench_x_carry_source`.cart': 7,
+        },
+    )
+    bench.promotion_source = None
+    assert bench.prepare_promotion(10) == 7
+    recovered = [
+        _SOURCE_EXISTS,
+        _SOURCE_MARKED,
+        _SOURCE_PENDING,
+        *_RESTORE,
+        'DROP DATABASE `bench_x_carry_source` []',
+    ]
+    assert calls[: len(recovered)] == recovered
+    assert _schema_statements(calls[len(recovered) :]) == _MAKE_SOURCE
+    assert (
+        'put back the sessions and cart rows schema bench_x_carry_source' in capsys.readouterr().out
+    )
+
+
+def test_a_leftover_whose_saved_rows_cannot_be_put_back_is_kept_and_named(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The restore is rolled back, and nothing is dropped or made, then or when the command
+    ends."""
+    calls: list[str] = []
+    bench = _promotion_bench(
+        monkeypatch,
+        calls,
+        rows={'SCHEMATA': 1, 'information_schema.TABLES': 1, _SOURCE_PENDING[: -len(' []')]: 1},
+        failing_statement=f'INSERT INTO {_SERVED["cart"]}',
+    )
+    bench.promotion_source = None
+    with pytest.raises(
+        WebRunError,
+        match='schema bench_x_carry_source holds the sessions and cart rows a promotion saved',
+    ):
+        bench.prepare_promotion(10)
+    bench.drop_promotion_source()
+    assert calls == [
+        _SOURCE_EXISTS,
+        _SOURCE_MARKED,
+        _SOURCE_PENDING,
+        *_RESTORE[:-2],
+        'ROLLBACK []',
+    ]
 
 
 def test_a_schema_of_the_sources_name_the_harness_did_not_make_is_refused_and_kept(
@@ -441,4 +536,4 @@ def test_a_source_whose_making_fails_is_dropped_when_the_command_ends(
     with pytest.raises(_StatementError):
         bench.prepare_promotion(10)
     bench.drop_promotion_source()
-    assert calls[-1] == 'DROP DATABASE IF EXISTS `bench_x_carry_source` []'
+    assert calls[-1] == _DROP_SOURCE
