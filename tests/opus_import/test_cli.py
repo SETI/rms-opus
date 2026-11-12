@@ -211,14 +211,16 @@ def test_a_worker_count_above_the_ceiling_is_refused_before_the_database_opens(
     [
         ['--carry-over-sessions-from', 'opus_ci_db'],
         ['--override-db-schema', 'opus_new', '--carry-over-sessions-from', 'opus_new'],
+        ['--carry-over-sessions-from', 'OPUS_CI_DB'],
     ],
-    ids=['configured-schema', 'overridden-schema'],
+    ids=['configured-schema', 'overridden-schema', 'other-case'],
 )
 def test_the_carry_over_refuses_the_schema_it_would_write_into(
     arguments: list[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Its target is emptied first, so the source being the target would empty both; the
-    refusal names the schema and comes before the database opens, so no statement runs."""
+    refusal names the schema and comes before the database opens, so no statement runs.
+    A server with ``lower_case_table_names`` set treats names differing in case as one."""
     logger, opened = _main_until_refused(arguments, monkeypatch)
     assert opened == []
     assert logger.messages_at('fatal') == [

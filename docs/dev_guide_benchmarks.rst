@@ -497,19 +497,22 @@ A warm-up that fails fails the run.
 ``--promotion-carts N`` times a promotion's window before each run's passes: a schema
 named after the served one with ``_carry_source`` is made once, holding only
 ``django_session`` and ``cart`` as the served schema declares them, with ``N`` cart rows
-naming the served schema's first observations, a hundred to an unexpired session. Each
+naming the served schema's first observations, ``PROMOTION_CART_ROWS_PER_SESSION`` of
+them to each unexpired session. Each
 run stops the application, runs the side's ``opus_import --carry-over-sessions-from``
 from that schema into the served one, restarts memcached, and starts the application
 again, recording ``web.promotion.carry_over_s`` and ``web.promotion.window_s``, the
-second from the stop to the start. The carry-over leaves the planted sessions and cart
-rows in the served schema. The rows planted are in the environment as
+second from the stop to the start. The planted sessions and cart rows the carry-over
+copies into the served schema are deleted from it again before the application starts,
+so every run, on either side, finds the same tables. The rows planted are in the environment as
 ``promotion_cart_rows``; the schema is dropped when the command ends.
 
 A side without ``warm_search``, or whose ``opus_import --help`` lists no
 ``--carry-over-sessions-from``, skips that step, and the result's ``skipped_steps``
 names it (``warm_search``, ``carry_over_sessions``). The environment records the states
-asked to warm as ``warm_states`` and the cart rows asked for as ``promotion_carts``, and
-a result file refuses web runs that differ in either.
+that warmed as ``warm_states`` (none on a side without the command) and the cart rows
+each promotion carried as ``promotion_carts`` (none on a side without the option), and a
+result file refuses web runs that differ in either.
 
 What bench_db records
 ~~~~~~~~~~~~~~~~~~~~~

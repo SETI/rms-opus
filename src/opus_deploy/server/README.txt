@@ -192,16 +192,19 @@ a search and a session as a visitor's first requests do.
 
 deploy_new_code_and_database.sh also carries the sessions and carts over from
 the database being served into the new one, while the web server is stopped.
-A cart row whose session has expired, or whose observation the new database
-lacks, is dropped, and the log counts them. If the carry-over fails, the web
-server is started again on the installation that was serving, and nothing has
-switched.
+Only sessions that own a cart row are copied: a session holds nothing else a
+visitor would miss. A cart row whose session has expired, or whose observation
+the new database lacks, is dropped, and the log counts them. The copy is one
+transaction. If it fails, the web server is started again on the installation
+that was serving, and nothing has switched. A release without the option, such
+as an older one, warns and switches without carrying anything.
 
 The installation that was replaced is still under staged/. Going back to it is
 moving the deployed symlink onto it and restarting the web server -- there is
 nothing to rebuild. Going back that way skips the carry-over, so the sessions
 and carts made since the deploy stay behind in the newer database. To carry
-them back, redeploy the previous database instead:
+them back, redeploy the previous database instead, which carries them only
+when the release you deploy has --carry-over-sessions-from:
 
     ./import_and_deploy/deploy_new_code_and_database.sh \
         <previous database> <its version specifier>

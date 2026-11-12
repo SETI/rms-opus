@@ -6963,3 +6963,52 @@ Nothing above this line is rewritten by an executor.
   deploy and the harness, six of the carry-over's SQL (no session join, no expiry
   filter, no truncation of either table, the source's ids, the reads after the writes),
   and one of the command's URLs against the integration database; each failed its test.
+- **Review fixes (2026-11-11, after PR-17's merge).** Each behavior fix has a test that
+  fails with it reverted (each checked by reverting it):
+  - *Promoting a release without the option.* `carry_over_sessions` in
+    `_promote_steps.sh` reads the staged `opus_import --help` first; when it lacks
+    `--carry-over-sessions-from` (a rollback to an older release), it warns that the
+    release cannot carry sessions over and returns 0, and the promotion goes on. The
+    deployment guide and `README.txt` say that carrying sessions back works only when the
+    release being promoted has the option.
+  - *Only the sessions that own a cart row are copied.* `grep -rn "request.session\["
+    src/opus_app` finds two keys: `has_session` (app_utils, a marker that the session
+    exists) and `cum_download_size` (cart views, the running total that caps one
+    session's downloads, which starts again). Besides those, a session holds a staff
+    member's Django admin login; nothing else a visitor would miss lives there, and the
+    served schema holds a session for every cookieless API caller for as long as a
+    session lasts. The session `INSERT` gains `AND session_key IN (SELECT session_id FROM
+    <source>.cart)`. The decision is in the step's docstring, the import-steps guide and
+    the deployment guide. The harness therefore plants no cart-less sessions; its window
+    does not include filtering a large `django_session`.
+  - *One transaction.* The two `TRUNCATE`s are `DELETE`s, in the same transaction as the
+    reads and the inserts, committed at the end and rolled back on any failure, so a
+    failure leaves the target's tables as they were (this replaces "read before the
+    target is truncated" above). A bad source name's `ImportDBError` from
+    `quote_identifier` is logged with its reason, as the server's failures are.
+  - *`OPUS_WARM_SEARCH`.* The warm-up is skipped only when the variable is exactly
+    `false`. The test lives on the function: the check moved from `_promote.sh` into
+    `warm_search` in `_promote_steps.sh`, which `_promote.sh` calls unconditionally, so
+    a shell test can run it; both files' headers say so.
+  - *Tests.* An `apps_db_tests` case runs the warm-up in process on a local-memory cache
+    (the refusal patched out), then finds the landing search's number and every default
+    widget's `mults_<field>:<search number>` key in the cache, computed from the user
+    interface's whole landing query string (its preferences, `order=time1,opusid`,
+    `view=search`, `widgets`, `cols`), before issuing the landing page's mult-count and
+    result-count requests, which then run no `GROUP BY` and insert no search. The
+    carry-over's expiry case plants sessions five minutes either side of UTC now and runs
+    the step in process on a connection whose time zone is `+09:00` or `-09:00`, where
+    `NOW()` would call both live or both expired. The shell tests source
+    `_promote_steps.sh` under `set -e` and call each step as its caller does. Further
+    import cases: a live session without a cart is not carried; a failure after the
+    deletes (a source `cart` without `recycled`, so the cart's `INSERT` fails) leaves
+    the target as it was; an unsafe name is logged with "Unsafe SQL identifier".
+  - *Harness.* `warm_states` and `promotion_carts` record what the side ran (empty and
+    None on a side without the command or the option), through
+    `DeploySteps.environment`, beside `skipped_steps`. After each promotion window the
+    planted rows (`PROMOTION_SESSION_PREFIX`) are deleted from the served schema before
+    the application starts. The docstring's sentence about `[warm]` is rewritten, and
+    the guides drop two counts that restated code (`PROMOTION_CART_ROWS_PER_SESSION`,
+    and the `search` app's commands).
+  - *Case.* The source-is-target refusal compares the names without regard to case, as
+    a server with `lower_case_table_names` set does.

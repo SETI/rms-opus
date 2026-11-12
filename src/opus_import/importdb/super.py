@@ -166,7 +166,7 @@ class CarriedOver:
     """What `ImportDBSuper.carry_over_sessions` copied into the target schema.
 
     Attributes:
-        sessions: The unexpired sessions copied.
+        sessions: The unexpired sessions that own a cart row, copied.
         cart_rows: The cart rows copied.
         source_cart_rows: The cart rows the source schema held, so that the ones not
             copied (their observation or their session is not in the target) are
@@ -1114,10 +1114,11 @@ class ImportDBSuper:
     def carry_over_sessions(self, source_schema: str) -> CarriedOver:
         """Replace this schema's sessions and cart rows with another schema's.
 
-        ``django_session`` and ``cart`` are emptied first, so running it again gives the
-        same result. The source's unexpired sessions are copied, then each source cart
-        row whose observation (by OPUS ID) and session are both in this schema, with
-        this schema's ``obs_general_id``; a cart row's own id is not copied.
+        One transaction: ``django_session`` and ``cart`` are emptied first, so running it
+        again gives the same result, and a failure leaves them as they were. The source's
+        unexpired sessions that own a cart row are copied, then each source cart row
+        whose observation (by OPUS ID) and session are both in this schema, with this
+        schema's ``obs_general_id``; a cart row's own id is not copied.
 
         Parameters:
             source_schema: The schema to copy from, on the same server.

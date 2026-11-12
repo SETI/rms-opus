@@ -444,7 +444,7 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         default=None,
         metavar='SCHEMA',
         help="Replace the target schema's django_session and cart rows with SCHEMA's "
-        'unexpired sessions and the cart rows of those sessions whose observations the '
+        'unexpired sessions that own cart rows and those cart rows whose observations the '
         'target holds; refused with any other step and when SCHEMA is the target',
     )
 
@@ -802,8 +802,9 @@ def main() -> None:
                 'fatal', f'--carry-over-sessions-from runs alone; it is refused with {conflict}'
             )
             sys.exit(-1)
-        # Truncating the target first would empty the source.
-        if carry_over_from == our_schema_name:
+        # Emptying the target first would empty the source. A server with
+        # lower_case_table_names set treats names differing only in case as one.
+        if carry_over_from.lower() == our_schema_name.lower():
             logger.log(
                 'fatal',
                 f'--carry-over-sessions-from {carry_over_from} names the schema it would '

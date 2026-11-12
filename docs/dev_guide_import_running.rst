@@ -427,13 +427,14 @@ Auxiliary tables and other steps
        and each web worker keeps its own until it is restarted.
    * - ``--carry-over-sessions-from SCHEMA``
      - Replace the target schema's ``django_session`` and ``cart`` rows with SCHEMA's:
-       both tables are emptied, then SCHEMA's unexpired sessions are copied, and each of
-       its cart rows whose session was copied and whose observation the target holds,
-       matched by ``opus_id``, under the target's ``obs_general_id``. SCHEMA's two tables
-       are read before anything is written. The log counts the rows copied and the cart
+       in one transaction, both tables are emptied, then SCHEMA's unexpired sessions that
+       own a cart row are copied, and each of its cart rows whose session was copied and
+       whose observation the target holds, matched by ``opus_id``, under the target's
+       ``obs_general_id``. SCHEMA's two tables are read before anything is written, and a
+       failure leaves the target's tables as they were. The log counts the rows copied and the cart
        rows dropped. It reads no holdings, and is refused with any other step, with
        bundles, with ``--read-only``, and when SCHEMA is the target schema (after
-       ``--override-db-schema``). ``deploy_new_code_and_database.sh`` runs it while the
+       ``--override-db-schema``, in any case). ``deploy_new_code_and_database.sh`` runs it while the
        web service is stopped (:ref:`user_guide_deployment_carry_over`).
    * - ``--validate``
      - Validate the imported tables. A check that logs an error keeps the invocation

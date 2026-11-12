@@ -27,14 +27,15 @@ Before anything is measured the harness asks the side's settings, in the same
 environment, which cache backend they chose, and **refuses to run** on Django's
 local-memory fallback; after each run it refuses the run if memcached served nothing.
 
-**After a deploy.** A cold state ``web.toml``'s ``[warm]`` flags, or ``--warm``, name
-ends its reset with the side's ``opus_manage warm_search``, as a deploy does once its
-workers start, so the state shows what a visitor meets after a deploy; its wall-clock
-goes in the run's details. With ``--promotion-carts N`` each run first times a
+**After a deploy.** ``web.toml``'s ``[warm]`` table and the ``--warm`` option name cold
+states to warm. Each such state's reset ends with the side's ``opus_manage
+warm_search``, as a deploy does once its workers start, so the state shows what a
+visitor meets after a deploy. The warm-up's wall-clock goes in the run's details. With ``--promotion-carts N`` each run first times a
 promotion's window, from the application's stop to its start: the side's
 ``opus_import --carry-over-sessions-from`` from a schema holding N planted cart rows
-into the served schema, then memcached's restart. A side without the command or the
-option skips the step, and the result names it among its skipped steps.
+into the served schema, then memcached's restart; the planted rows are then deleted
+from the served schema, so every run starts from the same tables. A side without the
+command or the option skips the step, and the result names it among its skipped steps.
 
 Example, one side's web runs at fixture scale against the schema its import built::
 
@@ -127,6 +128,9 @@ WARMUP_MAX_ROUNDS = 50
 
 #: The planted cart rows of one session, in the schema a promotion carries over from.
 PROMOTION_CART_ROWS_PER_SESSION = 100
+
+#: What every planted session key begins with.
+PROMOTION_SESSION_PREFIX = 'bench-carry-'
 
 #: What the schema a promotion carries over from is named after the served one.
 PROMOTION_SOURCE_SUFFIX = '_carry_source'
@@ -731,7 +735,7 @@ class WebBench:
             f'CREATE TABLE {quoted}.cart LIKE {served}.cart',
             # The names are the harness's own; the row count is bound.
             f'INSERT INTO {quoted}.cart (session_id, obs_general_id, opus_id, recycled) '  # nosec B608
-            "SELECT CONCAT('bench-carry-', (ROW_NUMBER() OVER (ORDER BY id) - 1) DIV "
+            f"SELECT CONCAT('{PROMOTION_SESSION_PREFIX}', (ROW_NUMBER() OVER (ORDER BY id) - 1) DIV "
             f'{PROMOTION_CART_ROWS_PER_SESSION}), id, opus_id, 0 FROM {served}.obs_general '
             'ORDER BY id LIMIT %s',
             f'INSERT INTO {quoted}.django_session (session_key, session_data, expire_date) '  # nosec B608
@@ -760,6 +764,10 @@ class WebBench:
         schema, then memcached's restart, as ``_promote.sh`` holds them between the web
         service's stop and start (its symlink switch, one rename, is not simulated).
 
+        Afterwards the rows the carry-over copied, which are the planted ones, are
+        deleted from the served schema, so the next run and the other side find its
+        ``cart`` and ``django_session`` as before.
+
         Parameters:
             run: The run to record ``web.promotion.window_s`` and
                 ``web.promotion.carry_over_s`` into.
@@ -777,9 +785,21 @@ class WebBench:
         carried = time.perf_counter()
         self.memcached.restart()
         ended = time.perf_counter()
+        self.remove_planted_rows()
         self.gunicorn.start()
         run['metrics']['web.promotion.carry_over_s'] = carried - started
         run['metrics']['web.promotion.window_s'] = ended - started
+
+    def remove_planted_rows(self) -> None:
+        """Delete the planted sessions and cart rows from the served schema."""
+        served = f'`{self.schema}`'
+        for table, column in (('cart', 'session_id'), ('django_session', 'session_key')):
+            query(
+                self.connection,
+                # The names are the harness's own; the prefix is bound.
+                f'DELETE FROM {served}.{table} WHERE {column} LIKE %s',  # nosec B608
+                [f'{PROMOTION_SESSION_PREFIX}%'],
+            )
 
     def require_cold(self) -> None:
         """Check that no worker has served a request since the application started.
@@ -1017,6 +1037,16 @@ class DeploySteps:
     promotion_carts: int | None
     skipped: tuple[str, ...]
 
+    def environment(self) -> dict[str, Any]:
+        """Return the result environment's entries for what the side runs.
+
+        Returns:
+            ``warm_states``, the states that warm (none on a side without the command),
+            and ``promotion_carts``, the cart rows each promotion carries over (None on a
+            side without the option); the steps skipped are recorded beside them.
+        """
+        return {'warm_states': sorted(self.warm_states), 'promotion_carts': self.promotion_carts}
+
 
 def deploy_steps(
     warm_states: frozenset[str],
@@ -1162,8 +1192,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             **side.environment(),
             **server_environment(server),
             'skipped_steps': [*spelling.skipped_steps, *steps.skipped],
-            'warm_states': sorted(warm_states),
-            'promotion_carts': args.promotion_carts,
+            **steps.environment(),
             'web_scenario_hash': scenario_hash([config.path]),
             'server_model': bench.gunicorn.server_model,
             'app_loading': 'eager',

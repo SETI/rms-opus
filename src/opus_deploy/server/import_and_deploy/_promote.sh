@@ -25,7 +25,8 @@
 # installation to promote, IMPORT_SCRIPT_DIR, the two service names
 # _read_deploy_env.sh supplies, OPUS_WEB_SERVICE and OPUS_CACHE_SERVICE, and
 # OPUS_PREVIOUS_DB_NAME, the schema to carry sessions and carts over from, empty or
-# unset for none. OPUS_WARM_SEARCH, when "false", skips the warm-up.
+# unset for none. OPUS_WARM_SEARCH skips the warm-up when it is exactly "false"; unset,
+# or any other value, warms.
 
 if [[ ! -v OPUS_DIR ]]; then
     echo "INTERNAL ERROR: OPUS_DIR undefined"
@@ -98,10 +99,8 @@ sudo systemctl start "${OPUS_WEB_SERVICE}"
 # The empty search, its first page and the widgets' counts, into the cache just emptied.
 # A failure warns and the deploy goes on. The warm-up registers a search and a session as
 # a visitor's first requests do, so a deploy that promises to write nothing to the
-# database sets OPUS_WARM_SEARCH to false.
-if [[ ${OPUS_WARM_SEARCH:-true} == true ]]; then
-    warm_search
-fi
+# database sets OPUS_WARM_SEARCH to false, which skips it; any other value warms.
+warm_search
 
 echo
 echo "Now serving: ${OPUS_DIR}/deployed -> $(readlink "${OPUS_DIR}/deployed")"

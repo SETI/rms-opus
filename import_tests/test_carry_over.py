@@ -14,7 +14,13 @@ What is worth pinning, and why:
   rows rather than adding to them.
 * **It depends on neither schema's ``cart`` character sets nor on columns one release's
   ``cart`` has and another's lacks,** since the two schemas belong to different releases.
-* **A source it cannot read fails before anything is written.**
+* **Only the sessions that own a cart row are carried**, since a session holds nothing
+  else a visitor would miss, and the served schema keeps one for every cookieless API
+  caller.
+* **A source it cannot read fails before anything is written, and a failure after the
+  target was emptied leaves it as it was**, since the deletes and the inserts are one
+  transaction. An unsafe schema name is logged with its reason.
+* **Expiry is judged in UTC**, as Django stores it, whatever the connection's time zone.
 """
 
 from __future__ import annotations
@@ -26,12 +32,16 @@ from typing import TYPE_CHECKING
 import pytest
 
 from import_tests.tools import build_run, golden_io
+from opus_import import importdb
 
 if TYPE_CHECKING:
     from import_tests.tools.golden_io import DatabaseCredentials
 
 #: The session the served schema's carts belong to, and one that has expired.
 _LIVE, _EXPIRED = 'carry-live', 'carry-expired'
+
+#: A live session of the served schema that owns no cart row, which is not carried.
+_CARTLESS = 'carry-cartless'
 
 #: A session and a cart row the target holds before the carry-over, which it removes.
 _STALE = 'carry-stale'
@@ -111,8 +121,9 @@ def _pair(
     _run_sql(
         credentials,
         served.schema,
-        f"INSERT INTO django_session (session_key, session_data, expire_date) VALUES ('{_LIVE}', 'data', '{later}'), "
-        f"('{_EXPIRED}', 'data', '{earlier}')",
+        'INSERT INTO django_session (session_key, session_data, expire_date) VALUES '
+        f"('{_LIVE}', 'data', '{later}'), ('{_EXPIRED}', 'data', '{earlier}'), "
+        f"('{_CARTLESS}', 'data', '{later}')",
         'INSERT INTO cart (session_id, obs_general_id, opus_id, recycled) VALUES '
         f"('{_LIVE}', 900001, '{kept}', 1), ('{_LIVE}', 900002, '{gone}', 0), "
         f"('{_EXPIRED}', 900003, '{kept}', 0)",
@@ -127,7 +138,8 @@ def test_the_carry_over_moves_live_carts_to_the_targets_ids_and_repeats(
     created_schemas: list[str],
     served_charset: str,
 ) -> None:
-    """One row carried under the target's id, two dropped and counted, twice over.
+    """One row carried under the target's id, two dropped and counted, twice over; the
+    session without a cart is not carried.
 
     In the ``other`` case the served schema's cart identifiers are in the other
     character set from the target's, and its cart has a column the target's lacks.
@@ -157,7 +169,7 @@ def test_the_carry_over_moves_live_carts_to_the_targets_ids_and_repeats(
         assert _cart(db_credentials, new.schema) == [(_LIVE, kept_id, kept, 1)]
     assert new.errors() == ''
     assert _cart(db_credentials, served.schema) == planted
-    assert sorted(_sessions(db_credentials, served.schema)) == [_EXPIRED, _LIVE]
+    assert _sessions(db_credentials, served.schema) == sorted([_CARTLESS, _EXPIRED, _LIVE])
 
 
 def test_a_source_without_the_tables_fails_before_writing(
@@ -173,3 +185,80 @@ def test_a_source_without_the_tables_fails_before_writing(
     assert 'Failed to carry sessions and carts over' in new.errors()
     assert _sessions(db_credentials, new.schema) == [_STALE]
     assert _cart(db_credentials, new.schema) == [(_STALE, kept_id, kept, 0)]
+
+
+def test_a_failure_after_the_deletes_leaves_the_target_as_it_was(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """The deletes and the inserts are one transaction, rolled back together.
+
+    The served schema's ``cart`` lacks ``recycled``, so the reads pass and the cart's
+    ``INSERT`` fails after both tables were emptied and the sessions copied.
+    """
+    served, new, kept, kept_id = _pair(main_run, db_credentials, created_schemas, 'carry_rollback')
+    _run_sql(db_credentials, served.schema, 'ALTER TABLE cart DROP COLUMN recycled')
+    result = new.step('--carry-over-sessions-from', served.schema)
+    assert result.returncode != 0
+    assert 'Failed to carry sessions and carts over' in new.errors()
+    assert _sessions(db_credentials, new.schema) == [_STALE]
+    assert _cart(db_credentials, new.schema) == [(_STALE, kept_id, kept, 0)]
+
+
+def test_an_unsafe_schema_name_is_logged_with_its_reason(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """A name the server would have to quote is refused, in the error log, writing nothing."""
+    _served, new, kept, kept_id = _pair(main_run, db_credentials, created_schemas, 'carry_unsafe')
+    result = new.step('--carry-over-sessions-from', 'opus-served')
+    assert result.returncode != 0
+    assert "Failed to carry sessions and carts over from 'opus-served'" in new.errors()
+    assert 'Unsafe SQL identifier' in new.errors()
+    assert _cart(db_credentials, new.schema) == [(_STALE, kept_id, kept, 0)]
+
+
+@pytest.mark.parametrize('time_zone', ['+09:00', '-09:00'])
+def test_expiry_is_judged_in_utc_whatever_the_sessions_time_zone(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    time_zone: str,
+) -> None:
+    """Django stores ``expire_date`` in UTC; minutes either side of now tell UTC from local.
+
+    The carry-over runs in this process on a connection whose time zone is nine hours
+    from UTC, where ``NOW()`` would call both sessions below live or both expired.
+    """
+    served, new, kept, _kept_id = _pair(
+        main_run, db_credentials, created_schemas, f'carry_tz{time_zone[0] == "+"}'
+    )
+    now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    soon = (now + datetime.timedelta(minutes=5)).isoformat(sep=' ', timespec='seconds')
+    gone = (now - datetime.timedelta(minutes=5)).isoformat(sep=' ', timespec='seconds')
+    _run_sql(
+        db_credentials,
+        served.schema,
+        'INSERT INTO django_session (session_key, session_data, expire_date) VALUES '
+        f"('carry-soon', 'data', '{soon}'), ('carry-just-gone', 'data', '{gone}')",
+        'INSERT INTO cart (session_id, obs_general_id, opus_id, recycled) VALUES '
+        f"('carry-soon', 900011, '{kept}', 0), ('carry-just-gone', 900012, '{kept}', 0)",
+    )
+    db = importdb.get_db(
+        'MySQL',
+        db_credentials.host,
+        '',
+        new.schema,
+        db_credentials.user,
+        db_credentials.password,
+        bulk_load=False,
+    )
+    try:
+        with db.conn.cursor() as cursor:
+            cursor.execute(f"SET SESSION time_zone = '{time_zone}'")
+        db.carry_over_sessions(served.schema)
+    finally:
+        db.close()
+    assert _sessions(db_credentials, new.schema) == sorted(['carry-soon', _LIVE])

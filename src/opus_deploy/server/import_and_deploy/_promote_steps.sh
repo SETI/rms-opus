@@ -12,11 +12,15 @@
 #
 # carry_over_sessions <served schema>
 #     Replaces the target schema's sessions and carts with the served schema's unexpired
-#     sessions and their carts (opus_import --carry-over-sessions-from). It runs while the
+#     sessions that own a cart, and their carts (opus_import
+#     --carry-over-sessions-from). It runs while the
 #     web service is stopped, before the switch. When it fails it starts the web service
 #     again, on the installation that was serving, and returns 1; nothing has switched.
+#     When the release being promoted has no such option, as one older than it does, it
+#     warns and returns 0, and the promotion goes on without the carry-over.
 #
 # warm_search
+#     Skipped when OPUS_WARM_SEARCH is exactly "false"; any other value, or none, warms.
 #     Answers the landing page's requests once (opus_manage warm_search), so the first
 #     visitor finds them cached. A failure is a warning, never a failed deploy: the site
 #     serves, only more slowly at first. Returns 0.
@@ -44,6 +48,13 @@ previous_db_name() {
 
 carry_over_sessions() {
     local served=$1
+    local help
+    # Going back to a release older than the option promotes it without the carry-over.
+    if ! help=$(opus_import --help) || [[ ${help} != *--carry-over-sessions-from* ]]; then
+        echo "WARNING: the release being promoted cannot carry sessions over; the"
+        echo "         sessions and carts in ${served} stay there."
+        return 0
+    fi
     if ! opus_import --carry-over-sessions-from "${served}"; then
         echo "ERROR: could not carry sessions and carts over from ${served}."
         echo "       Nothing has been switched; restarting what was running before."
@@ -54,6 +65,10 @@ carry_over_sessions() {
 }
 
 warm_search() {
+    if [[ ${OPUS_WARM_SEARCH:-true} == false ]]; then
+        echo "Skipping the warm-up: OPUS_WARM_SEARCH is false."
+        return 0
+    fi
     if ! opus_manage warm_search; then
         echo "WARNING: opus_manage warm_search failed; the site is serving, and the"
         echo "         first visitors' searches fill the cache instead."

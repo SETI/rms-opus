@@ -98,22 +98,33 @@ stopped (:ref:`user_guide_deployment_carry_over`).
 
 :func:`~opus_import.steps.do_carry_over.carry_over_sessions` calls
 :meth:`~opus_import.importdb.super.ImportDBSuper.carry_over_sessions` and logs what it
-copied. The MySQL implementation reads the source's ``django_session`` and counts its
-``cart`` first, so a source without them fails before anything is written. It then
-truncates the target's ``cart`` and ``django_session``, so a second run gives the same
-result, and runs two ``INSERT ... SELECT`` statements committed together: the sessions
-whose ``expire_date`` is later than ``UTC_TIMESTAMP()`` (Django stores it in UTC), then
-each source cart row joined to the target's ``obs_general`` by ``opus_id`` and to the
+copied. The MySQL implementation runs one transaction, committed at its end and rolled
+back on any failure, so a failure leaves the target's two tables as they were. In it, it
+reads the source's ``django_session`` and counts its ``cart``, so a source without them
+fails before anything is written; empties the target's ``cart`` and ``django_session``
+with ``DELETE`` (``TRUNCATE`` would commit at once), so a second run gives the same
+result; and runs two ``INSERT ... SELECT`` statements: the sessions whose
+``expire_date`` is later than ``UTC_TIMESTAMP()`` (Django stores it in UTC) and that own
+a cart row in the source, then each source cart row joined to the target's ``obs_general`` by ``opus_id`` and to the
 copied sessions by its session. The rows are written with the target's own
 ``obs_general_id``, ``opus_id`` and session key, and only the columns every release's
 ``cart`` shares are named, so the copy does not depend on either schema's character sets
 or on a column one release's ``cart`` has and another's lacks. A cart row's own ``id`` is
 not copied. The cart rows the source held and the target did not take, because their
-session expired or their observation is gone, are logged as dropped.
+session expired or their observation is gone, are logged as dropped. A source name that
+is not a plain identifier is refused, and logged with the reason, before any statement.
+
+Only the sessions that own a cart row are copied because nothing else a visitor would
+miss is kept in a session: ``grep -rn "request.session\[" src/opus_app`` finds the
+``has_session`` marker and ``cum_download_size``, the running total that caps one
+session's downloads. The served schema keeps a session for every caller of the public
+API that sends no cookie, for as long as a session lasts, and copying those would
+lengthen the time the web service is stopped.
 
 The command line refuses the option with any other step and when ``SCHEMA`` is the
-schema it writes into, before the database is opened, since emptying the target would
-then empty the source.
+schema it writes into, compared without regard to case as a server with
+``lower_case_table_names`` set compares them, before the database is opened, since
+emptying the target would then empty the source.
 
 .. _dev_guide_import_steps_do_django:
 

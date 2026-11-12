@@ -113,9 +113,9 @@ to do the second time.
 The commands worth knowing
 --------------------------
 
-All but ``prune`` and ``warm_search`` are Django's own; those two are OPUS's, defined by
-the ``search`` app in :mod:`opus_app.apps.search.management.commands.prune` and
-:mod:`opus_app.apps.search.management.commands.warm_search`. Each one below takes
+``prune`` and ``warm_search`` are OPUS's, defined by the ``search`` app in
+:mod:`opus_app.apps.search.management.commands.prune` and
+:mod:`opus_app.apps.search.management.commands.warm_search`; the others are Django's own. Each one below takes
 ``opus_manage`` or ``python manage.py`` in front of it.
 
 .. list-table::

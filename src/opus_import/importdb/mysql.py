@@ -1386,15 +1386,19 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
     def carry_over_sessions(self, source_schema: str) -> CarriedOver:
         """Replace this schema's sessions and cart rows with another schema's.
 
-        The source's two tables are read first, so a source without them fails before
-        anything is written. ``django_session`` and ``cart`` are then truncated and filled
-        by two ``INSERT ... SELECT`` statements committed together. Django stores ``expire_date`` in UTC, so
-        a session is unexpired when it is later than ``UTC_TIMESTAMP()``. A cart row is
-        joined to this schema's ``obs_general`` by ``opus_id`` and to the sessions just
-        copied by its session, and is written with this schema's own values of both, so
-        the copy compares the two schemas' columns but never stores the source's text in
-        a column of another character set. Only the columns the two releases' ``cart``
-        tables share are named.
+        One transaction, committed at the end and rolled back on any failure, so a
+        failure leaves this schema's two tables as they were: the source's
+        ``django_session`` is read and its ``cart`` counted, so a source without them
+        fails before anything is written; then ``cart`` and ``django_session`` are
+        emptied with ``DELETE`` (``TRUNCATE`` would commit at once) and filled by two
+        ``INSERT ... SELECT`` statements. Only the sessions that own a cart row in the
+        source are copied, and only while unexpired: Django stores ``expire_date`` in
+        UTC, so a session is unexpired when it is later than ``UTC_TIMESTAMP()``. A cart
+        row is joined to this schema's ``obs_general`` by ``opus_id`` and to the sessions
+        just copied by its session, and is written with this schema's own values of
+        both, so the copy compares the two schemas' columns but never stores the
+        source's text in a column of another character set. Only the columns every
+        release's ``cart`` has are named.
 
         Parameters:
             source_schema: The schema to copy from, on the same server.
@@ -1403,30 +1407,36 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             The sessions and cart rows copied, and the cart rows the source held.
 
         Raises:
-            ImportDBError: If the server rejects a statement, for instance because the
-                source lacks one of the tables.
+            ImportDBError: If the source's name is not a safe identifier, or the server
+                rejects a statement, for instance because the source lacks one of the
+                tables; either is logged.
         """
-        q = self.quote_identifier
-        source = q(source_schema)
-        writes = (
-            'TRUNCATE TABLE `cart`',
-            'TRUNCATE TABLE `django_session`',
-            # Identifiers are validated by quote_identifier; the statements carry no values.
-            'INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) '  # nosec B608
-            f'SELECT `session_key`, `session_data`, `expire_date` FROM {source}.`django_session` '
-            'WHERE `expire_date` > UTC_TIMESTAMP()',
-            'INSERT INTO `cart` (`session_id`, `obs_general_id`, `opus_id`, `recycled`) '  # nosec B608
-            'SELECT `s`.`session_key`, `n`.`id`, `n`.`opus_id`, `c`.`recycled` '
-            f'FROM {source}.`cart` AS `c` '
-            'JOIN `obs_general` AS `n` ON `n`.`opus_id` = `c`.`opus_id` '
-            'JOIN `django_session` AS `s` ON `s`.`session_key` = `c`.`session_id`',
-        )
-        # Identifiers are validated by quote_identifier; the statements carry no values.
-        reads = (
-            f'SELECT 1 FROM {source}.`django_session` LIMIT 1',  # nosec B608
-            f'SELECT COUNT(*) FROM {source}.`cart`',  # nosec B608
-        )
         with self._operation('carry_over_sessions'):
+            try:
+                source = self.quote_identifier(source_schema)
+            except ImportDBError as e:
+                self._log_failure(
+                    f'Failed to carry sessions and carts over from {source_schema!r}: {e}'
+                )
+                raise
+            # Identifiers are validated by quote_identifier; the statements carry no values.
+            reads = (
+                f'SELECT 1 FROM {source}.`django_session` LIMIT 1',  # nosec B608
+                f'SELECT COUNT(*) FROM {source}.`cart`',  # nosec B608
+            )
+            writes = (
+                'DELETE FROM `cart`',
+                'DELETE FROM `django_session`',
+                'INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) '  # nosec B608
+                f'SELECT `session_key`, `session_data`, `expire_date` FROM {source}.`django_session` '
+                'WHERE `expire_date` > UTC_TIMESTAMP() '
+                f'AND `session_key` IN (SELECT `session_id` FROM {source}.`cart`)',
+                'INSERT INTO `cart` (`session_id`, `obs_general_id`, `opus_id`, `recycled`) '  # nosec B608
+                'SELECT `s`.`session_key`, `n`.`id`, `n`.`opus_id`, `c`.`recycled` '
+                f'FROM {source}.`cart` AS `c` '
+                'JOIN `obs_general` AS `n` ON `n`.`opus_id` = `c`.`opus_id` '
+                'JOIN `django_session` AS `s` ON `s`.`session_key` = `c`.`session_id`',
+            )
             if not MYSQLDB_AVAILABLE:
                 return CarriedOver(sessions=0, cart_rows=0, source_cart_rows=0)
             try:

@@ -118,8 +118,8 @@ Either way the installation being replaced stays under ``staged/``, so going bac
 moving the ``deployed`` symlink onto it and restarting -- there is nothing to rebuild.
 Going back by hand skips the carry-over, so the sessions and carts made since the deploy
 stay behind in the newer database; redeploying the previous database with
-``deploy_new_code_and_database.sh <previous database>`` carries them back
-(:ref:`user_guide_deployment_carry_over`). Old installations are removed by hand, when
+``deploy_new_code_and_database.sh <previous database>`` carries them back when that
+release can carry sessions over (:ref:`user_guide_deployment_carry_over`). Old installations are removed by hand, when
 the one after them has been trusted for a while.
 
 The scripts
@@ -276,22 +276,32 @@ workers have stopped and before the switch, runs this against the new database::
 
     opus_import --carry-over-sessions-from <database being served>
 
-It empties the new database's two tables, copies every session that has not expired,
-and copies each cart row of those sessions whose observation the new database holds,
-matched by OPUS ID. The log says how many sessions and cart rows it copied, and how many
-cart rows it dropped because their session had expired or their observation is not in the
-new database.
+In one transaction, it empties the new database's two tables, copies every session that
+has not expired and owns a cart row, and copies each cart row of those sessions whose
+observation the new database holds, matched by OPUS ID. A failure rolls all of it back.
+The log says how many sessions and cart rows it copied, and how many cart rows it dropped
+because their session had expired or their observation is not in the new database.
+
+A session without a cart is not copied. OPUS keeps nothing else in a session that a
+visitor would miss: a marker that the session exists, and the running total that caps
+one session's downloads, which starts again. A staff member signed in to Django's admin
+signs in again. The served database holds such a session for every caller of the public
+API that sends no cookie, so copying them would lengthen the time the site is down.
 
 * **A first deploy**, with no deployed installation, carries nothing; nor does a redeploy
   of the database already being served. ``deploy_new_code_only.sh`` keeps the database, so
   it has nothing to carry.
 * **If the carry-over fails**, the workers are started again on the installation that was
   serving, nothing has switched, and the deploy exits with failure.
+* **A release without the option**, such as an older one being deployed again, cannot
+  carry sessions over. The deploy warns, leaves the sessions and carts where they are, and
+  switches.
 * **Going back by moving the** ``deployed`` **symlink by hand** skips the carry-over, so
   the sessions and carts made since the deploy stay in the newer database. Redeploying
   the previous database with ``deploy_new_code_and_database.sh <previous database>``
   carries them back, since the step empties its target first and so runs in either
-  direction.
+  direction, but only when the release being deployed has
+  ``--carry-over-sessions-from``.
 
 ``--carry-over-sessions-from`` refuses to run with any other step, and refuses a database
 that is the one it would write into, before it changes anything.

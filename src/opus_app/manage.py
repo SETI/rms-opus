@@ -28,7 +28,7 @@ def main() -> None:
     """Run the Django management command named on the command line.
 
     The subcommands are Django's own -- ``check``, ``migrate``, ``collectstatic``,
-    ``shell``, ``diffsettings`` and the rest -- and the two the ``search`` app adds,
+    ``shell``, ``diffsettings`` and the rest -- and the ``search`` app's own, such as
     ``prune`` and ``warm_search``. The import pipeline is ``opus_import``, and the test
     suites are run with ``pytest``.
 

@@ -4,10 +4,15 @@ A full-import deploy serves a new schema, whose ``django_session`` and ``cart`` 
 start empty, so without this every visitor would lose the cart they had built. The step
 runs while the web service is stopped, between the old schema's last request and the new
 one's first, with the new schema as the import's target: the served schema's unexpired
-sessions are copied, and each cart row whose observation the new schema still holds,
-by OPUS ID, under the new schema's id for it. A cart row whose session expired or whose
-observation is gone is dropped and counted. The target's two tables are emptied first,
-so the step can run again, and runs in either direction: going back to the previous
+sessions that own a cart row are copied, and each cart row whose observation the new
+schema still holds, by OPUS ID, under the new schema's id for it. A cart row whose
+session expired or whose observation is gone is dropped and counted. A session holds
+nothing else a visitor would miss (``has_session``, and the download quota
+``cum_download_size``, which starts again; a staff member signed in to Django's admin
+signs in again), so the sessions without a cart, one for every cookieless API caller,
+are not copied while the site is down. The target's two
+tables are emptied and filled in one transaction, so a failure leaves them as they were,
+the step can run again, and it runs in either direction: going back to the previous
 schema is a promotion toward it.
 """
 

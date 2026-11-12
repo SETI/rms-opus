@@ -33,6 +33,16 @@ def test_a_side_without_the_steps_skips_and_names_them() -> None:
         frozenset({'db-cold', 'app-cold'}), 10000, has_warm_search=False, spelling=_WITHOUT
     )
     assert steps == DeploySteps(frozenset(), None, ('warm_search', 'carry_over_sessions'))
+    # The environment records what ran, so the before side's file names no warm state.
+    assert steps.environment() == {'warm_states': [], 'promotion_carts': None}
+
+
+def test_the_environment_records_the_states_that_warm() -> None:
+    """Sorted, beside the promotion's cart rows."""
+    steps = deploy_steps(
+        frozenset({'db-cold', 'app-cold'}), 10000, has_warm_search=True, spelling=_WITH
+    )
+    assert steps.environment() == {'warm_states': ['app-cold', 'db-cold'], 'promotion_carts': 10000}
 
 
 def test_nothing_asked_is_nothing_skipped() -> None:
@@ -124,10 +134,25 @@ def test_the_promotion_window_holds_the_carry_over_and_the_cache_restart(
         calls.append('carry_over')
         steps.append(list(arguments))
 
+    def record_query(connection: object, statement: str, parameters: Any = ()) -> list[Any]:
+        calls.append(f'{statement} {list(parameters)}')
+        return []
+
     monkeypatch.setattr(bench_web, 'run_import_step', carry_over)
+    monkeypatch.setattr(bench_web, 'query', record_query)
+    bench.schema = 'bench_x'
+    bench._connection = object()
     run: dict[str, Any] = {'metrics': {}}
     bench.time_promotion(run)
-    assert calls == ['gunicorn.stop', 'carry_over', 'memcached.restart', 'gunicorn.start']
+    # The planted rows go once the window has closed, before the application starts.
+    assert calls == [
+        'gunicorn.stop',
+        'carry_over',
+        'memcached.restart',
+        "DELETE FROM `bench_x`.cart WHERE session_id LIKE %s ['bench-carry-%']",
+        "DELETE FROM `bench_x`.django_session WHERE session_key LIKE %s ['bench-carry-%']",
+        'gunicorn.start',
+    ]
     assert steps == [['--carry-over-sessions-from', 'bench_x_carry_source']]
     metrics = run['metrics']
     assert 0 <= metrics['web.promotion.carry_over_s'] <= metrics['web.promotion.window_s']
