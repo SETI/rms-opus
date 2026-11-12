@@ -6986,3 +6986,9 @@ Nothing above this line is rewritten by an executor.
     (`Innodb_data_written`). Where the bundle loads spend the extra time was not
     profiled. The third pair of import runs overlapped other work on the workstation
     (load averages to 5), which widens that session's spread.
+
+### 2026-11-12, PR-14 (written against this file at 1e55f88a)
+
+- `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
+  applied (a run changes no file), and `import_util.read_mult_option` refuses a string pin
+  or group pin, naming the entry.
