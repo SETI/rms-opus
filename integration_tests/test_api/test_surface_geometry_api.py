@@ -7,8 +7,8 @@ of the selector's rows. What is worth pinning, and why:
   value per observation, the alphabetically first label of its bodies -- of the bodies
   the search selects when the search constrains the field -- so a page has one row per
   observation and a search's stored results can be numbered.
-* **A body's field reads the body's rows.** The string-search choices of a body's field
-  come from the body's rows of the shared table.
+* **A body's field reads the body's rows.** The string-search choices of a body's field,
+  and its range endpoints, come from the body's rows of the shared table.
 
 The expected answers are computed from the database rather than recorded, since they
 are a property of whatever was imported. That database is the local one, so against a
@@ -25,10 +25,11 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
-from django.db.models import Count
+from django.db.models import Count, Max, Min
 from rest_framework.test import RequestsClient
 
 from opus_app.apps.search.models import ObsGeneral, ObsSurfaceGeometryTarget, TableNames
+from opus_app.apps.tools.app_utils import http400_search_params_invalid
 from opus_app.apps.tools.import_constants import mult_table
 from opus_support import collation_key
 
@@ -209,6 +210,14 @@ class ApiSurfaceGeometryTests(ApiTestHelper, TestCase):
         shown = [row[1] for row in page['page']]
         self.assertEqual(shown, sorted(shown, key=collation_key, reverse=True))
 
+    def test__api_data_selector_sort_with_a_body_no_row_names_is_refused(self) -> None:
+        "[test_surface_geometry_api.py] /api/data: sorting by a selector naming no body"
+        url = (
+            '/api/data.json?surfacegeometrytargetname=NotABody'
+            '&cols=opusid,surfacegeometrytargetname&order=surfacegeometrytargetname'
+        )
+        self._run_status_equal(url, 400, http400_search_params_invalid('/api/data.json'))
+
     def test__api_stringsearchchoices_of_a_body_field_reads_the_bodys_rows(self) -> None:
         "[test_surface_geometry_api.py] /__api/stringsearchchoices: a body's field"
         self._require_local_database()
@@ -225,3 +234,24 @@ class ApiSurfaceGeometryTests(ApiTestHelper, TestCase):
             .distinct()[:10]
         )
         self.assertEqual(choices, list(values))
+
+    def test__api_range_endpoints_of_a_body_field_reads_the_bodys_rows(self) -> None:
+        "[test_surface_geometry_api.py] /api/meta/range/endpoints: a body's field, no search"
+        self._require_local_database()
+        url = '/api/meta/range/endpoints/SURFACEGEOjupiter_planetographiclatitude.json'
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        endpoints = json.loads(response.content)
+        jupiter = TableNames.objects.get(table_name='obs_surface_geometry__jupiter').target_name
+        assert jupiter is not None
+        rows = ObsSurfaceGeometryTarget.objects.filter(target_name=jupiter)
+        expected = rows.aggregate(
+            min=Min('planetographic_latitude1'), max=Max('planetographic_latitude2')
+        )
+        nulls = rows.filter(
+            planetographic_latitude1__isnull=True, planetographic_latitude2__isnull=True
+        ).count()
+        self.assertEqual(float(endpoints['min']), expected['min'])
+        self.assertEqual(float(endpoints['max']), expected['max'])
+        self.assertEqual(endpoints['nulls'], nulls)
+        self.assertEqual(endpoints['units'], 'degrees')
