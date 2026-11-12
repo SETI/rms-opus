@@ -725,14 +725,14 @@ def _emit_surface_geometry_rows(
     Parameters:
         ctx: The import run's context, for the logger.
         state: What every row of the index is computed from.
-        schema: The surface geometry table's schema.
+        schema: ``obs_surface_geometry_target``'s schema.
         opus_id: The observation's OPUS id, for the warning.
         bodies: Each body's raw name and its summary-file row, or None for a body whose
             geometry the index row itself holds, in the order the rows are computed.
         emit: Where each computed row goes.
     """
     instrument_obj = state.instrument_obj
-    # Every obs class mixes in the module that fills the surface geometry table.
+    # Every obs class mixes in the module that fills obs_surface_geometry_target.
     assert isinstance(instrument_obj, ObsSurfaceGeometryTarget)
     metadata = state.metadata
     first_names: dict[str, str] = {}

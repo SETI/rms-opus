@@ -461,9 +461,9 @@ Consequences worth knowing:
   out, naming it on the reference's landing page so that a reader who cannot find it is
   told why.
 * **A new OPUS table does not exist to the web application until this has been run.**
-  A surface geometry body an import brings is not a table: its category is rows of
-  ``table_names``, ``param_info`` and ``partables`` read through the one
-  ``ObsSurfaceGeometryTarget`` model, so it needs no regeneration.
+  A surface geometry body an import brings needs no regeneration: its category is rows
+  of ``table_names``, ``param_info`` and ``partables``, read through the one
+  ``ObsSurfaceGeometryTarget`` model.
 * ``inspectdb`` writes a composite primary key as ``CompositePrimaryKey`` and its foreign
   key column as a ``ForeignKey`` named ``obs_general``, which the repairs above annotate,
   as in ``ObsFiles`` and ``ObsSurfaceGeometryTarget``. The foreign keys exist only once

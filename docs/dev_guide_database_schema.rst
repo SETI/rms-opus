@@ -230,14 +230,28 @@ field's qualified name is ``<table>.<column>``, such as ``obs_general.planet_id`
 ``mult_field`` key in the column's schema names the field instead, so that several
 columns can share one (:ref:`dev_guide_table_schemas`).
 
-The ``mult_field`` table has these columns:
+The ``mult_field`` table names the fields:
 
-* ``field_id`` (``smallint unsigned``, the primary key): The field's number. Every
+::
+
+    mysql> DESC mult_field;
+    +----------------+-------------------+------+-----+---------+
+    | Field          | Type              | Null | Key | Default |
+    +----------------+-------------------+------+-----+---------+
+    | field_id       | smallint unsigned | NO   | PRI | NULL    |
+    | qualified_name | varchar(100)      | NO   | UNI | NULL    |
+    | pinned         | tinyint           | NO   |     | NULL    |
+    | last_id        | int               | NO   |     | -1      |
+    +----------------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``field_id``: The field's number, the primary key. Every
   ``mult`` and ``mult_group`` row of the field carries it.
-* ``qualified_name`` (``varchar(100)``, a unique key): The field's qualified name.
-* ``pinned`` (``tinyint``): 1 when the column's schema lists the field's values in
+* ``qualified_name``: The field's qualified name, a unique key.
+* ``pinned``: 1 when the column's schema lists the field's values in
   ``mult_options``, 0 otherwise.
-* ``last_id`` (``int``, default -1): The highest id handed out in the field, or -1
+* ``last_id``: The highest id handed out in the field, or -1
   before the first. A value new to the field takes the next one, so a field's first
   value is 0. It only goes up: an id whose row finalization deletes is never handed out
   again. With several processes importing at once, an id taken for a value another
@@ -249,10 +263,28 @@ gives every mult field of the packaged ``obs_*.json`` schemas an id, 1, 2, 3, ..
 order of qualified name. A field that a later release adds takes the next id after the highest one in
 ``mult_field``. A field's id never changes.
 
-The ``mult`` table has these columns:
+The ``mult`` table holds the values:
 
-* ``field_id`` (``smallint unsigned``): The field the value belongs to.
-* ``id`` (``smallint unsigned``): What an observation's column holds for this value. Ids
+::
+
+    mysql> DESC mult;
+    +-----------+-------------------+------+-----+---------+
+    | Field     | Type              | Null | Key | Default |
+    +-----------+-------------------+------+-----+---------+
+    | field_id  | smallint unsigned | NO   | PRI | NULL    |
+    | id        | smallint unsigned | NO   | PRI | NULL    |
+    | value     | varchar(100)      | NO   |     | NULL    |
+    | label     | varchar(100)      | NO   |     | NULL    |
+    | pin       | smallint unsigned | YES  |     | NULL    |
+    | disp_rank | smallint unsigned | NO   |     | 0       |
+    | display   | enum('Y','N')     | NO   |     | Y       |
+    | grouping  | varchar(100)      | YES  |     | NULL    |
+    +-----------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``field_id``: The field the value belongs to.
+* ``id``: What an observation's column holds for this value. Ids
   are numbered within a field: a field's ids start at 0, and a value the import finds
   takes the next id of the field's ``last_id`` counter. A pinned field's ids are the ones
   its ``mult_options`` gives, written by bundle registration; if its list has no absent
@@ -260,16 +292,16 @@ The ``mult`` table has these columns:
   give. A stored row keeps its id and its value, so no observation row has to be
   rewritten when a value is renamed. Finalization deletes the values no observation
   holds, and their ids are not handed out again.
-* ``value`` (``varchar(100)``): The value as the import read it. The absent value is
+* ``value``: The value as the import read it. The absent value is
   stored as the empty string, never ``NULL``.
-* ``label`` (``varchar(100)``): The string to display in the UI.
-* ``pin`` (``smallint unsigned``, may be ``NULL``): The value's configured position, or
+* ``label``: The string to display in the UI.
+* ``pin``: The value's configured position, or
   ``NULL`` to place the value by what it holds.
-* ``disp_rank`` (``smallint unsigned``): The value's position among its field's values,
+* ``disp_rank``: The value's position among its field's values,
   counting from 1. Finalization computes it.
-* ``display`` (``enum('Y','N')``): ``Y`` to offer the value in the search form, ``N``
+* ``display``: ``Y`` to offer the value in the search form, ``N``
   to hide it.
-* ``grouping`` (``varchar(100)``, may be ``NULL``): The name of the group the value
+* ``grouping``: The name of the group the value
   belongs to, or ``NULL`` for none. In the UI, values in the same group are collected
   together under a common, collapsible header.
 
@@ -278,15 +310,28 @@ unique key compares values with the server's collation, which ignores case and a
 so two values that differ only in case are one value. The largest id a column can hold is
 65535; an import that would need a larger id stops with an error naming the field.
 
-The ``mult_group`` table has these columns:
+The ``mult_group`` table holds the groups:
 
-* ``field_id`` (``smallint unsigned``): The field the group belongs to.
-* ``grouping`` (``varchar(100)``): The group's name, which the field's ``mult`` rows
-  name in their ``grouping``.
-* ``group_pin`` (``smallint unsigned``, may be ``NULL``): The group's configured
-  position, or ``NULL`` to place the group by name.
-* ``group_rank`` (``smallint unsigned``): The group's position among its field's groups,
-  counting from 1. Finalization computes it.
+::
+
+    mysql> DESC mult_group;
+    +------------+-------------------+------+-----+---------+
+    | Field      | Type              | Null | Key | Default |
+    +------------+-------------------+------+-----+---------+
+    | field_id   | smallint unsigned | NO   | PRI | NULL    |
+    | grouping   | varchar(100)      | NO   | PRI | NULL    |
+    | group_pin  | smallint unsigned | YES  |     | NULL    |
+    | group_rank | smallint unsigned | NO   |     | 0       |
+    +------------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``field_id``: The field the group belongs to.
+* ``grouping``: The group's name, which the field's ``mult`` rows name in their
+  ``grouping``.
+* ``group_pin``: The group's configured position, or ``NULL`` to place the group by name.
+* ``group_rank``: The group's position among its field's groups, counting from 1.
+  Finalization computes it.
 
 The primary key is ``(field_id, grouping)``.
 
@@ -363,7 +408,7 @@ There are two types of surface geometry tables. The first, called simply ``obs_s
     | timestamp      | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +----------------+--------------+------+-----+-------------------+
 
-The second, ``obs_surface_geometry_target``, holds every body's surface geometry: one row per observation and body for which geometry information is available. Normally only a few bodies have a row for a given OPUS ID, since only a small number of bodies are in the field of view. Its columns are:
+The second, ``obs_surface_geometry_target``, holds every body's surface geometry: one row per observation and body for which geometry information is available. Normally only a few bodies have a row for a given OPUS ID, since only a small number of bodies are in the field of view. Its schema starts:
 
 * ``target_name``: The body, as the id of its value in the mult field of the ``Surface Geometry Target Selector`` (``obs_surface_geometry_name.target_name``, `The Encoding of Checkbox IDs and the mult Tables`_). The column's schema entry names that field with its ``mult_field`` key, since the column's own qualified name would name another one.
 * ``obs_general_id``: The observation, a foreign key onto ``obs_general.id``.
@@ -371,7 +416,7 @@ The second, ``obs_surface_geometry_target``, holds every body's surface geometry
 
 The primary key is ``(target_name, obs_general_id)``, so one body's rows are next to each other in the table. A plain key on ``obs_general_id`` serves the foreign key, the lookups of one observation's bodies, and the deletion of a bundle's rows. Every other key starts with ``target_name``: a pair of displayed range columns that both carry a key in the template is one key over the body and both columns, and every other keyed column has a key over the body and the column. The keys are listed in the schema file, ``obs_surface_geometry_target.json``.
 
-The web application presents the table as one category per body, named ``obs_surface_geometry__<body>``, and one more category, ``obs_surface_geometry_name``, whose one field is the ``Surface Geometry Target Selector``. A category is data, not a table: ``table_names`` names the table and the body each category reads (`The table_names Table`_), and ``param_info`` and ``partables`` carry the category's rows. A statement reads a body's category as the table under the category's name, keeping to the body's rows:
+Every other constraint category is one ``obs_*`` table, named after it: a category's search menu, its Details section and its API category are the table's, and ``table_names``, ``param_info`` and ``partables`` key their rows by the table's name. So that each body's surface geometry follows the same convention, the web application presents ``obs_surface_geometry_target`` as one category per body, under the name of a table that does not exist, ``obs_surface_geometry__<body>``, and one more category, ``obs_surface_geometry_name``, whose one field is the ``Surface Geometry Target Selector``. Every part of OPUS that works one table per category treats these names as tables, and nothing outside the database layer needs to know that the rows are in one table. ``table_names`` names the table and the body each category reads (`The table_names Table`_), and ``param_info`` and ``partables`` carry the category's rows. A statement reads a body's category as the table under the category's name, keeping to the body's rows:
 
 ::
 
@@ -388,7 +433,7 @@ The web application presents the table as one category per body, named ``obs_sur
     |        1 |
     +----------+
 
-The bodies are the values the table holds, so a body's category exists exactly when some observation has geometry for it. An import that brings a body the database has not held writes the body's mult value and its geometry rows, and its finalization writes the body's ``table_names``, ``param_info`` and ``partables`` rows: no table is created and no code changes.
+A body's category exists exactly when some observation has geometry for it: finalization writes its ``table_names``, ``param_info`` and ``partables`` rows from the bodies the table holds.
 
 To remove a bundle, the import deletes the table's rows by joining ``obs_general`` on ``obs_general_id``, as for every other ``obs_*`` table.
 

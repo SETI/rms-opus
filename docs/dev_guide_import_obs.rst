@@ -713,15 +713,18 @@ Surface geometry is two tables, because it answers two different questions.
 
 .. _dev_guide_import_obs_target_template:
 
-One table, many categories
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Surface geometry categories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is exactly one
-:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` class, one
-schema and one table, ``obs_surface_geometry_target``, and each body's rows are
-presented as a category of its own, ``obs_surface_geometry__<target>``
-(:mod:`opus_import.surface_geometry`). This is the mechanism to understand before
-touching surface geometry:
+:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` computes
+the rows of ``obs_surface_geometry_target``, and each body's rows are presented as a
+category of its own, ``obs_surface_geometry__<target>``
+(:mod:`opus_import.surface_geometry`). The category names are table names that do not
+exist: every other constraint category is an ``obs_*`` table of that name, and naming each
+body's rows as if they were one keeps that convention for the search menus, the Details
+page, the API and the ``table_names``, ``param_info`` and ``partables`` rows
+(:ref:`dev_guide_database_schema`). This is the mechanism to understand before touching
+surface geometry:
 
 1. **A row is computed under its body's category.** The driver resolves each body's
    name (:meth:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.surface_geo_target`),
@@ -733,7 +736,7 @@ touching surface geometry:
 2. **The field-method lookup collapses the category back to the table.**
    :func:`~opus_import.steps.do_import_obs.field_function_name` maps every
    ``obs_surface_geometry__<target>`` category onto ``obs_surface_geometry_target``.
-3. **The row is written to the one table.** The row sink maps the category to
+3. **The row is written to ``obs_surface_geometry_target``.** The row sink maps the category to
    ``obs_surface_geometry_target`` (:func:`~opus_import.surface_geometry.physical_table`)
    when it takes the row.
 4. **The schema reader expands a category for the steps after the import.**

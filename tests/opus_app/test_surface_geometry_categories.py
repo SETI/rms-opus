@@ -1,4 +1,4 @@
-"""How the application reads a surface geometry category: as the one table, under its name.
+"""How the application reads a surface geometry category: as ``obs_surface_geometry_target``, under its name.
 
 Every surface geometry category's rows are in ``obs_surface_geometry_target``. A body's
 category, ``obs_surface_geometry__<target>``, is the rows holding the body's id, and the

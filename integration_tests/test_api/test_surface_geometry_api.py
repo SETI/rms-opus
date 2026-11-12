@@ -1,6 +1,6 @@
 """The surface geometry selector and body fields, as the public API answers them.
 
-Every body's surface geometry is a row of one table, so an observation can have several
+Every body's surface geometry is a row of ``obs_surface_geometry_target``, so an observation can have several
 of the selector's rows. What is worth pinning, and why:
 
 * **The selector never multiplies rows.** As a results column or a sort order it is one

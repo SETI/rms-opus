@@ -1,4 +1,4 @@
-"""The one surface geometry table, and the categories its rows are searched under.
+"""``obs_surface_geometry_target``, and the categories its rows are searched under.
 
 Every body an observation has geometry for is one row of ``obs_surface_geometry_target``,
 computed under the body's category, ``obs_surface_geometry__<target>``. What is worth
@@ -7,9 +7,9 @@ pinning, and why:
 * **One row per body per observation.** The table is keyed by the body and the
   observation, so two names that resolve to one body must write one row, and a name
   that resolves to none must write none.
-* **The categories come from the data, in today's order.** ``table_names``,
-  ``param_info`` and ``partables`` are served as they were when every body had a table,
-  so the rows the categories derive come out in the same order with the same names.
+* **The categories come from the data, in a fixed order.** The rows of ``table_names``,
+  ``param_info`` and ``partables`` that the categories derive come out sorted by
+  category name, with the same names on every import.
 * **Validation reads the table under its categories.** ``param_info`` describes the
   table's columns under the body categories and the selector category, never under the
   table's own name.
@@ -152,7 +152,7 @@ def test_every_target_reads_its_own_categorys_fields() -> None:
 
 
 def test_the_template_holds_no_string_field() -> None:
-    """The string-search choices read a category as its own table, which a body is not.
+    """The string-search choices query a category's table without keeping to one body.
 
     A string field added to the template needs that query to keep to the body's rows
     first.
@@ -169,8 +169,8 @@ def test_the_template_holds_no_string_field() -> None:
 _TARGETS = [StoredTarget(7, 'saturn'), StoredTarget(3, 'dione')]
 
 
-def test_the_categories_sort_as_the_tables_they_stand_for() -> None:
-    """The bodies sort before the selector, as their tables sorted before its table."""
+def test_the_categories_sort_by_name_among_the_tables() -> None:
+    """The bodies' categories sort by name among the tables, before the selector's."""
     tables = ['obs_pds', 'obs_surface_geometry', 'obs_surface_geometry_target', 'obs_type_image']
     assert surface_geometry.category_names(tables, _TARGETS) == [
         'obs_pds',
@@ -188,7 +188,7 @@ def test_no_surface_geometry_table_presents_no_surface_geometry_category() -> No
 
 
 def test_a_categorys_table_names_row_names_its_table_and_body() -> None:
-    """The selector and each body read the one table; a table's own row names neither."""
+    """The selector and each body read ``obs_surface_geometry_target``; a table's own row names neither."""
     present = {'obs_general', 'obs_surface_geometry', 'obs_surface_geometry_target'}
     rows = do_table_names.build_table_names_rows(present.__contains__, _TARGETS)
     by_name = {row['table_name']: row for row in rows}
@@ -246,8 +246,8 @@ class _CategoryDB:
 def test_param_info_rows_come_in_the_order_the_tables_gave_them() -> None:
     """The bodies' rows, sorted by body, then the selector's one row.
 
-    ``param_info``'s rows are numbered as they are written, so this order is what keeps
-    the table the same as when every body had a table of its own.
+    ``param_info``'s rows are numbered as they are written, so this order fixes each
+    row's id.
     """
     db = _CategoryDB()
     assert do_param_info.fill_param_info(make_context(db=db), 'param_info__new')
@@ -276,7 +276,7 @@ def test_param_info_rows_come_in_the_order_the_tables_gave_them() -> None:
 
 
 class _ValidationDB:
-    """A stand-in whose ``param_info`` describes the surface geometry table's columns."""
+    """A stand-in whose ``param_info`` describes ``obs_surface_geometry_target``'s columns."""
 
     def __init__(self, body_category: str | None) -> None:
         """Hold the first body category ``param_info`` holds, or None for none."""
@@ -284,7 +284,7 @@ class _ValidationDB:
         self.asked: list[tuple[str, str]] = []
 
     def table_names(self, prefix: str) -> list[str]:
-        """Name the surface geometry table alone."""
+        """Name ``obs_surface_geometry_target`` alone."""
         return ['obs_surface_geometry_target']
 
     def quote_identifier(self, name: str) -> str:

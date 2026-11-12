@@ -50,7 +50,7 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
 
     One row per mission, per instrument and per instrument host, each keyed by the
     mult id of the corresponding ``obs_general`` value, plus one per surface
-    geometry body the surface geometry table holds
+    geometry body ``obs_surface_geometry_target`` holds
     (`opus_import.surface_geometry.stored_targets`), keyed by the body's id in the
     selector's mult field and revealing the body's category. An HST instrument points at the Hubble
     mission table, because HST keeps its columns there rather than in an instrument
