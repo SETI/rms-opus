@@ -7203,7 +7203,12 @@ Nothing above this line is rewritten by an executor.
     9.1 ms to 27.7 ms (reported; floor 198%); the planet widget db-cold, 39.0 ms to
     28.3 ms (-27.5%, within its floor).
   - **Promotion window** (head only, 10,000 planted cart rows): `web.promotion.window_s`
-    1.43 s, of which the carry-over `web.promotion.carry_over_s` 0.66 s.
+    2.48 s, of which the carry-over `web.promotion.carry_over_s` 0.62 s, measured by one
+    run after the review's fixes (at e2f3f136, session `w`, 2026-11-12, `--warm db-cold
+    --warm app-cold --promotion-carts 10000` against the same schema; load averages 3.9
+    to 11.2), since the window opens before the application's stop and closes once its
+    start returns. The runs above, which left out the stop and the start, gave 1.43 s and
+    0.66 s.
   - **Guard regressed, accepted:** `web.app-cold.concurrency.shared.p95_s` 0.177 s to
     0.227 s (+28.1%; floor 19.4%), every head run above every base run. The head serves
     requests with the same code as the base; what differs is the warm-up, which builds
