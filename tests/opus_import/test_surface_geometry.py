@@ -1,4 +1,4 @@
-"""The one surface geometry table, and the categories its rows are searched under.
+"""``obs_surface_geometry_target``, and the categories its rows are searched under.
 
 Every body an observation has geometry for is one row of ``obs_surface_geometry_target``,
 computed under the body's category, ``obs_surface_geometry__<target>``. What is worth
@@ -188,7 +188,7 @@ def test_no_surface_geometry_table_presents_no_surface_geometry_category() -> No
 
 
 def test_a_categorys_table_names_row_names_its_table_and_body() -> None:
-    """The selector and each body read the one table; a table's own row names neither."""
+    """The selector and each body read ``obs_surface_geometry_target``; a table's own row names neither."""
     present = {'obs_general', 'obs_surface_geometry', 'obs_surface_geometry_target'}
     rows = do_table_names.build_table_names_rows(present.__contains__, _TARGETS)
     by_name = {row['table_name']: row for row in rows}
@@ -276,7 +276,7 @@ def test_param_info_rows_come_in_the_order_the_tables_gave_them() -> None:
 
 
 class _ValidationDB:
-    """A stand-in whose ``param_info`` describes the surface geometry table's columns."""
+    """A stand-in whose ``param_info`` describes ``obs_surface_geometry_target``'s columns."""
 
     def __init__(self, body_category: str | None) -> None:
         """Hold the first body category ``param_info`` holds, or None for none."""
@@ -284,7 +284,7 @@ class _ValidationDB:
         self.asked: list[tuple[str, str]] = []
 
     def table_names(self, prefix: str) -> list[str]:
-        """Name the surface geometry table alone."""
+        """Name ``obs_surface_geometry_target`` alone."""
         return ['obs_surface_geometry_target']
 
     def quote_identifier(self, name: str) -> str:

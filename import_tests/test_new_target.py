@@ -1,6 +1,6 @@
 """A body the database has never held surface geometry for, served with no code changed.
 
-Every body's surface geometry is a row of one table, and its category -- the
+Every body's surface geometry is a row of ``obs_surface_geometry_target``, and its category -- the
 ``table_names``, ``param_info`` and ``partables`` rows the web application serves it
 through -- is written by finalization from the bodies that table holds. So a body new to
 the database is served by a web application started after an import and its finalization

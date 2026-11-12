@@ -16,7 +16,7 @@ is worth pinning, and why:
   removed; the search is then registered again under a new id.
 * **The pruner removes what it should and nothing else.**
 * **Selecting two surface geometry bodies keeps an observation once.** An observation
-  with geometry for both has a row of the surface geometry table for each, and
+  with geometry for both has a row of ``obs_surface_geometry_target`` for each, and
   ``search_results`` holds an observation once per search.
 
 These tests require the following volumes, imported in this order:

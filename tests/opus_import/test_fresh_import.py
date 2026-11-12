@@ -761,7 +761,7 @@ _ABOVE_HIGHEST = '`obs_general_id` > %s'
 
 
 def test_a_bundle_is_deleted_a_chunk_of_obs_general_at_a_time_children_first() -> None:
-    """Every child, the surface geometry table among them, through each chunk.
+    """Every child, ``obs_surface_geometry_target`` among them, through each chunk.
 
     Before the chunks, every child loses its rows above ``obs_general``'s highest id. Each
     chunk is `transaction_rows` of the bundle's ``obs_general`` ids: every child's rows
@@ -1006,7 +1006,7 @@ class _NullCountDB:
         return f'`{name}`'
 
     def table_names(self, prefix: str) -> list[str]:
-        """Name obs_pds and the surface geometry table."""
+        """Name obs_pds and ``obs_surface_geometry_target``."""
         return ['obs_pds', 'obs_surface_geometry_target']
 
     def table_info(self, table: str) -> list[dict[str, Any]]:
@@ -1032,7 +1032,7 @@ class _NullCountDB:
 def test_one_query_a_table_counts_the_nulls_of_every_nullable_column() -> None:
     """A nullable column that holds no NULL is reported; NOT NULL columns are not counted.
 
-    The surface geometry table is counted once, over every body's rows.
+    ``obs_surface_geometry_target`` is counted once, over every body's rows.
     """
     db = _NullCountDB((0, 5))
     ctx = make_context(db=db)
