@@ -7122,3 +7122,28 @@ Nothing above this line is rewritten by an executor.
     (3,056 unit tests); the import suite 192 passed and 3 skipped; the integration job's
     run (`tests/opus_support`, `tests/opus_app` and `integration_tests`, with coverage)
     2,875 passed against `pr18local`, imported again at this head, at 100% coverage.
+- **Measurement** (2026-11-11, test scale; one schema, `bench_test_after_b_3`, imported
+  by PR-17's head 45ccaebb, since this PR changes no schema; before PR-17's head serving
+  it, which has neither step; after this PR's head e5e71573 with `--warm db-cold --warm
+  app-cold --promotion-carts 10000`; six web runs alternated, three a side, session `a`;
+  judged against the PR-00 floors; load averages 1.3 to 6.9, the PR-19 executor working
+  beside the runs):
+  - **Target, the empty search's first page db-cold:** 24.8 ms to 18.6 ms, -25.0%, **not
+    improved** beyond its floor (52.0%, the web family's jitter of 12.9 ms over a small
+    median). Warm, the head's first page takes 10.7 ms. Behind the target, the warm-up
+    did what it is for: the empty search's db-cold result count 194.9 ms to 11.2 ms
+    (-94.2%), and the page's db-cold `Innodb_buffer_pool_reads` 220 to 0 and
+    `Sort_merge_passes` 1 to 0.
+  - **Two requests the warm-up does not issue:** the empty search's tenth page db-cold,
+    9.1 ms to 27.7 ms (reported; floor 198%); the planet widget db-cold, 39.0 ms to
+    28.3 ms (-27.5%, within its floor).
+  - **Promotion window** (head only, 10,000 planted cart rows): `web.promotion.window_s`
+    1.43 s, of which the carry-over `web.promotion.carry_over_s` 0.66 s.
+  - **Guard regressed, accepted:** `web.app-cold.concurrency.shared.p95_s` 0.177 s to
+    0.227 s (+28.1%; floor 19.4%), every head run above every base run. The head serves
+    requests with the same code as the base; what differs is the warm-up, which builds
+    the empty search 1.5 s before sixteen users build the shared search together. A
+    check session `nowarmapp`, one run a side with the head warming db-cold only, gave
+    0.175 s against the base's 0.174 s. The regression is the harness measuring a
+    scenario right after the warm-up's writes, which a deploy does once; the
+    orchestrator accepts it. Every other guard held.
