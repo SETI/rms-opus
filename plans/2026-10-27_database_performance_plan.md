@@ -6835,3 +6835,14 @@ Nothing above this line is rewritten by an executor.
 - **Import goldens:** `schema_version.tsv` alone changed (9 to 10), regenerated with
   `make_mini_goldens`. The dropped `timestamp` columns were already left out of every
   golden, and a `char` and a `varchar` read back the same values from the fixture.
+- Every new test was mutation-checked: each fails with the change it covers reverted (11
+  source mutations against the unit tests, the charset rendering removed for the two
+  `import_tests` cases, the nine replacement sites and a binary collation for the
+  integration cases).
+- The integration job's coverage gate reads 99% against `pr17local`, missing
+  `metadata/views.py` line 659 and one branch of `search.views.selector_label`. The same
+  two are missed by 227f74d3's tree run the same way against `pr16alocal`, so they are
+  older than this PR; no test reaches either.
+- Results: the gates pass (`run-all-checks.sh`, 3,008 unit tests); the import suite 185
+  passed and 3 skipped; the integration suite 1,604 passed against `pr17local`, imported
+  with this head (`import_for_tests.sh`).
