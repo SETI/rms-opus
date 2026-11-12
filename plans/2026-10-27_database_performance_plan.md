@@ -6724,3 +6724,9 @@ Nothing above this line is rewritten by an executor.
     I/O could not be killed anyway.
   - Results: the gates pass (2,993 unit tests); the import suite 182 passed and 3
     skipped. The import's output is unchanged, so the goldens were not regenerated.
+
+### 2026-11-12, PR-14 (written against this file at 1e55f88a)
+
+- `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
+  applied (a run changes no file), and `import_util.read_mult_option` refuses a string pin
+  or group pin, naming the entry.
