@@ -9,10 +9,9 @@ From an empty database the import is deterministic: row ids are handed out in ta
 order from the highest id already present. So a golden drops or reorders only what is
 named here, each justified where it is applied.
 
-Two of them are about values that are not stable: the columns MySQL fills in with the
-wall clock (`TIMESTAMP_DATA_TYPE`), and the ones the import stamps with it
-(`WALL_CLOCK_COLUMNS`), are dropped, and one JSON list whose order pdsfile documents as
-unstable (`_UNORDERED_JSON_COLUMNS`) is sorted. Any *other* column that differs between
+Two of them are about values that are not stable: the columns the import stamps with
+the wall clock (`WALL_CLOCK_COLUMNS`) are dropped, and one JSON list whose order pdsfile
+documents as unstable (`_UNORDERED_JSON_COLUMNS`) is sorted. Any *other* column that differs between
 two clean runs is a defect rather than a normalization candidate.
 
 The third is about a value that is perfectly stable and simply redundant:
@@ -59,11 +58,6 @@ NULL_TOKEN = '\\N'
 #: The escapes that keep one row on one line and one value in one field. They are
 #: applied in this order on the way out and reversed on the way in.
 _ESCAPES = (('\\', '\\\\'), ('\t', '\\t'), ('\r', '\\r'), ('\n', '\\n'))
-
-#: The MySQL data type the goldens drop entirely. The import never writes these columns
-#: -- ``do_import_obs`` skips every ``timestamp`` field -- and MySQL fills them from the
-#: wall clock, so they differ between two identical runs by design.
-TIMESTAMP_DATA_TYPE = 'timestamp'
 
 #: The columns the import stamps with the wall clock, which the goldens drop: when each
 #: bundle's latest import began and ended. They differ between two identical runs by
@@ -449,11 +443,8 @@ def serialize_table(
 ) -> str:
     """Read one table and render it as its golden text.
 
-    Every column MySQL declares as a timestamp is dropped: the import never writes one,
-    and the server fills them from the wall clock. Which columns those are is read from
-    the server rather than listed here, so a new timestamp column is handled the day it
-    appears. `WALL_CLOCK_COLUMNS` names the columns the import itself stamps with the
-    clock, which are dropped too. `DERIVED_COLUMNS` names the further columns dropped
+    `WALL_CLOCK_COLUMNS` names the columns the import stamps with the clock, which are
+    dropped. `DERIVED_COLUMNS` names the further columns dropped
     because the same value is derivable from another column beside it, and one column is
     reordered rather than dropped -- see `_UNORDERED_JSON_COLUMNS`. Nothing else is
     normalized: from an empty database every other value the import writes is the same on
@@ -487,11 +478,7 @@ def serialize_table(
         # stored first, or by an importer that died, is left unused, so it depends on
         # how the importers met.
         dropped |= {'last_id'}
-    columns = [
-        name
-        for name, data_type in table_columns(credentials, schema, table)
-        if data_type != TIMESTAMP_DATA_TYPE and name not in dropped
-    ]
+    columns = [name for name, _ in table_columns(credentials, schema, table) if name not in dropped]
     if len(columns) == 0:
         return '\n'
     key = _primary_key(credentials, schema, table)

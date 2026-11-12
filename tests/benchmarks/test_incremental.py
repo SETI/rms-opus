@@ -85,3 +85,68 @@ def test_an_append_that_left_old_rows_or_none_fails_the_run(
         bench._incremental({'metrics': {}, 'details': {}}, 0, 'bench_0')
 
     assert 'finalize' not in done
+
+
+class _Connection:
+    """A connection that answers the append check's queries from a table of answers."""
+
+    def __init__(self, answers: dict[str, list[tuple[Any, ...]]]) -> None:
+        """Answer each statement by the first key it contains."""
+        self.answers = answers
+        self.statements: list[str] = []
+
+    def close(self) -> None:
+        """Nothing to close."""
+
+
+def _rows_written(
+    monkeypatch: pytest.MonkeyPatch, answers: dict[str, list[tuple[Any, ...]]]
+) -> tuple[int, int]:
+    """Run the append check against a schema that answers as `answers` say.
+
+    Returns:
+        The check's count of rows, and of rows written before the append began.
+    """
+    connection = _Connection(answers)
+
+    def query(conn: _Connection, statement: str, parameters: Any = ()) -> list[tuple[Any, ...]]:
+        conn.statements.append(statement)
+        return next(rows for key, rows in conn.answers.items() if key in statement)
+
+    monkeypatch.setattr(bench_import, 'query', query)
+    bench = object.__new__(bench_import.ImportBench)
+    bench.server = SimpleNamespace(connect=lambda: connection)  # type: ignore[assignment]
+    return bench._rows_written_since('bench_0', BUNDLE, ('local now', 10))
+
+
+def test_a_side_with_a_timestamp_column_is_judged_by_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Each row's ``timestamp`` says when it was written."""
+    answers: dict[str, list[tuple[Any, ...]]] = {
+        'information_schema': [(1,)],
+        'SUM(`timestamp`': [(40, 3)],
+    }
+    assert _rows_written(monkeypatch, answers) == (40, 3)
+
+
+@pytest.mark.parametrize(
+    ('registry', 'expected'),
+    [
+        ([('done', 10, 40)], (40, 0)),
+        ([('done', 9, 40)], (40, 40)),
+        ([('done', 10, 39)], (40, 40)),
+        ([('failed', 10, 40)], (40, 40)),
+        ([('done', None, 40)], (40, 40)),
+        ([], (40, 40)),
+    ],
+    ids=['reloaded', 'began-before', 'rows-uncounted', 'not-done', 'never-began', 'unregistered'],
+)
+def test_a_side_without_one_is_judged_by_the_registry(
+    monkeypatch: pytest.MonkeyPatch, registry: list[tuple[Any, ...]], expected: tuple[int, int]
+) -> None:
+    """The bundle is done, its import began after the append did, and it counted every row."""
+    answers: dict[str, list[tuple[Any, ...]]] = {
+        'information_schema': [(0,)],
+        'import_bundle': registry,
+        'COUNT(*) FROM': [(40,)],
+    }
+    assert _rows_written(monkeypatch, answers) == expected

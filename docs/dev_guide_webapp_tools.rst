@@ -372,6 +372,16 @@ parameters its placeholders consume. Everything below returns one.
        terms. It numbers a search's results as they are stored, and numbers the cart in
        a sort order the same way.
 
+:func:`~opus_app.apps.tools.sql_builder.ascii_comparable` is not an expression but the
+value to bind for one: a caller's text, to be compared with a column in the ASCII
+character set, with each character outside ASCII replaced by
+``UNSTORED_ASCII_CHARACTER``, which no stored value holds. MySQL refuses to compare an
+ASCII column with text holding any other character, and such a character matches nothing
+there, so the comparison finds what it finds for any value the column does not hold. Every
+lookup by a caller's OPUS ID binds it this way, and a string search does for a column
+:func:`~opus_app.apps.tools.db_utils.is_ascii_column` names
+(:ref:`dev_guide_database_schema`).
+
 The statement layer
 ~~~~~~~~~~~~~~~~~~~
 
@@ -475,6 +485,10 @@ Model lookup by category name, and the labels behind the mult ids.
     here; :meth:`~opus_app.apps.tools.db_utils.ResolvedCategory.restrict` adds a body's
     condition to a statement that reads the category. The ``table_names`` rows come from
     the worker's copy (:mod:`~opus_app.apps.tools.import_constants`).
+
+:func:`~opus_app.apps.tools.db_utils.is_ascii_column`
+    Whether a table's column is in the ASCII character set, which its generated model
+    says by naming ``ascii_general_ci`` as the field's ``db_collation``.
 
 :func:`~opus_app.apps.tools.db_utils.query_table_for_opus_id`
     One category's rows for one observation, filtering on ``opus_id`` for

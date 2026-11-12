@@ -58,6 +58,7 @@ from opus_app.apps.search.views import (
     is_single_column_range,
     url_to_search_params,
 )
+from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
@@ -793,7 +794,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
     opus_id = kwargs['opus_id']
 
     try:
-        obs_general = ObsGeneral.objects.get(opus_id=opus_id)
+        obs_general = ObsGeneral.objects.get(opus_id=sql_builder.ascii_comparable(opus_id))
     except ObjectDoesNotExist as err:
         # This OPUS ID isn't even in the database!
         raise Http404 from err
@@ -1823,7 +1824,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     if original_slugs.get('detail'):
         opus_id = original_slugs['detail']
         try:
-            _ = ObsGeneral.objects.get(opus_id=opus_id)
+            _ = ObsGeneral.objects.get(opus_id=sql_builder.ascii_comparable(opus_id))
         except ObjectDoesNotExist:
             msg = (
                 'The OPUS_ID specified for the "detail" tab '

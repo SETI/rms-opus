@@ -20,7 +20,8 @@
     },
     {
         "field_name": "stsci_group_id",
-        "field_type": "char9",
+        "field_type": "varchar9",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -64,7 +65,8 @@
     },
     {
         "field_name": "hst_pi_name",
-        "field_type": "char24",
+        "field_type": "varchar24",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -147,7 +149,8 @@
     },
     {
         "field_name": "hst_target_name",
-        "field_type": "char31",
+        "field_type": "varchar31",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -521,10 +524,5 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

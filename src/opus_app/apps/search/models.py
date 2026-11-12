@@ -75,16 +75,15 @@ class ZZAuthUserUserPermissions(models.Model):
 
 
 class ZZCart(models.Model):
-    session_id = models.CharField(max_length=80)
+    session_id = models.CharField(max_length=40, db_collation='ascii_general_ci')
     obs_general = models.ForeignKey(
         'ObsGeneral',
         models.DO_NOTHING,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
+    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
     recycled = models.IntegerField()
-    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -96,7 +95,6 @@ class ZZContexts(models.Model):
     name = models.CharField(unique=True, max_length=50)
     description = models.CharField(max_length=100)
     parent = models.CharField(max_length=25)
-    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -107,7 +105,6 @@ class ZZDefinitions(models.Model):
     term = models.CharField(max_length=255)
     context = models.ForeignKey(ZZContexts, models.DO_NOTHING, db_column='context')
     definition = models.TextField()
-    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -218,8 +215,8 @@ class ObsFiles(models.Model):
         db_column='obs_general_id',
     )
     file_number = models.PositiveSmallIntegerField()
-    opus_id = models.CharField(max_length=50)
-    instrument_id = models.CharField(max_length=12)
+    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
+    instrument_id = models.CharField(max_length=60, db_collation='ascii_general_ci')
     version_number = models.PositiveIntegerField()
     version_name = models.CharField(max_length=16)
     category = models.CharField(max_length=64)
@@ -235,7 +232,6 @@ class ObsFiles(models.Model):
     width = models.PositiveIntegerField(blank=True, null=True)
     height = models.PositiveIntegerField(blank=True, null=True)
     pds_version = models.PositiveIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -244,8 +240,8 @@ class ObsFiles(models.Model):
 
 class ObsGeneral(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
+    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
+    bundle_id = models.CharField(max_length=75, db_collation='ascii_general_ci')
     instrument_id = models.PositiveSmallIntegerField()
     mission_id = models.PositiveSmallIntegerField()
     inst_host_id = models.PositiveSmallIntegerField()
@@ -264,7 +260,6 @@ class ObsGeneral(models.Model):
     declination2 = models.FloatField(blank=True, null=True)
     observation_type = models.PositiveSmallIntegerField()
     preview_images = models.JSONField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -286,7 +281,6 @@ class ObsInstrumentCocirs(models.Model):
     instrument_mode_centers_flag = models.PositiveSmallIntegerField(blank=True, null=True)
     instrument_mode_pairs_flag = models.PositiveSmallIntegerField(blank=True, null=True)
     instrument_mode_all_flag = models.PositiveSmallIntegerField(blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -313,7 +307,6 @@ class ObsInstrumentCoiss(models.Model):
     target_desc = models.PositiveSmallIntegerField()
     combined_filter = models.PositiveSmallIntegerField()
     camera = models.PositiveSmallIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -343,7 +336,6 @@ class ObsInstrumentCouvis(models.Model):
     line2 = models.IntegerField(blank=True, null=True)
     line_bin = models.IntegerField(blank=True, null=True)
     samples = models.IntegerField(blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -369,7 +361,6 @@ class ObsInstrumentCovims(models.Model):
     vis_exposure = models.FloatField(blank=True, null=True)
     vis_sampling_mode_id = models.PositiveSmallIntegerField()
     channel = models.PositiveSmallIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -384,15 +375,14 @@ class ObsInstrumentGossi(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    observation_id = models.CharField(max_length=20)
-    image_id = models.CharField(max_length=15)
+    observation_id = models.CharField(max_length=20, db_collation='ascii_general_ci')
+    image_id = models.CharField(max_length=15, db_collation='ascii_general_ci')
     filter_name = models.PositiveSmallIntegerField()
     filter_number = models.PositiveSmallIntegerField()
     gain_mode_id = models.PositiveSmallIntegerField()
     frame_duration = models.PositiveSmallIntegerField()
     obstruction_id = models.PositiveSmallIntegerField()
     compression_type = models.PositiveSmallIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -409,7 +399,6 @@ class ObsInstrumentNhlorri(models.Model):
     )
     instrument_compression_type = models.PositiveSmallIntegerField()
     binning_mode = models.PositiveSmallIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -425,7 +414,6 @@ class ObsInstrumentNhmvic(models.Model):
         db_column='obs_general_id',
     )
     instrument_compression_type = models.PositiveSmallIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -440,7 +428,7 @@ class ObsInstrumentVgiss(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    image_id = models.CharField(max_length=10)
+    image_id = models.CharField(max_length=10, db_collation='ascii_general_ci')
     scan_mode = models.PositiveSmallIntegerField()
     shutter_mode = models.PositiveSmallIntegerField()
     gain_mode = models.PositiveSmallIntegerField()
@@ -450,7 +438,6 @@ class ObsInstrumentVgiss(models.Model):
     camera = models.PositiveSmallIntegerField()
     usable_lines = models.SmallIntegerField(blank=True, null=True)
     usable_samples = models.SmallIntegerField(blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -465,7 +452,7 @@ class ObsMissionCassini(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    obs_name = models.CharField(max_length=30)
+    obs_name = models.CharField(max_length=30, db_collation='ascii_general_ci')
     rev_no = models.CharField(max_length=3, blank=True, null=True)
     rev_no_int = models.IntegerField(blank=True, null=True)
     is_prime = models.PositiveSmallIntegerField()
@@ -476,10 +463,13 @@ class ObsMissionCassini(models.Model):
     ert2 = models.FloatField(blank=True, null=True)
     cassini_target_code = models.PositiveSmallIntegerField(blank=True, null=True)
     cassini_target_name = models.PositiveSmallIntegerField(blank=True, null=True)
-    activity_name = models.CharField(max_length=9, blank=True, null=True)
+    activity_name = models.CharField(
+        max_length=9, db_collation='ascii_general_ci', blank=True, null=True
+    )
     mission_phase_name = models.PositiveSmallIntegerField(blank=True, null=True)
-    sequence_id = models.CharField(max_length=4, blank=True, null=True)
-    timestamp = models.DateTimeField()
+    sequence_id = models.CharField(
+        max_length=4, db_collation='ascii_general_ci', blank=True, null=True
+    )
 
     class Meta:
         managed = False
@@ -497,7 +487,6 @@ class ObsMissionGalileo(models.Model):
     orbit_number = models.PositiveSmallIntegerField(blank=True, null=True)
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -512,12 +501,12 @@ class ObsMissionHubble(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    stsci_group_id = models.CharField(max_length=9)
+    stsci_group_id = models.CharField(max_length=9, db_collation='ascii_general_ci')
     hst_proposal_id = models.IntegerField()
-    hst_pi_name = models.CharField(max_length=24)
+    hst_pi_name = models.CharField(max_length=24, db_collation='ascii_general_ci')
     detector_id = models.PositiveSmallIntegerField()
     publication_date = models.FloatField()
-    hst_target_name = models.CharField(max_length=31)
+    hst_target_name = models.CharField(max_length=31, db_collation='ascii_general_ci')
     fine_guidance_system_lock_type = models.PositiveSmallIntegerField()
     filter_name = models.PositiveSmallIntegerField()
     filter_type = models.PositiveSmallIntegerField()
@@ -532,7 +521,6 @@ class ObsMissionHubble(models.Model):
     wf4_flag = models.PositiveSmallIntegerField(blank=True, null=True)
     targeted_detector_id = models.PositiveSmallIntegerField(blank=True, null=True)
     optical_element = models.PositiveSmallIntegerField(blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -550,7 +538,6 @@ class ObsMissionNewHorizons(models.Model):
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
     mission_phase = models.PositiveSmallIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -569,7 +556,6 @@ class ObsMissionVoyager(models.Model):
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
     mission_phase_name = models.PositiveSmallIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -584,15 +570,20 @@ class ObsPds(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50)
-    bundle_id = models.CharField(max_length=75)
-    data_set_id = models.CharField(max_length=40)
-    product_id = models.CharField(max_length=50)
-    primary_lid = models.CharField(max_length=240)
+    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
+    bundle_id = models.CharField(max_length=75, db_collation='ascii_general_ci')
+    data_set_id = models.CharField(
+        max_length=40, db_collation='ascii_general_ci', blank=True, null=True
+    )
+    product_id = models.CharField(
+        max_length=50, db_collation='ascii_general_ci', blank=True, null=True
+    )
+    primary_lid = models.CharField(
+        max_length=240, db_collation='ascii_general_ci', blank=True, null=True
+    )
     product_creation_time = models.FloatField(blank=True, null=True)
-    primary_filespec = models.CharField(max_length=240)
-    note = models.CharField(max_length=255, blank=True, null=True)
-    timestamp = models.DateTimeField()
+    primary_filespec = models.CharField(max_length=240, db_collation='ascii_general_ci')
+    note = models.CharField(max_length=255, db_collation='ascii_general_ci', blank=True, null=True)
 
     class Meta:
         managed = False
@@ -617,7 +608,6 @@ class ObsProfile(models.Model):
     wl_band = models.PositiveSmallIntegerField(blank=True, null=True)
     source = models.PositiveSmallIntegerField(blank=True, null=True)
     host = models.PositiveSmallIntegerField(blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -738,8 +728,6 @@ class ObsRingGeometry(models.Model):
     center_x_coordinate = models.FloatField(blank=True, null=True)
     center_y_coordinate = models.FloatField(blank=True, null=True)
 
-    timestamp = models.DateTimeField()
-
     class Meta:
         managed = False
         db_table = 'obs_ring_geometry'
@@ -753,8 +741,7 @@ class ObsSurfaceGeometry(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    target_list = models.TextField(blank=True, null=True)
-    timestamp = models.DateTimeField()
+    target_list = models.TextField(db_collation='ascii_general_ci', blank=True, null=True)
 
     class Meta:
         managed = False
@@ -849,7 +836,6 @@ class ObsSurfaceGeometryTarget(models.Model):
     center_y_coordinate = models.FloatField(blank=True, null=True)
     surface_intercept_time1 = models.FloatField(blank=True, null=True)
     surface_intercept_time2 = models.FloatField(blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -869,7 +855,6 @@ class ObsTypeImage(models.Model):
     levels = models.PositiveIntegerField(blank=True, null=True)
     greater_pixel_size = models.PositiveIntegerField(blank=True, null=True)
     lesser_pixel_size = models.PositiveIntegerField(blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -895,7 +880,6 @@ class ObsWavelength(models.Model):
     spec_flag = models.PositiveSmallIntegerField()
     spec_size = models.PositiveIntegerField(blank=True, null=True)
     polarization_type = models.PositiveSmallIntegerField()
-    timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
@@ -924,7 +908,6 @@ class ZZParamInfo(models.Model):
     ranges = models.JSONField(blank=True, null=True)
     field_hints1 = models.CharField(max_length=255, blank=True, null=True)
     field_hints2 = models.CharField(max_length=255, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -936,7 +919,6 @@ class Partables(models.Model):
     trigger_col = models.CharField(max_length=200, blank=True, null=True)
     trigger_val = models.CharField(max_length=60, blank=True, null=True)
     partable = models.CharField(max_length=200, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -950,7 +932,6 @@ class TableNames(models.Model):
     disp_order = models.IntegerField()
     physical_table = models.CharField(max_length=60, blank=True, null=True)
     target_name = models.PositiveSmallIntegerField(blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False

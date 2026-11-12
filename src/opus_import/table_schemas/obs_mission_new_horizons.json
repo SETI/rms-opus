@@ -89,10 +89,5 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "comments": "Definition is from NHLORRI supplemental index label"
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

@@ -32,9 +32,11 @@ import pytest
 import opus_support
 from opus_import import import_util, mult_fields
 from opus_import.importdb.mysql import (
+    MYSQL_CHARSET_SQL,
     MYSQL_ENUM_FIELD_TYPE,
     MYSQL_FIELD_TYPE_SQL,
     is_renderable_field_type,
+    takes_charset,
 )
 from opus_import.steps.do_import_mult import PINNED_ABSENT_ID
 from opus_import.table_keys import ON_DELETE_VALUES, TABLE_LEVEL_KEY_KINDS
@@ -56,6 +58,7 @@ _COLUMN_KEYS = {
     'field_default',
     'field_autoincrement',
     'field_enum_options',
+    'field_charset',
     # Filling and validating it.
     'data_source',
     'val_min',
@@ -383,6 +386,35 @@ def test_every_enum_lists_its_values_and_nothing_else_does() -> None:
         for name, column in _columns()
         if (column['field_type'] == MYSQL_ENUM_FIELD_TYPE)
         != isinstance(column.get('field_enum_options'), str)
+    ] == []
+
+
+def test_every_character_set_is_one_create_table_renders_on_a_text_column() -> None:
+    """``field_charset`` names a set `create_table` knows, on a column holding text."""
+    assert [
+        f'{_where(name, column)}: {column["field_type"]} {column["field_charset"]!r}'
+        for name, column in _columns()
+        if 'field_charset' in column
+        and (
+            column['field_charset'] not in MYSQL_CHARSET_SQL
+            or not takes_charset(column['field_type'])
+        )
+    ] == []
+
+
+#: The columns that identify an observation, a bundle or a session wherever they appear,
+#: which hold ASCII so that every join and lookup on them compares bytes.
+_ASCII_IDENTIFIERS = {'opus_id', 'bundle_id', 'session_id'}
+
+
+def test_every_identifier_column_is_ascii() -> None:
+    """An OPUS ID, a bundle ID or a session key is ASCII in every table that holds one."""
+    columns = [
+        (name, column) for name, column in _columns() if column['field_name'] in _ASCII_IDENTIFIERS
+    ]
+    assert {column['field_name'] for _, column in columns} == _ASCII_IDENTIFIERS
+    assert [
+        _where(name, column) for name, column in columns if column.get('field_charset') != 'ascii'
     ] == []
 
 

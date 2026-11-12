@@ -6,9 +6,10 @@ which only a server can say, so the round trip here writes one set of rows both 
 two tables and reads both back. Matching the driver's own text is not the goal -- its
 float rendering differs from ``repr`` -- matching what the server stores is.
 
-A load behaves as though ``IGNORE`` were given, so a duplicate key and a value too long
-for its column would otherwise load with a warning. The two tests after the round trip
-are the check that each raises instead, with nothing of the chunk left behind.
+A load behaves as though ``IGNORE`` were given, so a duplicate key, a value too long for
+its column and a character an ASCII column cannot hold would otherwise load with a
+warning. The tests after the round trip are the check that each raises instead, with
+nothing of the chunk left behind.
 
 The last tests read the import runs' logs: the main run, whose goldens are only evidence
 about the bulk load if its rows went through it, and the session with ``bulk_load =
@@ -43,11 +44,10 @@ if TYPE_CHECKING:
 #: name of its type.
 _COLUMNS: list[dict[str, Any]] = [
     {'field_name': 'id', 'field_type': 'uint4', 'field_key': 'primary', 'field_notnull': True},
-    {'field_name': 'f_char', 'field_type': 'char40'},
+    {'field_name': 'f_ascii', 'field_type': 'varchar40', 'field_charset': 'ascii'},
     {'field_name': 'f_varchar', 'field_type': 'varchar255'},
     {'field_name': 'f_text', 'field_type': 'text'},
     {'field_name': 'f_datetime', 'field_type': 'datetime'},
-    {'field_name': 'f_timestamp', 'field_type': 'timestamp'},
     {'field_name': 'f_enum', 'field_type': 'enum', 'field_enum_options': "'Y','N'"},
     {'field_name': 'f_flag_onoff', 'field_type': 'flag_onoff'},
     {'field_name': 'f_flag_yesno', 'field_type': 'flag_yesno'},
@@ -66,11 +66,10 @@ _COLUMNS: list[dict[str, Any]] = [
 _ROWS: list[dict[str, Any]] = [
     {
         'id': 1,
-        'f_char': 'COISS_2002',
+        'f_ascii': 'COISS_2002',
         'f_varchar': 'co-iss-n1460960653',
         'f_text': 'Cassini ISS',
         'f_datetime': '2026-11-06 12:34:56',
-        'f_timestamp': '2026-11-06 12:34:56',
         'f_enum': 'Y',
         'f_flag_onoff': 1,
         'f_flag_yesno': 0,
@@ -87,11 +86,10 @@ _ROWS: list[dict[str, Any]] = [
     },
     {
         'id': 2,
-        'f_char': 'tab\there',
+        'f_ascii': 'tab\there',
         'f_varchar': 'back\\slash and \\N and NULL',
         'f_text': 'line\nbreak, return\r, nul\0 and ° degrees',
         'f_datetime': None,
-        'f_timestamp': None,
         'f_enum': None,
         'f_flag_onoff': None,
         'f_flag_yesno': None,
@@ -108,11 +106,10 @@ _ROWS: list[dict[str, Any]] = [
     },
     {
         'id': 3,
-        'f_char': '',
+        'f_ascii': '',
         'f_varchar': '\\',
         'f_text': '\\\\N',
         'f_datetime': '1970-01-01 00:00:01',
-        'f_timestamp': '2030-01-01 00:00:00',
         'f_enum': 'N',
         'f_flag_onoff': 0,
         'f_flag_yesno': 1,
@@ -185,7 +182,7 @@ def test_bulk_load_stores_what_insert_statements_store(bulk_db: ImportDBMySQL) -
 def test_a_duplicate_key_raises_and_loads_nothing(bulk_db: ImportDBMySQL) -> None:
     """The load would skip the second row with a warning; the check raises instead."""
     bulk_db.create_table('duplicate_key', _COLUMNS[:2])
-    rows = [{'id': 1, 'f_char': 'first'}, {'id': 1, 'f_char': 'second'}]
+    rows = [{'id': 1, 'f_ascii': 'first'}, {'id': 1, 'f_ascii': 'second'}]
 
     with pytest.raises(ImportDBError, match=r"1 skipped.*Duplicate entry '1'"):
         bulk_db.bulk_load_rows('duplicate_key', rows)
@@ -195,7 +192,7 @@ def test_a_duplicate_key_raises_and_loads_nothing(bulk_db: ImportDBMySQL) -> Non
 
 def test_a_truncated_value_raises_and_loads_nothing(bulk_db: ImportDBMySQL) -> None:
     """The load would cut the value short with a warning; the check raises instead."""
-    columns = [_COLUMNS[0], {'field_name': 'short', 'field_type': 'char3'}]
+    columns = [_COLUMNS[0], {'field_name': 'short', 'field_type': 'varchar3'}]
     bulk_db.create_table('truncated_value', columns)
     rows = [{'id': 1, 'short': 'abc'}, {'id': 2, 'short': 'abcdef'}]
 
@@ -203,6 +200,24 @@ def test_a_truncated_value_raises_and_loads_nothing(bulk_db: ImportDBMySQL) -> N
         bulk_db.bulk_load_rows('truncated_value', rows)
 
     assert _read_back(bulk_db, 'truncated_value') == []
+
+
+@pytest.mark.parametrize('path', [BULK_LOAD_PATH_FILE, BULK_LOAD_PATH_INSERT])
+def test_a_value_outside_an_ascii_column_raises_and_loads_nothing(
+    bulk_db: ImportDBMySQL, path: str
+) -> None:
+    """Either path names the column and the row of a character ASCII does not hold."""
+    table = f'non_ascii_{path.split()[0].lower()}'
+    bulk_db.create_table(table, _COLUMNS[:2])
+    rows = [{'id': 1, 'f_ascii': 'co-iss-n1460960653'}, {'id': 2, 'f_ascii': 'co-iss-ñ1460960653'}]
+    bulk_db.bulk_load_path = path
+    try:
+        with pytest.raises(ImportDBError, match=r"Incorrect string value.*'f_ascii' at row 2"):
+            bulk_db.bulk_load_rows(table, rows)
+    finally:
+        bulk_db.bulk_load_path = BULK_LOAD_PATH_FILE
+
+    assert _read_back(bulk_db, table) == []
 
 
 def _bulk_load_paths(run: ImportRun) -> list[str]:

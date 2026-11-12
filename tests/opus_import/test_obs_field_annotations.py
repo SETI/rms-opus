@@ -83,7 +83,7 @@ def _alias_for(field_type: str | None, form_type: str | None) -> str | None:
         return 'list[MultField]'
     if field_type is None:
         return None
-    if field_type.startswith(('char', 'varchar')) or field_type in ('text', 'json'):
+    if field_type.startswith('varchar') or field_type in ('text', 'json'):
         return 'StrField'
     if field_type.startswith('real'):
         return 'FloatField'

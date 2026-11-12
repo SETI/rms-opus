@@ -47,10 +47,10 @@ def import_observation_table(
 ) -> dict[str, Any] | None:
     """Compute one observation's row of one table.
 
-    Three kinds of entry are skipped: ``timestamp``, which the database maintains
-    itself; a column marked ``put_mults_here``, which holds another column's mult id;
-    and an entry with no ``field_name`` -- a ``pi_referred_slug`` entry, which describes
-    a search parameter rather than a column, or a table-level key.
+    Two kinds of entry are skipped: a column marked ``put_mults_here``, which holds
+    another column's mult id; and an entry with no ``field_name`` -- a
+    ``pi_referred_slug`` entry, which describes a search parameter rather than a column,
+    or a table-level key.
 
     A column whose form type is a GROUP type stores the id of a ``mult`` row rather than
     the value, and the value is added to its mult field if it is new. A ``mult_list`` column
@@ -77,10 +77,8 @@ def import_observation_table(
 
     metadata[table_name + '_row'] = new_row
 
-    # Compute every column's value. A "timestamp" column is skipped because the
-    # server fills it in, and an entry that is not a column of this table -- a
-    # param_info row of another table's column, or a table-level key -- is skipped
-    # too.
+    # Compute every column's value. An entry that is not a column of this table -- a
+    # param_info row of another table's column, or a table-level key -- is skipped.
 
     for table_column in table_schema:
         if 'field_name' not in table_column or table_column.get('put_mults_here', False):
@@ -91,9 +89,6 @@ def import_observation_table(
 
         metadata['table_name'] = table_name
         metadata['field_name'] = field_name
-
-        if field_name == 'timestamp':
-            continue
 
         data_source = table_column.get('data_source', None)
         if not data_source:
@@ -210,13 +205,13 @@ def import_observation_table(
                             + 'a valid flag value',
                         )
                         column_val = None
-                if field_type.startswith('char'):
-                    field_size = int(field_type[4:])
+                if field_type.startswith('varchar'):
+                    field_size = int(field_type.removeprefix('varchar'))
                     if not isinstance(column_val, str):
                         import_util.log_nonrepeating_error(
                             ctx,
                             f'Column "{field_name}" in table "{table_name}" '
-                            + f'has CHAR type but value "{column_val}" is of '
+                            + f'has VARCHAR type but value "{column_val}" is of '
                             + f'type "{type(column_val)}"',
                         )
                         column_val = ''
@@ -224,7 +219,7 @@ def import_observation_table(
                         import_util.log_nonrepeating_error(
                             ctx,
                             f'Column "{field_name}" in table "{table_name}" '
-                            + f'has CHAR size {field_size} but value '
+                            + f'has VARCHAR size {field_size} but value '
                             + f'"{column_val}" is too long',
                         )
                         column_val = column_val[:field_size]

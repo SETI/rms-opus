@@ -21,6 +21,7 @@
     {
         "field_name": "target_list",
         "field_type": "text",
+        "field_charset": "ascii",
         "field_notnull": false,
         "field_key": false,
         "data_source": "COMPUTE",
@@ -38,10 +39,5 @@
         "pi_slug": "surfacegeometrytargetlist",
         "pi_sub_heading": null,
         "pi_tooltip": null
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

@@ -20,7 +20,8 @@
     },
     {
         "field_name": "image_id",
-        "field_type": "char10",
+        "field_type": "varchar10",
+        "field_charset": "ascii",
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_vgiss",
@@ -302,10 +303,5 @@
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

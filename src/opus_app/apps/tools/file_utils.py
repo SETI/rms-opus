@@ -155,7 +155,11 @@ def get_pds_products(
         select.add_where(
             sql_builder.parenthesize(sql_builder.join_exprs(product_type_conditions, 'OR'))
         )
-    select.add_where(sql_builder.in_sequence(obs_files_column('opus_id'), opus_id_list))
+    select.add_where(
+        sql_builder.in_sequence(
+            obs_files_column('opus_id'), [sql_builder.ascii_comparable(x) for x in opus_id_list]
+        )
+    )
     select.add_order_by(obs_files_column('opus_id'))
     select.add_order_by(obs_files_column('version_number'), descending=True)
     select.add_order_by(obs_files_column('sort_order'))

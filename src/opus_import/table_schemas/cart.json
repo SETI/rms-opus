@@ -1,7 +1,8 @@
 [
     {
         "field_name": "session_id",
-        "field_type": "char80",
+        "field_type": "varchar40",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true
     },
@@ -25,7 +26,8 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char50",
+        "field_type": "varchar50",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true
     },
@@ -41,10 +43,6 @@
         "field_autoincrement": true,
         "field_key": "primary",
         "field_notnull": true
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp"
     },
     {
         "constraint": "CONSTRAINT all_fields UNIQUE (session_id,obs_general_id)"

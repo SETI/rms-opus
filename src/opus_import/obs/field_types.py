@@ -16,7 +16,7 @@ a ``MULTIGROUP`` form type.
 formality. A ``flag_yesno`` or ``flag_onoff`` column is stored as ``smallint unsigned``
 exactly like a ``mult_idx`` one (`opus_import.importdb.mysql.ImportDBMySQL.create_table`
 maps all three the same way): it holds the id of a ``mult`` row, and its method
-returns a `MultField` like any other group column. So does the one ``char3`` column that
+returns a `MultField` like any other group column. So does the one ``varchar3`` column that
 carries a ``GROUP`` form type. Reading the storage type instead would annotate those
 methods as scalars and be wrong about every one of them.
 
@@ -37,7 +37,7 @@ from typing import Any, TypedDict
 StrField = str | None
 """A text column's value, or None where the observation has none.
 
-Covers ``char*``, ``varchar*`` and ``text`` columns, and the one ``json`` column
+Covers ``varchar*`` and ``text`` columns, and the one ``json`` column
 (``obs_general.preview_images``), whose method returns the output of `json.dumps` and so
 is text as far as the pipeline is concerned. That one method never actually returns
 None -- its column is ``field_notnull`` -- but it shares the alias rather than being
