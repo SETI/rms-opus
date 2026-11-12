@@ -32,7 +32,7 @@ from .conftest import make_context
 #: The mult column every stand-in observation fills.
 PLANET = {'field_name': 'planet', 'pi_form_type': 'GROUP'}
 
-#: The mult column of the surface geometry table, whose field is the selector's.
+#: The mult column of ``obs_surface_geometry_target``, whose field is the selector's.
 TARGET = {
     'field_name': 'target_name',
     'pi_form_type': 'GROUP',
@@ -448,7 +448,7 @@ def test_a_replayed_pdsfile_log_call_reaches_the_class_logger_it_was_made_on() -
 
 
 def test_a_surface_geometry_categorys_mult_column_is_found_in_its_table() -> None:
-    """A row computed under a body's category has the surface geometry table's columns."""
+    """A row computed under a body's category has ``obs_surface_geometry_target``'s columns."""
     columns = do_import_pool._ColumnLookup(SCHEMAS)
     assert columns.find('obs_surface_geometry__mimas', 'target_name') is TARGET
     assert columns.find('obs_general', 'planet') is PLANET

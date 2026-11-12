@@ -431,7 +431,7 @@ class DBIntegrityTest(TestCase):
         self.assertEqual(result[0], 0)
 
     def test__every_surface_geometry_body_has_its_category_rows(self) -> None:
-        """DB Integrity: each body the surface geometry table holds has its category rows
+        """DB Integrity: each body ``obs_surface_geometry_target`` holds has its category rows
         Every distinct target_name of obs_surface_geometry_target has a table_names row
         naming the table and the body, a partables row revealing that category, and the
         template's param_info rows under it, as many as every other body's.

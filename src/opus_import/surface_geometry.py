@@ -1,13 +1,19 @@
-"""The surface geometry table, and the categories its rows are searched under.
+"""``obs_surface_geometry_target``, and the categories its rows are searched under.
 
-Every body an observation has surface geometry for contributes one row to one table,
+Every body an observation has surface geometry for contributes one row to
 ``obs_surface_geometry_target``, keyed by the body's id in the selector's mult field and
 the observation. The web application presents the rows as one **category** per body,
 ``obs_surface_geometry__<target>``, whose fields are the template's columns with the
 body's name in their labels and slugs, and one more category,
-``obs_surface_geometry_name``, whose one field is the selector that chooses a body. A
-category is data, not a table: ``table_names``, ``param_info`` and ``partables`` carry its
-rows, and ``table_names`` names the table and the body each category reads.
+``obs_surface_geometry_name``, whose one field is the selector that chooses a body.
+``table_names``, ``param_info`` and ``partables`` carry a category's rows, and
+``table_names`` names the table and the body each category reads.
+
+A body's category name is a table name that does not exist. Every other constraint
+category is the ``obs_`` table of its name, and the search menus, the Details page, the API
+and the three tables above all work one table per category; naming each body's rows as a
+table keeps that convention, so only the database layer resolves the name to
+``obs_surface_geometry_target`` and the body's rows.
 
 The bodies are the values the table holds (`stored_targets`), so a category exists
 exactly when an observation has geometry for its body.
@@ -26,7 +32,7 @@ if TYPE_CHECKING:
     from opus_import.context import ImportContext
     from opus_import.import_util import TableSchema
 
-#: The one table holding every body's surface geometry rows.
+#: The table holding every body's surface geometry rows.
 SURFACE_GEOMETRY_TABLE = 'obs_surface_geometry_target'
 
 #: The category whose one field selects a body.
@@ -43,7 +49,7 @@ TARGET_CATEGORY_PREFIX = 'obs_surface_geometry__'
 
 
 class StoredTarget(NamedTuple):
-    """One body the surface geometry table holds rows of.
+    """One body ``obs_surface_geometry_target`` holds rows of.
 
     Attributes:
         target_id: The body's id in the selector's mult field, which the table's
@@ -118,7 +124,7 @@ def category_names(table_names: Sequence[str], targets: Sequence[StoredTarget]) 
     Parameters:
         table_names: The ``obs_`` tables, `SURFACE_GEOMETRY_TABLE` among them if it
             exists.
-        targets: The bodies the surface geometry table holds.
+        targets: The bodies ``obs_surface_geometry_target`` holds.
 
     Returns:
         Every table but `SURFACE_GEOMETRY_TABLE`, which presents instead the selector
@@ -149,7 +155,7 @@ def read_category_schema(ctx: ImportContext, category: str) -> TableSchema | Non
 
 
 def stored_targets(ctx: ImportContext) -> list[StoredTarget]:
-    """Return the bodies the surface geometry table holds rows of.
+    """Return the bodies ``obs_surface_geometry_target`` holds rows of.
 
     Parameters:
         ctx: The import run's context, for the open database.

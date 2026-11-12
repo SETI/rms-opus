@@ -104,7 +104,7 @@ def test_an_importers_failed_index_leaves_the_delete_to_the_whole_bundles() -> N
 
 
 def test_the_finish_loads_every_table_in_order() -> None:
-    """Every body's rows wait with the surface geometry table's and load in its place."""
+    """Every body's rows wait with ``obs_surface_geometry_target``'s and load in its place."""
     sink, db = _sink(100)
     sink.add('obs_general', {'id': 1})
     sink.add('obs_surface_geometry__titan', {'target_name': 4, 'obs_general_id': 1})

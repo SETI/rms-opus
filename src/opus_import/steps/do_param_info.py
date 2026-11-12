@@ -56,7 +56,7 @@ def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
 
     logger.log('info', f'Filling {new_table}')
 
-    # The obs_ tables that exist, and the bodies the surface geometry table holds,
+    # The obs_ tables that exist, and the bodies obs_surface_geometry_target holds,
     # determine what goes into param_info
     categories = surface_geometry.category_names(
         list(db.table_names(prefix='obs_')), surface_geometry.stored_targets(ctx)

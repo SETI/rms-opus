@@ -191,7 +191,7 @@ def _leaf_classes() -> list[type[ObsBase]]:
 def _tables_for(instrument: ObsBase) -> list[str]:
     """Return the tables an instrument's bundle populates, as the import names them.
 
-    The surface geometry table is named, as the import computes its rows, by a body's
+    ``obs_surface_geometry_target`` is named, as the import computes its rows, by a body's
     category, ``obs_surface_geometry__`` plus a target, rather than by the table. Both the
     schema lookup and the method name are then resolved through the pipeline's own
     helpers, so the mapping from that name back to ``obs_surface_geometry_target`` is
