@@ -560,8 +560,8 @@ class ApiResultsTests(ApiTestHelper, TestCase):
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_lc_json(
         self,
     ) -> None:
-        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats PDS, Hubble Constraints json"
-        url = '/api/metadata/hst-09975-acs-j8n410lbq.json?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats pds, hubble constraints json"
+        url = '/api/metadata/hst-09975-acs-j8n410lbq.json?cats=pds+CONSTRAINTS,hubble+MISSION+constraints'
         self._run_json_equal_file(
             url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_json.json'
         )
