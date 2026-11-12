@@ -230,23 +230,54 @@ field's qualified name is ``<table>.<column>``, such as ``obs_general.planet_id`
 ``mult_field`` key in the column's schema names the field instead, so that several
 columns can share one (:ref:`dev_guide_table_schemas`).
 
-The ``mult_field`` table has these columns:
+The ``mult_field`` table names the fields:
 
-* ``field_id`` (``smallint unsigned``, the primary key): The field's number. Every
-  ``mult`` and ``mult_group`` row of the field carries it.
-* ``qualified_name`` (``varchar(100)``, a unique key): The field's qualified name.
-* ``pinned`` (``tinyint``): 1 when the column's schema lists the field's values in
-  ``mult_options``, 0 otherwise.
+::
+
+    mysql> DESC mult_field;
+    +----------------+-------------------+------+-----+---------+
+    | Field          | Type              | Null | Key | Default |
+    +----------------+-------------------+------+-----+---------+
+    | field_id       | smallint unsigned | NO   | PRI | NULL    |
+    | qualified_name | varchar(100)      | NO   | UNI | NULL    |
+    | pinned         | tinyint           | NO   |     | NULL    |
+    +----------------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``field_id``: The field's number, the primary key. Every ``mult`` and ``mult_group``
+  row of the field carries it.
+* ``qualified_name``: The field's qualified name, a unique key.
+* ``pinned``: 1 when the column's schema lists the field's values in ``mult_options``, 0
+  otherwise.
 
 The import numbers the fields once in each database. The first import gives every mult
 field of the packaged ``obs_*.json`` schemas an id, 1, 2, 3, ..., in order of qualified
 name. A field that a later release adds takes the next id after the highest one in
 ``mult_field``. A field's id never changes.
 
-The ``mult`` table has these columns:
+The ``mult`` table holds the values:
 
-* ``field_id`` (``smallint unsigned``): The field the value belongs to.
-* ``id`` (``smallint unsigned``): What an observation's column holds for this value. Ids
+::
+
+    mysql> DESC mult;
+    +-----------+-------------------+------+-----+---------+
+    | Field     | Type              | Null | Key | Default |
+    +-----------+-------------------+------+-----+---------+
+    | field_id  | smallint unsigned | NO   | PRI | NULL    |
+    | id        | smallint unsigned | NO   | PRI | NULL    |
+    | value     | varchar(100)      | NO   |     | NULL    |
+    | label     | varchar(100)      | NO   |     | NULL    |
+    | pin       | smallint unsigned | YES  |     | NULL    |
+    | disp_rank | smallint unsigned | NO   |     | 0       |
+    | display   | enum('Y','N')     | NO   |     | Y       |
+    | grouping  | varchar(100)      | YES  |     | NULL    |
+    +-----------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``field_id``: The field the value belongs to.
+* ``id``: What an observation's column holds for this value. Ids
   are numbered within a field: a field's ids start at 0, and a value the import finds
   takes the field's highest id plus one. A pinned field's ids are the ones its
   ``mult_options`` gives; if its list has no absent value and an observation needs one,
@@ -255,16 +286,16 @@ The ``mult`` table has these columns:
   is not reserved once its row is deleted: finalization deletes the values no
   observation holds, and the next value the import adds to the field takes the field's
   highest id plus one, which can be an id a deleted value had.
-* ``value`` (``varchar(100)``): The value as the import read it. The absent value is
+* ``value``: The value as the import read it. The absent value is
   stored as the empty string, never ``NULL``.
-* ``label`` (``varchar(100)``): The string to display in the UI.
-* ``pin`` (``smallint unsigned``, may be ``NULL``): The value's configured position, or
+* ``label``: The string to display in the UI.
+* ``pin``: The value's configured position, or
   ``NULL`` to place the value by what it holds.
-* ``disp_rank`` (``smallint unsigned``): The value's position among its field's values,
+* ``disp_rank``: The value's position among its field's values,
   counting from 1. Finalization computes it.
-* ``display`` (``enum('Y','N')``): ``Y`` to offer the value in the search form, ``N``
+* ``display``: ``Y`` to offer the value in the search form, ``N``
   to hide it.
-* ``grouping`` (``varchar(100)``, may be ``NULL``): The name of the group the value
+* ``grouping``: The name of the group the value
   belongs to, or ``NULL`` for none. In the UI, values in the same group are collected
   together under a common, collapsible header.
 
@@ -273,15 +304,28 @@ unique key compares values with the server's collation, which ignores case and a
 so two values that differ only in case are one value. The largest id a column can hold is
 65535; an import that would need a larger id stops with an error naming the field.
 
-The ``mult_group`` table has these columns:
+The ``mult_group`` table holds the groups:
 
-* ``field_id`` (``smallint unsigned``): The field the group belongs to.
-* ``grouping`` (``varchar(100)``): The group's name, which the field's ``mult`` rows
-  name in their ``grouping``.
-* ``group_pin`` (``smallint unsigned``, may be ``NULL``): The group's configured
-  position, or ``NULL`` to place the group by name.
-* ``group_rank`` (``smallint unsigned``): The group's position among its field's groups,
-  counting from 1. Finalization computes it.
+::
+
+    mysql> DESC mult_group;
+    +------------+-------------------+------+-----+---------+
+    | Field      | Type              | Null | Key | Default |
+    +------------+-------------------+------+-----+---------+
+    | field_id   | smallint unsigned | NO   | PRI | NULL    |
+    | grouping   | varchar(100)      | NO   | PRI | NULL    |
+    | group_pin  | smallint unsigned | YES  |     | NULL    |
+    | group_rank | smallint unsigned | NO   |     | 0       |
+    +------------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``field_id``: The field the group belongs to.
+* ``grouping``: The group's name, which the field's ``mult`` rows name in their
+  ``grouping``.
+* ``group_pin``: The group's configured position, or ``NULL`` to place the group by name.
+* ``group_rank``: The group's position among its field's groups, counting from 1.
+  Finalization computes it.
 
 The primary key is ``(field_id, grouping)``.
 
