@@ -296,10 +296,13 @@ API that sends no cookie, so copying them would lengthen the time the site is do
   of the database already being served. ``deploy_new_code_only.sh`` keeps the database, so
   it has nothing to carry.
 * **If the carry-over fails**, the workers are started again on the installation that was
-  serving, nothing has switched, and the deploy exits with failure.
+  serving, nothing has switched, and the deploy exits with failure. The deploy first reads
+  the release's ``opus_import --help`` to learn whether it has the option; if that fails,
+  the deploy stops the same way.
 * **A release without the option**, such as an older one being deployed again, cannot
-  carry sessions over. The deploy warns, leaves the sessions and carts where they are, and
-  switches.
+  carry sessions over: its ``opus_import --help`` succeeds and lists no
+  ``--carry-over-sessions-from``. The deploy warns, leaves the sessions and carts where
+  they are, and switches.
 * **Going back by moving the** ``deployed`` **symlink by hand** skips the carry-over, so
   the sessions and carts made since the deploy stay in the newer database. Redeploying
   the previous database with ``deploy_new_code_and_database.sh <previous database>

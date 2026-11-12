@@ -16,8 +16,10 @@
 #     --carry-over-sessions-from). It runs while the
 #     web service is stopped, before the switch. When it fails it starts the web service
 #     again, on the installation that was serving, and returns 1; nothing has switched.
-#     When the release being promoted has no such option, as one older than it does, it
-#     warns and returns 0, and the promotion goes on without the carry-over.
+#     It does the same when opus_import --help fails, since that does not show whether
+#     the option exists. When the help succeeds and lists no such option, as an older
+#     release's does, it warns and returns 0, and the promotion goes on without the
+#     carry-over.
 #
 # warm_search
 #     Skipped when OPUS_WARM_SEARCH is exactly "false"; any other value, or none, warms.
@@ -49,8 +51,16 @@ previous_db_name() {
 carry_over_sessions() {
     local served=$1
     local help
+    # A help that cannot be read says nothing about the option, so it fails the promotion.
+    if ! help=$(opus_import --help); then
+        echo "ERROR: opus_import --help failed, so whether the release being promoted"
+        echo "       can carry sessions over is unknown."
+        echo "       Nothing has been switched; restarting what was running before."
+        ${OPUS_SERVICE_COMMAND:-sudo systemctl} start "${OPUS_WEB_SERVICE}"
+        return 1
+    fi
     # Going back to a release older than the option promotes it without the carry-over.
-    if ! help=$(opus_import --help) || [[ ${help} != *--carry-over-sessions-from* ]]; then
+    if [[ ${help} != *--carry-over-sessions-from* ]]; then
         echo "WARNING: the release being promoted cannot carry sessions over; the"
         echo "         sessions and carts in ${served} stay there."
         return 0

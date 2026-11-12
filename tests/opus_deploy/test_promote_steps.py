@@ -45,6 +45,7 @@ def _run_step(
     import_status: int = 0,
     manage_status: int = 0,
     help_text: str = _HELP_WITH,
+    help_status: int = 0,
     environment: dict[str, str] | None = None,
 ) -> tuple[int, str, list[str], list[str]]:
     """Source the steps with fakes under ``set -e``, as the callers do, and run one line.
@@ -55,6 +56,7 @@ def _run_step(
         import_status: What the fake ``opus_import`` exits with, except for ``--help``.
         manage_status: What the fake ``opus_manage`` exits with.
         help_text: What the fake ``opus_import --help`` prints.
+        help_status: What the fake ``opus_import --help`` exits with.
         environment: Further variables to set.
 
     Returns:
@@ -70,7 +72,7 @@ def _run_step(
     for command, status in (('opus_import', import_status), ('opus_manage', manage_status)):
         fake = fake_bin / command
         fake.write_text(
-            f'#!/bin/bash\nif [[ $1 == --help ]]; then echo "{help_text}"; exit 0; fi\n'
+            f'#!/bin/bash\nif [[ $1 == --help ]]; then echo "{help_text}"; exit {help_status}; fi\n'
             f'echo "{command} $*" >> {calls}\nexit {status}\n',
             encoding='utf-8',
         )
@@ -129,6 +131,19 @@ def test_a_release_without_the_option_is_promoted_without_the_carry_over(
     assert asked == []
     assert 'the release being promoted cannot carry sessions over' in output
     assert 'CONTINUED' in output
+
+
+@pytest.mark.skipif(_BASH is None, reason='needs bash')
+def test_a_help_that_fails_is_a_failed_carry_over(tmp_path: Path) -> None:
+    """A failed probe does not show the option is absent, so the promotion stops and the
+    installation that was serving serves again."""
+    status, output, ran, asked = _run_step(tmp_path, _CARRY_OVER, help_status=1)
+    assert status == 1
+    assert ran == []
+    assert asked == ['start opus-web']
+    assert 'opus_import --help failed' in output
+    assert 'cannot carry sessions over' not in output
+    assert 'CONTINUED' not in output
 
 
 @pytest.mark.skipif(_BASH is None, reason='needs bash')

@@ -195,9 +195,11 @@ the database being served into the new one, while the web server is stopped.
 Only sessions that own a cart row are copied: a session holds nothing else a
 visitor would miss. A cart row whose session has expired, or whose observation
 the new database lacks, is dropped, and the log counts them. The copy is one
-transaction. If it fails, the web server is started again on the installation
-that was serving, and nothing has switched. A release without the option, such
-as an older one, warns and switches without carrying anything.
+transaction. If it fails, or if the release's `opus_import --help` fails, so
+that whether it has the option is unknown, the web server is started again on
+the installation that was serving, and nothing has switched. A release whose
+help lists no such option, such as an older one, warns and switches without
+carrying anything.
 
 The installation that was replaced is still under staged/. Going back to it is
 moving the deployed symlink onto it and restarting the web server -- there is
