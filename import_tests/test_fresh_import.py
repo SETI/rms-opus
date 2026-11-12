@@ -147,7 +147,11 @@ def test_the_finalized_schema_carries_exactly_the_declared_keys(
 def test_every_string_column_has_the_character_set_its_schema_names(
     main_run: build_run.ImportRun, db_credentials: DatabaseCredentials
 ) -> None:
-    """Each string column has its declared type, ASCII where it names ``field_charset``."""
+    """Each string column of a table the import creates from a schema file of its own has
+    the type that file declares, and is ASCII exactly where it names ``field_charset``.
+
+    ``mult``, ``obs_surface_geometry_target`` and every observation table are among them.
+    """
     found: dict[tuple[str, str], tuple[str, str]] = {
         (str(table), str(column)): (str(data_type), str(charset))
         for table, column, data_type, charset in golden_io.query(

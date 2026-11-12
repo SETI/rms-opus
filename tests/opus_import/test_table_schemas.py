@@ -403,7 +403,8 @@ def test_every_character_set_is_one_create_table_renders_on_a_text_column() -> N
 
 
 #: The columns that identify an observation, a bundle or a session wherever they appear,
-#: which hold ASCII so that every join and lookup on them compares bytes.
+#: which hold ASCII, a byte a character, so that every join, lookup and sort on them
+#: reads fewer bytes; ``ascii_general_ci`` still compares them without case.
 _ASCII_IDENTIFIERS = {'opus_id', 'bundle_id', 'session_id'}
 
 

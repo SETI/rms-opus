@@ -175,7 +175,6 @@
     {
         "field_name": "note",
         "field_type": "varchar255",
-        "field_charset": "ascii",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
