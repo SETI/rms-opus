@@ -36,6 +36,7 @@ in place, and two symbolic links say which installation is which:
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
     /opt/opus/deployed  -> staged/<database>_<timestamp>   # what the web server serves
     /opt/opus/import    -> staged/<database>_<timestamp>   # what an import is using
+    /opt/opus/deploy.lock                                  # held by the deploy running
 
 That shape is what makes a deploy safe to run against a live site, and it follows from
 one fact about OPUS: **a release that changes the table schemas cannot read a database
@@ -225,6 +226,20 @@ The scripts
 
 The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==<release>`` for a particular release, omitted for the newest.
+
+**One deploy runs at a time.** Each deploy script takes an exclusive ``flock`` on
+``deploy.lock`` in ``OPUS_DIR`` right after reading ``deploy.env``, before it reads which
+database is being served, and holds it until the switch is done. A deploy started while
+another holds it stops at once, having changed nothing, with::
+
+    ERROR: another deploy holds /opt/opus/deploy.lock; wait for it to finish.
+
+Otherwise a deploy that switched while another was building would leave the other
+carrying sessions and carts over from a database that had stopped being served, and the
+two would move the ``deployed`` symlink in turn. The lock goes with the deploy's shell, so
+a deploy that failed or was interrupted leaves nothing to remove.
+``run_full_opus_import.sh`` does not take it: an import builds beside the served
+installation, and runs while deploys come and go.
 
 ``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
 a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from

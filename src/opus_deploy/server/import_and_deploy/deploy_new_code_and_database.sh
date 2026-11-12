@@ -43,6 +43,13 @@ export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
+# One deploy at a time: held from before the served schema is read until the promotion
+# is done, and released when this script exits.
+source ${IMPORT_SCRIPT_DIR}/_deploy_lock.sh
+if ! take_deploy_lock "${OPUS_DIR}/deploy.lock"; then
+    echo "*** ABORTING: nothing was changed ***"
+    exit 1
+fi
 source ${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh
 source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 
