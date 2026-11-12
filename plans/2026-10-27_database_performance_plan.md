@@ -6905,8 +6905,10 @@ Nothing above this line is rewritten by an executor.
     `ascii_general_ci` ignores case, and what the character-set test checks (every table
     the import creates from a schema file of its own, `mult` among them).
   - `queries.sql` is the orchestrator's capture (f74c2115).
-  - Not fixed here: `api/files` and `__initdetail` answering 500 for a mixed-case OPUS ID
-    (`get_pds_products` keys its answer by the caller's spelling), which predates this PR.
+  - `api/files` and `__initdetail` answered 500 for a mixed-case OPUS ID, a KeyError in
+    `get_pds_products`, which searched with the caller's spelling and keyed its answer by
+    it but filled it by the stored ID; that predates this PR, and an accented OPUS ID
+    answered the same once the search folded it. Fixed in the CodeRabbit review below.
   - `db-perf-pr-16a` (1566313f, with PR-15's range-endpoint tests and the selector
     assertion) is merged in, keeping the earlier PRs' entries before this one.
   - `pr17local` was dropped and imported again at this head; its ASCII columns are the
@@ -6918,6 +6920,49 @@ Nothing above this line is rewritten by an executor.
     `tests/opus_app` and `integration_tests`, with coverage) 2,866 passed against
     `pr17local` at 100% coverage, PR-15's merged tests reaching the two lines the 99%
     bullet above names.
+- **CodeRabbit review (2026-11-12)**, at the orchestrator's decisions; each behavior fix
+  has a test that fails with it reverted (mutation-checked):
+  - *Incremental reload check.* `bench_import` waits, before taking the append's start,
+    until the server's `UTC_TIMESTAMP()` is later than the copied bundle's `started_at`
+    (polled, bounded at `CLOCK_WAIT_LIMIT_S`), so a copied row begun in the same second
+    is not taken for the reload (`tests/benchmarks/test_incremental.py`).
+  - *Live target.* `test_ascii_columns_api._path_response` asks a live server through
+    `_get_response`, as every other request does; the path is already percent-encoded,
+    which `requests` sends unchanged. Django's client remains the local path.
+  - *Regex folding.* `ascii_comparable(..., compatibility=False)` folds with NFD, and
+    `get_string_query` uses it for `regex`: the accents go, but a full-width `．` becomes
+    DEL rather than the operator `.`. Unit test of the fold and an integration case
+    (`regex` `VGISS．6210` finds nothing, `VGÍSS.6210` what `VGISS.6210` does).
+  - *Files keyed by spelling.* `get_pds_products` gathers each stored ID's products under
+    `sql_builder.ascii_collation_key` (folded, trailing spaces dropped, lower case, which
+    two strings share exactly when `ascii_general_ci` calls their folded forms equal,
+    checked on the server for every pair of ASCII characters) and returns them under
+    every requested spelling that has that key. Integration cases for an accented and a
+    mixed-case OPUS ID on `api/files` and `__initdetail`, and a `get_pds_products` case
+    with several spellings of one ID.
+  - *`__initdetail`'s other lookups.* The cart lookup and both `get_pds_preview_images`
+    calls take `obs_general.opus_id` (the `__initdetail` case above, with the observation
+    in the cart).
+  - *DEL in a `text` column.* The check covers any string bound for an ASCII column,
+    `varchar` or `text`, after the type checks (`test_do_import_obs.py`, a synthetic ASCII
+    `text` column).
+  - *DEL under `--ignore-errors`.* After logging the error the value is stored with DEL
+    removed, so no stored value holds it whatever the error policy; the docstring and the
+    import overview, table schemas and database schema guides say so.
+  - *Test helpers.* The incremental tests' stand-in `query` and `_rows_written` carry
+    docstrings with `Parameters:`, and the fake records each statement's parameters: the
+    `timestamp` query binds `since[0]` and the bundle.
+  - *Measurement wording.* The bullet below says what `Sort_merge_passes` 1 means.
+  - Mutation checks: each source change reverted fails its tests, but for one equivalent
+    mutant: keying the gathered products by the stored ID itself rather than its
+    collation key survives, since every stored OPUS ID is already its own key (lower
+    case, ASCII, no trailing space). The live-target branch of `_path_response` is not
+    run here (no live server). With `file_utils.py` and `ui/views.py` at 17286809, the
+    four new `api/files` and `__initdetail` cases each answer 500.
+  - `pr17local` was not imported again: the DEL removal changes no fixture value.
+  - Results after the fixes: the gates pass (3,021 unit tests); the import suite 185
+    passed and 3 skipped; the integration job's run 2,872 passed against `pr17local` at
+    100% coverage.
 - **Measurement** (2026-11-11, test scale; web runs and the first import with before at
   227f74d3, PR-16a's head, and after at 54ebdb75; the repeated imports with before at
   1566313f, PR-16a's head after its merges, and after at 45ccaebb; each side imports its
@@ -6925,8 +6970,9 @@ Nothing above this line is rewritten by an executor.
   imports, `b`; judged against the PR-00 floors):
   - **Target, the db-cold build of the broad default-sort search:** 0.2254 s to
     0.2275 s, +0.9% (floor 10.4%), **not improved**. `Sort_merge_passes` 1 and
-    `Created_tmp_disk_tables` 0 on both sides: at test scale the sort fits in memory, so
-    the narrower sort keys have nothing to save.
+    `Created_tmp_disk_tables` 0 on both sides: on either side the filesort wrote its sort
+    files and merged them once, and no temporary table went to disk, so the narrower sort
+    keys did not remove the merge pass and the build time did not move.
   - **Size:** `db.schema.data_bytes` 746.3 MB to 441.5 MB (-40.8%) and
     `db.schema.index_bytes` 366.7 MB to 237.6 MB (-35.2%); `obs_files` data 628.1 MB to
     342.7 MB, `obs_pds` 22.6 MB to 6.8 MB, `obs_general` 30.0 MB to 26.8 MB.
