@@ -7096,3 +7096,7 @@ Nothing above this line is rewritten by an executor.
     against `pr18local`, rebuilt on schema version 10, 2,868 passed, the coverage gate at
     99% with the same two lines unreached as before, which PR-15's fix, merged up through
     PR-17, covers.
+  - Results after merging PR-17's final head (45ccaebb), at ae4c23e3: the gates pass
+    (3,056 unit tests); the import suite 192 passed and 3 skipped; the integration job's
+    run (`tests/opus_support`, `tests/opus_app` and `integration_tests`, with coverage)
+    2,875 passed against `pr18local`, imported again at this head, at 100% coverage.
