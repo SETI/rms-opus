@@ -2,30 +2,26 @@
 
 The import reads a bundle's observations from its primary index files, whose names
 `opus_import.config_bundle_info` gives. `locate` finds them, for the import and for the
-bundle registry alike, and `declared_rows` reads how many rows one declares without
-reading its table, which is what the registry sizes a bundle's id range from.
+bundle registry alike, and `declared_rows` reads how many rows one declares from its
+label, with `pdstable` deferring the table, which is what the registry sizes a bundle's
+id range from.
 """
 
 from __future__ import annotations
 
 import os
-import re
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pdsfile
+import pdstable
 
 from opus_import import import_util
 
 if TYPE_CHECKING:
     from opus_import.config_bundle_info import BundleInfo
-
-#: A PDS3 label's row count: ``ROWS = <n>`` at the start of a line.
-_PDS3_ROWS = re.compile(r'^\s*ROWS\s*=\s*(\d+)', re.MULTILINE)
-
-#: A PDS4 label's row count: ``<records>n</records>``.
-_PDS4_RECORDS = re.compile(r'<records>\s*(\d+)\s*</records>')
 
 #: The suffix of a PDS3 label, compared without regard to case.
 _PDS3_LABEL_SUFFIX = '.lbl'
@@ -38,7 +34,7 @@ _CSV_SUFFIX = '.csv'
 
 
 class PrimaryIndexError(Exception):
-    """A bundle's primary index files cannot be located; the message says why."""
+    """A bundle's primary index files cannot be located or read; the message says why."""
 
 
 @dataclass(frozen=True)
@@ -126,29 +122,53 @@ def locate(bundle_id: str, vol_info: BundleInfo) -> PrimaryIndexes:
     return PrimaryIndexes(searched, [])
 
 
-def declared_rows(index_file: str) -> int | None:
+def declared_rows(index_file: str) -> int:
     """Return how many rows a primary index file's label declares.
 
-    A PDS3 index file is its label, whose ``ROWS`` gives the count; where it declares
-    more than one table, the largest. A PDS4 index's label is the ``.xml`` file beside
-    it, whose ``<records>`` gives the count. The PDS4 index files OPUS reads have no
-    label, so for one without, the table's own lines are counted, less the header line
-    of a ``.csv`` file.
+    A PDS3 index file is its label; a PDS4 index's label is the ``.xml`` file beside it.
+    Either is read as `pdstable.PdsTable` reads it for the import, with the table's
+    loading deferred, so only the label is read and the count is the rows of the table
+    the import reads. Some PDS4 index files OPUS reads have no label; for one without,
+    the table's own lines are counted, less the header line of a ``.csv`` file.
 
     Parameters:
         index_file: The path `locate` found.
 
     Returns:
-        The row count, or None when a label declares none.
+        The row count.
+
+    Raises:
+        PrimaryIndexError: If `pdstable` cannot read the label; the message names it and
+            gives the reason.
     """
     path = Path(index_file)
     if path.suffix.lower() == _PDS3_LABEL_SUFFIX:
-        counts = _PDS3_ROWS.findall(path.read_text(encoding='latin-1'))
-        return max(int(count) for count in counts) if counts else None
+        return _label_rows(path)
     label = path.with_suffix(_PDS4_LABEL_SUFFIX)
     if label.exists():
-        counts = _PDS4_RECORDS.findall(label.read_text(encoding='utf-8'))
-        return max(int(count) for count in counts) if counts else None
+        return _label_rows(label)
     with path.open('rb') as table:
         lines = sum(1 for line in table if line.strip())
     return max(0, lines - 1) if path.suffix.lower() == _CSV_SUFFIX else lines
+
+
+def _label_rows(label: Path) -> int:
+    """Return the rows of the table a label describes, reading the label alone.
+
+    Parameters:
+        label: A PDS3 or PDS4 label.
+
+    Returns:
+        The table's row count, as `pdstable.PdsTable` gives it.
+
+    Raises:
+        PrimaryIndexError: If `pdstable` cannot read the label.
+    """
+    # A warning about the label belongs to the import's own read of the table, which
+    # reports it against the bundle; recorded here, it is not left for the import's
+    # warning handler to report against whatever table it reads next.
+    with warnings.catch_warnings(record=True):
+        try:
+            return int(pdstable.PdsTable(str(label), defer_load=True).rows)
+        except Exception as e:  # pdstable raises many types for a bad label
+            raise PrimaryIndexError(f'label {label} cannot be read: {e}') from e

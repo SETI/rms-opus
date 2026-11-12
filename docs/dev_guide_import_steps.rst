@@ -288,13 +288,15 @@ table's creation commits on its own, and then, in one transaction:
   every pinned field from its ``mult_options``
   (:func:`~opus_import.steps.do_import_mult.register_pinned_fields`).
 
-The size estimate is the row count the bundle's primary index labels declare, read from
-the labels alone (:func:`~opus_import.primary_index.declared_rows`): ``ROWS`` in a PDS3
-label, ``<records>`` in the ``.xml`` label beside a PDS4 index, and, for a PDS4 index
-with no label, as the ones OPUS reads have, the index's own rows. A bundle OPUS imports
-with no ``BUNDLE_INFO`` entry, no primary index file, or a label declaring no row count
-refuses the whole registration, naming the bundle and the label, before anything is
-written.
+The size estimate is the row count the bundle's primary index labels declare
+(:func:`~opus_import.primary_index.declared_rows`). A PDS3 index file is its own label,
+and a PDS4 index's label is the ``.xml`` file beside it; either is read by
+``pdstable.PdsTable`` with ``defer_load=True``, which reads the label and not the table,
+so the count is the rows of the table the import reads. For a PDS4 index with no label,
+as some OPUS reads are, the count is the index's own rows. A bundle OPUS imports with no
+``BUNDLE_INFO`` entry, no primary index file, or a label ``pdstable`` cannot read, such
+as one without ``ROWS``, refuses the whole registration, naming the bundle and the
+label, before anything is written.
 
 **Why registration order fixes every id.** A bundle's observations take ``first_id``
 and the ids after it, in the order they are computed

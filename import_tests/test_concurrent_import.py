@@ -221,7 +221,8 @@ def test_a_label_with_no_row_count_refuses_registration(
 
     assert refused.returncode != 0
     assert f'Bundle {bad} cannot be registered' in refused.stdout
-    assert f'{bad}_index.lbl declares no row count' in refused.stdout
+    assert f'{bad}_index.lbl cannot be read' in refused.stdout
+    assert "missing required field: 'ROWS'" in refused.stdout
     assert golden_io.query(db_credentials, schema, 'SELECT COUNT(*) FROM import_bundle') == [(0,)]
 
 
