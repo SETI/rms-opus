@@ -18,17 +18,17 @@ SELECT VERSION(),
 -- statement: connection 17
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'time1' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'time1' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'opusid' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'opusid' LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'time1') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'time1') LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'opus_id') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'opus_id') LIMIT 21;
 -- statement: connection 17
 SELECT @@SESSION.innodb_lock_wait_timeout;
 -- statement: connection 17
@@ -50,15 +50,15 @@ SET SESSION innodb_lock_wait_timeout = 50;
 
 -- block: search.broad/result_count __api/meta/result_count.json?time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'time1' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'time1' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'time') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'time') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 2;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'time2') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'time2') LIMIT 21;
 -- statement: connection 17
 SELECT @@SESSION.innodb_lock_wait_timeout;
 -- statement: connection 17
@@ -80,7 +80,7 @@ SET SESSION innodb_lock_wait_timeout = 50;
 
 -- block: search.selective/result_count __api/meta/result_count.json?planet=Uranus&reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'planet' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'planet' LIMIT 21;
 -- statement: connection 17
 SELECT `mult_field`.`qualified_name` AS `qualified_name`, `mult_field`.`field_id` AS `field_id` FROM `mult_field`;
 -- statement: connection 17
@@ -90,9 +90,9 @@ None;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 3;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'planet_id') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'planet_id') LIMIT 21;
 -- statement: connection 17
-SELECT `table_names`.`id`, `table_names`.`table_name`, `table_names`.`label`, `table_names`.`display`, `table_names`.`disp_order`, `table_names`.`physical_table`, `table_names`.`target_name`, `table_names`.`timestamp` FROM `table_names` ORDER BY `table_names`.`disp_order` ASC;
+SELECT `table_names`.`id`, `table_names`.`table_name`, `table_names`.`label`, `table_names`.`display`, `table_names`.`disp_order`, `table_names`.`physical_table`, `table_names`.`target_name` FROM `table_names` ORDER BY `table_names`.`disp_order` ASC;
 -- statement: connection 17
 SELECT @@SESSION.innodb_lock_wait_timeout;
 -- statement: connection 17
@@ -114,17 +114,17 @@ SET SESSION innodb_lock_wait_timeout = 50;
 
 -- block: search.ring_radius/result_count __api/meta/result_count.json?RINGGEOringradius1=60000&RINGGEOringradius2=140000&reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'RINGGEOringradius1' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'RINGGEOringradius1' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`name` = 'ring_radius') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`name` = 'ring_radius') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 4;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`name` = 'ring_radius1') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`name` = 'ring_radius1') LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`name` = 'ring_radius2') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`name` = 'ring_radius2') LIMIT 21;
 -- statement: connection 17
 SELECT @@SESSION.innodb_lock_wait_timeout;
 -- statement: connection 17
@@ -146,7 +146,7 @@ SET SESSION innodb_lock_wait_timeout = 50;
 
 -- block: search.target/result_count __api/meta/result_count.json?target=Saturn&reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'target' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'target' LIMIT 21;
 -- statement: connection 17
 SELECT `mult`.`id` AS `id`, `mult`.`value` AS `value`, `mult`.`label` AS `label`, `mult`.`disp_rank` AS `disp_rank` FROM `mult` WHERE `mult`.`field_id` = 8;
 -- statement: connection 17
@@ -154,7 +154,7 @@ None;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 5;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'target_name') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`name` = 'target_name') LIMIT 21;
 -- statement: connection 17
 SELECT @@SESSION.innodb_lock_wait_timeout;
 -- statement: connection 17
@@ -164,7 +164,7 @@ set autocommit=0;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 5 FOR UPDATE;
 -- statement: connection 17
-INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`) SELECT 5,ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` ASC,`obs_general`.`opus_id` ASC),`obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,'11');
+INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`) SELECT 5,ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` ASC,`obs_general`.`opus_id` ASC),`obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,'1');
 -- statement: connection 17
 UPDATE user_searches SET result_count = 5062, results_built_at = UTC_TIMESTAMP(), last_used_at = UTC_TIMESTAMP() WHERE id = 5;
 -- statement: connection 17
@@ -176,23 +176,23 @@ SET SESSION innodb_lock_wait_timeout = 50;
 
 -- block: search.surface_geometry/result_count __api/meta/result_count.json?surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30&reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'surfacegeometrytargetname' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'surfacegeometrytargetname' LIMIT 21;
 -- statement: connection 17
 SELECT `mult`.`id` AS `id`, `mult`.`value` AS `value`, `mult`.`label` AS `label`, `mult`.`disp_rank` AS `disp_rank` FROM `mult` WHERE `mult`.`field_id` = 87;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'SURFACEGEOsaturn_planetographiclatitude1' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'SURFACEGEOsaturn_planetographiclatitude1' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry__saturn' AND `param_info`.`name` = 'planetographic_latitude') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry__saturn' AND `param_info`.`name` = 'planetographic_latitude') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 6;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry__saturn' AND `param_info`.`name` = 'planetographic_latitude1') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry__saturn' AND `param_info`.`name` = 'planetographic_latitude1') LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry__saturn' AND `param_info`.`name` = 'planetographic_latitude2') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry__saturn' AND `param_info`.`name` = 'planetographic_latitude2') LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry_name' AND `param_info`.`name` = 'target_name') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry_name' AND `param_info`.`name` = 'target_name') LIMIT 21;
 -- statement: connection 17
 SELECT @@SESSION.innodb_lock_wait_timeout;
 -- statement: connection 17
@@ -202,7 +202,7 @@ set autocommit=0;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 6 FOR UPDATE;
 -- statement: connection 17
-INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`) SELECT 6,ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` ASC,`obs_general`.`opus_id` ASC),`obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_surface_geometry_target` AS `obs_surface_geometry__saturn` ON `obs_general`.`id`=`obs_surface_geometry__saturn`.`obs_general_id` AND `obs_surface_geometry__saturn`.`target_name` = 0 WHERE (`obs_surface_geometry__saturn`.`planetographic_latitude2` >= -30.0e0 AND `obs_surface_geometry__saturn`.`planetographic_latitude1` <= 30.0e0) AND (EXISTS (SELECT 1 FROM `obs_surface_geometry_target` AS `obs_surface_geometry_name` WHERE `obs_surface_geometry_name`.`obs_general_id`=`obs_general`.`id` AND `obs_surface_geometry_name`.`target_name` IN (0)));
+INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`) SELECT 6,ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` ASC,`obs_general`.`opus_id` ASC),`obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_surface_geometry_target` AS `obs_surface_geometry__saturn` ON `obs_general`.`id`=`obs_surface_geometry__saturn`.`obs_general_id` AND `obs_surface_geometry__saturn`.`target_name` = 6 WHERE (`obs_surface_geometry__saturn`.`planetographic_latitude2` >= -30.0e0 AND `obs_surface_geometry__saturn`.`planetographic_latitude1` <= 30.0e0) AND (EXISTS (SELECT 1 FROM `obs_surface_geometry_target` AS `obs_surface_geometry_name` WHERE `obs_surface_geometry_name`.`obs_general_id`=`obs_general`.`id` AND `obs_surface_geometry_name`.`target_name` IN (6)));
 -- statement: connection 17
 UPDATE user_searches SET result_count = 4338, results_built_at = UTC_TIMESTAMP(), last_used_at = UTC_TIMESTAMP() WHERE id = 6;
 -- statement: connection 17
@@ -218,23 +218,23 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 
 -- block: pages.empty/page_1 api/data.json?page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'tx51otutnx9scjaepbhq3syqv2ro6ex9' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'zmzw1jwb7y7crtvm0zlq2dhmuq6m90q9' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('tx51otutnx9scjaepbhq3syqv2ro6ex9', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TY:0zioYjeJNAcQfwQG80fhN7Ll5fm91JnuXK40FrOrZ5A', '2026-11-25 13:34:56.845445');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('zmzw1jwb7y7crtvm0zlq2dhmuq6m90q9', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', '2026-11-26 01:17:04.540170');
 -- statement: connection 17
 commit;
 -- statement: connection 17
 set autocommit=1;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'instrument' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'instrument' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'planet' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'planet' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'target' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'target' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'observationduration' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'observationduration' LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
@@ -244,7 +244,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TY:0zioYjeJNAcQfwQG80fhN7Ll5fm91JnuXK40FrOrZ5A', `expire_date` = '2026-11-25 13:34:56.864418' WHERE `django_session`.`session_key` = 'tx51otutnx9scjaepbhq3syqv2ro6ex9';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.555808' WHERE `django_session`.`session_key` = 'zmzw1jwb7y7crtvm0zlq2dhmuq6m90q9';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -252,7 +252,7 @@ set autocommit=1;
 
 -- block: pages.empty/page_10 api/data.json?page=10&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:56.879602' AND `django_session`.`session_key` = 'tx51otutnx9scjaepbhq3syqv2ro6ex9') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.560034' AND `django_session`.`session_key` = 'zmzw1jwb7y7crtvm0zlq2dhmuq6m90q9') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
@@ -262,7 +262,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TY:0zioYjeJNAcQfwQG80fhN7Ll5fm91JnuXK40FrOrZ5A', `expire_date` = '2026-11-25 13:34:56.890470' WHERE `django_session`.`session_key` = 'tx51otutnx9scjaepbhq3syqv2ro6ex9';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.573181' WHERE `django_session`.`session_key` = 'zmzw1jwb7y7crtvm0zlq2dhmuq6m90q9';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -270,7 +270,7 @@ set autocommit=1;
 
 -- block: pages.empty/page_last api/data.json?page=298&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:56.900867' AND `django_session`.`session_key` = 'tx51otutnx9scjaepbhq3syqv2ro6ex9') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.577169' AND `django_session`.`session_key` = 'zmzw1jwb7y7crtvm0zlq2dhmuq6m90q9') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
@@ -280,7 +280,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TY:0zioYjeJNAcQfwQG80fhN7Ll5fm91JnuXK40FrOrZ5A', `expire_date` = '2026-11-25 13:34:56.906764' WHERE `django_session`.`session_key` = 'tx51otutnx9scjaepbhq3syqv2ro6ex9';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.585968' WHERE `django_session`.`session_key` = 'zmzw1jwb7y7crtvm0zlq2dhmuq6m90q9';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -292,11 +292,11 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 
 -- block: pages.broad/page_1 api/data.json?time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'wtwac713kz9mn077l2vlw39bide2cbyn' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'h8ixn2b47ap6azgxvayrudoqnmpfd88b' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('wtwac713kz9mn077l2vlw39bide2cbyn', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TY:0zioYjeJNAcQfwQG80fhN7Ll5fm91JnuXK40FrOrZ5A', '2026-11-25 13:34:56.940718');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('h8ixn2b47ap6azgxvayrudoqnmpfd88b', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', '2026-11-26 01:17:04.612431');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -310,7 +310,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TY:0zioYjeJNAcQfwQG80fhN7Ll5fm91JnuXK40FrOrZ5A', `expire_date` = '2026-11-25 13:34:56.952541' WHERE `django_session`.`session_key` = 'wtwac713kz9mn077l2vlw39bide2cbyn';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.625836' WHERE `django_session`.`session_key` = 'h8ixn2b47ap6azgxvayrudoqnmpfd88b';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -318,7 +318,7 @@ set autocommit=1;
 
 -- block: pages.broad/page_10 api/data.json?time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&page=10&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:56.962729' AND `django_session`.`session_key` = 'wtwac713kz9mn077l2vlw39bide2cbyn') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.630065' AND `django_session`.`session_key` = 'h8ixn2b47ap6azgxvayrudoqnmpfd88b') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 2;
 -- statement: connection 17
@@ -328,7 +328,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TY:0zioYjeJNAcQfwQG80fhN7Ll5fm91JnuXK40FrOrZ5A', `expire_date` = '2026-11-25 13:34:56.973014' WHERE `django_session`.`session_key` = 'wtwac713kz9mn077l2vlw39bide2cbyn';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.639843' WHERE `django_session`.`session_key` = 'h8ixn2b47ap6azgxvayrudoqnmpfd88b';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -336,7 +336,7 @@ set autocommit=1;
 
 -- block: pages.broad/page_last api/data.json?time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&page=298&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:56.992915' AND `django_session`.`session_key` = 'wtwac713kz9mn077l2vlw39bide2cbyn') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.647945' AND `django_session`.`session_key` = 'h8ixn2b47ap6azgxvayrudoqnmpfd88b') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 2;
 -- statement: connection 17
@@ -346,7 +346,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.007544' WHERE `django_session`.`session_key` = 'wtwac713kz9mn077l2vlw39bide2cbyn';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.655225' WHERE `django_session`.`session_key` = 'h8ixn2b47ap6azgxvayrudoqnmpfd88b';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -358,11 +358,11 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 
 -- block: pages.selective/page_1 api/data.json?planet=Uranus&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '49se1bql1xn4p2a4ub4o88xpui9gpfzw' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '1yzdldwyy3pbxfx7o0phbwbkmbe1bv80' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('49se1bql1xn4p2a4ub4o88xpui9gpfzw', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.041541');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('1yzdldwyy3pbxfx7o0phbwbkmbe1bv80', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', '2026-11-26 01:17:04.676475');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -376,7 +376,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.051680' WHERE `django_session`.`session_key` = '49se1bql1xn4p2a4ub4o88xpui9gpfzw';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.686896' WHERE `django_session`.`session_key` = '1yzdldwyy3pbxfx7o0phbwbkmbe1bv80';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -384,7 +384,7 @@ set autocommit=1;
 
 -- block: pages.selective/page_10 api/data.json?planet=Uranus&page=2&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.062543' AND `django_session`.`session_key` = '49se1bql1xn4p2a4ub4o88xpui9gpfzw') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.691748' AND `django_session`.`session_key` = '1yzdldwyy3pbxfx7o0phbwbkmbe1bv80') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 3;
 -- statement: connection 17
@@ -394,7 +394,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.069232' WHERE `django_session`.`session_key` = '49se1bql1xn4p2a4ub4o88xpui9gpfzw';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.697550' WHERE `django_session`.`session_key` = '1yzdldwyy3pbxfx7o0phbwbkmbe1bv80';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -402,7 +402,7 @@ set autocommit=1;
 
 -- block: pages.selective/page_last api/data.json?planet=Uranus&page=2&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.079748' AND `django_session`.`session_key` = '49se1bql1xn4p2a4ub4o88xpui9gpfzw') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.700964' AND `django_session`.`session_key` = '1yzdldwyy3pbxfx7o0phbwbkmbe1bv80') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 3;
 -- statement: connection 17
@@ -412,7 +412,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.086405' WHERE `django_session`.`session_key` = '49se1bql1xn4p2a4ub4o88xpui9gpfzw';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.706916' WHERE `django_session`.`session_key` = '1yzdldwyy3pbxfx7o0phbwbkmbe1bv80';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -424,11 +424,11 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 
 -- block: pages.ring_radius/page_1 api/data.json?RINGGEOringradius1=60000&RINGGEOringradius2=140000&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'y0w1vgl0zsfd38u0bprpog17aohrq92h' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '1c1jiuj9bfvoax1wcri6d1xm0zctfexu' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('y0w1vgl0zsfd38u0bprpog17aohrq92h', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.117806');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('1c1jiuj9bfvoax1wcri6d1xm0zctfexu', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', '2026-11-26 01:17:04.731034');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -442,7 +442,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.127392' WHERE `django_session`.`session_key` = 'y0w1vgl0zsfd38u0bprpog17aohrq92h';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.738945' WHERE `django_session`.`session_key` = '1c1jiuj9bfvoax1wcri6d1xm0zctfexu';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -450,7 +450,7 @@ set autocommit=1;
 
 -- block: pages.ring_radius/page_10 api/data.json?RINGGEOringradius1=60000&RINGGEOringradius2=140000&page=10&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.139224' AND `django_session`.`session_key` = 'y0w1vgl0zsfd38u0bprpog17aohrq92h') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.742443' AND `django_session`.`session_key` = '1c1jiuj9bfvoax1wcri6d1xm0zctfexu') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 4;
 -- statement: connection 17
@@ -460,7 +460,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.150087' WHERE `django_session`.`session_key` = 'y0w1vgl0zsfd38u0bprpog17aohrq92h';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.749265' WHERE `django_session`.`session_key` = '1c1jiuj9bfvoax1wcri6d1xm0zctfexu';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -468,7 +468,7 @@ set autocommit=1;
 
 -- block: pages.ring_radius/page_last api/data.json?RINGGEOringradius1=60000&RINGGEOringradius2=140000&page=112&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.160455' AND `django_session`.`session_key` = 'y0w1vgl0zsfd38u0bprpog17aohrq92h') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.752498' AND `django_session`.`session_key` = '1c1jiuj9bfvoax1wcri6d1xm0zctfexu') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 4;
 -- statement: connection 17
@@ -478,7 +478,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.165525' WHERE `django_session`.`session_key` = 'y0w1vgl0zsfd38u0bprpog17aohrq92h';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.758807' WHERE `django_session`.`session_key` = '1c1jiuj9bfvoax1wcri6d1xm0zctfexu';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -490,11 +490,11 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 
 -- block: pages.target/page_1 api/data.json?target=Saturn&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'lb4hofk941jgoyo2oby296x5do8zkzr7' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'k5ee3hg0187lsac3rl437ek4j6x5cd4v' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('lb4hofk941jgoyo2oby296x5do8zkzr7', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.201033');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('k5ee3hg0187lsac3rl437ek4j6x5cd4v', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', '2026-11-26 01:17:04.778937');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -508,7 +508,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.211227' WHERE `django_session`.`session_key` = 'lb4hofk941jgoyo2oby296x5do8zkzr7';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.791058' WHERE `django_session`.`session_key` = 'k5ee3hg0187lsac3rl437ek4j6x5cd4v';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -516,7 +516,7 @@ set autocommit=1;
 
 -- block: pages.target/page_10 api/data.json?target=Saturn&page=10&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.225283' AND `django_session`.`session_key` = 'lb4hofk941jgoyo2oby296x5do8zkzr7') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.795159' AND `django_session`.`session_key` = 'k5ee3hg0187lsac3rl437ek4j6x5cd4v') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 5;
 -- statement: connection 17
@@ -526,7 +526,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.233459' WHERE `django_session`.`session_key` = 'lb4hofk941jgoyo2oby296x5do8zkzr7';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.801830' WHERE `django_session`.`session_key` = 'k5ee3hg0187lsac3rl437ek4j6x5cd4v';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -534,7 +534,7 @@ set autocommit=1;
 
 -- block: pages.target/page_last api/data.json?target=Saturn&page=51&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.248988' AND `django_session`.`session_key` = 'lb4hofk941jgoyo2oby296x5do8zkzr7') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.805212' AND `django_session`.`session_key` = 'k5ee3hg0187lsac3rl437ek4j6x5cd4v') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 5;
 -- statement: connection 17
@@ -544,7 +544,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.255279' WHERE `django_session`.`session_key` = 'lb4hofk941jgoyo2oby296x5do8zkzr7';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.810016' WHERE `django_session`.`session_key` = 'k5ee3hg0187lsac3rl437ek4j6x5cd4v';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -556,11 +556,11 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 
 -- block: pages.surface_geometry/page_1 api/data.json?surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'qqnykf77k27kfpp566qkhz6eth58blxd' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '41mic16b9nwr18mdi1nmxbbkbn6m88rp' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('qqnykf77k27kfpp566qkhz6eth58blxd', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.287613');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('41mic16b9nwr18mdi1nmxbbkbn6m88rp', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', '2026-11-26 01:17:04.827107');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -574,7 +574,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.297756' WHERE `django_session`.`session_key` = 'qqnykf77k27kfpp566qkhz6eth58blxd';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.833909' WHERE `django_session`.`session_key` = '41mic16b9nwr18mdi1nmxbbkbn6m88rp';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -582,7 +582,7 @@ set autocommit=1;
 
 -- block: pages.surface_geometry/page_10 api/data.json?surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30&page=10&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.308403' AND `django_session`.`session_key` = 'qqnykf77k27kfpp566qkhz6eth58blxd') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.837200' AND `django_session`.`session_key` = '41mic16b9nwr18mdi1nmxbbkbn6m88rp') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 6;
 -- statement: connection 17
@@ -592,7 +592,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.316472' WHERE `django_session`.`session_key` = 'qqnykf77k27kfpp566qkhz6eth58blxd';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.843777' WHERE `django_session`.`session_key` = '41mic16b9nwr18mdi1nmxbbkbn6m88rp';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -600,7 +600,7 @@ set autocommit=1;
 
 -- block: pages.surface_geometry/page_last api/data.json?surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30&page=44&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.326626' AND `django_session`.`session_key` = 'qqnykf77k27kfpp566qkhz6eth58blxd') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.846954' AND `django_session`.`session_key` = '41mic16b9nwr18mdi1nmxbbkbn6m88rp') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 6;
 -- statement: connection 17
@@ -610,7 +610,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.331666' WHERE `django_session`.`session_key` = 'qqnykf77k27kfpp566qkhz6eth58blxd';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.850572' WHERE `django_session`.`session_key` = '41mic16b9nwr18mdi1nmxbbkbn6m88rp';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -618,11 +618,11 @@ set autocommit=1;
 
 -- block: resort.empty/default_order api/data.json?page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'e70xp0h2wxkptgfwcw9w2bwr9zn563zx' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'c7p3wkuzvxd5gi5mfs69oc3uqyb7av2l' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('e70xp0h2wxkptgfwcw9w2bwr9zn563zx', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.353941');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('c7p3wkuzvxd5gi5mfs69oc3uqyb7av2l', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', '2026-11-26 01:17:04.865053');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -636,7 +636,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.365556' WHERE `django_session`.`session_key` = 'e70xp0h2wxkptgfwcw9w2bwr9zn563zx';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR2:jjThkJRRrnQv9HL-7gh1tCvf2moZbM2VxFoBcuhGwvA', `expire_date` = '2026-11-26 01:17:04.874556' WHERE `django_session`.`session_key` = 'c7p3wkuzvxd5gi5mfs69oc3uqyb7av2l';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -644,7 +644,7 @@ set autocommit=1;
 
 -- block: resort.empty/resorted api/data.json?order=-time1,opusid&page=1&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.376700' AND `django_session`.`session_key` = 'e70xp0h2wxkptgfwcw9w2bwr9zn563zx') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:04.884484' AND `django_session`.`session_key` = 'c7p3wkuzvxd5gi5mfs69oc3uqyb7av2l') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
@@ -674,7 +674,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.479154' WHERE `django_session`.`session_key` = 'e70xp0h2wxkptgfwcw9w2bwr9zn563zx';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.049361' WHERE `django_session`.`session_key` = 'c7p3wkuzvxd5gi5mfs69oc3uqyb7av2l';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -682,11 +682,11 @@ set autocommit=1;
 
 -- block: resort.broad/default_order api/data.json?time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '05wo15lt0xjv65tzt5o91jhdh43h6lqt' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'd0q73ndx93i00gdtfwakh6ca1oayadv9' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('05wo15lt0xjv65tzt5o91jhdh43h6lqt', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.505375');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('d0q73ndx93i00gdtfwakh6ca1oayadv9', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', '2026-11-26 01:17:05.066256');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -700,7 +700,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.517372' WHERE `django_session`.`session_key` = '05wo15lt0xjv65tzt5o91jhdh43h6lqt';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.075819' WHERE `django_session`.`session_key` = 'd0q73ndx93i00gdtfwakh6ca1oayadv9';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -708,7 +708,7 @@ set autocommit=1;
 
 -- block: resort.broad/resorted api/data.json?time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&order=-time1,opusid&page=1&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.537672' AND `django_session`.`session_key` = '05wo15lt0xjv65tzt5o91jhdh43h6lqt') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:05.080174' AND `django_session`.`session_key` = 'd0q73ndx93i00gdtfwakh6ca1oayadv9') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
@@ -738,7 +738,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.661126' WHERE `django_session`.`session_key` = '05wo15lt0xjv65tzt5o91jhdh43h6lqt';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.177750' WHERE `django_session`.`session_key` = 'd0q73ndx93i00gdtfwakh6ca1oayadv9';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -746,11 +746,11 @@ set autocommit=1;
 
 -- block: resort.selective/default_order api/data.json?planet=Uranus&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '34sou1uuqt0ziwkuakqxxqimik9cl5bn' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'lwwudewdsre300ur66rhglvc47fme2px' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('34sou1uuqt0ziwkuakqxxqimik9cl5bn', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.685982');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('lwwudewdsre300ur66rhglvc47fme2px', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', '2026-11-26 01:17:05.193096');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -764,7 +764,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.696761' WHERE `django_session`.`session_key` = '34sou1uuqt0ziwkuakqxxqimik9cl5bn';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.208946' WHERE `django_session`.`session_key` = 'lwwudewdsre300ur66rhglvc47fme2px';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -772,7 +772,7 @@ set autocommit=1;
 
 -- block: resort.selective/resorted api/data.json?planet=Uranus&order=-time1,opusid&page=1&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.709485' AND `django_session`.`session_key` = '34sou1uuqt0ziwkuakqxxqimik9cl5bn') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:05.213770' AND `django_session`.`session_key` = 'lwwudewdsre300ur66rhglvc47fme2px') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
@@ -802,7 +802,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.731437' WHERE `django_session`.`session_key` = '34sou1uuqt0ziwkuakqxxqimik9cl5bn';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.229533' WHERE `django_session`.`session_key` = 'lwwudewdsre300ur66rhglvc47fme2px';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -810,11 +810,11 @@ set autocommit=1;
 
 -- block: resort.ring_radius/default_order api/data.json?RINGGEOringradius1=60000&RINGGEOringradius2=140000&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '8jhx63qsma752gnztsauo7yloeeo7dp7' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'eyzistgz605i1pygeym87syq65rb9mhb' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('8jhx63qsma752gnztsauo7yloeeo7dp7', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.755704');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('eyzistgz605i1pygeym87syq65rb9mhb', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', '2026-11-26 01:17:05.246275');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -828,7 +828,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.765395' WHERE `django_session`.`session_key` = '8jhx63qsma752gnztsauo7yloeeo7dp7';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.253340' WHERE `django_session`.`session_key` = 'eyzistgz605i1pygeym87syq65rb9mhb';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -836,7 +836,7 @@ set autocommit=1;
 
 -- block: resort.ring_radius/resorted api/data.json?RINGGEOringradius1=60000&RINGGEOringradius2=140000&order=-time1,opusid&page=1&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.776623' AND `django_session`.`session_key` = '8jhx63qsma752gnztsauo7yloeeo7dp7') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:05.257007' AND `django_session`.`session_key` = 'eyzistgz605i1pygeym87syq65rb9mhb') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
@@ -866,7 +866,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.845531' WHERE `django_session`.`session_key` = '8jhx63qsma752gnztsauo7yloeeo7dp7';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.309126' WHERE `django_session`.`session_key` = 'eyzistgz605i1pygeym87syq65rb9mhb';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -874,11 +874,11 @@ set autocommit=1;
 
 -- block: resort.target/default_order api/data.json?target=Saturn&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'yzyvztre6z34my3kxwe2bkg4zyc5p659' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'uf14xuad02l29bamrt2wca2j35x8r4vu' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('yzyvztre6z34my3kxwe2bkg4zyc5p659', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.868705');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('uf14xuad02l29bamrt2wca2j35x8r4vu', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', '2026-11-26 01:17:05.326167');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -892,7 +892,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.882590' WHERE `django_session`.`session_key` = 'yzyvztre6z34my3kxwe2bkg4zyc5p659';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.338896' WHERE `django_session`.`session_key` = 'uf14xuad02l29bamrt2wca2j35x8r4vu';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -900,7 +900,7 @@ set autocommit=1;
 
 -- block: resort.target/resorted api/data.json?target=Saturn&order=-time1,opusid&page=1&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.893516' AND `django_session`.`session_key` = 'yzyvztre6z34my3kxwe2bkg4zyc5p659') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:05.342154' AND `django_session`.`session_key` = 'uf14xuad02l29bamrt2wca2j35x8r4vu') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
@@ -914,7 +914,7 @@ set autocommit=0;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 11 FOR UPDATE;
 -- statement: connection 17
-INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`) SELECT 11,ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` DESC,`obs_general`.`opus_id` ASC),`obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,'11');
+INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`) SELECT 11,ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` DESC,`obs_general`.`opus_id` ASC),`obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,'1');
 -- statement: connection 17
 UPDATE user_searches SET result_count = 5062, results_built_at = UTC_TIMESTAMP(), last_used_at = UTC_TIMESTAMP() WHERE id = 11;
 -- statement: connection 17
@@ -930,7 +930,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.938416' WHERE `django_session`.`session_key` = 'yzyvztre6z34my3kxwe2bkg4zyc5p659';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.376932' WHERE `django_session`.`session_key` = 'uf14xuad02l29bamrt2wca2j35x8r4vu';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -938,11 +938,11 @@ set autocommit=1;
 
 -- block: resort.surface_geometry/default_order api/data.json?surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '019ti6z8v60y7d9zz0yt4zk9q73sg2pz' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '49tpboi1sb0nbygwpglyy4oglkwch44i' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('019ti6z8v60y7d9zz0yt4zk9q73sg2pz', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', '2026-11-25 13:34:57.960980');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('49tpboi1sb0nbygwpglyy4oglkwch44i', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', '2026-11-26 01:17:05.392752');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -956,7 +956,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8TZ:RDJwqsql2Pi-LdbgNF8cx466bqpoaS3tcuCqwqHbFW4', `expire_date` = '2026-11-25 13:34:57.970810' WHERE `django_session`.`session_key` = '019ti6z8v60y7d9zz0yt4zk9q73sg2pz';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.399500' WHERE `django_session`.`session_key` = '49tpboi1sb0nbygwpglyy4oglkwch44i';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -964,7 +964,7 @@ set autocommit=1;
 
 -- block: resort.surface_geometry/resorted api/data.json?surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30&order=-time1,opusid&page=1&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:57.981463' AND `django_session`.`session_key` = '019ti6z8v60y7d9zz0yt4zk9q73sg2pz') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:05.402841' AND `django_session`.`session_key` = '49tpboi1sb0nbygwpglyy4oglkwch44i') LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
@@ -978,7 +978,7 @@ set autocommit=0;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 12 FOR UPDATE;
 -- statement: connection 17
-INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`) SELECT 12,ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` DESC,`obs_general`.`opus_id` ASC),`obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_surface_geometry_target` AS `obs_surface_geometry__saturn` ON `obs_general`.`id`=`obs_surface_geometry__saturn`.`obs_general_id` AND `obs_surface_geometry__saturn`.`target_name` = 0 WHERE (`obs_surface_geometry__saturn`.`planetographic_latitude2` >= -30.0e0 AND `obs_surface_geometry__saturn`.`planetographic_latitude1` <= 30.0e0) AND (EXISTS (SELECT 1 FROM `obs_surface_geometry_target` AS `obs_surface_geometry_name` WHERE `obs_surface_geometry_name`.`obs_general_id`=`obs_general`.`id` AND `obs_surface_geometry_name`.`target_name` IN (0)));
+INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`) SELECT 12,ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` DESC,`obs_general`.`opus_id` ASC),`obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_surface_geometry_target` AS `obs_surface_geometry__saturn` ON `obs_general`.`id`=`obs_surface_geometry__saturn`.`obs_general_id` AND `obs_surface_geometry__saturn`.`target_name` = 6 WHERE (`obs_surface_geometry__saturn`.`planetographic_latitude2` >= -30.0e0 AND `obs_surface_geometry__saturn`.`planetographic_latitude1` <= 30.0e0) AND (EXISTS (SELECT 1 FROM `obs_surface_geometry_target` AS `obs_surface_geometry_name` WHERE `obs_surface_geometry_name`.`obs_general_id`=`obs_general`.`id` AND `obs_surface_geometry_name`.`target_name` IN (6)));
 -- statement: connection 17
 UPDATE user_searches SET result_count = 4338, results_built_at = UTC_TIMESTAMP(), last_used_at = UTC_TIMESTAMP() WHERE id = 12;
 -- statement: connection 17
@@ -994,7 +994,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', `expire_date` = '2026-11-25 13:34:58.019952' WHERE `django_session`.`session_key` = '019ti6z8v60y7d9zz0yt4zk9q73sg2pz';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR3:c4ZkhkPz5vSD5vEoQP-hXl3ue1X3lh4SB3KegpvCkfo', `expire_date` = '2026-11-26 01:17:05.433106' WHERE `django_session`.`session_key` = '49tpboi1sb0nbygwpglyy4oglkwch44i';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -1014,7 +1014,7 @@ SELECT `obs_general`.`instrument_id`,COUNT(*) AS `instrument_id__count` FROM `ob
 
 -- block: fanout.empty/mults_observationtype __api/meta/mults/observationtype.json?reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'observationtype' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'observationtype' LIMIT 21;
 -- statement: connection 17
 SELECT `mult`.`id` AS `id`, `mult`.`value` AS `value`, `mult`.`label` AS `label`, `mult`.`disp_rank` AS `disp_rank` FROM `mult` WHERE `mult`.`field_id` = 4;
 -- statement: connection 17
@@ -1030,7 +1030,7 @@ SELECT `obs_general`.`_mult_val_`,COUNT(*) AS `target_name__count` FROM `obs_gen
 
 -- block: fanout.empty/endpoints_time1 __api/meta/range/endpoints/time1.json?reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'time1' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'time1' LIMIT 21;
 -- statement: connection 17
 SELECT MIN(`obs_general`.`time1`) AS `min`, MAX(`obs_general`.`time2`) AS `max` FROM `obs_general`;
 -- statement: connection 17
@@ -1038,43 +1038,43 @@ SELECT COUNT(*) AS `__count` FROM `obs_general` WHERE (`obs_general`.`time1` IS 
 
 -- block: fanout.empty/menu __menu.json?reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` IN ('obs_general', 'obs_pds', 'obs_ring_geometry', 'obs_surface_geometry_name', 'obs_surface_geometry', 'obs_wavelength', 'obs_type_image', 'obs_profile') AND `param_info`.`display` = '1') ORDER BY `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` IN ('obs_general', 'obs_pds', 'obs_ring_geometry', 'obs_surface_geometry_name', 'obs_surface_geometry', 'obs_wavelength', 'obs_type_image', 'obs_profile') AND `param_info`.`display` = '1') ORDER BY `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_pds' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_pds' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_type_image' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_type_image' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_wavelength' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_wavelength' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_profile' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_profile' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'RINGGEOringradius1' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'RINGGEOringradius1' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'RINGGEOsolarringopeningangle1' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'RINGGEOsolarringopeningangle1' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'RINGGEOobserverringopeningangle1' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'RINGGEOobserverringopeningangle1' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry_name' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry_name' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Radius & Longitude') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Radius & Longitude') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Distance & Resolution') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Distance & Resolution') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Lighting Geometry - Observed') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Lighting Geometry - Observed') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Lighting Geometry - Ring Center') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Lighting Geometry - Ring Center') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Edge-On Viewing Geometry') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Edge-On Viewing Geometry') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Image Geometry') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Image Geometry') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Pole') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Pole') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Timing') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Timing') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
 SELECT `definitions`.`context` AS `context`, `definitions`.`term` AS `term`, `definitions`.`definition` AS `definition` FROM `definitions`;
 
@@ -1152,7 +1152,7 @@ SELECT COUNT(*) FROM `obs_general`,(SELECT `search_results`.`obs_general_id` AS 
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 13;
 -- statement: connection 17
-SELECT `partables`.`id`, `partables`.`trigger_tab`, `partables`.`trigger_col`, `partables`.`trigger_val`, `partables`.`partable`, `partables`.`timestamp` FROM `partables`;
+SELECT `partables`.`id`, `partables`.`trigger_tab`, `partables`.`trigger_col`, `partables`.`trigger_val`, `partables`.`partable` FROM `partables`;
 -- statement: connection 17
 SELECT DISTINCT `obs_general`.`mission_id` FROM `obs_general`,(SELECT `search_results`.`obs_general_id` AS `id`,`search_results`.`sort_order` FROM `search_results` WHERE `search_results`.`search_id` = 13) AS `results` WHERE `obs_general`.`id`=`results`.`id`;
 -- statement: connection 17
@@ -1160,41 +1160,41 @@ SELECT DISTINCT `obs_general`.`instrument_id` FROM `obs_general`,(SELECT `search
 -- statement: connection 17
 SELECT DISTINCT `obs_general`.`inst_host_id` FROM `obs_general`,(SELECT `search_results`.`obs_general_id` AS `id`,`search_results`.`sort_order` FROM `search_results` WHERE `search_results`.`search_id` = 13) AS `results` WHERE `obs_general`.`id`=`results`.`id`;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` IN ('obs_general', 'obs_pds', 'obs_type_image', 'obs_wavelength', 'obs_profile', 'obs_surface_geometry_name', 'obs_surface_geometry', 'obs_ring_geometry') AND `param_info`.`display` = '1') ORDER BY `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` IN ('obs_general', 'obs_pds', 'obs_type_image', 'obs_wavelength', 'obs_profile', 'obs_surface_geometry_name', 'obs_surface_geometry', 'obs_ring_geometry') AND `param_info`.`display` = '1') ORDER BY `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_general' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_pds' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_pds' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_type_image' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_type_image' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_wavelength' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_wavelength' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_profile' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_profile' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry_name' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry_name' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_surface_geometry' AND `param_info`.`display` = '1') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Radius & Longitude') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Radius & Longitude') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Distance & Resolution') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Distance & Resolution') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Lighting Geometry - Observed') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Lighting Geometry - Observed') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Lighting Geometry - Ring Center') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Lighting Geometry - Ring Center') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Edge-On Viewing Geometry') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Edge-On Viewing Geometry') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Image Geometry') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Image Geometry') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Pole') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Pole') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Timing') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_ring_geometry' AND `param_info`.`display` = '1' AND `param_info`.`sub_heading` = 'Timing') ORDER BY `param_info`.`category_name` ASC, `param_info`.`sub_heading` ASC, `param_info`.`disp_order` ASC;
 
 -- block: widget.planet/widget __widget/planet.html
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'planet' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'planet' LIMIT 21;
 -- statement: connection 17
 SELECT `mult`.`field_id`, `mult`.`id`, `mult`.`value`, `mult`.`label`, `mult`.`pin`, `mult`.`disp_rank`, `mult`.`display`, `mult`.`grouping` FROM `mult` WHERE (`mult`.`field_id` = 5 AND `mult`.`grouping` IS NULL);
 -- statement: connection 17
@@ -1254,9 +1254,9 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 
 -- block: autocomplete.bundleid/prefix_2 __api/stringsearchchoices/bundleid.json?bundleid=CO&reqno=1
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'bundleid' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'bundleid' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_pds' AND `param_info`.`name` = 'bundle_id') LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE (`param_info`.`category_name` = 'obs_pds' AND `param_info`.`name` = 'bundle_id') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
@@ -1274,11 +1274,11 @@ SELECT `obs_files`.`opus_id`,`obs_files`.`version_name`,`obs_files`.`category`,`
 
 -- block: files.broad/search_page_1 api/files.json?time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&page=1&limit=100
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'kr5pbwf5oa4rtqlxa5ti0clogrjm8q8m' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'wfimj9rwrzj017c8j7zpa8u8ykufkljv' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('kr5pbwf5oa4rtqlxa5ti0clogrjm8q8m', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', '2026-11-25 13:34:58.724831');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('wfimj9rwrzj017c8j7zpa8u8ykufkljv', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', '2026-11-26 01:17:06.033890');
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -1294,7 +1294,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', `expire_date` = '2026-11-25 13:34:58.766869' WHERE `django_session`.`session_key` = 'kr5pbwf5oa4rtqlxa5ti0clogrjm8q8m';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', `expire_date` = '2026-11-26 01:17:06.064872' WHERE `django_session`.`session_key` = 'wfimj9rwrzj017c8j7zpa8u8ykufkljv';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -1302,27 +1302,27 @@ set autocommit=1;
 
 -- block: previews.empty/gallery_page_1 __api/dataimages.json?page=1&limit=100&reqno=1
 -- statement: connection 17
-SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo' LIMIT 1;
+SELECT 1 AS `a` FROM `django_session` WHERE `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31' LIMIT 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('9zo1xnn0oydgvvpszoqvjqizfe632jeo', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', '2026-11-25 13:34:58.790982');
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES ('lrqc05kj799bg5p6gg6txfrimj0xtu31', 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', '2026-11-26 01:17:06.079825');
 -- statement: connection 17
 commit;
 -- statement: connection 17
 set autocommit=1;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = '**previewimages' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = '**previewimages' LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
-SELECT `obs_general`.`opus_id`,`obs_general`.`opus_id`,`mult_obs_general_instrument_id`.`label`,`mult_obs_general_planet_id`.`label`,`obs_general`.`target_name`,`obs_general`.`time1`,`obs_general`.`observation_duration`,`obs_general`.`preview_images`,`cart`.`opus_id`,`cart`.`recycled` FROM `obs_general` LEFT JOIN `mult` AS `mult_obs_general_instrument_id` ON `mult_obs_general_instrument_id`.`field_id` = 2 AND `mult_obs_general_instrument_id`.`id`=`obs_general`.`instrument_id` LEFT JOIN `mult` AS `mult_obs_general_planet_id` ON `mult_obs_general_planet_id`.`field_id` = 5 AND `mult_obs_general_planet_id`.`id`=`obs_general`.`planet_id` INNER JOIN (SELECT `search_results`.`obs_general_id` AS `id`,`search_results`.`sort_order` FROM `search_results` WHERE `search_results`.`search_id` = 1) AS `results` ON `obs_general`.`id`=`results`.`id` AND `results`.`sort_order` BETWEEN 1 AND 100 LEFT JOIN `cart` ON `obs_general`.`id`=`cart`.`obs_general_id` AND `cart`.`session_id` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo' ORDER BY `results`.`sort_order`;
+SELECT `obs_general`.`opus_id`,`obs_general`.`opus_id`,`mult_obs_general_instrument_id`.`label`,`mult_obs_general_planet_id`.`label`,`obs_general`.`target_name`,`obs_general`.`time1`,`obs_general`.`observation_duration`,`obs_general`.`preview_images`,`cart`.`opus_id`,`cart`.`recycled` FROM `obs_general` LEFT JOIN `mult` AS `mult_obs_general_instrument_id` ON `mult_obs_general_instrument_id`.`field_id` = 2 AND `mult_obs_general_instrument_id`.`id`=`obs_general`.`instrument_id` LEFT JOIN `mult` AS `mult_obs_general_planet_id` ON `mult_obs_general_planet_id`.`field_id` = 5 AND `mult_obs_general_planet_id`.`id`=`obs_general`.`planet_id` INNER JOIN (SELECT `search_results`.`obs_general_id` AS `id`,`search_results`.`sort_order` FROM `search_results` WHERE `search_results`.`search_id` = 1) AS `results` ON `obs_general`.`id`=`results`.`id` AND `results`.`sort_order` BETWEEN 1 AND 100 LEFT JOIN `cart` ON `obs_general`.`id`=`cart`.`obs_general_id` AND `cart`.`session_id` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31' ORDER BY `results`.`sort_order`;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', `expire_date` = '2026-11-25 13:34:58.810907' WHERE `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', `expire_date` = '2026-11-26 01:17:06.093533' WHERE `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -1330,17 +1330,17 @@ set autocommit=1;
 
 -- block: previews.empty/gallery_page_10 __api/dataimages.json?page=10&limit=100&reqno=1
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:58.821657' AND `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:06.096892' AND `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
-SELECT `obs_general`.`opus_id`,`obs_general`.`opus_id`,`mult_obs_general_instrument_id`.`label`,`mult_obs_general_planet_id`.`label`,`obs_general`.`target_name`,`obs_general`.`time1`,`obs_general`.`observation_duration`,`obs_general`.`preview_images`,`cart`.`opus_id`,`cart`.`recycled` FROM `obs_general` LEFT JOIN `mult` AS `mult_obs_general_instrument_id` ON `mult_obs_general_instrument_id`.`field_id` = 2 AND `mult_obs_general_instrument_id`.`id`=`obs_general`.`instrument_id` LEFT JOIN `mult` AS `mult_obs_general_planet_id` ON `mult_obs_general_planet_id`.`field_id` = 5 AND `mult_obs_general_planet_id`.`id`=`obs_general`.`planet_id` INNER JOIN (SELECT `search_results`.`obs_general_id` AS `id`,`search_results`.`sort_order` FROM `search_results` WHERE `search_results`.`search_id` = 1) AS `results` ON `obs_general`.`id`=`results`.`id` AND `results`.`sort_order` BETWEEN 901 AND 1000 LEFT JOIN `cart` ON `obs_general`.`id`=`cart`.`obs_general_id` AND `cart`.`session_id` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo' ORDER BY `results`.`sort_order`;
+SELECT `obs_general`.`opus_id`,`obs_general`.`opus_id`,`mult_obs_general_instrument_id`.`label`,`mult_obs_general_planet_id`.`label`,`obs_general`.`target_name`,`obs_general`.`time1`,`obs_general`.`observation_duration`,`obs_general`.`preview_images`,`cart`.`opus_id`,`cart`.`recycled` FROM `obs_general` LEFT JOIN `mult` AS `mult_obs_general_instrument_id` ON `mult_obs_general_instrument_id`.`field_id` = 2 AND `mult_obs_general_instrument_id`.`id`=`obs_general`.`instrument_id` LEFT JOIN `mult` AS `mult_obs_general_planet_id` ON `mult_obs_general_planet_id`.`field_id` = 5 AND `mult_obs_general_planet_id`.`id`=`obs_general`.`planet_id` INNER JOIN (SELECT `search_results`.`obs_general_id` AS `id`,`search_results`.`sort_order` FROM `search_results` WHERE `search_results`.`search_id` = 1) AS `results` ON `obs_general`.`id`=`results`.`id` AND `results`.`sort_order` BETWEEN 901 AND 1000 LEFT JOIN `cart` ON `obs_general`.`id`=`cart`.`obs_general_id` AND `cart`.`session_id` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31' ORDER BY `results`.`sort_order`;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', `expire_date` = '2026-11-25 13:34:58.834295' WHERE `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', `expire_date` = '2026-11-26 01:17:06.108398' WHERE `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -1348,7 +1348,7 @@ set autocommit=1;
 
 -- block: previews.empty/images_page_1 api/images.json?page=1&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:58.849044' AND `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:06.114393' AND `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
@@ -1358,7 +1358,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', `expire_date` = '2026-11-25 13:34:58.853345' WHERE `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', `expire_date` = '2026-11-26 01:17:06.117184' WHERE `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -1366,7 +1366,7 @@ set autocommit=1;
 
 -- block: previews.empty/images_page_10 api/images.json?page=10&limit=100
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:58.868022' AND `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:06.120537' AND `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31') LIMIT 21;
 -- statement: connection 17
 SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id = 1;
 -- statement: connection 17
@@ -1376,7 +1376,7 @@ SELECT result_count, results_built_at, search_hash FROM user_searches WHERE id =
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', `expire_date` = '2026-11-25 13:34:58.872429' WHERE `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', `expire_date` = '2026-11-26 01:17:06.123368' WHERE `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -1384,21 +1384,21 @@ set autocommit=1;
 
 -- block: previews.empty/detail __initdetail/co-iss-w1477654052.html
 -- statement: connection 17
-SELECT `obs_general`.`id`, `obs_general`.`opus_id`, `obs_general`.`bundle_id`, `obs_general`.`instrument_id`, `obs_general`.`mission_id`, `obs_general`.`inst_host_id`, `obs_general`.`planet_id`, `obs_general`.`target_name`, `obs_general`.`target_class`, `obs_general`.`time1`, `obs_general`.`time2`, `obs_general`.`observation_duration`, `obs_general`.`quantity`, `obs_general`.`right_asc1`, `obs_general`.`right_asc2`, `obs_general`.`right_asc`, `obs_general`.`d_right_asc`, `obs_general`.`declination1`, `obs_general`.`declination2`, `obs_general`.`observation_type`, `obs_general`.`preview_images`, `obs_general`.`timestamp` FROM `obs_general` WHERE `obs_general`.`opus_id` = 'co-iss-w1477654052' LIMIT 21;
+SELECT `obs_general`.`id`, `obs_general`.`opus_id`, `obs_general`.`bundle_id`, `obs_general`.`instrument_id`, `obs_general`.`mission_id`, `obs_general`.`inst_host_id`, `obs_general`.`planet_id`, `obs_general`.`target_name`, `obs_general`.`target_class`, `obs_general`.`time1`, `obs_general`.`time2`, `obs_general`.`observation_duration`, `obs_general`.`quantity`, `obs_general`.`right_asc1`, `obs_general`.`right_asc2`, `obs_general`.`right_asc`, `obs_general`.`d_right_asc`, `obs_general`.`declination1`, `obs_general`.`declination2`, `obs_general`.`observation_type`, `obs_general`.`preview_images` FROM `obs_general` WHERE `obs_general`.`opus_id` = 'co-iss-w1477654052' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'instrumentid' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'instrumentid' LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`old_slug` = 'instrumentid' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`old_slug` = 'instrumentid' LIMIT 21;
 -- statement: connection 17
 SELECT `obs_pds`.`primary_filespec` AS `primary_filespec` FROM `obs_pds` WHERE `obs_pds`.`obs_general_id` = 329600 LIMIT 21;
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:58.889307' AND `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:06.130905' AND `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31') LIMIT 21;
 -- statement: connection 17
-SELECT `cart`.`id`, `cart`.`session_id`, `cart`.`obs_general_id`, `cart`.`opus_id`, `cart`.`recycled`, `cart`.`timestamp` FROM `cart` WHERE (`cart`.`opus_id` = 'co-iss-w1477654052' AND `cart`.`recycled` = 0 AND `cart`.`session_id` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo') LIMIT 21;
+SELECT `cart`.`id`, `cart`.`session_id`, `cart`.`obs_general_id`, `cart`.`opus_id`, `cart`.`recycled` FROM `cart` WHERE (`cart`.`opus_id` = 'co-iss-w1477654052' AND `cart`.`recycled` = 0 AND `cart`.`session_id` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31') LIMIT 21;
 -- statement: connection 17
-SELECT `obs_general`.`id`, `obs_general`.`opus_id`, `obs_general`.`bundle_id`, `obs_general`.`instrument_id`, `obs_general`.`mission_id`, `obs_general`.`inst_host_id`, `obs_general`.`planet_id`, `obs_general`.`target_name`, `obs_general`.`target_class`, `obs_general`.`time1`, `obs_general`.`time2`, `obs_general`.`observation_duration`, `obs_general`.`quantity`, `obs_general`.`right_asc1`, `obs_general`.`right_asc2`, `obs_general`.`right_asc`, `obs_general`.`d_right_asc`, `obs_general`.`declination1`, `obs_general`.`declination2`, `obs_general`.`observation_type`, `obs_general`.`preview_images`, `obs_general`.`timestamp` FROM `obs_general` WHERE `obs_general`.`opus_id` = 'co-iss-w1477654052' LIMIT 21;
+SELECT `obs_general`.`id`, `obs_general`.`opus_id`, `obs_general`.`bundle_id`, `obs_general`.`instrument_id`, `obs_general`.`mission_id`, `obs_general`.`inst_host_id`, `obs_general`.`planet_id`, `obs_general`.`target_name`, `obs_general`.`target_class`, `obs_general`.`time1`, `obs_general`.`time2`, `obs_general`.`observation_duration`, `obs_general`.`quantity`, `obs_general`.`right_asc1`, `obs_general`.`right_asc2`, `obs_general`.`right_asc`, `obs_general`.`d_right_asc`, `obs_general`.`declination1`, `obs_general`.`declination2`, `obs_general`.`observation_type`, `obs_general`.`preview_images` FROM `obs_general` WHERE `obs_general`.`opus_id` = 'co-iss-w1477654052' LIMIT 21;
 -- statement: connection 17
-SELECT `obs_general`.`id`, `obs_general`.`opus_id`, `obs_general`.`bundle_id`, `obs_general`.`instrument_id`, `obs_general`.`mission_id`, `obs_general`.`inst_host_id`, `obs_general`.`planet_id`, `obs_general`.`target_name`, `obs_general`.`target_class`, `obs_general`.`time1`, `obs_general`.`time2`, `obs_general`.`observation_duration`, `obs_general`.`quantity`, `obs_general`.`right_asc1`, `obs_general`.`right_asc2`, `obs_general`.`right_asc`, `obs_general`.`d_right_asc`, `obs_general`.`declination1`, `obs_general`.`declination2`, `obs_general`.`observation_type`, `obs_general`.`preview_images`, `obs_general`.`timestamp` FROM `obs_general` WHERE `obs_general`.`opus_id` = 'co-iss-w1477654052' LIMIT 21;
+SELECT `obs_general`.`id`, `obs_general`.`opus_id`, `obs_general`.`bundle_id`, `obs_general`.`instrument_id`, `obs_general`.`mission_id`, `obs_general`.`inst_host_id`, `obs_general`.`planet_id`, `obs_general`.`target_name`, `obs_general`.`target_class`, `obs_general`.`time1`, `obs_general`.`time2`, `obs_general`.`observation_duration`, `obs_general`.`quantity`, `obs_general`.`right_asc1`, `obs_general`.`right_asc2`, `obs_general`.`right_asc`, `obs_general`.`d_right_asc`, `obs_general`.`declination1`, `obs_general`.`declination2`, `obs_general`.`observation_type`, `obs_general`.`preview_images` FROM `obs_general` WHERE `obs_general`.`opus_id` = 'co-iss-w1477654052' LIMIT 21;
 -- statement: connection 17
 SELECT `obs_files`.`opus_id`,`obs_files`.`version_name`,`obs_files`.`category`,`obs_files`.`sort_order`,`obs_files`.`short_name`,`obs_files`.`full_name`,`obs_files`.`size`,`obs_files`.`pds_version`,`obs_files`.`url` FROM `obs_files` WHERE ((`obs_files`.`short_name` = 'browse_medium' AND `obs_files`.`version_name` = 'Current') OR (`obs_files`.`short_name` = 'diagram_medium' AND `obs_files`.`version_name` = 'Current') OR (`obs_files`.`short_name` = 'browse_full' AND `obs_files`.`version_name` = 'Current') OR (`obs_files`.`short_name` = 'diagram_full' AND `obs_files`.`version_name` = 'Current')) AND `obs_files`.`opus_id` IN ('co-iss-w1477654052') ORDER BY `obs_files`.`opus_id`,`obs_files`.`version_number` DESC,`obs_files`.`sort_order`,`obs_files`.`product_order`,`obs_files`.`file_number`;
 -- statement: connection 17
@@ -1406,7 +1406,7 @@ SELECT `obs_files`.`opus_id`,`obs_files`.`version_name`,`obs_files`.`category`,`
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', `expire_date` = '2026-11-25 13:34:58.891969' WHERE `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', `expire_date` = '2026-11-26 01:17:06.133475' WHERE `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31';
 -- statement: connection 17
 commit;
 -- statement: connection 17
@@ -1414,9 +1414,9 @@ set autocommit=1;
 
 -- block: previews.empty/image_med api/image/med/co-iss-w1477654052.json
 -- statement: connection 17
-SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-11 13:34:58.902705' AND `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo') LIMIT 21;
+SELECT `django_session`.`session_key`, `django_session`.`session_data`, `django_session`.`expire_date` FROM `django_session` WHERE (`django_session`.`expire_date` > '2026-11-12 01:17:06.136415' AND `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31') LIMIT 21;
 -- statement: connection 17
-SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading`, `param_info`.`timestamp` FROM `param_info` WHERE `param_info`.`slug` = 'opusid' LIMIT 21;
+SELECT `param_info`.`id`, `param_info`.`category_name`, `param_info`.`name`, `param_info`.`form_type`, `param_info`.`display`, `param_info`.`display_results`, `param_info`.`disp_order`, `param_info`.`label`, `param_info`.`label_results`, `param_info`.`slug`, `param_info`.`old_slug`, `param_info`.`referred_slug`, `param_info`.`ranges`, `param_info`.`field_hints1`, `param_info`.`field_hints2`, `param_info`.`intro`, `param_info`.`tooltip`, `param_info`.`dict_context`, `param_info`.`dict_name`, `param_info`.`dict_context_results`, `param_info`.`dict_name_results`, `param_info`.`sub_heading` FROM `param_info` WHERE `param_info`.`slug` = 'opusid' LIMIT 21;
 -- statement: connection 17
 None;
 -- statement: connection 17
@@ -1444,7 +1444,7 @@ SELECT `obs_general`.`opus_id`,`obs_general`.`preview_images` FROM `obs_general`
 -- statement: connection 17
 set autocommit=0;
 -- statement: connection 17
-UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xR8Ta:fv7jAA4ZU1wJw-Ba7-0pHfrTm-MBU3Ne0JxZQYZsMgk', `expire_date` = '2026-11-25 13:34:58.930997' WHERE `django_session`.`session_key` = '9zo1xnn0oydgvvpszoqvjqizfe632jeo';
+UPDATE `django_session` SET `session_data` = 'eyJoYXNfc2Vzc2lvbiI6dHJ1ZX0:1xRJR4:G6vWwgJePrIf_HYseDxWrKSDNRK2qb8k-9-czS4j1ZE', `expire_date` = '2026-11-26 01:17:06.141376' WHERE `django_session`.`session_key` = 'lrqc05kj799bg5p6gg6txfrimj0xtu31';
 -- statement: connection 17
 commit;
 -- statement: connection 17
