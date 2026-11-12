@@ -88,6 +88,18 @@ class SQLBuilderExpressionTests(TestCase):
         self.assertEqual(expr.sql, '`obs_general`.`id`=`obs_pds`.`obs_general_id`')
         self.assertEqual(expr.params, [])
 
+    def test__aliased_table_renders_the_keys_it_ignores_for_grouping(self) -> None:
+        "[test_sql_builder.py] AliasedTable: IGNORE INDEX FOR GROUP BY after the alias"
+        source = sql_builder.AliasedTable(
+            'obs_surface_geometry_target', 's', ignore_for_group_by=('PRIMARY',)
+        )
+        self.assertEqual(
+            source.render(),
+            ('`obs_surface_geometry_target` AS `s` IGNORE INDEX FOR GROUP BY (`PRIMARY`)', []),
+        )
+        plain = sql_builder.AliasedTable('obs_surface_geometry_target', 's')
+        self.assertEqual(plain.render(), ('`obs_surface_geometry_target` AS `s`', []))
+
     def test__exists_renders_its_source_and_condition_with_their_params(self) -> None:
         "[test_sql_builder.py] exists: an aliased source, a condition naming the outer table"
         expr = sql_builder.exists(
