@@ -5,7 +5,7 @@ the table and the keys finalization adds must partition what the schema declares
 the first set must hold every key the per-bundle delete reads, or each bundle's delete
 would scan its tables whole. The delete reads ``obs_general`` through its ``bundle_id``
 key, and every other observation table through a key ``obs_general_id`` leads: the
-primary key, or for the surface geometry table, whose primary key starts with
+primary key, or for ``obs_surface_geometry_target``, whose primary key starts with
 ``target_name``, a plain key of its own.
 """
 

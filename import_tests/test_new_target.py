@@ -1,10 +1,10 @@
 """A body the database has never held surface geometry for, served with no code changed.
 
-Every body's surface geometry is a row of one table, and its category -- the
+Every body's surface geometry is a row of ``obs_surface_geometry_target``, and its category -- the
 ``table_names``, ``param_info`` and ``partables`` rows the web application serves it
 through -- is written by finalization from the bodies that table holds. So a body new to
 the database is served by a web application started after an import and its finalization
-have run: no table is created for it, no model is generated, no code changes.
+have run.
 
 The run renames one body of one observation's surface geometry summary to a body the
 fixture has no geometry for (`import_tests.tools.negative_cases.NEW_TARGET_CASE`), then

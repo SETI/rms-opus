@@ -207,7 +207,7 @@ def fill_table_names(ctx: ImportContext, new_table: str) -> bool:
     """Fill an empty ``table_names`` table from the tables that exist and the bodies.
 
     The rows and their order come from `build_table_names_rows`; this function only
-    asks the database which tables are there and which bodies the surface geometry table
+    asks the database which tables are there and which bodies ``obs_surface_geometry_target``
     holds, and writes what it gets back.
 
     Parameters:

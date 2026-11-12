@@ -474,7 +474,7 @@ class AliasedTable:
     """A table joined under an alias, rendered `<table> AS <alias>`.
 
     The ``mult`` table is joined once for each mult column a statement reads, each time
-    under its own alias, and the surface geometry table once for each surface geometry
+    under its own alias, and ``obs_surface_geometry_target`` once for each surface geometry
     category, under the category's name.
     """
 

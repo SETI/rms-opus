@@ -16,27 +16,23 @@ literals rather than computed from the schema; see `Filling the column`_ below.
 The schemas ship inside the wheel and are read through :mod:`importlib.resources`, so
 an installed OPUS finds them without a checkout.
 
-Some files are not tables. Two of them are not even column lists --
-``param_info_ranges.json`` is a dictionary of range sets and
-``internal_def_product_types.json`` names no columns -- while the other is a
-perfectly good column list that simply does not describe a table of its own:
+Two files are not tables:
 
 ``param_info_ranges.json``
     The named range sets a column's ``pi_ranges`` refers to.
-
-``obs_surface_geometry_target.json``
-    The schema of the one surface geometry table, and a *template* of the surface
-    geometry categories: each body's category, ``obs_surface_geometry__<target>``,
-    reads it with ``<TARGET>`` in its ``pi_*`` values replaced by the body's encoded
-    name and ``<SLUGTARGET>`` by its slug name. The ``target_name`` column's ``pi_*``
-    values describe the selector category, ``obs_surface_geometry_name``, and carry no
-    placeholder.
 
 ``internal_def_product_types.json``
     A dictionary source rather than a table. Its entries carry only ``definition``,
     ``pi_dict_name`` and ``pi_dict_context`` -- no ``field_name``, no ``field_type``
     -- and :mod:`opus_import.steps.do_dictionary` reads them to fill the
     ``definitions`` table.
+
+``obs_surface_geometry_target.json`` is the schema of ``obs_surface_geometry_target``
+and also a *template* of the surface geometry categories: each body's category,
+``obs_surface_geometry__<target>``, reads it with ``<TARGET>`` in its ``pi_*`` values
+replaced by the body's encoded name and ``<SLUGTARGET>`` by its slug name. The
+``target_name`` column's ``pi_*`` values describe the selector category,
+``obs_surface_geometry_name``, and carry no placeholder.
 
 Reading a schema is :func:`opus_import.import_util.read_schema_for_table`, which reads a
 body's category as the filled-in template, and it is the only place that substitution
