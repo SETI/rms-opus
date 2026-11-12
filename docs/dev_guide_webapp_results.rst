@@ -100,8 +100,9 @@ Around the query it does four things worth knowing. Every requested slug is reso
 through :func:`~opus_app.apps.search.views.get_param_info_by_slug`, so an unknown column
 is a 400 rather than a SQL error. Two columns may be prepended and appended to the
 caller's list and stripped off the right end afterwards, which is how a caller gets the
-OPUS ID or the preview JSON without them appearing in the output. A SQL NULL becomes the
-string ``'N/A'``. And every value is put through
+OPUS ID or the preview JSON without them appearing in the output. A SQL NULL becomes
+:data:`~opus_app.apps.results.views.NULL_RESULT`, the string ``'N/A'``. And every value is
+put through
 :func:`opus_support.units.format_unit_value`, so a number arrives already formatted in
 the unit the request asked for.
 
@@ -118,7 +119,10 @@ What each handler returns
     in the cart, in the recycle bin, or neither. It is the busiest endpoint in OPUS. The
     preview JSON is the column ``**previewimages``, which the page reads from
     ``obs_preview``, joined to ``obs_general`` by ``obs_general_id`` as any other
-    category's table is.
+    category's table is. :func:`~opus_app.apps.results.views.page_preview_json` decodes
+    it, and reads an observation without an ``obs_preview`` row, which the page delivers
+    as :data:`~opus_app.apps.results.views.NULL_RESULT`, as no preview images, for which
+    the not-found placeholder is shown.
 
 :func:`~opus_app.apps.results.views.api_get_data`
     The public tabular page: the labels, the rows, and how many observations the search

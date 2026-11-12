@@ -1,8 +1,10 @@
 """The page readers' preview images for an observation whose ``obs_preview`` row is missing.
 
-A page LEFT JOINs ``obs_preview``, so such an observation reads NULL; the readers give it
-the not-found placeholder, as the Detail page does, rather than failing the page. The
-search, the labels and the counts are stood in for, so no database is read.
+A page LEFT JOINs ``obs_preview``, so such an observation reads NULL, which
+`get_search_results_chunk` delivers as its ``NULL_RESULT``; the readers give it the
+not-found placeholder, as the Detail page does, rather than failing the page. The search,
+the labels and the counts are stood in for, so no database is read; that the real chunk
+delivers ``NULL_RESULT`` for a NULL join is pinned against the integration database.
 """
 
 from __future__ import annotations
@@ -56,10 +58,15 @@ def _request(path: str) -> Any:
     return RequestFactory().get(path, HTTP_HOST=host)
 
 
+#: The page's row for the observation without an ``obs_preview`` row, as the chunk gives it.
+_MISSING = (_OPUS_IDS[1], results_views.NULL_RESULT)
+
+
 def test_the_gallery_shows_the_placeholder_for_a_missing_preview(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _stand_in_search(monkeypatch, [(_OPUS_IDS[0], _VIEWSET), (_OPUS_IDS[1], None)])
+    """The gallery's page answers, with the placeholder for the observation."""
+    _stand_in_search(monkeypatch, [(_OPUS_IDS[0], _VIEWSET), _MISSING])
     handler = inspect.unwrap(results_views.api_get_data_and_images)
 
     response = handler(_request('/__api/dataimages.json?reqno=1'), api_code=1)
@@ -72,7 +79,8 @@ def test_the_gallery_shows_the_placeholder_for_a_missing_preview(
 def test_an_image_call_shows_the_placeholder_for_a_missing_preview(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _stand_in_search(monkeypatch, [(_OPUS_IDS[0], _VIEWSET), (_OPUS_IDS[1], None)])
+    """An image call answers, with the placeholder for the observation."""
+    _stand_in_search(monkeypatch, [(_OPUS_IDS[0], _VIEWSET), _MISSING])
 
     response = results_views._api_get_images(
         _request('/api/images/med.json'), 'json', 1, 'med', False, None
@@ -83,6 +91,11 @@ def test_an_image_call_shows_the_placeholder_for_a_missing_preview(
     assert images[1]['url'] == settings.THUMBNAIL_NOT_FOUND
 
 
-def test_a_page_reads_null_as_no_preview() -> None:
-    assert results_views.page_preview_json(None) is None
+def test_a_page_reads_the_chunks_null_as_no_preview() -> None:
+    """The chunk's stand-in for NULL is no view set."""
+    assert results_views.page_preview_json(results_views.NULL_RESULT) is None
+
+
+def test_a_page_reads_a_view_set_as_its_decoded_json() -> None:
+    """A view set's JSON text is decoded."""
     assert results_views.page_preview_json(_VIEWSET) == json.loads(_VIEWSET)
