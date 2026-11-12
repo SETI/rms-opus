@@ -77,6 +77,7 @@ PINNED_ENVIRONMENT_KEYS = (
     'coordinator_importers',
     'warm_states',
     'promotion_carts',
+    'promotion_cart_rows',
 )
 
 #: What a pinned entry is compared as in a file whose earlier runs do not record it: a

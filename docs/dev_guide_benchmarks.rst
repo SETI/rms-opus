@@ -513,8 +513,8 @@ A side without ``warm_search``, or whose ``opus_import --help`` lists no
 ``--carry-over-sessions-from``, skips that step, and the result's ``skipped_steps``
 names it (``warm_search``, ``carry_over_sessions``). The environment records the states
 that warmed as ``warm_states`` (none on a side without the command) and the cart rows
-each promotion carried as ``promotion_carts`` (none on a side without the option), and a
-result file refuses web runs that differ in either.
+each promotion asked for as ``promotion_carts`` (none on a side without the option), and a
+result file refuses web runs that differ in either, or in ``promotion_cart_rows``.
 
 What bench_db records
 ~~~~~~~~~~~~~~~~~~~~~
