@@ -2456,8 +2456,10 @@ def selector_label(
     )
     if selections is not None and qualified_name in selections:
         selected = import_constants.mult_table(qualified_name).ids_for(selections[qualified_name])
-        if selected:
-            select.add_where(sql_builder.in_values(field_column, selected))
+        # url_to_search_params refuses a mult value that names no row and leaves out a
+        # field given no value, so a field in the selections names at least one row.
+        assert selected
+        select.add_where(sql_builder.in_values(field_column, selected))
     return sql_builder.scalar_subquery(select)
 
 
