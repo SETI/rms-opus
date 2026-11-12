@@ -7012,3 +7012,14 @@ Nothing above this line is rewritten by an executor.
     and the `search` app's commands).
   - *Case.* The source-is-target refusal compares the names without regard to case, as
     a server with `lower_case_table_names` set does.
+  - Mutations, each failing its test: the shell steps (no `--help` check; skip on any
+    value but `true`; a warm-up failure under `set -e`), the case-sensitive refusal, the
+    harness's planted-row deletion and its recorded warm states, the warm-up's mult
+    requests against the integration database, and four of the carry-over's SQL (every
+    session copied, `TRUNCATE` for `DELETE`, `NOW()` for `UTC_TIMESTAMP()`, the bad name
+    unlogged).
+  - Results, at 97893f49 (PR-17's 54ebdb75 merged): the gates pass (3,050 unit tests);
+    the import suite 192 passed and 3 skipped; the integration suite with coverage
+    against `pr18local`, rebuilt on schema version 10, 2,868 passed, the coverage gate at
+    99% with the same two lines unreached as before, which PR-15's fix, merged up through
+    PR-17, covers.
