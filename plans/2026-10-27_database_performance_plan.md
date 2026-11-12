@@ -6820,3 +6820,24 @@ Nothing above this line is rewritten by an executor.
   - The harness additions are unit-tested with stand-in servers; the promotion schema's
     statements and a 10,000-row carry-over were run by hand against the local server, not
     through a harness session, which is the orchestrator's.
+- **The measurement** (§2.3; PR-18 imports once, test scale): the base imports once and
+  both sides serve that schema, A B A B, each `bench_web` invocation given `--schema
+  <that schema> --warm db-cold --warm app-cold --promotion-carts 10000`. The base has
+  neither step, so its runs are "after a simulated deploy without the warm-up" and record
+  both as skipped; the head's are "with the warm-up". The target is the head's
+  `web.db-cold.pages.empty.page_1.latency_s` against its own
+  `web.warm.pages.empty.page_1.latency_s`; beside it `search.empty`, `pages.empty` and
+  `fanout.empty` in both cold states, the two requests the warm-up does not cover
+  (`pages.empty.page_10.latency_s` and `widget.planet.wall_s`), and the head's
+  `web.promotion.window_s` and `web.promotion.carry_over_s`.
+- Results, at fed01e1a: the gates pass (3,029 unit tests); the import suite
+  185 passed and 3 skipped; the integration suite with coverage against `pr18local`
+  2,851 passed, with `warm_search.py` at 100%. The coverage gate reports 99%:
+  `metadata/views.py` line 659 (a surface geometry body's range endpoints with no
+  selection) and `search/views.py` 2459->2461 (`selector_label` with a selection naming
+  no id) are not reached, and are not reached with this PR's two `warm_search` test files
+  left out either; this PR changes neither module. Every new test was mutation-checked:
+  twenty mutations of the command line, the command, the shell steps, the code-only
+  deploy and the harness, six of the carry-over's SQL (no session join, no expiry
+  filter, no truncation of either table, the source's ids, the reads after the writes),
+  and one of the command's URLs against the integration database; each failed its test.

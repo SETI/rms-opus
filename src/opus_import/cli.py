@@ -693,7 +693,8 @@ def main() -> None:
     Raises:
         SystemExit: With a non-zero status, logged first, when the arguments are
             contradictory, a bundle descriptor is bad, the database connection fails,
-            the observation import fails or is refused, ``--finalize`` or
+            the observation import fails or is refused, the carry-over fails or names
+            the schema it would write into, ``--finalize`` or
             ``--write-schema-version`` refuses, an exception reaches the top-level
             handler, or -- unless ``--ignore-errors`` -- ``--create-indexes``, the
             duplicate step, ``--create-param-info``, ``--update-mult-info``,
