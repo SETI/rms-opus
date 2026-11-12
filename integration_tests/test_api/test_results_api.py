@@ -344,7 +344,7 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         self._run_status_equal(url, 400, http400_unknown_slug(None, '/api/data.json'))
 
         ################################################
-        ######### /api/metadata[_v2] API TESTS #########
+        ######### /api/metadata API TESTS #########
         ################################################
 
     # All metadata
@@ -642,8 +642,8 @@ class ApiResultsTests(ApiTestHelper, TestCase):
             http404_unknown_opus_id('vg-iss-2s-c4360845', '/api/metadata/vg-iss-2s-c4360845.html'),
         )
 
-    def test__api_metadata_bad_opusid_html_v2(self) -> None:
-        "[test_results_api.py] /api/metadata: bad opusid html v2"
+    def test__api_metadata_bad_opusid_punctuation_html(self) -> None:
+        "[test_results_api.py] /api/metadata: bad opusid html, punctuation only"
         url = '/api/metadata/,,,.html'
         self._run_status_equal(url, 404)
 
@@ -652,8 +652,8 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/metadata/0124.csv'
         self._run_status_equal(url, 404, http404_unknown_opus_id('0124', '/api/metadata/0124.csv'))
 
-    def test__api_metadata_bad_opusid_csv_v2(self) -> None:
-        "[test_results_api.py] /api/metadata: bad opusid csv v2"
+    def test__api_metadata_bad_opusid_single_digit_csv(self) -> None:
+        "[test_results_api.py] /api/metadata: bad opusid csv, single digit"
         url = '/api/metadata/1.csv'
         self._run_status_equal(url, 404, http404_unknown_opus_id('1', '/api/metadata/1.csv'))
 
