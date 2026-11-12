@@ -8,7 +8,11 @@ the ASCII character set and compares without case. What is worth pinning, and wh
 * **Accents do not matter either.** MySQL refuses to compare an ASCII column with text
   holding any other character, so every request that compares a caller's text with one of
   these columns folds it first (`sql_builder.ascii_comparable`), as the schema's
-  accent-blind utf8mb4 collation compared it: ``VGÍSS_6210`` is ``VGISS_6210``.
+  accent-blind utf8mb4 collation compared it: ``VGÍSS_6210`` is ``VGISS_6210``. A
+  regular expression keeps a compatibility character from becoming the ASCII operator it
+  resembles.
+* **An answer keyed by OPUS ID is keyed by the caller's spelling** (``api/files``), and
+  the Details tab names the observation so, whatever its case or accents.
 * **Text with no ASCII form finds nothing and is no error.** Each such request answers as
   it answers for an OPUS ID or a string the database does not hold.
 * **A session key is ASCII and fits the cart's column**, or the request is refused.
@@ -18,6 +22,7 @@ import json
 import logging
 from typing import Any
 from unittest import TestCase
+from urllib.parse import unquote
 
 import requests
 from django.conf import settings
@@ -39,6 +44,10 @@ NON_ASCII_OPUS_ID = OPUS_ID + '%C3%9F'
 
 #: The OPUS ID's decoded form, as the API echoes it.
 NON_ASCII_OPUS_ID_TEXT = OPUS_ID + '\u00df'
+
+#: Spellings of `OPUS_ID` that find it, as they travel in a URL: with accents, and in
+#: mixed case.
+OPUS_ID_SPELLINGS = ('vg-%C3%AD%C5%9B%C5%9B-2-s-c4360845', 'VG-ISS-2-s-C4360845')
 
 #: The cart's answer when an OPUS ID it was given is not in the database.
 CART_NOT_FOUND = 'Internal Error: One or more OPUS_IDs not found; nothing added to cart'
@@ -74,12 +83,13 @@ class ApiAsciiColumnsTests(ApiTestHelper, TestCase):
         """Restore logging after one test."""
         logging.disable(logging.NOTSET)
 
-    @staticmethod
-    def _path_response(path: str) -> Any:
-        """Fetch a URL whose path holds a character outside ASCII, in process.
+    def _path_response(self, path: str) -> Any:
+        """Fetch a URL whose path holds a character outside ASCII.
 
-        The requests-based client puts such a path in the WSGI environment undecoded,
-        which Django refuses; Django's own client encodes it as a server does.
+        A live server is asked as every other request is (`_get_response`); the path is
+        already percent-encoded, which the requests library sends as it is. In process,
+        the requests-based client puts such a path in the WSGI environment undecoded,
+        which Django refuses; Django's own client decodes it as a server does.
 
         Parameters:
             path: Path of the endpoint, beginning with a slash, percent-encoded.
@@ -88,6 +98,8 @@ class ApiAsciiColumnsTests(ApiTestHelper, TestCase):
             The response.
         """
         print(path)
+        if go_live_target():  # pragma: no cover - remote server
+            return self._get_response(path)
         host = next((h for h in settings.ALLOWED_HOSTS if h != '*'), 'localhost')
         return Client().get(path, HTTP_HOST=host)
 
@@ -148,6 +160,42 @@ class ApiAsciiColumnsTests(ApiTestHelper, TestCase):
         self.assertEqual(accented.status_code, 200)
         self.assertEqual(json.loads(accented.content), json.loads(plain.content))
 
+    def test__api_files_opusid_with_accents_or_in_mixed_case(self) -> None:
+        "[test_ascii_columns_api.py] /api/files: an OPUS ID's other spellings find its files"
+        plain = json.loads(self._path_response(f'/api/files/{OPUS_ID}.json').content)
+        self.assertNotEqual(plain['data'][OPUS_ID], {})
+        for spelling in OPUS_ID_SPELLINGS:
+            with self.subTest(spelling=spelling):
+                response = self._path_response(f'/api/files/{spelling}.json')
+                self.assertEqual(response.status_code, 200)
+                text = unquote(spelling)
+                self.assertEqual(
+                    json.loads(response.content),
+                    {
+                        'data': {text: plain['data'][OPUS_ID]},
+                        'versions': {text: plain['versions'][OPUS_ID]},
+                    },
+                )
+
+    def test__api_initdetail_opusid_with_accents_or_in_mixed_case(self) -> None:
+        "[test_ascii_columns_api.py] /__initdetail: an OPUS ID's other spellings, in the cart"
+        session = '&__sessionid=asciidetail'
+        self._json(f'/__cart/reset.json?reqno=1{session}')
+        self._json(f'/__cart/add.json?opusid={OPUS_ID}&reqno=2{session}')
+        plain = self._path_response(f'/__initdetail/{OPUS_ID}.html?{session}')
+        self.assertEqual(plain.status_code, 200)
+        self.assertIn('title="Remove from cart"', plain.content.decode())
+        for spelling in OPUS_ID_SPELLINGS:
+            with self.subTest(spelling=spelling):
+                response = self._path_response(f'/__initdetail/{spelling}.html?{session}')
+                self.assertEqual(response.status_code, 200)
+                # The page names the observation as the caller spelled it, and is
+                # otherwise the same: the same cart button, previews and products.
+                self.assertEqual(
+                    response.content.decode(),
+                    plain.content.decode().replace(OPUS_ID, unquote(spelling)),
+                )
+
     def test__api_result_count_bundleid_with_accents(self) -> None:
         "[test_ascii_columns_api.py] /api/meta/result_count: a bundle ID with an accent matches"
         count = self._count('bundleid=VGISS_6210&qtype-bundleid=matches')
@@ -156,6 +204,18 @@ class ApiAsciiColumnsTests(ApiTestHelper, TestCase):
         self.assertEqual(
             self._count('bundleid=v%C7%B5iss&qtype-bundleid=begins'),
             self._count('bundleid=VGISS&qtype-bundleid=begins'),
+        )
+
+    def test__api_result_count_regex_maps_no_compatibility_character(self) -> None:
+        "[test_ascii_columns_api.py] /api/meta/result_count: a full-width dot in a regex is no operator"
+        count = self._count('bundleid=VGISS.6210&qtype-bundleid=regex')
+        self.assertGreater(count, 0)
+        self.assertEqual(self._count('bundleid=VG%C3%8DSS.6210&qtype-bundleid=regex'), count)
+        self.assertEqual(self._count('bundleid=VGISS%EF%BC%8E6210&qtype-bundleid=regex'), 0)
+        self.assertEqual(self._count('bundleid=VGISS%EF%BC%8E6210&qtype-bundleid=matches'), 0)
+        self.assertEqual(
+            self._count('bundleid=VGISS%EF%BC%BF6210&qtype-bundleid=matches'),
+            self._count('bundleid=VGISS_6210&qtype-bundleid=matches'),
         )
 
     ##################################

@@ -536,6 +536,27 @@ class SQLBuilderASCIITests(TestCase):
         )
         self.assertTrue(unstored.isascii())
 
+    def test__ascii_comparable_for_a_regex_maps_no_compatibility_character(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: canonical decomposition alone for a regex"
+        unstored = UNSTORED_ASCII_CHARACTER
+        # The accents go; a full-width full stop and asterisk stay characters, not operators.
+        self.assertEqual(
+            sql_builder.ascii_comparable('VGÍSS\uff0e62\uff0a', compatibility=False),
+            f'VGISS{unstored}62{unstored}',
+        )
+        self.assertEqual(sql_builder.ascii_comparable('VGÍSS\uff0e62\uff0a'), 'VGISS.62*')
+
+    def test__ascii_collation_key_equals_what_the_collation_does(self) -> None:
+        "[test_sql_builder.py] ascii_collation_key: folded, unpadded, without case"
+        self.assertEqual(
+            sql_builder.ascii_collation_key('CÓ-ISS-N1460960653  '), 'co-iss-n1460960653'
+        )
+        self.assertEqual(
+            sql_builder.ascii_collation_key('co-iss-n1460960653'), 'co-iss-n1460960653'
+        )
+        # A leading space and a trailing tab are kept, as the collation keeps them.
+        self.assertEqual(sql_builder.ascii_collation_key(' a\t'), ' a\t')
+
     def test__generated_models_declare_the_ascii_columns(self) -> None:
         "[test_sql_builder.py] is_ascii_column: as each schema's field_charset says"
         ascii_columns, other_strings = _schema_string_columns()

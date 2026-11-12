@@ -1060,3 +1060,16 @@ class FileUtilsTests(TestCase):
         print('Expected:')
         print(expected)
         self.assertEqual(dict(ret), dict(expected))
+
+    def test__get_pds_products_keys_every_spelling_of_one_opusid(self) -> None:
+        "[test_file_utils.py] get_pds_products: each spelling that finds an opusid is a key"
+        opus_id = 'hst-11559-wfc3-ib4v21gcq'
+        expected = get_pds_products(opus_id)[opus_id]
+        self.assertNotEqual(expected, {})
+        # Upper case, an accent and trailing spaces each find the stored ID; the last
+        # spelling finds nothing.
+        found = [opus_id, 'HST-11559-WFC3-IB4V21GCQ', 'hst-11559-wfc3-íb4v21gcq', opus_id + '  ']
+        spellings = [*found, 'hst-11559-wfc3-ib4v21gcx']
+        ret = get_pds_products(spellings)
+        self.assertEqual(list(ret), spellings)
+        self.assertEqual(ret, {**dict.fromkeys(found, expected), spellings[-1]: {}})
