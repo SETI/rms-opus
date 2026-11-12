@@ -7449,6 +7449,31 @@ Nothing above this line is rewritten by an executor.
   - `bench_db`'s `ratio_to_obs_general_data` divides by `obs_general`'s data length, which
     holds the column on a base side and not on a head side; `details.preview_images.table`
     tells the two apart.
+- **CodeRabbit review (2026-11-12).**
+  - *A missing `obs_preview` row still failed a page* (`results.views.page_preview_json`).
+    `get_search_results_chunk` replaces every NULL in its rows with `'N/A'`, so the
+    readers received `'N/A'`, not None, and `json.loads` raised; the readers' tests
+    stubbed the chunk with None, which it never delivers, so they passed. The chunk's
+    stand-in is the constant `results.views.NULL_RESULT`, used where the chunk replaces
+    and compares it, and `page_preview_json` reads it as None. The stubbed page delivers
+    `NULL_RESULT` for the missing row, and an integration test calls the real chunk for
+    a Voyager ISS column of a Cassini observation, pinning that a NULL join arrives as
+    `NULL_RESULT` and reads as no preview. Its docstring, the chunk's and the web
+    application's results guide say so.
+  - *`field_obs_preview_preview_images` had no docstring.* It documents what the method
+    returns: the encoded view set, the missing-size warnings, `{"viewables": []}` for an
+    observation without a filespec or without a view set, and the `--fake-images` set.
+  - Mutations, each failing its test: the reader's `json.loads` of `NULL_RESULT`
+    restored (three unit tests); the chunk's replacement given another value (the
+    integration test).
+  - Results, at 7938aa70 (PR-18's 5723861f merged): the gates pass (3,100 unit tests);
+    the import suite 193 passed and 3 skipped; the mini goldens regenerated unchanged;
+    the integration job's run 2,886 passed against `pr19local` at 100% coverage. Two
+    earlier runs of the job each failed one test,
+    `test__api_stringsearchchoices_bundleid_002_couvis_timeout`, which sets a 1 ms
+    `MAX_EXECUTION_TIME` and expects the constrained query to exceed it; it passed alone
+    three times and in two further runs of `integration_tests` at this head, so its
+    result follows the server's speed, not this change.
 - **Measurement** (2026-11-11, test scale; base at e5e71573 and head at 6189530e, each
   importing its own schema, `bench_test_before_a_1` and `bench_test_after_a_1`, session
   `a`; judged against the PR-00 floors):
