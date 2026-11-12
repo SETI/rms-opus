@@ -5,7 +5,7 @@ New Horizons MVIC images, identified the same way as the LORRI ones.
 
 from typing import cast
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet
 from opus_import.obs.obs_type_image import TWELVE_BIT_IMAGE_LEVELS
 from opus_import.obs.obs_volume_new_horizons_common import ObsVolumeNewHorizonsCommon
 
@@ -105,19 +105,6 @@ class ObsVolumeNHxxMVXxxx(ObsVolumeNewHorizonsCommon):
         if dec is not None:
             return dec
         return cast(FloatField, self._supp_index_col('DECLINATION'))
-
-    def field_obs_general_ring_obs_id(self) -> StrField:
-        filename = self._index_col('FILE_SPECIFICATION_NAME').split('/')[-1]
-        image_num = filename[4:14]
-        camera = filename[:3].upper()
-        start_time = self._index_col('START_TIME')
-        # This is really dumb, but it's what the old OPUS did so we do it for
-        # backwards compatability
-        if start_time > '2007-09-01':
-            pl_str = 'P'
-        else:
-            pl_str = 'J'
-        return f'{pl_str}_IMG_NH_MVIC_{image_num}_{camera}'
 
     def field_obs_general_quantity(self) -> MultFieldRet:
         return self._create_mult('REFLECT')

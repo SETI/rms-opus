@@ -19,7 +19,6 @@ from opus_app.apps.tools.app_utils import (
     http400_unknown_category,
     http400_unknown_slug,
     http404_unknown_opus_id,
-    http404_unknown_ring_obs_id,
 )
 
 from .api_test_helper import ApiTestHelper, go_live_target
@@ -345,7 +344,7 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         self._run_status_equal(url, 400, http400_unknown_slug(None, '/api/data.json'))
 
         ################################################
-        ######### /api/metadata[_v2] API TESTS #########
+        ######### /api/metadata API TESTS #########
         ################################################
 
     # All metadata
@@ -365,85 +364,80 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
 
     def test__api_metadata_vg_iss_2_s_c4360845_default_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default json"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 default json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
 
-    def test__api_metadata_vg_iss_2_s_c4360845_default_json_ringobsid(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: S_IMG_VG2_ISS_4360845_N default json"
-        url = '/api/metadata/S_IMG_VG2_ISS_4360845_N.json'
-        self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_json.json')
-
     def test__api_metadata_vg_iss_2_s_c4360845_default_html(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default html"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 default html"
         url = '/api/metadata/vg-iss-2-s-c4360845.html'
         self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_html.html')
 
     def test__api_metadata_vg_iss_2_s_c4360845_default_html_private(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default html private"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 default html private"
         url = '/__api/metadata/vg-iss-2-s-c4360845.html'
         self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_html_private.html')
 
     def test__api_metadata_vg_iss_2_s_c4360845_default_csv(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default csv"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 default csv"
         url = '/api/metadata/vg-iss-2-s-c4360845.csv'
         self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_default_csv.csv')
 
     # Specified columns, empty
     def test__api_metadata_vg_iss_2_s_c4360845_cols_empty_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols empty json"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 cols empty json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols='
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_cols_empty_json.json')
 
     def test__api_metadata_vg_iss_2_s_c4360845_cols_empty_html(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols empty html"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 cols empty html"
         url = '/api/metadata/vg-iss-2-s-c4360845.html?cols='
         self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_cols_empty_html.html')
 
     def test__api_metadata_vg_iss_2_s_c4360845_cols_empty_html_private(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols empty html private"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 cols empty html private"
         url = '/__api/metadata/vg-iss-2-s-c4360845.html?cols='
         self._run_html_equal_file(
             url, 'api_metadata_vg_iss_2_s_c4360845_cols_empty_html_private.html'
         )
 
     def test__api_metadata_vg_iss_2_s_c4360845_cols_empty_csv(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols empty csv"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 cols empty csv"
         url = '/api/metadata/vg-iss-2-s-c4360845.csv?cols='
         self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_cols_empty_csv.csv')
 
     # Specified columns, opusid only
     def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols opusid json"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 cols opusid json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=opusid'
         self._run_json_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_cols_opusid_json.json')
 
     def test__api_metadata_nh_lorri_lor_0284457489_cols_opusid_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: nh-lorri-lor_0284457489 cols opusid json"
+        "[test_results_api.py] /api/metadata: nh-lorri-lor_0284457489 cols opusid json"
         # Check an OPUS ID with a _ in it which can screw up database searches
         url = '/api/metadata/nh-lorri-lor_0284457489.json?cols=opusid'
         self._run_json_equal_file(url, 'api_metadata_nh_lorri_lor_0284457489_cols_opusid_json.json')
 
     def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_html(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols opusid html"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 cols opusid html"
         url = '/api/metadata/vg-iss-2-s-c4360845.html?cols=opusid'
         self._run_html_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_cols_opusid_html.html')
 
     def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_html_private(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols opusid html private"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 cols opusid html private"
         url = '/__api/metadata/vg-iss-2-s-c4360845.html?cols=opusid'
         self._run_html_equal_file(
             url, 'api_metadata_vg_iss_2_s_c4360845_cols_opusid_html_private.html'
         )
 
     def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_csv(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols opusid csv"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4360845 cols opusid csv"
         url = '/api/metadata/vg-iss-2-s-c4360845.csv?cols=opusid'
         self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4360845_cols_opusid_csv.csv')
 
     # Specified columns, all Voyager or Cassini slugs
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager json"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all voyager json"
         url = '/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_json_equal_file(
             url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_json.json'
@@ -466,7 +460,7 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         )
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini json"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini json"
         url = '/api/metadata/vg-iss-2-s-c4365507.json?cols=opusid,bundleid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_json_equal_file(
             url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_json.json'
@@ -480,42 +474,42 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         )
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_html(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager html"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all voyager html"
         url = '/api/metadata/vg-iss-2-s-c4365507.html?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_html_equal_file(
             url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_html.html'
         )
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_html(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini html"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini html"
         url = '/api/metadata/vg-iss-2-s-c4365507.html?cols=opusid,bundleid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_html_equal_file(
             url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_html.html'
         )
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_csv(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4365507 cols all voyager csv"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all voyager csv"
         url = '/api/metadata/vg-iss-2-s-c4365507.csv?cols=opusid,VOYAGERmissionphasename,VOYAGERspacecraftclockcount1,VOYAGERspacecraftclockcount2,VOYAGERert,VGISScamera,VGISSfilter,VGISSfilternumber,VGISSshuttermode,VGISSeditmode,VGISSgainmode,VGISSscanmode,VGISSimageid,VGISSusablelines,VGISSusablesamples'
         self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_voyager_csv.csv')
 
     def test__api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_csv(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4365507 cols all cassini csv"
+        "[test_results_api.py] /api/metadata: vg-iss-2-s-c4365507 cols all cassini csv"
         url = '/api/metadata/vg-iss-2-s-c4365507.csv?cols=opusid,bundleid,greaterpixelsize,lesserpixelsize,wavelength1,wavelength2,CASSINIobsname,CASSINIactivityname,CASSINImissionphasename,CASSINItargetcode,CASSINIrevnoint,CASSINIprimeinst,CASSINIisprime,CASSINIsequenceid,CASSINIspacecraftclockcount1,CASSINIspacecraftclockcount2,CASSINIert1,CASSINIert2'
         self._run_csv_equal_file(url, 'api_metadata_vg_iss_2_s_c4365507_cols_all_cassini_csv.csv')
 
     # Specified cats, empty
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_empty_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats empty json"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats empty json"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.json?cats='
         self._run_json_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_empty_json.json')
 
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_empty_html(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats empty html"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats empty html"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.html?cats='
         self._run_html_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_empty_html.html')
 
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_empty_csv(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats empty csv"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats empty csv"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.csv?cats='
         self._run_csv_equal_file(url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_empty_csv.csv')
 
@@ -542,21 +536,21 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         )
 
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_pds_constraints_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats PDS Constraints json"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats PDS Constraints json"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.json?cats=PDS+Constraints'
         self._run_json_equal_file(
             url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_pds_constraints_json.json'
         )
 
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_pds_constraints_html(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats PDS Constraints html"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats PDS Constraints html"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.html?cats=PDS+Constraints'
         self._run_html_equal_file(
             url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_pds_constraints_html.html'
         )
 
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_pds_constraints_csv(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats PDS Constraints csv"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats PDS Constraints csv"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.csv?cats=PDS+Constraints'
         self._run_csv_equal_file(
             url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_pds_constraints_csv.csv'
@@ -566,8 +560,8 @@ class ApiResultsTests(ApiTestHelper, TestCase):
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_lc_json(
         self,
     ) -> None:
-        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats PDS, Hubble Constraints json"
-        url = '/api/metadata/hst-09975-acs-j8n410lbq.json?cats=PDS+Constraints,Hubble+Mission+Constraints'
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats pds, hubble constraints json"
+        url = '/api/metadata/hst-09975-acs-j8n410lbq.json?cats=pds+CONSTRAINTS,hubble+MISSION+constraints'
         self._run_json_equal_file(
             url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_json.json'
         )
@@ -591,21 +585,21 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         )
 
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats PDS, Hubble Constraints json"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats PDS, Hubble Constraints json"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.json?cats=PDS+Constraints,Hubble+Mission+Constraints'
         self._run_json_equal_file(
             url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_json.json'
         )
 
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_html(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats PDS, Hubble Constraints html"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats PDS, Hubble Constraints html"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.html?cats=PDS+Constraints,Hubble+Mission+Constraints'
         self._run_html_equal_file(
             url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_html.html'
         )
 
     def test__api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_csv(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: hst-09975-acs-j8n410lbq cats PDS, Hubble Constraints csv"
+        "[test_results_api.py] /api/metadata: hst-09975-acs-j8n410lbq cats PDS, Hubble Constraints csv"
         url = '/api/metadata/hst-09975-acs-j8n410lbq.csv?cats=PDS+Constraints,Hubble+Mission+Constraints'
         self._run_csv_equal_file(
             url, 'api_metadata_hst_09975_acs_j8n410lbq_cats_pds_hubble_constraints_csv.csv'
@@ -623,32 +617,21 @@ class ApiResultsTests(ApiTestHelper, TestCase):
             ),
         )
 
-    def test__api_metadata_bad_ringobsid_json(self) -> None:
-        "[test_results_api.py] /api/metadata: bad ringobsid json"
-        url = '/api/metadata/S_IMG_VG2_ISS_4360846_N.json'
+    def test__api_metadata_old_format_ring_obs_id_is_an_unknown_opusid(self) -> None:
+        "[test_results_api.py] /api/metadata: an old-format RING_OBS_ID is an unknown OPUS ID"
+        url = '/api/metadata/S_IMG_VG2_ISS_4360845_N.json'
         self._run_status_equal(
             url,
             404,
-            http404_unknown_ring_obs_id(
-                'S_IMG_VG2_ISS_4360846_N', '/api/metadata/S_IMG_VG2_ISS_4360846_N.json'
+            http404_unknown_opus_id(
+                'S_IMG_VG2_ISS_4360845_N', '/api/metadata/S_IMG_VG2_ISS_4360845_N.json'
             ),
         )
 
-    def test__api_metadata2_bad_opusid_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: bad opusid json"
-        url = '/api/metadata_v2/vg-iss-2-s-,c4360845.json'
+    def test__api_metadata_v2_is_gone(self) -> None:
+        "[test_results_api.py] /api/metadata_v2: the route is gone"
+        url = '/api/metadata_v2/vg-iss-2-s-c4360845.json'
         self._run_status_equal(url, 404)
-
-    def test__api_metadata2_bad_ringobsid_json(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: bad ringobsid json"
-        url = '/api/metadata_v2/S_IMG_VG2_ISS_4360846_N.json'
-        self._run_status_equal(
-            url,
-            404,
-            http404_unknown_ring_obs_id(
-                'S_IMG_VG2_ISS_4360846_N', '/api/metadata_v2/S_IMG_VG2_ISS_4360846_N.json'
-            ),
-        )
 
     def test__api_metadata_bad_opusid_html(self) -> None:
         "[test_results_api.py] /api/metadata: bad opusid html"
@@ -659,8 +642,8 @@ class ApiResultsTests(ApiTestHelper, TestCase):
             http404_unknown_opus_id('vg-iss-2s-c4360845', '/api/metadata/vg-iss-2s-c4360845.html'),
         )
 
-    def test__api_metadata_bad_opusid_html_v2(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: bad opusid html v2"
+    def test__api_metadata_bad_opusid_punctuation_html(self) -> None:
+        "[test_results_api.py] /api/metadata: bad opusid html, punctuation only"
         url = '/api/metadata/,,,.html'
         self._run_status_equal(url, 404)
 
@@ -669,8 +652,8 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/metadata/0124.csv'
         self._run_status_equal(url, 404, http404_unknown_opus_id('0124', '/api/metadata/0124.csv'))
 
-    def test__api_metadata_bad_opusid_csv_v2(self) -> None:
-        "[test_results_api.py] /api/metadata_v2: bad opusid csv v2"
+    def test__api_metadata_bad_opusid_single_digit_csv(self) -> None:
+        "[test_results_api.py] /api/metadata: bad opusid csv, single digit"
         url = '/api/metadata/1.csv'
         self._run_status_equal(url, 404, http404_unknown_opus_id('1', '/api/metadata/1.csv'))
 
@@ -788,12 +771,14 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/files/hst-11559-wfc3-ib4v12n6q.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_versions_ib4v12n6q.json')
 
-    def test__api_files_bad_ringobsid(self) -> None:
-        "[test_results_api.py] /api/files: bad ringobsid"
-        url = '/api/files/N_1_BAD.json'
-        self._run_status_equal(
-            url, 404, http404_unknown_ring_obs_id('N_1_BAD', '/api/files/N_1_BAD.json')
-        )
+    def test__api_files_old_format_ring_obs_id_is_an_unknown_opusid(self) -> None:
+        "[test_results_api.py] /api/files: an old-format RING_OBS_ID is an unknown OPUS ID"
+        url = '/api/files/S_IMG_VG2_ISS_4360845_N.json'
+        expected: dict[str, dict[str, dict[str, str]]] = {
+            'data': {'S_IMG_VG2_ISS_4360845_N': {}},
+            'versions': {'S_IMG_VG2_ISS_4360845_N': {}},
+        }
+        self._run_json_equal(url, expected)
 
     def test__api_files_bad_search(self) -> None:
         "[test_results_api.py] /api/files: bad search"
@@ -920,12 +905,10 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/categories/co-iss-w1866145657x.json'
         self._run_json_equal_file(url, 'api_categories_bad_opusid.json')
 
-    def test__api_categories_bad_ringobsid(self) -> None:
-        "[test_results_api.py] /api/categories: Bad ringobsid"
-        url = '/api/categories/_123.json'
-        self._run_status_equal(
-            url, 404, http404_unknown_ring_obs_id('_123', '/api/categories/_123.json')
-        )
+    def test__api_categories_old_format_ring_obs_id_is_an_unknown_opusid(self) -> None:
+        "[test_results_api.py] /api/categories: an old-format RING_OBS_ID is an unknown OPUS ID"
+        url = '/api/categories/S_IMG_VG2_ISS_4360845_N.json'
+        self._run_json_equal_file(url, 'api_categories_bad_opusid.json')
 
     def test__api_categories_vg_iss_2_s_c4360004(self) -> None:
         "[test_results_api.py] /api/categories: vg-iss-2-s-c4360004"
@@ -956,12 +939,10 @@ class ApiResultsTests(ApiTestHelper, TestCase):
         url = '/api/product_types/co-iss-w1866145657x.json'
         self._run_json_equal_file(url, 'api_product_types_bad_opusid.json')
 
-    def test__api_product_types_bad_ringobsid(self) -> None:
-        "[test_results_api.py] /api/product_types: Bad ringobsid"
-        url = '/api/product_types/_N_1_2_3.json'
-        self._run_status_equal(
-            url, 404, http404_unknown_ring_obs_id('_N_1_2_3', '/api/product_types/_N_1_2_3.json')
-        )
+    def test__api_product_types_old_format_ring_obs_id_is_an_unknown_opusid(self) -> None:
+        "[test_results_api.py] /api/product_types: an old-format RING_OBS_ID is an unknown OPUS ID"
+        url = '/api/product_types/S_IMG_VG2_ISS_4360845_N.json'
+        self._run_json_equal_file(url, 'api_product_types_bad_opusid.json')
 
     def test__api_product_types_vg_iss_2_s_c4360004(self) -> None:
         "[test_results_api.py] /api/product_types: vg-iss-2-s-c4360004"

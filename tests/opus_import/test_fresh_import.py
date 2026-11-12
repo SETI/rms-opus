@@ -665,11 +665,11 @@ def test_a_schema_no_import_may_append_to_is_refused(
 
 def test_an_interrupted_finalization_refuses_the_import() -> None:
     """No version row but a key finalization adds: refused, naming --finalize."""
-    keys = {'obs_general': [TableKey('primary', ('id',)), TableKey('key', ('time1',))]}
+    keys = {'obs_general': [TableKey('primary', ('id',)), TableKey('key', ('time1', 'opus_id'))]}
     chosen, ctx = _choose(_StateDB(None, keys, ['obs_general']))
     assert not chosen
     (message,) = ctx.logger.messages_at('fatal')
-    assert 'obs_general: KEY (time1)' in message
+    assert 'obs_general: KEY (time1, opus_id)' in message
     assert '--finalize' in message
 
 
@@ -996,6 +996,55 @@ def test_rows_whose_obs_general_row_is_missing_are_errors() -> None:
         'Table "cart" has 3 rows whose obs_general row is missing',
     ]
     assert all('IS NULL' in query for query in db.queries)
+
+
+class _NullCountDB:
+    """A stand-in with two nullable columns and one NOT NULL column in obs_pds."""
+
+    def __init__(self, counts: tuple[int | None, ...]) -> None:
+        """Hold the NULL counts the one query returns, column by column."""
+        self.counts = counts
+        self.queries: list[str] = []
+
+    def quote_identifier(self, name: str) -> str:
+        """Backtick-quote a name."""
+        return f'`{name}`'
+
+    def table_names(self, prefix: str) -> list[str]:
+        """Name obs_pds and a per-target table, which the check skips."""
+        return ['obs_pds', 'obs_surface_geometry__saturn']
+
+    def table_info(self, table: str) -> list[dict[str, Any]]:
+        """Describe obs_pds's columns."""
+        return [
+            {'field_name': 'obs_general_id', 'field_notnull': True},
+            {'field_name': 'note', 'field_notnull': False},
+            {'field_name': 'primary_lid', 'field_notnull': False},
+        ]
+
+    def general_select(self, cmd: str, params: Any = None) -> list[tuple[int | None, ...]]:
+        """Record the query and return the counts."""
+        self.queries.append(cmd)
+        return [self.counts]
+
+
+def test_one_query_a_table_counts_the_nulls_of_every_nullable_column() -> None:
+    """A nullable column that holds no NULL is reported; NOT NULL columns are not counted."""
+    db = _NullCountDB((0, 5))
+    ctx = make_context(db=db)
+    do_validate.validate_nulls(ctx)
+    assert db.queries == ['SUM(`note` IS NULL), SUM(`primary_lid` IS NULL) FROM `obs_pds`']
+    assert ctx.logger.messages_at('info') == [
+        'Column "obs_pds.note" allows NULLs but none found - suggest changing column attributes'
+    ]
+
+
+def test_an_empty_tables_nullable_columns_are_reported() -> None:
+    """The sums over no rows are NULL, which is none found."""
+    db = _NullCountDB((None, None))
+    ctx = make_context(db=db)
+    do_validate.validate_nulls(ctx)
+    assert len(ctx.logger.messages_at('info')) == 2
 
 
 @pytest.mark.parametrize(

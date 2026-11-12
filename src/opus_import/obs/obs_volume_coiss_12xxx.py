@@ -81,18 +81,6 @@ class ObsVolumeCOISS12xxx(ObsCassiniCommonPDS3):
             return dec
         return cast(FloatField, self._index_col('DECLINATION'))
 
-    def field_obs_general_ring_obs_id(self) -> StrField:
-        camera = self._index_col('INSTRUMENT_ID')[3]
-        assert camera in ('N', 'W')
-        filename = self._index_col('FILE_NAME')
-        image_num = filename[1:11]
-        planet = self._cassini_planet_id()
-        if planet is None:
-            pl_str = ''
-        else:
-            pl_str = planet[0]
-        return f'{pl_str}_IMG_CO_ISS_{image_num}_{camera}'
-
     def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult(self._cassini_planet_id())
 

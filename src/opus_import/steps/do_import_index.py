@@ -244,10 +244,10 @@ def import_one_index(
                         for csv_row in csvreader:
                             if len(csv_row) > 2 and csv_row[2].count('-') > 1:
                                 # Old format with OPUS ID column
-                                (csv_bundle, csv_filespec, csv_ringobsid, *csv_targets) = csv_row
+                                (csv_bundle, csv_filespec, csv_opus_id, *csv_targets) = csv_row
                             else:
                                 # New format without OPUS ID column
-                                csv_ringobsid = None
+                                csv_opus_id = None
                                 (csv_bundle, csv_filespec, *csv_targets) = csv_row
                             if len(csv_targets) == 1:
                                 csv_targets = csv_targets[0].split(',')  # New format
@@ -256,8 +256,8 @@ def import_one_index(
                                 'FILE_SPECIFICATION_NAME': csv_filespec.strip(),
                                 'TARGET_LIST': csv_targets,
                             }
-                            if csv_ringobsid:
-                                row_dict['OPUS_ID'] = csv_ringobsid.strip()
+                            if csv_opus_id:
+                                row_dict['OPUS_ID'] = csv_opus_id.strip()
 
                             assoc_rows.append(row_dict)
                 else:

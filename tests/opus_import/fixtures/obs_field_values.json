@@ -56,7 +56,6 @@
    "tooltip": null
   },
   "obs_general/field_obs_general_preview_images": "{\"viewables\": []}",
-  "obs_general/field_obs_general_primary_filespec": "TEST_BUNDLE/data/1294561143_1295221348/N1294561143_1.LBL",
   "obs_general/field_obs_general_quantity": {
    "aliases": null,
    "col_val": "REFLECT",
@@ -69,7 +68,6 @@
   },
   "obs_general/field_obs_general_right_asc1": 1.97,
   "obs_general/field_obs_general_right_asc2": 16.75,
-  "obs_general/field_obs_general_ring_obs_id": "S_IMG_CO_ISS_1294561143_N",
   "obs_general/field_obs_general_target_class": [
    {
     "aliases": null,
@@ -605,7 +603,6 @@
    "tooltip": null
   },
   "obs_general/field_obs_general_preview_images": "{\"viewables\": []}",
-  "obs_general/field_obs_general_primary_filespec": "TEST_BUNDLE/C0349632000R.LBL",
   "obs_general/field_obs_general_quantity": {
    "aliases": null,
    "col_val": "REFLECT",
@@ -618,7 +615,6 @@
   },
   "obs_general/field_obs_general_right_asc1": 1.97,
   "obs_general/field_obs_general_right_asc2": 16.75,
-  "obs_general/field_obs_general_ring_obs_id": "J_IMG_GO_SSI_03496:32:000",
   "obs_general/field_obs_general_target_class": [
    {
     "aliases": null,
@@ -1058,7 +1054,6 @@
    "tooltip": null
   },
   "obs_general/field_obs_general_preview_images": "{\"viewables\": []}",
-  "obs_general/field_obs_general_primary_filespec": "TEST_BUNDLE/DATA/VISIT_01/U2NO0102T.LBL",
   "obs_general/field_obs_general_quantity": {
    "aliases": null,
    "col_val": "REFLECT",
@@ -1071,7 +1066,6 @@
   },
   "obs_general/field_obs_general_right_asc1": null,
   "obs_general/field_obs_general_right_asc2": null,
-  "obs_general/field_obs_general_ring_obs_id": "_IMG_HST_WFPC2_1995-08-13_U2NO0102T",
   "obs_general/field_obs_general_target_class": [
    {
     "aliases": null,
@@ -1592,7 +1586,6 @@
    "tooltip": null
   },
   "obs_general/field_obs_general_preview_images": "{\"viewables\": []}",
-  "obs_general/field_obs_general_primary_filespec": "TEST_BUNDLE/data/20070108_003059/lor_0030597859_0x630_eng.lbl",
   "obs_general/field_obs_general_quantity": {
    "aliases": null,
    "col_val": "REFLECT",
@@ -1605,7 +1598,6 @@
   },
   "obs_general/field_obs_general_right_asc1": 1.97,
   "obs_general/field_obs_general_right_asc2": 16.75,
-  "obs_general/field_obs_general_ring_obs_id": "J_IMG_NH_LORRI_0030597859",
   "obs_general/field_obs_general_target_class": [
    {
     "aliases": null,
@@ -2003,7 +1995,6 @@
    "tooltip": null
   },
   "obs_general/field_obs_general_preview_images": "{\"viewables\": []}",
-  "obs_general/field_obs_general_primary_filespec": "TEST_BUNDLE/DATA/C13854XX/C1385455_RAW.LBL",
   "obs_general/field_obs_general_quantity": {
    "aliases": null,
    "col_val": "REFLECT",
@@ -2016,7 +2007,6 @@
   },
   "obs_general/field_obs_general_right_asc1": 1.97,
   "obs_general/field_obs_general_right_asc2": 16.75,
-  "obs_general/field_obs_general_ring_obs_id": "S_IMG_VG2_ISS_1385455_N",
   "obs_general/field_obs_general_target_class": [
    {
     "aliases": null,
@@ -2468,7 +2458,6 @@
    "tooltip": null
   },
   "obs_general/field_obs_general_preview_images": "{\"viewables\": []}",
-  "obs_general/field_obs_general_primary_filespec": "TEST_BUNDLE/DATA/ESO1M/ES1_EPD.LBL",
   "obs_general/field_obs_general_quantity": {
    "aliases": null,
    "col_val": "OPDEPTH",
@@ -2481,7 +2470,6 @@
   },
   "obs_general/field_obs_general_right_asc1": 281.585879,
   "obs_general/field_obs_general_right_asc2": 281.585879,
-  "obs_general/field_obs_general_ring_obs_id": null,
   "obs_general/field_obs_general_target_class": [
    {
     "aliases": null,

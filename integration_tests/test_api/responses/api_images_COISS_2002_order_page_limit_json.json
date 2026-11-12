@@ -26,8 +26,7 @@
             "full_alt_text": "N1463530096_1_full.png",
             "full_size_bytes": 173070,
             "full_width": 1024,
-            "full_height": 1024,
-            "ring_obs_id": "S_IMG_CO_ISS_1463530096_N"
+            "full_height": 1024
         },
         {
             "opus_id": "co-iss-n1463530079",
@@ -50,8 +49,7 @@
             "full_alt_text": "N1463530079_1_full.png",
             "full_size_bytes": 179939,
             "full_width": 1024,
-            "full_height": 1024,
-            "ring_obs_id": "S_IMG_CO_ISS_1463530079_N"
+            "full_height": 1024
         },
         {
             "opus_id": "co-iss-n1463530062",
@@ -74,8 +72,7 @@
             "full_alt_text": "N1463530062_1_full.png",
             "full_size_bytes": 181331,
             "full_width": 1024,
-            "full_height": 1024,
-            "ring_obs_id": "S_IMG_CO_ISS_1463530062_N"
+            "full_height": 1024
         },
         {
             "opus_id": "co-iss-n1463530022",
@@ -98,8 +95,7 @@
             "full_alt_text": "N1463530022_1_full.png",
             "full_size_bytes": 153117,
             "full_width": 1024,
-            "full_height": 1024,
-            "ring_obs_id": "S_IMG_CO_ISS_1463530022_N"
+            "full_height": 1024
         },
         {
             "opus_id": "co-iss-n1463529988",
@@ -122,8 +118,7 @@
             "full_alt_text": "N1463529988_1_full.png",
             "full_size_bytes": 356785,
             "full_width": 1024,
-            "full_height": 1024,
-            "ring_obs_id": "S_IMG_CO_ISS_1463529988_N"
+            "full_height": 1024
         }
     ]
 }

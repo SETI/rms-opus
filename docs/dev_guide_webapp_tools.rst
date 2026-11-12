@@ -116,10 +116,6 @@ Slug and name helpers
 :func:`~opus_app.apps.tools.app_utils.sort_dictionary`
     A copy with the keys in sorted order, which is what makes a search's hash stable.
 
-:func:`~opus_app.apps.tools.app_utils.is_old_format_ring_obs_id` and :func:`~opus_app.apps.tools.app_utils.convert_ring_obs_id_to_opus_id`
-    A ``RING_OBS_ID`` is the identifier some bookmarks carry in place of an OPUS ID.
-    These recognize one and convert it.
-
 :func:`~opus_app.apps.tools.app_utils.download_filename`
     The name of a temporary download: a fixed prefix, a timestamp, the kind of file, one
     random letter, and optionally an OPUS ID. No extension -- the caller adds one.
@@ -168,8 +164,7 @@ same way wherever it is found, and so that changing the wording is one edit.
        :func:`~opus_app.apps.tools.app_utils.http400_unknown_download_file_format`
      - The request named a field, a unit, a category or an archive format OPUS does not
        have.
-   * - :func:`~opus_app.apps.tools.app_utils.http404_unknown_opus_id`,
-       :func:`~opus_app.apps.tools.app_utils.http404_unknown_ring_obs_id`
+   * - :func:`~opus_app.apps.tools.app_utils.http404_unknown_opus_id`
      - The URL named an observation that does not exist.
    * - :func:`~opus_app.apps.tools.app_utils.http404_unknown_format`
      - A handler was reached with a format it does not produce.

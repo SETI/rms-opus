@@ -150,14 +150,6 @@ class ObsVolumeGO0xxx(ObsVolumeGalileoCommon):
             return None
         return cast(FloatField, dec + np.rad2deg(_GOSSI_FOV_RAD_DIAG / 2))
 
-    def field_obs_general_ring_obs_id(self) -> StrField:
-        if self._index_col('ORBIT_NUMBER') is None:
-            return None
-        if not self._col_in_index('SPACECRAFT_CLOCK_START_COUNT'):
-            return None  # SL9 - they didn't exist before anyway
-        image_num = self._index_col('SPACECRAFT_CLOCK_START_COUNT').replace('.', '')
-        return cast(StrField, 'J_IMG_GO_SSI_' + image_num)
-
     def field_obs_general_planet_id(self) -> MultFieldRet:
         if self._index_col('ORBIT_NUMBER') is None:
             return self._create_mult('OTH')

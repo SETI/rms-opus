@@ -63,9 +63,6 @@ class ObsGeneral(ObsBase):
                         used_classes.add(target_info[1])
         return ret_list
 
-    def field_obs_general_primary_filespec(self) -> StrField:
-        return self.primary_filespec
-
     def field_obs_general_preview_images(self) -> StrField:
         ### XXX Review this
         filespec = self.primary_filespec
@@ -222,9 +219,6 @@ class ObsGeneral(ObsBase):
         return None
 
     def field_obs_general_declination2(self) -> FloatField:
-        return None
-
-    def field_obs_general_ring_obs_id(self) -> StrField:
         return None
 
     ###################################

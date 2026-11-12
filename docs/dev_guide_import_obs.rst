@@ -562,8 +562,7 @@ is the master table, and every other table's rows hang off it.
 The methods fall into three groups:
 
 * **Do not override** -- ``opus_id``, ``bundle_id``, ``instrument_id``,
-  ``inst_host_id``, ``mission_id``, ``target_class``, ``primary_filespec`` and
-  ``preview_images``. These are derived from the contract members above.
+  ``inst_host_id``, ``mission_id``, ``target_class`` and ``preview_images``. These are derived from the contract members above.
   ``preview_images`` is the interesting one: it asks ``rms-pdsfile`` for a view set
   through its ``viewset`` property and renders the result to JSON, and it honors
   ``--ignore-missing-images`` and ``--fake-images``. **Its guard does real work**, because "no previews" reaches it in three different shapes: the
@@ -574,9 +573,9 @@ The methods fall into three groups:
   reason: the first rejects ``False`` and None while keeping a ``PdsViewSet`` in the type,
   and the second rejects the empty one.
 * **Might override** -- ``target_name``, ``time1``, ``time2``,
-  ``observation_duration``, the four right-ascension and declination columns, and
-  ``ring_obs_id``. The four sky columns and ``ring_obs_id`` default to None;
-  ``observation_duration`` is ``max(time2 - time1, 0)``.
+  ``observation_duration``, and the four right-ascension and declination columns. The
+  four sky columns default to None; ``observation_duration`` is
+  ``max(time2 - time1, 0)``.
 * **Must override** -- ``planet_id``, ``quantity`` and ``observation_type``, each of
   which raises. ``_target_name`` belongs with them: it returns one ``(name, shown name)``
   pair per target and raises too, since no two archives record the target the same way,

@@ -115,15 +115,19 @@ Here is an example of the schema for the ``obs_general`` table (note this may ch
     | right_asc1           | double       | YES  | MUL | NULL              |
     | right_asc2           | double       | YES  | MUL | NULL              |
     | right_asc            | double       | YES  | MUL | NULL              |
-    | d_right_asc          | double       | YES  | MUL | NULL              |
+    | d_right_asc          | double       | YES  |     | NULL              |
     | declination1         | double       | YES  | MUL | NULL              |
     | declination2         | double       | YES  | MUL | NULL              |
     | observation_type     | int unsigned | NO   |     | NULL              |
-    | ring_obs_id          | char(40)     | YES  | MUL | NULL              |
-    | primary_filespec     | char(240)    | NO   | MUL | NULL              |
     | preview_images       | json         | NO   |     | NULL              |
     | timestamp            | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +----------------------+--------------+------+-----+-------------------+
+
+Besides the keys shown, ``obs_general`` has three keys over two columns each:
+``(time1, opus_id)``, which serves the default sort, ``(right_asc, d_right_asc)`` and
+``(declination1, declination2)``. ``DESC`` marks only a key's first column, which is why
+``d_right_asc`` shows no key. Most columns of the other observation tables have no key of
+their own; :ref:`dev_guide_table_schemas` says which columns get one.
 
 ``opus_id`` carries a plain key rather than a unique one. Two bundles can produce the same OPUS ID, and an import loads both copies side by side; the import's finalization then keeps the copy imported last and deletes the others, so a finished database has one row per OPUS ID.
 
@@ -159,18 +163,18 @@ Here is an example of a mission table:
     +-------------------------+--------------+------+-----+-------------------+
     | obs_general_id          | int unsigned | NO   | PRI | NULL              |
     | obs_name                | char(30)     | NO   | MUL | NULL              |
-    | rev_no                  | char(3)      | YES  | MUL | NULL              |
-    | rev_no_int              | int          | YES  | MUL | NULL              |
+    | rev_no                  | char(3)      | YES  |     | NULL              |
+    | rev_no_int              | int          | YES  |     | NULL              |
     | is_prime                | int unsigned | NO   |     | NULL              |
-    | prime_inst_id           | int unsigned | NO   | MUL | NULL              |
+    | prime_inst_id           | int unsigned | NO   |     | NULL              |
     | spacecraft_clock_count1 | double       | YES  | MUL | NULL              |
     | spacecraft_clock_count2 | double       | YES  | MUL | NULL              |
     | ert1                    | double       | YES  | MUL | NULL              |
     | ert2                    | double       | YES  | MUL | NULL              |
-    | cassini_target_code     | int unsigned | YES  | MUL | NULL              |
+    | cassini_target_code     | int unsigned | YES  |     | NULL              |
     | cassini_target_name     | int unsigned | YES  | MUL | NULL              |
     | activity_name           | char(9)      | YES  | MUL | NULL              |
-    | mission_phase_name      | int unsigned | YES  | MUL | NULL              |
+    | mission_phase_name      | int unsigned | YES  |     | NULL              |
     | sequence_id             | char(4)      | YES  |     | NULL              |
     | timestamp               | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +-------------------------+--------------+------+-----+-------------------+

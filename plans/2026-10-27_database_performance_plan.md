@@ -5627,3 +5627,85 @@ Nothing above this line is rewritten by an executor.
   - The orchestrator's decision on the stop-and-report (2026-11-10): the PR proceeds on
     the structural gains, the schema's smaller indexes and data, `obs_files`' two keys,
     and the children keyed on their observation, which PR-14 and PR-15 build on.
+
+### 2026-11-10, PR-13 (written against this file at afb570bb)
+
+- The branch is PR-12's, since the section builds on its keys and its table-level
+  `{"key": [...]}` entry, which PR-12 added; this PR only uses the entry.
+- The keys follow the section's table, with one departure:
+  `obs_mission_cassini.spacecraft_clock_count1` keeps its key. Its pair partner
+  `spacecraft_clock_count2` keeps one, so the section's pair rule keeps it too; the
+  table leaves it out without marking an exception.
+- The two-column keys are the section's: `(time1, opus_id)`, `(right_asc, d_right_asc)`
+  and `(declination1, declination2)` on `obs_general`, and one `(<col>, d_<col>)` key on
+  `obs_ring_geometry` for each of its twelve longitude columns with a `d_` partner, eight
+  of which had no key before. The surface geometry name and per-target tables are left
+  to PR-15, which replaces them.
+- No import step or management command needs a dropped key to find its rows (a grep of
+  `src/opus_import` and the management commands for each). Validation reads every
+  column, though: `validate_nulls` counted each nullable column's NULLs with a query of
+  its own, a table scan for every column without a key. It now counts every nullable
+  column of a table in one query, one scan of the table whatever its keys.
+  `validate_min_max_order` compares a pair's two columns, which no key serves, so its
+  cost does not change.
+- `ring_obs_id` goes from every site the section lists. `ui/views.py` keeps one check
+  that names `ringobsid`: a URL whose `cols` is exactly the old default list, which
+  begins with `ringobsid`, is given the current defaults with a message, as before. It
+  reads no column. The log analyzer drops a `ringobsid` field from a server's
+  definitions only when the server lists one, since the server it reads may run an
+  older release, and keeps recording `ringobsid` as `opusid`'s old slug; a new unit test
+  covers both.
+- An old-format id gets what any unknown OPUS ID gets, which is the section's 404 only
+  from `api/metadata`: `api/files` answers with the id and no
+  files, and `api/categories` and `api/product_types` with an empty list, all with
+  status 200. The integration suite's `ringobsid` tests go, and four tests, one per
+  endpoint (`test__api_*_old_format_ring_obs_id_is_an_unknown_opusid`), show an
+  old-format id that used to resolve now getting those answers. The two real-world bookmark
+  tests, whose `detail` is an old-format id, now expect it ignored with the unknown-OPUS-ID
+  message. Two tests used `**filespec`, the removed column's slug, as their field that
+  cannot be displayed; they use `**previewimages`.
+- The 102 API golden responses carrying the `ring_obs_id` key lose it and change in
+  nothing else; they are edited rather than regenerated, and the integration suite,
+  against a local database imported with this head, confirms them. The import goldens
+  change in `obs_general` (the two columns), `param_info` (their two rows, the later
+  rows' ids moving down), `definitions` (`RING_OBS_ID`'s row, likewise) and
+  `schema_version`.
+- At the orchestrator's direction (2026-11-10), the `api/metadata_v2` route, an alias of
+  `api/metadata` that answered identically apart from the path its error messages name,
+  goes with `ring_obs_id`: a second deliberate break of the public API. Its one test
+  becomes a check that the route answers 404, and the `api/metadata` tests whose
+  descriptions named `api/metadata_v2` name the route they request. The log analyzer
+  keeps its pattern for `__api/metadata_v2`, since the logs it reads predate the change.
+- `models.py` is edited: `ObsGeneral` loses the two fields, and `inspectdb` against the
+  local integration database gives the same fields.
+- `SCHEMA_VERSION` is 6.
+- PR-13's measurement (2026-11-10, test scale; before at a01011e4, PR-12's head, after at
+  b94159b2, whose code a1687bde only adds the query capture to). Session `a`: three fixture
+  imports a side alternated A B B A A B, one test-scale import a side, A B, each side
+  serving its own schema, three web runs a side alternated, then `bench_db
+  --dump-queries` once a side. Session `b`: five web runs a side alternated against
+  session `a`'s schemas, since the target's change in session `a` landed within twice
+  its floor (§2.6). Another session's tests shared the workstation during part of
+  session `b` (one-minute load averages from 3 to 11 at the runs' starts).
+  - **The target did not improve**, in either session:
+    `web.app-cold.search.empty.wall_s` was 160.4 ms against 186.8 ms in session `a`
+    (+16.4%, floor 24.9%) and 196.7 ms against 172.3 ms in session `b` (-12.4%). The
+    db-cold empty search was 309.3 ms against 289.4 ms in session `b` (-6.4%).
+  - **The plan of the empty search build** is the one the section predicted: the base
+    reads `obs_general` by a table scan and sorts; this head reads the `(time1,
+    opus_id)` key by an index scan and still sorts for `ROW_NUMBER()`. The sort spills
+    on both sides (`Sort_merge_passes` 1) at the harness's 256 KiB `sort_buffer_size`;
+    at test scale it fits in memory from 4 MiB and spills at 2 MiB. In session `a`'s
+    app-cold run the empty search read 119 pages against 4, the new key being one no
+    earlier scenario had read into the buffer pool.
+  - Every guard held, the section's own among them: the selective search's app-cold
+    p50 -7.1% in session `b` (+5.5% in session `a`), the broad search's +4.7% and its
+    last page's -16.9%, the import +0.8% faster (331.0 s against 328.3 s).
+  - Schema size: data 799.2 MB to 788.7 MB (-1.3%), indexes 412.9 MB to 398.6 MB
+    (-3.5%); `obs_general`'s data 40.4 MB to 29.9 MB and indexes 28.2 MB to 19.1 MB;
+    `obs_ring_geometry`'s indexes 25.0 MB to 26.4 MB, its twelve two-column keys
+    outweighing the single-column keys dropped. Finalization's key additions 31.4 s to
+    29.7 s, validation 4.1 s to 3.8 s; the fixture imports within noise.
+  - The orchestrator's ruling (2026-11-10): the section's purpose is structural (the
+    keys production never read, the two columns, `ring_obs_id`'s API), so the target's
+    result is reported and is not a stop-and-report.
