@@ -15,130 +15,130 @@ obs_general	right_asc2	LONG%.6f:hour_angle	0	1	301	Right Ascension	Right Ascensi
 obs_general	declination1	RANGE%.6f:latitude	1	1	310	Declination	Declination (Min)	declination1	\N	\N	\N		OPUS_GENERAL	DECLINATION	OPUS_GENERAL	DECLINATION_MIN	\N	\N	\N	\N	14
 obs_general	declination2	RANGE%.6f:latitude	0	1	311	Declination	Declination (Max)	declination2	\N	\N	\N		\N	\N	OPUS_GENERAL	DECLINATION_MAX	\N	\N	\N	\N	15
 obs_general	observation_type	GROUP	1	1	95	Observation Type	Observation Type	observationtype	typeid	\N	\N	\N	OPUS_GENERAL	OBSERVATION_TYPE	\N	\N	\N	\N	\N	\N	16
-obs_general	preview_images	\N	0	0	0	\N	\N	**previewimages	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	17
-obs_instrument_cocirs	detector_id	GROUP	1	1	1	Detector ID	Detector ID	COCIRSdetectorid	DETECTORID	\N	\N		COCIRS	DETECTOR_ID	\N	\N	\N	\N	\N	\N	18
-obs_instrument_cocirs	instrument_mode_blinking_flag	GROUP	1	1	2	Blinking Mode	Blinking Mode	COCIRSinstrumentmodeblinkingflag	INSTRUMENTMODEBLINKINGFLAG	\N	\N	\N	COCIRS	BLINKING_MODE	\N	\N	\N	\N	\N	\N	19
-obs_instrument_cocirs	instrument_mode_even_flag	GROUP	1	1	3	Even Mode	Even Mode	COCIRSinstrumentmodeevenflag	INSTRUMENTMODEEVENFLAG	\N	\N	\N	COCIRS	EVEN_MODE	\N	\N	\N	\N	\N	\N	20
-obs_instrument_cocirs	instrument_mode_odd_flag	GROUP	1	1	4	Odd Mode	Odd Mode	COCIRSinstrumentmodeoddflag	INSTRUMENTMODEODDFLAG	\N	\N	\N	COCIRS	ODD_MODE	\N	\N	\N	\N	\N	\N	21
-obs_instrument_cocirs	instrument_mode_centers_flag	GROUP	1	1	5	Centers Mode	Centers Mode	COCIRSinstrumentmodecentersflag	INSTRUMENTMODECENTERSFLAG	\N	\N	\N	COCIRS	CENTERS_MODE	\N	\N	\N	\N	\N	\N	22
-obs_instrument_cocirs	instrument_mode_pairs_flag	GROUP	1	1	6	Pairs Mode	Pairs Mode	COCIRSinstrumentmodepairsflag	INSTRUMENTMODEPAIRSFLAG	\N	\N	\N	COCIRS	PAIRS_MODE	\N	\N	\N	\N	\N	\N	23
-obs_instrument_cocirs	instrument_mode_all_flag	GROUP	1	1	7	All Mode	All Mode	COCIRSinstrumentmodeallflag	INSTRUMENTMODEALLFLAG	\N	\N	\N	COCIRS	ALL_MODE	\N	\N	\N	\N	\N	\N	24
-obs_instrument_coiss	data_conversion_type	GROUP	1	1	70	Data Conversion Type	Data Conversion Type	COISSdataconversiontype	DATACONVERSIONTYPE	\N	\N		COISS	DATA_CONVERSION_TYPE	\N	\N	\N	\N	\N	\N	25
-obs_instrument_coiss	compression_type	GROUP	1	1	60	Compression Type	Compression Type	COISScompressiontype	INSTCMPRSTYPE	\N	\N		COISS	COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	26
-obs_instrument_coiss	gain_mode_id	GROUP	1	1	80	Gain Mode	Gain Mode	COISSgainmode	GAINMODEID	\N	\N		COISS	GAIN_MODE_ID	\N	\N	\N	\N	\N	\N	27
-obs_instrument_coiss	image_observation_type	GROUP	1	1	130	Image Observation Type	Image Observation Type	COISSimageobservationtype	IMAGEOBSERVATIONTYPE	\N	\N		COISS	IMAGE_OBSERVATION_TYPE	\N	\N	\N	\N	\N	\N	28
-obs_instrument_coiss	missing_lines	RANGE%d	1	1	100	Missing Lines	Missing Lines	COISSmissinglines	MISSINGLINES	\N	\N		COISS	MISSING_LINES	\N	\N	\N	\N	\N	\N	29
-obs_instrument_coiss	shutter_mode_id	GROUP	1	1	40	Shutter Mode	Shutter Mode	COISSshuttermode	SHUTTERMODEID	\N	\N		COISS	SHUTTER_MODE_ID	\N	\N	\N	\N	\N	\N	30
-obs_instrument_coiss	shutter_state_id	GROUP	1	1	50	Shutter State	Shutter State	COISSshutterstate	SHUTTERSTATEID	\N	\N		COISS	SHUTTER_STATE_ID	\N	\N	\N	\N	\N	\N	31
-obs_instrument_coiss	image_number	RANGE%d	1	1	110	Image Number	Image Number	COISSimagenumber	\N	\N	\N	\N	COISS	IMAGE_NUMBER	\N	\N	\N	\N	\N	\N	32
-obs_instrument_coiss	instrument_mode_id	GROUP	1	1	90	Instrument Mode	Instrument Mode	COISSinstrumentmode	\N	\N	\N	\N	COISS	INSTRUMENT_MODE_ID	\N	\N	\N	\N	\N	\N	33
-obs_instrument_coiss	target_desc	GROUP	1	1	120	Target Description	Target Description	COISStargetdesc	\N	\N	\N	\N	COISS	TARGET_DESC	\N	\N	\N	\N	\N	\N	34
-obs_instrument_coiss	combined_filter	GROUP	1	1	30	Filter	Filter	COISSfilter	FILTER	\N	To select observations by color or wavelength range instead of by instrument-specific filter name, use the Wavelength field available under Wavelength Constraints.		COISS	NORMALIZED_FILTER_NAME	\N	\N	\N	\N	\N	\N	35
-obs_instrument_coiss	camera	GROUP	1	1	20	Camera	Camera	COISScamera	camera	\N	\N		COISS	CAMERA	\N	\N	\N	\N	\N	\N	36
-obs_instrument_coiss	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	37
-obs_instrument_couvis	observation_type	GROUP	1	1	20	Observation Type	Observation Type	COUVISobservationtype	OBSERVATIONTYPE	\N	\N	\N	COUVIS	OBSERVATION_TYPE	\N	\N	\N	\N	\N	\N	38
-obs_instrument_couvis	integration_duration	RANGE%.4f:duration	1	1	100	Integration Duration	Integration Duration	COUVISintegrationduration	INTEGRATIONDURATION	\N	\N	\N	COUVIS	INTEGRATION_DURATION	\N	\N	\N	\N	\N	\N	39
-obs_instrument_couvis	compression_type	GROUP	1	1	90	Compression Type	Compression Type	COUVIScompressiontype	instrumentCOUVISCOMPRESSIONTYPE	\N	\N	\N	COUVIS	COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	40
-obs_instrument_couvis	occultation_port_state	GROUP	1	1	30	Occultation Port State	Occultation Port State	COUVISoccultationportstate	OCCULTATIONPORTSTATE	\N	\N	\N	COUVIS	OCCULTATION_PORT_STATE	\N	\N	\N	\N	\N	\N	41
-obs_instrument_couvis	slit_state	GROUP	1	1	40	Slit State	Slit State	COUVISslitstate	SLITSTATE	\N	\N	\N	COUVIS	SLIT_STATE	\N	\N	\N	\N	\N	\N	42
-obs_instrument_couvis	test_pulse_state	GROUP	1	1	120	Test Pulse State	Test Pulse State	COUVIStestpulsestate	TESTPULSESTATE	\N	\N	\N	COUVIS	TEST_PULSE_STATE	\N	\N	\N	\N	\N	\N	43
-obs_instrument_couvis	dwell_time	GROUP	1	1	110	HDAC Dwell Time	HDAC Dwell Time	COUVISdwelltime	DWELLTIME	\N	\N	\N	COUVIS	HDAC_DWELL_TIME	\N	\N	\N	\N	\N	\N	44
-obs_instrument_couvis	channel	GROUP	1	1	10	Detector	Detector	COUVISchannel	instrumentCOUVISChannel	\N	\N	\N	COUVIS	CHANNEL	\N	\N	\N	\N	\N	\N	45
-obs_instrument_couvis	band1	RANGE%d	1	1	70	Band	Band (Min)	COUVISband1	BAND1	\N	\N	\N	COUVIS	MINIMUM_BAND_NUMBER	\N	\N	\N	\N	\N	\N	46
-obs_instrument_couvis	band2	RANGE%d	0	1	71	Band	Band (Max)	COUVISband2	BAND2	\N	\N	\N	COUVIS	MAXIMUM_BAND_NUMBER	\N	\N	\N	\N	\N	\N	47
-obs_instrument_couvis	band_bin	RANGE%d	1	1	72	Band Binning	Band Binning	COUVISbandbin	BANDBIN	\N	\N	\N	COUVIS	BAND_BINNING_FACTOR	\N	\N	\N	\N	\N	\N	48
-obs_instrument_couvis	line1	RANGE%d	1	1	50	Line	Line (Min)	COUVISline1	LINE1	\N	\N	\N	COUVIS	WINDOW_LINE_NUMBER	COUVIS	WINDOW_MINIMUM_LINE_NUMBER	\N	\N	\N	\N	49
-obs_instrument_couvis	line2	RANGE%d	0	1	51	Line	Line (Max)	COUVISline2	LINE2	\N	\N	\N	\N	\N	COUVIS	WINDOW_MAXIMUM_LINE_NUMBER	\N	\N	\N	\N	50
-obs_instrument_couvis	line_bin	RANGE%d	1	1	60	Line Binning	Line Binning	COUVISlinebin	LINEBIN	\N	\N	\N	COUVIS	LINE_BINNING_FACTOR	\N	\N	\N	\N	\N	\N	51
-obs_instrument_couvis	samples	RANGE%d	1	1	80	Samples	Samples	COUVISsamples	SAMPLES	\N	\N	\N	COUVIS	LINE_SAMPLES	\N	\N	\N	\N	\N	\N	52
-obs_instrument_covims	instrument_mode_id	GROUP	1	1	100	Instrument Mode	Instrument Mode	COVIMSinstrumentmode	INSTRUMENTMODEID	\N	\N		COVIMS	INSTRUMENT_MODE_ID	\N	\N	\N	\N	\N	\N	53
-obs_instrument_covims	spectral_editing	GROUP	1	1	90	Spectral Editing	Spectral Editing	COVIMSspectralediting	SPECTRALEDITING	\N	\N		COVIMS	SPECTRAL_EDITING	\N	\N	\N	\N	\N	\N	54
-obs_instrument_covims	spectral_summing	GROUP	1	1	80	Spectral Summing	Spectral Summing	COVIMSspectralsumming	SPECTRALSUMMING	\N	\N		COVIMS	SPECTRAL_SUMMING	\N	\N	\N	\N	\N	\N	55
-obs_instrument_covims	star_tracking	GROUP	1	1	110	Star Tracking	Star Tracking	COVIMSstartracking	\N	\N	\N		COVIMS	STAR_TRACKING	\N	\N	\N	\N	\N	\N	56
-obs_instrument_covims	swath_width	RANGE%d	1	1	60	Swath Width	Swath Width	COVIMSswathwidth	\N	\N	\N		COVIMS	SWATH_WIDTH	\N	\N	\N	\N	\N	\N	57
-obs_instrument_covims	swath_length	RANGE%d	1	1	70	Swath Length	Swath Length	COVIMSswathlength	\N	\N	\N		COVIMS	SWATH_LENGTH	\N	\N	\N	\N	\N	\N	58
-obs_instrument_covims	ir_exposure	RANGE%.4f:duration	1	1	50	IR Exposure	IR Exposure	COVIMSirexposure	IREXPOSURE	\N	\N		COVIMS	IR_EXPOSURE	\N	\N	\N	\N	\N	\N	59
-obs_instrument_covims	ir_sampling_mode_id	GROUP	1	1	40	IR Sampling Mode	IR Sampling Mode	COVIMSirsamplingmode	IRSAMPLINGMODEID	\N	\N		COVIMS	IR_SAMPLING_MODE_ID	\N	\N	\N	\N	\N	\N	60
-obs_instrument_covims	vis_exposure	RANGE%.4f:duration	1	1	30	VIS Exposure	VIS Exposure	COVIMSvisexposure	VISEXPOSURE	\N	\N		COVIMS	VIS_EXPOSURE	\N	\N	\N	\N	\N	\N	61
-obs_instrument_covims	vis_sampling_mode_id	GROUP	1	1	20	VIS Sampling Mode	VIS Sampling Mode	COVIMSvissamplingmode	VISSAMPLINGMODEID	\N	\N		COVIMS	VIS_SAMPLING_MODE_ID	\N	\N	\N	\N	\N	\N	62
-obs_instrument_covims	channel	GROUP	1	1	10	Channel	Channel	COVIMSchannel	channel	\N	\N	\N	COVIMS	CHANNEL	\N	\N	\N	\N	\N	\N	63
-obs_instrument_gossi	observation_id	STRING	1	1	80	Observation ID	Observation ID	GOSSIobservationid	OBSERVATIONID	\N	\N		GOSSI	OBSERVATION_ID	\N	\N	\N	\N	\N	\N	64
-obs_instrument_gossi	image_id	STRING	1	1	70	Image ID	Image ID	GOSSIimageid	instrumentGOSSIIMAGEID	\N	\N		GOSSI	IMAGE_ID	\N	\N	\N	\N	\N	\N	65
-obs_instrument_gossi	filter_name	GROUP	1	1	10	Filter Name	Filter Name	GOSSIfilter	instrumentGOSSIFILTERNAME	\N	\N		GOSSI	FILTER_NAME	\N	\N	\N	\N	\N	\N	66
-obs_instrument_gossi	filter_number	GROUP	1	1	20	Filter Number	Filter Number	GOSSIfilternumber	instrumentGOSSIFILTERNUMBER	\N	\N		GOSSI	FILTER_NUMBER	\N	\N	\N	\N	\N	\N	67
-obs_instrument_gossi	gain_mode_id	GROUP	1	1	40	Gain Mode	Gain Mode	GOSSIgainmode	instrumentGOSSIGAINMODEID	\N	\N		GOSSI	GAIN_MODE_ID	\N	\N	\N	\N	\N	\N	68
-obs_instrument_gossi	frame_duration	GROUP	1	1	60	Frame Duration	Frame Duration	GOSSIframeduration	FRAMEDURATION	\N	\N		GOSSI	FRAME_DURATION	\N	\N	\N	\N	\N	\N	69
-obs_instrument_gossi	obstruction_id	GROUP	1	1	50	Obstruction	Obstruction	GOSSIobstruction	OBSTRUCTIONID	\N	\N		GOSSI	OBSTRUCTION_ID	\N	\N	\N	\N	\N	\N	70
-obs_instrument_gossi	compression_type	GROUP	1	1	30	Compression Type	Compression Type	GOSSIcompressiontype	COMPRESSIONTYPE	\N	\N		GOSSI	COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	71
-obs_instrument_gossi	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	72
-obs_instrument_nhlorri	instrument_compression_type	GROUP	1	1	20	Instrument Compression Type	Instrument Compression Type	NHLORRIinstrumentcompressiontype	INSTRUMENTCOMPRESSIONTYPE	\N	\N	\N	NHLORRI	INSTRUMENT_COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	73
-obs_instrument_nhlorri	binning_mode	GROUP	1	1	10	Binning Mode	Binning Mode	NHLORRIbinningmode	BINNINGMODE	\N	\N	\N	NHLORRI	BINNING_MODE	\N	\N	\N	\N	\N	\N	74
-obs_instrument_nhlorri	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	75
-obs_instrument_nhmvic	instrument_compression_type	GROUP	1	1	10	Instrument Compression Type	Instrument Compression Type	NHMVICinstrumentcompressiontype	INSTRUMENTCOMPRESSIONTYPE	\N	\N	\N	NHMVIC	INSTRUMENT_COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	76
-obs_instrument_vgiss	image_id	STRING	1	1	80	Image ID	Image ID	VGISSimageid	IMAGEID	\N	\N		VGISS	IMAGE_ID	\N	\N	\N	\N	\N	\N	77
-obs_instrument_vgiss	scan_mode	GROUP	1	1	70	Scan Mode	Scan Mode	VGISSscanmode	SCANMODEID	\N	\N		VGISS	SCAN_MODE_ID	\N	\N	\N	\N	\N	\N	78
-obs_instrument_vgiss	shutter_mode	GROUP	1	1	40	Shutter Mode	Shutter Mode	VGISSshuttermode	instrumentVGISSSHUTTERMODEID	\N	\N		VGISS	SHUTTER_MODE_ID	\N	\N	\N	\N	\N	\N	79
-obs_instrument_vgiss	gain_mode	GROUP	1	1	60	Gain Mode	Gain Mode	VGISSgainmode	instrumentVGISSGAINMODEID	\N	\N		VGISS	GAIN_MODE_ID	\N	\N	\N	\N	\N	\N	80
-obs_instrument_vgiss	edit_mode	GROUP	1	1	50	Edit Mode	Edit Mode	VGISSeditmode	EDITMODEID	\N	\N		VGISS	EDIT_MODE_ID	\N	\N	\N	\N	\N	\N	81
-obs_instrument_vgiss	filter_name	GROUP	1	1	20	Filter Name	Filter Name	VGISSfilter	FILTERNAME	\N	\N		VGISS	FILTER_NAME	\N	\N	\N	\N	\N	\N	82
-obs_instrument_vgiss	filter_number	GROUP	1	1	30	Filter Number	Filter Number	VGISSfilternumber	FILTERNUMBER	\N	\N		VGISS	FILTER_NUMBER	\N	\N	\N	\N	\N	\N	83
-obs_instrument_vgiss	camera	GROUP	1	1	10	Camera	Camera	VGISScamera	instrumentVGISScamera	\N	\N		VGISS	CAMERA	\N	\N	\N	\N	\N	\N	84
-obs_instrument_vgiss	usable_lines	RANGE%d	1	1	90	Usable Lines	Usable Lines	VGISSusablelines	\N	\N	\N		VGISS	USABLE_LINES	\N	\N	\N	\N	\N	\N	85
-obs_instrument_vgiss	usable_samples	RANGE%d	1	1	100	Usable Samples	Usable Samples	VGISSusablesamples	\N	\N	\N		VGISS	USABLE_SAMPLES	\N	\N	\N	\N	\N	\N	86
-obs_instrument_vgiss	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	87
-obs_mission_cassini	obs_name	STRING	1	1	10	Observation Name	Observation Name	CASSINIobsname	obsname	\N	\N		CASSINI	OBSERVATION_NAME	CASSINI	OBSERVATION_NAME_RESULTS	\N	\N	\N	\N	88
-obs_mission_cassini	rev_no	GROUP:range_cassini_rev_no	1	0	50	Saturn Orbit Number (By Checkbox)	\N	CASSINIrevno	revno	\N	\N		CASSINI	ORBIT_NUMBER	\N	\N	\N	\N	\N	\N	89
-obs_mission_cassini	rev_no_int	RANGE:range_cassini_rev_no	1	1	51	Saturn Orbit Number (By Range)	Saturn Orbit Number	CASSINIrevnoint	\N	\N	\N		CASSINI	ORBIT_NUMBER_INT	CASSINI	ORBIT_NUMBER_INT_RESULTS	\N	\N	\N	\N	90
-obs_mission_cassini	is_prime	GROUP	1	1	70	Is Prime	Is Prime	CASSINIisprime	prime	\N	\N		CASSINI	IS_PRIME_FLAG	\N	\N	\N	\N	\N	\N	91
-obs_mission_cassini	prime_inst_id	GROUP	1	1	60	Primary Instrument	Primary Instrument	CASSINIprimeinst	primeinstid	\N	\N		CASSINI	PRIMARY_INSTRUMENT_ID	\N	\N	\N	\N	\N	\N	92
-obs_mission_cassini	spacecraft_clock_count1	RANGE:range_cassini_sclk	1	1	90	Spacecraft Clock Count	Spacecraft Clock Start Count	CASSINIspacecraftclockcount1	spacecraftclockcount1	\N	\N		CASSINI	SPACECRAFT_CLOCK_COUNT	CASSINI	SPACECRAFT_CLOCK_START_COUNT	\N	\N	\N	\N	93
-obs_mission_cassini	spacecraft_clock_count2	RANGE:range_cassini_sclk	0	1	91	Spacecraft Clock Count	Spacecraft Clock Stop Count	CASSINIspacecraftclockcount2	spacecraftclockcount2	\N	\N		\N	\N	CASSINI	SPACECRAFT_CLOCK_STOP_COUNT	\N	\N	\N	\N	94
-obs_mission_cassini	ert1	RANGE:datetime	1	1	100	Earth Received Time	Earth Received Start Time	CASSINIert1	ertsec1	\N	\N		CASSINI	EARTH_RECEIVED_TIME	CASSINI	EARTH_RECEIVED_START_TIME	\N	\N	\N	\N	95
-obs_mission_cassini	ert2	RANGE:datetime	0	1	101	Earth Received Time	Earth Received Stop Time	CASSINIert2	ertsec2	\N	\N		\N	\N	CASSINI	EARTH_RECEIVED_STOP_TIME	\N	\N	\N	\N	96
-obs_mission_cassini	cassini_target_code	GROUP	1	1	40	Cassini Target Code	Cassini Target Code	CASSINItargetcode	\N	\N	\N		CASSINI	CASSINI_TARGET_CODE	\N	\N	\N	\N	\N	\N	97
-obs_mission_cassini	cassini_target_name	GROUP	1	1	45	Cassini Original Target Name	Cassini Original Target Name	CASSINItargetname	\N	\N	\N		CASSINI	CASSINI_TARGET_NAME	\N	\N	\N	\N	\N	\N	98
-obs_mission_cassini	activity_name	STRING	1	1	20	Activity Name	Activity Name	CASSINIactivityname	activityname	\N	\N		CASSINI	ACTIVITY_NAME	\N	\N	\N	\N	\N	\N	99
-obs_mission_cassini	mission_phase_name	GROUP	1	1	30	Mission Phase	Mission Phase	CASSINImissionphasename	\N	\N	\N	\N	CASSINI	MISSION_PHASE_NAME	\N	\N	\N	\N	\N	\N	100
-obs_mission_cassini	sequence_id	STRING	1	1	80	Sequence ID	Sequence ID	CASSINIsequenceid	\N	\N	\N	\N	CASSINI	SEQUENCE_ID	\N	\N	\N	\N	\N	\N	101
-obs_mission_galileo	orbit_number	GROUP	1	1	10	Orbit Number	Orbit Number	GALILEOorbitnumber	ORBITNUMBER	\N	\N		GALILEO	ORBIT_NUMBER	\N	\N	\N	\N	\N	\N	102
-obs_mission_galileo	spacecraft_clock_count1	RANGE:range_galileo_sclk	1	1	20	Spacecraft Clock Count	Spacecraft Clock Start Count	GALILEOspacecraftclockcount1	missiongalileospacecraftclockcount1	\N	\N		GALILEO	SPACECRAFT_CLOCK_COUNT	GALILEO	SPACECRAFT_CLOCK_START_COUNT	\N	\N	\N	\N	103
-obs_mission_galileo	spacecraft_clock_count2	RANGE:range_galileo_sclk	0	1	21	Spacecraft Clock Count	Spacecraft Clock Stop Count	GALILEOspacecraftclockcount2	missiongalileospacecraftclockcount2	\N	\N		\N	\N	GALILEO	SPACECRAFT_CLOCK_STOP_COUNT	\N	\N	\N	\N	104
-obs_mission_hubble	stsci_group_id	STRING	1	1	70	STScI File Name	STScI File Name	HSTstscigroupid	STSCIGROUPID	\N	\N	\N	HST	STSCI_GROUP_ID	\N	\N	\N	\N	\N	\N	105
-obs_mission_hubble	hst_proposal_id	RANGE%d	1	1	50	HST Proposal ID	HST Proposal ID	HSTproposalid	HSTPROPOSALID	\N	\N	\N	HST	HST_PROPOSAL_ID	\N	\N	\N	\N	\N	\N	106
-obs_mission_hubble	hst_pi_name	STRING	1	1	60	PI Name	PI Name	HSTpiname	HSTPINAME	\N	\N	\N	HST	HST_PI_NAME	\N	\N	\N	\N	\N	\N	107
-obs_mission_hubble	detector_id	GROUP	1	1	10	Detector	Detector	HSTdetector	missionhubbleDETECTORID	\N	\N	\N	HST	DETECTOR_ID	\N	\N	\N	\N	\N	\N	108
-obs_mission_hubble	publication_date	RANGE:datetime	1	1	180	Publication Date	Publication Date	HSTpublicationdate	PUBLICATIONDATE	\N	\N	\N	HST	PUBLICATION_DATE	HST	PUBLICATION_DATE_RESULTS	\N	\N	\N	\N	109
-obs_mission_hubble	hst_target_name	STRING	1	1	80	HST Target Name	HST Target Name	HSTtargetname	HSTTARGETNAME	\N	\N	\N	HST	HST_TARGET_NAME	\N	\N	\N	\N	\N	\N	110
-obs_mission_hubble	fine_guidance_system_lock_type	GROUP	1	1	150	Fine Guidance System Lock	Fine Guidance System Lock	HSTfineguidancesystemlocktype	FINEGUIDANCESYSTEMLOCKTYPE	\N	\N	\N	HST	FINE_GUIDANCE_SYSTEM_LOCK_TYPE	\N	\N	\N	\N	\N	\N	111
-obs_mission_hubble	filter_name	GROUP	1	1	20	Filter Name	Filter Name	HSTfilter	missionhubbleFILTERNAME	\N	To select observations by color or wavelength range instead of by instrument-specific filter name, use the Wavelength field available under Wavelength Constraints.	\N	HST	FILTER_NAME	\N	\N	\N	\N	\N	\N	112
-obs_mission_hubble	filter_type	GROUP	1	1	30	Filter Type	Filter Type	HSTfiltertype	\N	\N	\N	\N	HST	FILTER_TYPE	\N	\N	\N	\N	\N	\N	113
-obs_mission_hubble	aperture_type	GROUP	1	1	40	Aperture Type	Aperture Type	HSTaperturetype	missionhubbleAPERTURETYPE	\N	\N	\N	HST	APERTURE_TYPE	\N	\N	\N	\N	\N	\N	114
-obs_mission_hubble	proposed_aperture_type	GROUP	1	1	45	STIS Proposed Aperture Type	STIS Proposed Aperture Type	HSTproposedaperturetype	\N	\N	\N	\N	HST	PROPOSED_APERTURE_TYPE	\N	\N	\N	\N	\N	\N	115
-obs_mission_hubble	exposure_type	GROUP	1	1	140	Exposure Type	Exposure Type	HSTexposuretype	missionhubbleEXPOSURETYPE	\N	\N	\N	HST	EXPOSURE_TYPE	\N	\N	\N	\N	\N	\N	116
-obs_mission_hubble	gain_mode_id	GROUP	1	1	160	Gain Mode	Gain Mode	HSTgainmode	missionhubbleGAINMODEID	\N	\N	\N	HST	GAIN_MODE_ID	\N	\N	\N	\N	\N	\N	117
-obs_mission_hubble	instrument_mode_id	GROUP	1	1	170	Instrument Mode	Instrument Mode	HSTinstrumentmode	missionhubbleINSTRUMENTMODEID	\N	\N	\N	HST	INSTRUMENT_MODE_ID	\N	\N	\N	\N	\N	\N	118
-obs_mission_hubble	pc1_flag	GROUP	1	1	100	WFPC2 PC1 Flag	WFPC2 PC1 Flag	HSTpc1flag	missionhubblePC1FLAG	\N	\N	\N	HST	PC1_FLAG	\N	\N	\N	\N	\N	\N	119
-obs_mission_hubble	wf2_flag	GROUP	1	1	110	WFPC2 WF2 Flag	WFPC2 WF2 Flag	HSTwf2flag	missionhubbleWF2FLAG	\N	\N	\N	HST	WF2_FLAG	\N	\N	\N	\N	\N	\N	120
-obs_mission_hubble	wf3_flag	GROUP	1	1	120	WFPC2 WF3 Flag	WFPC2 WF3 Flag	HSTwf3flag	missionhubbleWF3FLAG	\N	\N	\N	HST	WF3_FLAG	\N	\N	\N	\N	\N	\N	121
-obs_mission_hubble	wf4_flag	GROUP	1	1	130	WFPC2 WF4 Flag	WFPC2 WF4 Flag	HSTwf4flag	missionhubbleWF4FLAG	\N	\N	\N	HST	WF4_FLAG	\N	\N	\N	\N	\N	\N	122
-obs_mission_hubble	targeted_detector_id	GROUP	1	1	90	WFPC2 Targeted Detector	WFPC2 Targeted Detector	HSTtargeteddetector	missionhubbleTARGETEDDETECTORID	\N	\N	\N	HST	TARGETED_DETECTOR_ID	\N	\N	\N	\N	\N	\N	123
-obs_mission_hubble	optical_element	GROUP	1	1	35	STIS Optical Element	STIS Optical Element	HSTopticalelement	\N	\N	\N	\N	HST	OPTICAL_ELEMENT_NAME	\N	\N	\N	\N	\N	\N	124
-obs_mission_hubble	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	125
-obs_mission_new_horizons	spacecraft_clock_count1	RANGE:range_new_horizons_sclk	1	1	20	Spacecraft Clock Count	Spacecraft Clock Start Count	NEWHORIZONSspacecraftclockcount1	missionnewhorizonsspacecraftclockcount1	\N	\N	\N	NEWHORIZONS	SPACECRAFT_CLOCK_COUNT	NEWHORIZONS	SPACECRAFT_CLOCK_START_COUNT	\N	\N	\N	\N	126
-obs_mission_new_horizons	spacecraft_clock_count2	RANGE:range_new_horizons_sclk	1	1	21	Spacecraft Clock Count	Spacecraft Clock Stop Count	NEWHORIZONSspacecraftclockcount2	missionnewhorizonsspacecraftclockcount2	\N	\N	\N	\N	\N	NEWHORIZONS	SPACECRAFT_CLOCK_STOP_COUNT	\N	\N	\N	\N	127
-obs_mission_new_horizons	mission_phase	GROUP	1	1	10	Mission Phase	Mission Phase	NEWHORIZONSmissionphase	missionphase	\N	\N	\N	NEWHORIZONS	MISSION_PHASE_NAME	\N	\N	\N	\N	\N	\N	128
-obs_mission_voyager	ert	RANGE:datetime	1	1	30	Earth Received Time	Earth Received Time	VOYAGERert	\N	\N	\N		VOYAGER	EARTH_RECEIVED_TIME	\N	\N	\N	\N	\N	\N	129
-obs_mission_voyager	spacecraft_clock_count1	RANGE:range_voyager_sclk	1	1	20	Spacecraft Clock Count	Spacecraft Clock Start Count	VOYAGERspacecraftclockcount1	spacecraftclockcount1	\N	\N		VOYAGER	SPACECRAFT_CLOCK_COUNT	VOYAGER	SPACECRAFT_CLOCK_START_COUNT	\N	\N	\N	\N	130
-obs_mission_voyager	spacecraft_clock_count2	RANGE:range_voyager_sclk	0	1	21	Spacecraft Clock Count	Spacecraft Clock Stop Count	VOYAGERspacecraftclockcount2	spacecraftclockcount2	\N	\N		\N	\N	VOYAGER	SPACECRAFT_CLOCK_STOP_COUNT	\N	\N	\N	\N	131
-obs_mission_voyager	mission_phase_name	GROUP	1	1	10	Mission Phase	Mission Phase	VOYAGERmissionphasename	\N	\N	\N	\N	VOYAGER	MISSION_PHASE_NAME	\N	\N	\N	\N	\N	\N	132
-obs_pds	opus_id	STRING	1	1	60	OPUS ID	OPUS ID	opusid	\N	\N	\N	\N	OPUS_GENERAL	OPUS_ID	\N	\N	\N	\N	\N	\N	133
-obs_pds	bundle_id	STRING	1	1	10	Bundle/Volume ID	Bundle/Volume ID	bundleid	volumeid	\N	\N	\N	OPUS_PDS	BUNDLE_ID	\N	\N	\N	\N	\N	\N	134
-obs_pds	data_set_id	STRING	1	1	20	PDS3 Data Set ID	PDS3 Data Set ID	datasetid	\N	\N	\N	\N	OPUS_PDS	DATA_SET_ID	\N	\N	\N	\N	\N	\N	135
-obs_pds	product_id	STRING	1	1	30	PDS3 Product ID	PDS3 Product ID	productid	\N	\N	\N	\N	OPUS_PDS	PRODUCT_ID	\N	\N	\N	\N	\N	\N	136
-obs_pds	primary_lid	STRING	1	1	35	Primary Product LID	Primary Product LID	primarylid	\N	\N	\N	\N	OPUS_PDS	PRIMARY_LID	\N	\N	\N	\N	\N	\N	137
-obs_pds	product_creation_time	RANGE:datetime	1	1	40	Product Creation Time	Product Creation Time	productcreationtime	\N	\N	The Product Creation Time is the time when the actual final data product was created for inclusion in the PDS archive, not the time of the original observation. In most cases, you will want to use the Observation Time under General Constraints instead.	\N	OPUS_PDS	PRODUCT_CREATION_TIME	OPUS_PDS	PRODUCT_CREATION_TIME_RESULTS	\N	\N	\N	\N	138
-obs_pds	primary_filespec	STRING	1	1	50	Primary File Spec	Primary File Spec	primaryfilespec	\N	\N	The Primary File Spec uses different filename extensions depending on the mission and instrument, and in many cases specifies the label file instead of the data file. Thus we suggest that you do not include the extension in your search and that you use the "contains" query type to guarantee the best match.	\N	OPUS_PDS	FILE_SPECIFICATION_NAME	\N	\N	\N	\N	\N	\N	139
-obs_pds	note	STRING	1	1	70	Note	Note	note	\N	\N	\N		OPUS_PDS	NOTE	\N	\N	\N	\N	\N	\N	140
+obs_instrument_cocirs	detector_id	GROUP	1	1	1	Detector ID	Detector ID	COCIRSdetectorid	DETECTORID	\N	\N		COCIRS	DETECTOR_ID	\N	\N	\N	\N	\N	\N	17
+obs_instrument_cocirs	instrument_mode_blinking_flag	GROUP	1	1	2	Blinking Mode	Blinking Mode	COCIRSinstrumentmodeblinkingflag	INSTRUMENTMODEBLINKINGFLAG	\N	\N	\N	COCIRS	BLINKING_MODE	\N	\N	\N	\N	\N	\N	18
+obs_instrument_cocirs	instrument_mode_even_flag	GROUP	1	1	3	Even Mode	Even Mode	COCIRSinstrumentmodeevenflag	INSTRUMENTMODEEVENFLAG	\N	\N	\N	COCIRS	EVEN_MODE	\N	\N	\N	\N	\N	\N	19
+obs_instrument_cocirs	instrument_mode_odd_flag	GROUP	1	1	4	Odd Mode	Odd Mode	COCIRSinstrumentmodeoddflag	INSTRUMENTMODEODDFLAG	\N	\N	\N	COCIRS	ODD_MODE	\N	\N	\N	\N	\N	\N	20
+obs_instrument_cocirs	instrument_mode_centers_flag	GROUP	1	1	5	Centers Mode	Centers Mode	COCIRSinstrumentmodecentersflag	INSTRUMENTMODECENTERSFLAG	\N	\N	\N	COCIRS	CENTERS_MODE	\N	\N	\N	\N	\N	\N	21
+obs_instrument_cocirs	instrument_mode_pairs_flag	GROUP	1	1	6	Pairs Mode	Pairs Mode	COCIRSinstrumentmodepairsflag	INSTRUMENTMODEPAIRSFLAG	\N	\N	\N	COCIRS	PAIRS_MODE	\N	\N	\N	\N	\N	\N	22
+obs_instrument_cocirs	instrument_mode_all_flag	GROUP	1	1	7	All Mode	All Mode	COCIRSinstrumentmodeallflag	INSTRUMENTMODEALLFLAG	\N	\N	\N	COCIRS	ALL_MODE	\N	\N	\N	\N	\N	\N	23
+obs_instrument_coiss	data_conversion_type	GROUP	1	1	70	Data Conversion Type	Data Conversion Type	COISSdataconversiontype	DATACONVERSIONTYPE	\N	\N		COISS	DATA_CONVERSION_TYPE	\N	\N	\N	\N	\N	\N	24
+obs_instrument_coiss	compression_type	GROUP	1	1	60	Compression Type	Compression Type	COISScompressiontype	INSTCMPRSTYPE	\N	\N		COISS	COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	25
+obs_instrument_coiss	gain_mode_id	GROUP	1	1	80	Gain Mode	Gain Mode	COISSgainmode	GAINMODEID	\N	\N		COISS	GAIN_MODE_ID	\N	\N	\N	\N	\N	\N	26
+obs_instrument_coiss	image_observation_type	GROUP	1	1	130	Image Observation Type	Image Observation Type	COISSimageobservationtype	IMAGEOBSERVATIONTYPE	\N	\N		COISS	IMAGE_OBSERVATION_TYPE	\N	\N	\N	\N	\N	\N	27
+obs_instrument_coiss	missing_lines	RANGE%d	1	1	100	Missing Lines	Missing Lines	COISSmissinglines	MISSINGLINES	\N	\N		COISS	MISSING_LINES	\N	\N	\N	\N	\N	\N	28
+obs_instrument_coiss	shutter_mode_id	GROUP	1	1	40	Shutter Mode	Shutter Mode	COISSshuttermode	SHUTTERMODEID	\N	\N		COISS	SHUTTER_MODE_ID	\N	\N	\N	\N	\N	\N	29
+obs_instrument_coiss	shutter_state_id	GROUP	1	1	50	Shutter State	Shutter State	COISSshutterstate	SHUTTERSTATEID	\N	\N		COISS	SHUTTER_STATE_ID	\N	\N	\N	\N	\N	\N	30
+obs_instrument_coiss	image_number	RANGE%d	1	1	110	Image Number	Image Number	COISSimagenumber	\N	\N	\N	\N	COISS	IMAGE_NUMBER	\N	\N	\N	\N	\N	\N	31
+obs_instrument_coiss	instrument_mode_id	GROUP	1	1	90	Instrument Mode	Instrument Mode	COISSinstrumentmode	\N	\N	\N	\N	COISS	INSTRUMENT_MODE_ID	\N	\N	\N	\N	\N	\N	32
+obs_instrument_coiss	target_desc	GROUP	1	1	120	Target Description	Target Description	COISStargetdesc	\N	\N	\N	\N	COISS	TARGET_DESC	\N	\N	\N	\N	\N	\N	33
+obs_instrument_coiss	combined_filter	GROUP	1	1	30	Filter	Filter	COISSfilter	FILTER	\N	To select observations by color or wavelength range instead of by instrument-specific filter name, use the Wavelength field available under Wavelength Constraints.		COISS	NORMALIZED_FILTER_NAME	\N	\N	\N	\N	\N	\N	34
+obs_instrument_coiss	camera	GROUP	1	1	20	Camera	Camera	COISScamera	camera	\N	\N		COISS	CAMERA	\N	\N	\N	\N	\N	\N	35
+obs_instrument_coiss	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	36
+obs_instrument_couvis	observation_type	GROUP	1	1	20	Observation Type	Observation Type	COUVISobservationtype	OBSERVATIONTYPE	\N	\N	\N	COUVIS	OBSERVATION_TYPE	\N	\N	\N	\N	\N	\N	37
+obs_instrument_couvis	integration_duration	RANGE%.4f:duration	1	1	100	Integration Duration	Integration Duration	COUVISintegrationduration	INTEGRATIONDURATION	\N	\N	\N	COUVIS	INTEGRATION_DURATION	\N	\N	\N	\N	\N	\N	38
+obs_instrument_couvis	compression_type	GROUP	1	1	90	Compression Type	Compression Type	COUVIScompressiontype	instrumentCOUVISCOMPRESSIONTYPE	\N	\N	\N	COUVIS	COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	39
+obs_instrument_couvis	occultation_port_state	GROUP	1	1	30	Occultation Port State	Occultation Port State	COUVISoccultationportstate	OCCULTATIONPORTSTATE	\N	\N	\N	COUVIS	OCCULTATION_PORT_STATE	\N	\N	\N	\N	\N	\N	40
+obs_instrument_couvis	slit_state	GROUP	1	1	40	Slit State	Slit State	COUVISslitstate	SLITSTATE	\N	\N	\N	COUVIS	SLIT_STATE	\N	\N	\N	\N	\N	\N	41
+obs_instrument_couvis	test_pulse_state	GROUP	1	1	120	Test Pulse State	Test Pulse State	COUVIStestpulsestate	TESTPULSESTATE	\N	\N	\N	COUVIS	TEST_PULSE_STATE	\N	\N	\N	\N	\N	\N	42
+obs_instrument_couvis	dwell_time	GROUP	1	1	110	HDAC Dwell Time	HDAC Dwell Time	COUVISdwelltime	DWELLTIME	\N	\N	\N	COUVIS	HDAC_DWELL_TIME	\N	\N	\N	\N	\N	\N	43
+obs_instrument_couvis	channel	GROUP	1	1	10	Detector	Detector	COUVISchannel	instrumentCOUVISChannel	\N	\N	\N	COUVIS	CHANNEL	\N	\N	\N	\N	\N	\N	44
+obs_instrument_couvis	band1	RANGE%d	1	1	70	Band	Band (Min)	COUVISband1	BAND1	\N	\N	\N	COUVIS	MINIMUM_BAND_NUMBER	\N	\N	\N	\N	\N	\N	45
+obs_instrument_couvis	band2	RANGE%d	0	1	71	Band	Band (Max)	COUVISband2	BAND2	\N	\N	\N	COUVIS	MAXIMUM_BAND_NUMBER	\N	\N	\N	\N	\N	\N	46
+obs_instrument_couvis	band_bin	RANGE%d	1	1	72	Band Binning	Band Binning	COUVISbandbin	BANDBIN	\N	\N	\N	COUVIS	BAND_BINNING_FACTOR	\N	\N	\N	\N	\N	\N	47
+obs_instrument_couvis	line1	RANGE%d	1	1	50	Line	Line (Min)	COUVISline1	LINE1	\N	\N	\N	COUVIS	WINDOW_LINE_NUMBER	COUVIS	WINDOW_MINIMUM_LINE_NUMBER	\N	\N	\N	\N	48
+obs_instrument_couvis	line2	RANGE%d	0	1	51	Line	Line (Max)	COUVISline2	LINE2	\N	\N	\N	\N	\N	COUVIS	WINDOW_MAXIMUM_LINE_NUMBER	\N	\N	\N	\N	49
+obs_instrument_couvis	line_bin	RANGE%d	1	1	60	Line Binning	Line Binning	COUVISlinebin	LINEBIN	\N	\N	\N	COUVIS	LINE_BINNING_FACTOR	\N	\N	\N	\N	\N	\N	50
+obs_instrument_couvis	samples	RANGE%d	1	1	80	Samples	Samples	COUVISsamples	SAMPLES	\N	\N	\N	COUVIS	LINE_SAMPLES	\N	\N	\N	\N	\N	\N	51
+obs_instrument_covims	instrument_mode_id	GROUP	1	1	100	Instrument Mode	Instrument Mode	COVIMSinstrumentmode	INSTRUMENTMODEID	\N	\N		COVIMS	INSTRUMENT_MODE_ID	\N	\N	\N	\N	\N	\N	52
+obs_instrument_covims	spectral_editing	GROUP	1	1	90	Spectral Editing	Spectral Editing	COVIMSspectralediting	SPECTRALEDITING	\N	\N		COVIMS	SPECTRAL_EDITING	\N	\N	\N	\N	\N	\N	53
+obs_instrument_covims	spectral_summing	GROUP	1	1	80	Spectral Summing	Spectral Summing	COVIMSspectralsumming	SPECTRALSUMMING	\N	\N		COVIMS	SPECTRAL_SUMMING	\N	\N	\N	\N	\N	\N	54
+obs_instrument_covims	star_tracking	GROUP	1	1	110	Star Tracking	Star Tracking	COVIMSstartracking	\N	\N	\N		COVIMS	STAR_TRACKING	\N	\N	\N	\N	\N	\N	55
+obs_instrument_covims	swath_width	RANGE%d	1	1	60	Swath Width	Swath Width	COVIMSswathwidth	\N	\N	\N		COVIMS	SWATH_WIDTH	\N	\N	\N	\N	\N	\N	56
+obs_instrument_covims	swath_length	RANGE%d	1	1	70	Swath Length	Swath Length	COVIMSswathlength	\N	\N	\N		COVIMS	SWATH_LENGTH	\N	\N	\N	\N	\N	\N	57
+obs_instrument_covims	ir_exposure	RANGE%.4f:duration	1	1	50	IR Exposure	IR Exposure	COVIMSirexposure	IREXPOSURE	\N	\N		COVIMS	IR_EXPOSURE	\N	\N	\N	\N	\N	\N	58
+obs_instrument_covims	ir_sampling_mode_id	GROUP	1	1	40	IR Sampling Mode	IR Sampling Mode	COVIMSirsamplingmode	IRSAMPLINGMODEID	\N	\N		COVIMS	IR_SAMPLING_MODE_ID	\N	\N	\N	\N	\N	\N	59
+obs_instrument_covims	vis_exposure	RANGE%.4f:duration	1	1	30	VIS Exposure	VIS Exposure	COVIMSvisexposure	VISEXPOSURE	\N	\N		COVIMS	VIS_EXPOSURE	\N	\N	\N	\N	\N	\N	60
+obs_instrument_covims	vis_sampling_mode_id	GROUP	1	1	20	VIS Sampling Mode	VIS Sampling Mode	COVIMSvissamplingmode	VISSAMPLINGMODEID	\N	\N		COVIMS	VIS_SAMPLING_MODE_ID	\N	\N	\N	\N	\N	\N	61
+obs_instrument_covims	channel	GROUP	1	1	10	Channel	Channel	COVIMSchannel	channel	\N	\N	\N	COVIMS	CHANNEL	\N	\N	\N	\N	\N	\N	62
+obs_instrument_gossi	observation_id	STRING	1	1	80	Observation ID	Observation ID	GOSSIobservationid	OBSERVATIONID	\N	\N		GOSSI	OBSERVATION_ID	\N	\N	\N	\N	\N	\N	63
+obs_instrument_gossi	image_id	STRING	1	1	70	Image ID	Image ID	GOSSIimageid	instrumentGOSSIIMAGEID	\N	\N		GOSSI	IMAGE_ID	\N	\N	\N	\N	\N	\N	64
+obs_instrument_gossi	filter_name	GROUP	1	1	10	Filter Name	Filter Name	GOSSIfilter	instrumentGOSSIFILTERNAME	\N	\N		GOSSI	FILTER_NAME	\N	\N	\N	\N	\N	\N	65
+obs_instrument_gossi	filter_number	GROUP	1	1	20	Filter Number	Filter Number	GOSSIfilternumber	instrumentGOSSIFILTERNUMBER	\N	\N		GOSSI	FILTER_NUMBER	\N	\N	\N	\N	\N	\N	66
+obs_instrument_gossi	gain_mode_id	GROUP	1	1	40	Gain Mode	Gain Mode	GOSSIgainmode	instrumentGOSSIGAINMODEID	\N	\N		GOSSI	GAIN_MODE_ID	\N	\N	\N	\N	\N	\N	67
+obs_instrument_gossi	frame_duration	GROUP	1	1	60	Frame Duration	Frame Duration	GOSSIframeduration	FRAMEDURATION	\N	\N		GOSSI	FRAME_DURATION	\N	\N	\N	\N	\N	\N	68
+obs_instrument_gossi	obstruction_id	GROUP	1	1	50	Obstruction	Obstruction	GOSSIobstruction	OBSTRUCTIONID	\N	\N		GOSSI	OBSTRUCTION_ID	\N	\N	\N	\N	\N	\N	69
+obs_instrument_gossi	compression_type	GROUP	1	1	30	Compression Type	Compression Type	GOSSIcompressiontype	COMPRESSIONTYPE	\N	\N		GOSSI	COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	70
+obs_instrument_gossi	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	71
+obs_instrument_nhlorri	instrument_compression_type	GROUP	1	1	20	Instrument Compression Type	Instrument Compression Type	NHLORRIinstrumentcompressiontype	INSTRUMENTCOMPRESSIONTYPE	\N	\N	\N	NHLORRI	INSTRUMENT_COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	72
+obs_instrument_nhlorri	binning_mode	GROUP	1	1	10	Binning Mode	Binning Mode	NHLORRIbinningmode	BINNINGMODE	\N	\N	\N	NHLORRI	BINNING_MODE	\N	\N	\N	\N	\N	\N	73
+obs_instrument_nhlorri	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	74
+obs_instrument_nhmvic	instrument_compression_type	GROUP	1	1	10	Instrument Compression Type	Instrument Compression Type	NHMVICinstrumentcompressiontype	INSTRUMENTCOMPRESSIONTYPE	\N	\N	\N	NHMVIC	INSTRUMENT_COMPRESSION_TYPE	\N	\N	\N	\N	\N	\N	75
+obs_instrument_vgiss	image_id	STRING	1	1	80	Image ID	Image ID	VGISSimageid	IMAGEID	\N	\N		VGISS	IMAGE_ID	\N	\N	\N	\N	\N	\N	76
+obs_instrument_vgiss	scan_mode	GROUP	1	1	70	Scan Mode	Scan Mode	VGISSscanmode	SCANMODEID	\N	\N		VGISS	SCAN_MODE_ID	\N	\N	\N	\N	\N	\N	77
+obs_instrument_vgiss	shutter_mode	GROUP	1	1	40	Shutter Mode	Shutter Mode	VGISSshuttermode	instrumentVGISSSHUTTERMODEID	\N	\N		VGISS	SHUTTER_MODE_ID	\N	\N	\N	\N	\N	\N	78
+obs_instrument_vgiss	gain_mode	GROUP	1	1	60	Gain Mode	Gain Mode	VGISSgainmode	instrumentVGISSGAINMODEID	\N	\N		VGISS	GAIN_MODE_ID	\N	\N	\N	\N	\N	\N	79
+obs_instrument_vgiss	edit_mode	GROUP	1	1	50	Edit Mode	Edit Mode	VGISSeditmode	EDITMODEID	\N	\N		VGISS	EDIT_MODE_ID	\N	\N	\N	\N	\N	\N	80
+obs_instrument_vgiss	filter_name	GROUP	1	1	20	Filter Name	Filter Name	VGISSfilter	FILTERNAME	\N	\N		VGISS	FILTER_NAME	\N	\N	\N	\N	\N	\N	81
+obs_instrument_vgiss	filter_number	GROUP	1	1	30	Filter Number	Filter Number	VGISSfilternumber	FILTERNUMBER	\N	\N		VGISS	FILTER_NUMBER	\N	\N	\N	\N	\N	\N	82
+obs_instrument_vgiss	camera	GROUP	1	1	10	Camera	Camera	VGISScamera	instrumentVGISScamera	\N	\N		VGISS	CAMERA	\N	\N	\N	\N	\N	\N	83
+obs_instrument_vgiss	usable_lines	RANGE%d	1	1	90	Usable Lines	Usable Lines	VGISSusablelines	\N	\N	\N		VGISS	USABLE_LINES	\N	\N	\N	\N	\N	\N	84
+obs_instrument_vgiss	usable_samples	RANGE%d	1	1	100	Usable Samples	Usable Samples	VGISSusablesamples	\N	\N	\N		VGISS	USABLE_SAMPLES	\N	\N	\N	\N	\N	\N	85
+obs_instrument_vgiss	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	86
+obs_mission_cassini	obs_name	STRING	1	1	10	Observation Name	Observation Name	CASSINIobsname	obsname	\N	\N		CASSINI	OBSERVATION_NAME	CASSINI	OBSERVATION_NAME_RESULTS	\N	\N	\N	\N	87
+obs_mission_cassini	rev_no	GROUP:range_cassini_rev_no	1	0	50	Saturn Orbit Number (By Checkbox)	\N	CASSINIrevno	revno	\N	\N		CASSINI	ORBIT_NUMBER	\N	\N	\N	\N	\N	\N	88
+obs_mission_cassini	rev_no_int	RANGE:range_cassini_rev_no	1	1	51	Saturn Orbit Number (By Range)	Saturn Orbit Number	CASSINIrevnoint	\N	\N	\N		CASSINI	ORBIT_NUMBER_INT	CASSINI	ORBIT_NUMBER_INT_RESULTS	\N	\N	\N	\N	89
+obs_mission_cassini	is_prime	GROUP	1	1	70	Is Prime	Is Prime	CASSINIisprime	prime	\N	\N		CASSINI	IS_PRIME_FLAG	\N	\N	\N	\N	\N	\N	90
+obs_mission_cassini	prime_inst_id	GROUP	1	1	60	Primary Instrument	Primary Instrument	CASSINIprimeinst	primeinstid	\N	\N		CASSINI	PRIMARY_INSTRUMENT_ID	\N	\N	\N	\N	\N	\N	91
+obs_mission_cassini	spacecraft_clock_count1	RANGE:range_cassini_sclk	1	1	90	Spacecraft Clock Count	Spacecraft Clock Start Count	CASSINIspacecraftclockcount1	spacecraftclockcount1	\N	\N		CASSINI	SPACECRAFT_CLOCK_COUNT	CASSINI	SPACECRAFT_CLOCK_START_COUNT	\N	\N	\N	\N	92
+obs_mission_cassini	spacecraft_clock_count2	RANGE:range_cassini_sclk	0	1	91	Spacecraft Clock Count	Spacecraft Clock Stop Count	CASSINIspacecraftclockcount2	spacecraftclockcount2	\N	\N		\N	\N	CASSINI	SPACECRAFT_CLOCK_STOP_COUNT	\N	\N	\N	\N	93
+obs_mission_cassini	ert1	RANGE:datetime	1	1	100	Earth Received Time	Earth Received Start Time	CASSINIert1	ertsec1	\N	\N		CASSINI	EARTH_RECEIVED_TIME	CASSINI	EARTH_RECEIVED_START_TIME	\N	\N	\N	\N	94
+obs_mission_cassini	ert2	RANGE:datetime	0	1	101	Earth Received Time	Earth Received Stop Time	CASSINIert2	ertsec2	\N	\N		\N	\N	CASSINI	EARTH_RECEIVED_STOP_TIME	\N	\N	\N	\N	95
+obs_mission_cassini	cassini_target_code	GROUP	1	1	40	Cassini Target Code	Cassini Target Code	CASSINItargetcode	\N	\N	\N		CASSINI	CASSINI_TARGET_CODE	\N	\N	\N	\N	\N	\N	96
+obs_mission_cassini	cassini_target_name	GROUP	1	1	45	Cassini Original Target Name	Cassini Original Target Name	CASSINItargetname	\N	\N	\N		CASSINI	CASSINI_TARGET_NAME	\N	\N	\N	\N	\N	\N	97
+obs_mission_cassini	activity_name	STRING	1	1	20	Activity Name	Activity Name	CASSINIactivityname	activityname	\N	\N		CASSINI	ACTIVITY_NAME	\N	\N	\N	\N	\N	\N	98
+obs_mission_cassini	mission_phase_name	GROUP	1	1	30	Mission Phase	Mission Phase	CASSINImissionphasename	\N	\N	\N	\N	CASSINI	MISSION_PHASE_NAME	\N	\N	\N	\N	\N	\N	99
+obs_mission_cassini	sequence_id	STRING	1	1	80	Sequence ID	Sequence ID	CASSINIsequenceid	\N	\N	\N	\N	CASSINI	SEQUENCE_ID	\N	\N	\N	\N	\N	\N	100
+obs_mission_galileo	orbit_number	GROUP	1	1	10	Orbit Number	Orbit Number	GALILEOorbitnumber	ORBITNUMBER	\N	\N		GALILEO	ORBIT_NUMBER	\N	\N	\N	\N	\N	\N	101
+obs_mission_galileo	spacecraft_clock_count1	RANGE:range_galileo_sclk	1	1	20	Spacecraft Clock Count	Spacecraft Clock Start Count	GALILEOspacecraftclockcount1	missiongalileospacecraftclockcount1	\N	\N		GALILEO	SPACECRAFT_CLOCK_COUNT	GALILEO	SPACECRAFT_CLOCK_START_COUNT	\N	\N	\N	\N	102
+obs_mission_galileo	spacecraft_clock_count2	RANGE:range_galileo_sclk	0	1	21	Spacecraft Clock Count	Spacecraft Clock Stop Count	GALILEOspacecraftclockcount2	missiongalileospacecraftclockcount2	\N	\N		\N	\N	GALILEO	SPACECRAFT_CLOCK_STOP_COUNT	\N	\N	\N	\N	103
+obs_mission_hubble	stsci_group_id	STRING	1	1	70	STScI File Name	STScI File Name	HSTstscigroupid	STSCIGROUPID	\N	\N	\N	HST	STSCI_GROUP_ID	\N	\N	\N	\N	\N	\N	104
+obs_mission_hubble	hst_proposal_id	RANGE%d	1	1	50	HST Proposal ID	HST Proposal ID	HSTproposalid	HSTPROPOSALID	\N	\N	\N	HST	HST_PROPOSAL_ID	\N	\N	\N	\N	\N	\N	105
+obs_mission_hubble	hst_pi_name	STRING	1	1	60	PI Name	PI Name	HSTpiname	HSTPINAME	\N	\N	\N	HST	HST_PI_NAME	\N	\N	\N	\N	\N	\N	106
+obs_mission_hubble	detector_id	GROUP	1	1	10	Detector	Detector	HSTdetector	missionhubbleDETECTORID	\N	\N	\N	HST	DETECTOR_ID	\N	\N	\N	\N	\N	\N	107
+obs_mission_hubble	publication_date	RANGE:datetime	1	1	180	Publication Date	Publication Date	HSTpublicationdate	PUBLICATIONDATE	\N	\N	\N	HST	PUBLICATION_DATE	HST	PUBLICATION_DATE_RESULTS	\N	\N	\N	\N	108
+obs_mission_hubble	hst_target_name	STRING	1	1	80	HST Target Name	HST Target Name	HSTtargetname	HSTTARGETNAME	\N	\N	\N	HST	HST_TARGET_NAME	\N	\N	\N	\N	\N	\N	109
+obs_mission_hubble	fine_guidance_system_lock_type	GROUP	1	1	150	Fine Guidance System Lock	Fine Guidance System Lock	HSTfineguidancesystemlocktype	FINEGUIDANCESYSTEMLOCKTYPE	\N	\N	\N	HST	FINE_GUIDANCE_SYSTEM_LOCK_TYPE	\N	\N	\N	\N	\N	\N	110
+obs_mission_hubble	filter_name	GROUP	1	1	20	Filter Name	Filter Name	HSTfilter	missionhubbleFILTERNAME	\N	To select observations by color or wavelength range instead of by instrument-specific filter name, use the Wavelength field available under Wavelength Constraints.	\N	HST	FILTER_NAME	\N	\N	\N	\N	\N	\N	111
+obs_mission_hubble	filter_type	GROUP	1	1	30	Filter Type	Filter Type	HSTfiltertype	\N	\N	\N	\N	HST	FILTER_TYPE	\N	\N	\N	\N	\N	\N	112
+obs_mission_hubble	aperture_type	GROUP	1	1	40	Aperture Type	Aperture Type	HSTaperturetype	missionhubbleAPERTURETYPE	\N	\N	\N	HST	APERTURE_TYPE	\N	\N	\N	\N	\N	\N	113
+obs_mission_hubble	proposed_aperture_type	GROUP	1	1	45	STIS Proposed Aperture Type	STIS Proposed Aperture Type	HSTproposedaperturetype	\N	\N	\N	\N	HST	PROPOSED_APERTURE_TYPE	\N	\N	\N	\N	\N	\N	114
+obs_mission_hubble	exposure_type	GROUP	1	1	140	Exposure Type	Exposure Type	HSTexposuretype	missionhubbleEXPOSURETYPE	\N	\N	\N	HST	EXPOSURE_TYPE	\N	\N	\N	\N	\N	\N	115
+obs_mission_hubble	gain_mode_id	GROUP	1	1	160	Gain Mode	Gain Mode	HSTgainmode	missionhubbleGAINMODEID	\N	\N	\N	HST	GAIN_MODE_ID	\N	\N	\N	\N	\N	\N	116
+obs_mission_hubble	instrument_mode_id	GROUP	1	1	170	Instrument Mode	Instrument Mode	HSTinstrumentmode	missionhubbleINSTRUMENTMODEID	\N	\N	\N	HST	INSTRUMENT_MODE_ID	\N	\N	\N	\N	\N	\N	117
+obs_mission_hubble	pc1_flag	GROUP	1	1	100	WFPC2 PC1 Flag	WFPC2 PC1 Flag	HSTpc1flag	missionhubblePC1FLAG	\N	\N	\N	HST	PC1_FLAG	\N	\N	\N	\N	\N	\N	118
+obs_mission_hubble	wf2_flag	GROUP	1	1	110	WFPC2 WF2 Flag	WFPC2 WF2 Flag	HSTwf2flag	missionhubbleWF2FLAG	\N	\N	\N	HST	WF2_FLAG	\N	\N	\N	\N	\N	\N	119
+obs_mission_hubble	wf3_flag	GROUP	1	1	120	WFPC2 WF3 Flag	WFPC2 WF3 Flag	HSTwf3flag	missionhubbleWF3FLAG	\N	\N	\N	HST	WF3_FLAG	\N	\N	\N	\N	\N	\N	120
+obs_mission_hubble	wf4_flag	GROUP	1	1	130	WFPC2 WF4 Flag	WFPC2 WF4 Flag	HSTwf4flag	missionhubbleWF4FLAG	\N	\N	\N	HST	WF4_FLAG	\N	\N	\N	\N	\N	\N	121
+obs_mission_hubble	targeted_detector_id	GROUP	1	1	90	WFPC2 Targeted Detector	WFPC2 Targeted Detector	HSTtargeteddetector	missionhubbleTARGETEDDETECTORID	\N	\N	\N	HST	TARGETED_DETECTOR_ID	\N	\N	\N	\N	\N	\N	122
+obs_mission_hubble	optical_element	GROUP	1	1	35	STIS Optical Element	STIS Optical Element	HSTopticalelement	\N	\N	\N	\N	HST	OPTICAL_ELEMENT_NAME	\N	\N	\N	\N	\N	\N	123
+obs_mission_hubble	\N	\N	1	1	1000	\N	\N	\N	\N	duration	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	124
+obs_mission_new_horizons	spacecraft_clock_count1	RANGE:range_new_horizons_sclk	1	1	20	Spacecraft Clock Count	Spacecraft Clock Start Count	NEWHORIZONSspacecraftclockcount1	missionnewhorizonsspacecraftclockcount1	\N	\N	\N	NEWHORIZONS	SPACECRAFT_CLOCK_COUNT	NEWHORIZONS	SPACECRAFT_CLOCK_START_COUNT	\N	\N	\N	\N	125
+obs_mission_new_horizons	spacecraft_clock_count2	RANGE:range_new_horizons_sclk	1	1	21	Spacecraft Clock Count	Spacecraft Clock Stop Count	NEWHORIZONSspacecraftclockcount2	missionnewhorizonsspacecraftclockcount2	\N	\N	\N	\N	\N	NEWHORIZONS	SPACECRAFT_CLOCK_STOP_COUNT	\N	\N	\N	\N	126
+obs_mission_new_horizons	mission_phase	GROUP	1	1	10	Mission Phase	Mission Phase	NEWHORIZONSmissionphase	missionphase	\N	\N	\N	NEWHORIZONS	MISSION_PHASE_NAME	\N	\N	\N	\N	\N	\N	127
+obs_mission_voyager	ert	RANGE:datetime	1	1	30	Earth Received Time	Earth Received Time	VOYAGERert	\N	\N	\N		VOYAGER	EARTH_RECEIVED_TIME	\N	\N	\N	\N	\N	\N	128
+obs_mission_voyager	spacecraft_clock_count1	RANGE:range_voyager_sclk	1	1	20	Spacecraft Clock Count	Spacecraft Clock Start Count	VOYAGERspacecraftclockcount1	spacecraftclockcount1	\N	\N		VOYAGER	SPACECRAFT_CLOCK_COUNT	VOYAGER	SPACECRAFT_CLOCK_START_COUNT	\N	\N	\N	\N	129
+obs_mission_voyager	spacecraft_clock_count2	RANGE:range_voyager_sclk	0	1	21	Spacecraft Clock Count	Spacecraft Clock Stop Count	VOYAGERspacecraftclockcount2	spacecraftclockcount2	\N	\N		\N	\N	VOYAGER	SPACECRAFT_CLOCK_STOP_COUNT	\N	\N	\N	\N	130
+obs_mission_voyager	mission_phase_name	GROUP	1	1	10	Mission Phase	Mission Phase	VOYAGERmissionphasename	\N	\N	\N	\N	VOYAGER	MISSION_PHASE_NAME	\N	\N	\N	\N	\N	\N	131
+obs_pds	opus_id	STRING	1	1	60	OPUS ID	OPUS ID	opusid	\N	\N	\N	\N	OPUS_GENERAL	OPUS_ID	\N	\N	\N	\N	\N	\N	132
+obs_pds	bundle_id	STRING	1	1	10	Bundle/Volume ID	Bundle/Volume ID	bundleid	volumeid	\N	\N	\N	OPUS_PDS	BUNDLE_ID	\N	\N	\N	\N	\N	\N	133
+obs_pds	data_set_id	STRING	1	1	20	PDS3 Data Set ID	PDS3 Data Set ID	datasetid	\N	\N	\N	\N	OPUS_PDS	DATA_SET_ID	\N	\N	\N	\N	\N	\N	134
+obs_pds	product_id	STRING	1	1	30	PDS3 Product ID	PDS3 Product ID	productid	\N	\N	\N	\N	OPUS_PDS	PRODUCT_ID	\N	\N	\N	\N	\N	\N	135
+obs_pds	primary_lid	STRING	1	1	35	Primary Product LID	Primary Product LID	primarylid	\N	\N	\N	\N	OPUS_PDS	PRIMARY_LID	\N	\N	\N	\N	\N	\N	136
+obs_pds	product_creation_time	RANGE:datetime	1	1	40	Product Creation Time	Product Creation Time	productcreationtime	\N	\N	The Product Creation Time is the time when the actual final data product was created for inclusion in the PDS archive, not the time of the original observation. In most cases, you will want to use the Observation Time under General Constraints instead.	\N	OPUS_PDS	PRODUCT_CREATION_TIME	OPUS_PDS	PRODUCT_CREATION_TIME_RESULTS	\N	\N	\N	\N	137
+obs_pds	primary_filespec	STRING	1	1	50	Primary File Spec	Primary File Spec	primaryfilespec	\N	\N	The Primary File Spec uses different filename extensions depending on the mission and instrument, and in many cases specifies the label file instead of the data file. Thus we suggest that you do not include the extension in your search and that you use the "contains" query type to guarantee the best match.	\N	OPUS_PDS	FILE_SPECIFICATION_NAME	\N	\N	\N	\N	\N	\N	138
+obs_pds	note	STRING	1	1	70	Note	Note	note	\N	\N	\N		OPUS_PDS	NOTE	\N	\N	\N	\N	\N	\N	139
+obs_preview	preview_images	\N	0	0	0	\N	\N	**previewimages	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	140
 obs_profile	occ_type	GROUP	1	1	10	Occultation or Profile Type	Occultation or Profile Type	occtype	\N	\N	\N		OPUS_PROFILE	OCCULTATION_TYPE	\N	\N	\N	\N	\N	\N	141
 obs_profile	occ_dir	GROUP	1	1	20	Occultation Direction	Occultation Direction	occdir	\N	\N	\N		OPUS_PROFILE	OCCULTATION_DIR	\N	\N	\N	\N	\N	\N	142
 obs_profile	body_occ_flag	GROUP	1	1	30	Body Occultation Flag	Body Occultation Flag	bodyoccflag	\N	\N	\N		OPUS_PROFILE	BODY_OCCULTATION_FLAG	\N	\N	\N	\N	\N	\N	143
