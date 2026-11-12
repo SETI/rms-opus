@@ -6423,3 +6423,11 @@ Nothing above this line is rewritten by an executor.
 - `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
   applied (a run changes no file), and `import_util.read_mult_option` refuses a string pin
   or group pin, naming the entry.
+
+### 2026-11-12, PR-16 (written against this file at 712067c6)
+
+- `import_for_tests.sh` no longer registers its bundles before importing them, a line
+  this PR had added: its `--import` lines run one after another, and each registers its
+  bundles as it starts, in the same order, so the numbers and ids are the same.
+  `opus_import_all --prepare` keeps registering its whole list first, for the importers
+  that run at once.

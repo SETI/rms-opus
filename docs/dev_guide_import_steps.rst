@@ -302,8 +302,9 @@ and the ids after it, in the order they are computed
 the registration order, never on which process imports a bundle or when. A bundle
 already registered keeps its number and range, since its rows are deleted before it is
 written again; one deleted with ``--delete-bundles`` loses its row, and is registered
-afresh, after every other, when it is next imported. ``opus_import_all --prepare`` and
-``import_for_tests.sh`` register their whole list before anything is imported.
+afresh, after every other, when it is next imported. ``opus_import_all --prepare``
+registers its whole list before any importer starts, so that importers running at once
+take the numbers its order gives.
 
 **Every move between states is conditional** on the state the bundle is expected to be
 in, by an ``UPDATE`` whose condition names it
