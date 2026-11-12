@@ -6417,3 +6417,9 @@ Nothing above this line is rewritten by an executor.
   importer is dead. PR-16a gives every importer a lock, refuses `--requeue` of a bundle
   whose importer is recorded, and replaces the cleanup with a row-locked
   `release_bundle`.
+
+### 2026-11-12, PR-14 (written against this file at 1e55f88a)
+
+- `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
+  applied (a run changes no file), and `import_util.read_mult_option` refuses a string pin
+  or group pin, naming the entry.
