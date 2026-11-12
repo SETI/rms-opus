@@ -500,20 +500,28 @@ named after the served one with ``_carry_source`` is made once, holding
 naming the served schema's first observations, ``PROMOTION_CART_ROWS_PER_SESSION`` of
 them to each unexpired session, an empty copy of each of the two tables to save the
 served schema's own rows into, and an empty ``bench_web_promotion_source`` table that
-marks it as the harness's. A schema of that name holding the mark, left by a harness run
-that did not finish, is dropped first; one without it is refused, naming it, and left as
-it is. Each run saves the served schema's ``cart`` and ``django_session`` into
-the copies, then stops the application, runs the side's ``opus_import
---carry-over-sessions-from`` from that schema into the served one, restarts memcached,
-and starts the application again, recording ``web.promotion.carry_over_s``, the
-carry-over alone, and ``web.promotion.window_s``, from the moment the application is
-told to stop until it has started again, every worker having loaded the application.
-Once the window has closed, whether or not every step succeeded, the two tables'
-saved rows replace the ones the carry-over wrote, in one transaction, so every run, on
+marks it as the harness's. Each run saves the served schema's ``cart`` and
+``django_session`` into the copies and puts a row in the mark, in one transaction, then
+stops the application, runs the side's ``opus_import --carry-over-sessions-from`` from
+that schema into the served one, restarts memcached, and starts the application again,
+recording ``web.promotion.carry_over_s``, the carry-over alone, and
+``web.promotion.window_s``, from the moment the application is told to stop until it
+has started again, every worker having loaded the application. Once the window has
+closed, whether or not every step succeeded, the two tables' saved rows replace the ones
+the carry-over wrote and the mark is emptied, in one transaction, so every run, on
 either side, finds the same tables; neither the save nor the restore is in the window,
-and a save that fails stops nothing and restores nothing. The rows planted, fewer than
-``N`` when the served schema holds fewer observations, are in the environment as
-``promotion_cart_rows``; the schema is dropped when the command ends.
+and a save that fails stops nothing and restores nothing. A row in the mark therefore
+means the schema holds the only copy of the served schema's rows. The rows planted,
+fewer than ``N`` when the served schema holds fewer observations, are in the environment
+as ``promotion_cart_rows``; the schema is dropped when the command ends, unless a
+restore failed, when it is kept and the command fails naming it.
+
+A schema of the source's name without the mark is refused, naming it, and left as it is.
+One holding the mark, left by a harness run that did not finish, is dropped before the
+source is made; when the mark holds a row, the saved rows first replace the served
+schema's and the mark is emptied, in one transaction, and the command says so. A restore
+there that fails keeps the schema and fails the command, naming it; its ``saved_cart``
+and ``saved_django_session`` hold the rows to put back.
 
 A side without ``warm_search``, or whose ``opus_import --help`` lists no
 ``--carry-over-sessions-from``, skips that step, and the result's ``skipped_steps``
