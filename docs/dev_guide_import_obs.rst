@@ -586,8 +586,8 @@ ObsPreview -- ``obs_preview``
 
 :class:`opus_import.obs.obs_preview.ObsPreview`
 
-The preview images every observation has, in one column, ``preview_images``, which is
-not to be overridden. It asks ``rms-pdsfile`` for a view set through its ``viewset``
+The preview images every observation has, in one column, ``preview_images``, whose
+method is not to be overridden. It asks ``rms-pdsfile`` for a view set through its ``viewset``
 property and renders the result to JSON, and it honors ``--ignore-missing-images`` and
 ``--fake-images``. **Its guard does real work**, because "no previews" reaches it in
 three different shapes: the property answers a miss with ``False`` rather than None,
