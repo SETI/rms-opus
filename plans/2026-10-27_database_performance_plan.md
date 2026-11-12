@@ -7122,18 +7122,83 @@ Nothing above this line is rewritten by an executor.
     (3,056 unit tests); the import suite 192 passed and 3 skipped; the integration job's
     run (`tests/opus_support`, `tests/opus_app` and `integration_tests`, with coverage)
     2,875 passed against `pr18local`, imported again at this head, at 100% coverage.
+- **CodeRabbit review (2026-11-12).**
+  - *The promotion window* (`bench_web`). `web.promotion.window_s` opened after gunicorn
+    had stopped and closed before it started, leaving both out, while the section's "web
+    stop to web start" and the method's docstring include them. It opens before the stop
+    and closes when `gunicorn.start` returns, every worker having loaded the application;
+    `web.promotion.carry_over_s` is still the carry-over alone. This replaces "gunicorn's
+    start ... is outside it" above: `systemctl start` returning before mod_wsgi loads
+    anything does not shorten what a visitor waits, since each worker's first request
+    pays the load. The window was measured again for it (Measurement, below).
+  - *The planted rows when a restart fails* (`bench_web`). They are deleted in a
+    `finally` once the window has closed, after the application's start (which replaces
+    "before the application starts" above), so a failed memcached restart or gunicorn
+    start leaves none behind, and their deletion is never inside the window. The tests
+    time the steps on a clock each advances by a distinct power of two, so the window's
+    sum names the steps it holds, and fail each restart in turn.
+  - *`promotion_cart_rows` is pinned* within a result file beside `promotion_carts`: the
+    same request plants fewer rows against a schema with fewer observations.
+  - *The rollback commands* in the deployment guide name the previous release
+    (`==<previous release>`): without it the newest release is installed, and the schema
+    version check refuses a database another schema version imported. Docs only.
+  - *The target's comparison* (Measurement, below). The reviewer is right: the target is
+    the head's db-cold first page against its own warm, as the section ("expected to
+    approach the warm number") and the measurement note above define it, and the bullet
+    reported the before-against-after db-cold change under the target's name. It reports
+    the defined comparison, with the before-against-after change beside it; no measured
+    number changed.
+  - *A failing help probe* (`_promote_steps.sh`). A failing `opus_import --help` was read
+    as a release without the option, so the promotion switched without carrying
+    anything. It fails the step as a failed carry-over does (the web service started
+    again on the unchanged installation, return 1); only a help that succeeds and lists
+    no `--carry-over-sessions-from` warns and goes on. The deployment guide and
+    `README.txt` say so.
+  - *A deploy lock* (`deploy_new_code_and_database.sh`). Accepted, in both deploy
+    scripts: a deploy that switches during another's build leaves the other carrying
+    over from a schema that has stopped being served, and the same gap lets two deploys
+    move the `deployed` symlink in turn, which a lock in one script alone would not
+    close. A sourced `_deploy_lock.sh` defines `take_deploy_lock`, an exclusive `flock -n`
+    on `${OPUS_DIR}/deploy.lock` through a descriptor the deploy's shell keeps open, taken
+    right after `_read_deploy_env.sh` and so held through `_promote.sh`; a second deploy
+    stops at once, having changed nothing. `run_full_opus_import.sh` takes no lock. The
+    code-only deploy test's stand-in runner moved into `tests/opus_deploy/conftest.py`,
+    shared with `test_deploy_lock.py`; its `_promote.sh` stub records whether another
+    process finds the lock held during the promotion. The deployment guide (a paragraph
+    and its layout block) and `README.txt` document it.
+  - *The carry-over of its own schema* (`ImportDBMySQL.carry_over_sessions`). The method
+    refuses a source equal to its schema, without regard to case, logged, before any
+    statement; the command line's refusal stays, before the database opens.
+  - *Without MySQLdb* the method raises a logged `ImportDBError` rather than returning
+    zero counts, which `do_carry_over` reported as a success.
+  - *Docstrings* on every stand-in method of `tests/benchmarks/test_deploy_steps.py`.
+  - *Outside the diff: `resolve_parallelism` before the carry-over* (`cli.py`).
+    Declined. A full-import deploy first runs `opus_import --import-dictionary
+    --reset-search-tables` on the same host with the same configuration, which resolves
+    the same counts, so a configuration above the host's ceiling stops the deploy there,
+    before the web service stops; skipping the check for the carry-over alone would
+    change no deploy's outcome.
+  - Mutations, each failing its test: the window opened after the stop or closed before
+    the start; the deletion inside the window or outside the `finally`; the pin removed;
+    a failing probe read as absence; the lock's call removed from either script, the
+    `flock` skipped, or the lock taken after the served schema is read; the method's
+    refusal removed or made case-sensitive; zero counts without the driver.
+  - Results, at c7c95cbc: the gates pass (3,068 unit tests). The import suite and the
+    integration job are left for the orchestrator's run after the next merge.
 - **Measurement** (2026-11-11, test scale; one schema, `bench_test_after_b_3`, imported
   by PR-17's head 45ccaebb, since this PR changes no schema; before PR-17's head serving
   it, which has neither step; after this PR's head e5e71573 with `--warm db-cold --warm
   app-cold --promotion-carts 10000`; six web runs alternated, three a side, session `a`;
   judged against the PR-00 floors; load averages 1.3 to 6.9, the PR-19 executor working
   beside the runs):
-  - **Target, the empty search's first page db-cold:** 24.8 ms to 18.6 ms, -25.0%, **not
-    improved** beyond its floor (52.0%, the web family's jitter of 12.9 ms over a small
-    median). Warm, the head's first page takes 10.7 ms. Behind the target, the warm-up
-    did what it is for: the empty search's db-cold result count 194.9 ms to 11.2 ms
-    (-94.2%), and the page's db-cold `Innodb_buffer_pool_reads` 220 to 0 and
-    `Sort_merge_passes` 1 to 0.
+  - **Target, the head's db-cold first page of the empty search against its own warm:**
+    18.6 ms against 10.7 ms, 7.9 ms apart, within the web family's jitter of 12.9 ms, the
+    distance at which §2.6 counts two medians of a time metric as agreeing; by that
+    measure the target is met. Beside it, before against after, db-cold, which the target
+    does not judge: 24.8 ms to 18.6 ms, -25.0%, not beyond its floor (52.0%, the same
+    jitter over a small median). Behind the target, the warm-up did what it is for: the
+    empty search's db-cold result count 194.9 ms to 11.2 ms (-94.2%), and the page's
+    db-cold `Innodb_buffer_pool_reads` 220 to 0 and `Sort_merge_passes` 1 to 0.
   - **Two requests the warm-up does not issue:** the empty search's tenth page db-cold,
     9.1 ms to 27.7 ms (reported; floor 198%); the planet widget db-cold, 39.0 ms to
     28.3 ms (-27.5%, within its floor).
