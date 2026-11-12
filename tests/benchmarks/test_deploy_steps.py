@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import subprocess  # nosec B404 - a stand-in's finished process
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
 from benchmarks import bench_web
+from benchmarks.app_servers import ServerError
 from benchmarks.bench_web import DeploySteps, WebBench, WebRunError, deploy_steps
 from benchmarks.sides import Spelling
 
@@ -55,13 +57,32 @@ def test_nothing_asked_is_nothing_skipped() -> None:
 class _Recorder:
     """Records each call made of it, under a name, into a shared list."""
 
-    def __init__(self, name: str, calls: list[str]) -> None:
+    def __init__(self, name: str, calls: list[str], failing: str | None = None) -> None:
         self.name = name
         self.calls = calls
+        self.failing = failing
 
     def __getattr__(self, method: str) -> Any:
+        """Return a stand-in for any method the stand-in server is asked for.
+
+        Parameters:
+            method: The method's name.
+
+        Returns:
+            A function that takes any arguments, appends ``<name>.<method>`` to the
+            shared list, and returns None, or raises `ServerError` once it has appended
+            when `method` is the recorder's ``failing`` method.
+        """
+
         def record(*args: Any, **kwargs: Any) -> None:
+            """Append ``<name>.<method>`` to the shared list, whatever the arguments.
+
+            Raises:
+                ServerError: After appending, when the method is the failing one.
+            """
             self.calls.append(f'{self.name}.{method}')
+            if method == self.failing:
+                raise ServerError(f'{self.name}.{method} failed')
 
         return record
 
@@ -121,38 +142,106 @@ def test_a_failed_warm_up_fails_the_run() -> None:
         _bench([], frozenset({'db-cold'}), status=1).reset('db-cold')
 
 
-def test_the_promotion_window_holds_the_carry_over_and_the_cache_restart(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Between the application's stop and its start, as ``_promote.sh`` has them."""
-    calls: list[str] = []
+#: What each step of a promotion costs on the test's clock, in seconds, each a distinct
+#: power of two so that every sum of them names the steps it holds.
+_STEP_SECONDS = {
+    'gunicorn.stop': 1.0,
+    'carry_over': 2.0,
+    'memcached.restart': 4.0,
+    'gunicorn.start': 8.0,
+    'DELETE': 16.0,
+}
+
+
+def _promotion_bench(
+    monkeypatch: pytest.MonkeyPatch, calls: list[str], *, failing: str | None = None
+) -> WebBench:
+    """Return a WebBench ready to time a promotion over stand-ins, on a clock of its steps.
+
+    The module's clock reads the sum of `_STEP_SECONDS` over the steps recorded so far,
+    so each step takes its own time.
+
+    Parameters:
+        monkeypatch: Undoes the replaced carry-over, query and clock afterwards.
+        calls: The list every step is recorded into: a server's method as
+            ``<server>.<method>``, the carry-over as ``carry_over``, and a statement as
+            its text followed by its parameters.
+        failing: A server's step, as recorded (``<server>.<method>``), that raises
+            `ServerError` once recorded; None for none.
+
+    Returns:
+        The bench, its promotion source ``bench_x_carry_source`` and its schema
+        ``bench_x``.
+    """
     bench = _bench(calls, frozenset())
     bench.promotion_source = 'bench_x_carry_source'
-    steps: list[list[str]] = []
+    bench.schema = 'bench_x'
+    bench._connection = object()
 
     def carry_over(side: object, arguments: list[str], env: object, errors_log: object) -> None:
+        """Record the carry-over as ``carry_over`` and then its arguments."""
         calls.append('carry_over')
-        steps.append(list(arguments))
+        calls.append(' '.join(arguments))
 
     def record_query(connection: object, statement: str, parameters: Any = ()) -> list[Any]:
+        """Record a statement and its parameters, and return no rows."""
         calls.append(f'{statement} {list(parameters)}')
         return []
 
+    def now() -> float:
+        """Return the seconds the steps recorded so far have taken."""
+        return sum(
+            seconds
+            for call in calls
+            for step, seconds in _STEP_SECONDS.items()
+            if call == step or (step == 'DELETE' and call.startswith(step))
+        )
+
     monkeypatch.setattr(bench_web, 'run_import_step', carry_over)
     monkeypatch.setattr(bench_web, 'query', record_query)
-    bench.schema = 'bench_x'
-    bench._connection = object()
+    monkeypatch.setattr(bench_web, 'time', SimpleNamespace(perf_counter=now))
+    if failing is not None:
+        server, method = failing.split('.')
+        setattr(bench, server, _Recorder(server, calls, failing=method))
+    return bench
+
+
+#: The statements that delete the planted rows, as `_promotion_bench` records them.
+_DELETES = [
+    "DELETE FROM `bench_x`.cart WHERE session_id LIKE %s ['bench-carry-%']",
+    "DELETE FROM `bench_x`.django_session WHERE session_key LIKE %s ['bench-carry-%']",
+]
+
+
+def test_the_promotion_window_runs_from_the_applications_stop_to_its_start(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The stop, the carry-over, the cache restart and the start, as ``_promote.sh`` has
+    them; the planted rows go once the window has closed, so their deletion is not in it."""
+    calls: list[str] = []
     run: dict[str, Any] = {'metrics': {}}
-    bench.time_promotion(run)
-    # The planted rows go once the window has closed, before the application starts.
+    _promotion_bench(monkeypatch, calls).time_promotion(run)
     assert calls == [
         'gunicorn.stop',
         'carry_over',
+        '--carry-over-sessions-from bench_x_carry_source',
         'memcached.restart',
-        "DELETE FROM `bench_x`.cart WHERE session_id LIKE %s ['bench-carry-%']",
-        "DELETE FROM `bench_x`.django_session WHERE session_key LIKE %s ['bench-carry-%']",
         'gunicorn.start',
+        *_DELETES,
     ]
-    assert steps == [['--carry-over-sessions-from', 'bench_x_carry_source']]
-    metrics = run['metrics']
-    assert 0 <= metrics['web.promotion.carry_over_s'] <= metrics['web.promotion.window_s']
+    assert run['metrics'] == {
+        'web.promotion.window_s': 15.0,
+        'web.promotion.carry_over_s': 2.0,
+    }
+
+
+@pytest.mark.parametrize('failing', ['memcached.restart', 'gunicorn.start'])
+def test_the_planted_rows_are_deleted_when_a_restart_fails(
+    monkeypatch: pytest.MonkeyPatch, failing: str
+) -> None:
+    """The served schema is left as it was found, and the failure reaches the caller."""
+    calls: list[str] = []
+    bench = _promotion_bench(monkeypatch, calls, failing=failing)
+    with pytest.raises(ServerError, match=f'{failing} failed'):
+        bench.time_promotion({'metrics': {}})
+    assert calls[-3:] == [failing, *_DELETES]

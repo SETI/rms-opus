@@ -498,13 +498,15 @@ A warm-up that fails fails the run.
 named after the served one with ``_carry_source`` is made once, holding only
 ``django_session`` and ``cart`` as the served schema declares them, with ``N`` cart rows
 naming the served schema's first observations, ``PROMOTION_CART_ROWS_PER_SESSION`` of
-them to each unexpired session. Each
-run stops the application, runs the side's ``opus_import --carry-over-sessions-from``
-from that schema into the served one, restarts memcached, and starts the application
-again, recording ``web.promotion.carry_over_s`` and ``web.promotion.window_s``, the
-second from the stop to the start. The planted sessions and cart rows the carry-over
-copies into the served schema are deleted from it again before the application starts,
-so every run, on either side, finds the same tables. The rows planted are in the environment as
+them to each unexpired session. Each run stops the application, runs the side's
+``opus_import --carry-over-sessions-from`` from that schema into the served one, restarts
+memcached, and starts the application again, recording ``web.promotion.carry_over_s``,
+the carry-over alone, and ``web.promotion.window_s``, from the moment the application is
+told to stop until it has started again, every worker having loaded the application. The
+planted sessions and cart rows the carry-over copies into the served schema are deleted
+from it again once the window has closed, whether or not every step succeeded, so every
+run, on either side, finds the same tables. The rows planted, fewer than ``N`` when the
+served schema holds fewer observations, are in the environment as
 ``promotion_cart_rows``; the schema is dropped when the command ends.
 
 A side without ``warm_search``, or whose ``opus_import --help`` lists no
