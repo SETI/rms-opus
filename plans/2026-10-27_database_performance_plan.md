@@ -6918,3 +6918,25 @@ Nothing above this line is rewritten by an executor.
     `tests/opus_app` and `integration_tests`, with coverage) 2,866 passed against
     `pr17local` at 100% coverage, PR-15's merged tests reaching the two lines the 99%
     bullet above names.
+- **Measurement** (2026-11-11, test scale; web runs and the first import with before at
+  227f74d3, PR-16a's head, and after at 54ebdb75; the repeated imports with before at
+  1566313f, PR-16a's head after its merges, and after at 45ccaebb; each side imports its
+  own schema; web runs alternated, three a side; sessions `a` and, for the repeated
+  imports, `b`; judged against the PR-00 floors):
+  - **Target, the db-cold build of the broad default-sort search:** 0.2254 s to
+    0.2275 s, +0.9% (floor 10.4%), **not improved**. `Sort_merge_passes` 1 and
+    `Created_tmp_disk_tables` 0 on both sides: at test scale the sort fits in memory, so
+    the narrower sort keys have nothing to save.
+  - **Size:** `db.schema.data_bytes` 746.3 MB to 441.5 MB (-40.8%) and
+    `db.schema.index_bytes` 366.7 MB to 237.6 MB (-35.2%); `obs_files` data 628.1 MB to
+    342.7 MB, `obs_pds` 22.6 MB to 6.8 MB, `obs_general` 30.0 MB to 26.8 MB.
+  - **Warm broad results page, first page:** 10.4 ms to 10.7 ms, within its floor.
+  - **Import:** one run a side put `import.largest.import_s` at +9.2% (72.2 s to
+    78.9 s), beyond its guard, so the imports were repeated at three runs a side, which
+    replace the first: `import.wall_s` 322.9 s to 327.1 s (+1.3%) and
+    `import.largest.import_s` 75.4 s to 78.6 s (+4.3%), both **held**. The bundle loads
+    are a few percent slower (the largest bundle alone in the warm-up runs, 75.8 s to
+    82.0 s); finalization 25.2 s to 22.0 s, and the server wrote 2.06 GB against 1.33 GB
+    (`Innodb_data_written`). Where the bundle loads spend the extra time was not
+    profiled. The third pair of import runs overlapped other work on the workstation
+    (load averages to 5), which widens that session's spread.
