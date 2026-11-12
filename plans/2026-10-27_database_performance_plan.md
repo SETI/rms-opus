@@ -7531,3 +7531,27 @@ Nothing above this line is rewritten by an executor.
   - **Imports** (one test-scale import a side): `import.wall_s` 330.0 s to 325.7 s
     (-1.3%), `import.largest.import_s` 81.2 s to 78.8 s (-3.0%),
     `import.peak_tree_pss_kb` -0.8%, all held. Every web guard held in both sessions.
+
+### 2026-11-12, rulings on PR-15 to PR-19 (written against this file at 550313fa)
+
+- **PR-15:** the operator accepted the regressed guard
+  `web.app-cold.search.surface_geometry.wall_s` (+35.4%, floor 20.7%) as reported, not a
+  stop-and-report, on the explanation recorded in PR-15's notes: the app-cold pass reads
+  from disk whatever the scenarios before it left out of the buffer pool, and the search
+  itself is faster db-cold and warm.
+- **PR-16:** the operator accepted `db.schema.data_bytes` +7.6% (floor 0) as the cost of
+  the per-bundle id ranges.
+- **PR-17:** the operator accepted every API difference listed for one ruling: the
+  changed golden `api_help_bundles.html`; the letters NFKD does not decompose no longer
+  matching their ASCII spellings in an ASCII column; padding in `matches` searches and
+  cart `opusid`s on ASCII columns; the 400 for a `__sessionid` outside ASCII or over 40
+  characters; regular expressions on ASCII columns folded with NFD; and mixed-case and
+  accented OPUS IDs in `api/files` and `__initdetail` answering 200.
+- **PR-18:** the operator accepted the target as met (the db-cold first page within the
+  web jitter of the warm one), and the regressed guard, the app-cold shared concurrency
+  p95 (+28.1%, floor 19.4%), as the harness's warm-up running beside the scenario rather
+  than the request path.
+- **PR-19:** the operator ruled the stop-and-report: the PR is kept, on the cold reads of
+  the target search (`Innodb_pages_read` -73.1%) and its search-build's first execution
+  after a restart (-33.4%), although the web-level target did not improve beyond its
+  floor at test scale.
