@@ -425,6 +425,23 @@ There are two types of surface geometry tables. The first, called simply ``obs_s
 
 The second, ``obs_surface_geometry_target``, holds every body's surface geometry: one row per observation and body for which geometry information is available. Normally only a few bodies have a row for a given OPUS ID, since only a small number of bodies are in the field of view. Its schema starts:
 
+::
+
+    mysql> DESC obs_surface_geometry_target;
+    +---------------------------------------+-------------------+------+-----+---------+
+    | Field                                 | Type              | Null | Key | Default |
+    +---------------------------------------+-------------------+------+-----+---------+
+    | target_name                           | smallint unsigned | NO   | PRI | NULL    |
+    | obs_general_id                        | int unsigned      | NO   | PRI | NULL    |
+    | planetographic_latitude1              | double            | YES  |     | NULL    |
+    | planetographic_latitude2              | double            | YES  |     | NULL    |
+    | sub_solar_planetographic_latitude1    | double            | YES  |     | NULL    |
+    | sub_solar_planetographic_latitude2    | double            | YES  |     | NULL    |
+    | ...                                   |                   |      |     |         |
+    +---------------------------------------+-------------------+------+-----+---------+
+
+The fields are:
+
 * ``target_name``: The body, as the id of its value in the mult field of the ``Surface Geometry Target Selector`` (``obs_surface_geometry_name.target_name``, `The Encoding of Checkbox IDs and the mult Tables`_). The column's schema entry names that field with its ``mult_field`` key, since the column's own qualified name would name another one.
 * ``obs_general_id``: The observation, a foreign key onto ``obs_general.id``.
 * The geometry columns, one set for every body.
