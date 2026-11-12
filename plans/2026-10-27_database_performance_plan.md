@@ -7555,3 +7555,9 @@ Nothing above this line is rewritten by an executor.
   the target search (`Innodb_pages_read` -73.1%) and its search-build's first execution
   after a restart (-33.4%), although the web-level target did not improve beyond its
   floor at test scale.
+
+### 2026-11-12, PR-14 (written against this file at 1e55f88a)
+
+- `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
+  applied (a run changes no file), and `import_util.read_mult_option` refuses a string pin
+  or group pin, naming the entry.
