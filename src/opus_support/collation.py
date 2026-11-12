@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import unicodedata
 
-#: The character no ASCII column holds: the import refuses a value carrying it, and the
+#: The character no ASCII column holds. The import refuses a value carrying it, and the
 #: web application binds it in place of a character that has no ASCII form, so that it
 #: matches nothing.
 UNSTORED_ASCII_CHARACTER = '\x7f'
