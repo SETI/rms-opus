@@ -58,6 +58,13 @@ class _Recorder:
     """Records each call made of it, under a name, into a shared list."""
 
     def __init__(self, name: str, calls: list[str], failing: str | None = None) -> None:
+        """Make a stand-in server.
+
+        Parameters:
+            name: The server's name, which prefixes each call recorded.
+            calls: The shared list each call is appended to.
+            failing: A method that raises once recorded, or None for none.
+        """
         self.name = name
         self.calls = calls
         self.failing = failing
@@ -91,11 +98,25 @@ class _Side:
     """A side whose warm-up records itself and exits with a given status."""
 
     def __init__(self, calls: list[str], status: int = 0) -> None:
+        """Make a stand-in side.
+
+        Parameters:
+            calls: The shared list its warm-up is recorded into.
+            status: What its warm-up exits with.
+        """
         self.calls = calls
         self.status = status
         self.env: dict[str, str] | None = None
 
     def warm_search(self, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+        """Record ``side.warm_search`` and the environment it was given.
+
+        Parameters:
+            env: The environment the warm-up would run in.
+
+        Returns:
+            A finished process exiting with the side's status.
+        """
         self.calls.append('side.warm_search')
         self.env = env
         return subprocess.CompletedProcess([], self.status, 'out', 'err')
