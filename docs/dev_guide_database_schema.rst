@@ -251,10 +251,12 @@ The fields are:
 * ``qualified_name``: The field's qualified name, a unique key.
 * ``pinned``: 1 when the column's schema lists the field's values in
   ``mult_options``, 0 otherwise.
-* ``last_id``: The highest id handed out in the field, or -1
+* ``last_id``: The highest id the field's counter has handed out, or -1
   before the first. A value new to the field takes the next one, so a field's first
-  value is 0. It only goes up: an id whose row finalization deletes is never handed out
-  again. With several processes importing at once, an id taken for a value another
+  value is 0. It only goes up: an id the counter handed out is never handed out again,
+  even once finalization deletes its row. A pinned field's ids are not the counter's
+  but the ones its list gives, and 65535 for an absent value the list lacks (``mult``,
+  below). With several processes importing at once, an id taken for a value another
   process stored first is left unused, so a field's ids may have gaps; the id-width
   check counts ``last_id``, not the rows.
 
@@ -291,7 +293,9 @@ The fields are:
   value and an observation needs one, the import adds it under 65535, an id no list may
   give. A stored row keeps its id and its value, so no observation row has to be
   rewritten when a value is renamed. Finalization deletes the values no observation
-  holds, and their ids are not handed out again.
+  holds. An id the counter handed out is not handed out again; a pinned field's absent
+  value, deleted once no observation holds it, is added under 65535 again when an
+  import needs it.
 * ``value``: The value as the import read it. The absent value is
   stored as the empty string, never ``NULL``.
 * ``label``: The string to display in the UI.
@@ -885,16 +889,49 @@ The ``import_bundle`` table is the bundle registry: the import's record of each 
 
 The fields are:
 
-* ``bundle_number``: The bundle's place in registration order, which is the import order. A bundle keeps its number when it is imported again.
+* ``bundle_number``: The bundle's place in registration order, which fixes its id range and so which copy of a shared OPUS ID finalization keeps. A plain ``--import`` imports its bundles in this order; queue importers claim the largest pending bundle first, whatever its number. A bundle keeps its number when it is imported again.
 * ``bundle_id``: The bundle, such as ``COISS_2002``. A bundle OPUS deliberately skips is never registered.
 * ``size_estimate``: The rows the bundle's primary index labels declared when it was registered.
 * ``first_id``: The ``obs_general.id`` of the bundle's first observation. A bundle's range starts where the range of the bundle registered before it ends, so the ranges ascend in ``bundle_number`` order and the copy of a shared OPUS ID that finalization keeps, the one with the highest ``id``, is the one from the bundle registered later.
 * ``id_capacity``: How many ids, from ``first_id``, the bundle's observations may take: a hundred for each row of ``size_estimate``. A bundle that needs more fails its import, naming its capacity.
 * ``state``: ``pending`` once the bundle is registered and before an import takes it; ``importing`` while the bundle is deleted and loaded; ``done`` once it is imported without logging an error, or under ``--ignore-errors``; ``failed`` when its import failed or logged an error.
 * ``started_at`` and ``finished_at``: When the bundle's latest import began and ended, in UTC; ``NULL`` before the first, and ``finished_at`` while one is running.
-* ``rows_done``: The ``obs_general`` rows the bundle's latest import has loaded, advanced after each load.
-* ``process_id`` and ``losses``: Not written by the import, which leaves them ``NULL`` and 0.
+* ``process_id``: The ``import_process`` row of the importer that claimed the bundle, set with ``importing``, and kept on a ``failed`` bundle so its importer's log can be found; ``NULL`` for a bundle imported by a plain ``opus_import``, and once the bundle returns to ``pending``.
+* ``rows_done``: The ``obs_general`` rows the bundle's latest import has committed, advanced in each chunk's transaction.
+* ``losses``: How many importers died holding the bundle. Its second loss marks it ``failed``.
 
 The key on ``(state, size_estimate, bundle_number)`` is what a claim reads: scanned from its highest entry, it gives the largest ``pending`` bundle in one index entry, so a claim locks only the row it takes.
 
 Every invocation that registers or imports bundles creates the table when the schema lacks it, on a fresh import and an append alike, and registers its bundles before the first one starts. ``--finalize`` refuses to run, and ``--write-schema-version`` refuses to write ``ready``, while any row is not ``done``. ``--delete-bundles`` deletes a bundle's row with its observations, and ``--scorched-earth`` drops the table.
+
+.. _dev_guide_database_schema_import_process:
+
+The ``import_process`` Table
+----------------------------
+
+The ``import_process`` table records every importer, an ``opus_import --join`` process drawing bundles from the queue (:ref:`dev_guide_import_full_run`). Only the import reads it; the web application never does, and ``SCHEMA_VERSION`` does not cover it, since an importer creates it when the schema lacks it.
+
+::
+
+    mysql> DESC import_process;
+    +-------------+---------------------------------+------+-----+---------+----------------+
+    | Field       | Type                            | Null | Key | Default | Extra          |
+    +-------------+---------------------------------+------+-----+---------+----------------+
+    | process_id  | int unsigned                    | NO   | PRI | NULL    | auto_increment |
+    | host        | varchar(255)                    | NO   |     | NULL    |                |
+    | pid         | int unsigned                    | NO   |     | NULL    |                |
+    | log_path    | varchar(1024)                   | NO   |     | NULL    |                |
+    | started_at  | datetime                        | NO   |     | NULL    |                |
+    | progress_at | datetime                        | NO   |     | NULL    |                |
+    | state       | enum('running','exited','lost') | NO   |     | NULL    |                |
+    +-------------+---------------------------------+------+-----+---------+----------------+
+
+The fields are:
+
+* ``process_id``: The importer, as ``import_bundle.process_id`` names it.
+* ``host`` and ``pid``: The computer the importer runs on, and its process id there.
+* ``log_path``: The importer's information log, on its computer.
+* ``started_at`` and ``progress_at``: When the importer started, and when it last committed a chunk of rows, in UTC.
+* ``state``: ``running`` from its start; ``exited`` once it has exited; ``lost`` once a coordinator found its lock free while the row was ``running``.
+
+Whether an importer is alive is not in the table: it is whether the server-wide named lock :func:`opus_import.import_processes.importer_lock_name` names is held, which the server frees when the importer's lock connection closes. ``--scorched-earth`` drops the table.

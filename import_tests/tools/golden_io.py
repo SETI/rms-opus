@@ -70,6 +70,10 @@ TIMESTAMP_DATA_TYPE = 'timestamp'
 #: design.
 WALL_CLOCK_COLUMNS = {'import_bundle': frozenset({'started_at', 'finished_at'})}
 
+#: The columns the mult-value mode also drops, which depend on how several importers
+#: shared the work: which importer imported each bundle, and how many died holding it.
+IMPORTER_COLUMNS = {'import_bundle': frozenset({'process_id', 'losses'})}
+
 #: The extension every golden file carries.
 GOLDEN_EXT = '.tsv'
 
@@ -465,7 +469,8 @@ def serialize_table(
         table: The table to read.
         mult_values: True for the mult-value mode: every mult column holds the value its
             id names (``partables``' ``trigger_val`` among them), ``mult`` is written
-            without its ``id`` and ``mult_field`` without its ``last_id``, every value of a mult field is written as its
+            without its ``id`` and ``mult_field`` without its ``last_id``,
+            `IMPORTER_COLUMNS` are dropped, every value of a mult field is written as its
             `opus_support.collation_key`, and the rows are sorted.
 
     Returns:
@@ -473,11 +478,14 @@ def serialize_table(
         sorted in the mult-value mode.
     """
     dropped = DERIVED_COLUMNS.get(table, frozenset()) | WALL_CLOCK_COLUMNS.get(table, frozenset())
+    if mult_values:
+        dropped |= IMPORTER_COLUMNS.get(table, frozenset())
     if mult_values and table == _MULT_TABLE:
         dropped |= {'id'}
     if mult_values and table == _MULT_FIELD_TABLE:
         # The counter counts ids taken, and an id taken for a value another importer
-        # stored first is left unused, so it depends on how the importers met.
+        # stored first, or by an importer that died, is left unused, so it depends on
+        # how the importers met.
         dropped |= {'last_id'}
     columns = [
         name

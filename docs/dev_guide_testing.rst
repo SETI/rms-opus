@@ -151,6 +151,16 @@ and each site decides what its argument selects. The sites are:
     know that they hold bundles at the same time
     (:ref:`dev_guide_import_steps_do_import`).
 
+``hold_after_chunk``
+    After the first chunk of each bundle's rows commits; its argument is a number of
+    seconds. ``hold_after_chunk:5`` holds an import mid-bundle, so a test can kill an
+    importer or its lock connection there.
+
+``hold_before_lock``
+    Between an importer's ``import_process`` insert and its lock; its argument is a
+    number of seconds. ``hold_before_lock:5`` lets a test read the importers' table
+    while the row is written and not yet committed.
+
 Never set it outside a test.
 
 That plain form is the everyday one -- about two minutes, no coverage, with the three
@@ -224,10 +234,13 @@ By hand
    It prints the schema it is about to erase and asks for confirmation before doing
    anything, which is the check that keeps it off a database you meant to keep. It then
    imports a fixed list of bundle sets -- Cassini ISS, UVIS, VIMS and CIRS, Galileo,
-   Voyager, Hubble, New Horizons, and the occultation sets -- and finishes with
-   ``--finalize``, ``--import-dictionary``, ``manage.py migrate`` and
-   ``--validate``. Read ``ERRORS.log`` afterwards rather than trusting the exit
-   status: several import steps report failure through the log and still exit zero.
+   Voyager, Hubble, New Horizons, and the occultation sets -- through
+   ``opus_import_all``, with ``[import] importers`` importers at once, which finishes
+   the database, and then runs ``manage.py migrate``. Options of ``opus_import_all``
+   given to the script are passed on: ``--workers 24 --importers 6`` divides 24 workers
+   among six importers. Read ``ERRORS.log`` afterwards
+   rather than trusting the exit status: several import steps report failure through
+   the log and still exit zero.
 
 3. **Run the suite**::
 

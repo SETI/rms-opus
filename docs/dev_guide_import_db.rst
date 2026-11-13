@@ -500,8 +500,12 @@ The bulk load
 :meth:`~opus_import.importdb.mysql.ImportDBMySQL.bulk_load_rows` writes the observation
 rows: every ``obs_`` table's rows, ``obs_files``' among them. :class:`~opus_import.steps.do_import_index.TableRowSink` loads a table
 each time ``[import] transaction_rows`` of its rows wait, and the rest at the end of
-:func:`~opus_import.steps.do_import_index.import_one_index`. Each load of ``obs_general``
-rows is followed by the bundle's ``rows_done`` in the bundle registry. The ``mult`` rows
+:func:`~opus_import.steps.do_import_index.import_one_index`. Each chunk runs under the
+bundle's guard (:class:`~opus_import.import_processes.BundleGuard`, a
+:class:`~opus_import.importdb.super.LoadGuard`): the chunk is one transaction, on the
+``INSERT`` path as well, whose first statement advances the bundle's ``rows_done`` in the
+bundle registry and whose commit an importer drawing from the queue makes only while it
+holds its lock. The ``mult`` rows
 are not loaded: each is inserted the moment its value is met
 (:ref:`dev_guide_import_steps_do_import_mult`), because its value must never be written
 over another row's.

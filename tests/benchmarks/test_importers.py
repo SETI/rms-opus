@@ -2,11 +2,19 @@
 total, the merging of the importers' timings, and the arguments it refuses."""
 
 import json
+import signal
+import subprocess
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from benchmarks import bench_import
+from benchmarks.bench_server import MysqlServer
+from benchmarks.import_scenarios import ImportScenario
+from benchmarks.results import make_label
+from benchmarks.sides import Side, Spelling
 
 
 @pytest.mark.parametrize(
@@ -94,3 +102,69 @@ def test_a_malformed_importers_run_is_refused(
     with pytest.raises(SystemExit):
         bench_import._parse_arguments(_argv(*extra))
     assert message in capsys.readouterr().err
+
+
+class _InterruptedOutput:
+    """A coordinator's output whose reading is interrupted once, after its first line."""
+
+    def __init__(self, lines: list[str], events: list[str]) -> None:
+        self._lines = iter(lines)
+        self._events = events
+        self._interrupted = False
+
+    def __iter__(self) -> Iterator[str]:
+        return self
+
+    def __next__(self) -> str:
+        if self._events.count('read') == 1 and not self._interrupted:
+            self._interrupted = True
+            raise KeyboardInterrupt
+        line = next(self._lines)
+        self._events.append('read')
+        return line
+
+
+class _Coordinator:
+    """A coordinator process recording the signals it is sent and when it is waited for."""
+
+    def __init__(self, options: dict[str, Any]) -> None:
+        self.events: list[str] = []
+        self.options = options
+        self.stdout = _InterruptedOutput(['division', 'finished'], self.events)
+
+    def send_signal(self, signum: int) -> None:
+        self.events.append(f'signal {signum}')
+
+    def wait(self) -> int:
+        self.events.append('exited')
+        return 1
+
+
+def test_an_interrupted_coordinator_run_waits_for_the_coordinator_to_exit(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The interrupt is passed on to the coordinator, in a process group of its own, its
+    output is read to the end, and the interrupt is raised only once it has exited, so the
+    server is not stopped under its importers."""
+    started: list[_Coordinator] = []
+
+    def start(*args: Any, **kwargs: Any) -> _Coordinator:
+        started.append(_Coordinator(kwargs))
+        return started[-1]
+
+    monkeypatch.setattr(subprocess, 'Popen', start)
+    bench = bench_import.ImportBench(
+        server=MysqlServer.__new__(MysqlServer),
+        side=Side(python=Path('python'), repo_root=tmp_path),
+        spelling=Spelling.from_help(''),
+        label=make_label(pr='PR-00', side='after', scale='test', session='a', date='2026-11-11'),
+        scenario=ImportScenario.__new__(ImportScenario),
+        cache_location='127.0.0.1:1',
+    )
+
+    with pytest.raises(KeyboardInterrupt):
+        bench._run_stamped(tmp_path / 'opus.toml', ['-m', 'opus_import.import_all'])
+
+    (coordinator,) = started
+    assert coordinator.options['process_group'] == 0
+    assert coordinator.events == ['read', f'signal {signal.SIGINT}', 'read', 'exited']

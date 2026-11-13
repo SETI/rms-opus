@@ -152,6 +152,38 @@ def test_runs_with_no_environment_recorded_take_only_runs_that_set_no_import_key
 
 
 @pytest.mark.parametrize(
+    ('first', 'then'),
+    [(4, None), (None, 4), (4, 6)],
+    ids=['coordinator-then-one-process', 'one-process-then-coordinator', 'other-count'],
+)
+@pytest.mark.parametrize('key', ['coordinator_importers', 'importers'])
+def test_runs_shared_among_importers_another_way_are_refused_within_a_file(
+    key: str, first: int | None, then: int | None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A file's import runs share one importer count, or none (one process)."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-11', 'PR-16a', 'after', 'test', 'mysql', 'a')
+    results.append_runs(label, {key: first}, [_run('import')])
+    results.append_runs(label, {key: first}, [_run('import')])
+    with pytest.raises(ResultError, match=f'{key} was {first!r} and is now {then!r}'):
+        results.append_runs(label, {key: then}, [_run('import')])
+
+
+def test_a_file_whose_runs_record_no_importer_count_takes_only_one_process_runs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Runs that record no count imported in one process; a command recording none, such
+    as a web run, still appends."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-11', 'PR-16a', 'after', 'test', 'mysql', 'a')
+    results.append_runs(label, {}, [_run('import')])
+    results.append_runs(label, {'coordinator_importers': None}, [_run('import')])
+    results.append_runs(label, {}, [_run()])
+    with pytest.raises(ResultError, match='coordinator_importers was None and is now 4'):
+        results.append_runs(label, {'coordinator_importers': 4}, [_run('import')])
+
+
+@pytest.mark.parametrize(
     ('content', 'message'),
     [
         ([], 'holds one JSON object'),

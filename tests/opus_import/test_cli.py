@@ -8,8 +8,11 @@ to act on, so `--help` works on a machine that has none.
 
 import json
 import os
+import signal
+import socket
 import subprocess
 import sys
+import types
 import warnings
 from pathlib import Path
 
@@ -22,6 +25,10 @@ from opus_config import OPUS_CONFIG_ENV_VAR
 from opus_import import cli, importdb
 
 from .conftest import RecordingLogger, make_context
+
+#: What the stubbed log handler factories return: a handler naming a log file, which the
+#: run records as its log's path.
+_FILE_HANDLER = types.SimpleNamespace(baseFilename='opus_import.log')
 
 
 def test_parser_defaults_to_doing_nothing() -> None:
@@ -143,7 +150,7 @@ def test_a_refused_combination_of_options_exits_before_the_database_opens(
     logger = _HandlerlessLogger()
     monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
     for factory in ('file_handler', 'warning_handler', 'error_handler'):
-        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: None)
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
     opened: list[object] = []
     monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: opened.append(args))
     monkeypatch.setattr(sys, 'argv', ['opus_import', *arguments])
@@ -166,7 +173,7 @@ def _main_until_refused(
     logger = _HandlerlessLogger()
     monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
     for factory in ('file_handler', 'warning_handler', 'error_handler'):
-        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: None)
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
     monkeypatch.setattr(opus_config.config, 'detected_cores', lambda: 8)
     opened: list[object] = []
     monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: opened.append(args))
@@ -318,3 +325,69 @@ def test_step_timings_are_written_with_their_total(
         'import_bundle:COISS_2002': 1.25,
         'total': 7.0,
     }
+
+
+def test_an_importers_first_interrupt_drains_and_its_second_aborts() -> None:
+    """The first SIGINT is only counted; the second raises, which aborts the bundle; a
+    third, arriving during the abort, is only counted."""
+    ctx = make_context()
+    ctx.importer = object()  # type: ignore[assignment]
+    handler = cli._interrupt_handler(ctx)
+
+    handler(signal.SIGINT, None)
+    assert ctx.interrupts == 1
+    with pytest.raises(KeyboardInterrupt):
+        handler(signal.SIGINT, None)
+    assert ctx.interrupts == 2
+    handler(signal.SIGINT, None)
+    assert ctx.interrupts == 3
+
+
+def test_a_second_interrupt_while_the_importer_records_itself_is_only_counted() -> None:
+    """Between the start of its record in ``import_process`` and its loop, or while it
+    records its exit, nothing is raised: the queue loop's check of the count stops it."""
+    ctx = make_context()
+    ctx.queue_entered = True
+    handler = cli._interrupt_handler(ctx)
+
+    handler(signal.SIGINT, None)
+    handler(signal.SIGINT, None)
+    assert ctx.interrupts == 2
+
+
+def test_a_second_interrupt_before_the_importer_records_itself_stops_it() -> None:
+    """Reading the holdings or opening the database, it holds nothing a stop would leave
+    behind, so the second interrupt raises there too, and a third is only counted."""
+    ctx = make_context()
+    handler = cli._interrupt_handler(ctx)
+
+    handler(signal.SIGINT, None)
+    with pytest.raises(KeyboardInterrupt):
+        handler(signal.SIGINT, None)
+    handler(signal.SIGINT, None)
+    assert ctx.interrupts == 3
+
+
+def test_a_queue_importer_names_its_logs_after_its_computer_and_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Several importers started in one second write files of their own; a plain run's
+    logs carry no such suffix."""
+    suffixes: list[str] = []
+
+    def file_handler(*args: object, **kwargs: object) -> object:
+        suffixes.append(str(kwargs.get('suffix', '')))
+        return _FILE_HANDLER
+
+    for arguments in (['--join'], ['--import', 'COISS_2002']):
+        monkeypatch.setattr(sys, 'argv', ['opus_import', '--workers', '7', *arguments])
+        monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+        monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: _HandlerlessLogger())
+        monkeypatch.setattr(pdslogger, 'file_handler', file_handler)
+        for factory in ('warning_handler', 'error_handler'):
+            monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
+        monkeypatch.setattr(opus_config.config, 'detected_cores', lambda: 8)
+        with pytest.raises(SystemExit):
+            cli.main()
+    host_and_pid = f'{cli.JOIN_LOG_SUFFIX}_{socket.gethostname()}_{os.getpid()}'
+    assert suffixes == [host_and_pid, host_and_pid, '', '']

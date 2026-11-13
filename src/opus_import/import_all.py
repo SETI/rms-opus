@@ -1,34 +1,50 @@
-"""Import every bundle set OPUS holds, in the order a full import runs them.
+"""Import every bundle set OPUS holds, dividing the work among several importers.
 
-A full-holdings import is not one command. It is three steps, each one or more
-``opus_import`` processes, and the sequence lives in the package, so that
-``opus_import_all`` is available wherever the distribution is installed::
+A full-holdings import is not one command. ``opus_import_all`` runs it from the package,
+so that it is available wherever the distribution is installed::
 
     OPUS_CONFIG=/opt/opus/opus.toml opus_import_all --override-db-schema opus3_new
 
-1. ``--prepare`` registers every bundle the bundle sets expand to, in import order, in
-   the target schema's bundle registry, which fixes each bundle's number and the range
-   its observation ids come from. With ``--scorched-earth`` it first erases every OPUS
-   table in the schema.
-2. ``--join`` runs one importer, which imports bundles from the registry's queue, the
-   largest pending first, until none is pending. Several, on one computer or several,
-   each with a configuration naming the same database server and schema and the same
-   holdings, draw from one queue; ``--sets`` limits which bundles one claims.
-3. ``--finish`` runs the closing sequence once every importer has exited: the
-   finalization group, the dictionary, validation, and the schema version row, which
-   lets the web application serve the result. It refuses while any registered bundle is
-   not done.
+With no step named it is the **coordinator**:
 
-Each step runs alone when named. With none named, ``opus_import_all`` runs all three on
-one computer, with one importer. **Every invocation is a separate** ``opus_import``
-**process**, and the run stops at the first one that fails.
+1. **Prepare.** It registers every bundle the bundle sets expand to (or the ones
+   ``--sets`` names), in import order, in the target schema's bundle registry, which
+   fixes each bundle's number and the range its observation ids come from. With
+   ``--scorched-earth`` it first erases every OPUS table in the schema. Registration
+   leaves registered bundles alone, so a rerun after an interruption resumes.
+2. **Divide.** ``--workers`` is the total of worker processes on this computer
+   (``[import] workers`` when not given), refused above the ceiling every import
+   obeys. It starts ``--importers`` importers (``[import] importers`` when not given),
+   capped at that total, and divides the total among them as evenly as whole numbers
+   allow (`divide`). Each importer is an ``opus_import --join`` process drawing bundles
+   from the registry's queue, the largest pending first.
+3. **Track.** Every few seconds it reads the registry and the importers' table
+   (`opus_import.coordinator`): on a terminal it redraws a table of the running importers under a totals line; otherwise
+   it logs a line per finished bundle and the totals every
+   ``[import] status_interval_minutes``.
+4. **Recover.** An importer whose lock is free while its row says it is running is
+   lost; its bundle's rows are deleted and the bundle returns to the queue, or fails at
+   its second loss (`opus_import.steps.do_recover`). A lost importer of its own is
+   replaced while bundles its importers may claim are pending.
+5. **Finish.** When no bundle is pending or importing and no importer anywhere is
+   alive, it runs the closing sequence (``--finish``), unless a bundle failed, when it
+   names each with its importer's log and leaves the schema unfinalized.
 
-**Erasing is asked for, never the default.** Without ``--scorched-earth`` nothing is
-erased, so running ``opus_import_all`` again after an interruption registers nothing new
-and imports only what is not done. ``--scorched-earth`` asks for confirmation first,
-naming the schema; ``--yes`` answers for a caller that has already asked -- which is what
-the Ring-Moon Systems Node's ``scripts/import/import_all.sh`` wrapper does before it puts
-the run under ``nohup`` -- and is refused without ``--scorched-earth``.
+The first interrupt (Ctrl-C) drains: the importers claim nothing new and finish their
+bundles, and the coordinator exits without finalizing. A second aborts: each importer
+returns its bundle to the queue, and later ones do not interrupt that. Either way a rerun
+resumes.
+
+Each step also runs alone when named: ``--prepare``; ``--join``, which starts and tracks
+``--importers`` importers on this computer (one by default) and never prepares or
+finishes, so another computer naming the same database server, schema and holdings can
+join a running import; ``--finish``; ``--requeue``; and ``--status``, which prints the
+coordinator's table from any computer.
+
+**Erasing is asked for, never the default.** ``--scorched-earth`` asks for confirmation
+first, naming the schema; ``--yes`` answers for a caller that has already asked -- which is
+what the Ring-Moon Systems Node's ``scripts/import/import_all.sh`` wrapper does before it
+puts the run under ``nohup`` -- and is refused without ``--scorched-earth``.
 """
 
 from __future__ import annotations
@@ -36,10 +52,20 @@ from __future__ import annotations
 import argparse
 import subprocess  # nosec B404
 import sys
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from opus_config import MAX_WORKERS, ConfigError, get_config, resolve_parallelism
+from opus_import import bundle_registry, coordinator, importdb
+
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
+
+    import pdslogger
+
+    from opus_config import OpusConfig
+    from opus_config.config import ImportConfig
+    from opus_import.importdb.super import ImportDBSuper
 
 #: The bundle sets, in the order they are imported -- GALILEO and NEWHORIZONS, then the rest
 #: roughly in the reverse of how long each takes. Registration numbers the bundles in this
@@ -81,10 +107,98 @@ DROP_OPTIONS = ('--scorched-earth', '--yes')
 #: ``yes``: the tables it is about to drop are not recoverable.
 CONFIRMATION = 'YES'
 
+#: The ``--importers`` value that takes the count from ``[import] importers``.
+AUTO_IMPORTERS = 'auto'
+
 #: The registry states ``--finish`` refuses to run past, and the ones of those that
 #: ``--requeue`` returns to the queue.
 _UNFINISHED_STATES = ('pending', 'importing', 'failed')
 _REQUEUEABLE_STATES = ('importing', 'failed')
+
+
+def divide(total: int, importers: int) -> list[int]:
+    """Divide a total of workers among importers as evenly as whole numbers allow.
+
+    Parameters:
+        total: The workers, at least 1.
+        importers: The importers, from 1 to `total`.
+
+    Returns:
+        Each importer's workers, in start order. The first ``total mod importers`` take
+        one more than the rest, and together they make `total`.
+    """
+    share, extra = divmod(total, importers)
+    return [share + 1 if index < extra else share for index in range(importers)]
+
+
+@dataclass(frozen=True)
+class Division:
+    """How this computer's workers are divided among its importers, and why.
+
+    Attributes:
+        cores: The cores detected.
+        cpu_fraction: The share of them the ceiling allows.
+        ceiling: The most workers a request may ask for.
+        workers: The total of workers, N.
+        importers: The importers, M, at most N.
+        per_importer: Each importer's workers, in start order.
+    """
+
+    cores: int
+    cpu_fraction: float
+    ceiling: int
+    workers: int
+    importers: int
+    per_importer: tuple[int, ...]
+
+    def describe(self) -> str:
+        """Return the line the coordinator writes first.
+
+        Returns:
+            The cores, the fraction, the ceiling, N, M, and each importer's workers.
+        """
+        return (
+            f'Parallelism: {self.cores} cores detected, cpu_fraction {self.cpu_fraction:g}, '
+            f'ceiling {self.ceiling}; workers {self.workers} in all, importers '
+            f'{self.importers}, workers per importer '
+            f'{", ".join(str(count) for count in self.per_importer)}'
+        )
+
+
+def resolve_division(
+    config: ImportConfig,
+    workers: int | str | None,
+    importers: int | str,
+    *,
+    detected: int | None = None,
+) -> Division:
+    """Resolve the total of workers against the ceiling, and divide it among importers.
+
+    Parameters:
+        config: The ``[import]`` table.
+        workers: ``--workers``: a number, `opus_config.MAX_WORKERS` for the ceiling, or
+            None for ``[import] workers``.
+        importers: ``--importers``: a number, or `AUTO_IMPORTERS` for
+            ``[import] importers``.
+        detected: The cores to take as detected, or None to count them.
+
+    Returns:
+        The division.
+
+    Raises:
+        opus_config.config.ConfigError: If the total is above the ceiling, naming it.
+    """
+    parallelism = resolve_parallelism(config, workers, detected=detected)
+    requested = config.importers if importers == AUTO_IMPORTERS else int(importers)
+    count = min(requested, parallelism.workers)
+    return Division(
+        cores=parallelism.cores,
+        cpu_fraction=parallelism.cpu_fraction,
+        ceiling=parallelism.ceiling,
+        workers=parallelism.workers,
+        importers=count,
+        per_importer=tuple(divide(parallelism.workers, count)),
+    )
 
 
 def _override(schema: str | None) -> list[str]:
@@ -92,7 +206,9 @@ def _override(schema: str | None) -> list[str]:
     return ['--override-db-schema', schema] if schema is not None else []
 
 
-def prepare_steps(schema: str | None, erase: bool, extra_options: Sequence[str]) -> list[list[str]]:
+def prepare_steps(
+    schema: str | None, erase: bool, extra_options: Sequence[str], sets: str | None = None
+) -> list[list[str]]:
     """Return the ``opus_import`` command lines ``--prepare`` runs, in order.
 
     Parameters:
@@ -102,6 +218,8 @@ def prepare_steps(schema: str | None, erase: bool, extra_options: Sequence[str])
         erase: Whether to erase every OPUS table in the schema first.
         extra_options: Options added to every invocation, from this command's own
             command line.
+        sets: Comma-separated bundle descriptors to register in place of `BUNDLE_SETS`,
+            or None.
 
     Returns:
         The erase, when asked for, then one registration of every bundle set, in import
@@ -109,31 +227,29 @@ def prepare_steps(schema: str | None, erase: bool, extra_options: Sequence[str])
     """
     override = _override(schema)
     steps = [[*DROP_OPTIONS, *override, *extra_options]] if erase else []
-    steps.append(['--register-bundles', *override, *extra_options, *BUNDLE_SETS])
+    descriptors = list(BUNDLE_SETS) if sets is None else [sets]
+    steps.append(['--register-bundles', *override, *extra_options, *descriptors])
     return steps
 
 
-def join_steps(
-    schema: str | None, sets: str | None, workers: str | None, extra_options: Sequence[str]
-) -> list[list[str]]:
-    """Return the ``opus_import`` command line ``--join`` runs: one importer.
+def importer_step(
+    schema: str | None, workers: int, extra_options: Sequence[str], sets: str | None = None
+) -> list[str]:
+    """Return one importer's ``opus_import`` command line.
 
     Parameters:
         schema: The database schema, or None for the configuration's.
-        sets: Comma-separated bundle descriptors the importer may claim, or None for any.
-        workers: The importer's ``--workers``, or None for ``[import] workers``.
+        workers: The importer's workers.
         extra_options: Options added to the invocation.
+        sets: Comma-separated bundle descriptors the importer may claim, or None for any.
 
     Returns:
-        One command line.
+        The command line after ``python -m opus_import``.
     """
-    step = ['--join', *_override(schema)]
-    if workers is not None:
-        step += ['--workers', workers]
-    step += [*extra_options]
+    step = ['--join', *_override(schema), '--workers', str(workers), *extra_options]
     if sets is not None:
         step.append(sets)
-    return [step]
+    return step
 
 
 def finish_steps(schema: str | None) -> list[list[str]]:
@@ -160,31 +276,6 @@ def requeue_steps(schema: str | None, bundles: Sequence[str]) -> list[list[str]]
         One command line.
     """
     return [['--requeue', *_override(schema), *bundles]]
-
-
-def import_steps(
-    schema: str | None,
-    extra_options: Sequence[str],
-    *,
-    erase: bool = False,
-    workers: str | None = None,
-) -> list[list[str]]:
-    """Return every ``opus_import`` command line the default sequence runs, in order.
-
-    Parameters:
-        schema: The database schema, or None for the configuration's.
-        extra_options: Options added to every invocation that reads the holdings.
-        erase: Whether ``--scorched-earth`` was given.
-        workers: The importer's ``--workers``, or None.
-
-    Returns:
-        ``--prepare``'s, one importer's, and ``--finish``'s command lines.
-    """
-    return [
-        *prepare_steps(schema, erase, extra_options),
-        *join_steps(schema, None, workers, extra_options),
-        *finish_steps(schema),
-    ]
 
 
 def run_step(arguments: list[str]) -> int:
@@ -221,6 +312,37 @@ def confirm(schema: str | None) -> bool:
     return input(f'>>> Type {CONFIRMATION} to continue: ') == CONFIRMATION
 
 
+def open_target_db(
+    config: OpusConfig,
+    schema: str | None,
+    *,
+    read_only: bool,
+    logger: pdslogger.PdsLogger | None = None,
+) -> ImportDBSuper:
+    """Open the target schema the way the import does, with no bulk load.
+
+    Parameters:
+        config: The configuration.
+        schema: The schema, or None for the configuration's.
+        read_only: Whether to execute no write.
+        logger: Where the connection reports, or None.
+
+    Returns:
+        The open connection.
+    """
+    return importdb.get_db(
+        config.database.brand,
+        config.database.host,
+        config.database.database,
+        schema if schema is not None else config.database.schema,
+        config.database.user,
+        config.database.password,
+        logger=logger,
+        read_only=read_only,
+        bulk_load=False,
+    )
+
+
 def registry_states(schema: str | None) -> list[tuple[str, str]]:
     """Read every registered bundle's state from the target schema.
 
@@ -235,21 +357,7 @@ def registry_states(schema: str | None) -> list[tuple[str, str]]:
         opus_import.importdb.super.ImportDBError: If the schema cannot be read, which includes
             a schema that does not exist.
     """
-    # Imported here, so that --help and --dry-run need neither a configuration nor the
-    # database driver.
-    from opus_config import get_config
-    from opus_import import bundle_registry, importdb
-
-    config = get_config()
-    db = importdb.get_db(
-        config.database.brand,
-        config.database.host,
-        config.database.database,
-        schema if schema is not None else config.database.schema,
-        config.database.user,
-        config.database.password,
-        read_only=True,
-    )
+    db = open_target_db(get_config(), schema, read_only=True)
     try:
         return [(row.bundle_id, row.state) for row in bundle_registry.registered_ranges(db)]
     finally:
@@ -280,12 +388,41 @@ def unfinished_refusal(states: Sequence[tuple[str, str]]) -> str | None:
     return '--finish refuses to run while registered bundles are not done:\n' + '\n'.join(lines)
 
 
+################################################################################
+# THE COMMAND LINE
+################################################################################
+
+
+def _count_or(word: str) -> Callable[[str], int | str]:
+    """Return an argument type: a whole number of at least 1, or `word`.
+
+    Parameters:
+        word: The one word accepted beside a number.
+    """
+
+    def parse(text: str) -> int | str:
+        """Parse one argument."""
+        if text == word:
+            return text
+        try:
+            count = int(text)
+        except ValueError:
+            count = 0
+        if count < 1:
+            raise argparse.ArgumentTypeError(
+                f'must be a whole number of at least 1 or "{word}", not {text!r}'
+            )
+        return count
+
+    return parse
+
+
 def _create_argument_parser() -> argparse.ArgumentParser:
     """Build ``opus_import_all``'s argument parser."""
     parser = argparse.ArgumentParser(
         prog='opus_import_all',
         description='Import every bundle set OPUS holds: register the bundles, import them '
-        'from the queue, and finish the database',
+        'with several importers drawing from one queue, and finish the database',
         epilog='Any other option is passed to every opus_import invocation that reads the '
         'holdings.',
     )
@@ -298,7 +435,8 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     steps.add_argument(
         '--join',
         action='store_true',
-        help='run one importer, which imports bundles from the queue until none is pending',
+        help='start --importers importers on this computer (1 by default) and track them; '
+        'they draw from the queue a coordinator elsewhere prepared, and nothing is finished',
     )
     steps.add_argument(
         '--finish',
@@ -310,17 +448,44 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--requeue',
         nargs='+',
         metavar='BUNDLE',
-        help='return failed or importing bundles to the queue, after deleting their rows',
+        help='return failed bundles, or importing ones whose importer is gone, to the '
+        'queue, after deleting their rows',
+    )
+    steps.add_argument(
+        '--status',
+        action='store_true',
+        help="print the coordinator's table of the importers and the totals, from any computer",
     )
     parser.add_argument(
         '--sets',
         metavar='DESC,DESC',
-        help='with --join, claim only the bundles these comma-separated descriptors name',
+        help='with --join, claim only the bundles these comma-separated descriptors name; '
+        'with --prepare or no step, register them in place of every bundle set',
     )
     parser.add_argument(
         '--workers',
         metavar='N',
-        help="with --join, or the default sequence, the importer's opus_import --workers",
+        type=_count_or(MAX_WORKERS),
+        help='the total of worker processes on this computer, divided among the importers, '
+        f'or "{MAX_WORKERS}" for the ceiling; [import] workers by default',
+    )
+    parser.add_argument(
+        '--importers',
+        metavar='M',
+        type=_count_or(AUTO_IMPORTERS),
+        help='how many importers to start on this computer, capped at --workers: '
+        f'"{AUTO_IMPORTERS}" ([import] importers, the default with no step) or a number '
+        '(1 is the default with --join)',
+    )
+    parser.add_argument(
+        '--watch',
+        action='store_true',
+        help='with --status, redraw the table every few seconds until interrupted',
+    )
+    parser.add_argument(
+        '--recover',
+        action='store_true',
+        help='with --status, first return the bundles of lost importers to the queue',
     )
     # Named exactly as the pipeline names it, and not passed through: an option this
     # parser did not recognize would reach only the steps that read the holdings and not
@@ -352,27 +517,65 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _print_plan(arguments: argparse.Namespace, extra_options: Sequence[str]) -> None:
+def _division(parser: argparse.ArgumentParser, arguments: argparse.Namespace) -> Division:
+    """Resolve the division the arguments ask for, from the configuration.
+
+    Parameters:
+        parser: The parser, whose ``error`` reports a refusal.
+        arguments: The parsed arguments.
+
+    Returns:
+        The division.
+
+    Raises:
+        SystemExit: If the total of workers is above the ceiling.
+    """
+    default = 1 if arguments.join else AUTO_IMPORTERS
+    importers = arguments.importers if arguments.importers is not None else default
+    try:
+        return resolve_division(get_config().import_, arguments.workers, importers)
+    except ConfigError as e:
+        parser.error(str(e))
+
+
+def _print_plan(
+    arguments: argparse.Namespace, extra_options: Sequence[str], division: Division | None
+) -> None:
     """Print, for ``--dry-run``, the steps the arguments would run.
 
     Parameters:
         arguments: The parsed arguments.
         extra_options: The options passed through.
+        division: The importers to start, or None when no importer would start.
     """
     schema = arguments.override_db_schema
-    run_all = not (arguments.prepare or arguments.join or arguments.finish or arguments.requeue)
+    run_all = not (
+        arguments.prepare
+        or arguments.join
+        or arguments.finish
+        or arguments.requeue
+        or arguments.status
+    )
+    if division is not None:
+        print(division.describe())
     if arguments.prepare or run_all:
+        registered = BUNDLE_SETS if arguments.sets is None else (arguments.sets,)
         print(
             f'prepare: {"erases" if arguments.scorched_earth else "erases nothing"}; '
-            f'registers, in import order: {" ".join(BUNDLE_SETS)}'
+            f'registers, in import order: {" ".join(registered)}'
         )
-        for step in prepare_steps(schema, arguments.scorched_earth, extra_options):
+        for step in prepare_steps(schema, arguments.scorched_earth, extra_options, arguments.sets):
             print(' '.join(['opus_import', *step]))
-    if arguments.join or run_all:
-        workers = arguments.workers or '[import] workers'
-        print(f'join: 1 importer, workers {workers}')
-        for step in join_steps(schema, arguments.sets, arguments.workers, extra_options):
-            print(' '.join(['opus_import', *step]))
+    if division is not None:
+        claimed = arguments.sets if arguments.join else None
+        print(
+            f'import: {division.importers} importers on this computer, tracked every '
+            f'{coordinator.TRACK_SECONDS:g} seconds, a lost one replaced while bundles are pending'
+        )
+        for workers in division.per_importer:
+            print(
+                ' '.join(['opus_import', *importer_step(schema, workers, extra_options, claimed)])
+            )
     if arguments.finish or run_all:
         print('finish: once every registered bundle is done')
         for step in finish_steps(schema):
@@ -381,6 +584,8 @@ def _print_plan(arguments: argparse.Namespace, extra_options: Sequence[str]) -> 
         print('requeue:')
         for step in requeue_steps(schema, arguments.requeue):
             print(' '.join(['opus_import', *step]))
+    if arguments.status:
+        print("status: prints the coordinator's table" + (', watching' if arguments.watch else ''))
 
 
 def _run(parser: argparse.ArgumentParser, steps: list[list[str]]) -> None:
@@ -419,50 +624,134 @@ def _finish(parser: argparse.ArgumentParser, schema: str | None) -> None:
     _run(parser, finish_steps(schema))
 
 
+def _check_arguments(parser: argparse.ArgumentParser, arguments: argparse.Namespace) -> None:
+    """Refuse the combinations of arguments that mean nothing.
+
+    Parameters:
+        parser: The parser, whose ``error`` reports a refusal.
+        arguments: The parsed arguments.
+
+    Raises:
+        SystemExit: With status 2 for a refused combination.
+    """
+    if arguments.yes and not arguments.scorched_earth:
+        parser.error(
+            '--yes answers the confirmation --scorched-earth asks, and is refused without it'
+        )
+    step_named = (
+        arguments.prepare
+        or arguments.join
+        or arguments.finish
+        or arguments.requeue
+        or arguments.status
+    )
+    if arguments.scorched_earth and step_named and not arguments.prepare:
+        parser.error(
+            '--scorched-earth erases before registering, so it goes with --prepare or no step'
+        )
+    if (arguments.workers or arguments.importers) and step_named and not arguments.join:
+        parser.error(
+            '--workers and --importers divide the importers on this computer, so they go '
+            'with --join or no step'
+        )
+    if arguments.sets and step_named and not (arguments.join or arguments.prepare):
+        parser.error(
+            '--sets names bundles to register or claim, so it goes with --prepare, '
+            '--join or no step'
+        )
+    if (arguments.watch or arguments.recover) and not arguments.status:
+        parser.error('--watch and --recover go with --status')
+
+
 def main() -> None:
     """Run the full-holdings import, or the one step named.
 
     Raises:
         SystemExit: With a non-zero status if the arguments are refused, the
-            confirmation is refused, ``--finish`` refuses, or an invocation fails, naming
-            it. A successful run exits zero, which says every step ran -- not that every
-            step was clean. Read ``ERRORS.log`` for that.
+            confirmation is refused, an invocation fails, naming it, a bundle failed,
+            the run was interrupted, or ``--finish`` refuses. A successful run exits
+            zero, which says every step ran -- not that every step was clean. Read
+            ``ERRORS.log`` for that.
     """
     parser = _create_argument_parser()
     arguments, extra_options = parser.parse_known_args()
-    if arguments.yes and not arguments.scorched_earth:
-        parser.error(
-            '--yes answers the confirmation --scorched-earth asks, and is refused without it'
-        )
-    step_named = arguments.prepare or arguments.join or arguments.finish or arguments.requeue
-    if arguments.scorched_earth and step_named and not arguments.prepare:
-        parser.error(
-            '--scorched-earth erases before registering, so it goes with --prepare or no step'
-        )
-    if (arguments.sets or arguments.workers) and step_named and not arguments.join:
-        parser.error("--sets and --workers are an importer's, so they go with --join or no step")
-    if arguments.sets and not step_named:
-        parser.error('--sets limits one importer of several, so it goes with --join')
+    _check_arguments(parser, arguments)
+    step_named = (
+        arguments.prepare
+        or arguments.join
+        or arguments.finish
+        or arguments.requeue
+        or arguments.status
+    )
+    starts_importers = arguments.join or not step_named
+    # Resolved first, so a total above the ceiling stops the run before anything is erased.
+    division = _division(parser, arguments) if starts_importers else None
 
     if arguments.dry_run:
-        _print_plan(arguments, extra_options)
+        _print_plan(arguments, extra_options, division)
         return
 
     schema = arguments.override_db_schema
+    if arguments.status:
+        sys.exit(
+            coordinator.show_status(
+                get_config(), schema, watch=arguments.watch, recover=arguments.recover
+            )
+        )
     if arguments.scorched_earth and not arguments.yes and not confirm(schema):
         parser.exit(1, 'Aborting: the confirmation was not given.\n')
 
+    if division is not None:
+        print(division.describe(), flush=True)
     if arguments.requeue:
         _run(parser, requeue_steps(schema, arguments.requeue))
         return
     if arguments.prepare or not step_named:
-        _run(parser, prepare_steps(schema, arguments.scorched_earth, extra_options))
-    if arguments.join or not step_named:
-        _run(parser, join_steps(schema, arguments.sets, arguments.workers, extra_options))
+        _run(
+            parser,
+            prepare_steps(schema, arguments.scorched_earth, extra_options, arguments.sets),
+        )
+    if division is not None:
+        status = coordinate(
+            schema,
+            division,
+            extra_options,
+            finishing=not step_named,
+            sets=arguments.sets if arguments.join else None,
+        )
+        if status != 0:
+            parser.exit(status, f'{parser.prog}: stopped -- the importers did not finish\n')
     if arguments.finish or not step_named:
         _finish(parser, schema)
     if not step_named:
         print('Import is complete. Read ERRORS.log before trusting it.')
+
+
+def coordinate(
+    schema: str | None,
+    division: Division,
+    extra_options: Sequence[str],
+    *,
+    finishing: bool,
+    sets: str | None,
+) -> int:
+    """Start, track and recover importers until the run is over
+    (`opus_import.coordinator.Coordinator.run`).
+
+    Parameters:
+        schema: The database schema, or None for the configuration's.
+        division: The importers to start.
+        extra_options: Options added to every importer's invocation.
+        finishing: Whether to wait for every importer anywhere, as the coordinator does.
+        sets: Comma-separated bundle descriptors the importers may claim, or None.
+
+    Returns:
+        The run's exit status.
+    """
+    run = coordinator.Coordinator(
+        get_config(), schema, division, extra_options, finishing=finishing, sets=sets
+    )
+    return run.run()
 
 
 if __name__ == '__main__':  # pragma: no cover

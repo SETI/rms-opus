@@ -12,6 +12,7 @@ from __future__ import annotations
 import contextlib
 import multiprocessing
 import os
+import signal
 import time
 import warnings
 from collections.abc import Iterator
@@ -252,6 +253,42 @@ def test_the_rows_are_computed_in_forked_workers() -> None:
     assert len(emitted) == 40
     assert os.getpid() not in emitted
     assert len(set(emitted)) > 1
+
+
+def test_a_worker_ignores_an_interrupt(signal_restored: None) -> None:
+    """A terminal's Ctrl-C reaches every process of its group; the import's process
+    decides what it means, and the pool survives it."""
+
+    def interrupted(ctx: ImportContext, index: _Index, index_row_num: int, emit: Any) -> None:
+        if os.getpid() != parent:
+            os.kill(os.getpid(), signal.SIGINT)
+        emit('obs_general', {'row': index_row_num})
+
+    parent = os.getpid()
+    ctx = make_context()
+    ctx.workers = 2
+    ctx.worker_rows = 2
+    emitted: list[Any] = []
+    with _forking():
+        computed = do_import_pool.compute_index(
+            ctx,
+            _Index(list(range(8))),
+            interrupted,
+            lambda table, row: emitted.append(row['row']),
+            'TEST_0001_index.lbl',
+        )
+    assert computed
+    assert emitted == list(range(8))
+
+
+@pytest.fixture
+def signal_restored() -> Iterator[None]:
+    """Keep this process's SIGINT handler as it was, whatever a test does to it."""
+    before = signal.getsignal(signal.SIGINT)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGINT, before)
 
 
 def test_the_replayed_rows_hold_real_ids_and_no_placeholder() -> None:

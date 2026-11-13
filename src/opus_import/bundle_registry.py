@@ -27,10 +27,11 @@ from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from opus_import import import_util
+from opus_import import import_processes, import_util
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
+    from opus_import.import_processes import ImporterLock
     from opus_import.importdb.super import ImportDBSuper
 
 #: The table holding the registry.
@@ -111,8 +112,9 @@ class BundleIds:
     Attributes:
         range: The bundle's registry row.
         used: How many ids have been handed out.
-        rows_done: How many ``obs_general`` rows the import has loaded, which it records
-            in the registry after each load (`record_rows_done`).
+        rows_done: How many ``obs_general`` rows the import has committed, which each
+            chunk's transaction records in the registry
+            (`opus_import.import_processes.BundleGuard`).
     """
 
     range: BundleRange
@@ -320,9 +322,22 @@ def _state_columns(state: str) -> dict[str, object]:
         The columns and their values.
     """
     if state == BUNDLE_IMPORTING:
-        return {'state': state, 'started_at': _now(), 'finished_at': None, 'rows_done': 0}
+        # A plain import names no importer; a queue importer's claim sets its own.
+        return {
+            'state': state,
+            'started_at': _now(),
+            'finished_at': None,
+            'rows_done': 0,
+            'process_id': None,
+        }
     if state == BUNDLE_PENDING:
-        return {'state': state, 'started_at': None, 'finished_at': None, 'rows_done': 0}
+        return {
+            'state': state,
+            'started_at': None,
+            'finished_at': None,
+            'rows_done': 0,
+            'process_id': None,
+        }
     return {'state': state, 'finished_at': _now()}
 
 
@@ -361,19 +376,22 @@ def start_bundle(
         ctx: The import run's context, for the open database.
         bundle_id: The bundle.
         from_states: The states it may be taken from. ``importing`` belongs here only
-            for ``--requeue``, which states that the process holding it has stopped.
+            for ``--requeue``, which states that the process holding it has stopped, and
+            with it the bundle is taken only while its ``process_id`` is NULL: a queue
+            importer's bundle is never taken, since recovery returns it.
 
     Returns:
-        The hold on the bundle, or None when it was in none of `from_states`.
+        The hold on the bundle, or None when it was in none of `from_states`, or a queue
+        importer holds it.
     """
     db = ctx.db
     assert db is not None
     columns = _state_columns(BUNDLE_IMPORTING)
+    where = f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, from_states)}'
+    if BUNDLE_IMPORTING in from_states:
+        where += f' AND {db.quote_identifier("process_id")} IS NULL'
     changed = db.conditional_update(
-        BUNDLE_REGISTRY_TABLE,
-        columns,
-        f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, from_states)}',
-        [bundle_id, *from_states],
+        BUNDLE_REGISTRY_TABLE, columns, where, [bundle_id, *from_states]
     )
     if changed == 0:
         return None
@@ -410,28 +428,6 @@ def finish_bundle(ctx: ImportContext, claim: Claim, state: str) -> bool:
     return changed != 0
 
 
-def holds(ctx: ImportContext, claim: Claim) -> bool:
-    """Return whether a bundle is still ``importing`` under a process's hold.
-
-    Only ``--requeue``, naming the bundle as stopped, takes a bundle from that state, so
-    the answer stays true until the process finishes the bundle unless an operator
-    requeues it.
-
-    Parameters:
-        ctx: The import run's context, for the open database.
-        claim: The hold `start_bundle` or `claim_bundle` gave.
-
-    Returns:
-        True while the registry row is ``importing`` under the hold's ``started_at``.
-    """
-    found = bundle_range(ctx, claim.bundle_id)
-    return (
-        found is not None
-        and found.state == BUNDLE_IMPORTING
-        and found.started_at == claim.started_at
-    )
-
-
 def return_to_pending(
     ctx: ImportContext, bundle_ids: Iterable[str], from_states: Sequence[str]
 ) -> list[str]:
@@ -461,48 +457,34 @@ def return_to_pending(
     return moved
 
 
-def record_rows_done(ctx: ImportContext, bundle: BundleRange, rows_done: int) -> None:
-    """Record how many ``obs_general`` rows a bundle's import has committed so far.
-
-    The row is written only while the bundle is ``importing`` under the hold the import
-    began with, so a process that has lost the bundle writes nothing.
-
-    Parameters:
-        ctx: The import run's context, for the open database.
-        bundle: The bundle's registry row, as the import read it.
-        rows_done: The rows committed since the import took the bundle.
-    """
-    db = ctx.db
-    assert db is not None
-    q = db.quote_identifier
-    db.update_row(
-        BUNDLE_REGISTRY_TABLE,
-        {'rows_done': rows_done},
-        f'{q("bundle_number")}=%s AND {q("started_at")}=%s',
-        [bundle.bundle_number, bundle.started_at],
-    )
-
-
 def claim_bundle(
     ctx: ImportContext,
     among: Collection[str] | None = None,
     excluding: Collection[str] = (),
+    importer: ImporterLock | None = None,
 ) -> Claim | None:
     """Take the largest ``pending`` bundle no other process holds, and mark it ``importing``.
 
     The claim is one transaction: a locking read of one row through the registry's key
     on ``(state, size_estimate, bundle_number)``, scanned from its highest entry, that
-    passes over rows another process has locked, then the move to ``importing``. It is
-    run again if the server reports a lock conflict (`ImportDBSuper.retrying`).
+    passes over rows another process has locked, then the move to ``importing``, naming
+    the importer in ``process_id``. An importer's claim commits only while its lock
+    connection holds its lock. It is run again if the server reports a lock conflict
+    (`ImportDBSuper.retrying`).
 
     Parameters:
         ctx: The import run's context, for the open database.
         among: The only bundles that may be claimed, or None for any.
         excluding: Bundles never claimed.
+        importer: The importer claiming, or None for a process that holds no lock.
 
     Returns:
         The hold on the bundle claimed, or None when no bundle is ``pending`` (of
         `among`, and not of `excluding`) that another process has not claimed first.
+
+    Raises:
+        opus_import.import_processes.LostImporterError: If the importer's lock is lost;
+            nothing is claimed then.
     """
     db = ctx.db
     assert db is not None
@@ -530,7 +512,12 @@ def claim_bundle(
         if number is None:
             return None
         columns = _state_columns(BUNDLE_IMPORTING)
+        columns['process_id'] = None if importer is None else importer.process_id
         db.update_row(BUNDLE_REGISTRY_TABLE, columns, f'{q("bundle_number")}=%s', [number])
+        if importer is not None and not importer.held():
+            raise import_processes.LostImporterError(
+                import_processes.lost_lock_message(importer, import_processes.WHILE_CLAIMING)
+            )
         rows = db.read_rows(
             BUNDLE_REGISTRY_TABLE, ['bundle_id'], f'{q("bundle_number")}=%s', [number]
         )
@@ -539,6 +526,38 @@ def claim_bundle(
         return Claim(str(rows[0][0]), started_at)
 
     return db.retrying('Claiming a pending bundle', claim)
+
+
+def finish_claimed_bundle(ctx: ImportContext, bundle_number: int, importer: ImporterLock) -> None:
+    """Mark an importer's bundle ``done``, only while it is ``importing`` under the importer.
+
+    One transaction: the move to ``done``, matching the bundle only in that state and
+    under that importer, committed only while the importer's lock connection holds its
+    lock.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        bundle_number: The bundle's number.
+        importer: The importer holding it.
+
+    Raises:
+        opus_import.import_processes.LostImporterError: If the registry no longer names
+            the importer, or its lock is lost; the bundle is left as it was.
+    """
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    with db.transaction():
+        matched = db.update_row(
+            BUNDLE_REGISTRY_TABLE,
+            _state_columns(BUNDLE_DONE),
+            f'{q("bundle_number")}=%s AND {q("state")}=%s AND {q("process_id")}=%s',
+            [bundle_number, BUNDLE_IMPORTING, importer.process_id],
+        )
+        if matched != 1 or not importer.held():
+            raise import_processes.LostImporterError(
+                import_processes.lost_lock_message(importer, import_processes.WHILE_FINISHING)
+            )
 
 
 def unregister_bundles(ctx: ImportContext, bundle_ids: Iterable[str]) -> None:

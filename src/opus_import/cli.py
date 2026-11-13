@@ -15,6 +15,8 @@ import json
 import logging
 import os
 import pstats
+import signal
+import socket
 import sys
 import time
 import traceback
@@ -47,11 +49,55 @@ from opus_import.steps import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import FrameType
     from typing import TextIO
 
     from opus_import.importdb.super import WarningHandler
 
 LOGNAME = 'opus_import.main'
+
+#: What a queue importer's log names carry after their time, before its computer and
+#: process id.
+JOIN_LOG_SUFFIX = 'join'
+
+
+def _interrupt_handler(ctx: ImportContext) -> Callable[[int, FrameType | None], None]:
+    """Return a queue importer's SIGINT handler: drain on the first, abort on the second.
+
+    Installed explicitly, so an importer started in the background, where SIGINT
+    starts out ignored, still hears it.
+
+    Parameters:
+        ctx: The importer's context, whose `ImportContext.interrupts` the handler counts.
+
+    Returns:
+        The handler. The first interrupt is only counted, and the importer claims
+        nothing new once its bundle is done. The second raises `KeyboardInterrupt` while
+        the importer runs (`ImportContext.importer` is set), which aborts its bundle
+        (`opus_import.steps.do_import.import_from_queue`), and before the importer has
+        begun recording itself (`ImportContext.queue_entered`), while it reads the
+        holdings and holds nothing, which stops it; otherwise it is only counted, and
+        the queue loop's check of the count stops the importer. Every later interrupt is
+        only counted, so that nothing interrupts the abort.
+    """
+
+    def handler(signum: int, frame: FrameType | None) -> None:
+        """Count the interrupt; raise on the second, while the importer runs or before it
+        has begun.
+
+        Parameters:
+            signum: The signal.
+            frame: Where the program was. Unused.
+
+        Raises:
+            KeyboardInterrupt: On the second interrupt.
+        """
+        ctx.interrupts += 1
+        if ctx.interrupts == 2 and (ctx.importer is not None or not ctx.queue_entered):
+            raise KeyboardInterrupt
+
+    return handler
 
 
 def _worker_count(text: str) -> int | str:
@@ -605,8 +651,16 @@ def main() -> None:
     info_logfile = os.path.abspath(config.import_.log_file)
     debug_logfile = os.path.abspath(config.import_.debug_log_file)
 
-    info_handler = pdslogger.file_handler(info_logfile, level=logging.INFO, rotation='ymdhms')
-    debug_handler = pdslogger.file_handler(debug_logfile, level=logging.DEBUG, rotation='ymdhms')
+    # Several importers may start on one computer in the same second, so each names its
+    # logs after its computer and process as well.
+    suffix = f'{JOIN_LOG_SUFFIX}_{socket.gethostname()}_{os.getpid()}' if args.join else ''
+    info_handler = pdslogger.file_handler(
+        info_logfile, level=logging.INFO, rotation='ymdhms', suffix=suffix
+    )
+    debug_handler = pdslogger.file_handler(
+        debug_logfile, level=logging.DEBUG, rotation='ymdhms', suffix=suffix
+    )
+    ctx.log_path = info_handler.baseFilename
 
     logger.add_handler(info_handler)
     logger.add_handler(debug_handler)
@@ -650,6 +704,8 @@ def main() -> None:
     if conflict:
         logger.log('fatal', f'--join imports from the queue alone; it is refused with {conflict}')
         sys.exit(-1)
+    if args.join:
+        signal.signal(signal.SIGINT, _interrupt_handler(ctx))
 
     our_schema_name = config.database.schema
     if args.override_db_schema:

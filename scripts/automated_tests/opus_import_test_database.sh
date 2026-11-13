@@ -17,7 +17,7 @@ DATA_DIR=$TEST_CAT_DIR/data
 # so every process this script starts is given its path.
 export OPUS_CONFIG="$(pwd)/opus.toml"
 
-echo YES | ./scripts/import/import_for_tests.sh "--log-debug-limit 0 --log-info-limit 0"
+echo YES | ./scripts/import/import_for_tests.sh --log-debug-limit 0 --log-info-limit 0
 IMPORT_STATUS=$?
 # Check the import's own exit status, not just its error log. import_for_tests.sh runs
 # under `set -e`, so anything that stops it -- a missing interpreter, a failed bundle,

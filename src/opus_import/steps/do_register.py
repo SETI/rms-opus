@@ -5,8 +5,9 @@ Every invocation that imports bundles registers them before the first one starts
 processes. Registration fixes what every process would otherwise race to decide:
 
 - each new bundle's row of the bundle registry (`opus_import.bundle_registry`), numbered
-  in the order the bundles are given, which is the import order, with an id range sized
-  from the row count its primary index labels declare (`opus_import.primary_index`);
+  in the order the bundles are given, with an id range sized from the row count its
+  primary index labels declare (`opus_import.primary_index`); the numbers fix the
+  ranges, not the order queue importers take the bundles in, which is largest first;
 - the ``mult_field`` row of every field the packaged schemas declare, and the rows and
   groups of every pinned field (`opus_import.steps.do_import_mult.register_pinned_fields`).
 

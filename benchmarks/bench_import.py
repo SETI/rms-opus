@@ -29,6 +29,11 @@ guards.
 group and ``N`` queue importers (``opus_import --join``) started together, each with its
 share of the ``workers`` total (`ImportBench.run_importers`), for a side that has them;
 ``--register-only`` times that registration alone (`ImportBench.run_registration`).
+``--coordinator M`` runs the scale's groups through ``opus_import_all`` instead, which
+registers them, divides the ``workers`` total among ``M`` importers it starts and
+tracks, and runs the closing sequence (`ImportBench.run_coordinator`), for a side that
+has it. Both record each importer's idle time from its last bundle to the last
+importer's exit (`benchmarks.importer_logs`).
 
 Every timed import starts on a **freshly restarted server**: the owned mysqld is shut
 down cleanly, which flushes its dirty pages and checkpoints its redo log, and started
@@ -65,13 +70,14 @@ import json
 import math
 import pstats
 import shutil
+import signal
 import subprocess  # nosec B404 - the harness runs the side's import
 import sys
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from benchmarks import web_scenarios
+from benchmarks import importer_logs, web_scenarios
 from benchmarks.bench_server import (
     DB_HOST,
     DB_PASSWORD,
@@ -745,6 +751,9 @@ class ImportBench:
             log_dir=errors_log.parent,
             importer_log_dirs=[directory / 'logs' for directory in importer_dirs],
         )
+        self._record_idle(
+            run, [directory / 'logs' for directory in importer_dirs], joined_only=False
+        )
         timings = monitor.records[2].timings
         run['metrics']['import.registration.wall_s'] = monitor.records[1].wall_s
         run['details']['importers'] = importers
@@ -759,6 +768,189 @@ class ImportBench:
             for row in registry
         ]
         return run, schema
+
+    def run_coordinator(self, index: int | str, importers: int) -> tuple[dict[str, Any], str]:
+        """Import the scale's bundles under ``opus_import_all``, and record it.
+
+        The run is the side's erase, then one ``opus_import_all`` invocation in its
+        default mode: it registers the scale's groups in import order (``--sets``),
+        divides the ``[import] workers`` total among `importers` importers it starts and
+        tracks (``--importers``, ``--workers``), and runs the closing sequence once every
+        bundle is done. Django's migration follows as its own invocation, since the
+        closing sequence has none, so the run does the same work as a run with
+        ``--importers``, the migration last instead of before the validation.
+
+        The invocation is recorded as one, ``coordinator``, whose wall-clock counts in
+        ``import.wall_s``. Its phases come from its output
+        (`benchmarks.importer_logs.coordinator_phases`): the registration is
+        ``import.registration.wall_s``, the importers' phase
+        ``import.bundle_imports.wall_s``, and each closing invocation
+        ``import.invocation.<role>.wall_s``, which with the migration make
+        ``import.finalization.wall_s``. Its per-bundle times are the importers' own log
+        blocks (`benchmarks.importer_logs.bundle_log_timings`).
+
+        Parameters:
+            index: The run's index.
+            importers: How many importers the coordinator starts.
+
+        Returns:
+            The result run, of kind ``import``, and the schema it built.
+
+        Raises:
+            RunFailedError: If the coordinator exits non-zero, its output does not mark
+                its phases, or a registered bundle is not ``done``.
+        """
+        workers = self.extra_import.get('workers', 1)
+        assert isinstance(workers, int)
+        schema = self.schema_name(index)
+        drop_schema(self.server, schema)
+        run_dir = self.label.scratch_dir / f'import_{index}'
+        config_file, errors_log, monitor, timing = self._prepare(run_dir, schema)
+        sets = ','.join(self._group_descriptors())
+        run = new_run('import')
+        self.fresh_server(run, 'run')
+        before = self._status()
+        self._invoke(monitor, config_file, [*self.spelling.erase, *timing])
+        arguments = [
+            '-m',
+            'opus_import.import_all',
+            '--sets',
+            sets,
+            '--importers',
+            str(importers),
+            '--workers',
+            str(workers),
+        ]
+        monitor.step_started(arguments)
+        lines, exited, returncode = self._run_stamped(config_file, arguments)
+        output = '\n'.join(line for _, line in lines)
+        monitor.step_finished(
+            build_run.StepResult(
+                arguments=tuple(arguments), returncode=returncode, stdout=output, stderr=output
+            )
+        )
+        record = monitor.records[-1]
+        record.name = 'coordinator'
+        log_dir = errors_log.parent
+        logs = importer_logs.importer_logs([log_dir])
+        record.timings = importer_logs.bundle_log_timings(logs)
+        try:
+            phases = importer_logs.coordinator_phases(lines, exited, self.spelling)
+        except ValueError as e:
+            raise RunFailedError(f'{e}:\n{output[-4000:]}') from e
+        registry = self._registry(schema)
+        unfinished = [row['bundle_id'] for row in registry if row['state'] != 'done']
+        if unfinished:
+            raise RunFailedError(f'the coordinator left {unfinished} unfinished')
+        self._migrate(monitor, config_file)
+        require_empty_errors_log(errors_log, at_end=True)
+        self._fill_run(
+            run,
+            monitor,
+            schema,
+            before,
+            full=True,
+            log_dir=log_dir,
+            bundle_wall_s=phases.importers_s,
+        )
+        metrics = run['metrics']
+        for role, seconds in phases.steps.items():
+            metrics[f'import.invocation.{role}.wall_s'] = seconds
+        migrate = metrics['import.invocation.migrate.wall_s']
+        metrics['import.finalization.wall_s'] = phases.finish_s + migrate
+        metrics['import.registration.wall_s'] = phases.registration_s
+        self._record_idle(run, [log_dir])
+        details = run['details']
+        details['importers'] = importers
+        details['workers_per_importer'] = phases.workers_per_importer
+        details['coordinator_phases_s'] = {
+            'registration': phases.registration_s,
+            'importers': phases.importers_s,
+            'finish': phases.finish_s,
+        }
+        details['bundles'] = [
+            {
+                'bundle_id': row['bundle_id'],
+                'size_estimate': row['size_estimate'],
+                'import_s': record.timings.get(f'import_bundle:{row["bundle_id"]}'),
+                'rows_done': row['rows_done'],
+            }
+            for row in registry
+        ]
+        return run, schema
+
+    def _run_stamped(
+        self, config_file: Path, arguments: Sequence[str]
+    ) -> tuple[list[tuple[float, str]], float, int]:
+        """Run the side's interpreter, stamping each line of its output as it is read.
+
+        The process runs in a process group of its own, so a terminal's Ctrl-C reaches
+        the harness alone, which passes each interrupt on to it as SIGINT and goes on
+        reading until it exits: the coordinator drains or aborts its importers, and the
+        server they write to is stopped only after.
+
+        Parameters:
+            config_file: The run's configuration.
+            arguments: The command line after the interpreter.
+
+        Returns:
+            Each output line (standard error merged in) with the `time.perf_counter`
+            reading it was read at, the reading when the process exited, and its exit
+            status.
+
+        Raises:
+            KeyboardInterrupt: Once the process has exited, if the harness was
+                interrupted while it ran.
+        """
+        process = subprocess.Popen(  # nosec B603 - the side's interpreter and its own module
+            [str(self.side.python), *arguments],
+            cwd=self.side.repo_root,
+            env=build_run.run_environment(config_file),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            process_group=0,
+        )
+        assert process.stdout is not None
+        lines: list[tuple[float, str]] = []
+        interrupted = False
+        while True:
+            try:
+                for line in process.stdout:
+                    lines.append((time.perf_counter(), line.rstrip('\n')))
+                returncode = process.wait()
+                break
+            except KeyboardInterrupt:
+                interrupted = True
+                process.send_signal(signal.SIGINT)
+        exited = time.perf_counter()
+        if interrupted:
+            raise KeyboardInterrupt
+        return lines, exited, returncode
+
+    def _record_idle(
+        self, run: dict[str, Any], log_dirs: Sequence[Path], *, joined_only: bool = True
+    ) -> None:
+        """Record each importer's idle time from its last bundle to the last exit.
+
+        Parameters:
+            run: The result run, which gains ``import.importer_idle_s.max`` and ``.sum``
+                and the per-importer list ``importer_idle_s`` in its details.
+            log_dirs: The directories holding the importers' information logs.
+            joined_only: As `importer_logs.importer_logs` takes it.
+
+        Raises:
+            RunFailedError: If no importer's log is found.
+        """
+        idle = importer_logs.importer_idle(
+            importer_logs.importer_logs(log_dirs, joined_only=joined_only)
+        )
+        if len(idle) == 0:
+            raise RunFailedError(f'no queue importer log in {[str(d) for d in log_dirs]}')
+        seconds = [float(str(entry['idle_s'])) for entry in idle]
+        run['metrics']['import.importer_idle_s.max'] = max(seconds)
+        run['metrics']['import.importer_idle_s.sum'] = sum(seconds)
+        run['details']['importer_idle_s'] = idle
 
     def _registry(self, schema: str) -> list[dict[str, Any]]:
         """Return a schema's bundle registry, in registration order.
@@ -869,6 +1061,7 @@ class ImportBench:
         full: bool,
         log_dir: Path,
         importer_log_dirs: Sequence[Path] = (),
+        bundle_wall_s: float | None = None,
     ) -> None:
         """Turn a finished run's records into its metrics and details.
 
@@ -882,6 +1075,9 @@ class ImportBench:
                 name the bulk-load path each invocation took.
             importer_log_dirs: Each queue importer's own log directory, whose logs name
                 the paths the importers took; none for a run of one process.
+            bundle_wall_s: The seconds the bundle imports took, for a run whose records
+                do not show them apart (the coordinator's); None to sum the bundle-import
+                and ``join`` records.
         """
         metrics = run['metrics']
         records = monitor.records
@@ -893,8 +1089,14 @@ class ImportBench:
                     phases[step] = phases.get(step, 0.0) + seconds
         for step, seconds in phases.items():
             metrics[f'import.phase.{step}_s'] = seconds
-        bundle_wall = sum(
-            r.wall_s for r in records if monitor.is_bundle_import(r.arguments) or r.name == 'join'
+        bundle_wall = (
+            sum(
+                r.wall_s
+                for r in records
+                if monitor.is_bundle_import(r.arguments) or r.name == 'join'
+            )
+            if bundle_wall_s is None
+            else bundle_wall_s
         )
         finalization = [r for r in records if r.name in FINALIZATION_ROLES]
         if full:
@@ -1136,6 +1338,15 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         'side that has --join',
     )
     parser.add_argument(
+        '--coordinator',
+        metavar='M',
+        type=int,
+        default=None,
+        help="import under opus_import_all, which registers the scale's groups, divides the "
+        '--import-key workers total among M importers it starts, and finishes the '
+        'database; for a side whose opus_import_all has --importers',
+    )
+    parser.add_argument(
         '--register-only',
         action='store_true',
         help="instead of the timed runs, register the scale's bundles into a scratch "
@@ -1161,6 +1372,24 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
             or args.register_only
         ):
             parser.error('--importers times full runs and takes no other mode')
+    if args.coordinator is not None:
+        if args.coordinator < 1:
+            parser.error('--coordinator takes a count of at least 1')
+        workers = args.import_keys.get('workers', 1)
+        if isinstance(workers, bool) or not isinstance(workers, int) or workers < args.coordinator:
+            parser.error(
+                f'--coordinator {args.coordinator} needs a whole number of workers, at least '
+                f'one per importer: give --import-key workers=N, not {workers!r}'
+            )
+        if (
+            args.importers is not None
+            or args.reuse_schema is not None
+            or args.workers_sweep is not None
+            or args.profile
+            or args.register_only
+            or args.stop_before_finalization
+        ):
+            parser.error('--coordinator times full runs and takes no other mode')
     if args.register_only and (
         args.reuse_schema is not None
         or args.workers_sweep is not None
@@ -1226,13 +1455,18 @@ def main(argv: Sequence[str] | None = None) -> None:
         'import_scenario_hash': scenario_hash([scenario.path]),
         'import_start_method': DEFAULT_START_METHOD,
         'bulk_load_path': DEFAULT_BULK_LOAD_PATH,
+        'importers': args.importers,
+        'coordinator_importers': args.coordinator,
     }
     if args.importers is not None and spelling.join is None:
         sys.exit('this side has no --join: measure it without --importers, in one process')
+    if args.coordinator is not None and not side.has_coordinator():
+        sys.exit(
+            'this side has no opus_import_all that divides importers: measure it with '
+            '--importers or in one process'
+        )
     if args.register_only and spelling.register_bundles is None:
         sys.exit('this side has no --register-bundles to time')
-    if args.importers is not None:
-        environment['importers'] = args.importers
     with server.running():
         environment.update(server_environment(server))
         if args.register_only:
@@ -1281,7 +1515,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             sys.stdout.write(f'warm-up import recorded in {path}\n')
         for offset in range(count):
             index = existing + offset + 1
-            if args.importers is not None:
+            if args.coordinator is not None:
+                run, schema = bench.run_coordinator(index, args.coordinator)
+            elif args.importers is not None:
                 run, schema = bench.run_importers(index, args.importers, finalize=finalize)
             elif args.scale == 'fixture':
                 run, schema = bench.run_fixture(index, finalize=finalize)

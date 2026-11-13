@@ -170,8 +170,8 @@ Django's own management command line with the settings module already named, so 
 installation needs nothing in its environment but ``OPUS_CONFIG``, and in a checkout
 ``manage.py`` is the same program. ``opus_config_template`` writes the configuration
 template into the working directory. ``opus_import_all`` runs a full import: the registration
-of every bundle set in order, an importer, and the four steps that finish the database,
-each as its own ``opus_import`` process. ``opus_deploy_scripts`` writes the server deploy chain out of the distribution;
+of every bundle set in order, the importers it starts and tracks, and the four steps that
+finish the database, each as its own ``opus_import`` process. ``opus_deploy_scripts`` writes the server deploy chain out of the distribution;
 :ref:`user_guide_deployment` is what it is for.
 
 Running the tests and the checks

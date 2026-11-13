@@ -454,8 +454,8 @@ numbered within a field: they start at zero, and a value not already there takes
 next id of the field's counter, ``mult_field.last_id`` -- unless the column's schema pins
 its values with ``mult_options``, in which case the ids are the ones listed and a value
 that is not among them is an error. A stored row keeps its id and its value, so renaming
-a value rewrites no observation row. The counter only goes up, so an id finalization
-deletes is never handed out again. With several processes importing at once, a field's
+a value rewrites no observation row. The counter only goes up, so an id it handed out
+is never handed out again, even once finalization deletes its row. With several processes importing at once, a field's
 new values number in the order they arrive, and may leave gaps where two processes met
 the same value; with one, they number as the serial import does.
 
@@ -512,8 +512,10 @@ Invariants
   ``--update-mult-info`` nor finalization rewrites the id or the value of a row it
   holds: a new value is inserted, never written over another row, and a list entry that
   disagrees with a stored row is an error. Renaming a value or reordering a field
-  touches no observation row. A row finalization deletes does not free its id:
-  ``mult_field.last_id`` never goes down, so the id is never handed out again.
+  touches no observation row. A row finalization deletes does not free an id the
+  counter handed out: ``mult_field.last_id`` never goes down, so the id is never handed
+  out again. A pinned field's ids are its list's, and an absent value its list lacks
+  takes 65535.
 * **An import computes in many processes and writes from one.** Only the import's own
   process uses the database and writes the log; pool workers compute rows and record
   what they would have written, and that process replays it in index order, so the

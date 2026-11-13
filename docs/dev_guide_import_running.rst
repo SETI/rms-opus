@@ -69,6 +69,13 @@ and the log locations all come from the configuration file, and the keys it uses
      - The ceiling neither ``workers`` nor ``index_workers`` may exceed: the share of the
        cores the import counts that is allowed (0.75 by default). See
        :ref:`dev_guide_import_running_parallelism`.
+   * - ``[import] importers``, ``stall_warning_minutes``, ``status_interval_minutes``
+     - How ``opus_import_all`` runs a full import: how many importers it starts on this
+       computer (4 by default, capped at its total of workers, so one with the default
+       ``workers``), how long an importer may
+       go without progress before it is reported as stalled (30 minutes by default), and
+       how often the totals line is written when the output is not a terminal (5
+       minutes by default). See :ref:`dev_guide_import_full_run`.
 
 Configuration values can be overridden for one run without editing the file, with
 ``--override-db-schema``, ``--override-pds3-data-dir``, ``--override-pds4-data-dir`` and
@@ -303,9 +310,11 @@ Import steps
    * - ``--requeue``
      - Return the named ``failed`` or ``importing`` bundles to ``pending``, after
        deleting their rows. Naming any other bundle refuses the whole invocation, which
-       then changes nothing. Naming an ``importing`` bundle states that the process that
-       claimed it has stopped. Each bundle is held while its rows are deleted, so one
-       another process takes first is left to it, with nothing deleted.
+       then changes nothing, and so does naming an ``importing`` bundle a queue importer
+       holds, which recovery returns (`How an importer is known to be alive`_). Naming
+       any other ``importing`` bundle states that the process that claimed it has
+       stopped. Each bundle is held while its rows are deleted, so one another process
+       takes first is left to it, with nothing deleted.
    * - ``--delete-bundles``
      - Delete the named bundles' rows from every observation table, and their bundle
        registry rows, before any bundle is imported. A ``ready`` schema of this release's
@@ -535,7 +544,9 @@ A run writes to five places:
      - Everything, as it happens.
    * - ``[import] log_file``
      - Info level and above. The file name has the run's date and time appended before
-       the extension, so a run never overwrites an earlier one.
+       the extension, so a run never overwrites an earlier one. An importer
+       (``opus_import --join``) appends ``_join_<host>_<pid>`` after them as well, so
+       several importers started in the same second write files of their own.
    * - ``[import] debug_log_file``
      - Debug level and above, dated the same way.
    * - ``WARNINGS.log`` in ``[paths] import_log_dir``
@@ -642,32 +653,110 @@ A complete import is hours to days and replaces everything a user sees, so it is
 into a new schema and switched over afterwards rather than in place.
 
 The sequence itself is an installed command, :mod:`opus_import.import_all`, run as
-``opus_import_all``. It has three steps, each one or more ``opus_import`` processes:
+``opus_import_all``. With no step named it is the **coordinator**, which runs the whole
+import on one computer; its tracking, recovery and table are
+:mod:`opus_import.coordinator`:
+
+1. **Prepare.** It registers every bundle the bundle sets expand to, in the order a full
+   import takes them, as one ``opus_import --register-bundles`` invocation. Registering
+   the whole list first is what fixes every bundle's number and id range, and so every
+   observation's id, the same way on every run. ``--sets`` registers the bundles its
+   comma-separated descriptors name instead.
+2. **Divide.** ``--workers N`` is the total of worker processes on this computer, from
+   ``[import] workers`` when it is not given, so the default is 1. A total above the
+   ceiling (`How many processes a run uses`_) is refused before anything runs.
+   ``--importers M`` (``auto``, the default, reads ``[import] importers``) is capped at
+   N, and N is divided among the M importers as evenly as whole numbers allow: the first
+   ``N mod M`` take one more. Each importer is one ``opus_import --join --workers <share>``
+   process (`Several import processes`_).
+3. **Track.** Every few seconds it reads the bundle registry and ``import_process``. On a
+   terminal it redraws a table: a totals line (bundles done, importing, pending and
+   failed; rows done of the estimated total; time elapsed; and the remaining time,
+   estimated from the row rate it has observed), then one line per running importer on
+   any computer (host and process id, bundle, rows done of the bundle's estimate, time
+   in the bundle, time since its last progress). Without a terminal it writes a line per
+   finished bundle and the totals line every ``[import] status_interval_minutes``. An
+   importer alive but with no progress for ``[import] stall_warning_minutes`` is reported
+   as stalled, and never stopped.
+4. **Recover.** An importer whose lock is free while its row says ``running`` is lost
+   (`How an importer is known to be alive`_). Its bundle's rows are deleted, its
+   ``losses`` counted, and it goes back to ``pending``; at its second loss it is
+   ``failed`` instead, since a bundle that kills its importer twice would loop. The
+   coordinator keeps up to M importers of its own running while bundles are ``pending``
+   that they may claim, beyond the ones its idle importers are about to take. An
+   importer exits cleanly only once it finds nothing it may claim, so a bundle
+   ``pending`` both when one started and when it exited cleanly is taken as one the
+   importers here may not claim (``--sets``, ``--exclude-bundles``), and nothing is
+   started for it; when such bundles are all that is left and nothing runs anywhere,
+   one more round is started for them before the run stops naming them. Once
+   :data:`~opus_import.coordinator.FAILED_STARTS_ALLOWED` importers in a row exit with
+   failure before claiming anything, no more are started. A pass whose reading of the
+   database fails is logged, and the next opens a new connection; once readings have
+   failed for :data:`~opus_import.coordinator.DATABASE_OUTAGE_SECONDS` in a row the
+   coordinator stops, leaving its running importers to finish, and a rerun resumes.
+5. **Finish.** Once no bundle is ``pending`` or ``importing`` and no importer anywhere is
+   alive, it runs ``--finish`` (below). If a bundle failed, it exits with failure
+   instead, naming each failed bundle with its importer's log, and leaves the schema
+   unfinalized; after the fix, ``opus_import_all --requeue <bundle>`` and a rerun import
+   only those.
+
+The coordinator's first line states the division, as in::
+
+    Parallelism: 30 cores detected, cpu_fraction 0.8, ceiling 24; workers 24 in all, importers 6, workers per importer 4, 4, 4, 4, 4, 4
+
+Every event the coordinator reports (an importer started or exited, a bundle recovered
+or finished, a stall, an interrupt, the reason the run stopped) goes to its own log,
+``opus_import_all_<time>.log`` in ``[paths] import_log_dir``, and the events of the
+run's end are printed after the terminal's last redraw, so the failed bundles and their
+importers' logs are on the screen when it exits. Each
+importer writes its own logs, named after its computer and process id
+(:ref:`dev_guide_import_logs`).
+
+**Interrupts.** The first Ctrl-C (SIGINT) drains: every importer finishes its bundle and
+claims nothing new, and the coordinator exits with failure without finalizing. A second
+aborts: every importer deletes its bundle's rows, returns it to ``pending``, and exits;
+an importer still reading the holdings, before it has recorded itself in
+``import_process``, holds nothing and stops where it is. Later interrupts do not
+interrupt the abort. Either way, running ``opus_import_all`` again resumes. The importers run in process
+groups of their own, so a terminal's Ctrl-C reaches the coordinator alone, which passes
+it on; under ``nohup``, ``kill -INT <coordinator>`` does the same.
+
+The steps also run alone when named:
 
 ``--prepare``
-    Registers every bundle the bundle sets expand to, in the order a full import takes
-    them, as one ``opus_import --register-bundles`` invocation. Registering the whole
-    list first is what fixes every bundle's number and id range, and so every
-    observation's id, the same way on every run.
+    The registration above, after the erase with ``--scorched-earth``.
 
 ``--join``
-    Runs one importer, ``opus_import --join``, which imports bundles from the registry
-    until none is ``pending`` (`Several import processes`_). ``--sets`` limits the
-    bundles it claims and ``--workers`` sets its ``--workers``.
+    Starts ``--importers`` importers on this computer (1 when not given) dividing its own
+    ``--workers`` under its own ceiling, tracks and recovers them as the coordinator
+    does, and exits once they have; it never prepares or finishes. Run with an
+    ``OPUS_CONFIG`` naming the same database server, schema and holdings, it is how
+    another computer joins a running import, and it can join or leave at any time; the
+    coordinator shows its importers and waits for them before finishing. ``--sets``
+    limits the bundles its importers claim.
 
 ``--finish``
-    Once every importer has exited, runs ``opus_import --finalize``,
-    ``--import-dictionary``, ``--validate`` and ``--write-schema-version``, each as its
-    own invocation. Before the first it reads the registry, and while any bundle is
-    ``pending``, ``importing`` or ``failed`` it refuses, naming each with its state and,
-    for a ``failed`` or ``importing`` one, the ``opus_import_all --requeue <bundle>``
-    that returns it to the queue. It is not ``opus_import --finalize``, which is the
-    finalization group alone.
+    Runs ``opus_import --finalize``, ``--import-dictionary``, ``--validate`` and
+    ``--write-schema-version``, each as its own invocation. Before the first it reads the
+    registry, and while any bundle is ``pending``, ``importing`` or ``failed`` it refuses,
+    naming each with its state and, for a ``failed`` or ``importing`` one, the
+    ``opus_import_all --requeue <bundle>`` that returns it to the queue. It is not
+    ``opus_import --finalize``, which is the finalization group alone.
 
-Each step runs alone when named. With none named, ``opus_import_all`` runs all three in
-order on one computer, with one importer, stopping at the first invocation that fails.
-``opus_import_all --requeue <bundles>`` returns ``failed`` or ``importing`` bundles to
-``pending`` after deleting their rows, through ``opus_import --requeue``.
+``--requeue <bundles>``
+    Returns ``failed`` bundles, and ``importing`` ones no queue importer holds, to
+    ``pending`` after deleting their rows, through ``opus_import --requeue``. An
+    ``importing`` bundle a queue importer holds is refused, alive or not: once its lock
+    is free, recovery returns it, which the coordinator does and ``--status --recover``
+    does on demand.
+
+``--status``
+    Prints the coordinator's table from any computer, reading only; ``--watch`` redraws
+    it every few seconds until interrupted, and ``--recover`` first recovers lost
+    importers, as a coordinator would. Each reading sees the tables as they are, so a
+    watch started before the import created them shows them once it has. A reading that
+    fails, as one does while a rerun drops the tables, is reported on standard error: a
+    single ``--status`` exits with failure, and a watch reads again on a new connection.
 
 **Nothing is erased unless asked for.** ``opus_import_all --scorched-earth`` first runs
 ``opus_import --scorched-earth --yes`` as its own invocation, after asking for
@@ -677,32 +766,40 @@ Without it, running ``opus_import_all`` again after an interruption registers no
 new and imports only what is not ``done``.
 
 ``opus_import_all --dry-run`` prints, without connecting to the database or reading the
-holdings, what the same arguments would run: whether it erases, the bundle descriptors
-it registers in import order, the importer it starts with its workers, and the
-invocations ``--finish`` runs; with a step named, that step alone.
+holdings, what the same arguments would run: the division, whether it erases, the bundle
+descriptors it registers in import order, each importer's ``opus_import --join`` command
+line, and the invocations ``--finish`` runs; with a step named, that step alone. It
+reads the configuration file, for the ceiling and the defaults. For six importers of
+four workers each, on a computer whose ceiling allows 24 (30 cores at a
+``cpu_fraction`` of 0.8, for one)::
+
+    opus_import_all --override-db-schema opus3_new --importers 6 --workers 24 --dry-run
+
 :ref:`user_guide_installation_full_import` is the operator's account of it.
 
 Several import processes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Several ``opus_import --join`` processes, on one computer or several, can import into
-one schema at once. Each needs an ``OPUS_CONFIG`` naming the same database server,
-schema and holdings, and a log directory of its own. Register the bundles first, with
-``opus_import --register-bundles`` or ``opus_import_all --prepare``; then start the
-importers; then, once every one has exited, run ``opus_import_all --finish``.
+An importer is one ``opus_import --join`` process. Several, on one computer or several,
+can import into one schema at once; the coordinator and ``opus_import_all --join`` start
+and track them, and they can also be started by hand. Each needs an ``OPUS_CONFIG``
+naming the same database server, schema and holdings. Register the bundles first; then
+start the importers; then, once every one has exited, run ``opus_import_all --finish``.
 
 Each importer claims the largest ``pending`` bundle no other importer holds, marks it
-``importing``, deletes its rows, imports it, marks it ``done``, and claims the next,
-exiting when none is ``pending``. Taking the largest first starts the large bundles at
-once and leaves the small ones to fill in at the end. An importer never erases or
-finalizes. A bundle whose import raises or logs an error is marked ``failed`` and its
-rows are deleted; the importer goes on to the next and does not claim it again, and
-exits with failure at the end. Positional bundle descriptors limit the bundles an
-importer claims, which is how a computer holding only some of the holdings joins, and
-``--exclude-bundles`` keeps it off the ones it names. An importer that finds nothing to
-claim waits for any registration in progress and looks once more before it exits, and
-one started on a schema with no bundle registry waits the same way, then exits with
-failure if there is still none.
+``importing`` under its own ``import_process`` row, deletes its rows, imports it, marks
+it ``done``, and claims the next, exiting when none is ``pending``. Taking the largest
+first starts the large bundles at once and leaves the small ones to fill in at the end.
+An importer never erases or finalizes. A bundle whose import raises or logs an error is
+marked ``failed`` and its rows are deleted; the importer goes on to the next and does
+not claim it again, and exits with failure at the end. Positional bundle descriptors
+limit the bundles an importer claims, which is how a computer holding only some of the
+holdings joins, and ``--exclude-bundles`` keeps it off the ones it names. An importer
+that finds nothing to claim waits for any registration in progress and looks once more
+before it exits, and one started on a schema with no bundle registry waits the same
+way, then exits with failure if there is still none. An importer's first interrupt makes
+it finish its bundle and claim nothing new; a second makes it return its bundle to the
+queue and exit, and any later one is ignored until it has.
 
 A bundle is held by one process at a time. A plain ``opus_import --import`` and
 ``--delete-bundles`` refuse a bundle another process holds ``importing``, naming the
@@ -728,6 +825,36 @@ Almost nothing the importers write depends on which one imports a bundle or when
   up to five attempts with growing pauses, when the server reports a deadlock or a lock
   wait timeout.
 
+How an importer is known to be alive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+No timeout decides it. Each importer records itself as a row of ``import_process`` and
+holds a server-wide named lock for its whole life, on a connection opened for that alone
+and never reconnected (:mod:`opus_import.import_processes`). The server frees the lock
+when that connection closes, however the process ends, so any computer can ask the
+server whether an importer is alive. A process that exits or is killed closes it at
+once. A computer that loses power or its network cannot close it, and the server frees
+the lock only when it finds the connection dead, which for an idle connection is when
+the server's TCP keepalive gives up: about two hours and ten minutes on Linux's defaults,
+since the lock connection's idle timeout is a year. Until then the importer counts as
+alive; ``KILL`` of its lock connection on the server frees the lock at once. A server
+restart frees every lock, so each bundle in flight is recovered, with a loss counted. The row is committed only once the lock is held, so
+no reader sees a ``running`` row whose lock is free unless its importer is gone.
+
+An importer commits nothing once it has lost its lock or its bundle. Each chunk of rows
+it loads is one transaction whose first statement advances its bundle's ``rows_done``,
+matching the bundle only while the registry names the importer as importing it, and which
+commits only after the lock connection confirms it still holds the lock. A claim and the
+move to ``done`` are checked the same way. When either check fails, the importer rolls
+the chunk back, deletes its bundle's rows and returns it to ``pending``, and exits with
+failure naming its lock. That delete, the delete before each import, and a recovery's
+delete all run while a second connection holds the bundle's registry row, and each
+first checks that the row still names the importer; so a recovery and an importer never
+both act on one bundle, and no delete reaches a bundle another importer has taken since.
+
+A plain ``opus_import`` takes no lock and records no row; its bundles keep
+``process_id`` NULL and are never recovered.
+
 ``scripts/import/`` holds the wrappers the Ring-Moon Systems Node uses around that:
 
 ``import_all.sh``
@@ -741,10 +868,15 @@ Almost nothing the importers write depends on which one imports a bundle or when
 ``import_for_tests.sh``
     The fixed bundle list the integration suite runs against -- Cassini ISS, UVIS, VIMS
     and CIRS, Galileo, Voyager, Hubble, New Horizons, and the occultation bundle sets --
-    registered as one list and then imported, followed by ``--finalize``, ``--import-dictionary``, ``manage.py migrate``,
-    ``--validate`` and ``--write-schema-version``. **It begins by erasing every table the
-    import creates** (``--scorched-earth --yes``) and asks for confirmation first,
-    printing the schema so that the erase cannot be aimed at the wrong database.
+    held in the script's ``TEST_BUNDLES`` array and imported by ``opus_import_all
+    --scorched-earth --yes --sets``: it registers the list in its order, which fixes
+    every observation id, imports it with ``[import] importers`` queue importers sharing
+    ``[import] workers``, and finishes the database. ``manage.py migrate`` follows. Its
+    arguments are passed on to ``opus_import_all`` as given, so ``--workers`` and
+    ``--importers`` set the division, as in ``import_for_tests.sh --workers 24
+    --importers 6``; ``--sets`` would replace the list.
+    **It begins by erasing every table the import creates** and asks for confirmation
+    first, printing the schema so that the erase cannot be aimed at the wrong database.
 
 ``clone_database.sh``
     Copies a database.

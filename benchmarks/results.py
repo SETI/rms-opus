@@ -62,7 +62,8 @@ BRANDS = ('mysql',)
 HIGHER_IS_BETTER_SUFFIX = '_per_s'
 
 #: Environment entries that must not change within one result file: a file whose runs
-#: came from two commits, two interpreters or two servers is not one label's runs.
+#: came from two commits, two interpreters, two servers, or imports shared among
+#: importers in two ways is not one label's runs.
 PINNED_ENVIRONMENT_KEYS = (
     'git_sha',
     'git_dirty',
@@ -72,11 +73,18 @@ PINNED_ENVIRONMENT_KEYS = (
     'server_owned',
     'hostname',
     'import_keys',
+    'importers',
+    'coordinator_importers',
 )
 
 #: What a pinned entry is compared as in a file whose earlier runs do not record it: a
-#: run that records no ``import_keys`` set none.
-PINNED_ENVIRONMENT_DEFAULTS: dict[str, Any] = {'import_keys': {}}
+#: run that records no ``import_keys`` set none, and one that records no importer count
+#: imported in one process.
+PINNED_ENVIRONMENT_DEFAULTS: dict[str, Any] = {
+    'import_keys': {},
+    'importers': None,
+    'coordinator_importers': None,
+}
 
 _RESULT_NAME = re.compile(
     r'^(?P<date>\d{4}-\d{2}-\d{2})_(?P<pr>PR-[0-9A-Za-z]+)_(?P<side>before|after)_'

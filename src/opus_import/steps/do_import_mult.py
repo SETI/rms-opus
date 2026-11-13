@@ -18,8 +18,8 @@ hand out one id twice. The row is then inserted in a second short transaction. W
 another process inserted the same value first, the insert meets the field's unique key on
 ``(field_id, value)``, and the stored row's id is read back and used; the id taken is
 left unused, a gap in the field's ids that nothing depends on. With one import process no
-id is ever left unused. The counter is never lowered, so an id finalization deletes is
-never handed out again.
+id is ever left unused. The counter is never lowered, so an id it handed out is never
+handed out again, even once finalization deletes its row.
 
 Every field is read once per bundle into `opus_import.context.ImportContext`'s cache, so
 importing an index of a hundred thousand rows does not query for the same value a hundred

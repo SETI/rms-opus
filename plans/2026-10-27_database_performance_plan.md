@@ -6418,6 +6418,313 @@ Nothing above this line is rewritten by an executor.
   whose importer is recorded, and replaces the cleanup with a row-locked
   `release_bundle`.
 
+
+### 2026-11-11, PR-16a (written against this file at 6441f344)
+
+- The branch is PR-16's head (6441f344), stacked on it; PR-16's review fixes are merged in
+  when they land.
+- **Telling the coordinator "6 importers × 4 workers"** needs no new option:
+  `opus_import_all --importers 6 --workers 24` divides 24 among 6 (`import_all.divide`,
+  the first `N mod M` taking one more), and `--dry-run` prints the division line first,
+  then each importer's `opus_import --join --workers <share>` command line. The total is
+  refused above PR-09's ceiling, as the section says, so on the workstation's 30 cores
+  at the default `cpu_fraction = 0.75` (ceiling 22) the run needs `cpu_fraction = 0.8` (or
+  higher) in its `OPUS_CONFIG`; no key states the cores. `--workers max` asks for the
+  ceiling. The coordinator resolves the total through `resolve_parallelism`, so
+  `[import] index_workers` is checked against the same ceiling.
+- **`--dry-run` reads the configuration file** (for the ceiling and the defaults) whenever
+  it would start importers, which PR-16's dry run did not need; it still connects to
+  nothing and reads no holdings.
+- **`--sets` with `--prepare` or no step registers those descriptors in place of
+  `BUNDLE_SETS`** (with `--join` it limits the claims, as in PR-16). The coordinator does
+  not pass it to its importers: the queue holds only what was registered. The section
+  has no way to run the coordinator over less than the whole holdings, which the
+  `import_tests` cases and a partial site import both need.
+- **`opus_import_all --join` is a coordinator without `--prepare` or `--finish`**: it
+  starts `--importers` importers (default 1) dividing its own `--workers` (default
+  `[import] workers`, which defaults to 1, where the section says "default 1"), tracks and
+  recovers like the coordinator, and exits once its own importers have, non-zero if any
+  exited non-zero. It replaces its lost importers while bundles are pending.
+- **`[import] importers` defaults to 1** until PR-16a's measurement sets it, which is the
+  orchestrator's; the plain default run is therefore one importer of one worker, as before.
+- **Every chunk of every table carries the guard, not only `obs_general`'s.** A recovered
+  bundle's `obs_files` chunk committing late would otherwise collide with, or survive,
+  the next importer's rows. `ImportDBSuper.bulk_load_rows` takes a `LoadGuard`
+  (`import_processes.BundleGuard`): with one, each chunk is one transaction on either
+  path (the `INSERT` fallback included, whose packets otherwise commit one by one), the
+  guard's statements first, its lock check last. `rows_done` advances only for
+  `obs_general` chunks; `progress_at` advances with every chunk. PR-16's separate
+  `record_rows_done` statement goes. A plain import's guard carries only the
+  `obs_general` chunks' `rows_done` update, matching the bundle's `started_at` from the
+  import's own claim, and checks nothing, so its loads of other tables are as before.
+- **"The `UPDATE` matched its row"** is read from the server's report (`Rows matched:` in
+  `Connection.info()`, before the commit), since MySQLdb's `rowcount` counts changed rows
+  and a chunk of another table leaves `rows_done` unchanged. `update_row` returns the
+  rows matched.
+- **The row lock is held on a second connection through the deletes.** The section's
+  abort and recovery take `SELECT ... FOR UPDATE` on the registry row "in the abort's
+  transaction", but the per-bundle delete commits chunk by chunk, which would release a
+  lock on the same connection. `do_recover.release_bundle` (the importer's abort, its
+  failure path, and also its delete before each import, which could otherwise reach a
+  bundle another importer took after a recovery) and `_recover_bundle` lock the row on a
+  sibling connection with `FOR UPDATE SKIP LOCKED`, check it still names the importer as
+  `importing` (and, for a recovery, that the lock is still free), run the delete on the
+  import connection, then write the new state on the sibling and commit. A row another
+  session holds is left alone (the recovery tries again on its next pass). Every state
+  write matches the state it moves from, as the orchestrator asked.
+- **Recovery returns any `importing` bundle whose importer's lock is free**, whatever the
+  importer's row says, not only those of `running` rows: an importer interrupted between
+  its claim's commit and its bundle's abortable region exits `exited` still naming the
+  bundle. (That window, and the cost of a loss counted for it, is the one gap; the hold
+  of `hold_after_claim` was moved inside the abortable region so the interrupt test does
+  not land in it.) A `running` row with a free lock and no bundle left becomes `lost`.
+- **A `failed` bundle keeps its `process_id`**, so the coordinator can name the importer's
+  log (`host:log_path`); a return to `pending` clears it.
+- **An importer's failed index takes nothing back itself** (`TableRowSink.discard` returns
+  at once for a queue importer): the whole bundle is deleted under the row lock on the
+  failure path, and the range delete could reach another importer's rows after a
+  recovery.
+- **The abort closes the import connection and opens a fresh one** before deleting: a
+  second interrupt (a `KeyboardInterrupt` raised by the handler) can arrive mid-statement,
+  and closing rolls back whatever the connection held, its row locks included.
+- **Signals.** An importer's handler (installed for `--join`, explicitly, since a
+  background job starts with SIGINT ignored) counts the first interrupt and raises on the
+  second. PR-09's pool workers now ignore SIGINT: a terminal's Ctrl-C reaches every
+  process of the foreground group, and a worker dying of it broke the pool. The
+  coordinator starts each importer in a process group of its own (`process_group=0`), so a
+  terminal's Ctrl-C reaches the coordinator alone, which passes each interrupt on; under
+  `nohup`, `kill -INT <coordinator>` does the same. The importers' standard output, which
+  duplicates their logs and would break a terminal's table, is discarded; their standard
+  error is inherited.
+- **Each importer's info and debug logs carry `_join_<host>_<pid>` after their time**,
+  since several importers started in one second would otherwise append to one file;
+  `build_run.import_logs` accepts the suffix. The coordinator writes its own
+  `opus_import_all_<time>.log` in `[paths] import_log_dir` (and `ERRORS.log`) and its
+  lines to standard output; "the log's first line" is the division line it prints first.
+- **`--status` without `--recover` opens a read-only connection and does not create
+  `import_process`** (an absent table reads as no importer), so that it is read-only as
+  the section says; `--status --recover` creates it, as the coordinator and `--join` do.
+  The remaining-time estimate is the rows done since the tracker's first reading over the
+  time since, so a single `--status` prints "not yet estimated"; `--watch` estimates
+  after its first redraw.
+- **Replacement is bounded**: a coordinator starts at most `M` plus the number of
+  registered bundles importers in all, which ends a run whose importers cannot start;
+  a bundle lost twice is failed, which bounds the loops the section describes. When
+  nothing runs and bundles are pending it starts the division again (a joined
+  computer's importer may have died after the coordinator's own exited).
+- **A bundle `importing` with `process_id` NULL** (a plain `opus_import` running, or one
+  that died) cannot be recovered; once no importer anywhere is alive the coordinator
+  exits non-zero naming it, with the `--requeue` remedy. `--requeue` refuses an
+  `importing` bundle whose importer holds its lock, by `IS_USED_LOCK`.
+- **Stalls are judged by each computer's clock** (`progress_at` and the coordinator's now,
+  both UTC); computers whose clocks disagree by minutes would mis-report.
+- **The mult-value mode also drops `import_bundle.process_id` and `losses`, and
+  `mult_field.last_id`** (`golden_io.IMPORTER_COLUMNS`): which importer imported a
+  bundle and how many died holding it depend on how the work was shared, and a killed
+  importer's taken-but-unwritten mult ids advance the counter. The first run of the kill
+  test found `last_id` differing.
+- **The kill test runs three importers at `--workers 4` (2, 1 and 1 workers) with
+  `cpu_fraction = 1.0`**, not each at `workers = 2`: a coordinator's six workers would be
+  refused on a GitHub-hosted runner's four cores. It kills the importer that has a pool
+  (`/proc/<pid>/task/<pid>/children`), mid-bundle (rows of the bundle committed, held at
+  `hold_after_chunk:5`), and requires its lock free within five seconds, the bundle
+  returned and imported again (`losses` 1), the importer `lost`, `schema_version` ready,
+  and the mult-value comparison with the main run equal. The double-loss case kills the
+  importer holding `VG_2801` twice (`hold_after_claim:3`, one importer of one worker);
+  the interrupt case runs two importers, interrupts twice, and reruns; the lock case
+  `KILL`s the lock connection of one `opus_import --join` at `hold_after_chunk:5` and
+  requires the importer's non-zero exit naming the lock, the bundle `pending` and no
+  `obs_general` or `obs_files` row; the last case detects the hold of `hold_before_lock:5`
+  through `information_schema.innodb_trx` (an uncommitted transaction with rows modified
+  on the schema), so it needs an account with `PROCESS`. The cases skip `manage.py
+  migrate`, which nothing they compare needs.
+- `import_process`'s `DESC` in `dev_guide_database_schema.rst` was taken from a table the
+  code created, not written by hand.
+- **The lost-lock message says what the importer was doing** (`committing a chunk`,
+  `claiming a bundle`, `marking its bundle done`, `deleting its bundle`). The lock case
+  requires `committing a chunk`: without it, the case passed with the chunk's lock check
+  removed, since the move to `done` checks the lock too and the abort's delete leaves the
+  same rows.
+- **Review fixes (2026-11-11).** PR-16's head at 00eba464 was merged in first, for its
+  `ImportDBSuper.forget_table_names` and its requeue hold. Each fix has a test that
+  fails with it reverted (all mutation-checked):
+  - *Stale table list (1, 6).* `delete_bundle_from_obs_tables`, `read_snapshot` and
+    `recover_lost_importers` reread the tables from the server
+    (`forget_table_names`), so a recovery or an importer's delete reaches tables created
+    after its connection opened, and a `--status --watch` started early sees the
+    registry once it exists. `--status` reports a failed reading on standard error
+    instead of a traceback; a watch reads again on a new connection, a single status
+    exits 1. The import case `test_a_recovery_deletes_rows_in_tables_created_after_it_connected`
+    runs a coordinator connected to a schema holding only the registry, whose own
+    importers may not claim the bundle (`--exclude-bundles`), kills a plain `--join`
+    importer after its first chunk, and requires no `obs_general` or `obs_files` row left.
+  - *Useless restarts (2).* The coordinator keeps up to `M` importers running while
+    bundles its importers may claim are pending, beyond its idle importers. An importer
+    exits 0 only once nothing it may claim is pending, so the bundles pending both at its
+    start and at its clean exit are recorded unclaimable (claimability is fixed by
+    `--sets` and `--exclude-bundles`); one more round is started for them when they are
+    all that is left and nothing runs anywhere, then the run stops naming them.
+    `FAILED_STARTS_ALLOWED` (3) importers in a row exiting non-zero before claiming stop
+    all starts. An importer's row is found by host, pid and `started_at`, and "claimed"
+    means a reading showed a bundle under its `process_id`.
+  - *Final explanation (3).* Every event is logged to `opus_import_all.log` (already
+    logged recovery lines are not logged twice), and the events after the terminal's
+    last redraw are printed when the run returns.
+  - *Requeue (4).* Chosen: refuse. `--requeue` refuses an `importing` bundle with a
+    non-NULL `process_id`, alive or not, naming the coordinator and `--status --recover`
+    as what returns it, and `start_bundle` takes a bundle from `importing` only while its
+    `process_id` is NULL, so a queue importer's claim landing after the check is never
+    taken. The hold is taken from the state the bundle was read in. This replaces the
+    `IS_USED_LOCK` refusal recorded above. Routing through `_recover_bundle` was not
+    chosen: it counts a loss, so a requeue could fail the bundle.
+  - *Interrupts (5).* The importer's handler raises only on the second interrupt and only
+    while `ctx.importer` is set; later ones are counted. The second, wherever it lands
+    (between a claim's commit and the work, in a failed bundle's release), aborts every
+    bundle the registry has `importing` under the importer, read on a fresh connection;
+    the fatal line names the bundles returned, or says it held none.
+  - *Pass loop (7).* A reading that raises `ImportDBError` is logged as a warning, the
+    connection closed and opened again on the next pass; after `DATABASE_OUTAGE_SECONDS`
+    (300) of failed readings in a row the coordinator exits 1, naming its importers that
+    still run, which a rerun tracks.
+  - *Minor.* The `--status` case asserted a line count that held whatever the order; it
+    runs `--status --recover` during the hold (8 s) instead, requires "No importer is lost",
+    the transaction still uncommitted afterwards, and the row `running` after the hold.
+    The plain-import guard note above is corrected (it matches `started_at`). The guides
+    say when a lock is freed for an importer on another computer (the server's TCP
+    keepalive, about 2 h 11 m on Linux's defaults; `KILL` frees it at once) instead of
+    "noticed at once".
+  - Skipped: the double fatal log of a lost lock found during a claim. `retrying` logs
+    only an `ImportDBError`, `LostImporterError` is not one, and the lock connection has
+    no logger, so the claim path logs it once, in `import_from_queue`.
+  - *PR-16's final head (97be1c93)* was merged after these fixes. Its failed-bundle path
+    (delete under the hold, then `failed` if `bundle_registry.holds`) is
+    `do_recover.release_bundle` here, which deletes under the `process_id`-checked row
+    lock and marks `failed` in the same hold, so `holds` is dropped and PR-16's ordering
+    test runs against `release_bundle`.
+  - *Module size.* The coordinator, its table, `start_importer` and `--status` moved to
+    `opus_import.coordinator` (744 lines), leaving `opus_import.import_all` (776) the
+    command line, the division and the steps; `import_all._open_db` is
+    `open_target_db`, which both use. Its unit tests moved to
+    `tests/opus_import/test_coordinator.py`.
+  - The fresh-schema case first failed only on its own assertion, naming the coordinator's
+    exited importer (row 1) for the killed one (row 2); it names the running row. With
+    both table rereads (the delete's and the recovery's) reverted it fails with 7
+    `obs_files` rows left; with either one alone it passes.
+  - Results, on the merged and split head: the gates pass (2,954 unit tests); the import
+    suite 182 passed and 3 skipped; the goldens regenerate with no diff; the lock-case
+    mutation (the chunk's lock check removed) fails as it should; the integration suite
+    1,591 passed against `pr16alocal`, imported again at this head.
+- **The harness reads a hand-started importer's log whatever it is named**, since PR-16's
+  importers do not add the `_join_` suffix this section's do; each has a directory of
+  its own (`importer_logs.importer_logs(joined_only=False)`), found by the measurement's
+  first run.
+- **Measurement** (2026-11-11, test scale, twenty `workers` in all, a total 1, 2 and 4
+  divide evenly, since the before side's `--importers` refuses an uneven division; the
+  workstation's ceiling at the default `cpu_fraction` is 22; before at 97be1c93, PR-16's
+  importers started by the harness (`--importers M`); after at df7d3b95, the coordinator
+  (`--coordinator M`); two runs a configuration alternated; judged against the PR-00
+  floors by the guard rule):
+  - **Structural criterion, met:** `import.wall_s` one importer 152.0 s to 154.4 s
+    (+1.6%), two 97.0 s to 99.9 s (+3.0%), four 70.8 s to 74.4 s (+5.0%); each within the
+    guard's 5% beyond the 1.8% floor. The coordinator's 2 s to 4 s are its registration
+    (1.6 s to 2.0 s, the prepare run as a step of its own) and its tracking, which reads
+    the last importer's exit at its next pass, up to `TRACK_SECONDS` later.
+  - **Idle time** from each importer's last bundle to the last exit: at most 0.18 s with
+    four importers on either side, so the largest-first queue leaves the importers
+    finishing together at this scale.
+  - **`[import] importers` defaults to 4**, the fastest count measured; `workers` still
+    defaults to 1 and the importers are capped at it, so a default import is still one
+    process.
+  - The stall PR-16's four-importer runs showed at eight workers (one bundle on each of
+    three importers waiting 25 s to 65 s, all resuming within seconds of the fourth
+    importer's exit) did not recur in any of the four four-importer runs here, at five
+    workers an importer; a poller of the server's process list,
+    `performance_schema.metadata_locks` and `data_lock_waits` saw no lock wait during
+    them. Its cause is not determined.
+- **The complete-scale import with six importers of four workers** (2026-11-11, at
+  299f4800, `bench_import --scale complete --coordinator 6 --import-key workers=24
+  --import-key cpu_fraction=0.8`, the holdings PR-00's baseline read; session
+  `full6x4b`), against PR-00's one-process baseline (`2026-11-05_PR-00_before_complete
+  _mysql_a.json`), the same 985 bundles and 1,627,081 `obs_general` rows:
+  - `import.wall_s` 18,234.7 s to 4,856.9 s, 3.75 times faster: registration 13.6 s;
+    the bundle imports 17,620.3 s to 1,997.5 s (8.8 times); finalization 613.1 s to
+    2,844.4 s, since PR-07 builds the secondary keys there rather than during the loads.
+  - **Finalization's key step took 2,654.7 s on one connection** (`index_workers` 1):
+    `obs_files` 1,642.5 s, `obs_pds` 314.4 s, `obs_ring_geometry` 229.9 s,
+    `obs_surface_geometry_target` 169.3 s, `obs_general` 167.4 s,
+    `obs_mission_cassini` 67.4 s, and the other nine tables 64 s together. With two
+    connections the step would take about as long as `obs_files` alone, saving up to
+    the other tables' 1,012 s less what halving `obs_files`' sort memory costs; a third
+    would save nothing. Validation took 167.1 s.
+  - The importers' idle time from their last bundle to the last exit was at most 0.25 s.
+  - **Memory:** the run's cgroup peaked at 42.4 GB, the harness's server included (its
+    buffer pool sized from the harness's budget, 23 GB resident), and the import's
+    process tree at 16.6 GB PSS; each importer and pool worker holds about 2.4 GB
+    resident, `pdsfile`'s preload of the complete holdings among it. PR-00's run peaked
+    at 3.1 GB PSS. A run under a 31 GB memory ceiling was killed after ten minutes.
+  - A poller of the server's lock tables saw one wait between importers in 33 minutes
+    of loading (an importer briefly waiting for another's `mult_field` counter row), and
+    no stall like the one PR-16's eight-worker runs showed.
+- **CodeRabbit fixes (2026-11-11, first review, at d5cbdebb).** Each behavior fix has a
+  test that fails with it reverted (each checked by reverting it):
+  - *Interrupt while importers start.* `Coordinator._start` starts nothing once
+    interrupted, and an importer whose start an interrupt landed in (not yet in `_own`,
+    so the handler missed it) is sent one SIGINT once registered; at worst it gets two
+    and aborts, holding nothing yet.
+  - *Claims cleared by recovery; recovered bundles taken as unclaimable.* A pass
+    reads the registry first, runs `_track` on that reading, then recovers, and reads
+    again only when the recovery acted. An importer that claimed and died within one
+    tracking interval still shows its bundle in the first reading, so it is not counted
+    a failed start; a bundle this pass's recovery returns is not pending in it, so a
+    clean exit does not mark it unclaimable. A return by another coordinator between
+    two readings is still possible; the finishing coordinator's one extra round covers
+    it.
+  - *Second interrupt during the importer's start-up.* The handler also raises on the
+    second interrupt before the importer has begun recording itself
+    (`ImportContext.queue_entered`, set in `import_from_queue` before
+    `create_process_table`): it holds nothing then, and the holdings preload could
+    otherwise not be stopped. From that point until its loop, and after it, the second
+    is still only counted, as the review-fixes bullet decided. This extends that
+    decision rather than undoing it: it only adds the phase in which nothing is held.
+  - *No registry in `recover_lost_importers`* (`--status --recover` on a schema with
+    `import_process` only): the held-bundle read is skipped and lost importers are still
+    marked.
+  - *The holder connection's idle timeout.* The registry row is still held on a sibling
+    connection through the deletes, as decided above. That connection, idle while the
+    deletes run, is given `LOCK_CONNECTION_IDLE_SECONDS` as the lock connection is, so a
+    server's short `wait_timeout` cannot close it and free the row partway through. The
+    restructure CodeRabbit asked for, locking and checking in each delete chunk's own
+    transaction, was not done: it undoes that decision. The remaining case, the holder
+    dropped while its sibling on the same host keeps working, is not a real failure mode.
+  - *Harness interrupt.* `_run_stamped` starts `opus_import_all` in its own process group,
+    passes each KeyboardInterrupt on as SIGINT, reads to the end, and raises only after
+    the coordinator exits, so `server.running()` does not stop MySQL under its importers.
+  - *Result-file pins.* `importers` and `coordinator_importers` are pinned (defaults
+    None, as `import_keys`' is `{}`), and `bench_import` always records both, so a file
+    refuses a run with another count, or with a count against none, in either direction.
+  - *Docs.* `[import] importers`' default is 4, capped at the workers total, in the
+    `ImportConfig` docstring, `dev_guide_import_running.rst` and
+    `user_guide_deployment.rst`.
+  - *Test teardown.* The coordinator cases kill a recorded importer pid only if
+    `/proc/<pid>/environ` names the case's `OPUS_CONFIG`; a reused pid is left alone.
+    This changes no product behavior and has no test of its own.
+  - *Test stand-in and module size.* `RegistryDB` and the loop helpers moved to
+    `tests/opus_import/conftest.py`, matching every term of a clause (`row_selected`,
+    shared with `test_do_recover.py`), and the queue importer's tests moved to
+    `test_queue_importer.py`. A test there requires an importer whose bundle was given to
+    importer 2 not to mark it done; it fails with the old first-term-only matching.
+  - Skipped, coordinator read timeouts: a client read timeout on the coordinator's
+    connection would also cut the recovery's delete chunks, which run on that
+    connection. `get_db` has no timeout option, so this would be a database-layer
+    change. A peer that stops answering is bounded by TCP keepalive, as every other
+    connection is.
+  - Skipped, killing pool workers on abort: `ProcessPoolExecutor` has no public way to
+    terminate workers before Python 3.14 (the floor is 3.12). The wait is at most one
+    in-flight task (`worker_rows`, 500 by default), and a worker stuck in uninterruptible
+    I/O could not be killed anyway.
+  - Results: the gates pass (2,993 unit tests); the import suite 182 passed and 3
+    skipped. The import's output is unchanged, so the goldens were not regenerated.
+
 ### 2026-11-12, PR-14 (written against this file at 1e55f88a)
 
 - `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
@@ -6431,3 +6738,15 @@ Nothing above this line is rewritten by an executor.
   bundles as it starts, in the same order, so the numbers and ids are the same.
   `opus_import_all --prepare` keeps registering its whole list first, for the importers
   that run at once.
+
+### 2026-11-12, PR-16a (written against this file at 790c4616)
+
+- `import_for_tests.sh` imports its list through `opus_import_all --scorched-earth --yes
+  --sets`, from a `TEST_BUNDLES` array that `holdings_survey.script_bundle_descriptors`
+  and the test-scale scenario's test read. Rebuilding the local integration database
+  this way took about two minutes with four importers; its observation ids equal a
+  sequential build's (count, id range and a checksum of id and OPUS id).
+- The ids of a mult field without `mult_options` depend on which importer meets each
+  value first: two parallel builds numbered 382 `mult` rows differently. Three
+  `test_search.py` tests that wrote such ids down read them by value instead
+  (`_mult_id`); the API goldens do not depend on them. The suite passed on both builds.

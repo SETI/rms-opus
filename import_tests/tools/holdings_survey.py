@@ -48,6 +48,9 @@ VOLUME_INDEX_DIRNAMES = ('INDEX', 'index')
 #: fixture that repeated them would buy coverage CI already has.
 INTEGRATION_SCRIPT = Path('scripts') / 'import' / 'import_for_tests.sh'
 
+#: The bash array of `INTEGRATION_SCRIPT` that lists its bundles, one or more a line.
+SCRIPT_BUNDLE_ARRAY = 'TEST_BUNDLES'
+
 
 @dataclass(frozen=True)
 class RegistryEntry:
@@ -232,32 +235,32 @@ def locate_bundles(pds3_root: Path, pds4_root: Path) -> dict[int, list[BundleLoc
 def script_bundle_descriptors(script_path: Path) -> list[str]:
     """Return the bundle descriptors the integration import script names.
 
-    A commented-out line names a bundle the script does not import, so it is not one
-    the fixture has to avoid.
+    The script lists them in its ``TEST_BUNDLES`` array, which it hands to
+    ``opus_import_all --sets``. A commented-out entry names a bundle the script does not
+    import, so it is not one the fixture has to avoid.
 
     Parameters:
         script_path: The shell script to read.
 
     Returns:
-        Every descriptor on an active ``--import`` line, in script order.
+        Every active entry of ``TEST_BUNDLES``, in script order.
+
+    Raises:
+        ValueError: If the script has no ``TEST_BUNDLES`` array, or it is not closed.
     """
+    lines = iter(script_path.read_text(encoding='utf-8').splitlines())
+    for line in lines:
+        if line.strip() == f'{SCRIPT_BUNDLE_ARRAY}=(':
+            break
+    else:
+        raise ValueError(f'{script_path} has no {SCRIPT_BUNDLE_ARRAY}=( line')
     descriptors: list[str] = []
-    for line in script_path.read_text(encoding='utf-8').splitlines():
-        stripped = line.strip()
-        if stripped.startswith('#'):
-            continue
-        if '--import' not in stripped:
-            continue
-        for index, field in enumerate(stripped.split()):
-            # Both spellings the option takes. Matching the substring alone would also
-            # match `--import-dictionary`, and asking for the exact token alone
-            # would miss the `=` form and raise looking for it.
-            if field.startswith('--import='):
-                descriptors.extend(field.partition('=')[2].split(','))
-            elif field == '--import':
-                following = stripped.split()[index + 1 : index + 2]
-                descriptors.extend(word for value in following for word in value.split(','))
-    return descriptors
+    for line in lines:
+        entries = line.partition('#')[0].split()
+        if entries == [')']:
+            return descriptors
+        descriptors.extend(entries)
+    raise ValueError(f'{script_path}: {SCRIPT_BUNDLE_ARRAY} is not closed by a ) line')
 
 
 def preference_order(eligible: Sequence[str]) -> list[str]:

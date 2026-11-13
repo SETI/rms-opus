@@ -24,8 +24,9 @@ Three **scales**, each named by a file under ``benchmarks/scenarios/``:
     needs no holdings.
 
 ``test`` (``import_test.toml``)
-    The bundle groups ``scripts/import/import_for_tests.sh`` imports, read from the real
-    holdings. The same database the integration suite's API goldens are pinned to.
+    The bundles ``scripts/import/import_for_tests.sh`` imports, in its order, read from
+    the real holdings, in groups each imported by one invocation of the bundle-import
+    step. The same database the integration suite's API goldens are pinned to.
 
 ``complete`` (``import_complete.toml``)
     Every bundle set, in the order ``opus_import_all`` registers them. Hours.
@@ -306,7 +307,9 @@ booleans, a whole or finite decimal number as a number, and anything else as a s
 ``log_file`` and ``debug_log_file`` are refused, since the harness
 reads each run's logs from where it put them. A result file holds runs of one set of
 keys: a run with others is refused, as a run of another commit is, and a file whose
-runs record no keys takes only runs that set none. A side whose configuration does not
+runs record no keys takes only runs that set none. In the same way a file holds runs of
+one ``--importers`` count, one ``--coordinator`` count, or neither, and a file whose runs
+record no count takes only runs in one process. A side whose configuration does not
 know a key refuses the file, so it is given only to a side that does.
 
 ``--workers-sweep N,N,...`` chooses an ``[import] workers`` count rather than measuring a
@@ -330,6 +333,8 @@ largest bundle refuses it::
 for a side whose ``opus_import`` has ``--join``. Each run is the side's erase, one
 ``opus_import --register-bundles`` of every group of the scenario in import order,
 ``N`` ``opus_import --join`` processes started together, and the finalization sequence.
+Neither this nor ``--coordinator M`` imports the largest bundle alone or times the
+incremental group, so a multi-importer run has neither measurement.
 Each importer has a configuration and a log directory of its own and an equal share of
 the ``workers`` total ``--import-key workers=W`` gives, or of 1 when none is given; a
 total that ``N`` does not divide is refused, so the importers together use exactly the
@@ -350,6 +355,56 @@ other::
         --session a --python venv/bin/python --repo-root . \
         --importers 4 --import-key workers=8
 
+Both kinds of run with several importers record each importer's **idle time**, from the
+end of its last bundle to the exit of the run's last importer, read from the importers'
+own information logs (``benchmarks/importer_logs.py``): each bundle's ``Importing``
+block, and the record each importer writes as it exits. An importer that imported no
+bundle was idle from its start. The run records ``import.importer_idle_s.max`` and
+``import.importer_idle_s.sum``, and the per-importer list, with each importer's log and
+bundles, in its details under ``importer_idle_s``.
+
+``--coordinator M`` times the import under ``opus_import_all`` instead, for a side whose
+``opus_import_all`` has ``--importers`` and ``--sets``. Each run is the side's erase,
+then one ``opus_import_all --sets <groups> --importers M --workers W`` in its default
+mode, which registers the scenario's groups in import order, divides the ``workers``
+total ``--import-key workers=W`` gives (or 1) among the ``M`` importers it starts and
+tracks, and runs its closing sequence once every bundle is done, then Django's
+migration. The coordinator divides an uneven total itself, the first importers taking
+one more, so any total from ``M`` up to the worker ceiling
+(:ref:`dev_guide_import_running_parallelism`) is accepted; a total ``--importers`` must also
+take, one every count of a comparison divides, keeps the two kinds of run alike. The
+coordinator's closing sequence is ``--finalize``, ``--import-dictionary``,
+``--validate`` and ``--write-schema-version``, the finalization sequence less Django's
+migration, so the run adds the migration as its own invocation: the work is the same as
+an ``--importers`` run's, with the migration last instead of before the validation.
+``opus_import_all`` is recorded as one invocation, ``coordinator``, which
+``import.wall_s`` counts with the erase and the migration. Its phases come from its own
+standard output, read as it is printed
+(``coordinator_phases`` in ``benchmarks/importer_logs.py``): the registration, from the
+registration's command to the first importer's start, is
+``import.registration.wall_s``; the importers' phase, from there to the first closing
+command, is ``import.bundle_imports.wall_s``; and each closing invocation, to the next
+command or the coordinator's exit, is ``import.invocation.<role>.wall_s``, which with the
+migration make ``import.finalization.wall_s``. The coordinator learns that its last
+importer has exited at its next reading, so its importers' phase, and its
+``import.wall_s``, carry up to one tracking interval
+(:data:`~opus_import.coordinator.TRACK_SECONDS`) past the last importer's exit, which a
+run with ``--importers`` does not; the idle times stop at the last exit either way. The
+coordinator's importers cannot be
+given a timing file each, so each bundle's ``import_bundle`` time is its ``Importing``
+block's elapsed time in its importer's log, which covers the same call the timing
+covers. The details hold the importer count, each importer's workers as the
+coordinator's first line states them, the three phases, and each bundle as an
+``--importers`` run records it. A side without such an ``opus_import_all`` refuses the
+option, and ``--coordinator`` takes no other mode. ``opus_import_all`` runs in a process
+group of its own: a Ctrl-C reaches the harness alone, which passes each one on to it and
+waits for it to exit, so the server is stopped only once its importers have drained or
+aborted. For four importers sharing 20 workers::
+
+    python -m benchmarks.bench_import --scale test --side after --pr <tag> \
+        --session a --python venv/bin/python --repo-root . \
+        --coordinator 4 --import-key workers=20
+
 ``--register-only`` times the registration alone: it registers every group of the
 scenario into a scratch schema, which it drops afterwards, and records a run of kind
 ``register`` holding ``import.registration.wall_s``. Registration reads each bundle's
@@ -360,8 +415,9 @@ import before any importer starts. It takes no other mode, and a side without
 **A run that fails records nothing.** It fails when an invocation exits non-zero; when
 a bundle-import invocation leaves any bundle it imports without a row in
 ``obs_general`` (the bundles are its descriptors expanded by the side's own code, less
-the ones the import deliberately skips); when the importers of an ``--importers`` run
-leave a registered bundle that is not ``done``; or when the run's ``ERRORS.log`` is not empty,
+the ones the import deliberately skips); when the importers of an ``--importers`` or ``--coordinator`` run
+leave a registered bundle that is not ``done``; when a coordinator's output does not
+mark its phases; or when the run's ``ERRORS.log`` is not empty,
 because several steps log an error and still exit zero. Each run starts with a log
 directory of its own, and an ``ERRORS.log`` already holding anything fails it before it
 starts.

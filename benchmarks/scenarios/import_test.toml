@@ -1,7 +1,7 @@
-# Test scale: the bundle groups scripts/import/import_for_tests.sh imports, in its
-# order and with its options, from the Ring-Moon Systems Node's holdings. Each group is
-# one invocation of the bundle-import step. tests/benchmarks checks that the groups
-# agree with the script.
+# Test scale: the bundles scripts/import/import_for_tests.sh imports, in its order,
+# from the Ring-Moon Systems Node's holdings. Each group is one invocation of the
+# bundle-import step. tests/benchmarks checks that the groups' bundles, in order, are
+# the script's list.
 
 scale = "test"
 

@@ -101,6 +101,18 @@ DEFAULT_CPU_FRACTION = 0.75
 #: The index rows one worker task covers when the file does not say.
 DEFAULT_WORKER_ROWS = 500
 
+#: How many importers ``opus_import_all`` starts when neither its command line nor the
+#: file says, before it is capped at the total of workers.
+DEFAULT_IMPORTERS = 4
+
+#: The minutes an importer may go without committing a chunk before ``opus_import_all``
+#: reports it as stalled, when the file does not say.
+DEFAULT_STALL_WARNING_MINUTES = 30
+
+#: The minutes between ``opus_import_all``'s totals lines when its output is not a
+#: terminal, when the file does not say.
+DEFAULT_STATUS_INTERVAL_MINUTES = 5
+
 #: The ``workers`` or ``index_workers`` value that asks for the ceiling itself.
 MAX_WORKERS = 'max'
 
@@ -265,6 +277,14 @@ class ImportConfig:
         cpu_fraction: The share of the cores the ceiling allows, greater than 0 and at
             most 1. The default is 0.75.
         worker_rows: The index rows one worker task covers. The default is 500.
+        importers: How many importers ``opus_import_all`` starts on this computer. The
+            default is 4. The importers started are capped at the total of workers, so
+            with the default of one worker a run starts one importer.
+        stall_warning_minutes: How long an importer that is alive may go without
+            committing a chunk before ``opus_import_all`` reports it as stalled. It is
+            never stopped for it. The default is 30.
+        status_interval_minutes: How often ``opus_import_all`` logs its totals line when
+            its output is not a terminal. The default is 5.
     """
 
     log_file: str
@@ -277,6 +297,9 @@ class ImportConfig:
     workers: int | str
     cpu_fraction: float
     worker_rows: int
+    importers: int
+    stall_warning_minutes: int
+    status_interval_minutes: int
 
 
 @dataclass(frozen=True)
@@ -802,6 +825,13 @@ def _read_import(source: Path, values: dict[str, Any]) -> ImportConfig:
             'cpu_fraction', default=DEFAULT_CPU_FRACTION, above=0.0, maximum=1.0
         ),
         worker_rows=table.read_int('worker_rows', default=DEFAULT_WORKER_ROWS, minimum=1),
+        importers=table.read_int('importers', default=DEFAULT_IMPORTERS, minimum=1),
+        stall_warning_minutes=table.read_int(
+            'stall_warning_minutes', default=DEFAULT_STALL_WARNING_MINUTES, minimum=1
+        ),
+        status_interval_minutes=table.read_int(
+            'status_interval_minutes', default=DEFAULT_STATUS_INTERVAL_MINUTES, minimum=1
+        ),
     )
     table.finish()
     return config

@@ -175,9 +175,12 @@ live. In order:
    a finished schema; no other state is changed.
 4. **Return bundles to the queue**, under ``--requeue``
    (:func:`~opus_import.steps.do_import.requeue_bundles`): every named bundle must be
-   ``failed`` or ``importing``, or nothing changes and the invocation fails. Each is
-   taken from ``failed`` or ``importing`` as the invocation's own hold, under a new
-   ``started_at``, deleted from every observation table, and set ``pending`` only while
+   ``failed``, or ``importing`` under no queue importer (``process_id`` NULL, as a plain
+   ``--import`` leaves one), or nothing changes and the invocation fails. A queue
+   importer's bundle is left to recovery, which checks the importer's lock under the
+   bundle's row lock. Each is taken from the state it was read in as the invocation's
+   own hold, under a new ``started_at`` (from ``importing`` only while ``process_id`` is
+   still NULL), deleted from every observation table, and set ``pending`` only while
    that hold stands; a bundle another process took after the states were read is left
    to it, with nothing deleted, and the invocation fails.
 5. Stop here unless ``--register-bundles``, ``--import`` or ``--join`` was given.
@@ -219,13 +222,20 @@ failed fresh import leaves a schema with no version row and a failed append leav
 deploy scripts refuse to promote it.
 
 **The queue.** Under ``--join``,
-:func:`~opus_import.steps.do_import.import_from_queue` claims a bundle
-(:func:`~opus_import.bundle_registry.claim_bundle`), logs ``Claimed bundle <bundle>``,
-deletes and imports it as above, and marks it ``done``; it then claims the next, and
-logs ``No pending bundle is left to claim; this importer exits`` when none is left. A
-claim is one transaction: a locking read, through the registry's key on ``(state,
-size_estimate, bundle_number)`` scanned from its highest entry, of the first ``pending``
-row no other session holds (``FOR UPDATE SKIP LOCKED``), then the move to ``importing``.
+:func:`~opus_import.steps.do_import.import_from_queue` first records the importer in
+``import_process`` and takes its lock on a connection of its own
+(:func:`~opus_import.import_processes.start_importer`): it raises the idle limit of that
+connection to a year, inserts the ``running`` row, reads its ``process_id`` back, takes
+the lock without waiting, and only then commits, and logs ``Importer <process_id>``. It then
+claims a bundle (:func:`~opus_import.bundle_registry.claim_bundle`), logs ``Claimed
+bundle <bundle>``, deletes and imports it as above, and marks it ``done``
+(:func:`~opus_import.bundle_registry.finish_claimed_bundle`); it then claims the next,
+and logs ``No pending bundle is left to claim; this importer exits`` when none is left,
+recording itself ``exited`` before it frees its lock. A claim is one transaction: a
+locking read, through the registry's key on ``(state, size_estimate, bundle_number)``
+scanned from its highest entry, of the first ``pending`` row no other session holds
+(``FOR UPDATE SKIP LOCKED``), then the move to ``importing`` naming the importer in
+``process_id``, committed only while the importer holds its lock.
 Under ``READ COMMITTED`` the read locks only the row it returns, so several importers
 claiming at once each take a different bundle, the largest left, and none waits for
 another. Positional bundle descriptors limit the bundles claimed, and ``--exclude-bundles``
@@ -237,13 +247,33 @@ way, reads the table names from the server again
 (:meth:`~opus_import.importdb.super.ImportDBSuper.forget_table_names`), and fails with a
 message naming ``--register-bundles`` if there is still none. A bundle whose import
 raises or logs an error has its rows deleted while it is still ``importing`` under the
-importer's hold, which no claim and no plain ``--import`` takes, and is then marked
-``failed`` if the hold still stands (:func:`~opus_import.bundle_registry.holds`); the
-importer goes on, the bundle is never claimed again, and the importer exits with failure
+importer, its registry row held on a second connection, so no claim and no plain
+``--import`` takes it meanwhile, and is then marked ``failed`` in that same hold
+(:func:`~opus_import.steps.do_recover.release_bundle`); the importer goes on, the bundle is never claimed again, and the importer exits with failure
 at the end. Under the
 test-only fault ``OPUS_IMPORT_FAULT=hold_after_claim:<seconds>`` an importer sleeps
 that long after each claim commits (:ref:`the import's fault sites
 <dev_guide_testing_faults>`).
+
+Each chunk of rows an importer loads runs under the bundle's guard
+(:class:`~opus_import.import_processes.BundleGuard`): its first statement advances the
+bundle's ``rows_done`` only while the registry names the importer as importing it, the
+importer's ``progress_at`` advances beside it, and before the commit the lock connection
+confirms it holds the lock. Should either fail, the chunk is rolled back and the importer
+aborts its bundle (:func:`~opus_import.steps.do_import.abort_bundle`) and exits with
+failure naming its lock. An abort, a failure, and the delete before each import delete
+the bundle's rows while a second connection holds the bundle's registry row and has
+checked that it still names the importer
+(:func:`~opus_import.steps.do_recover.release_bundle`); a coordinator's recovery of a
+lost importer's bundle does the same, after checking again that the importer's lock is
+free (:func:`~opus_import.steps.do_recover.recover_lost_importers`). Every bundle delete
+reads the schema's tables from the server first, so it reaches a table another importer
+created after this connection opened. After one interrupt an importer claims nothing new
+once its bundle is done; a second, wherever it lands, aborts every bundle the registry
+has ``importing`` under the importer, and any later one is only counted, so nothing
+interrupts the abort. A
+plain ``--import`` takes no lock: its bundles keep ``process_id`` NULL, and only its
+``obs_general`` chunks carry ``rows_done``, matching no importer.
 
 :func:`~opus_import.steps.do_import.import_one_bundle` is the per-bundle driver
 described in :ref:`dev_guide_import_per_bundle`. It resets the per-bundle caches, skips
@@ -268,10 +298,12 @@ The bundle registry: opus_import.bundle_registry and opus_import.steps.do_regist
 importers draw from.
 
 **Registration.** :func:`~opus_import.steps.do_register.register_bundles` registers
-bundles in the order given, which is the import order. It holds a server-wide named lock
-(``GET_LOCK`` on the name :func:`opus_import.importdb.lock_name` gives the schema and
-``register``) for its whole length, so two registrations never interleave. Under the lock
-it first creates the registry and the mult tables where the schema lacks them, since a
+bundles in the order given, which fixes their id ranges and so which copy of a shared
+OPUS ID finalization keeps (below). It is the order a plain ``--import`` imports them
+in, but not a queue importer, which claims the largest pending bundle first. It holds a
+server-wide named lock (``GET_LOCK`` on the name :func:`opus_import.importdb.lock_name`
+gives the schema and ``register``) for its whole length, so two registrations never
+interleave. Under the lock it first creates the registry and the mult tables where the schema lacks them, since a
 table's creation commits on its own, and then, in one transaction:
 
 * adds each bundle the registry lacks, as ``pending``, with the next ``bundle_number``,
@@ -314,16 +346,25 @@ in, by an ``UPDATE`` whose condition names it
 processes never both hold one bundle. A queue importer takes a bundle only from
 ``pending`` (:func:`~opus_import.bundle_registry.claim_bundle`), and ``--import`` takes
 one it names from any state but ``importing``
-(:func:`~opus_import.bundle_registry.start_bundle`); a bundle goes from ``importing`` to ``done`` or
-``failed`` only while it is still ``importing`` under the ``started_at`` the process
-wrote when it took it (:func:`~opus_import.bundle_registry.finish_bundle`), so a bundle
-``--requeue`` returned to the queue and another process took is never finished, or
-deleted, by the process that held it before; that process logs an error instead. Only
-``--requeue`` moves an ``importing`` bundle back to ``pending``: it takes the bundle
-from ``failed`` or ``importing`` as a hold of its own, and returns it under that hold
-once its rows are deleted. The hold is
-``started_at``, to the second, so a bundle requeued and taken again within the second it
-was first taken is the one case it cannot tell apart.
+(:func:`~opus_import.bundle_registry.start_bundle`). Each kind of holder moves a bundle
+on from ``importing`` only while it still holds it, by a guard of its own: a plain
+``--import``, and ``--requeue``, only while the bundle is ``importing`` under the
+``started_at`` the process wrote when it took it
+(:func:`~opus_import.bundle_registry.finish_bundle`); a queue importer only while the
+bundle is ``importing`` under its ``process_id``, when it marks it ``done``
+(:func:`~opus_import.bundle_registry.finish_claimed_bundle`) or deletes its rows and
+marks it ``failed`` or ``pending``
+(:func:`~opus_import.steps.do_recover.release_bundle`). Besides a
+queue importer's abort and a recovery, only ``--requeue`` moves an ``importing`` bundle
+back to ``pending``, and only one no queue importer holds: it takes the bundle from
+``failed`` or ``importing`` as a hold of its own, and returns it under that hold once its
+rows are deleted. The bundle of a plain ``--import`` is requeued only once that process
+has stopped: the process holds no lock, so ``--requeue`` cannot tell a live one from a
+dead one, and a live one goes on writing rows into the bundle's range. A bundle
+``--requeue`` returned to the queue and another process took is then not finished by
+the process that held it before, which logs an error instead, unless both took it within
+one second: the hold is ``started_at``, to the second, and cannot tell those two
+apart.
 
 A bundle moves through these states:
 
@@ -332,7 +373,8 @@ A bundle moves through these states:
 
 ``importing``
     Being deleted and loaded. Moving to it stamps ``started_at`` and starts
-    ``rows_done`` again, which every load of the bundle's ``obs_general`` rows advances.
+    ``rows_done`` again, which every committed chunk of the bundle's ``obs_general`` rows
+    advances, in the chunk's own transaction.
 
 ``done``
     Imported without logging an error, or under ``--ignore-errors``. ``finished_at`` is
@@ -505,8 +547,9 @@ every append runs it again. It has three parts, in this order:
    the intended set of choices; the absent value the import adds to a pinned field whose
    list has none, under
    :data:`~opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted once no
-   observation holds it. A deleted id is never handed out again: a new value takes the
-   next id of the field's counter, ``mult_field.last_id``, which only goes up.
+   observation holds it, and an import that needs it again adds it under the same id.
+   Any other deleted id is never handed out again: a new value takes the next id of the
+   field's counter, ``mult_field.last_id``, which only goes up.
 2. **Apply the overrides.**
    :func:`~opus_import.steps.do_finalize_mult.apply_mult_overrides` writes each column's
    ``mult_overrides`` over its field's stored rows, so an override wins over the label
@@ -1109,9 +1152,13 @@ Otherwise it computes in a pool:
   exactly as they do serially; each Python warning is issued again with its class and
   location, against the registry of the module it came from, so the import's process's
   own filters decide whether it is shown -- a warning shown once per location is shown
-  once however many workers met it -- and ``pdsfile`` calls go to the real logger. Each row then goes to the sink with every value final. **The
-  tables, their ids, the mult ids and the log are therefore the same whatever the
-  number of workers.**
+  once however many workers met it -- and ``pdsfile`` calls go to the real logger.
+  Each row then goes to the sink with every value final. **The tables, their ids, the
+  mult ids and the log are therefore the same whatever the number of workers.** That
+  holds within one importer. With several importers writing one schema, a field
+  without ``mult_options`` numbers its new values in the order the importers reach
+  them, so its mult ids can differ from a serial import's and from one run to the
+  next; the observation ids, which come from each bundle's range, do not.
 * **A worker's failure abandons the index**: the import's process logs an error naming
   the range of rows and the index file, replays nothing after it, and
   :func:`~opus_import.steps.do_import_index.import_one_index` returns False. It first
@@ -1243,8 +1290,8 @@ compared by the server's own collation) before it is given an id, and the server
 is kept in the cache under the value's key.
 A value is stored as a string, and an absent value (None) as the empty string. A value
 the field lacks takes the next id of the field's counter, ``mult_field.last_id``, which
-holds the highest id handed out in the field, or -1 before the first, so a field's first
-value is 0. The id is taken in a short transaction of its own
+holds the highest id the counter has handed out in the field, or -1 before the first, so
+a field's first value is 0. The id is taken in a short transaction of its own
 (:meth:`~opus_import.importdb.super.ImportDBSuper.increment_counter`, run again on a
 deadlock), which locks the counter's row for one statement and reads no ``MAX``. A
 value that would need an id above

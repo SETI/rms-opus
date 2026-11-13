@@ -162,6 +162,8 @@ Which chapter covers what
      - :ref:`dev_guide_import_db`
    * - ``src/opus_import/context.py``, ``cli.py``, ``util/``
      - :ref:`dev_guide_import`, :ref:`dev_guide_import_running`
+   * - ``src/opus_import/import_all.py``, ``coordinator.py``, ``import_processes.py``
+     - :ref:`dev_guide_import_running`
    * - ``src/opus_import/table_schemas/``
      - :ref:`dev_guide_table_schemas`
    * - ``src/opus_import/dictionary_data/``

@@ -200,6 +200,9 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('import_.workers', 1),
         ('import_.cpu_fraction', 0.75),
         ('import_.worker_rows', 500),
+        ('import_.importers', 4),
+        ('import_.stall_warning_minutes', 30),
+        ('import_.status_interval_minutes', 5),
     ],
 )
 def test_load_config_defaults_every_optional_key(
@@ -237,6 +240,9 @@ def test_load_config_defaults_every_optional_key(
         ('import', 'cpu_fraction', '1', 1.0),
         ('import', 'cpu_fraction', '0.5', 0.5),
         ('import', 'worker_rows', '5', 5),
+        ('import', 'importers', '6', 6),
+        ('import', 'stall_warning_minutes', '10', 10),
+        ('import', 'status_interval_minutes', '1', 1),
     ],
 )
 def test_load_config_reads_an_optional_key_that_is_written(
@@ -399,6 +405,18 @@ def test_load_config_accepts_a_whole_number_probability(
             "[import] 'worker_rows' must be a whole number, not float",
         ),
         (
+            adding('import', 'importers', '0'),
+            "[import] 'importers' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'stall_warning_minutes', '0'),
+            "[import] 'stall_warning_minutes' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'status_interval_minutes', '0'),
+            "[import] 'status_interval_minutes' must be at least 1, not 0",
+        ),
+        (
             adding('import', 'server_tmpdir', 'false'),
             "[import] 'server_tmpdir' must be a string, not bool",
         ),
@@ -483,6 +501,9 @@ def test_load_config_accepts_a_whole_number_probability(
         'cpu-fraction-above-one',
         'worker-rows-zero',
         'worker-rows-not-whole',
+        'importers-zero',
+        'stall-warning-minutes-zero',
+        'status-interval-minutes-zero',
         'server-tmpdir-not-a-string',
         'bulk-load-given-a-string',
         'scratch-dir-given-a-number',
@@ -656,6 +677,9 @@ def _import_table(**keys: object) -> ImportConfig:
         'workers': 1,
         'cpu_fraction': 0.75,
         'worker_rows': 500,
+        'importers': 1,
+        'stall_warning_minutes': 30,
+        'status_interval_minutes': 5,
     }
     values.update(keys)
     return ImportConfig(**values)  # type: ignore[arg-type]

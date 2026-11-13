@@ -18,28 +18,24 @@ class _LoadingDB:
         """Hold the load size the sink reads."""
         self.transaction_rows = transaction_rows
         self.events: list[tuple[str, str, Any]] = []
+        self.guards: list[object] = []
 
     def quote_identifier(self, name: str) -> str:
         """Backtick-quote a name."""
         return f'`{name}`'
 
-    def bulk_load_rows(self, table_name: str, rows: list[dict[str, Any]]) -> None:
-        """Record a load and its size."""
+    def bulk_load_rows(
+        self, table_name: str, rows: list[dict[str, Any]], guard: object = None
+    ) -> None:
+        """Record a load, its size, and the guard its chunks run under."""
         self.events.append(('load', table_name, len(rows)))
+        self.guards.append(guard)
 
     def delete_rows(self, table_name: str, where: str, where_params: list[Any]) -> None:
         """Record a delete, the column it selects by and the ids it runs from and to."""
         column, rest = where.split(' ', 1)
         assert rest == f'>= %s AND {column} < %s'
         self.events.append(('delete', table_name, (column, *where_params)))
-
-    def update_row(
-        self, table_name: str, row: dict[str, Any], where: str, where_params: list[Any]
-    ) -> None:
-        """Record the bundle's progress."""
-        assert (table_name, where) == ('import_bundle', '`bundle_number`=%s AND `started_at`=%s')
-        assert where_params[1] == _RANGE.started_at
-        self.events.append(('progress', str(where_params[0]), row['rows_done']))
 
 
 ORDER = ['obs_general', 'obs_surface_geometry_target', 'obs_files']
@@ -60,7 +56,7 @@ def _sink(transaction_rows: int) -> tuple[TableRowSink, _LoadingDB]:
 
 
 def _loads(db: _LoadingDB) -> list[tuple[str, str, Any]]:
-    """Return the loads recorded, without the progress records."""
+    """Return the loads recorded, without the deletes."""
     return [event for event in db.events if event[0] == 'load']
 
 
@@ -78,18 +74,33 @@ def test_a_table_is_loaded_each_time_a_transactions_worth_of_rows_waits() -> Non
     ]
 
 
-def test_each_obs_general_load_records_the_bundles_rows_done() -> None:
-    """The registry's count follows every load of observations, and no other table's."""
+def test_every_load_runs_under_the_bundles_guard() -> None:
+    """The guard records the bundle's progress in each chunk's transaction, so the sink
+    hands it to every table's load."""
     sink, db = _sink(2)
-    for number in range(5):
+    guard = object()
+    sink.ctx.load_guard = guard  # type: ignore[assignment]
+    for number in range(3):
         sink.add('obs_general', {'id': number})
         sink.add('obs_files', {'obs_general_id': number})
     sink.finish()
-    assert [event for event in db.events if event[0] == 'progress'] == [
-        ('progress', '7', 2),
-        ('progress', '7', 4),
-        ('progress', '7', 5),
-    ]
+    assert db.guards
+    assert all(given is guard for given in db.guards)
+
+
+def test_an_importers_failed_index_leaves_the_delete_to_the_whole_bundles() -> None:
+    """A queue importer deletes the whole failed bundle while it holds the bundle's
+    registry row, so the sink takes nothing back itself."""
+    sink, db = _sink(2)
+    sink.ctx.importer = object()  # type: ignore[assignment]
+    sink.add('obs_general', {'id': 10})
+    sink.add('obs_general', {'id': 11})
+    sink.add('obs_general', {'id': 12})
+    sink.discard()
+    sink.finish()
+    assert [event for event in db.events if event[0] == 'delete'] == []
+    assert _loads(db)[0] == ('load', 'obs_general', 2)
+    assert ('load', 'obs_general', 1) not in _loads(db)
 
 
 def test_the_finish_loads_every_table_in_order() -> None:
