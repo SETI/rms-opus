@@ -23,16 +23,17 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from opus_import.import_all import importer_step, open_target_db
+import pdslogger
+
+from opus_import import import_all, import_processes, importdb
+from opus_import.context import ImportContext
+from opus_import.steps import do_recover
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from types import FrameType
 
-    import pdslogger
-
     from opus_config import OpusConfig
-    from opus_import.context import ImportContext
     from opus_import.import_all import Division
     from opus_import.import_processes import Snapshot
     from opus_import.importdb.super import ImportDBSuper
@@ -332,7 +333,7 @@ class Coordinator:
         if self._starts_left <= 0 or self.interrupts:
             return
         self._starts_left -= 1
-        arguments = importer_step(self.schema, workers, self.extra_options, self.sets)
+        arguments = import_all.importer_step(self.schema, workers, self.extra_options, self.sets)
         process = start_importer(arguments)
         self._own.append(_Importer(process, workers, pending_at_start=self._pending))
         self._event(f'started importer {process.pid} with {workers} workers')
@@ -375,8 +376,6 @@ class Coordinator:
             0 when the coordinator may finish the schema, or when every importer of a
             ``--join`` exited cleanly; 1 otherwise, after saying why.
         """
-        from opus_import import import_processes
-
         ctx = self._context()
         db = ctx.db
         assert db is not None
@@ -406,10 +405,6 @@ class Coordinator:
     def _context(self) -> ImportContext:
         """Open the coordinator's log and connection, and a context for the recovery's
         deletes."""
-        import pdslogger
-
-        from opus_import.context import ImportContext
-
         logger = pdslogger.PdsLogger('opus_import.coordinator')
         log_dir = self.config.paths.import_log_dir
         logger.add_handler(
@@ -418,7 +413,7 @@ class Coordinator:
         logger.add_handler(pdslogger.error_handler(log_dir, rotation='none'))
         self.logger = logger
         ctx = ImportContext(args=argparse.Namespace(), logger=logger)
-        ctx.db = open_target_db(self.config, self.schema, read_only=False, logger=logger)
+        ctx.db = import_all.open_target_db(self.config, self.schema, read_only=False, logger=logger)
         return ctx
 
     def _pass(self, ctx: ImportContext) -> int | None:
@@ -434,9 +429,6 @@ class Coordinator:
         Returns:
             The run's exit status once it is over, or None while it goes on.
         """
-        from opus_import import import_processes, importdb
-        from opus_import.steps import do_recover
-
         for importer in self._own:
             code = importer.process.poll()
             if code is not None and not importer.reported:
@@ -447,7 +439,7 @@ class Coordinator:
                 self._event(f'importer {importer.process.pid} exited with status {code}')
         try:
             if ctx.db is None:
-                ctx.db = open_target_db(
+                ctx.db = import_all.open_target_db(
                     self.config, self.schema, read_only=False, logger=self.logger
                 )
             snapshot = import_processes.read_snapshot(ctx.db)
@@ -713,19 +705,13 @@ def show_status(config: OpusConfig, schema: str | None, *, watch: bool, recover:
     Returns:
         0, or 1 when the schema cannot be read, which without `watch` ends the command.
     """
-    import pdslogger
-
-    from opus_import import import_processes, importdb
-    from opus_import.context import ImportContext
-    from opus_import.steps import do_recover
-
     db: ImportDBSuper | None = None
     estimate = RateEstimate()
     try:
         while True:
             try:
                 if db is None:
-                    db = open_target_db(config, schema, read_only=not recover)
+                    db = import_all.open_target_db(config, schema, read_only=not recover)
                     if recover:
                         import_processes.create_process_table(db)
                         ctx = ImportContext(
