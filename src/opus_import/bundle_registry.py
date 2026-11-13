@@ -27,7 +27,7 @@ from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from opus_import import import_util
+from opus_import import import_processes, import_util
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
@@ -486,9 +486,6 @@ def claim_bundle(
         opus_import.import_processes.LostImporterError: If the importer's lock is lost;
             nothing is claimed then.
     """
-    # Imported here: import_processes reads this module's table and states.
-    from opus_import import import_processes
-
     db = ctx.db
     assert db is not None
     q = db.quote_identifier
@@ -547,8 +544,6 @@ def finish_claimed_bundle(ctx: ImportContext, bundle_number: int, importer: Impo
         opus_import.import_processes.LostImporterError: If the registry no longer names
             the importer, or its lock is lost; the bundle is left as it was.
     """
-    from opus_import import import_processes
-
     db = ctx.db
     assert db is not None
     q = db.quote_identifier

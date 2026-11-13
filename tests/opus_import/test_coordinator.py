@@ -16,8 +16,9 @@ from typing import Any
 import pytest
 
 from opus_import import coordinator as opus_coordinator
-from opus_import import import_all
+from opus_import import import_all, import_processes, importdb
 from opus_import.import_processes import BundleStatus, ProcessStatus, Snapshot
+from opus_import.steps import do_recover
 
 from .conftest import import_table
 
@@ -384,8 +385,6 @@ def test_the_end_of_a_run_on_a_terminal_is_printed_and_every_event_logged(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The failed bundles, named after the table's last redraw, still reach the screen."""
-    from opus_import import import_processes
-
     coordinator = _coordinator()
     coordinator.terminal = True
     logged = _record_log(coordinator)
@@ -410,8 +409,6 @@ def test_a_failed_reading_is_logged_and_the_next_pass_reconnects(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A transient failure costs a pass, not the run."""
-    from opus_import import import_processes, importdb
-
     coordinator = _coordinator()
     logged = _record_log(coordinator)
     ctx = _FakeContext()
@@ -426,7 +423,7 @@ def test_a_failed_reading_is_logged_and_the_next_pass_reconnects(
     _patch_reading(monkeypatch, Snapshot((), ()))
     monkeypatch.setattr(import_processes, 'read_snapshot', read)
     reopened = _FakeDB()
-    monkeypatch.setattr(opus_coordinator, 'open_target_db', lambda *args, **kwargs: reopened)
+    monkeypatch.setattr(import_all, 'open_target_db', lambda *args, **kwargs: reopened)
 
     assert coordinator._pass(ctx) is None  # type: ignore[arg-type]
     assert ctx.db is None
@@ -442,8 +439,6 @@ def test_readings_failing_for_the_outage_limit_stop_the_coordinator(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A persistent failure ends the run, saying so, rather than being retried for ever."""
-    from opus_import import importdb
-
     coordinator = _coordinator()
     logged = _record_log(coordinator)
     coordinator._failing_since = time.monotonic() - opus_coordinator.DATABASE_OUTAGE_SECONDS
@@ -451,7 +446,7 @@ def test_readings_failing_for_the_outage_limit_stop_the_coordinator(
     def refuse(*args: Any, **kwargs: Any) -> None:
         raise importdb.ImportDBError("Can't connect to MySQL server")
 
-    monkeypatch.setattr(opus_coordinator, 'open_target_db', refuse)
+    monkeypatch.setattr(import_all, 'open_target_db', refuse)
     ctx = _FakeContext()
     ctx.db = None
 
@@ -488,9 +483,6 @@ def _record_log(coordinator: opus_coordinator.Coordinator) -> list[tuple[str, st
 
 def _patch_reading(monkeypatch: pytest.MonkeyPatch, snapshot: Snapshot) -> None:
     """Make every reading of the registry return `snapshot`, and recover nothing."""
-    from opus_import import import_processes
-    from opus_import.steps import do_recover
-
     monkeypatch.setattr(import_processes, 'read_snapshot', lambda db: snapshot)
     monkeypatch.setattr(do_recover, 'recover_lost_importers', lambda ctx: [])
 
@@ -498,9 +490,6 @@ def _patch_reading(monkeypatch: pytest.MonkeyPatch, snapshot: Snapshot) -> None:
 def _patch_recovery(monkeypatch: pytest.MonkeyPatch, before: Snapshot, after: Snapshot) -> None:
     """Make readings return `before` until a recovery returns a bundle, and `after` from
     then on."""
-    from opus_import import import_processes
-    from opus_import.steps import do_recover
-
     recovered: list[str] = []
 
     def recover(ctx: object) -> list[str]:
@@ -544,8 +533,6 @@ class _CachingDB:
 def test_a_reading_sees_tables_created_after_the_connection_opened() -> None:
     """The registry, created by another process since, is read rather than taken as
     absent from the names the connection cached."""
-    from opus_import import import_processes
-
     snapshot = import_processes.read_snapshot(_CachingDB())  # type: ignore[arg-type]
     assert [bundle.bundle_id for bundle in snapshot.bundles] == ['A']
 
@@ -556,8 +543,6 @@ def test_status_reports_a_failed_reading_and_a_watch_goes_on(
 ) -> None:
     """A reading that fails (the tables dropped by a rerun) is reported without a
     traceback; a watch reads again on a new connection, a single status exits 1."""
-    from opus_import import import_processes, importdb
-
     opened: list[_CachingDB] = []
 
     def open_db(*args: Any, **kwargs: Any) -> _CachingDB:
@@ -573,7 +558,7 @@ def test_status_reports_a_failed_reading_and_a_watch_goes_on(
         if len(opened) == 2:
             raise KeyboardInterrupt
 
-    monkeypatch.setattr(opus_coordinator, 'open_target_db', open_db)
+    monkeypatch.setattr(import_all, 'open_target_db', open_db)
     monkeypatch.setattr(import_processes, 'read_snapshot', read)
     monkeypatch.setattr(time, 'sleep', sleep)
 
