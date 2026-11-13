@@ -884,7 +884,10 @@ A plain ``opus_import`` takes no lock and records no row; its bundles keep
     held in the script's ``TEST_BUNDLES`` array and imported by ``opus_import_all
     --scorched-earth --yes --sets``: it registers the list in its order, which fixes
     every observation id, imports it with ``[import] importers`` queue importers sharing
-    ``[import] workers``, and finishes the database. ``manage.py migrate`` follows.
+    ``[import] workers``, and finishes the database. ``manage.py migrate`` follows. Its
+    arguments are passed on to ``opus_import_all`` as given, so ``--workers`` and
+    ``--importers`` set the division, as in ``import_for_tests.sh --workers 24
+    --importers 6``; ``--sets`` would replace the list.
     **It begins by erasing every table the import creates** and asks for confirmation
     first, printing the schema so that the erase cannot be aimed at the wrong database.
 
