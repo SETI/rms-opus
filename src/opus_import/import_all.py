@@ -55,7 +55,8 @@ import sys
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from opus_config import MAX_WORKERS
+from opus_config import MAX_WORKERS, ConfigError, get_config, resolve_parallelism
+from opus_import import bundle_registry, coordinator, importdb
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -187,9 +188,6 @@ def resolve_division(
     Raises:
         opus_config.config.ConfigError: If the total is above the ceiling, naming it.
     """
-    # Imported here, so that --help needs no configuration package state.
-    from opus_config import resolve_parallelism
-
     parallelism = resolve_parallelism(config, workers, detected=detected)
     requested = config.importers if importers == AUTO_IMPORTERS else int(importers)
     count = min(requested, parallelism.workers)
@@ -332,8 +330,6 @@ def open_target_db(
     Returns:
         The open connection.
     """
-    from opus_import import importdb
-
     return importdb.get_db(
         config.database.brand,
         config.database.host,
@@ -361,10 +357,6 @@ def registry_states(schema: str | None) -> list[tuple[str, str]]:
         opus_import.importdb.super.ImportDBError: If the schema cannot be read, which includes
             a schema that does not exist.
     """
-    # Imported here, so that --help needs neither a configuration nor the database driver.
-    from opus_config import get_config
-    from opus_import import bundle_registry
-
     db = open_target_db(get_config(), schema, read_only=True)
     try:
         return [(row.bundle_id, row.state) for row in bundle_registry.registered_ranges(db)]
@@ -538,8 +530,6 @@ def _division(parser: argparse.ArgumentParser, arguments: argparse.Namespace) ->
     Raises:
         SystemExit: If the total of workers is above the ceiling.
     """
-    from opus_config import ConfigError, get_config
-
     default = 1 if arguments.join else AUTO_IMPORTERS
     importers = arguments.importers if arguments.importers is not None else default
     try:
@@ -577,12 +567,10 @@ def _print_plan(
         for step in prepare_steps(schema, arguments.scorched_earth, extra_options, arguments.sets):
             print(' '.join(['opus_import', *step]))
     if division is not None:
-        from opus_import.coordinator import TRACK_SECONDS
-
         claimed = arguments.sets if arguments.join else None
         print(
             f'import: {division.importers} importers on this computer, tracked every '
-            f'{TRACK_SECONDS:g} seconds, a lost one replaced while bundles are pending'
+            f'{coordinator.TRACK_SECONDS:g} seconds, a lost one replaced while bundles are pending'
         )
         for workers in division.per_importer:
             print(
@@ -705,11 +693,10 @@ def main() -> None:
 
     schema = arguments.override_db_schema
     if arguments.status:
-        from opus_config import get_config
-        from opus_import.coordinator import show_status
-
         sys.exit(
-            show_status(get_config(), schema, watch=arguments.watch, recover=arguments.recover)
+            coordinator.show_status(
+                get_config(), schema, watch=arguments.watch, recover=arguments.recover
+            )
         )
     if arguments.scorched_earth and not arguments.yes and not confirm(schema):
         parser.exit(1, 'Aborting: the confirmation was not given.\n')
@@ -761,13 +748,10 @@ def coordinate(
     Returns:
         The run's exit status.
     """
-    from opus_config import get_config
-    from opus_import.coordinator import Coordinator
-
-    coordinator = Coordinator(
+    run = coordinator.Coordinator(
         get_config(), schema, division, extra_options, finishing=finishing, sets=sets
     )
-    return coordinator.run()
+    return run.run()
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -493,9 +493,6 @@ CLAIMED_PREFIX = 'Claimed bundle '
 #: The log line a queue importer writes when no bundle is left for it.
 QUEUE_EMPTY_LINE = 'No pending bundle is left to claim; this importer exits'
 
-#: How the log line naming a queue importer's ``import_process`` row starts.
-IMPORTER_PREFIX = 'Importer '
-
 
 def import_from_queue(
     ctx: ImportContext, among: set[str] | None, excluding: set[str] | None = None
@@ -547,7 +544,7 @@ def import_from_queue(
     try:
         ctx.importer = importer
         import_util.log_info(
-            ctx, f'{IMPORTER_PREFIX}{importer.process_id}, holding the lock "{importer.name}"'
+            ctx, f'Importer {importer.process_id}, holding the lock "{importer.name}"'
         )
         with ctx.timed('import'):
             while True:

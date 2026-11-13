@@ -15,6 +15,7 @@ from typing import Any
 
 import pytest
 
+import opus_config.config
 from opus_config import ConfigError
 from opus_import import import_all
 
@@ -53,13 +54,11 @@ def recorded_steps(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
 
 def _eight_cores(monkeypatch: pytest.MonkeyPatch, **keys: object) -> None:
     """Make the division read a default configuration on a computer of eight cores."""
-    import opus_config
-    import opus_config.config
 
     class _Config:
         import_ = import_table(**keys)
 
-    monkeypatch.setattr(opus_config, 'get_config', lambda: _Config())
+    monkeypatch.setattr(import_all, 'get_config', lambda: _Config())
     monkeypatch.setattr(opus_config.config, 'detected_cores', lambda: 8)
 
 
