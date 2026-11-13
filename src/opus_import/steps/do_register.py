@@ -72,8 +72,8 @@ def size_estimate(bundle_id: str) -> int:
 
     Raises:
         RegistrationError: If the bundle has no ``BUNDLE_INFO`` entry, no primary index
-            file is found, or one's label declares no row count; the message names the
-            bundle and the label.
+            file is found, or one's label cannot be read; the message names the bundle
+            and the label.
     """
     vol_info = do_import_tables.lookup_vol_info(bundle_id)
     if vol_info is None:
@@ -89,13 +89,10 @@ def size_estimate(bundle_id: str) -> int:
         )
     total = 0
     for label in found.files:
-        rows = primary_index.declared_rows(label)
-        if rows is None:
-            raise RegistrationError(
-                f'Bundle {bundle_id} cannot be registered: its primary index label {label} '
-                'declares no row count'
-            )
-        total += rows
+        try:
+            total += primary_index.declared_rows(label)
+        except primary_index.PrimaryIndexError as e:
+            raise RegistrationError(f'Bundle {bundle_id} cannot be registered: {e}') from e
     return total
 
 
