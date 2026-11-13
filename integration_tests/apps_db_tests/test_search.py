@@ -38,6 +38,16 @@ from opus_app.apps.tools.import_constants import mult_field_id
 from ._broken_requests import request_without_get, request_without_meta
 
 
+def _mult_id(param_qualified_name: str, value: str) -> int:
+    """Return the id of a mult field's row holding a value.
+
+    A field without ``mult_options`` numbers its values as the importers meet them, and
+    importers running at once meet them in no fixed order, so a test reads such an id
+    rather than writing it down.
+    """
+    return Mult.objects.get(field_id=mult_field_id(param_qualified_name), value=value).id
+
+
 class SearchTests(TestCase):
     """Search-URL parsing, and the SQL each kind of search clause builds."""
 
@@ -3665,12 +3675,14 @@ class SearchTests(TestCase):
         print(sql)
         print(params)
         expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `obs_mission_cassini` ON `obs_general`.`id`=`obs_mission_cassini`.`obs_general_id` WHERE (`obs_general`.`planet_id` IN (%s)) AND (`obs_instrument_coiss`.`camera` IN (%s)) AND (`obs_mission_cassini`.`rev_no` IN (%s,%s))'
-        expected_params = [4, 0, 2, 4]
+        expected_params = [
+            4,
+            0,
+            _mult_id('obs_mission_cassini.rev_no', '00A'),
+            _mult_id('obs_mission_cassini.rev_no', '00C'),
+        ]
         print(expected)
         print(expected_params)
-        print(
-            'NOTE: This test requires one of COISS or COVIMS to be imported before COUVIS due to a bad observation name in COUVIS!'
-        )
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
@@ -3784,7 +3796,7 @@ class SearchTests(TestCase):
         print(sql)
         print(params)
         expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,%s)'
-        expected_params = ['1']
+        expected_params = [str(_mult_id('obs_general.target_name', 'SATURN'))]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -3798,7 +3810,10 @@ class SearchTests(TestCase):
         print(sql)
         print(params)
         expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,%s) OR JSON_CONTAINS(`obs_general`.`target_name`,%s)'
-        expected_params = ['1', '19']
+        expected_params = [
+            str(_mult_id('obs_general.target_name', 'SATURN')),
+            str(_mult_id('obs_general.target_name', 'JUPITER')),
+        ]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)

@@ -24,8 +24,9 @@ Three **scales**, each named by a file under ``benchmarks/scenarios/``:
     needs no holdings.
 
 ``test`` (``import_test.toml``)
-    The bundle groups ``scripts/import/import_for_tests.sh`` imports, read from the real
-    holdings. The same database the integration suite's API goldens are pinned to.
+    The bundles ``scripts/import/import_for_tests.sh`` imports, in its order, read from
+    the real holdings, in groups each imported by one invocation of the bundle-import
+    step. The same database the integration suite's API goldens are pinned to.
 
 ``complete`` (``import_complete.toml``)
     Every bundle set, in the order ``opus_import_all`` registers them. Hours.
