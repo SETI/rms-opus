@@ -514,8 +514,8 @@ Invariants
   disagrees with a stored row is an error. Renaming a value or reordering a field
   touches no observation row. A row finalization deletes does not free an id the
   counter handed out: ``mult_field.last_id`` never goes down, so the id is never handed
-  out again. A pinned field's ids are its list's, and its absent value's is always
-  65535.
+  out again. A pinned field's ids are its list's, and an absent value its list lacks
+  takes 65535.
 * **An import computes in many processes and writes from one.** Only the import's own
   process uses the database and writes the log; pool workers compute rows and record
   what they would have written, and that process replays it in index order, so the
