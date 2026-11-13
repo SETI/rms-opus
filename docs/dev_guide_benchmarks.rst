@@ -333,6 +333,8 @@ largest bundle refuses it::
 for a side whose ``opus_import`` has ``--join``. Each run is the side's erase, one
 ``opus_import --register-bundles`` of every group of the scenario in import order,
 ``N`` ``opus_import --join`` processes started together, and the finalization sequence.
+Neither this nor ``--coordinator M`` imports the largest bundle alone or times the
+incremental group, so a multi-importer run has neither measurement.
 Each importer has a configuration and a log directory of its own and an equal share of
 the ``workers`` total ``--import-key workers=W`` gives, or of 1 when none is given; a
 total that ``N`` does not divide is refused, so the importers together use exactly the
@@ -368,7 +370,8 @@ mode, which registers the scenario's groups in import order, divides the ``worke
 total ``--import-key workers=W`` gives (or 1) among the ``M`` importers it starts and
 tracks, and runs its closing sequence once every bundle is done, then Django's
 migration. The coordinator divides an uneven total itself, the first importers taking
-one more, so any total of at least ``M`` is accepted; a total ``--importers`` must also
+one more, so any total from ``M`` up to the worker ceiling
+(:ref:`dev_guide_import_running_parallelism`) is accepted; a total ``--importers`` must also
 take, one every count of a comparison divides, keeps the two kinds of run alike. The
 coordinator's closing sequence is ``--finalize``, ``--import-dictionary``,
 ``--validate`` and ``--write-schema-version``, the finalization sequence less Django's

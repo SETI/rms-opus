@@ -386,9 +386,15 @@ in, by an ``UPDATE`` whose condition names it
 processes never both hold one bundle. A queue importer takes a bundle only from
 ``pending`` (:func:`~opus_import.bundle_registry.claim_bundle`), and ``--import`` takes
 one it names from any state but ``importing``
-(:func:`~opus_import.bundle_registry.start_bundle`); a bundle goes from ``importing`` to ``done`` or
-``failed`` only while it is still ``importing`` under the ``started_at`` the process
-wrote when it took it (:func:`~opus_import.bundle_registry.finish_bundle`). Besides a
+(:func:`~opus_import.bundle_registry.start_bundle`). Each kind of holder moves a bundle
+on from ``importing`` only while it still holds it, by a guard of its own: a plain
+``--import``, and ``--requeue``, only while the bundle is ``importing`` under the
+``started_at`` the process wrote when it took it
+(:func:`~opus_import.bundle_registry.finish_bundle`); a queue importer only while the
+bundle is ``importing`` under its ``process_id``, when it marks it ``done``
+(:func:`~opus_import.bundle_registry.finish_claimed_bundle`) or deletes its rows and
+marks it ``failed`` or ``pending``
+(:func:`~opus_import.steps.do_recover.release_bundle`). Besides a
 queue importer's abort and a recovery, only ``--requeue`` moves an ``importing`` bundle
 back to ``pending``, and only one no queue importer holds: it takes the bundle from
 ``failed`` or ``importing`` as a hold of its own, and returns it under that hold once its
@@ -1193,9 +1199,13 @@ Otherwise it computes in a pool:
   exactly as they do serially; each Python warning is issued again with its class and
   location, against the registry of the module it came from, so the import's process's
   own filters decide whether it is shown -- a warning shown once per location is shown
-  once however many workers met it -- and ``pdsfile`` calls go to the real logger. Each row then goes to the sink with every value final. **The
-  tables, their ids, the mult ids and the log are therefore the same whatever the
-  number of workers.**
+  once however many workers met it -- and ``pdsfile`` calls go to the real logger.
+  Each row then goes to the sink with every value final. **The tables, their ids, the
+  mult ids and the log are therefore the same whatever the number of workers.** That
+  holds within one importer. With several importers writing one schema, a field
+  without ``mult_options`` numbers its new values in the order the importers reach
+  them, so its mult ids can differ from a serial import's and from one run to the
+  next; the observation ids, which come from each bundle's range, do not.
 * **A worker's failure abandons the index**: the import's process logs an error naming
   the range of rows and the index file, replays nothing after it, and
   :func:`~opus_import.steps.do_import_index.import_one_index` returns False. It first
