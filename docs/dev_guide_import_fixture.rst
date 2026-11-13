@@ -194,7 +194,17 @@ The negative cases
     exempt from the clean-log rules: a volume imported twice in one invocation, with no
     flag, which proves that the second import replaces the first and leaves one copy of
     each observation, and a volume whose index names a target the pipeline does not
-    describe under ``--ignore-errors``.
+    describe under ``--ignore-errors``. A recipe in ``import_tests/fixtures/negative``
+    either overwrites one column of one row of a volume's primary index or renames one
+    body's rows in one of its surface geometry summaries.
+
+A surface geometry body the fixture has no geometry for
+    A run of its own renames one observation's rows for one body of a volume's moon
+    summary to a body the fixture has no geometry for, then imports and finalizes that
+    volume. The body's ``table_names`` and ``partables`` rows must be there, and the web
+    application, driven through Django's test client by ``opus_manage shell`` under the
+    run's own configuration, must list the body's category for the observation and
+    search the body's fields, with no code regenerated.
 
 The append
     Each case starts from a copy of the main run's finished schema and runs real

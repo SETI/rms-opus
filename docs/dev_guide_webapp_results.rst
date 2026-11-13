@@ -119,13 +119,18 @@ What each handler returns
 
 :func:`~opus_app.apps.results.views.api_get_data`
     The public tabular page: the labels, the rows, and how many observations the search
-    found. JSON, HTML or CSV.
+    found. JSON, HTML or CSV. A page has one row per observation: the surface geometry
+    selector, whose category holds one row per body, is selected as
+    :func:`~opus_app.apps.search.views.selector_label` rather than joined.
 
 :func:`~opus_app.apps.results.views.api_get_metadata` and :func:`~opus_app.apps.results.views.api_get_metadata_internal`
     One observation's metadata. Both delegate to
     :func:`~opus_app.apps.results.views.get_metadata`. Without a column list it walks the
     "Constraints" categories in display order and returns every displayable field of each;
     with ``cols`` it returns exactly those fields, through ``_get_metadata_by_slugs``. The
+    surface geometry bodies the observation has rows of are read in one query
+    (:func:`~opus_app.apps.tools.db_utils.targets_for_opus_id`), and a body's category is
+    read only when the observation has the body. The
     private form differs in three ways: its HTML is the Details tab's flavor, with
     tooltips and search icons; its column slugs may carry a ``:unit`` suffix; and it
     accepts a list of columns to embed in the search links it renders.
@@ -145,7 +150,10 @@ What each handler returns
 
 :func:`~opus_app.apps.results.views.api_get_categories_for_opus_id` and :func:`~opus_app.apps.results.views.api_get_categories_for_search`
     Which "Constraints" categories an observation appears in, and which a search
-    triggers. The first probes each table for a row; the second uses
+    triggers. The first probes each table for a row, and answers every surface geometry
+    body's category from one query listing the bodies the observation has rows of
+    (:func:`~opus_app.apps.tools.db_utils.targets_for_opus_id`), in ``table_names``
+    display order; the second uses
     :func:`~opus_app.apps.results.views.get_triggered_tables`. Both skip
     ``obs_surface_geometry_name``, which is not a data table.
 
@@ -157,9 +165,10 @@ What each handler returns
     Which tables a search makes relevant. With no selections it is the ``BASE_TABLES``
     setting; otherwise it walks every ``partables`` row and fires a trigger when the
     search's observations all carry the triggering value. A surface geometry trigger is
-    the exception, compared as text rather than through a query --
-    :ref:`dev_guide_import_steps_do_partables` explains why. The result is ordered by the
-    ``table_names`` display order and cached.
+    the exception: it fires when its body is one of the bodies the search selects, each
+    resolved to its ``mult`` id whether the search names it by label or by value, rather
+    than through a query (:ref:`dev_guide_import_steps_do_partables`). The result is
+    ordered by the ``table_names`` display order and cached.
 
 :func:`~opus_app.apps.results.views.labels_for_slugs`
     A slug list to its display labels, with the unit appended. The cart app imports it
@@ -225,7 +234,10 @@ both use it.
 **The mult counts** are what the interface's green numbers beside each checkbox are: for
 each value of a mult field, how many of the search's observations have it. **The field's
 own constraint is removed from the search first**, so that ticking one box does not make
-the other boxes read zero. A ``MULTIGROUP`` field holds a JSON list, so its counts come
+the other boxes read zero. The field's category is read as
+:func:`~opus_app.apps.tools.db_utils.resolve_category` resolves it, so the surface
+geometry selector's counts are over every row of ``obs_surface_geometry_target``, one per
+observation and body. A ``MULTIGROUP`` field holds a JSON list, so its counts come
 from a :class:`~opus_app.apps.tools.sql_builder.JSONTable` that explodes the list into
 rows. The values come back in the order of their ``disp_rank``, the integer rank
 finalization gives each value of the field
@@ -234,7 +246,9 @@ finalization gives each value of the field
 **The range endpoints** are the smallest and largest value a numeric field takes over the
 search, plus how many observations have neither. The field's own constraints are removed
 for the same reason as above. With no search at all it uses the ORM's aggregates over the
-whole table; with one it issues raw ``MIN`` and ``MAX`` joined to the search's results.
+whole category; with one it issues raw ``MIN`` and ``MAX`` joined to the search's results.
+Either way a surface geometry body's category keeps to the body's rows of
+``obs_surface_geometry_target``, which every body shares.
 The answer is cached per field, per unit and per search.
 
 **The field descriptions** are the public field dictionary:

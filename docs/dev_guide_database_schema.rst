@@ -80,11 +80,11 @@ A row for an OPUS ID does not need to be present in each table, and in fact neve
 * The various Mission Constraints (e.g. "Cassini Mission Constraints", ``obs_mission_cassini``) have rows only for observations that were part of that mission.
 * The various Instrument Constraints (e.g. "Cassini ISS Constraints", ``obs_instrument_coiss``) have rows only for observations that were taken by that instrument.
 * "Ring Geometry Constraints" (``obs_ring_geometry``) has rows only for observations for which some amount of ring geometry metadata exists.
-* The top-level "Surface Geometry Constraints" (``obs_surface_geometry``) and body-specific Surface Geometry Constraints (e.g. "Saturn Surface Geometry Constraints", ``obs_surface_geometry__saturn``) have rows only for observations for which some amount of surface geometry metadata exists for the observation (top-level) or specific body (body-specific).
+* The top-level "Surface Geometry Constraints" (``obs_surface_geometry``) and body-specific Surface Geometry Constraints (e.g. "Saturn Surface Geometry Constraints", ``obs_surface_geometry__saturn``) have rows only for observations for which some amount of surface geometry metadata exists for the observation (top-level) or specific body (body-specific). The body-specific categories are not tables of their own: each is one body's rows of ``obs_surface_geometry_target`` (`The Surface Geometry Tables`_).
 
 In addition to the fields corresponding to the metadata available in the UI, each ``obs_*`` table also has columns for internal use:
 
-* ``obs_general_id``: The ``id`` of the observation's row in ``obs_general``, and a foreign key onto it. Joining tables on it puts all of an observation's metadata into one row. Most ``obs_*`` tables have at most one row per observation, so ``obs_general_id`` is their primary key. The exceptions are ``obs_files`` (`The Special obs_files Table`_) and the surface geometry name and per-body tables (`The Surface Geometry Tables`_), which can have several rows per observation. ``obs_general`` itself has no ``obs_general_id``.
+* ``obs_general_id``: The ``id`` of the observation's row in ``obs_general``, and a foreign key onto it. Joining tables on it puts all of an observation's metadata into one row. Most ``obs_*`` tables have at most one row per observation, so ``obs_general_id`` is their primary key. The exceptions are ``obs_files`` (`The Special obs_files Table`_) and ``obs_surface_geometry_target`` (`The Surface Geometry Tables`_), which can have several rows per observation. ``obs_general`` itself has no ``obs_general_id``.
 * ``timestamp``: A date/time field that records when the row was last updated
 
 The columns that identify an observation are stored once, in ``obs_general``: its ``id``, its ``opus_id``, its ``bundle_id`` (the PDS3 volume or PDS4 bundle it came from) and its ``instrument_id``. Another table that needs one of them joins ``obs_general`` on ``obs_general_id``. Storing each value in one place means the copies can never disagree.
@@ -402,31 +402,51 @@ There are two types of surface geometry tables. The first, called simply ``obs_s
     | timestamp      | timestamp    | NO   |     | CURRENT_TIMESTAMP |
     +----------------+--------------+------+-----+-------------------+
 
-There is also a series of tables, one per body, containing the surface geometry information for that body for each OPUS ID for which geometry information is available. These tables are named ``obs_surface_geometry__<body>``. Normally at most only a few such tables will contain rows for a given OPUS ID, since only a small number bodies are in the field of view:
+The second, ``obs_surface_geometry_target``, holds every body's surface geometry: one row per observation and body for which geometry information is available. Normally only a few bodies have a row for a given OPUS ID, since only a small number of bodies are in the field of view. Its schema starts:
 
 ::
 
-    mysql> SELECT COUNT(*) FROM obs_surface_geometry__enceladus WHERE opus_id='co-iss-n1460961193';
+    mysql> DESC obs_surface_geometry_target;
+    +---------------------------------------+-------------------+------+-----+---------+
+    | Field                                 | Type              | Null | Key | Default |
+    +---------------------------------------+-------------------+------+-----+---------+
+    | target_name                           | smallint unsigned | NO   | PRI | NULL    |
+    | obs_general_id                        | int unsigned      | NO   | PRI | NULL    |
+    | planetographic_latitude1              | double            | YES  |     | NULL    |
+    | planetographic_latitude2              | double            | YES  |     | NULL    |
+    | sub_solar_planetographic_latitude1    | double            | YES  |     | NULL    |
+    | sub_solar_planetographic_latitude2    | double            | YES  |     | NULL    |
+    | ...                                   |                   |      |     |         |
+    +---------------------------------------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``target_name``: The body, as the id of its value in the mult field of the ``Surface Geometry Target Selector`` (``obs_surface_geometry_name.target_name``, `The Encoding of Checkbox IDs and the mult Tables`_). The column's schema entry names that field with its ``mult_field`` key, since the column's own qualified name would name another one.
+* ``obs_general_id``: The observation, a foreign key onto ``obs_general.id``.
+* The geometry columns, one set for every body.
+
+The primary key is ``(target_name, obs_general_id)``, so one body's rows are next to each other in the table. A plain key on ``obs_general_id`` serves the foreign key, the lookups of one observation's bodies, and the deletion of a bundle's rows. Every other key starts with ``target_name``: a pair of displayed range columns that both carry a key in the template is one key over the body and both columns, and every other keyed column has a key over the body and the column. The keys are listed in the schema file, ``obs_surface_geometry_target.json``.
+
+Every other constraint category is one ``obs_*`` table, named after it: a category's search menu, its Details section and its API category are the table's, and ``table_names``, ``param_info`` and ``partables`` key their rows by the table's name. So that each body's surface geometry follows the same convention, the web application presents ``obs_surface_geometry_target`` as one category per body, under the name of a table that does not exist, ``obs_surface_geometry__<body>``, and one more category, ``obs_surface_geometry_name``, whose one field is the ``Surface Geometry Target Selector``. Every part of OPUS that works one table per category treats these names as tables, and nothing outside the database layer needs to know that the rows are in one table. ``table_names`` names the table and the body each category reads (`The table_names Table`_), and ``param_info`` and ``partables`` carry the category's rows. A statement reads a body's category as the table under the category's name, keeping to the body's rows:
+
+::
+
+    mysql> SELECT COUNT(*) FROM obs_general
+               JOIN obs_surface_geometry_target AS obs_surface_geometry__enceladus
+               ON obs_surface_geometry__enceladus.obs_general_id = obs_general.id
+               AND obs_surface_geometry__enceladus.target_name =
+                   (SELECT target_name FROM table_names
+                    WHERE table_name = 'obs_surface_geometry__enceladus')
+               WHERE obs_general.opus_id = 'co-iss-n1460961193';
     +----------+
     | COUNT(*) |
     +----------+
     |        1 |
     +----------+
 
-    mysql> SELECT COUNT(*) FROM obs_surface_geometry__titan WHERE opus_id='co-iss-n1460961193';
-    +----------+
-    | COUNT(*) |
-    +----------+
-    |        0 |
-    +----------+
+A body's category exists exactly when some observation has geometry for it: finalization writes its ``table_names``, ``param_info`` and ``partables`` rows from the bodies the table holds.
 
-The per-body tables are all made from one template. They and ``obs_surface_geometry_name``, which holds the ``Surface Geometry Target Selector`` field as one row per observation and body, are laid out differently from the other ``obs_*`` tables:
-
-* Each has an ``id`` primary key of its own, because it can have several rows per observation.
-* ``obs_general_id`` is an ordinary column with a plain key and a foreign key onto ``obs_general.id``.
-* Each also has ``opus_id``, ``bundle_id`` and ``instrument_id``, copied from ``obs_general``. That is why the query above can select by ``opus_id``.
-
-To remove a bundle, the import deletes these tables' rows by their own ``bundle_id``, and every other ``obs_*`` table's rows by joining ``obs_general``.
+To remove a bundle, the import deletes the table's rows by joining ``obs_general`` on ``obs_general_id``, as for every other ``obs_*`` table.
 
 The Special ``obs_files`` Table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -534,8 +554,8 @@ In order for OPUS to properly handle search and metadata display, it needs detai
 
 The fields are:
 
-* ``category_name``: The name of the ``obs_*`` table containing the metadata field.
-* ``name``: The name of the field in the above-referenced table.
+* ``category_name``: The name of the category containing the metadata field: an ``obs_*`` table, or a surface geometry category (`The Surface Geometry Tables`_), whose fields are the template's with the body's name in their labels and slugs.
+* ``name``: The name of the field's column in the category's table.
 * ``form_type``: Information about the field so that OPUS knows how to present it for searching and metadata display. The format is ``TYPE[precision][:units]``. The available ``TYPE``\ s are described in the section "Opus Metadata" above.
 
   * For numeric fields (``RANGE`` and ``LONG``), ``precision`` defines the precision of the value using ``%`` notation:
@@ -572,23 +592,27 @@ The ``table_names`` table contains the mapping between the ``obs_*`` SQL table n
 ::
 
     mysql> DESC table_names;
-    +------------+--------------+------+-----+-------------------+
-    | Field      | Type         | Null | Key | Default           |
-    +------------+--------------+------+-----+-------------------+
-    | table_name | char(60)     | NO   | MUL | NULL              |
-    | label      | char(60)     | NO   |     | NULL              |
-    | display    | char(1)      | NO   |     | Y                 |
-    | disp_order | int          | NO   |     | NULL              |
-    | id         | int unsigned | NO   | PRI | NULL              |
-    | timestamp  | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    +------------+--------------+------+-----+-------------------+
+    +----------------+-------------------+------+-----+-------------------+
+    | Field          | Type              | Null | Key | Default           |
+    +----------------+-------------------+------+-----+-------------------+
+    | table_name     | char(60)          | NO   | MUL | NULL              |
+    | label          | char(60)          | NO   |     | NULL              |
+    | display        | char(1)           | NO   |     | Y                 |
+    | disp_order     | int               | NO   |     | NULL              |
+    | physical_table | varchar(60)       | YES  |     | NULL              |
+    | target_name    | smallint unsigned | YES  |     | NULL              |
+    | id             | int unsigned      | NO   | PRI | NULL              |
+    | timestamp      | timestamp         | YES  |     | CURRENT_TIMESTAMP |
+    +----------------+-------------------+------+-----+-------------------+
 
 The fields are:
 
-* ``table_name``: The name of the SQL ``obs_*`` table.
+* ``table_name``: The name of the category: an SQL ``obs_*`` table, or a surface geometry category (`The Surface Geometry Tables`_).
 * ``label``: The English label, such as ``Occultation/Reflectance Profiles Constraints``.
 * ``display``: A flag ``Y`` or ``N`` indicating whether to display this table. Currently this is always ``Y``.
 * ``disp_order``: An integer indicating how the table should be sorted when displaying them.
+* ``physical_table``: The table a category's rows are in when the category is not a table of its own, ``obs_surface_geometry_target`` for every surface geometry category; ``NULL`` for a table.
+* ``target_name``: For a surface geometry body's category, the body's id in the selector's mult field, which the rows of the category hold in ``obs_surface_geometry_target.target_name``; ``NULL`` for every other category, the selector ``obs_surface_geometry_name`` among them, which reads every row of the table.
 * ``id``: A unique ID.
 * ``timestamp``: The date and time this row was last modified.
 

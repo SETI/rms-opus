@@ -31,13 +31,17 @@ from .conftest import make_context
 #: The mult column every stand-in observation fills.
 PLANET = {'field_name': 'planet', 'pi_form_type': 'GROUP'}
 
-#: The mult column of the stand-in target's table.
-TARGET = {'field_name': 'target_class', 'pi_form_type': 'GROUP'}
+#: The mult column of ``obs_surface_geometry_target``, whose field is the selector's.
+TARGET = {
+    'field_name': 'target_name',
+    'pi_form_type': 'GROUP',
+    'mult_field': 'obs_surface_geometry_name.target_name',
+}
 
 #: The schemas the pool looks a mult event's column up in.
 SCHEMAS = {
     'obs_general': [{'field_name': 'id'}, PLANET],
-    'obs_surface_geometry__<TARGET>': [{'field_name': 'id'}, TARGET],
+    'obs_surface_geometry_target': [{'field_name': 'obs_general_id'}, TARGET],
 }
 
 
@@ -75,7 +79,7 @@ class _FakeDB:
 #: The field ids the stand-in mult columns' values carry.
 MULT_FIELDS = {
     'obs_general.planet': MultFieldInfo(1, pinned=False),
-    'obs_surface_geometry__mimas.target_class': MultFieldInfo(2, pinned=False),
+    'obs_surface_geometry_name.target_name': MultFieldInfo(2, pinned=False),
 }
 
 
@@ -118,23 +122,20 @@ def _compute_row(
     emit(
         'obs_general',
         {'id': general_id, 'planet': planet, 'planets': deferred.json_list([planet, 'S RINGS'])},
-        None,
     )
     if index_row_num % 3 == 0:
-        target_id = import_util.next_table_id(ctx, 'obs_surface_geometry__mimas')
-        target_class = do_import_mult.update_mult_table(
+        target_name = do_import_mult.update_mult_table(
             ctx,
             'obs_surface_geometry__mimas',
-            'target_class',
+            'target_name',
             TARGET,
-            'MOON',
-            'Moon',
+            'MIMAS',
+            'Mimas',
             group_pin=1,
         )
         emit(
             'obs_surface_geometry__mimas',
-            {'id': target_id, 'obs_general_id': general_id, 'target_class': target_class},
-            'MIMAS',
+            {'obs_general_id': general_id, 'target_name': target_name},
         )
     emit(
         'obs_files',
@@ -143,7 +144,6 @@ def _compute_row(
             'obs_general_id': general_id,
             'instrument_id': planet,
         },
-        None,
     )
 
 
@@ -166,7 +166,7 @@ def _run(
             ctx,
             _Index(list(range(rows))),
             _compute_row,
-            lambda table, row, target: emitted.append((table, row, target)),
+            lambda table, row: emitted.append((table, row)),
             'TEST_0001_index.lbl',
         )
     return ctx, emitted, computed
@@ -192,7 +192,7 @@ def test_a_pool_computes_what_one_process_computes() -> None:
 def _warning_row(ctx: ImportContext, index: _Index, index_row_num: int, emit: Any) -> None:
     """Warn from one location on every row."""
     warnings.warn('every row warns from here', UserWarning, stacklevel=1)
-    emit('obs_general', {'row': index_row_num}, None)
+    emit('obs_general', {'row': index_row_num})
 
 
 def test_a_warning_shown_once_per_location_is_shown_once_across_workers() -> None:
@@ -221,7 +221,7 @@ def test_the_rows_are_computed_in_forked_workers() -> None:
     def which_process(ctx: ImportContext, index: _Index, index_row_num: int, emit: Any) -> None:
         # Long enough that one worker cannot take every task before the others start.
         time.sleep(0.02)
-        emit('obs_general', {'pid': os.getpid()}, None)
+        emit('obs_general', {'pid': os.getpid()})
 
     ctx = make_context()
     ctx.workers = 3
@@ -232,7 +232,7 @@ def test_the_rows_are_computed_in_forked_workers() -> None:
             ctx,
             _Index(list(range(40))),
             which_process,
-            lambda table, row, target: emitted.append(row['pid']),
+            lambda table, row: emitted.append(row['pid']),
             'TEST_0001_index.lbl',
         )
     assert computed
@@ -244,13 +244,14 @@ def test_the_rows_are_computed_in_forked_workers() -> None:
 def test_the_replayed_rows_hold_real_ids_and_no_placeholder() -> None:
     """Ids continue from the table's largest; mult ids are the serial ones; lists are JSON."""
     _ctx, rows, _ok = _run(workers=3)
-    general = [row for table, row, _target in rows if table == 'obs_general']
+    general = [row for table, row in rows if table == 'obs_general']
     assert [row['id'] for row in general] == list(range(101, 124))
     assert [row['planet'] for row in general[:5]] == [0, 1, 2, 3, 0]
     assert general[1]['planets'] == '[1, "S RINGS"]'
-    targets = [row for table, row, _target in rows if table == 'obs_surface_geometry__mimas']
-    assert [row['id'] for row in targets] == list(range(len(targets)))
-    for _table, row, _target in rows:
+    targets = [row for table, row in rows if table == 'obs_surface_geometry__mimas']
+    assert [row['obs_general_id'] for row in targets] == list(range(101, 124, 3))
+    assert {row['target_name'] for row in targets} == {0}
+    for _table, row in rows:
         assert not any(deferred.is_deferred(value) for value in row.values())
 
 
@@ -303,7 +304,7 @@ def test_a_platform_without_fork_computes_in_this_process(monkeypatch: pytest.Mo
     )
 
 
-def _drop_row(table_name: str, row: dict[str, Any], target: str | None) -> None:
+def _drop_row(table_name: str, row: dict[str, Any]) -> None:
     """Accept a replayed row and keep nothing."""
 
 
@@ -396,8 +397,8 @@ def test_a_replayed_pdsfile_log_call_reaches_the_class_logger_it_was_made_on() -
     assert (ctx.current_index_row_number, ctx.current_primary_filespec) == (3, 'DATA/X.LBL')
 
 
-def test_a_target_tables_mult_column_is_found_in_the_template() -> None:
-    """Every target's table shares the ``<TARGET>`` template's column definitions."""
+def test_a_surface_geometry_categorys_mult_column_is_found_in_its_table() -> None:
+    """A row computed under a body's category has ``obs_surface_geometry_target``'s columns."""
     columns = do_import_pool._ColumnLookup(SCHEMAS)
-    assert columns.find('obs_surface_geometry__mimas', 'target_class') is TARGET
+    assert columns.find('obs_surface_geometry__mimas', 'target_name') is TARGET
     assert columns.find('obs_general', 'planet') is PLANET

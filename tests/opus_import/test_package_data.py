@@ -69,7 +69,7 @@ def test_read_schema_for_table_ignores_case() -> None:
 
 
 def test_read_schema_for_table_substitutes_the_surface_geometry_target() -> None:
-    """A per-target surface geometry table gets the target substituted into its schema."""
+    """A surface geometry body's category reads as the template with the body filled in."""
     schema = import_util.read_schema_for_table(make_context(), 'obs_surface_geometry__saturn')
     assert schema is not None
     rendered = str(schema)

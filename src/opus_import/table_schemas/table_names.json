@@ -22,6 +22,18 @@
         "field_notnull": true
     },
     {
+        "field_name": "physical_table",
+        "field_type": "varchar60",
+        "field_default": null,
+        "comment": "The table a category's rows are in when it is not a table of its own; NULL when the category is its table."
+    },
+    {
+        "field_name": "target_name",
+        "field_type": "uint2",
+        "field_default": null,
+        "comment": "The id, in the surface geometry selector's mult field, of the body a surface geometry category reads; NULL for every other category."
+    },
+    {
         "field_name": "id",
         "field_type": "uint4",
         "field_autoincrement": true,

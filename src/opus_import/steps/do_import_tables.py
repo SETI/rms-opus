@@ -14,11 +14,6 @@ Scorched earth (`delete_all_opus_tables`) drops every table the import creates, 
 every table in the schema but Django's own: the ones `OPUS_TABLE_PREFIXES` and
 `OPUS_TABLE_NAMES` name.
 
-The ``obs_surface_geometry__<TARGET>`` tables are the exception throughout: there is one
-per target an observation mentions, so which of them exist is not known until the
-observations have been read, and they are created from a single template schema as the
-targets turn up.
-
 These are the table-preparation internals of `opus_import.steps.do_import`, not a step of
 their own.
 """
@@ -153,10 +148,6 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     Every other table goes before ``obs_general``, in chunks, each chunk one statement and
     its own transaction, so no single statement holds a whole large bundle's undo:
 
-    * The tables `opus_import.table_keys.BUNDLE_KEYED_TABLE_PREFIXES` names hold
-      ``bundle_id``, and are created with its key: their rows of the bundle are deleted
-      by ``bundle_id`` and a range of the table's own ``id``,
-      `ImportDBSuper.transaction_rows` rows at a time, read through that key.
     * Every other table's rows above ``obs_general``'s highest ``id`` are deleted. They
       are rows of observations whose ``obs_general`` rows were never loaded: a table is
       loaded once a transaction's worth of its rows wait, so a run that stopped partway
@@ -167,13 +158,14 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
       a time through ``obs_general``'s ``bundle_id`` key. For each chunk, every other
       table's rows of those observations are deleted by joining ``obs_general`` on
       ``obs_general_id``, which leads each such table's primary key -- for ``obs_files``
-      every file of each observation -- and then the chunk's ``obs_general`` rows.
+      every file of each observation -- or a key of its own on that column, which
+      ``obs_surface_geometry_target`` has because its primary key starts with
+      ``target_name``; and then the chunk's ``obs_general`` rows.
 
-    Every statement selects by ``bundle_id`` and a range of ids, or by a range of the
-    primary key, so none reads rows outside its range: a table a fresh import is still
-    loading has no other key to find a bundle's rows by. The connection checks foreign
-    keys while it deletes, so ``cart``'s cascade removes the cart rows that name the
-    bundle's observations.
+    Every statement selects by ``bundle_id`` and a range of ids, or by a range of
+    ``obs_general_id``, through a key a table is created with, so none reads rows outside
+    its range. The connection checks foreign keys while it deletes, so ``cart``'s cascade
+    removes the cart rows that name the bundle's observations.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -184,13 +176,8 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     db = ctx.db
     assert db is not None
     table_names = sorted(db.table_names(prefix=['obs_']))
-    children = [name for name in table_names if name != 'obs_general']
-    keyed = [name for name in children if table_keys.is_bundle_keyed_table(name)]
-    joined = [name for name in children if name not in keyed]
+    joined = [name for name in table_names if not table_keys.is_bundle_keyed_table(name)]
 
-    for table_name in keyed:
-        for first_id, last_id in _bundle_id_ranges(db, table_name, bundle_id):
-            _delete_id_range(db, table_name, bundle_id, first_id, last_id)
     if 'obs_general' not in table_names:
         return
     q = db.quote_identifier
@@ -284,10 +271,6 @@ def create_tables_for_import(
     is skipped, which is how a bundle ends up with only the tables its instrument has
     columns in.
 
-    The ``obs_surface_geometry__<TARGET>`` tables are deliberately **not** created: the
-    target names are not known until the observations have been read. Its template
-    schema is still returned, because the import needs the column names.
-
     Parameters:
         ctx: The import run's context, for the open database and the caches.
         bundle_id: The bundle whose tables to create.
@@ -320,25 +303,12 @@ def create_tables_for_import(
             table_name = table_name.replace('<INST>', instrument_id.lower())
         table_name = table_name.replace('<MISSION>', mission_name.lower())
 
-        if table_name.startswith('obs_surface_geometry__'):
-            # Note that we aren't replacing <TARGET> here because we don't know
-            # the target name! We're only using this schema to get field names,
-            # data source, source order, etc. The real use of the schema will be
-            # later when we finally create and insert into the correct table for
-            # each target.
-            table_schema = import_util.read_schema_for_table(ctx, 'obs_surface_geometry_target')
-        else:
-            table_schema = import_util.read_schema_for_table(ctx, table_name)
+        table_schema = import_util.read_schema_for_table(ctx, table_name)
         if table_schema is None:
             continue
 
         table_schemas[table_name] = table_schema
         table_names_in_order.append(table_name)
-
-        if table_name.startswith('obs_surface_geometry__'):
-            # Skip surface geo tables until they are needed
-            continue
-
         db.create_table(table_name, table_schema)
 
     return table_schemas, table_names_in_order

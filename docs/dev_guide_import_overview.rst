@@ -47,8 +47,11 @@ with them. These are the imported data.
 
 **The auxiliary tables** -- ``param_info``, ``table_names``, ``partables``,
 ``contexts`` and ``definitions``. These describe the search form rather than the
-observations, and only ``param_info`` is really derived from what was imported; the
-others come from the checked-in table schemas and configuration maps.
+observations. ``param_info``, ``table_names`` and ``partables`` are derived in part from
+what was imported: each has rows for every body ``obs_surface_geometry_target`` holds
+(:func:`~opus_import.surface_geometry.stored_targets`), and ``param_info`` has rows for
+the ``obs_`` tables the import created. Their other rows, and all of ``contexts`` and
+``definitions``, come from the checked-in table schemas and configuration maps.
 :ref:`dev_guide_database_schema` describes each of them.
 
 **The support tables** -- ``cart``, ``user_searches`` and ``search_results``. The web
@@ -300,8 +303,8 @@ function :func:`~opus_import.steps.do_import_index.import_index_row`. Each row s
 from the metadata as it stood before the first row, so a row's result depends on that row
 alone. Three things are deferred, in this order:
 
-* the ``obs_surface_geometry__<TARGET>`` tables, because which of them exist depends on
-  the targets the observations turn out to mention;
+* the ``obs_surface_geometry_target`` rows, one per body the observation has geometry
+  for, each computed under the body's category, ``obs_surface_geometry__<target>``;
 * ``obs_surface_geometry`` itself, because its target list is only known once those have
   been walked;
 * ``obs_files``, because it needs the ``obs_general`` and ``obs_pds`` rows and
@@ -365,8 +368,8 @@ For every other column it dispatches on the schema's ``data_source``:
 The method name is produced by
 :func:`~opus_import.steps.do_import_obs.field_function_name`, and that is the pipeline's
 **only** rule for finding a field method: ``field_`` plus the table name plus the column
-name, with every ``obs_surface_geometry__<TARGET>`` table folded onto
-``obs_surface_geometry_target`` because they are all built from one template. A method
+name, with every surface geometry category, ``obs_surface_geometry__<target>``, folded
+onto ``obs_surface_geometry_target``, the table its rows are written to. A method
 whose name that rule cannot produce is a method that is never called.
 
 The computed value is then checked against what the schema declares, and **validation
@@ -415,13 +418,11 @@ database server.
 ``obs_`` table has an ``obs_general_id`` naming the row this one hangs off. In most of
 them that is the whole primary key, since such a table holds at most one row per
 observation; ``obs_files`` adds ``file_number``, the file's position among its
-observation's files; and the surface geometry name table, which holds one row per
-observation and body, and the per-target tables number their rows in an ``id`` of their
-own. The pipeline
-assigns them all: a ``MAX_ID`` column gets one more than the largest id used in that
-table so far, an ``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this
-observation already produced, and ``file_number`` counts from 1 in the order the files
-are written.
+observation's files; and ``obs_surface_geometry_target``, which holds one row per
+observation and body, adds ``target_name``, the body. The pipeline assigns the ids: a
+``MAX_ID`` column gets one more than the largest id used in that table so far, an
+``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this observation
+already produced, and ``file_number`` counts from 1 in the order the files are written.
 
 The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, the
 largest id the table holds. Each bundle is deleted before it is written, so its new rows

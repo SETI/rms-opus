@@ -211,15 +211,8 @@ This is the bundle recipe plus the configuration data that says the instrument e
 Adding a surface geometry target
 --------------------------------
 
-There is nothing to do. The ``obs_surface_geometry__<TARGET>`` tables are created from
-one template as the targets are discovered, their ``table_names`` rows and their
-``partables`` triggers are generated from the tables that exist, and their search
-parameters are named by the slug form of the target name.
-:ref:`dev_guide_import_obs_target_template` describes the mechanism.
-
-The one thing that is **not** automatic: adding the target to ``TARGET_NAME_INFO`` if it
-is not already there, since an unknown name never reaches the surface geometry code at
-all.
+Add the target to ``TARGET_NAME_INFO`` if it is not already there: a name missing from
+it never reaches the surface geometry code.
 
 .. _dev_guide_extending_unit:
 

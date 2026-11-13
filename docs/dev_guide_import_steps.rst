@@ -51,8 +51,7 @@ The order, and what forces it
   and an import in the same invocation can still finish the registry first.
 * **The keys come right after the import**, and the foreign keys after every other key,
   because a fresh import loads its tables without them; the duplicate step follows,
-  because it finds the copies through the key on ``opus_id`` and deletes them from the
-  surface geometry name and per-target tables through their key on ``obs_general_id``.
+  because it finds the copies through the key on ``opus_id``.
 * **The mult step comes after the duplicate step and before the auxiliary tables**: the
   duplicate step's deletions can leave a value that no observation holds, and
   ``partables`` reads the ``mult`` rows.
@@ -300,11 +299,11 @@ here. It then adds them in three phases:
    connections (:meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`), as
    :mod:`opus_import.cli` resolved it against the ceiling
    (:ref:`dev_guide_import_running_parallelism`) -- ``"max"`` is the ceiling itself. The
-   list includes a plain key on every foreign-key column no other key leads -- the
-   ``obs_general_id`` of the surface geometry name and per-target tables, since every
-   other table's primary key leads with it -- so the index each foreign key needs
-   already exists, and adding the foreign key does not have to create it, one table at a
-   time.
+   list includes a plain key on every foreign-key column no other key leads, so the
+   index each foreign key needs already exists, and adding the foreign key does not have
+   to create it, one table at a time. No packaged schema has such a column: every
+   observation table's ``obs_general_id`` leads its primary key or, in
+   ``obs_surface_geometry_target``, a plain key the table is created with.
 2. **The foreign keys**, one at a time with ``foreign_key_checks`` off, after every
    plain key: with the checks off, adding a foreign key is an in-place change that does
    not read the rows already there, and each one takes an exclusive lock on
@@ -344,8 +343,7 @@ opus_import.steps.do_duplicate_ids
 
 Keeps one copy of each OPUS ID. It has no option of its own: ``--finalize`` runs it,
 after the keys, and skips it when adding the keys failed, since it finds the copies by
-``obs_general.opus_id`` and deletes them from the surface geometry name and per-target
-tables by ``obs_general_id``, which only those keys index. OPUS IDs are compared as the
+``obs_general.opus_id``, which only those keys index. OPUS IDs are compared as the
 column's collation compares them, so two that differ only in case are the same ID.
 
 Two bundles can produce the same OPUS ID -- Galileo SSI does, and so can a calibrated
@@ -465,8 +463,15 @@ the rows into ``param_info__new``, and :func:`~opus_import.steps.do_param_info.d
 is the step, which rebuilds the table by swap
 (:ref:`dev_guide_import_steps_table_swap`).
 
-One row per column that carries a ``pi_category_name``, read out of the **packaged
-schema** of every ``obs_`` table in the schema. A column with no ``param_info`` row is
+One row per entry that describes a category's field, read out of the **packaged
+schema** of every category in order of name (:func:`~opus_import.surface_geometry.category_names`):
+every ``obs_`` table in the schema but ``obs_surface_geometry_target``, and in its place
+the surface geometry selector category, ``obs_surface_geometry_name``, and one category
+per body the table holds (:func:`~opus_import.surface_geometry.stored_targets`). A
+category's entries are those whose ``pi_category_name`` is the category: a body's are the
+template's with the body's name filled in, and the selector's is the template's
+``target_name``. The order is the order of the rows' ids, so the bodies' rows come before
+the selector's, as their names sort before it. A column with no ``param_info`` row is
 invisible to users no matter what the import wrote into it. The row copies the ``pi_*``
 keys across, and three of them are read without a default --
 ``pi_disp_order``, ``pi_display`` and ``pi_display_results`` -- so a column that carries
@@ -523,14 +528,17 @@ A row is ``(trigger_tab, trigger_col, trigger_val, partable)``. The rows are
      - One per entry of ``INST_HOST_ID_TO_MISSION_ID``, triggering on
        ``obs_general.inst_host_id``.
    * - Surface geometry targets
-     - One per ``obs_surface_geometry__*`` table that exists, triggering on
-       ``obs_surface_geometry_name.target_name``.
+     - One per body ``obs_surface_geometry_target`` holds
+       (:func:`~opus_import.surface_geometry.stored_targets`), triggering on
+       ``obs_surface_geometry_name.target_name`` and revealing the body's category,
+       ``obs_surface_geometry__<target>``.
 
-The first three groups store a ``mult`` row's id as the trigger value, because that is
-what the corresponding ``obs_general`` column holds; the surface geometry group stores
-the **target name itself**, because the web side compares the user's search text to it
-directly rather than running a database lookup. That asymmetry is the one thing to know
-before adding a trigger of a new kind.
+Every group stores a ``mult`` row's id as the trigger value, because that is what the
+column it triggers on holds. The web side tests the two kinds differently: an
+``obs_general`` trigger fires when every observation the search finds holds its id, and
+a surface geometry trigger fires when its body is one of the bodies the search selects,
+whether the search names the body by its label or by its value. That difference is the
+one thing to know before adding a trigger of a new kind.
 
 Because the first three groups are generated, a mission or instrument that was never
 imported still gets a row.
@@ -550,18 +558,23 @@ Its public functions:
 
 :func:`~opus_import.steps.do_table_names.build_table_names_rows` is the authority on
 what a category is called and what order the categories come in. It is a pure function
--- it takes a "does this table exist?" callable and the list of surface geometry tables
--- so that the documentation build and the tests can ask the same question without a
-database.
+-- it takes a "does this table exist?" callable and the surface geometry bodies -- so
+that the documentation build and the tests can ask the same question without a
+database. :func:`~opus_import.steps.do_table_names.fill_table_names` reads the bodies
+from the rows ``obs_surface_geometry_target`` holds
+(:func:`~opus_import.surface_geometry.stored_targets`), the same derivation
+``param_info`` and ``partables`` use, so the three agree; the code-only deploy rebuilds
+all three on the served schema the same way.
 
 **The set of tables is written out by hand there, not derived from the schemas**, with
 two generated groups. The order it emits is:
 
 1. ``obs_general`` -- "General Constraints", written unconditionally.
-2. ``obs_pds``, ``obs_type_image``, ``obs_wavelength``, ``obs_profile``,
-   ``obs_surface_geometry_name``, ``obs_surface_geometry``, each if it exists.
-3. One per ``obs_surface_geometry__<TARGET>`` table, labeled from the decoded target
-   name.
+2. ``obs_pds``, ``obs_type_image``, ``obs_wavelength``, ``obs_profile``, each if it
+   exists; the selector category ``obs_surface_geometry_name`` if
+   ``obs_surface_geometry_target`` exists; ``obs_surface_geometry`` if it exists.
+3. One category per surface geometry body, ``obs_surface_geometry__<target>``, in order
+   of encoded name, labeled from the decoded name.
 4. ``obs_ring_geometry``, if it exists.
 5. One per mission table that exists, **generated** by looping
    ``MISSION_ID_TO_MISSION_TABLE_SFX``.
@@ -571,6 +584,10 @@ two generated groups. The order it emits is:
 
 ``obs_files`` is deliberately absent: it holds one row per file rather than per
 observation, and users never search it.
+
+A surface geometry category's row names the table its rows are in, ``physical_table``,
+and a body's category the body's id, ``target_name``, which is how the web application
+reads the category (:ref:`dev_guide_database_schema`).
 
 The consequence for :ref:`dev_guide_import_extending`: **a new mission or instrument
 needs no change here**, because groups 5 and 6 generate its row already, and adding one
@@ -644,7 +661,11 @@ The checks, in this order:
     ``obs_general_id``, anything beginning ``d_``, any column that has a ``d_``
     companion, ``opus_id`` outside ``obs_general``, anything beginning ``mult_``,
     ``bundle_id`` outside ``obs_pds``, ``instrument_id`` outside ``obs_general``, and
-    the whole of ``obs_files``. It then looks for a duplicated
+    the whole of ``obs_files``. A column is looked up under its table's name, except in
+    ``obs_surface_geometry_target``: its ``target_name`` under the selector category,
+    ``obs_surface_geometry_name``, and every other column under the first body's
+    category, which describes them as every body's does; with no body there is none,
+    and those columns are not checked. It then looks for a duplicated
     ``(category_name, disp_order)`` among displayed parameters and for a duplicated
     ``slug``. Both duplicate scans use a subquery that skips its first match, so they
     report a value shared by three or more rows and stay silent about one shared by
@@ -653,16 +674,17 @@ The checks, in this order:
 :func:`~opus_import.steps.do_validate.validate_nulls`
     Reports a column declared to allow NULLs in which no NULL was found, at **info**
     level rather than as an error: it is an observation about the schema rather than a
-    fault in the data. The ``obs_surface_geometry__*`` tables are skipped, because they
-    all come from one template.
+    fault in the data. ``obs_surface_geometry_target`` is counted once, over every body's
+    rows.
 
 :func:`~opus_import.steps.do_validate.validate_min_max_order`
     For every ``X1``/``X2`` pair, reports rows where ``X2 < X1``, listing the first
     hundred OPUS IDs. A ``LONG`` field is skipped, because a longitude range wraps and
     its low end legitimately exceeds its high end, and so is a column whose
     ``param_info`` form type is NULL. A missing ``X2``, an absent
-    ``param_info`` row, or more than one, is an error. A table other than
-    ``obs_general`` names a bad row by the OPUS ID of the ``obs_general`` row it joins.
+    ``param_info`` row, or more than one, is an error; the row is looked up under the
+    category ``validate_param_info`` uses. A table other than ``obs_general`` names a bad
+    row by the OPUS ID of the ``obs_general`` row it joins.
 
 :func:`~opus_import.steps.do_validate.validate_filter_wavelength_consistency`
     For every table with a ``filter_name`` or ``combined_filter`` column, checks that
@@ -790,12 +812,7 @@ Its functions:
     Creates the mult tables if the schema lacks them
     (:func:`~opus_import.mult_fields.create_mult_tables`), then every table a bundle
     needs that the schema lacks. It returns the schemas it read and the table names in
-    order, which is what the index importer walks. **The
-    ``obs_surface_geometry__<TARGET>`` tables are deliberately not created here**: the
-    target names are not known until the observations have been read, so the index
-    importer's row sink creates each from the template just before it loads the first
-    rows for that target. The template schema is still returned, because the import needs
-    the column names.
+    order, which is what the index importer walks.
 
 .. _dev_guide_import_steps_scorched_earth:
 
@@ -821,13 +838,7 @@ Its functions:
 
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`
     Deletes one bundle from every observation table, every other table before
-    ``obs_general``, in chunks. First the tables
-    :data:`~opus_import.table_keys.BUNDLE_KEYED_TABLE_PREFIXES` names -- the surface
-    geometry name and per-target tables, which hold ``bundle_id`` and are created with
-    its key -- are emptied of the bundle: their ids for it are read ``[import]
-    transaction_rows`` at a time through that key, and each chunk goes in one statement
-    selecting by ``bundle_id`` and a range of the table's own ``id``. Next every other
-    table loses its rows above ``obs_general``'s highest ``id``: rows of observations
+    ``obs_general``, in chunks. First every other table loses its rows above ``obs_general``'s highest ``id``: rows of observations
     whose ``obs_general`` rows were never loaded, which a run that stopped partway
     through an index leaves, since each table is loaded once a transaction's worth of
     its rows wait; the bundle's ids, handed out again from ``obs_general``'s highest,
@@ -837,7 +848,9 @@ Its functions:
     statement per table that joins ``obs_general`` on ``obs_general_id``
     (:meth:`~opus_import.importdb.super.ImportDBSuper.delete_joined_rows`), selecting
     by the bundle and the chunk's range of ids -- for ``obs_files``, every file of each
-    observation -- followed by the chunk's ``obs_general`` rows. Each statement is its
+    observation, and for ``obs_surface_geometry_target``, every body's row of each,
+    through the key on ``obs_general_id`` it is created with -- followed by the chunk's
+    ``obs_general`` rows. Each statement is its
     own transaction, so none holds a whole large bundle's undo, and none reads rows
     outside its range -- which matters on a fresh import, whose tables have no other
     key to find a bundle's rows by until finalization. The connection checks foreign
@@ -885,18 +898,18 @@ Importing every observation one primary index file describes.
     Where the import's own process sends each finished row, by table. A table's rows are
     loaded as soon as ``[import] transaction_rows`` of them are waiting
     (:meth:`~opus_import.importdb.super.ImportDBSuper.bulk_load_rows`), so the import
-    holds at most that many rows of a table at once rather than a whole index's; a
-    surface geometry target's table is created from the template just before its first
-    load. :meth:`~opus_import.steps.do_import_index.TableRowSink.finish` loads what is
-    still waiting, table by table in the order walked, the targets' tables in the order
-    of their target names. Tables therefore load in no fixed order relative to one
+    holds at most that many rows of a table at once rather than a whole index's. A
+    surface geometry row arrives under its body's category and waits with
+    ``obs_surface_geometry_target``'s rows
+    (:func:`~opus_import.surface_geometry.physical_table`).
+    :meth:`~opus_import.steps.do_import_index.TableRowSink.finish` loads what is still
+    waiting, table by table in the order walked. Tables therefore load in no fixed order relative to one
     another during the index, which the foreign keys tolerate because a bundle loads with
     their checks off (:ref:`dev_guide_import_steps_do_import`). An index that fails
     partway is taken back by
     :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes every
-    table's rows from the first one the sink loaded: by ``id`` in the tables that number
-    their own rows (``obs_general`` and the surface geometry name and per-target tables)
-    and by ``obs_general_id`` in every other table, with ``obs_general`` after the
+    table's rows from the first one the sink loaded: by ``id`` in ``obs_general``, which
+    numbers its own rows, and by ``obs_general_id`` in every other table, with ``obs_general`` after the
     tables whose rows refer to it. Ids are handed out from each table's highest and the
     import's process is the only writer, so those are exactly the index's rows. None may
     be left: the index's mult values are never written, so a row of it left behind would

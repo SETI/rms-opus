@@ -44,7 +44,6 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any, Literal
 
-from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
 from django.db import DatabaseError, connection
@@ -63,6 +62,7 @@ from opus_app.apps.search.views import (
     get_search_id,
     parse_order_slug,
     search_results_join_condition,
+    selector_label,
     url_to_search_params,
 )
 from opus_app.apps.tools import sql_builder
@@ -95,12 +95,15 @@ from opus_app.apps.tools.app_utils import (
 from opus_app.apps.tools.db_utils import (
     lookup_pretty_value_for_mult,
     lookup_pretty_value_for_mult_list,
+    observation_has_body,
     query_table_for_opus_id,
+    resolve_category,
 )
 from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_products
 from opus_app.apps.tools.import_constants import (
     collates_as_key,
     displayed_table_names,
+    mult_table,
     partables,
     table_names,
     table_names_collate_as_keys,
@@ -606,6 +609,9 @@ def get_metadata(
             log.error('get_metadata: Unknown category name in "%r"', cats)
             raise Http400Error(http400_unknown_category(request))
 
+    # The bodies the observation has rows of, per table the bodies' categories share
+    targets: dict[str, frozenset[int]] = {}
+
     # Now find all params and their values in each of these tables
     for table in all_tables:
         table_label = table.label
@@ -643,6 +649,13 @@ def get_metadata(
             data_all_info[table_label] = all_info
 
             try:
+                category = resolve_category(table_name)
+                # A body's category is asked about only when the observation has rows
+                # of the body, which one query per shared table answers.
+                if category.target_name is not None and not observation_has_body(
+                    category, opus_id, targets
+                ):
+                    continue
                 results = query_table_for_opus_id(table_name, opus_id)
             except LookupError:  # pragma: no cover - configuration error
                 log.exception(
@@ -1082,6 +1095,8 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
         raise Http400Error(http400_missing_opus_id(request))
 
     all_categories: list[dict[str, Any]] = []
+    # The bodies the observation has rows of, per table the bodies' categories share
+    targets: dict[str, frozenset[int]] = {}
     for tbl in table_names():
         table_name = tbl.table_name
         if table_name == 'obs_surface_geometry_name':
@@ -1090,13 +1105,17 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
             continue
 
         try:
-            results = query_table_for_opus_id(table_name, opus_id)
+            category = resolve_category(table_name)
+            if category.target_name is not None:
+                found = observation_has_body(category, opus_id, targets)
+            else:
+                found = query_table_for_opus_id(table_name, opus_id).exists()
         except LookupError:  # pragma: no cover - configuration error
             log.exception(
                 'api_get_categories_for_opus_id: Unable to find ' + 'table %r', table_name
             )
             continue
-        if results.exists():
+        if found:
             cat = {'table_name': table_name, 'label': tbl.label}
             all_categories.append(cat)
 
@@ -1295,7 +1314,11 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
 ################################################################################
 
 
-def _results_column_select(column_names: list[str]) -> sql_builder.Select:
+def _results_column_select(
+    column_names: list[str],
+    selector_columns: dict[int, tuple[str, str]],
+    selections: dict[str, Any] | None,
+) -> sql_builder.Select:
     """Return a Select over the requested "table.column" names, in order.
 
     The result rows are unpacked positionally by the caller, so the column order
@@ -1303,9 +1326,22 @@ def _results_column_select(column_names: list[str]) -> sql_builder.Select:
 
     Parameters:
         column_names: The columns to select, each written `<table>.<column>`.
+        selector_columns: The positions in `column_names` that name a selector field,
+            each with its category and field, which are selected as
+            `opus_app.apps.search.views.selector_label` rather than as a column.
+        selections: The search's constraints, or None for the cart, which
+            `selector_label` reads.
+
+    Returns:
+        A Select with one column per name in `column_names`, in that order, and no FROM
+        clause; the caller adds the tables and joins the columns read.
     """
     select = sql_builder.Select()
-    for qualified_name in column_names:
+    for position, qualified_name in enumerate(column_names):
+        if position in selector_columns:
+            category_name, field_name = selector_columns[position]
+            select.add_column(selector_label(category_name, field_name, selections))
+            continue
         table_name, _, column_name = qualified_name.partition('.')
         select.add_column(sql_builder.column(column_name, table_name))
     return select
@@ -1458,6 +1494,9 @@ def get_search_results_chunk(
 
     form_type_formats: list[tuple[ParamInfo, str | None, str | None, str | None, str | None]] = []
     column_names: list[str] = []
+    # The positions of the selector fields among the columns: an observation can have
+    # several of a selector's rows, so each is one value (selector_label), not a join.
+    selector_columns: dict[int, tuple[str, str]] = {}
     tables: set[str] = set()
     mult_tables: set[tuple[str, bool, str, str]] = set()
     for slug in cols_to_slug_list(cols):
@@ -1475,8 +1514,15 @@ def get_search_results_chunk(
             # This isn't needed for correctness, just cleanliness.
             table = 'obs_general'
             column = 'obs_general.opus_id'
-        tables.add(table)
         (form_type, form_type_format, form_type_unit_id) = parse_form_type(pi.form_type)
+        if form_type in settings.MULT_FORM_TYPES and resolve_category(table).is_selector:
+            selector_columns[len(column_names)] = (table, pi.name)
+            column_names.append(column)
+            form_type_formats.append(
+                (pi, form_type, form_type_format, form_type_unit_id, desired_units)
+            )
+            continue
+        tables.add(table)
         if form_type in settings.MULT_FORM_TYPES and form_type != 'MULTIGROUP':
             # For a mult field, we will have to join in its mult rows
             # and put their label here
@@ -1594,7 +1640,7 @@ def get_search_results_chunk(
             )
             return error_return(500, http500_search_cache_failed(request))
 
-        select = _results_column_select(column_names)
+        select = _results_column_select(column_names, selector_columns, selections)
         from_source = select.add_from('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
@@ -1683,7 +1729,7 @@ def get_search_results_chunk(
         assert order_mult_tables is not None
         assert order_obs_tables is not None
 
-        select = _results_column_select(column_names)
+        select = _results_column_select(column_names, selector_columns, None)
         from_source = select.add_from('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
@@ -1901,6 +1947,10 @@ def _get_metadata_by_slugs(
         raise Http404(http404_unknown_format(fmt, request))
 
 
+#: The selector field whose selected bodies trigger their surface geometry categories.
+_SURFACE_GEOMETRY_SELECTOR = 'obs_surface_geometry_name.target_name'
+
+
 def get_triggered_tables(
     selections: dict[str, list[Any]], extras: dict[str, Any], api_code: int | None = None
 ) -> list[str] | None:
@@ -1913,8 +1963,10 @@ def get_triggered_tables(
 
     Returns:
         The names of the triggered tables, in the order they are displayed in, or
-        the base tables sorted by name when there are no selections. It is None when
-        the search's results could not be built.
+        the base tables sorted by name when there are no selections. A surface
+        geometry body's category is among them when the body is one of the bodies the
+        search selects, named by its label or its value. It is None when the search's
+        results could not be built.
     """
     if not selections:
         return sorted(settings.BASE_TABLES)
@@ -1941,6 +1993,14 @@ def get_triggered_tables(
 
     triggered_tables = settings.BASE_TABLES[:]
 
+    # A surface geometry trigger holds its body's mult id, and a selected body may be
+    # named by its label or its value, so both sides compare as ids.
+    selected_bodies: set[int] = set()
+    if _SURFACE_GEOMETRY_SELECTOR in selections:
+        selected_bodies = set(
+            mult_table(_SURFACE_GEOMETRY_SELECTOR).ids_for(selections[_SURFACE_GEOMETRY_SELECTOR])
+        )
+
     # Now see if any more tables are triggered from query
     queries: dict[str, list[Any]] = {}
     for partable in partables():
@@ -1961,16 +2021,10 @@ def get_triggered_tables(
             continue  # Already triggered, no need to check
 
         if trigger_tab == 'obs_surface_geometry_name':
-            # Surface geometry has multiple targets per observation
-            # so we just want to know if our val is in the result
-            # (not the only result)
-            if (
-                'obs_surface_geometry_name.target_name' in selections
-                and trigger_val.upper()
-                == selections['obs_surface_geometry_name.target_name'][0].upper()
-            ):
-                # If the selected surfacegeo target has no result, we
-                # still want to have the related menu item displayed.
+            # An observation has geometry for many bodies, so a body's category is
+            # triggered by the body being selected rather than by the search's
+            # results; a selected body with no results still has its menu item.
+            if int(trigger_val) in selected_bodies:
                 triggered_tables.append(partable_name)
         else:
             if trigger_tab + trigger_col in queries:
@@ -1985,13 +2039,14 @@ def get_triggered_tables(
                 # and surface geometry (which is handled separately above), so
                 # only the obs_general arm of the join condition is reachable
                 # from here.
-                trigger_model = apps.get_model('search', ''.join(trigger_tab.title().split('_')))
-                trigger_column = trigger_model._meta.get_field(trigger_col).column
+                trigger = resolve_category(trigger_tab)
+                trigger_column = trigger.model._meta.get_field(trigger_col).column
                 select = sql_builder.Select(distinct=True)
                 select.add_column(sql_builder.column(trigger_column, trigger_tab))
-                select.add_from(trigger_tab)
+                select.add_from(trigger.source)
                 select.add_from(sql_builder.search_results_source(search_id))
                 select.add_where(search_results_join_condition(trigger_tab))
+                trigger.restrict(select)
                 sql, sql_params = select.build()
                 log.debug('get_triggered_tables SQL: %r *** PARAMS %r', sql, str(sql_params))
                 cursor = connection.cursor()

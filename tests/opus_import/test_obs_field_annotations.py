@@ -45,7 +45,7 @@ import numpy as np
 import pytest
 
 import opus_support
-from opus_import import config_data, import_util, obs
+from opus_import import config_data, import_util, obs, surface_geometry
 from opus_import.config_bundle_info import BUNDLE_INFO
 from opus_import.obs.field_types import MultField, as_int
 from opus_import.obs.obs_base import ObsBase
@@ -191,11 +191,11 @@ def _leaf_classes() -> list[type[ObsBase]]:
 def _tables_for(instrument: ObsBase) -> list[str]:
     """Return the tables an instrument's bundle populates, as the import names them.
 
-    The per-target surface geometry table keeps its real name, ``obs_surface_geometry__``
-    plus a target, rather than being normalized here. Both the schema lookup and the
-    method name are then resolved through the pipeline's own helpers, so the mapping
-    from that name back to ``obs_surface_geometry_target`` is something this test
-    exercises rather than reimplements.
+    ``obs_surface_geometry_target`` is named, as the import computes its rows, by a body's
+    category, ``obs_surface_geometry__`` plus a target, rather than by the table. Both the
+    schema lookup and the method name are then resolved through the pipeline's own
+    helpers, so the mapping from that name back to ``obs_surface_geometry_target`` is
+    something this test exercises rather than reimplements.
     """
     inst_id = instrument.instrument_id
     mission_name = config_data.MISSION_ID_TO_MISSION_TABLE_SFX[instrument.mission_id]
@@ -205,7 +205,8 @@ def _tables_for(instrument: ObsBase) -> list[str]:
         if inst_id is not None:
             table = table.replace('<INST>', inst_id.lower())
         table = table.replace('<MISSION>', mission_name.lower())
-        table = table.replace('<TARGET>', 'saturn')
+        if table == surface_geometry.SURFACE_GEOMETRY_TABLE:
+            table = surface_geometry.target_category('saturn')
         if _schema_for(table) is not None:
             tables.append(table)
     return tables
@@ -865,12 +866,12 @@ def _is_mult(value: Any) -> bool:
 #: or a field method changes, and read a change as something to explain rather than to
 #: paper over.
 _EXPECTED_RETURNS: dict[str, tuple[int, int]] = {
-    'COISS': (226, 192),
-    'GOSSI': (211, 175),
-    'HSTWFPC2': (220, 160),
-    'NHLORRI': (205, 171),
-    'VGISS': (214, 173),
-    'eso-la_silla.1m04': (200, 162),
+    'COISS': (220, 186),
+    'GOSSI': (205, 169),
+    'HSTWFPC2': (214, 154),
+    'NHLORRI': (199, 165),
+    'VGISS': (208, 167),
+    'eso-la_silla.1m04': (194, 156),
 }
 
 
@@ -903,8 +904,8 @@ def _drive_fixture(
                 continue
             # Matched through the pipeline's own rule rather than by prefix. A prefix
             # also matches a longer table's name -- `obs_surface_geometry` is a prefix
-            # of `obs_surface_geometry_name` and of `obs_surface_geometry_target` --
-            # which drove 66 methods twice, each time under the wrong table.
+            # of `obs_surface_geometry_target` -- which drove its methods twice, once
+            # under the wrong table.
             if name != field_function_name(table, column['field_name']):
                 continue
             # `_metadata` is `dict | None` on ObsBase; `_instrument_for` always

@@ -349,6 +349,20 @@ class Subquery:
         return f'({sql}) AS {quote_identifier(self.alias)}', params
 
 
+def scalar_subquery(select: 'Select') -> Expr:
+    """Return a `Select` of one column and at most one row as a value, `(SELECT ...)`.
+
+    Parameters:
+        select: The statement, which may name the outer statement's tables.
+
+    Returns:
+        An `Expr` whose SQL is the statement's in parentheses and whose parameters are
+        the statement's, in order.
+    """
+    sql, params = select.build()
+    return Expr(f'({sql})', params)
+
+
 def search_results_source(search_id: int) -> Subquery:
     """Return one search's rows of ``search_results``, as a source to join.
 
@@ -396,15 +410,24 @@ class AliasedTable:
     """A table joined under an alias, rendered `<table> AS <alias>`.
 
     The ``mult`` table is joined once for each mult column a statement reads, each time
-    under its own alias.
+    under its own alias, and ``obs_surface_geometry_target`` once for each surface geometry
+    category, under the category's name.
+
+    `ignore_for_group_by` names keys the server is not to use for the statement's
+    grouping, rendered as MySQL's `IGNORE INDEX FOR GROUP BY (...)` after the alias.
     """
 
     table: str
     alias: str
+    ignore_for_group_by: tuple[str, ...] = ()
 
     def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this source as it appears in a FROM clause."""
-        return f'{quote_identifier(self.table)} AS {quote_identifier(self.alias)}', []
+        sql = f'{quote_identifier(self.table)} AS {quote_identifier(self.alias)}'
+        if self.ignore_for_group_by:
+            keys = ','.join(quote_identifier(key) for key in self.ignore_for_group_by)
+            sql += f' IGNORE INDEX FOR GROUP BY ({keys})'
+        return sql, []
 
 
 TableSource = str | Subquery | JSONTable | AliasedTable
@@ -417,6 +440,31 @@ def _render_source(source: TableSource) -> tuple[str, list[Any]]:
     if isinstance(source, str):
         return quote_identifier(source), []
     return source.render()
+
+
+def exists(source: TableSource, where: Expr) -> Expr:
+    """Return a condition that holds when a source has a row meeting another condition.
+
+    Renders `EXISTS (SELECT 1 FROM <source> WHERE <where>)`. A condition on a table that
+    can hold several rows of one observation is put this way rather than as a join, which
+    would repeat the observation once for each row it matched.
+
+    Parameters:
+        source: The table, or other `TableSource`, the rows are looked for in.
+        where: The condition a row must meet, which may name the outer statement's
+            tables.
+
+    Returns:
+        An `Expr` whose parameters are the source's followed by the condition's, in the
+        order their placeholders appear.
+    """
+    source_sql, params = _render_source(source)
+    # The source is rendered from identifiers validated by quote_identifier, and the
+    # condition's own values are %s placeholders in where.params.
+    return Expr(
+        f'EXISTS (SELECT 1 FROM {source_sql} WHERE {where.sql})',  # nosec B608
+        params + list(where.params),
+    )
 
 
 @dataclass(frozen=True)

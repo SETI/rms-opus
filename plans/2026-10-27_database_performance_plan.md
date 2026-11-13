@@ -5892,6 +5892,179 @@ Nothing above this line is rewritten by an executor.
     on PR-13's database and 31.3 ms on this head's, with the same modules imported
     during it.
 
+### 2026-11-10, PR-15 (written against this file at 466ca7f7)
+
+- The branch is PR-14's, since the section builds on its single `mult` table and the
+  `mult_field` key.
+- **The application already resolves the selector's field by `mult_field`'s name.** The
+  key on `obs_surface_geometry_target.target_name` names
+  `obs_surface_geometry_name.target_name`, which is the selector's
+  `ParamInfo.param_qualified_name()`, so `mult_field_id`, `mult_table`, the widget and
+  `add_mult_table_joins` find the field with no change; the import gives the column that
+  field through `import_util.mult_field_name`. PR-14's note on the key is resolved by the
+  names agreeing rather than by teaching the application the key.
+- `do_update_mult_info` needed no change: PR-14 made it read
+  `mult_fields.packaged_mult_columns`, which honors the key. Nor did
+  `finalize_mult`, which reads each table's mult columns from its schema. The section's
+  "tries several splits" is older than PR-14. `tests/opus_import/test_do_import_index.py`
+  and `test_do_update_mult_info.py` name no per-target table and are unchanged.
+- **The resolved target names the category.** A row's category is
+  `obs_surface_geometry__` plus `table_name_for_sfc_target` of the target the raw name
+  resolves to (`ObsSurfaceGeometryTarget.surface_geo_target`, the field method's own
+  resolution), so an unknown body under `--ignore-errors` is `obs_surface_geometry__other`,
+  the category `stored_targets` derives from its `OTHER` value, where the per-target
+  table was named from the raw name. Every resolved name round-trips (no
+  `TARGET_NAME_MAPPING` value is a key of it; a unit test reads every target's fields).
+- The row sink takes the category and maps it to the table
+  (`surface_geometry.physical_table`); the pool's `RowEmitter` and `Capture.row` lose
+  the target argument, which only created tables. `TableRowSink.finish` loads
+  `obs_surface_geometry_target` in its place, empty when the index had no geometry.
+- **Keys.** `table_keys.BUNDLE_KEYED_TABLE_PREFIXES` goes; `is_bundle_keyed_table` is
+  `obs_general` alone. The keep set holds `obs_general`'s `bundle_id` key and, in any
+  other observation table, a plain key on `obs_general_id` alone, which only the surface
+  geometry table declares. The pair rule gives seven pair keys (the section's list) and
+  a `(target_name, <col>)` key for every other keyed column, a pair's `X2` among them
+  (the rule excepts only `X1`).
+- **The selector is joined when a request names it as a results column or a sort
+  order**, all its rows, as `obs_surface_geometry_name` was joined before; the section
+  says it is never joined. Its search constraint is the `EXISTS` and asks for no join,
+  so a search never repeats an observation; skipping the join outright would turn
+  `cols=surfacegeometrytargetname` (which `get_param_info_by_slug` accepts, display or
+  not) into a database error where it answers today.
+- `sql_builder` gains `exists(source, where)`; the aliased source is PR-14's
+  `AliasedTable`. `db_utils.resolve_category` returns a `ResolvedCategory` with `source`,
+  `is_selector` and `target_condition()`; the model is looked up per call (Django's
+  registry) and the `table_names` mapping is cached per process. `get_metadata` and
+  `api_get_categories_for_opus_id` share `observation_has_body`, one
+  `targets_for_opus_id` query per shared table.
+- **Validation's representative category** is `MIN(category_name)` of the
+  `obs_surface_geometry__` rows `param_info` holds; with none (an empty table) the
+  geometry columns are not checked. `validate_nulls` counts the table once.
+- `param_info`'s categories are listed by `surface_geometry.category_names` and each
+  category's rows are the schema entries whose `pi_category_name` is the category, which
+  puts the selector's row where `obs_surface_geometry_name` sorted. The template's
+  `target_name` entry is placed first so `definitions` keeps its order.
+- The docs extension builds the same table as before: rendered from this head and from
+  PR-14's head, the API guide's field table is byte-identical.
+- The new-target fixture renames the `PAN` rows of `VGISS_6109`'s moon summary (one
+  observation, `vg-iss-1-s-c3450302`) to `YMIR`, through a `rename_body` recipe
+  operation (`import_tests/fixtures/negative/new_target.tsv`); `import_tests/test_new_target.py`
+  imports and finalizes the bundle, checks the body's `table_names` and `partables` rows,
+  and drives `api/categories`, the section's latitude search and a sub-solar latitude
+  search that finds the observation through `opus_manage shell -c` (the venv's
+  installed command) with the run's `OPUS_CONFIG`.
+- `tests/opus_import/fixtures/obs_field_values.json` is regenerated: per mission the six
+  `opus_id`/`bundle_id`/`instrument_id` methods of the two tables go and the
+  `target_name` method moves unchanged to the template; `_EXPECTED_RETURNS` falls by six
+  returned and six non-null per mission.
+- `SCHEMA_VERSION` is 8.
+- The template's `id` (`MAX_ID`) goes, so `obs_general` is the only table the import
+  numbers; `read_schema_for_table` loses its unused `replace` parameter, and
+  `read_schema_for_existing_table` reads every table as its own schema.
+- `models.py` is edited: `create_opus_models.sh`, run unchanged against the local
+  integration database imported with this head, gives exactly the
+  `ObsSurfaceGeometryTarget` (with `pk = models.CompositePrimaryKey('target_name',
+  'obs_general_id')` and the annotated `ForeignKey`) and `TableNames` classes written; the
+  other differences are older than this PR (nullability, column order,
+  `ObsFiles.instrument_id`'s width, and `ZZ` classes for tables the file lacks). The file
+  falls from 10,485 lines and 144 classes to 968 and 43 (`wc -l`, `grep -c '^class '`);
+  the local integration schema from 94 tables to 45 (`information_schema.tables`,
+  PR-14's local database against this one). The script needed no change.
+- The import goldens change in the surface geometry tables (the 25 per-target files and
+  `obs_surface_geometry_name.tsv` give way to `obs_surface_geometry_target.tsv`), in
+  `table_names` (the two columns, every other column unchanged) and in
+  `schema_version`, nothing else. The one table holds the 209 rows the per-target files
+  held, each with the same values (compared row by row, keyed by body and observation).
+- **No integration golden changed**: the suite passes against the local integration
+  database imported with this head. Against PR-14's local database, `table_names`'
+  four columns, `param_info` (ids included), `partables` and `definitions` are
+  byte-identical, `obs_surface_geometry_target` holds as many rows as
+  `obs_surface_geometry_name` did and one distinct body per per-target table, and
+  Saturn's rows match `obs_surface_geometry__saturn`'s.
+- The integration suite's three per-model surface geometry checks give way to two: every
+  distinct `target_name` has its `table_names`, `partables` and equally many
+  `param_info` rows, and the selector category names the table and no body. A new test
+  in `integration_tests/apps_db_tests/test_search_results.py` selects two bodies one
+  observation has and asserts the observation is one result and the count is the
+  observations; it fails when the selector's `EXISTS` is replaced by the join.
+- Results: the gates pass (`run-all-checks.sh`, 2,780 unit tests); the import suite 169
+  passed and 3 skipped; the integration suite 1,586 passed against the local database.
+  The two new-target tests fail when finalization writes no body's `table_names` row.
+
+### 2026-11-10, PR-15 (written against this file at 6dfff149)
+
+- An independent review compared requests against PR-14's and PR-15's local databases
+  and found two regressions, each fixed on the branch.
+- **The selector as a sort order or a results column.** Sorting by
+  `surfacegeometrytargetname` while the search constrains it answered 500 (a duplicate
+  key in `search_results`): the constraint was the `EXISTS`, but the sort still joined
+  the selector's table with no body restriction. As a results column it repeated each
+  observation once per body, on PR-14 as well. The orchestrator's ruling (2026-11-10),
+  which supersedes this PR's earlier note that kept the join: the selector, as a column
+  or a sort, never multiplies rows. It is `search.views.selector_label`, a subquery
+  correlated with `obs_general` giving `MIN(mult.label)` -- the alphabetically first
+  label, which is what a mult field shows and sorts by, so the column and the sort agree
+  -- over the bodies the search selects when it constrains the field and over every body
+  otherwise (the cart included), NULL for an observation with none.
+  `create_order_by_terms` takes the search's selections for it, and the results page's
+  column select takes the selector's positions. The answers that change, each now one
+  row per observation: `api/data`-shaped requests (and the Details tab's column
+  requests through the same page builder) naming `surfacegeometrytargetname` in `cols`,
+  which repeated rows; sorts by it with no constraint on it or with several selected
+  bodies, which answered 500 on PR-14. A cart sorted by it uses the same label, over
+  every body; no test drives that request.
+- **`api_string_search_choices` read a body's category as a table** and answered 500
+  for a body's slug (`SURFACEGEO<target>_<field>`); it reads `resolve_category`'s source
+  now, kept to the body's rows. `ResolvedCategory.restrict(select)` adds a body's
+  condition to a statement, and every site that read `target_condition()` through an
+  `if` uses it, the trigger query included. A sweep of `src/opus_app` for `add_from(`,
+  `add_join(`, `table_model_from_name`, `apps.get_model` and `obs_surface_geometry__`
+  finds no other site that names a category's table itself.
+- `integration_tests/test_api/test_surface_geometry_api.py` pins the regression URL
+  (one row per observation, in order), the column case (`limit` rows, one value each),
+  a two-body sort and an unconstrained sort, each checking every row's label against
+  the database, and a body field's string choices. Its setup removes the stored
+  searches so each search is built by the code under test; all five fail against the
+  previous commit's code. `sql_builder.scalar_subquery` is new.
+- No golden changed. Results: the gates pass (2,783 unit tests); the import suite 169
+  passed and 3 skipped; the integration suite 1,591 passed against the local database,
+  which the fix did not need imported again.
+- PR-15's measurement (2026-11-11, test scale; before at 1e55f88a, PR-14's head, after at
+  2d01553f). Three fixture imports a side alternated A B B A A B, one test-scale import a
+  side, A B, each side serving its own schema, three web runs a side alternated, then
+  `bench_db --dump-queries` once a side. The target is structural, and is met: one
+  surface geometry table, one model, and the new-target test passing.
+  - The schema's tables 94 against 45; the import's `Com_create_table` 94 against 45 and
+    `Com_alter_table` 157 against 59; `models.py` 10,485 lines and 144 classes against
+    968 and 43. The schema's data 784.5 MB against 746.3 MB (-4.9%) and indexes 398.0 MB
+    against 366.7 MB (-7.9%); the surface geometry data 51.9 MB in the per-body tables
+    against 30.0 MB in the one table, and its indexes 111.2 MB against 94.7 MB.
+  - The test-scale import was 330.4 s against 307.4 s (-7.0%).
+  - The categories call: app-cold p50 94.0 ms against 22.4 ms (-76.2%), db-cold 213.6 ms
+    against 45.2 ms (-78.8%), warm 16.0 ms against 5.8 ms. The gunicorn workers' peak RSS
+    about 12.8% lower in every scenario (135.2 MB against 117.9 MB for the empty search,
+    app-cold). The empty fan-out's db-cold buffer-pool reads 539 against 409.
+  - The surface geometry search (Saturn, planetographic latitude): db-cold p50 279.2 ms
+    against 214.0 ms (-23.3%; the section's own guard, held); its plan examines 45,460
+    rows against 30,630 (-32.6%) and takes 24.9 ms against 16.2 ms. The plan reads
+    Saturn's rows through the primary key's `target_name` prefix and filters the
+    latitudes, since `planetographic_latitude1` and `planetographic_latitude2` carry no
+    key in the template, before or after this PR; the section's "one index range on
+    `(target_name, col)`" holds for the keyed columns.
+  - **One guard regressed:** that search's app-cold p50, 123.0 ms against 166.6 ms
+    (+35.4%, floor 20.7%), with buffer-pool reads 456 against 1,063. The app-cold pass
+    runs every scenario on a server not restarted since the db-cold pass's last
+    scenario, so a scenario reads from disk whatever the scenarios before it in that
+    pass have not; Saturn's rows in the one table were not among them, where the
+    per-body table's mostly were. With the buffer pool warm (Django's test client
+    against the two local integration databases, the search's stored results cleared
+    first) the same search took 260.9 ms against 106.4 ms, the `INSERT ... SELECT` 241 ms
+    against 85 ms, with the same count.
+  - The orchestrator's ruling (2026-11-11): the regression is reported and explained,
+    not a stop-and-report, since the section's own guard on this search (db-cold)
+    improved and the warm search is faster; it is flagged in the PR's description for
+    the user's review before merge.
+
 ### 2026-11-12, PR-14 (written against this file at 1e55f88a)
 
 - `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is

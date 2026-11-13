@@ -23,8 +23,7 @@ TABLES_TO_POPULATE = [
     'obs_files',
     'obs_ring_geometry',
     'obs_surface_geometry',
-    'obs_surface_geometry_name',
-    'obs_surface_geometry__<TARGET>',
+    'obs_surface_geometry_target',
 ]
 
 # Also modify populate_obs_general_preview_images as necessary

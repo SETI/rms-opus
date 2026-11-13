@@ -53,15 +53,14 @@ DEFAULT_ON_DELETE: OnDelete = 'restrict'
 #: needs: the observation tables the bundle steps write, and the mult tables.
 KEY_FILTERED_TABLE_PREFIXES = ('obs_', 'mult_')
 
-#: The columns the per-bundle delete selects a table's rows by, each read through a plain
+#: The column the per-bundle delete selects ``obs_general``'s rows by, read through a plain
 #: key whose only column it is.
-DELETE_READ_COLUMNS = ('bundle_id',)
+BUNDLE_DELETE_COLUMN = 'bundle_id'
 
-#: The prefixes of the observation tables besides ``obs_general`` that the per-bundle
-#: delete selects rows from by ``bundle_id``: the surface geometry name table and the
-#: per-target tables. It reaches every other observation table's rows by joining
-#: ``obs_general`` on ``obs_general_id``, through the primary key that column leads.
-BUNDLE_KEYED_TABLE_PREFIXES = ('obs_surface_geometry_name', 'obs_surface_geometry__')
+#: The column the per-bundle delete reaches every other observation table's rows by,
+#: joining ``obs_general`` on it; a table whose primary key does not start with it is
+#: read through a plain key whose only column it is.
+OBSERVATION_DELETE_COLUMN = 'obs_general_id'
 
 
 def is_bundle_keyed_table(table_name: str) -> bool:
@@ -71,10 +70,10 @@ def is_bundle_keyed_table(table_name: str) -> bool:
         table_name: The table's raw name.
 
     Returns:
-        True for ``obs_general`` and the tables `BUNDLE_KEYED_TABLE_PREFIXES` names.
+        True for ``obs_general`` alone: the delete reaches every other observation
+        table's rows by joining ``obs_general`` on ``obs_general_id``.
     """
-    name = table_name.lower()
-    return name == 'obs_general' or name.startswith(BUNDLE_KEYED_TABLE_PREFIXES)
+    return table_name.lower() == 'obs_general'
 
 
 @dataclass(frozen=True)
@@ -238,17 +237,18 @@ def _delete_keys(table_name: str, keys: Sequence[TableKey]) -> list[TableKey]:
         keys: Its declared keys.
 
     Returns:
-        For a table the delete selects rows from by ``bundle_id``
-        (`is_bundle_keyed_table`), each plain key whose only column is one the delete
-        selects rows by; for any other table, none.
+        For ``obs_general`` (`is_bundle_keyed_table`), each plain key whose only column is
+        `BUNDLE_DELETE_COLUMN`; for any other observation table, each plain key whose only
+        column is `OBSERVATION_DELETE_COLUMN`, which a table declares when its primary key
+        does not start with that column; for any other table, none.
     """
-    if not is_bundle_keyed_table(table_name):
+    if is_bundle_keyed_table(table_name):
+        column = BUNDLE_DELETE_COLUMN
+    elif table_name.lower().startswith('obs_'):
+        column = OBSERVATION_DELETE_COLUMN
+    else:
         return []
-    return [
-        key
-        for key in keys
-        if key.kind == 'key' and len(key.columns) == 1 and key.columns[0] in DELETE_READ_COLUMNS
-    ]
+    return [key for key in keys if key.kind == 'key' and key.columns == (column,)]
 
 
 def create_time_keys(table_name: str, schema: Sequence[SchemaColumn]) -> list[TableKey]:

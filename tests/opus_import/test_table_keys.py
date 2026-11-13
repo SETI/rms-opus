@@ -3,9 +3,10 @@
 Every packaged schema is read: for an observation or mult table the keys created with
 the table and the keys finalization adds must partition what the schema declares, and
 the first set must hold every key the per-bundle delete reads, or each bundle's delete
-would scan its tables whole. The delete reads ``obs_general`` and the surface geometry
-tables through their ``bundle_id`` keys, and every other observation table through the
-primary key ``obs_general_id`` leads.
+would scan its tables whole. The delete reads ``obs_general`` through its ``bundle_id``
+key, and every other observation table through a key ``obs_general_id`` leads: the
+primary key, or for ``obs_surface_geometry_target``, whose primary key starts with
+``target_name``, a plain key of its own.
 """
 
 from __future__ import annotations
@@ -24,23 +25,8 @@ TABLE_SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
 #: Every packaged table schema.
 _SCHEMAS = sorted(TABLE_SCHEMA_DIR.glob('*.json'))
 
-#: The ones whose tables a fresh import creates with only the keys a load needs. The
-#: surface geometry template stands for every per-target table.
+#: The ones whose tables a fresh import creates with only the keys a load needs.
 _FILTERED = [path for path in _SCHEMAS if table_keys.is_key_filtered_table(path.stem)]
-
-
-def _table_name(path: Path) -> str:
-    """Return the table a schema file describes, naming the templates as their tables.
-
-    Parameters:
-        path: The schema file.
-
-    Returns:
-        The raw table name.
-    """
-    if path.stem == 'obs_surface_geometry_target':
-        return 'obs_surface_geometry__titan'
-    return path.stem
 
 
 def _schema(path: Path) -> list[dict[str, object]]:
@@ -59,7 +45,7 @@ def _schema(path: Path) -> list[dict[str, object]]:
 def test_every_observation_schema_is_among_the_filtered_ones() -> None:
     """The observation schemas this suite reads are the ones the filter selects."""
     assert len(_FILTERED) > 1
-    assert all(table_keys.is_key_filtered_table(_table_name(path)) for path in _FILTERED)
+    assert all(table_keys.is_key_filtered_table(path.stem) for path in _FILTERED)
 
 
 @pytest.mark.parametrize('path', _FILTERED, ids=lambda path: path.stem)
@@ -67,10 +53,10 @@ def test_the_two_key_sets_partition_what_the_schema_declares(path: Path) -> None
     """Every declared key is created with the table or added by finalization, never both.
 
     Finalization also adds a key the schema does not declare: a plain key on a foreign
-    key's column where no declared key leads with that column (the surface geometry
-    tables' ``obs_general_id``). No other undeclared key appears.
+    key's column where no declared key leads with that column. No other undeclared key
+    appears.
     """
-    table = _table_name(path)
+    table = path.stem
     schema = _schema(path)
     declared = table_keys.declared_keys(schema)
     kept = table_keys.create_time_keys(table, schema)
@@ -91,12 +77,13 @@ def test_the_two_key_sets_partition_what_the_schema_declares(path: Path) -> None
 def test_the_table_is_created_with_the_keys_the_delete_reads(path: Path) -> None:
     """The delete finds a bundle's rows through a key every table is created with.
 
-    A table the delete selects by ``bundle_id`` keeps that key; any other observation
-    table is reached by joining ``obs_general`` on ``obs_general_id``, which leads its
-    primary key, and keeps no ``bundle_id`` key even where it declares one (``obs_pds``).
-    Primary and unique keys are always kept, and foreign keys never.
+    ``obs_general``, which the delete selects by ``bundle_id``, keeps that key; any other
+    observation table is reached by joining ``obs_general`` on ``obs_general_id``, which
+    leads its primary key or a plain key it keeps, and keeps no ``bundle_id`` key even
+    where it declares one (``obs_pds``). Primary and unique keys are always kept, and
+    foreign keys never.
     """
-    table = _table_name(path)
+    table = path.stem
     schema = _schema(path)
     kept = table_keys.create_time_keys(table, schema)
     declared = table_keys.declared_keys(schema)
@@ -105,8 +92,9 @@ def test_the_table_is_created_with_the_keys_the_delete_reads(path: Path) -> None
         assert bundle_key in kept
     elif table.startswith('obs_'):
         assert bundle_key not in kept
-        (primary,) = [key for key in kept if key.kind == 'primary']
-        assert primary.columns[0] == 'obs_general_id'
+        assert any(
+            key.columns[0] == 'obs_general_id' for key in kept if key.kind in ('primary', 'key')
+        )
     for key in declared:
         if key.kind in ('primary', 'unique'):
             assert key in kept
@@ -116,7 +104,7 @@ def test_the_table_is_created_with_the_keys_the_delete_reads(path: Path) -> None
 @pytest.mark.parametrize('path', _FILTERED, ids=lambda path: path.stem)
 def test_foreign_keys_come_after_the_plain_keys_they_rely_on(path: Path) -> None:
     """Finalization's list ends with the foreign keys, each column led by a plain key first."""
-    table = _table_name(path)
+    table = path.stem
     schema = _schema(path)
     added = table_keys.add_secondary_indexes(table, schema)
     kinds = [key.kind for key in added]
@@ -148,6 +136,27 @@ def test_a_child_is_keyed_on_obs_general_id_and_gains_its_foreign_key_on_it() ->
     assert [key for key in added if key.kind == 'foreign'] == [
         TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)))
     ]
+
+
+def test_the_surface_geometry_table_is_keyed_on_the_body_then_the_observation() -> None:
+    """Created with its primary key and the delete's key; finalization adds the rest.
+
+    Every key the template's columns declare leads with ``target_name``, as one body's
+    rows are contiguous, and a pair of displayed range columns that both carry a key is
+    one key over both.
+    """
+    schema = _schema(TABLE_SCHEMA_DIR / 'obs_surface_geometry_target.json')
+    table = 'obs_surface_geometry_target'
+    assert table_keys.create_time_keys(table, schema) == [
+        TableKey('primary', ('target_name', 'obs_general_id')),
+        TableKey('key', ('obs_general_id',)),
+    ]
+    added = table_keys.add_secondary_indexes(table, schema)
+    assert added[-1] == TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)))
+    assert all(key.columns[0] == 'target_name' for key in added[:-1])
+    assert TableKey('key', ('target_name', 'center_distance1', 'center_distance2')) in added
+    assert TableKey('key', ('target_name', 'center_distance1')) not in added
+    assert all(column.get('field_key') in (None, False) for column in schema)
 
 
 def test_obs_files_is_keyed_on_its_observation_and_file_number() -> None:

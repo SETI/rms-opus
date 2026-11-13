@@ -393,9 +393,9 @@ def field_function_name(table_name: str, field_name: str) -> str:
     rule here changes what that test checks.
 
     Parameters:
-        table_name: The table being filled. Every ``obs_surface_geometry__<TARGET>``
-            table shares the methods named for ``obs_surface_geometry_target``, since
-            they are all built from that one template.
+        table_name: The table being filled, or the surface geometry category,
+            ``obs_surface_geometry__<target>``, a row of ``obs_surface_geometry_target`` is
+            computed under; every category shares the methods named for that table.
         field_name: The column being computed.
 
     Returns:
@@ -416,9 +416,9 @@ def import_run_field_function(
 ) -> tuple[bool, Any]:
     """Call the obs class method that computes one column's value.
 
-    The method is named ``field_<table>_<column>``, and every
-    ``obs_surface_geometry__<TARGET>`` table shares the one named for
-    ``obs_surface_geometry_target``, since they are all built from that template.
+    The method is named ``field_<table>_<column>``, and every surface geometry category,
+    ``obs_surface_geometry__<target>``, shares the one named for
+    ``obs_surface_geometry_target``, the table its rows are written to.
 
     Parameters:
         ctx: The import run's context, for the logger.

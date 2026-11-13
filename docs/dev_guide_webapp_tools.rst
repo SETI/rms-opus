@@ -394,7 +394,18 @@ The statement layer
     elsewhere, such as by :func:`~opus_app.apps.tools.sql_builder.mult_join`.
 
 :class:`~opus_app.apps.tools.sql_builder.AliasedTable`
-    A table joined under an alias, rendered ``<table> AS <alias>``.
+    A table joined under an alias, rendered ``<table> AS <alias>``: ``mult`` under a
+    column's alias, and ``obs_surface_geometry_target`` under a surface geometry
+    category's name.
+
+:func:`~opus_app.apps.tools.sql_builder.exists`
+    ``EXISTS (SELECT 1 FROM <source> WHERE <condition>)``, the form a condition on a
+    table holding several rows of one observation takes, so that the observation is not
+    repeated once for each row a join would match.
+
+:func:`~opus_app.apps.tools.sql_builder.scalar_subquery`
+    A :class:`~opus_app.apps.tools.sql_builder.Select` of one column and at most one row
+    as a value, ``(SELECT ...)``, which may name the outer statement's tables.
 
 :func:`~opus_app.apps.tools.sql_builder.mult_join`
     The join that reads one mult column's labels:
@@ -447,16 +458,34 @@ concurrent second write into a replacement instead of a duplicate.
 opus_app.apps.tools.db_utils
 ----------------------------
 
-Model lookup by table name, and the labels behind the mult ids.
+Model lookup by category name, and the labels behind the mult ids.
 
 :func:`~opus_app.apps.tools.db_utils.table_model_from_name`
     ``obs_pds`` becomes ``ObsPds``, looked up in the ``search`` app. The return has no
     static type, because the class depends on the name.
 
+:func:`~opus_app.apps.tools.db_utils.resolve_category`
+    Where a ``param_info`` category's rows are, as a
+    :class:`~opus_app.apps.tools.db_utils.ResolvedCategory`: the table's model, the table,
+    the alias a statement names the table by, which is the category's name, and the
+    surface geometry body's id the rows hold, or None. A category whose ``table_names``
+    row names a ``physical_table`` -- every surface geometry category -- is that table
+    under the category's name, with the row's ``target_name``; any other is the table of
+    its name. Every view that reads a category as a source, a join or a model resolves it
+    here; :meth:`~opus_app.apps.tools.db_utils.ResolvedCategory.restrict` adds a body's
+    condition to a statement that reads the category. The ``table_names`` rows come from
+    the worker's copy (:mod:`~opus_app.apps.tools.import_constants`).
+
 :func:`~opus_app.apps.tools.db_utils.query_table_for_opus_id`
-    One table's rows for one observation, filtering on ``opus_id`` for ``obs_general``,
-    which holds it, and on ``obs_general``'s ``opus_id`` through the ``obs_general``
-    relation for every other table.
+    One category's rows for one observation, filtering on ``opus_id`` for
+    ``obs_general``, which holds it, and on ``obs_general``'s ``opus_id`` through the
+    ``obs_general`` relation for every other table, and for a surface geometry body's
+    category on the body's id as well.
+
+:func:`~opus_app.apps.tools.db_utils.targets_for_opus_id` and :func:`~opus_app.apps.tools.db_utils.observation_has_body`
+    The surface geometry bodies one observation has rows of, in one query, which answers
+    for every body's category at once; the second asks it once per table and answers
+    for one body's category from the result.
 
 :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult` and :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult_list`
     A mult column stores the id of a ``mult`` row, so displaying it means a second

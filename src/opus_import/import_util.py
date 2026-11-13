@@ -579,7 +579,7 @@ def mult_field_name(table_name: str, field_name: str, schema_entry: dict[str, An
 
 
 def encode_target_name(target_name: str) -> str:
-    """Return a target name in the form a surface geometry table name uses.
+    """Return a target name in the form a surface geometry category name uses.
 
     Parameters:
         target_name: The target name as a PDS label spells it.
@@ -596,7 +596,7 @@ def encode_target_name(target_name: str) -> str:
 
 
 def decode_target_name(target_name: str) -> str:
-    """Return the target name an encoded surface geometry table name was made from.
+    """Return the target name an encoded surface geometry category name was made from.
 
     Parameters:
         target_name: The encoded name.
@@ -611,7 +611,7 @@ def decode_target_name(target_name: str) -> str:
 
 
 def table_name_for_sfc_target(target_name: str) -> str:
-    """Return the encoded target name a surface geometry table is named for.
+    """Return the encoded target name a surface geometry category is named for.
 
     Parameters:
         target_name: The target name as a PDS label spells it.
@@ -665,16 +665,16 @@ def table_schema_files(pattern: str) -> list[Traversable]:
     )
 
 
-def read_schema_for_table(
-    ctx: ImportContext, table_name: str, replace: Sequence[tuple[str, str]] | None = None
-) -> TableSchema | None:
+def read_schema_for_table(ctx: ImportContext, table_name: str) -> TableSchema | None:
     """Read the packaged JSON schema that defines one OPUS table.
+
+    A surface geometry category, ``obs_surface_geometry__<target>``, reads as the
+    ``obs_surface_geometry_target`` template with the target's name in its labels and
+    slugs.
 
     Parameters:
         ctx: The import run's context, for the logger.
-        table_name: The table, matched without regard to case.
-        replace: Text substitutions to apply to the schema before parsing it, as
-            ``(from, to)`` pairs.
+        table_name: The table or category, matched without regard to case.
 
     Returns:
         The column definitions in the order the schema lists them, or None if there is
@@ -685,8 +685,8 @@ def read_schema_for_table(
             read is logged first, since the parser's own message names no file.
     """
     table_name = table_name.lower()
+    replace: list[tuple[str, str]] = []
     if table_name.startswith('obs_surface_geometry__'):
-        assert not replace
         target_name = table_name.replace('obs_surface_geometry__', '')
         table_name = 'obs_surface_geometry_target'
         replace = [
@@ -698,9 +698,8 @@ def read_schema_for_table(
         return None
     contents = schema_file.read_text(encoding='utf-8')
     try:
-        if replace:
-            for r in replace:
-                contents = contents.replace(r[0], r[1])
+        for old, new in replace:
+            contents = contents.replace(old, new)
         schema: TableSchema = json.loads(contents)
         return schema
     except json.decoder.JSONDecodeError:
@@ -713,12 +712,11 @@ def read_schema_for_existing_table(ctx: ImportContext, table_name: str) -> Table
 
     Parameters:
         ctx: The import run's context, for the logger.
-        table_name: The table's raw name, such as ``obs_instrument_coiss``,
-            ``obs_surface_geometry__titan`` or ``mult_field``.
+        table_name: The table's raw name, such as ``obs_instrument_coiss`` or
+            ``mult_field``.
 
     Returns:
-        The table's own schema, or the surface geometry template with the target filled
-        in; None for a table no packaged schema describes.
+        The table's own schema; None for a table no packaged schema describes.
     """
     return read_schema_for_table(ctx, table_name)
 

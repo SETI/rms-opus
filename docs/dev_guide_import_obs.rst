@@ -81,8 +81,7 @@ The shape of it
         class ObsWavelength { obs_wavelength }
         class ObsRingGeometry { obs_ring_geometry }
         class ObsSurfaceGeometry { obs_surface_geometry }
-        class ObsSurfaceGeometryName { obs_surface_geometry_name }
-        class ObsSurfaceGeometryTarget { obs_surface_geometry__TARGET }
+        class ObsSurfaceGeometryTarget { obs_surface_geometry_target }
         class ObsCommonPDS3 {
             <<abstract>>
             combines the PDS3 table modules
@@ -101,7 +100,6 @@ The shape of it
         ObsBase <|-- ObsWavelength
         ObsBase <|-- ObsRingGeometry
         ObsBase <|-- ObsSurfaceGeometry
-        ObsBase <|-- ObsSurfaceGeometryName
         ObsBase <|-- ObsSurfaceGeometryTarget
         ObsGeneral <|-- ObsGeneralPDS3
         ObsBasePDS3 <|-- ObsGeneralPDS3
@@ -122,7 +120,6 @@ The shape of it
         ObsProfilePDS3 <|-- ObsCommonPDS3
         ObsRingGeometry <|-- ObsCommonPDS3
         ObsSurfaceGeometry <|-- ObsCommonPDS3
-        ObsSurfaceGeometryName <|-- ObsCommonPDS3
         ObsSurfaceGeometryTarget <|-- ObsCommonPDS3
         ObsGeneralPDS4 <|-- ObsCommonPDS4
         ObsPdsPDS4 <|-- ObsCommonPDS4
@@ -131,7 +128,6 @@ The shape of it
         ObsProfilePDS4 <|-- ObsCommonPDS4
         ObsRingGeometry <|-- ObsCommonPDS4
         ObsSurfaceGeometry <|-- ObsCommonPDS4
-        ObsSurfaceGeometryName <|-- ObsCommonPDS4
         ObsSurfaceGeometryTarget <|-- ObsCommonPDS4
 
 The diagram shows every class in this chapter and every direct base of each, and it pans
@@ -202,7 +198,7 @@ Reading a Cassini ISS volume's order off the tree gives:
     ObsProfilePDS3, ObsProfile      one per table, in the order ObsCommonPDS3 lists them
     ObsBasePDS3             the PDS3 base, released here by the last table module
                             above that derives from it
-    ObsRingGeometry, ObsSurfaceGeometry, ObsSurfaceGeometryName,
+    ObsRingGeometry, ObsSurfaceGeometry,
     ObsSurfaceGeometryTarget        the remaining table modules
     ObsCassiniCommon        the mission's PDS-version-independent half
     ObsBase                 the root
@@ -683,10 +679,10 @@ Two things in it are not a plain read:
   column. :func:`~opus_import.steps.do_import_obs.import_observation_table` calls it
   unless ``--ignore-geo-mismatch``.
 
-The three surface geometry modules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The two surface geometry modules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Surface geometry is three tables, because it answers three different questions.
+Surface geometry is two tables, because it answers two different questions.
 
 :class:`~opus_import.obs.obs_surface_geometry.ObsSurfaceGeometry` -- ``obs_surface_geometry``
     **Which bodies the observation covered**, as one comma-separated list of display
@@ -697,14 +693,14 @@ Surface geometry is three tables, because it answers three different questions.
     it is fine for the surface geometry to carry the central planet when the inventory
     does not.
 
-:class:`~opus_import.obs.obs_surface_geometry_name.ObsSurfaceGeometryName` -- ``obs_surface_geometry_name``
-    **The one body a per-target geometry row belongs to.** It has one field method of
-    substance, which reads ``surface_geo_target_name`` off the metadata, resolves it, and
-    builds a mult carrying the target's display name and its planet group. This is the
-    many-to-one mapping of rows to OPUS IDs.
-
-:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` -- ``obs_surface_geometry__<TARGET>``
-    **Where the observation fell on one body's surface**: field methods read the surface
+:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` -- ``obs_surface_geometry_target``
+    **Which body a row is for, and where the observation fell on its surface.** The
+    ``target_name`` method reads ``surface_geo_target_name`` off the metadata, resolves
+    it, and builds a value of the selector's mult field carrying the target's display
+    name and its planet group;
+    :meth:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.surface_geo_target`
+    is the same resolution, which the driver uses to choose the row's category. The
+    other field methods read the surface
     geometry summary row for the current target, grouped by planetographic and
     planetocentric latitude, west longitude, distance and resolution, lighting geometry,
     pole and limb, image geometry and timing. The eight **east longitude** columns are
@@ -717,33 +713,41 @@ Surface geometry is three tables, because it answers three different questions.
 
 .. _dev_guide_import_obs_target_template:
 
-One class, many tables
-~~~~~~~~~~~~~~~~~~~~~~
+Surface geometry categories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is exactly one
-:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` class and
-one template schema, and the ``<TARGET>`` placeholder is substituted at three separate
-points. This is the mechanism to understand before touching surface geometry:
+:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` computes
+the rows of ``obs_surface_geometry_target``, and each body's rows are presented as a
+category of its own, ``obs_surface_geometry__<target>``
+(:mod:`opus_import.surface_geometry`). The category names are table names that do not
+exist: every other constraint category is an ``obs_*`` table of that name, and naming each
+body's rows as if they were one keeps that convention for the search menus, the Details
+page, the API and the ``table_names``, ``param_info`` and ``partables`` rows
+(:ref:`dev_guide_database_schema`). This is the mechanism to understand before touching
+surface geometry:
 
-1. **The table list carries the placeholder.** ``TABLES_TO_POPULATE`` ends with
-   ``obs_surface_geometry__<TARGET>``.
-2. **The schema reader expands it.**
+1. **A row is computed under its body's category.** The driver resolves each body's
+   name (:meth:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.surface_geo_target`),
+   writes no row for a name that resolves to no target, and one row for the first of two
+   names that resolve to the same target, warning with the observation and both names.
+   It rewrites two metadata keys per body and hands
+   :func:`~opus_import.steps.do_import_obs.import_observation_table` the schema with the
+   category's name, which the geometry checks report.
+2. **The field-method lookup collapses the category back to the table.**
+   :func:`~opus_import.steps.do_import_obs.field_function_name` maps every
+   ``obs_surface_geometry__<target>`` category onto ``obs_surface_geometry_target``.
+3. **The row is written to ``obs_surface_geometry_target``.** The row sink maps the category to
+   ``obs_surface_geometry_target`` (:func:`~opus_import.surface_geometry.physical_table`)
+   when it takes the row.
+4. **The schema reader expands a category for the steps after the import.**
    :func:`~opus_import.import_util.read_schema_for_table` recognizes a name starting
-   ``obs_surface_geometry__``, redirects to ``obs_surface_geometry_target.json``, and
+   ``obs_surface_geometry__``, reads ``obs_surface_geometry_target.json``, and
    substitutes ``<TARGET>`` with
    :func:`~opus_import.import_util.table_name_for_sfc_target` and ``<SLUGTARGET>`` with
    :func:`~opus_import.import_util.slug_name_for_sfc_target`. The substitution is plain
-   text, applied to the file's contents before it is parsed.
-3. **The field-method lookup collapses back to the template name.**
-   :func:`~opus_import.steps.do_import_obs.field_function_name` maps every
-   ``obs_surface_geometry__<TARGET>`` table onto
-   ``obs_surface_geometry_target``, which is why the methods are named
-   ``field_obs_surface_geometry_target_*`` while the tables are not.
+   text, applied to the file's contents before it is parsed. ``param_info``'s build
+   reads each body's category this way, from the bodies the table holds.
 
-The driver loops the targets, replaces the token in the table name, and rewrites two
-metadata keys per iteration -- and hands
-:func:`~opus_import.steps.do_import_obs.import_observation_table` the **unsubstituted**
-template schema with the **substituted** table name.
 :func:`~opus_import.import_util.slug_name_for_sfc_target` carries a warning worth
 repeating: changing it means changing ``getSurfacegeoTargetSlug`` in the front end's
 ``utils.js`` too.
@@ -754,7 +758,7 @@ The assembly classes
 :class:`~opus_import.obs.obs_common_pds3.ObsCommonPDS3` and
 :class:`~opus_import.obs.obs_common_pds4.ObsCommonPDS4` each list the same table
 modules in the same order -- general, pds, type image, wavelength, profile, ring
-geometry, surface geometry, surface geometry name, surface geometry target -- differing
+geometry, surface geometry, surface geometry target -- differing
 only in the three PDS-version variants. That order is what decides which module wins
 when two define the same method, and it is the only reason these classes exist.
 

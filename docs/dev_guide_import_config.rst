@@ -49,8 +49,7 @@ The tables OPUS fills for each observation, **in the order it fills them**:
     obs_files
     obs_ring_geometry
     obs_surface_geometry
-    obs_surface_geometry_name
-    obs_surface_geometry__<TARGET>
+    obs_surface_geometry_target
 
 Some of the names carry a placeholder, substituted per bundle by
 :func:`~opus_import.steps.do_import_tables.create_tables_for_import`:
@@ -66,13 +65,11 @@ Some of the names carry a placeholder, substituted per bundle by
        ``obs_mission_cassini``.
    * - ``<INST>``
      - The instrument id, lowercased. ``COISS`` gives ``obs_instrument_coiss``.
-   * - ``<TARGET>``
-     - The encoded target name, from
-       :func:`~opus_import.import_util.table_name_for_sfc_target`. Unlike the other
-       two, this is **not** substituted when the tables are created: which targets an
-       observation mentions is not known until the index has been read, so the
-       ``obs_surface_geometry__<TARGET>`` tables are created during the write-out, each
-       when the first rows for its target are written.
+
+``obs_surface_geometry_target`` holds every body's surface geometry, one row per
+observation and body; each row is computed under the body's category,
+``obs_surface_geometry__<target>``, whose name ends in the encoded target name from
+:func:`~opus_import.import_util.table_name_for_sfc_target`.
 
 A table whose schema file does not exist is skipped, which is how a bundle ends up
 with only the tables its instrument actually has columns in.

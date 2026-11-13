@@ -16,18 +16,10 @@ literals rather than computed from the schema; see `Filling the column`_ below.
 The schemas ship inside the wheel and are read through :mod:`importlib.resources`, so
 an installed OPUS finds them without a checkout.
 
-Some files are not tables. Two of them are not even column lists --
-``param_info_ranges.json`` is a dictionary of range sets and
-``internal_def_product_types.json`` names no columns -- while the other is a
-perfectly good column list that simply does not describe a table of its own:
+Two files are not tables:
 
 ``param_info_ranges.json``
     The named range sets a column's ``pi_ranges`` refers to.
-
-``obs_surface_geometry_target.json``
-    A *template*: one surface-geometry table is created from it per target, with
-    ``<TARGET>`` replaced by the target's encoded name and ``<SLUGTARGET>`` by its
-    slug name.
 
 ``internal_def_product_types.json``
     A dictionary source rather than a table. Its entries carry only ``definition``,
@@ -35,8 +27,18 @@ perfectly good column list that simply does not describe a table of its own:
     -- and :mod:`opus_import.steps.do_dictionary` reads them to fill the
     ``definitions`` table.
 
-Reading a schema is :func:`opus_import.import_util.read_schema_for_table`, and it is
-the only place that substitution happens.
+``obs_surface_geometry_target.json`` is the schema of ``obs_surface_geometry_target``
+and also a *template* of the surface geometry categories: each body's category,
+``obs_surface_geometry__<target>``, reads it with ``<TARGET>`` in its ``pi_*`` values
+replaced by the body's encoded name and ``<SLUGTARGET>`` by its slug name. The
+``target_name`` column's ``pi_*`` values describe the selector category,
+``obs_surface_geometry_name``, and carry no placeholder.
+
+Reading a schema is :func:`opus_import.import_util.read_schema_for_table`, which reads a
+body's category as the filled-in template, and it is the only place that substitution
+happens. Which entries describe a category's fields is
+:func:`opus_import.surface_geometry.category_columns`: those whose ``pi_category_name``
+is the category.
 
 Column keys
 -----------
@@ -100,9 +102,10 @@ Defining the column
      - ``"primary"``, ``"unique"``, ``"foreign"``, or ``true`` for an ordinary index;
        any other value is refused. ``"foreign"`` requires ``field_key_foreign``. A
        table whose name begins ``obs_`` or ``mult_`` is created with only its primary
-       key, its unique keys and, in a table the per-bundle delete selects by
-       ``bundle_id``, its ``bundle_id`` key, on either write path, and finalization adds
-       the others
+       key, its unique keys and the keys the per-bundle delete reads -- ``obs_general``'s
+       key on ``bundle_id``, and in any other observation table a plain key on
+       ``obs_general_id`` alone -- on either write path, and finalization adds the
+       others
        (:ref:`dev_guide_import_db_keys`); the finished table carries every key
        declared.
    * - ``field_key_foreign``
@@ -110,13 +113,8 @@ Defining the column
        ``ON DELETE RESTRICT ON UPDATE CASCADE``; a foreign key that says what deleting
        the referenced row does is a table-level ``foreign_key`` entry instead. An
        observation table's one foreign key is ``obs_general_id`` onto
-       ``obs_general.id``. Where it is declared depends on the table's primary key:
-
-       * The surface geometry name and per-target tables have an ``id`` primary key of
-         their own, so they declare the foreign key here, on ``obs_general_id``.
-       * Every other observation table uses ``obs_general_id`` as its primary key (in
-         ``obs_files``, as the first of two columns), so it declares the foreign key
-         as a table-level ``foreign_key`` entry.
+       ``obs_general.id``, and every observation table declares it as a table-level
+       ``foreign_key`` entry.
 
        A key on ``opus_id`` is always a plain key, never a unique one, because two
        bundles can produce the same OPUS ID, and both copies are loaded before
@@ -143,7 +141,9 @@ Defining the column
        a key over several columns is declared, which ``field_key`` cannot express, and
        :func:`~opus_import.table_keys.declared_keys` reads it as a
        :class:`~opus_import.table_keys.TableKey` beside the column-level keys.
-       ``search_results`` declares its primary key ``(search_id, sort_order)`` this way.
+       ``search_results`` declares its primary key ``(search_id, sort_order)`` this way,
+       and ``obs_surface_geometry_target`` its primary key
+       ``(target_name, obs_general_id)``.
    * - ``unique``
      - A table-level unique key over listed columns, in the same form:
        ``{"unique": ["<column>", ...]}``. ``search_results`` declares its unique key
@@ -154,8 +154,9 @@ Defining the column
        key: a table whose name begins ``obs_`` or ``mult_`` gains it at finalization.
        ``obs_files`` declares its key ``(opus_id, short_name, version_name)`` this way,
        ``obs_general`` its keys ``(time1, opus_id)``, ``(right_asc, d_right_asc)`` and
-       ``(declination1, declination2)``, and ``obs_ring_geometry`` a key over each
-       longitude column and its ``d_`` partner.
+       ``(declination1, declination2)``, ``obs_ring_geometry`` a key over each
+       longitude column and its ``d_`` partner, and ``obs_surface_geometry_target`` a
+       key on ``obs_general_id`` and keys that start with ``target_name``.
        A ``primary_key``, ``unique`` or ``key`` entry whose value is not a non-empty
        list of column names is refused.
    * - ``comments``
@@ -372,8 +373,11 @@ discovers them from the data. Three keys of a column change that:
         }
 
 ``mult_field``
-    Names the column's mult field outright, so that several columns can share one. A
-    column without it has the field ``<table>.<column>``.
+    Names the column's mult field outright, so that several columns can share one, or a
+    column can hold the field another name gives it. A column without it has the field
+    ``<table>.<column>``. ``obs_surface_geometry_target.target_name`` holds the field
+    ``obs_surface_geometry_name.target_name``, the surface geometry selector's, which
+    the web application reads it by.
 
 :mod:`opus_import.steps.do_update_mult_info` writes the ``mult_options`` and the
 ``mult_overrides`` over the stored rows of a database that is already imported, and the
