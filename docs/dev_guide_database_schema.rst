@@ -129,7 +129,7 @@ Besides the keys shown, ``obs_general`` has three keys over two columns each:
 ``d_right_asc`` shows no key. Most columns of the other observation tables have no key of
 their own; :ref:`dev_guide_table_schemas` says which columns get one.
 
-``opus_id`` carries a plain key rather than a unique one. Two bundles can produce the same OPUS ID, and an import loads both copies side by side; the import's finalization then keeps the copy imported last and deletes the others, so a finished database has one row per OPUS ID.
+``opus_id`` carries a plain key rather than a unique one. Two bundles can produce the same OPUS ID, and an import loads both copies side by side; the import's finalization then keeps the copy with the highest ``id``, which is the copy from the bundle registered later (:ref:`dev_guide_database_schema_import_bundle`), and deletes the others, so a finished database has one row per OPUS ID.
 
 Most of these fields should be self-evident. Some numeric fields have ``1`` and ``2`` versions. These are the minimum and maximum values of the metadata for a "dual column range". ``right_asc`` has two extra fields (``right_asc`` and ``d_right_asc``). These are internal fields that are used to help speed up searching on wrap-around longitudes. Also, ``obs_general`` has a hidden field ``preview_images`` which stores information (in the form of a JSON encoded PdsViewSet) about all of the preview images for each observation so that they can be rapidly retrieved when displaying the Gallery View without needing to join tables together.
 
@@ -241,19 +241,26 @@ The ``mult_field`` table names the fields:
     | field_id       | smallint unsigned | NO   | PRI | NULL    |
     | qualified_name | varchar(100)      | NO   | UNI | NULL    |
     | pinned         | tinyint           | NO   |     | NULL    |
+    | last_id        | int               | NO   |     | -1      |
     +----------------+-------------------+------+-----+---------+
 
 The fields are:
 
-* ``field_id``: The field's number, the primary key. Every ``mult`` and ``mult_group``
-  row of the field carries it.
+* ``field_id``: The field's number, the primary key. Every
+  ``mult`` and ``mult_group`` row of the field carries it.
 * ``qualified_name``: The field's qualified name, a unique key.
-* ``pinned``: 1 when the column's schema lists the field's values in ``mult_options``, 0
-  otherwise.
+* ``pinned``: 1 when the column's schema lists the field's values in
+  ``mult_options``, 0 otherwise.
+* ``last_id``: The highest id handed out in the field, or -1
+  before the first. A value new to the field takes the next one, so a field's first
+  value is 0. It only goes up: an id whose row finalization deletes is never handed out
+  again. With several processes importing at once, an id taken for a value another
+  process stored first is left unused, so a field's ids may have gaps; the id-width
+  check counts ``last_id``, not the rows.
 
-The import numbers the fields once in each database. The first import gives every mult
-field of the packaged ``obs_*.json`` schemas an id, 1, 2, 3, ..., in order of qualified
-name. A field that a later release adds takes the next id after the highest one in
+Bundle registration numbers the fields once in each database. The first registration
+gives every mult field of the packaged ``obs_*.json`` schemas an id, 1, 2, 3, ..., in
+order of qualified name. A field that a later release adds takes the next id after the highest one in
 ``mult_field``. A field's id never changes.
 
 The ``mult`` table holds the values:
@@ -279,13 +286,12 @@ The fields are:
 * ``field_id``: The field the value belongs to.
 * ``id``: What an observation's column holds for this value. Ids
   are numbered within a field: a field's ids start at 0, and a value the import finds
-  takes the field's highest id plus one. A pinned field's ids are the ones its
-  ``mult_options`` gives; if its list has no absent value and an observation needs one,
-  the import adds it under 65535, an id no list may give. A stored row keeps its id and
-  its value, so no observation row has to be rewritten when a value is renamed. An id
-  is not reserved once its row is deleted: finalization deletes the values no
-  observation holds, and the next value the import adds to the field takes the field's
-  highest id plus one, which can be an id a deleted value had.
+  takes the next id of the field's ``last_id`` counter. A pinned field's ids are the ones
+  its ``mult_options`` gives, written by bundle registration; if its list has no absent
+  value and an observation needs one, the import adds it under 65535, an id no list may
+  give. A stored row keeps its id and its value, so no observation row has to be
+  rewritten when a value is renamed. Finalization deletes the values no observation
+  holds, and their ids are not handed out again.
 * ``value``: The value as the import read it. The absent value is
   stored as the empty string, never ``NULL``.
 * ``label``: The string to display in the UI.
@@ -856,21 +862,39 @@ Two things read it, and both require the release's own version in the ``ready`` 
 The ``import_bundle`` Table
 ---------------------------
 
-The ``import_bundle`` table is the bundle registry: the import's record of each bundle it has taken on and how far it got (:ref:`dev_guide_import_steps_registry`). The web application never reads it.
+The ``import_bundle`` table is the bundle registry: the import's record of each bundle registered for import, the range its observation ids come from, and how far it got (:ref:`dev_guide_import_steps_registry`). Its states are also the work queue several import processes draw from. The web application never reads it.
 
 ::
 
     mysql> DESC import_bundle;
-    +-----------+---------------------------------------------+------+-----+---------+
-    | Field     | Type                                        | Null | Key | Default |
-    +-----------+---------------------------------------------+------+-----+---------+
-    | bundle_id | varchar(75)                                 | NO   | PRI | NULL    |
-    | state     | enum('pending','importing','done','failed') | NO   |     | NULL    |
-    +-----------+---------------------------------------------+------+-----+---------+
+    +---------------+---------------------------------------------+------+-----+---------+----------------+
+    | Field         | Type                                        | Null | Key | Default | Extra          |
+    +---------------+---------------------------------------------+------+-----+---------+----------------+
+    | bundle_number | smallint unsigned                           | NO   | PRI | NULL    | auto_increment |
+    | bundle_id     | varchar(75)                                 | NO   | UNI | NULL    |                |
+    | size_estimate | bigint unsigned                             | NO   |     | NULL    |                |
+    | first_id      | int unsigned                                | NO   |     | NULL    |                |
+    | id_capacity   | int unsigned                                | NO   |     | NULL    |                |
+    | state         | enum('pending','importing','done','failed') | NO   | MUL | pending |                |
+    | started_at    | datetime                                    | YES  |     | NULL    |                |
+    | finished_at   | datetime                                    | YES  |     | NULL    |                |
+    | process_id    | int unsigned                                | YES  |     | NULL    |                |
+    | rows_done     | bigint unsigned                             | NO   |     | 0       |                |
+    | losses        | tinyint unsigned                            | NO   |     | 0       |                |
+    +---------------+---------------------------------------------+------+-----+---------+----------------+
 
 The fields are:
 
-* ``bundle_id``: The bundle, such as ``COISS_2002``. A bundle OPUS deliberately skips is never recorded.
-* ``state``: ``pending`` once an import has recorded the bundle and before it starts; ``importing`` while the bundle is deleted and loaded; ``done`` once it is imported without logging an error, or under ``--ignore-errors``; ``failed`` when its import failed or logged an error.
+* ``bundle_number``: The bundle's place in registration order, which is the import order. A bundle keeps its number when it is imported again.
+* ``bundle_id``: The bundle, such as ``COISS_2002``. A bundle OPUS deliberately skips is never registered.
+* ``size_estimate``: The rows the bundle's primary index labels declared when it was registered.
+* ``first_id``: The ``obs_general.id`` of the bundle's first observation. A bundle's range starts where the range of the bundle registered before it ends, so the ranges ascend in ``bundle_number`` order and the copy of a shared OPUS ID that finalization keeps, the one with the highest ``id``, is the one from the bundle registered later.
+* ``id_capacity``: How many ids, from ``first_id``, the bundle's observations may take: a hundred for each row of ``size_estimate``. A bundle that needs more fails its import, naming its capacity.
+* ``state``: ``pending`` once the bundle is registered and before an import takes it; ``importing`` while the bundle is deleted and loaded; ``done`` once it is imported without logging an error, or under ``--ignore-errors``; ``failed`` when its import failed or logged an error.
+* ``started_at`` and ``finished_at``: When the bundle's latest import began and ended, in UTC; ``NULL`` before the first, and ``finished_at`` while one is running.
+* ``rows_done``: The ``obs_general`` rows the bundle's latest import has loaded, advanced after each load.
+* ``process_id`` and ``losses``: Not written by the import, which leaves them ``NULL`` and 0.
 
-Every invocation that imports bundles creates the table when the schema lacks it, on a fresh import and an append alike, and records its bundles before the first one starts. ``--finalize`` refuses to run, and ``--write-schema-version`` refuses to write ``ready``, while any row is not ``done``. ``--delete-bundles`` deletes a bundle's row with its observations, and ``--scorched-earth`` drops the table.
+The key on ``(state, size_estimate, bundle_number)`` is what a claim reads: scanned from its highest entry, it gives the largest ``pending`` bundle in one index entry, so a claim locks only the row it takes.
+
+Every invocation that registers or imports bundles creates the table when the schema lacks it, on a fresh import and an append alike, and registers its bundles before the first one starts. ``--finalize`` refuses to run, and ``--write-schema-version`` refuses to write ``ready``, while any row is not ``done``. ``--delete-bundles`` deletes a bundle's row with its observations, and ``--scorched-earth`` drops the table.

@@ -22,7 +22,7 @@ from typing import Any
 import pytest
 
 import opus_import
-from opus_import.importdb.super import ImportDBError, ImportDBSuper
+from opus_import.importdb.super import ImportDBError, ImportDBSuper, RollbackError
 
 # mysqlclient is a runtime dependency, but `importdb/mysql.py` guards its own import so
 # the package stays importable without it. Skip the whole module rather than failing
@@ -528,8 +528,10 @@ _FIELD_TYPE_CASES: dict[str, tuple[Any, str]] = {
     'int1': (-128, '-128'),
     'int2': (-32768, '-32768'),
     'int4': (-2147483648, '-2147483648'),
+    'uint1': (255, '255'),
     'uint2': (65535, '65535'),
     'uint4': (4294967295, '4294967295'),
+    'uint8': (18446744073709551615, '18446744073709551615'),
     'mult_idx': (17, '17'),
     'real4': (0.1, '0.1'),
     'real8': (1.7976931348623157e308, '1.7976931348623157e+308'),
@@ -943,3 +945,386 @@ def test_table_info_names_every_type_create_table_renders(
     db = _ColumnsDB()
     db._table_info_cache = {}
     assert db.table_info('obs_general')[0]['field_type'] == field_type
+
+
+# ---------------------------------------------------------------------------
+# Several import processes: isolation, transactions, retries, locks and counters
+# ---------------------------------------------------------------------------
+
+
+class _ScriptedCursor:
+    """A cursor that records each statement and answers from its connection's script."""
+
+    def __init__(self, conn: _ScriptedConnection) -> None:
+        self._conn = conn
+        self.rowcount = conn.rowcount
+
+    def __enter__(self) -> _ScriptedCursor:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def execute(self, cmd: str, param_list: Any = None) -> None:
+        self._conn.executed.append((cmd, param_list))
+
+    def fetchall(self) -> list[tuple[Any, ...]]:
+        cmd = self._conn.executed[-1][0]
+        for prefix, rows in self._conn.answers.items():
+            if cmd.startswith(prefix):
+                return rows
+        return []
+
+
+class _ScriptedConnection:
+    """A connection recording statements, commits and rollbacks, answering by prefix."""
+
+    def __init__(self, answers: dict[str, list[tuple[Any, ...]]] | None = None) -> None:
+        self.answers = answers or {}
+        self.rowcount = 1
+        self.executed: list[tuple[str, Any]] = []
+        self.commits = 0
+        self.rollbacks = 0
+
+    def cursor(self) -> _ScriptedCursor:
+        return _ScriptedCursor(self)
+
+    def commit(self) -> None:
+        self.commits += 1
+
+    def rollback(self) -> None:
+        self.rollbacks += 1
+
+    @staticmethod
+    def fileno() -> None:
+        """Hold no socket, so a pool worker forked later in this process closes nothing."""
+        return None
+
+
+class _ConnectedDB(ImportDBMySQL):
+    """An ImportDBMySQL over a scripted connection, running statements through it."""
+
+    def __init__(self, conn: _ScriptedConnection) -> None:
+        ImportDBSuper.__init__(self, 'host', 'db', 'schema', 'user', 'password', logger=None)
+        self.conn = conn
+
+
+class _Logger:
+    """A logger keeping every message by level."""
+
+    def __init__(self) -> None:
+        self.messages: list[tuple[str, str]] = []
+
+    def log(self, level: str, message: str) -> None:
+        self.messages.append((level, message))
+
+
+def test_a_connection_reads_at_read_committed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every import connection, siblings included, sets the session's isolation level."""
+    conn = _ScriptedConnection({'SELECT VERSION()': [('8.0.36',)], 'SELECT @@GLOBAL': [(1, 0)]})
+    monkeypatch.setattr(MySQLdb, 'connect', lambda **kwargs: conn)
+
+    ImportDBMySQL('host', 'db', 'schema', 'user', 'password')
+
+    statements = [cmd for cmd, _ in conn.executed]
+    assert 'SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED' in statements
+
+
+def test_a_transaction_commits_once_at_its_end_and_rolls_back_on_failure() -> None:
+    """Statements inside it do not commit themselves; a failure rolls the whole back."""
+    conn = _ScriptedConnection()
+    db = _ConnectedDB(conn)
+
+    with db.transaction():
+        db.read_rows('t', ['a'])
+        db.delete_rows('t', '`a`=%s', [1])
+        assert conn.commits == 0
+    assert conn.commits == 1
+
+    def fail_inside() -> None:
+        with db.transaction():
+            db.read_rows('t', ['a'])
+            raise ImportDBError('stop')
+
+    with pytest.raises(ImportDBError):
+        fail_inside()
+    assert (conn.commits, conn.rollbacks) == (1, 1)
+
+
+@pytest.mark.parametrize(
+    ('code', 'retryable', 'duplicate'),
+    [(1213, True, False), (1205, True, False), (1062, False, True), (1146, False, False)],
+    ids=['deadlock', 'lock-wait-timeout', 'duplicate-key', 'other'],
+)
+def test_the_driver_codes_the_import_reads(code: int, retryable: bool, duplicate: bool) -> None:
+    """Deadlocks and lock wait timeouts are retried; a duplicate key is told apart."""
+    db = _RecordingDB()
+    wrapped = ImportDBError('wrapped')
+    wrapped.__cause__ = MySQLdb.OperationalError(code, 'message')
+    assert db.is_retryable_error(wrapped) is retryable
+    assert db.is_duplicate_key_error(wrapped) is duplicate
+    assert db.is_retryable_error(MySQLdb.OperationalError(code, 'message')) is retryable
+
+
+def _failing(codes: list[int]) -> Any:
+    """Return a body that fails with each code in turn, then returns 'done'."""
+
+    def body() -> str:
+        if codes:
+            raise ImportDBError('failed') from MySQLdb.OperationalError(codes.pop(0), 'x')
+        return 'done'
+
+    return body
+
+
+def test_a_lock_conflict_is_retried_after_growing_sleeps(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Each failed attempt is rolled back, and the next runs after the next sleep."""
+    sleeps: list[float] = []
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', sleeps.append)
+    conn = _ScriptedConnection()
+    db = _ConnectedDB(conn)
+    db.logger = _Logger()
+
+    assert db.retrying('Claiming', _failing([1213, 1205])) == 'done'
+
+    assert sleeps == [0.5, 1.0]
+    assert (conn.rollbacks, conn.commits) == (2, 1)
+    assert [level for level, _ in db.logger.messages] == ['debug', 'debug']
+
+
+def test_the_fifth_failure_is_raised_with_the_statement(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Five attempts in all; the last failure is fatal, naming the statement and error."""
+    sleeps: list[float] = []
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', sleeps.append)
+    db = _ConnectedDB(_ScriptedConnection())
+    db.logger = _Logger()
+
+    def body() -> None:
+        db.delete_rows('t', '`a`=%s', [1])
+        raise ImportDBError('deadlock') from MySQLdb.OperationalError(1213, 'Deadlock found')
+
+    with pytest.raises(ImportDBError):
+        db.retrying('Deleting bundle "B_1"', body)
+
+    assert sleeps == [0.5, 1.0, 2.0, 4.0]
+    (fatal,) = [message for level, message in db.logger.messages if level == 'fatal']
+    assert fatal.startswith('Deleting bundle "B_1" failed on attempt 5 of 5')
+    assert 'DELETE FROM `t` WHERE `a`=%s' in fatal
+
+
+def test_any_other_failure_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A failure that a second attempt would meet again is raised at once."""
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', pytest.fail)
+    db = _ConnectedDB(_ScriptedConnection())
+
+    with pytest.raises(ImportDBError):
+        db.retrying('Claiming', _failing([1146]))
+
+
+def test_a_counter_is_counted_on_and_read_back_by_this_connection() -> None:
+    """One locking statement and LAST_INSERT_ID(), with no MAX read."""
+    conn = _ScriptedConnection({'SELECT LAST_INSERT_ID()': [(7,)]})
+    db = _ConnectedDB(conn)
+
+    assert db.increment_counter('mult_field', 'last_id', 'field_id', 3) == 7
+
+    assert conn.executed == [
+        (
+            'UPDATE `mult_field` SET `last_id` = LAST_INSERT_ID(`last_id` + 1) '
+            'WHERE `field_id` = %s',
+            [3],
+        ),
+        ('SELECT LAST_INSERT_ID()', None),
+    ]
+    assert conn.commits == 1
+
+
+def test_a_counter_row_that_is_absent_is_an_error() -> None:
+    """A field with no ``mult_field`` row is not silently given id 0."""
+    conn = _ScriptedConnection()
+    conn.rowcount = 0
+
+    with pytest.raises(ImportDBError, match='no row'):
+        _ConnectedDB(conn).increment_counter('mult_field', 'last_id', 'field_id', 3)
+
+
+def test_a_read_only_counter_counts_on_from_the_stored_value_without_an_update() -> None:
+    """The UPDATE is logged as simulated, never sent; the stored value is read once and
+    each later count goes on from the last."""
+    conn = _ScriptedConnection({'SELECT `last_id`': [(4,)]})
+    db = _ConnectedDB(conn)
+    db.read_only = True
+    db.log_sql = True
+    db.logger = _Logger()
+
+    counted = [db.increment_counter('mult_field', 'last_id', 'field_id', 3) for _ in range(2)]
+
+    assert counted == [5, 6]
+    assert conn.executed == [('SELECT `last_id` FROM `mult_field` WHERE `field_id`=%s', [3])]
+    simulated = [message for _level, message in db.logger.messages if '[SIM]' in message]
+    assert len(simulated) == 2
+    assert 'UPDATE `mult_field` SET `last_id`' in simulated[0]
+
+
+def test_a_read_only_counter_row_that_is_absent_is_an_error() -> None:
+    """A field with no ``mult_field`` row is refused in a read-only run too."""
+    db = _ConnectedDB(_ScriptedConnection())
+    db.read_only = True
+
+    with pytest.raises(ImportDBError, match='no row whose field_id is 3'):
+        db.increment_counter('mult_field', 'last_id', 'field_id', 3)
+
+
+def test_the_claim_reads_one_row_skipping_locked_ones() -> None:
+    """Both order terms descend, so the key serves the order and nothing is sorted."""
+    conn = _ScriptedConnection({'SELECT `bundle_number`': [(4,)]})
+    db = _ConnectedDB(conn)
+
+    found = db.lock_first_row(
+        'import_bundle',
+        'bundle_number',
+        '`state` = %s',
+        ['pending'],
+        ['size_estimate', 'bundle_number'],
+    )
+
+    assert found == 4
+    assert conn.executed == [
+        (
+            'SELECT `bundle_number` FROM `import_bundle` WHERE `state` = %s ORDER BY '
+            '`size_estimate` DESC, `bundle_number` DESC LIMIT 1 FOR UPDATE SKIP LOCKED',
+            ['pending'],
+        )
+    ]
+
+
+def test_an_insert_keeping_existing_rows_is_a_no_op_update_not_an_ignore(
+    db: _RecordingDB,
+) -> None:
+    """A stored row is left alone, and a data error still fails."""
+    db.insert_rows_keeping_existing(
+        'mult_group', 'field_id', [{'field_id': 2, 'grouping': 'G', 'group_pin': 1}]
+    )
+    ((cmd, params),) = db.executed
+    assert cmd == (
+        'INSERT INTO `mult_group` (`field_id`,`group_pin`,`grouping`) VALUES (%s,%s,%s) '
+        'ON DUPLICATE KEY UPDATE `field_id` = `field_id`'
+    )
+    assert 'IGNORE' not in cmd
+    assert params == [2, 1, 'G']
+
+
+def test_a_named_lock_is_taken_waiting_and_released_however_the_body_ends() -> None:
+    """GET_LOCK waits without limit; RELEASE_LOCK follows even a failed body."""
+    conn = _ScriptedConnection({'SELECT GET_LOCK': [(1,)], 'SELECT RELEASE_LOCK': [(1,)]})
+    db = _ConnectedDB(conn)
+
+    with pytest.raises(RuntimeError), db.named_lock('opus:abc'):
+        raise RuntimeError('inside')
+
+    assert conn.executed == [
+        ('SELECT GET_LOCK(%s, -1)', ['opus:abc']),
+        ('SELECT RELEASE_LOCK(%s)', ['opus:abc']),
+    ]
+
+
+def test_a_named_lock_not_granted_is_an_error() -> None:
+    """The body never runs without the lock."""
+    conn = _ScriptedConnection({'SELECT GET_LOCK': [(None,)]})
+
+    lock = _ConnectedDB(conn).named_lock('opus:abc')
+
+    with pytest.raises(ImportDBError, match='did not grant'):
+        lock.__enter__()
+
+
+def test_a_conditional_update_counts_the_rows_it_changed() -> None:
+    """The condition is the WHERE clause; 0 rows changed means it did not hold."""
+    conn = _ScriptedConnection()
+    conn.rowcount = 0
+    db = _ConnectedDB(conn)
+
+    changed = db.conditional_update(
+        'import_bundle', {'state': 'done'}, '`bundle_id`=%s AND `state` IN (%s)', ['B', 'importing']
+    )
+
+    assert changed == 0
+    assert conn.executed == [
+        (
+            'UPDATE `import_bundle` SET `state`=%s WHERE `bundle_id`=%s AND `state` IN (%s)',
+            ['done', 'B', 'importing'],
+        )
+    ]
+    assert conn.commits == 1
+
+
+def test_an_expected_failure_is_neither_retried_nor_logged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A duplicate key the caller reads back is raised at once, with no fatal line."""
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', pytest.fail)
+    db = _ConnectedDB(_ScriptedConnection())
+    db.logger = _Logger()
+
+    with pytest.raises(ImportDBError):
+        db.retrying('Inserting', _failing([1062]), expected=db.is_duplicate_key_error)
+
+    assert db.logger.messages == []
+
+
+class _DyingConnection(_ScriptedConnection):
+    """A connection whose every statement after GET_LOCK fails, as a broken one does."""
+
+    def cursor(self) -> _ScriptedCursor:
+        if self.executed and self.executed[-1][0].startswith('SELECT GET_LOCK'):
+            raise MySQLdb.OperationalError(2013, 'Lost connection to MySQL server')
+        return _ScriptedCursor(self)
+
+
+def test_a_failed_release_does_not_replace_the_bodys_failure() -> None:
+    """The body's own exception reaches the caller when the release fails too."""
+    db = _ConnectedDB(_DyingConnection({'SELECT GET_LOCK': [(1,)]}))
+
+    def body() -> None:
+        with db.named_lock('opus:abc'):
+            raise RuntimeError('the body failed')
+
+    with pytest.raises(RuntimeError, match='the body failed'):
+        body()
+
+
+class _RollbackFailingConnection(_ScriptedConnection):
+    """A connection whose rollback fails, as a broken one's does."""
+
+    def rollback(self) -> None:
+        raise MySQLdb.OperationalError(2013, 'Lost connection to MySQL server')
+
+
+@pytest.mark.parametrize(
+    ('code', 'wrapped'),
+    [(1213, True), (1062, True), (1213, False)],
+    ids=['retryable', 'expected', 'driver-error-retryable'],
+)
+def test_a_failed_rollback_is_fatal_naming_both_failures(
+    code: int, wrapped: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Neither retried nor passed to the caller as expected: the transaction's failure is
+    the one raised from, and the fatal line names it beside the rollback's."""
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', pytest.fail)
+    db = _ConnectedDB(_RollbackFailingConnection())
+    db.logger = _Logger()
+    driver_error = MySQLdb.OperationalError(code, 'the body failed')
+    failure: Exception = ImportDBError('the body failed') if wrapped else driver_error
+    if wrapped:
+        failure.__cause__ = driver_error
+
+    def body() -> None:
+        raise failure
+
+    with pytest.raises(RollbackError, match='Lost connection to MySQL server') as excinfo:
+        db.retrying('Claiming', body, expected=db.is_duplicate_key_error)
+
+    assert excinfo.value.__cause__ is failure
+    (fatal,) = [message for level, message in db.logger.messages if level == 'fatal']
+    assert fatal.startswith('Claiming failed on attempt 1 of 5')
+    assert 'the body failed' in fatal

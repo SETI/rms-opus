@@ -18,9 +18,14 @@ dispatches on the brand named in the configuration and returns an
 :class:`~opus_import.importdb.super.ImportDBSuper`, **so no step module names a brand**.
 MySQL is the only brand implemented.
 
-The package's whole public surface is two names: :func:`~opus_import.importdb.get_db`
-and :exc:`~opus_import.importdb.super.ImportDBError`, the one exception the layer
-raises. A failed database operation always aborts the import.
+The package's whole public surface is :func:`~opus_import.importdb.get_db`,
+:func:`~opus_import.importdb.lock_name`, which names a server-wide lock belonging to one
+schema (:meth:`~opus_import.importdb.super.ImportDBSuper.named_lock`), and
+:exc:`~opus_import.importdb.super.ImportDBError`, the exception the layer raises. Its
+subclass, :exc:`~opus_import.importdb.super.RollbackError`, is a failed transaction whose
+rollback failed too. A failed database operation always aborts the import, except the
+ones :ref:`dev_guide_import_db_transactions` describes as run again or handled by their
+caller.
 
 .. mermaid::
     :zoom:
@@ -37,11 +42,15 @@ raises. A failed database operation always aborts the import.
             +JOINED_PARENT_ALIAS
             +table_exists()
             +read_rows()
+            +transaction()
+            +retrying()
+            +failures_expected()
             +open_sibling_connection()
             +build_indexes()
             +foreign_keys_unchecked()
             +quote_identifier()*
             +table_names()*
+            +forget_table_names()*
             +table_info()*
             +create_table()*
             +drop_table()*
@@ -51,6 +60,7 @@ raises. A failed database operation always aborts the import.
             +insert_rows()*
             +bulk_load_rows()*
             +update_row()*
+            +conditional_update()*
             +upsert_row()*
             +upsert_rows()*
             +delete_rows()*
@@ -67,6 +77,12 @@ raises. A failed database operation always aborts the import.
             +run_ddl()*
             +close()*
             +socket_descriptor()*
+            +named_lock()*
+            +increment_counter()*
+            +lock_first_row()*
+            +insert_rows_keeping_existing()*
+            +is_retryable_error()*
+            +is_duplicate_key_error()*
             #_prepare_index_session()*
             #_size_index_sort()*
             #_set_foreign_key_checks()*
@@ -90,9 +106,13 @@ raises. A failed database operation always aborts the import.
         class ImportDBError {
             Exception
         }
+        class RollbackError {
+            ImportDBError
+        }
 
         ImportDBSuper <|-- ImportDBMySQL
         ImportDBSuper <|-- ImportDBPostgreSQL
+        ImportDBError <|-- RollbackError
         ImportDBMySQL ..> ImportDBError : raises
 
 .. _dev_guide_import_db_foreign_key_checks:
@@ -205,6 +225,9 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
        implementation must sort them**, because a caller handing out row ids while
        iterating this would otherwise produce a different database on a different
        machine.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.forget_table_names`\ ``()``
+     - Make the next ``table_names`` read the names from the server again, for a table
+       another process may have created since a cached read.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_info`\ ``(table_name)``
      - The table's columns as the database currently defines them, in the same shape a
        packaged schema has.
@@ -228,6 +251,31 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
        observation rows go through it (:ref:`dev_guide_import_db_bulk_load`).
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.update_row`\ ``(table_name, row, where, where_params=None)``
      - Assign new values to the rows a WHERE clause selects.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.conditional_update`\ ``(table_name, row, where, where_params)``
+     - The same, returning how many rows changed: 0 when the clause, the condition the
+       change depends on, selected none, and -1 in a read-only run. Every move between
+       the bundle registry's states is one.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows_keeping_existing`\ ``(table_name, key_name, rows)``
+     - Insert rows, leaving alone any whose key a stored row holds, while a value a
+       column cannot hold still fails; the ``mult_group`` insert.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.increment_counter`\ ``(table_name, column, key_column, key)``
+     - Add one to a counter column of one row and return the new value as this
+       connection set it, locking only that row until the transaction ends; raise when
+       no row has the key. A read-only run returns the stored value advanced by every
+       addition the run has made (``_simulated_count``). ``mult_field.last_id`` is the
+       one counter.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.lock_first_row`\ ``(table_name, column, where, where_params, order_by)``
+     - Lock the first row a WHERE clause selects in descending ``order_by`` order,
+       passing over rows another session has locked, and return one column of it, or
+       None; the bundle claim.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.named_lock`\ ``(name)``
+     - A context manager holding a server-wide named lock while its body runs, waiting
+       for it first. The lock belongs to the connection, so it survives the body's
+       commits; a release that fails after a failed body does not replace the body's
+       exception.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.is_retryable_error`\ ``(exc)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.is_duplicate_key_error`\ ``(exc)``
+     - Whether a failure, the driver's error or an ``ImportDBError`` raised from one, is
+       a deadlock or a lock wait that timed out; or a duplicate primary or unique key.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_row` / :meth:`~opus_import.importdb.super.ImportDBSuper.upsert_rows`
      - Insert, updating any row whose key is already present. The key column is written
        on an insert and never assigned on an update.
@@ -284,9 +332,45 @@ The concrete members are the constructor,
 :meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.table_exists`,
-:meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`, ``_execute``, the warning
-collector ``_make_warning_handler``, and ``_operation`` with the ``_enter``/``_exit``
-pair it runs.
+:meth:`~opus_import.importdb.super.ImportDBSuper.read_rows`,
+:meth:`~opus_import.importdb.super.ImportDBSuper.transaction`,
+:meth:`~opus_import.importdb.super.ImportDBSuper.retrying`,
+:meth:`~opus_import.importdb.super.ImportDBSuper.failures_expected`, ``_execute``,
+``_simulated_count``, the warning collector ``_make_warning_handler``, and
+``_operation`` with the ``_enter``/``_exit`` pair it runs.
+
+.. _dev_guide_import_db_transactions:
+
+Transactions, retries and isolation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Several import processes can write one schema at once
+(:ref:`dev_guide_import_steps_registry`), so every import connection sets its session to
+``READ COMMITTED`` as it connects: a locking read locks only the rows it returns and
+takes no gap locks.
+
+Outside a transaction each statement commits as it runs.
+:meth:`~opus_import.importdb.super.ImportDBSuper.transaction` makes every statement the
+body runs through the instance join one transaction instead, committed when the body
+returns and rolled back when it raises; transactions do not nest, and a bulk load, which
+commits each chunk itself, does not belong in one. When the rollback fails as well, the
+connection is in doubt, and
+:exc:`~opus_import.importdb.super.RollbackError` is raised, naming both failures and
+raised from the body's.
+
+:meth:`~opus_import.importdb.super.ImportDBSuper.retrying` runs a body as one such
+transaction, and runs it again when it fails with an error
+:meth:`~opus_import.importdb.super.ImportDBSuper.is_retryable_error` accepts -- a
+deadlock, or a lock wait that timed out -- after the next pause of
+:data:`~opus_import.importdb.super.RETRY_SLEEPS`; the attempt after the last pause is the
+final one. A failure its caller says it handles (``expected``), such as the duplicate key
+a mult value's insert reads back, is raised at once, unlogged. Any other failure, the
+final attempt's, and a ``RollbackError`` always, is logged as fatal with the last
+statement run and raised. The body may run more than once, so it reads what it needs
+inside itself. While it runs,
+:meth:`~opus_import.importdb.super.ImportDBSuper.failures_expected` keeps the write
+methods from logging their own failures as fatal, since ``retrying`` decides which one
+is.
 
 .. _dev_guide_import_db_inherited:
 
@@ -321,6 +405,15 @@ messages branch on the flag too, so a
 dropped table reads as ``[SIM] Dropped table`` rather than ``Dropped table``. A
 read-only run against a schema the server does not have fails as it connects rather
 than creating the schema.
+
+What a read-only import would have written and later reads back is kept in the run
+instead. A bundle registration writes no registry row, and keeps the row it would have
+added in :attr:`~opus_import.context.ImportContext.planned_ranges`, so a bundle the
+registry lacks takes its observation ids from the range it would have been given.
+:meth:`~opus_import.importdb.super.ImportDBSuper.increment_counter` logs its ``UPDATE``
+and returns the stored counter advanced by the run's own additions, so a new mult value
+takes the id it would have. ``--join`` is refused with ``--read-only``: an importer whose
+claims are never written would claim the same bundle for ever.
 
 Warnings
 ~~~~~~~~
@@ -381,14 +474,16 @@ Both :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows` and
 why an import into a new schema needs no ``CREATE DATABASE`` first. A read-only
 connection never creates it: an unknown database fails the run, with a fatal message
 naming the schema. It then primes a
-cache of every table name, reads the server version, and sets a strict SQL mode --
-failing the run if it cannot. Last, it sets the session up for the import's writes:
+cache of every table name, reads the server version, and sets a strict SQL mode and the
+``READ COMMITTED`` isolation level -- failing the run if it cannot do either. Last, it sets the session up for the import's writes:
 it chooses the bulk-load path (below), and where the server keeps a binary log it issues
 ``SET sql_log_bin = 0``, so the import's rows are not written to it a second time. An
 account without the privilege for that gets one info line naming ``--skip-log-bin`` and
 the grant instead, and the import goes on. The import's own connection is never closed
 explicitly -- there is no destructor and no context manager -- and each statement is run
-through its own cursor and committed immediately; the index build closes the sibling
+through its own cursor and committed immediately, except inside
+:meth:`~opus_import.importdb.super.ImportDBSuper.transaction`, where the statements
+commit together when the transaction ends; the index build closes the sibling
 connections it opens.
 
 The driver is imported defensively, so the module still imports without ``mysqlclient``
@@ -405,11 +500,11 @@ The bulk load
 :meth:`~opus_import.importdb.mysql.ImportDBMySQL.bulk_load_rows` writes the observation
 rows: every ``obs_`` table's rows, ``obs_files``' among them. :class:`~opus_import.steps.do_import_index.TableRowSink` loads a table
 each time ``[import] transaction_rows`` of its rows wait, and the rest at the end of
-:func:`~opus_import.steps.do_import_index.import_one_index`, after
-:func:`~opus_import.steps.do_import_mult.write_mult_tables` has inserted the ``mult``
-rows the index added and upserted its ``mult_group`` rows. A ``mult`` row is inserted
-rather than loaded or upserted because its value must never be written over another
-row's: a value the field's unique key finds already there stops the import.
+:func:`~opus_import.steps.do_import_index.import_one_index`. Each load of ``obs_general``
+rows is followed by the bundle's ``rows_done`` in the bundle registry. The ``mult`` rows
+are not loaded: each is inserted the moment its value is met
+(:ref:`dev_guide_import_steps_do_import_mult`), because its value must never be written
+over another row's.
 
 **The text.** The rows are written as the text ``LOAD DATA`` reads by default: fields
 separated by tabs, rows ended by newlines, ``\N`` for NULL, and a backslash before each
@@ -591,16 +686,10 @@ Schemas
     file returns None, which is how a bundle ends up with only the tables its instrument
     has columns in.
 
-:func:`~opus_import.import_util.find_max_table_id`
-    The largest ``id`` the table holds, or -1 when the table does not exist or is
-    empty. A bundle is deleted before it is written, so its new rows are numbered above
-    every row that remains.
-
 :func:`~opus_import.import_util.next_table_id`
-    Hands out a table's next row id: one more than
-    :func:`~opus_import.import_util.find_max_table_id` the first time a bundle asks, one
-    more than the last after that, kept in
-    :attr:`~opus_import.context.ImportContext.max_table_id_cache`. In a pool worker it
+    Hands out the next observation id, from the bundle's registered range
+    (:attr:`~opus_import.context.ImportContext.bundle_ids`): the range's first id, then
+    one more each time. ``obs_general`` is the only table that asks. In a pool worker it
     returns a :class:`~opus_import.deferred.LocalId` instead, which the import's process
     rebases onto the real id (:ref:`dev_guide_import_steps_do_import_pool`). A ``MAX_ID``
     column takes its ids from it.

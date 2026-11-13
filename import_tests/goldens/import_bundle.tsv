@@ -1,25 +1,25 @@
-bundle_id	state
-cassini_uvis_solarocc_beckerjarmak2023	done
-COCIRS_1101	done
-COCIRS_5704	done
-COISS_2055	done
-CORSS_8001	done
-COUVIS_0031	done
-COUVIS_8001	done
-COVIMS_0048	done
-COVIMS_8001	done
-EBROCC_0001	done
-GO_0011	done
-HSTI1_3631	done
-HSTJ1_0507	done
-HSTN0_7429	done
-HSTO1_2478	done
-HSTU0_7308	done
-NHKELO_1001	done
-NHPCMV_1001	done
-uranus_occ_u14_opmt_106cm	done
-VG_2801	done
-VG_2802	done
-VG_2803	done
-VG_2810	done
-VGISS_6109	done
+bundle_number	bundle_id	size_estimate	first_id	id_capacity	state	process_id	rows_done	losses
+1	COCIRS_1101	43	0	4300	done	\N	43	0
+2	COCIRS_5704	20	4300	2000	done	\N	20	0
+3	COISS_2055	20	6300	2000	done	\N	20	0
+4	CORSS_8001	20	8300	2000	done	\N	20	0
+5	COUVIS_0031	20	10300	2000	done	\N	20	0
+6	COUVIS_8001	20	12300	2000	done	\N	20	0
+7	COVIMS_0048	20	14300	2000	done	\N	37	0
+8	COVIMS_8001	20	16300	2000	done	\N	20	0
+9	EBROCC_0001	2	18300	200	done	\N	2	0
+10	GO_0011	20	18500	2000	done	\N	20	0
+11	HSTI1_3631	6	20500	600	done	\N	6	0
+12	HSTJ1_0507	20	21100	2000	done	\N	20	0
+13	HSTN0_7429	20	23100	2000	done	\N	20	0
+14	HSTO1_2478	8	25100	800	done	\N	8	0
+15	HSTU0_7308	8	25900	800	done	\N	8	0
+16	NHKELO_1001	20	26700	2000	done	\N	20	0
+17	NHPCMV_1001	15	28700	1500	done	\N	13	0
+18	VGISS_6109	18	30200	1800	done	\N	18	0
+19	VG_2801	45	32000	4500	done	\N	12	0
+20	VG_2802	30	36500	3000	done	\N	6	0
+21	VG_2803	42	39500	4200	done	\N	20	0
+22	VG_2810	2	43700	200	done	\N	2	0
+23	cassini_uvis_solarocc_beckerjarmak2023	20	43900	2000	done	\N	20	0
+24	uranus_occ_u14_opmt_106cm	4	45900	400	done	\N	4	0

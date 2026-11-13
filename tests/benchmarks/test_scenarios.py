@@ -37,17 +37,11 @@ def test_the_test_scale_groups_are_import_for_tests_sh_s(monkeypatch: pytest.Mon
 
 
 def test_the_complete_scale_groups_are_opus_import_all_s(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Same bundle sets, order and options as the full-holdings import runs."""
+    """Same bundle sets, in the order the full-holdings import registers them, with no
+    options of their own, as it gives none."""
     monkeypatch.setenv('PDS_DROPBOX_ROOT', '/holdings-root')
     scenario = import_scenarios.load_scenario('complete')
-    expected = [
-        (
-            step[-1],
-            tuple(option for option in step if option != '--import' and option != step[-1]),
-        )
-        for step in import_all.import_steps(None, [])
-        if '--import' in step
-    ]
+    expected = [(name, ()) for name in import_all.BUNDLE_SETS]
     assert [(group.bundles, group.options) for group in scenario.groups] == expected
 
 

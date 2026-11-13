@@ -20,6 +20,7 @@ their own.
 
 from __future__ import annotations
 
+import functools
 import re
 from typing import TYPE_CHECKING
 
@@ -148,12 +149,15 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     Every other table goes before ``obs_general``, in chunks, each chunk one statement and
     its own transaction, so no single statement holds a whole large bundle's undo:
 
-    * Every other table's rows above ``obs_general``'s highest ``id`` are deleted. They
-      are rows of observations whose ``obs_general`` rows were never loaded: a table is
-      loaded once a transaction's worth of its rows wait, so a run that stopped partway
-      through an index can leave a child's rows behind with no ``obs_general`` row to
-      join, and the bundle's ids, handed out again from ``obs_general``'s highest, would
-      collide with them.
+    * Every other table's rows in the bundle's registered id range above the highest
+      ``obs_general`` id in that range are deleted. They are rows of observations whose
+      ``obs_general`` rows were never loaded: a table is loaded once a transaction's worth
+      of its rows wait, so a run that stopped partway through an index can leave a
+      child's rows behind with no ``obs_general`` row to join, and the bundle's ids,
+      handed out again from the start of its range, would collide with them. No other
+      bundle's rows lie in the range, so another process importing into the schema at the
+      same time loses nothing. A bundle the registry does not hold has no range, and this
+      part is skipped.
     * Then the bundle's ``obs_general`` ids are read `ImportDBSuper.transaction_rows` at
       a time through ``obs_general``'s ``bundle_id`` key. For each chunk, every other
       table's rows of those observations are deleted by joining ``obs_general`` on
@@ -164,8 +168,10 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
 
     Every statement selects by ``bundle_id`` and a range of ids, or by a range of
     ``obs_general_id``, through a key a table is created with, so none reads rows outside
-    its range. The connection checks foreign keys while it deletes, so ``cart``'s cascade
-    removes the cart rows that name the bundle's observations.
+    its range. Each is run again when the server reports a deadlock or a lock wait
+    timeout (`ImportDBSuper.retrying`). The connection checks foreign keys while it
+    deletes, so ``cart``'s cascade removes the cart rows that name the bundle's
+    observations.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -181,22 +187,42 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     if 'obs_general' not in table_names:
         return
     q = db.quote_identifier
-    highest = db.find_column_max('obs_general', 'id') or 0
-    for table_name in joined:
-        db.delete_rows(table_name, f'{q("obs_general_id")} > %s', [highest])
+    description = f'Deleting bundle "{bundle_id}"'
+    registered = bundle_registry.bundle_range(ctx, bundle_id)
+    if registered is not None:
+        last = registered.end - 1
+        in_range = f'{q("id")} BETWEEN %s AND %s'
+        highest = db.general_select(
+            f'MAX({q("id")}) FROM {q("obs_general")} WHERE {in_range}',  # nosec B608
+            [registered.first_id, last],
+        )[0][0]
+        above = registered.first_id if highest is None else int(highest) + 1
+        in_orphans = f'{q("obs_general_id")} BETWEEN %s AND %s'
+        for table_name in joined:
+            db.retrying(
+                description,
+                functools.partial(db.delete_rows, table_name, in_orphans, [above, last]),
+            )
     parent = q(db.JOINED_PARENT_ALIAS)
     in_chunk = f'{parent}.{q("bundle_id")} = %s AND {parent}.{q("id")} BETWEEN %s AND %s'
     for first_id, last_id in _bundle_id_ranges(db, 'obs_general', bundle_id):
         for table_name in joined:
-            db.delete_joined_rows(
-                table_name,
-                'obs_general_id',
-                'obs_general',
-                'id',
-                in_chunk,
-                [bundle_id, first_id, last_id],
+            db.retrying(
+                description,
+                functools.partial(
+                    db.delete_joined_rows,
+                    table_name,
+                    'obs_general_id',
+                    'obs_general',
+                    'id',
+                    in_chunk,
+                    [bundle_id, first_id, last_id],
+                ),
             )
-        _delete_id_range(db, 'obs_general', bundle_id, first_id, last_id)
+        db.retrying(
+            description,
+            functools.partial(_delete_id_range, db, 'obs_general', bundle_id, first_id, last_id),
+        )
 
 
 def _bundle_id_ranges(

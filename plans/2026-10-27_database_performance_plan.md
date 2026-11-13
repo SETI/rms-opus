@@ -6065,8 +6065,369 @@ Nothing above this line is rewritten by an executor.
     improved and the warm search is faster; it is flagged in the PR's description for
     the user's review before merge.
 
+### 2026-11-10, PR-16 (written against this file at 2d01553f)
+
+- The branch is PR-15's, with PR-15's review fixes merged in, since the section builds on
+  its one surface geometry table: `obs_general.id` is the only id the import allocates.
+- **`mult_field.last_id` is `INT NOT NULL DEFAULT -1`, not PR-14's width with
+  `DEFAULT 0`.** PR-14 kept every field's ids starting at 0, so "the highest id handed
+  out" needs a value for "none yet": -1, the same convention as PR-14's cached `max_id`.
+  The statement is the section's, `UPDATE mult_field SET last_id = LAST_INSERT_ID(last_id
+  + 1) WHERE field_id = %s`, and the first value of an empty field still takes 0. The
+  counter is wider than an id so that the overflow is the import's
+  `MultIdOverflowError`, naming the field, when the counter passes 65,535, not a
+  server range error. Registration sets a pinned field's `last_id` to the highest id it
+  holds, leaving out `PINNED_ABSENT_ID`.
+- **PR-14's id reuse ends.** The counter is never lowered, so an id finalization deletes
+  is never handed out again. The guides said a deleted id is free again; they now say the
+  reverse (`dev_guide_database_schema.rst`, `dev_guide_import_overview.rst`,
+  `dev_guide_import_steps.rst`).
+- **The observation ids change in every observation table's golden.** The first
+  registered bundle's range starts at 0, as the ids did, and each later range starts
+  where the last ended, a hundred ids per declared row, so every bundle after the first
+  has ids other than the serial import's. With one importer the ids are the same on
+  every run, which is the section's claim; they are not the pre-PR ids. The regenerated
+  goldens were checked by a script, not by eye: in every changed observation table the
+  rows are equal once `id`, `obs_general_id` and `bundle_number` are dropped, and in the
+  same order. The mult ids are unchanged (`mult.tsv` and `mult_group.tsv` did not change),
+  `mult_field.tsv` gains `last_id`, equal for every field to the highest id `mult.tsv`
+  holds for it but 65,535 (so one importer leaves no gap), `import_bundle.tsv` is the
+  rebuilt table, and `schema_version.tsv` holds 9. Nothing else changed.
+- `golden_io` drops `import_bundle.started_at` and `finished_at` (`WALL_CLOCK_COLUMNS`),
+  which the import stamps with the clock, and counts `bundle_number` among the numbered
+  columns the re-import comparisons drop: a bundle deleted with `--delete-bundles` loses
+  its row and is registered afresh, with a new number, when imported again.
+- **Registration lives in a step module, `opus_import.steps.do_register`**, beside
+  `opus_import.bundle_registry`, which keeps the table-level reads and writes:
+  registration needs `do_import_tables.opus_imports_bundle` and the pinned fields' writer
+  in `do_import_mult`, and `do_import_tables` imports `bundle_registry`. The primary
+  index search moved out of `import_one_bundle` into `opus_import.primary_index`, which
+  both use.
+- **A PDS4 index has no label to read a row count from.** The PDS4 primary indexes OPUS
+  reads are bare CSV files (the fixture's, and `import_util.safe_pdstable_read`'s own
+  comment), so the section's "`<records>` in a PDS4 one" has nothing to read.
+  `primary_index.declared_rows` reads `<records>` from a `.xml` label beside the index
+  when there is one, and otherwise counts the index's non-blank lines, less a `.csv`
+  header: the one case where registration opens a table. A PDS3 label declaring several
+  `ROWS` gives the largest.
+- **Registration writes the pinned fields' rows by the same lay-over the import did**,
+  presentation updates included, so an append's registration applies a list's relabels
+  as the import used to. The one pinned row an importer still writes is the absent value
+  under `PINNED_ABSENT_ID` for a value outside a list; its id is fixed, so a second
+  importer's insert meets the key and reads the row back.
+- **`--join` and `--requeue` are `opus_import` options**, and `opus_import_all --join`
+  and `--requeue` run them as their own invocations, as every other step of
+  `opus_import_all` is one; the section's "one importer in this process" is one
+  `opus_import --join` process. `--sets` becomes that invocation's positional bundle
+  descriptors, which limit the claim (`bundle_id IN (...)` beside the state). `--join`
+  is refused with `--import`, `--do-it-all`, `--register-bundles`, `--requeue`,
+  `--delete-bundles`, `--scorched-earth`, `--ignore-errors`, `--finalize`,
+  `--create-indexes` and `--write-schema-version`. A queue importer exits non-zero when
+  any bundle it took failed, so the default sequence stops before `--finish`, which would
+  refuse anyway.
+- `opus_import_all --finish` reads the registry over a read-only `importdb` connection;
+  `--dry-run` connects to nothing. `--scorched-earth` goes only with `--prepare` or the
+  default sequence, and `--sets` and `--workers` only with `--join` (`--workers` also
+  with the default sequence).
+- **A plain `--import` on the append path resumes `pending` and `failed` bundles, not
+  `importing` ones.** PR-08's append-resume test resumes a `failed` bundle with a bare
+  `--import`, and the section keeps its assertions; a bundle left `importing` is the
+  section's case for `--requeue`. `--register-bundles` on the fresh path leaves
+  registered bundles alone (a rerun keeps what is done); on the append path it returns
+  the named ones to `pending` and sets the schema `appending`. A plain `--import`
+  returns its named bundles to `pending` on both paths, as PR-08's upsert did.
+- **`rows_done` is written by its own statement after each `obs_general` load**, not
+  inside the load's transaction; PR-16a's chunk transaction, whose first statement is
+  that update, needs the bulk load to take a statement to run before its commit.
+- **The per-bundle delete's first part is bounded by the bundle's range.** PR-12's
+  "rows above `obs_general`'s highest id" would delete another importer's children that
+  load before their `obs_general` rows. It now deletes, in each other table, the rows in
+  the bundle's range above the highest `obs_general` id in that range; a bundle the
+  registry lacks has no range, and that part is skipped. `TableRowSink.discard` deletes
+  from the first id it loaded to the range's end, not to the table's end. Every statement
+  of the delete runs in `ImportDBSuper.retrying`.
+- **`create_table` renders `CREATE TABLE IF NOT EXISTS` whenever it is asked to leave an
+  existing table alone**, since two fresh-path importers can create the same observation
+  table between one's cache check and its statement.
+- The write methods' fatal log goes through `ImportDBSuper._log_failure`, which is
+  silent inside `failures_expected()`: a retried deadlock and a mult insert that meets
+  another importer's row are not failures, and `retrying` logs the final one with its
+  statement. Each retried attempt is logged at debug level.
+- `ImportDBSuper.transaction()` makes every statement the instance runs join one
+  transaction (the registration's), and `retrying` runs a body in one per attempt; the
+  brand methods the section's SQL needs are `named_lock`, `increment_counter`,
+  `lock_first_row`, `insert_rows_keeping_existing`, `is_retryable_error` and
+  `is_duplicate_key_error`, MySQL in `importdb/mysql.py` (§1, Brand dispatch).
+  PostgreSQL note: `pg_advisory_lock` for the named lock, `UPDATE ... RETURNING` for the
+  counter, `INSERT ... ON CONFLICT DO NOTHING` for the groups.
+- **The golden-equality case compares three `--join` importers with the main run**, not
+  with a second one-importer import: the main run registers each bundle as it imports it,
+  in the same order the three-importer run registers them in one invocation, so the
+  numbers and ranges are the same, and the comparison saves a fixture import. The same
+  run is the claim test's: each importer holds every claim for five seconds, and its own
+  configuration and log directory stand for another computer; each runs `workers = 2`.
+- **The mult-value mode compares more than the mult columns' values**, found by the
+  first run of the equality case: (a) `obs_surface_geometry_target`'s primary key starts
+  with `target_name`, a mult id, so its rows come back in another order, and the mode
+  sorts every table's rows; (b) `table_names.target_name` holds a mult id of the
+  selector's field (PR-15), outside the observation tables, and the mode maps it too;
+  (c) **which spelling of a case-merged value is stored follows arrival order.** PR-14's
+  unique key on `(field_id, value)` compares under `utf8mb4_0900_ai_ci`, so the fixture's
+  `obs_profile.quality_score` holds one row for `FAIR`/`fair` and one for `POOR`/`poor`;
+  the serial import stores the uppercase spellings, and with three importers the bundle
+  met first decided, and stored `fair` and `poor`. The labels are the same (`Fair`,
+  `Poor`), and the observation columns hold the merged row's id either way, so the mode
+  writes every value as `opus_support.collation_key` gives it. With several importers a
+  case-merged value's stored spelling (`mult.value`) is therefore not fixed from run to
+  run. Its label is fixed in the fixture only because every bundle computes the same
+  one: in general an unpinned value's stored label, display, pin and grouping, and a new
+  group's `group_pin`, are whichever importer inserts the row first, the case the
+  conflict warning exists for, and they too can differ from run to run with several
+  importers. The orchestrator's ruling (2026-11-11): accepted, and the mult-value mode's
+  comparison by `collation_key` stands.
+- `tests/benchmarks/test_scenarios.py` compares the complete scale's groups with
+  `import_all.BUNDLE_SETS`, since `import_steps` no longer has an `--import` per set; the
+  harness still imports the groups one plain `--import` at a time, which registers them
+  in the same order.
+- `_opus_import_volumes.sh` is renamed `_opus_import_bundles.sh`; `grep -rln
+  "_opus_import_volumes" src scripts docs tests import_tests integration_tests
+  benchmarks .github` finds nothing in the tracked tree.
+- `SCHEMA_VERSION` is 9.
+- A command wrapper's path from outside the repository reached two lines this PR wrote
+  (`import_for_tests.sh`'s registration line and a docstring of
+  `do_import_tables.delete_bundle_from_obs_tables`); both were removed, and `git diff
+  6dfff149 -- . | grep -nE '/(seti|home|tmp|usr/local)/'` finds no added line.
+- Every new test was mutation-checked: each fails with the change it covers reverted or
+  broken (the unit tests by 32 source mutations, the `import_tests` cases by four, among
+  them a per-process `max + 1` for mult ids, under which the three importers collide on
+  `mult`'s primary key, and a registration that sorts the bundles). Registering the
+  fixture in its own order did not catch the sorted registration, since the fixture's
+  order is its bundles' sorted order; a case registering them in reverse does.
+- Once, in the first full run of the gates, four tests of `test_import_pool.py` failed
+  in one xdist worker with the pool reporting failure; ten runs of the unit suite since,
+  with and without `--dist loadscope`, and the second run of the gates did not repeat it.
+  The likeliest cause was a scripted connection of the new `test_importdb_mysql.py`
+  tests, without `fileno()`, which a pool forked later in the same worker would try to
+  close (`close_inherited_connections`); the scripted connection now has one.
+- The integration suite fails 40 tests when run with `-n 4` against the one local
+  database (cart and search state shared between workers); run serially, as the
+  integration job runs it, it passes.
+- Results: the gates pass (`run-all-checks.sh`, 2,819 unit tests); the import suite 175
+  passed and 3 skipped; the integration suite 1,591 passed against the local database
+  imported with this head (`import_for_tests.sh`, which registers its whole list first).
+  **No integration golden changed.**
+- **Review fixes (2026-11-11).** An independent review found six faults, each fixed:
+  - **Two processes could hold one bundle.** Every state write was a plain `UPDATE ...
+    WHERE bundle_id = %s`. Each move is now conditional on the state expected
+    (`ImportDBSuper.conditional_update`, which returns the rows changed): a queue
+    importer takes a bundle only from `pending`, and a plain `--import` takes one it
+    names from any state but `importing` (`bundle_registry.start_bundle`; a bundle
+    named twice in one invocation, PR-07's negative case, is `done` by its second turn); `importing` to `done` or `failed` only while still `importing` under the
+    `started_at` the process wrote when it took the bundle (`finish_bundle`, the hold
+    being `bundle_registry.Claim`); `pending` only from `done` or `failed`, or from
+    `importing` under `--requeue` alone (`return_to_pending`). A queue importer whose
+    bundle was requeued and retaken logs an error and neither marks nor deletes it;
+    its failure path marks `failed` before deleting, and deletes only when the mark
+    took. `rows_done` is written only under the same `started_at`. A plain `--import`
+    refuses, before writing anything, a named bundle that is `importing`, naming the
+    `--requeue`; one another process takes between registration and its turn is an
+    error and is left alone. `--delete-bundles` refuses an `importing` bundle.
+    `started_at` is to the second, so a bundle requeued and retaken within the second
+    it was first taken is the one case the hold cannot tell apart; a token column
+    would close it, and PR-16a's `process_id` can serve as one.
+  - **`--register-bundles` returned done bundles to `pending` on the append path.**
+    Registration now leaves every registered bundle's state alone; only a bundle it adds
+    is `pending`, and it sets `appending` only when it added one
+    (`do_register.Registration.added`). A plain `--import` keeps its replace semantics
+    for the bundles it names. **`--register-bundles` does not refuse an `importing`
+    bundle**, though the review asked for it: it no longer changes that bundle, and
+    PR-16a's coordinator reruns `--prepare` before its recovery step, which a refusal
+    would block after an importer died. A rerun of the prepare step on a finished schema
+    changes no state and leaves the row `ready` (a unit test, which also found that
+    three ready-state tests compared a shared dictionary with itself; they copy it now).
+  - **The mult value and group inserts are retried** (`retrying` gains `expected`, for a
+    failure the caller handles: the value insert's duplicate key is raised at once,
+    unlogged, for the read-back). The bulk loads are not retried: at `READ COMMITTED`
+    the per-bundle deletes take no gap locks, every observation table's only unique key
+    is its primary key, which lies in the loading bundle's own range, and a load chunk
+    that failed has already been rolled back and raised by PR-04's check.
+  - **An importer could exit while a registration was committing**, its locking read
+    passing over the uncommitted rows. A claim that finds nothing now takes and
+    releases registration's named lock and claims once more; an `import_tests` case
+    holds the lock, waits until the importer is blocked on it, makes a bundle pending,
+    releases it, and requires the importer to claim and import that bundle.
+  - The notes' claim that a value's label is fixed from run to run is corrected above.
+  - `--join --exclude-bundles X` with no bundles named honors the exclusion
+    (`claim_bundle(excluding=...)`), and a failed `RELEASE_LOCK` after a failed body no
+    longer replaces the body's exception.
+  - The new tests are mutation-checked: 14 source mutations against the unit tests, one
+    against the waiting case; each fails.
+  - Results after the fixes: the gates pass (2,830 unit tests); the import suite 176
+    passed and 3 skipped; the integration suite 1,591 passed against `pr16local`,
+    imported again with the fixes' registration (the import's output is unchanged).
+- **The harness starts several importers** (2026-11-11, at the orchestrator's request,
+  for the section's measurement). `bench_import --importers N` runs a side's erase, one
+  `--register-bundles` of every scenario group in import order, N `--join` processes
+  started together, each with a configuration and log directory of its own and an equal
+  share of `--import-key workers=W` (1 when none is given; a total N does not divide is
+  refused, so the importers together use exactly the workers a one-process run of the
+  same total uses), and the finalization sequence. The importers' phase is one
+  invocation, `join`, from the first start to the last exit, counted in
+  `import.bundle_imports.wall_s`; the run also records `import.registration.wall_s` and
+  each bundle's `size_estimate`, `import_bundle` time (from the importers'
+  `--timing-json` files) and `rows_done`. Other `--import-key`s, `transaction_rows`
+  among them, reach every importer. A side without `--join` refuses the option and is
+  measured as one process, which is what the target compares against; a scenario group
+  with options of its own refuses it too. `bench_import --register-only` registers
+  every group into a scratch schema, which it drops, and records a run of kind
+  `register` with `import.registration.wall_s`. `benchmarks.sides.Spelling` gains
+  `register_bundles` and `join`. A fixture-scale smoke run on this side,
+  `--importers 2 --import-key workers=2 --runs 1`, recorded 16.6 s, registration 0.6 s,
+  the importers' phase 8.8 s, 24 bundles, 399 `obs_general` rows (session `smoke`).
+- The merge of PR-15's head (395965d7) keeps PR-14's and PR-15's entries before this one,
+  with PR-15's measurement bullets at the end of PR-15's last entry; `queries.sql` is
+  PR-15's.
+- **A queue importer failed a bundle for another bundle's warning** (found by the
+  orchestrator's first test-scale `--importers 1` run, 2026-11-11). `pdsfile` reads a
+  viewable's shape with `PIL.Image.open`, and for `cassini_uvis_solarocc_beckerjarmak2023`'s
+  full-size preview PIL issues a `DecompressionBombWarning` (122,314,580 pixels against
+  its 89,478,485 limit). The import collects Python warnings in
+  `ImportContext.python_warning_list` and reports them only at a PDS3 table read
+  (`import_util.log_accumulated_warnings`); the bundle is PDS4, so nothing reported it.
+  An invocation that imports that bundle alone ends with the warning unreported, which
+  is what the one-process runs did; the queue importer went on to `HSTO0_7316`, whose
+  index read reported it as that bundle's error, failed it and deleted it. A plain
+  `--import` naming the two bundles in one invocation would have done the same. Each
+  bundle now starts with the list empty (`import_one_bundle`), so every path reports
+  what an invocation of the bundle alone reports; a unit test fails without the reset.
+  Charging the warning to the bundle that raised it would fail
+  `cassini_uvis_solarocc_beckerjarmak2023` on every path, a change of behavior this PR
+  does not make.
+- The same import-suite run failed the equality case once: `mult_field.last_id` of
+  `obs_profile.body_occ_flag` was 3 with three importers against 2 with one, an id taken
+  for a value another importer stored first, as designed. The mult-value mode now leaves
+  `mult_field.last_id` out as well; earlier runs had passed because the importers had
+  not met a new value at the same moment.
+- The merge of PR-15's head after its review fixes (1c9b912b) brings the surface geometry
+  triggers keyed by mult id; nothing of this section's changed.
+- **Measurement** (2026-11-11, test scale, eight `workers` in all; before at 395965d7,
+  PR-15's head, one process; after at 507f6316; two runs a configuration alternated, and
+  one with `transaction_rows = 1000`; sessions `a` before, `i1`, `i2`, `i4` and `t4`
+  after; judged against the PR-00 floors):
+  - **Target, four importers:** `import.wall_s` 166.8 s to 113.1 s, -32.2% (floor 1.8%),
+    **improved**; `import.bundle_imports.wall_s` 140.2 s to 84.2 s. One importer 151.2 s
+    (-9.3%), two 141.5 s (-15.2%). Finalization 25.2 s to 26.0 s on every count.
+  - **Four importers with `transaction_rows = 1000`** (reported): 146.5 s, 29.5% slower
+    than the default four-importer run; the bundle imports 117.2 s against 84.2 s.
+  - **Registration:** 1.6 s to 1.7 s at test scale; every bundle of the complete
+    holdings in 21.6 s (`--register-only`, session `reg`).
+  - **Each bundle's time against its `size_estimate`:** Pearson 0.92 with one importer,
+    0.57 and 0.68 in the two four-importer runs. The difference is a stall: in each
+    four-importer run, a bundle on each importer waited 22 s to 50 s in the same window
+    of about 30 s, every one of them reading `pdsfile`'s pickle files (opening them, or
+    the `from_opus_id` that reads them), and resumed within seconds of the others;
+    `VG_2803` took 50.3 s and 61.5 s against 0.7 s with one importer. The stalled
+    importers resumed within seconds of the fourth importer's exit, in both runs. The
+    holdings (a local SSD) and the server's data (a separate NVMe drive) share no disk,
+    and the cause was not determined. The complete-scale run is where it would show.
+  - **`db.schema.data_bytes` 746.3 MB to 803.0 MB, +7.6%, regressed** (floor 0);
+    `db.schema.index_bytes` 366.7 MB on both sides. One importer gives 801.9 MB and two
+    794.6 MB, so concurrency is not the cause. The same 29,752 `obs_general` rows take ids
+    0 to 3,218,240 where the base's take 0 to 29,753: the ranges follow `bundle_number`,
+    each holding `ID_CAPACITY_FACTOR` (100) ids for each row its labels declare, and a
+    queue importer claims the largest bundle first, so even one importer inserts into the
+    middle of every table's primary key rather than at its end, and the pages it splits
+    stay partly filled (`obs_profile` 53 bytes a row against 89). Rebuilding every `obs_` table
+    (`ALTER TABLE ... FORCE`, 33.5 s) took the one-importer schema to 847.9 MB and the
+    base's to 849.4 MB, so a rebuild in finalization would not recover the bytes. The
+    orchestrator accepts the regression as the cost of the id ranges; the web guards,
+    which read these tables, held.
+  - **Web guards** (three runs a side alternated, against `bench_test_before_a_2` and
+    `bench_test_after_i4_2`): every guard held; app-cold search empty +0.8%, broad
+    +1.9%, surface geometry +1.5%, fan-out empty +1.8%, concurrency distinct p95 -12.8%.
+- **With PR-15's triggers keyed by mult id, the equality case compared `partables` by
+  id**, and the three importers can number a body differently from the main run, so the
+  case failed once its importers met the bodies in another order. The mult-value mode
+  gives each `partables` row's `trigger_val` as the value of the field its
+  `trigger_tab` and `trigger_col` name (`golden_io`). Results on the final head: the
+  gates pass (2,854 unit tests), the import suite 176 passed and 3 skipped, and the
+  integration suite 1,591 passed against `pr16local`, imported again at this head.
+- **CodeRabbit fixes (2026-11-11).** Fixed, each with a test that fails without it:
+  - `--requeue` holds a bundle before deleting its rows: it takes it from `failed` or
+    `importing` with `start_bundle(from_states=...)`, a fresh `started_at`, deletes, and
+    returns it to `pending` through `finish_bundle` only while that hold stands, so a
+    plain `--import` that took the bundle after the state check keeps its rows. The
+    one-second `started_at` limit recorded above still applies; no token column is added.
+  - A mult value and its new group are one `retrying` transaction, so a failed group
+    insert leaves no value without its group. No repair on the duplicate-value path: the
+    importer that stored the value stored its group in the same transaction.
+  - A read-only import of a new bundle works: registration keeps the rows it would have added in
+    `ImportContext.planned_ranges`, which `bundle_range` falls back to, and
+    `increment_counter` logs its `UPDATE` and counts on from the stored `last_id`
+    (`ImportDBSuper._simulated_count`). `--join` is refused with `--read-only`, which
+    would claim the same bundle for ever.
+  - A queue importer on a schema with no registry waits on registration's lock, rereads
+    the table names (`ImportDBSuper.forget_table_names`), and fails naming
+    `--register-bundles`, instead of a 1146 from the claim's locking read.
+  - A failed rollback raises `RollbackError`, naming both failures and raised from the
+    body's; `retrying` never retries it or hands it to `expected`.
+  - Both harnesses drain every importer's pipes at once (`build_run.communicate_all`),
+    and the waiting `import_tests` case kills and reaps its importer however it ends.
+  - The guides and the `do_import_index` docstring describe immediate mult writes, the
+    replay's ids from `ctx.bundle_ids`, `MAX_ID` from the bundle's range, ids never
+    reused, and the importdb chapter's whole surface: `lock_name`, the new brand
+    methods, `transaction`/`retrying`/`failures_expected`, `READ COMMITTED` and
+    `RETRY_SLEEPS`.
+  - Skipped: none.
+  - Results: the gates pass (2,869 unit tests); the import suite 176 passed and 3
+    skipped. Each new test was mutation-checked against its fix reverted.
+- **CodeRabbit fixes, round 2 (2026-11-11).**
+  - A queue importer's failed bundle is deleted while it is still `importing` under the
+    importer's hold, which no claim and no plain `--import` takes, and marked `failed`
+    afterwards only while the hold stands; no delete when the hold was already lost
+    (`bundle_registry.holds`). Of the two ways the coordinator offered, this one, over a
+    sibling connection holding the row lock, keeps PR-16 simple: only an operator's
+    `--requeue` of a live importer can still meet the delete, the case the requeue
+    already states cannot happen, and PR-16a's `release_bundle` replaces the path.
+  - `bench_import`'s incremental append no longer needs the bundle's largest
+    `obs_general.id` to grow, which the registered range does not give: every row of the
+    bundle must have a `timestamp` no earlier than the server's `NOW()` when the append
+    started, and there must be rows. The check uses no registry column, so a side from
+    before PR-16 is measured by it too.
+  - `bench_import --importers` reads the bulk-load paths from each importer's log
+    directory as well as the run's (`bulk_load_paths(*log_dirs)`).
+  - The mult tests' stand-in runs each transaction again after a deadlock on its first
+    attempt, taking back the attempt's rows, groups and counter; a test asserts the id,
+    the rows and the group after both transactions are retried.
+  - The overview's earlier passages describe a `mult` row as inserted when its value is
+    met, before any `obs_` row holding its id is loaded.
+  - The pool-failure inconsistency is fixed the other way from the review's suggestion:
+    `import_one_index` calls `TableRowSink.discard` on a worker's failure, which deletes
+    the index's loaded rows at once, so the pool section now says that, and the index
+    summary, which already did, stands.
+  - Skipped: none.
+  - Results: the gates pass (2,876 unit tests); the import suite 176 passed and 3
+    skipped. The new failed-bundle test fails with the round-1 `do_import.py`.
+- **CodeRabbit, round 3 (2026-11-11).** The import tests' stand-in for `retrying` gives up
+  after as many attempts as `ImportDBSuper.retrying` makes, so a persistent deadlock ends
+  a test rather than hanging it. Its request to serialize the failed-bundle cleanup
+  against `--requeue` as well is declined here: the cleanup runs while the bundle is
+  `importing` under the importer's own hold, which no claim and no plain `--import` can
+  take, and `--requeue` of an `importing` bundle is the operator's statement that its
+  importer is dead. PR-16a gives every importer a lock, refuses `--requeue` of a bundle
+  whose importer is recorded, and replaces the cleanup with a row-locked
+  `release_bundle`.
+
 ### 2026-11-12, PR-14 (written against this file at 1e55f88a)
 
 - `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
   applied (a run changes no file), and `import_util.read_mult_option` refuses a string pin
   or group pin, naming the entry.
+
+### 2026-11-12, PR-16 (written against this file at 712067c6)
+
+- `import_for_tests.sh` no longer registers its bundles before importing them, a line
+  this PR had added: its `--import` lines run one after another, and each registers its
+  bundles as it starts, in the same order, so the numbers and ids are the same.
+  `opus_import_all --prepare` keeps registering its whole list first, for the importers
+  that run at once.

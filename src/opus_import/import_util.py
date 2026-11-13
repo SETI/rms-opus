@@ -721,43 +721,29 @@ def read_schema_for_existing_table(ctx: ImportContext, table_name: str) -> Table
     return read_schema_for_table(ctx, table_name)
 
 
-def find_max_table_id(ctx: ImportContext, table_name: str) -> Any:
-    """Return the largest row id a table holds.
-
-    Parameters:
-        ctx: The import run's context, for the open database.
-        table_name: The table.
-
-    Returns:
-        The maximum, or -1 if the table does not exist or is empty.
-    """
-    assert ctx.db is not None
-    if not ctx.db.table_exists(table_name):
-        return -1
-    max_id = ctx.db.find_column_max(table_name, 'id')
-    return -1 if max_id is None else max_id
-
-
 def next_table_id(ctx: ImportContext, table_name: str) -> Any:
-    """Hand out the next row id for a table.
+    """Hand out the next observation id, from the bundle's registered range.
 
-    The first id a bundle asks for in a table is one more than the largest the table
-    holds; each later one is one more than the last.
+    ``obs_general`` is the only table that numbers its own rows; every other table keys
+    on ``obs_general_id``. A bundle's observations take its range's first id and those
+    after it, in the order they are computed.
 
     Parameters:
-        ctx: The import run's context, for the open database and the id cache.
-        table_name: The table.
+        ctx: The import run's context, for the bundle's id counter.
+        table_name: The table asking, which is ``obs_general``.
 
     Returns:
         The id, or, in a pool worker, the `opus_import.deferred.LocalId` the import's
         process turns into it.
+
+    Raises:
+        opus_import.bundle_registry.BundleIdRangeError: If the bundle's range is used up.
     """
     if ctx.capture is not None:
         return ctx.capture.next_id(table_name)
-    if table_name not in ctx.max_table_id_cache:
-        ctx.max_table_id_cache[table_name] = find_max_table_id(ctx, table_name)
-    ctx.max_table_id_cache[table_name] += 1
-    return ctx.max_table_id_cache[table_name]
+    assert table_name == 'obs_general', table_name
+    assert ctx.bundle_ids is not None
+    return ctx.bundle_ids.take(1)
 
 
 ################################################################################

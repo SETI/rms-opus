@@ -25,6 +25,7 @@ import shutil
 import site
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
@@ -67,6 +68,11 @@ AUX_ARGS = ('--finalize',)
 DICTIONARY_ARGS = ('--import-dictionary',)
 VALIDATE_ARGS = ('--validate',)
 VERSION_ARGS = ('--write-schema-version',)
+
+#: The registration of a whole bundle list, and one queue importer, which several
+#: processes can run at once against one schema.
+REGISTER_ARGS = ('--register-bundles',)
+JOIN_ARGS = ('--join',)
 
 #: The Django migration's command line after the interpreter, run in the checkout.
 MIGRATE_ARGS = ('manage.py', 'migrate')
@@ -932,3 +938,62 @@ def drop_schema(credentials: DatabaseCredentials, schema: str) -> None:
         schema: The schema to drop.
     """
     golden_io.execute(credentials, None, f'DROP DATABASE IF EXISTS `{schema}`')
+
+
+def communicate_all(processes: Sequence[subprocess.Popen[str]]) -> list[tuple[str, str]]:
+    """Wait for every process to exit, draining all of their pipes at once.
+
+    Draining one process's pipes at a time would leave the others' undrained, and a
+    process that fills a pipe then blocks, holding whatever it holds -- a claimed bundle,
+    or a lock another of the processes waits for -- until its turn comes.
+
+    Parameters:
+        processes: Processes started with their standard output and error piped, as text.
+
+    Returns:
+        Each process's standard output and error, in the order of `processes`.
+    """
+    if len(processes) == 0:
+        return []
+    with ThreadPoolExecutor(max_workers=len(processes)) as executor:
+        return list(executor.map(lambda process: process.communicate(), processes))
+
+
+def run_concurrently(
+    config_files: Sequence[Path],
+    arguments: Sequence[str],
+    *,
+    extra_environment: Mapping[str, str] | None = None,
+) -> list[StepResult]:
+    """Start one ``opus_import`` invocation per configuration at once, and wait for all.
+
+    Parameters:
+        config_files: Each process's configuration, which names its own log directory.
+        arguments: The command line every process runs, after ``python -m opus_import``.
+        extra_environment: Variables added to every process's environment, or None.
+
+    Returns:
+        What each invocation did, in the order of `config_files`.
+    """
+    processes = []
+    for config_file in config_files:
+        environment = {**run_environment(config_file), **(extra_environment or {})}
+        processes.append(
+            subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's own module
+                [str(THIS_PYTHON), '-m', 'opus_import', *arguments],
+                cwd=fixture_layout.REPO_ROOT,
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        )
+    return [
+        StepResult(
+            arguments=tuple(arguments),
+            returncode=process.returncode,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        for process, (stdout, stderr) in zip(processes, communicate_all(processes), strict=True)
+    ]

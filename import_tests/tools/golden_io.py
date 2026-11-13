@@ -10,9 +10,10 @@ order from the highest id already present. So a golden drops or reorders only wh
 named here, each justified where it is applied.
 
 Two of them are about values that are not stable: the columns MySQL fills in with the
-wall clock (`TIMESTAMP_DATA_TYPE`) are dropped, and one JSON list whose order pdsfile
-documents as unstable (`_UNORDERED_JSON_COLUMNS`) is sorted. Any *other* column that
-differs between two clean runs is a defect rather than a normalization candidate.
+wall clock (`TIMESTAMP_DATA_TYPE`), and the ones the import stamps with it
+(`WALL_CLOCK_COLUMNS`), are dropped, and one JSON list whose order pdsfile documents as
+unstable (`_UNORDERED_JSON_COLUMNS`) is sorted. Any *other* column that differs between
+two clean runs is a defect rather than a normalization candidate.
 
 The third is about a value that is perfectly stable and simply redundant:
 `DERIVED_COLUMNS` drops a column another column in the same row rebuilds. That is a size
@@ -20,20 +21,33 @@ decision rather than a stability one, and it is only safe because the rebuilding
 asserted -- `import_tests.test_goldens` re-derives each dropped column against the
 database, so what is saved is bytes and not coverage.
 
+The **mult-value mode** of `serialize_table` is the one used to compare two imports whose
+mult ids may differ: several import processes writing one schema give a field's new values
+ids in the order they arrive, so every mult column is written as the value its id names,
+the ``mult`` table without its ids, ``mult_field`` without its counter, which leaves an
+id unused where two importers met one value, and the rows of every table sorted, since a
+key holding a mult id orders them by id. A value is written as the server's collation compares it,
+because of two values the field's unique key merges, the one stored is the one met first.
+No golden is written in that mode.
+
 `without_surrogate_ids` is a fourth, and it is deliberately not part of writing or
-reading a golden: only the re-import comparison uses it, because only a re-import
-renumbers rows.
+reading a golden: only the re-import comparisons use it, because only a bundle deleted
+and imported again is renumbered.
 """
 
 from __future__ import annotations
 
 import datetime
+import functools
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import MySQLdb
+
+from opus_import import import_util, mult_fields
+from opus_support import collation_key
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -50,6 +64,11 @@ _ESCAPES = (('\\', '\\\\'), ('\t', '\\t'), ('\r', '\\r'), ('\n', '\\n'))
 #: -- ``do_import_obs`` skips every ``timestamp`` field -- and MySQL fills them from the
 #: wall clock, so they differ between two identical runs by design.
 TIMESTAMP_DATA_TYPE = 'timestamp'
+
+#: The columns the import stamps with the wall clock, which the goldens drop: when each
+#: bundle's latest import began and ended. They differ between two identical runs by
+#: design.
+WALL_CLOCK_COLUMNS = {'import_bundle': frozenset({'started_at', 'finished_at'})}
 
 #: The extension every golden file carries.
 GOLDEN_EXT = '.tsv'
@@ -113,14 +132,15 @@ EXCLUDED_TABLES: dict[str, str] = {}
 #: value per path in this fixture but are not computed from it.
 DERIVED_COLUMNS = {'obs_files': frozenset({'url'})}
 
-#: The columns the server numbers rather than the import computing: ``id`` is the
-#: auto-incremented row id and ``obs_general_id`` names an observation's ``obs_general``
-#: row (a child table's primary key, or part of it). They are stable across two clean runs from an empty
-#: database, which is why the goldens carry them, and they are *not* stable across a
-#: re-import: the pipeline deletes the bundle's rows and loads them again, handing out ids
-#: from the largest present, so re-importing a bundle renumbers it.
-#: `without_surrogate_ids` is what the re-import comparison drops them with.
-SURROGATE_ID_COLUMNS = frozenset({'id', 'obs_general_id'})
+#: The columns numbered by the server or by the bundle registry rather than computed from
+#: the holdings: ``id`` is a row id, ``obs_general_id`` names an observation's
+#: ``obs_general`` row (a child table's primary key, or part of it), and
+#: ``bundle_number`` is the registry's auto-incremented number. They are stable across two
+#: clean runs from an empty database, which is why the goldens carry them, and they are
+#: *not* stable across a bundle deleted and imported again: it is registered afresh, with
+#: a new number and a range after every other, so its rows are renumbered.
+#: `without_surrogate_ids` is what the re-import comparisons drop them with.
+SURROGATE_ID_COLUMNS = frozenset({'id', 'obs_general_id', 'bundle_number'})
 
 #: The column naming the bundle a row came from, where a table has one.
 BUNDLE_COLUMN = 'bundle_id'
@@ -325,17 +345,115 @@ def encode_value(value: Any) -> str:
     return text
 
 
-def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -> str:
+#: The table holding every mult field's values, and the one naming the fields.
+_MULT_TABLE = 'mult'
+_MULT_FIELD_TABLE = 'mult_field'
+
+
+#: The columns outside the observation tables that hold a mult id: a surface geometry
+#: category's body in ``table_names``, an id of the selector's field.
+_OTHER_MULT_COLUMNS = {
+    'table_names': {'target_name': ('obs_surface_geometry_name.target_name', False)},
+}
+
+
+@functools.cache
+def _mult_columns() -> dict[str, dict[str, tuple[str, bool]]]:
+    """Return every column of a packaged observation schema that holds mult ids, and the
+    `_OTHER_MULT_COLUMNS`.
+
+    Returns:
+        For each table, each such column's field (its qualified name) and whether the
+        column holds a JSON list of ids rather than one.
+    """
+    columns: dict[str, dict[str, tuple[str, bool]]] = {
+        table: dict(table_columns) for table, table_columns in _OTHER_MULT_COLUMNS.items()
+    }
+    for schema_file in import_util.table_schema_files('obs_*.json'):
+        table = schema_file.name.removesuffix('.json')
+        for entry in json.loads(schema_file.read_text(encoding='utf-8')):
+            if mult_fields.is_mult_column(entry):
+                name = import_util.mult_field_name(table, entry['field_name'], entry)
+                is_list = entry['field_type'] == 'mult_list'
+                columns.setdefault(table, {})[entry['field_name']] = (name, is_list)
+    return columns
+
+
+def _mult_values(credentials: DatabaseCredentials, schema: str) -> dict[tuple[str, int], str]:
+    """Return every mult value a schema holds, keyed by its field's name and its id.
+
+    Each value is given as the server's collation compares it
+    (`opus_support.collation_key`): the unique key on ``(field_id, value)`` merges values
+    that differ only in case or accent, and which spelling the merged row keeps is the
+    first one met, which with several importers is the order they met them in.
+    """
+    rows = query(
+        credentials,
+        schema,
+        f'SELECT f.qualified_name, m.id, m.value FROM `{_MULT_TABLE}` m '  # nosec B608
+        f'JOIN `{_MULT_FIELD_TABLE}` f ON f.field_id = m.field_id',
+    )
+    return {(str(name), int(mult_id)): collation_key(str(value)) for name, mult_id, value in rows}
+
+
+def _as_mult_value(values: dict[tuple[str, int], str], field: tuple[str, bool], stored: Any) -> Any:
+    """Return a mult column's stored id, or JSON list of ids, as the values they name.
+
+    Parameters:
+        values: What `_mult_values` returned.
+        field: The column's field and whether it holds a list.
+        stored: The column's value: an id, an id as text, a JSON list of ids, or NULL.
+
+    Returns:
+        The value, or the JSON list of values; NULL stays NULL.
+    """
+    name, is_list = field
+    if stored is None:
+        return None
+    if is_list:
+        return json.dumps([values[(name, int(mult_id))] for mult_id in json.loads(stored)])
+    return values[(name, int(stored))]
+
+
+#: The table whose ``trigger_val`` holds an id of the mult field its row's
+#: ``trigger_tab`` and ``trigger_col`` name, so which field a value belongs to varies by row.
+_TRIGGER_TABLE = 'partables'
+
+
+def _with_trigger_value(
+    values: dict[tuple[str, int], str], columns: Sequence[str], row: Sequence[Any]
+) -> tuple[Any, ...]:
+    """Return a ``partables`` row with its ``trigger_val`` given as the value its id names.
+
+    Parameters:
+        values: What `_mult_values` returned.
+        columns: The row's column names, in order.
+        row: The row as read.
+
+    Returns:
+        The row, its ``trigger_val`` replaced by the mult value of the field
+        ``<trigger_tab>.<trigger_col>``.
+    """
+    fields = dict(zip(columns, row, strict=True))
+    field = (f'{fields["trigger_tab"]}.{fields["trigger_col"]}', False)
+    fields['trigger_val'] = _as_mult_value(values, field, fields['trigger_val'])
+    return tuple(fields[column] for column in columns)
+
+
+def serialize_table(
+    credentials: DatabaseCredentials, schema: str, table: str, *, mult_values: bool = False
+) -> str:
     """Read one table and render it as its golden text.
 
     Every column MySQL declares as a timestamp is dropped: the import never writes one,
     and the server fills them from the wall clock. Which columns those are is read from
     the server rather than listed here, so a new timestamp column is handled the day it
-    appears. `DERIVED_COLUMNS` names the further columns dropped because the same value is
-    derivable from another column beside it, and one column is reordered rather than
-    dropped -- see `_UNORDERED_JSON_COLUMNS`. Nothing else is normalized: from an empty
-    database every other value the import writes is the same on every run, and one that is
-    not is a defect rather than a normalization candidate.
+    appears. `WALL_CLOCK_COLUMNS` names the columns the import itself stamps with the
+    clock, which are dropped too. `DERIVED_COLUMNS` names the further columns dropped
+    because the same value is derivable from another column beside it, and one column is
+    reordered rather than dropped -- see `_UNORDERED_JSON_COLUMNS`. Nothing else is
+    normalized: from an empty database every other value the import writes is the same on
+    every run, and one that is not is a defect rather than a normalization candidate.
 
     Both the generator and the comparison call this, so a golden and the run it is
     compared against are projected the same way by construction rather than by two lists
@@ -345,15 +463,26 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
         credentials: How to reach the server.
         schema: The schema to read.
         table: The table to read.
+        mult_values: True for the mult-value mode: every mult column holds the value its
+            id names (``partables``' ``trigger_val`` among them), ``mult`` is written
+            without its ``id`` and ``mult_field`` without its ``last_id``, every value of a mult field is written as its
+            `opus_support.collation_key`, and the rows are sorted.
 
     Returns:
-        A header line of column names, then one line per row, ordered by primary key.
+        A header line of column names, then one line per row, ordered by primary key, or
+        sorted in the mult-value mode.
     """
-    derived = DERIVED_COLUMNS.get(table, frozenset())
+    dropped = DERIVED_COLUMNS.get(table, frozenset()) | WALL_CLOCK_COLUMNS.get(table, frozenset())
+    if mult_values and table == _MULT_TABLE:
+        dropped |= {'id'}
+    if mult_values and table == _MULT_FIELD_TABLE:
+        # The counter counts ids taken, and an id taken for a value another importer
+        # stored first is left unused, so it depends on how the importers met.
+        dropped |= {'last_id'}
     columns = [
         name
         for name, data_type in table_columns(credentials, schema, table)
-        if data_type != TIMESTAMP_DATA_TYPE and name not in derived
+        if data_type != TIMESTAMP_DATA_TYPE and name not in dropped
     ]
     if len(columns) == 0:
         return '\n'
@@ -362,15 +491,31 @@ def serialize_table(credentials: DatabaseCredentials, schema: str, table: str) -
     quoted = ', '.join(f'`{name}`' for name in columns)
     ordering = ', '.join(f'`{name}`' for name in order_by)
     rows = query(credentials, schema, f'SELECT {quoted} FROM `{table}` ORDER BY {ordering}')
-    lines = ['\t'.join(columns)]
-    lines += [
-        '\t'.join(
-            encode_value(_ordered(table, column, value))
-            for column, value in zip(columns, row, strict=True)
-        )
+    mult_columns = _mult_columns().get(table, {}) if mult_values else {}
+    values = (
+        _mult_values(credentials, schema)
+        if mult_columns or (mult_values and table == _TRIGGER_TABLE)
+        else {}
+    )
+    if mult_values and table == _TRIGGER_TABLE:
+        rows = [_with_trigger_value(values, columns, row) for row in rows]
+
+    def field_text(column: str, value: Any) -> str:
+        """Return one field as the golden writes it."""
+        if column in mult_columns:
+            value = _as_mult_value(values, mult_columns[column], value)
+        elif mult_values and table == _MULT_TABLE and column == 'value':
+            value = collation_key(str(value))
+        return encode_value(_ordered(table, column, value))
+
+    lines = [
+        '\t'.join(field_text(column, value) for column, value in zip(columns, row, strict=True))
         for row in rows
     ]
-    return '\n'.join(lines) + '\n'
+    if mult_values:
+        # A key holding a mult id orders rows by id, which the mode leaves out.
+        lines.sort()
+    return '\n'.join(['\t'.join(columns), *lines]) + '\n'
 
 
 def without_surrogate_ids(text: str) -> str:

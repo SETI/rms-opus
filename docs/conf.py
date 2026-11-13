@@ -254,6 +254,9 @@ nitpick_ignore = [
     # A TypeVar. Sphinx describes the generic function it parameterizes but has no
     # object of its own to point the parameter at.
     ('py:class', 'opus_log_analyzer.opus.html_generator.T'),
+    # The type parameter of `ImportDBSuper.retrying`, declared in its own signature, which
+    # Sphinx renders as the bare name.
+    ('py:class', 'T'),
 ]
 
 nitpick_ignore_regex: list[tuple[str, str]] = []

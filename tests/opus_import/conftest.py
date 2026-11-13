@@ -28,6 +28,25 @@ class RecordingLogger:
         """
         self.messages.append((level, msg))
 
+    def open(self, title: str, *args: Any, **kwargs: Any) -> None:
+        """Record the start of a section of the log.
+
+        Parameters:
+            title: The section's title.
+            args: Ignored.
+            kwargs: Ignored, such as the section's limits.
+        """
+        self.messages.append(('open', title))
+
+    def close(self, *args: Any, **kwargs: Any) -> None:
+        """Record the end of a section of the log.
+
+        Parameters:
+            args: Ignored.
+            kwargs: Ignored.
+        """
+        self.messages.append(('close', ''))
+
     def messages_at(self, level: str) -> list[str]:
         """Return every message logged at `level`, in the order they were logged.
 

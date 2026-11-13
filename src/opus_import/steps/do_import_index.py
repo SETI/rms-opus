@@ -15,10 +15,11 @@ body the observation has geometry for, are computed after the other tables' rows
 deferred past even that, because it needs the ``obs_general`` and ``obs_pds`` rows and
 contributes many rows per observation rather than one.
 
-Nothing is written to the database until every row has been computed. The new ``mult``
-rows go out first, because an ``obs_`` row stores the id a value was given in its mult
-field and that row has to exist to be looked up -- by convention rather than by a database
-constraint, since a ``mult_idx`` column carries no foreign key.
+Each new ``mult`` row is inserted as its value is met (`opus_import.steps.do_import_mult`),
+and an ``obs_`` row is loaded only after it has been computed, so a ``mult`` row is
+always written before an ``obs_`` row that stores its id -- the order a lookup needs, kept
+by convention rather than by a database constraint, since a ``mult_idx`` column carries
+no foreign key.
 
 These are the per-index internals of `opus_import.steps.do_import`, not a step of their
 own.
@@ -32,9 +33,9 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import pdsfile
 
-from opus_import import import_util, surface_geometry, table_keys
+from opus_import import bundle_registry, import_util, surface_geometry, table_keys
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
-from opus_import.steps import do_import_mult, do_import_obs, do_import_pool, do_import_tables
+from opus_import.steps import do_import_obs, do_import_pool, do_import_tables
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -366,20 +367,16 @@ def import_one_index(
     sink = TableRowSink(ctx, table_names_in_order)
 
     # Two bundles can produce the same OPUS ID; finalization's duplicate step keeps the
-    # later copy of each.
+    # copy from the bundle registered later.
     if not do_import_pool.compute_index(ctx, state, import_index_row, sink.add, bundle_label_path):
-        # The index's mult values are never written, so none of its rows may stay: a
-        # later bundle would give their mult ids to other values.
+        # A failed index leaves none of its rows; the mult values it added stay, and
+        # finalization deletes those no observation holds.
         sink.discard()
         return False
 
     ctx.current_index_row_number = None
     ctx.current_primary_filespec = None
 
-    # The mult rows go out before the last of the rows: an obs_ row holds the id its
-    # value was given in its mult field, so that row has to be there to be looked up.
-    # Nothing enforces it -- a mult_idx column carries no foreign key.
-    do_import_mult.write_mult_tables(ctx)
     sink.finish()
 
     return True  # SUCCESS!
@@ -473,28 +470,31 @@ class TableRowSink:
     def discard(self) -> None:
         """Delete every row this sink loaded, and drop the rows still waiting.
 
-        Ids are handed out from each table's highest, and the import's process is the
-        only writer, so this index's rows are those from the first it loaded up: by
-        ``id`` in ``obs_general``, and by ``obs_general_id``, the observation's id, in
-        every other table. The tables are emptied of them in the reverse of the order
-        they were first loaded, except that ``obs_general`` always goes last, after every
-        table whose rows refer to it: a table with many rows per observation, such as
-        ``obs_files``, can fill a transaction and load before ``obs_general`` does.
+        Ids are handed out in ascending order from the bundle's own range, which no other
+        process writes, so this index's rows are those from the first it loaded to the
+        end of the range: by ``id`` in ``obs_general``, and by ``obs_general_id``, the
+        observation's id, in every other table. The tables are emptied of them in the
+        reverse of the order they were first loaded, except that ``obs_general`` always
+        goes last, after every table whose rows refer to it: a table with many rows per
+        observation, such as ``obs_files``, can fill a transaction and load before
+        ``obs_general`` does.
         """
         db = self.ctx.db
         assert db is not None
+        assert self.ctx.bundle_ids is not None
+        end = self.ctx.bundle_ids.range.end
         in_order = [name for name in reversed(self.first_loaded) if name != 'obs_general']
         if 'obs_general' in self.first_loaded:
             in_order.append('obs_general')
         for table_name in in_order:
             first_id = self.first_loaded[table_name]
             column = db.quote_identifier(_observation_id_column(table_name))
-            db.delete_rows(table_name, f'{column} >= %s', [first_id])
+            db.delete_rows(table_name, f'{column} >= %s AND {column} < %s', [first_id, end])
         self.first_loaded.clear()
         self.rows.clear()
 
     def _load(self, table_name: str) -> None:
-        """Load one table's waiting rows.
+        """Load one table's waiting rows, and record the bundle's progress after ``obs_general``.
 
         Parameters:
             table_name: The table.
@@ -507,6 +507,10 @@ class TableRowSink:
             self.first_loaded.setdefault(table_name, waiting[0][_observation_id_column(table_name)])
         db.bulk_load_rows(table_name, waiting)
         self.rows[table_name] = []
+        bundle_ids = self.ctx.bundle_ids
+        if waiting and table_name == 'obs_general' and bundle_ids is not None:
+            bundle_ids.rows_done += len(waiting)
+            bundle_registry.record_rows_done(self.ctx, bundle_ids.range, bundle_ids.rows_done)
 
 
 def import_index_row(

@@ -156,7 +156,7 @@ def test_some_shell_files_were_found() -> None:
     # Canaries rather than an inventory: one from each family the rule is meant to
     # reach, so a rule that silently narrows fails here instead of passing vacuously.
     assert 'run-all-checks.sh' in names
-    assert '_opus_import_volumes.sh' in names
+    assert '_opus_import_bundles.sh' in names
     assert 'run_log_analyzer_update.sh_template' in names
     assert 'deploy.env.template' in names
 

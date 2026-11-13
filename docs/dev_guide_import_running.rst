@@ -154,7 +154,7 @@ failed in its import stops it before the first finalization step. Neither option
 Which path an import takes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-No option chooses how an invocation that imports bundles writes; the target schema's
+No option chooses how an invocation that registers or imports bundles writes; the target schema's
 state does (:ref:`dev_guide_import_write_paths`), and the import log says which on a line
 beginning ``Import path:``, naming the schema and its version:
 
@@ -166,7 +166,7 @@ beginning ``Import path:``, naming the schema and its version:
      - Path
    * - No ``schema_version`` row, and none of the secondary keys finalization adds
      - **Fresh import**: an empty schema, or one a fresh import is part way through,
-       since a full import runs one invocation per bundle group. The tables carry only
+       since a full import runs several invocations, which may run at once. The tables carry only
        the keys a load needs until ``--finalize`` adds the rest once.
    * - One row, of this release's version, ``ready`` or ``appending``
      - **Append**: the bundles load into the tables with their keys in place. The row is
@@ -186,16 +186,34 @@ replaces it. Neither path finalizes on its own: ``--finalize``, ``--validate`` a
 ``--write-schema-version`` follow as their own invocations, or ``--do-it-all`` runs the
 first of them in the same one.
 
-**The bundle registry.** Every invocation that imports bundles records each of them in
-the ``import_bundle`` table, on both paths: ``pending`` before the first bundle starts,
-``importing`` while it is deleted and loaded, then ``done``, or ``failed`` when its
-import failed or logged an error. A bundle whose import fails stops the invocation,
-leaving the ones after it ``pending``; one that only logged an error is recorded
-``failed`` and the invocation goes on to the next, exiting with failure after the last.
-An append first resumes every bundle the registry holds that is not ``done`` and that it
-does not name, in bundle order, then imports the ones it names, in the order named. That
-order matters: of two copies of one OPUS ID, finalization keeps the one imported last.
-An append with nothing to import leaves a finished schema ``ready``.
+**The bundle registry.** Every invocation that imports bundles registers each of them in
+the ``import_bundle`` table before the first one starts, on both paths. Registration
+gives a bundle new to the registry the next **bundle number** and an **id range**: the
+``obs_general`` ids its observations take, a hundred for each row its primary index
+labels declare, starting where the last registered range ends. A bundle already
+registered keeps its number and its range, so importing it again gives its observations
+the ids they had. Its state is then ``pending``, ``importing`` while it is deleted and
+loaded, then ``done``, or ``failed`` when its import failed or logged an error. A bundle
+whose import fails stops the invocation, leaving the ones after it ``pending``; one that
+only logged an error is recorded ``failed`` and the invocation goes on to the next,
+exiting with failure after the last. An append first resumes every bundle the registry
+holds that is ``pending`` or ``failed`` and that it does not name, in registration
+order, then imports the ones it names, in the order named. A bundle left ``importing``
+by a process that stopped is not resumed: ``--requeue`` returns it once that process is
+known to have stopped. An append with nothing to import leaves a finished schema
+``ready``.
+
+**Of two copies of one OPUS ID, finalization keeps the one from the bundle registered
+later**, since its range, and so its id, is higher. On a full import that is the later
+bundle in import order; importing a bundle again does not change which copy that is.
+
+**Registration refuses what it cannot size.** A bundle OPUS deliberately skips is
+logged at debug level as ``Ignoring registration of <bundle>`` and never registered. A
+bundle OPUS imports whose primary index file is missing, or whose label declares no row
+count, refuses the whole registration, naming the bundle and the label, and nothing is
+registered. A PDS4 index OPUS reads has no label, so its own rows are counted instead.
+Registration holds a server-wide lock, so two registrations never hand out overlapping
+ranges.
 
 **An unfinished registry is never finalized or marked ready.** While any bundle in the
 registry is not ``done``, ``--finalize`` refuses before its first step, and
@@ -272,6 +290,22 @@ Import steps
    * - ``--import``
      - Import the named bundles, on the path the schema's state chooses. Each bundle is
        deleted from the observation tables first, so importing it again replaces it.
+   * - ``--register-bundles``
+     - Register the named bundles in the bundle registry, in the order named, and import
+       nothing. A bundle already registered keeps its number, its range and its state;
+       on an append that adds a bundle, the schema is set to ``appending``.
+   * - ``--join``
+     - Import bundles from the bundle registry, the largest ``pending`` first, until none
+       is ``pending``; several processes may run at once (`Several import processes`_).
+       Named bundles limit the ones claimed. Refused with any option that erases,
+       deletes, registers or finalizes, and with ``--ignore-errors`` and
+       ``--read-only``.
+   * - ``--requeue``
+     - Return the named ``failed`` or ``importing`` bundles to ``pending``, after
+       deleting their rows. Naming any other bundle refuses the whole invocation, which
+       then changes nothing. Naming an ``importing`` bundle states that the process that
+       claimed it has stopped. Each bundle is held while its rows are deleted, so one
+       another process takes first is left to it, with nothing deleted.
    * - ``--delete-bundles``
      - Delete the named bundles' rows from every observation table, and their bundle
        registry rows, before any bundle is imported. A ``ready`` schema of this release's
@@ -427,7 +461,7 @@ Logging and diagnostics
        wall-clock seconds, plus ``total``. The steps are named as
        :meth:`~opus_import.context.ImportContext.timed` records them: each phase of
        :func:`~opus_import.steps.do_import.do_import_steps` (``scorched_earth``,
-       ``delete_bundles``, ``import``), ``delete_bundle:<bundle>`` and
+       ``delete_bundles``, ``register_bundles``, ``import``), ``delete_bundle:<bundle>`` and
        ``import_bundle:<bundle>`` for each bundle, each table's and each statement's key
        build (``create_indexes:<table>``, ``create_indexes:<table>:<keys>``), and the
        auxiliary, analyze, validation, cart and dictionary steps under their option's
@@ -453,19 +487,21 @@ whole shape. It:
 5. Resolves ``workers`` and ``index_workers`` against the ceiling and logs the
    ``Parallelism`` line, exiting non-zero with a fatal message if either is above it
    (:ref:`dev_guide_import_running_parallelism`).
-6. Rejects ``--scorched-earth`` without ``--yes``, or ``--yes`` without
-   ``--scorched-earth``, with a fatal message and a non-zero exit.
+6. Rejects ``--scorched-earth`` without ``--yes``, ``--yes`` without
+   ``--scorched-earth``, and ``--join`` with any option it is refused with, each with a
+   fatal message and a non-zero exit.
 7. Configures ``rms-pdsfile`` -- shelves-only unless ``--dont-use-shelves-only`` -- and
    preloads both holdings roots. The ``rms-pdsfile`` logger is attached *after* the
    preload, so the preload's own debug output stays out of the run's log.
 8. Opens the database through :func:`opus_import.importdb.get_db`, exiting non-zero if
    the connection fails.
-9. Chooses the import's path when the invocation imports bundles and erases nothing
-   first, exiting non-zero if the import is refused
+9. Chooses the import's path when the invocation registers or imports bundles and
+   erases nothing first, exiting non-zero if the import is refused
    (:ref:`dev_guide_import_running_paths`).
 10. Runs :func:`opus_import.steps.do_import.do_import_steps` -- the erase under
-    ``--scorched-earth``, then ``--delete-bundles``, then the import -- exiting non-zero
-    if it returns False.
+    ``--scorched-earth``, then ``--delete-bundles``, then ``--requeue``, then the
+    registration and the import, or the queue under ``--join`` -- exiting non-zero if it
+    returns False.
 11. Under ``--finalize``, refuses with a fatal message and a non-zero exit, before any
     finalization step, while any bundle in the bundle registry is not ``done``.
 12. Runs ``--create-indexes``, then, under ``--finalize``, the duplicate step and the
@@ -606,11 +642,91 @@ A complete import is hours to days and replaces everything a user sees, so it is
 into a new schema and switched over afterwards rather than in place.
 
 The sequence itself is an installed command, :mod:`opus_import.import_all`, run as
-``opus_import_all``: the erase, the bundle sets in the order a full import takes them,
-and the four steps that finish the database, each as its own ``opus_import`` process,
-stopping at the first failure. ``opus_import_all --dry-run`` prints the whole sequence
-without running any of it, and :ref:`user_guide_installation_full_import` is the
-operator's account of it.
+``opus_import_all``. It has three steps, each one or more ``opus_import`` processes:
+
+``--prepare``
+    Registers every bundle the bundle sets expand to, in the order a full import takes
+    them, as one ``opus_import --register-bundles`` invocation. Registering the whole
+    list first is what fixes every bundle's number and id range, and so every
+    observation's id, the same way on every run.
+
+``--join``
+    Runs one importer, ``opus_import --join``, which imports bundles from the registry
+    until none is ``pending`` (`Several import processes`_). ``--sets`` limits the
+    bundles it claims and ``--workers`` sets its ``--workers``.
+
+``--finish``
+    Once every importer has exited, runs ``opus_import --finalize``,
+    ``--import-dictionary``, ``--validate`` and ``--write-schema-version``, each as its
+    own invocation. Before the first it reads the registry, and while any bundle is
+    ``pending``, ``importing`` or ``failed`` it refuses, naming each with its state and,
+    for a ``failed`` or ``importing`` one, the ``opus_import_all --requeue <bundle>``
+    that returns it to the queue. It is not ``opus_import --finalize``, which is the
+    finalization group alone.
+
+Each step runs alone when named. With none named, ``opus_import_all`` runs all three in
+order on one computer, with one importer, stopping at the first invocation that fails.
+``opus_import_all --requeue <bundles>`` returns ``failed`` or ``importing`` bundles to
+``pending`` after deleting their rows, through ``opus_import --requeue``.
+
+**Nothing is erased unless asked for.** ``opus_import_all --scorched-earth`` first runs
+``opus_import --scorched-earth --yes`` as its own invocation, after asking for
+confirmation naming the schema, so the import starts from a schema holding no OPUS
+table; ``--yes`` answers that confirmation and is refused without ``--scorched-earth``.
+Without it, running ``opus_import_all`` again after an interruption registers nothing
+new and imports only what is not ``done``.
+
+``opus_import_all --dry-run`` prints, without connecting to the database or reading the
+holdings, what the same arguments would run: whether it erases, the bundle descriptors
+it registers in import order, the importer it starts with its workers, and the
+invocations ``--finish`` runs; with a step named, that step alone.
+:ref:`user_guide_installation_full_import` is the operator's account of it.
+
+Several import processes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Several ``opus_import --join`` processes, on one computer or several, can import into
+one schema at once. Each needs an ``OPUS_CONFIG`` naming the same database server,
+schema and holdings, and a log directory of its own. Register the bundles first, with
+``opus_import --register-bundles`` or ``opus_import_all --prepare``; then start the
+importers; then, once every one has exited, run ``opus_import_all --finish``.
+
+Each importer claims the largest ``pending`` bundle no other importer holds, marks it
+``importing``, deletes its rows, imports it, marks it ``done``, and claims the next,
+exiting when none is ``pending``. Taking the largest first starts the large bundles at
+once and leaves the small ones to fill in at the end. An importer never erases or
+finalizes. A bundle whose import raises or logs an error is marked ``failed`` and its
+rows are deleted; the importer goes on to the next and does not claim it again, and
+exits with failure at the end. Positional bundle descriptors limit the bundles an
+importer claims, which is how a computer holding only some of the holdings joins, and
+``--exclude-bundles`` keeps it off the ones it names. An importer that finds nothing to
+claim waits for any registration in progress and looks once more before it exits, and
+one started on a schema with no bundle registry waits the same way, then exits with
+failure if there is still none.
+
+A bundle is held by one process at a time. A plain ``opus_import --import`` and
+``--delete-bundles`` refuse a bundle another process holds ``importing``, naming the
+``opus_import --requeue`` that returns it once that process has stopped, and
+``--register-bundles`` leaves every registered bundle's state as it is. A bundle
+requeued while its first importer still ran is left to whichever importer took it next:
+the first logs an error, and neither marks nor deletes it.
+
+Almost nothing the importers write depends on which one imports a bundle or when:
+
+* A bundle's observation ids come from its registered range.
+* A mult value new to its field takes the next id of the field's counter,
+  ``mult_field.last_id``, in a short transaction of its own, and is written at once.
+  When another importer wrote the same value first, the stored row's id is used and the
+  id taken is left unused. So with several importers a field's new values may number
+  differently from one run to the next, and its ids may have gaps; with one, they number
+  as the serial import does. The value's stored row is the first importer's: of two
+  spellings the server's collation calls one value, and of two labels or group pins
+  computed for it, the stored one is the one met first, as the conflict warning
+  reports.
+* Every import connection reads at ``READ COMMITTED``, and a claim, a mult id, a mult
+  value's insert with its group's, and each statement of a bundle's delete are run again,
+  up to five attempts with growing pauses, when the server reports a deadlock or a lock
+  wait timeout.
 
 ``scripts/import/`` holds the wrappers the Ring-Moon Systems Node uses around that:
 
@@ -618,13 +734,14 @@ operator's account of it.
     A full production import on one of the Ring-Moon Systems Node's own servers. It
     refuses to run on any
     other host, prints the database currently being served, asks for confirmation, and
-    then puts ``opus_import_all --yes`` under ``nohup``. Everything it adds is specific
-    to the Ring-Moon Systems Node; the import itself is the installed command.
+    then puts ``opus_import_all --scorched-earth --yes`` under ``nohup``. Everything it
+    adds is specific to the Ring-Moon Systems Node; the import itself is the installed
+    command.
 
 ``import_for_tests.sh``
     The fixed bundle list the integration suite runs against -- Cassini ISS, UVIS, VIMS
     and CIRS, Galileo, Voyager, Hubble, New Horizons, and the occultation bundle sets --
-    followed by ``--finalize``, ``--import-dictionary``, ``manage.py migrate``,
+    registered as one list and then imported, followed by ``--finalize``, ``--import-dictionary``, ``manage.py migrate``,
     ``--validate`` and ``--write-schema-version``. **It begins by erasing every table the
     import creates** (``--scorched-earth --yes``) and asks for confirmation first,
     printing the schema so that the erase cannot be aimed at the wrong database.

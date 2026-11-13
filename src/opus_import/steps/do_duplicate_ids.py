@@ -5,8 +5,11 @@ its raw counterpart can -- and ``obs_general.opus_id`` carries a plain key rathe
 unique one, so both copies load side by side and nothing looks for them while bundles
 load. This step, run in finalization after the keys are built, keeps the copy with the
 highest ``obs_general.id`` and deletes the others' rows from every observation table.
-Ids are handed out in import order, so the copy kept is the one imported last; a bundle
-imported again gets ids above every existing one, so its new copy replaces the old.
+A bundle's ids come from its registered range, and the ranges ascend in registration
+order (`opus_import.bundle_registry`), so the copy kept is the one from the bundle
+registered later, which on a full import is the later bundle in import order. A bundle
+imported again keeps its number and its range, so importing it again does not change
+which copy that is.
 
 Each deleted copy is logged at info level when it came from another bundle than the copy
 kept, and as a warning when it came from the same bundle, which is a fault in that

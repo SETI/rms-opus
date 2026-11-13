@@ -95,6 +95,8 @@ def test_timing_options_name_the_file() -> None:
         ('validate', '--validate'),
         ('erase', ('--scorched-earth', '--yes')),
         ('timing_json', '--timing-json'),
+        ('register_bundles', '--register-bundles'),
+        ('join', '--join'),
     ],
 )
 def test_this_checkouts_own_help_is_spelled_as_expected(field: str, expected: object) -> None:
@@ -123,6 +125,12 @@ def test_this_checkouts_own_help_is_spelled_as_expected(field: str, expected: ob
         (NEW_HELP, ['--write-schema-version'], 'write_schema_version'),
         (OLD_HELP, ['--drop-cache-tables'], 'reset_search_tables'),
         (OLD_HELP, ['--update-mult-info', '--timing-json', 't.json'], '--update-mult-info'),
+        (
+            NEW_HELP + ' --register-bundles --join',
+            ['--register-bundles', '--timing-json', 't.json', 'COISS'],
+            'register_bundles',
+        ),
+        (NEW_HELP + ' --register-bundles --join', ['--join'], 'join'),
     ],
 )
 def test_an_invocation_is_named_by_its_role_on_either_side(
@@ -169,3 +177,11 @@ def test_a_set_pythonpath_is_refused() -> None:
         require_no_pythonpath({'PYTHONPATH': '/some/checkout/src'})
     require_no_pythonpath({'PYTHONPATH': ''})
     require_no_pythonpath({})
+
+
+def test_a_side_without_the_queue_has_no_registration_or_importer() -> None:
+    """A side older than the queue is measured in one process, so neither is named."""
+    spelling = Spelling.from_help(NEW_HELP)
+    assert spelling.register_bundles is None
+    assert spelling.join is None
+    assert spelling.role(['--join']) == '--join'
