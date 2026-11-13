@@ -7000,3 +7000,15 @@ Nothing above this line is rewritten by an executor.
   bundles as it starts, in the same order, so the numbers and ids are the same.
   `opus_import_all --prepare` keeps registering its whole list first, for the importers
   that run at once.
+
+### 2026-11-12, PR-16a (written against this file at 790c4616)
+
+- `import_for_tests.sh` imports its list through `opus_import_all --scorched-earth --yes
+  --sets`, from a `TEST_BUNDLES` array that `holdings_survey.script_bundle_descriptors`
+  and the test-scale scenario's test read. Rebuilding the local integration database
+  this way took about two minutes with four importers; its observation ids equal a
+  sequential build's (count, id range and a checksum of id and OPUS id).
+- The ids of a mult field without `mult_options` depend on which importer meets each
+  value first: two parallel builds numbered 382 `mult` rows differently. Three
+  `test_search.py` tests that wrote such ids down read them by value instead
+  (`_mult_id`); the API goldens do not depend on them. The suite passed on both builds.

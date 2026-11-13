@@ -868,10 +868,12 @@ A plain ``opus_import`` takes no lock and records no row; its bundles keep
 ``import_for_tests.sh``
     The fixed bundle list the integration suite runs against -- Cassini ISS, UVIS, VIMS
     and CIRS, Galileo, Voyager, Hubble, New Horizons, and the occultation bundle sets --
-    registered as one list and then imported, followed by ``--finalize``, ``--import-dictionary``, ``manage.py migrate``,
-    ``--validate`` and ``--write-schema-version``. **It begins by erasing every table the
-    import creates** (``--scorched-earth --yes``) and asks for confirmation first,
-    printing the schema so that the erase cannot be aimed at the wrong database.
+    held in the script's ``TEST_BUNDLES`` array and imported by ``opus_import_all
+    --scorched-earth --yes --sets``: it registers the list in its order, which fixes
+    every observation id, imports it with ``[import] importers`` queue importers sharing
+    ``[import] workers``, and finishes the database. ``manage.py migrate`` follows.
+    **It begins by erasing every table the import creates** and asks for confirmation
+    first, printing the schema so that the erase cannot be aimed at the wrong database.
 
 ``clone_database.sh``
     Copies a database.
