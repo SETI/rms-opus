@@ -298,10 +298,12 @@ The bundle registry: opus_import.bundle_registry and opus_import.steps.do_regist
 importers draw from.
 
 **Registration.** :func:`~opus_import.steps.do_register.register_bundles` registers
-bundles in the order given, which is the import order. It holds a server-wide named lock
-(``GET_LOCK`` on the name :func:`opus_import.importdb.lock_name` gives the schema and
-``register``) for its whole length, so two registrations never interleave. Under the lock
-it first creates the registry and the mult tables where the schema lacks them, since a
+bundles in the order given, which fixes their id ranges and so which copy of a shared
+OPUS ID finalization keeps (below). It is the order a plain ``--import`` imports them
+in, but not a queue importer, which claims the largest pending bundle first. It holds a
+server-wide named lock (``GET_LOCK`` on the name :func:`opus_import.importdb.lock_name`
+gives the schema and ``register``) for its whole length, so two registrations never
+interleave. Under the lock it first creates the registry and the mult tables where the schema lacks them, since a
 table's creation commits on its own, and then, in one transaction:
 
 * adds each bundle the registry lacks, as ``pending``, with the next ``bundle_number``,
@@ -346,14 +348,17 @@ processes never both hold one bundle. A queue importer takes a bundle only from
 one it names from any state but ``importing``
 (:func:`~opus_import.bundle_registry.start_bundle`); a bundle goes from ``importing`` to ``done`` or
 ``failed`` only while it is still ``importing`` under the ``started_at`` the process
-wrote when it took it (:func:`~opus_import.bundle_registry.finish_bundle`), so a bundle
-``--requeue`` returned to the queue and another process took is never finished, or
-deleted, by the process that held it before; that process logs an error instead. Besides a queue importer's abort and a recovery, only
-``--requeue`` moves an ``importing`` bundle back to ``pending``, and only one no queue
-importer holds: it takes the bundle from ``failed`` or ``importing`` as a hold of its
-own, and returns it under that hold once its rows are deleted. The hold is
-``started_at``, to the second, so a bundle requeued and taken again within the second it
-was first taken is the one case it cannot tell apart.
+wrote when it took it (:func:`~opus_import.bundle_registry.finish_bundle`). Besides a
+queue importer's abort and a recovery, only ``--requeue`` moves an ``importing`` bundle
+back to ``pending``, and only one no queue importer holds: it takes the bundle from
+``failed`` or ``importing`` as a hold of its own, and returns it under that hold once its
+rows are deleted. The bundle of a plain ``--import`` is requeued only once that process
+has stopped: the process holds no lock, so ``--requeue`` cannot tell a live one from a
+dead one, and a live one goes on writing rows into the bundle's range. A bundle
+``--requeue`` returned to the queue and another process took is then not finished by
+the process that held it before, which logs an error instead, unless both took it within
+one second: the hold is ``started_at``, to the second, and cannot tell those two
+apart.
 
 A bundle moves through these states:
 
@@ -536,8 +541,9 @@ every append runs it again. It has three parts, in this order:
    the intended set of choices; the absent value the import adds to a pinned field whose
    list has none, under
    :data:`~opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted once no
-   observation holds it. A deleted id is never handed out again: a new value takes the
-   next id of the field's counter, ``mult_field.last_id``, which only goes up.
+   observation holds it, and an import that needs it again adds it under the same id.
+   Any other deleted id is never handed out again: a new value takes the next id of the
+   field's counter, ``mult_field.last_id``, which only goes up.
 2. **Apply the overrides.**
    :func:`~opus_import.steps.do_finalize_mult.apply_mult_overrides` writes each column's
    ``mult_overrides`` over its field's stored rows, so an override wins over the label
@@ -1274,8 +1280,8 @@ compared by the server's own collation) before it is given an id, and the server
 is kept in the cache under the value's key.
 A value is stored as a string, and an absent value (None) as the empty string. A value
 the field lacks takes the next id of the field's counter, ``mult_field.last_id``, which
-holds the highest id handed out in the field, or -1 before the first, so a field's first
-value is 0. The id is taken in a short transaction of its own
+holds the highest id the counter has handed out in the field, or -1 before the first, so
+a field's first value is 0. The id is taken in a short transaction of its own
 (:meth:`~opus_import.importdb.super.ImportDBSuper.increment_counter`, run again on a
 deadlock), which locks the counter's row for one statement and reads no ``MAX``. A
 value that would need an id above
