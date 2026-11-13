@@ -1370,7 +1370,7 @@ def _edit_cart_range(
         order_from = order_select.add_from('obs_general')
         # Now JOIN all the obs_ tables together
         add_obs_table_joins(order_from, sorted(order_obs_tables))
-        # And JOIN all the mult_ tables together
+        # And JOIN mult once for each mult column
         add_mult_table_joins(order_from, sorted(order_mult_tables))
         order_from.add_join(
             'INNER',

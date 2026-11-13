@@ -23,10 +23,10 @@ was computed from changes.
 
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, Any
 
 from opus_import import config_targets, import_util
+from opus_import.config_targets.planet_group_mapping import PlanetGroup
 from opus_import.obs.field_types import FloatField, MultField
 
 if TYPE_CHECKING:
@@ -719,7 +719,7 @@ class ObsBase:
             return None, None
         return target_name, config_targets.TARGET_NAME_INFO[target_name]
 
-    def _get_planet_group_info(self, target_name: str | None) -> dict[str, str]:
+    def _get_planet_group_info(self, target_name: str | None) -> PlanetGroup:
         """Return how a target's planet group is shown in the search form.
 
         Parameters:
@@ -727,7 +727,7 @@ class ObsBase:
 
         Returns:
             The `opus_import.config_targets.PLANET_GROUP_MAPPING` entry, which carries
-            the group's label and its sort key. A target with no planet, or one this
+            the group's label and its pin. A target with no planet, or one this
             pipeline does not describe, is grouped under ``OTHER``.
         """
         # Return the planet group info for a passed in target_name
@@ -745,62 +745,48 @@ class ObsBase:
         col_val: str | int | float | None,
         disp_name: str | None = None,
         disp: str = 'Y',
-        disp_order: int | str | None = None,
+        pin: int | None = None,
         grouping: str | None = None,
-        group_disp_order: str | None = None,
-        tooltip: str | None = None,
-        aliases: list[str] | None = None,
+        group_pin: int | None = None,
     ) -> MultField:
         """Build the value a group column's field method returns.
 
-        A group column stores an index into a ``mult_`` table rather than the value
-        itself, and that table also carries how the web application presents the value.
-        Everything but `col_val` is presentation, and every one of those may be left out
-        -- `opus_import.steps.do_import_mult.update_mult_table` derives a label and a
-        sort order from the value when none is given.
+        A group column stores the id of a row of the ``mult`` table rather than the value
+        itself, and that row also carries how the web application presents the value.
+        Everything but `col_val` is presentation, and every one of those may be left out:
+        `opus_import.steps.do_import_obs.import_observation_table` derives a label from
+        the value when none is given, and finalization places each value in its field's
+        list from what the values hold.
 
         Parameters:
-            col_val: The value this row of the mult table stands for.
+            col_val: The value this row of the field stands for.
             disp_name: The label to show, or None to derive one.
             disp: ``'Y'`` to offer the value in the search form, ``'N'`` to hide it.
-            disp_order: The sort key, or None to derive one.
+            pin: The value's position, ahead of every value without a pin, or None to
+                place it by what it holds.
             grouping: The group the value belongs to in the search form.
-            group_disp_order: The group's sort key, or None to sort groups by name.
-            tooltip: Kept in the result and read by nothing; see
-                `opus_import.obs.field_types.MultField`.
-            aliases: Other spellings a search should accept, stored as JSON. No obs
-                class passes any.
+            group_pin: The group's position, ahead of every group without a pin, or
+                None to place the group by name.
 
         Returns:
             The `opus_import.obs.field_types.MultField` for this value.
         """
-        data_dict: MultField = {
+        return {
             'col_val': col_val,
             'disp': disp,
             'disp_name': disp_name,
-            'disp_order': disp_order,
+            'pin': pin,
             'grouping': grouping,
-            'group_disp_order': group_disp_order,
-            'tooltip': tooltip,
-            'aliases': json.dumps(aliases) if aliases else None,
+            'group_pin': group_pin,
         }
-        # For testing purpose: uncomment the following code to hide the Dark field
-        # under "Other" in target widget and also store aliases for the field.
-        # if col_val == 'DARK':
-        #     data_dict['disp'] = 'N'
-        #     aliases_list = ['dark_1', 'dark_2', 'dark_3']
-        #     data_dict['aliases'] = json.dumps(aliases_list)
-        return data_dict
 
     def _create_mult_keep_case(
         self,
         col_val: str | None,
         disp: str = 'Y',
-        disp_order: int | str | None = None,
+        pin: int | None = None,
         grouping: str | None = None,
-        group_disp_order: str | None = None,
-        tooltip: str | None = None,
-        aliases: list[str] | None = None,
+        group_pin: int | None = None,
     ) -> MultField:
         """Build a group column's value, showing it exactly as it is spelled.
 
@@ -812,11 +798,9 @@ class ObsBase:
         Parameters:
             col_val: The value, which is also the label.
             disp: As in `ObsBase._create_mult`.
-            disp_order: As in `ObsBase._create_mult`.
+            pin: As in `ObsBase._create_mult`.
             grouping: As in `ObsBase._create_mult`.
-            group_disp_order: As in `ObsBase._create_mult`.
-            tooltip: As in `ObsBase._create_mult`.
-            aliases: As in `ObsBase._create_mult`.
+            group_pin: As in `ObsBase._create_mult`.
 
         Returns:
             The `opus_import.obs.field_types.MultField` for this value.
@@ -825,11 +809,9 @@ class ObsBase:
             col_val=col_val,
             disp_name=col_val,
             disp=disp,
-            disp_order=disp_order,
+            pin=pin,
             grouping=grouping,
-            group_disp_order=group_disp_order,
-            tooltip=tooltip,
-            aliases=aliases,
+            group_pin=group_pin,
         )
 
     # Helpers for time fields

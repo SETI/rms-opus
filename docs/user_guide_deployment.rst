@@ -147,18 +147,23 @@ The scripts
     the dictionary from the new release, so a release that changed a label, a tooltip or
     a category describes itself. Each table is built beside the live one and swapped in
     with one atomic rename, so the workers still serving the old release never find one
-    missing or partly filled.
+    missing or partly filled. The same step runs ``opus_import --update-mult-info``,
+    which writes the release's ``mult_options`` and ``mult_overrides`` over the ``mult``
+    rows in place, so a release that renamed a checkbox value shows the label it gives once
+    the switch has restarted the workers (:ref:`user_guide_deployment_rename_mult_value`).
+    It changes no id, so no observation row is touched.
 
     ``--no-database`` writes nothing to the database: it skips Django's migrations and
-    the description-table step, and still installs the release, collects its static
-    files and switches to it. It is for a release that changes neither the import nor
-    the table schemas -- the web application, its templates and static files, the
-    documentation. Whether a release is one of those is your call, from its release
-    notes, as whether it changed the schema is. It still makes the schema version check,
-    which only reads, and it refuses a release for which Django has a migration to apply
-    (``opus_manage migrate --plan --check``), naming the plain code-only deploy as the one
-    to run, so a release that crosses a Django version with a new contrib migration cannot
-    skip it unnoticed. A Django that cannot start is refused too, with its own output.
+    the description-table step, ``--update-mult-info`` with it, and still installs the
+    release, collects its static files and switches to it. It is for a release that
+    changes neither the import nor the table schemas -- the web application, its
+    templates and static files, the documentation. Whether a release is one of those is
+    your call, from its release notes, as whether it changed the schema is. It still
+    makes the schema version check, which only reads, and it refuses a release for which
+    Django has a migration to apply (``opus_manage migrate --plan --check``), naming the
+    plain code-only deploy as the one to run, so a release that crosses a Django version
+    with a new contrib migration cannot skip it unnoticed. A Django that cannot start is
+    refused too, with its own output.
 
     The database records its schema version, and the script refuses, before writing
     anything, a release whose version differs (:ref:`user_guide_deployment_schema_version`).
@@ -319,7 +324,7 @@ own memory. Step 2 empties those.
 
 **2. Every worker process has to be restarted**, because each one keeps its own copy of
 the tables only an import changes -- ``param_info``, ``table_names``, ``partables``,
-``definitions`` and the ``mult_`` tables -- and, without memcached, its own cache.
+``definitions``, ``mult_field`` and ``mult`` -- and, without memcached, its own cache.
 **Nothing running outside a worker can reach those**, ``clear_django_cache`` included, so
 restarting the application is the only thing that clears them. See
 :ref:`dev_guide_webapp_caching`.
@@ -411,6 +416,38 @@ it, and the database stays ``appending``. Either import it again -- the next
 ``opus_import --import`` takes up every unfinished bundle before the ones it names --
 or remove it with ``opus_import --delete-bundles <bundle>``, which deletes its rows and
 its record. Then run the three closing commands again.
+
+.. _user_guide_deployment_rename_mult_value:
+
+Renaming a checkbox value
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A checkbox value's label, whether it is offered, its group and its place in the list
+are stored in its ``mult`` row, beside the id the observations hold
+(:ref:`dev_guide_database_schema_mult`). None of them is part of an observation, so they
+change without an import:
+
+1. **Edit the column's table schema.** For a column whose values the import discovers,
+   add an entry to its ``mult_overrides`` naming the stored ``value`` and the
+   ``label`` to show -- or ``display``, ``grouping`` or ``pin`` -- or change the entry
+   already there. For a column whose schema lists its values in ``mult_options``, change that
+   list's entry instead, keeping its id and its value: only the label, the pin, the
+   display flag and the group of an entry change in place. :ref:`dev_guide_table_schemas`
+   gives both formats.
+2. **Release** the change (:ref:`user_guide_deployment_releasing`).
+3. **Deploy it** with ``deploy_new_code_only.sh ==<release>``. Its database step runs
+   ``opus_import --update-mult-info``, which writes the schemas' ``mult_options`` and
+   ``mult_overrides`` over the stored ``mult`` rows and ranks the changed fields again.
+   Ids and values never change, so no observation row is touched. If a ``mult_options``
+   entry gives a stored id another value, or a stored value another id, the step writes
+   nothing, logs each such entry in ``ERRORS.log``, and exits with failure, which stops
+   the deploy. The switch at the end restarts the cache service and the web service, and
+   the restarted workers read the label.
+
+``deploy_new_code_only.sh --no-database`` skips the database step, so it renames
+nothing. A database a full import built already carries the overrides, because
+finalization applies them, so a release deployed with ``deploy_new_code_and_database.sh``
+needs no extra step.
 
 .. _user_guide_deployment_prune:
 
@@ -549,9 +586,10 @@ Operating checklist
    * - Change a credential or a path
      - Edit ``deploy.env``, then run a deploy. Never edit ``opus.toml`` on a Ring-Moon
        Systems Node server.
-   * - Change a field label or a tooltip
-     - Edit the table schema, re-run ``--update-mult-info`` or ``--import-dictionary``,
-       clear the cache and restart the workers.
+   * - Change a field label, a tooltip or a checkbox value's label
+     - Edit the table schema, release, then ``deploy_new_code_only.sh ==<version>``,
+       which rebuilds the description tables and runs ``--update-mult-info``
+       (:ref:`user_guide_deployment_rename_mult_value`).
    * - ``search_results`` is growing
      - The hourly ``opus_manage prune`` cron job
        (:ref:`user_guide_deployment_prune`). It is per-installation and is not deployed.

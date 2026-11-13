@@ -21,7 +21,7 @@ Each of its modules is covered in full below.
    * - :mod:`~opus_app.apps.tools.sql_builder`
      - Assembling raw SQL from structure instead of from string concatenation.
    * - :mod:`~opus_app.apps.tools.db_utils`
-     - Finding a model by table name, and the labels behind the ``mult_`` tables.
+     - Finding a model by table name, and the labels behind the mult ids.
    * - :mod:`~opus_app.apps.tools.import_constants`
      - Each worker's copy of the tables only an import changes.
    * - :mod:`~opus_app.apps.tools.file_utils`
@@ -110,8 +110,11 @@ Slug and name helpers
 :func:`~opus_app.apps.tools.app_utils.cols_to_slug_list`
     A comma-separated slug list, or an empty list.
 
-:func:`~opus_app.apps.tools.app_utils.get_mult_name`
-    The ``mult_`` table name for a ``<table>.<column>`` field.
+:func:`~opus_app.apps.tools.app_utils.mult_alias`
+    The alias a statement joins the ``mult`` table under for a ``<table>.<column>``
+    field: ``mult_`` and the name with its period replaced by an underscore, such as
+    ``mult_obs_general_planet_id``. A statement that reads several mult columns joins
+    ``mult`` once for each, so each join needs a name of its own.
 
 :func:`~opus_app.apps.tools.app_utils.sort_dictionary`
     A copy with the keys in sorted order, which is what makes a search's hash stable.
@@ -241,6 +244,7 @@ The shape of it
             +source
             +joins
             +add_join()
+            +append_join()
             +render()
         }
         class Join {
@@ -260,6 +264,11 @@ The shape of it
             +alias
             +render()
         }
+        class AliasedTable {
+            +table
+            +alias
+            +render()
+        }
         class ValueError {
             <<builtin>>
         }
@@ -269,8 +278,10 @@ The shape of it
         FromSource "1" *-- "many" Join
         FromSource ..> Subquery : source may be
         FromSource ..> JSONTable : source may be
+        FromSource ..> AliasedTable : source may be
         Join ..> Subquery : source may be
         Join ..> JSONTable : source may be
+        Join ..> AliasedTable : source may be
         Subquery *-- Select
         Select ..> Expr : columns, WHERE, GROUP BY, ORDER BY
         Join ..> Expr : ON
@@ -288,8 +299,9 @@ one.
 and the joins hanging off it; :class:`~opus_app.apps.tools.sql_builder.Join` is one of
 those joins; and a source may be a plain table name, a
 :class:`~opus_app.apps.tools.sql_builder.Subquery` -- which holds a whole
-:class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- or a
-:class:`~opus_app.apps.tools.sql_builder.JSONTable`.
+:class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- a
+:class:`~opus_app.apps.tools.sql_builder.JSONTable`, or an
+:class:`~opus_app.apps.tools.sql_builder.AliasedTable`, a table under an alias.
 The :class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is not a
 tree: a statement can hold a statement.
 
@@ -376,7 +388,22 @@ The statement layer
     One table source and the joins hanging off it. A statement may have more than one
     source, rendered comma-separated -- and **the comma binds more loosely than JOIN**,
     which is what the cart's download summary and the queries that join a search to its
-    results rely on.
+    results rely on. :meth:`~opus_app.apps.tools.sql_builder.FromSource.add_join` builds
+    a join from its kind, source and condition;
+    :meth:`~opus_app.apps.tools.sql_builder.FromSource.append_join` appends one built
+    elsewhere, such as by :func:`~opus_app.apps.tools.sql_builder.mult_join`.
+
+:class:`~opus_app.apps.tools.sql_builder.AliasedTable`
+    A table joined under an alias, rendered ``<table> AS <alias>``.
+
+:func:`~opus_app.apps.tools.sql_builder.mult_join`
+    The join that reads one mult column's labels:
+    ``LEFT JOIN mult AS <alias> ON <alias>.field_id = %s AND <alias>.id = <column>``,
+    with the field's ``mult_field`` id as the parameter. The ``mult`` table holds every
+    field's values, so a statement joins it once for each mult column it reads, each
+    time under the column's alias
+    (:func:`~opus_app.apps.tools.app_utils.mult_alias`), and each join reads ``mult``
+    through its primary key.
 
 :class:`~opus_app.apps.tools.sql_builder.Subquery`
     A :class:`~opus_app.apps.tools.sql_builder.Select` used as a table source, under a
@@ -420,7 +447,7 @@ concurrent second write into a replacement instead of a duplicate.
 opus_app.apps.tools.db_utils
 ----------------------------
 
-Model lookup by table name, and the labels behind the ``mult_`` tables.
+Model lookup by table name, and the labels behind the mult ids.
 
 :func:`~opus_app.apps.tools.db_utils.table_model_from_name`
     ``obs_pds`` becomes ``ObsPds``, looked up in the ``search`` app. The return has no
@@ -432,9 +459,11 @@ Model lookup by table name, and the labels behind the ``mult_`` tables.
     relation for every other table.
 
 :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult` and :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult_list`
-    A mult column stores a row id, so displaying it means a second lookup, which reads
-    the worker's copy of the field's ``mult_`` table from
-    :mod:`~opus_app.apps.tools.import_constants`.
+    A mult column stores the id of a ``mult`` row, so displaying it means a second
+    lookup, which reads the worker's copy of the field's ``mult`` rows from
+    :mod:`~opus_app.apps.tools.import_constants`. The field's absent value, whose stored
+    value is the empty string, is reported as nothing unless the caller asks for its
+    label.
 
 The MySQL error numbers declared here for callers to match a database exception against
 are ``MYSQL_TABLE_NOT_EXISTS``; ``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
@@ -449,9 +478,10 @@ results.
 opus_app.apps.tools.import_constants
 ------------------------------------
 
-The ``table_names``, ``partables`` and ``mult_`` tables hold the same rows from one import
-to the next, so each worker process reads each of them whole, on first use, and answers
-from memory after that. **Nothing here notices an import**: the deploy restarts the
+The ``table_names``, ``partables``, ``mult_field`` and ``mult`` tables hold the same rows
+from one import to the next, so each worker process reads them on first use and answers
+from memory after that: ``table_names``, ``partables`` and ``mult_field`` whole, and
+``mult`` one field at a time. **Nothing here notices an import**: the deploy restarts the
 workers after one (:ref:`dev_guide_webapp_caching`). A copy is built in full before it is
 stored, so a thread never sees part of one; two threads that miss at once each read the
 table, and one of the two equal copies is kept.
@@ -460,16 +490,26 @@ table, and one of the two equal copies is kept.
     The rows, shared by every request in the process. A caller that sets an attribute
     on a row, as the menu does, copies it first.
 
-:func:`~opus_app.apps.tools.import_constants.mult_table`
-    One mult field's table, keyed by the field's ``<table>.<column>`` name: its rows by
-    id, for showing a stored id as its label, and its ids by label and by value, for
-    turning a search's mult selection into ids.
-    :meth:`~opus_app.apps.tools.import_constants.MultTable.ids_for` answers what the
-    query ``label IN (...) OR value IN (...)`` answered, and asks the server instead
-    when a name finds nothing or when the table holds a name that is not printable
-    ASCII.
+:func:`~opus_app.apps.tools.import_constants.mult_field_id`
+    The ``mult_field`` id of a field, by its ``<table>.<column>`` name, read from a copy
+    of ``mult_field`` taken whole on first use. A name ``mult_field`` lacks raises
+    :exc:`LookupError`.
 
-:func:`~opus_app.apps.tools.import_constants.collation_key`
+:func:`~opus_app.apps.tools.import_constants.mult_table`
+    One mult field's ``mult`` rows, as a
+    :class:`~opus_app.apps.tools.import_constants.MultTable`, keyed by the field's
+    ``<table>.<column>`` name: its rows by id, each a
+    :class:`~opus_app.apps.tools.import_constants.MultRow` carrying ``id``, ``value``,
+    ``label`` and ``disp_rank``, for showing a stored id as its label and for ordering
+    the field's values; and its ids by label and by value, for turning a search's mult
+    selection into ids. The absent value, stored as the empty string, is never a key by
+    its value, and :attr:`~opus_app.apps.tools.import_constants.MultRow.is_absent` tells
+    it apart. :meth:`~opus_app.apps.tools.import_constants.MultTable.ids_for` answers
+    what the query ``label IN (...) OR value IN (...)`` over the field's rows answered,
+    and asks the server instead when a name finds nothing or when the field holds a name
+    that is not printable ASCII.
+
+:func:`opus_support.collation.collation_key`
     **The server compares strings without regard to case or accent**
     (``utf8mb4_0900_ai_ci``), and the public API relies on it: ``planet=saturn`` finds
     the row labeled ``Saturn``. Every lookup here by a string compares the strings'
@@ -479,10 +519,12 @@ table, and one of the two equal copies is kept.
     (``¨`` onto a space). Strings that are printable ASCII
     (:func:`~opus_app.apps.tools.import_constants.collates_as_key`) compare the same way
     under both. So a mult lookup goes to the server when a requested name is not printable
-    ASCII, finds nothing, or searches a table that is not all printable ASCII; and
+    ASCII, finds nothing, or searches a field that is not all printable ASCII; and
     ``get_metadata`` asks the server about a category list its copy does not match in
     full, that holds a name that is not printable ASCII, or that is looked up while a
-    displayed table's label or name is not printable ASCII.
+    displayed table's label or name is not printable ASCII. The function lives in
+    :mod:`opus_support` because the import keys its cache of a field's values the same
+    way (:ref:`dev_guide_import_steps_do_import_mult`).
 
 .. _dev_guide_webapp_tools_file_utils:
 
@@ -531,8 +573,8 @@ reproduced verbatim: a field changed here would silently stop matching the table
 
 :func:`~opus_app.apps.tools.dictionary.get_definition` is the lookup, made against a
 copy of ``definitions`` each worker process reads whole on first use and keeps, and
-compared the way the server's collation compares (``collation_key`` in
-:mod:`~opus_app.apps.tools.import_constants`).
+compared the way the server's collation compares
+(:func:`~opus_support.collation.collation_key`).
 :func:`~opus_app.apps.tools.dictionary.get_def_for_tooltip` is the tooltip's use of it: a
 missing definition is logged as an error **except** under a ``MULT_`` context, because a
 mult value legitimately has none.

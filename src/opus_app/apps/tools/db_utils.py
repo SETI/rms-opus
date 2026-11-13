@@ -4,13 +4,13 @@
 #
 ################################################################################
 
-"""Model lookup by table name, and the labels behind the mult tables.
+"""Model lookup by table name, and the labels behind the mult ids.
 
 The observation tables share a naming convention (`obs_pds` holds the rows of the
 `ObsPds` model), so code that has to work across all of them looks a model class up
-by table name instead of importing it. A mult field stores the id of a row in its
-own small table rather than a value, so displaying one means a second lookup, which
-reads the process's copy of that table from `import_constants`.
+by table name instead of importing it. A mult field stores the id of a ``mult`` row
+rather than a value, so displaying one means a second lookup, which reads the process's
+copy of the field's rows from `import_constants`.
 
 The MySQL error numbers are the failures that callers of these tables catch when
 they inspect a database exception; `is_lock_timeout_error` and `is_deadlock_error` are
@@ -114,14 +114,14 @@ def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any, cvt_null: bo
 
     Parameters:
         param_info: The field the value belongs to.
-        value: What the observation's column holds, which is the id of a row in the
-            field's mult table.
-        cvt_null: Whether the mult table's null row should be reported by its label
+        value: What the observation's column holds, which is the id of one of the
+            field's ``mult`` rows.
+        cvt_null: Whether the field's absent value should be reported by its label
             rather than as nothing at all.
 
     Returns:
         The label to display, or None when the field is not a mult one, when the
-        mult table has no such row, or when the row is the null one and `cvt_null`
+        field has no such row, or when the row is the absent value and `cvt_null`
         is false.
     """
     if param_info.form_type is None:  # pragma: no cover - import error
@@ -136,7 +136,7 @@ def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any, cvt_null: bo
     row = rows.get(int(value)) if value is not None else None
     if row is None:  # pragma: no cover - import error
         return None
-    if not cvt_null and row.value is None:
+    if not cvt_null and row.is_absent:
         return None
     return row.label
 
@@ -148,9 +148,9 @@ def lookup_pretty_value_for_mult_list(
 
     Parameters:
         param_info: The field the values belong to.
-        mult_vals: What the observation's column holds, which is the ids of rows in
-            the field's mult table.
-        cvt_null: Whether the mult table's null row should be reported by its label
+        mult_vals: What the observation's column holds, which is the ids of the
+            field's ``mult`` rows.
+        cvt_null: Whether the field's absent value should be reported by its label
             rather than as nothing at all.
 
     Returns:
@@ -160,7 +160,7 @@ def lookup_pretty_value_for_mult_list(
     for mult_val in mult_vals:
         ret = lookup_pretty_value_for_mult(param_info, mult_val, cvt_null=cvt_null)
         result_list.append(ret)
-    # lookup_pretty_value_for_mult returns None for a mult table's null row when
+    # lookup_pretty_value_for_mult returns None for a field's absent value when
     # cvt_null is false, and joining a None raises TypeError. That is a real fault
     # rather than a typing artifact, and choosing what a null should display as
     # belongs to the caller that passes cvt_null, so the declaration is left honest

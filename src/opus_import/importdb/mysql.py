@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING, Any
 
 try:
     import MySQLdb
+    import MySQLdb.cursors
 
     MYSQLDB_AVAILABLE = True
 except ImportError:
@@ -58,7 +59,7 @@ from opus_import.table_keys import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
+    from collections.abc import Collection, Iterator, Sequence
 
     import pdslogger
 
@@ -83,15 +84,19 @@ MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
     'text': 'text',
     'mult_list': 'JSON',
     'json': 'JSON',
-    # A flag and a mult index both hold the id of a mult table row.
-    'flag_yesno': 'int unsigned',
-    'flag_onoff': 'int unsigned',
-    'mult_idx': 'int unsigned',
+    # A flag and a mult index both hold the id of a mult row, which is a SMALLINT
+    # UNSIGNED within its field (mult.json).
+    'flag_yesno': 'smallint unsigned',
+    'flag_onoff': 'smallint unsigned',
+    'mult_idx': 'smallint unsigned',
     'timestamp': 'timestamp',
     'datetime': 'datetime',
     # A SHA-256 digest, stored as its bytes.
     'binary32': 'binary(32)',
 }
+
+#: The rows `ImportDBMySQL.stream_select` asks the server for at a time.
+STREAM_FETCH_ROWS = 10_000
 
 #: A ``field_type`` that names a character type and its width, such as ``char12`` or
 #: ``varchar255``: the type, then the width.
@@ -152,9 +157,9 @@ MYSQL_KEY_BYTES: dict[str, int] = {
     'uint8': 8,
     'real4': 4,
     'real8': 8,
-    'flag_yesno': 4,
-    'flag_onoff': 4,
-    'mult_idx': 4,
+    'flag_yesno': 2,
+    'flag_onoff': 2,
+    'mult_idx': 2,
     'timestamp': 4,
     'datetime': 5,
     'enum': 2,
@@ -298,7 +303,7 @@ class ImportDBMySQL(ImportDBSuper):
                 created if the server does not already have it, unless ``read_only``.
             db_user: The user to connect as.
             db_password: That user's password.
-            mult_form_types: The ``param_info`` form types that have a ``mult_`` table,
+            mult_form_types: The ``param_info`` form types whose columns hold mult ids,
                 or None for none of them.
             logger: Where to report progress, statements and warnings, or None to report
                 nothing.
@@ -1923,6 +1928,45 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         with self._operation('cmd'):
             res = self._execute_and_fetchall('SELECT ' + cmd, 'general_select', param_list)
         return res
+
+    def stream_select(
+        self, cmd: str, param_list: Sequence[Any] | None = None
+    ) -> Iterator[ResultRow]:
+        """Run `SELECT <cmd>` and yield its rows as the server sends them.
+
+        The query runs through an unbuffered server-side cursor, so a scan of a large
+        table never holds the whole result in memory. The connection carries nothing
+        else until the last row is read, so the caller reads every row before it issues
+        another statement.
+
+        Parameters:
+            cmd: Everything after the SELECT keyword, quoted and parameterized as
+                `general_select` requires.
+            param_list: The parameters its placeholders consume.
+
+        Yields:
+            One tuple per row, in the order the query named its columns; no rows at all
+            when the driver is absent.
+
+        Raises:
+            ImportDBError: If the server rejects the query or the read fails.
+        """
+        if not MYSQLDB_AVAILABLE:
+            return
+        with self._operation('stream_select'):
+            try:
+                with self.conn.cursor(MySQLdb.cursors.SSCursor) as cur:
+                    self._execute('SELECT ' + cmd, param_list, cur=cur)
+                    while True:
+                        rows = cur.fetchmany(STREAM_FETCH_ROWS)
+                        if not rows:
+                            break
+                        yield from rows
+                self.conn.commit()
+            except MySQLdb.Error as e:
+                if self.logger:
+                    self.logger.log('fatal', f'Failed in stream_select: {e}')
+                raise ImportDBError(e) from e
 
     def find_column_max(self, table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.

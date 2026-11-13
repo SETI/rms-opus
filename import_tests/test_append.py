@@ -13,7 +13,6 @@ from __future__ import annotations
 import os
 import subprocess  # nosec B404
 import sys
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
@@ -39,60 +38,6 @@ _SERVE_ONE = (
     'lambda status, headers: statuses.append(status)))\n'
     'print(statuses[0])\n'
 )
-
-
-@dataclass
-class _Copy:
-    """A copy of the main run's schema, with a configuration and logs of its own.
-
-    Attributes:
-        schema: The copy.
-        paths: Its configuration file and log directory, over the main run's tree.
-    """
-
-    schema: str
-    paths: build_run.RunPaths
-
-    def step(self, *arguments: str) -> build_run.StepResult:
-        """Run one ``opus_import`` invocation against the copy.
-
-        Parameters:
-            arguments: The options.
-
-        Returns:
-            What the invocation did.
-        """
-        return build_run.run_pipeline_step(self.paths.config_file, arguments)
-
-    def errors(self) -> str:
-        """Return what the copy's error log holds so far."""
-        path = self.paths.errors_log
-        return path.read_text(encoding='utf-8') if path.exists() else ''
-
-
-def _copy(
-    main_run: build_run.ImportRun,
-    credentials: DatabaseCredentials,
-    created_schemas: list[str],
-    case: str,
-) -> _Copy:
-    """Copy the main run's finished schema for one case.
-
-    Parameters:
-        main_run: The main run.
-        credentials: How to reach the server.
-        created_schemas: The session's schemas, which the copy joins.
-        case: What distinguishes the copy's schema, configuration and logs.
-
-    Returns:
-        The copy.
-    """
-    schema = fixture_layout.schema_name(os.getpid(), case)
-    created_schemas.append(schema)
-    build_run.clone_schema(credentials, main_run.schema, schema)
-    paths = build_run.sibling_paths(main_run, case)
-    build_run.write_opus_config(paths, schema, credentials)
-    return _Copy(schema, paths)
 
 
 def _version_rows(credentials: DatabaseCredentials, schema: str) -> list[tuple[int, str]] | None:
@@ -152,7 +97,7 @@ def _cart_rows(credentials: DatabaseCredentials, schema: str) -> int:
     return int(golden_io.query(credentials, schema, 'SELECT COUNT(*) FROM cart')[0][0])
 
 
-def _serves(copy: _Copy) -> str:
+def _serves(copy: build_run.SchemaCopy) -> str:
     """Load the web application against the copy, in a process, and return one status."""
     finished = subprocess.run(  # nosec B603 - this interpreter and a fixed program
         [sys.executable, '-c', _SERVE_ONE],
@@ -182,16 +127,16 @@ def test_an_append_that_replaces_one_bundle_and_adds_one_matches_a_fresh_import(
     rows back; the replaced one is deleted and loaded again. A table holding bundles'
     rows is compared without its server-numbered columns, since both bundles are
     renumbered; every other table, the mult tables among them, exactly. The mult values
-    the added bundle brings stay in their tables through the deletion, since mult rows
-    are never deleted, so this shows the append's rows and finalization, not an append
-    writing a mult value the schema has never held.
+    the added bundle brings stay in ``mult`` through the deletion, since only
+    finalization deletes a value no observation holds, so this shows the append's rows
+    and finalization, not an append writing a mult value the schema has never held.
 
     Before the append, the cart names every observation of the replaced bundle and of
     one the append leaves alone; straight after it, before finalization re-creates the
     cart, only the second bundle's rows remain, removed by the cart's cascade when the
     replaced bundle was deleted.
     """
-    copy = _copy(main_run, db_credentials, created_schemas, 'append')
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'append')
     replaced, added = main_run.bundles[0], main_run.bundles[-1]
     kept = next(bundle for bundle in main_run.bundles if bundle not in (replaced, added))
     assert copy.step('--delete-bundles', added).returncode == 0
@@ -269,7 +214,7 @@ def test_rows_left_above_obs_generals_highest_id_are_removed_before_a_bundle_loa
     removed before its rows load, and validation then finds no row without its
     ``obs_general`` row.
     """
-    copy = _copy(main_run, db_credentials, created_schemas, 'append_orphans')
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'append_orphans')
     added = main_run.bundles[-1]
     assert copy.step('--delete-bundles', added).returncode == 0
     orphan_id = _plant_orphans(db_credentials, copy.schema, ('obs_files', 'obs_pds'))
@@ -294,7 +239,7 @@ def test_a_failed_append_stays_appending_until_a_rerun_resumes_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The closing invocations refuse, the web application refuses, and a rerun finishes it."""
-    copy = _copy(main_run, db_credentials, created_schemas, 'append_failed')
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'append_failed')
     first, second = main_run.bundles[0], main_run.bundles[1]
     _failing(monkeypatch, second)
     failed = copy.step(*build_run.IMPORT_ARGS, f'{first},{second}')
@@ -337,7 +282,7 @@ def test_deleting_the_failed_bundle_lets_the_schema_be_finished_without_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``--delete-bundles`` removes its rows and its registry row, and the schema ends ready."""
-    copy = _copy(main_run, db_credentials, created_schemas, 'append_deleted')
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'append_deleted')
     first, second = main_run.bundles[0], main_run.bundles[1]
     _failing(monkeypatch, second)
     assert copy.step(*build_run.IMPORT_ARGS, f'{first},{second}').returncode != 0
@@ -357,7 +302,7 @@ def test_ignore_errors_records_the_failing_bundle_done(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Under ``--ignore-errors`` neither --finalize nor the version step refuses."""
-    copy = _copy(main_run, db_credentials, created_schemas, 'append_ignored')
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'append_ignored')
     first, second = main_run.bundles[0], main_run.bundles[1]
     _failing(monkeypatch, second)
     ignored = copy.step(*build_run.IMPORT_ARGS, '--ignore-errors', f'{first},{second}')

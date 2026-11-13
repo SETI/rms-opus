@@ -37,7 +37,6 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Literal
 
-from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
@@ -53,7 +52,7 @@ from opus_app.apps.cart.models import Cart
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.results.views import get_triggered_tables
 from opus_app.apps.search.forms import SearchForm
-from opus_app.apps.search.models import ObsGeneral, ObsPds, TableNames
+from opus_app.apps.search.models import Mult, MultGroup, ObsGeneral, ObsPds, TableNames
 from opus_app.apps.search.views import (
     get_param_info_by_slug,
     is_single_column_range,
@@ -64,7 +63,6 @@ from opus_app.apps.tools.app_utils import (
     api_view,
     cols_to_slug_list,
     get_git_version,
-    get_mult_name,
     get_reqno,
     get_session_id,
     http400_bad_or_missing_reqno,
@@ -80,7 +78,7 @@ from opus_app.apps.tools.file_utils import (
     get_pds_preview_images,
     get_pds_products,
 )
-from opus_app.apps.tools.import_constants import displayed_table_names
+from opus_app.apps.tools.import_constants import displayed_table_names, mult_field_id
 from opus_support import (
     display_search_unit,
     display_unit_ever,
@@ -628,12 +626,12 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
         if param_qualified_name in selections:
             values = selections[param_qualified_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
-        mult_param = get_mult_name(param_qualified_name)
-        model = apps.get_model('search', mult_param.title().replace('_', ''))
+        field_id = mult_field_id(param_qualified_name)
+        field_rows = Mult.objects.filter(field_id=field_id)
 
         if values is not None:
             # Make form choices case-insensitive
-            choices = [mult.label for mult in model.objects.filter(display='Y')]
+            choices = [mult.label for mult in field_rows.filter(display='Y')]
             new_values = []
             for val in values:
                 for choice in choices:  # pragma: no cover - loop should never complete
@@ -645,9 +643,9 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
 
         # For entries with "None" grouping value, we don't group them.
         # None grouping values will be displayed before grouping values
-        if list(model.objects.filter(grouping=None)):
+        if list(field_rows.filter(grouping=None)):
             form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
-            for count, mult in enumerate(model.objects.filter(display='Y').order_by('disp_order')):
+            for count, mult in enumerate(field_rows.filter(display='Y').order_by('disp_rank')):
                 tp_id = mult.label
                 # If there is any invalid characters for HTML class/id
                 # we will replace invalid characters in the mult options
@@ -663,8 +661,10 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 options.append((count, mult.label, mult_tooltip, tp_id))
 
         # Group the entries with the same grouping values.
-        # Different groups will be displayed based on group_disp_order
-        grouping_entries = model.objects.order_by('group_disp_order').distinct().values('grouping')
+        # The groups are displayed in the order of their rank, each once.
+        grouping_entries = (
+            MultGroup.objects.filter(field_id=field_id).order_by('group_rank').values('grouping')
+        )
         for entry in grouping_entries:
             options_of_a_group = []
             glabel = entry['grouping']
@@ -672,11 +672,11 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
             # `# pragma: no cover`, which must stay attached to that condition for
             # the integration coverage gate.
             if glabel is not None and glabel != 'NULL':  # noqa: SIM102
-                if model.objects.filter(grouping=glabel)[0:1]:  # pragma: no cover -
+                if field_rows.filter(grouping=glabel)[0:1]:  # pragma: no cover -
                     # There should always be at least one item under the grouping
                     form = _update_form_with_grouping(form, form_vals, glabel)
                     for count, mult in enumerate(
-                        model.objects.filter(grouping=glabel, display='Y').order_by('disp_order')
+                        field_rows.filter(grouping=glabel, display='Y').order_by('disp_rank')
                     ):
                         tp_id = mult.label
                         for ch in settings.INVALID_CLASS_CHAR:

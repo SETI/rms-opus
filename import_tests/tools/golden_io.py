@@ -184,18 +184,24 @@ def connect(credentials: DatabaseCredentials, schema: str | None) -> Any:
     )
 
 
-def execute(credentials: DatabaseCredentials, schema: str | None, statement: str) -> None:
+def execute(
+    credentials: DatabaseCredentials,
+    schema: str | None,
+    statement: str,
+    parameters: Sequence[Any] = (),
+) -> None:
     """Run one statement that returns no rows.
 
     Parameters:
         credentials: How to reach the server.
         schema: The schema to run it in, or None.
         statement: The SQL to run.
+        parameters: The values to bind; with none, the statement is sent as written.
     """
     connection = connect(credentials, schema)
     try:
         cursor = connection.cursor()
-        cursor.execute(statement)
+        cursor.execute(statement, parameters if parameters else None)
         connection.commit()
     finally:
         connection.close()

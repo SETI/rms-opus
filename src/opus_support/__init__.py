@@ -19,6 +19,7 @@ from opus_support.angles import (
     parse_hms,
     parse_hms_dms,
 )
+from opus_support.collation import collation_key
 from opus_support.orbits import (
     CASSINI_ORBIT_NAME,
     CASSINI_ORBIT_NUMBER,
@@ -90,6 +91,7 @@ __all__ = [
     'UnitConversion',
     'UnitInfo',
     'adjust_format_string_for_units',
+    'collation_key',
     'convert_from_default_unit',
     'convert_to_default_unit',
     'display_result_unit',

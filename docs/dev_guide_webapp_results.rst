@@ -227,7 +227,9 @@ each value of a mult field, how many of the search's observations have it. **The
 own constraint is removed from the search first**, so that ticking one box does not make
 the other boxes read zero. A ``MULTIGROUP`` field holds a JSON list, so its counts come
 from a :class:`~opus_app.apps.tools.sql_builder.JSONTable` that explodes the list into
-rows. The values come back in the mult table's display order.
+rows. The values come back in the order of their ``disp_rank``, the integer rank
+finalization gives each value of the field
+(:ref:`dev_guide_import_steps_do_finalize_mult`).
 
 **The range endpoints** are the smallest and largest value a numeric field takes over the
 search, plus how many observations have neither. The field's own constraints are removed

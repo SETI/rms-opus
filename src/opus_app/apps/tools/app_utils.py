@@ -513,14 +513,18 @@ def api_view(handler: Callable[..., HttpResponse]) -> Callable[..., HttpResponse
 ################################################################################
 
 
-def get_mult_name(param_qualified_name: str) -> str:
-    """Returns mult widget foreign key table name.
+def mult_alias(param_qualified_name: str) -> str:
+    """Return the alias a statement joins the ``mult`` table under for one mult field.
+
+    A statement that reads several mult columns joins ``mult`` once for each
+    (`opus_app.apps.tools.sql_builder.mult_join`), so each join needs a name of its own.
 
     Parameters:
         param_qualified_name: The field's `<table>.<column>` name.
 
     Returns:
-        The name of the ``mult_`` table holding that field's values.
+        ``mult_`` and the name with its period replaced by an underscore, such as
+        ``mult_obs_general_planet_id``.
     """
     return 'mult_' + '_'.join(param_qualified_name.split('.'))
 

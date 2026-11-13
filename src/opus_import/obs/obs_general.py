@@ -189,7 +189,7 @@ class ObsGeneral(ObsBase):
                         col_val=target_name,
                         disp_name=target_disp_name,
                         grouping=group_info['label'],
-                        group_disp_order=group_info['disp_order'],
+                        group_pin=group_info['disp_order'],
                     )
                 )
         return ret

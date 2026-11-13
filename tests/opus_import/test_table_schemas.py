@@ -30,12 +30,13 @@ from typing import Any
 import pytest
 
 import opus_support
-from opus_import import import_util
+from opus_import import import_util, mult_fields
 from opus_import.importdb.mysql import (
     MYSQL_ENUM_FIELD_TYPE,
     MYSQL_FIELD_TYPE_SQL,
     is_renderable_field_type,
 )
+from opus_import.steps.do_import_mult import PINNED_ABSENT_ID
 from opus_import.table_keys import ON_DELETE_VALUES, TABLE_LEVEL_KEY_KINDS
 
 #: The packaged schema directory, as a path.
@@ -62,6 +63,8 @@ _COLUMN_KEYS = {
     'val_sentinel',
     'val_set_invalid_to_null',
     'mult_options',
+    'mult_overrides',
+    'mult_field',
     # Describing it to the user interface.
     'pi_category_name',
     'pi_disp_order',
@@ -447,7 +450,12 @@ def test_every_ranges_name_is_in_the_ranges_file() -> None:
 
 
 def test_every_mult_options_row_is_a_mult_row() -> None:
-    """Seven values, typed as `import_util.MultOption` says, with a Y or N display."""
+    """Seven values, typed as `import_util.MultOption` says, with integer orders.
+
+    The pin and the group pin are integers, never strings of digits: the import refuses
+    a string. An id fits ``mult.id``, a ``SMALLINT UNSIGNED``, below its largest value,
+    which a pinned field's absent value takes when its list has none.
+    """
     wrong: list[str] = []
     for name, column in _columns():
         rows = column.get('mult_options')
@@ -459,18 +467,65 @@ def test_every_mult_options_row_is_a_mult_row() -> None:
                 continue
             option = import_util.MultOption(*row)
             if not (
-                isinstance(option.id, int)
+                _is_int(option.id)
+                and 0 <= option.id < PINNED_ABSENT_ID
                 and isinstance(option.value, str | None)
                 and isinstance(option.label, str)
-                and isinstance(option.disp_order, str | int)
+                and _is_int(option.pin)
                 and option.display in ('Y', 'N')
                 and isinstance(option.grouping, str | None)
-                and isinstance(option.group_disp_order, str | None)
+                and (option.group_pin is None or _is_int(option.group_pin))
             ):
                 wrong.append(f'{_where(name, column)}: {row!r}')
         ids = [row[0] for row in rows if isinstance(row, list) and row]
         if len(ids) != len(set(ids)):
             wrong.append(f'{_where(name, column)}: repeated ids')
+    assert wrong == []
+
+
+def _is_int(value: object) -> bool:
+    """Return whether a JSON value is an integer, which a boolean is not."""
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+#: The members a ``mult_overrides`` entry may carry, each a column of ``mult``.
+_OVERRIDE_MEMBERS = {'value', 'label', 'display', 'grouping', 'pin'}
+
+
+def test_every_mult_overrides_entry_names_a_value_and_mult_columns() -> None:
+    """An override is an object with a ``value`` and only `mult`'s presentation columns.
+
+    It belongs to a column that holds mult ids and lists no ``mult_options``: a pinned
+    field's presentation is its list.
+    """
+    wrong: list[str] = []
+    for name, column in _columns():
+        overrides = column.get('mult_overrides')
+        if overrides is None:
+            continue
+        if not mult_fields.is_mult_column(column) or 'mult_options' in column:
+            wrong.append(f'{_where(name, column)}: overrides on a column that cannot take them')
+        for override in overrides:
+            if not (
+                isinstance(override, dict)
+                and 'value' in override
+                and set(override) <= _OVERRIDE_MEMBERS
+                and isinstance(override.get('label', ''), str)
+                and override.get('display', 'Y') in ('Y', 'N')
+                and (override.get('pin') is None or _is_int(override['pin']))
+            ):
+                wrong.append(f'{_where(name, column)}: {override!r}')
+    assert wrong == []
+
+
+def test_every_mult_field_key_is_on_a_mult_column() -> None:
+    """A ``mult_field`` key names the field of a column that holds mult ids."""
+    wrong = [
+        _where(name, column)
+        for name, column in _columns()
+        if 'mult_field' in column
+        and not (isinstance(column['mult_field'], str) and mult_fields.is_mult_column(column))
+    ]
     assert wrong == []
 
 

@@ -47,7 +47,7 @@ that observation belongs to.
         B --> C[pdstable / pdsfile:<br/>read the primary index and its supplements]
         C --> D[One obs class instance for the bundle]
         D --> E[For each index row:<br/>replace the metadata, then call one<br/>field_obs_table_column method per column]
-        E -->|each bundle deleted, then loaded:<br/>a fresh import or an append| G[(Observation tables: obs_*, mult_*)]
+        E -->|each bundle deleted, then loaded:<br/>a fresh import or an append| G[(Observation tables: obs_*, mult, mult_field, mult_group)]
         G -->|finalization| H[(Auxiliary tables:<br/>param_info, table_names, partables)]
 
 There is one set of tables, and every import writes into it. An import into a schema
@@ -117,7 +117,7 @@ view, and -- for anything that searches -- reaches the database through the rows
         U --> V[The view, wrapped in api_view]
         V --> P[url_to_search_params:<br/>the query string becomes<br/>selections and extras]
         P --> Q[get_search_id:<br/>register the search, and write<br/>its results once]
-        Q --> S[sql_builder.Select:<br/>join the obs_ and mult_ tables]
+        Q --> S[sql_builder.Select:<br/>join the obs_ tables and mult]
         S --> D[(MySQL)]
         D --> F[Format as JSON, CSV or HTML]
         F --> RESP([HTTP response])
@@ -147,7 +147,7 @@ steps.
 
 **The wide joins are assembled, not written.**
 :mod:`opus_app.apps.tools.sql_builder` builds the statements that join the ``obs_``
-tables to each other and to the ``mult_`` tables holding their enumerated values. Values
+tables to each other and to the ``mult`` table holding their enumerated values. Values
 are always passed as parameters, and identifiers are validated before they are quoted.
 :ref:`dev_guide_webapp_tools_sql_builder` says what that buys and where the two
 exceptions are.
@@ -165,9 +165,11 @@ means. The two ideas to carry into any other chapter:
 * An ``obs_*`` table corresponds one-for-one to a "Constraints" category in the user
   interface, and a row is one observation. ``obs_general`` is the master table: every
   observation has a row there, and every other table's rows hang off it.
-* A field whose value comes from a fixed set stores an integer index into a ``mult_``
-  table rather than the value itself, which is what makes the checkbox searches fast.
-  :ref:`dev_guide_table_schemas` describes how a column declares that.
+* A field whose value comes from a fixed set stores the integer id of a row of the
+  ``mult`` table rather than the value itself, which is what makes the checkbox searches
+  fast. Each such field's values carry its ``field_id`` from ``mult_field``, and
+  ``mult_group`` holds its groups. :ref:`dev_guide_table_schemas` describes how a column
+  declares that.
 
 What each subsystem owns
 ------------------------
@@ -181,7 +183,7 @@ The division of responsibility, in one table, because several questions turn on 
    * - Thing
      - Written by
      - Read by
-   * - The ``obs_*`` and ``mult_*`` tables
+   * - The ``obs_*`` tables, ``mult``, ``mult_field`` and ``mult_group``
      - the import pipeline
      - the web application
    * - ``param_info``, ``table_names``, ``partables``

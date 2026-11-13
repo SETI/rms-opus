@@ -409,14 +409,23 @@ supposed to be.
 Building a mult value
 ~~~~~~~~~~~~~~~~~~~~~
 
-A group column stores an index into a ``mult_`` table rather than the value itself, and
-that table also carries how the web application presents the value.
-``_create_mult(col_val, disp_name=None, disp='Y', disp_order=None, grouping=None,
-group_disp_order=None, tooltip=None, aliases=None)`` builds the dictionary a group
-column's field method must return. Everything but ``col_val`` is presentation, and every
-one of those may be left out --
-:func:`~opus_import.steps.do_import_mult.update_mult_table` derives a label and a sort
-order from the value when none is given.
+A group column stores the id of a row of the ``mult`` table rather than the value
+itself, and that row also carries how the web application presents the value.
+``_create_mult(col_val, disp_name=None, disp='Y', pin=None, grouping=None,
+group_pin=None)`` builds the dictionary a group column's field method must return.
+Everything but ``col_val`` is presentation, and every one of those may be left out:
+:func:`~opus_import.steps.do_import_obs.import_observation_table` derives a label from
+the value when none is given, and finalization places each value in its field's list
+from what the values hold (:ref:`dev_guide_import_steps_do_finalize_mult`). A ``pin``
+places a value ahead of every value without one, and a ``group_pin`` does the same for
+its group.
+
+The presentation is read only when the field lacks the value, and never for a
+column whose schema lists its values in ``mult_options``. A value the field already
+holds keeps its stored label, display and grouping; when a field method gives a
+different one, the import logs a warning once a run, and the column's
+``mult_overrides`` (:ref:`dev_guide_table_schemas`) is the way to change the stored
+presentation.
 
 ``_create_mult_keep_case`` is the variant that passes the value through as the label
 rather than letting the derivation title-case it, which is what a value whose
@@ -484,8 +493,8 @@ is written once, inside it, and deliberately not restated here.
    * - :data:`~opus_import.obs.field_types.IntField`
      - ``int*`` and ``uint*`` columns.
    * - :class:`~opus_import.obs.field_types.MultField`
-     - One value of a ``GROUP`` column, as the eight-key dictionary
-       ``_create_mult`` builds.
+     - One value of a ``GROUP`` column, as the dictionary ``_create_mult`` builds:
+       ``col_val``, ``disp``, ``disp_name``, ``pin``, ``grouping`` and ``group_pin``.
    * - :data:`~opus_import.obs.field_types.MultFieldRet`
      - What a ``GROUP`` column's method returns: a
        :class:`~opus_import.obs.field_types.MultField` or a list of them. A
@@ -494,8 +503,8 @@ is written once, inside it, and deliberately not restated here.
 Two rules are worth stating explicitly, because both are easy to get wrong:
 
 * **The form type decides, not the storage type.** A ``flag_yesno`` or ``flag_onoff``
-  column is stored as ``int unsigned`` exactly like a ``mult_idx`` one, because it *is*
-  an index into a ``mult_`` table, so its method returns a
+  column is stored as ``smallint unsigned`` exactly like a ``mult_idx`` one, because it
+  *is* the id of a ``mult`` row, so its method returns a
   :class:`~opus_import.obs.field_types.MultField`. So does the one ``char3`` column that
   carries a ``GROUP`` form type. Returning a bare value from a group column makes
   :func:`~opus_import.steps.do_import_obs.import_observation_table` log ``bad data type
@@ -507,10 +516,6 @@ Two rules are worth stating explicitly, because both are easy to get wrong:
   :class:`float` and ``numpy.str_`` *does* subclass :class:`str`, so
   :data:`~opus_import.obs.field_types.FloatField` and
   :data:`~opus_import.obs.field_types.StrField` need no equivalent.
-
-Two keys of :class:`~opus_import.obs.field_types.MultField` are inert: nothing reads
-``tooltip`` -- a ``mult_`` table has no such column -- and no obs class passes either
-``tooltip`` or ``aliases``, so both are None in every row the pipeline writes.
 
 .. _dev_guide_import_obs_version_bases:
 

@@ -1,108 +1,150 @@
-"""Write the checked-in display details back over the ``mult_`` tables.
+"""Write the checked-in presentation of the mult fields over the stored ``mult`` rows.
 
-A ``mult_`` table holds the enumerated values one column can take, along with how the
-web application should present them. Where a table schema pins those presentation
-details in a ``mult_options`` entry, this step copies them over whatever the import
-wrote, so that editing a schema is enough to change a label or a sort order without
-re-importing.
+A column's schema can state how its field's values are presented in two ways: a
+``mult_options`` list, which pins the field's values, ids, labels and order, and a
+``mult_overrides`` list, which sets the label, display, grouping or pin of values the
+import discovered. This step writes both over the rows in place and re-ranks the fields it
+touched, so that editing a schema and deploying the code is enough to rename a value or
+reorder a list, with no re-import: an existing row's id and value, which the observation
+rows hold and mean, never change.
 
-The step runs only when ``--update-mult-info`` is given; nothing else calls it, and
-``--do-it-all`` does not imply it.
+The step runs only when ``--update-mult-info`` is given; the code-only deploy gives it.
+Finalization applies the overrides itself (`opus_import.steps.do_finalize_mult`), and
+``--do-it-all`` does not imply this step.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
 
-from opus_import import import_util
-from opus_import.import_util import MultOption
+from opus_import import import_util, mult_fields
+from opus_import.mult_fields import MULT_GROUP_TABLE, MULT_TABLE
+from opus_import.steps import do_finalize_mult
+from opus_import.steps.do_import_mult import PRESENTATION_COLUMNS, option_rows
+from opus_support import collation_key
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
 
 
-def update_mult_info(ctx: ImportContext) -> None:
-    """Update every ``mult_`` table whose schema pins its values.
+@dataclass
+class _FieldWrites:
+    """What the step writes for one pinned field.
 
-    The table's name says which schema and which column it belongs to, so the name is
-    split apart and matched against the packaged schemas. A table whose schema or column
-    cannot be found is reported and skipped rather than aborting the run, and a column
-    with no ``mult_options`` entry is left exactly as the import wrote it.
+    Attributes:
+        field_id: The field.
+        updates: Each stored row's id beside the presentation its entry gives it.
+        inserts: The entries the field holds no row for, as ``mult`` rows.
+        groups: Each group's pin, keyed by name.
+    """
 
-    Every presentation column a schema pins is written: the label, the sort key, whether
-    the value is offered in the search form, the group it belongs to and that group's
-    sort key. The value itself and the row id are not touched -- the id is what the
-    ``obs_`` rows already reference, and the value is what a row means rather than how it
-    is shown.
+    field_id: int
+    updates: list[tuple[int, dict[str, Any]]] = field(default_factory=list)
+    inserts: list[dict[str, Any]] = field(default_factory=list)
+    groups: dict[str, int | None] = field(default_factory=dict)
+
+
+def update_mult_info(ctx: ImportContext) -> bool:
+    """Write every pinned field's list and every override, then re-rank what changed.
+
+    A pinned field this schema holds no rows of is left alone: no observation of this
+    schema uses it. For one it does, each ``mult_options`` entry is checked against the
+    stored rows first. An entry whose id the field stores with the same value writes its
+    label, pin, display and grouping over that row; an entry neither of whose id or value
+    the field stores is inserted, id and value with it; and an entry whose id is stored
+    under another value, or whose value is stored under another id, is an error, since
+    writing it would change what the observations holding the id mean. **Nothing is
+    written when any entry is in error.** Each entry's group pin is written to its group.
+    Then every column's ``mult_overrides`` is applied
+    (`opus_import.steps.do_finalize_mult.apply_mult_overrides`), the groups left with no
+    value are deleted, and the values and groups of every field either changed are
+    ranked again.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
 
+    Returns:
+        True when the step wrote what the schemas give; False when an entry disagreed
+        with a stored row, each such entry having been logged as an error and nothing
+        written.
+
     Raises:
-        TypeError: If a ``mult_options`` entry does not carry exactly the seven values
-            `opus_import.import_util.MultOption` names. That is a fault in the packaged
-            schema, and stopping is better than writing a row built from values that
-            landed in the wrong columns.
+        TypeError: If a ``mult_options`` entry is not the shape
+            `opus_import.import_util.read_mult_option` accepts. That is a fault in the
+            packaged schema, and stopping is better than writing a row built from values
+            that landed in the wrong columns.
     """
     db = ctx.db
     assert db is not None
-    logger = ctx.logger
+    q = db.quote_identifier
+    fields = mult_fields.ensure_mult_fields(ctx)
+    plans: list[_FieldWrites] = []
+    errors: list[str] = []
 
-    # Find all the mult_ tables
-    table_names = db.table_names(prefix='mult_')
-
-    for table_name in table_names:
-        # A mult table's name is its observation table's name joined to its column's,
-        # and both halves contain underscores, so where the split falls has to be
-        # decided by trying them. A table name alone is not enough to decide it: both
-        # `obs_surface_geometry` and `obs_surface_geometry_name` are real tables, so
-        # `mult_obs_surface_geometry_name_target_name` matches a schema at the shorter
-        # split and only the longer one leaves a column that exists. The split is
-        # therefore the one where the schema *and* the column both resolve.
-        splits = table_name.split('_')
-        table_schema = None
-        column = None
-        for n_splits in range(3, len(splits)):
-            trial_name = '_'.join(splits[1:n_splits])
-            trial_schema = import_util.read_schema_for_table(ctx, trial_name)
-            if trial_schema is None:
-                continue
-            if table_schema is None:
-                # Remembered so that a table whose column resolves nowhere is reported
-                # against a schema that exists, rather than as an unknown table.
-                table_schema = trial_schema
-            mult_field_name = '_'.join(splits[n_splits:])
-            for trial_column in trial_schema:
-                if trial_column.get('field_name') == mult_field_name:
-                    table_schema, column = trial_schema, trial_column
-                    break
-            if column is not None:
-                break
-        if table_schema is None:
-            logger.log('error', f'Unable to find table schema for mult "{table_name}"')
+    for name, column in mult_fields.packaged_mult_columns().items():
+        if not column.pinned:
             continue
-        if column is None:
-            logger.log('error', f'Unable to find a column matching mult table "{table_name}"')
-            continue
-
-        mult_options = column.get('mult_options', False)
-        if not mult_options:
-            continue
-
-        for mult_info in mult_options:
-            option = MultOption(*mult_info)
-
-            row_dict = {
-                'label': str(option.label),
-                'disp_order': option.disp_order,
-                'display': option.display,
-                'grouping': option.grouping,
-                'group_disp_order': option.group_disp_order,
-            }
-
-            db.update_row(
-                table_name,
-                row_dict,
-                f'{db.quote_identifier("id")}=%s',
-                where_params=[option.id],
+        field_id = fields[name].field_id
+        stored = {
+            int(row_id): str(value)
+            for row_id, value in db.read_rows(
+                MULT_TABLE, ['id', 'value'], f'{q("field_id")}=%s', [field_id]
             )
+        }
+        if not stored:
+            continue
+        held = {collation_key(value): row_id for row_id, value in stored.items()}
+        writes = _FieldWrites(field_id)
+        for row, group_pin in option_rows(column.entry):
+            key = collation_key(row['value'])
+            if row['id'] in stored and collation_key(stored[row['id']]) != key:
+                errors.append(
+                    f'mult_options of mult field "{name}" gives id {row["id"]} the value '
+                    f'"{row["value"]}", but the field stores "{stored[row["id"]]}" under it'
+                )
+            elif row['id'] not in stored and key in held:
+                errors.append(
+                    f'mult_options of mult field "{name}" gives the value "{row["value"]}" '
+                    f'id {row["id"]}, but the field stores it under id {held[key]}'
+                )
+            elif row['id'] in stored:
+                writes.updates.append(
+                    (row['id'], {part: row[part] for part in PRESENTATION_COLUMNS})
+                )
+            else:
+                writes.inserts.append({'field_id': field_id, **row})
+            if row['grouping'] is not None:
+                writes.groups.setdefault(row['grouping'], group_pin)
+        plans.append(writes)
+
+    if errors:
+        for message in errors:
+            import_util.log_error(ctx, message)
+        import_util.log_error(ctx, '--update-mult-info wrote nothing')
+        return False
+
+    for writes in plans:
+        for row_id, presentation in writes.updates:
+            db.update_row(
+                MULT_TABLE,
+                presentation,
+                f'{q("field_id")}=%s AND {q("id")}=%s',
+                where_params=[writes.field_id, row_id],
+            )
+        if writes.inserts:
+            db.insert_rows(MULT_TABLE, writes.inserts)
+        db.upsert_rows(
+            MULT_GROUP_TABLE,
+            'grouping',
+            [
+                {'field_id': writes.field_id, 'grouping': grouping, 'group_pin': group_pin}
+                for grouping, group_pin in writes.groups.items()
+            ],
+        )
+
+    touched = {writes.field_id for writes in plans}
+    touched |= do_finalize_mult.apply_mult_overrides(ctx)
+    do_finalize_mult.delete_empty_groups(ctx)
+    do_finalize_mult.rank_mult_fields(ctx, touched)
+    return True

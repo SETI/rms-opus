@@ -13,9 +13,9 @@ decision table drift, and these two had already begun to -- one said
 a ``MULTIGROUP`` form type.
 
 **The form type is what decides, not the storage type**, and the difference is not a
-formality. A ``flag_yesno`` or ``flag_onoff`` column is stored as ``int unsigned``
+formality. A ``flag_yesno`` or ``flag_onoff`` column is stored as ``smallint unsigned``
 exactly like a ``mult_idx`` one (`opus_import.importdb.mysql.ImportDBMySQL.create_table`
-maps all three the same way): it is an index into a ``mult_`` table, and its method
+maps all three the same way): it holds the id of a ``mult`` row, and its method
 returns a `MultField` like any other group column. So does the one ``char3`` column that
 carries a ``GROUP`` form type. Reading the storage type instead would annotate those
 methods as scalars and be wrong about every one of them.
@@ -104,16 +104,10 @@ class MultField(TypedDict):
 
     `opus_import.obs.obs_base.ObsBase._create_mult` builds these and every group
     column's method returns one (or a list of them, for a ``MULTIGROUP`` column).
-    `opus_import.steps.do_import_obs.import_observation_table` takes the eight keys
-    apart into eight parallel lists and hands them to
+    `opus_import.steps.do_import_obs.import_observation_table` takes the keys apart into
+    parallel lists and hands them to
     `opus_import.steps.do_import_mult.update_mult_table`, which turns ``col_val`` into
-    the row id the ``obs_`` column actually stores.
-
-    Two keys are carried but unused, and are kept because removing a key from a shape
-    the whole hierarchy builds is a wider change than annotating it: **nothing anywhere
-    reads** ``tooltip`` -- a ``mult_`` table has no such column -- and no obs class
-    passes either ``tooltip`` or ``aliases``, so both are None in every row this
-    pipeline writes today.
+    the id the ``obs_`` column actually stores.
 
     Attributes:
         col_val: The value itself, before
@@ -128,28 +122,21 @@ class MultField(TypedDict):
             `as_int` first.
         disp: ``'Y'`` to offer the value in the search form, ``'N'`` to hide it.
         disp_name: How the value is shown to users, or None to have
-            `update_mult_table` derive a label from ``col_val``.
-        disp_order: The sort key, or None to have `update_mult_table` derive one.
+            `import_observation_table` derive a label from ``col_val``.
+        pin: The value's position, ahead of every value without a pin, or None to have
+            finalization place it by what it holds.
         grouping: The group the value belongs to in the search form, or None.
-        group_disp_order: The group's sort key, or None to sort groups by name. It is
-            text, not a number: both call sites pass a
-            `opus_import.config_targets.PLANET_GROUP_MAPPING` entry's ``disp_order``,
-            which is ``'010'``-style, and of the 410 ``mult_options`` entries in the
-            packaged schemas the 54 that set the equivalent column set it to a string.
-        tooltip: Unused. See above.
-        aliases: Other spellings a search should accept, already rendered by
-            `json.dumps` -- `_create_mult` converts the list it is handed. Unused; see
-            above.
+        group_pin: The group's position, ahead of every group without a pin, or None to
+            place the group by name. Both call sites pass a
+            `opus_import.config_targets.PLANET_GROUP_MAPPING` entry's ``disp_order``.
     """
 
     col_val: str | int | float | None
     disp: str
     disp_name: str | None
-    disp_order: int | str | None
+    pin: int | None
     grouping: str | None
-    group_disp_order: str | None
-    tooltip: str | None
-    aliases: str | None
+    group_pin: int | None
 
 
 MultFieldRet = MultField | list[MultField]

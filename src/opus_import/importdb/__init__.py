@@ -54,7 +54,7 @@ def get_db(
         db_schema: The schema (MySQL database) holding the OPUS tables.
         db_user: The user to connect as.
         db_password: That user's password.
-        mult_form_types: The ``param_info`` form types that have a ``mult_`` table, or
+        mult_form_types: The ``param_info`` form types whose columns hold mult ids, or
             None for none of them.
         logger: Where to report progress, statements and warnings, or None to report
             nothing.

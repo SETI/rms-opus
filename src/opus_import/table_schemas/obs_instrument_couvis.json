@@ -40,15 +40,15 @@
         "pi_tooltip": null,
         "comments": "Definition is from COUVIS label",
         "mult_options": [
-              [   0,   "CALIB",   "CALIB", "010", "Y", null, null],
-              [   1,  "UCSTAR",  "UCSTAR", "020", "Y", null, null],
-              [   2, "UFPSCAN", "UFPSCAN", "030", "Y", null, null],
-              [   3,   "UHDAC",   "UHDAC", "040", "Y", null, null],
-              [   4, "UHIGHSN", "UHIGHSN", "050", "Y", null, null],
-              [   5,    "UMAP",    "UMAP", "060", "Y", null, null],
-              [   6,   "USCAN",   "USCAN", "070", "Y", null, null],
-              [   7,  "USTARE",  "USTARE", "080", "Y", null, null],
-              [   8,    "NONE",    "None", "090", "Y", null, null]
+              [   0,   "CALIB",   "CALIB",    10, "Y", null, null],
+              [   1,  "UCSTAR",  "UCSTAR",    20, "Y", null, null],
+              [   2, "UFPSCAN", "UFPSCAN",    30, "Y", null, null],
+              [   3,   "UHDAC",   "UHDAC",    40, "Y", null, null],
+              [   4, "UHIGHSN", "UHIGHSN",    50, "Y", null, null],
+              [   5,    "UMAP",    "UMAP",    60, "Y", null, null],
+              [   6,   "USCAN",   "USCAN",    70, "Y", null, null],
+              [   7,  "USTARE",  "USTARE",    80, "Y", null, null],
+              [   8,    "NONE",    "None",    90, "Y", null, null]
           ]
     },
     {
@@ -99,10 +99,10 @@
         "pi_tooltip": null,
         "comments": "Definition is from COUVIS label",
         "mult_options": [
-              [   0,  "8_BIT",  "8_BIT", "010", "Y", null, null],
-              [   1, "SQRT_8", "SQRT_8", "020", "Y", null, null],
-              [   2, "SQRT_9", "SQRT_9", "030", "Y", null, null],
-              [   3,   "NONE",   "None", "040", "Y", null, null]
+              [   0,  "8_BIT",  "8_BIT",    10, "Y", null, null],
+              [   1, "SQRT_8", "SQRT_8",    20, "Y", null, null],
+              [   2, "SQRT_9", "SQRT_9",    30, "Y", null, null],
+              [   3,   "NONE",   "None",    40, "Y", null, null]
           ]
     },
     {
@@ -127,9 +127,9 @@
         "pi_tooltip": null,
         "comments": "Definition is from COUVIS label",
         "mult_options": [
-              [   0,   "OPEN",   "Open", "010", "Y", null, null],
-              [   1, "CLOSED", "Closed", "020", "Y", null, null],
-              [   2,    "N/A",    "N/A", "030", "Y", null, null]
+              [   0,   "OPEN",   "Open",    10, "Y", null, null],
+              [   1, "CLOSED", "Closed",    20, "Y", null, null],
+              [   2,    "N/A",    "N/A",    30, "Y", null, null]
           ]
     },
     {
@@ -154,10 +154,10 @@
         "pi_tooltip": null,
         "comments": "Definition is from COUVIS label",
         "mult_options": [
-              [   0, "HIGH_RESOLUTION", "High Resolution", "010", "Y", null, null],
-              [   1,  "LOW_RESOLUTION",  "Low Resolution", "020", "Y", null, null],
-              [   2,     "OCCULTATION",     "Occultation", "030", "Y", null, null],
-              [   3,            "NULL",             "N/A", "040", "Y", null, null]
+              [   0, "HIGH_RESOLUTION", "High Resolution",    10, "Y", null, null],
+              [   1,  "LOW_RESOLUTION",  "Low Resolution",    20, "Y", null, null],
+              [   2,     "OCCULTATION",     "Occultation",    30, "Y", null, null],
+              [   3,            "NULL",             "N/A",    40, "Y", null, null]
           ]
     },
     {
@@ -228,10 +228,10 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0, "EUV",   "EUV", "010", "Y", null, null],
-              [   1, "FUV",   "FUV", "020", "Y", null, null],
-              [   2, "HDAC", "HDAC", "030", "Y", null, null],
-              [   3, "HSP",   "HSP", "040", "Y", null, null]
+              [   0, "EUV",   "EUV",    10, "Y", null, null],
+              [   1, "FUV",   "FUV",    20, "Y", null, null],
+              [   2, "HDAC", "HDAC",    30, "Y", null, null],
+              [   3, "HSP",   "HSP",    40, "Y", null, null]
           ]
     },
     {

@@ -17,7 +17,7 @@ In addition to metadata, OPUS stores other information that helps it operate in 
 OPUS Metadata
 -------------
 
-It's important to understand that OPUS has its own concept of metadata types independent of the SQL data types. For example, an integer in the database could represent a numeric value (like the pixel size of an image) or an index into a "mult table" (like the selection of a particular mission from the available options) or a reference to an entry in another table or just a unique ID in the current table. As such, there needs to be a place to store "metadata about the metadata", and this is the separate ``param_info`` table, which will be discussed later. We will use the term "field type" when discussing OPUS's concept of metadata types, and "SQL data type" when discussing the attributes of a SQL column.
+It's important to understand that OPUS has its own concept of metadata types independent of the SQL data types. For example, an integer in the database could represent a numeric value (like the pixel size of an image) or the id of a row of the ``mult`` table (like the selection of a particular mission from the available options) or a reference to an entry in another table or just a unique ID in the current table. As such, there needs to be a place to store "metadata about the metadata", and this is the separate ``param_info`` table, which will be discussed later. We will use the term "field type" when discussing OPUS's concept of metadata types, and "SQL data type" when discussing the attributes of a SQL column.
 
 OPUS understands the following high-level field types:
 
@@ -26,12 +26,12 @@ OPUS understands the following high-level field types:
   * ``Volume ID`` = ``"HSTU0_5392"``
   * ``Primary File Spec`` = ``"HSTU0_5392/DATA/VISIT_03/U2930301T.LBL"``
   * ``PI Name`` = ``"Spencer, John R."``
-* ``GROUP``: A selection in a list of possible options. ``GROUP`` is also referred to as a "mult", meaning multiple choice. In the database, a ``GROUP`` is stored as a single integer (using the SQL ``int unsigned`` data type), which is an index into another special "mult table", which will be described below. When searching, the user can select one or more checkboxes from the group. Any observation that matches one of the selected checkboxes will be given as a result. When displaying metadata, the integer is converted to a string by referencing the "mult table" and the string is shown. Examples:
+* ``GROUP``: A selection in a list of possible options. ``GROUP`` is also referred to as a "mult", meaning multiple choice. In the database, a ``GROUP`` is stored as a single integer (using the SQL ``smallint unsigned`` data type), which is the id of a row of the special ``mult`` table, which will be described below. When searching, the user can select one or more checkboxes from the group. Any observation that matches one of the selected checkboxes will be given as a result. When displaying metadata, the integer is converted to a string by looking up its ``mult`` row and the row's label is shown. Examples:
 
   * ``Mission`` = ``Galileo`` (stored in the database as the value ``1``)
   * ``Saturn Orbit Number (By Checkbox)`` = ``044`` (stored in the database as the value ``23``)
   * ``Body Occultation Flag`` = ``N/A`` (stored in the database as the value ``0``)
-* ``MULTIGROUP``: Multiple selections in a list of possible options. This is similar to a ``GROUP``, except that instead of having a single option selected represented as an integer, the database contains a JSON list (using the SQL ``JSON`` data type) containing, potentially, multiple integers. This type is used when a single observation can apply to more than one entry in the group, such as ``Intended Target Name`` (where one observation can be intended for multiple targets in PDS4) or ``Nominal Target Class`` (where multiple intended targets results in multiple target classes). Searching by the user is performed the same way as with a ``GROUP``, except that the matching is done against any of the entries in the list, not just a single integer. If any of the entries match, the observation is returned as a search result. When displaying metadata, each entry in the list is converted to a string by referencing the "mult table" and then they are joined together by commas. The functionality provided by ``MULTIGROUP`` is a strict superset of ``GROUP`` and technically we could remove the ``GROUP`` type entirely. However, the performance of searching and retrieving the values from a ``MULTIGROUP`` is roughly 30% slower than a ``GROUP`` due to the need to handle the arbitrary length list of values, and thus we keep both types around for performance. Examples:
+* ``MULTIGROUP``: Multiple selections in a list of possible options. This is similar to a ``GROUP``, except that instead of having a single option selected represented as an integer, the database contains a JSON list (using the SQL ``JSON`` data type) containing, potentially, multiple integers. This type is used when a single observation can apply to more than one entry in the group, such as ``Intended Target Name`` (where one observation can be intended for multiple targets in PDS4) or ``Nominal Target Class`` (where multiple intended targets results in multiple target classes). Searching by the user is performed the same way as with a ``GROUP``, except that the matching is done against any of the entries in the list, not just a single integer. If any of the entries match, the observation is returned as a search result. When displaying metadata, each entry in the list is converted to a string by looking up its ``mult`` row and then they are joined together by commas. The functionality provided by ``MULTIGROUP`` is a strict superset of ``GROUP`` and technically we could remove the ``GROUP`` type entirely. However, the performance of searching and retrieving the values from a ``MULTIGROUP`` is roughly 30% slower than a ``GROUP`` due to the need to handle the arbitrary length list of values, and thus we keep both types around for performance. Examples:
 
   * ``Intended Target Name`` = ``Jupiter,Amalthea``
   * ``Nominal Target Class`` = ``Planet,Regular Satellite``
@@ -96,32 +96,32 @@ Here is an example of the schema for the ``obs_general`` table (note this may ch
 ::
 
     mysql> DESC obs_general;
-    +----------------------+--------------+------+-----+-------------------+
-    | Field                | Type         | Null | Key | Default           |
-    +----------------------+--------------+------+-----+-------------------+
-    | id                   | int unsigned | NO   | PRI | NULL              |
-    | opus_id              | char(50)     | NO   | MUL | NULL              |
-    | bundle_id            | char(75)     | NO   | MUL | NULL              |
-    | instrument_id        | int unsigned | NO   | MUL | NULL              |
-    | mission_id           | int unsigned | NO   | MUL | NULL              |
-    | inst_host_id         | int unsigned | NO   | MUL | NULL              |
-    | planet_id            | int unsigned | NO   | MUL | NULL              |
-    | target_name          | json         | NO   |     | NULL              |
-    | target_class         | json         | NO   |     | NULL              |
-    | time1                | double       | YES  | MUL | NULL              |
-    | time2                | double       | YES  | MUL | NULL              |
-    | observation_duration | double       | YES  | MUL | NULL              |
-    | quantity             | int unsigned | NO   | MUL | NULL              |
-    | right_asc1           | double       | YES  | MUL | NULL              |
-    | right_asc2           | double       | YES  | MUL | NULL              |
-    | right_asc            | double       | YES  | MUL | NULL              |
-    | d_right_asc          | double       | YES  |     | NULL              |
-    | declination1         | double       | YES  | MUL | NULL              |
-    | declination2         | double       | YES  | MUL | NULL              |
-    | observation_type     | int unsigned | NO   |     | NULL              |
-    | preview_images       | json         | NO   |     | NULL              |
-    | timestamp            | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +----------------------+--------------+------+-----+-------------------+
+    +----------------------+-------------------+------+-----+-------------------+
+    | Field                | Type              | Null | Key | Default           |
+    +----------------------+-------------------+------+-----+-------------------+
+    | id                   | int unsigned      | NO   | PRI | NULL              |
+    | opus_id              | char(50)          | NO   | MUL | NULL              |
+    | bundle_id            | char(75)          | NO   | MUL | NULL              |
+    | instrument_id        | smallint unsigned | NO   | MUL | NULL              |
+    | mission_id           | smallint unsigned | NO   | MUL | NULL              |
+    | inst_host_id         | smallint unsigned | NO   | MUL | NULL              |
+    | planet_id            | smallint unsigned | NO   | MUL | NULL              |
+    | target_name          | json              | NO   |     | NULL              |
+    | target_class         | json              | NO   |     | NULL              |
+    | time1                | double            | YES  | MUL | NULL              |
+    | time2                | double            | YES  | MUL | NULL              |
+    | observation_duration | double            | YES  | MUL | NULL              |
+    | quantity             | smallint unsigned | NO   | MUL | NULL              |
+    | right_asc1           | double            | YES  | MUL | NULL              |
+    | right_asc2           | double            | YES  | MUL | NULL              |
+    | right_asc            | double            | YES  | MUL | NULL              |
+    | d_right_asc          | double            | YES  |     | NULL              |
+    | declination1         | double            | YES  | MUL | NULL              |
+    | declination2         | double            | YES  | MUL | NULL              |
+    | observation_type     | smallint unsigned | NO   |     | NULL              |
+    | preview_images       | json              | NO   |     | NULL              |
+    | timestamp            | timestamp         | NO   |     | CURRENT_TIMESTAMP |
+    +----------------------+-------------------+------+-----+-------------------+
 
 Besides the keys shown, ``obs_general`` has three keys over two columns each:
 ``(time1, opus_id)``, which serves the default sort, ``(right_asc, d_right_asc)`` and
@@ -158,26 +158,26 @@ Here is an example of a mission table:
 ::
 
     mysql> DESC obs_mission_cassini;
-    +-------------------------+--------------+------+-----+-------------------+
-    | Field                   | Type         | Null | Key | Default           |
-    +-------------------------+--------------+------+-----+-------------------+
-    | obs_general_id          | int unsigned | NO   | PRI | NULL              |
-    | obs_name                | char(30)     | NO   | MUL | NULL              |
-    | rev_no                  | char(3)      | YES  |     | NULL              |
-    | rev_no_int              | int          | YES  |     | NULL              |
-    | is_prime                | int unsigned | NO   |     | NULL              |
-    | prime_inst_id           | int unsigned | NO   |     | NULL              |
-    | spacecraft_clock_count1 | double       | YES  | MUL | NULL              |
-    | spacecraft_clock_count2 | double       | YES  | MUL | NULL              |
-    | ert1                    | double       | YES  | MUL | NULL              |
-    | ert2                    | double       | YES  | MUL | NULL              |
-    | cassini_target_code     | int unsigned | YES  |     | NULL              |
-    | cassini_target_name     | int unsigned | YES  | MUL | NULL              |
-    | activity_name           | char(9)      | YES  | MUL | NULL              |
-    | mission_phase_name      | int unsigned | YES  |     | NULL              |
-    | sequence_id             | char(4)      | YES  |     | NULL              |
-    | timestamp               | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +-------------------------+--------------+------+-----+-------------------+
+    +-------------------------+-------------------+------+-----+-------------------+
+    | Field                   | Type              | Null | Key | Default           |
+    +-------------------------+-------------------+------+-----+-------------------+
+    | obs_general_id          | int unsigned      | NO   | PRI | NULL              |
+    | obs_name                | char(30)          | NO   | MUL | NULL              |
+    | rev_no                  | char(3)           | YES  |     | NULL              |
+    | rev_no_int              | int               | YES  |     | NULL              |
+    | is_prime                | smallint unsigned | NO   |     | NULL              |
+    | prime_inst_id           | smallint unsigned | NO   |     | NULL              |
+    | spacecraft_clock_count1 | double            | YES  | MUL | NULL              |
+    | spacecraft_clock_count2 | double            | YES  | MUL | NULL              |
+    | ert1                    | double            | YES  | MUL | NULL              |
+    | ert2                    | double            | YES  | MUL | NULL              |
+    | cassini_target_code     | smallint unsigned | YES  |     | NULL              |
+    | cassini_target_name     | smallint unsigned | YES  | MUL | NULL              |
+    | activity_name           | char(9)           | YES  | MUL | NULL              |
+    | mission_phase_name      | smallint unsigned | YES  |     | NULL              |
+    | sequence_id             | char(4)           | YES  |     | NULL              |
+    | timestamp               | timestamp         | NO   |     | CURRENT_TIMESTAMP |
+    +-------------------------+-------------------+------+-----+-------------------+
 
 Note that there will be a different number of rows in the ``obs_general`` table and many of the other tables:
 
@@ -211,97 +211,159 @@ Tables can be joined together to retrieve all of the metadata for one or more ob
 
 Generally speaking, you can think of the OPUS schema as having only one ``obs`` table and one row per OPUS ID with a huge number of columns encoding all of the possible metadata that could be needed. However, this would be inefficient to store (e.g. why store New Horizons metadata for a Cassini mission? You would just have to fill the columns wth NULLs), so instead we break the information across multiple tables and only populate the rows in the tables as necessary, allowing MySQL's efficient JOIN functionality to combine everything together when needed.
 
-The Encoding of Checkbox IDs and the ``mult_obs_*`` Tables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _dev_guide_database_schema_mult:
 
-"Mult" (aka ``GROUP``) fields are multiple choice options selected from a defined set. The list of available options may be hardcoded in the import pipeline or generated dynamically during the import process. Either way, the option associated with a particular observation is stored as an integer in the database. This integer is then used as an index into an associated "mult table" to look up the details of that option. The name of the "mult table" is a combination of the parent ``obs_*`` table and the field name. For example, for the "Planet Name" (``planet_id``) field in the "General Constraints" category (``obs_general``) the table is called ``mult_obs_general_planet_id``, and it has the following schema:
+The Encoding of Checkbox IDs and the ``mult`` Tables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"Mult" (aka ``GROUP``) fields are multiple choice options selected from a defined set.
+The set of options may be listed in the column's table schema (its ``mult_options``) or
+found during the import. Either way, an observation's column stores an integer, the
+option's id. Three tables describe the options:
+
+* ``mult_field`` names each **mult field**: the set of values one column can hold.
+* ``mult`` holds the values of every field, one row per value.
+* ``mult_group`` holds the groups of every field.
+
+Every column whose form type is ``GROUP`` or ``MULTIGROUP`` has a mult field. The
+field's qualified name is ``<table>.<column>``, such as ``obs_general.planet_id``. A
+``mult_field`` key in the column's schema names the field instead, so that several
+columns can share one (:ref:`dev_guide_table_schemas`).
+
+The ``mult_field`` table names the fields:
 
 ::
 
-    mysql> DESC mult_obs_general_planet_id;
-    +------------------+---------------+------+-----+-------------------+
-    | Field            | Type          | Null | Key | Default           |
-    +------------------+---------------+------+-----+-------------------+
-    | id               | int unsigned  | NO   | PRI | NULL              |
-    | value            | char(100)     | YES  |     | NULL              |
-    | label            | char(100)     | NO   |     | NULL              |
-    | disp_order       | char(100)     | NO   |     | NULL              |
-    | display          | enum('Y','N') | NO   |     | Y                 |
-    | grouping         | char(100)     | YES  |     | NULL              |
-    | group_disp_order | char(100)     | YES  |     | NULL              |
-    | aliases          | json          | YES  |     | NULL              |
-    | timestamp        | timestamp     | YES  |     | CURRENT_TIMESTAMP |
-    +------------------+---------------+------+-----+-------------------+
+    mysql> DESC mult_field;
+    +----------------+-------------------+------+-----+---------+
+    | Field          | Type              | Null | Key | Default |
+    +----------------+-------------------+------+-----+---------+
+    | field_id       | smallint unsigned | NO   | PRI | NULL    |
+    | qualified_name | varchar(100)      | NO   | UNI | NULL    |
+    | pinned         | tinyint           | NO   |     | NULL    |
+    +----------------+-------------------+------+-----+---------+
 
 The fields are:
 
-* ``id``: A unique integer which is used to reference a row in this table. This is the same value that is stored in the ``obs_*`` table.
-* ``value``: The actual metadata value which was the source of this option.
+* ``field_id``: The field's number, the primary key. Every ``mult`` and ``mult_group``
+  row of the field carries it.
+* ``qualified_name``: The field's qualified name, a unique key.
+* ``pinned``: 1 when the column's schema lists the field's values in ``mult_options``, 0
+  otherwise.
+
+The import numbers the fields once in each database. The first import gives every mult
+field of the packaged ``obs_*.json`` schemas an id, 1, 2, 3, ..., in order of qualified
+name. A field that a later release adds takes the next id after the highest one in
+``mult_field``. A field's id never changes.
+
+The ``mult`` table holds the values:
+
+::
+
+    mysql> DESC mult;
+    +-----------+-------------------+------+-----+---------+
+    | Field     | Type              | Null | Key | Default |
+    +-----------+-------------------+------+-----+---------+
+    | field_id  | smallint unsigned | NO   | PRI | NULL    |
+    | id        | smallint unsigned | NO   | PRI | NULL    |
+    | value     | varchar(100)      | NO   |     | NULL    |
+    | label     | varchar(100)      | NO   |     | NULL    |
+    | pin       | smallint unsigned | YES  |     | NULL    |
+    | disp_rank | smallint unsigned | NO   |     | 0       |
+    | display   | enum('Y','N')     | NO   |     | Y       |
+    | grouping  | varchar(100)      | YES  |     | NULL    |
+    +-----------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``field_id``: The field the value belongs to.
+* ``id``: What an observation's column holds for this value. Ids
+  are numbered within a field: a field's ids start at 0, and a value the import finds
+  takes the field's highest id plus one. A pinned field's ids are the ones its
+  ``mult_options`` gives; if its list has no absent value and an observation needs one,
+  the import adds it under 65535, an id no list may give. A stored row keeps its id and
+  its value, so no observation row has to be rewritten when a value is renamed. An id
+  is not reserved once its row is deleted: finalization deletes the values no
+  observation holds, and the next value the import adds to the field takes the field's
+  highest id plus one, which can be an id a deleted value had.
+* ``value``: The value as the import read it. The absent value is
+  stored as the empty string, never ``NULL``.
 * ``label``: The string to display in the UI.
-* ``disp_order``: A string that is used to sort the entries in the mult table so that they are displayed in a meaningful order. These strings do not have to have any intrinsic meaning, just be sortable.
-* ``display``: An indication of whether the value should be displayed or hidden in the UI. At this time all entries have a value of 'Y'.
-* ``grouping``: The name of the group this option belongs to. In the UI items in the same group will be collected together under a common, collapsible header.
-* ``group_disp_order``: A string that is used to sort the names of the groups.
-* ``aliases``: A JSON-encoded list of strings representing alias names for this value, for example historical names for a target.
-* ``timestamp``: The date and time the entry was last modified.
+* ``pin``: The value's configured position, or
+  ``NULL`` to place the value by what it holds.
+* ``disp_rank``: The value's position among its field's values,
+  counting from 1. Finalization computes it.
+* ``display``: ``Y`` to offer the value in the search form, ``N``
+  to hide it.
+* ``grouping``: The name of the group the value
+  belongs to, or ``NULL`` for none. In the UI, values in the same group are collected
+  together under a common, collapsible header.
 
-For example, here are the entries for the ``planet_id`` field (timestamp removed for brevity):
+The primary key is ``(field_id, id)``, and ``(field_id, value)`` is a unique key. The
+unique key compares values with the server's collation, which ignores case and accents,
+so two values that differ only in case are one value. The largest id a column can hold is
+65535; an import that would need a larger id stops with an error naming the field.
 
-::
-
-    mysql> SELECT * FROM mult_obs_general_planet_id;
-    +----+-------+---------+------------+---------+----------+------------------+
-    | id | value | label   | disp_order | display | grouping | group_disp_order |
-    +----+-------+---------+------------+---------+----------+------------------+
-    |  0 | VEN   | Venus   | 010        | Y       | NULL     | NULL             |
-    |  1 | EAR   | Earth   | 020        | Y       | NULL     | NULL             |
-    |  2 | MAR   | Mars    | 030        | Y       | NULL     | NULL             |
-    |  3 | JUP   | Jupiter | 040        | Y       | NULL     | NULL             |
-    |  4 | SAT   | Saturn  | 050        | Y       | NULL     | NULL             |
-    |  5 | URA   | Uranus  | 060        | Y       | NULL     | NULL             |
-    |  6 | NEP   | Neptune | 070        | Y       | NULL     | NULL             |
-    |  7 | PLU   | Pluto   | 080        | Y       | NULL     | NULL             |
-    |  8 | OTH   | Other   | 090        | Y       | NULL     | NULL             |
-    +----+-------+---------+------------+---------+----------+------------------+
-
-Notice in this case that the ``disp_order`` field is simply a three-digit string that specifies the planets from inner to outer in the solar system, and there is no grouping.
-
-Here are the first 10 entries for the ``target_name`` field (timestamp removed for brevity):
+The ``mult_group`` table holds the groups:
 
 ::
 
-    mysql> SELECT * FROM mult_obs_general_target_name LIMIT 10;
-    +----+-----------+--------------+--------------+---------+----------+------------------+
-    | id | value     | label        | disp_order   | display | grouping | group_disp_order |
-    +----+-----------+--------------+--------------+---------+----------+------------------+
-    |  0 | S RINGS   | Saturn Rings | Saturn Rings | Y       | Saturn   | 060              |
-    |  1 | SATURN    | Saturn       | Saturn       | Y       | Saturn   | 060              |
-    |  2 | TITAN     | Titan        | Titan        | Y       | Saturn   | 060              |
-    |  3 | ENCELADUS | Enceladus    | Enceladus    | Y       | Saturn   | 060              |
-    |  4 | PHOEBE    | Phoebe       | Phoebe       | Y       | Saturn   | 060              |
-    |  5 | HYPERION  | Hyperion     | Hyperion     | Y       | Saturn   | 060              |
-    |  6 | PANDORA   | Pandora      | Pandora      | Y       | Saturn   | 060              |
-    |  7 | DIONE     | Dione        | Dione        | Y       | Saturn   | 060              |
-    |  8 | ATLAS     | Atlas        | Atlas        | Y       | Saturn   | 060              |
-    |  9 | RHEA      | Rhea         | Rhea         | Y       | Saturn   | 060              |
-    +----+-----------+--------------+--------------+---------+----------+------------------+
+    mysql> DESC mult_group;
+    +------------+-------------------+------+-----+---------+
+    | Field      | Type              | Null | Key | Default |
+    +------------+-------------------+------+-----+---------+
+    | field_id   | smallint unsigned | NO   | PRI | NULL    |
+    | grouping   | varchar(100)      | NO   | PRI | NULL    |
+    | group_pin  | smallint unsigned | YES  |     | NULL    |
+    | group_rank | smallint unsigned | NO   |     | 0       |
+    +------------+-------------------+------+-----+---------+
 
-Notice in this case that the ``disp_order`` field is simply the name of the target, resulting in the targets being listed in alphabetical order. The grouping is done by planet, and the groups are sorted from inner to outer.
+The fields are:
 
-As discussed earlier, the value stored in the main ``obs_*`` table corresponds to the ``id`` index:
+* ``field_id``: The field the group belongs to.
+* ``grouping``: The group's name, which the field's ``mult`` rows name in their
+  ``grouping``.
+* ``group_pin``: The group's configured position, or ``NULL`` to place the group by name.
+* ``group_rank``: The group's position among its field's groups, counting from 1.
+  Finalization computes it.
+
+The primary key is ``(field_id, grouping)``.
+
+The order of a field's values and groups never depends on the order the import met them.
+Finalization ranks every field (:ref:`dev_guide_import_steps_do_finalize_mult`): the
+pinned values come first, in order of their pin; then the ordinary values, by number
+when every one of them is a number and by label otherwise; then ``Yes`` and ``On``; then
+``No`` and ``Off``; and last the absent-value labels ``None``, ``N/A`` and ``NULL``.
+:mod:`opus_import.mult_rank` gives the full rules. The pinned groups come first, in order
+of their pin, and the others follow by name.
+
+This statement lists the values of the "Planet Name" (``planet_id``) field in the
+"General Constraints" category (``obs_general``) in the order the UI shows them:
 
 ::
 
-    mysql> SELECT obs_general.planet_id, mult_obs_general_planet_id.label FROM obs_general
-               JOIN mult_obs_general_planet_id ON obs_general.planet_id=mult_obs_general_planet_id.id
+    mysql> SELECT mult.id, mult.value, mult.label FROM mult
+               JOIN mult_field ON mult_field.field_id=mult.field_id
+               WHERE mult_field.qualified_name='obs_general.planet_id'
+               ORDER BY mult.disp_rank;
+
+The value stored in the main ``obs_*`` table is the ``id`` of a ``mult`` row of the
+column's field, so reading an observation's label joins ``mult`` on both ``field_id``
+and ``id``:
+
+::
+
+    mysql> SELECT obs_general.planet_id, mult.label FROM obs_general
+               JOIN mult_field ON mult_field.qualified_name='obs_general.planet_id'
+               JOIN mult ON mult.field_id=mult_field.field_id
+                         AND mult.id=obs_general.planet_id
                WHERE obs_general.opus_id='co-iss-n1460960653';
-    +-----------+--------+
-    | planet_id | label  |
-    +-----------+--------+
-    |         4 | Saturn |
-    +-----------+--------+
 
-Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists, and more complicated SQL queries are required to extract the contents of those lists and match them with the mult tables:
+The web application joins ``mult`` the same way, once for each mult column a statement
+reads, each time under an alias of its own and with the field's id as a parameter
+(:func:`opus_app.apps.tools.sql_builder.mult_join`).
+
+Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists, and more complicated SQL queries are required to extract the contents of those lists and match them with the ``mult`` rows:
 
 ::
 

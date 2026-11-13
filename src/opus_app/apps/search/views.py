@@ -47,7 +47,6 @@ from opus_app.apps.tools import import_constants, sql_builder
 from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
-    get_mult_name,
     get_reqno,
     http400_bad_limit,
     http400_bad_or_missing_reqno,
@@ -57,6 +56,7 @@ from opus_app.apps.tools.app_utils import (
     http500_database_error,
     http500_search_cache_failed,
     json_response,
+    mult_alias,
     sort_dictionary,
     strip_numeric_suffix,
 )
@@ -1733,7 +1733,7 @@ def _search_select(
 
     # Now JOIN all the obs_ tables together
     add_obs_table_joins(from_source, sorted(obs_tables))
-    # And JOIN all the mult_ tables together
+    # And JOIN mult once for each mult column
     add_mult_table_joins(from_source, sorted(mult_tables))
 
     # Add in the WHERE clauses
@@ -2248,24 +2248,23 @@ def add_obs_table_joins(from_source: sql_builder.FromSource, obs_tables: Iterabl
 def add_mult_table_joins(
     from_source: sql_builder.FromSource, mult_tables: Iterable[tuple[str, bool, str, str]]
 ) -> None:
-    """LEFT JOIN each ``mult_`` table onto the ``obs_`` column that holds its id.
+    """LEFT JOIN ``mult`` onto each ``obs_`` column that holds a mult id.
 
     Parameters:
         from_source: The `sql_builder.FromSource` to hang the joins on.
-        mult_tables: (mult_table, is_multigroup, category, field_name) tuples, in
-            the order they should appear. A MULTIGROUP column holds a JSON list
-            rather than a single id, so it joins on the list's first element.
+        mult_tables: (alias, is_multigroup, category, field_name) tuples, in the order
+            they should appear, each joining ``mult`` under its alias
+            (`app_utils.mult_alias`) for the field ``<category>.<field_name>``. A
+            MULTIGROUP column holds a JSON list rather than a single id, so it joins on
+            the list's first element.
     """
-    for mult_table, is_multigroup, category, field_name in mult_tables:
+    for alias, is_multigroup, category, field_name in mult_tables:
         mult_column = sql_builder.column(field_name, category)
         if is_multigroup:
             # For a MULTIGROUP field, we just sort on the first value
             mult_column = sql_builder.json_extract_first(mult_column)
-        from_source.add_join(
-            'LEFT',
-            mult_table,
-            sql_builder.columns_equal(mult_column, sql_builder.column('id', mult_table)),
-        )
+        field_id = import_constants.mult_field_id(f'{category}.{field_name}')
+        from_source.append_join(sql_builder.mult_join(alias, field_id, mult_column))
 
 
 def search_results_join_condition(table_name: str) -> sql_builder.Expr:
@@ -2383,8 +2382,9 @@ def create_order_by_terms(
     """Given params and descending lists, make the ORDER BY terms.
 
     Returns a list of (expression, descending) pairs ready for
-    `sql_builder.Select.add_order_by`, plus the ``mult_`` and ``obs_`` tables the terms
-    require the caller to join in.
+    `sql_builder.Select.add_order_by`, plus the ``mult`` joins (as
+    `add_mult_table_joins` takes them) and the ``obs_`` tables the terms require the
+    caller to join in.
     """
     order_mult_tables = set()
     order_obs_tables = set()
@@ -2400,12 +2400,12 @@ def create_order_by_terms(
         order_column = sql_builder.column(pi.name, pi.category_name)
         order_obs_tables.add(pi.category_name)
         if form_type in settings.MULT_FORM_TYPES:
-            # A mult field holds an id, so it sorts by the human-readable label
-            # in its mult table rather than by the value stored in the row.
-            mult_table = get_mult_name(pi.param_qualified_name())
-            order_column = sql_builder.column('label', mult_table)
+            # A mult field holds an id, so it sorts by the text of the label its mult row
+            # carries rather than by the value stored in the row, and never by the rank.
+            alias = mult_alias(pi.param_qualified_name())
+            order_column = sql_builder.column('label', alias)
             is_multigroup = form_type == 'MULTIGROUP'
-            order_mult_tables.add((mult_table, is_multigroup, pi.category_name, pi.name))
+            order_mult_tables.add((alias, is_multigroup, pi.category_name, pi.name))
         order_terms.append((order_column, descending_params[i]))
 
     return order_terms, order_mult_tables, order_obs_tables

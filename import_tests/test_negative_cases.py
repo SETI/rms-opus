@@ -6,7 +6,7 @@ of the clean run's assertions -- and each is exempt from the main run's clean-lo
 
 A negative run stops after its imports rather than following the main run's full
 sequence. Everything asserted here is in place by then: a fresh import writes the
-observation tables directly, so ``obs_general`` and the target-name mult table are
+observation tables directly, so ``obs_general`` and the target-name mult field are
 written, and the rest of what these tests read is the run's own step statuses and error
 log. The auxiliary tables, the dictionary, the Django migration and the validation
 produce nothing any assertion below looks at, and running them three times a suite
@@ -28,9 +28,9 @@ if TYPE_CHECKING:
     from import_tests.tools.build_run import ImportRun
     from import_tests.tools.golden_io import DatabaseCredentials
 
-#: The table whose row is the observation, and the mult table its target name indexes.
+#: The table whose row is the observation, and the mult field its target name indexes.
 _OBS_GENERAL = 'obs_general'
-_TARGET_NAME_MULT = 'mult_obs_general_target_name'
+_TARGET_NAME_FIELD = 'obs_general.target_name'
 
 #: The value an unknown target name falls back to under ``--ignore-errors``.
 _OTHER_TARGET = 'OTHER'
@@ -154,13 +154,15 @@ def test_unknown_target_becomes_other(
     """An unknown target name imports as ``OTHER`` instead of dropping the observation.
 
     The flag has to reach the obs layer for the fallback to run at all, which is what
-    this asserts: an ``OTHER`` row in the target-name mult table is the only evidence
+    this asserts: an ``OTHER`` value of the target-name mult field is the only evidence
     anywhere that the observation was kept rather than dropped.
     """
     rows = golden_io.query(
         db_credentials,
         ignore_errors_run.schema,
-        f'SELECT value FROM `{_TARGET_NAME_MULT}`',
+        'SELECT `m`.`value` FROM `mult` AS `m` JOIN `mult_field` AS `f` '
+        'ON `f`.`field_id` = `m`.`field_id` WHERE `f`.`qualified_name` = %s',
+        [_TARGET_NAME_FIELD],
     )
     values = {str(row[0]).upper() for row in rows}
     assert _OTHER_TARGET in values, sorted(values)

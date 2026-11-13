@@ -343,12 +343,13 @@ def do_import_steps(ctx: ImportContext) -> bool:
 
     named_bundles = list(import_util.yield_import_bundle_ids(ctx))
 
-    # Before anything else, so that there are no vestigial mult tables and the ids start
-    # again from 1.
+    # Before anything else, so that there are no vestigial mult rows and the ids start
+    # again.
     if ctx.args.scorched_earth:
         import_util.log_warning(ctx, f'** DELETING EVERY OPUS TABLE IN SCHEMA {db.db_schema} **')
         with ctx.timed('scorched_earth'):
             do_import_tables.delete_all_opus_tables(ctx)
+        ctx.mult_fields = None
 
     if ctx.args.delete_bundles:
         if named_bundles and _schema_is_ready(ctx):

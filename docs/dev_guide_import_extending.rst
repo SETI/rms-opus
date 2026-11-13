@@ -172,7 +172,10 @@ This is the bundle recipe plus the configuration data that says the instrument e
    ``TABLES_TO_POPULATE`` does not already cover, add them there too -- but an ordinary
    new mission or instrument needs no change to that list, because its mission,
    instrument and surface-geometry entries carry placeholders that are substituted per
-   bundle.
+   bundle. ``obs_general.json`` lists the values of ``mission_id``, ``inst_host_id`` and
+   ``instrument_id`` in their ``mult_options``, so add an entry there for each value
+   added, with an id the list does not use and an integer pin
+   (:ref:`dev_guide_table_schemas`); a value missing from the list is an import error.
 2. **Add the table schemas** the new mission and instrument tables need -- one JSON file
    per table, named after the table. A table with no schema file is silently skipped, so
    a missing file looks like a table nobody fills rather than an error.

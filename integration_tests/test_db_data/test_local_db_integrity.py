@@ -5,13 +5,11 @@ from unittest import TestCase
 
 from django.apps import apps
 from django.db import connection
-from django.db.models import Count
+from django.db.models import Count, QuerySet
 
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import (
-    MultObsGeneralInstrumentId,
-    MultObsGeneralMissionId,
-    MultObsGeneralPlanetId,
+    Mult,
     ObsGeneral,
     ObsInstrumentCocirs,
     ObsInstrumentCoiss,
@@ -36,6 +34,19 @@ from opus_app.apps.search.models import (
     TableNames,
 )
 from opus_app.apps.tools.db_utils import MYSQL_TABLE_NOT_EXISTS
+from opus_app.apps.tools.import_constants import mult_field_id
+
+
+def _mult_rows(param_qualified_name: str) -> QuerySet[Mult]:
+    """Return one mult field's ``mult`` rows.
+
+    Parameters:
+        param_qualified_name: The field's ``<table>.<column>`` name.
+
+    Returns:
+        The rows, as a queryset to filter further.
+    """
+    return Mult.objects.filter(field_id=mult_field_id(param_qualified_name))
 
 
 class DBIntegrityTest(TestCase):
@@ -86,7 +97,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='CO' and obs_mission_cassini.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='CO'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='CO'))[0][
+            0
+        ]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -109,7 +122,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='GO' and obs_mission_galileo.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='GO'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='GO'))[0][
+            0
+        ]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -132,7 +147,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='HST' and obs_mission_hubble.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='HST'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='HST'))[
+            0
+        ][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -155,7 +172,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='NH' and obs_mission_newhorizons.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='NH'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='NH'))[0][
+            0
+        ]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -178,7 +197,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='VG' and obs_mission_voyager.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='VG'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='VG'))[0][
+            0
+        ]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -202,7 +223,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='COCIRS' and obs_instrument_cocirs.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='COCIRS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='COCIRS')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -227,7 +248,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='COISS' and obs_instrument_coiss.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='COISS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='COISS')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -252,7 +273,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='COUVIS' and obs_instrument_couvis.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='COUVIS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='COUVIS')
         )[0][0]
         print(instrument_id)
         obs = (
@@ -278,7 +299,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='COVIMS' and obs_instrument_covims.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='COVIMS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='COVIMS')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -303,7 +324,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='GOSSI' and obs_instrument_gossi.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='GOSSI')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='GOSSI')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -328,7 +349,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='NHLORRI' and obs_instrument_nhlorri.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='NHLORRI')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='NHLORRI')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -353,7 +374,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='NHMVIC' and obs_instrument_nhmvic.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='NHMVIC')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='NHMVIC')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -378,7 +399,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='VGISS' and obs_instrument_vgiss.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='VGISS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='VGISS')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -405,8 +426,8 @@ class DBIntegrityTest(TestCase):
         cursor = connection.cursor()
         q = """SELECT COUNT(*) FROM obs_general
                WHERE instrument_id NOT IN
-                   (SELECT id FROM mult_obs_general_instrument_id)"""
-        cursor.execute(q)
+                   (SELECT id FROM mult WHERE field_id = %s)"""
+        cursor.execute(q, [mult_field_id('obs_general.instrument_id')])
         result = cursor.fetchone()
         cursor.close()
         self.assertEqual(result[0], 0)
@@ -457,13 +478,17 @@ class DBIntegrityTest(TestCase):
         self.assertEqual(count_partables, count_tablenames)
 
     def test__planets_properly_ordered(self) -> None:
-        "DB Integrity: planets are properly ordered in the planet mult table"
+        "DB Integrity: planets are properly ordered by their rank"
         the_planets = [
             planet['label']
-            for planet in MultObsGeneralPlanetId.objects.filter(display='Y').values('label')
+            for planet in _mult_rows('obs_general.planet_id')
+            .filter(display='Y')
+            .order_by('disp_rank')
+            .values('label')
         ]
         print(
-            'SELECT label FROM mult_obs_general_planet_id WHERE display = "Y" ORDER BY disp_order;'
+            'SELECT label FROM mult WHERE field_id = <planet_id> AND display = "Y" '
+            'ORDER BY disp_rank;'
         )
         expect = [
             'Venus',

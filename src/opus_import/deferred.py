@@ -6,7 +6,7 @@ connection and must not write to the import's log files. So wherever that code w
 the database for something or write a message, it asks the context's `Capture` instead:
 
 * a new row id is a `LocalId`, numbered from zero per table within the worker's task;
-* a value of a ``mult_`` column is a `MultRef` to the mult resolution the worker recorded
+* a value of a mult column is a `MultRef` to the mult resolution the worker recorded
   for it, since only the import's process knows the id the value has or will get;
 * a ``mult_list`` column holding either is a `DeferredJson`, the list before it is
   turned into JSON;
@@ -41,7 +41,7 @@ class LocalId:
 
 @dataclass(frozen=True)
 class MultRef:
-    """A ``mult_`` id a worker could not know, standing for one recorded resolution.
+    """A mult id a worker could not know, standing for one recorded resolution.
 
     Attributes:
         number: The resolution's position among the task's mult events, from zero.
@@ -128,15 +128,15 @@ class Capture:
     def mult(
         self, position: tuple[Any, Any], table: str, field_name: str, values: tuple[Any, ...]
     ) -> MultRef:
-        """Record a value of a ``mult_`` column, to be resolved by the import's process.
+        """Record a value of a mult column, to be resolved by the import's process.
 
         Parameters:
             position: The index row number and primary filespec the worker is on.
             table: The observation table the column belongs to.
             field_name: The column.
             values: `opus_import.steps.do_import_mult.update_mult_table`'s arguments
-                after its column definition: the value, label, aliases, display flag,
-                display order, grouping, and group display order.
+                after its column definition: the value, label, display flag, pin,
+                grouping, and group pin.
 
         Returns:
             The placeholder for the id the value will have.

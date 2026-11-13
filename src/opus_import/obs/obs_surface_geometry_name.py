@@ -46,5 +46,5 @@ class ObsSurfaceGeometryName(ObsBase):
             col_val=target_name,
             disp_name=target_info[2],
             grouping=group_info['label'],
-            group_disp_order=group_info['disp_order'],
+            group_pin=group_info['disp_order'],
         )

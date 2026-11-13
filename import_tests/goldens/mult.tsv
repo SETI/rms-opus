@@ -1,0 +1,767 @@
+field_id	id	value	label	pin	disp_rank	display	grouping
+1	0	CO	Cassini	10	1	Y	\N
+1	1	GO	Galileo	20	2	Y	\N
+1	2	HST	Hubble	30	3	Y	\N
+1	3	NH	New Horizons	40	4	Y	\N
+1	4	VG1	Voyager 1	50	5	Y	\N
+1	5	VG2	Voyager 2	60	6	Y	\N
+1	6	GB	Ground-based	70	7	Y	\N
+2	0	COCIRS	Cassini CIRS	10	1	Y	\N
+2	1	COISS	Cassini ISS	20	2	Y	\N
+2	2	CORSS	Cassini RSS	30	3	Y	\N
+2	3	COUVIS	Cassini UVIS	40	4	Y	\N
+2	4	COVIMS	Cassini VIMS	50	5	Y	\N
+2	5	GOSSI	Galileo SSI	60	6	Y	\N
+2	6	VGISS	Voyager ISS	70	7	Y	\N
+2	7	VGPPS	Voyager PPS	80	8	Y	\N
+2	8	VGRSS	Voyager RSS	90	9	Y	\N
+2	9	VGUVS	Voyager UVS	100	10	Y	\N
+2	10	HSTACS	Hubble ACS	110	11	Y	\N
+2	11	hst.fos	Hubble FOS	120	12	Y	\N
+2	12	HSTNICMOS	Hubble NICMOS	130	13	Y	\N
+2	13	HSTSTIS	Hubble STIS	140	14	Y	\N
+2	14	HSTWFC3	Hubble WFC3	150	15	Y	\N
+2	15	HSTWFPC2	Hubble WFPC2	160	16	Y	\N
+2	16	NHLORRI	New Horizons LORRI	170	17	Y	\N
+2	17	NHMVIC	New Horizons MVIC	180	18	Y	\N
+2	108	caha-calar_alto.1m23	Caha Calar Alto 1.23m	1080	19	Y	Ground-based
+2	124	ctio-cerro_tololo.smarts_1m50	Cerro Tololo SMARTS 1.5m	1240	20	Y	Ground-based
+2	126	ctio-cerro_tololo.victorblanco_4m0	Cerro Tololo Victor Blanco 4m	1260	21	Y	Ground-based
+2	132	eso-la_silla.1m04	ESO La Silla 1m	1320	22	Y	Ground-based
+2	134	eso-la_silla.2m2	ESO La Silla 2.2m	1340	23	Y	Ground-based
+2	135	eso-la_silla.3m6	ESO La Silla 3.6m	1350	24	Y	Ground-based
+2	164	irtf-maunakea.3m2	IRTF 3.2m	1640	25	Y	Ground-based
+2	172	kuiper-airborne.0m91	Kuiper Airborne Observatory 0.91m	1720	26	Y	Ground-based
+2	173	las_campanas.ireneedupont_2m5	Las Campanas Irenee Dupont 2.5m	1730	27	Y	Ground-based
+2	176	las_campanas.swope_1m0	Las Campanas Henrietta Swope 1.0m	1760	28	Y	Ground-based
+2	187	lowell.perkins_warner1m83	Lowell Perkins 1.83m	1870	30	Y	Ground-based
+2	202	maunakea.ukirt_3m8	UKIRT 3.8m	2360	40	Y	Ground-based
+2	204	mcdonald.harlanjsmith_2m7	McDonald Harlan J Smith 2.7m	2040	31	Y	Ground-based
+2	215	mount_stromlo.1m9	Mount Stromlo 1.9m	2150	32	Y	Ground-based
+2	226	palomar.hale_5m08	Palomar Hale 5.08m	2260	33	Y	Ground-based
+2	230	pic_du_midi.1m06	Pic du Midi 1.06m	2300	34	Y	Ground-based
+2	231	pic_du_midi.bernardlyot_2m0	Pic du Midi Bernard Lyot 2.0m	2310	35	Y	Ground-based
+2	232	saao.radcliffe_1m88	SAAO Radcliffe 1.88m	2320	36	Y	Ground-based
+2	233	siding_spring.aat_3m9	SSO AAT 3.9m	2330	37	Y	Ground-based
+2	234	siding_spring.anu_2m3	SSO ANU 2.3m	2340	38	Y	Ground-based
+2	244	teide.carlossanchez_1m55	Teide Carlos Sanchez 1.55m	2350	39	Y	Ground-based
+2	500	lick.nickel	Lick Anna L Nickel 1m	1810	29	Y	Ground-based
+3	0	CO	Cassini	10	1	Y	\N
+3	1	GO	Galileo	20	2	Y	\N
+3	2	HST	Hubble	30	3	Y	\N
+3	3	NH	New Horizons	40	4	Y	\N
+3	4	VG	Voyager	50	5	Y	\N
+3	5	GB	Ground-based	60	6	Y	\N
+4	0	IMG	Image	10	1	Y	\N
+4	1	MOS	Mosaic	20	2	Y	\N
+4	2	SPE	Spectrum	30	3	Y	\N
+4	3	SPI	Spectral Image	40	4	Y	\N
+4	4	SCU	Spectral Cube	50	5	Y	\N
+4	5	TS	Time Series	60	6	Y	\N
+4	6	STS	Spectral Time Series	70	7	Y	\N
+4	7	OCC	Occultation Profile	80	8	Y	\N
+4	8	REF	Reflectance Profile	90	9	Y	\N
+5	0	VEN	Venus	10	1	Y	\N
+5	1	EAR	Earth	20	2	Y	\N
+5	2	MAR	Mars	30	3	Y	\N
+5	3	JUP	Jupiter	40	4	Y	\N
+5	4	SAT	Saturn	50	5	Y	\N
+5	5	URA	Uranus	60	6	Y	\N
+5	6	NEP	Neptune	70	7	Y	\N
+5	7	PLU	Pluto	80	8	Y	\N
+5	8	OTH	Other	90	9	Y	\N
+6	0	REFLECT	Reflectivity	10	1	Y	\N
+6	1	THERMAL	Thermal Emission	20	2	Y	\N
+6	2	OPDEPTH	Optical Depth	30	3	Y	\N
+6	3	EMISSION	Emission	40	4	Y	\N
+7	0	PLANET	Planet	10	1	Y	\N
+7	1	REG_SAT	Regular Satellite	20	2	Y	\N
+7	2	IRR_SAT	Irregular Satellite	30	3	Y	\N
+7	3	RING	Ring	40	4	Y	\N
+7	4	SKY	Sky	50	5	Y	\N
+7	5	CALIBRATION	Calibration	60	6	Y	\N
+7	6	OTHER	Other	70	7	Y	\N
+8	0	SATURN	Saturn	\N	38	Y	Saturn
+8	1	DIONE	Dione	\N	19	Y	Saturn
+8	2	RHEA	Rhea	\N	37	Y	Saturn
+8	3	TITAN	Titan	\N	45	Y	Saturn
+8	4	ENCELADUS	Enceladus	\N	21	Y	Saturn
+8	5	HELENE	Helene	\N	23	Y	Saturn
+8	6	MIMAS	Mimas	\N	31	Y	Saturn
+8	7	TETHYS	Tethys	\N	44	Y	Saturn
+8	8	S RINGS	Saturn Rings	\N	39	Y	Saturn
+8	9	SKY	Sky	\N	40	Y	Other
+8	10	UNKNOWN	Unknown	\N	47	Y	Other
+8	11	IAPETUS	Iapetus	\N	25	Y	Saturn
+8	12	STAR	Star	\N	42	Y	Other
+8	13	KIVIUQ	Kiviuq	\N	29	Y	Saturn
+8	14	PAN	Pan	\N	35	Y	Saturn
+8	15	SOLAR WIND	Solar Wind	\N	41	Y	Other
+8	16	JANUS	Janus	\N	26	Y	Saturn
+8	17	ALBIORIX	Albiorix	\N	14	Y	Saturn
+8	18	CALIBRATION	Calibration	\N	16	Y	Other
+8	19	SUN	Sun	\N	43	Y	Other
+8	20	HYPERION	Hyperion	\N	24	Y	Saturn
+8	21	EARTH	Earth	\N	20	Y	Earth
+8	22	JUPITER	Jupiter	\N	27	Y	Jupiter
+8	23	URANUS	Uranus	\N	48	Y	Uranus
+8	24	ARROKOTH	Arrokoth	\N	15	Y	Other
+8	25	2011 HK103	2011 HK103	\N	3	Y	Other
+8	26	2011 JW31	2011 JW31	\N	6	Y	Other
+8	27	2011 JY31	2011 JY31	\N	7	Y	Other
+8	28	2014 OE394	2014 OE394	\N	8	Y	Other
+8	29	2011 JA32	2011 JA32	\N	5	Y	Other
+8	30	2014 OJ394	2014 OJ394	\N	9	Y	Other
+8	31	2011 HF103	2011 HF103	\N	2	Y	Other
+8	32	2011 HZ102	2011 HZ102	\N	4	Y	Other
+8	33	2014 OS393	2014 OS393	\N	10	Y	Other
+8	34	2014 PN70	2014 PN70	\N	11	Y	Other
+8	35	QUAOAR	Quaoar	\N	36	Y	Other
+8	36	NONE	None	\N	50	Y	Other
+8	37	TRITON	Triton	\N	46	Y	Neptune
+8	38	NGC 3532	NGC 3532	\N	34	Y	Other
+8	39	M7	M7	\N	30	Y	Other
+8	40	HD_37962	HD 37962	\N	22	Y	Other
+8	41	2002 MS4	2002 MS4	\N	1	Y	Other
+8	42	2018 MF13	2018 MF13	\N	12	Y	Other
+8	43	2018 MG13	2018 MG13	\N	13	Y	Other
+8	44	NEPTUNE	Neptune	\N	32	Y	Neptune
+8	45	CHARON	Charon	\N	17	Y	Pluto
+8	46	KERBEROS	Kerberos	\N	28	Y	Pluto
+8	47	DARK	Dark	\N	18	Y	Other
+8	48	U RINGS	Uranus Rings	\N	49	Y	Uranus
+8	49	N RINGS	Neptune Rings	\N	33	Y	Neptune
+9	0	FP1	FP1	10	1	Y	\N
+9	1	FP3	FP3	20	2	Y	\N
+9	2	FP4	FP4	30	3	Y	\N
+10	0		N/A	\N	3	Y	\N
+10	1	On	On	\N	1	Y	\N
+10	2	Off	Off	\N	2	Y	\N
+11	0		N/A	\N	3	Y	\N
+11	1	Off	Off	\N	2	Y	\N
+11	2	On	On	\N	1	Y	\N
+12	0		N/A	\N	3	Y	\N
+12	1	Off	Off	\N	2	Y	\N
+12	2	On	On	\N	1	Y	\N
+13	0		N/A	\N	2	Y	\N
+13	1	Off	Off	\N	1	Y	\N
+14	0		N/A	\N	2	Y	\N
+14	1	Off	Off	\N	1	Y	\N
+15	0		N/A	\N	3	Y	\N
+15	1	Off	Off	\N	2	Y	\N
+15	2	On	On	\N	1	Y	\N
+16	0	N	Narrow Angle	10	1	Y	\N
+16	1	W	Wide Angle	20	2	Y	\N
+17	0	CLEAR	CLEAR	\N	3	Y	\N
+17	1	IR2	IR2	\N	5	Y	\N
+17	2	MT3+IRP90	MT3+IRP90	\N	7	Y	\N
+17	3	CB3	CB3	\N	2	Y	\N
+17	4	MT1	MT1	\N	6	Y	\N
+17	5	CB2	CB2	\N	1	Y	\N
+17	6	IR1+IR2	IR1+IR2	\N	4	Y	\N
+18	0	LOSSLESS	Lossless	10	1	Y	\N
+18	1	LOSSY	Lossy	20	2	Y	\N
+18	2	NOTCOMP	Not Compressed	30	3	Y	\N
+18	3		N/A	40	4	Y	\N
+19	0	12BIT	12BIT	10	1	Y	\N
+19	1	8LSB	8LSB	20	2	Y	\N
+19	2	TABLE	TABLE	30	3	Y	\N
+19	3		N/A	40	4	Y	\N
+20	0	12 ELECTRONS PER DN	12 Electrons per DN	10	1	Y	\N
+20	1	29 ELECTRONS PER DN	29 Electrons per DN	20	2	Y	\N
+20	2	95 ELECTRONS PER DN	95 Electrons per DN	30	3	Y	\N
+20	3	215 ELECTRONS PER DN	215 Electrons per DN	40	4	Y	\N
+20	4		N/A	50	5	Y	\N
+21	0	SCIENCE	Science	10	1	Y	\N
+21	1	SCIENCE/OPNAV	Science/OpNav	20	2	Y	\N
+21	2	SCIENCE/CALIBRATION	Science/Calibration	30	3	Y	\N
+21	3	SCIENCE/SUPPORT	Science/Support	40	4	Y	\N
+21	4	OPNAV	OpNav	50	5	Y	\N
+21	5	OPNAV/SUPPORT	Opnav/Support	60	6	Y	\N
+21	6	CALIBRATION	Calibration	70	7	Y	\N
+21	7	ENGINEERING	Engineering	80	8	Y	\N
+21	8	SUPPORT	Support	90	9	Y	\N
+21	9	UNKNOWN	Unknown	100	10	Y	\N
+21	10		N/A	110	11	Y	\N
+22	0	FULL	FULL	10	1	Y	\N
+22	1	SUM2	SUM2	20	2	Y	\N
+22	2	SUM4	SUM4	30	3	Y	\N
+22	3		N/A	40	4	Y	\N
+23	0	NACONLY	NACONLY	10	1	Y	\N
+23	1	WACONLY	WACONLY	20	2	Y	\N
+23	2	BOTSIM	BOTSIM	30	3	Y	\N
+23	3		N/A	40	4	Y	\N
+24	0	DISABLED	Disabled	10	1	Y	\N
+24	1	ENABLED	Enabled	20	2	Y	\N
+24	2		N/A	30	3	Y	\N
+25	0	SATURN-RINGS	Saturn-Rings	\N	5	Y	\N
+25	1	RHEA	Rhea	\N	3	Y	\N
+25	2	SATURN	Saturn	\N	4	Y	\N
+25	3	TITAN	Titan	\N	7	Y	\N
+25	4	CONSTANT I/F	Constant I/F	\N	1	Y	\N
+25	5	STAR	Star	\N	6	Y	\N
+25	6	ENCELADUS	Enceladus	\N	2	Y	\N
+26	0	EUV	EUV	10	1	Y	\N
+26	1	FUV	FUV	20	2	Y	\N
+26	2	HDAC	HDAC	30	3	Y	\N
+26	3	HSP	HSP	40	4	Y	\N
+27	0	8_BIT	8_BIT	10	1	Y	\N
+27	1	SQRT_8	SQRT_8	20	2	Y	\N
+27	2	SQRT_9	SQRT_9	30	3	Y	\N
+27	3	NONE	None	40	4	Y	\N
+28	0	1	1	\N	1	Y	\N
+28	1		N/A	\N	2	Y	\N
+29	0	CALIB	CALIB	10	1	Y	\N
+29	1	UCSTAR	UCSTAR	20	2	Y	\N
+29	2	UFPSCAN	UFPSCAN	30	3	Y	\N
+29	3	UHDAC	UHDAC	40	4	Y	\N
+29	4	UHIGHSN	UHIGHSN	50	5	Y	\N
+29	5	UMAP	UMAP	60	6	Y	\N
+29	6	USCAN	USCAN	70	7	Y	\N
+29	7	USTARE	USTARE	80	8	Y	\N
+29	8	NONE	None	90	9	Y	\N
+30	0	OPEN	Open	10	1	Y	\N
+30	1	CLOSED	Closed	20	2	Y	\N
+30	2	N/A	N/A	30	3	Y	\N
+31	0	HIGH_RESOLUTION	High Resolution	10	1	Y	\N
+31	1	LOW_RESOLUTION	Low Resolution	20	2	Y	\N
+31	2	OCCULTATION	Occultation	30	3	Y	\N
+31	3	NULL	N/A	40	4	Y	\N
+32	0		N/A	\N	2	Y	\N
+32	1	Off	Off	\N	1	Y	\N
+33	0	IR	IR	10	1	Y	\N
+33	1	VIS	VIS	20	2	Y	\N
+34	0	IMAGE	IMAGE	10	1	Y	\N
+34	1	LINE	LINE	20	2	Y	\N
+34	2	OCCULTATION	OCCULTATION	30	3	Y	\N
+34	3	POINT	POINT	40	4	Y	\N
+34	4	CAL_BACKGROUND	CAL_BACKGROUND	50	5	Y	\N
+34	5	CAL_SOLAR	CAL_SOLAR	60	6	Y	\N
+34	6	CAL_SPECTRAL	CAL_SPECTRAL	70	7	Y	\N
+35	0	HI-RES	Hi-Res	10	1	Y	\N
+35	1	NORMAL	Normal	20	2	Y	\N
+35	2	UNDER	Under	30	3	Y	\N
+36	0	No	No	\N	2	Y	\N
+36	1	Yes	Yes	\N	1	Y	\N
+37	0	No	No	\N	2	Y	\N
+37	1	Yes	Yes	\N	1	Y	\N
+38	0	Off	Off	\N	2	Y	\N
+38	1	On	On	\N	1	Y	\N
+39	0	HI-RES	Hi-Res	10	1	Y	\N
+39	1	NORMAL	Normal	20	2	Y	\N
+39	2	UNK	Unknown	30	3	Y	\N
+39	3	N/A	N/A	40	4	Y	\N
+40	0	BARC RATE CONTROL	BARC	10	1	Y	\N
+40	1	HUFFMAN	Huffman	20	2	Y	\N
+40	2	INTEGER COSINE TRANSFORM	Integer Cosine Transform	30	3	Y	\N
+40	3	NONE	None	40	4	Y	\N
+41	0	CLEAR	Clear	10	1	Y	\N
+41	1	VIOLET	Violet	20	2	Y	\N
+41	2	GREEN	Green	30	3	Y	\N
+41	3	RED	Red	40	4	Y	\N
+41	4	IR-7270	Methane [IR-7270]	50	5	Y	\N
+41	5	IR-7560	Methane Continuum [IR-7560]	60	6	Y	\N
+41	6	IR-8890	Methane [IR-8890]	70	7	Y	\N
+41	7	IR-9680	Infrared [IR-9680]	80	8	Y	\N
+42	0	7	7	\N	8	Y	\N
+42	1	4	4	\N	5	Y	\N
+42	2	2	2	\N	3	Y	\N
+42	3	0	0	\N	1	Y	\N
+42	4	6	6	\N	7	Y	\N
+42	5	1	1	\N	2	Y	\N
+42	6	5	5	\N	6	Y	\N
+42	7	3	3	\N	4	Y	\N
+43	0	30.333	30.333	\N	1	Y	\N
+44	0	10K	10K	10	1	Y	\N
+44	1	40K	40K	20	2	Y	\N
+44	2	100K	100K	30	3	Y	\N
+44	3	400K	400K	40	4	Y	\N
+45	0	POSSIBLE	Possible	10	1	Y	\N
+45	1	NOT POSSIBLE	Not Possible	20	2	Y	\N
+45	2	PRESENCE VERIFIED	Presence Verified	30	3	Y	\N
+46	0	1x1	1x1	10	1	Y	\N
+46	1	4x4	4x4	20	2	Y	\N
+47	0	LOSSLESS	Lossless	10	1	Y	\N
+47	1	LOSSY	Lossy	20	2	Y	\N
+47	2	NOTCOMP	Not Compressed	30	3	Y	\N
+48	0	LOSSLESS	Lossless	10	1	Y	\N
+48	1	LOSSY	Lossy	20	2	Y	\N
+48	2	NOTCOMP	Not Compressed	30	3	Y	\N
+49	0	N	Narrow Angle	10	1	Y	\N
+49	1	W	Wide Angle	20	2	Y	\N
+49	2		N/A	30	3	Y	\N
+50	0	1:1	1:1	10	1	Y	\N
+50	1	3:4	3:4	20	2	Y	\N
+50	2	2:3	2:3	30	3	Y	\N
+50	3	3:5	3:5	40	4	Y	\N
+50	4	1:2	1:2	50	5	Y	\N
+50	5	2:5	2:5	60	6	Y	\N
+50	6	1:3	1:3	70	7	Y	\N
+50	7	1:5	1:5	80	8	Y	\N
+50	8	1:10	1:10	90	9	Y	\N
+50	9	1:32	1:32	100	10	Y	\N
+50	10		N/A	110	11	Y	\N
+51	0	CLEAR	Clear	10	1	Y	\N
+51	1	UV	UV	20	2	Y	\N
+51	2	VIOLET	Violet	30	3	Y	\N
+51	3	BLUE	Blue	40	4	Y	\N
+51	4	GREEN	Green	50	5	Y	\N
+51	5	CH4_U	Methane-U	60	6	Y	\N
+51	6	SODIUM	Sodium-D	70	7	Y	\N
+51	7	ORANGE	Orange	80	8	Y	\N
+51	8	CH4_JS	Methane-JST	90	9	Y	\N
+52	0	0	0	10	1	Y	\N
+52	1	1	1	20	2	Y	\N
+52	2	2	2	30	3	Y	\N
+52	3	3	3	40	4	Y	\N
+52	4	4	4	50	5	Y	\N
+52	5	5	5	60	6	Y	\N
+52	6	6	6	70	7	Y	\N
+52	7	7	7	80	8	Y	\N
+53	0	LOW	Low	10	1	Y	\N
+53	1	HIGH	High	20	2	Y	\N
+53	2		N/A	30	3	Y	\N
+54	0	1:1	1:1	10	1	Y	\N
+54	1	2:1	2:1	20	2	Y	\N
+54	2	3:1	3:1	30	3	Y	\N
+54	3	5:1	5:1	40	4	Y	\N
+54	4	10:1	10:1	50	5	Y	\N
+54	5		N/A	60	6	Y	\N
+55	0	NAONLY	NAONLY	10	1	Y	\N
+55	1	WAONLY	WAONLY	20	2	Y	\N
+55	2	BOTSIM	BOTSIM	30	3	Y	\N
+55	3	BODARK	BODARK	40	4	Y	\N
+55	4	BOTALT	BOTALT	50	5	Y	\N
+55	5	BSIMAN	BSIMAN	60	6	Y	\N
+55	6	NOSHUT	NOSHUT	70	7	Y	\N
+55	7		N/A	80	8	Y	\N
+56	0	IC	IC (Instrument calibration)	\N	6	Y	\N
+56	1	RH	RH (Rhea)	\N	11	Y	\N
+56	2	TI	TI (Titan)	\N	18	Y	\N
+56	3	DI	DI (Dione)	\N	1	Y	\N
+56	4	EN	EN (Enceladus)	\N	2	Y	\N
+56	5	HE	HE (Helene)	\N	3	Y	\N
+56	6	MI	MI (Mimas)	\N	8	Y	\N
+56	7	OT	OT (Other)	\N	9	Y	\N
+56	8	SA	SA (Saturn)	\N	13	Y	\N
+56	9	RI	RI (Rings - general)	\N	12	Y	\N
+56	10	IA	IA (Iapetus)	\N	5	Y	\N
+56	11	ST	ST (Star)	\N	15	Y	\N
+56	12	RF	RF (Ring F)	\N	10	Y	\N
+56	13	SK	SK (Skeleton request)	\N	14	Y	\N
+56	14	SW	SW (Solar wind)	\N	17	Y	\N
+56	15	JA	JA (Janus)	\N	7	Y	\N
+56	16	SU	SU (Sun)	\N	16	Y	\N
+56	17	HY	HY (Hyperion)	\N	4	Y	\N
+57	0	Saturn	Saturn	\N	15	Y	\N
+57	1	Dione	Dione	\N	3	Y	\N
+57	2	Rhea	Rhea	\N	12	Y	\N
+57	3	Titan	Titan	\N	21	Y	\N
+57	4	Enceladus	Enceladus	\N	4	Y	\N
+57	5	Helene	Helene	\N	5	Y	\N
+57	6	Mimas	Mimas	\N	10	Y	\N
+57	7	Tethys	Tethys	\N	20	Y	\N
+57	8	S_Rings	S_Rings	\N	14	Y	\N
+57	9	Sky	Sky	\N	16	Y	\N
+57	10	Unk	Unk	\N	22	Y	\N
+57	11	S Rings	S Rings	\N	13	Y	\N
+57	12	Iapetus	Iapetus	\N	7	Y	\N
+57	13	Star	Star	\N	18	Y	\N
+57	14	Kiviuq	Kiviuq	\N	9	Y	\N
+57	15	Pan	Pan	\N	11	Y	\N
+57	16		N/A	\N	23	Y	\N
+57	17	Solar Wind	Solar Wind	\N	17	Y	\N
+57	18	Janus	Janus	\N	8	Y	\N
+57	19	Albiorix	Albiorix	\N	1	Y	\N
+57	20	Calib	Calib	\N	2	Y	\N
+57	21	Sun	Sun	\N	19	Y	\N
+57	22	Hyperion	Hyperion	\N	6	Y	\N
+58	0	No	No	\N	2	Y	\N
+58	1	Yes	Yes	\N	1	Y	\N
+59	0	INTERPLANETARY CRUISE	Interplanetary Cruise	0	1	Y	\N
+59	1	VENUS 1 ENCOUNTER	Venus 1 Encounter	10	2	Y	\N
+59	2	VENUS 2 ENCOUNTER	Venus 2 Encounter	20	3	Y	\N
+59	3	EARTH ENCOUNTER	Earth Encounter	30	4	Y	\N
+59	4	OUTER CRUISE	Outer Cruise	40	5	Y	\N
+59	5	JUPITER ENCOUNTER	Jupiter Encounter	50	6	Y	\N
+59	6	SCIENCE CRUISE	Science Cruise	60	7	Y	\N
+59	7	APPROACH SCIENCE	Approach Science	70	8	Y	\N
+59	8	PHOEBE ENCOUNTER	Phoebe Encounter	80	9	Y	\N
+59	9	TOUR PRE-HUYGENS	Tour Pre-Huygens	90	10	Y	\N
+59	10	SATURN ORBIT INSERTION	Saturn Orbit Insertion	100	11	Y	\N
+59	11	TITAN A ENCOUNTER	Titan A Encounter	110	12	Y	\N
+59	12	TITAN B ENCOUNTER	Titan B Encounter	120	13	Y	\N
+59	13	HUYGENS PROBE SEPARATION	Huygens Probe Separation	130	14	Y	\N
+59	14	HUYGENS DESCENT	Huygens Descent	140	15	Y	\N
+59	15	TITAN C HUYGENS	Titan C Huygens	150	16	Y	\N
+59	16	TOUR (PRIME MISSION)	Tour (Prime Mission)	160	17	Y	\N
+59	17	EQUINOX MISSION (XM)	Equinox Mission (XM)	170	18	Y	\N
+59	18	SOLSTICE MISSION (XXM)	Solstice Mission (XXM)	180	19	Y	\N
+60	0	CIRS	CIRS	10	1	Y	\N
+60	1	ISS	ISS	20	2	Y	\N
+60	2	RSS	RSS	30	3	Y	\N
+60	3	UVIS	UVIS	40	4	Y	\N
+60	4	VIMS	VIMS	50	5	Y	\N
+60	5	OTHER	Other	60	6	Y	\N
+60	6	UNK	Unknown	70	7	Y	\N
+61	0	143	143	\N	55	Y	\N
+61	1	144	144	\N	56	Y	\N
+61	2	042	042	\N	24	Y	\N
+61	3	043	043	\N	25	Y	\N
+61	4	111	111	\N	46	Y	\N
+61	5	112	112	\N	47	Y	\N
+61	6	113	113	\N	48	Y	\N
+61	7	007	007	\N	2	Y	\N
+61	8	008	008	\N	3	Y	\N
+61	9	009	009	\N	4	Y	\N
+61	10	010	010	\N	5	Y	\N
+61	11	011	011	\N	6	Y	\N
+61	12	012	012	\N	7	Y	\N
+61	13	028	028	\N	10	Y	\N
+61	14	044	044	\N	26	Y	\N
+61	15	046	046	\N	27	Y	\N
+61	16	054	054	\N	28	Y	\N
+61	17	056	056	\N	30	Y	\N
+61	18	057	057	\N	31	Y	\N
+61	19	084	084	\N	41	Y	\N
+61	20	089	089	\N	42	Y	\N
+61	21	133	133	\N	53	Y	\N
+61	22	137	137	\N	54	Y	\N
+61	23	129	129	\N	49	Y	\N
+61	24	130	130	\N	50	Y	\N
+61	25	131	131	\N	51	Y	\N
+61	26	132	132	\N	52	Y	\N
+61	27	00A	00A	\N	1	Y	\N
+61	28	013	013	\N	8	Y	\N
+61	29	026	026	\N	9	Y	\N
+61	30	029	029	\N	11	Y	\N
+61	31	030	030	\N	12	Y	\N
+61	32	031	031	\N	13	Y	\N
+61	33	032	032	\N	14	Y	\N
+61	34	033	033	\N	15	Y	\N
+61	35	034	034	\N	16	Y	\N
+61	36	035	035	\N	17	Y	\N
+61	37	036	036	\N	18	Y	\N
+61	38	037	037	\N	19	Y	\N
+61	39	038	038	\N	20	Y	\N
+61	40	039	039	\N	21	Y	\N
+61	41	040	040	\N	22	Y	\N
+61	42	150	150	\N	57	Y	\N
+61	43	151	151	\N	58	Y	\N
+61	44	152	152	\N	59	Y	\N
+61	45	153	153	\N	60	Y	\N
+61	46	041	041	\N	23	Y	\N
+61	47	055	055	\N	29	Y	\N
+61	48	060	060	\N	33	Y	\N
+61	49	063	063	\N	35	Y	\N
+61	50	065	065	\N	36	Y	\N
+61	51	072	072	\N	38	Y	\N
+61	52	078	078	\N	39	Y	\N
+61	53	080	080	\N	40	Y	\N
+61	54	094	094	\N	44	Y	\N
+61	55	108	108	\N	45	Y	\N
+61	56	168	168	\N	61	Y	\N
+61	57	174	174	\N	63	Y	\N
+61	58	176	176	\N	64	Y	\N
+61	59	179	179	\N	65	Y	\N
+61	60	185	185	\N	67	Y	\N
+61	61	059	059	\N	32	Y	\N
+61	62	062	062	\N	34	Y	\N
+61	63	066	066	\N	37	Y	\N
+61	64	090	090	\N	43	Y	\N
+61	65	172	172	\N	62	Y	\N
+61	66	181	181	\N	66	Y	\N
+61	67	239	239	\N	68	Y	\N
+61	68	241	241	\N	69	Y	\N
+61	69	243	243	\N	70	Y	\N
+61	70	245	245	\N	71	Y	\N
+61	71	249	249	\N	72	Y	\N
+61	72	257	257	\N	73	Y	\N
+61	73	263	263	\N	74	Y	\N
+61	74	279	279	\N	75	Y	\N
+62	0	0	0	0	1	Y	\N
+62	1	1	G1	10	2	Y	\N
+62	2	2	G2	20	3	Y	\N
+62	3	3	C3	30	4	Y	\N
+62	4	4	E4	40	5	Y	\N
+62	5	5	J5	50	6	Y	\N
+62	6	6	E6	60	7	Y	\N
+62	7	7	G7	70	8	Y	\N
+62	8	8	G8	80	9	Y	\N
+62	9	9	C9	90	10	Y	\N
+62	10	10	C10	100	11	Y	\N
+62	11	11	E11	110	12	Y	\N
+62	12	12	E12	120	13	Y	\N
+62	13	13	E13	130	14	Y	\N
+62	14	14	E14	140	15	Y	\N
+62	15	15	E15	150	16	Y	\N
+62	16	16	E16	160	17	Y	\N
+62	17	17	E17	170	18	Y	\N
+62	18	18	E18	180	19	Y	\N
+62	19	19	E19	190	20	Y	\N
+62	20	20	C20	200	21	Y	\N
+62	21	21	C21	210	22	Y	\N
+62	22	22	C22	220	23	Y	\N
+62	23	23	C23	230	24	Y	\N
+62	24	24	I24	240	25	Y	\N
+62	25	25	I25	250	26	Y	\N
+62	26	26	E26	260	27	Y	\N
+62	27	27	I27	270	28	Y	\N
+62	28	28	G28	280	29	Y	\N
+62	29	29	G29	290	30	Y	\N
+62	30	30	C30	300	31	Y	\N
+62	31	31	I31	310	32	Y	\N
+62	32	32	I32	320	33	Y	\N
+62	33	33	I33	330	34	Y	\N
+62	34	34	A34	340	35	Y	\N
+62	35	35	J35	350	36	Y	\N
+62	36		N/A	360	37	Y	\N
+63	0	WFC3-UVIS1-2K2A-SUB	WFC3-UVIS1-2K2A-SUB	\N	9	Y	WFC3
+63	1	WFC3-UVIS-QUAD-SUB	WFC3-UVIS-QUAD-SUB	\N	8	Y	WFC3
+63	2	ACS-SBC	ACS-SBC	\N	1	Y	ACS
+63	3	NICMOS-NIC1-FIX	NICMOS-NIC1-FIX	\N	2	Y	NICMOS
+63	4	NICMOS-NIC2-FIX	NICMOS-NIC2-FIX	\N	3	Y	NICMOS
+63	5	STIS-F28X50LP	STIS-F28X50LP	\N	7	Y	STIS
+63	6	STIS-50CCD	STIS-50CCD	\N	4	Y	STIS
+63	7	STIS-52X0.2	STIS-52X0.2	\N	5	Y	STIS
+63	8	STIS-52X0.5	STIS-52X0.5	\N	6	Y	STIS
+63	9	WFPC2-UF160BN15	WFPC2-UF160BN15	\N	10	Y	WFPC2
+63	10	WFPC2-UWF3FIX	WFPC2-UWF3FIX	\N	12	Y	WFPC2
+63	11	WFPC2-UWF3CH4	WFPC2-UWF3CH4	\N	11	Y	WFPC2
+64	0	ACS-HRC	ACS-HRC	10	1	Y	\N
+64	1	ACS-SBC	ACS-SBC	20	2	Y	\N
+64	2	ACS-WFC	ACS-WFC	30	3	Y	\N
+64	3	NICMOS-NIC1	NICMOS-NIC1	40	4	Y	\N
+64	4	NICMOS-NIC2	NICMOS-NIC2	50	5	Y	\N
+64	5	NICMOS-NIC3	NICMOS-NIC3	60	6	Y	\N
+64	6	STIS-CCD	STIS-CCD	70	7	Y	\N
+64	7	STIS-FUV-MAMA	STIS-FUV-MAMA	80	8	Y	\N
+64	8	STIS-NUV-MAMA	STIS-NUV-MAMA	90	9	Y	\N
+64	9	WFC3-IR	WFC3-IR	100	10	Y	\N
+64	10	WFC3-UVIS	WFC3-UVIS	110	11	Y	\N
+64	11	UNKNOWN	Unknown	120	12	Y	\N
+65	0	EXCESSIVE DOWNTIME	Excessive Downtime	10	1	Y	\N
+65	1	INDETERMINATE	Indeterminate	20	2	Y	\N
+65	2	INTERRUPTED	Interrupted	30	3	Y	\N
+65	3	NORMAL	Normal	40	4	Y	\N
+65	4	TDF-DOWN AT EXPSTART	TDF-Down At Expstart	50	5	Y	\N
+65	5	UNKNOWN	Unknown	60	6	Y	\N
+66	0	WFC3-F631N	WFC3-F631N	\N	14	Y	WFC3
+66	1	WFC3-F502N	WFC3-F502N	\N	13	Y	WFC3
+66	2	WFC3-F395N	WFC3-F395N	\N	10	Y	WFC3
+66	3	WFC3-F469N	WFC3-F469N	\N	11	Y	WFC3
+66	4	WFC3-F487N	WFC3-F487N	\N	12	Y	WFC3
+66	5	WFC3-FQ889N	WFC3-FQ889N	\N	15	Y	WFC3
+66	6	ACS-F125LP	ACS-F125LP	\N	1	Y	ACS
+66	7	NICMOS-F108N	NICMOS-F108N	\N	2	Y	NICMOS
+66	8	NICMOS-F165M	NICMOS-F165M	\N	4	Y	NICMOS
+66	9	NICMOS-F160W	NICMOS-F160W	\N	3	Y	NICMOS
+66	10	NICMOS-F171M	NICMOS-F171M	\N	5	Y	NICMOS
+66	11	NICMOS-F187W	NICMOS-F187W	\N	6	Y	NICMOS
+66	12	NICMOS-F204M	NICMOS-F204M	\N	7	Y	NICMOS
+66	13	STIS-LONG PASS	STIS-LONG PASS	\N	9	Y	STIS
+66	14	STIS-CLEAR	STIS-CLEAR	\N	8	Y	STIS
+66	15	WFPC2-F160BN15	WFPC2-F160BN15	\N	16	Y	WFPC2
+66	16	WFPC2-F160BN15+F130LP	WFPC2-F160BN15+F130LP	\N	17	Y	WFPC2
+66	17	WFPC2-F160BN15+F165LP	WFPC2-F160BN15+F165LP	\N	18	Y	WFPC2
+66	18	WFPC2-F218W	WFPC2-F218W	\N	19	Y	WFPC2
+66	19	WFPC2-FQCH4N	WFPC2-FQCH4N	\N	22	Y	WFPC2
+66	20	WFPC2-F410M	WFPC2-F410M	\N	20	Y	WFPC2
+66	21	WFPC2-F953N	WFPC2-F953N	\N	21	Y	WFPC2
+67	0	LP	Long Pass	10	1	Y	\N
+67	1	X	Extremely Wide	20	2	Y	\N
+67	2	W	Broadband	30	3	Y	\N
+67	3	M	Medium Band	40	4	Y	\N
+67	4	N	Narrowband	50	5	Y	\N
+67	5	FR	Ramp	60	6	Y	\N
+67	6	SP	Spectroscopic	70	7	Y	\N
+67	7	OT	Other	80	8	Y	\N
+68	0	COARSE	Coarse	10	1	Y	\N
+68	1	FINE	Fine	20	2	Y	\N
+68	2	GYROS	Gyros	30	3	Y	\N
+68	3	FINE/GYRO	Fine/Gyro	40	4	Y	\N
+68	4	UNK	Unknown	50	5	Y	\N
+69	0	A2D0	A2D0	10	1	Y	\N
+69	1	A2D1	A2D1	20	2	Y	\N
+69	2	A2D4	A2D4	30	3	Y	\N
+69	3	A2D7	A2D7	40	4	Y	\N
+69	4	A2D15	A2D15	50	5	Y	\N
+69	5	N/A	N/A	60	6	Y	\N
+70	0	ACCUM	ACCUM	10	1	Y	\N
+70	1	MULTIACCUM	MULTIACCUM	20	2	Y	\N
+70	2	ACQ	ACQ	30	3	Y	\N
+70	3	ACQ/PEAK	ACQ/PEAK	40	4	Y	\N
+70	4	FULL	FULL	50	5	Y	\N
+70	5	AREA	AREA	60	6	Y	\N
+70	6	CCUM	CCUM	70	7	Y	\N
+70	7	TIME-TAG	TIME-TAG	80	8	Y	\N
+71	0		N/A	\N	4	Y	\N
+71	1	MIRVIS	MIRVIS	\N	3	Y	\N
+71	2	G230L	G230L	\N	1	Y	\N
+71	3	G430L	G430L	\N	2	Y	\N
+72	0		N/A	\N	2	Y	\N
+72	1	Yes	Yes	\N	1	Y	\N
+73	0		N/A	\N	5	Y	\N
+73	1	F28X50LP	F28X50LP	\N	4	Y	\N
+73	2	50CCD	50CCD	\N	1	Y	\N
+73	3	52X0.2	52X0.2	\N	2	Y	\N
+73	4	52X0.5	52X0.5	\N	3	Y	\N
+74	0	PC1	PC1	10	1	Y	\N
+74	1	WF2	WF2	20	2	Y	\N
+74	2	WF3	WF3	30	3	Y	\N
+74	3	WF4	WF4	40	4	Y	\N
+74	4		N/A	50	5	Y	\N
+75	0		N/A	\N	2	Y	\N
+75	1	Yes	Yes	\N	1	Y	\N
+76	0		N/A	\N	2	Y	\N
+76	1	Yes	Yes	\N	1	Y	\N
+77	0		N/A	\N	2	Y	\N
+77	1	Yes	Yes	\N	1	Y	\N
+78	0	KEM1 ENCOUNTER	KEM1 Encounter	\N	1	Y	\N
+78	1	PLUTO CRUISE	Pluto Cruise	\N	2	Y	\N
+79	0	SATURN ENCOUNTER	Saturn Encounter	\N	2	Y	\N
+79	1	URANUS ENCOUNTER	Uranus Encounter	\N	3	Y	\N
+79	2	NEPTUNE ENCOUNTER	Neptune Encounter	\N	1	Y	\N
+80	0		N/A	\N	3	Y	\N
+80	1	Yes	Yes	\N	1	Y	\N
+80	2	No	No	\N	2	Y	\N
+81	0	cassini	Cassini	0	1	Y	\N
+81	10	hst.fos	Hubble	10	2	Y	\N
+81	20	voyager 1	Voyager 1	20	3	Y	\N
+81	30	voyager 2	Voyager 2	30	4	Y	\N
+81	40		N/A	40	5	Y	\N
+81	108	caha-calar_alto.1m23	Caha Calar Alto 1.23m	1080	16	Y	Ground-based
+81	110	canberra.dss34_34m	DSS 34 (Canberra 34m)	150	11	Y	DSN
+81	116	canberra.dss43_70m	DSS 43 (Canberra 70m)	160	12	Y	DSN
+81	124	ctio-cerro_tololo.smarts_1m50	Cerro Tololo SMARTS 1.5m	1240	17	Y	Ground-based
+81	126	ctio-cerro_tololo.victorblanco_4m0	Cerro Tololo Victor Blanco 4m	1260	18	Y	Ground-based
+81	132	eso-la_silla.1m04	ESO La Silla 1m	1320	19	Y	Ground-based
+81	134	eso-la_silla.2m2	ESO La Silla 2.2m	1340	20	Y	Ground-based
+81	135	eso-la_silla.3m6	ESO La Silla 3.6m	1350	21	Y	Ground-based
+81	152	goldstone.dss14_70m	DSS 14 (Goldstone 70m)	100	6	Y	DSN
+81	153	goldstone.dss15_34m	DSS 15 (Goldstone 34m)	110	7	Y	DSN
+81	156	goldstone.dss24_34m	DSS 24 (Goldstone 34m)	120	8	Y	DSN
+81	157	goldstone.dss25_34m	DSS 25 (Goldstone 34m)	130	9	Y	DSN
+81	158	goldstone.dss26_34m	DSS 26 (Goldstone 34m)	140	10	Y	DSN
+81	164	irtf-maunakea.3m2	IRTF 3.2m	1640	22	Y	Ground-based
+81	172	kuiper-airborne.0m91	Kuiper Airborne Observatory 0.91m	1720	23	Y	Ground-based
+81	173	las_campanas.ireneedupont_2m5	Las Campanas Irenee Dupont 2.5m	1730	24	Y	Ground-based
+81	176	las_campanas.swope_1m0	Las Campanas Henrietta Swope 1.0m	1760	25	Y	Ground-based
+81	187	lowell.perkins_warner1m83	Lowell Perkins 1.83m	1870	27	Y	Ground-based
+81	189	madrid.dss54_34m	DSS 54 (Madrid 34m)	170	13	Y	DSN
+81	190	madrid.dss55_34m	DSS 55 (Madrid 34m)	180	14	Y	DSN
+81	195	madrid.dss63_70m	DSS 63 (Madrid 70m)	190	15	Y	DSN
+81	202	maunakea.ukirt_3m8	UKIRT 3.8m	2360	37	Y	Ground-based
+81	204	mcdonald.harlanjsmith_2m7	McDonald Harlan J Smith 2.7m	2040	28	Y	Ground-based
+81	215	mount_stromlo.1m9	Mount Stromlo 1.9m	2150	29	Y	Ground-based
+81	226	palomar.hale_5m08	Palomar Hale 5.08m	2260	30	Y	Ground-based
+81	230	pic_du_midi.1m06	Pic du Midi 1.06m	2300	31	Y	Ground-based
+81	231	pic_du_midi.bernardlyot_2m0	Pic du Midi Bernard Lyot 2.0m	2310	32	Y	Ground-based
+81	232	saao.radcliffe_1m88	SAAO Radcliffe 1.88m	2320	33	Y	Ground-based
+81	233	siding_spring.aat_3m9	SSO AAT 3.9m	2330	34	Y	Ground-based
+81	234	siding_spring.anu_2m3	SSO ANU 2.3m	2340	35	Y	Ground-based
+81	244	teide.carlossanchez_1m55	Teide Carlos Sanchez 1.55m	2350	36	Y	Ground-based
+81	500	lick.nickel	Lick Anna L Nickel 1m	1810	26	Y	Ground-based
+82	0	I	Ingress	10	1	Y	\N
+82	1	E	Egress	20	2	Y	\N
+82	2	B	Both	30	3	Y	\N
+82	3		N/A	40	4	Y	\N
+83	0	RAD	Radio	10	1	Y	\N
+83	1	STE	Stellar	20	2	Y	\N
+83	2	SOL	Solar	30	3	Y	\N
+83	3	REF	Reflectance	40	4	Y	\N
+83	4		N/A	50	5	Y	\N
+84	0		N/A	\N	5	Y	\N
+84	1	UNASSIGNED	Unassigned	\N	4	Y	\N
+84	2	POOR	Poor	\N	3	Y	\N
+84	3	GOOD	Good	\N	2	Y	\N
+84	4	FAIR	Fair	\N	1	Y	\N
+85	0		N/A	\N	48	Y	\N
+85	1	CASSINI	Cassini	0	1	Y	\N
+85	2	KSI02_CET	Xi2 Cet	\N	47	Y	Stars
+85	3	ALF_VIR	Alp Vir (Spica)	\N	14	Y	Stars
+85	4	ALF_LEO	Alp Leo (Regulus)	\N	9	Y	Stars
+85	5	126_TAU	126 Tau	\N	2	Y	Stars
+85	6	SIG_SGR	Sig Sgr	\N	40	Y	Stars
+85	7	ALF_SCO	Alp Sco (Antares)	\N	11	Y	Stars
+85	8	ALF_ORI	Alp Ori (Betelgeuse)	\N	10	Y	Stars
+85	9	ALF_TAU	Alp Tau (Aldebaran)	\N	12	Y	Stars
+85	10	DEL_VIR	Del Vir	\N	21	Y	Stars
+85	11	GAM_LUP	Gam Lup	\N	28	Y	Stars
+85	12	MU_PSA	Mu PsA	\N	34	Y	Stars
+85	13	GAM_PEG	Gam Peg	\N	29	Y	Stars
+85	14	ALF_ARA	Alp Ara	\N	5	Y	Stars
+85	15	ETA_LUP	Eta Lup	\N	25	Y	Stars
+85	16	KAP_CEN	Kap Cen	\N	32	Y	Stars
+85	17	DEL_PER	Del Per	\N	20	Y	Stars
+85	18	GAM_GRU	Gam Gru	\N	27	Y	Stars
+85	19	EPS_PSA	Eps PsA	\N	24	Y	Stars
+85	20	CHI_CEN	Chi Cen	\N	18	Y	Stars
+85	21	TET_ARA	The Ara	\N	43	Y	Stars
+85	22	OMI_CET	Omi Cet	\N	35	Y	Stars
+85	23	IRC_+10216	CW Leo (IRC +10216)	\N	19	Y	Stars
+85	24	ALF_AUR	Alp Aur (Capella)	\N	6	Y	Stars
+85	25	R_HYA	R Hya	\N	37	Y	Stars
+85	26	R_LEO	R Leo	\N	38	Y	Stars
+85	27	ALF_TRA	Alp TrA	\N	13	Y	Stars
+85	28	R_CAS	R Cas	\N	36	Y	Stars
+85	29	GAM_CRU	Gam Cru	\N	26	Y	Stars
+85	30	BET_GRU	Bet Gru	\N	15	Y	Stars
+85	31	RS_CNC	RS Cnc	\N	39	Y	Stars
+85	32	EPS_MUS	Eps Mus	\N	23	Y	Stars
+85	33	BET_PEG	Bet Peg	\N	16	Y	Stars
+85	34	ALF_CMA	Alp CMa (Sirius)	\N	8	Y	Stars
+85	35	ALF_CET	Alp Cet	\N	7	Y	Stars
+85	36	13_LYR	13 Lyr (R Lyr)	\N	3	Y	Stars
+85	37	W_HYA	W Hya	\N	46	Y	Stars
+85	38	MU_CEP	Mu Cep	\N	33	Y	Stars
+85	39	28_SGR	28 Sgr	\N	4	Y	Stars
+85	40	SIGMA SGR	Sigma Sgr	\N	41	Y	Stars
+85	41	BETA PER	Beta Per	\N	17	Y	Stars
+85	42	DELTA SCO	Delta Sco	\N	22	Y	Stars
+85	43	IOTA HER	Iota Her	\N	31	Y	Stars
+85	44	VOYAGER 1	Voyager 1	\N	44	Y	\N
+85	45	VOYAGER 2	Voyager 2	\N	45	Y	\N
+85	46	Sun	Sun	\N	42	Y	\N
+85	47	HIPPARCOS_79085	Hipparcos 79085	\N	30	Y	Stars
+86	0	S	S	10	1	Y	\N
+86	1	X	X	20	2	Y	\N
+86	2	KA	Ka	30	3	Y	\N
+86	3	IR	IR	40	4	Y	\N
+86	4	VI	Visible	50	5	Y	\N
+86	5	UV	UV	60	6	Y	\N
+86	6		N/A	70	7	Y	\N
+87	0	SATURN	Saturn	\N	22	Y	Saturn
+87	1	DIONE	Dione	\N	6	Y	Saturn
+87	2	RHEA	Rhea	\N	21	Y	Saturn
+87	3	TITAN	Titan	\N	25	Y	Saturn
+87	4	ENCELADUS	Enceladus	\N	8	Y	Saturn
+87	5	HELENE	Helene	\N	10	Y	Saturn
+87	6	MIMAS	Mimas	\N	15	Y	Saturn
+87	7	TETHYS	Tethys	\N	24	Y	Saturn
+87	8	KIVIUQ	Kiviuq	\N	13	Y	Saturn
+87	9	EPIMETHEUS	Epimetheus	\N	9	Y	Saturn
+87	10	PAN	Pan	\N	17	Y	Saturn
+87	11	JANUS	Janus	\N	12	Y	Saturn
+87	12	HYPERION	Hyperion	\N	11	Y	Saturn
+87	13	EARTH	Earth	\N	7	Y	Earth
+87	14	AEGAEON	Aegaeon	\N	1	Y	Saturn
+87	15	ANTHE	Anthe	\N	2	Y	Saturn
+87	16	ATLAS	Atlas	\N	3	Y	Saturn
+87	17	CALYPSO	Calypso	\N	4	Y	Saturn
+87	18	DAPHNIS	Daphnis	\N	5	Y	Saturn
+87	19	METHONE	Methone	\N	14	Y	Saturn
+87	20	PALLENE	Pallene	\N	16	Y	Saturn
+87	21	PANDORA	Pandora	\N	18	Y	Saturn
+87	22	POLYDEUCES	Polydeuces	\N	19	Y	Saturn
+87	23	PROMETHEUS	Prometheus	\N	20	Y	Saturn
+87	24	TELESTO	Telesto	\N	23	Y	Saturn
+88	0	FRAM	Frame	10	1	Y	\N
+88	1	RAST	Raster Scan	20	2	Y	\N
+88	2	PUSH	Pushbroom	30	3	Y	\N
+88	3	MOSAIC	Mosaic	40	4	Y	\N
+88	4		N/A	50	5	Y	\N
+89	0	LINEAR	Linear	10	1	Y	\N
+89	1	NONE	None	20	2	Y	\N
+90	0	Yes	Yes	\N	1	Y	\N
+90	1	No	No	\N	2	Y	\N

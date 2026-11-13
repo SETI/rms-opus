@@ -391,8 +391,29 @@ class JSONTable:
         )
 
 
-def _render_source(source: str | Subquery | JSONTable) -> tuple[str, list[Any]]:
-    """Return the `(sql, params)` for a table name, a `Subquery` or a `JSONTable`."""
+@dataclass(frozen=True)
+class AliasedTable:
+    """A table joined under an alias, rendered `<table> AS <alias>`.
+
+    The ``mult`` table is joined once for each mult column a statement reads, each time
+    under its own alias.
+    """
+
+    table: str
+    alias: str
+
+    def render(self) -> tuple[str, list[Any]]:
+        """Return the `(sql, params)` of this source as it appears in a FROM clause."""
+        return f'{quote_identifier(self.table)} AS {quote_identifier(self.alias)}', []
+
+
+TableSource = str | Subquery | JSONTable | AliasedTable
+"""The sources a FROM clause or a join can name -- a table, a `Subquery`, a `JSONTable` or
+an `AliasedTable`."""
+
+
+def _render_source(source: TableSource) -> tuple[str, list[Any]]:
+    """Return the `(sql, params)` for a table name or any other `TableSource`."""
     if isinstance(source, str):
         return quote_identifier(source), []
     return source.render()
@@ -404,8 +425,8 @@ class Join:
 
     #: 'INNER' or 'LEFT'.
     kind: str
-    #: The table name, `Subquery` or `JSONTable` being joined in.
-    source: str | Subquery | JSONTable
+    #: The table name, or other `TableSource`, being joined in.
+    source: TableSource
     #: The ON condition, or None for a `JSON_TABLE` join, which has none.
     on: Expr | None = None
 
@@ -431,14 +452,17 @@ class FromSource:
     summary and the queries that join a search to its results rely on.
     """
 
-    source: str | Subquery | JSONTable
+    source: TableSource
     joins: list[Join] = field(default_factory=list)
 
-    def add_join(
-        self, kind: str, source: str | Subquery | JSONTable, on: Expr | None = None
-    ) -> 'FromSource':
+    def add_join(self, kind: str, source: TableSource, on: Expr | None = None) -> 'FromSource':
         """Append a join to this source and return self."""
         self.joins.append(Join(kind, source, on))
+        return self
+
+    def append_join(self, join: Join) -> 'FromSource':
+        """Append a join built elsewhere, such as by `mult_join`, and return self."""
+        self.joins.append(join)
         return self
 
     def render(self) -> tuple[str, list[Any]]:
@@ -449,6 +473,27 @@ class FromSource:
             sql += join_sql
             params = params + join_params
         return sql, params
+
+
+#: The table holding every mult field's values, keyed ``(field_id, id)``.
+MULT_TABLE = 'mult'
+
+
+def mult_join(alias: str, field_id: int, mult_column: Expr) -> Join:
+    """Return the join that reads one mult column's labels.
+
+    Renders `LEFT JOIN mult AS <alias> ON <alias>.field_id = %s AND <alias>.id =
+    <mult_column>`, the field id as a parameter, so a statement reads each mult column's
+    rows of ``mult`` through the table's primary key, under an alias of its own.
+
+    Parameters:
+        alias: The alias the join's columns are read under, such as ``<alias>.label``.
+        field_id: The ``mult_field`` id of the column's field.
+        mult_column: The column holding the id, or an expression giving it.
+    """
+    on = binary_op(column('field_id', alias), '=', value(field_id))
+    on = join_exprs([on, columns_equal(column('id', alias), mult_column)], 'AND')
+    return Join('LEFT', AliasedTable(MULT_TABLE, alias), on)
 
 
 class _OrderBy(NamedTuple):
@@ -503,7 +548,7 @@ class Select:
         self._columns.append(expr)
         return self
 
-    def add_from(self, source: str | Subquery | JSONTable) -> FromSource:
+    def add_from(self, source: TableSource) -> FromSource:
         """Add a comma-separated table source and return the `FromSource` for it.
 
         The return value is the `FromSource`, not the statement, so that joins can

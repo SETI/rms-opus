@@ -56,6 +56,7 @@ raises. A failed database operation always aborts the import.
             +delete_rows()*
             +delete_joined_rows()*
             +general_select()*
+            +stream_select()*
             +find_column_max()*
             +read_table_keys()*
             +add_keys_statement()*
@@ -126,8 +127,9 @@ Keys on a fresh import
 :class:`~opus_import.table_keys.TableKey` values -- a kind, the columns in order and,
 for a foreign key, what it references and what it does on delete -- which compare by
 those and never by name, because the server names an unnamed key itself.
-:meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_table` always creates an
-observation or ``mult_`` table with **the keep set**,
+:meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_table` always creates a table
+whose name begins ``obs_`` or ``mult_``
+(:data:`~opus_import.table_keys.KEY_FILTERED_TABLE_PREFIXES`) with **the keep set**,
 :func:`~opus_import.table_keys.create_time_keys`, exactly: the primary key, every unique
 key, every ``{"constraint": ...}`` entry (rendered raw, as always), and the keys the
 per-bundle delete reads: the ``bundle_id`` key of ``obs_general`` and of the surface
@@ -137,7 +139,9 @@ is keyed on ``obs_general_id``, which the delete reaches by joining ``obs_genera
 it is created with its primary key alone, and ``obs_pds``'s ``bundle_id`` key waits for
 finalization like any other plain key. It does so on both write paths, so a table first
 created by an append is keyed by the ``--finalize`` that follows, as every table of a
-fresh import is. A table of neither kind is created with every key its schema declares,
+fresh import is. ``mult_field`` and ``mult_group`` declare only a primary key and unique
+keys, so the keep set is every key they have. A table of neither kind, ``mult`` among
+them, is created with every key its schema declares,
 table-level ``foreign_key``, ``primary_key``, ``unique`` and ``key`` entries included
 (:ref:`dev_guide_table_schemas`), which is how ``cart`` has its cascading foreign key,
 and ``search_results`` its keys over two columns, from the start.
@@ -150,8 +154,9 @@ table's primary key leads with it), so the index each foreign key needs already
 exists when the foreign key is added.
 Finalization's ``--create-indexes`` adds what it lists
 (:ref:`dev_guide_import_steps_create_indexes`). Both read the same column entries, so
-the two can never disagree; a unit test checks that they partition every observation and
-``mult_`` schema's keys and that the keep set holds every key the delete reads.
+the two can never disagree; a unit test checks that they partition the keys of every
+schema whose name begins ``obs_`` or ``mult_``, and that the keep set holds every key
+the delete reads.
 
 .. _dev_guide_import_db_siblings:
 
@@ -239,6 +244,12 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
        ``obs_general`` this way.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.general_select`\ ``(cmd, param_list=None)``
      - Run a query the caller assembled and return every row.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.stream_select`\ ``(cmd, param_list=None)``
+     - Run a query the caller assembled and yield its rows as the server sends them,
+       through an unbuffered cursor, so a scan of a large table never holds the whole
+       result in memory. The caller reads every row before it issues another statement
+       on the connection. Finalization's mult step reads the observation tables this
+       way.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.find_column_max`\ ``(table_name, column_name)``
      - The largest value in a column.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.read_table_keys`\ ``()``
@@ -395,9 +406,11 @@ The bulk load
 rows: every ``obs_`` table's rows, the per-target surface geometry tables' and
 ``obs_files``'. :class:`~opus_import.steps.do_import_index.TableRowSink` loads a table
 each time ``[import] transaction_rows`` of its rows wait, and the rest at the end of
-:func:`~opus_import.steps.do_import_index.import_one_index`, after ``upsert_rows`` has
-written the mult tables. The mult tables are upserted rather than loaded because a load
-cannot update a row it finds already there.
+:func:`~opus_import.steps.do_import_index.import_one_index`, after
+:func:`~opus_import.steps.do_import_mult.write_mult_tables` has inserted the ``mult``
+rows the index added and upserted its ``mult_group`` rows. A ``mult`` row is inserted
+rather than loaded or upserted because its value must never be written over another
+row's: a value the field's unique key finds already there stops the import.
 
 **The text.** The rows are written as the text ``LOAD DATA`` reads by default: fields
 separated by tabs, rows ended by newlines, ``\N`` for NULL, and a backslash before each
@@ -486,9 +499,15 @@ Types
 
 :class:`~opus_import.import_util.MultOption`
     One entry of a column's ``mult_options`` list, as a named tuple rather than a
-    positional one. Building one from the JSON list makes a wrong-length entry raise
+    positional one: ``id``, ``value``, ``label``, ``pin``, ``display``, ``grouping`` and
+    ``group_pin``. Building one from the JSON list makes a wrong-length entry raise
     :exc:`TypeError` at the point of construction rather than being mis-assigned later.
-    The ``aliases`` column is deliberately absent, because no schema pins one.
+
+:func:`~opus_import.import_util.read_mult_option`
+    Builds a :class:`~opus_import.import_util.MultOption` from one ``mult_options``
+    entry, and raises :exc:`TypeError` when the entry does not carry exactly seven
+    values, when its ``pin`` is not an integer, or when its ``group_pin`` is neither an
+    integer nor null. A string such as ``"010"`` is refused rather than converted.
 
 Bundle expansion and PDS table reading
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -533,8 +552,10 @@ Table names
     that the id is in the corresponding :mod:`opus_import.config_data` map, so a typo
     fails immediately rather than producing a table nobody fills.
 
-:func:`~opus_import.import_util.table_name_mult`
-    ``mult_<table>_<column>``, both lowercased.
+:func:`~opus_import.import_util.mult_field_name`
+    The qualified name of the mult field holding a column's values: the column's
+    ``mult_field`` key when its schema entry has one, otherwise ``<table>.<column>`` in
+    lower case, such as ``obs_general.planet_id``.
 
 :func:`~opus_import.import_util.encode_target_name` and :func:`~opus_import.import_util.decode_target_name`
     A target name is not a legal SQL identifier, so it is encoded: lowercased, with

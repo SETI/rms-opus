@@ -22,6 +22,7 @@ from django.db import connection
 from django.http import Http404, QueryDict
 from django.test import RequestFactory
 
+from opus_app.apps.search.models import Mult, ObsGeneral
 from opus_app.apps.search.views import (
     api_normalize_input,
     api_string_search_choices,
@@ -32,6 +33,7 @@ from opus_app.apps.search.views import (
     set_user_search_number,
     url_to_search_params,
 )
+from opus_app.apps.tools.import_constants import mult_field_id
 
 from ._broken_requests import request_without_get, request_without_meta
 
@@ -3754,8 +3756,8 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `mult_obs_instrument_coiss_data_conversion_type` ON `obs_instrument_coiss`.`data_conversion_type`=`mult_obs_instrument_coiss_data_conversion_type`.`id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY `mult_obs_instrument_coiss_data_conversion_type`.`label` ASC'
-        expected_params = [20]
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `mult` AS `mult_obs_instrument_coiss_data_conversion_type` ON `mult_obs_instrument_coiss_data_conversion_type`.`field_id` = %s AND `mult_obs_instrument_coiss_data_conversion_type`.`id`=`obs_instrument_coiss`.`data_conversion_type` WHERE `obs_general`.`observation_duration` >= %s ORDER BY `mult_obs_instrument_coiss_data_conversion_type`.`label` ASC'
+        expected_params = [mult_field_id('obs_instrument_coiss.data_conversion_type'), 20]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -3809,12 +3811,31 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `mult_obs_general_target_name` ON JSON_EXTRACT(`obs_general`.`target_name`, "$[0]")=`mult_obs_general_target_name`.`id` ORDER BY `mult_obs_general_target_name`.`label` ASC'
-        expected_params: list[Any] = []
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `mult` AS `mult_obs_general_target_name` ON `mult_obs_general_target_name`.`field_id` = %s AND `mult_obs_general_target_name`.`id`=JSON_EXTRACT(`obs_general`.`target_name`, "$[0]") ORDER BY `mult_obs_general_target_name`.`label` ASC'
+        expected_params: list[Any] = [mult_field_id('obs_general.target_name')]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
+
+    def test__results_sorted_by_a_mult_column_follow_its_labels_not_its_ranks(self) -> None:
+        "[test_search.py] construct_query_string: a mult sort is by label text"
+        # The planet field's ranks follow its pins (Venus, Earth, Mars, ...), which is
+        # not the alphabetical order of its labels, so the two orders tell apart.
+        planets = Mult.objects.filter(field_id=mult_field_id('obs_general.planet_id'))
+        by_rank = [row.label for row in planets.order_by('disp_rank')]
+        self.assertNotEqual(by_rank, sorted(by_rank, key=str.casefold))
+
+        sql, params = construct_query_string({}, {'order': (['obs_general.planet_id'], [False])})
+        assert sql is not None
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            ids = [row[0] for row in cursor.fetchall()]
+        label_of = {row.id: row.label for row in planets}
+        planet_of = dict(ObsGeneral.objects.filter(id__in=ids).values_list('id', 'planet_id'))
+        labels = [label_of[planet_of[obs_id]] for obs_id in ids]
+        self.assertGreater(len(set(labels)), 1)
+        self.assertEqual(labels, sorted(labels, key=str.casefold))
 
     def test__the_server_runs_djangos_connection_at_read_committed(self) -> None:
         "[test_search.py] the search build's isolation level, as the server reports it"

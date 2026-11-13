@@ -25,7 +25,7 @@ An import run turns the index tables of a set of bundles into the whole OPUS dat
         H[(PDS3 and PDS4 holdings:<br/>primary index, summary and<br/>supplemental index files, shelves)]
         BI[config_bundle_info:<br/>which obs class, which index files]
         OB[One obs class instance per bundle]
-        OBS[(Observation tables:<br/>obs_*, mult_*)]
+        OBS[(Observation tables:<br/>obs_*, mult, mult_field, mult_group)]
         REG[(Bundle registry:<br/>import_bundle)]
         AUX[(Auxiliary tables:<br/>param_info, table_names,<br/>partables, contexts, definitions)]
         SUP[(Support tables:<br/>cart, user_searches,<br/>search_results)]
@@ -41,8 +41,9 @@ Five groups of table come out, and they are produced at different times and with
 different guarantees:
 
 **The observation tables** -- ``obs_general``, ``obs_pds``, the per-mission and
-per-instrument tables, the geometry tables, ``obs_files``, and the ``mult_`` tables of
-enumerated values that go with them. These are the imported data.
+per-instrument tables, the geometry tables, ``obs_files``, and the mult tables
+(``mult``, ``mult_field`` and ``mult_group``), which hold the enumerated values that go
+with them. These are the imported data.
 
 **The auxiliary tables** -- ``param_info``, ``table_names``, ``partables``,
 ``contexts`` and ``definitions``. These describe the search form rather than the
@@ -75,8 +76,8 @@ one of two paths; no option chooses (:ref:`dev_guide_import_running_paths`).
 
 **A fresh import** is the path into a schema with no ``schema_version`` row. Such a
 schema is not served -- the web application refuses it and both deploy scripts refuse to
-promote it -- so there is nothing to protect while it fills. The observation and
-``mult_`` tables are created with only the keys a load needs, and finalization adds the
+promote it -- so there is nothing to protect while it fills. The observation tables are
+created with only the keys a load needs, and finalization adds the
 rest once, after the last bundle (:ref:`dev_guide_import_steps_create_indexes`), which is
 far cheaper than maintaining every index row by row through every load. A failed fresh
 import leaves a schema that is still not served until an import finishes it.
@@ -89,12 +90,12 @@ into them in place. Before the first bundle the append sets the row's state to
 scripts refuse to promote it until ``--write-schema-version`` sets it back to
 ``ready``. **An append never finalizes the schema itself**: ``--finalize``,
 ``--validate`` and ``--write-schema-version`` follow as invocations of their own, as
-they do after a fresh import. Each finalization step then either does its work again, because an append
-invalidates it -- the duplicate step, the auxiliary tables, the cart and search tables,
-``ANALYZE`` and validation -- or finds nothing to do, as ``--create-indexes`` does on
-tables that already carry every key. A table first created by an append, because its
-bundle is the first to need it, is created with only the keys a load needs and keyed by
-the ``--finalize`` that follows.
+they do after a fresh import. Each finalization step then either does its work again,
+because an append invalidates it -- the duplicate step, the mult step, the auxiliary
+tables, the cart and search tables, ``ANALYZE`` and validation -- or finds nothing to
+do, as ``--create-indexes`` does on tables that already carry every key. A table first
+created by an append, because its bundle is the first to need it, is created with only
+the keys a load needs and keyed by the ``--finalize`` that follows.
 
 A schema holding another release's version is imported into on neither path: it is
 re-imported under the release that will serve it, starting from
@@ -202,7 +203,7 @@ forced by something:
 
 1. **Erase or delete**, inside :mod:`~opus_import.steps.do_import`:
    ``--scorched-earth`` drops every table the import creates, before anything else, so
-   that no ``mult_`` table survives and the row ids start again; ``--delete-bundles``
+   that no ``mult`` row survives and the ids start again; ``--delete-bundles``
    then deletes the named bundles.
 2. **Import the observations** (:mod:`~opus_import.steps.do_import`). This is the long
    part.
@@ -211,17 +212,22 @@ forced by something:
    (:mod:`~opus_import.steps.do_duplicate_ids`), which finds and deletes the copies
    through those keys. ``--finalize`` refuses before this point, changing nothing,
    while any bundle in the bundle registry is not ``done``.
-4. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
+4. **Finalize the mult fields** (:mod:`~opus_import.steps.do_finalize_mult`): delete the
+   values no observation holds, apply the schemas' ``mult_overrides``, and rank every
+   field's values and groups. The duplicate step's deletions can leave a value unused,
+   and ``partables`` reads the ``mult`` rows, so it comes between them.
+5. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
    :mod:`~opus_import.steps.do_partables`,
    :mod:`~opus_import.steps.do_table_names`), **recreate the cart and drop the cache
    tables** (:mod:`~opus_import.steps.do_cart`, :mod:`~opus_import.steps.do_django`),
    then analyze the tables. Each auxiliary table is derived from the imported tables --
    from which of them exist, and from their schemas -- and ``cart`` carries a foreign
    key onto ``obs_general``, so all of them must follow the import.
-5. **Pin the mult display details** (:mod:`~opus_import.steps.do_update_mult_info`) and
-   **validate** (:mod:`~opus_import.steps.do_validate`).
-6. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`).
-7. **Mark the schema ready** (:mod:`~opus_import.steps.do_schema_version`), last,
+6. **Write the mult presentation from the schemas**
+   (:mod:`~opus_import.steps.do_update_mult_info`) and **validate**
+   (:mod:`~opus_import.steps.do_validate`).
+7. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`).
+8. **Mark the schema ready** (:mod:`~opus_import.steps.do_schema_version`), last,
    because its row is what makes the schema servable.
 
 :mod:`opus_import.steps` states the whole order and what forces each part of it, and is
@@ -310,12 +316,12 @@ tables, their ids and the log are the same whatever the number of workers
 
 **Each finished row goes to a sink** that loads a table's rows as soon as
 ``[import] transaction_rows`` of them are waiting, so an index is never held in memory
-whole. Once every row has been computed, the ``mult_`` tables go out, and then the
-``obs_`` rows still waiting, table by table in order with ``obs_general`` first. An
-``obs_`` row stores the row id its value was given in the corresponding ``mult_`` table,
-and a table that filled a transaction during the index was loaded before the ``mult_``
-tables were written; nothing enforces the order, because a ``mult_idx`` column carries a
-plain index, not a foreign key, and the bundle loads with foreign key checks off.
+whole. Once every row has been computed, the ``mult`` rows the index added go out, and
+then the ``obs_`` rows still waiting, table by table in order with ``obs_general`` first.
+An ``obs_`` row stores the id its value was given in the column's mult field, and a table
+that filled a transaction during the index was loaded before the ``mult`` rows were
+written; nothing enforces the order, because a ``mult_idx`` column carries no foreign
+key, and the bundle loads with foreign key checks off.
 
 Where the surface geometry comes from varies. Most bundles have separate summary files
 per target. Some -- COCIRS_[01]xxx among them -- carry it inline in the primary index
@@ -380,10 +386,10 @@ Logging an error is what marks the run, and the bundle, as having produced bad d
 the bundle is recorded ``failed`` in the bundle registry, which keeps finalization and
 the version step from running until it is imported again or deleted.
 
-Finally, a column whose ``pi_form_type`` is a GROUP type has its value replaced by a
-``mult_`` table row id, adding the value to that table if it is new. A ``mult_list``
-column holds several values and is written as a JSON array, with a missing value omitted
-rather than stored as null.
+Finally, a column whose ``pi_form_type`` is a GROUP type has its value replaced by the
+id of a ``mult`` row of its field, adding the value to the field if the field lacks it.
+A ``mult_list`` column holds several values and is written as a JSON array, with a missing
+value omitted rather than stored as null.
 
 Each computed row is left on the metadata dictionary under ``<table_name>_row`` as well
 as returned, which is how a later table's field methods read what an earlier one
@@ -433,23 +439,33 @@ from zero per table within its task, and the import's process rebases them onto 
 maximum as it replays the tasks in index order; the ids are the ones the serial loop
 gives.
 
-**The mult id.** A column whose value comes from a fixed set stores an integer index into
-that column's ``mult_`` table rather than the value itself. The table is
-``mult_<table>_<column>``, its ids start at zero, and a value not already there is given
-one more than the current maximum -- unless the column's schema pins its values with
-``mult_options``, in which case a value that is not among them is an error.
+**The mult id.** A column whose value comes from a fixed set stores the id of a ``mult``
+row rather than the value itself. The column's values form one mult field, named
+``<table>.<column>`` unless the column's schema gives a ``mult_field`` key, and every
+``mult`` row of the field carries the field's ``field_id`` from ``mult_field``. Ids are
+numbered within a field: they start at zero, and a value not already there is given one
+more than the field's current maximum -- unless the column's schema pins its values with
+``mult_options``, in which case the ids are the ones listed and a value that is not
+among them is an error. A stored row keeps its id and its value, so renaming a value
+rewrites no observation row. A deleted row's id is free again: after finalization deletes
+a value no observation holds, a value added later can take its id.
 
-Nothing enforces the reference: a ``mult_idx`` column carries a plain index and **no
-foreign key**, so a table's rows can be loaded before the ``mult_`` values they name are
-written, which happens at the end of each index. A pool worker cannot know a value's id
+The field ids are numbered once in each database, over every mult field of the packaged
+``obs_*.json`` schemas in order of qualified name, and a field a later release adds takes
+the next id (:mod:`opus_import.mult_fields`).
+
+Nothing enforces the reference: a ``mult_idx`` column carries **no foreign key**, so a
+table's rows can be loaded before the ``mult`` rows they name are written, which happens
+at the end of each index. A pool worker cannot know a value's id
 either; it records the value, and the import's process resolves each one in the order
 the serial loop meets them, so every value gets the id the serial loop gives it.
 
 A ``mult_list`` column -- one an observation can have several values of -- stores a JSON
 array of those ids instead, with missing values omitted rather than stored as null.
 
-:ref:`dev_guide_import_steps_do_import_mult` describes the caching and the derived sort
-order, and :ref:`dev_guide_database_schema` describes what the tables look like.
+:ref:`dev_guide_import_steps_do_import_mult` describes the caching,
+:ref:`dev_guide_import_steps_do_finalize_mult` the order the values are listed in, and
+:ref:`dev_guide_database_schema_mult` what the tables look like.
 
 .. _dev_guide_import_obs_dispatch:
 
@@ -479,10 +495,16 @@ Invariants
   wrote a finished schema before setting it ``appending`` would break the guarantee the
   design rests on. A web application already serving a schema does not check it again,
   so appends and deletions go to a schema nothing is serving.
-* **Every** ``mult_`` **value an** ``obs_`` **row names is in its** ``mult_`` **table
-  by the end of the index.** The ``mult_`` tables are written once every row has been
-  computed, before the rows still waiting are loaded. No database constraint enforces
-  it.
+* **Every mult id an** ``obs_`` **row holds names a** ``mult`` **row of its field by
+  the end of the index.** The ``mult`` rows an index adds are written once every row has
+  been computed, before the rows still waiting are loaded, and finalization deletes only
+  the values no observation holds. No database constraint enforces it.
+* **A stored** ``mult`` **row keeps its id and its value.** Neither the import,
+  ``--update-mult-info`` nor finalization rewrites the id or the value of a row it
+  holds: a new value is inserted, never written over another row, and a list entry that
+  disagrees with a stored row is an error. Renaming a value or reordering a field
+  touches no observation row. A row finalization deletes frees its id for a later
+  value.
 * **An import computes in many processes and writes from one.** Only the import's own
   process uses the database and writes the log; pool workers compute rows and record
   what they would have written, and that process replays it in index order, so the

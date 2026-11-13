@@ -45,7 +45,8 @@ directory has a chapter of its own, it is named beside it.
     │   ├── opus_config/          # the TOML configuration loader, and the
     │   │                         #   opus.toml.template it writes out as
     │   │                         #   the opus_config_template command
-    │   ├── opus_support/         # unit, time, clock, angle and orbit conversions
+    │   ├── opus_support/         # unit, time, clock, angle and orbit conversions,
+    │   │                         #   and the server's string collation
     │   ├── opus_import/          # the import pipeline
     │   │   ├── cli.py, __main__.py       # the command-line surface
     │   │   ├── context.py                # the per-run context every step is handed
@@ -56,6 +57,8 @@ directory has a chapter of its own, it is named beside it.
     │   │   ├── config_targets/           # target names, classes and aliases
     │   │   ├── instruments.py            # per-instrument label parsing helpers
     │   │   ├── import_util.py            # helpers shared by the steps and the obs classes
+    │   │   ├── mult_fields.py            # which columns hold mult ids, and field ids
+    │   │   ├── mult_rank.py              # the order a mult field's values are listed in
     │   │   ├── importdb/                 # the SQL backend: super.py (the abstract base
     │   │   │                             #   both brands inherit), mysql.py, and the
     │   │   │                             #   unimplemented postgresql.py stub

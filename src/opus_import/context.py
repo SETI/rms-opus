@@ -31,6 +31,8 @@ if TYPE_CHECKING:
 
     from opus_import.deferred import Capture
     from opus_import.importdb.super import ImportDBSuper
+    from opus_import.mult_fields import MultFieldInfo
+    from opus_import.steps.do_import_mult import MultFieldCache
 
 
 class ImportLog:
@@ -154,7 +156,7 @@ class ImportLog:
         if msg in self._ctx.logged_import_errors:
             self._ctx.mark_bad_data()
             return
-        self._ctx.logged_import_errors.append(msg)
+        self._ctx.logged_import_errors.add(msg)
         self.error(msg)
 
     def nonrepeating_warning(self, msg: str) -> None:
@@ -167,7 +169,7 @@ class ImportLog:
         if self._recorded('nonrepeating_warning', (msg,)):
             return
         if msg not in self._ctx.logged_import_warnings:
-            self._ctx.logged_import_warnings.append(msg)
+            self._ctx.logged_import_warnings.add(msg)
             self.warning(msg)
 
     def unknown_target_name(self, target_name: str) -> None:
@@ -219,10 +221,14 @@ class ImportContext:
         current_primary_filespec: The primary filespec of the observation being imported,
             or None. It is unknown for part of each row, because some bundles take it
             from the supplemental index.
-        mult_table_cache: Each mult table read or created during this bundle, keyed by
-            table name. Cleared for each bundle.
-        modified_mult_tables: The mult tables this bundle added values to, and which
-            therefore have to be written back. Cleared for each bundle.
+        mult_fields: Every mult field's ``mult_field`` row, keyed by qualified name, once
+            `opus_import.mult_fields.ensure_mult_fields` has read them; None before.
+        mult_table_cache: Each mult field read during this bundle, keyed by qualified
+            name: its rows, a dictionary from value to row, and its highest id
+            (`opus_import.steps.do_import_mult.MultFieldCache`). Cleared for each bundle.
+        modified_mult_tables: The mult fields this bundle added values to, or whose
+            preprogrammed rows it read, and which therefore have to be written. Cleared
+            for each bundle.
         step_timings: Wall-clock seconds per step the run has timed with `timed`,
             keyed by step name, which is what ``--timing-json`` writes out.
         import_path: The path an invocation that imports bundles takes, once
@@ -242,8 +248,8 @@ class ImportContext:
     db: ImportDBSuper | None = None
 
     python_warning_list: list[str] = field(default_factory=list)
-    logged_import_errors: list[str] = field(default_factory=list)
-    logged_import_warnings: list[str] = field(default_factory=list)
+    logged_import_errors: set[str] = field(default_factory=set)
+    logged_import_warnings: set[str] = field(default_factory=set)
     import_has_bad_data: bool = False
     bundle_has_errors: bool = False
 
@@ -253,7 +259,8 @@ class ImportContext:
     current_index_row_number: int | None = None
     current_primary_filespec: str | None = None
 
-    mult_table_cache: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    mult_fields: dict[str, MultFieldInfo] | None = None
+    mult_table_cache: dict[str, MultFieldCache] = field(default_factory=dict)
     modified_mult_tables: set[str] = field(default_factory=set)
 
     step_timings: dict[str, float] = field(default_factory=dict)
