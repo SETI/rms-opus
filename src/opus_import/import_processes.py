@@ -56,8 +56,16 @@ IMPORTER_LOCK = 'importer'
 LOCK_CONNECTION_IDLE_SECONDS = 31_536_000
 
 #: The `opus_import.import_fault` site between an importer's ``import_process`` insert
-#: and its ``GET_LOCK``. Its argument is the seconds the importer sleeps there.
+#: and its ``GET_LOCK``. Its argument is a file's path: the importer waits there while
+#: the file exists, so the test that made it decides when the importer goes on.
 HOLD_BEFORE_LOCK_FAULT_SITE = 'hold_before_lock'
+
+#: How long an importer waits at `HOLD_BEFORE_LOCK_FAULT_SITE` before it goes on with the
+#: file still there, so a test that never removes it does not leave the importer waiting.
+HOLD_LIMIT_SECONDS = 300.0
+
+#: How often an importer at `HOLD_BEFORE_LOCK_FAULT_SITE` looks for its file.
+_HOLD_POLL_SECONDS = 0.1
 
 #: The `opus_import.import_fault` site after a bundle's first chunk commits. Its
 #: argument is the seconds the importer sleeps there.
@@ -66,6 +74,18 @@ HOLD_AFTER_CHUNK_FAULT_SITE = 'hold_after_chunk'
 
 class LostImporterError(Exception):
     """The importer lost its lock or its bundle, so it may commit nothing more."""
+
+
+def hold_while_present(path: str, limit: float = HOLD_LIMIT_SECONDS) -> None:
+    """Wait while a file exists, for at most a limit.
+
+    Parameters:
+        path: The file.
+        limit: The most seconds to wait.
+    """
+    deadline = time.monotonic() + limit
+    while os.path.exists(path) and time.monotonic() < deadline:
+        time.sleep(_HOLD_POLL_SECONDS)
 
 
 def importer_lock_name(schema: str, process_id: int) -> str:
@@ -178,9 +198,9 @@ def start_importer(lock_db: ImportDBSuper, log_path: str) -> ImporterLock:
             },
         )
         process_id = lock_db.last_insert_id()
-        hold = import_fault_argument(HOLD_BEFORE_LOCK_FAULT_SITE)
-        if hold is not None:
-            time.sleep(float(hold))
+        hold_file = import_fault_argument(HOLD_BEFORE_LOCK_FAULT_SITE)
+        if hold_file is not None:
+            hold_while_present(hold_file)
         name = importer_lock_name(lock_db.db_schema, process_id)
         if not lock_db.try_named_lock(name):
             raise importdb.ImportDBError(f'The server did not grant the importer lock "{name}"')
