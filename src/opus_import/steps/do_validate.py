@@ -36,7 +36,8 @@ def _body_category(db: ImportDBSuper) -> str | None:
 
     Returns:
         The first ``obs_surface_geometry__`` category ``param_info`` holds, or None when it
-        holds none, which is when ``obs_surface_geometry_target`` holds no rows.
+        holds none. Finalization writes one for each body the table holds, so none means
+        an empty table; `validate_param_info` reports one that holds rows.
     """
     q = db.quote_identifier
     res = db.general_select(
@@ -75,8 +76,9 @@ def validate_param_info(ctx: ImportContext) -> None:
     that has one, the ``mult_`` id columns, ``opus_id`` outside ``obs_general``,
     ``bundle_id`` outside ``obs_pds``, ``instrument_id`` outside ``obs_general``, and
     everything in ``obs_files``. A surface geometry column other than ``target_name`` is
-    skipped when ``param_info`` has no body's category. A column with no row is
-    reported; a column with more than one is not, since the check tests only for
+    skipped when ``param_info`` has no body's category; the table holding rows then is
+    reported, since finalization gives every body it holds a category. A column with no
+    row is reported; a column with more than one is not, since the check tests only for
     absence.
 
     The rows are then scanned for a ``disp_order`` repeated within one category among
@@ -105,6 +107,18 @@ def validate_param_info(ctx: ImportContext) -> None:
     pi_table_name = 'param_info'
 
     q = db.quote_identifier
+
+    geometry_table = surface_geometry.SURFACE_GEOMETRY_TABLE
+    if (
+        body_category is None
+        and geometry_table in obs_table_names
+        and db.general_select(f'1 FROM {q(geometry_table)} LIMIT 1')
+    ):
+        logger.log(
+            'error',
+            f'"{geometry_table}" holds rows but param_info has no '
+            f'"{surface_geometry.TARGET_CATEGORY_PREFIX}" category to describe them',
+        )
 
     for obs_table_name in obs_table_names:
         if obs_table_name == 'obs_files':

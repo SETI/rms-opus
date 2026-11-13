@@ -246,10 +246,12 @@ The fields are:
 * ``qualified_name``: The field's qualified name, a unique key.
 * ``pinned``: 1 when the column's schema lists the field's values in
   ``mult_options``, 0 otherwise.
-* ``last_id``: The highest id handed out in the field, or -1
+* ``last_id``: The highest id the field's counter has handed out, or -1
   before the first. A value new to the field takes the next one, so a field's first
-  value is 0. It only goes up: an id whose row finalization deletes is never handed out
-  again. With several processes importing at once, an id taken for a value another
+  value is 0. It only goes up: an id the counter handed out is never handed out again,
+  even once finalization deletes its row. A pinned field's ids are not the counter's
+  but the ones its list gives, and 65535 for an absent value the list lacks (``mult``,
+  below). With several processes importing at once, an id taken for a value another
   process stored first is left unused, so a field's ids may have gaps; the id-width
   check counts ``last_id``, not the rows.
 
@@ -286,7 +288,9 @@ The fields are:
   value and an observation needs one, the import adds it under 65535, an id no list may
   give. A stored row keeps its id and its value, so no observation row has to be
   rewritten when a value is renamed. Finalization deletes the values no observation
-  holds, and their ids are not handed out again.
+  holds. An id the counter handed out is not handed out again; a pinned field's absent
+  value, deleted once no observation holds it, is added under 65535 again when an
+  import needs it.
 * ``value``: The value as the import read it. The absent value is
   stored as the empty string, never ``NULL``.
 * ``label``: The string to display in the UI.
@@ -911,7 +915,7 @@ The ``import_bundle`` table is the bundle registry: the import's record of each 
 
 The fields are:
 
-* ``bundle_number``: The bundle's place in registration order, which is the import order. A bundle keeps its number when it is imported again.
+* ``bundle_number``: The bundle's place in registration order, which fixes its id range and so which copy of a shared OPUS ID finalization keeps. A plain ``--import`` imports its bundles in this order; queue importers claim the largest pending bundle first, whatever its number. A bundle keeps its number when it is imported again.
 * ``bundle_id``: The bundle, such as ``COISS_2002``. A bundle OPUS deliberately skips is never registered.
 * ``size_estimate``: The rows the bundle's primary index labels declared when it was registered.
 * ``first_id``: The ``obs_general.id`` of the bundle's first observation. A bundle's range starts where the range of the bundle registered before it ends, so the ranges ascend in ``bundle_number`` order and the copy of a shared OPUS ID that finalization keeps, the one with the highest ``id``, is the one from the bundle registered later.

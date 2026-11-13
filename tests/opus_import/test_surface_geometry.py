@@ -278,9 +278,14 @@ def test_param_info_rows_come_in_the_order_the_tables_gave_them() -> None:
 class _ValidationDB:
     """A stand-in whose ``param_info`` describes ``obs_surface_geometry_target``'s columns."""
 
-    def __init__(self, body_category: str | None) -> None:
-        """Hold the first body category ``param_info`` holds, or None for none."""
+    def __init__(self, body_category: str | None, *, has_rows: bool | None = None) -> None:
+        """Hold the first body category ``param_info`` holds, or None for none.
+
+        The table holds rows exactly when there is a body category, unless ``has_rows``
+        says otherwise.
+        """
         self.body_category = body_category
+        self.has_rows = body_category is not None if has_rows is None else has_rows
         self.asked: list[tuple[str, str]] = []
 
     def table_names(self, prefix: str) -> list[str]:
@@ -301,6 +306,8 @@ class _ValidationDB:
         """Answer the body-category query, then each count by its category and column."""
         if cmd.startswith('MIN('):
             return [(self.body_category,)]
+        if cmd.startswith('1 FROM'):
+            return [(1,)] if self.has_rows else []
         if 'EXISTS' in cmd or cmd.lstrip().startswith('`g`'):
             return []
         category, name = params
@@ -344,3 +351,14 @@ def test_an_empty_surface_geometry_table_checks_only_the_selector() -> None:
     do_validate.validate_param_info(ctx)
     assert ctx.logger.messages_at('error') == []
     assert db.asked == [('obs_surface_geometry_name', 'target_name')]
+
+
+def test_a_surface_geometry_table_with_rows_and_no_body_category_is_reported() -> None:
+    """Rows with no category to describe them are an error, not an empty table."""
+    db = _ValidationDB(None, has_rows=True)
+    ctx = make_context(db=db)
+    do_validate.validate_param_info(ctx)
+    errors = ctx.logger.messages_at('error')
+    assert len(errors) == 1
+    assert 'obs_surface_geometry_target' in errors[0]
+    assert 'obs_surface_geometry__' in errors[0]
