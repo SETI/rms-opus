@@ -234,10 +234,11 @@ By hand
    It prints the schema it is about to erase and asks for confirmation before doing
    anything, which is the check that keeps it off a database you meant to keep. It then
    imports a fixed list of bundle sets -- Cassini ISS, UVIS, VIMS and CIRS, Galileo,
-   Voyager, Hubble, New Horizons, and the occultation sets -- and finishes with
-   ``--finalize``, ``--import-dictionary``, ``manage.py migrate`` and
-   ``--validate``. Read ``ERRORS.log`` afterwards rather than trusting the exit
-   status: several import steps report failure through the log and still exit zero.
+   Voyager, Hubble, New Horizons, and the occultation sets -- through
+   ``opus_import_all``, with ``[import] importers`` importers at once, which finishes
+   the database, and then runs ``manage.py migrate``. Read ``ERRORS.log`` afterwards
+   rather than trusting the exit status: several import steps report failure through
+   the log and still exit zero.
 
 3. **Run the suite**::
 

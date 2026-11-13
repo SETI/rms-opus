@@ -1,7 +1,5 @@
 """The scenario files, their loaders, and their agreement with the sequences they copy."""
 
-import re
-import shlex
 from pathlib import Path
 
 import pytest
@@ -9,6 +7,7 @@ import pytest
 from benchmarks import bench_server, import_scenarios, web_scenarios
 from benchmarks.app_servers import ServerError
 from benchmarks.web_scenarios import ScenarioError
+from import_tests.tools import holdings_survey
 from opus_config import load_config
 from opus_import import import_all
 
@@ -16,24 +15,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 IMPORT_FOR_TESTS = REPO_ROOT / 'scripts' / 'import' / 'import_for_tests.sh'
 
 
-def _script_groups() -> list[tuple[str, tuple[str, ...]]]:
-    """Return each active bundle-import line of import_for_tests.sh: bundles, options."""
-    groups = []
-    for line in IMPORT_FOR_TESTS.read_text().splitlines():
-        if not re.match(r'^python -m opus_import .*--import ', line):
-            continue
-        words = [word for word in shlex.split(line)[3:] if word != '$1']
-        options = tuple(word for word in words if word.startswith('--') and word != '--import')
-        bundles = [word for word in words if not word.startswith('--')]
-        groups.append((bundles[0], options))
-    return groups
-
-
 def test_the_test_scale_groups_are_import_for_tests_sh_s(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Same bundles, same order, same options, as the script the API goldens come from."""
+    """Same bundles, in the same order, as the script the API goldens come from, with no
+    options of their own, as it gives none."""
     monkeypatch.setenv('PDS_DROPBOX_ROOT', '/holdings-root')
     scenario = import_scenarios.load_scenario('test')
-    assert [(group.bundles, group.options) for group in scenario.groups] == _script_groups()
+    bundles = [bundle for group in scenario.groups for bundle in group.bundles.split(',')]
+    assert bundles == holdings_survey.script_bundle_descriptors(IMPORT_FOR_TESTS)
+    assert [group.options for group in scenario.groups] == [()] * len(scenario.groups)
 
 
 def test_the_complete_scale_groups_are_opus_import_all_s(monkeypatch: pytest.MonkeyPatch) -> None:
