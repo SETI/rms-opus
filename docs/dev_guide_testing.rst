@@ -158,8 +158,10 @@ and each site decides what its argument selects. The sites are:
 
 ``hold_before_lock``
     Between an importer's ``import_process`` insert and its lock; its argument is a
-    number of seconds. ``hold_before_lock:5`` lets a test read the importers' table
-    while the row is written and not yet committed.
+    file's path, and the importer waits there while the file exists, for at most
+    :data:`~opus_import.import_processes.HOLD_LIMIT_SECONDS`. ``hold_before_lock:<path>`` lets a test read the importers'
+    table while the row is written and not yet committed, for as long as its reads
+    take, and then remove the file to let the importer go on.
 
 Never set it outside a test.
 

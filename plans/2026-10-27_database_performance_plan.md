@@ -7346,3 +7346,11 @@ Nothing above this line is rewritten by an executor.
   value first: two parallel builds numbered 382 `mult` rows differently. Three
   `test_search.py` tests that wrote such ids down read them by value instead
   (`_mult_id`); the API goldens do not depend on them. The suite passed on both builds.
+
+### 2026-11-13, PR-17 (written against this file at 8f59892b)
+
+- The `hold_before_lock` fault site takes a file's path rather than a number of seconds:
+  the importer waits while the file exists, for at most `HOLD_LIMIT_SECONDS`. Its test
+  failed twice in CI with a fixed hold of 8 s, when three Import Tests jobs shared the
+  runner and `opus_import_all --status --recover` outlasted the hold; the test removes
+  the file once its reads are done.

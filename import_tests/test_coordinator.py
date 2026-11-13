@@ -470,9 +470,15 @@ def test_no_reader_sees_an_importer_before_it_holds_its_lock(
 ) -> None:
     """During the hold between an importer's row and its lock, a ``READ COMMITTED`` read
     does not see the row and ``--status --recover`` finds no importer lost; after it,
-    ``--status`` shows the importer with its lock held, still ``running``."""
+    ``--status`` shows the importer with its lock held, still ``running``.
+
+    The importer holds while a file exists, and the test removes it once its reads are
+    done, so the reads fall inside the hold however slowly the computer runs them.
+    """
     _register(case, main_run.bundles)
-    hold = f'{import_processes.HOLD_BEFORE_LOCK_FAULT_SITE}:8'
+    hold_file = case.paths.log_dir / 'hold_before_lock'
+    hold_file.touch()
+    hold = f'{import_processes.HOLD_BEFORE_LOCK_FAULT_SITE}:{hold_file}'
     case.start('opus_import', ['--join', '--workers', '1'], fault=hold)
 
     def uncommitted_insert() -> bool:
@@ -487,10 +493,13 @@ def test_no_reader_sees_an_importer_before_it_holds_its_lock(
         )
         return bool(found[0][0])
 
-    _wait(uncommitted_insert, "the importer's uncommitted row")
-    rows_during = _read_committed(case, 'SELECT COUNT(*) FROM import_process')
-    recovered_during = _status(case, '--recover')
-    recovered_in_the_hold = uncommitted_insert()
+    try:
+        _wait(uncommitted_insert, "the importer's uncommitted row")
+        rows_during = _read_committed(case, 'SELECT COUNT(*) FROM import_process')
+        recovered_during = _status(case, '--recover')
+        recovered_in_the_hold = uncommitted_insert()
+    finally:
+        hold_file.unlink()
 
     process_id = _wait(
         lambda: case.importers()[0][0] if case.importers() else None, "the importer's row"
