@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # Run this from the root of the repository, with rms-opus installed in the active
-# environment, with OPUS_CONFIG naming the OPUS configuration file.
+# environment, with OPUS_CONFIG naming the OPUS configuration file. Its arguments are
+# options of opus_import_all, such as --workers 24 --importers 6, passed on as given.
 set -e
 
 echo "*************************************************************"
@@ -38,10 +39,10 @@ TEST_BUNDLES=(
     cassini_uvis_solarocc_beckerjarmak2023
     # cassini_iss_fring_mosaics_rsfrench2025
 )
-# Erase the schema, register the list, import it with [import] importers queue importers
-# sharing [import] workers, and finish the database. The confirmation above answers the
-# erase's.
-opus_import_all --scorched-earth --yes --sets "$(IFS=,; echo "${TEST_BUNDLES[*]}")" $1
+# Erase the schema, register the list, import it with queue importers (--importers, or
+# [import] importers) sharing the workers (--workers, or [import] workers), and finish
+# the database. The confirmation above answers the erase's.
+opus_import_all --scorched-earth --yes --sets "$(IFS=,; echo "${TEST_BUNDLES[*]}")" "$@"
 python manage.py migrate
 
 echo "ALL DONE!"

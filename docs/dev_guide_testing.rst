@@ -236,7 +236,9 @@ By hand
    imports a fixed list of bundle sets -- Cassini ISS, UVIS, VIMS and CIRS, Galileo,
    Voyager, Hubble, New Horizons, and the occultation sets -- through
    ``opus_import_all``, with ``[import] importers`` importers at once, which finishes
-   the database, and then runs ``manage.py migrate``. Read ``ERRORS.log`` afterwards
+   the database, and then runs ``manage.py migrate``. Options of ``opus_import_all``
+   given to the script are passed on: ``--workers 24 --importers 6`` divides 24 workers
+   among six importers. Read ``ERRORS.log`` afterwards
    rather than trusting the exit status: several import steps report failure through
    the log and still exit zero.
 
