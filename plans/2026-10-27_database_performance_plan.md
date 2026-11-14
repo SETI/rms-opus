@@ -7288,38 +7288,38 @@ Nothing above this line is rewritten by an executor.
   - Mutations, each failing its test: the leftover's row ignored; the final drop
     ignoring `restore_pending`; the flag never set, or never cleared.
   - Results, at ac849e9a: the gates pass (3,086 unit tests).
-- **Measurement** (2026-11-11, test scale; one schema, `bench_test_after_b_3`, imported
-  by PR-17's head 45ccaebb, since this PR changes no schema; before PR-17's head serving
-  it, which has neither step; after this PR's head e5e71573 with `--warm db-cold --warm
-  app-cold --promotion-carts 10000`; six web runs alternated, three a side, session `a`;
-  judged against the PR-00 floors; load averages 1.3 to 6.9, the PR-19 executor working
-  beside the runs):
+- **Measurement** (2026-11-13, test scale, session `r`, five web runs a side, B A A B B A
+  A B B A, replacing session `a`'s three, which measured a warm-up this PR no longer
+  ships): one schema, `bench_test_gate_with`, a copy of PR-17's test-scale import
+  (`SCHEMA_VERSION` 10, which this PR keeps); before PR-17's final head 86667054 serving
+  it, which has neither step; after this PR's head 6f60721d with `--warm db-cold --warm
+  app-cold --promotion-carts 10000`; judged against the PR-00 floors. Load averages 9.4
+  to 21.1, from other work on the machine; the first before run overlapped the last 40 s
+  of a `run-all-checks.sh`.
   - **Target, the head's db-cold first page of the empty search against its own warm:**
-    18.6 ms against 10.7 ms, 7.9 ms apart, within the web family's jitter of 12.9 ms, the
-    distance at which §2.6 counts two medians of a time metric as agreeing; by that
-    measure the target is met. Beside it, before against after, db-cold, which the target
-    does not judge: 24.8 ms to 18.6 ms, -25.0%, not beyond its floor (52.0%, the same
-    jitter over a small median). Behind the target, the warm-up did what it is for: the
-    empty search's db-cold result count 194.9 ms to 11.2 ms (-94.2%), and the page's
-    db-cold `Innodb_buffer_pool_reads` 220 to 0 and `Sort_merge_passes` 1 to 0.
+    19.4 ms against 18.3 ms, within the web family's jitter of 12.9 ms, the distance at
+    which §2.6 counts two medians of a time metric as agreeing: the target is met. Before
+    against after, db-cold, which the target does not judge: 44.1 ms to 19.4 ms, -56.0%,
+    beyond its floor (29.2%). Behind it, the empty search's db-cold result count 274.0 ms
+    to 1.9 ms (-99.3%), and the page's db-cold `Innodb_buffer_pool_reads` 263 to 0 and
+    `Sort_merge_passes` 1 to 0. The warm-up took 3.3 s, median over the runs' resets
+    (2.5 s to 4.9 s), asking the harness's own gunicorn.
   - **Two requests the warm-up does not issue:** the empty search's tenth page db-cold,
-    9.1 ms to 27.7 ms (reported; floor 198%); the planet widget db-cold, 39.0 ms to
-    28.3 ms (-27.5%, within its floor).
+    19.2 ms to 18.1 ms (-5.4%; floor 113.7%); the planet widget db-cold, 56.9 ms to
+    15.1 ms (-73.5%, beyond its floor of 22.7%), since its counts are among those the
+    warm-up asks for.
   - **Promotion window** (head only, 10,000 planted cart rows): `web.promotion.window_s`
-    2.48 s, of which the carry-over `web.promotion.carry_over_s` 0.62 s, measured by one
-    run after the review's fixes (at e2f3f136, session `w`, 2026-11-12, `--warm db-cold
-    --warm app-cold --promotion-carts 10000` against the same schema; load averages 3.9
-    to 11.2), since the window opens before the application's stop and closes once its
-    start returns. The runs above, which left out the stop and the start, gave 1.43 s and
-    0.66 s.
-  - **Guard regressed, accepted:** `web.app-cold.concurrency.shared.p95_s` 0.177 s to
-    0.227 s (+28.1%; floor 19.4%), every head run above every base run. The head serves
-    requests with the same code as the base; what differs is the warm-up, which builds
-    the empty search 1.5 s before sixteen users build the shared search together. A
-    check session `nowarmapp`, one run a side with the head warming db-cold only, gave
-    0.175 s against the base's 0.174 s. The regression is the harness measuring a
-    scenario right after the warm-up's writes, which a deploy does once; the
-    orchestrator accepts it. Every other guard held.
+    3.48 s, of which the carry-over `web.promotion.carry_over_s` 0.76 s (spread 41.6%).
+  - **Guard regressed, accepted:** `web.app-cold.concurrency.shared.p95_s` 0.216 s to
+    0.270 s (+24.7%; floor 15.9%), at five runs a side as §2.6 asks of a guard within
+    twice its floor. The head serves requests with the same code as the base; what
+    differs is the warm-up, whose searches' rows are written just before sixteen users
+    build the shared search together. Session `nowarmapp` (2026-11-11), one run a side
+    with the head warming db-cold only, gave 0.175 s against the base's 0.174 s; the
+    db-cold half, also warmed, held (+2.9%), and the distinct half improved (-25.8%).
+    The regression is the harness measuring a scenario right after the warm-up's
+    writes, which a deploy does once; the orchestrator accepts it. Every other guard
+    held.
 
 ### 2026-11-12, PR-14 (written against this file at 1e55f88a)
 
