@@ -81,16 +81,6 @@ Helper functions build the substituted names:
 they are given is in the maps below, so a typo fails immediately rather than producing
 a table nobody fills.
 
-``VOLSETS_WITH_PREVIEWS``
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The volume sets that have browse products: the Cassini ISS and CIRS sets, the Cassini UVIS
-and VIMS sets, EBROCC, Galileo, the Hubble sets, the New Horizons sets, and the Voyager
-ISS sets. **Nothing reads it.**
-:meth:`~opus_import.obs.obs_preview.ObsPreview.field_obs_preview_preview_images` decides
-whether an observation has previews by asking ``rms-pdsfile`` for a view set, not by
-consulting this list.
-
 The mission, host and instrument maps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

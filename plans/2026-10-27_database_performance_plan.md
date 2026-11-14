@@ -7620,3 +7620,9 @@ Nothing above this line is rewritten by an executor.
   them common searches, in about 5 s; a user-interface request for a warmed search stores
   no search and builds nothing.
 - `bench_web` passes its own server's root as `--url`.
+
+### 2026-11-13, PR-19 (written against this file at a2beb69e)
+
+- `config_data.VOLSETS_WITH_PREVIEWS` goes, with its section of the import configuration
+  guide: nothing read it, since `ObsPreview.field_obs_preview_preview_images` asks
+  rms-pdsfile whether an observation has a view set.
