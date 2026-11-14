@@ -8196,4 +8196,7 @@ Nothing above this line is rewritten by an executor.
   side by side, each side's lines kept: `bench_db`'s `django_settings` beside
   `probe_resort`, `sql_builder`'s and `test_table_schemas`'s imports, the table schemas
   guide's key list (the junction tables' key, then `fulltext`), and these notes after
-  PR-20's and PR-21's.
+  PR-20's and PR-21's. PR-20's later head 3ef090a3 (its measurement notes) is merged in
+  too. Results at that merge: the gates pass (3,231 unit tests); the import suite 209
+  passed and 3 skipped; `pr22local` set up again from the merge, and the integration
+  job's run 2,929 passed at 100% coverage.
