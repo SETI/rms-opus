@@ -15,10 +15,13 @@ one side's schema, in the session that captured them:
   one the scenario's default-order request reads (`built_search_id`).
 
 Each shape is run under ``EXPLAIN ANALYZE`` `EXPLAIN_RUNS` times, the two shapes
-alternating, and never executed as a write: both would insert the same rows. The probe
-records each shape's times, the rows its top iterator returned and the rows it examined,
-and the built search's stored ``result_count``. A measurement is valid only when both
-shapes returned that many rows and it is not zero (`probe_problems`).
+alternating, and never executed as a write: both would insert the same rows. After the
+timed runs each shape's rows are counted once, exactly, by ``SELECT COUNT(*)`` over it
+(`count_rows`), since ``EXPLAIN ANALYZE`` prints a large row count rounded
+(``rows=1.38e+06``). The probe records each shape's times, its exact row count, the rows
+its plan says it returned and examined, and the built search's stored ``result_count``.
+A measurement is valid only when both shapes' exact counts equal that count and it is not
+zero (`probe_problems`).
 
 The probe's statements are generated at replay time from the capture and the built
 search's id, and are written to no capture file. Both shapes run on any commit whose
@@ -71,6 +74,9 @@ _WHERE = re.compile(r'\bWHERE\b', re.IGNORECASE)
 
 #: The clause keywords a top-level ``WHERE`` may be followed by.
 _TRAILING_CLAUSE = re.compile(r'\b(GROUP\s+BY|ORDER\s+BY|LIMIT|HAVING|WINDOW)\b', re.IGNORECASE)
+
+#: The alias a shape's rows are counted under.
+COUNTED_ALIAS = 'counted'
 
 #: The metric names' prefix.
 METRIC_PREFIX = 'db.resort_probe'
@@ -217,18 +223,34 @@ def _spread(values: Sequence[float]) -> float:
     return (max(values) - min(values)) / middle if middle > 0 else 0.0
 
 
+def count_rows(connection: Any, statement: str) -> int:
+    """Return exactly how many rows a ``SELECT`` returns, by counting them on the server.
+
+    Parameters:
+        connection: The replay connection.
+        statement: The ``SELECT``.
+
+    Returns:
+        ``SELECT COUNT(*) FROM (<statement>) AS counted``'s answer.
+    """
+    # The statement is one the capture recorded or one generated from it.
+    counted = f'SELECT COUNT(*) FROM ({statement}) AS `{COUNTED_ALIAS}`'  # nosec B608
+    return int(query(connection, counted)[0][0])
+
+
 def probe_problems(shapes: dict[str, dict[str, Any]], result_count: int | None) -> list[str]:
     """Return why a probe's measurement is not valid; none for a valid one.
 
     Parameters:
-        shapes: Each shape's ``rows_returned`` and ``rows_examined``, every run's.
+        shapes: Each shape's exact ``rows_returned`` (`count_rows`), and its
+            ``rows_examined`` in every run, as its plan reports them.
         result_count: The built search's stored ``result_count``, or None if its row
             holds none.
 
     Returns:
-        A sentence for each problem: no result count, or a zero one; a shape that
-        examined or returned no rows in some run; or a shape whose rows differ from the
-        result count in some run.
+        A sentence for each problem: no result count, or a zero one; a shape whose plan
+        examined no rows in some run; a shape that returned no rows; or a shape whose
+        rows differ from the result count.
     """
     problems = []
     if not result_count:
@@ -236,11 +258,11 @@ def probe_problems(shapes: dict[str, dict[str, Any]], result_count: int | None) 
     for name, shape in shapes.items():
         if min(shape['rows_examined']) == 0:
             problems.append(f'the {name} shape examined no rows in a run')
-        if min(shape['rows_returned']) == 0:
-            problems.append(f'the {name} shape returned no rows in a run')
-        elif result_count and set(shape['rows_returned']) != {result_count}:
+        if shape['rows_returned'] == 0:
+            problems.append(f'the {name} shape returned no rows')
+        elif result_count and shape['rows_returned'] != result_count:
             problems.append(
-                f'the {name} shape returned {sorted(set(shape["rows_returned"]))} rows, '
+                f'the {name} shape returned {shape["rows_returned"]} rows, '
                 f'not the result count {result_count}'
             )
     return problems
@@ -260,11 +282,13 @@ def probe(
     Returns:
         The metrics, under ``db.resort_probe.<search>.``: each shape's ``time_s`` (the
         median wall-clock of its ``EXPLAIN ANALYZE``), ``analyze_ms`` (the median time to
-        its top iterator's last row, as the server reports it), ``rows_returned`` and
-        ``rows_examined``; ``result_count``; ``ratio``, the generated shape's ``time_s``
+        its top iterator's last row, as the server reports it), ``rows_returned`` (its
+        exact count, `count_rows`) and ``rows_examined`` (the median of what its plans
+        report); ``result_count``; ``ratio``, the generated shape's ``time_s``
         over the captured shape's; and ``valid``, 1 or 0. The samples: each shape's
         times and server times, under their metrics' names. The details: both
-        statements, the built search's id, every run's figures, each shape's spread, the
+        statements, the built search's id, every run's figures (the rows each plan reports
+        its top iterator returned among them, as ``plan_rows``), each shape's spread, the
         last ``EXPLAIN ANALYZE`` tree of each, and the problems `probe_problems` found.
     """
     captured = captured_resort(blocks, search)
@@ -273,7 +297,7 @@ def probe(
     stored = query(connection, 'SELECT result_count FROM user_searches WHERE id = %s', [search_id])
     result_count = int(stored[0][0]) if stored and stored[0][0] is not None else None
     runs: dict[str, dict[str, Any]] = {
-        name: {'times_s': [], 'analyze_ms': [], 'rows_returned': [], 'rows_examined': []}
+        name: {'times_s': [], 'analyze_ms': [], 'plan_rows': [], 'rows_examined': []}
         for name in SHAPES
     }
     trees: dict[str, str] = {}
@@ -284,9 +308,11 @@ def probe(
             runs[name]['times_s'].append(time.perf_counter() - started)
             summary = summarize_analyze(tree)
             runs[name]['analyze_ms'].append(summary['top_last_row_ms'])
-            runs[name]['rows_returned'].append(int(summary['top_rows']))
+            runs[name]['plan_rows'].append(summary['top_rows'])
             runs[name]['rows_examined'].append(int(summary['rows_examined']))
             trees[name] = tree
+    for name in SHAPES:
+        runs[name]['rows_returned'] = count_rows(connection, statements[name])
     prefix = f'{METRIC_PREFIX}.{search}'
     metrics: dict[str, float] = {}
     samples: dict[str, list[float]] = {}
@@ -296,7 +322,7 @@ def probe(
         samples[f'{prefix}.{name}.time_s'] = list(shape['times_s'])
         metrics[f'{prefix}.{name}.analyze_ms'] = statistics.median(shape['analyze_ms'])
         samples[f'{prefix}.{name}.analyze_ms'] = list(shape['analyze_ms'])
-        metrics[f'{prefix}.{name}.rows_returned'] = statistics.median(shape['rows_returned'])
+        metrics[f'{prefix}.{name}.rows_returned'] = shape['rows_returned']
         metrics[f'{prefix}.{name}.rows_examined'] = statistics.median(shape['rows_examined'])
     problems = probe_problems(runs, result_count)
     if result_count is not None:

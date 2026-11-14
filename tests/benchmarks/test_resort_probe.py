@@ -128,14 +128,14 @@ def test_a_search_id_that_is_not_an_int_is_refused() -> None:
         resort_probe.generated_resort(_CAPTURED, '2 OR 1')  # type: ignore[arg-type]
 
 
-def _shape(returned: list[int], examined: list[int]) -> dict[str, Any]:
+def _shape(returned: int, examined: list[int]) -> dict[str, Any]:
     """Return one shape's per-run rows."""
     return {'rows_returned': returned, 'rows_examined': examined}
 
 
 def test_a_probe_whose_shapes_return_the_result_count_is_valid() -> None:
     """Both shapes returning the built search's count, having examined rows, is valid."""
-    shapes = {'captured': _shape([30] * 5, [40] * 5), 'generated': _shape([30] * 5, [60] * 5)}
+    shapes = {'captured': _shape(30, [40] * 5), 'generated': _shape(30, [60] * 5)}
     assert resort_probe.probe_problems(shapes, 30) == []
 
 
@@ -143,29 +143,29 @@ def test_a_probe_whose_shapes_return_the_result_count_is_valid() -> None:
     ('shapes', 'count', 'problem'),
     [
         (
-            {'captured': _shape([30], [40]), 'generated': _shape([30], [60])},
+            {'captured': _shape(30, [40]), 'generated': _shape(30, [60])},
             0,
             'result count 0',
         ),
         (
-            {'captured': _shape([30], [40]), 'generated': _shape([30], [60])},
+            {'captured': _shape(30, [40]), 'generated': _shape(30, [60])},
             None,
             'result count None',
         ),
         (
-            {'captured': _shape([0], [40]), 'generated': _shape([30], [60])},
+            {'captured': _shape(0, [40]), 'generated': _shape(30, [60])},
             30,
             'captured shape returned no rows',
         ),
         (
-            {'captured': _shape([30], [0]), 'generated': _shape([30], [60])},
+            {'captured': _shape(30, [0]), 'generated': _shape(30, [60])},
             30,
             'captured shape examined no rows',
         ),
         (
-            {'captured': _shape([30], [40]), 'generated': _shape([29], [60])},
+            {'captured': _shape(30, [40]), 'generated': _shape(29, [60])},
             30,
-            'generated shape returned [29] rows',
+            'generated shape returned 29 rows',
         ),
     ],
 )
@@ -180,10 +180,14 @@ def test_a_probe_that_returned_no_rows_or_others_is_a_failed_measurement(
 class _ProbeServer:
     """A connection and cursor answering the probe's statements."""
 
-    def __init__(self, rows: dict[str, int], result_count: int | None) -> None:
-        """Hold the rows each shape returns and the built search's count."""
+    def __init__(
+        self, rows: dict[str, int], result_count: int | None, printed: str | None = None
+    ) -> None:
+        """Hold the rows each shape returns, the built search's count, and the row count
+        each plan prints, when it prints one other than the exact count."""
         self.rows = rows
         self.result_count = result_count
+        self.printed = printed
         self.executed: list[tuple[str, Any]] = []
         self._answer: list[tuple[Any, ...]] = []
 
@@ -200,12 +204,17 @@ class _ProbeServer:
         if statement.startswith('SELECT result_count'):
             self._answer = [(self.result_count,)]
             return
-        assert statement.startswith('EXPLAIN ANALYZE ')
         shape = 'generated' if '`probe_set`' in statement else 'captured'
         rows = self.rows[shape]
+        if statement.startswith('SELECT COUNT(*) FROM ('):
+            assert statement.endswith(') AS `counted`')
+            self._answer = [(rows,)]
+            return
+        assert statement.startswith('EXPLAIN ANALYZE ')
+        printed = self.printed or str(rows)
         self._answer = [
             (
-                f'-> Window aggregate  (actual time=1.5..2.5 rows={rows} loops=1)\n'
+                f'-> Window aggregate  (actual time=1.5..2.5 rows={printed} loops=1)\n'
                 f'    -> Table scan on obs_general  (cost=9 rows=50) '
                 f'(actual time=0.1..1.0 rows={rows + 10} loops=1)\n',
             )
@@ -237,6 +246,20 @@ def test_the_probe_alternates_the_shapes_and_records_what_the_gate_reads() -> No
     assert details['search_id'] == 2
     assert details['problems'] == []
     assert details['statements']['captured'] == _CAPTURED
+    counts = [statement for statement, _ in server.executed if statement.startswith('SELECT COUNT')]
+    assert len(counts) == len(resort_probe.SHAPES)
+    assert server.executed[-1][0] in counts
+
+
+def test_a_large_count_the_plan_prints_rounded_is_still_a_valid_measurement() -> None:
+    """EXPLAIN ANALYZE prints 1,381,234 rows as 1.38e+06; the exact count decides, and the
+    plan's figure is kept as a diagnostic."""
+    server = _ProbeServer({'captured': 1381234, 'generated': 1381234}, 1381234, '1.38e+06')
+    metrics, _samples, details = resort_probe.probe(server, _blocks())
+    assert metrics['db.resort_probe.broad.valid'] == 1.0
+    assert details['problems'] == []
+    assert metrics['db.resort_probe.broad.captured.rows_returned'] == 1381234
+    assert details['runs']['captured']['plan_rows'] == [1380000.0] * EXPLAIN_RUNS
 
 
 def test_a_probe_whose_shapes_disagree_is_recorded_invalid() -> None:

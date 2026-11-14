@@ -586,19 +586,22 @@ replaced by a join to the ``search_results`` rows of the search the scenario's
 default-order request read, so it numbers the built search's rows in the requested order
 without the predicate. The probe writes the generated statement into no capture file.
 Each shape's ``SELECT`` runs under ``EXPLAIN ANALYZE`` five times, the two shapes taking
-turns, and neither is run as a write. The metrics are under ``db.resort_probe.broad.``:
+turns, and neither is run as a write. After the timed runs each shape's rows are counted
+once, exactly, by ``SELECT COUNT(*)`` over it, since ``EXPLAIN ANALYZE`` prints a large
+row count rounded (``rows=1.38e+06``). The metrics are under ``db.resort_probe.broad.``:
 for each shape, ``time_s``, the median time of its ``EXPLAIN ANALYZE``, with the five
 times in the run's ``samples``; ``analyze_ms``, the median time to the last row its top
-iterator reports; ``rows_returned`` and ``rows_examined``; then ``result_count``, the
-built search's stored count; ``ratio``, the generated shape's ``time_s`` over the
-captured one's; and ``valid``. The run's details keep both statements, every execution's
-figures and the last ``EXPLAIN ANALYZE`` tree of each. The measurement is valid only
-when both shapes returned the built search's result count in every execution, that count
-is not zero, and both examined rows; otherwise ``valid`` is 0, the details say why, and
-the command exits with an error after recording the run. A probe that cannot run -- a
-capture without the re-sort scenario's blocks, a re-sorted request that built no search,
-or a statement the server refuses -- is recorded the same way, with the error as its
-problem, so the run's other measurements are kept.
+iterator reports; ``rows_returned``, the exact count, and ``rows_examined``, from the
+plans; then ``result_count``, the built search's stored count; ``ratio``, the generated
+shape's ``time_s`` over the captured one's; and ``valid``. The run's details keep both
+statements, every execution's figures (the rows each plan reports returned among them)
+and the last ``EXPLAIN ANALYZE`` tree of each. The measurement is valid only when both
+shapes' exact counts equal the built search's result count, that count is not zero, and
+both plans examined rows in every execution; otherwise ``valid`` is 0, the details say
+why, and the command exits with an error after recording the run. A probe that cannot
+run -- a capture without the re-sort scenario's blocks, a re-sorted request that built
+no search, or a statement the server refuses -- is recorded the same way, with the error
+as its problem, so the run's other measurements are kept.
 
 Result files
 ------------
