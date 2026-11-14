@@ -52,7 +52,6 @@ from benchmarks.app_servers import MemcachedServer
 from benchmarks.bench_server import (
     MysqlServer,
     load_server_config,
-    parse_django_settings,
     query,
     quote_identifier,
     reexec_with_socket,
@@ -445,20 +444,7 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument(
         '--ascii-columns', action='store_true', help='count non-ASCII STRING values'
     )
-    parser.add_argument(
-        '--django-setting',
-        metavar='NAME=VALUE',
-        action='append',
-        default=[],
-        help="with --dump-queries, a Django setting the capture's application assigns "
-        "before serving, as bench_web's option of the name; repeatable",
-    )
-    args = parser.parse_args(argv)
-    try:
-        args.django_settings = parse_django_settings(args.django_setting)
-    except ValueError as e:
-        parser.error(str(e))
-    return args
+    return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -551,7 +537,6 @@ def main(argv: Sequence[str] | None = None) -> None:
             'innodb_buffer_pool_size': pool,
         }
         if args.dump_queries:
-            environment['django_settings'] = args.django_settings
             _dump_and_replay(
                 server=server,
                 side=side,
@@ -561,7 +546,6 @@ def main(argv: Sequence[str] | None = None) -> None:
                 memcached_binary=memcached_binary,
                 run=run,
                 commit_capture=args.commit_capture,
-                django_settings=args.django_settings,
                 probe_resort=args.resort_probe,
             )
     path = append_runs(label, environment, [run])
@@ -616,7 +600,6 @@ def _dump_and_replay(
     memcached_binary: str,
     run: dict[str, Any],
     commit_capture: bool,
-    django_settings: dict[str, object],
     probe_resort: bool,
 ) -> None:
     """Capture this side's scenario SQL and replay it at once, into the run's details.
@@ -630,7 +613,6 @@ def _dump_and_replay(
         memcached_binary: The memcached program.
         run: The run to record the plans in.
         commit_capture: Whether to copy the capture to `COMMITTED_CAPTURE` as well.
-        django_settings: The Django settings the capture's application assigns, by name.
         probe_resort: Whether to run `record_resort_probe` after the replay, on its
             connection.
     """
@@ -648,7 +630,6 @@ def _dump_and_replay(
         schema=schema,
         holdings=holdings,
         single_worker=True,
-        django_settings=django_settings,
     )
     capture = label.scratch_dir / f'queries_{label.side}.sql'
     bench.stamp_schema_version()

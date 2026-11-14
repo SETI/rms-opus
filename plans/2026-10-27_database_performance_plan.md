@@ -8265,3 +8265,45 @@ Nothing above this line is rewritten by an executor.
   - `bench_db`'s autocomplete plans (`d`, default settings, so the joined `LIKE` on both)
     agree: `prefix_2` 18.96 against 19.63 ms, `prefix_6` 11.88 against 11.91 ms, the same
     rows examined.
+- **Reduced to the #1279 fix (2026-11-14)**, at the operator's ruling on the measurements
+  below: the `FULLTEXT` indexes, the three-statement fallback, the schema entries and
+  version 13, finalization's `FULLTEXT` step and token-size check, the stopword handling
+  in the import, clones and peer load, the harness's `--django-setting`, and their tests
+  and documentation are all removed. What remains is the timeout tests' injected 3024
+  (`_run_stringsearchchoices_timed_out`), against PR-20's code and schema version 12.
+  The measurements were taken on a complete-scale import of 9edf2110 (6 importers × 4
+  workers, 3,350.9 s; result file `2026-11-14_PR-22_after_complete_mysql_full6x4.json`),
+  so both paths read the same data; the base's statement is the head's with
+  `STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD=500`, since the empty search's 1,627,081
+  results put the default on the branch from every observation.
+  - **`bench_web`, complete scale** (sessions `cd` default, `cl` `LIKE` alone under
+    500 ms, `cx` the index first; two runs each, order cd cl cx cx cl cd; another
+    session's `sdtty` jobs held the load at 12 to 19 after the first run). App-cold
+    `prefix_2` / `prefix_6`: `cd` 43 and 30 / 22 and 51 ms, `cl` 22 and 43 / 22 and
+    45 ms, `cx` 1,019 and 1,810 / 936 and 1,452 ms. In `cx` the index statement reached
+    its 500 ms limit for both prefixes in every run (`Max_execution_time_exceeded` 2),
+    and the last `LIKE` answered; `cd` and `cl` timed nothing out. The default never
+    reached the index.
+  - **A probe of 47 cases** (13 string fields, of them 12 indexed and `primaryfilespec`
+    not; texts of 2 to 18 characters, texts no value holds, and `begins`, `ends` and
+    `regex`), each three times under each setting through the application in process,
+    with the cache cleared and the buffer pool warm. Medians, `LIKE` alone / default /
+    index first, in ms: `opusid` `co` 7 / 5 / 780, `co-iss` 22 / 21 / 1,340, `1477654`
+    78 / 187 / 138, the whole `co-iss-w1477654052` 150 / 284 / 220, `vims-v16058` 94 /
+    353 / 297, `_ir` 85 / 1,331 / 1,262, `zzqq` 131 / 56 / 4; `productid` `_N174250` 122 /
+    325 / 265, `qqzz` 205 / 55 / 4; `datasetid` `VIMS` 6 / 4 / 1,949; `CASSINIobsname`
+    `LIMBSCAN` 64 / 350 / 254; `CASSINIsequenceid` `S7` 234 / 310 / 290. The index won
+    only for texts that match nothing or nearly nothing; for a text of moderate
+    frequency the default paid for a `LIKE` cut off at 50 ms and then an index search
+    slower than that `LIKE` would have been. `begins`, `ends`, `regex` and the unindexed
+    column were the same under every setting. `LIKE` alone timed out on no `contains`
+    case; the slowest cases were `regex` (410 to 480 ms, and `^co-iss-w147765` once at
+    its limit), which the index does not serve.
+  - **A defect the probe found:** MySQL reports a full-text result-cache overflow as
+    error 188 itself, not inside 1030 as `is_abandoned_query_error` expected, so the
+    endpoint answered HTTP 500. Under the default settings `CASSINIobsname`
+    `ALBCOL005_PRIME` failed in all three runs (148 ms with `LIKE` alone); with the index
+    first `bundleid` `COISS_` and `COISS_2` failed in two of three. The unit test had
+    built the 1030 form.
+  - The `bench_complete_after_full6x4_1` schema stays on the benchmark server until the
+    chain's cleanup.
