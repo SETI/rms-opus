@@ -892,7 +892,8 @@ A plain ``opus_import`` takes no lock and records no row; its bundles keep
     first, printing the schema so that the erase cannot be aimed at the wrong database.
 
 ``clone_database.sh``
-    Copies a database.
+    Copies a database, through ``mysqldump``, loading the copy with the stopword list
+    off so that its ``FULLTEXT`` indexes hold what the import's do.
 
 ``find_unknown_warnings.sh``
     Filters an import log down to the warnings no known pattern accounts for, which is

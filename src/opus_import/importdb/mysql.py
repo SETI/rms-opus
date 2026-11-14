@@ -53,6 +53,7 @@ from opus_import.importdb.super import (
     SchemaColumn,
 )
 from opus_import.table_keys import (
+    NGRAM_TOKEN_SIZE,
     KeyKind,
     OnDelete,
     TableKey,
@@ -213,6 +214,16 @@ MYSQL_INDEX_ENTRY_OVERHEAD = 10
 
 #: The factor the estimate allows for the sort's own overhead.
 MYSQL_INDEX_SORT_FACTOR = 1.3
+
+#: The parser every ``FULLTEXT`` index is built with: it indexes each run of
+#: `opus_import.table_keys.NGRAM_TOKEN_SIZE` characters inside a word, so the index finds
+#: text in the middle of a value, which the default parser, indexing whole words, would
+#: not.
+MYSQL_FULLTEXT_PARSER = 'ngram'
+
+#: The bytes an ngram token's entry carries beyond its characters, in the space estimate
+#: of a ``FULLTEXT`` build: the row's document id and the token's position.
+MYSQL_FULLTEXT_TOKEN_OVERHEAD = 12
 
 #: The host names that put the server on the computer running the import, where a
 #: directory on the server's host can be read from here.
@@ -520,6 +531,16 @@ class ImportDBMySQL(ImportDBSuper):
                     self._execute('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED')
                 except MySQLdb.Error as e:
                     self._log_failure(f'Failed to set the READ COMMITTED isolation level: {e}')
+                    raise ImportDBError(e) from e
+
+                try:
+                    # A FULLTEXT index keeps the stopword setting of the session that
+                    # built it, or that last rebuilt its table. The default list holds
+                    # "a" and "i", and the ngram parser drops every token holding a
+                    # stopword, so every session the import opens turns the list off.
+                    self._execute('SET SESSION innodb_ft_enable_stopword = OFF')
+                except MySQLdb.Error as e:
+                    self._log_failure(f'Failed to turn the full-text stopword list off: {e}')
                     raise ImportDBError(e) from e
 
                 self._prepare_import_session()
@@ -1081,8 +1102,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
     def _create_key_clause(self, key: TableKey) -> str:
         """Return a key as a ``CREATE TABLE`` clause names it.
 
-        A plain or unique key is named after its first column, as the server would name
-        it, and a foreign key is left for the server to name.
+        A plain, unique or ``FULLTEXT`` key is named after its first column, as the server
+        would name it, and a foreign key is left for the server to name. A ``FULLTEXT``
+        key is built with the ngram parser (`MYSQL_FULLTEXT_PARSER`).
 
         Parameters:
             key: The key.
@@ -1103,6 +1125,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 f'{q(table)}({referenced_columns}) '
                 f'ON DELETE {key.on_delete.upper()} ON UPDATE CASCADE'
             )
+        if key.kind == 'fulltext':
+            return (
+                f'FULLTEXT KEY {q(key.columns[0])} ({columns}) WITH PARSER {MYSQL_FULLTEXT_PARSER}'
+            )
         prefix = 'UNIQUE KEY' if key.kind == 'unique' else 'KEY'
         return f'{prefix} {q(key.columns[0])} ({columns})'
 
@@ -1114,7 +1140,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         Parameters:
             table_name: The table.
-            keys: The keys to add; no foreign key.
+            keys: The keys to add; no foreign or ``FULLTEXT`` key.
 
         Returns:
             The statement.
@@ -1122,11 +1148,45 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         q = self.quote_identifier
         clauses = []
         for key in keys:
-            assert key.kind != 'foreign', key
+            assert key.kind not in ('foreign', 'fulltext'), key
             columns = ', '.join(q(column) for column in key.columns)
             kind = {'primary': 'PRIMARY KEY', 'unique': 'UNIQUE KEY', 'key': 'KEY'}[key.kind]
             clauses.append(f'ADD {kind} ({columns})')
         return f'ALTER TABLE {q(table_name)} ' + ', '.join(clauses)
+
+    def add_fulltext_key_statement(self, table_name: str, key: TableKey) -> str:
+        """Return one ``ALTER TABLE`` that adds a ``FULLTEXT`` key to a table.
+
+        The key is unnamed, so the server names it after its first column, and built
+        with the ngram parser (`MYSQL_FULLTEXT_PARSER`).
+
+        Parameters:
+            table_name: The table.
+            key: The ``FULLTEXT`` key.
+
+        Returns:
+            The statement.
+        """
+        assert key.kind == 'fulltext', key
+        columns = ', '.join(self.quote_identifier(column) for column in key.columns)
+        return (
+            f'ALTER TABLE {self.quote_identifier(table_name)} '
+            f'ADD FULLTEXT KEY ({columns}) WITH PARSER {MYSQL_FULLTEXT_PARSER}'
+        )
+
+    def read_ngram_token_size(self) -> int:
+        """Return the server's ``ngram_token_size``.
+
+        Returns:
+            The token size the server's ngram parser builds ``FULLTEXT`` indexes with.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        res = self._execute_and_fetchall(
+            'SELECT @@GLOBAL.ngram_token_size', 'read_ngram_token_size'
+        )
+        return int(res[0][0])
 
     def add_foreign_key_statement(self, table_name: str, key: TableKey) -> str:
         """Return one ``ALTER TABLE`` that adds a foreign key to a table.
@@ -1144,13 +1204,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
     def read_table_keys(self) -> dict[str, list[TableKey]]:
         """Return the keys every table in the schema has, from ``information_schema``.
 
-        Plain, unique and primary keys come from ``STATISTICS``, and foreign keys from
-        ``KEY_COLUMN_USAGE`` joined to ``REFERENTIAL_CONSTRAINTS``; a ``FULLTEXT`` or
+        Plain, unique, primary and ``FULLTEXT`` keys come from ``STATISTICS``, and
+        foreign keys from ``KEY_COLUMN_USAGE`` joined to ``REFERENTIAL_CONSTRAINTS``; a
         spatial index is not a key here and is left out.
 
         Returns:
-            Each table's keys, keyed by table name, plain, unique and primary keys
-            first, in the order the server lists them; a table with no key is absent.
+            Each table's keys, keyed by table name, plain, unique, primary and
+            ``FULLTEXT`` keys first, in the order the server lists them; a table with no
+            key is absent.
 
         Raises:
             ImportDBError: If the server rejects a query.
@@ -1179,10 +1240,12 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
 
         indexes: dict[tuple[str, str], tuple[KeyKind, list[str]]] = {}
         for table_name, index_name, non_unique, column_name, index_type in index_rows:
-            if index_type not in ('BTREE', 'HASH'):
+            if index_type not in ('BTREE', 'HASH', 'FULLTEXT'):
                 continue
             kind: KeyKind
-            if index_name == 'PRIMARY':
+            if index_type == 'FULLTEXT':
+                kind = 'fulltext'
+            elif index_name == 'PRIMARY':
                 kind = 'primary'
             elif int(non_unique) == 0:
                 kind = 'unique'
@@ -1217,7 +1280,11 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
 
         The estimate is ``rows x (key bytes + primary key bytes + 10) x 1.3``, with the
         rows the server's statistics count and each column's bytes from
-        `MYSQL_KEY_BYTES`.
+        `MYSQL_KEY_BYTES`. A ``FULLTEXT`` key sorts a token for each run of
+        `opus_import.table_keys.NGRAM_TOKEN_SIZE` characters a value of its declared
+        width can hold, each the run's bytes and `MYSQL_FULLTEXT_TOKEN_OVERHEAD`, so its
+        estimate is ``rows x tokens x token bytes x 1.3``; the rebuild the first one on a
+        table makes is the caller's to add (`table_data_bytes`).
 
         Parameters:
             table_name: The table.
@@ -1240,6 +1307,20 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         columns_by_name = {
             column['field_name']: column for column in schema if 'field_name' in column
         }
+        if key.kind == 'fulltext':
+            token_bytes = 0
+            for name in key.columns:
+                column = columns_by_name.get(name, {})
+                width_type = MYSQL_WIDTH_FIELD_TYPE.fullmatch(column.get('field_type', ''))
+                characters = int(width_type[1]) if width_type is not None else 0
+                char_bytes = MYSQL_CHARSET_BYTES.get(
+                    column.get('field_charset', ''), MYSQL_DEFAULT_CHARSET_BYTES
+                )
+                tokens = max(1, characters - NGRAM_TOKEN_SIZE + 1)
+                token_bytes += tokens * (
+                    NGRAM_TOKEN_SIZE * char_bytes + MYSQL_FULLTEXT_TOKEN_OVERHEAD
+                )
+            return int(rows * token_bytes * MYSQL_INDEX_SORT_FACTOR)
         primary = [k for k in declared_keys(schema) if k.kind == 'primary']
         primary_columns = primary[0].columns if primary else ()
 
@@ -1263,6 +1344,26 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
 
         entry = width(key.columns) + width(primary_columns) + MYSQL_INDEX_ENTRY_OVERHEAD
         return int(rows * entry * MYSQL_INDEX_SORT_FACTOR)
+
+    def table_data_bytes(self, table_name: str) -> int:
+        """Return a table's data bytes as the server's statistics count them.
+
+        Parameters:
+            table_name: The table.
+
+        Returns:
+            Its ``DATA_LENGTH``, 0 for a table the statistics do not list.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        res = self._execute_and_fetchall(
+            'SELECT `DATA_LENGTH` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=%s '
+            'AND `TABLE_NAME`=%s',
+            'table_data_bytes',
+            [self.db_schema, table_name],
+        )
+        return int(res[0][0] or 0) if res else 0
 
     def index_space_budget(self, server_tmpdir: str | None) -> int | None:
         """Return the temporary space the index builds running at once may hold together.

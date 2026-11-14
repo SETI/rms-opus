@@ -1180,7 +1180,7 @@ class ImportDBSuper:
 
         Parameters:
             table_name: The table.
-            keys: The keys to add; no foreign key.
+            keys: The keys to add; no foreign or ``FULLTEXT`` key.
 
         Returns:
             The statement.
@@ -1189,6 +1189,32 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::add_keys_statement must be overridden')
+
+    def add_fulltext_key_statement(self, table_name: str, key: TableKey) -> str:
+        """Return one statement that adds a ``FULLTEXT`` key to a table, alone.
+
+        Parameters:
+            table_name: The table.
+            key: The ``FULLTEXT`` key.
+
+        Returns:
+            The statement.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::add_fulltext_key_statement must be overridden')
+
+    def read_ngram_token_size(self) -> int:
+        """Return the token size the server builds ngram ``FULLTEXT`` indexes with.
+
+        Returns:
+            The token size, in characters.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::read_ngram_token_size must be overridden')
 
     def add_foreign_key_statement(self, table_name: str, key: TableKey) -> str:
         """Return one statement that adds a foreign key to a table.
@@ -1239,6 +1265,20 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::key_space_bytes must be overridden')
+
+    def table_data_bytes(self, table_name: str) -> int:
+        """Return a table's data bytes as the server's statistics count them.
+
+        Parameters:
+            table_name: The table.
+
+        Returns:
+            The bytes.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::table_data_bytes must be overridden')
 
     def index_space_budget(self, server_tmpdir: str | None) -> int | None:
         """Return the temporary space the index builds running at once may hold together.

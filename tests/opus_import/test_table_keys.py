@@ -16,11 +16,11 @@ from pathlib import Path
 
 import pytest
 
-from opus_import import import_util, table_keys
+from opus_import import schema_files, table_keys
 from opus_import.table_keys import TableKey
 
 #: Where the packaged table schemas are.
-TABLE_SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
+TABLE_SCHEMA_DIR = Path(str(schema_files.TABLE_SCHEMA_DIR))
 
 #: Every packaged table schema.
 _SCHEMAS = sorted(TABLE_SCHEMA_DIR.glob('*.json'))
@@ -103,15 +103,32 @@ def test_the_table_is_created_with_the_keys_the_delete_reads(path: Path) -> None
 
 @pytest.mark.parametrize('path', _FILTERED, ids=lambda path: path.stem)
 def test_foreign_keys_come_after_the_plain_keys_they_rely_on(path: Path) -> None:
-    """Finalization's list ends with the foreign keys, each column led by a plain key first."""
+    """Finalization's list starts with the FULLTEXT keys and ends with the foreign keys,
+    each foreign key's column led by a B-tree key first."""
     table = path.stem
     schema = _schema(path)
     added = table_keys.add_secondary_indexes(table, schema)
+    order = {'fulltext': 0, 'foreign': 2}
     kinds = [key.kind for key in added]
-    assert kinds == sorted(kinds, key=lambda kind: kind == 'foreign')
+    assert kinds == sorted(kinds, key=lambda kind: order.get(kind, 1))
     kept = table_keys.create_time_keys(table, schema)
-    led = {key.columns[0] for key in [*kept, *added] if key.kind != 'foreign'}
+    led = {key.columns[0] for key in [*kept, *added] if key.kind not in ('foreign', 'fulltext')}
     assert all(key.columns[0] in led for key in added if key.kind == 'foreign')
+
+
+def test_a_fulltext_key_leads_no_b_tree_key() -> None:
+    """A foreign key on a column that only a FULLTEXT key leads gains a plain key first."""
+    schema: list[dict[str, object]] = [
+        {'field_name': 'id', 'field_type': 'uint4', 'field_key': 'primary'},
+        {'field_name': 'code', 'field_type': 'varchar10'},
+        {'fulltext': ['code']},
+        {'foreign_key': {'columns': ['code'], 'references': ['codes', 'code']}},
+    ]
+    assert table_keys.add_secondary_indexes('obs_codes', schema) == [
+        TableKey('fulltext', ('code',)),
+        TableKey('key', ('code',)),
+        TableKey('foreign', ('code',), ('codes', ('code',))),
+    ]
 
 
 def test_obs_general_keeps_only_its_primary_key_and_bundle_key() -> None:
@@ -122,6 +139,18 @@ def test_obs_general_keeps_only_its_primary_key_and_bundle_key() -> None:
         TableKey('key', ('bundle_id',)),
     ]
     assert TableKey('key', ('opus_id',)) in table_keys.add_secondary_indexes('obs_general', schema)
+
+
+def test_a_fulltext_entry_declares_a_fulltext_key_beside_the_columns_b_tree() -> None:
+    """``obs_pds.bundle_id`` keeps its plain key and gains a FULLTEXT key, both left to
+    finalization, the FULLTEXT key first."""
+    schema = _schema(TABLE_SCHEMA_DIR / 'obs_pds.json')
+    declared = table_keys.declared_keys(schema)
+    assert TableKey('fulltext', ('bundle_id',)) in declared
+    assert TableKey('key', ('bundle_id',)) in declared
+    added = table_keys.add_secondary_indexes('obs_pds', schema)
+    assert added[0] == TableKey('fulltext', ('bundle_id',))
+    assert TableKey('key', ('bundle_id',)) in added
 
 
 def test_a_child_is_keyed_on_obs_general_id_and_gains_its_foreign_key_on_it() -> None:
@@ -196,6 +225,7 @@ def test_keys_compare_by_kind_and_columns_not_name() -> None:
         ({'primary_key': []}, 'lists its columns by name'),
         ({'unique': 'a'}, 'lists its columns by name'),
         ({'unique': ['a', 1]}, 'lists its columns by name'),
+        ({'fulltext': []}, 'lists its columns by name'),
     ],
     ids=[
         'unknown-kind',
@@ -203,6 +233,7 @@ def test_keys_compare_by_kind_and_columns_not_name() -> None:
         'primary-without-columns',
         'unique-not-a-list',
         'unique-not-names',
+        'fulltext-without-columns',
     ],
 )
 def test_a_key_the_schema_cannot_declare_is_refused(entry: dict[str, object], message: str) -> None:
@@ -225,6 +256,7 @@ def test_describe_names_the_kind_and_columns() -> None:
     assert TableKey('key', ('time1', 'time2')).describe() == 'KEY (time1, time2)'
     assert TableKey('unique', ('a',)).describe() == 'UNIQUE KEY (a)'
     assert TableKey('primary', ('id',)).describe() == 'PRIMARY KEY (id)'
+    assert TableKey('fulltext', ('opus_id',)).describe() == 'FULLTEXT KEY (opus_id)'
     assert (
         TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',))).describe()
         == 'FOREIGN KEY (obs_general_id) REFERENCES obs_general (id)'

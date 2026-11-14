@@ -22,7 +22,7 @@ from typing import Any
 
 import pytest
 
-from opus_import import config_targets, import_util, surface_geometry
+from opus_import import config_targets, import_util, schema_files, surface_geometry
 from opus_import.context import ImportContext
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import (
@@ -38,7 +38,7 @@ from .conftest import default_arguments, make_context
 
 #: The surface geometry template, as it is packaged.
 _TEMPLATE: list[dict[str, Any]] = json.loads(
-    (import_util.TABLE_SCHEMA_DIR / 'obs_surface_geometry_target.json').read_text(encoding='utf-8')
+    (schema_files.TABLE_SCHEMA_DIR / 'obs_surface_geometry_target.json').read_text(encoding='utf-8')
 )
 
 # ------------------------------------------------------------------------------------

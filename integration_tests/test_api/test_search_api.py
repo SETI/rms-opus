@@ -2,12 +2,14 @@
 
 import json
 import logging
+from collections.abc import Callable
 from typing import Any
 from unittest import TestCase
 
 import requests
 from django.conf import settings
 from django.core.cache import cache
+from django.db import OperationalError, connection
 from rest_framework.test import RequestsClient
 
 from opus_app.apps.tools.app_utils import (
@@ -16,8 +18,50 @@ from opus_app.apps.tools.app_utils import (
     http400_search_params_invalid,
     http400_unknown_slug,
 )
+from opus_app.apps.tools.db_utils import (
+    INNODB_FTS_RESULT_CACHE_LIMIT_ERROR,
+    MYSQL_EXECUTION_TIME_EXCEEDED,
+    MYSQL_STORAGE_ENGINE_ERROR,
+)
 
 from .api_test_helper import ApiTestHelper, go_live_target
+
+#: The execution-time limit, in milliseconds, the string-choices time-out cases give the
+#: statement joined to the search's results. It marks that statement for
+#: `ApiSearchTests._run_stringsearchchoices_timed_out`, which interrupts it as the server
+#: does when a statement outlasts its limit; the setUp's limit on the other statement,
+#: 1000000, is a different hint.
+_JOINED_TIME_LIMIT_MS = 1
+
+#: The server's message for a statement interrupted at its execution-time limit.
+_EXECUTION_TIME_EXCEEDED_MESSAGE = (
+    'Query execution was interrupted, maximum statement execution time exceeded'
+)
+
+#: The short execution-time limit, in milliseconds, the cases of the string choices from
+#: every observation give the first statement, LIKE alone, which marks it apart from the
+#: setUp's 1000000 on the others.
+_SHORT_LIKE_LIMIT_MS = 2
+
+#: The server's error for a full-text search whose results outgrow its result cache.
+_RESULT_CACHE_EXCEEDED = OperationalError(
+    MYSQL_STORAGE_ENGINE_ERROR,
+    f"Got error {INNODB_FTS_RESULT_CACHE_LIMIT_ERROR} - 'FTS query exceeds result cache "
+    "limit' from storage engine",
+)
+
+#: The server's error for a statement stopped at its execution-time limit.
+_TIME_EXCEEDED = OperationalError(MYSQL_EXECUTION_TIME_EXCEEDED, _EXECUTION_TIME_EXCEEDED_MESSAGE)
+
+
+def _is_short_like(sql: str) -> bool:
+    """Return whether a statement is the LIKE alone under the short limit."""
+    return f'MAX_EXECUTION_TIME({_SHORT_LIKE_LIMIT_MS})' in sql
+
+
+def _is_match(sql: str) -> bool:
+    """Return whether a statement reads a full-text index."""
+    return 'MATCH(' in sql
 
 
 class ApiSearchTests(ApiTestHelper, TestCase):
@@ -31,7 +75,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
         so every suite resets them; a suite that did not would see its own API calls
         fail at random.
 
-        It also raises the three string-choice search thresholds out of reach, so that
+        It also raises the four string-choice search thresholds out of reach, so that
         the full search always runs and the recorded responses do not depend on how fast
         this machine is, and chooses the client: a plain session for a live server,
         otherwise one that drives the WSGI application in process.
@@ -45,9 +89,11 @@ class ApiSearchTests(ApiTestHelper, TestCase):
         self.search_count_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
         self.search_time_threshold = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD
         self.search_time_threshold2 = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
+        self.simple_like_threshold = settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000000
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1000000
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 1000000
+        settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD = 1000000
         if go_live_target():  # pragma: no cover - remote server
             self.client = requests.Session()
         else:
@@ -55,11 +101,12 @@ class ApiSearchTests(ApiTestHelper, TestCase):
         cache.clear()
 
     def tearDown(self) -> None:
-        """Put back the three string-choice search thresholds, and restore logging."""
+        """Put back the four string-choice search thresholds, and restore logging."""
         logging.disable(logging.NOTSET)
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = self.search_count_threshold
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = self.search_time_threshold
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = self.search_time_threshold2
+        settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD = self.simple_like_threshold
 
     def _run_stringsearchchoices_subset(self, url: str, expected: dict[str, Any]) -> None:
         """Assert a string-search-choices response contains given choices.
@@ -95,6 +142,42 @@ class ApiSearchTests(ApiTestHelper, TestCase):
         print(new_choices)
         jdata['choices'] = new_choices
         self.assertEqual(expected, jdata)
+
+    def _run_stringsearchchoices_timed_out(self, url: str, expected: dict[str, Any]) -> None:
+        """Assert the choices a request gives when its joined statement outlasts its limit.
+
+        The statement joined to the search's results carries the limit
+        `_JOINED_TIME_LIMIT_MS`, and the server is made to interrupt it as it does a
+        statement that outlasts its limit, with the error the endpoint falls back on. A
+        real 1 ms limit is beaten by any statement that runs in less, so whether it fired
+        would depend on this machine's speed and on what the buffer pool holds. Every
+        other statement runs as it is. The endpoint runs in this process, which is where
+        the interruption is made.
+
+        Parameters:
+            url: Path of the API endpoint.
+            expected: Choices that must all appear in the response.
+        """
+        if go_live_target():  # pragma: no cover - remote server
+            self.skipTest('the time-out is made inside the application in this process')
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = _JOINED_TIME_LIMIT_MS
+        hint = f'MAX_EXECUTION_TIME({_JOINED_TIME_LIMIT_MS})'
+        interrupted: list[str] = []
+
+        def interrupt_joined_statement(
+            execute: Callable[..., Any], sql: str, params: Any, many: bool, context: Any
+        ) -> Any:
+            """Interrupt the joined statement, and run every other one."""
+            if hint in sql:
+                interrupted.append(sql)
+                raise OperationalError(
+                    MYSQL_EXECUTION_TIME_EXCEEDED, _EXECUTION_TIME_EXCEEDED_MESSAGE
+                )
+            return execute(sql, params, many, context)
+
+        with connection.execute_wrapper(interrupt_joined_statement):
+            self._run_stringsearchchoices_subset(url, expected)
+        self.assertEqual(len(interrupted), 1)
 
         ###################################################
         ######### /__api/normalizeinput API TESTS #########
@@ -1114,7 +1197,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
 
     def test__api_stringsearchchoices_bundleid_002_coiss_timeout(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COISS timeout"
-        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
+        # The joined statement is interrupted at its limit, so every observation answers.
         url = (
             '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+ISS&reqno=123'
         )
@@ -1124,11 +1207,11 @@ class ApiSearchTests(ApiTestHelper, TestCase):
             'truncated_results': False,
             'reqno': 123,
         }
-        self._run_stringsearchchoices_subset(url, expected)
+        self._run_stringsearchchoices_timed_out(url, expected)
 
     def test__api_stringsearchchoices_bundleid_002_couvis_timeout(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COUVIS timeout"
-        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
+        # The joined statement is interrupted at its limit, so every observation answers.
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+UVIS&reqno=123'
         expected = {
             'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
@@ -1136,7 +1219,157 @@ class ApiSearchTests(ApiTestHelper, TestCase):
             'truncated_results': False,
             'reqno': 123,
         }
-        self._run_stringsearchchoices_subset(url, expected)
+        self._run_stringsearchchoices_timed_out(url, expected)
+
+    def _string_choices_given_up(
+        self, url: str, give_up: Callable[[str], OperationalError | None]
+    ) -> tuple[list[str], dict[str, Any]]:
+        """Request string choices, with the server giving up on the statements `give_up` picks.
+
+        Parameters:
+            url: Path of the API endpoint.
+            give_up: For each statement's SQL, the error the server gives up on it with,
+                or None to run it.
+
+        Returns:
+            The statements that select the choices, in the order sent, and the response.
+        """
+        if go_live_target():  # pragma: no cover - remote server
+            self.skipTest('the statements are read inside the application in this process')
+        sent: list[str] = []
+
+        def run_or_give_up(
+            execute: Callable[..., Any], sql: str, params: Any, many: bool, context: Any
+        ) -> Any:
+            """Keep each statement, and run it or raise the error it is given up with.
+
+            A statement under the short limit runs under the whole one instead, so the
+            server never gives up on it here: only `give_up` decides that.
+            """
+            if 'MAX_EXECUTION_TIME' in sql:
+                sent.append(sql)
+            error = give_up(sql)
+            if error is not None:
+                raise error
+            if _is_short_like(sql):
+                sql = sql.replace(
+                    f'MAX_EXECUTION_TIME({_SHORT_LIKE_LIMIT_MS})',
+                    f'MAX_EXECUTION_TIME({settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2})',
+                )
+            return execute(sql, params, many, context)
+
+        with connection.execute_wrapper(run_or_give_up):
+            response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        return sent, json.loads(response.content)
+
+    def _every_observation(self) -> None:
+        """Have the string choices come from every observation, LIKE first under the short
+        limit."""
+        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
+        settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD = _SHORT_LIKE_LIMIT_MS
+
+    def test__api_stringsearchchoices_joined_to_the_search_keeps_like(self) -> None:
+        "[test_search_api.py] /api/stringsearchchoices: the join to the search's results uses LIKE alone"
+        url = '/__api/stringsearchchoices/bundleid.json?bundleid=COISS_2&reqno=123'
+        (statement,), _ = self._string_choices_given_up(url, lambda sql: None)
+        self.assertIn('`search_results`', statement)
+        self.assertNotIn('MATCH', statement)
+        self.assertIn('`obs_pds`.`bundle_id` LIKE %s', statement)
+
+    def test__api_stringsearchchoices_every_observation_tries_like_first(self) -> None:
+        "[test_search_api.py] /api/stringsearchchoices: without the join, LIKE alone answers first under the short limit"
+        self._every_observation()
+        url = '/__api/stringsearchchoices/bundleid.json?bundleid=COISS_2&reqno=123'
+        (statement,), answer = self._string_choices_given_up(url, lambda sql: None)
+        self.assertTrue(_is_short_like(statement))
+        self.assertNotIn('MATCH', statement)
+        self.assertNotIn('`search_results`', statement)
+        self.assertIn('<b>COISS_2</b>002', answer['choices'])
+        self.assertTrue(answer['full_search'])
+
+    def test__api_stringsearchchoices_every_observation_falls_back_to_the_index(self) -> None:
+        "[test_search_api.py] /api/stringsearchchoices: a LIKE given up on is retried with the index, with the same choices"
+        self._every_observation()
+        url = '/__api/stringsearchchoices/bundleid.json?bundleid=COISS_2&reqno=123'
+        _, like_answer = self._string_choices_given_up(url, lambda sql: None)
+        cache.clear()
+        (short, match), answer = self._string_choices_given_up(
+            url, lambda sql: _TIME_EXCEEDED if _is_short_like(sql) else None
+        )
+        self.assertTrue(_is_short_like(short))
+        self.assertIn('MATCH(`obs_pds`.`bundle_id`) AGAINST (%s IN BOOLEAN MODE)', match)
+        self.assertIn('MAX_EXECUTION_TIME(1000000)', match)
+        self.assertIn('`obs_pds`.`bundle_id` LIKE %s', match)
+        self.assertEqual(answer, like_answer)
+
+    def test__api_stringsearchchoices_no_short_limit_tries_the_index_first(self) -> None:
+        "[test_search_api.py] /api/stringsearchchoices: a short limit of 0 starts with the index, with the same choices"
+        self._every_observation()
+        url = '/__api/stringsearchchoices/bundleid.json?bundleid=COISS_2&reqno=123'
+        _, like_answer = self._string_choices_given_up(url, lambda sql: None)
+        cache.clear()
+        settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD = 0
+        (match,), answer = self._string_choices_given_up(url, lambda sql: None)
+        self.assertIn('MATCH(`obs_pds`.`bundle_id`) AGAINST (%s IN BOOLEAN MODE)', match)
+        self.assertEqual(answer, like_answer)
+
+    def test__api_stringsearchchoices_index_given_up_on_falls_back_to_like(self) -> None:
+        "[test_search_api.py] /api/stringsearchchoices: an index search given up on, by time or result cache, is retried with LIKE under the whole limit"
+        self._every_observation()
+        url = '/__api/stringsearchchoices/bundleid.json?bundleid=COISS_2&reqno=123'
+        _, like_answer = self._string_choices_given_up(url, lambda sql: None)
+        for error in (_TIME_EXCEEDED, _RESULT_CACHE_EXCEEDED):
+            with self.subTest(error=error.args[0]):
+                cache.clear()
+
+                def give_up(sql: str, error: OperationalError = error) -> OperationalError | None:
+                    """Give up on the short LIKE by time and on the index search by `error`."""
+                    if _is_short_like(sql):
+                        return _TIME_EXCEEDED
+                    return error if _is_match(sql) else None
+
+                (_, _, last), answer = self._string_choices_given_up(url, give_up)
+                self.assertIn('MAX_EXECUTION_TIME(1000000)', last)
+                self.assertNotIn('MATCH', last)
+                self.assertEqual(answer, like_answer)
+
+    def test__api_stringsearchchoices_every_statement_given_up_on_answers_nothing(self) -> None:
+        "[test_search_api.py] /api/stringsearchchoices: when the server gives up on every statement there are no choices"
+        self._every_observation()
+        url = '/__api/stringsearchchoices/bundleid.json?bundleid=COISS_2&reqno=123'
+        statements, answer = self._string_choices_given_up(
+            url, lambda sql: _TIME_EXCEEDED if 'MAX_EXECUTION_TIME' in sql else None
+        )
+        self.assertEqual(len(statements), 3)
+        self.assertEqual(answer['choices'], [])
+        self.assertTrue(answer['full_search'])
+
+    def test__api_stringsearchchoices_opusid_falls_back_to_the_index_its_search_reads(
+        self,
+    ) -> None:
+        "[test_search_api.py] /api/stringsearchchoices: the OPUS ID is matched in obs_general's index"
+        self._every_observation()
+        url = '/__api/stringsearchchoices/opusid.json?opusid=co-iss-n14&reqno=123'
+        (_, match), _ = self._string_choices_given_up(
+            url, lambda sql: _TIME_EXCEEDED if _is_short_like(sql) else None
+        )
+        self.assertIn('MATCH(`obs_general`.`opus_id`) AGAINST (%s IN BOOLEAN MODE)', match)
+
+    def test__api_stringsearchchoices_without_the_index_runs_like_once(self) -> None:
+        "[test_search_api.py] /api/stringsearchchoices: a wide column, one character or begins runs LIKE alone under the whole limit"
+        self._every_observation()
+        for url in (
+            '/__api/stringsearchchoices/primaryfilespec.json?primaryfilespec=COISS_2&reqno=123',
+            '/__api/stringsearchchoices/bundleid.json?bundleid=C&reqno=123',
+            '/__api/stringsearchchoices/bundleid.json?bundleid=COISS&qtype-bundleid=begins&reqno=123',
+        ):
+            with self.subTest(url=url):
+                cache.clear()
+                (statement,), _ = self._string_choices_given_up(url, lambda sql: None)
+                self.assertNotIn('MATCH', statement)
+                self.assertIn('MAX_EXECUTION_TIME(1000000)', statement)
+                self.assertIn(' LIKE %s', statement)
 
     def test__api_stringsearchchoices_bundleid_o_0017_cache(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid O_0017 cached reqno"

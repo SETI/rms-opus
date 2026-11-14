@@ -7874,3 +7874,394 @@ Nothing above this line is rewritten by an executor.
   examines `obs_general`'s alone; with the broad search matching nearly every
   observation, the re-evaluated `WHERE` costs less than the join that would replace it.
 - PR-22 is stacked on PR-20.
+
+### 2026-11-14, PR-22 (written against this file at 92aed872)
+
+- The branch is PR-19's head (92aed872); it is to be stacked on PR-20, and on PR-21 if its
+  gate passes, when the orchestrator merges them in.
+- **The local server**, on which the import suite and the local integration database
+  (`pr22local`) were built: MySQL 8.0.46, `@@GLOBAL.ngram_token_size` 2 and
+  `@@GLOBAL.innodb_ft_enable_stopword` ON (ON in a new session too). Nothing global was
+  changed; the import turns the stopword list off in its own sessions (below).
+- **The columns**, derived rather than listed: every `STRING` field with a `pi_slug`,
+  completed from the column its search reads (`search.views.STRING_CHOICE_COLUMN_SUBSTITUTES`,
+  the one entry mapping `obs_pds.opus_id` to `obs_general.opus_id`, which the view already
+  switched to and which is now a named constant), whose type is `varcharN` with N at most
+  `table_keys.FULLTEXT_MAX_WIDTH` (100). On this tree that gives `obs_general.opus_id`,
+  `obs_instrument_gossi.observation_id` and `image_id`, `obs_instrument_vgiss.image_id`,
+  `obs_mission_cassini.obs_name`, `activity_name` and `sequence_id`,
+  `obs_mission_hubble.stsci_group_id`, `hst_pi_name` and `hst_target_name`, and
+  `obs_pds.bundle_id`, `data_set_id` and `product_id`; `pr22local` holds exactly these 13
+  `FULLTEXT` indexes (`information_schema.STATISTICS`, `INDEX_TYPE = 'FULLTEXT'`). Kept on
+  `LIKE`, as wider: `obs_pds.primary_lid` and `primary_filespec` (240), `note` (255) and
+  `obs_surface_geometry.target_list` (`text`). `obs_pds.opus_id` gets no index: the
+  endpoint never searches it. `tests/opus_app/test_string_choice_fulltext.py` derives the
+  set and compares it with the schemas' `{"fulltext": [...]}` entries. **No column differs**
+  from `LIKE` on the fixture (below), so none is held back.
+- **The application reads the entries from the packaged schemas**,
+  `opus_import.schema_files.packaged_fulltext_columns()`, cached per process, rather than
+  asking the server: `SCHEMA_VERSION` (13) already guarantees the served schema is this
+  release's. `schema_files` is a module of its own because `import_util` imports pdsfile
+  and numpy, which a web worker has no use for; `TABLE_SCHEMA_DIR` moved into it, and the
+  nine other files that read it from `import_util` (`docs/_ext` among them) read it
+  there.
+- **The query departs from the section's**: the phrase is the longest run of
+  `[A-Za-z0-9_]` in the (ASCII-folded) text, in double quotes, and the `LIKE` stays beside
+  the `MATCH` (`sql_builder.fulltext_match`, ANDed in `get_string_query(...,
+  fulltext=True)`), rather than the whole term with its double quotes removed. The section's
+  premise that the ngram parser keeps `-` and `/` inside tokens is wrong: the parser breaks
+  its tokens at a space and at every single-byte character that is not a letter, digit or
+  `_` (probed on the local server, on a scratch table with ngram indexes built with the
+  stopword list off): the phrase `"o-is"` does not find `co-iss-n1546733885`, nor `"z/w."`
+  `x_y-z/w.v*q`, `"h, j"` `Smith, John`, `"a i"` `a i`, `"O'B"` `O'Brien`, `"0%"`
+  `100% done` or `"a+b-c"` `a+b-c`, though `LIKE` finds each. Every OPUS ID holds `-`, so
+  the section's query would have differed from `LIKE` on `opus_id`, `product_id` and the
+  rest, and its own rule would have kept them on `LIKE`: with the whole term as the phrase,
+  the comparison test below fails for 7 of the 13 columns (`obs_general.opus_id`,
+  `obs_instrument_gossi.observation_id`, `obs_instrument_vgiss.image_id`,
+  `obs_mission_hubble.hst_pi_name` and `hst_target_name`, `obs_pds.data_set_id` and
+  `product_id`). Removing an embedded quote also
+  changes what is searched for. A run of word characters is contiguous in any value that
+  contains the text, so the index finds every row the `LIKE` finds, and the `LIKE` keeps
+  the result exactly `LIKE`'s. Text with no run of two characters (one character, or
+  `a-b`), every other qtype and an unindexed column keep `LIKE` alone. The longest run
+  alone, rather than every run as a required phrase, keeps short common runs (`co`, `iss`)
+  out of the index search, whose posting lists would be most of the table. The section's
+  "prefixes of two or more characters" is read as "a run of two or more", since the
+  shortest token is 2.
+- **The comparison test** (`import_tests/test_fulltext.py`, on the main run's schema): for
+  each indexed column, every distinct value, its runs of 2, 3 and 6 characters at every
+  position, and the same runs with their case swapped are searched with `LIKE` alone and
+  with `fulltext_match` beside it, through `SELECT DISTINCT` of the column over the whole
+  table (the simple branch, which reads every row the joined branch can); the two sets
+  are equal for all 13 columns. The same file checks that each index carries
+  `WITH PARSER ngram`. With the stopword line taken out of the import's sessions, it fails
+  for 10 of the 13 columns. `import_tests/test_fresh_import.py`'s independent reading of the
+  finalized keys learns the `FULLTEXT` kind, so it checks that the main run, and a
+  finalization rerun after an interrupted one, carry exactly the declared `FULLTEXT` keys.
+- **The stopword list is off in every import session**, not only the building one:
+  `ImportDBMySQL.__init__` sets `innodb_ft_enable_stopword = OFF` beside the isolation
+  level, so siblings, workers and the parent are covered. The probe showed why the
+  building session alone is not enough: an index keeps the setting of the session that
+  created it (rows inserted later under a session with the list on are still found by
+  `"ia"`), but **a rebuild of the table re-creates it under the rebuilding session's
+  setting**: after `ALTER TABLE ... FORCE`, `ADD COLUMN` or `OPTIMIZE TABLE` under a
+  session with the list on, `"is"` no longer finds `COISS_2002`. Nothing in the import
+  rebuilds a finalized table today; the setting covers whatever does. A table created
+  with a `FULLTEXT` key under a session with the list on misses the same way, so
+  `bench_server.clone_schema`, `import_tests.tools.build_run.clone_schema` and
+  `scripts/import/clone_database.sh`, which copy finalized schemas, turn it off too
+  (beyond the section; a clone of a finalized test-scale schema is the incremental
+  group's starting point).
+- **Finalization**: `add_secondary_indexes` lists `FULLTEXT` keys first, and
+  `do_indexes.create_indexes` gives each its own statement, `ALTER TABLE ... ADD FULLTEXT
+  KEY (...) WITH PARSER ngram`, before its table's plain keys, within the same
+  `build_indexes` call (so a table's `FULLTEXT` and B-tree builds stay on one connection,
+  in order, and different tables still build at once). The token-size check
+  (`read_ngram_token_size`) runs only when some `FULLTEXT` key is missing, and refuses the
+  whole step, before anything is built, naming the setting, its value and that it is read
+  only at startup. A `FULLTEXT` key leads no B-tree, so a foreign key on such a column
+  still gets its supporting plain key. Its space estimate is `(rows x tokens x (2 x char
+  bytes + 12) + data bytes) x 1.3`, the data bytes for the rebuild the first one makes;
+  its statement leaves `innodb_ddl_buffer_size` at the server's setting (`sort_bytes` 0).
+  `read_table_keys` reports `FULLTEXT` keys as kind `fulltext`, so a rerun is idempotent.
+  The hidden `FTS_DOC_ID` column and its unique index appear in neither
+  `information_schema.COLUMNS` nor `STATISTICS`, so `table_info`, the key comparison and
+  the goldens see no difference. The server names the `FULLTEXT` key after the column
+  (built first) and the column's plain key `<column>_2`.
+- `{"fulltext": [...]}` is a `TABLE_LEVEL_KEY_KINDS` entry; the schema validator also
+  requires it to be in an `obs_*.json` schema and to name exactly one of its columns, a
+  `varcharN` of at most `FULLTEXT_MAX_WIDTH`.
+- **The peer's load** is `load_dump` in `src/opus_deploy/server/database/_load_db_steps.sh`,
+  as the section gives it; `load_db.sh` keeps its argument, `deploy.env` and dump-file
+  checks and then sources it.
+- **The harness needed no change for the measurement.** The digests (§2.2) tell the
+  branches apart: the joined statement names `search_results`, the simple one does not,
+  and on this head the autocomplete statement holds `MATCH`. `Max_execution_time_exceeded`
+  and the `FULLTEXT` tablespaces (`db.schema.fulltext_bytes`, inside
+  `db.schema.index_bytes`) are already recorded. `scenarios/queries.sql` is left for the
+  measurement's capture.
+- **Import goldens**: only `schema_version.tsv` (13, over PR-20's 12). **API goldens
+  unchanged.**
+- **#1301 at test scale.** The issue's steps (instrument Cassini ISS, the OPUS ID typed a
+  character at a time) do not reproduce at test scale on the base: `pr22local` holds no
+  `co-iss-n1546733885`, and typed out for `co-iss-n1869660829`, which it holds, every
+  prefix answers from the joined branch with no `MAX_EXECUTION_TIME` timeout (the session's
+  `Max_execution_time_exceeded` delta 0 at each prefix), down to the one choice. The
+  head gives the same choices at every prefix. Whether the index resolves the issue is a
+  complete-scale question, for PR-24's complete-scale session; the issue's prefix
+  `co-iss-n154673` is matched through the run `n154673`.
+- **The flaky string-choices test (#1279).** The cause is the timing threshold.
+  `test__api_stringsearchchoices_bundleid_002_{coiss,couvis}_timeout` set
+  `STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1` and expect the statement joined to the
+  search's results to be interrupted (`full_search: true`, both bundles). Whether the
+  server interrupts it depends only on whether the statement outlasts 1 ms. Evidence, on
+  `pr22local` with the base's (`LIKE`) view, 20 requests per limit, the cache cleared
+  before each: at a 1 ms limit both URLs fell back 20 of 20 times; at 5 ms Cassini UVIS
+  fell back 0 of 20 and Cassini ISS 20 of 20; at 10 ms 0 and 19; from 15 ms on (one
+  outlier at 25 ms) neither. So on this workstation the Cassini UVIS statement (a search of
+  2,279 rows) finishes within 5 ms and the Cassini ISS one (10,801) within 15: the UVIS case,
+  the one the issue names, is the one a machine a few times faster flips, and the
+  integration job's two failures recorded in PR-19's notes were that case. **Reproduction:**
+  the original test file with the limit raised to 5 ms (standing in for a statement five
+  times faster) fails `..._couvis_timeout` (`full_search: false`, only `COUVIS_0002`) and
+  passes the other five; the fixed file passes all of them with its limit at 1 ms and at
+  100 ms. Ruled out: settings leaking between cases (`setUp` sets all three thresholds,
+  `tearDown` restores them), and a shared cached answer (`setUp` runs `cache.clear()`,
+  which flushes memcached, so the site cache and the view's own entries both start empty;
+  the two cases that share a URL, COUVIS `_bigcache` and `_timeout`, expect the same
+  answer anyway). **The fix**: the two cases interrupt the joined statement themselves
+  (`_run_stringsearchchoices_timed_out`), through Django's `connection.execute_wrapper`,
+  raising `OperationalError(3024, ...)` for the statement carrying the hint
+  `MAX_EXECUTION_TIME(1)`, and require exactly one interruption; every other statement
+  runs. They skip against a live target, where the application is not in this process
+  (and where the settings the cases set never applied). The `MATCH` path does not change
+  which branch these cases take: the plain cases keep the joined branch (`setUp`'s
+  thresholds), `_bigcache` the simple one (count threshold 1), and `_timeout` the
+  interrupted joined branch then the simple one. On the head the joined `MATCH` statement
+  is not faster here: with the head's view both URLs fell back 20 of 20 times at every
+  limit up to 20 ms, Cassini ISS 18 and Cassini UVIS 13 of 20 at 25 ms, and 1 and 0 at
+  60 ms, so a 1 ms limit would still have fired here, but only by timing.
+- **A risk for the orchestrator, not measured by the section.** The optimizer prices the
+  ngram index search as one row and always takes it, so in the joined branch the index
+  search reads every matching row of the table and then probes the search's rows, where
+  `LIKE` read only the search's rows. With a restricted search and a common run that is
+  slower: `EXPLAIN ANALYZE` on `pr22local` of the joined `bundle_id` statement for `002`,
+  Cassini UVIS (2,279 rows): 3.9 ms with `LIKE`, 7.0 ms with `MATCH`; Cassini UVIS before
+  2007-04-05 (2,038 rows): 3.9 ms and 15 ms; Cassini ISS (10,801 rows): 16 ms and 17.9 ms. The section's measurement carries no selection,
+  so it does not see this; at complete scale a two-letter prefix in a search under
+  `STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD` rows may hit the 500 ms limit where `LIKE` did
+  not. Restricting `MATCH` to the simple branch would remove the risk and also the change
+  the test-scale measurement (joined branch, empty search) measures; it is left to the
+  orchestrator.
+- Every new test was mutation-checked: each of 23 source mutations (the session's
+  stopword setting, the statement's and the clause's parser, the token-size query, check
+  and its condition, the space estimate, the `FULLTEXT` reading, the key order and
+  `led`, the log label, the entry kind, the first-statement order, the phrase's word,
+  length, characters and parameter order, the load's stopword line and token check, the
+  clone's stopword line, a dropped and a too-wide schema entry, and the substitute) failed
+  its unit tests; four against `pr22local` (the view without `fulltext`, `get_string_query`
+  without the `MATCH`, `MATCH` for every qtype, the time-out cases without the injection)
+  failed theirs; and the two import-suite mutations above (the stopword line, the whole
+  term as the phrase) failed `test_fulltext.py`.
+- Results at 4899a245: the gates pass (`run-all-checks.sh`, 3,155 unit tests); the import
+  suite 207 passed and 3 skipped; the integration job's run (`tests/opus_support`,
+  `tests/opus_app` and `integration_tests`, with coverage) 2,919 passed against `pr22local`
+  at 100% coverage. `pr22local` was imported with this branch's code before the last two
+  commits, which change no import step (the `TABLE_SCHEMA_DIR` move, comments, the
+  import suite's key reader); its `schema_version` row is 12, `ready`.
+- **The measurement, for the orchestrator** (§2.3, measured on clones, test scale):
+  the base (the merge-base after PR-20 and PR-21 are in) imports once with
+  `bench_import --stop-before-finalization`; each side then runs `bench_import
+  --reuse-schema <that schema> --finalize-only` with its own interpreter, finalizing its
+  own copy (`import.finalization.wall_s`; the head's `FULLTEXT` builds are the
+  `import.phase.create_indexes:<table>:FULLTEXT KEY (<column>)_s` phases); the ceiling is
+  the head's finalization less the base's, at most 10% of the base's
+  `import.bundle_imports.wall_s` plus its finalization. `bench_db` once a side on its own
+  copy (`db.schema.index_bytes`, which includes `db.schema.fulltext_bytes`, and the
+  capture's `db.plan.autocomplete.bundleid/prefix_2` and `/prefix_6` plans, whose
+  `EXPLAIN ANALYZE` shows `Full-text index search` on the head), then `bench_web --schema
+  <copy>` alternated A B B A at §2.6's count. The target is the p50 of
+  `web.app-cold.autocomplete.bundleid.prefix_6.latency_s` (`COISS_`), with `prefix_2`
+  (`CO`) reported and the warm state reported, not judged. The branch that answered is
+  read from `details.top_statements['web.app-cold.autocomplete.bundleid']`: a digest
+  naming `search_results` is the joined branch, one without it the simple branch, and on
+  the head the digest holds `MATCH`; each digest's `count` gives the requests it served
+  (two timed requests, one statement each, unless one timed out and fell back, when the
+  simple digest appears beside the joined one). The time-out count is
+  `web.app-cold.autocomplete.bundleid.server.Max_execution_time_exceeded` (and the db-cold
+  one). At test scale the empty search holds fewer rows than
+  `STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD`, so both sides should answer from the joined
+  branch.
+- **Review fixes (2026-11-14)**, at the orchestrator's decisions on an independent review
+  of 92aed872..31763beb. They supersede the bullets above where the two differ.
+  - **Which statement reads the index (the orchestrator's decision).** The full-text
+    search reads every row that holds its run, then de-duplicates and sorts, where `LIKE`
+    walks the column's covering key in order and stops at the limit plus one. Rechecked on
+    `pr22local`, the simple branch's statement on `obs_general.opus_id`, best of five
+    wall-clock: `co` `LIKE` 0.12 ms, `MATCH` 55.25 ms; `co-iss-n1` (phrase `"iss"`) 0.31
+    against 50.42 ms; `n1546` (no row) 3.60 against 2.53 ms; `n18696608` (one row) 4.19
+    against 5.12 ms; a run no value holds (`zqzqzq`) 3.85 against 0.14 ms. A `MATCH` past
+    `MAX_EXECUTION_TIME` raises 3024, which in the simple branch answered `choices: []`, so
+    at complete scale, where every Cassini OPUS ID holds `co`, a first keystroke could have
+    answered nothing. So:
+    - **The join to the search's results uses `LIKE` alone**, as before this PR: its cost
+      is bounded by the search, and the index was slower there (the risk bullet above).
+    - **The query from every observation runs up to three statements**, each the next only
+      when the server gives up on the one before: `LIKE` alone under the new setting
+      `STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD`; the index beside the `LIKE` under
+      `STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2`; `LIKE` alone under that limit. When the
+      server gives up on all three the answer is `choices: []`, as today's simple-branch
+      timeout. The third statement is the one the base runs, so an answer is never emptier
+      than the base's; that is the "better" chosen, at a worst case of the short limit
+      plus twice the whole one. A column without an index, text with no run of two
+      characters and every other qtype run only the third. "Gives up" is
+      `db_utils.is_abandoned_query_error`: error 3024, or error 1030 whose message names
+      InnoDB's error 188, a full-text search outgrowing `innodb_ft_result_cache_limit`
+      (2,000,000,000 bytes on the local server). That error was not reproduced here: the
+      limit is a global setting, which this work does not change; its message form is
+      MySQL's `Got error 188 - 'FTS query exceeds result cache limit' from storage engine`,
+      and the tests inject it. Any other error is still a 500.
+    - **The setting.** The `STRINGCHOICE_*` thresholds are constants in `settings.py`, not
+      configuration keys, so §1's key rule does not apply; the new one sits beside them.
+      **Default 50 ms**, from `pr22local` (best of five, the simple branch's `LIKE` on each
+      indexed column, for the most common value's first two and six characters, its
+      rarest value and a text no value holds): the slowest was 6.44 ms
+      (`obs_mission_cassini.sequence_id`, which has no B-tree key, 18,122 rows), and the
+      `opus_id` key's whole scan 3.85 ms for 29,752 rows; a `LIKE` that finds its limit
+      early took at most 0.31 ms. So at test scale the `LIKE` never runs out (a margin of
+      7.8 over the slowest), and the index is reached only where `LIKE` reads a whole
+      large column. Scaled linearly to the complete holdings' 1,627,081 rows (PR-07's
+      count) the `opus_id` scan would be about 210 ms; that is an extrapolation, not a
+      measurement. **0 skips the first statement**, so the index is tried first, which is
+      how the measurement forces the index path (below).
+    - **What the index buys, as measured here, is small.** At test scale the index beat
+      `LIKE` only on a run whose two-character tokens are rare (`zqzqzq`); on an OPUS ID's
+      digits it was no faster (`n18696608`, 5.12 against 4.19 ms), since every digit pair
+      is a long posting list, and each grows with the table as `LIKE`'s scan does.
+      Whether the index answers issue #1301's long prefixes inside the limit at complete
+      scale is for PR-24's complete-scale session.
+    - Tests (in process, the server's errors injected through `connection.execute_wrapper`,
+      no timing): the joined branch sends `LIKE` alone; from every observation the first
+      statement is the short `LIKE` and answers; a short `LIKE` given up on is followed by
+      the `MATCH` statement, with the same answer as `LIKE`'s; a `MATCH` given up on, by
+      time or by the result cache, is followed by `LIKE` under the whole limit, same
+      answer; all three given up on answer `[]`; a short limit of 0 sends the `MATCH` first,
+      same answer; the OPUS ID's fallback reads `obs_general`'s index; a wide column, one
+      character and `begins` send one `LIKE` under the whole limit. The `ApiSearchTests`
+      `setUp` raises the new threshold out of reach with the other three.
+  - **The measurement's design.** At test scale the empty search holds fewer rows than
+    `STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD`, so the default run takes the joined branch,
+    where base and head now send the same `LIKE`: it is a guard. To reach what this PR
+    changes, `bench_web` and `bench_db --dump-queries` take `--django-setting NAME=VALUE`
+    (repeatable): `benchmarks/gunicorn_hooks.py` assigns each before a worker serves, the
+    result's environment records them as `django_settings` (`bench_db`'s details as
+    `capture_django_settings`), and `compare.py` refuses two results whose settings
+    differ, so both sides get the same. A side that does not read a setting (the base,
+    for the new one) ignores it. Three sessions, each A B B A on the clones:
+    1. **default** (no setting): guards; the target's branch is the joined one on both.
+    2. **simple** (`STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD=1`): the base sends `LIKE`
+       under 500 ms, the head `LIKE` under 50 ms; the same statement, so a guard that the
+       head's first statement costs nothing.
+    3. **index** (`STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD=1` and
+       `STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD=0`): the base sends `LIKE`, the head
+       `MATCH` beside the `LIKE`: the cost of the index path itself, `prefix_2` (`CO`) and
+       `prefix_6` (`COISS_`) both judged. By the numbers above it may well be slower at
+       test scale; that is a result.
+  - **Finalization's estimates.** The first `FULLTEXT` key on a table rebuilds it, copying
+    its rows and sorting each secondary key it has again. That statement's estimate is now
+    its token bytes, the table's data bytes (`table_data_bytes`, a new brand method) and
+    the estimates of the table's existing unique and plain keys, with its sort buffer sized
+    for the largest of those keys and shared among them; later `FULLTEXT` statements on the
+    table, and every one on a table that has a `FULLTEXT` key already, carry their token
+    bytes alone and the server's buffer. `key_space_bytes` of a `FULLTEXT` key is its token
+    bytes alone. The docstring that said the statement sorts no B-tree key is corrected.
+  - **The stopword setting in the guides.** The installation guide asks for
+    `innodb_ft_enable_stopword = OFF` in both servers' configuration, beside the sessions'
+    own setting, since a rebuild in any other session (`OPTIMIZE TABLE`, `ALTER TABLE ...
+    FORCE`, `mysqlcheck --optimize`, a dump restored by hand) re-creates the index with
+    the list on; the database schema guide says the same.
+  - **The comparison test** also searches, in a column that is not ASCII
+    (`obs_mission_hubble.hst_pi_name`, read from `information_schema.COLUMNS`), each text
+    with its vowels accented and in full-width form; a full-width text has no run the index
+    holds, so the application leaves it to `LIKE`, and the test skips it as the
+    application does.
+  - **For PR-23 and PR-24:** the second server's load and an incremental append maintain the
+    `FULLTEXT` indexes row by row through the full-text cache rather than by a sort, and a
+    deleted row's tokens stay in the index, marked deleted, until `OPTIMIZE TABLE` with
+    `innodb_optimize_fulltext_only = ON` purges them. Neither the load's time nor the
+    growth under repeated appends is measured here.
+  - **`SCHEMA_VERSION` collides with PR-20's**: both bump 11 to 12, and the files merge
+    without a conflict, so a PR-20 database would pass this branch's schema guard and its
+    `MATCH` would answer 1191, a 500. Not renumbered here; the orchestrator gives the
+    number at the restack.
+  - Mutation checks, each failing its tests: against `pr22local`, the short `LIKE` skipped
+    always, a short limit of 0 not skipping it, the `MATCH` statement removed, the last
+    `LIKE` removed, the empty answer not given when all three are given up on, the joined
+    branch reading the index, and the result-cache error not counted as given up; in the
+    unit suite, the rebuild charged on a table that has a `FULLTEXT` key, the data bytes or
+    the existing keys left out of it, its sort buffer left unsized, the data-bytes query,
+    the error-188 match without word boundaries, the hook not assigning the settings, the
+    server not passing them, `compare.py` not refusing differing settings (which needed a
+    test of its own, the parametrized one reading the same tuple), and a lower-case setting
+    name accepted. Removing the old `pragma: no cover` from the string choices' final
+    block exposed the highlight's compile failure, which no test reaches; that `except`
+    carries the pragma.
+  - Results at 787704ae plus the pragma: the gates pass (3,172 unit tests); the import suite 207 passed and
+    3 skipped; `pr22local` set up again from this branch, and the integration job's run
+    2,930 passed at 100% coverage.
+- **Restacked on PR-20 (2026-11-14)**, PR-21 not being executed: PR-20's head c0c43fe9
+  is merged in. `SCHEMA_VERSION` is 13 and the import golden `schema_version.tsv` says
+  so, so a PR-20 database fails this branch's schema guard. The merge's conflicts were
+  side by side, each side's lines kept: `bench_db`'s `django_settings` beside
+  `probe_resort`, `sql_builder`'s and `test_table_schemas`'s imports, the table schemas
+  guide's key list (the junction tables' key, then `fulltext`), and these notes after
+  PR-20's and PR-21's. PR-20's later head 3ef090a3 (its measurement notes) is merged in
+  too. Results at that merge: the gates pass (3,231 unit tests); the import suite 209
+  passed and 3 skipped; `pr22local` set up again from the merge, and the integration
+  job's run 2,929 passed at 100% coverage.
+- **CodeRabbit's review (2026-11-14)**, of 3ef090a3..03a201d5; each behavior fix has a
+  test that fails with it reverted (mutation-checked):
+  - *A dump that cannot be read.* `load_dump` piped the stopword line and `cat` into
+    `mysql`, whose status alone was returned, so an unreadable dump loaded nothing and
+    succeeded. The pipeline runs under `set -o pipefail` in a subshell, and a test gives
+    the load a missing dump. `clone_database.sh` (`/bin/sh`, no `pipefail`) checks the
+    dump is readable before its pipeline.
+  - *A real 2 ms limit in the fallback tests.* The cases that set
+    `STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD` to 2 ms sent the first `LIKE` with that
+    hint, so a slow server could give up on it unasked, the timing dependence #1279 is
+    about. `_string_choices_given_up` keeps the statement as sent for its record and its
+    injection, and runs a short-limit statement it does not give up on under
+    `STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2` instead.
+  - *The Django settings in result files.* `bench_db --dump-queries` records its
+    settings as the environment's `django_settings`, as `bench_web` does, in place of
+    `details.capture_django_settings`, so `compare.py`'s check covers the capture's
+    plans too; `django_settings` is pinned within a result file, compared as `{}` for
+    earlier runs that record none.
+  - Declined: the pre-merge check asking for the feature to leave this PR. The PR is
+    this plan's PR-22, and it fixes #1279 as the plan asks.
+  - Results with these fixes: the gates pass (3,233 unit tests); against `pr22local`,
+    `integration_tests/test_api/test_search_api.py` and
+    `integration_tests/apps_db_tests/test_search.py` 383 passed.
+- **Measurement** (2026-11-14, test scale, on clones; base PR-20's head 3ef090a3, head
+  03a201d5; judged against the PR-00 floors). The base's code imported once, stopping
+  before finalization (session `b`); each side finalized its own copy and ran `bench_db
+  --dump-queries` on it (session `d`, the head's with `--commit-capture`); then three web
+  sessions on the copies, B A A B each: `w` (default settings), `s`
+  (`STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD=1`) and `x` (that and
+  `STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD=0`). The default session is `w`, not `d`: the
+  capture `--commit-capture` writes made the head's worktree dirty, and `results.py`
+  refused the next web run into `d`'s file; the capture was kept and the worktree
+  restored. The digests confirm each session's branch: `w` the joined `LIKE` on both
+  sides, `s` the `LIKE` from every observation on both (the head's under its 50 ms
+  limit), `x` the base's `LIKE` and the head's `MATCH` beside it. No session timed a
+  statement out (`Max_execution_time_exceeded` 0 throughout). The machine was otherwise
+  quiet (load 1.4 to 9.9, no other benchmark).
+
+  | Metric | Before | After | Change |
+  |---|---|---|---|
+  | **Target:** `prefix_6` (`COISS_`), app-cold, index path (`x`) | 9.3 ms | 70.2 ms | +653%, beyond its floor (138%): not improved |
+  | `prefix_2` (`CO`), app-cold, index path (`x`) | 11.3 ms | 62.5 ms | +454%, beyond its floor |
+  | `prefix_6` / `prefix_2`, app-cold, simple branch (`s`) | 9.1 / 18.7 ms | 8.7 / 16.4 ms | −4.6% / −12.2%, within the floors |
+  | `prefix_6` / `prefix_2`, app-cold, default (`w`) | 14.6 / 33.3 ms | 13.7 / 31.9 ms | −6.1% / −4.0%, within the floors |
+  | Finalization, wall (`d`) | 24.17 s | 26.23 s | +2.06 s, 0.7% of the base's bundle imports and finalization (312.9 s); the ceiling is 10% |
+  | `db.schema.index_bytes` (`d`, guard) | 238.3 MB | 275.1 MB | +15.4%, regressed; `FULLTEXT` 33.1 MB of it, the rest +1.5% |
+
+  - Every guard held in sessions `w` and `s`. In `x`, the autocomplete scenario's wall
+    (+543%) and `web.warm.concurrency.distinct.p95_s` (13.0 to 53.6 ms) regressed, both
+    from the forced index path.
+  - **The target is a stop-and-report (§2.5), and the orchestrator keeps the PR**, for
+    the operator to rule on at merge. The index path is several times slower than `LIKE`
+    at test scale, as the review fixes' figures foresaw: the full-text search reads every
+    row holding its run and sorts them, where `LIKE` walks the covering key and stops at
+    the limit. What the PR changes by default costs nothing measurable: the joined
+    branch sends the base's statement, and the simple branch's first statement is the
+    base's `LIKE` under a shorter limit (`s`). The index is reached only after that
+    `LIKE` has run out of time, where the base would go on with the same `LIKE` up to
+    500 ms or answer nothing; whether it then answers sooner is the complete-scale
+    question (#1301) for PR-24's session. Its standing costs are the index bytes, the
+    finalization's 2 s at test scale and the servers' `ngram_token_size = 2` requirement.
+    The alternative is to drop the index and keep the #1279 fix alone.
+  - `bench_db`'s autocomplete plans (`d`, default settings, so the joined `LIKE` on both)
+    agree: `prefix_2` 18.96 against 19.63 ms, `prefix_6` 11.88 against 11.91 ms, the same
+    rows examined.

@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from opus_import import import_util
+from opus_import import schema_files
 from opus_import.table_keys import TABLE_LEVEL_KEY_KINDS
 
 #: The schema files the chapter says are not tables. It also says which two of them
@@ -33,7 +33,7 @@ def _schema_dir() -> Path:
     Returns:
         The directory the import pipeline reads its schemas from.
     """
-    return Path(str(import_util.TABLE_SCHEMA_DIR))
+    return Path(str(schema_files.TABLE_SCHEMA_DIR))
 
 
 def _schema_files() -> list[Path]:

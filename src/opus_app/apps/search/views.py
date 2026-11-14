@@ -62,6 +62,7 @@ from opus_app.apps.tools.app_utils import (
 )
 from opus_app.apps.tools.db_utils import (
     MYSQL_EXECUTION_TIME_EXCEEDED,
+    is_abandoned_query_error,
     is_ascii_column,
     is_deadlock_error,
     is_lock_timeout_error,
@@ -73,6 +74,7 @@ if TYPE_CHECKING:
 
     from django.http import HttpRequest, HttpResponse
 
+from opus_import.schema_files import packaged_fulltext_columns
 from opus_support import (
     convert_from_default_unit,
     convert_to_default_unit,
@@ -87,6 +89,13 @@ log = logging.getLogger(__name__)
 
 # How many regular expressions the server accepted each process remembers.
 _REGEX_CACHE_SIZE = 1024
+
+#: The string fields `api_string_search_choices` completes from a column of another table
+#: than the field's own, because the search reads that column: each field's qualified
+#: name, and the table and column completed from.
+STRING_CHOICE_COLUMN_SUBSTITUTES: dict[str, tuple[str, str]] = {
+    'obs_pds.opus_id': ('obs_general', 'opus_id'),
+}
 
 
 ################################################################################
@@ -169,6 +178,14 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
 
     truncated_results is true if the the number of results exceeded the
     specified limit. Only the limit number will be returned.
+
+    Without the join, a contains search of a column that carries an ngram FULLTEXT
+    index (`opus_import.schema_files.packaged_fulltext_columns`) is tried with LIKE
+    alone under `settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD` (skipped when that is
+    0); when the server gives up on it, with the index beside the LIKE
+    (`get_string_query`), which finds the same choices; and when the server gives up on
+    that too, with LIKE alone under the whole limit. The join to the search's results
+    always uses LIKE alone.
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/__api/stringsearchchoices/{slug}.json'))
@@ -187,13 +204,14 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
     param_category = param_info.category_name
     param_name = param_info.name
 
-    # obs_general.opus_id is shown to the user in the obs_pds table
-    # but searched from the obs_general table. Thus we have to switch the
-    # table here to find the parameter and qtype below.
-    if param_qualified_name == 'obs_pds.opus_id':
-        param_qualified_name = 'obs_general.opus_id'
-        param_category = 'obs_general'
-        param_name = 'opus_id'
+    # A field shown in one table but searched in another is completed from the column
+    # the search reads, which is also where the parameter and qtype are found below.
+    if param_qualified_name in STRING_CHOICE_COLUMN_SUBSTITUTES:
+        param_category, param_name = STRING_CHOICE_COLUMN_SUBSTITUTES[param_qualified_name]
+        param_qualified_name = f'{param_category}.{param_name}'
+    # A surface geometry body's category is the body's rows of a table every body shares,
+    # read under the category's name; each statement keeps to those rows.
+    category = resolve_category(param_category)
 
     # We'd really rather not have to use allow_regex_errors here,
     # but the front end will send us search strings with bad regex
@@ -233,6 +251,19 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         result = {'choices': [], 'full_search': True, 'truncated_results': False}
         result['reqno'] = reqno
         return json_response(result)
+    # get_string_query returns both halves together or neither.
+    assert like_params is not None
+    # The same condition with the column's full-text index beside each LIKE that can use
+    # it, or None when the column has no index or no value has a word the index holds.
+    fulltext_condition: sql_builder.Expr | None = None
+    if (category.table, param_name) in packaged_fulltext_columns():
+        match_query, match_params = get_string_query(
+            selections, param_qualified_name, query_qtype_list, fulltext=True
+        )
+        if match_query != like_query:
+            assert match_query is not None
+            assert match_params is not None
+            fulltext_condition = sql_builder.Expr(match_query, match_params)
 
     partial_query = selections[param_qualified_name][0]
     del selections[param_qualified_name]
@@ -268,9 +299,6 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         return json_response(cached_val)
 
     param_column = sql_builder.column(param_name, param_category)
-    # A surface geometry body's category is the body's rows of a table every body shares,
-    # read under the category's name; each statement keeps to those rows.
-    category = resolve_category(param_category)
     cursor = connection.cursor()
 
     final_results: list[Any] | None = None
@@ -285,9 +313,7 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         select = sql_builder.Select(distinct=True, max_execution_time=max_time)
         select.add_column(param_column)
         # The search's results are an INNER JOIN because we only want opus_ids
-        # that appear in them to cause result rows. The join is on
-        # obs_general_id in practice: there are currently no string fields in
-        # obs_general, so param_category is never obs_general here.
+        # that appear in them to cause result rows.
         select.add_from(category.source).add_join(
             'INNER',
             sql_builder.search_results_source(search.search_id),
@@ -315,36 +341,51 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
             do_simple_search = True
 
     if do_simple_search:
-        # Same thing but no join to the search's results
-        # This will give more results than we really want, but will be much
-        # faster
-        max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
-        select = sql_builder.Select(distinct=True, max_execution_time=max_time)
-        select.add_column(param_column)
-        select.add_from(category.source)
-        category.restrict(select)
-
-        if partial_query:
-            # get_string_query returns both halves together or neither, and the
-            # None case returned above.
-            assert like_params is not None
-            select.add_where(sql_builder.Expr(like_query, like_params))
-
-        select.add_order_by(param_column)
-        select.limit(limit + 1)
-        sql, sql_params = select.build()
-
-        try:
-            cursor.execute(sql, tuple(sql_params))
-        except DatabaseError as e:  # pragma: no cover - database error
-            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED:  # pragma: no cover -
-                # database error
-                log.exception('api_string_search_choices: "%r" failed', sql)
-                return HttpResponseServerError(http500_database_error(request))
+        # Every observation's values, with no join to the search's results: more choices
+        # than the search allows, but much faster.
+        like_condition = sql_builder.Expr(like_query, like_params) if partial_query else None
+        attempts = [(like_condition, settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2)]
+        if partial_query and fulltext_condition is not None:
+            # LIKE walks the column's key in order and stops at the limit, which is quick
+            # when many values match and slow when few do, as it then reads the whole key.
+            # The full-text index is the reverse: it reads every matching row. So LIKE
+            # gets a short limit first, then the index gets the whole limit, then LIKE
+            # does, which is the statement a column without an index runs, so the answer
+            # is never emptier than LIKE alone would give. A short limit of 0 tries the
+            # index first.
+            attempts = [
+                (fulltext_condition, settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2),
+                (like_condition, settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2),
+            ]
+            short_limit = settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD
+            if short_limit > 0:
+                attempts.insert(0, (like_condition, short_limit))
+        answered = False
+        for condition, max_time in attempts:
+            select = sql_builder.Select(distinct=True, max_execution_time=max_time)
+            select.add_column(param_column)
+            select.add_from(category.source)
+            category.restrict(select)
+            if condition is not None:
+                select.add_where(condition)
+            select.add_order_by(param_column)
+            select.limit(limit + 1)
+            sql, sql_params = select.build()
+            try:
+                cursor.execute(sql, tuple(sql_params))
+            except DatabaseError as e:
+                if not is_abandoned_query_error(e):  # pragma: no cover - database error
+                    log.exception('api_string_search_choices: "%r" failed', sql)
+                    return HttpResponseServerError(http500_database_error(request))
+                continue
+            answered = True
+            break
+        if not answered:
             final_results = []
 
-    if final_results is None:  # pragma: no cover - can't trigger during testing
-        # This is always true except when BOTH queries time out
+    if final_results is None:
+        # A statement above answered: every one but the last is given up on only for
+        # another to run.
         final_results = []
         more = True
         while more:
@@ -365,7 +406,7 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
                 # because it wasn't bad for MySQL
                 pattern = regex.compile(f'({esc_partial_query})', regex.IGNORECASE | regex.V1)
                 final_results = [pattern.sub('<b>\\1</b>', x) for x in final_results]
-            except Exception:
+            except Exception:  # pragma: no cover - a pattern MySQL took and regex refuses
                 # Match highlighting is cosmetic. A query that will not compile as a
                 # regular expression leaves the text unhighlighted rather than failing
                 # the search the user asked for.
@@ -1814,7 +1855,11 @@ def _valid_regex(r: str) -> bool:
 
 
 def get_string_query(
-    selections: dict[str, Any], param_qualified_name: str, qtypes: list[str]
+    selections: dict[str, Any],
+    param_qualified_name: str,
+    qtypes: list[str],
+    *,
+    fulltext: bool = False,
 ) -> sql_builder.Expr | tuple[None, None]:
     """Builds query for strings.
 
@@ -1829,6 +1874,11 @@ def get_string_query(
     (`sql_builder.ascii_comparable`), since no value of the column holds any other
     character; a regular expression is folded without mapping compatibility characters,
     which could become operators.
+
+    With `fulltext`, for a column with an ngram ``FULLTEXT`` index, a ``contains`` value
+    with a word of at least two characters is also matched against the index
+    (`sql_builder.fulltext_match`), beside its ``LIKE``, which keeps the rows it finds
+    the rows the ``LIKE`` alone finds.
 
     Returns an `sql_builder.Expr`, which is a `(sql, params)` pair, or the pair
     `(None, None)` if the query cannot be built.
@@ -1873,6 +1923,7 @@ def get_string_query(
         qtype = qtypes[idx]
         if ascii_column:
             value = sql_builder.ascii_comparable(value, compatibility=qtype != 'regex')
+        compared = value
 
         if qtype != 'regex':
             value = value.replace('\\', '\\\\')
@@ -1884,6 +1935,9 @@ def get_string_query(
             clause = sql_builder.binary_op(
                 param_column, 'LIKE', sql_builder.value('%' + value + '%')
             )
+            match = sql_builder.fulltext_match(param_column, compared) if fulltext else None
+            if match is not None:
+                clause = sql_builder.join_exprs([match, clause], 'AND')
         elif qtype == 'begins':
             clause = sql_builder.binary_op(param_column, 'LIKE', sql_builder.value(value + '%'))
         elif qtype == 'ends':

@@ -706,7 +706,10 @@ def clone_schema(
 
     Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
     keys and foreign keys (``CREATE TABLE ... LIKE`` does not copy foreign keys), with
-    ``foreign_key_checks`` off so that tables may be created and filled in any order;
+    ``foreign_key_checks`` off so that tables may be created and filled in any order,
+    and with the stopword list off (``innodb_ft_enable_stopword``), since a ``FULLTEXT``
+    index keeps the setting of the session that created it and the import's indexes are
+    built without stopwords;
     then its rows are copied with ``INSERT ... SELECT``, naming the stored columns only,
     since MySQL computes a generated column and refuses a value for one. The copies run
     over several connections at once. The target is dropped first if it exists. Last,
@@ -743,6 +746,7 @@ def clone_schema(
         query(connection, f'DROP DATABASE IF EXISTS {quote_identifier(target)}')
         query(connection, f'CREATE DATABASE {quote_identifier(target)}')
         query(connection, 'SET SESSION foreign_key_checks = 0')
+        query(connection, 'SET SESSION innodb_ft_enable_stopword = OFF')
         query(connection, f'USE {quote_identifier(target)}')
         for table in tables:
             definition = query(
@@ -835,6 +839,29 @@ def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
             )
         keys[key] = _import_key_value(text)
     return keys
+
+
+def parse_django_settings(pairs: Sequence[str]) -> dict[str, object]:
+    """Read ``--django-setting`` arguments into the Django settings a run assigns.
+
+    Parameters:
+        pairs: Each ``NAME=VALUE``.
+
+    Returns:
+        The settings, each value a whole number, a finite decimal number, a boolean or a
+        string, in argument order.
+
+    Raises:
+        ValueError: If an argument has no ``=``, or its name is not a Django setting's
+            (upper-case letters, digits and underscores, starting with a letter).
+    """
+    found: dict[str, object] = {}
+    for pair in pairs:
+        name, separator, text = pair.partition('=')
+        if not separator or not re.fullmatch(r'[A-Z][A-Z0-9_]*', name):
+            raise ValueError(f'--django-setting takes NAME=VALUE with a setting NAME, not {pair!r}')
+        found[name] = _import_key_value(text)
+    return found
 
 
 def write_opus_config(

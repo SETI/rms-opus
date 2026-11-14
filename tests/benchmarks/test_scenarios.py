@@ -284,3 +284,17 @@ def test_an_import_key_naming_a_log_the_harness_reads_is_refused(key: str) -> No
     """The harness reads its runs' logs from where it put them."""
     with pytest.raises(ValueError, match='the harness sets'):
         bench_server.parse_import_keys([f'{key}=/tmp/x.log'])
+
+
+def test_django_settings_are_read_by_name_with_typed_values() -> None:
+    """``NAME=VALUE`` pairs, each value typed as an ``--import-key`` value is."""
+    assert bench_server.parse_django_settings(
+        ['STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD=1', 'X_Y=abc']
+    ) == {'STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD': 1, 'X_Y': 'abc'}
+
+
+@pytest.mark.parametrize('pair', ['NO_EQUALS', 'lower=1', '=1', '1ABC=2'])
+def test_a_django_setting_without_a_setting_name_is_refused(pair: str) -> None:
+    """Django settings are upper-case names, and each is given a value."""
+    with pytest.raises(ValueError, match='--django-setting takes NAME=VALUE'):
+        bench_server.parse_django_settings([pair])

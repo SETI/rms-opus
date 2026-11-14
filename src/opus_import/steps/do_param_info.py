@@ -21,7 +21,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 import opus_support
-from opus_import import import_util, surface_geometry, table_swap
+from opus_import import schema_files, surface_geometry, table_swap
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
@@ -63,7 +63,7 @@ def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
     )
 
     # read json file for ranges info
-    ranges_file = import_util.TABLE_SCHEMA_DIR / 'param_info_ranges.json'
+    ranges_file = schema_files.TABLE_SCHEMA_DIR / 'param_info_ranges.json'
     contents = ranges_file.read_text(encoding='utf-8')
     try:
         # convert the contents (str) to a json object (dict)

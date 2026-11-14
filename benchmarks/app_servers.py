@@ -7,6 +7,7 @@ file all three are reached through.
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 import shutil
 import signal
@@ -16,7 +17,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from benchmarks.gunicorn_hooks import READY, SERVED_LOG_ENV
+from benchmarks.gunicorn_hooks import DJANGO_SETTINGS_ENV, READY, SERVED_LOG_ENV
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -178,6 +179,7 @@ class GunicornServer:
         log_dir: Path,
         app_log_file: Path,
         served_log: Path,
+        django_settings: Mapping[str, object] | None = None,
     ) -> None:
         """Describe the server; nothing is started.
 
@@ -194,6 +196,8 @@ class GunicornServer:
                 loaded the application.
             served_log: The file `GUNICORN_HOOKS` writes each worker's readiness and
                 every request it serves to, emptied at each start.
+            django_settings: The Django settings each worker assigns before it serves
+                anything (`GUNICORN_HOOKS`), by name; None or empty for none.
         """
         self.python = python
         self.repo_root = repo_root
@@ -204,6 +208,7 @@ class GunicornServer:
         self.log_dir = log_dir
         self.app_log_file = app_log_file
         self.served_log = served_log
+        self.django_settings = dict(django_settings or {})
         self._process: subprocess.Popen[bytes] | None = None
         self._no_control_socket: bool | None = None
 
@@ -326,6 +331,18 @@ class GunicornServer:
             self._no_control_socket = '--no-control-socket' in finished.stdout.split()
         return ['--no-control-socket'] if self._no_control_socket else []
 
+    def process_environment(self) -> dict[str, str]:
+        """Return the environment gunicorn is started with.
+
+        Returns:
+            The server's environment, the served log's path under `SERVED_LOG_ENV`, and,
+            when there are any, the Django settings as JSON under `DJANGO_SETTINGS_ENV`.
+        """
+        env = {**self.env, SERVED_LOG_ENV: str(self.served_log)}
+        if self.django_settings:
+            env[DJANGO_SETTINGS_ENV] = json.dumps(self.django_settings)
+        return env
+
     def start(self) -> None:
         """Start gunicorn and wait until every worker has loaded the application.
 
@@ -367,7 +384,7 @@ class GunicornServer:
         self._process = subprocess.Popen(  # nosec B603 - the side's gunicorn
             arguments,
             cwd=self.repo_root,
-            env={**self.env, SERVED_LOG_ENV: str(self.served_log)},
+            env=self.process_environment(),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

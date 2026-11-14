@@ -25,6 +25,8 @@ import json
 from pathlib import Path
 from unittest import TestCase
 
+import pytest
+
 import opus_import
 from opus_app.apps.tools import db_utils, sql_builder
 from opus_support import UNSTORED_ASCII_CHARACTER
@@ -601,3 +603,62 @@ def _schema_string_columns() -> tuple[set[tuple[str, str]], set[tuple[str, str]]
             elif entry.get('pi_form_type') == 'STRING':
                 other_strings.add(key)
     return ascii_columns, other_strings
+
+
+@pytest.mark.parametrize(
+    ('text', 'phrase'),
+    [
+        ('CO', '"CO"'),
+        ('COISS_', '"COISS_"'),
+        ('co-iss-n154673', '"n154673"'),
+        ('ab"cd', '"ab"'),
+        ('x*yz+12 3', '"yz"'),
+        ('100% done', '"done"'),
+    ],
+    ids=['two-letters', 'underscore', 'longest-word', 'quote', 'operators', 'wildcard'],
+)
+def test_fulltext_match_searches_the_longest_word_as_a_phrase(text: str, phrase: str) -> None:
+    """The phrase holds only letters, digits and underscores, so no character the ngram
+    parser breaks a token at and no boolean operator reaches the server."""
+    expr = sql_builder.fulltext_match(sql_builder.column('bundle_id', 'obs_pds'), text)
+    assert expr == sql_builder.Expr(
+        'MATCH(`obs_pds`.`bundle_id`) AGAINST (%s IN BOOLEAN MODE)', [phrase]
+    )
+
+
+@pytest.mark.parametrize('text', ['', 'a', 'a-b', '-', 'é'], ids=repr)
+def test_fulltext_match_is_none_for_text_without_a_two_character_word(text: str) -> None:
+    """The index holds no token shorter than the ngram token size."""
+    assert sql_builder.fulltext_match(sql_builder.column('bundle_id', 'obs_pds'), text) is None
+
+
+def test_fulltext_match_keeps_the_columns_parameters_first() -> None:
+    """A column expression's own parameters come before the phrase."""
+    expr = sql_builder.fulltext_match(sql_builder.Expr('f(%s)', [7]), 'abc')
+    assert expr is not None
+    assert expr.params == [7, '"abc"']
+
+
+@pytest.mark.parametrize(
+    ('args', 'abandoned'),
+    [
+        ((db_utils.MYSQL_EXECUTION_TIME_EXCEEDED, 'Query execution was interrupted'), True),
+        (
+            (
+                db_utils.MYSQL_STORAGE_ENGINE_ERROR,
+                "Got error 188 - 'FTS query exceeds result cache limit' from storage engine",
+            ),
+            True,
+        ),
+        ((db_utils.MYSQL_STORAGE_ENGINE_ERROR, 'Got error 1880 from storage engine'), False),
+        ((db_utils.MYSQL_STORAGE_ENGINE_ERROR,), False),
+        ((db_utils.MYSQL_LOCK_WAIT_TIMEOUT, 'Lock wait timeout exceeded'), False),
+        ((), False),
+    ],
+    ids=['time-limit', 'result-cache', 'other-engine-error', 'no-message', 'lock-wait', 'bare'],
+)
+def test_an_abandoned_query_is_a_time_limit_or_the_full_text_result_cache(
+    args: tuple[object, ...], abandoned: bool
+) -> None:
+    """The two errors after which another statement may answer the string choices."""
+    assert db_utils.is_abandoned_query_error(Exception(*args)) is abandoned

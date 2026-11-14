@@ -143,3 +143,70 @@ def test_the_counters_move_by_their_difference() -> None:
 def test_identifiers_are_quoted(name: str, expected: str) -> None:
     """A backquote inside a name is doubled."""
     assert bench_server.quote_identifier(name) == expected
+
+
+class _CloneCursor:
+    """A cursor that records each statement on its connection and answers the clone's reads."""
+
+    def __init__(self, statements: list[str]) -> None:
+        """Record into the connection's list."""
+        self.statements = statements
+        self.rows: list[tuple[str, ...]] = []
+
+    def execute(self, statement: str, parameters: object = None) -> None:
+        """Record a statement and choose the rows it answers."""
+        self.statements.append(statement)
+        if statement.startswith('SELECT TABLE_NAME'):
+            self.rows = [('obs_pds',)]
+        elif statement.startswith('SHOW CREATE TABLE'):
+            self.rows = [('obs_pds', 'CREATE TABLE `obs_pds` (`bundle_id` varchar(75))')]
+        elif statement.startswith('SELECT COLUMN_NAME'):
+            self.rows = [('bundle_id',)]
+        else:
+            self.rows = []
+
+    def fetchall(self) -> list[tuple[str, ...]]:
+        """Return the last statement's rows."""
+        return self.rows
+
+    def close(self) -> None:
+        """Nothing to release."""
+
+
+class _CloneConnection:
+    """A connection whose statements are kept in the order they were sent."""
+
+    def __init__(self) -> None:
+        """Start with nothing sent."""
+        self.statements: list[str] = []
+
+    def cursor(self) -> _CloneCursor:
+        """Return a cursor recording into this connection."""
+        return _CloneCursor(self.statements)
+
+    def close(self) -> None:
+        """Nothing to release."""
+
+
+class _CloneServer:
+    """A server handing out recording connections, the first being the clone's own."""
+
+    def __init__(self) -> None:
+        """Start with no connection."""
+        self.connections: list[_CloneConnection] = []
+
+    def connect(self) -> _CloneConnection:
+        """Return a new recording connection."""
+        connection = _CloneConnection()
+        self.connections.append(connection)
+        return connection
+
+
+def test_a_clone_creates_its_tables_with_the_stopword_list_off() -> None:
+    """A copied FULLTEXT index keeps the creating session's setting, so the list is off
+    before the first table is created."""
+    server = _CloneServer()
+    bench_server.clone_schema(server, 'source', 'target', version=None, connections=1)  # type: ignore[arg-type]
+    statements = server.connections[0].statements
+    created = next(i for i, s in enumerate(statements) if s.startswith('CREATE TABLE'))
+    assert 'SET SESSION innodb_ft_enable_stopword = OFF' in statements[:created]

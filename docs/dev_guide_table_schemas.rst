@@ -176,8 +176,23 @@ Defining the column
        longitude column and its ``d_`` partner, ``obs_surface_geometry_target`` a
        key on ``obs_general_id`` and keys that start with ``target_name``, and each
        junction table of a ``mult_list`` column a key on ``obs_general_id``.
-       A ``primary_key``, ``unique`` or ``key`` entry whose value is not a non-empty
-       list of column names is refused.
+       A ``primary_key``, ``unique``, ``key`` or ``fulltext`` entry whose value is not a
+       non-empty list of column names is refused.
+   * - ``fulltext``
+     - A ``FULLTEXT`` index on one column, in the same form:
+       ``{"fulltext": ["<column>"]}``. It is built with MySQL's ngram parser, which
+       indexes every run of two characters inside a word, and it is how the search
+       form's completions find text in the middle of a value
+       (:ref:`dev_guide_webapp_search`). The column keeps any B-tree key it declares
+       beside it. Finalization adds it, before the table's other keys and in a statement
+       of its own (:ref:`dev_guide_import_steps_create_indexes`). The entries are on
+       exactly the columns the completions read whose declared width is at most
+       :data:`~opus_import.table_keys.FULLTEXT_MAX_WIDTH` characters: each ``STRING``
+       field with a slug, read from the column its search reads, which for the OPUS ID
+       is ``obs_general.opus_id``. A wider column, a file specification or a note, has
+       none, since an index holding nearly every run of two characters of every value
+       would outweigh the table. ``tests/opus_app/test_string_choice_fulltext.py``
+       derives that set and compares it with the entries.
    * - ``comments``
      - A note for whoever reads the schema. Nothing consumes it.
 
@@ -429,8 +444,8 @@ so a mistake fails the suite rather than an import, or a tooltip nobody sees. An
 one of four kinds, told apart by its keys -- a column (``field_name``), a link
 (``pi_referred_slug``), a definition with no column (``definition`` and no
 ``field_name``), or a table-level entry, which is one of ``{"constraint": "..."}``,
-``{"foreign_key": {...}}``, ``{"primary_key": [...]}``, ``{"unique": [...]}`` and
-``{"key": [...]}`` -- and the checks are:
+``{"foreign_key": {...}}``, ``{"primary_key": [...]}``, ``{"unique": [...]}``,
+``{"key": [...]}`` and ``{"fulltext": [...]}`` -- and the checks are:
 
 * **No object names a key twice.** JSON allows it and Python's reader keeps the last
   value without a word, so a key written twice is a value silently ignored. The files
@@ -440,8 +455,10 @@ one of four kinds, told apart by its keys -- a column (``field_name``), a link
   table-level entry its one key. A ``constraint`` is text, and a ``foreign_key`` has
   ``columns`` and ``references``, optionally ``on_delete`` and nothing else, with a
   non-empty list of column names, a table and one column for each of them, and an
-  ``on_delete`` of ``"cascade"`` or ``"restrict"``; a ``primary_key``, ``unique`` or
-  ``key`` entry is a non-empty list of column names.
+  ``on_delete`` of ``"cascade"`` or ``"restrict"``; a ``primary_key``, ``unique``,
+  ``key`` or ``fulltext`` entry is a non-empty list of column names. A ``fulltext``
+  entry is in an observation table's schema and names one of its columns, a ``varchar``
+  of at most :data:`~opus_import.table_keys.FULLTEXT_MAX_WIDTH` characters.
 * Every ``field_type`` is one ``create_table`` renders. The renderer and the test read
   the same constants, ``MYSQL_FIELD_TYPE_SQL`` and ``MYSQL_WIDTH_FIELD_TYPE`` in
   :mod:`opus_import.importdb.mysql`, so the two cannot disagree. An ``enum`` column, and
@@ -479,7 +496,8 @@ memory and import time, so an observation column carries a single-column key
 * the import, finalization or a management command reads rows by it;
 * a foreign key needs it;
 * it is an autocomplete column, a searchable field with the ``STRING`` form type, whose
-  prefix match reads the key;
+  prefix match reads the key (a narrow one has a ``fulltext`` entry beside it, for text
+  in the middle of a value);
 * it is one half of a ``1``/``2`` range pair, and the other half has a key.
 
 Not every column that meets one of these has a key: production's statistics decide, and

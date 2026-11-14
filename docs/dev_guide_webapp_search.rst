@@ -52,7 +52,7 @@ api_string_search_choices
 :func:`opus_app.apps.search.views.api_string_search_choices`
 
 The autocomplete dropdown for a string field: every value the field can still take,
-given what the user has typed into it and given the rest of the search. Four things about
+given what the user has typed into it and given the rest of the search. Five things about
 it are worth knowing.
 
 **It removes the field being typed into from the search.** The suggestions are
@@ -72,6 +72,40 @@ the search has more than that, or if the restricted query exceeds its execution-
 hint, it falls back to querying the whole database and reports ``full_search: true``.
 Both queries carry a ``MAX_EXECUTION_TIME`` hint, because an autocomplete that takes
 seconds is worse than one that answers approximately.
+
+**Without the join, a** ``contains`` **search of a narrow column may read its full-text
+index.** The columns with a ``FULLTEXT`` index
+(:func:`~opus_import.schema_files.packaged_fulltext_columns`, :ref:`dev_guide_table_schemas`)
+can be matched with ``MATCH(<column>) AGAINST (%s IN BOOLEAN MODE)`` as well as with the
+``LIKE`` every string search uses (:func:`~opus_app.apps.tools.sql_builder.fulltext_match`,
+added by :func:`~opus_app.apps.search.views.get_string_query` with ``fulltext``). The
+phrase searched for is the longest run of letters, digits and underscores in the typed
+text, in double quotes: the ngram parser breaks a token at any other character, and
+boolean mode reads several of them as operators, so such a run is the part of the text the
+index holds. Every value that contains the text contains the run, so the index finds every
+row the ``LIKE`` would; the ``LIKE`` then keeps only the rows that contain the whole text,
+so the choices are the ones the ``LIKE`` alone gives.
+
+The two find their rows in opposite ways. ``LIKE`` walks the column's key in order and
+stops once it has one more value than the limit, which is quick when many values match and
+slow when few do, as it then reads the whole key; the index reads every row that holds the
+run, which is quick when few do and slow when many do. So the query from every observation
+runs up to three statements, each the next only when the server gives up on the one
+before (:func:`~opus_app.apps.tools.db_utils.is_abandoned_query_error`: the statement ran
+out of its ``MAX_EXECUTION_TIME``, or the full-text search outgrew the server's
+``innodb_ft_result_cache_limit``):
+
+1. ``LIKE`` alone, under ``STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD`` (50 ms by default;
+   0 skips this statement, so the index is tried first);
+2. the index beside the ``LIKE``, under ``STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2``;
+3. ``LIKE`` alone under ``STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2``, the statement a
+   column without an index runs, so the answer is never emptier than ``LIKE`` alone would
+   give. When the server gives up on it too there are no choices.
+
+Text with no run of two characters, any other query type, and a column without an index
+run only the last of these. The restricted query, joined to the search's results, always
+uses ``LIKE`` alone: its cost is bounded by the search, and the index, which reads every
+matching row of the table whatever the search holds, is slower there.
 
 **The matched portion is highlighted** by re-applying the user's pattern to each
 suggestion. It uses the third-party ``regex`` module rather than :mod:`re`, because that

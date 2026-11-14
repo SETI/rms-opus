@@ -43,6 +43,11 @@
         "comments": "Definition is from GOSSI label."
     },
     {
+        "fulltext": [
+            "observation_id"
+        ]
+    },
+    {
         "field_name": "image_id",
         "field_type": "varchar15",
         "field_charset": "ascii",
@@ -64,6 +69,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "comments": "Definition is from GOSSI label."
+    },
+    {
+        "fulltext": [
+            "image_id"
+        ]
     },
     {
         "field_name": "filter_name",

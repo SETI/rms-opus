@@ -14,14 +14,16 @@ An entry is one of four kinds, told apart by its keys:
   no column of its own;
 * a **table-level entry**, which has none of those: ``{"constraint": "..."}``, appended to
   ``CREATE TABLE`` as written; ``{"foreign_key": {...}}``, a foreign key with its
-  columns, what it references, and optionally what deleting a referenced row does; or
+  columns, what it references, and optionally what deleting a referenced row does;
   ``{"primary_key": [...]}``, ``{"unique": [...]}`` or ``{"key": [...]}``, a key over the
-  listed columns.
+  listed columns; or ``{"fulltext": [...]}``, an ngram ``FULLTEXT`` index on one column of
+  an observation table.
 """
 
 from __future__ import annotations
 
 import csv
+import fnmatch
 import json
 from collections import Counter
 from pathlib import Path
@@ -30,19 +32,21 @@ from typing import Any
 import pytest
 
 import opus_support
-from opus_import import import_util, list_junctions, mult_fields
+from opus_import import import_util, list_junctions, mult_fields, schema_files
 from opus_import.importdb.mysql import (
     MYSQL_CHARSET_SQL,
     MYSQL_ENUM_FIELD_TYPE,
     MYSQL_FIELD_TYPE_SQL,
+    MYSQL_WIDTH_FIELD_TYPE,
     is_renderable_field_type,
     takes_charset,
 )
+from opus_import.schema_files import OBSERVATION_SCHEMA_PATTERN
 from opus_import.steps.do_import_mult import PINNED_ABSENT_ID
-from opus_import.table_keys import ON_DELETE_VALUES, TABLE_LEVEL_KEY_KINDS
+from opus_import.table_keys import FULLTEXT_MAX_WIDTH, ON_DELETE_VALUES, TABLE_LEVEL_KEY_KINDS
 
 #: The packaged schema directory, as a path.
-_SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
+_SCHEMA_DIR = Path(str(schema_files.TABLE_SCHEMA_DIR))
 
 #: The JSON files there that are not lists of entries.
 _NOT_ENTRY_LISTS = {'param_info_ranges.json'}
@@ -295,6 +299,95 @@ def test_the_table_level_key_check_refuses_what_create_table_cannot_render(
     """A key lists at least one column, by name."""
     (level_entry,) = entry
     assert bool(_table_level_key_problems('x.json', entry, level_entry)) == problem
+
+
+def _fulltext_problems(name: str, entries: list[dict[str, Any]]) -> list[str]:
+    """Say what is wrong with a schema's ``fulltext`` entries, if anything.
+
+    Parameters:
+        name: The schema's file name.
+        entries: The schema's entries.
+
+    Returns:
+        One line per entry that is not on one column of the schema whose type is a
+        ``varchar`` of at most `FULLTEXT_MAX_WIDTH` characters, or that is in a schema
+        that is not an observation table's (`OBSERVATION_SCHEMA_PATTERN`), the only
+        schemas the web application reads them from.
+    """
+    columns = {entry['field_name']: entry for entry in entries if 'field_name' in entry}
+    problems = []
+    for entry in entries:
+        if 'fulltext' not in entry:
+            continue
+        if not fnmatch.fnmatch(name, OBSERVATION_SCHEMA_PATTERN):
+            problems.append(f'{name}: fulltext outside an observation table')
+        named = entry['fulltext']
+        if not isinstance(named, list) or len(named) != 1 or named[0] not in columns:
+            problems.append(f'{name}: fulltext {named!r} is not one column of the table')
+            continue
+        width = MYSQL_WIDTH_FIELD_TYPE.fullmatch(columns[named[0]]['field_type'])
+        if width is None or int(width[1]) > FULLTEXT_MAX_WIDTH:
+            problems.append(
+                f'{name}: fulltext {named[0]} is not a varchar of at most '
+                f'{FULLTEXT_MAX_WIDTH} characters'
+            )
+    return problems
+
+
+@pytest.mark.parametrize(
+    ('name', 'entries', 'problem'),
+    [
+        (
+            'obs_x.json',
+            [{'field_name': 'a', 'field_type': 'varchar100'}, {'fulltext': ['a']}],
+            None,
+        ),
+        (
+            'cart.json',
+            [{'field_name': 'a', 'field_type': 'varchar10'}, {'fulltext': ['a']}],
+            'outside',
+        ),
+        (
+            'obs_x.json',
+            [{'field_name': 'a', 'field_type': 'varchar101'}, {'fulltext': ['a']}],
+            'at most',
+        ),
+        ('obs_x.json', [{'field_name': 'a', 'field_type': 'text'}, {'fulltext': ['a']}], 'at most'),
+        (
+            'obs_x.json',
+            [{'field_name': 'a', 'field_type': 'varchar10'}, {'fulltext': ['b']}],
+            'one column',
+        ),
+        (
+            'obs_x.json',
+            [
+                {'field_name': 'a', 'field_type': 'varchar10'},
+                {'field_name': 'b', 'field_type': 'varchar10'},
+                {'fulltext': ['a', 'b']},
+            ],
+            'one column',
+        ),
+    ],
+    ids=['narrow', 'not-observation', 'too-wide', 'text', 'no-such-column', 'two-columns'],
+)
+def test_the_fulltext_check_refuses_what_the_autocomplete_does_not_read(
+    name: str, entries: list[dict[str, Any]], problem: str | None
+) -> None:
+    """A FULLTEXT entry names one narrow varchar of an observation table."""
+    problems = _fulltext_problems(name, entries)
+    if problem is None:
+        assert problems == []
+    else:
+        assert len(problems) == 1
+        assert problem in problems[0]
+
+
+def test_every_fulltext_entry_is_on_one_narrow_column_of_an_observation_table() -> None:
+    """The packaged ``fulltext`` entries pass `_fulltext_problems`, and there are some."""
+    assert [
+        problem for name, entries in _entry_lists() for problem in _fulltext_problems(name, entries)
+    ] == []
+    assert any('fulltext' in entry for _, entries in _entry_lists() for entry in entries)
 
 
 def _foreign_key_problems(name: str, entry: Any) -> list[str]:

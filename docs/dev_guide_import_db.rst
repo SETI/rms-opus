@@ -70,6 +70,8 @@ caller.
             +find_column_max()*
             +read_table_keys()*
             +add_keys_statement()*
+            +add_fulltext_key_statement()*
+            +read_ngram_token_size()*
             +add_foreign_key_statement()*
             +add_foreign_keys()*
             +key_space_bytes()*
@@ -169,9 +171,9 @@ table-level ``foreign_key``, ``primary_key``, ``unique`` and ``key`` entries inc
 and ``search_results`` its keys over two columns, from the start.
 
 :func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
-tables: the declared keys the keep set leaves out, plain keys first and foreign keys
-last, plus a plain key on each foreign-key column no other key leads, so the index each
-foreign key needs already exists when the foreign key is added.
+tables: the declared keys the keep set leaves out, ``FULLTEXT`` keys first, then plain
+keys, and foreign keys last, plus a plain key on each foreign-key column no B-tree key
+leads, so the index each foreign key needs already exists when the foreign key is added.
 Finalization's ``--create-indexes`` adds what it lists
 (:ref:`dev_guide_import_steps_create_indexes`). Both read the same column entries, so
 the two can never disagree; a unit test checks that they partition the keys of every
@@ -303,8 +305,11 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.read_table_keys`\ ``()``
      - Every table's keys as the server reports them, as
        :class:`~opus_import.table_keys.TableKey` values.
-   * - :meth:`~opus_import.importdb.super.ImportDBSuper.add_keys_statement`\ ``(table_name, keys)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_key_statement`\ ``(table_name, key)``
-     - One statement that adds plain keys to a table, or one foreign key.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.add_keys_statement`\ ``(table_name, keys)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.add_fulltext_key_statement`\ ``(table_name, key)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_key_statement`\ ``(table_name, key)``
+     - One statement that adds plain keys to a table, one ``FULLTEXT`` key, or one
+       foreign key.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.read_ngram_token_size`\ ``()``
+     - The server's ``ngram_token_size``, which the ``FULLTEXT`` keys are built with.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.add_foreign_keys`\ ``(statements)``
      - Add foreign keys one at a time without checking the rows already there.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.key_space_bytes`\ ``(table_name, schema, key)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.index_space_budget`\ ``(server_tmpdir)``
@@ -670,10 +675,13 @@ Table names
 Schemas
 ~~~~~~~
 
-``TABLE_SCHEMA_DIR`` and ``DICTIONARY_DATA_DIR``
+:data:`~opus_import.schema_files.TABLE_SCHEMA_DIR` and ``DICTIONARY_DATA_DIR``
     The two packaged data directories, as :mod:`importlib.resources` traversables. Every
     read of a table schema or of the context tree goes through one of them, which is what
-    lets an installed OPUS find them without a checkout.
+    lets an installed OPUS find them without a checkout. The first is defined in
+    :mod:`opus_import.schema_files`, which imports nothing of the import's own
+    dependencies, so the web application reads the schemas through it too
+    (:func:`~opus_import.schema_files.packaged_fulltext_columns`).
 
 :func:`~opus_import.import_util.table_schema_files`
     The packaged ``table_schemas`` entries whose file name matches a glob, **sorted by

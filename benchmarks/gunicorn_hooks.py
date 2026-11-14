@@ -1,7 +1,7 @@
 """The gunicorn configuration file the harness starts every side's application with.
 
 gunicorn executes this file by path, in the side's interpreter, so it imports nothing
-from `benchmarks` and works on any commit. It does two things, both outside the
+from `benchmarks` and works on any commit. It does three things, all outside the
 application's code:
 
 * **It finishes loading the application at worker start.** Django imports its URLconf,
@@ -15,8 +15,14 @@ application's code:
   `SERVED_LOG_ENV` environment variable names, one line per write, so the harness can
   tell when every worker is ready, prove a cold scenario started on workers that had
   served nothing, and warm every worker before a warm repetition.
+* **It sets the Django settings a run asks for.** `DJANGO_SETTINGS_ENV` holds a JSON
+  object of setting names and values (``bench_web --django-setting``), which
+  ``post_worker_init`` assigns before the worker serves anything, so a run can measure
+  a branch the defaults do not take at its scale. A setting the side does not read is
+  set and ignored.
 """
 
+import json
 import os
 
 #: The environment variable naming the file the hooks append to.
@@ -24,6 +30,22 @@ SERVED_LOG_ENV = 'BENCHMARK_SERVED_LOG'
 
 #: The line a worker writes once it has finished loading the application.
 READY = 'READY'
+
+#: The environment variable holding the Django settings a run sets, as a JSON object.
+DJANGO_SETTINGS_ENV = 'BENCHMARK_DJANGO_SETTINGS'
+
+
+def apply_settings(settings: object) -> None:
+    """Assign each setting `DJANGO_SETTINGS_ENV` names to the application's settings.
+
+    Parameters:
+        settings: The settings object, Django's ``django.conf.settings`` in a worker.
+    """
+    overrides = os.environ.get(DJANGO_SETTINGS_ENV)
+    if overrides is None:
+        return
+    for name, value in json.loads(overrides).items():
+        setattr(settings, name, value)
 
 
 def _record(text: str) -> None:
@@ -43,15 +65,17 @@ def _record(text: str) -> None:
 
 
 def post_worker_init(worker: object) -> None:
-    """Import the URLconf, then record that this worker is ready.
+    """Set the run's settings, import the URLconf, then record that this worker is ready.
 
     Parameters:
         worker: The gunicorn worker, unused.
     """
     del worker
     # Imported here, in the worker, where loading the application has set Django up.
+    from django.conf import settings
     from django.urls import get_resolver
 
+    apply_settings(settings)
     _ = get_resolver().url_patterns
     _record(READY)
 

@@ -200,6 +200,23 @@ def test_web_runs_that_warmed_or_promoted_another_way_are_refused_within_a_file(
         results.append_runs(label, {**warmed, 'promotion_carts': None}, [_run()])
 
 
+def test_runs_given_other_django_settings_are_refused_within_a_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A file's runs share their Django settings; runs that record none gave none."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-14', 'PR-22', 'after', 'test', 'mysql', 'a')
+    results.append_runs(label, {}, [_run('import')])
+    forced = {'django_settings': {'STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD': 1}}
+    with pytest.raises(ResultError, match=re.escape('django_settings was {} and is now')):
+        results.append_runs(label, forced, [_run()])
+    results.append_runs(label, {'django_settings': {}}, [_run()])
+    other = Label('2026-11-14', 'PR-22', 'after', 'test', 'mysql', 'b')
+    results.append_runs(other, forced, [_run()])
+    with pytest.raises(ResultError, match='django_settings was'):
+        results.append_runs(other, {'django_settings': {}}, [_run()])
+
+
 def test_web_runs_that_planted_another_number_of_rows_are_refused_within_a_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

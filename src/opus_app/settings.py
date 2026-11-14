@@ -521,6 +521,12 @@ STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500  # ms
 # Timeout for SELECT When not joined with the search's results
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500  # ms
+# Timeout for the first SELECT, LIKE alone, when not joined with the search's results
+# on a column with a full-text index; the index is tried when it runs out. LIKE stops
+# early when many values match, so it outlasts this only when few do and it reads the
+# whole column, which is when the index is quick. 0 skips that SELECT, so the index is
+# tried first.
+STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD = 50  # ms
 
 THUMBNAIL_NOT_FOUND = 'https://opus.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 

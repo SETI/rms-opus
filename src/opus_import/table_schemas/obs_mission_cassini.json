@@ -45,6 +45,11 @@
         "pi_tooltip": ""
     },
     {
+        "fulltext": [
+            "obs_name"
+        ]
+    },
+    {
         "field_name": "rev_no",
         "field_type": "varchar3",
         "field_default": null,
@@ -319,6 +324,11 @@
         "pi_tooltip": ""
     },
     {
+        "fulltext": [
+            "activity_name"
+        ]
+    },
+    {
         "field_name": "mission_phase_name",
         "field_type": "mult_idx",
         "field_default": null,
@@ -382,5 +392,10 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "comments": "Definition is from COISS label"
+    },
+    {
+        "fulltext": [
+            "sequence_id"
+        ]
     }
 ]

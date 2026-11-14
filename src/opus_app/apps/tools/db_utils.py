@@ -25,6 +25,7 @@ the places that read the numbers of a lock wait that timed out and of a broken d
 from __future__ import annotations
 
 import functools
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -46,6 +47,37 @@ MYSQL_TABLE_NOT_EXISTS = 1146
 MYSQL_EXECUTION_TIME_EXCEEDED = 3024
 MYSQL_LOCK_WAIT_TIMEOUT = 1205
 MYSQL_DEADLOCK = 1213
+
+#: The server's "Got error <n> from storage engine", whose message names the engine's
+#: own error number.
+MYSQL_STORAGE_ENGINE_ERROR = 1030
+
+#: InnoDB's error number for a full-text search whose results outgrow the server's
+#: ``innodb_ft_result_cache_limit``, which reaches the client inside
+#: `MYSQL_STORAGE_ENGINE_ERROR`'s message.
+INNODB_FTS_RESULT_CACHE_LIMIT_ERROR = 188
+
+
+def is_abandoned_query_error(exc: BaseException) -> bool:
+    """Return whether the server gave up on a query that another query may answer.
+
+    Parameters:
+        exc: The exception, as Django raises it, which carries the driver's error
+            number as its first argument and the server's message as its second.
+
+    Returns:
+        True for MySQL's error 3024, a statement stopped at its ``MAX_EXECUTION_TIME``,
+        and for error 1030 carrying InnoDB's error 188, a full-text search whose results
+        outgrew ``innodb_ft_result_cache_limit``.
+    """
+    if not exc.args:
+        return False
+    if exc.args[0] == MYSQL_EXECUTION_TIME_EXCEEDED:
+        return True
+    message = str(exc.args[1]) if len(exc.args) > 1 else ''
+    return exc.args[0] == MYSQL_STORAGE_ENGINE_ERROR and bool(
+        re.search(rf'\berror {INNODB_FTS_RESULT_CACHE_LIMIT_ERROR}\b', message)
+    )
 
 
 def is_lock_timeout_error(exc: BaseException) -> bool:

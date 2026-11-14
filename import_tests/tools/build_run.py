@@ -915,7 +915,9 @@ def clone_schema(credentials: DatabaseCredentials, source: str, target: str) -> 
 
     Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
     keys and foreign keys, with ``foreign_key_checks`` off so that tables may be created
-    and filled in any order. The target is dropped first if it exists.
+    and filled in any order, and with the stopword list off, as the import builds its
+    ``FULLTEXT`` indexes, since a copied index keeps the setting of the session that
+    created it. The target is dropped first if it exists.
 
     Parameters:
         credentials: How to reach the database server.
@@ -927,6 +929,7 @@ def clone_schema(credentials: DatabaseCredentials, source: str, target: str) -> 
     with contextlib.closing(golden_io.connect(credentials, target)) as connection:
         with contextlib.closing(connection.cursor()) as cursor:
             cursor.execute('SET SESSION foreign_key_checks = 0')
+            cursor.execute('SET SESSION innodb_ft_enable_stopword = OFF')
             for table in golden_io.list_tables(credentials, source):
                 cursor.execute(f'SHOW CREATE TABLE `{source}`.`{table}`')
                 cursor.execute(cursor.fetchall()[0][1])

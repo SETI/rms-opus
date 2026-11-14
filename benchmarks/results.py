@@ -63,7 +63,8 @@ HIGHER_IS_BETTER_SUFFIX = '_per_s'
 
 #: Environment entries that must not change within one result file: a file whose runs
 #: came from two commits, two interpreters, two servers, imports shared among importers
-#: in two ways, or web runs that warmed or promoted differently is not one label's runs.
+#: in two ways, web runs that warmed or promoted differently, or applications given
+#: different Django settings is not one label's runs.
 PINNED_ENVIRONMENT_KEYS = (
     'git_sha',
     'git_dirty',
@@ -78,14 +79,17 @@ PINNED_ENVIRONMENT_KEYS = (
     'warm_states',
     'promotion_carts',
     'promotion_cart_rows',
+    'django_settings',
 )
 
 #: What a pinned entry is compared as in a file whose earlier runs do not record it: a
 #: run that records no ``import_keys`` set none, and one that records no importer count
-#: imported in one process. The web runs' entries have none, since a file's import runs
+#: imported in one process, and one that records no Django settings gave the application
+#: none. The web runs' warming and promotion entries have none, since a file's import runs
 #: record neither.
 PINNED_ENVIRONMENT_DEFAULTS: dict[str, Any] = {
     'import_keys': {},
+    'django_settings': {},
     'importers': None,
     'coordinator_importers': None,
 }
