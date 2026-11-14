@@ -345,9 +345,9 @@ It asks the site's own API, over HTTP, for what those searches show: for the emp
 search, its result count and first page, the default widgets and the menu, and its counts
 for every mult field, so that opening any mult widget is a cache hit; then, for one search
 per value of each common field -- each planet, mission and instrument, among others -- the
-same count, first page, default widgets and menu. The fields come from ``api/fields.json`` and the values from the empty search's
-counts, so they are always the database's own. It prints each request's status and time,
-and the total. The site is already serving while it runs.
+same count, first page, default widgets and menu. The fields come from ``api/fields.json``
+and the values from the empty search's counts, so they are always the database's own. It
+prints each request's status and time, and the total. The site is already serving while it runs.
 
 * **It asks the site at its public URL**, the configuration's ``public_url`` under
   ``/opus/``, so the server has to be able to reach that address. ``--url`` names another,
