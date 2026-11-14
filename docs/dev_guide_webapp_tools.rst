@@ -606,7 +606,9 @@ size and the checksum are columns the import wrote from a shelf.
 
 :func:`~opus_app.apps.tools.file_utils.get_pds_preview_images`
     The preview images at one or more of the four sizes, from the JSON view set the
-    import stored in ``obs_general.preview_images``. Each size contributes a URL,
+    import stored in ``obs_preview.preview_images``. A caller that read the JSON with
+    a page of results passes it in; otherwise each observation's row is looked up by
+    its OPUS ID. Each size contributes a URL,
     alternative text, a byte size and the two dimensions. A missing preview yields the
     "not found" placeholder, or is skipped entirely under ``ignore_missing``.
 

@@ -38,7 +38,7 @@ StrField = str | None
 """A text column's value, or None where the observation has none.
 
 Covers ``varchar*`` and ``text`` columns, and the one ``json`` column
-(``obs_general.preview_images``), whose method returns the output of `json.dumps` and so
+(``obs_preview.preview_images``), whose method returns the output of `json.dumps` and so
 is text as far as the pipeline is concerned. That one method never actually returns
 None -- its column is ``field_notnull`` -- but it shares the alias rather than being
 given one of its own for a single column.

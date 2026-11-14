@@ -1253,3 +1253,27 @@ def test_do_it_all_imports_and_finalize_alone_does_not() -> None:
 def test_a_new_context_has_chosen_no_path() -> None:
     """The context starts with no path chosen, so `do_import_steps` chooses one."""
     assert make_context(db=SimpleNamespace()).import_path is None
+
+
+@pytest.mark.parametrize(('count', 'errors'), [(4, 1), (0, 0)])
+def test_an_observation_without_an_obs_preview_row_is_an_error(count: int, errors: int) -> None:
+    """``obs_general`` is anti-joined against ``obs_preview``, whose rows the pages read."""
+    db = _OrphanDB(count, ['obs_general', 'obs_preview'])
+    ctx = make_context(db=db)
+    do_validate.validate_previews(ctx)
+    assert ctx.logger.messages_at('error') == (
+        ['4 obs_general rows have no obs_preview row'] * errors
+    )
+    (query,) = db.queries
+    assert query.startswith('COUNT(*) FROM `obs_general` `g` ')
+    assert 'LEFT JOIN `obs_preview` `p` ON `p`.`obs_general_id` = `g`.`id` ' in query
+    assert query.endswith('WHERE `p`.`obs_general_id` IS NULL')
+
+
+def test_a_schema_without_obs_preview_has_no_previews_to_check() -> None:
+    """Without obs_preview there is nothing to join obs_general to."""
+    db = _OrphanDB(4, ['obs_general'])
+    ctx = make_context(db=db)
+    do_validate.validate_previews(ctx)
+    assert ctx.logger.messages_at('error') == []
+    assert db.queries == []

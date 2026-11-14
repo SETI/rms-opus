@@ -7321,6 +7321,241 @@ Nothing above this line is rewritten by an executor.
     writes, which a deploy does once; the orchestrator accepts it. Every other guard
     held.
 
+### 2026-11-11, PR-19 (written against this file at e5e71573)
+
+- The branch is PR-18's head (e5e71573), which sits on PR-17's 45ccaebb. PR-18 changes
+  no schema, so PR-17's finalized test-scale schema is this PR's merge-base's.
+- **The gate passed** (the orchestrator's prototype, 2026-11-11). Clones of PR-17's
+  finalized test-scale schema `bench_test_after_a_1`, imported by PR-17's code, made with
+  `bench_server.clone_schema`: `bench_test_gate_with`, and `bench_test_gate_without`
+  after `ALTER TABLE obs_general DROP COLUMN preview_images, ALGORITHM=INPLACE`.
+  - `obs_general`'s data length 26,787,840 against 5,783,552 bytes (ratio 0.216); its
+    index length 19,087,360 against 14,630,912.
+  - The web scenario could not serve the copy without the column:
+    `web.db-cold.previews.empty` (`__api/dataimages.json`) answered 500, since the ORM
+    read `preview_images`. So, as the section allows, the target search's search-build
+    `SELECT` (`SELECT 5,ROW_NUMBER() OVER (ORDER BY obs_general.time1,
+    obs_general.opus_id), obs_general.id FROM obs_general WHERE
+    JSON_CONTAINS(obs_general.target_name,'1')`) was timed by `EXPLAIN ANALYZE` on its
+    first execution after a server restart, 12 restarts alternated with, without,
+    without, with: with the column a median of 29.95 ms (29.6 to 30.5), without it
+    26.15 ms (25.6 to 31.2, the 31.2 an outlier by §2.6's rule); a change of -12.7%,
+    beyond the floor of `db.plan.search.target/result_count.time_s` in PR-00's floors
+    file (6.2%, absolute 1.23 ms).
+  - Secondary: the `Innodb_buffer_pool_reads` delta was 120.5 with the column and 322
+    without, but that counter leaves out the pages read-ahead brings in. Four more
+    restarts recorded `Innodb_pages_read`: 1,659 with the column (1,536 of them
+    read-ahead) and 329 without (none read-ahead); the explain times were 30.85 against
+    28.4 ms in those four. The harness's server starts exactly cold (no buffer-pool dump
+    or reload, `O_DIRECT`), so these are whole cold reads. **The target is judged, in
+    this PR's own measurement, on pages read as well as on `Innodb_buffer_pool_reads`**,
+    since the plan's secondary metric alone points the wrong way here.
+- **`bench_web` records two more counters per scenario**: `Innodb_buffer_pool_read_ahead`
+  and `Innodb_pages_read`, beside `Innodb_buffer_pool_reads`
+  (`bench_web.SCENARIO_COUNTERS`, metrics `web.<state>.<scenario>.server.<counter>`).
+  The harness runs from the PR worktree, so both sides of this PR's A/B record them; the
+  benchmarks guide says what each counts. `bench_db` records no server counters (its
+  plans run warm), so it gains none. `bench_import` is left as it is.
+- **`bench_db` reads `preview_images` from either shape**: from `obs_preview` where the
+  schema has it, otherwise from `obs_general` (`bench_db.PREVIEW_TABLES`), still as a
+  ratio to `obs_general`'s data length; `details.preview_images` gains `table`, naming
+  where it was read. No other harness reader names the column (`grep -rn preview
+  benchmarks --include=*.py`); `scenarios/queries.sql` is left for the measurement's
+  `--commit-capture` to rewrite.
+- **`param_info`'s `preview_images` row moves to the category `obs_preview`.** The page
+  readers (`api_get_data_and_images`, `_api_get_images`, which `api/images*.json` and
+  `api/image/<size>/<opus_id>` share) ask `get_search_results_chunk` for the column
+  `**previewimages`; with the row under `obs_preview`, `add_obs_table_joins` LEFT JOINs
+  `obs_preview` on `obs_general_id = obs_general.id`, one primary-key join for the
+  page, as for any other category's table, and their code is unchanged. The Detail
+  page's two lookups (`get_pds_preview_images` with no JSON passed) read
+  `ObsPreview.objects.get(obs_general__opus_id=...)`: `obs_general` by its `opus_id`
+  key, then `obs_preview` by its primary key. `grep -rn preview_images src/opus_app
+  --include=*.py` finds nothing else.
+- **`obs_preview` has no `table_names` row**: it is no section of the Details tab and
+  no category of `api/categories`; `api/fields` skips `**` slugs before it looks a
+  category up. A request that needs the label of `**previewimages` (a widget for it)
+  failed before (its `label` is NULL) and fails still, now on the missing `table_names`
+  row first; no golden covers it.
+- **`obs_preview` comes right after `obs_general` in `TABLES_TO_POPULATE`**, so the
+  preview method runs where it ran as `obs_general`'s last column, and the import's
+  warnings keep their order. The method is `ObsPreview.field_obs_preview_preview_images`
+  in a table module of its own (`opus_import.obs.obs_preview`), mixed into
+  `ObsCommonPDS3` and `ObsCommonPDS4` after the general module, moved unchanged.
+- **The per-bundle steps needed no change.** The per-bundle delete, the delete of rows
+  above a bundle's highest `obs_general` id, `TableRowSink.discard`, the duplicate step,
+  scorched earth, finalization's foreign keys (from the schema's table-level
+  `foreign_key` entry) and the orphan count all iterate the `obs_` tables the server
+  holds, and `obs_preview`'s primary key leads with `obs_general_id`. The import suite's
+  append and delete cases compare every observation table, `obs_preview` among them.
+- **Validation gains `validate_previews`**, an anti-join counting the observations
+  without an `obs_preview` row. The `NOT NULL` column guaranteed every observation its
+  preview JSON; the page readers parse the joined value, which a missing row makes NULL.
+- Two docstrings stated how many table modules the assembly classes combine ("nine",
+  already wrong); they say so in words.
+- `models.py` is edited: `ObsGeneral` loses the field and `ObsPreview` is added as the
+  other one-to-one children are.
+  `inspectdb obs_preview obs_general` against the local integration database imported
+  with this head (`pr19local`) gives the same fields, `obs_preview`'s key as a
+  one-to-one relation onto `ObsGeneral` (its foreign key is in place), which the file
+  names as the other children do. There the page join reads `obs_preview` by
+  `eq_ref` on its primary key (`EXPLAIN` of the join by hand).
+- The import goldens change in `obs_general` (the column), the new `obs_preview` (the
+  same values, keyed by each observation's id, checked by a script: every `obs_general`
+  row equal less the column, and the old column equal to the new table), `param_info`
+  (the one row's category; every other row the same, in the same order, though
+  `param_info.id` shifts down by one for the rows after the moved one, which take 17 to
+  139 while the moved row goes from 17 to 140; nothing keys on those ids) and
+  `schema_version`, nothing else. `tests/opus_import/fixtures/obs_field_values.json` is
+  regenerated: the method moves from `obs_general/` to `obs_preview/` with its value.
+- `integration_tests/test_db_data/test_local_db_integrity.py` checks `obs_preview`'s
+  rows per bundle against `obs_general`'s.
+- `SCHEMA_VERSION` is 11.
+- Every new test was mutation-checked: `PREVIEW_TABLES` reordered, cut to
+  `obs_general`, and a schema with neither table read anyway; either new counter left
+  out of `SCENARIO_COUNTERS`; `validate_previews` without its error and without its
+  table check. Each failed its test.
+- Results: the gates pass at 42df97a8 (`run-all-checks.sh`, 3,069 unit tests), and at
+  f278efc5, which adds the regenerated goldens, the import suite 193 passed and 3 skipped; the integration job's run (`tests/opus_support`,
+  `tests/opus_app` and `integration_tests`, with coverage) 2,875 passed against
+  `pr19local` at 100% coverage. **No integration golden changed.** `pr19local` holds
+  29,752 rows in both `obs_general` and `obs_preview`, and validation reported nothing.
+  The integrity check's new assertion fails with one `obs_preview` row deleted from
+  `pr19local` (restored after).
+- **The measurement** (§2.3; PR-19 imports twice, test scale), for the orchestrator:
+  base at e5e71573 and head each in its own worktree and virtual environment; the
+  fixture imports three a side, A B B A A B, and one test-scale import a side, A B, each
+  into its own schema; `bench_db --dump-queries` once a side (the head's last with
+  `--commit-capture`); then `bench_web` runs alternated A B B A at §2.6's test-scale
+  count, each side serving its own schema. One `bench_web` run gives every state: the
+  db-cold pass, then the app-cold pass, whose second issue of each scenario is warm.
+  - Target: `web.db-cold.search.target.wall_s` (`compare --target`), with
+    `web.db-cold.search.target.server.Innodb_pages_read`,
+    `.server.Innodb_buffer_pool_read_ahead` and `.server.Innodb_buffer_pool_reads`
+    beside it; `web.app-cold.search.target.wall_s` reported.
+  - The scenarios that scan `obs_general`, app-cold: `search.target`, and the mult counts
+    and the menu (the triggered tables) in `fanout.empty` and `fanout.selected`
+    (`...fanout.<search>.<request>.latency_s`).
+  - The preview-image reads: `previews.empty` in all three states,
+    `web.{warm,app-cold,db-cold}.previews.empty.wall_s` and its requests'
+    `.latency_s` (`gallery_page_1` and `gallery_page_10`, `__api/dataimages.json`;
+    `images_page_1` and `images_page_10`, `api/images.json`; `detail`,
+    `__initdetail/<opus_id>.html`; `image_med`, `api/image/med/<opus_id>.json`). The
+    plan of each read is `bench_db`'s capture: `db.plan.previews.empty/<request>.*`, with
+    the `EXPLAIN ANALYZE` and `EXPLAIN FORMAT=JSON` in the result's details (on the
+    head, one join for a page and, for the Detail page, an `opus_id` key lookup on
+    `obs_general` then `obs_preview`'s primary key).
+  - Sizes: `db.table.obs_general.data_bytes`, `db.table.obs_preview.data_bytes`, and
+    `details.preview_images` (its `table` names where each side holds the column).
+- **Review fixes (2026-11-11).** An independent review found no functional defect in
+  the import, the joins or the API output; these were fixed:
+  - **A missing `obs_preview` row failed every page holding the observation.** The two
+    page readers parsed the LEFT JOIN's NULL with `json.loads` and answered 500, while
+    the Detail page showed the not-found placeholder. They read the column through
+    `results.views.page_preview_json`, which returns None for NULL, so a missing row
+    shows the placeholder everywhere, and `validate_previews` reports it.
+    `tests/opus_app/test_preview_readers.py` drives the gallery and an image call with a
+    page whose second row is NULL; each fails with its reader's `json.loads` restored.
+  - `validate_previews`' test pins the `FROM` table and the whole `ON` condition; a join
+    on `g.opus_id` or from `obs_pds` fails it.
+  - The obs-module guide's class diagram gains `ObsPreview` as a base of both assembly
+    classes, and its Cassini ISS order is what `ObsVolumeCOISS12xxx.__mro__` prints:
+    `ObsGeneralPDS3, ObsGeneral, ObsPreview, ObsPdsPDS3, ...`. `field_types.StrField`
+    names `obs_preview.preview_images`; `do_table_names` and the import-steps guide name
+    every reader of the JSON. Three test docstrings describe the schema shapes as they
+    are.
+  - Validation's cost: `validate_previews` reads `obs_general`'s and `obs_preview`'s
+    primary keys once more, beside `validate_orphans`' anti-join over `obs_preview`; at
+    complete scale that is one more pass over both keys.
+  - `bench_db`'s `ratio_to_obs_general_data` divides by `obs_general`'s data length, which
+    holds the column on a base side and not on a head side; `details.preview_images.table`
+    tells the two apart.
+- **CodeRabbit review (2026-11-12).**
+  - *A missing `obs_preview` row still failed a page* (`results.views.page_preview_json`).
+    `get_search_results_chunk` replaces every NULL in its rows with `'N/A'`, so the
+    readers received `'N/A'`, not None, and `json.loads` raised; the readers' tests
+    stubbed the chunk with None, which it never delivers, so they passed. The chunk's
+    stand-in is the constant `results.views.NULL_RESULT`, used where the chunk replaces
+    and compares it, and `page_preview_json` reads it as None. The stubbed page delivers
+    `NULL_RESULT` for the missing row, and an integration test calls the real chunk for
+    a Voyager ISS column of a Cassini observation, pinning that a NULL join arrives as
+    `NULL_RESULT` and reads as no preview. Its docstring, the chunk's and the web
+    application's results guide say so.
+  - *`field_obs_preview_preview_images` had no docstring.* It documents what the method
+    returns: the encoded view set, the missing-size warnings, `{"viewables": []}` for an
+    observation without a filespec or without a view set, and the `--fake-images` set.
+  - Mutations, each failing its test: the reader's `json.loads` of `NULL_RESULT`
+    restored (three unit tests); the chunk's replacement given another value (the
+    integration test).
+  - Results, at 7938aa70 (PR-18's 5723861f merged): the gates pass (3,100 unit tests);
+    the import suite 193 passed and 3 skipped; the mini goldens regenerated unchanged;
+    the integration job's run 2,886 passed against `pr19local` at 100% coverage. Two
+    earlier runs of the job each failed one test,
+    `test__api_stringsearchchoices_bundleid_002_couvis_timeout`, which sets a 1 ms
+    `MAX_EXECUTION_TIME` and expects the constrained query to exceed it; it passed alone
+    three times and in two further runs of `integration_tests` at this head, so its
+    result follows the server's speed, not this change.
+- **Measurement** (2026-11-11, test scale; base at e5e71573 and head at 6189530e, each
+  importing its own schema, `bench_test_before_a_1` and `bench_test_after_a_1`, session
+  `a`; judged against the PR-00 floors):
+  - **Target, the target search db-cold:** the first three runs a side gave 112.0 ms to
+    101.7 ms (-9.2%; floor 15.7%), within twice the floor, so the web runs were repeated
+    five a side, alternated, in session `r` (load averages 3.1 to 14.0), and the repeat
+    replaces them: 107.2 ms to 99.65 ms, -7.0%, **not improved** beyond its floor (16.4%,
+    an absolute 17.6 ms). The search-build's cold read did change:
+    `web.db-cold.search.target.server.Innodb_pages_read` 1,753 to 471 (-73.1%), of which
+    `Innodb_buffer_pool_read_ahead` 1,536 to 256; `Innodb_buffer_pool_reads` 217 to 215.
+    The gate's measurement repeated on the two A/B schemas (the search-build `SELECT`'s
+    `EXPLAIN ANALYZE` on its first execution after a restart, 12 restarts alternated)
+    gave 32.5 ms (31.1 to 33.9) to 21.65 ms (20.7 to 22.6), -33.4%, every head run below
+    every base run, with 1,657.5 pages read to 375. At test scale the request's wall time
+    carries the HTTP round trip and the cold reads of the rest of the request, whose
+    floor is wider than the build's gain. **A stop-and-report under §2.5**, for the
+    orchestrator's decision.
+  - **App-cold, the scenarios that scan `obs_general`:** `web.app-cold.search.target.wall_s`
+    70.0 ms to 71.4 ms (+2.0%); the mult counts of `fanout.empty` -6.4% to -9.5%; its menu
+    -1.4%; `fanout.selected`'s menu +60.8% (floor 70.8%) and its mult counts +0.6% to
+    -39.4%. All within their floors; the schema fits the buffer pool at this scale, so
+    app-cold the target search reads one or two pages from disk on either side.
+  - **The preview-image reads**, `previews.empty`'s `wall_s`: warm +5.8%, app-cold +2.7%,
+    db-cold +1.3%, each within its floor, as is every request of it in every state. The
+    plans (`db.plan.previews.empty/<request>`) read `obs_preview` in one statement for a
+    page, a single-row lookup on its primary key for each of the page's rows, and for
+    the Detail page `obs_general` by its `opus_id` key then one `obs_preview` row by its
+    primary key; their times are within their floors. App-cold
+    the scenario reads 23 pages against 4 (the head's `obs_preview` pages), db-cold 265
+    against 258.
+  - **Sizes:** `db.table.obs_general.data_bytes` 26,787,840 to 5,783,552 (-78.4%);
+    `obs_preview` 21,544,960; `db.schema.data_bytes` +0.1% and `db.schema.index_bytes`
+    +0.0%, held.
+  - **Imports** (one test-scale import a side): `import.wall_s` 330.0 s to 325.7 s
+    (-1.3%), `import.largest.import_s` 81.2 s to 78.8 s (-3.0%),
+    `import.peak_tree_pss_kb` -0.8%, all held. Every web guard held in both sessions.
+
+### 2026-11-12, rulings on PR-15 to PR-19 (written against this file at 550313fa)
+
+- **PR-15:** the operator accepted the regressed guard
+  `web.app-cold.search.surface_geometry.wall_s` (+35.4%, floor 20.7%) as reported, not a
+  stop-and-report, on the explanation recorded in PR-15's notes: the app-cold pass reads
+  from disk whatever the scenarios before it left out of the buffer pool, and the search
+  itself is faster db-cold and warm.
+- **PR-16:** the operator accepted `db.schema.data_bytes` +7.6% (floor 0) as the cost of
+  the per-bundle id ranges.
+- **PR-17:** the operator accepted every API difference listed for one ruling: the
+  changed golden `api_help_bundles.html`; the letters NFKD does not decompose no longer
+  matching their ASCII spellings in an ASCII column; padding in `matches` searches and
+  cart `opusid`s on ASCII columns; the 400 for a `__sessionid` outside ASCII or over 40
+  characters; regular expressions on ASCII columns folded with NFD; and mixed-case and
+  accented OPUS IDs in `api/files` and `__initdetail` answering 200.
+- **PR-18:** the operator accepted the target as met (the db-cold first page within the
+  web jitter of the warm one), and the regressed guard, the app-cold shared concurrency
+  p95 (+28.1%, floor 19.4%), as the harness's warm-up running beside the scenario rather
+  than the request path.
+- **PR-19:** the operator ruled the stop-and-report: the PR is kept, on the cold reads of
+  the target search (`Innodb_pages_read` -73.1%) and its search-build's first execution
+  after a restart (-33.4%), although the web-level target did not improve beyond its
+  floor at test scale.
+
 ### 2026-11-12, PR-14 (written against this file at 1e55f88a)
 
 - `scripts/import/rewrite_mult_option_orders.py` is removed after review: its rewrite is
@@ -7391,3 +7626,9 @@ Nothing above this line is rewritten by an executor.
   rows of `search_results` on every request, and the second would only read the same rows
   again. The harness's `pages.empty`, which reads `api/data.json`, finds the search built
   and its rows in the buffer pool all the same.
+
+### 2026-11-13, PR-19 (written against this file at a2beb69e)
+
+- `config_data.VOLSETS_WITH_PREVIEWS` goes, with its section of the import configuration
+  guide: nothing read it, since `ObsPreview.field_obs_preview_preview_images` asks
+  rms-pdsfile whether an observation has a view set.

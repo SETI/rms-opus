@@ -65,6 +65,7 @@ The shape of it
         }
         class ObsGeneralPDS3 { obs_general, PDS3 }
         class ObsGeneralPDS4 { obs_general, PDS4 }
+        class ObsPreview { obs_preview }
         class ObsPds {
             <<abstract>>
             obs_pds
@@ -94,6 +95,7 @@ The shape of it
         ObsBase <|-- ObsBasePDS3
         ObsBase <|-- ObsBasePDS4
         ObsBase <|-- ObsGeneral
+        ObsBase <|-- ObsPreview
         ObsBase <|-- ObsPds
         ObsBase <|-- ObsProfile
         ObsBase <|-- ObsTypeImage
@@ -114,6 +116,7 @@ The shape of it
         ObsProfile <|-- ObsProfilePDS4
         ObsBasePDS4 <|-- ObsProfilePDS4
         ObsGeneralPDS3 <|-- ObsCommonPDS3
+        ObsPreview <|-- ObsCommonPDS3
         ObsPdsPDS3 <|-- ObsCommonPDS3
         ObsTypeImage <|-- ObsCommonPDS3
         ObsWavelength <|-- ObsCommonPDS3
@@ -122,6 +125,7 @@ The shape of it
         ObsSurfaceGeometry <|-- ObsCommonPDS3
         ObsSurfaceGeometryTarget <|-- ObsCommonPDS3
         ObsGeneralPDS4 <|-- ObsCommonPDS4
+        ObsPreview <|-- ObsCommonPDS4
         ObsPdsPDS4 <|-- ObsCommonPDS4
         ObsTypeImage <|-- ObsCommonPDS4
         ObsWavelength <|-- ObsCommonPDS4
@@ -194,8 +198,9 @@ Reading a Cassini ISS volume's order off the tree gives:
     ObsVolumeCOISS12xxx     the volume set
     ObsCassiniCommonPDS3    the mission, PDS3 half
     ObsCommonPDS3           the assembly class
-    ObsGeneralPDS3, ObsGeneral, ObsPdsPDS3, ObsPds, ObsTypeImage, ObsWavelength,
-    ObsProfilePDS3, ObsProfile      one per table, in the order ObsCommonPDS3 lists them
+    ObsGeneralPDS3, ObsGeneral, ObsPreview, ObsPdsPDS3, ObsPds, ObsTypeImage,
+    ObsWavelength, ObsProfilePDS3, ObsProfile
+                            one per table, in the order ObsCommonPDS3 lists them
     ObsBasePDS3             the PDS3 base, released here by the last table module
                             above that derives from it
     ObsRingGeometry, ObsSurfaceGeometry,
@@ -482,7 +487,7 @@ is written once, inside it, and deliberately not restated here.
      - Covers
    * - :data:`~opus_import.obs.field_types.StrField`
      - ``varchar*`` and ``text`` columns, and the one ``json`` column
-       (``obs_general.preview_images``, whose method returns the output of
+       (``obs_preview.preview_images``, whose method returns the output of
        :func:`json.dumps`).
    * - :data:`~opus_import.obs.field_types.FloatField`
      - ``real4`` and ``real8`` columns.
@@ -563,16 +568,7 @@ is the master table, and every other table's rows hang off it.
 The methods fall into three groups:
 
 * **Do not override** -- ``opus_id``, ``bundle_id``, ``instrument_id``,
-  ``inst_host_id``, ``mission_id``, ``target_class`` and ``preview_images``. These are derived from the contract members above.
-  ``preview_images`` is the interesting one: it asks ``rms-pdsfile`` for a view set
-  through its ``viewset`` property and renders the result to JSON, and it honors
-  ``--ignore-missing-images`` and ``--fake-images``. **Its guard does real work**, because "no previews" reaches it in three different shapes: the
-  property answers a miss with ``False`` rather than None, having converted it; a lookup
-  that succeeds but finds nothing gives an *empty* view set, which is falsy and whose
-  ``thumbnail`` raises rather than returning nothing; and the two exception branches set
-  None themselves. The guard is an ``isinstance`` test **and** a truthiness test for that
-  reason: the first rejects ``False`` and None while keeping a ``PdsViewSet`` in the type,
-  and the second rejects the empty one.
+  ``inst_host_id``, ``mission_id`` and ``target_class``. These are derived from the contract members above.
 * **Might override** -- ``target_name``, ``time1``, ``time2``,
   ``observation_duration``, and the four right-ascension and declination columns. The
   four sky columns default to None; ``observation_duration`` is
@@ -587,6 +583,22 @@ The methods fall into three groups:
 :class:`~opus_import.obs.obs_general_pds4.ObsGeneralPDS4` supplies **nothing**: the
 pairing exists to put the PDS4 base into the class's ancestry, and a PDS4 bundle class
 has to answer ``_target_name`` itself.
+
+ObsPreview -- ``obs_preview``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_preview.ObsPreview`
+
+The preview images every observation has, in one column, ``preview_images``, whose
+method is not to be overridden. It asks ``rms-pdsfile`` for a view set through its ``viewset``
+property and renders the result to JSON, and it honors ``--ignore-missing-images`` and
+``--fake-images``. **Its guard does real work**, because "no previews" reaches it in
+three different shapes: the property answers a miss with ``False`` rather than None,
+having converted it; a lookup that succeeds but finds nothing gives an *empty* view set,
+which is falsy and whose ``thumbnail`` raises rather than returning nothing; and the two
+exception branches set None themselves. The guard is an ``isinstance`` test **and** a
+truthiness test for that reason: the first rejects ``False`` and None while keeping a
+``PdsViewSet`` in the type, and the second rejects the empty one.
 
 ObsPds -- ``obs_pds``
 ~~~~~~~~~~~~~~~~~~~~~

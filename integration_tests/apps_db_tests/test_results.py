@@ -10,6 +10,7 @@ from django.http import Http404, QueryDict
 from django.test import RequestFactory
 
 from opus_app.apps.results.views import (
+    NULL_RESULT,
     api_get_categories_for_opus_id,
     api_get_categories_for_search,
     api_get_data,
@@ -21,7 +22,9 @@ from opus_app.apps.results.views import (
     api_get_metadata,
     api_get_product_types_for_opus_id,
     api_get_product_types_for_search,
+    get_search_results_chunk,
     get_triggered_tables,
+    page_preview_json,
 )
 from opus_app.apps.search.views import url_to_search_params
 
@@ -95,9 +98,22 @@ class ResultsTests(TestCase):
         ):
             api_get_data_and_images(request)
 
-            ###########################################
-            ######### api_get_data UNIT TESTS #########
-            ###########################################
+    def test__get_search_results_chunk_null_join_reads_as_no_preview(self) -> None:
+        "[test_results.py] get_search_results_chunk: a NULL join reads as no preview"
+        # A Cassini observation has no Voyager ISS row, so the LEFT JOIN reads NULL, as
+        # it does for an observation without an obs_preview row.
+        request = self.factory.get('/api/data.json?volumeid=COISS_2002&__sessionid=test')
+        (_page_no, _start, _limit, page, _order, _aux, error) = get_search_results_chunk(
+            request, cols='opusid,VGISSscanmode', limit=1
+        )
+        self.assertIsNone(error)
+        assert page is not None
+        self.assertEqual(page[0][1], NULL_RESULT)
+        self.assertIsNone(page_preview_json(page[0][1]))
+
+        ###########################################
+        ######### api_get_data UNIT TESTS #########
+        ###########################################
 
     def test__api_get_data_no_meta(self) -> None:
         "[test_results.py] api_get_data: no META"

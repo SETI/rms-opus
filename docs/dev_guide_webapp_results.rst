@@ -100,8 +100,9 @@ Around the query it does four things worth knowing. Every requested slug is reso
 through :func:`~opus_app.apps.search.views.get_param_info_by_slug`, so an unknown column
 is a 400 rather than a SQL error. Two columns may be prepended and appended to the
 caller's list and stripped off the right end afterwards, which is how a caller gets the
-OPUS ID or the preview JSON without them appearing in the output. A SQL NULL becomes the
-string ``'N/A'``. And every value is put through
+OPUS ID or the preview JSON without them appearing in the output. A SQL NULL becomes
+:data:`~opus_app.apps.results.views.NULL_RESULT`, the string ``'N/A'``. And every value is
+put through
 :func:`opus_support.units.format_unit_value`, so a number arrives already formatted in
 the unit the request asked for.
 
@@ -115,7 +116,13 @@ What each handler returns
 :func:`~opus_app.apps.results.views.api_get_data_and_images`
     One page of the browse or cart grid: per observation an OPUS ID, the metadata column
     values, the four preview images with their dimensions, and whether the observation is
-    in the cart, in the recycle bin, or neither. It is the busiest endpoint in OPUS.
+    in the cart, in the recycle bin, or neither. It is the busiest endpoint in OPUS. The
+    preview JSON is the column ``**previewimages``, which the page reads from
+    ``obs_preview``, joined to ``obs_general`` by ``obs_general_id`` as any other
+    category's table is. :func:`~opus_app.apps.results.views.page_preview_json` decodes
+    it, and reads an observation without an ``obs_preview`` row, which the page delivers
+    as :data:`~opus_app.apps.results.views.NULL_RESULT`, as no preview images, for which
+    the not-found placeholder is shown.
 
 :func:`~opus_app.apps.results.views.api_get_data`
     The public tabular page: the labels, the rows, and how many observations the search
@@ -138,7 +145,7 @@ What each handler returns
 :func:`~opus_app.apps.results.views.api_get_images_by_size`, :func:`~opus_app.apps.results.views.api_get_images` and :func:`~opus_app.apps.results.views.api_get_image`
     The preview images for a search at one size, for a search at every size, and for one
     observation. All three share ``_api_get_images``, which reads the preview JSON out of
-    ``obs_general`` and hands it to
+    ``obs_preview``, joined to the page by ``obs_general_id``, and hands it to
     :func:`~opus_app.apps.tools.file_utils.get_pds_preview_images`. The single-observation
     form works by injecting an OPUS ID constraint into a copy of the query string, so that
     one code path serves both.

@@ -131,12 +131,35 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+#: What `get_search_results_chunk` gives, in a row, in place of a value its query read as
+#: NULL, such as a column of a LEFT JOINed table that has no row for the observation.
+NULL_RESULT = 'N/A'
+
 
 ################################################################################
 #
 # API INTERFACES
 #
 ################################################################################
+
+
+def page_preview_json(value: str) -> Any:
+    """Return one observation's preview images as a page of results read them.
+
+    A page LEFT JOINs ``obs_preview``, so an observation without a row reads NULL, which
+    `get_search_results_chunk` delivers as `NULL_RESULT`. That is returned as None, for
+    which `get_pds_preview_images` gives the not-found placeholder, as it does on the
+    Detail page.
+
+    Parameters:
+        value: The page's ``**previewimages`` column for the observation, as
+            `get_search_results_chunk` delivers it: the view set as JSON text, or
+            `NULL_RESULT`.
+
+    Returns:
+        The decoded view set, or None for `NULL_RESULT`.
+    """
+    return None if value == NULL_RESULT else json.loads(value)
 
 
 @never_cache
@@ -217,7 +240,7 @@ def api_get_data_and_images(request: HttpRequest, *, api_code: int) -> HttpRespo
     assert page is not None
     assert aux is not None
 
-    preview_jsons = [json.loads(x[-1]) for x in page]
+    preview_jsons = [page_preview_json(x[-1]) for x in page]
     opus_ids = aux['opus_ids']
     image_list = get_pds_preview_images(opus_ids, preview_jsons, ['thumb', 'small', 'med', 'full'])
 
@@ -901,7 +924,7 @@ def _api_get_images(
     assert page is not None
     assert aux is not None
 
-    preview_jsons = [json.loads(x[1]) for x in page]
+    preview_jsons = [page_preview_json(x[1]) for x in page]
     opus_ids = aux['opus_ids']
     if size is None:
         image_list = get_pds_preview_images(opus_ids, preview_jsons, ignore_missing=True)
@@ -1442,7 +1465,8 @@ def get_search_results_chunk(
         `page_no` is set when the page was asked for by page number and `start_obs`
         when it was asked for by observation number; the other one is None. `limit`
         is the maximum number of results that could be returned, `results` holds one
-        list of column values per observation, `all_order` is the sort order that
+        list of column values per observation, with `NULL_RESULT` for each value the
+        query read as NULL, `all_order` is the sort order that
         was used, including a trailing opus_id if necessary, and `aux_dict` holds
         whatever the `return_` arguments asked for. When something goes wrong all
         six of those are None and `error` is a `(response_code, string)` pair to be
@@ -1827,7 +1851,7 @@ def get_search_results_chunk(
 
     # There might be real None entries, which means the join returned null
     # data. Replace these so they look prettier.
-    results = [[x if x is not None else 'N/A' for x in r] for r in results]
+    results = [[x if x is not None else NULL_RESULT for x in r] for r in results]
 
     # If pi_form_type has format, we format the results
     # This is also where we make pretty lists for MULTIGROUPs
@@ -1848,7 +1872,7 @@ def get_search_results_chunk(
                     param_info, json.loads(entry[idx]), cvt_null=True
                 )
                 entry[idx] = result
-            if entry[idx] != 'N/A':
+            if entry[idx] != NULL_RESULT:
                 # Result is returned in proper format converted to
                 # the given unit
                 entry[idx] = format_unit_value(

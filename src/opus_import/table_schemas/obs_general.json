@@ -529,25 +529,5 @@
               [   7, "OCC",  "Occultation Profile",    80, "Y", null, null],
               [   8, "REF",  "Reflectance Profile",    90, "Y", null, null]
         ]
-    },
-    {
-        "field_name": "preview_images",
-        "field_type": "json",
-        "field_notnull": true,
-        "field_key": false,
-        "data_source": "COMPUTE",
-        "pi_category_name": "obs_general",
-        "pi_dict_context": null,
-        "pi_dict_name": null,
-        "pi_disp_order": 0,
-        "pi_display": 0,
-        "pi_display_results": 0,
-        "pi_form_type": null,
-        "pi_intro": null,
-        "pi_label": null,
-        "pi_label_results": null,
-        "pi_slug": "**previewimages",
-        "pi_sub_heading": null,
-        "pi_tooltip": null
     }
 ]

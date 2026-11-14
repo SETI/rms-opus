@@ -455,7 +455,12 @@ Per scenario and state the run records the wall-clock and each request's latency
 statements executed against the schema, the twenty statement shapes with the most total
 latency, the server's buffer-pool misses, connections, sort-merge passes, on-disk
 temporary tables and statements stopped at the execution time limit, the schema's table
-count, and the workers' peak resident set. A scenario in which a request fails, or
+count, and the workers' peak resident set. The buffer-pool misses
+(``Innodb_buffer_pool_reads``) are the reads a request waited on; they leave out the
+pages InnoDB's read-ahead brought in beside them, so the run also records those
+(``Innodb_buffer_pool_read_ahead``) and every page read from disk
+(``Innodb_pages_read``). A cold scan that read-ahead serves shows few misses and many
+pages read. A scenario in which a request fails, or
 memcached evicts anything, fails the run: a failed request usually answers sooner than a
 served one, so a broken scenario would time as faster, and an eviction means
 ``memcached_mb`` in ``web.toml`` is too small for the cache state being measured. A
@@ -544,8 +549,9 @@ earlier web run stored are not part of what the import wrote. Then, after
 ``ANALYZE TABLE`` on every table, with the statistics cache off: each table's data
 and index bytes, exact row count and index count, and the largest ``id`` of each mult
 table that has an ``id`` column; the schema's totals, its ``FULLTEXT`` tablespaces, and
-its size against the buffer pool; the size of ``obs_general.preview_images``; and the
-per-index usage counters.
+its size against the buffer pool; the size of ``preview_images`` beside ``obs_general``'s
+data, read from ``obs_preview`` or, on a schema without that table, from
+``obs_general``, and the table it was read from; and the per-index usage counters.
 ``--ascii-columns`` counts the non-ASCII values of every column whose form type is
 ``STRING``.
 

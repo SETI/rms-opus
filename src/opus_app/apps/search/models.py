@@ -261,7 +261,6 @@ class ObsGeneral(models.Model):
     declination1 = models.FloatField(blank=True, null=True)
     declination2 = models.FloatField(blank=True, null=True)
     observation_type = models.PositiveSmallIntegerField()
-    preview_images = models.JSONField()
 
     class Meta:
         managed = False
@@ -590,6 +589,21 @@ class ObsPds(models.Model):
     class Meta:
         managed = False
         db_table = 'obs_pds'
+
+
+class ObsPreview(models.Model):
+    obs_general = models.OneToOneField(
+        ObsGeneral,
+        models.DO_NOTHING,
+        primary_key=True,
+        related_name='%(class)s_general_id',
+        db_column='obs_general_id',
+    )
+    preview_images = models.JSONField()
+
+    class Meta:
+        managed = False
+        db_table = 'obs_preview'
 
 
 class ObsProfile(models.Model):

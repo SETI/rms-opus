@@ -62,3 +62,62 @@ def test_a_per_field_mult_table_records_its_largest_id(monkeypatch: pytest.Monke
     statistics = _statistics(monkeypatch, {'mult_obs_general_planet_id': ['id', 'value']})
 
     assert statistics['mult_obs_general_planet_id']['max_id'] == 17
+
+
+# --- preview_images: in obs_preview, or in obs_general on a schema without it -------------
+
+
+def _previews(
+    monkeypatch: pytest.MonkeyPatch, tables: dict[str, dict[str, int]]
+) -> tuple[dict[str, Any] | None, list[str]]:
+    """Return what `bench_db.preview_images` records for `tables`, and what it asked."""
+    statements: list[str] = []
+
+    def answer(_connection: Any, statement: str, _parameters: Any = ()) -> list[tuple[Any, ...]]:
+        statements.append(statement)
+        return [(640, 6400)]
+
+    monkeypatch.setattr(bench_db, 'query', answer)
+    return bench_db.preview_images(None, 'schema', tables), statements
+
+
+def test_previews_are_read_from_obs_preview_where_the_schema_has_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A schema with obs_preview holds the column there; the ratio is to obs_general's data."""
+    previews, statements = _previews(
+        monkeypatch, {'obs_general': {'data_bytes': 12800}, 'obs_preview': {'data_bytes': 9000}}
+    )
+
+    assert previews == {
+        'table': 'obs_preview',
+        'average_bytes': 640.0,
+        'total_bytes': 6400.0,
+        'ratio_to_obs_general_data': 0.5,
+    }
+    assert [statement.rsplit('FROM ', 1)[1] for statement in statements] == [
+        '`schema`.`obs_preview`'
+    ]
+
+
+def test_previews_are_read_from_obs_general_on_a_schema_without_obs_preview(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A schema without obs_preview holds the column in obs_general."""
+    previews, statements = _previews(monkeypatch, {'obs_general': {'data_bytes': 64000}})
+
+    assert previews is not None
+    assert previews['table'] == 'obs_general'
+    assert previews['ratio_to_obs_general_data'] == 0.1
+    assert [statement.rsplit('FROM ', 1)[1] for statement in statements] == [
+        '`schema`.`obs_general`'
+    ]
+
+
+def test_a_schema_without_either_table_records_no_previews(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    previews, statements = _previews(monkeypatch, {'mult': {'data_bytes': 10}})
+
+    assert previews is None
+    assert statements == []

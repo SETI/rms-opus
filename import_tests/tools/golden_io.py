@@ -73,13 +73,13 @@ GOLDEN_EXT = '.tsv'
 
 #: The one column the goldens reorder before comparing, and the JSON list inside it.
 #:
-#: ``obs_general.preview_images`` is ``PdsViewSet.to_dict()``, and pdsfile says in as many
+#: ``obs_preview.preview_images`` is ``PdsViewSet.to_dict()``, and pdsfile says in as many
 #: words that its members come out "in the iteration order of a Python set, which is not
 #: the order they were appended in and is not stable across processes". The set holds
 #: objects, so the order does not follow the hash seed either: two identical imports store
 #: the same images in a different order. Sorting the list makes the comparison about which
 #: images an observation has rather than about which run wrote the row.
-_UNORDERED_JSON_COLUMNS = {('obs_general', 'preview_images'): 'viewables'}
+_UNORDERED_JSON_COLUMNS = {('obs_preview', 'preview_images'): 'viewables'}
 
 #: What each entry of that list is sorted by.
 _UNORDERED_JSON_SORT_KEY = 'url'

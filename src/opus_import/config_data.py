@@ -14,6 +14,7 @@ GROUP_FORM_TYPES = ['GROUP', 'MULTIGROUP']
 # If you change something here, be sure to update do_table_names.py as well.
 TABLES_TO_POPULATE = [
     'obs_general',
+    'obs_preview',
     'obs_pds',
     'obs_mission_<MISSION>',
     'obs_instrument_<INST>',
@@ -24,31 +25,6 @@ TABLES_TO_POPULATE = [
     'obs_ring_geometry',
     'obs_surface_geometry',
     'obs_surface_geometry_target',
-]
-
-# Also modify populate_obs_general_preview_images as necessary
-VOLSETS_WITH_PREVIEWS = [
-    'COISS_1xxx',
-    'COISS_2xxx',
-    'COCIRS_5xxx',
-    'COCIRS_6xxx',
-    'COUVIS_0xxx',
-    'COUVIS_8xxx',
-    'COVIMS_0xxx',
-    'COVIMS_8xxx',
-    'EBROCC_0xxx',
-    'GO_0xxx',
-    'HSTIx_xxxx',
-    'HSTJx_xxxx',
-    'HSTNx_xxxx',
-    'HSTOx_xxxx',
-    'HSTUx_xxxx',
-    'NHxxLO_xxxx',
-    'NHxxMV_xxxx',
-    'VGISS_5xxx',
-    'VGISS_6xxx',
-    'VGISS_7xxx',
-    'VGISS_8xxx',
 ]
 
 # Mapping from mission id (UC) to full mission name (LC)
