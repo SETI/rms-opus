@@ -4,7 +4,7 @@ Every OPUS string column but the ASCII ones uses the ``utf8mb4_0900_ai_ci`` coll
 which ignores case and accents. The import keys its cache of a field's mult values this
 way, so that a value the server's unique key would call a duplicate finds the row already
 there, and the web application keys its in-memory copies of the import's tables this way,
-so that a lookup finds what a query would. An ASCII column (``ascii_general_ci``) ignores
+so that a lookup finds what a query would. An ASCII column (`ASCII_COLLATION`) ignores
 case only; `UNSTORED_ASCII_CHARACTER` is the one ASCII character none may hold.
 """
 
@@ -16,6 +16,11 @@ import unicodedata
 #: web application binds it in place of a character that has no ASCII form, so that it
 #: matches nothing.
 UNSTORED_ASCII_CHARACTER = '\x7f'
+
+#: The collation of every column in the ASCII character set. The import creates such a
+#: column with it, and the web application's models name it as the column's
+#: ``db_collation``.
+ASCII_COLLATION = 'ascii_general_ci'
 
 
 def collation_key(text: str) -> str:

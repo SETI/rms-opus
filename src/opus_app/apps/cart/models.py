@@ -9,13 +9,15 @@ import pipeline rather than by a migration, so Django is told not to manage it.
 
 from django.db import models
 
+from opus_support import ASCII_COLLATION
+
 
 class Cart(models.Model):
     """One observation held by one session, in its cart or in its recycle bin."""
 
-    session_id = models.CharField(max_length=40, db_collation='ascii_general_ci')
+    session_id = models.CharField(max_length=40, db_collation=ASCII_COLLATION)
     obs_general = models.ForeignKey('search.ObsGeneral', models.DO_NOTHING)
-    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
+    opus_id = models.CharField(max_length=50, db_collation=ASCII_COLLATION)
     recycled = models.IntegerField()
 
     class Meta:

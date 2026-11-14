@@ -20,8 +20,12 @@ mv /tmp/__models.py /tmp/_models.py
 # inspectdb reads a BINARY column as text; user_searches.search_hash holds a digest's
 # bytes, which only a BinaryField returns unaltered
 sed -e "s/search_hash = models.CharField(unique=True, max_length=32)/search_hash = models.BinaryField(unique=True, max_length=32)/" < /tmp/_models.py > /tmp/__models.py
+# An ASCII column names the collation opus_support defines for every ASCII column, which
+# db_utils.is_ascii_column compares against, rather than inspectdb's copy of its value
+sed -e "s/db_collation='ascii_general_ci'/db_collation=ASCII_COLLATION/" \
+    -e 's/^from django.db import models$/from django.db import models\n\nfrom opus_support import ASCII_COLLATION/' < /tmp/__models.py > /tmp/_models.py
 # Then get rid of any Auth or Django tables that are left
-sed -e "s/'Django/'ZZDjango/g" < /tmp/__models.py | sed -e "s/'Auth/'ZZAuth/g" | sed -e "s/(Auth/(ZZAuth/g" > src/opus_app/apps/search/models.py
+sed -e "s/'Django/'ZZDjango/g" < /tmp/_models.py | sed -e "s/'Auth/'ZZAuth/g" | sed -e "s/(Auth/(ZZAuth/g" > src/opus_app/apps/search/models.py
 # inspectdb emits one long line per field, so the raw output is unreadable and
 # every regeneration diff is unreviewable. The generator is the only durable
 # place to fix that: a hand-edit to the output is destroyed by the next run.

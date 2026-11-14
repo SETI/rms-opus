@@ -58,6 +58,7 @@ from opus_import.table_keys import (
     declared_keys,
     is_key_filtered_table,
 )
+from opus_support import ASCII_COLLATION
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Iterator, Sequence
@@ -112,7 +113,7 @@ MYSQL_TEXT_FIELD_TYPE = 'text'
 #: compares without case, as the schema's own collation does, and costs a byte a
 #: character where the schema's utf8mb4 may cost four.
 MYSQL_CHARSET_SQL: dict[str, str] = {
-    'ascii': 'CHARACTER SET ascii COLLATE ascii_general_ci',
+    'ascii': f'CHARACTER SET ascii COLLATE {ASCII_COLLATION}',
 }
 
 #: The bytes one character of each ``field_charset`` may take; a column without one is
