@@ -143,11 +143,6 @@ def value(val: Any) -> Expr:
     return Expr('%s', [val])
 
 
-#: The collation of a column in the ASCII character set, as a generated model's
-#: ``db_collation`` names it.
-ASCII_COLLATION = 'ascii_general_ci'
-
-
 def ascii_comparable(text: str, *, compatibility: bool = True) -> str:
     """Return text as it may be compared with a column in the ASCII character set.
 
@@ -189,8 +184,8 @@ def ascii_comparable(text: str, *, compatibility: bool = True) -> str:
 def ascii_collation_key(text: str) -> str:
     """Return the form of text that a comparison with an ASCII column sees.
 
-    Two strings have equal keys exactly when an ASCII column's ``ascii_general_ci``
-    collation calls their `ascii_comparable` forms equal: the folded text, its trailing
+    Two strings have equal keys exactly when an ASCII column's collation
+    (`opus_support.ASCII_COLLATION`) calls their `ascii_comparable` forms equal: the folded text, its trailing
     spaces dropped (the collation pads with spaces) and its letters in lower case (the
     collation ignores case). A value read from such a column is its own folded form, so
     a stored OPUS ID and every caller's spelling that finds it have the same key.

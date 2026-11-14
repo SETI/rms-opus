@@ -33,7 +33,7 @@ from django.conf import settings
 
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.import_constants import mult_table, table_names
-from opus_support import parse_form_type
+from opus_support import ASCII_COLLATION, parse_form_type
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -111,7 +111,7 @@ def is_ascii_column(table_name: str, column_name: str) -> bool:
         django.core.exceptions.FieldDoesNotExist: If the model has no such field.
     """
     field = table_model_from_name(table_name)._meta.get_field(column_name)
-    return getattr(field, 'db_collation', None) == sql_builder.ASCII_COLLATION
+    return getattr(field, 'db_collation', None) == ASCII_COLLATION
 
 
 #: The column of a surface geometry category's table holding the body's id.

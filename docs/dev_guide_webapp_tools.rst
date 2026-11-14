@@ -497,7 +497,8 @@ Model lookup by category name, and the labels behind the mult ids.
 
 :func:`~opus_app.apps.tools.db_utils.is_ascii_column`
     Whether a table's column is in the ASCII character set, which its generated model
-    says by naming ``ascii_general_ci`` as the field's ``db_collation``.
+    says by naming :data:`~opus_support.collation.ASCII_COLLATION` as the field's
+    ``db_collation``.
 
 :func:`~opus_app.apps.tools.db_utils.query_table_for_opus_id`
     One category's rows for one observation, filtering on ``opus_id`` for

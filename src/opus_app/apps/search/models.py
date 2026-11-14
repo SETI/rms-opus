@@ -7,6 +7,8 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
+from opus_support import ASCII_COLLATION
+
 
 class ZZAuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=150)
@@ -75,14 +77,14 @@ class ZZAuthUserUserPermissions(models.Model):
 
 
 class ZZCart(models.Model):
-    session_id = models.CharField(max_length=40, db_collation='ascii_general_ci')
+    session_id = models.CharField(max_length=40, db_collation=ASCII_COLLATION)
     obs_general = models.ForeignKey(
         'ObsGeneral',
         models.DO_NOTHING,
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
+    opus_id = models.CharField(max_length=50, db_collation=ASCII_COLLATION)
     recycled = models.IntegerField()
 
     class Meta:
@@ -215,8 +217,8 @@ class ObsFiles(models.Model):
         db_column='obs_general_id',
     )
     file_number = models.PositiveSmallIntegerField()
-    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
-    instrument_id = models.CharField(max_length=60, db_collation='ascii_general_ci')
+    opus_id = models.CharField(max_length=50, db_collation=ASCII_COLLATION)
+    instrument_id = models.CharField(max_length=60, db_collation=ASCII_COLLATION)
     version_number = models.PositiveIntegerField()
     version_name = models.CharField(max_length=16)
     category = models.CharField(max_length=64)
@@ -240,8 +242,8 @@ class ObsFiles(models.Model):
 
 class ObsGeneral(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
-    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
-    bundle_id = models.CharField(max_length=75, db_collation='ascii_general_ci')
+    opus_id = models.CharField(max_length=50, db_collation=ASCII_COLLATION)
+    bundle_id = models.CharField(max_length=75, db_collation=ASCII_COLLATION)
     instrument_id = models.PositiveSmallIntegerField()
     mission_id = models.PositiveSmallIntegerField()
     inst_host_id = models.PositiveSmallIntegerField()
@@ -374,8 +376,8 @@ class ObsInstrumentGossi(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    observation_id = models.CharField(max_length=20, db_collation='ascii_general_ci')
-    image_id = models.CharField(max_length=15, db_collation='ascii_general_ci')
+    observation_id = models.CharField(max_length=20, db_collation=ASCII_COLLATION)
+    image_id = models.CharField(max_length=15, db_collation=ASCII_COLLATION)
     filter_name = models.PositiveSmallIntegerField()
     filter_number = models.PositiveSmallIntegerField()
     gain_mode_id = models.PositiveSmallIntegerField()
@@ -427,7 +429,7 @@ class ObsInstrumentVgiss(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    image_id = models.CharField(max_length=10, db_collation='ascii_general_ci')
+    image_id = models.CharField(max_length=10, db_collation=ASCII_COLLATION)
     scan_mode = models.PositiveSmallIntegerField()
     shutter_mode = models.PositiveSmallIntegerField()
     gain_mode = models.PositiveSmallIntegerField()
@@ -451,7 +453,7 @@ class ObsMissionCassini(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    obs_name = models.CharField(max_length=30, db_collation='ascii_general_ci')
+    obs_name = models.CharField(max_length=30, db_collation=ASCII_COLLATION)
     rev_no = models.CharField(max_length=3, blank=True, null=True)
     rev_no_int = models.IntegerField(blank=True, null=True)
     is_prime = models.PositiveSmallIntegerField()
@@ -463,11 +465,11 @@ class ObsMissionCassini(models.Model):
     cassini_target_code = models.PositiveSmallIntegerField(blank=True, null=True)
     cassini_target_name = models.PositiveSmallIntegerField(blank=True, null=True)
     activity_name = models.CharField(
-        max_length=9, db_collation='ascii_general_ci', blank=True, null=True
+        max_length=9, db_collation=ASCII_COLLATION, blank=True, null=True
     )
     mission_phase_name = models.PositiveSmallIntegerField(blank=True, null=True)
     sequence_id = models.CharField(
-        max_length=4, db_collation='ascii_general_ci', blank=True, null=True
+        max_length=4, db_collation=ASCII_COLLATION, blank=True, null=True
     )
 
     class Meta:
@@ -500,12 +502,12 @@ class ObsMissionHubble(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    stsci_group_id = models.CharField(max_length=9, db_collation='ascii_general_ci')
+    stsci_group_id = models.CharField(max_length=9, db_collation=ASCII_COLLATION)
     hst_proposal_id = models.IntegerField()
     hst_pi_name = models.CharField(max_length=24)
     detector_id = models.PositiveSmallIntegerField()
     publication_date = models.FloatField()
-    hst_target_name = models.CharField(max_length=31, db_collation='ascii_general_ci')
+    hst_target_name = models.CharField(max_length=31, db_collation=ASCII_COLLATION)
     fine_guidance_system_lock_type = models.PositiveSmallIntegerField()
     filter_name = models.PositiveSmallIntegerField()
     filter_type = models.PositiveSmallIntegerField()
@@ -569,19 +571,19 @@ class ObsPds(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    opus_id = models.CharField(max_length=50, db_collation='ascii_general_ci')
-    bundle_id = models.CharField(max_length=75, db_collation='ascii_general_ci')
+    opus_id = models.CharField(max_length=50, db_collation=ASCII_COLLATION)
+    bundle_id = models.CharField(max_length=75, db_collation=ASCII_COLLATION)
     data_set_id = models.CharField(
-        max_length=40, db_collation='ascii_general_ci', blank=True, null=True
+        max_length=40, db_collation=ASCII_COLLATION, blank=True, null=True
     )
     product_id = models.CharField(
-        max_length=50, db_collation='ascii_general_ci', blank=True, null=True
+        max_length=50, db_collation=ASCII_COLLATION, blank=True, null=True
     )
     primary_lid = models.CharField(
-        max_length=240, db_collation='ascii_general_ci', blank=True, null=True
+        max_length=240, db_collation=ASCII_COLLATION, blank=True, null=True
     )
     product_creation_time = models.FloatField(blank=True, null=True)
-    primary_filespec = models.CharField(max_length=240, db_collation='ascii_general_ci')
+    primary_filespec = models.CharField(max_length=240, db_collation=ASCII_COLLATION)
     note = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
@@ -755,7 +757,7 @@ class ObsSurfaceGeometry(models.Model):
         related_name='%(class)s_general_id',
         db_column='obs_general_id',
     )
-    target_list = models.TextField(db_collation='ascii_general_ci', blank=True, null=True)
+    target_list = models.TextField(db_collation=ASCII_COLLATION, blank=True, null=True)
 
     class Meta:
         managed = False
