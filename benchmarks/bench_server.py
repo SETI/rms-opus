@@ -841,6 +841,29 @@ def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
     return keys
 
 
+def parse_django_settings(pairs: Sequence[str]) -> dict[str, object]:
+    """Read ``--django-setting`` arguments into the Django settings a run assigns.
+
+    Parameters:
+        pairs: Each ``NAME=VALUE``.
+
+    Returns:
+        The settings, each value a whole number, a finite decimal number, a boolean or a
+        string, in argument order.
+
+    Raises:
+        ValueError: If an argument has no ``=``, or its name is not a Django setting's
+            (upper-case letters, digits and underscores, starting with a letter).
+    """
+    found: dict[str, object] = {}
+    for pair in pairs:
+        name, separator, text = pair.partition('=')
+        if not separator or not re.fullmatch(r'[A-Z][A-Z0-9_]*', name):
+            raise ValueError(f'--django-setting takes NAME=VALUE with a setting NAME, not {pair!r}')
+        found[name] = _import_key_value(text)
+    return found
+
+
 def write_opus_config(
     path: Path,
     *,

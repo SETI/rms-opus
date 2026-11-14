@@ -62,6 +62,7 @@ from opus_app.apps.tools.app_utils import (
 )
 from opus_app.apps.tools.db_utils import (
     MYSQL_EXECUTION_TIME_EXCEEDED,
+    is_abandoned_query_error,
     is_ascii_column,
     is_deadlock_error,
     is_lock_timeout_error,
@@ -178,9 +179,13 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
     truncated_results is true if the the number of results exceeded the
     specified limit. Only the limit number will be returned.
 
-    A contains search of a column that carries an ngram FULLTEXT index
-    (`opus_import.schema_files.packaged_fulltext_columns`) reads the index as well as
-    matching with LIKE (`get_string_query`), which finds the same choices.
+    Without the join, a contains search of a column that carries an ngram FULLTEXT
+    index (`opus_import.schema_files.packaged_fulltext_columns`) is tried with LIKE
+    alone under `settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD` (skipped when that is
+    0); when the server gives up on it, with the index beside the LIKE
+    (`get_string_query`), which finds the same choices; and when the server gives up on
+    that too, with LIKE alone under the whole limit. The join to the search's results
+    always uses LIKE alone.
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/__api/stringsearchchoices/{slug}.json'))
@@ -240,15 +245,25 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         del qtypes[param_qualified_name]
 
     # Must do this here before deleting the slug from selections below
-    fulltext = (category.table, param_name) in packaged_fulltext_columns()
-    like_query, like_params = get_string_query(
-        selections, param_qualified_name, query_qtype_list, fulltext=fulltext
-    )
+    like_query, like_params = get_string_query(selections, param_qualified_name, query_qtype_list)
     if like_query is None:
         # This is usually caused by a bad regex
         result = {'choices': [], 'full_search': True, 'truncated_results': False}
         result['reqno'] = reqno
         return json_response(result)
+    # get_string_query returns both halves together or neither.
+    assert like_params is not None
+    # The same condition with the column's full-text index beside each LIKE that can use
+    # it, or None when the column has no index or no value has a word the index holds.
+    fulltext_condition: sql_builder.Expr | None = None
+    if (category.table, param_name) in packaged_fulltext_columns():
+        match_query, match_params = get_string_query(
+            selections, param_qualified_name, query_qtype_list, fulltext=True
+        )
+        if match_query != like_query:
+            assert match_query is not None
+            assert match_params is not None
+            fulltext_condition = sql_builder.Expr(match_query, match_params)
 
     partial_query = selections[param_qualified_name][0]
     del selections[param_qualified_name]
@@ -326,36 +341,51 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
             do_simple_search = True
 
     if do_simple_search:
-        # Same thing but no join to the search's results
-        # This will give more results than we really want, but will be much
-        # faster
-        max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
-        select = sql_builder.Select(distinct=True, max_execution_time=max_time)
-        select.add_column(param_column)
-        select.add_from(category.source)
-        category.restrict(select)
-
-        if partial_query:
-            # get_string_query returns both halves together or neither, and the
-            # None case returned above.
-            assert like_params is not None
-            select.add_where(sql_builder.Expr(like_query, like_params))
-
-        select.add_order_by(param_column)
-        select.limit(limit + 1)
-        sql, sql_params = select.build()
-
-        try:
-            cursor.execute(sql, tuple(sql_params))
-        except DatabaseError as e:  # pragma: no cover - database error
-            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED:  # pragma: no cover -
-                # database error
-                log.exception('api_string_search_choices: "%r" failed', sql)
-                return HttpResponseServerError(http500_database_error(request))
+        # Every observation's values, with no join to the search's results: more choices
+        # than the search allows, but much faster.
+        like_condition = sql_builder.Expr(like_query, like_params) if partial_query else None
+        attempts = [(like_condition, settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2)]
+        if partial_query and fulltext_condition is not None:
+            # LIKE walks the column's key in order and stops at the limit, which is quick
+            # when many values match and slow when few do, as it then reads the whole key.
+            # The full-text index is the reverse: it reads every matching row. So LIKE
+            # gets a short limit first, then the index gets the whole limit, then LIKE
+            # does, which is the statement a column without an index runs, so the answer
+            # is never emptier than LIKE alone would give. A short limit of 0 tries the
+            # index first.
+            attempts = [
+                (fulltext_condition, settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2),
+                (like_condition, settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2),
+            ]
+            short_limit = settings.STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD
+            if short_limit > 0:
+                attempts.insert(0, (like_condition, short_limit))
+        answered = False
+        for condition, max_time in attempts:
+            select = sql_builder.Select(distinct=True, max_execution_time=max_time)
+            select.add_column(param_column)
+            select.add_from(category.source)
+            category.restrict(select)
+            if condition is not None:
+                select.add_where(condition)
+            select.add_order_by(param_column)
+            select.limit(limit + 1)
+            sql, sql_params = select.build()
+            try:
+                cursor.execute(sql, tuple(sql_params))
+            except DatabaseError as e:
+                if not is_abandoned_query_error(e):  # pragma: no cover - database error
+                    log.exception('api_string_search_choices: "%r" failed', sql)
+                    return HttpResponseServerError(http500_database_error(request))
+                continue
+            answered = True
+            break
+        if not answered:
             final_results = []
 
-    if final_results is None:  # pragma: no cover - can't trigger during testing
-        # This is always true except when BOTH queries time out
+    if final_results is None:
+        # A statement above answered: every one but the last is given up on only for
+        # another to run.
         final_results = []
         more = True
         while more:

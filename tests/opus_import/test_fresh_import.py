@@ -278,15 +278,24 @@ def test_the_server_ngram_token_size_is_read() -> None:
 
 
 def test_the_fulltext_space_estimate() -> None:
-    """``(rows x tokens x token bytes + the table's data bytes) x 1.3``: a token for each
-    run of two characters a value of the declared width holds, each two characters and
-    twelve bytes of document id and position."""
+    """``rows x tokens x token bytes x 1.3``: a token for each run of two characters a
+    value of the declared width holds, each two characters and twelve bytes of document
+    id and position."""
     db = _RecordingDB(set())
-    db.answers = {'TABLE_ROWS': [(1000, 500000)]}
+    db.answers = {'TABLE_ROWS': [(1000,)]}
     space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('fulltext', ('opus_id',)))
-    assert space == int((1000 * 49 * (2 * 1 + 12) + 500000) * 1.3)
+    assert space == int(1000 * 49 * (2 * 1 + 12) * 1.3)
     space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('fulltext', ('bundle_id',)))
-    assert space == int((1000 * 74 * (2 * 4 + 12) + 500000) * 1.3)
+    assert space == int(1000 * 74 * (2 * 4 + 12) * 1.3)
+
+
+def test_a_tables_data_bytes_are_its_data_length() -> None:
+    """The server's statistics, which the first FULLTEXT key's rebuild copies."""
+    db = _RecordingDB(set())
+    db.answers = {'DATA_LENGTH': [(500000,)]}
+    assert db.table_data_bytes('obs_pds') == 500000
+    db.answers = {'DATA_LENGTH': []}
+    assert db.table_data_bytes('obs_pds') == 0
 
 
 def test_the_space_budget_is_the_free_space_of_a_local_servers_directory(tmp_path: Any) -> None:
@@ -987,6 +996,7 @@ class _IndexingDB(_RecordingDB):
         keys: dict[str, list[TableKey]],
         budget: int | None = None,
         token_size: int = NGRAM_TOKEN_SIZE,
+        data_bytes: int = 1000,
     ) -> None:
         """Hold the keys the server reports, the space budget and the ngram token size.
 
@@ -994,7 +1004,9 @@ class _IndexingDB(_RecordingDB):
             keys: Each table's keys.
             budget: The space budget, or None.
             token_size: The server's ``ngram_token_size``.
+            data_bytes: Every table's data bytes.
         """
+        self.data_bytes = data_bytes
         super().__init__({'obs_pds'})
         self.keys = keys
         self.budget = budget
@@ -1015,6 +1027,10 @@ class _IndexingDB(_RecordingDB):
     def key_space_bytes(self, table_name: str, schema: Any, key: TableKey) -> int:
         """Size every key at 60 bytes."""
         return 60
+
+    def table_data_bytes(self, table_name: str) -> int:
+        """Return every table's data bytes."""
+        return self.data_bytes
 
     def build_indexes(
         self, table_to_statements: Any, **kwargs: Any
@@ -1048,9 +1064,11 @@ def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
         f'ALTER TABLE `obs_pds` ADD FULLTEXT KEY (`{column}`) WITH PARSER ngram'
         for column in ('bundle_id', 'data_set_id', 'product_id')
     ]
+    # The first rebuilds the table, which has no secondary key to sort again.
     assert [(s.label, s.space_bytes, s.sort_bytes, s.key_count) for s in fulltext] == [
-        (f'FULLTEXT KEY ({column})', 60, 0, 1)
-        for column in ('bundle_id', 'data_set_id', 'product_id')
+        ('FULLTEXT KEY (bundle_id)', 60 + 1000, 0, 1),
+        ('FULLTEXT KEY (data_set_id)', 60, 0, 1),
+        ('FULLTEXT KEY (product_id)', 60, 0, 1),
     ]
     assert statement.sort_bytes == 60 < statement.space_bytes
     assert statement.key_count == statement.sql.count('ADD KEY')
@@ -1066,6 +1084,23 @@ def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
     assert db.workers == 1
     assert ctx.step_timings['create_indexes:obs_pds'] == 2.0
     assert ctx.step_timings['create_indexes:obs_pds:FULLTEXT KEY (bundle_id)'] == 0.5
+
+
+def test_the_first_fulltext_statement_carries_the_rebuild_of_the_keys_a_table_has() -> None:
+    """The rebuild copies the rows and sorts each secondary key the table has again, so
+    the first statement counts them and sizes its sort for them; a table that has a
+    FULLTEXT key already is not rebuilt."""
+    have = [TableKey('primary', ('obs_general_id',)), TableKey('key', ('opus_id',))]
+    db = _IndexingDB({'obs_pds': have})
+    assert do_indexes.create_indexes(make_context(db=db))
+    first, second = db.built['obs_pds'][:2]
+    assert (first.space_bytes, first.sort_bytes, first.key_count) == (60 + 1000 + 60, 60, 1)
+    assert (second.space_bytes, second.sort_bytes, second.key_count) == (60, 0, 1)
+    db = _IndexingDB({'obs_pds': [*have, TableKey('fulltext', ('bundle_id',))]})
+    assert do_indexes.create_indexes(make_context(db=db))
+    first = db.built['obs_pds'][0]
+    assert first.label == 'FULLTEXT KEY (data_set_id)'
+    assert (first.space_bytes, first.sort_bytes, first.key_count) == (60, 0, 1)
 
 
 def test_create_indexes_refuses_a_server_whose_ngram_token_size_is_not_two() -> None:
@@ -1109,7 +1144,7 @@ def test_create_indexes_on_a_finished_schema_does_nothing() -> None:
 
 def test_under_a_budget_a_tables_keys_are_split_to_fit() -> None:
     """Keys of 60 bytes under a budget of 100 go one to a statement."""
-    db = _IndexingDB({'obs_pds': []}, budget=100)
+    db = _IndexingDB({'obs_pds': []}, budget=100, data_bytes=0)
     ctx = make_context(db=db)
     assert do_indexes.create_indexes(ctx)
     assert len(db.built['obs_pds']) > 4

@@ -162,3 +162,34 @@ def test_a_failed_warm_up_request_fails_the_warm_up() -> None:
             served_by=dict,
             issue=lambda tasks, concurrency: len(tasks),
         )
+
+
+def test_the_hooks_assign_the_settings_a_run_names(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Each named setting is assigned with its JSON value; without the variable, none is."""
+
+    class _Settings:
+        STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000
+
+    settings = _Settings()
+    monkeypatch.delenv(gunicorn_hooks.DJANGO_SETTINGS_ENV, raising=False)
+    gunicorn_hooks.apply_settings(settings)
+    assert settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD == 100000
+    monkeypatch.setenv(
+        gunicorn_hooks.DJANGO_SETTINGS_ENV,
+        '{"STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD": 1, "STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD": 0}',
+    )
+    gunicorn_hooks.apply_settings(settings)
+    assert settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD == 1
+    assert vars(settings)['STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD'] == 0
+
+
+def test_gunicorn_is_started_with_the_runs_settings(tmp_path: Path) -> None:
+    """The settings reach the hooks as JSON; a run without any passes no variable."""
+    server = _gunicorn(tmp_path / 'served.log')
+    assert gunicorn_hooks.DJANGO_SETTINGS_ENV not in server.process_environment()
+    server.django_settings = {'STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD': 1}
+    environment = server.process_environment()
+    assert environment[gunicorn_hooks.DJANGO_SETTINGS_ENV] == (
+        '{"STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD": 1}'
+    )
+    assert environment[gunicorn_hooks.SERVED_LOG_ENV] == str(tmp_path / 'served.log')

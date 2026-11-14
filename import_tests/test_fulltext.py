@@ -7,7 +7,11 @@ alone matches. For every indexed column of the main run's schema, every value's 
 two, three and six characters, the whole value, and those runs with their case swapped
 are searched both ways, and the distinct values found must be the same. A run holding a
 character the ngram parser breaks a token at, or a stopword's letter (``a`` or ``i``),
-which an index built with the stopword list on drops, is among them.
+which an index built with the stopword list on drops, is among them. In a column that is
+not ASCII, whose collation ignores accents and compares a full-width letter with its
+ASCII form, each text is searched also with its vowels accented and in full-width form,
+as a user may type it; a full-width text holds no run the index holds, so it is left to
+``LIKE`` alone.
 """
 
 from __future__ import annotations
@@ -37,8 +41,24 @@ def _like_pattern(text: str) -> str:
     return f'%{escaped}%'
 
 
-def _terms(values: list[str]) -> list[str]:
-    """Return the texts searched for in a column holding `values`, sorted."""
+#: Each vowel's accented form, for the texts searched in a column that is not ASCII.
+_ACCENTED = str.maketrans('aeiouAEIOU', 'áéíóúÁÉÍÓÚ')
+
+#: Each printable ASCII character's full-width form (U+FF01 to U+FF5E).
+_FULL_WIDTH = str.maketrans({chr(code): chr(code + 0xFEE0) for code in range(0x21, 0x7F)})
+
+
+def _terms(values: list[str], *, ascii_column: bool) -> list[str]:
+    """Return the texts searched for in a column holding `values`, sorted.
+
+    Parameters:
+        values: The column's distinct values.
+        ascii_column: Whether the column is ASCII; one that is not is also searched with
+            each text's vowels accented and in full-width form.
+
+    Returns:
+        The texts.
+    """
     terms: set[str] = set()
     for value in values:
         terms.add(value)
@@ -46,6 +66,8 @@ def _terms(values: list[str]) -> list[str]:
             for start in range(len(value) - length + 1):
                 run = value[start : start + length]
                 terms.update((run, run.swapcase()))
+    if not ascii_column:
+        terms |= {term.translate(table) for term in terms for table in (_ACCENTED, _FULL_WIDTH)}
     return sorted(term for term in terms if term)
 
 
@@ -72,6 +94,13 @@ def test_the_index_finds_every_value_like_finds(
     connection = golden_io.connect(db_credentials, main_run.schema)
     try:
         cursor = connection.cursor()
+        cursor.execute('SET NAMES utf8mb4')
+        cursor.execute(
+            'SELECT CHARACTER_SET_NAME FROM information_schema.COLUMNS '
+            'WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+            [table, column],
+        )
+        ascii_column = cursor.fetchall()[0][0] == 'ascii'
         cursor.execute(
             f'SELECT DISTINCT {quoted.sql} FROM `{table}` WHERE {quoted.sql} IS NOT NULL'
         )
@@ -79,7 +108,7 @@ def test_the_index_finds_every_value_like_finds(
         assert values, f'{table}.{column} holds no value to search for'
         differing = []
         matched = 0
-        for term in _terms(values):
+        for term in _terms(values, ascii_column=ascii_column):
             match = sql_builder.fulltext_match(quoted, term)
             if match is None:
                 continue

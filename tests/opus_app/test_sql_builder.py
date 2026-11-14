@@ -647,3 +647,28 @@ def test_fulltext_match_keeps_the_columns_parameters_first() -> None:
     expr = sql_builder.fulltext_match(sql_builder.Expr('f(%s)', [7]), 'abc')
     assert expr is not None
     assert expr.params == [7, '"abc"']
+
+
+@pytest.mark.parametrize(
+    ('args', 'abandoned'),
+    [
+        ((db_utils.MYSQL_EXECUTION_TIME_EXCEEDED, 'Query execution was interrupted'), True),
+        (
+            (
+                db_utils.MYSQL_STORAGE_ENGINE_ERROR,
+                "Got error 188 - 'FTS query exceeds result cache limit' from storage engine",
+            ),
+            True,
+        ),
+        ((db_utils.MYSQL_STORAGE_ENGINE_ERROR, 'Got error 1880 from storage engine'), False),
+        ((db_utils.MYSQL_STORAGE_ENGINE_ERROR,), False),
+        ((db_utils.MYSQL_LOCK_WAIT_TIMEOUT, 'Lock wait timeout exceeded'), False),
+        ((), False),
+    ],
+    ids=['time-limit', 'result-cache', 'other-engine-error', 'no-message', 'lock-wait', 'bare'],
+)
+def test_an_abandoned_query_is_a_time_limit_or_the_full_text_result_cache(
+    args: tuple[object, ...], abandoned: bool
+) -> None:
+    """The two errors after which another statement may answer the string choices."""
+    assert db_utils.is_abandoned_query_error(Exception(*args)) is abandoned

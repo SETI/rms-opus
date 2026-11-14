@@ -71,6 +71,7 @@ from benchmarks.bench_server import (
     counter_deltas,
     global_status,
     load_server_config,
+    parse_django_settings,
     query,
     reexec_with_socket,
     restamp_version,
@@ -582,6 +583,7 @@ class WebBench:
         holdings: tuple[Path, Path],
         single_worker: bool = False,
         warm_states: frozenset[str] = frozenset(),
+        django_settings: Mapping[str, object] | None = None,
     ) -> None:
         """Prepare the servers for one side; nothing is started.
 
@@ -599,6 +601,8 @@ class WebBench:
                 thread, as the query capture needs.
             warm_states: The cold states whose resets end with the side's
                 ``warm_search``.
+            django_settings: The Django settings the application's workers assign
+                before serving (``--django-setting``), by name; None for none.
         """
         self.server = server
         self.memcached = memcached
@@ -628,6 +632,7 @@ class WebBench:
             log_dir=run_dir / 'gunicorn',
             app_log_file=run_dir / 'logs' / 'opus_log.txt',
             served_log=run_dir / 'gunicorn' / 'served.log',
+            django_settings=django_settings,
         )
         self._connection: Any = None
         self._cache_gets = 0
@@ -1330,6 +1335,15 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument('--runs', type=int, default=None, help="default: web.toml's for the scale")
     parser.add_argument('--schema', default=None, help="serve this schema instead of the import's")
     parser.add_argument(
+        '--django-setting',
+        metavar='NAME=VALUE',
+        action='append',
+        default=[],
+        help="a Django setting the application's workers assign before serving, such as "
+        'STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD=1; repeatable, recorded in the '
+        "result's environment, and both sides of a comparison must give the same",
+    )
+    parser.add_argument(
         '--warm',
         action='append',
         choices=COLD_STATES,
@@ -1346,7 +1360,12 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         "the side's carry-over of N planted cart rows into the served schema, and the "
         'cache restart',
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    try:
+        args.django_settings = parse_django_settings(args.django_setting)
+    except ValueError as e:
+        parser.error(str(e))
+    return args
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -1389,6 +1408,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         schema=schema,
         holdings=holdings,
         warm_states=steps.warm_states,
+        django_settings=args.django_settings,
     )
     count = config.runs[args.scale] if args.runs is None else args.runs
     with server.running():
@@ -1400,6 +1420,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             **steps.environment(),
             'web_scenario_hash': scenario_hash([config.path]),
             'server_model': bench.gunicorn.server_model,
+            'django_settings': args.django_settings,
             'app_loading': 'eager',
             'cache_owned': True,
         }

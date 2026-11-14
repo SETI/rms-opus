@@ -118,20 +118,28 @@ def _fulltext_statements(
     table_name: str,
     schema: Sequence[SchemaColumn],
     keys: Sequence[TableKey],
+    have: Sequence[TableKey],
 ) -> list[IndexStatement]:
     """Return one statement for each ``FULLTEXT`` key of a table.
+
+    The first ``FULLTEXT`` key on a table rebuilds it, which copies its rows and sorts
+    each secondary key it already has again. So when the table has none yet, the first
+    statement's estimate is its own sort, the table's data bytes and the sorts of the keys
+    it has, and its sort memory is sized for the largest of those keys, shared among
+    them, as a statement building them would be; every later statement sorts only its
+    tokens, with the sort memory at the server's setting.
 
     Parameters:
         db: The open database.
         table_name: The table.
         schema: Its schema.
         keys: The ``FULLTEXT`` keys to add.
+        have: The keys the table has, as the server reports them.
 
     Returns:
-        The statements, in the keys' order. Each builds one index and sorts no B-tree
-        key, so the connection's sort memory is left at the server's setting for it.
+        The statements, in the keys' order.
     """
-    return [
+    statements = [
         IndexStatement(
             sql=db.add_fulltext_key_statement(table_name, key),
             label=_key_label([key]),
@@ -141,6 +149,21 @@ def _fulltext_statements(
         )
         for key in keys
     ]
+    if statements and not any(key.kind == 'fulltext' for key in have):
+        rebuilt = [
+            db.key_space_bytes(table_name, schema, key)
+            for key in have
+            if key.kind in ('unique', 'key')
+        ]
+        first = statements[0]
+        statements[0] = IndexStatement(
+            sql=first.sql,
+            label=first.label,
+            space_bytes=first.space_bytes + db.table_data_bytes(table_name) + sum(rebuilt),
+            sort_bytes=max(rebuilt, default=0),
+            key_count=max(1, len(rebuilt)),
+        )
+    return statements
 
 
 def _ngram_token_size_problem(db: ImportDBSuper) -> str | None:
@@ -209,7 +232,9 @@ def create_indexes(ctx: ImportContext) -> bool:
             # The estimates read the server's row count, which can predate the loads
             # until the table is analyzed.
             db.analyze_table(table_name)
-            key_statements[table_name] = _fulltext_statements(db, table_name, schema, fulltext_keys)
+            key_statements[table_name] = _fulltext_statements(
+                db, table_name, schema, fulltext_keys, have
+            )
             if plain_keys:
                 key_statements[table_name] += _group_keys(
                     db, table_name, schema, plain_keys, space_budget

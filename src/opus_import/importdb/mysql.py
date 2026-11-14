@@ -1281,9 +1281,9 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         rows the server's statistics count and each column's bytes from
         `MYSQL_KEY_BYTES`. A ``FULLTEXT`` key sorts a token for each run of
         `opus_import.table_keys.NGRAM_TOKEN_SIZE` characters a value of its declared
-        width can hold, each the run's bytes and `MYSQL_FULLTEXT_TOKEN_OVERHEAD`, and may
-        rebuild the table beside the sort, so its estimate is ``(rows x tokens x token
-        bytes + the table's data bytes) x 1.3``.
+        width can hold, each the run's bytes and `MYSQL_FULLTEXT_TOKEN_OVERHEAD`, so its
+        estimate is ``rows x tokens x token bytes x 1.3``; the rebuild the first one on a
+        table makes is the caller's to add (`table_data_bytes`).
 
         Parameters:
             table_name: The table.
@@ -1297,8 +1297,8 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             ImportDBError: If the server rejects the query.
         """
         res = self._execute_and_fetchall(
-            'SELECT `TABLE_ROWS`, `DATA_LENGTH` FROM `INFORMATION_SCHEMA`.`TABLES` '
-            'WHERE `TABLE_SCHEMA`=%s AND `TABLE_NAME`=%s',
+            'SELECT `TABLE_ROWS` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=%s '
+            'AND `TABLE_NAME`=%s',
             'key_space_bytes',
             [self.db_schema, table_name],
         )
@@ -1307,7 +1307,6 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             column['field_name']: column for column in schema if 'field_name' in column
         }
         if key.kind == 'fulltext':
-            data_bytes = int(res[0][1] or 0) if res else 0
             token_bytes = 0
             for name in key.columns:
                 column = columns_by_name.get(name, {})
@@ -1320,7 +1319,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 token_bytes += tokens * (
                     NGRAM_TOKEN_SIZE * char_bytes + MYSQL_FULLTEXT_TOKEN_OVERHEAD
                 )
-            return int((rows * token_bytes + data_bytes) * MYSQL_INDEX_SORT_FACTOR)
+            return int(rows * token_bytes * MYSQL_INDEX_SORT_FACTOR)
         primary = [k for k in declared_keys(schema) if k.kind == 'primary']
         primary_columns = primary[0].columns if primary else ()
 
@@ -1344,6 +1343,26 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
 
         entry = width(key.columns) + width(primary_columns) + MYSQL_INDEX_ENTRY_OVERHEAD
         return int(rows * entry * MYSQL_INDEX_SORT_FACTOR)
+
+    def table_data_bytes(self, table_name: str) -> int:
+        """Return a table's data bytes as the server's statistics count them.
+
+        Parameters:
+            table_name: The table.
+
+        Returns:
+            Its ``DATA_LENGTH``, 0 for a table the statistics do not list.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        res = self._execute_and_fetchall(
+            'SELECT `DATA_LENGTH` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=%s '
+            'AND `TABLE_NAME`=%s',
+            'table_data_bytes',
+            [self.db_schema, table_name],
+        )
+        return int(res[0][0] or 0) if res else 0
 
     def index_space_budget(self, server_tmpdir: str | None) -> int | None:
         """Return the temporary space the index builds running at once may hold together.

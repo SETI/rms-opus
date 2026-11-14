@@ -80,7 +80,8 @@ Three servers, all on the local machine:
   charge a quarter of a second to whichever measured request happened to reach a worker
   first. The same file has each worker write a line to a served log when it is ready and
   after every request it serves, naming itself and the request, which is how the
-  harness knows which worker served what.
+  harness knows which worker served what, and assigns any Django settings the run names
+  (``--django-setting``) before the worker serves anything.
 
 .. _dev_guide_benchmarks_tuning:
 
@@ -503,6 +504,18 @@ and before the scenario. The
 warm-up's wall-clock is in the run's details under ``warm_search_s``, and its statements
 are not counted in the scenario's, since the statement statistics are emptied after it.
 A warm-up that fails fails the run.
+
+**A branch the defaults do not take.** ``--django-setting NAME=VALUE`` (repeatable, on
+``bench_web`` and on ``bench_db --dump-queries``) has every worker assign that Django
+setting before it serves anything, the value typed as an ``--import-key`` value is, so a
+run can measure a code path the scale's data does not reach: for example
+``STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD=1`` makes autocomplete answer from every
+observation rather than from the search's results, and
+``STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD=0`` makes that answer try the column's
+full-text index first. A side whose code does not read a setting ignores it. The
+result's environment records the settings as ``django_settings`` (``bench_db``'s details
+as ``capture_django_settings``), and ``compare.py`` refuses two results whose settings
+differ, so both sides of a comparison are given the same.
 
 ``--promotion-carts N`` times a promotion's window before each run's passes: a schema
 named after the served one with ``_carry_source`` is made once, holding

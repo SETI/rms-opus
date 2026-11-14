@@ -1266,6 +1266,20 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::key_space_bytes must be overridden')
 
+    def table_data_bytes(self, table_name: str) -> int:
+        """Return a table's data bytes as the server's statistics count them.
+
+        Parameters:
+            table_name: The table.
+
+        Returns:
+            The bytes.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::table_data_bytes must be overridden')
+
     def index_space_budget(self, server_tmpdir: str | None) -> int | None:
         """Return the temporary space the index builds running at once may hold together.
 

@@ -7,8 +7,8 @@ larger than its floor (or, with ``--all``, every metric either file holds), and 
 it how many reported metrics it left out. A row holds each side's median, spread and
 maximum, the change, the floor (as a fraction and
 in the metric's units at the before median), the metric's role, and the verdict. A metric's p95 over its runs is its maximum, since a session has
-fewer than twenty runs, so the maximum column is its p95 too. It refuses two results whose ``server_model``, server ownership, cache backend
-or brand differ, because their numbers are not comparable.
+fewer than twenty runs, so the maximum column is its p95 too. It refuses two results whose ``server_model``, server ownership, cache backend,
+brand or Django settings set for the run (``--django-setting``) differ, because their numbers are not comparable.
 
 A metric's **role** decides whether it is judged. A **target** (``--target``) is judged
 on improving beyond its floor. A **guard** -- the metrics `GUARD_PATTERNS` matches: the
@@ -124,7 +124,13 @@ GUARD_PATTERNS = tuple(
 CEILING_FRACTION = 0.10
 
 #: Environment entries two compared results must share.
-MATCHING_ENVIRONMENT_KEYS = ('server_model', 'server_owned', 'cache_backend', 'brand')
+MATCHING_ENVIRONMENT_KEYS = (
+    'server_model',
+    'server_owned',
+    'cache_backend',
+    'brand',
+    'django_settings',
+)
 
 #: The metric families whose time metrics share a jitter: each family's is the median of
 #: its time metrics' absolute floors (`family_jitter`).

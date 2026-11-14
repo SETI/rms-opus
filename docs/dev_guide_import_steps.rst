@@ -532,7 +532,13 @@ setting, unless that is above the same ceiling. The sorts write to the server's 
 server_tmpdir`` names another -- a directory on the database server's host, never the
 import's ``scratch_dir``. Each key's temporary space is estimated as
 ``rows x (key bytes + primary key bytes + 10) x 1.3``, with the rows the server counts
-once the table has been analyzed, which the step does first. When the database server
+once the table has been analyzed, which the step does first. A ``FULLTEXT`` key's is
+``rows x tokens x token bytes x 1.3``, a token for each run of two characters a value of
+its declared width holds. The first ``FULLTEXT`` key on a table rebuilds it, copying its
+rows and sorting each secondary key it already has again, so that statement also counts
+the table's data bytes and those keys' estimates, and its sort buffer is sized for the
+largest of those keys, shared among them; a later ``FULLTEXT`` statement leaves the
+buffer at the server's setting. When the database server
 runs on the same computer as the import (its host is ``localhost``, ``127.0.0.1`` or
 ``::1``) and ``server_tmpdir`` is given and its free space can be read, that free space
 (or the data directory's, if less) is a budget the statements running at once must fit

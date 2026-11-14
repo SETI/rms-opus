@@ -118,11 +118,15 @@ web application reads to answer those completions:
   server's configuration. The import refuses to build the indexes on a server where it
   is anything else, before it builds any, and so does the load onto a second server
   (``OPUS_PEER_DB_HOST``) before it creates the database there.
-* ``innodb_ft_enable_stopword`` is turned off by the import and by that load, each for
-  its own session, so the server's setting does not matter. The default stopword list
-  holds ``a`` and ``i``, and the ngram parser leaves out of its index every run that
-  holds a stopword, so an index built with the list on would not find a value by any run
-  of characters holding an ``a`` or an ``i``.
+* ``innodb_ft_enable_stopword`` should be ``OFF`` in the configuration of the import's
+  server and of the second server. The default stopword list holds ``a`` and ``i``, and
+  the ngram parser leaves out of its index every run that holds a stopword, so an index
+  built with the list on does not find a value by any run of characters holding an ``a``
+  or an ``i``. An index takes the setting of the session that builds it, and of any
+  session that rebuilds its table: ``OPTIMIZE TABLE``, ``ALTER TABLE ... FORCE``,
+  ``mysqlcheck --optimize``, or a dump restored by hand. The import and the load onto the
+  second server turn the list off for their own sessions; the server's setting covers
+  every other session.
 
 **The MySQL client development headers**, because the ``mysqlclient`` driver ships no
 Linux wheel and is compiled during every install. On Debian or Ubuntu::
