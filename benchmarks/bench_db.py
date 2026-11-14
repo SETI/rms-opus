@@ -20,13 +20,20 @@ loads into a process or a thread on first use are captured with the same request
 time. ``--commit-capture`` also
 copies the capture to ``scenarios/queries.sql``, the committed copy for a reader.
 
+``--resort-probe``, with ``--dump-queries``, then times the broad search's re-sort in two
+shapes on the replay's connection (`benchmarks.resort_probe`): as the application issued
+it, and generated from the built search's ``search_results`` rows. Its statements are
+written to no capture. A probe whose shapes did not both return the built search's
+non-zero result count is recorded, and then the command exits with an error.
+
 ``--ascii-columns`` counts, for every column whose form type is ``STRING``, the values
 that do not survive conversion to ASCII.
 
 Example::
 
     python -m benchmarks.bench_db --scale test --side before --pr PR-nn --session a \\
-        --python venv-head/bin/python --repo-root . --dump-queries --ascii-columns
+        --python venv-head/bin/python --repo-root . --dump-queries --resort-probe \\
+        --ascii-columns
 """
 
 from __future__ import annotations
@@ -38,7 +45,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from benchmarks import query_capture
+from benchmarks import query_capture, resort_probe
 from benchmarks.app_servers import MemcachedServer
 from benchmarks.bench_server import (
     MysqlServer,
@@ -427,6 +434,12 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         'changes that checkout',
     )
     parser.add_argument(
+        '--resort-probe',
+        action='store_true',
+        help="time the broad search's re-sort as captured and from its built rows; "
+        'needs --dump-queries',
+    )
+    parser.add_argument(
         '--ascii-columns', action='store_true', help='count non-ASCII STRING values'
     )
     return parser.parse_args(argv)
@@ -442,6 +455,8 @@ def main(argv: Sequence[str] | None = None) -> None:
     require_no_pythonpath()
     if args.commit_capture and not args.dump_queries:
         raise SystemExit('--commit-capture copies the capture --dump-queries makes; give both')
+    if args.resort_probe and not args.dump_queries:
+        raise SystemExit('--resort-probe re-sorts the searches --dump-queries builds; give both')
     if args.commit_capture and args.repo_root.resolve() != REPO_ROOT:
         # The committed capture is this checkout's own SQL; another side's would be
         # committed under this commit's name.
@@ -529,9 +544,13 @@ def main(argv: Sequence[str] | None = None) -> None:
                 memcached_binary=memcached_binary,
                 run=run,
                 commit_capture=args.commit_capture,
+                probe_resort=args.resort_probe,
             )
     path = append_runs(label, environment, [run])
     sys.stdout.write(f'recorded in {path}\n')
+    problems = run['details'].get('resort_probe', {}).get('problems')
+    if problems:
+        raise SystemExit('the re-sort probe is not a valid measurement: ' + '; '.join(problems))
 
 
 def _dump_and_replay(
@@ -544,6 +563,7 @@ def _dump_and_replay(
     memcached_binary: str,
     run: dict[str, Any],
     commit_capture: bool,
+    probe_resort: bool,
 ) -> None:
     """Capture this side's scenario SQL and replay it at once, into the run's details.
 
@@ -556,6 +576,8 @@ def _dump_and_replay(
         memcached_binary: The memcached program.
         run: The run to record the plans in.
         commit_capture: Whether to copy the capture to `COMMITTED_CAPTURE` as well.
+        probe_resort: Whether to run `benchmarks.resort_probe.probe` after the replay, on
+            its connection, into the run's metrics, samples and details.
     """
     config = load_web_config(scale=label.scale)
     memcached = MemcachedServer(
@@ -583,6 +605,11 @@ def _dump_and_replay(
         memcached.stop()
     with contextlib.closing(server.connect(schema)) as connection:
         entries = query_capture.replay(connection, blocks)
+        if probe_resort:
+            probe_metrics, probe_samples, probe_details = resort_probe.probe(connection, blocks)
+            run['metrics'].update(probe_metrics)
+            run['samples'].update(probe_samples)
+            run['details']['resort_probe'] = probe_details
     run['details']['plans'] = entries
     run['details']['capture'] = str(capture)
     run['details']['capture_server_model'] = bench.gunicorn.server_model

@@ -577,6 +577,26 @@ tables of the commit and session that made it, so it is replayed only there.
 ``benchmarks/scenarios/queries.sql`` is a copy kept for a reader, written by
 ``--commit-capture``; nothing replays it.
 
+``--resort-probe``, given with ``--dump-queries``, times the broad search's re-sort in
+two shapes after the replay, on its connection (``benchmarks/resort_probe.py``). The
+**captured** shape is the ``SELECT`` with which the re-sort scenario's re-sorted request
+built its search: the search's predicate evaluated again, its rows numbered in the
+requested order. The **generated** shape is that ``SELECT`` with its ``WHERE`` clause
+replaced by a join to the ``search_results`` rows of the search the scenario's
+default-order request read, so it numbers the built search's rows in the requested order
+without the predicate. The probe writes the generated statement into no capture file.
+Each shape's ``SELECT`` runs under ``EXPLAIN ANALYZE`` five times, the two shapes taking
+turns, and neither is run as a write. The metrics are under ``db.resort_probe.broad.``:
+for each shape, ``time_s``, the median time of its ``EXPLAIN ANALYZE``, with the five
+times in the run's ``samples``; ``analyze_ms``, the median time to the last row its top
+iterator reports; ``rows_returned`` and ``rows_examined``; then ``result_count``, the
+built search's stored count; ``ratio``, the generated shape's ``time_s`` over the
+captured one's; and ``valid``. The run's details keep both statements, every execution's
+figures and the last ``EXPLAIN ANALYZE`` tree of each. The measurement is valid only
+when both shapes returned the built search's result count in every execution, that count
+is not zero, and both examined rows; otherwise ``valid`` is 0, the details say why, and
+the command exits with an error after recording the run.
+
 Result files
 ------------
 
