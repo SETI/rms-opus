@@ -7354,3 +7354,9 @@ Nothing above this line is rewritten by an executor.
   failed twice in CI with a fixed hold of 8 s, when three Import Tests jobs shared the
   runner and `opus_import_all --status --recover` outlasted the hold; the test removes
   the file once its reads are done.
+- The ASCII collation's name is one constant, `opus_support.ASCII_COLLATION`: the import's
+  column SQL, `is_ascii_column` and every model's `db_collation` read it, and
+  `create_opus_models.sh` writes the constant into the generated models in place of
+  inspectdb's literal. Two tests of the rendered column SQL keep the literal text.
+- `get_session_id` imports `Cart` at the top of `app_utils`; only views, forms and tests
+  import `app_utils`, all after Django has loaded its apps.
