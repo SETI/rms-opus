@@ -192,7 +192,7 @@ recognize raises :exc:`NotImplementedError` rather than being guessed at.
    * - ``varcharNNN``
      - ``varchar(NNN)``
      - The most characters a value may have is part of the type name. The import
-       drops a value's trailing spaces, then truncates a longer value and logs an error.
+       truncates a longer value and logs an error.
    * - ``text``
      - ``text``
      -

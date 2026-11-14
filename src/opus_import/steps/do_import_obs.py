@@ -39,42 +39,6 @@ if TYPE_CHECKING:
     from opus_import.import_util import TableSchema
 
 
-def stored_text(value: str) -> str:
-    """Return a string as a ``varcharNNN`` column of the import stores it.
-
-    A ``varchar`` keeps the trailing spaces a fixed-width ``char`` dropped when it was
-    read, so they are dropped before the value is loaded, and the database returns what
-    it returned when the column was a ``char``.
-
-    Parameters:
-        value: The value computed for the column.
-
-    Returns:
-        The value without trailing spaces.
-    """
-    return value.rstrip(' ')
-
-
-def strip_stored_text(row: dict[str, Any], table_schema: TableSchema) -> dict[str, Any]:
-    """Apply `stored_text` to every string a row holds for a ``varcharNNN`` column.
-
-    Parameters:
-        row: The row, keyed by column name, which is changed in place.
-        table_schema: The table's column definitions.
-
-    Returns:
-        The row.
-    """
-    for entry in table_schema:
-        name = entry.get('field_name')
-        if not isinstance(name, str):
-            continue
-        value = row.get(name)
-        if isinstance(value, str) and str(entry.get('field_type', '')).startswith('varchar'):
-            row[name] = stored_text(value)
-    return row
-
-
 def import_observation_table(
     ctx: ImportContext,
     instrument_obj: ObsBase,
@@ -258,7 +222,6 @@ def import_observation_table(
                         )
                         column_val = ''
                     else:
-                        column_val = stored_text(column_val)
                         if len(column_val) > field_size:
                             import_util.log_nonrepeating_error(
                                 ctx,

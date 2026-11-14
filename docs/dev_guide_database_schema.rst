@@ -389,7 +389,7 @@ Some columns (like ``OPUS ID``) must always contain a valid value, while others 
 String Columns and Character Sets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Every string column is a ``varchar(NNN)``, which stores as many characters as a value has, up to ``NNN``, or a ``text``. No column is a fixed-width ``char``. The import drops a value's trailing spaces before it stores it in a ``varchar`` column, so a value reads back as it would from a ``char``.
+Every string column is a ``varchar(NNN)``, which stores as many characters as a value has, up to ``NNN``, or a ``text``. No column is a fixed-width ``char``.
 
 A string column takes the schema's character set, ``utf8mb4``, whose collation ``utf8mb4_0900_ai_ci`` compares without case or accents. A column whose schema entry carries ``"field_charset": "ascii"`` is ``CHARACTER SET ascii COLLATE ascii_general_ci`` instead: it compares without case, as the default does, and it costs one byte a character where ``utf8mb4`` may cost four, in the row, in every index entry and in every sort. The ASCII columns are these:
 
