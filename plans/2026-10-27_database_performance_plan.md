@@ -7360,3 +7360,8 @@ Nothing above this line is rewritten by an executor.
   inspectdb's literal. Two tests of the rendered column SQL keep the literal text.
 - `get_session_id` imports `Cart` at the top of `app_utils`; only views, forms and tests
   import `app_utils`, all after Django has loaded its apps.
+- The import stores a `varchar` value as computed, trailing spaces and all, superseding
+  the 2026-11-11 bullet that drops them at load (`stored_text`): no value the holdings
+  or pdsfile give a `varchar` column ends in a space, so the stripping guarded nothing.
+  `ascii_collation_key` still drops a caller's trailing spaces, as the ASCII collation
+  pads.
