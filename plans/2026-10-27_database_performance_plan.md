@@ -7808,3 +7808,20 @@ Nothing above this line is rewritten by an executor.
     `--validate` runs `validate_junctions` on every fixture import, 195 passed and 3
     skipped. The integration job's run was not repeated: nothing in this batch changes
     `opus_app` or the import's output.
+
+### 2026-11-14, PR-21 (written against this file at b67a1150)
+
+- **Not executed: the gate failed.** PR-20's test-scale session `a` (2026-11-13), after
+  side (PR-20's head b67a1150 serving its own import, `bench_test_after_a_1`),
+  `bench_db --dump-queries --resort-probe`: the re-sort from `search_results` (generated)
+  took 41.0 ms against 20.3 ms for the captured re-sort (`time_s` medians of five
+  alternated `EXPLAIN ANALYZE` runs each; spreads 62.9% and 39.5%; server-reported 39.1
+  ms against 18.4 ms), a ratio of 2.02, where the gate asks for less than 0.75. The probe
+  is valid: both shapes returned 29,730 rows, the broad search's result count, and both
+  examined rows in every run (generated 59,460, captured 29,750). The before side (PR-19's
+  head on its own import) gave 28.2 ms against 13.5 ms, a ratio of 2.09.
+- The generated shape joins the built search's rows of `search_results` to `obs_general`
+  and still sorts every row, so it examines both tables' rows where the captured shape
+  examines `obs_general`'s alone; with the broad search matching nearly every
+  observation, the re-evaluated `WHERE` costs less than the join that would replace it.
+- PR-22 is stacked on PR-20.
