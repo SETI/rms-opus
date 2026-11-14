@@ -79,14 +79,18 @@ def _server_keys(credentials: DatabaseCredentials, schema: str) -> dict[str, set
         Each table's keys, keyed by table name.
     """
     indexes: dict[tuple[str, str], tuple[str, list[str]]] = {}
-    for table, index, non_unique, column in golden_io.query(
+    for table, index, non_unique, column, index_type in golden_io.query(
         credentials,
         None,
-        'SELECT TABLE_NAME, INDEX_NAME, NON_UNIQUE, COLUMN_NAME FROM information_schema.STATISTICS '
+        'SELECT TABLE_NAME, INDEX_NAME, NON_UNIQUE, COLUMN_NAME, INDEX_TYPE '
+        'FROM information_schema.STATISTICS '
         'WHERE TABLE_SCHEMA = %s ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX',
         [schema],
     ):
-        kind = 'primary' if index == 'PRIMARY' else 'key' if int(non_unique) else 'unique'
+        if index_type == 'FULLTEXT':
+            kind = 'fulltext'
+        else:
+            kind = 'primary' if index == 'PRIMARY' else 'key' if int(non_unique) else 'unique'
         indexes.setdefault((table, index), (kind, []))[1].append(column)
     keys: dict[str, set[TableKey]] = {}
     for (table, _index), (kind, columns) in indexes.items():

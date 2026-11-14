@@ -534,9 +534,9 @@ class ImportDBMySQL(ImportDBSuper):
 
                 try:
                     # A FULLTEXT index keeps the stopword setting of the session that
-                    # built it, and so does any rebuild of its table. The default list
-                    # holds "a" and "i", and the ngram parser drops every token holding
-                    # a stopword, so every session the import opens turns the list off.
+                    # built it, or that last rebuilt its table. The default list holds
+                    # "a" and "i", and the ngram parser drops every token holding a
+                    # stopword, so every session the import opens turns the list off.
                     self._execute('SET SESSION innodb_ft_enable_stopword = OFF')
                 except MySQLdb.Error as e:
                     self._log_failure(f'Failed to turn the full-text stopword list off: {e}')

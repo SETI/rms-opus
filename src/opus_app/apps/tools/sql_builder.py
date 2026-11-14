@@ -77,8 +77,8 @@ from opus_support import UNSTORED_ASCII_CHARACTER
 _IDENTIFIER_RE = re.compile(r'\A[A-Za-z0-9_]+\Z')
 
 #: A word as MySQL's ngram parser reads one: a run of ASCII letters, digits and
-#: underscores. The parser starts a new token after a space or any other single-byte
-#: character that is not one of these, so a token never spans one.
+#: underscores. The parser breaks its tokens at a space and at any other single-byte
+#: character that is not one of these, so no token spans one.
 _NGRAM_WORD_RE = re.compile(r'[A-Za-z0-9_]+')
 
 #: Operators that may appear between two rendered expressions. Restricting the set

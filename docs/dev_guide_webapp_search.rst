@@ -80,7 +80,7 @@ are matched with ``MATCH(<column>) AGAINST (%s IN BOOLEAN MODE)`` as well as wit
 ``LIKE`` every string search uses (:func:`~opus_app.apps.tools.sql_builder.fulltext_match`,
 added by :func:`~opus_app.apps.search.views.get_string_query`). The phrase searched for is
 the longest run of letters, digits and underscores in the typed text, in double quotes:
-the ngram parser starts a new token at any other character, and boolean mode reads several
+the ngram parser breaks a token at any other character, and boolean mode reads several
 of them as operators, so such a run is the part of the text the index holds. Every value
 that contains the text contains the run, so the index finds every row the ``LIKE`` would;
 the ``LIKE`` then keeps only the rows that contain the whole text, so the choices are the
