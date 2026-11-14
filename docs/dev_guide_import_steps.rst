@@ -916,6 +916,16 @@ The checks, in this order:
     import writes one for every observation, and the results pages read an
     observation's preview images from it. Any such row is an error.
 
+:func:`~opus_import.steps.do_validate.validate_junctions`
+    For each ``mult_list`` column, compares the distinct ids of each observation's JSON
+    list with its rows of the column's junction table, both ways
+    (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.list_junction_mismatches`): an id
+    with no junction row, and a junction row whose id the list lacks. The search and the
+    counts of the field's values read the junction table, and the pages that show the
+    list read the JSON, so the two must agree. Disagreement is an error naming the
+    junction table, how many observations disagree and the least ``obs_general`` id
+    among them; a missing junction table is an error too.
+
 :func:`~opus_import.steps.do_validate.validate_unique_opus_ids`
     Groups ``obs_general`` by ``opus_id`` and reports any OPUS ID more than one row
     carries, with how many there are and the first ten. ``opus_id`` carries a plain key,
@@ -1125,8 +1135,8 @@ Importing every observation one primary index file describes.
     (:func:`~opus_import.list_junctions.junction_rows`), from the row's final values, so
     the junction table holds the ids the JSON column holds whichever process computed
     the row. :meth:`~opus_import.steps.do_import_index.TableRowSink.finish` loads what is
-    still waiting, table by table in the order walked, then the junction tables. Tables therefore load in no fixed order relative to one
-    another during the index, which the foreign keys tolerate because a bundle loads with
+    still waiting, table by table in the order walked, then the junction tables. Tables
+    therefore load in no fixed order relative to one another during the index, which the foreign keys tolerate because a bundle loads with
     their checks off (:ref:`dev_guide_import_steps_do_import`). An index that fails
     partway is taken back by
     :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes every

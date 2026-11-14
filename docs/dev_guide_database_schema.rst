@@ -368,7 +368,7 @@ The web application joins ``mult`` the same way, once for each mult column a sta
 reads, each time under an alias of its own and with the field's id as a parameter
 (:func:`opus_app.apps.tools.sql_builder.mult_join`).
 
-Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists, and more complicated SQL queries are required to extract the contents of those lists and match them with the ``mult`` rows:
+Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists of ``mult`` ids:
 
 ::
 
@@ -379,7 +379,11 @@ Fields like ``Intended Target Name`` that support multiple simultaneous options 
     | [0]         | [3]          |
     +-------------+--------------+
 
-To better understand how this is used, search for SQL commands containing ``JSON_`` in the ``views.py`` files under ``apps``.
+Each such column also has a junction table with one row per id of each observation's
+list, and the search and the counts of the field's values read that table rather than
+the list (:ref:`dev_guide_database_schema_junction_tables`). A sort on the field joins
+``mult`` on the list's first entry
+(:func:`opus_app.apps.tools.sql_builder.json_extract_first`).
 
 NULL and NOT NULL Columns
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -576,9 +580,11 @@ from the same ids as the JSON list. A search for any of some values is a semi-jo
 junction table, an ``EXISTS`` that reads its primary key. The counts of a field's values
 group the junction table's rows by ``mult_id``, joined to the search's rows of
 ``search_results`` when the search has selections. The JSON list stays in
-``obs_general`` for the pages that show it, and a sort on the field orders by the label of
-the list's first entry. Finalization reads the ids in use from the junction table when it deletes the ``mult``
-values no observation holds.
+``obs_general`` for the pages that show it, and a sort on the field orders by the label
+of the list's first entry. Finalization reads the ids in use from the junction table
+when it deletes the ``mult`` values no observation holds. The import's validation step
+compares each observation's list with its junction rows, both ways, and reports any
+observation on which they disagree.
 
 .. _dev_guide_database_schema_obs_preview:
 

@@ -11,14 +11,16 @@ that filter's wavelengths -- and at the one a constraint expresses but does not 
 a foreign key added with ``foreign_key_checks`` off, as finalization adds them, never
 reads the rows already there, so every row's ``obs_general`` row is counted here, and
 ``obs_pds``'s copy of each row's bundle is compared with ``obs_general``'s. Every
-observation's ``obs_preview`` row, which the results pages read, is counted too.
+observation's ``obs_preview`` row, which the results pages read, is counted too, and each
+``mult_list`` column's lists are compared with its junction table, which the search and
+the counts read.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from opus_import import surface_geometry
+from opus_import import import_util, list_junctions, surface_geometry, table_keys
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
@@ -506,6 +508,51 @@ WHERE {q('p')}.{q('obs_general_id')} IS NULL"""  # nosec B608
         ctx.logger.log('error', f'{count} obs_general rows have no obs_preview row')
 
 
+def validate_junctions(ctx: ImportContext) -> None:
+    """Report observations whose ``mult_list`` list and junction rows disagree.
+
+    For each ``mult_list`` column of an observation table the schema holds, the distinct
+    ids of each observation's JSON list are compared with its rows of the column's
+    junction table, both ways (`ImportDBSuper.list_junction_mismatches`): an id with no
+    junction row, or a junction row whose id the list lacks. Either is an error, naming
+    the junction table, how many observations disagree and the least ``obs_general`` id
+    among them; so is a missing junction table. A junction row whose observation is gone
+    is `validate_orphans`' to report, and is counted here too.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+    """
+    db = ctx.db
+    assert db is not None
+    ctx.logger.log('debug', 'Validating the junction tables of the mult_list columns')
+    tables = set(db.table_names(prefix='obs_'))
+    for table_name in sorted(tables):
+        schema = import_util.read_schema_for_existing_table(ctx, table_name)
+        if schema is None:
+            continue
+        for column in list_junctions.list_columns(schema):
+            junction = list_junctions.junction_table(table_name, column)
+            if junction not in tables:
+                ctx.logger.log(
+                    'error',
+                    f'Table "{table_name}" has no junction table "{junction}" for its '
+                    f'mult_list column "{column}"',
+                )
+                continue
+            observation = (
+                'id'
+                if table_keys.is_bundle_keyed_table(table_name)
+                else list_junctions.JUNCTION_OBSERVATION_COLUMN
+            )
+            count, first = db.list_junction_mismatches(table_name, column, junction, observation)
+            if count:
+                ctx.logger.log(
+                    'error',
+                    f'Junction table "{junction}" disagrees with {table_name}.{column} for '
+                    f'{count} observations, the first with obs_general id {first}',
+                )
+
+
 def validate_unique_opus_ids(ctx: ImportContext) -> None:
     """Report OPUS IDs that more than one ``obs_general`` row carries.
 
@@ -563,6 +610,7 @@ def do_validate(ctx: ImportContext) -> bool:
     validate_orphans(ctx)
     validate_pds_bundle_ids(ctx)
     validate_previews(ctx)
+    validate_junctions(ctx)
     validate_unique_opus_ids(ctx)
 
     fatal_count, error_count, _warning_count, _message_count = ctx.logger.close()

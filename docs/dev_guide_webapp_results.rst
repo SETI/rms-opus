@@ -247,8 +247,9 @@ geometry selector's counts are over every row of ``obs_surface_geometry_target``
 observation and body. A ``MULTIGROUP`` field holds a JSON list, so its counts group the
 rows of the column's junction table by ``mult_id``, joined to the search's rows of
 ``search_results`` when the search has selections; an observation counts once for each
-distinct value its list holds (:ref:`dev_guide_database_schema_junction_tables`). The values come back in the order of their ``disp_rank``, the integer rank
-finalization gives each value of the field
+distinct value its list holds (:ref:`dev_guide_database_schema_junction_tables`). The
+values come back in the order of their ``disp_rank``, the integer rank finalization gives
+each value of the field
 (:ref:`dev_guide_import_steps_do_finalize_mult`).
 
 **The range endpoints** are the smallest and largest value a numeric field takes over the

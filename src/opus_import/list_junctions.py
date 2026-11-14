@@ -23,6 +23,8 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
+from opus_import.table_keys import OBSERVATION_DELETE_COLUMN
+
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
@@ -32,8 +34,9 @@ LIST_FIELD_TYPE = 'mult_list'
 #: A junction table's column holding one id of an observation's list.
 JUNCTION_MULT_COLUMN = 'mult_id'
 
-#: A junction table's column naming the observation, by its ``obs_general`` row.
-JUNCTION_OBSERVATION_COLUMN = 'obs_general_id'
+#: A junction table's column naming the observation, by its ``obs_general`` row: the column
+#: the per-bundle delete reaches every table but ``obs_general`` by.
+JUNCTION_OBSERVATION_COLUMN = OBSERVATION_DELETE_COLUMN
 
 
 def junction_table(table: str, column: str) -> str:

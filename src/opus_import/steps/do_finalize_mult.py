@@ -10,8 +10,8 @@ or added can stop or start referencing any value. It has three parts:
    distinct ids collected here, so a table whose mult columns carry no key is read once
    rather than once a column. A ``mult_list`` column's ids are read from its junction
    table (`opus_import.list_junctions`), whose primary key leads with the id, so the
-   distinct ids are read from the key without a scan of the observation table. A pinned field keeps every row its list gives, since the list is
-   the intended set of choices; the one row it may hold beyond them, the absent value
+   distinct ids are read from the key without a scan of the observation table. A pinned
+   field keeps every row its list gives, since the list is the intended set of choices; the one row it may hold beyond them, the absent value
    the import adds under `opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted
    like any other once no observation holds it. A deleted id is free again: the next
    value the import adds to the field takes the field's highest id plus one, which can
