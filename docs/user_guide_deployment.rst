@@ -249,6 +249,15 @@ of any machine. ``run_full_opus_import.sh`` runs the first at the end of an impo
 ``scripts/import/clone_database.sh`` in the repository copies one database to another on
 the same server.
 
+The peer builds the database's ``FULLTEXT`` indexes as it loads, under the load's own
+session, and the dump sets neither of the two server settings those indexes depend on.
+So ``load_db.sh`` refuses, before it creates the database, a peer whose
+``ngram_token_size`` is not ``2``: the web application searches the indexes for runs of
+two characters, and the server reads the setting only when it starts, so it is fixed in
+the peer's configuration and the peer restarted. And the load turns the stopword list off
+for its session, ahead of the dump: the ngram parser leaves out every run of characters
+that holds a stopword, and the default list holds ``a`` and ``i``.
+
 .. _user_guide_deployment_schema_version:
 
 The schema version check

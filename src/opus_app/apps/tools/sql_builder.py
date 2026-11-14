@@ -67,6 +67,7 @@ from typing import Any, NamedTuple
 
 from django.db import connection
 
+from opus_import.table_keys import NGRAM_TOKEN_SIZE
 from opus_support import UNSTORED_ASCII_CHARACTER
 
 #: The only identifier shape OPUS uses. Table, column and alias names come from
@@ -74,6 +75,11 @@ from opus_support import UNSTORED_ASCII_CHARACTER
 #: runtime; none of them ever needs a character outside this set, so anything else
 #: is a bug or an injection attempt rather than an exotic identifier.
 _IDENTIFIER_RE = re.compile(r'\A[A-Za-z0-9_]+\Z')
+
+#: A word as MySQL's ngram parser reads one: a run of ASCII letters, digits and
+#: underscores. The parser starts a new token after a space or any other single-byte
+#: character that is not one of these, so a token never spans one.
+_NGRAM_WORD_RE = re.compile(r'[A-Za-z0-9_]+')
 
 #: Operators that may appear between two rendered expressions. Restricting the set
 #: means `binary_op` cannot be handed arbitrary SQL text through its operator.
@@ -263,6 +269,40 @@ def angular_separation(longitude_column: Expr, target_longitude: float) -> Expr:
     return Expr(
         f'ABS(MOD(%s - {longitude_column.sql} + 540., 360.) - 180.)',
         [target_longitude, *longitude_column.params],
+    )
+
+
+def fulltext_match(column_expr: Expr, text: str) -> Expr | None:
+    """Return a full-text condition that every row whose column contains `text` meets.
+
+    The condition is MySQL's ``MATCH(<column>) AGAINST (%s IN BOOLEAN MODE)`` over the
+    column's ngram ``FULLTEXT`` index, searching for the longest word of `text` (a run of
+    ASCII letters, digits and underscores, `_NGRAM_WORD_RE`) as a phrase in double
+    quotes. A word holds no character the ngram parser breaks a token at, and no
+    character boolean mode reads as an operator, so every value that contains `text`
+    contains the word's tokens in order and the index finds it. The index finds values
+    that hold the word without `text` as well, so the caller keeps its ``LIKE`` beside
+    this condition, which narrows the rows the ``LIKE`` reads without changing which
+    rows match.
+
+    PostgreSQL note: a ``pg_trgm`` GIN index serves ``LIKE '%x%'`` itself, so that brand
+    needs no condition here.
+
+    Parameters:
+        column_expr: The column, which has an ngram ``FULLTEXT`` index.
+        text: The text the column is to contain, as it is compared with the column.
+
+    Returns:
+        The condition, or None when `text` has no word of at least `NGRAM_TOKEN_SIZE`
+        characters, the shortest the index holds.
+    """
+    words = [word for word in _NGRAM_WORD_RE.findall(text) if len(word) >= NGRAM_TOKEN_SIZE]
+    if len(words) == 0:
+        return None
+    longest = max(words, key=len)
+    return Expr(
+        f'MATCH({column_expr.sql}) AGAINST (%s IN BOOLEAN MODE)',
+        [*column_expr.params, f'"{longest}"'],
     )
 
 

@@ -8,7 +8,9 @@ column) or true for a plain key. A foreign key may instead be a table-level entr
 references does; ``on_delete`` is optional and ``"restrict"`` when absent. A key over
 several columns is a table-level entry too: ``{"primary_key": [...]}``,
 ``{"unique": [...]}`` or ``{"key": [...]}`` for a plain key, each listing its columns in
-order. `declared_keys` reads all of
+order. ``{"fulltext": [...]}`` declares a ``FULLTEXT`` index, which the brand builds with
+the ngram parser (`NGRAM_TOKEN_SIZE`) for the web application's autocomplete; the column
+keeps any B-tree key it declares beside it. `declared_keys` reads all of
 them as `TableKey` values, which the brand renders and which compare by kind,
 ordered columns and, for a foreign key, what it references and does on delete -- never by
 name, because the server names an unnamed key itself.
@@ -17,7 +19,7 @@ The observation and mult tables (`is_key_filtered_table`) are created, on both w
 paths, with only the keys a load needs (`create_time_keys`): the primary key, every
 unique key, and the keys the per-bundle delete reads, so that a load maintains as few
 indexes as it can. Finalization adds the rest (`add_secondary_indexes`) once, after the
-last bundle.
+last bundle, each ``FULLTEXT`` index first.
 The two are complements over a filtered table's keys, apart from the plain key
 `add_secondary_indexes` adds under a foreign-key column no key of its own leads, so that
 the foreign key finds its index already built. Every other table is created with every
@@ -37,8 +39,9 @@ if TYPE_CHECKING:
 
     from opus_import.importdb.super import SchemaColumn
 
-KeyKind = Literal['primary', 'unique', 'key', 'foreign']
-"""The kind of a key -- the primary key, a unique key, a plain key or a foreign key."""
+KeyKind = Literal['primary', 'unique', 'key', 'foreign', 'fulltext']
+"""The kind of a key -- the primary key, a unique key, a plain key, a foreign key or a
+``FULLTEXT`` index."""
 
 OnDelete = Literal['cascade', 'restrict']
 """What deleting a referenced row does to the rows a foreign key ties to it."""
@@ -61,6 +64,26 @@ BUNDLE_DELETE_COLUMN = 'bundle_id'
 #: joining ``obs_general`` on it; a table whose primary key does not start with it is
 #: read through a plain key whose only column it is.
 OBSERVATION_DELETE_COLUMN = 'obs_general_id'
+
+#: The token size, in characters, of the ngram parser the ``FULLTEXT`` indexes are built
+#: with: the server's ``ngram_token_size``, which finalization requires and the web
+#: application's queries assume. A word of the search shorter than this has no token.
+NGRAM_TOKEN_SIZE = 2
+
+#: The widest column, in declared characters, a ``FULLTEXT`` entry is declared on: an
+#: ngram index stores a token for nearly every character of every value, so on a wider
+#: column (a file path, a note) it would outweigh the table, and the column keeps
+#: ``LIKE``.
+FULLTEXT_MAX_WIDTH = 100
+
+#: How a log line names each kind of key but a foreign key, which names what it
+#: references as well.
+KEY_LABELS: dict[KeyKind, str] = {
+    'primary': 'PRIMARY KEY',
+    'unique': 'UNIQUE KEY',
+    'key': 'KEY',
+    'fulltext': 'FULLTEXT KEY',
+}
 
 
 def is_bundle_keyed_table(table_name: str) -> bool:
@@ -112,8 +135,7 @@ class TableKey:
             if self.on_delete != DEFAULT_ON_DELETE:
                 described += f' ON DELETE {self.on_delete.upper()}'
             return described
-        label = {'primary': 'PRIMARY KEY', 'unique': 'UNIQUE KEY', 'key': 'KEY'}[self.kind]
-        return f'{label} ({columns})'
+        return f'{KEY_LABELS[self.kind]} ({columns})'
 
 
 def is_key_filtered_table(table_name: str) -> bool:
@@ -152,17 +174,19 @@ def _table_level_foreign_key(entry: SchemaColumn) -> TableKey:
     return TableKey('foreign', columns, (references[0], references[1:]), on_delete)
 
 
-#: The table-level entries that declare a primary, unique or plain key over listed
-#: columns, and the kind of key each declares.
+#: The table-level entries that declare a primary, unique, plain or ``FULLTEXT`` key over
+#: listed columns, and the kind of key each declares.
 TABLE_LEVEL_KEY_KINDS: dict[str, KeyKind] = {
     'primary_key': 'primary',
     'unique': 'unique',
     'key': 'key',
+    'fulltext': 'fulltext',
 }
 
 
 def _table_level_key(entry_name: str, columns: object) -> TableKey:
-    """Return the key a table-level ``primary_key``, ``unique`` or ``key`` entry declares.
+    """Return the key a table-level ``primary_key``, ``unique``, ``key`` or ``fulltext`` entry
+    declares.
 
     Parameters:
         entry_name: The entry's name, a key of `TABLE_LEVEL_KEY_KINDS`.
@@ -191,7 +215,8 @@ def declared_keys(schema: Sequence[SchemaColumn]) -> list[TableKey]:
 
     Returns:
         One key per column whose ``field_key`` declares one, and one per table-level
-        ``foreign_key``, ``primary_key``, ``unique`` or ``key`` entry. Other entries without
+        ``foreign_key``, ``primary_key``, ``unique``, ``key`` or ``fulltext`` entry. Other
+        entries without
         ``field_name`` (constraints, and ``param_info`` rows of another table) declare
         none.
 
@@ -273,29 +298,32 @@ def add_secondary_indexes(table_name: str, schema: Sequence[SchemaColumn]) -> li
     """Return the keys finalization adds to a table the import created.
 
     These are every declared key `create_time_keys` leaves out, in column order, then, for
-    each foreign-key column that no key leads, a plain key on that column, so that the
-    foreign key, which needs an index whose first column is its own, finds one built
-    rather than creating it implicitly while foreign keys are added one at a time.
+    each foreign-key column that no B-tree key leads, a plain key on that column, so that
+    the foreign key, which needs an index whose first column is its own, finds one built
+    rather than creating it implicitly while foreign keys are added one at a time. A
+    ``FULLTEXT`` index leads no B-tree key.
 
     Parameters:
         table_name: The table's raw name.
         schema: Its schema.
 
     Returns:
-        The keys, plain keys before foreign keys; none for a table that is not an
-        observation or mult table, which is created with every key it declares.
+        The keys, ``FULLTEXT`` indexes first, then plain keys, then foreign keys; none for a
+        table that is not an observation or mult table, which is created with every key
+        it declares.
     """
     if not is_key_filtered_table(table_name):
         return []
     keys = declared_keys(schema)
     kept = create_time_keys(table_name, schema)
     rest = [key for key in keys if key not in kept]
-    led = {key.columns[0] for key in keys if key.kind != 'foreign'}
+    led = {key.columns[0] for key in keys if key.kind not in ('foreign', 'fulltext')}
     supporting = [
         TableKey('key', key.columns)
         for key in rest
         if key.kind == 'foreign' and key.columns[0] not in led
     ]
-    plain = [key for key in rest if key.kind != 'foreign']
+    fulltext = [key for key in rest if key.kind == 'fulltext']
+    plain = [key for key in rest if key.kind not in ('foreign', 'fulltext')]
     foreign = [key for key in rest if key.kind == 'foreign']
-    return [*plain, *supporting, *foreign]
+    return [*fulltext, *plain, *supporting, *foreign]

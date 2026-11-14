@@ -12,15 +12,15 @@ from pathlib import Path
 
 import pytest
 
-from opus_import import import_util
+from opus_import import import_util, schema_files
 
 from .conftest import make_context
 
 
 def test_table_schema_dir_holds_the_schemas() -> None:
     """The packaged schema directory is present and holds the OPUS table schemas."""
-    assert (import_util.TABLE_SCHEMA_DIR / 'obs_general.json').is_file()
-    assert (import_util.TABLE_SCHEMA_DIR / 'param_info_ranges.json').is_file()
+    assert (schema_files.TABLE_SCHEMA_DIR / 'obs_general.json').is_file()
+    assert (schema_files.TABLE_SCHEMA_DIR / 'param_info_ranges.json').is_file()
 
 
 def test_dictionary_data_dir_holds_the_context_tree() -> None:

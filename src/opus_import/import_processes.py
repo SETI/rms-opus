@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING
 
 from opus_import import bundle_registry, importdb
 from opus_import.import_fault import import_fault_argument
-from opus_import.import_util import TABLE_SCHEMA_DIR
+from opus_import.schema_files import TABLE_SCHEMA_DIR
 
 if TYPE_CHECKING:
     from opus_import.bundle_registry import BundleIds

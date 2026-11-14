@@ -706,7 +706,10 @@ def clone_schema(
 
     Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
     keys and foreign keys (``CREATE TABLE ... LIKE`` does not copy foreign keys), with
-    ``foreign_key_checks`` off so that tables may be created and filled in any order;
+    ``foreign_key_checks`` off so that tables may be created and filled in any order,
+    and with the stopword list off (``innodb_ft_enable_stopword``), since a ``FULLTEXT``
+    index keeps the setting of the session that created it and the import's indexes are
+    built without stopwords;
     then its rows are copied with ``INSERT ... SELECT``, naming the stored columns only,
     since MySQL computes a generated column and refuses a value for one. The copies run
     over several connections at once. The target is dropped first if it exists. Last,
@@ -743,6 +746,7 @@ def clone_schema(
         query(connection, f'DROP DATABASE IF EXISTS {quote_identifier(target)}')
         query(connection, f'CREATE DATABASE {quote_identifier(target)}')
         query(connection, 'SET SESSION foreign_key_checks = 0')
+        query(connection, 'SET SESSION innodb_ft_enable_stopword = OFF')
         query(connection, f'USE {quote_identifier(target)}')
         for table in tables:
             definition = query(

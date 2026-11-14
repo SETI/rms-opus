@@ -27,6 +27,7 @@ from opus_import.steps import (
     do_validate,
 )
 from opus_import.table_keys import (
+    NGRAM_TOKEN_SIZE,
     TableKey,
     add_secondary_indexes,
     create_time_keys,
@@ -159,6 +160,19 @@ def test_a_table_outside_the_filter_is_created_with_every_declared_key() -> None
         assert clause in cmd
 
 
+def test_a_fulltext_entry_is_left_for_finalization_on_an_observation_table() -> None:
+    """A FULLTEXT index is rendered with the ngram parser where a table is created with it,
+    and an observation table is created without it."""
+    schema = [*_CHILD_SCHEMA, {'fulltext': ['opus_id']}]
+    db = _RecordingDB(set())
+    db.create_table('cart', schema)
+    db.create_table('obs_pds', schema)
+    cart, obs_pds = [cmd for cmd, _ in db.executed if cmd.startswith('CREATE TABLE')]
+    assert 'FULLTEXT KEY `opus_id` (`opus_id`) WITH PARSER ngram' in cart
+    assert 'FULLTEXT' not in obs_pds
+    assert TableKey('fulltext', ('opus_id',)) in add_secondary_indexes('obs_pds', schema)
+
+
 def test_a_table_level_foreign_key_renders_what_a_delete_does() -> None:
     """The entry is no column, and its ``on_delete`` reaches the clause."""
     db = _RecordingDB(set())
@@ -191,11 +205,15 @@ def test_the_packaged_cart_cascades_to_its_rows() -> None:
 
 
 def test_the_statements_that_add_keys() -> None:
-    """Plain keys are added unnamed in one statement; a foreign key as create_table renders it."""
+    """Plain keys are added unnamed in one statement, a FULLTEXT key alone with the ngram
+    parser, and a foreign key as create_table renders it."""
     db = _RecordingDB(set())
     keys = [TableKey('key', ('time1',)), TableKey('key', ('time1', 'time2'))]
     assert db.add_keys_statement('obs_pds', keys) == (
         'ALTER TABLE `obs_pds` ADD KEY (`time1`), ADD KEY (`time1`, `time2`)'
+    )
+    assert db.add_fulltext_key_statement('obs_pds', TableKey('fulltext', ('bundle_id',))) == (
+        'ALTER TABLE `obs_pds` ADD FULLTEXT KEY (`bundle_id`) WITH PARSER ngram'
     )
     foreign = TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)))
     assert db.add_foreign_key_statement('obs_pds', foreign) == (
@@ -205,7 +223,8 @@ def test_the_statements_that_add_keys() -> None:
 
 
 def test_the_server_keys_are_read_by_kind_and_columns() -> None:
-    """``STATISTICS`` gives the indexes, column by column; the constraints give foreign keys."""
+    """``STATISTICS`` gives the indexes, column by column, a spatial one left out; the
+    constraints give foreign keys."""
     db = _RecordingDB(set())
     db.answers = {
         'STATISTICS': [
@@ -213,6 +232,7 @@ def test_the_server_keys_are_read_by_kind_and_columns() -> None:
             ('obs_pds', 'time1_2', 1, 'time1', 'BTREE'),
             ('obs_pds', 'time1_2', 1, 'time2', 'BTREE'),
             ('obs_pds', 'note', 1, 'note', 'FULLTEXT'),
+            ('obs_pds', 'place', 1, 'place', 'SPATIAL'),
             ('obs_pds', 'u', 0, 'opus_id', 'BTREE'),
             ('cart', 'PRIMARY', 0, 'id', 'BTREE'),
         ],
@@ -225,6 +245,7 @@ def test_the_server_keys_are_read_by_kind_and_columns() -> None:
         'obs_pds': [
             TableKey('primary', ('id',)),
             TableKey('key', ('time1', 'time2')),
+            TableKey('fulltext', ('note',)),
             TableKey('unique', ('opus_id',)),
             TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',))),
         ],
@@ -247,6 +268,25 @@ def test_the_space_estimate() -> None:
     assert space == int(1000 * (50 + 2 + 4 + 10) * 1.3)
     space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('key', ('bundle_id',)))
     assert space == int(1000 * (4 * 75 + 2 + 4 + 10) * 1.3)
+
+
+def test_the_server_ngram_token_size_is_read() -> None:
+    """The global setting, which the server reads only at startup."""
+    db = _RecordingDB(set())
+    db.answers = {'SELECT @@GLOBAL.ngram_token_size': [(3,)]}
+    assert db.read_ngram_token_size() == 3
+
+
+def test_the_fulltext_space_estimate() -> None:
+    """``(rows x tokens x token bytes + the table's data bytes) x 1.3``: a token for each
+    run of two characters a value of the declared width holds, each two characters and
+    twelve bytes of document id and position."""
+    db = _RecordingDB(set())
+    db.answers = {'TABLE_ROWS': [(1000, 500000)]}
+    space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('fulltext', ('opus_id',)))
+    assert space == int((1000 * 49 * (2 * 1 + 12) + 500000) * 1.3)
+    space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('fulltext', ('bundle_id',)))
+    assert space == int((1000 * 74 * (2 * 4 + 12) + 500000) * 1.3)
 
 
 def test_the_space_budget_is_the_free_space_of_a_local_servers_directory(tmp_path: Any) -> None:
@@ -942,16 +982,23 @@ def test_an_id_left_shared_after_the_step_is_an_error() -> None:
 class _IndexingDB(_RecordingDB):
     """A recording backend whose builds are recorded rather than run."""
 
-    def __init__(self, keys: dict[str, list[TableKey]], budget: int | None = None) -> None:
-        """Hold the keys the server reports and the space budget.
+    def __init__(
+        self,
+        keys: dict[str, list[TableKey]],
+        budget: int | None = None,
+        token_size: int = NGRAM_TOKEN_SIZE,
+    ) -> None:
+        """Hold the keys the server reports, the space budget and the ngram token size.
 
         Parameters:
             keys: Each table's keys.
             budget: The space budget, or None.
+            token_size: The server's ``ngram_token_size``.
         """
         super().__init__({'obs_pds'})
         self.keys = keys
         self.budget = budget
+        self.answers = {'ngram_token_size': [(token_size,)]}
         self.built: dict[str, list[IndexStatement]] = {}
         self.workers = 0
         self.foreign: list[IndexStatement] = []
@@ -991,11 +1038,20 @@ class _IndexingDB(_RecordingDB):
 
 
 def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
-    """ANALYZE for the estimates, the plain keys in one statement, the foreign key on its own, then ANALYZE."""
+    """ANALYZE for the estimates, each FULLTEXT key alone and first, the plain keys in one
+    statement, the foreign key on its own, then ANALYZE."""
     db = _IndexingDB({'obs_pds': [TableKey('primary', ('obs_general_id',))]})
     ctx = make_context(db=db)
     assert do_indexes.create_indexes(ctx)
-    (statement,) = db.built['obs_pds']
+    *fulltext, statement = db.built['obs_pds']
+    assert [s.sql for s in fulltext] == [
+        f'ALTER TABLE `obs_pds` ADD FULLTEXT KEY (`{column}`) WITH PARSER ngram'
+        for column in ('bundle_id', 'data_set_id', 'product_id')
+    ]
+    assert [(s.label, s.space_bytes, s.sort_bytes, s.key_count) for s in fulltext] == [
+        (f'FULLTEXT KEY ({column})', 60, 0, 1)
+        for column in ('bundle_id', 'data_set_id', 'product_id')
+    ]
     assert statement.sort_bytes == 60 < statement.space_bytes
     assert statement.key_count == statement.sql.count('ADD KEY')
     assert statement.sql.startswith('ALTER TABLE `obs_pds` ADD KEY (`opus_id`)')
@@ -1008,7 +1064,33 @@ def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
     ]
     assert db.analyzed == ['obs_pds', 'obs_pds']
     assert db.workers == 1
-    assert ctx.step_timings['create_indexes:obs_pds'] == 0.5
+    assert ctx.step_timings['create_indexes:obs_pds'] == 2.0
+    assert ctx.step_timings['create_indexes:obs_pds:FULLTEXT KEY (bundle_id)'] == 0.5
+
+
+def test_create_indexes_refuses_a_server_whose_ngram_token_size_is_not_two() -> None:
+    """A missing FULLTEXT key on a server with another token size builds nothing at all."""
+    db = _IndexingDB({'obs_pds': [TableKey('primary', ('obs_general_id',))]}, token_size=3)
+    ctx = make_context(db=db)
+    assert not do_indexes.create_indexes(ctx)
+    assert db.built == {}
+    assert db.foreign == []
+    assert db.analyzed == []
+    (error,) = ctx.logger.messages_at('error')
+    assert 'ngram_token_size is 3, and the FULLTEXT keys need 2' in error
+    assert 'read only when the server starts' in error
+
+
+def test_create_indexes_without_a_missing_fulltext_key_reads_no_token_size() -> None:
+    """The token size matters only to a FULLTEXT build, so its absence refuses nothing else."""
+    schema = import_util.read_schema_for_existing_table(make_context(), 'obs_pds')
+    assert schema is not None
+    fulltext = [key for key in add_secondary_indexes('obs_pds', schema) if key.kind == 'fulltext']
+    db = _IndexingDB({'obs_pds': [TableKey('primary', ('obs_general_id',)), *fulltext]})
+    db.answers = {}
+    ctx = make_context(db=db)
+    assert do_indexes.create_indexes(ctx)
+    assert all('FULLTEXT' not in statement.sql for statement in db.built['obs_pds'])
 
 
 def test_create_indexes_on_a_finished_schema_does_nothing() -> None:
@@ -1030,7 +1112,7 @@ def test_under_a_budget_a_tables_keys_are_split_to_fit() -> None:
     db = _IndexingDB({'obs_pds': []}, budget=100)
     ctx = make_context(db=db)
     assert do_indexes.create_indexes(ctx)
-    assert len(db.built['obs_pds']) > 1
+    assert len(db.built['obs_pds']) > 4
     assert all(statement.space_bytes <= 100 for statement in db.built['obs_pds'])
 
 

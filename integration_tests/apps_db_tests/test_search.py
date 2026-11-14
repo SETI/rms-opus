@@ -3161,6 +3161,49 @@ class SearchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__string_query_contains_fulltext(self) -> None:
+        "[test_search.py] string_query: contains on an indexed column also matches the index"
+        selections = {'obs_pds.bundle_id': ['COISS_2']}
+        sql, params = get_string_query(selections, 'obs_pds.bundle_id', ['contains'], fulltext=True)
+        expected = (
+            'MATCH(`obs_pds`.`bundle_id`) AGAINST (%s IN BOOLEAN MODE) '
+            'AND `obs_pds`.`bundle_id` LIKE %s'
+        )
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, ['"COISS_2"', '%COISS\\_2%'])
+
+    def test__string_query_contains_fulltext_folds_to_ascii(self) -> None:
+        "[test_search.py] string_query: the index is matched with the text folded to ASCII"
+        selections = {'obs_pds.bundle_id': ['CÖISS']}
+        _sql, params = get_string_query(
+            selections, 'obs_pds.bundle_id', ['contains'], fulltext=True
+        )
+        self.assertEqual(params, ['"COISS"', '%COISS%'])
+
+    def test__string_query_fulltext_keeps_like_without_a_word(self) -> None:
+        "[test_search.py] string_query: one character, or another qtype, keeps LIKE alone"
+        for value, qtype, pattern in (('C', 'contains', '%C%'), ('COISS', 'begins', 'COISS%')):
+            with self.subTest(value=value, qtype=qtype):
+                selections = {'obs_pds.bundle_id': [value]}
+                sql, params = get_string_query(
+                    selections, 'obs_pds.bundle_id', [qtype], fulltext=True
+                )
+                self.assertEqual(sql, '`obs_pds`.`bundle_id` LIKE %s')
+                self.assertEqual(params, [pattern])
+
+    def test__string_query_fulltext_each_value_of_several(self) -> None:
+        "[test_search.py] string_query: each contains value is matched on its own, ORed"
+        selections = {'obs_pds.bundle_id': ['COISS', 'V']}
+        sql, params = get_string_query(
+            selections, 'obs_pds.bundle_id', ['contains', 'contains'], fulltext=True
+        )
+        expected = (
+            '(MATCH(`obs_pds`.`bundle_id`) AGAINST (%s IN BOOLEAN MODE) '
+            'AND `obs_pds`.`bundle_id` LIKE %s) OR (`obs_pds`.`bundle_id` LIKE %s)'
+        )
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, ['"COISS"', '%COISS%', '%V%'])
+
     def test__string_query_begins(self) -> None:
         "[test_search.py] string_query: string query with qtype begins"
         selections = {'obs_pds.bundle_id': ['ISS']}

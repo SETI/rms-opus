@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, NamedTuple
 
-from opus_import import import_util, surface_geometry
+from opus_import import import_util, schema_files, surface_geometry
 from opus_import.steps.do_table_names import build_table_names_rows
 from opus_import.surface_geometry import StoredTarget
 from opus_support import get_valid_units, parse_form_type
@@ -114,7 +114,7 @@ def _read_category_columns(table_name: str) -> list[dict[str, Any]]:
             ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
             ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name)),
         ]
-    contents = (import_util.TABLE_SCHEMA_DIR / (table_name + '.json')).read_text(encoding='utf-8')
+    contents = (schema_files.TABLE_SCHEMA_DIR / (table_name + '.json')).read_text(encoding='utf-8')
     for old, new in replace:
         contents = contents.replace(old, new)
     return surface_geometry.category_columns(json.loads(contents), category)

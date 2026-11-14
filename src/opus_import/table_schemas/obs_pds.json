@@ -64,6 +64,11 @@
         "pi_tooltip": null
     },
     {
+        "fulltext": [
+            "bundle_id"
+        ]
+    },
+    {
         "field_name": "data_set_id",
         "field_type": "varchar40",
         "field_charset": "ascii",
@@ -85,6 +90,11 @@
         "pi_tooltip": null
     },
     {
+        "fulltext": [
+            "data_set_id"
+        ]
+    },
+    {
         "field_name": "product_id",
         "field_type": "varchar50",
         "field_charset": "ascii",
@@ -104,6 +114,11 @@
         "pi_slug": "productid",
         "pi_sub_heading": null,
         "pi_tooltip": null
+    },
+    {
+        "fulltext": [
+            "product_id"
+        ]
     },
     {
         "field_name": "primary_lid",

@@ -108,6 +108,22 @@ the import needs in order to run:
   the server holds writes back while it flushes pages to make room; a larger log lets it
   absorb more before it must.
 
+Two more settings decide what the ``FULLTEXT`` indexes hold, which the import builds on
+the narrow string columns the search form completes as the user types, and which the
+web application reads to answer those completions:
+
+* ``ngram_token_size`` must be ``2``, its default. The indexes are built with MySQL's
+  ngram parser, which indexes every run of that many characters, and the web application
+  searches for runs of two. The server reads it only when it starts, so it goes in the
+  server's configuration. The import refuses to build the indexes on a server where it
+  is anything else, before it builds any, and so does the load onto a second server
+  (``OPUS_PEER_DB_HOST``) before it creates the database there.
+* ``innodb_ft_enable_stopword`` is turned off by the import and by that load, each for
+  its own session, so the server's setting does not matter. The default stopword list
+  holds ``a`` and ``i``, and the ngram parser leaves out of its index every run that
+  holds a stopword, so an index built with the list on would not find a value by any run
+  of characters holding an ``a`` or an ``i``.
+
 **The MySQL client development headers**, because the ``mysqlclient`` driver ships no
 Linux wheel and is compiled during every install. On Debian or Ubuntu::
 
@@ -390,7 +406,8 @@ containing a space.
        an import ends by dumping what it built and loading it there; empty, the dump
        stays where it was written. It needs ``OPUS_DB_DUMP_DIR``, because the load
        reads what the dump wrote, and a peer with nowhere to dump to is refused before
-       the import rather than after it.
+       the import rather than after it. The peer's ``ngram_token_size`` must be ``2``,
+       as on the import's server.
    * - ``OPUS_IMPORT_MAIL_TO``
      - *Optional.* Where to mail the log when an import finishes. Empty sends nothing
        and leaves the log where it was written.

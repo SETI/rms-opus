@@ -240,7 +240,16 @@ for a while.
 
   database/                           dump_db.sh and load_db.sh: copy a finished
                                       database to the server OPUS_PEER_DB_HOST
-                                      names, through OPUS_DB_DUMP_DIR.
+                                      names, through OPUS_DB_DUMP_DIR. The peer
+                                      builds the FULLTEXT indexes as it loads,
+                                      so the load refuses a peer whose
+                                      ngram_token_size is not 2 (read only at
+                                      server start; the web application
+                                      searches for runs of two characters), and
+                                      turns the stopword list off for its
+                                      session (the list holds "a" and "i", and
+                                      the index would leave out every run of
+                                      characters holding one).
   log_analyzer/                       Cron templates for the log-analyzer
                                       reports. Fill in the placeholders.
   deploy.env.template                 The contract for secrets/deploy.env.

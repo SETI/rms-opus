@@ -491,8 +491,20 @@ logs that every table has every key and does nothing -- which is what it finds a
 append into tables that already have them, while a table the append created is keyed
 here. It then adds them in three phases:
 
-1. **The plain keys**, grouped per table into ``ALTER TABLE ... ADD KEY ..., ADD KEY
-   ...`` statements, run for different tables at once over ``[import] index_workers``
+1. **The ``FULLTEXT`` keys and the plain keys.** Each ``FULLTEXT`` key is an ``ALTER
+   TABLE ... ADD FULLTEXT KEY (...) WITH PARSER ngram`` of its own, since the server
+   builds one per statement, and comes first among its table's statements: the first
+   ``FULLTEXT`` key on a table rebuilds the table, which would build again every key
+   added before it. Before it builds anything, the step refuses, with an error naming the
+   setting and its value, when a ``FULLTEXT`` key is missing and the server's
+   ``ngram_token_size`` is not
+   :data:`~opus_import.table_keys.NGRAM_TOKEN_SIZE`, which the web application's
+   searches assume. Every connection the import opens turns
+   ``innodb_ft_enable_stopword`` off, because an index keeps the stopword setting of the
+   session that built it, or that rebuilt its table, and the ngram parser leaves out
+   every run of characters holding a stopword. The plain keys are grouped per table into
+   ``ALTER TABLE ... ADD KEY ..., ADD KEY ...`` statements. Different tables' statements
+   run at once over ``[import] index_workers``
    connections (:meth:`~opus_import.importdb.super.ImportDBSuper.build_indexes`), as
    :mod:`opus_import.cli` resolved it against the ceiling
    (:ref:`dev_guide_import_running_parallelism`) -- ``"max"`` is the ceiling itself. The

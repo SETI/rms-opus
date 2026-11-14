@@ -10,6 +10,14 @@
 #
 # It is the other half of dump_db.sh, and run_full_opus_import.sh runs the pair at the
 # end of an import.
+#
+# The peer builds the database's ngram FULLTEXT indexes as it loads, under this load's
+# session, and the dump sets neither of the two settings they depend on. So the load
+# refuses, before it creates anything, a peer whose ngram_token_size is not 2: the web
+# application searches for runs of two characters, and the server reads the setting
+# only when it starts. And it turns the stopword list off for its session, since the
+# ngram parser drops every token holding a stopword ("a" and "i" among them).
+# _load_db_steps.sh holds the load itself.
 set -e
 
 if [[ $# -ne 1 ]]; then
@@ -36,12 +44,7 @@ if [[ ! -f ${SQLDUMP} ]]; then
     exit 1
 fi
 
+source "${SCRIPT_DIR}/_load_db_steps.sh"
+
 echo "Loading ${DATABASE} onto ${OPUS_PEER_DB_HOST} from ${SQLDUMP}"
-# The database is created first because a dump holds no CREATE DATABASE, and the load
-# needs something to select. It fails if the database is already there, which is the
-# refusal to want: loading over a database somebody is serving would replace it row by
-# row while they read it.
-echo "CREATE DATABASE ${DATABASE};" \
-    | mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}"
-mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}" \
-    "${DATABASE}" < "${SQLDUMP}"
+load_dump "${DATABASE}" "${SQLDUMP}"

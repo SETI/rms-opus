@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from import_tests.tools import build_run, fixture_layout, golden_io, run_logs
-from opus_import import import_util
+from opus_import import schema_files
 from opus_import.steps import do_import
 from opus_import.table_keys import (
     TableKey,
@@ -47,7 +47,7 @@ _SECOND_BUNDLE = 'COISS_2055'
 _CHILD_ID_OFFSET = 1_000_000
 
 #: Where the packaged table schemas are.
-_SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
+_SCHEMA_DIR = Path(str(schema_files.TABLE_SCHEMA_DIR))
 
 #: The tables a schema file describes that Django's own migrations create, not the import.
 _CREATED_BY_DJANGO = {'django_session'}

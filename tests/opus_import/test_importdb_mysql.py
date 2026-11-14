@@ -1104,6 +1104,20 @@ def test_a_connection_reads_at_read_committed(monkeypatch: pytest.MonkeyPatch) -
     assert 'SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED' in statements
 
 
+def test_a_connection_turns_the_full_text_stopword_list_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Every import connection turns the stopword list off, so any FULLTEXT index it
+    builds or rebuilds keeps every ngram."""
+    conn = _ScriptedConnection({'SELECT VERSION()': [('8.0.36',)], 'SELECT @@GLOBAL': [(1, 0)]})
+    monkeypatch.setattr(MySQLdb, 'connect', lambda **kwargs: conn)
+
+    ImportDBMySQL('host', 'db', 'schema', 'user', 'password')
+
+    statements = [cmd for cmd, _ in conn.executed]
+    assert 'SET SESSION innodb_ft_enable_stopword = OFF' in statements
+
+
 def test_a_transaction_commits_once_at_its_end_and_rolls_back_on_failure() -> None:
     """Statements inside it do not commit themselves; a failure rolls the whole back."""
     conn = _ScriptedConnection()

@@ -73,6 +73,7 @@ if TYPE_CHECKING:
 
     from django.http import HttpRequest, HttpResponse
 
+from opus_import.schema_files import packaged_fulltext_columns
 from opus_support import (
     convert_from_default_unit,
     convert_to_default_unit,
@@ -87,6 +88,13 @@ log = logging.getLogger(__name__)
 
 # How many regular expressions the server accepted each process remembers.
 _REGEX_CACHE_SIZE = 1024
+
+#: The string fields `api_string_search_choices` completes from a column of another table
+#: than the field's own, because the search reads that column: each field's qualified
+#: name, and the table and column completed from.
+STRING_CHOICE_COLUMN_SUBSTITUTES: dict[str, tuple[str, str]] = {
+    'obs_pds.opus_id': ('obs_general', 'opus_id'),
+}
 
 
 ################################################################################
@@ -169,6 +177,10 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
 
     truncated_results is true if the the number of results exceeded the
     specified limit. Only the limit number will be returned.
+
+    A contains search of a column that carries an ngram FULLTEXT index
+    (`opus_import.schema_files.packaged_fulltext_columns`) reads the index as well as
+    matching with LIKE (`get_string_query`), which finds the same choices.
     """
     if not request or request.GET is None or request.META is None:
         raise Http404(http404_no_request(f'/__api/stringsearchchoices/{slug}.json'))
@@ -187,13 +199,14 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
     param_category = param_info.category_name
     param_name = param_info.name
 
-    # obs_general.opus_id is shown to the user in the obs_pds table
-    # but searched from the obs_general table. Thus we have to switch the
-    # table here to find the parameter and qtype below.
-    if param_qualified_name == 'obs_pds.opus_id':
-        param_qualified_name = 'obs_general.opus_id'
-        param_category = 'obs_general'
-        param_name = 'opus_id'
+    # A field shown in one table but searched in another is completed from the column
+    # the search reads, which is also where the parameter and qtype are found below.
+    if param_qualified_name in STRING_CHOICE_COLUMN_SUBSTITUTES:
+        param_category, param_name = STRING_CHOICE_COLUMN_SUBSTITUTES[param_qualified_name]
+        param_qualified_name = f'{param_category}.{param_name}'
+    # A surface geometry body's category is the body's rows of a table every body shares,
+    # read under the category's name; each statement keeps to those rows.
+    category = resolve_category(param_category)
 
     # We'd really rather not have to use allow_regex_errors here,
     # but the front end will send us search strings with bad regex
@@ -227,7 +240,10 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         del qtypes[param_qualified_name]
 
     # Must do this here before deleting the slug from selections below
-    like_query, like_params = get_string_query(selections, param_qualified_name, query_qtype_list)
+    fulltext = (category.table, param_name) in packaged_fulltext_columns()
+    like_query, like_params = get_string_query(
+        selections, param_qualified_name, query_qtype_list, fulltext=fulltext
+    )
     if like_query is None:
         # This is usually caused by a bad regex
         result = {'choices': [], 'full_search': True, 'truncated_results': False}
@@ -268,9 +284,6 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         return json_response(cached_val)
 
     param_column = sql_builder.column(param_name, param_category)
-    # A surface geometry body's category is the body's rows of a table every body shares,
-    # read under the category's name; each statement keeps to those rows.
-    category = resolve_category(param_category)
     cursor = connection.cursor()
 
     final_results: list[Any] | None = None
@@ -285,9 +298,7 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         select = sql_builder.Select(distinct=True, max_execution_time=max_time)
         select.add_column(param_column)
         # The search's results are an INNER JOIN because we only want opus_ids
-        # that appear in them to cause result rows. The join is on
-        # obs_general_id in practice: there are currently no string fields in
-        # obs_general, so param_category is never obs_general here.
+        # that appear in them to cause result rows.
         select.add_from(category.source).add_join(
             'INNER',
             sql_builder.search_results_source(search.search_id),
@@ -1816,7 +1827,11 @@ def _valid_regex(r: str) -> bool:
 
 
 def get_string_query(
-    selections: dict[str, Any], param_qualified_name: str, qtypes: list[str]
+    selections: dict[str, Any],
+    param_qualified_name: str,
+    qtypes: list[str],
+    *,
+    fulltext: bool = False,
 ) -> sql_builder.Expr | tuple[None, None]:
     """Builds query for strings.
 
@@ -1831,6 +1846,11 @@ def get_string_query(
     (`sql_builder.ascii_comparable`), since no value of the column holds any other
     character; a regular expression is folded without mapping compatibility characters,
     which could become operators.
+
+    With `fulltext`, for a column with an ngram ``FULLTEXT`` index, a ``contains`` value
+    with a word of at least two characters is also matched against the index
+    (`sql_builder.fulltext_match`), beside its ``LIKE``, which keeps the rows it finds
+    the rows the ``LIKE`` alone finds.
 
     Returns an `sql_builder.Expr`, which is a `(sql, params)` pair, or the pair
     `(None, None)` if the query cannot be built.
@@ -1875,6 +1895,7 @@ def get_string_query(
         qtype = qtypes[idx]
         if ascii_column:
             value = sql_builder.ascii_comparable(value, compatibility=qtype != 'regex')
+        compared = value
 
         if qtype != 'regex':
             value = value.replace('\\', '\\\\')
@@ -1886,6 +1907,9 @@ def get_string_query(
             clause = sql_builder.binary_op(
                 param_column, 'LIKE', sql_builder.value('%' + value + '%')
             )
+            match = sql_builder.fulltext_match(param_column, compared) if fulltext else None
+            if match is not None:
+                clause = sql_builder.join_exprs([match, clause], 'AND')
         elif qtype == 'begins':
             clause = sql_builder.binary_op(param_column, 'LIKE', sql_builder.value(value + '%'))
         elif qtype == 'ends':

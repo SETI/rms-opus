@@ -30,6 +30,11 @@
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
+        "fulltext": [
+            "opus_id"
+        ]
+    },
+    {
         "field_name": "bundle_id",
         "field_type": "varchar75",
         "field_charset": "ascii",

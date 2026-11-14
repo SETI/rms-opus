@@ -41,6 +41,11 @@
         "pi_tooltip": ""
     },
     {
+        "fulltext": [
+            "image_id"
+        ]
+    },
+    {
         "field_name": "scan_mode",
         "field_type": "mult_idx",
         "field_notnull": false,

@@ -38,6 +38,7 @@ import pdsparser
 import pdstable
 
 from opus_import import config_data, config_targets, instruments
+from opus_import.schema_files import TABLE_SCHEMA_DIR
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
@@ -119,9 +120,8 @@ def _is_int(value: object) -> bool:
 
 # Data that ships inside the package, located through importlib.resources rather than
 # from __file__ or the working directory so that it is found in an installed wheel too:
-# the JSON schemas that define every OPUS table, and the dictionary context tree the
-# dictionary import step reads.
-TABLE_SCHEMA_DIR = files('opus_import') / 'table_schemas'
+# the dictionary context tree the dictionary import step reads. The JSON schemas that
+# define every OPUS table are `opus_import.schema_files.TABLE_SCHEMA_DIR`.
 DICTIONARY_DATA_DIR = files('opus_import') / 'dictionary_data'
 
 ################################################################################
