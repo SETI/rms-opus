@@ -187,10 +187,11 @@ release imported but did not finish, its finishing steps -- `opus_import
   AFTER A DEPLOY
 --------------------------------------------------------------------------------
 
-Every deploy ends with `opus_manage warm_search`, which asks the landing
-page's questions once so that the first visitor finds them cached. A failure of
-it is a warning, not a failed deploy. --no-database skips it, since it writes
-a search and a session as a visitor's first requests do.
+Every deploy ends with `opus_manage warm_search`, which asks the site, over
+its public URL, for the landing page and for one search per planet, mission,
+instrument and the like, so that the first visitors find them ready. A failure
+of it is a warning, not a failed deploy. --no-database skips it, since it
+writes searches and a session as visitors' requests do.
 
 deploy_new_code_and_database.sh also carries the sessions and carts over from
 the database being served into the new one, while the web server is stopped.

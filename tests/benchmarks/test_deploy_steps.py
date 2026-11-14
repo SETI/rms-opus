@@ -107,18 +107,21 @@ class _Side:
         self.calls = calls
         self.status = status
         self.env: dict[str, str] | None = None
+        self.url: str | None = None
 
-    def warm_search(self, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
-        """Record ``side.warm_search`` and the environment it was given.
+    def warm_search(self, env: dict[str, str], url: str) -> subprocess.CompletedProcess[str]:
+        """Record ``side.warm_search``, the environment and the server it was given.
 
         Parameters:
             env: The environment the warm-up would run in.
+            url: The server it would warm.
 
         Returns:
             A finished process exiting with the side's status.
         """
         self.calls.append('side.warm_search')
         self.env = env
+        self.url = url
         return subprocess.CompletedProcess([], self.status, 'out', 'err')
 
 
@@ -128,6 +131,7 @@ def _bench(calls: list[str], warm_states: frozenset[str], status: int = 0) -> We
     bench.side = _Side(calls, status)  # type: ignore[assignment]
     bench.server = _Recorder('mysql', calls)  # type: ignore[assignment]
     bench.gunicorn = _Recorder('gunicorn', calls)  # type: ignore[assignment]
+    bench.gunicorn.base_url = 'http://127.0.0.1:8000'  # type: ignore[misc]
     bench.memcached = _Recorder('memcached', calls)  # type: ignore[assignment]
     bench.env = {'OPUS_CONFIG': 'opus.toml'}
     bench.warm_states = warm_states
@@ -142,10 +146,12 @@ def _bench(calls: list[str], warm_states: frozenset[str], status: int = 0) -> We
 def test_a_warmed_state_warms_last_after_its_restarts(state: str) -> None:
     """After memcached's restart, so the warm-up fills the cache the scenario reads."""
     calls: list[str] = []
-    seconds = _bench(calls, frozenset({state})).reset(state)
+    bench = _bench(calls, frozenset({state}))
+    seconds = bench.reset(state)
     assert seconds is not None
     assert seconds >= 0
     assert calls[-2:] == ['memcached.restart', 'side.warm_search']
+    assert bench.side.url == 'http://127.0.0.1:8000/'  # type: ignore[attr-defined]
     assert ('mysql.restart' in calls) == (state == 'db-cold')
 
 

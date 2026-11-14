@@ -151,12 +151,13 @@ The commands worth knowing
        :ref:`user_guide_deployment_prune` gives the options, their defaults and the
        sizing rule.
    * - ``warm_search``
-     - Issues the landing page's requests once through Django's test client -- the empty
-       search's result count and first page, the default widgets' fan-out, and the empty
-       search's counts for every searchable mult field -- so memcached holds their
-       answers and the database's buffer pool their rows. It prints each request's time
-       and the total, exits with failure if a request does not answer 200, and refuses
-       Django's local-memory cache. Both deploy scripts run it after the switch;
+     - Asks the running site's API, over HTTP and several requests at a time, for the
+       landing page -- the empty search's result count and first page, the default
+       widgets' fan-out, and the empty search's counts for every mult field -- and for
+       one search per value of each common field, such as each planet, mission and
+       instrument, so that their results are built and their answers cached. It prints
+       each request's status and time and the total, and exits with failure if a request
+       does not answer 200. Both deploy scripts run it after the switch;
        :ref:`user_guide_deployment_warm_search` says when, and
        :ref:`dev_guide_webapp_search_warm` what it warms.
 

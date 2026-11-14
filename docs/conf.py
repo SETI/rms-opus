@@ -245,6 +245,7 @@ nitpick_ignore = [
     # link either name to.
     ('py:class', 'pdslogger.PdsLogger'),
     ('py:exc', 'requests.RequestException'),
+    ('py:class', 'requests.sessions.Session'),
     # A type alias declared inside an `if TYPE_CHECKING:` block. The block does not
     # execute, so autodoc never sees the name and has nothing to describe; the
     # annotations that use it are still checked, which is the point of writing it

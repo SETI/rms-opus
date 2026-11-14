@@ -7600,3 +7600,23 @@ Nothing above this line is rewritten by an executor.
   or pdsfile give a `varchar` column ends in a space, so the stripping guarded nothing.
   `ascii_collation_key` still drops a caller's trailing spaces, as the ASCII collation
   pads.
+
+### 2026-11-13, PR-18 (written against this file at eaf4b272)
+
+- `opus_manage warm_search` asks the running site's API over HTTP (`requests`), several
+  requests at a time (`--parallel`), at `public_url` under `BASE_PATH` unless `--url` names
+  another root. Besides the landing page it warms one search per value of each field of
+  `COMMON_SEARCH_FIELDS` (planet, target class, mission, instrument host, instrument,
+  observation type, measurement quantity): each search's count, first page, default
+  widgets, menu and its own field's counts. The fields come from `api/fields.json` and the
+  values from the empty search's mult counts, so the command reads no table itself and the
+  list follows the database. The searches of `integration_tests/test_api/data/result_counts.csv`
+  were the starting point, but most of them test edge cases rather than what visitors ask,
+  so the list is generated rather than copied. Over HTTP the requests also reach the web
+  server's workers.
+- It no longer refuses Django's local-memory cache: the searches it builds are rows of
+  `search_results`, found built whatever the cache holds, so only the cached answers are
+  lost without memcached. Against the integration database it makes 567 requests, 63 of
+  them common searches, in about 5 s; a user-interface request for a warmed search stores
+  no search and builds nothing.
+- `bench_web` passes its own server's root as `--url`.

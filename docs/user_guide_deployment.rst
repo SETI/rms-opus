@@ -53,8 +53,8 @@ restarts the workers. A failure before that moment leaves the site serving exact
 was serving, and the previous installation is still on disk afterwards, so going back is
 another switch rather than a rebuild. Sessions and carts are rows of the database, so a
 deploy that switches to a new database carries them over while the workers are stopped
-(:ref:`user_guide_deployment_carry_over`), and every deploy ends by answering the landing
-page's requests once, so the first visitor finds them cached
+(:ref:`user_guide_deployment_carry_over`), and every deploy ends by asking the site for
+the landing page and the common searches once, so the first visitors find them ready
 (:ref:`user_guide_deployment_warm_search`).
 
 Underneath the installation root the deploy chain also expects, or creates, these
@@ -143,7 +143,7 @@ The scripts
     are stopped, the sessions and carts are carried over from the database being served
     (:ref:`user_guide_deployment_carry_over`), the ``deployed`` symlink is moved onto the
     new installation, the cache service is restarted, the workers are started again, and
-    the landing page is warmed (:ref:`user_guide_deployment_warm_search`). The workers
+    the common searches are warmed (:ref:`user_guide_deployment_warm_search`). The workers
     are stopped only for the carry-over and the switch, not while the new installation is
     being prepared.
     Which units those are comes from ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
@@ -153,7 +153,7 @@ The scripts
     against the database already being served. It reads the database name out of the
     installation currently deployed, builds a new installation at the new release naming
     that same database, runs the same migration, static-file and description-table steps,
-    and switches to it the same way, warming the landing page afterwards. The database
+    and switches to it the same way, warming the common searches afterwards. The database
     does not change, so there is nothing to carry over. It does not upgrade anything in
     place. It leaves the
     search tables alone, so the searches users have made are still stored after the
@@ -172,7 +172,7 @@ The scripts
 
     ``--no-database`` writes nothing to the database: it skips Django's migrations and
     the description-table step, ``--update-mult-info`` with it, and the warm-up after the
-    switch, which stores a search and a session as a visitor's first requests do; it
+    switch, which stores searches and a session as visitors' requests do; it
     still installs the release, collects its static files and switches to it. It is for a release that
     changes neither the import nor the table schemas -- the web application, its
     templates and static files, the documentation. Whether a release is one of those is
@@ -330,30 +330,40 @@ that is the one it would write into, before it changes anything.
 
 .. _user_guide_deployment_warm_search:
 
-Warming the landing page
-~~~~~~~~~~~~~~~~~~~~~~~~
+Warming the common searches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Every visitor's first search is the empty one, and the answers the landing page asks for
--- its result count, its first page, and the counts each mult widget shows -- are cached in
-memcached until the next import. A deploy restarts memcached, so both deploy scripts run
-this once the workers are started again::
+Every visitor's first search is the empty one, and most next choose one planet, mission or
+instrument. A search's results are built in the database the first time anyone asks for
+it, and its answers are cached in memcached; a new database has no search built, and a
+deploy restarts memcached. So both deploy scripts run this once the workers are started
+again::
 
     opus_manage warm_search
 
-It issues the landing page's requests through the application itself: the empty search's
-result count and first page, the default widgets and the menu, and the empty search's
-counts for every searchable mult field, so that opening any mult widget is a cache hit. It
-prints each request's status and time, and the total. The site is already serving while
-it runs.
+It asks the site's own API, over HTTP, for what those searches show: for the empty
+search, its result count and first page, the default widgets and the menu, and its counts
+for every mult field, so that opening any mult widget is a cache hit; then, for one search
+per value of each common field -- each planet, mission and instrument, among others -- the
+same count, first page, default widgets and menu. The fields come from ``api/fields.json`` and the values from the empty search's
+counts, so they are always the database's own. It prints each request's status and time,
+and the total. The site is already serving while it runs.
 
-* **It needs memcached.** On Django's per-process cache it would fill only its own
-  process, so it refuses.
+* **It asks the site at its public URL**, the configuration's ``public_url`` under
+  ``/opus/``, so the server has to be able to reach that address. ``--url`` names another,
+  such as ``http://localhost/opus/``; the host it names must be in ``allowed_hosts``.
+* **Several requests are in flight at once**, as many as ``--parallel`` says
+  (``opus_manage warm_search --help`` gives the default), so they reach several of the web
+  server's workers. The empty search's count is asked for
+  alone first, since its other requests read the results it builds, and each common
+  search's requests run in order, its count first.
 * **A failure is a warning**, not a failed deploy: the site serves, and the first visitors'
-  requests fill the cache instead.
-* **Each worker still loads its own caches** on its first request; the warm-up fills the
-  shared cache and the database's buffers, not the workers.
-* ``deploy_new_code_only.sh --no-database`` skips it, since its requests store a search
-  and a session as a visitor's do.
+  requests build the searches instead.
+* **A search's built results are in the database**, so they are found whatever the cache
+  holds; on Django's per-process cache, without memcached, only the cached answers are
+  lost.
+* ``deploy_new_code_only.sh --no-database`` skips it, since its requests store searches
+  and a session as visitors' do.
 
 Run it by hand after anything else that empties the cache, such as the steps in
 :ref:`user_guide_deployment_after_import`.

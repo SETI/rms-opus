@@ -58,11 +58,12 @@ WARM_SEARCH_PROBE = (
 )
 
 #: What a side's interpreter runs to issue ``opus_manage warm_search``: the console
-#: script's own entry point, with the side's settings module.
+#: script's own entry point, with the side's settings module and the program's own
+#: arguments.
 WARM_SEARCH_PROGRAM = (
     'import sys\n'
     'from opus_app.manage import main\n'
-    "sys.argv = ['opus_manage', 'warm_search']\n"
+    "sys.argv = ['opus_manage', 'warm_search', *sys.argv[1:]]\n"
     'main()\n'
 )
 
@@ -232,17 +233,17 @@ class Side:
         """
         return self.run(['-I', '-c', WARM_SEARCH_PROBE]).returncode == 0
 
-    def warm_search(self, env: Mapping[str, str]) -> subprocess.CompletedProcess[str]:
-        """Run the side's ``opus_manage warm_search``.
+    def warm_search(self, env: Mapping[str, str], url: str) -> subprocess.CompletedProcess[str]:
+        """Run the side's ``opus_manage warm_search`` against a running server.
 
         Parameters:
-            env: The environment, whose ``OPUS_CONFIG`` names the served schema and the
-                memcached to fill.
+            env: The environment, whose ``OPUS_CONFIG`` is the served side's.
+            url: The server's root, which the warm-up asks for every request.
 
         Returns:
             The finished command.
         """
-        return self.run(['-c', WARM_SEARCH_PROGRAM], env=env)
+        return self.run(['-c', WARM_SEARCH_PROGRAM, '--url', url], env=env)
 
     def has_coordinator(self) -> bool:
         """Return whether the side's ``opus_import_all`` starts and divides importers.
