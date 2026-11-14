@@ -7,6 +7,7 @@ echo Dumping $1 to $sqldump
 mysqldump $1 $3 > $sqldump
 echo "CREATE DATABASE $2;" | mysql $3
 echo Creating clone $2
+if [ ! -r $sqldump ]; then echo "Cannot read $sqldump" >&2; exit 1; fi
 # The dump's FULLTEXT keys are built as the clone loads, keeping this session's stopword
 # setting; the import builds them with the list off, so the clone does too.
 { echo 'SET SESSION innodb_ft_enable_stopword = OFF;'; cat $sqldump; } | mysql $2 $3

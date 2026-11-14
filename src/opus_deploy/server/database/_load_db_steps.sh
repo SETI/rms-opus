@@ -23,7 +23,8 @@
 #     Reads the peer's ngram_token_size. When it is not 2, prints why and returns 1,
 #     having created nothing. Otherwise creates the database, which fails when it
 #     exists, and replays the dump into it on one mysql session whose first statement
-#     is "SET SESSION innodb_ft_enable_stopword = OFF;". Returns mysql's status.
+#     is "SET SESSION innodb_ft_enable_stopword = OFF;". Returns non-zero when the
+#     dump cannot be read or mysql fails.
 #
 # Inputs: OPUS_DB_USER, OPUS_DB_PASSWORD and OPUS_PEER_DB_HOST, from deploy.env.
 
@@ -53,7 +54,13 @@ load_dump() {
     echo "CREATE DATABASE ${database};" \
         | mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}" \
         || return 1
-    { echo 'SET SESSION innodb_ft_enable_stopword = OFF;'; cat "${dump}"; } \
-        | mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}" \
-            "${database}"
+    # pipefail, in a subshell so the caller's options stay as they were, makes a dump
+    # that cannot be read fail the load: mysql alone would succeed, having run only the
+    # SET SESSION.
+    (
+        set -o pipefail
+        { echo 'SET SESSION innodb_ft_enable_stopword = OFF;'; cat "${dump}"; } \
+            | mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}" \
+                "${database}"
+    )
 }

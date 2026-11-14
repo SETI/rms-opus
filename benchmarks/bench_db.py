@@ -551,6 +551,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             'innodb_buffer_pool_size': pool,
         }
         if args.dump_queries:
+            environment['django_settings'] = args.django_settings
             _dump_and_replay(
                 server=server,
                 side=side,
@@ -665,7 +666,6 @@ def _dump_and_replay(
     run['details']['plans'] = entries
     run['details']['capture'] = str(capture)
     run['details']['capture_server_model'] = bench.gunicorn.server_model
-    run['details']['capture_django_settings'] = django_settings
     run['details']['web_scenario_hash'] = scenario_hash([config.path])
     block_metrics, block_samples = plan_metrics(entries)
     run['metrics'].update(block_metrics)

@@ -514,9 +514,10 @@ run can measure a code path the scale's data does not reach: for example
 observation rather than from the search's results, and
 ``STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD=0`` makes that answer try the column's
 full-text index first. A side whose code does not read a setting ignores it. The
-result's environment records the settings as ``django_settings`` (``bench_db``'s details
-as ``capture_django_settings``), and ``compare.py`` refuses two results whose settings
-differ, so both sides of a comparison are given the same.
+result's environment records the settings as ``django_settings``; a result file refuses
+runs given other settings than its earlier ones (none, for runs that record none), and
+``compare.py`` refuses two results whose settings differ, so both sides of a comparison
+are given the same.
 
 ``--promotion-carts N`` times a promotion's window before each run's passes: a schema
 named after the served one with ``_carry_source`` is made once, holding

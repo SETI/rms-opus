@@ -39,12 +39,16 @@ _DUMP = (
 _BASH = shutil.which('bash')
 
 
-def _run_load(tmp_path: Path, token_size: str) -> tuple[int, str, list[tuple[str, str]]]:
+def _run_load(
+    tmp_path: Path, token_size: str, *, dump_name: str = 'opus_x.sql'
+) -> tuple[int, str, list[tuple[str, str]]]:
     """Source the load with a fake mysql and call it.
 
     Parameters:
         tmp_path: A scratch directory.
         token_size: What the fake mysql answers for the peer's ``ngram_token_size``.
+        dump_name: The dump the load is given, in `tmp_path`; only ``opus_x.sql`` is
+            written.
 
     Returns:
         The function's status, everything it printed, and each mysql call in order, as
@@ -52,8 +56,8 @@ def _run_load(tmp_path: Path, token_size: str) -> tuple[int, str, list[tuple[str
     """
     chain = tmp_path / 'chain'
     scripts.write_scripts(chain)
-    dump = tmp_path / 'opus_x.sql'
-    dump.write_text(_DUMP, encoding='utf-8')
+    (tmp_path / 'opus_x.sql').write_text(_DUMP, encoding='utf-8')
+    dump = tmp_path / dump_name
     calls = tmp_path / 'calls'
     calls.mkdir()
     fake_bin = tmp_path / 'bin'
@@ -129,6 +133,14 @@ def test_a_peer_with_another_token_size_is_refused_before_anything_is_created(
     assert 'only when it starts' in output
     assert len(calls) == 1
     assert 'SELECT @@GLOBAL.ngram_token_size' in calls[0][0]
+
+
+@pytest.mark.skipif(_BASH is None, reason='needs bash')
+def test_a_dump_that_cannot_be_read_fails_the_load(tmp_path: Path) -> None:
+    """A non-zero status, though mysql succeeds on the SET SESSION it is given."""
+    status, output, calls = _run_load(tmp_path, '2', dump_name='missing.sql')
+    assert status != 0, output
+    assert calls[-1][1] == _STOPWORDS_OFF
 
 
 def test_sourcing_the_load_runs_nothing(tmp_path: Path) -> None:

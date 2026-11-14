@@ -1241,12 +1241,21 @@ class ApiSearchTests(ApiTestHelper, TestCase):
         def run_or_give_up(
             execute: Callable[..., Any], sql: str, params: Any, many: bool, context: Any
         ) -> Any:
-            """Keep each statement, and run it or raise the error it is given up with."""
+            """Keep each statement, and run it or raise the error it is given up with.
+
+            A statement under the short limit runs under the whole one instead, so the
+            server never gives up on it here: only `give_up` decides that.
+            """
             if 'MAX_EXECUTION_TIME' in sql:
                 sent.append(sql)
             error = give_up(sql)
             if error is not None:
                 raise error
+            if _is_short_like(sql):
+                sql = sql.replace(
+                    f'MAX_EXECUTION_TIME({_SHORT_LIKE_LIMIT_MS})',
+                    f'MAX_EXECUTION_TIME({settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2})',
+                )
             return execute(sql, params, many, context)
 
         with connection.execute_wrapper(run_or_give_up):
