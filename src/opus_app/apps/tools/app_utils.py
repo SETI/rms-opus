@@ -38,6 +38,8 @@ from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.template import loader
 from django.utils.html import escape
 
+from opus_app.apps.cart.models import Cart
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
@@ -158,7 +160,9 @@ def get_session_id(request: HttpRequest) -> str | None:
     """Get the current session id, or create one if none available.
 
     The caller can override the sessionid (only for internal testing
-    purposes) by specifying the __sessionid=<S> parameter.
+    purposes) by specifying the __sessionid=<S> parameter. The cart stores it in an
+    ASCII column of a fixed width, so a value that is not ASCII or is longer than that
+    is refused before any query compares it.
 
     Parameters:
         request: The request whose session is wanted.
@@ -166,10 +170,17 @@ def get_session_id(request: HttpRequest) -> str | None:
     Returns:
         The session id. It is None only where Django could not create a session
         key at all.
+
+    Raises:
+        Http400Error: If ``__sessionid`` is not ASCII or is longer than ``cart.session_id``.
     """
     session_id = None
     if request.GET is not None:  # pragma: no cover - only happens with real web browser
         session_id = request.GET.get('__sessionid', None)
+    max_length = Cart._meta.get_field('session_id').max_length
+    assert max_length is not None
+    if session_id is not None and (not session_id.isascii() or len(session_id) > max_length):
+        raise Http400Error(http400_bad_session_id(request))
     if session_id is None:  # pragma: no cover - only happens with real web browser
         if not request.session.get('has_session'):
             request.session['has_session'] = True
@@ -584,6 +595,11 @@ def http404_no_request(s: HttpRequest | str | None) -> str:
 def http400_bad_or_missing_reqno(r: HttpRequest | str | None) -> str:
     """The reqno parameter is absent or is not a non-negative integer."""
     return f'Internal error (Bad or missing reqno) for {_request_path(r)}'
+
+
+def http400_bad_session_id(r: HttpRequest | str | None) -> str:
+    """The __sessionid parameter is not ASCII or is longer than a session key may be."""
+    return f'Internal error (Bad __sessionid) for {_request_path(r)}'
 
 
 def http400_missing_opus_id(r: HttpRequest | str | None) -> str:

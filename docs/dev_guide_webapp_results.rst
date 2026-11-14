@@ -410,7 +410,7 @@ The model
 ~~~~~~~~~
 
 :class:`opus_app.apps.cart.models.Cart` is a hand-written unmanaged model: the session
-id, a foreign key to ``obs_general``, the OPUS ID, the recycled flag and a timestamp. The
+id, a foreign key to ``obs_general``, the OPUS ID and the recycled flag. The
 generated models file carries a ``ZZ``-prefixed duplicate of the same table, which
 nothing uses.
 

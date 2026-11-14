@@ -36,7 +36,8 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char50",
+        "field_type": "varchar50",
+        "field_charset": "ascii",
         "field_key": false,
         "field_notnull": true,
         "data_source": [
@@ -47,7 +48,8 @@
     },
     {
         "field_name": "instrument_id",
-        "field_type": "char60",
+        "field_type": "varchar60",
+        "field_charset": "ascii",
         "field_key": false,
         "field_notnull": true,
         "data_source": [
@@ -64,31 +66,31 @@
     },
     {
         "field_name": "version_name",
-        "field_type": "char16",
+        "field_type": "varchar16",
         "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "category",
-        "field_type": "char64",
+        "field_type": "varchar64",
         "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "sort_order",
-        "field_type": "char9",
+        "field_type": "varchar9",
         "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "short_name",
-        "field_type": "char64",
+        "field_type": "varchar64",
         "field_key": false,
         "field_notnull": true
     },
     {
         "field_name": "full_name",
-        "field_type": "char64",
+        "field_type": "varchar64",
         "field_key": false,
         "field_notnull": true
     },
@@ -125,7 +127,7 @@
     },
     {
         "field_name": "checksum",
-        "field_type": "char32",
+        "field_type": "varchar32",
         "field_key": false,
         "field_notnull": true
     },
@@ -153,11 +155,6 @@
         "field_name": "pds_version",
         "field_type": "uint4",
         "field_key": false,
-        "field_notnull": true
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
         "field_notnull": true
     }
 ]

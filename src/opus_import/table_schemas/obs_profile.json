@@ -349,10 +349,5 @@
         "pi_disp_order": 1021,
         "pi_display": 0,
         "pi_display_results": 1
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

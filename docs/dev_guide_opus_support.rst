@@ -50,7 +50,11 @@ implementation, not what to import.
     a mult field's values with it, and the web application keys its copies of the
     import's tables with it, so that a lookup in memory finds what a query would.
     :ref:`dev_guide_webapp_tools_import_constants` says where the key and the collation
-    differ.
+    differ. :data:`~opus_support.collation.UNSTORED_ASCII_CHARACTER` is DEL, the one ASCII
+    character no ASCII column holds: the import refuses it there, and the web application
+    binds it for a character of a caller's text that has no ASCII form.
+    :data:`~opus_support.collation.ASCII_COLLATION` is the collation of every ASCII
+    column, which the import creates the column with and the models name.
 
 The package's header carries a standing demand for **100% test coverage**, and
 ``tests/opus_support/`` is where it is met. A new unit system, clock format or angle

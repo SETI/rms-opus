@@ -43,8 +43,13 @@ from opus_import.importdb.mysql import ImportDBMySQL  # noqa: E402 - follows the
 _CHILD_SCHEMA: list[dict[str, Any]] = [
     {'field_name': 'obs_general_id', 'field_type': 'uint4', 'field_key': 'primary'},
     {'foreign_key': {'columns': ['obs_general_id'], 'references': ['obs_general', 'id']}},
-    {'field_name': 'opus_id', 'field_type': 'char50', 'field_key': True},
-    {'field_name': 'bundle_id', 'field_type': 'char75', 'field_key': True},
+    {
+        'field_name': 'opus_id',
+        'field_type': 'varchar50',
+        'field_charset': 'ascii',
+        'field_key': True,
+    },
+    {'field_name': 'bundle_id', 'field_type': 'varchar75', 'field_key': True},
     {'field_name': 'time1', 'field_type': 'real8', 'field_key': True},
 ]
 
@@ -236,8 +241,12 @@ def test_the_space_estimate() -> None:
     db.answers = {'TABLE_ROWS': [(1000,)]}
     space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('key', ('time1',)))
     assert space == int(1000 * (8 + 4 + 10) * 1.3)
+    # A string takes its width in characters at its character set's widest, and two
+    # bytes of length: one byte a character in ASCII, four in the schema's utf8mb4.
     space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('key', ('opus_id',)))
-    assert space == int(1000 * (4 * 50 + 4 + 10) * 1.3)
+    assert space == int(1000 * (50 + 2 + 4 + 10) * 1.3)
+    space = db.key_space_bytes('obs_pds', _CHILD_SCHEMA, TableKey('key', ('bundle_id',)))
+    assert space == int(1000 * (4 * 75 + 2 + 4 + 10) * 1.3)
 
 
 def test_the_space_budget_is_the_free_space_of_a_local_servers_directory(tmp_path: Any) -> None:

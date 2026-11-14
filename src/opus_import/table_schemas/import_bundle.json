@@ -10,6 +10,7 @@
     {
         "field_name": "bundle_id",
         "field_type": "varchar75",
+        "field_charset": "ascii",
         "field_key": "unique",
         "field_notnull": true
     },

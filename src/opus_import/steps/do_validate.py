@@ -71,7 +71,7 @@ def validate_param_info(ctx: ImportContext) -> None:
 
     Every column of every ``obs_`` table needs a ``param_info`` row, under the category
     `_param_info_category` gives it, apart from the ones users never search or see:
-    ``id``, ``timestamp``, ``obs_general_id``, the ``d_`` (delta) columns and any column
+    ``id``, ``obs_general_id``, the ``d_`` (delta) columns and any column
     that has one, the ``mult_`` id columns, ``opus_id`` outside ``obs_general``,
     ``bundle_id`` outside ``obs_pds``, ``instrument_id`` outside ``obs_general``, and
     everything in ``obs_files``. A surface geometry column other than ``target_name`` is
@@ -129,7 +129,6 @@ def validate_param_info(ctx: ImportContext) -> None:
             field_name = column['field_name']
             if (
                 field_name == 'id'
-                or field_name == 'timestamp'
                 or field_name == 'obs_general_id'
                 or field_name.startswith('d_')
                 or 'd_' + field_name in field_names

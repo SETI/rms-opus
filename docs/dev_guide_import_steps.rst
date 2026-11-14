@@ -819,7 +819,7 @@ The checks, in this order:
 
 :func:`~opus_import.steps.do_validate.validate_param_info`
     Every user-visible column of every ``obs_`` table has a ``param_info`` row. A list
-    of exemptions covers the columns that legitimately have none: ``id``, ``timestamp``,
+    of exemptions covers the columns that legitimately have none: ``id``,
     ``obs_general_id``, anything beginning ``d_``, any column that has a ``d_``
     companion, ``opus_id`` outside ``obs_general``, anything beginning ``mult_``,
     ``bundle_id`` outside ``obs_pds``, ``instrument_id`` outside ``obs_general``, and

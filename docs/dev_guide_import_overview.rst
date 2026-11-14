@@ -346,10 +346,10 @@ Inside one row
 
 :func:`~opus_import.steps.do_import_obs.import_observation_table` computes one
 observation's row of one table by walking that table's schema and producing one value
-per column. Three kinds of entry are skipped outright: ``timestamp``, which the
-database maintains itself; a column marked ``put_mults_here``, which holds another
-column's mult id; and an entry with no ``field_name`` -- a ``pi_referred_slug`` entry,
-which describes a search parameter rather than a column, or a table-level key.
+per column. Two kinds of entry are skipped outright: a column marked
+``put_mults_here``, which holds another column's mult id; and an entry with no
+``field_name`` -- a ``pi_referred_slug`` entry, which describes a search parameter
+rather than a column, or a table-level key.
 
 For every other column it dispatches on the schema's ``data_source``:
 
@@ -386,8 +386,12 @@ reports rather than raises**, so one bad row does not end the run:
 * a flag column's value is folded onto ``Yes``/``No`` or ``On``/``Off``; ``N/A``,
   ``UNK`` and ``NULL`` become NULL quietly, and any other unrecognized spelling becomes
   NULL and logs an error;
-* a ``charNNN`` column keeps a value of the right type -- an over-long string is
+* a ``varcharNNN`` column keeps a value of the right type -- an over-long string is
   truncated, a non-string becomes the empty string -- and logs an error either way;
+* a string bound for an ASCII column, ``varcharNNN`` or ``text``, that holds DEL logs an
+  error and is stored with the DEL removed, so no stored value holds it even in a run
+  that ignores errors. Any other character outside an ASCII column's character set is
+  not checked here: the load that writes the row fails, naming the column and the row;
 * a numeric column's value must parse, must not equal a ``val_sentinel``, and must lie
   between ``val_min`` and ``val_max``. It becomes NULL if it does not. A column carrying
   ``val_set_invalid_to_null`` logs an out-of-range value at **debug** level instead of

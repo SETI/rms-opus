@@ -52,7 +52,6 @@ class ParamInfo(models.Model):
     dict_context_results = models.CharField(max_length=255, blank=True, null=True)
     dict_name_results = models.CharField(max_length=255, blank=True, null=True)
     sub_heading = models.CharField(max_length=150, blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         """Model options: the table the rows come from, and the order they come in."""

@@ -372,6 +372,25 @@ parameters its placeholders consume. Everything below returns one.
        terms. It numbers a search's results as they are stored, and numbers the cart in
        a sort order the same way.
 
+:func:`~opus_app.apps.tools.sql_builder.ascii_comparable` is not an expression but the
+value to bind for one: a caller's text, to be compared with a column in the ASCII
+character set. MySQL refuses that comparison for text holding any other character, so the
+text is folded as the accent-blind ``utf8mb4_0900_ai_ci`` compares it -- decomposed
+(NFKD), its combining marks dropped -- and a character that still has no ASCII form is
+replaced by ``opus_support.UNSTORED_ASCII_CHARACTER``, DEL, which the import refuses in
+an ASCII column, so the comparison finds what it finds for any value the column does not
+hold. A regular expression is folded with canonical decomposition alone (NFD, the
+function's ``compatibility=False``): its accents still go, but a compatibility character
+keeps no ASCII form, since that form may be an operator (a full-width ``．`` would become
+``.``, which matches any character); it becomes DEL and matches only itself. Every
+lookup by a caller's OPUS ID binds it this way, and a string search does for a column
+:func:`~opus_app.apps.tools.db_utils.is_ascii_column` names
+(:ref:`dev_guide_database_schema`). Code that pairs a value read from such a column with
+the caller's text it was found by keys both with
+:func:`~opus_app.apps.tools.sql_builder.ascii_collation_key`, the folded text without
+its trailing spaces and in lower case, which two strings share exactly when the column's
+``ascii_general_ci`` collation calls their folded forms equal.
+
 The statement layer
 ~~~~~~~~~~~~~~~~~~~
 
@@ -476,6 +495,11 @@ Model lookup by category name, and the labels behind the mult ids.
     condition to a statement that reads the category. The ``table_names`` rows come from
     the worker's copy (:mod:`~opus_app.apps.tools.import_constants`).
 
+:func:`~opus_app.apps.tools.db_utils.is_ascii_column`
+    Whether a table's column is in the ASCII character set, which its generated model
+    says by naming :data:`~opus_support.collation.ASCII_COLLATION` as the field's
+    ``db_collation``.
+
 :func:`~opus_app.apps.tools.db_utils.query_table_for_opus_id`
     One category's rows for one observation, filtering on ``opus_id`` for
     ``obs_general``, which holds it, and on ``obs_general``'s ``opus_id`` through the
@@ -571,7 +595,11 @@ size and the checksum are columns the import wrote from a shelf.
     on-disk path, ``'raw'`` a dictionary carrying both plus the checksum, the size and
     the category. A requested product type may carry ``@<version>``; a bare type matches
     the current version only, matching the download endpoint's behavior. Every requested
-    OPUS ID appears in the result even if it has no files. The files are read newest
+    OPUS ID appears in the result, keyed as the caller spelled it, even if it has no
+    files. A spelling finds the stored ID it equals under the column's collation
+    (:func:`~opus_app.apps.tools.sql_builder.ascii_collation_key`: any case, accents
+    folded, trailing spaces ignored), so several spellings of one ID each get its files.
+    The files are read newest
     version first, then by the product types' display order, and last by
     ``file_number``, so the files of one product type keep the order the import wrote
     them in.

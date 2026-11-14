@@ -47,8 +47,11 @@ import pytest
 import opus_support
 from opus_import import config_data, import_util, obs, surface_geometry
 from opus_import.config_bundle_info import BUNDLE_INFO
+from opus_import.obs import field_types
 from opus_import.obs.field_types import MultField, as_int
 from opus_import.obs.obs_base import ObsBase
+from opus_import.obs.obs_volume_cocirs_56xxx import ObsVolumeCOCIRS56xxx
+from opus_import.obs.obs_volume_covims_0xxx import ObsVolumeCOVIMS0xxx
 from opus_import.steps.do_import_obs import field_function_name
 
 from ._source_scan import class_functions, functions_in, parsed_modules
@@ -83,7 +86,7 @@ def _alias_for(field_type: str | None, form_type: str | None) -> str | None:
         return 'list[MultField]'
     if field_type is None:
         return None
-    if field_type.startswith(('char', 'varchar')) or field_type in ('text', 'json'):
+    if field_type.startswith('varchar') or field_type in ('text', 'json'):
         return 'StrField'
     if field_type.startswith('real'):
         return 'FloatField'
@@ -1117,9 +1120,6 @@ def test_a_missing_index_column_is_reported_rather_than_crashing_the_bundle() ->
     `_fix_cassini_sclk` returns None only for a None input. It could not fire in either
     direction. A dead guard is worse than no guard, because it reads as coverage.
     """
-    from opus_import.obs.obs_volume_cocirs_56xxx import ObsVolumeCOCIRS56xxx
-    from opus_import.obs.obs_volume_covims_0xxx import ObsVolumeCOVIMS0xxx
-
     # An index row with none of the columns these methods read.
     metadata: dict[str, Any] = {'index_row': {}}
 
@@ -1378,8 +1378,6 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
 
 def test_the_alias_names_are_the_ones_the_package_defines() -> None:
     """The table names aliases that exist, so a rename cannot leave it checking text."""
-    from opus_import.obs import field_types
-
     for name in ('StrField', 'FloatField', 'IntField', 'MultField', 'MultFieldRet'):
         assert hasattr(field_types, name), name
     assert _alias_for('mult_list', 'MULTIGROUP') == 'list[MultField]'

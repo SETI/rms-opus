@@ -19,7 +19,7 @@ from opus_support.angles import (
     parse_hms,
     parse_hms_dms,
 )
-from opus_support.collation import collation_key
+from opus_support.collation import ASCII_COLLATION, UNSTORED_ASCII_CHARACTER, collation_key
 from opus_support.orbits import (
     CASSINI_ORBIT_NAME,
     CASSINI_ORBIT_NUMBER,
@@ -78,12 +78,14 @@ from opus_support.units import (
 )
 
 __all__ = [
+    'ASCII_COLLATION',
     'CASSINI_ORBIT_NAME',
     'CASSINI_ORBIT_NUMBER',
     'DEG_RAD',
     'MAX_TIME',
     'MIN_TIME',
     'UNIT_FORMAT_DB',
+    'UNSTORED_ASCII_CHARACTER',
     'VOYAGER_PLANET_NAMES',
     'VOYAGER_PLANET_PARTITIONS',
     'FormatFunc',

@@ -1201,7 +1201,9 @@ def api_get_product_types_for_opus_id(request: HttpRequest, opus_id: str) -> Htt
     select, _from_source = _product_types_select()
     select.add_where(
         sql_builder.binary_op(
-            sql_builder.column('opus_id', 'obs_files'), '=', sql_builder.value(opus_id)
+            sql_builder.column('opus_id', 'obs_files'),
+            '=',
+            sql_builder.value(sql_builder.ascii_comparable(opus_id)),
         )
     )
 

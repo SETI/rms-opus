@@ -20,7 +20,8 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char50",
+        "field_type": "varchar50",
+        "field_charset": "ascii",
         "field_key": true,
         "field_notnull": true,
         "data_source": "COMPUTE",
@@ -41,7 +42,8 @@
     },
     {
         "field_name": "bundle_id",
-        "field_type": "char75",
+        "field_type": "varchar75",
+        "field_charset": "ascii",
         "field_key": true,
         "field_notnull": true,
         "data_source": "COMPUTE",
@@ -63,7 +65,8 @@
     },
     {
         "field_name": "data_set_id",
-        "field_type": "char40",
+        "field_type": "varchar40",
+        "field_charset": "ascii",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -83,7 +86,8 @@
     },
     {
         "field_name": "product_id",
-        "field_type": "char50",
+        "field_type": "varchar50",
+        "field_charset": "ascii",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -103,7 +107,8 @@
     },
     {
         "field_name": "primary_lid",
-        "field_type": "char240",
+        "field_type": "varchar240",
+        "field_charset": "ascii",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -147,7 +152,8 @@
     },
     {
         "field_name": "primary_filespec",
-        "field_type": "char240",
+        "field_type": "varchar240",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -168,7 +174,7 @@
     },
     {
         "field_name": "note",
-        "field_type": "char255",
+        "field_type": "varchar255",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -186,10 +192,5 @@
         "pi_slug": "note",
         "pi_sub_heading": null,
         "pi_tooltip": ""
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

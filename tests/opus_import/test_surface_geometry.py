@@ -299,8 +299,7 @@ class _ValidationDB:
     def table_info(self, table: str) -> list[dict[str, Any]]:
         """Describe the table's key columns and one range pair."""
         return [
-            {'field_name': name}
-            for name in ('target_name', 'obs_general_id', 'phase1', 'phase2', 'timestamp')
+            {'field_name': name} for name in ('target_name', 'obs_general_id', 'phase1', 'phase2')
         ]
 
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any, ...]]:

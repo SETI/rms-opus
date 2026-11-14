@@ -32,6 +32,7 @@ from opus_import.obs.obs_base import ObsBase
 from opus_import.obs.obs_ring_geometry import ObsRingGeometry
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import do_import_mult
+from opus_support import UNSTORED_ASCII_CHARACTER
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
@@ -47,10 +48,10 @@ def import_observation_table(
 ) -> dict[str, Any] | None:
     """Compute one observation's row of one table.
 
-    Three kinds of entry are skipped: ``timestamp``, which the database maintains
-    itself; a column marked ``put_mults_here``, which holds another column's mult id;
-    and an entry with no ``field_name`` -- a ``pi_referred_slug`` entry, which describes
-    a search parameter rather than a column, or a table-level key.
+    Two kinds of entry are skipped: a column marked ``put_mults_here``, which holds
+    another column's mult id; and an entry with no ``field_name`` -- a
+    ``pi_referred_slug`` entry, which describes a search parameter rather than a column,
+    or a table-level key.
 
     A column whose form type is a GROUP type stores the id of a ``mult`` row rather than
     the value, and the value is added to its mult field if it is new. A ``mult_list`` column
@@ -59,6 +60,11 @@ def import_observation_table(
 
     The row is left on ``metadata`` under ``<table_name>_row`` as well as returned, so
     that a later table's field functions can read what an earlier one computed.
+
+    A string bound for an ASCII column (``field_charset`` ``"ascii"``, a ``varcharNNN`` or
+    ``text`` column) that holds DEL (`opus_support.UNSTORED_ASCII_CHARACTER`) logs an
+    error naming the column, and is stored with the DEL removed, so no stored value holds
+    it whether or not the run ignores errors.
 
     Parameters:
         ctx: The import run's context.
@@ -77,10 +83,8 @@ def import_observation_table(
 
     metadata[table_name + '_row'] = new_row
 
-    # Compute every column's value. A "timestamp" column is skipped because the
-    # server fills it in, and an entry that is not a column of this table -- a
-    # param_info row of another table's column, or a table-level key -- is skipped
-    # too.
+    # Compute every column's value. An entry that is not a column of this table -- a
+    # param_info row of another table's column, or a table-level key -- is skipped.
 
     for table_column in table_schema:
         if 'field_name' not in table_column or table_column.get('put_mults_here', False):
@@ -91,9 +95,6 @@ def import_observation_table(
 
         metadata['table_name'] = table_name
         metadata['field_name'] = field_name
-
-        if field_name == 'timestamp':
-            continue
 
         data_source = table_column.get('data_source', None)
         if not data_source:
@@ -210,24 +211,25 @@ def import_observation_table(
                             + 'a valid flag value',
                         )
                         column_val = None
-                if field_type.startswith('char'):
-                    field_size = int(field_type[4:])
+                if field_type.startswith('varchar'):
+                    field_size = int(field_type.removeprefix('varchar'))
                     if not isinstance(column_val, str):
                         import_util.log_nonrepeating_error(
                             ctx,
                             f'Column "{field_name}" in table "{table_name}" '
-                            + f'has CHAR type but value "{column_val}" is of '
+                            + f'has VARCHAR type but value "{column_val}" is of '
                             + f'type "{type(column_val)}"',
                         )
                         column_val = ''
-                    elif len(column_val) > field_size:
-                        import_util.log_nonrepeating_error(
-                            ctx,
-                            f'Column "{field_name}" in table "{table_name}" '
-                            + f'has CHAR size {field_size} but value '
-                            + f'"{column_val}" is too long',
-                        )
-                        column_val = column_val[:field_size]
+                    else:
+                        if len(column_val) > field_size:
+                            import_util.log_nonrepeating_error(
+                                ctx,
+                                f'Column "{field_name}" in table "{table_name}" '
+                                + f'has VARCHAR size {field_size} but value '
+                                + f'"{column_val}" is too long',
+                            )
+                            column_val = column_val[:field_size]
                 elif (
                     field_type.startswith('real')
                     or field_type.startswith('int')
@@ -306,6 +308,21 @@ def import_observation_table(
                                 )
                                 import_util.log_nonrepeating_error(ctx, msg)
                             column_val = None
+                if (
+                    table_column.get('field_charset') == 'ascii'
+                    and isinstance(column_val, str)
+                    and UNSTORED_ASCII_CHARACTER in column_val
+                ):
+                    # The web application binds this character for one a caller gave
+                    # that has no ASCII form, so no stored value may hold it, even when
+                    # the run ignores errors.
+                    import_util.log_nonrepeating_error(
+                        ctx,
+                        f'Column "{field_name}" in table "{table_name}" '
+                        + f'is ASCII but value {column_val!r} holds the '
+                        + 'character DEL, which no ASCII column may hold',
+                    )
+                    column_val = column_val.replace(UNSTORED_ASCII_CHARACTER, '')
 
             ### CHECK TO SEE IF THE COLUMN HOLDS MULT IDS ###
 

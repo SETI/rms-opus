@@ -145,12 +145,10 @@ The goldens
     path here but are not computed from it, and which are what the golden is for in this
     table, together with their linkage to an OPUS id.
 
-    Two further things are normalized. Every column MySQL declares as a
-    ``timestamp`` is dropped: the import never writes one and the server fills them from
-    the wall clock. And ``obs_general.preview_images`` has its JSON list sorted, because
-    it is a ``PdsViewSet`` rendered to a dictionary and ``pdsfile`` documents that its
-    members come out in the iteration order of a Python set, which is not stable across
-    processes. A third measure sits outside the goldens: the suite pins
+    One further thing is normalized: ``obs_general.preview_images`` has its JSON list
+    sorted, because it is a ``PdsViewSet`` rendered to a dictionary and ``pdsfile``
+    documents that its members come out in the iteration order of a Python set, which is
+    not stable across processes. Another measure sits outside the goldens: the suite pins
     ``PYTHONHASHSEED`` in the pipeline's subprocesses, because several steps iterate sets
     of strings. A hash-seed pin is not sufficient on its own: ``do_param_info``'s table
     set is filled from a query with no ``ORDER BY``, so its order depends on insertion

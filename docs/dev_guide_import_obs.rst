@@ -481,7 +481,7 @@ is written once, inside it, and deliberately not restated here.
    * - Alias
      - Covers
    * - :data:`~opus_import.obs.field_types.StrField`
-     - ``char*``, ``varchar*`` and ``text`` columns, and the one ``json`` column
+     - ``varchar*`` and ``text`` columns, and the one ``json`` column
        (``obs_general.preview_images``, whose method returns the output of
        :func:`json.dumps`).
    * - :data:`~opus_import.obs.field_types.FloatField`
@@ -501,7 +501,7 @@ Two rules are worth stating explicitly, because both are easy to get wrong:
 * **The form type decides, not the storage type.** A ``flag_yesno`` or ``flag_onoff``
   column is stored as ``smallint unsigned`` exactly like a ``mult_idx`` one, because it
   *is* the id of a ``mult`` row, so its method returns a
-  :class:`~opus_import.obs.field_types.MultField`. So does the one ``char3`` column that
+  :class:`~opus_import.obs.field_types.MultField`. So does the one ``varchar3`` column that
   carries a ``GROUP`` form type. Returning a bare value from a group column makes
   :func:`~opus_import.steps.do_import_obs.import_observation_table` log ``bad data type
   returned for mult`` and **discard the whole observation**.

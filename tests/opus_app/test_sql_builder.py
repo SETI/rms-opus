@@ -21,9 +21,13 @@ What is worth pinning here, and why:
   that possible from the builder's side.
 """
 
+import json
+from pathlib import Path
 from unittest import TestCase
 
-from opus_app.apps.tools import sql_builder
+import opus_import
+from opus_app.apps.tools import db_utils, sql_builder
+from opus_support import UNSTORED_ASCII_CHARACTER
 
 
 class SQLBuilderIdentifierTests(TestCase):
@@ -516,3 +520,94 @@ class SQLBuilderStatementTests(TestCase):
         )
         self.assertEqual(sql, 'UPDATE `cart` SET `recycled`=%s WHERE `cart`.`session_id` = %s')
         self.assertEqual(params, [0, 'sess'])
+
+
+class SQLBuilderASCIITests(TestCase):
+    """Text bound for a comparison with an ASCII column, and which columns are ASCII."""
+
+    def test__ascii_comparable_keeps_ascii(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: ASCII text, case and punctuation kept"
+        self.assertEqual(
+            sql_builder.ascii_comparable('CO-ISS-n1460960653_%\\'), 'CO-ISS-n1460960653_%\\'
+        )
+
+    def test__ascii_comparable_folds_accents_as_the_old_collation_did(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: decomposed, the combining marks dropped"
+        self.assertEqual(sql_builder.ascii_comparable('Müller'), 'Muller')
+        self.assertEqual(sql_builder.ascii_comparable('Európa'), 'Europa')
+        self.assertEqual(sql_builder.ascii_comparable('cö-iss-ñ'), 'co-iss-n')
+        # A compatibility form decomposes to its ASCII letters.
+        self.assertEqual(sql_builder.ascii_comparable('ﬁle'), 'file')
+
+    def test__ascii_comparable_replaces_what_has_no_ascii_form(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: one unstored character for each such one"
+        unstored = UNSTORED_ASCII_CHARACTER
+        # A sharp s, a degree sign and an emoji have no decomposition into ASCII.
+        self.assertEqual(
+            sql_builder.ascii_comparable('straße°🪐'), f'stra{unstored}e{unstored * 2}'
+        )
+        self.assertTrue(unstored.isascii())
+
+    def test__ascii_comparable_for_a_regex_maps_no_compatibility_character(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: canonical decomposition alone for a regex"
+        unstored = UNSTORED_ASCII_CHARACTER
+        # The accents go; a full-width full stop and asterisk stay characters, not operators.
+        self.assertEqual(
+            sql_builder.ascii_comparable('VGÍSS\uff0e62\uff0a', compatibility=False),
+            f'VGISS{unstored}62{unstored}',
+        )
+        self.assertEqual(sql_builder.ascii_comparable('VGÍSS\uff0e62\uff0a'), 'VGISS.62*')
+
+    def test__ascii_collation_key_equals_what_the_collation_does(self) -> None:
+        "[test_sql_builder.py] ascii_collation_key: folded, unpadded, without case"
+        self.assertEqual(
+            sql_builder.ascii_collation_key('CÓ-ISS-N1460960653  '), 'co-iss-n1460960653'
+        )
+        self.assertEqual(
+            sql_builder.ascii_collation_key('co-iss-n1460960653'), 'co-iss-n1460960653'
+        )
+        # A leading space and a trailing tab are kept, as the collation keeps them.
+        self.assertEqual(sql_builder.ascii_collation_key(' a\t'), ' a\t')
+
+    def test__generated_models_declare_the_ascii_columns(self) -> None:
+        "[test_sql_builder.py] is_ascii_column: as each schema's field_charset says"
+        ascii_columns, other_strings = _schema_string_columns()
+        self.assertIn(('obs_general', 'opus_id'), ascii_columns)
+        self.assertEqual(
+            other_strings, {('obs_pds', 'note'), ('obs_mission_hubble', 'hst_pi_name')}
+        )
+        for table, column in sorted(ascii_columns):
+            with self.subTest(table=table, column=column):
+                self.assertTrue(db_utils.is_ascii_column(table, column))
+        for table, column in sorted(other_strings | {('obs_files', 'short_name')}):
+            with self.subTest(table=table, column=column):
+                self.assertFalse(db_utils.is_ascii_column(table, column))
+
+
+def _schema_string_columns() -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
+    """Return the ASCII columns of the tables with a model, and the other STRING columns.
+
+    Returns:
+        Every column a packaged schema gives ``field_charset``, in a table the ``search``
+        app has a model for; and every column whose ``pi_form_type`` is ``STRING`` and
+        that has none.
+    """
+    ascii_columns: set[tuple[str, str]] = set()
+    other_strings: set[tuple[str, str]] = set()
+    for path in sorted((Path(opus_import.__file__).parent / 'table_schemas').glob('*.json')):
+        entries = json.loads(path.read_text(encoding='utf-8'))
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if 'field_name' not in entry:
+                continue
+            key = (path.stem, entry['field_name'])
+            if entry.get('field_charset') == 'ascii':
+                try:
+                    db_utils.table_model_from_name(path.stem)
+                except LookupError:
+                    continue
+                ascii_columns.add(key)
+            elif entry.get('pi_form_type') == 'STRING':
+                other_strings.add(key)
+    return ascii_columns, other_strings

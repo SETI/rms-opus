@@ -33,7 +33,7 @@ from django.conf import settings
 
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.import_constants import mult_table, table_names
-from opus_support import parse_form_type
+from opus_support import ASCII_COLLATION, parse_form_type
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -91,6 +91,27 @@ def table_model_from_name(table_name: str) -> type[Any]:
 
     # This can throw LookupError
     return apps.get_model('search', model_name)
+
+
+def is_ascii_column(table_name: str, column_name: str) -> bool:
+    """Return whether a table's column holds ASCII, as its generated model declares.
+
+    A column in the ASCII character set compares only with ASCII text
+    (`sql_builder.ascii_comparable`).
+
+    Parameters:
+        table_name: The table, such as a `ResolvedCategory.table`.
+        column_name: The column.
+
+    Returns:
+        True if the model's field names the ASCII collation.
+
+    Raises:
+        LookupError: If the `search` app has no model for the table.
+        django.core.exceptions.FieldDoesNotExist: If the model has no such field.
+    """
+    field = table_model_from_name(table_name)._meta.get_field(column_name)
+    return getattr(field, 'db_collation', None) == ASCII_COLLATION
 
 
 #: The column of a surface geometry category's table holding the body's id.
@@ -219,6 +240,7 @@ def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
     """
     # This can throw LookupError
     resolved = resolve_category(table_name)
+    opus_id = sql_builder.ascii_comparable(opus_id)
     # obs_general holds opus_id itself; every other table reaches it through its
     # obs_general relation, so the two need different lookups.
     # The model class is chosen by name, so its manager and everything that comes
@@ -270,7 +292,9 @@ def targets_for_opus_id(table: str, opus_id: str) -> frozenset[int]:
     Raises:
         LookupError: If the `search` app has no model for the table.
     """
-    rows = table_model_from_name(table).objects.filter(obs_general__opus_id=opus_id)
+    rows = table_model_from_name(table).objects.filter(
+        obs_general__opus_id=sql_builder.ascii_comparable(opus_id)
+    )
     return frozenset(rows.values_list(TARGET_COLUMN, flat=True))
 
 

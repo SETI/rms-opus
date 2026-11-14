@@ -89,11 +89,19 @@ Defining the column
    * - ``field_enum_options``
      - Required when ``field_type`` is ``enum``: the comma-separated, quoted list of
        values, rendered straight into ``enum(...)``.
+   * - ``field_charset``
+     - ``"ascii"`` on a ``varcharNNN`` or ``text`` column to store it as ``CHARACTER SET
+       ascii COLLATE ascii_general_ci``, which compares without case; any other value,
+       or the key on another type, is refused. A column without it takes the schema's
+       ``utf8mb4``. A value with a character outside ASCII fails the load that writes
+       it, and one holding DEL is an error and is stored without it.
+       :ref:`dev_guide_database_schema` says which columns carry it.
    * - ``field_notnull``
      - True to declare the column ``NOT NULL``.
    * - ``field_default``
      - The column's default. ``null``, or the string ``"NULL"``, means SQL ``NULL``. A
-       value that is neither ``NULL``, ``CURRENT_TIMESTAMP`` nor all digits is quoted.
+       value that is neither ``NULL`` nor all digits, a leading minus sign aside, is
+       quoted.
        A ``NOT NULL`` column whose default would be ``NULL`` gets no ``DEFAULT``
        clause at all.
    * - ``field_autoincrement``
@@ -181,9 +189,10 @@ recognize raises :exc:`NotImplementedError` rather than being guessed at.
    * - ``real4`` ``real8``
      - ``float`` ``double``
      -
-   * - ``charNNN`` ``varcharNNN``
-     - ``char(NNN)`` ``varchar(NNN)``
-     - The length is part of the type name.
+   * - ``varcharNNN``
+     - ``varchar(NNN)``
+     - The most characters a value may have is part of the type name. The import
+       truncates a longer value and logs an error.
    * - ``text``
      - ``text``
      -
@@ -204,10 +213,6 @@ recognize raises :exc:`NotImplementedError` rather than being guessed at.
      - ``smallint unsigned``
      - Stored exactly like ``mult_idx``: the "Yes"/"No"/"N/A" and "On"/"Off"/"N/A"
        values are ``mult`` rows like any other enumerated value.
-   * - ``timestamp``
-     - ``timestamp``
-     - Always given ``DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP``,
-       whatever the schema says.
    * - ``datetime``
      - ``datetime``
      -
@@ -263,7 +268,7 @@ Validating the value
 ``field_type`` starts with ``int``, ``uint`` or ``real``. Every one of them is read
 inside that single branch of
 :func:`opus_import.steps.do_import_obs.import_observation_table`, so putting
-``val_max`` on a ``charNNN`` or a ``mult_idx`` column silently enforces nothing.
+``val_max`` on a ``varcharNNN`` or a ``mult_idx`` column silently enforces nothing.
 Several shipping columns already do exactly that.
 
 .. list-table::

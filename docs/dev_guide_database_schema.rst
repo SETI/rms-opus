@@ -21,7 +21,7 @@ It's important to understand that OPUS has its own concept of metadata types ind
 
 OPUS understands the following high-level field types:
 
-* ``STRING``: A single arbitrary string. It is represented in the database with a SQL ``charNNN`` data type (a string with a maximum length). When searching, the string can be matched exactly or by various types of pattern matching (e.g. ``begins``, ``ends``, ``contains``, ``excludes``, or ``regex``). When displaying metadata, the string is simply shown as-is. Examples:
+* ``STRING``: A single arbitrary string. It is represented in the database with a SQL ``varcharNNN`` data type (a string with a maximum length), in the ASCII character set when every value in the holdings is ASCII (`String Columns and Character Sets`_). When searching, the string can be matched exactly or by various types of pattern matching (e.g. ``begins``, ``ends``, ``contains``, ``excludes``, or ``regex``). When displaying metadata, the string is simply shown as-is. Examples:
 
   * ``Volume ID`` = ``"HSTU0_5392"``
   * ``Primary File Spec`` = ``"HSTU0_5392/DATA/VISIT_03/U2930301T.LBL"``
@@ -85,7 +85,6 @@ A row for an OPUS ID does not need to be present in each table, and in fact neve
 In addition to the fields corresponding to the metadata available in the UI, each ``obs_*`` table also has columns for internal use:
 
 * ``obs_general_id``: The ``id`` of the observation's row in ``obs_general``, and a foreign key onto it. Joining tables on it puts all of an observation's metadata into one row. Most ``obs_*`` tables have at most one row per observation, so ``obs_general_id`` is their primary key. The exceptions are ``obs_files`` (`The Special obs_files Table`_) and ``obs_surface_geometry_target`` (`The Surface Geometry Tables`_), which can have several rows per observation. ``obs_general`` itself has no ``obs_general_id``.
-* ``timestamp``: A date/time field that records when the row was last updated
 
 The columns that identify an observation are stored once, in ``obs_general``: its ``id``, its ``opus_id``, its ``bundle_id`` (the PDS3 volume or PDS4 bundle it came from) and its ``instrument_id``. Another table that needs one of them joins ``obs_general`` on ``obs_general_id``. Storing each value in one place means the copies can never disagree.
 
@@ -96,32 +95,31 @@ Here is an example of the schema for the ``obs_general`` table (note this may ch
 ::
 
     mysql> DESC obs_general;
-    +----------------------+-------------------+------+-----+-------------------+
-    | Field                | Type              | Null | Key | Default           |
-    +----------------------+-------------------+------+-----+-------------------+
-    | id                   | int unsigned      | NO   | PRI | NULL              |
-    | opus_id              | char(50)          | NO   | MUL | NULL              |
-    | bundle_id            | char(75)          | NO   | MUL | NULL              |
-    | instrument_id        | smallint unsigned | NO   | MUL | NULL              |
-    | mission_id           | smallint unsigned | NO   | MUL | NULL              |
-    | inst_host_id         | smallint unsigned | NO   | MUL | NULL              |
-    | planet_id            | smallint unsigned | NO   | MUL | NULL              |
-    | target_name          | json              | NO   |     | NULL              |
-    | target_class         | json              | NO   |     | NULL              |
-    | time1                | double            | YES  | MUL | NULL              |
-    | time2                | double            | YES  | MUL | NULL              |
-    | observation_duration | double            | YES  | MUL | NULL              |
-    | quantity             | smallint unsigned | NO   | MUL | NULL              |
-    | right_asc1           | double            | YES  | MUL | NULL              |
-    | right_asc2           | double            | YES  | MUL | NULL              |
-    | right_asc            | double            | YES  | MUL | NULL              |
-    | d_right_asc          | double            | YES  |     | NULL              |
-    | declination1         | double            | YES  | MUL | NULL              |
-    | declination2         | double            | YES  | MUL | NULL              |
-    | observation_type     | smallint unsigned | NO   |     | NULL              |
-    | preview_images       | json              | NO   |     | NULL              |
-    | timestamp            | timestamp         | NO   |     | CURRENT_TIMESTAMP |
-    +----------------------+-------------------+------+-----+-------------------+
+    +----------------------+-------------------+------+-----+---------+
+    | Field                | Type              | Null | Key | Default |
+    +----------------------+-------------------+------+-----+---------+
+    | id                   | int unsigned      | NO   | PRI | NULL    |
+    | opus_id              | varchar(50)       | NO   | MUL | NULL    |
+    | bundle_id            | varchar(75)       | NO   | MUL | NULL    |
+    | instrument_id        | smallint unsigned | NO   | MUL | NULL    |
+    | mission_id           | smallint unsigned | NO   | MUL | NULL    |
+    | inst_host_id         | smallint unsigned | NO   | MUL | NULL    |
+    | planet_id            | smallint unsigned | NO   | MUL | NULL    |
+    | target_name          | json              | NO   |     | NULL    |
+    | target_class         | json              | NO   |     | NULL    |
+    | time1                | double            | YES  | MUL | NULL    |
+    | time2                | double            | YES  | MUL | NULL    |
+    | observation_duration | double            | YES  | MUL | NULL    |
+    | quantity             | smallint unsigned | NO   | MUL | NULL    |
+    | right_asc1           | double            | YES  | MUL | NULL    |
+    | right_asc2           | double            | YES  | MUL | NULL    |
+    | right_asc            | double            | YES  | MUL | NULL    |
+    | d_right_asc          | double            | YES  |     | NULL    |
+    | declination1         | double            | YES  | MUL | NULL    |
+    | declination2         | double            | YES  | MUL | NULL    |
+    | observation_type     | smallint unsigned | NO   |     | NULL    |
+    | preview_images       | json              | NO   |     | NULL    |
+    +----------------------+-------------------+------+-----+---------+
 
 Besides the keys shown, ``obs_general`` has three keys over two columns each:
 ``(time1, opus_id)``, which serves the default sort, ``(right_asc, d_right_asc)`` and
@@ -138,46 +136,44 @@ Most of these fields should be self-evident. Some numeric fields have ``1`` and 
 ::
 
     mysql> DESC obs_pds;
-    +-----------------------+--------------+------+-----+-------------------+
-    | Field                 | Type         | Null | Key | Default           |
-    +-----------------------+--------------+------+-----+-------------------+
-    | obs_general_id        | int unsigned | NO   | PRI | NULL              |
-    | opus_id               | char(50)     | NO   | MUL | NULL              |
-    | bundle_id             | char(75)     | NO   | MUL | NULL              |
-    | data_set_id           | char(40)     | YES  | MUL | NULL              |
-    | product_id            | char(50)     | YES  | MUL | NULL              |
-    | primary_lid           | char(240)    | YES  | MUL | NULL              |
-    | product_creation_time | double       | YES  | MUL | NULL              |
-    | primary_filespec      | char(240)    | NO   | MUL | NULL              |
-    | note                  | char(255)    | YES  | MUL | NULL              |
-    | timestamp             | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +-----------------------+--------------+------+-----+-------------------+
+    +-----------------------+--------------+------+-----+---------+
+    | Field                 | Type         | Null | Key | Default |
+    +-----------------------+--------------+------+-----+---------+
+    | obs_general_id        | int unsigned | NO   | PRI | NULL    |
+    | opus_id               | varchar(50)  | NO   | MUL | NULL    |
+    | bundle_id             | varchar(75)  | NO   | MUL | NULL    |
+    | data_set_id           | varchar(40)  | YES  | MUL | NULL    |
+    | product_id            | varchar(50)  | YES  | MUL | NULL    |
+    | primary_lid           | varchar(240) | YES  | MUL | NULL    |
+    | product_creation_time | double       | YES  | MUL | NULL    |
+    | primary_filespec      | varchar(240) | NO   | MUL | NULL    |
+    | note                  | varchar(255) | YES  | MUL | NULL    |
+    +-----------------------+--------------+------+-----+---------+
 
 Here is an example of a mission table:
 
 ::
 
     mysql> DESC obs_mission_cassini;
-    +-------------------------+-------------------+------+-----+-------------------+
-    | Field                   | Type              | Null | Key | Default           |
-    +-------------------------+-------------------+------+-----+-------------------+
-    | obs_general_id          | int unsigned      | NO   | PRI | NULL              |
-    | obs_name                | char(30)          | NO   | MUL | NULL              |
-    | rev_no                  | char(3)           | YES  |     | NULL              |
-    | rev_no_int              | int               | YES  |     | NULL              |
-    | is_prime                | smallint unsigned | NO   |     | NULL              |
-    | prime_inst_id           | smallint unsigned | NO   |     | NULL              |
-    | spacecraft_clock_count1 | double            | YES  | MUL | NULL              |
-    | spacecraft_clock_count2 | double            | YES  | MUL | NULL              |
-    | ert1                    | double            | YES  | MUL | NULL              |
-    | ert2                    | double            | YES  | MUL | NULL              |
-    | cassini_target_code     | smallint unsigned | YES  |     | NULL              |
-    | cassini_target_name     | smallint unsigned | YES  | MUL | NULL              |
-    | activity_name           | char(9)           | YES  | MUL | NULL              |
-    | mission_phase_name      | smallint unsigned | YES  |     | NULL              |
-    | sequence_id             | char(4)           | YES  |     | NULL              |
-    | timestamp               | timestamp         | NO   |     | CURRENT_TIMESTAMP |
-    +-------------------------+-------------------+------+-----+-------------------+
+    +-------------------------+-------------------+------+-----+---------+
+    | Field                   | Type              | Null | Key | Default |
+    +-------------------------+-------------------+------+-----+---------+
+    | obs_general_id          | int unsigned      | NO   | PRI | NULL    |
+    | obs_name                | varchar(30)       | NO   | MUL | NULL    |
+    | rev_no                  | varchar(3)        | YES  |     | NULL    |
+    | rev_no_int              | int               | YES  |     | NULL    |
+    | is_prime                | smallint unsigned | NO   |     | NULL    |
+    | prime_inst_id           | smallint unsigned | NO   |     | NULL    |
+    | spacecraft_clock_count1 | double            | YES  | MUL | NULL    |
+    | spacecraft_clock_count2 | double            | YES  | MUL | NULL    |
+    | ert1                    | double            | YES  | MUL | NULL    |
+    | ert2                    | double            | YES  | MUL | NULL    |
+    | cassini_target_code     | smallint unsigned | YES  |     | NULL    |
+    | cassini_target_name     | smallint unsigned | YES  | MUL | NULL    |
+    | activity_name           | varchar(9)        | YES  | MUL | NULL    |
+    | mission_phase_name      | smallint unsigned | YES  |     | NULL    |
+    | sequence_id             | varchar(4)        | YES  |     | NULL    |
+    +-------------------------+-------------------+------+-----+---------+
 
 Note that there will be a different number of rows in the ``obs_general`` table and many of the other tables:
 
@@ -391,6 +387,27 @@ NULL and NOT NULL Columns
 
 Some columns (like ``OPUS ID``) must always contain a valid value, while others (like ``Right Ascension``) may have values missing for some observations. For safety and database integrity, we prevent columns that must always be valid from having ``NULL`` values by setting the ``NOT NULL`` column property. Other columns do not have this property set and allow ``NULL`` values. The validate step of the import process identifies columns that permit NULLs and yet have no NULL values and issues the suggestion that those columns be modified to be ``NOT NULL``.
 
+String Columns and Character Sets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every string column is a ``varchar(NNN)``, which stores as many characters as a value has, up to ``NNN``, or a ``text``. No column is a fixed-width ``char``.
+
+A string column takes the schema's character set, ``utf8mb4``, whose collation ``utf8mb4_0900_ai_ci`` compares without case or accents. A column whose schema entry carries ``"field_charset": "ascii"`` is ``CHARACTER SET ascii COLLATE ascii_general_ci`` instead: it compares without case, as the default does, and it costs one byte a character where ``utf8mb4`` may cost four, in the row, in every index entry and in every sort. The ASCII columns are these:
+
+* every ``opus_id`` and ``bundle_id`` column, and ``obs_files.instrument_id``;
+* ``cart.session_id``, which holds Django's session key;
+* every column whose ``pi_form_type`` is ``STRING``, whose values are all ASCII in the complete holdings, and which is an identifier rather than free text.
+
+``grep -l '"field_charset": "ascii"' src/opus_import/table_schemas/*.json`` lists the schemas that have one. Free text stays ``utf8mb4``, because a PDS4 label is UTF-8 and a name or a note may hold any character: the ``mult`` table's ``value`` and ``label``, the dictionary, ``param_info``, ``obs_pds.note`` and ``obs_mission_hubble.hst_pi_name``.
+
+A value with a character outside ASCII cannot be stored in an ASCII column: the import's load of its row fails, naming the column and the row. Nor can the ASCII character DEL: the import logs an error for a value holding it, which fails its bundle, and stores the value without it, so even a run that ignores errors stores none.
+
+MySQL refuses to compare an ASCII column with text holding any other character, so the web application folds a caller's text before it compares it with one (:func:`~opus_app.apps.tools.sql_builder.ascii_comparable`), as the accent-blind ``utf8mb4_0900_ai_ci`` would: it decomposes the text and drops the accents, so ``VGÍSS_6210`` finds ``VGISS_6210``. A ``regex`` search keeps a compatibility character, such as the full-width ``．``, from becoming the ASCII operator it resembles: its text is decomposed canonically, which drops the accents alone. A character with no ASCII form, such as ``ß`` or ``°``, or a compatibility character in a ``regex`` search, becomes DEL, which no stored value holds: a search for it with ``matches``, ``contains``, ``begins``, ``ends`` or ``regex`` finds nothing, one with ``excludes`` finds every row, and an OPUS ID holding it is unknown. The folding applies where the column's generated model names the ASCII collation (:func:`~opus_app.apps.tools.db_utils.is_ascii_column`).
+
+An ASCII column pads with spaces when it compares, as ``utf8mb4_0900_ai_ci`` does not, so a value with trailing spaces equals the value without them.
+
+The two collations sort punctuation differently. ``ascii_general_ci`` compares the characters' codes with the letters folded to upper case, so ``_`` sorts after every letter and digit, and ``-`` and ``/`` before them; ``utf8mb4_0900_ai_ci`` sorts every punctuation mark before the letters and digits. ``VGISS_6210`` therefore sorts before ``VG_2810``.
+
 The Use of SQL Indexes
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -404,13 +421,12 @@ There are two types of surface geometry tables. The first, called simply ``obs_s
 ::
 
     mysql> DESC obs_surface_geometry;
-    +----------------+--------------+------+-----+-------------------+
-    | Field          | Type         | Null | Key | Default           |
-    +----------------+--------------+------+-----+-------------------+
-    | obs_general_id | int unsigned | NO   | PRI | NULL              |
-    | target_list    | text         | YES  |     | NULL              |
-    | timestamp      | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +----------------+--------------+------+-----+-------------------+
+    +----------------+--------------+------+-----+---------+
+    | Field          | Type         | Null | Key | Default |
+    +----------------+--------------+------+-----+---------+
+    | obs_general_id | int unsigned | NO   | PRI | NULL    |
+    | target_list    | text         | YES  |     | NULL    |
+    +----------------+--------------+------+-----+---------+
 
 The second, ``obs_surface_geometry_target``, holds every body's surface geometry: one row per observation and body for which geometry information is available. Normally only a few bodies have a row for a given OPUS ID, since only a small number of bodies are in the field of view. Its schema starts:
 
@@ -473,30 +489,29 @@ The list of product files for any OPUS ID can be exceedingly long, and each file
 ::
 
     mysql> DESC obs_files;
-    +-----------------+-------------------+------+-----+-------------------+
-    | Field           | Type              | Null | Key | Default           |
-    +-----------------+-------------------+------+-----+-------------------+
-    | obs_general_id  | int unsigned      | NO   | PRI | NULL              |
-    | file_number     | smallint unsigned | NO   | PRI | NULL              |
-    | opus_id         | char(50)          | NO   | MUL | NULL              |
-    | instrument_id   | char(60)          | NO   |     | NULL              |
-    | version_number  | int unsigned      | NO   |     | NULL              |
-    | version_name    | char(16)          | NO   |     | NULL              |
-    | category        | char(64)          | NO   |     | NULL              |
-    | sort_order      | char(9)           | NO   |     | NULL              |
-    | short_name      | char(64)          | NO   |     | NULL              |
-    | full_name       | char(64)          | NO   |     | NULL              |
-    | default_checked | int unsigned      | NO   |     | NULL              |
-    | product_order   | int unsigned      | NO   |     | NULL              |
-    | logical_path    | text              | NO   |     | NULL              |
-    | url             | text              | NO   |     | NULL              |
-    | checksum        | char(32)          | NO   |     | NULL              |
-    | size            | int unsigned      | NO   |     | NULL              |
-    | width           | int unsigned      | YES  |     | NULL              |
-    | height          | int unsigned      | YES  |     | NULL              |
-    | pds_version     | int unsigned      | NO   |     | NULL              |
-    | timestamp       | timestamp         | NO   |     | CURRENT_TIMESTAMP |
-    +-----------------+-------------------+------+-----+-------------------+
+    +-----------------+-------------------+------+-----+---------+
+    | Field           | Type              | Null | Key | Default |
+    +-----------------+-------------------+------+-----+---------+
+    | obs_general_id  | int unsigned      | NO   | PRI | NULL    |
+    | file_number     | smallint unsigned | NO   | PRI | NULL    |
+    | opus_id         | varchar(50)       | NO   | MUL | NULL    |
+    | instrument_id   | varchar(60)       | NO   |     | NULL    |
+    | version_number  | int unsigned      | NO   |     | NULL    |
+    | version_name    | varchar(16)       | NO   |     | NULL    |
+    | category        | varchar(64)       | NO   |     | NULL    |
+    | sort_order      | varchar(9)        | NO   |     | NULL    |
+    | short_name      | varchar(64)       | NO   |     | NULL    |
+    | full_name       | varchar(64)       | NO   |     | NULL    |
+    | default_checked | int unsigned      | NO   |     | NULL    |
+    | product_order   | int unsigned      | NO   |     | NULL    |
+    | logical_path    | text              | NO   |     | NULL    |
+    | url             | text              | NO   |     | NULL    |
+    | checksum        | varchar(32)       | NO   |     | NULL    |
+    | size            | int unsigned      | NO   |     | NULL    |
+    | width           | int unsigned      | YES  |     | NULL    |
+    | height          | int unsigned      | YES  |     | NULL    |
+    | pds_version     | int unsigned      | NO   |     | NULL    |
+    +-----------------+-------------------+------+-----+---------+
 
 And as predicted a single OPUS ID is likely to appear more than once:
 
@@ -534,33 +549,32 @@ In order for OPUS to properly handle search and metadata display, it needs detai
 ::
 
     mysql> DESC param_info;
-    +----------------------+---------------+------+-----+-------------------+
-    | Field                | Type          | Null | Key | Default           |
-    +----------------------+---------------+------+-----+-------------------+
-    | category_name        | varchar(150)  | YES  | MUL | NULL              |
-    | name                 | varchar(87)   | YES  | MUL | NULL              |
-    | form_type            | varchar(100)  | YES  |     | NULL              |
-    | display              | tinyint       | NO   |     | NULL              |
-    | display_results      | tinyint       | NO   |     | NULL              |
-    | disp_order           | int           | NO   |     | NULL              |
-    | label                | varchar(240)  | YES  |     | NULL              |
-    | label_results        | varchar(240)  | YES  |     | NULL              |
-    | slug                 | varchar(255)  | YES  |     | NULL              |
-    | old_slug             | varchar(255)  | YES  |     | NULL              |
-    | referred_slug        | varchar(255)  | YES  |     | NULL              |
-    | intro                | varchar(1023) | YES  |     | NULL              |
-    | tooltip              | varchar(255)  | YES  |     | NULL              |
-    | dict_context         | varchar(255)  | YES  |     | NULL              |
-    | dict_name            | varchar(255)  | YES  |     | NULL              |
-    | dict_context_results | varchar(255)  | YES  |     | NULL              |
-    | dict_name_results    | varchar(255)  | YES  |     | NULL              |
-    | sub_heading          | varchar(150)  | YES  |     | NULL              |
-    | ranges               | json          | YES  |     | NULL              |
-    | field_hints1         | varchar(255)  | YES  |     | NULL              |
-    | field_hints2         | varchar(255)  | YES  |     | NULL              |
-    | id                   | int unsigned  | NO   | PRI | NULL              |
-    | timestamp            | timestamp     | YES  |     | CURRENT_TIMESTAMP |
-    +----------------------+---------------+------+-----+-------------------+
+    +----------------------+---------------+------+-----+---------+
+    | Field                | Type          | Null | Key | Default |
+    +----------------------+---------------+------+-----+---------+
+    | category_name        | varchar(150)  | YES  | MUL | NULL    |
+    | name                 | varchar(87)   | YES  | MUL | NULL    |
+    | form_type            | varchar(100)  | YES  |     | NULL    |
+    | display              | tinyint       | NO   |     | NULL    |
+    | display_results      | tinyint       | NO   |     | NULL    |
+    | disp_order           | int           | NO   |     | NULL    |
+    | label                | varchar(240)  | YES  |     | NULL    |
+    | label_results        | varchar(240)  | YES  |     | NULL    |
+    | slug                 | varchar(255)  | YES  |     | NULL    |
+    | old_slug             | varchar(255)  | YES  |     | NULL    |
+    | referred_slug        | varchar(255)  | YES  |     | NULL    |
+    | intro                | varchar(1023) | YES  |     | NULL    |
+    | tooltip              | varchar(255)  | YES  |     | NULL    |
+    | dict_context         | varchar(255)  | YES  |     | NULL    |
+    | dict_name            | varchar(255)  | YES  |     | NULL    |
+    | dict_context_results | varchar(255)  | YES  |     | NULL    |
+    | dict_name_results    | varchar(255)  | YES  |     | NULL    |
+    | sub_heading          | varchar(150)  | YES  |     | NULL    |
+    | ranges               | json          | YES  |     | NULL    |
+    | field_hints1         | varchar(255)  | YES  |     | NULL    |
+    | field_hints2         | varchar(255)  | YES  |     | NULL    |
+    | id                   | int unsigned  | NO   | PRI | NULL    |
+    +----------------------+---------------+------+-----+---------+
 
 The fields are:
 
@@ -592,7 +606,6 @@ The fields are:
 * ``ranges``: A JSON field giving details of pre-programmed ranges that can be selected during searching, if any. For example, the ``Wavelength`` field has a number of pre-programmed options such as "Red" or "Violet".
 * ``field_hints1`` and ``field_hints2``: When ``ranges`` is specified, the grey text to display in the search widget to give a hint as to what can be typed. For example, for the ``Wavelength`` field this is "Wavelength or Color".
 * ``id``: A unique ID.
-* ``timestamp``: The date and time this row was last modified.
 
 The ``table_names`` Table
 -------------------------
@@ -602,18 +615,17 @@ The ``table_names`` table contains the mapping between the ``obs_*`` SQL table n
 ::
 
     mysql> DESC table_names;
-    +----------------+-------------------+------+-----+-------------------+
-    | Field          | Type              | Null | Key | Default           |
-    +----------------+-------------------+------+-----+-------------------+
-    | table_name     | char(60)          | NO   | MUL | NULL              |
-    | label          | char(60)          | NO   |     | NULL              |
-    | display        | char(1)           | NO   |     | Y                 |
-    | disp_order     | int               | NO   |     | NULL              |
-    | physical_table | varchar(60)       | YES  |     | NULL              |
-    | target_name    | smallint unsigned | YES  |     | NULL              |
-    | id             | int unsigned      | NO   | PRI | NULL              |
-    | timestamp      | timestamp         | YES  |     | CURRENT_TIMESTAMP |
-    +----------------+-------------------+------+-----+-------------------+
+    +----------------+-------------------+------+-----+---------+
+    | Field          | Type              | Null | Key | Default |
+    +----------------+-------------------+------+-----+---------+
+    | table_name     | varchar(60)       | NO   | MUL | NULL    |
+    | label          | varchar(60)       | NO   |     | NULL    |
+    | display        | varchar(1)        | NO   |     | Y       |
+    | disp_order     | int               | NO   |     | NULL    |
+    | physical_table | varchar(60)       | YES  |     | NULL    |
+    | target_name    | smallint unsigned | YES  |     | NULL    |
+    | id             | int unsigned      | NO   | PRI | NULL    |
+    +----------------+-------------------+------+-----+---------+
 
 The fields are:
 
@@ -624,7 +636,6 @@ The fields are:
 * ``physical_table``: The table a category's rows are in when the category is not a table of its own, ``obs_surface_geometry_target`` for every surface geometry category; ``NULL`` for a table.
 * ``target_name``: For a surface geometry body's category, the body's id in the selector's mult field, which the rows of the category hold in ``obs_surface_geometry_target.target_name``; ``NULL`` for every other category, the selector ``obs_surface_geometry_name`` among them, which reads every row of the table.
 * ``id``: A unique ID.
-* ``timestamp``: The date and time this row was last modified.
 
 The ``partables`` Table
 -----------------------
@@ -634,23 +645,21 @@ The ``partables`` table is used to instruct OPUS on how to figure out when a par
 ::
 
     mysql> DESC partables;
-    +-------------+--------------+------+-----+-------------------+
-    | Field       | Type         | Null | Key | Default           |
-    +-------------+--------------+------+-----+-------------------+
-    | trigger_tab | char(200)    | YES  | MUL | NULL              |
-    | trigger_col | char(200)    | YES  |     | NULL              |
-    | trigger_val | char(60)     | YES  |     | NULL              |
-    | partable    | char(200)    | YES  |     | NULL              |
-    | id          | int unsigned | NO   | PRI | NULL              |
-    | timestamp   | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    +-------------+--------------+------+-----+-------------------+
+    +-------------+--------------+------+-----+---------+
+    | Field       | Type         | Null | Key | Default |
+    +-------------+--------------+------+-----+---------+
+    | trigger_tab | varchar(200) | YES  | MUL | NULL    |
+    | trigger_col | varchar(200) | YES  |     | NULL    |
+    | trigger_val | varchar(60)  | YES  |     | NULL    |
+    | partable    | varchar(200) | YES  |     | NULL    |
+    | id          | int unsigned | NO   | PRI | NULL    |
+    +-------------+--------------+------+-----+---------+
 
 * ``trigger_tab``: The table to look at for a particular value.
 * ``trigger_col``: The column in that table to look at for a particular value.
 * ``trigger_val``: The value to look for.
 * ``partable``: When that value is found in that column in that table for all search results, trigger the display of this table.
 * ``id``: A unique ID.
-* ``timestamp``: The date and time this row was last modified.
 
 For example:
 
@@ -676,25 +685,23 @@ The ``cart`` table records the current Cart contents for all users. As long as t
 ::
 
     mysql> DESC cart;
-    +----------------+--------------+------+-----+-------------------+
-    | Field          | Type         | Null | Key | Default           |
-    +----------------+--------------+------+-----+-------------------+
-    | session_id     | char(80)     | NO   | MUL | NULL              |
-    | obs_general_id | int unsigned | NO   | MUL | NULL              |
-    | opus_id        | char(50)     | NO   | MUL | NULL              |
-    | recycled       | tinyint      | NO   |     | NULL              |
-    | id             | int unsigned | NO   | PRI | NULL              |
-    | timestamp      | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    +----------------+--------------+------+-----+-------------------+
+    +----------------+--------------+------+-----+---------+
+    | Field          | Type         | Null | Key | Default |
+    +----------------+--------------+------+-----+---------+
+    | session_id     | varchar(40)  | NO   | MUL | NULL    |
+    | obs_general_id | int unsigned | NO   | MUL | NULL    |
+    | opus_id        | varchar(50)  | NO   | MUL | NULL    |
+    | recycled       | tinyint      | NO   |     | NULL    |
+    | id             | int unsigned | NO   | PRI | NULL    |
+    +----------------+--------------+------+-----+---------+
 
 The fields are:
 
-* ``session_id``: The Django session ID.
+* ``session_id``: The Django session key, in ASCII.
 * ``obs_general_id``: The ``obs_general`` unique ID of the observation in the cart. It is a foreign key that cascades on delete, so deleting an observation -- when its bundle is imported again, deleted with ``--delete-bundles``, or settled by finalization's duplicate step -- deletes the cart rows that hold it.
 * ``opus_id``: The OPUS ID of the observation in the cart (which could also be found by joining the ``obs_general_id`` with the ``obs_general`` table).
 * ``recycled``: A boolean flag saying whether or not this observation is in the recycle bin.
 * ``id``: A unique ID.
-* ``timestamp``: The date and time this row was last modified.
 
 The ``user_searches`` and ``search_results`` Tables
 ---------------------------------------------------
@@ -789,15 +796,14 @@ The ``contexts`` table has the following schema:
 ::
 
     mysql> DESC contexts;
-    +-------------+--------------+------+-----+-------------------+
-    | Field       | Type         | Null | Key | Default           |
-    +-------------+--------------+------+-----+-------------------+
-    | name        | char(50)     | NO   | UNI | NULL              |
-    | description | char(100)    | NO   |     | NULL              |
-    | parent      | char(25)     | NO   |     | NULL              |
-    | timestamp   | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    | id          | int unsigned | NO   | PRI | NULL              |
-    +-------------+--------------+------+-----+-------------------+
+    +-------------+--------------+------+-----+---------+
+    | Field       | Type         | Null | Key | Default |
+    +-------------+--------------+------+-----+---------+
+    | name        | varchar(50)  | NO   | UNI | NULL    |
+    | description | varchar(100) | NO   |     | NULL    |
+    | parent      | varchar(25)  | NO   |     | NULL    |
+    | id          | int unsigned | NO   | PRI | NULL    |
+    +-------------+--------------+------+-----+---------+
 
 Contexts are arranged in a tree, such that each context has a single parent. In the eventual website interface, a term will be displayed in multiple contexts if appropriate. The top-level context is the NASA PDS Planetary Science Data Dictionary, ``PSDD``. Under this are the top-level OPUS Constraints categories: ``OPUS_GENERAL``, ``OPUS_PDS``, ``OPUS_TYPE_IMAGE``, ``OPUS_WAVELENGTH``, etc., as well as the missions like ``CASSINI``. Under each mission are the instruments: ``CASSINI`` has ``COCIRS``, ``COISS``, ``COUVIS``, etc.
 
@@ -806,7 +812,6 @@ The fields are:
 * ``name``: The internal name of the context (e.g. ``CASSINI``).
 * ``description``: The pretty English name of the context (e.g. ``Cassini Mission``).
 * ``parent``: The internal name of the parent context.
-* ``timestamp``: The date and time this row was last modified.
 * ``id``: A unique ID.
 
 The ``definitions`` table has the following schema:
@@ -814,22 +819,20 @@ The ``definitions`` table has the following schema:
 ::
 
     mysql> DESC definitions;
-    +------------+--------------+------+-----+-------------------+
-    | Field      | Type         | Null | Key | Default           |
-    +------------+--------------+------+-----+-------------------+
-    | term       | char(255)    | NO   | MUL | NULL              |
-    | context    | char(50)     | NO   | MUL | NULL              |
-    | definition | text         | NO   |     | NULL              |
-    | timestamp  | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    | id         | int unsigned | NO   | PRI | NULL              |
-    +------------+--------------+------+-----+-------------------+
+    +------------+--------------+------+-----+---------+
+    | Field      | Type         | Null | Key | Default |
+    +------------+--------------+------+-----+---------+
+    | term       | varchar(255) | NO   | MUL | NULL    |
+    | context    | varchar(50)  | NO   | MUL | NULL    |
+    | definition | text         | NO   |     | NULL    |
+    | id         | int unsigned | NO   | PRI | NULL    |
+    +------------+--------------+------+-----+---------+
 
 The fields are:
 
 * ``term``: The internal name of the term (e.g. ``PLANET_NAME``).
 * ``context``: The associated internal name of the context.
 * ``definition``: The full free-form text definition.
-* ``timestamp``: The date and time this row was last modified.
 * ``id``: A unique ID.
 
 .. _dev_guide_database_schema_version:
