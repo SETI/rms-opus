@@ -7808,6 +7808,55 @@ Nothing above this line is rewritten by an executor.
     `--validate` runs `validate_junctions` on every fixture import, 195 passed and 3
     skipped. The integration job's run was not repeated: nothing in this batch changes
     `opus_app` or the import's output.
+- **Measurement** (2026-11-13, test scale; base at 92aed872 and head at b67a1150, each in
+  its own worktree and virtual environment, each side importing and serving its own
+  schema; judged against the PR-00 floors):
+  - *Session `a`:* three fixture imports a side (A B B A A B), one test-scale import a
+    side (A B), web runs A B B A, then `bench_db --dump-queries --resort-probe` once a
+    side (the head's with `--commit-capture`). The target landed within twice its floor
+    and the test-scale import guard regressed on its one run a side, so §2.6's repeat
+    followed as session `r`, whose web and test-scale import figures replace session
+    `a`'s. The fixture imports and the `bench_db` figures are session `a`'s.
+  - *Session `r`:* ten web runs alternated (B A A B B A A B B A), five a side, on session
+    `a`'s two test-scale schemas; then six test-scale imports, three a side (B A A B B A).
+
+  | Metric | Before | After | Change |
+  |---|---|---|---|
+  | **Target:** target search, app-cold (`r`) | 99.0 ms | 63.1 ms | −36.2%, within its floor (41.4%): not improved |
+  | The same search, db-cold (`r`) | 139.6 ms | 100.7 ms | −27.8%, within its floor |
+  | Its `result_count` plan, rows examined (`a`) | 32,970 | 13,340 | −59.5% |
+  | Target mult count, empty search, app-cold (`r`) | 41.7 ms | 13.2 ms | −68.2%, within its floor |
+  | Target mult count, selected search, app-cold (`r`) | 28.7 ms | 20.5 ms | −28.5%, within its floor |
+  | Their plans' time, empty / selected (`a`) | 32.5 / 42.4 ms | 5.0 / 34.6 ms | −84.6% / −18.4% |
+  | Re-sort on the target, plan time (`a`) | 32.9 ms | 6.6 ms | −80.0%; rows examined −65.1% |
+  | Test-scale import, wall (`r`, guard) | 312.5 s | 312.2 s | −0.1%, held |
+  | Largest bundle's import (`r`, guard) | 72.1 s | 72.1 s | −0.1%, held |
+  | Fixture import, wall (`a`, guard) | 40.4 s | 42.3 s | +4.8%, held (spreads 2.5% / 7.8%) |
+
+  - **The target is a stop-and-report (§2.5), and the orchestrator keeps the PR.** The
+    target search's app-cold medians are 36% apart, but the floor of a time this small is
+    mostly the web jitter (41 ms of absolute noise on 99 ms), and the per-run values
+    overlap (before 79.9 to 102.3 ms, after 61.8 to 85.4 ms). The plans show the change
+    the PR is for: the search's `result_count` reads 59.5% fewer rows, a semi-join on
+    `obs_general_target_name` replacing a scan of every observation's JSON list; the
+    empty search's target mult count plans in 84.6% less time, grouping the junction
+    table's primary key; and the re-sort on the target plans in 80.0% less. Each
+    app-cold scenario on the target moved down as a whole (the target pages −28.9%, the
+    re-sort on the target −20.0%), none beyond its floor at this scale, where the tables
+    fit in memory; warm, where the search is already built, the medians agree within the
+    jitter. The scan the PR removes grows with the observations and the semi-join with
+    the matches.
+  - **The import guard holds.** Session `a`'s single test-scale import a side regressed
+    (+22.4% wall, +20.9% largest bundle), measured under a load of about ten. Session
+    `r`'s three a side, at loads of 1.5 to 4.2 with no other benchmark running, agree to
+    0.1%: writing the junction rows costs the import nothing measurable at test scale.
+    At fixture scale every after import was slower than every before one, by less than
+    the after side's own spread.
+  - Every web guard held in session `r`, and no metric regressed beyond its floor.
+  - PR-21's gate, from session `a`'s `bench_db`: see PR-21's notes.
+  - Session `r`'s first five web runs shared the machine with eight other jobs (load
+    9.9 to 17.9); the last five ran with none (load 5.8 to 9.8). The import repeat ran
+    alone. In session `a`, a gate run overlapped the fifth web run.
 
 ### 2026-11-14, PR-21 (written against this file at b67a1150)
 
