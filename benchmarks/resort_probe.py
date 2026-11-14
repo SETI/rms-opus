@@ -32,6 +32,8 @@ import statistics
 import time
 from typing import TYPE_CHECKING, Any
 
+import MySQLdb
+
 from benchmarks.bench_server import query
 from benchmarks.query_capture import EXPLAIN_RUNS, inner_select, summarize_analyze
 
@@ -314,3 +316,26 @@ def probe(
         'problems': problems,
     }
     return metrics, samples, details
+
+
+def measure(
+    connection: Any, blocks: Sequence[Block], search: str = PROBE_SEARCH
+) -> tuple[dict[str, float], dict[str, list[float]], dict[str, Any]]:
+    """Run `probe`, recording a capture that lacks a shape or a statement the server
+    refused as a failed measurement rather than raising.
+
+    Parameters:
+        connection: As `probe` takes it.
+        blocks: The capture's blocks.
+        search: The search, as ``web.toml`` names it.
+
+    Returns:
+        What `probe` returns; or, when it raises `ProbeError` or a server error, the
+        metric ``db.resort_probe.<search>.valid`` at 0, no samples, and details whose
+        ``problems`` holds the error's message.
+    """
+    try:
+        return probe(connection, blocks, search)
+    except (ProbeError, MySQLdb.Error) as err:
+        details: dict[str, Any] = {'search': search, 'problems': [f'{type(err).__name__}: {err}']}
+        return {f'{METRIC_PREFIX}.{search}.valid': 0.0}, {}, details

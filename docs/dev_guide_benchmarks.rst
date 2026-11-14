@@ -595,7 +595,10 @@ captured one's; and ``valid``. The run's details keep both statements, every exe
 figures and the last ``EXPLAIN ANALYZE`` tree of each. The measurement is valid only
 when both shapes returned the built search's result count in every execution, that count
 is not zero, and both examined rows; otherwise ``valid`` is 0, the details say why, and
-the command exits with an error after recording the run.
+the command exits with an error after recording the run. A probe that cannot run -- a
+capture without the re-sort scenario's blocks, a re-sorted request that built no search,
+or a statement the server refuses -- is recorded the same way, with the error as its
+problem, so the run's other measurements are kept.
 
 Result files
 ------------

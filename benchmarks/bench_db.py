@@ -24,7 +24,9 @@ copies the capture to ``scenarios/queries.sql``, the committed copy for a reader
 shapes on the replay's connection (`benchmarks.resort_probe`): as the application issued
 it, and generated from the built search's ``search_results`` rows. Its statements are
 written to no capture. A probe whose shapes did not both return the built search's
-non-zero result count is recorded, and then the command exits with an error.
+non-zero result count, or that could not run (a capture without the shapes, a statement
+the server refused), is recorded with the rest of the run, and then the command exits with
+an error.
 
 ``--ascii-columns`` counts, for every column whose form type is ``STRING``, the values
 that do not survive conversion to ASCII.
@@ -548,9 +550,44 @@ def main(argv: Sequence[str] | None = None) -> None:
             )
     path = append_runs(label, environment, [run])
     sys.stdout.write(f'recorded in {path}\n')
+    failure = probe_failure(run)
+    if failure is not None:
+        raise SystemExit(failure)
+
+
+def record_resort_probe(
+    run: dict[str, Any], connection: Any, blocks: Sequence[query_capture.Block]
+) -> None:
+    """Time the broad search's re-sort and add what it found to a run.
+
+    A probe that could not run is recorded as a failed measurement
+    (`benchmarks.resort_probe.measure`), so the run's other measurements are kept.
+
+    Parameters:
+        run: The ``db`` run, whose metrics, samples and details gain the probe's.
+        connection: The replay's connection.
+        blocks: The capture the replay ran.
+    """
+    metrics, samples, details = resort_probe.measure(connection, blocks)
+    run['metrics'].update(metrics)
+    run['samples'].update(samples)
+    run['details']['resort_probe'] = details
+
+
+def probe_failure(run: Mapping[str, Any]) -> str | None:
+    """Return why a run's re-sort probe is not a valid measurement, if it is not.
+
+    Parameters:
+        run: A ``db`` run, recorded already.
+
+    Returns:
+        A message naming each problem `benchmarks.resort_probe` found, or None for a run
+        without a probe or with a valid one.
+    """
     problems = run['details'].get('resort_probe', {}).get('problems')
-    if problems:
-        raise SystemExit('the re-sort probe is not a valid measurement: ' + '; '.join(problems))
+    if not problems:
+        return None
+    return 'the re-sort probe is not a valid measurement: ' + '; '.join(problems)
 
 
 def _dump_and_replay(
@@ -576,8 +613,8 @@ def _dump_and_replay(
         memcached_binary: The memcached program.
         run: The run to record the plans in.
         commit_capture: Whether to copy the capture to `COMMITTED_CAPTURE` as well.
-        probe_resort: Whether to run `benchmarks.resort_probe.probe` after the replay, on
-            its connection, into the run's metrics, samples and details.
+        probe_resort: Whether to run `record_resort_probe` after the replay, on its
+            connection.
     """
     config = load_web_config(scale=label.scale)
     memcached = MemcachedServer(
@@ -606,10 +643,7 @@ def _dump_and_replay(
     with contextlib.closing(server.connect(schema)) as connection:
         entries = query_capture.replay(connection, blocks)
         if probe_resort:
-            probe_metrics, probe_samples, probe_details = resort_probe.probe(connection, blocks)
-            run['metrics'].update(probe_metrics)
-            run['samples'].update(probe_samples)
-            run['details']['resort_probe'] = probe_details
+            record_resort_probe(run, connection, blocks)
     run['details']['plans'] = entries
     run['details']['capture'] = str(capture)
     run['details']['capture_server_model'] = bench.gunicorn.server_model

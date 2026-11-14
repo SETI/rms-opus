@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import MySQLdb
 import pytest
 
 from benchmarks import bench_db, resort_probe
@@ -253,3 +254,60 @@ def test_bench_db_refuses_the_probe_without_a_capture(monkeypatch: pytest.Monkey
     arguments += ['--python', 'python', '--repo-root', '.', '--resort-probe']
     with pytest.raises(SystemExit, match='--resort-probe re-sorts'):
         bench_db.main(arguments)
+
+
+class _RefusingServer(_ProbeServer):
+    """A server that refuses the generated shape's statement."""
+
+    def execute(self, statement: str, parameters: Any) -> None:
+        """Refuse an EXPLAIN ANALYZE naming the built search's rows."""
+        if '`probe_set`' in statement:
+            raise MySQLdb.OperationalError(1054, "Unknown column 'probe_set.obs_general_id'")
+        super().execute(statement, parameters)
+
+
+def test_a_probe_the_server_refuses_is_recorded_as_a_failed_measurement() -> None:
+    """A server error in a shape's statement is a problem of the run, not an exception."""
+    server = _RefusingServer({'captured': 30, 'generated': 30}, 30)
+    metrics, samples, details = resort_probe.measure(server, _blocks())
+    assert metrics == {'db.resort_probe.broad.valid': 0.0}
+    assert samples == {}
+    assert len(details['problems']) == 1
+    assert 'probe_set.obs_general_id' in details['problems'][0]
+
+
+def test_a_capture_without_the_shapes_is_recorded_as_a_failed_measurement() -> None:
+    """A re-sorted request that built no search leaves nothing to time, and says so."""
+    server = _ProbeServer({'captured': 30, 'generated': 30}, 30)
+    metrics, _samples, details = resort_probe.measure(server, _blocks(inserts=0))
+    assert metrics == {'db.resort_probe.broad.valid': 0.0}
+    assert 'build a search' in details['problems'][0]
+    assert server.executed == []
+
+
+def test_a_probe_that_runs_is_measured_as_probe_measures_it() -> None:
+    """With nothing failing, the result is the probe's own."""
+    server = _ProbeServer({'captured': 30, 'generated': 30}, 30)
+    metrics, samples, details = resort_probe.measure(server, _blocks())
+    assert metrics['db.resort_probe.broad.valid'] == 1.0
+    assert len(samples['db.resort_probe.broad.captured.time_s']) == EXPLAIN_RUNS
+    assert details['problems'] == []
+
+
+def test_bench_db_records_a_failed_probe_and_then_fails() -> None:
+    """A probe the server refused is added to the run with the run's other figures kept,
+    and makes the command fail; a run with a valid probe, or none, does not."""
+    server = _RefusingServer({'captured': 30, 'generated': 30}, 30)
+    run: dict[str, Any] = {
+        'metrics': {'db.schema.data_bytes': 1.0},
+        'samples': {},
+        'details': {'plans': []},
+    }
+    bench_db.record_resort_probe(run, server, _blocks())
+    assert run['metrics'] == {'db.schema.data_bytes': 1.0, 'db.resort_probe.broad.valid': 0.0}
+    assert run['details']['plans'] == []
+    failure = bench_db.probe_failure(run)
+    assert failure is not None
+    assert 'probe_set.obs_general_id' in failure
+    assert bench_db.probe_failure({'details': {'resort_probe': {'problems': []}}}) is None
+    assert bench_db.probe_failure({'details': {}}) is None
