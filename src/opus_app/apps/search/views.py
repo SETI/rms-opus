@@ -1696,21 +1696,19 @@ def _search_select(
                 )
                 return None
             if mult_values:
-                mult_column = sql_builder.column(param_info.name, cat_name)
                 mult_clause: sql_builder.Expr
                 if form_type == 'GROUP':
                     # Single-valued mult. We can be efficient by seeing if the field
                     # contents is in the list of search values.
-                    mult_clause = sql_builder.in_values(mult_column, mult_values)
+                    mult_clause = sql_builder.in_values(
+                        sql_builder.column(param_info.name, cat_name), mult_values
+                    )
                 else:
-                    # Multi-valued mult (multisel). We have to see if each search value
-                    # is in the database field list, so we have to check them one by one.
-                    mult_clause = sql_builder.join_exprs(
-                        [
-                            sql_builder.json_contains(mult_column, str(mult_value))
-                            for mult_value in mult_values
-                        ],
-                        'OR',
+                    # Multi-valued mult (multisel): the column holds a list, and the
+                    # observation matches when the list holds any of the search values,
+                    # which its junction table answers.
+                    mult_clause = sql_builder.list_contains_any(
+                        cat_name, param_info.name, mult_values
                     )
                 category = resolve_category(cat_name)
                 if category.is_selector:

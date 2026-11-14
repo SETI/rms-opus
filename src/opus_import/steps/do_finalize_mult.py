@@ -8,9 +8,10 @@ or added can stop or start referencing any value. It has three parts:
    ``mult`` rows whose id no observation holds are deleted. The ids in use are read one
    scan per observation table, through an unbuffered cursor, with each column's
    distinct ids collected here, so a table whose mult columns carry no key is read once
-   rather than once a column. A ``mult_list`` column's ids are read out of its JSON list
-   in the same scan. A pinned field keeps every row its list gives, since the list is
-   the intended set of choices; the one row it may hold beyond them, the absent value
+   rather than once a column. A ``mult_list`` column's ids are read from its junction
+   table (`opus_import.list_junctions`), whose primary key leads with the id, so the
+   distinct ids are read from the key without a scan of the observation table. A pinned
+   field keeps every row its list gives, since the list is the intended set of choices; the one row it may hold beyond them, the absent value
    the import adds under `opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted
    like any other once no observation holds it. A deleted id is free again: the next
    value the import adds to the field takes the field's highest id plus one, which can
@@ -27,12 +28,11 @@ deletes the groups left empty and ranks the fields it touched with the same func
 
 from __future__ import annotations
 
-import json
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 import opus_support
-from opus_import import import_util, mult_fields
+from opus_import import import_util, list_junctions, mult_fields
 from opus_import.mult_fields import MULT_GROUP_TABLE, MULT_TABLE
 from opus_import.mult_rank import RankedGroup, RankedValue, group_ranks, value_ranks
 from opus_import.steps.do_import_mult import ABSENT_VALUE, option_rows
@@ -79,6 +79,9 @@ def finalize_mult(ctx: ImportContext) -> bool:
 def referenced_mult_ids(ctx: ImportContext) -> dict[str, set[int]]:
     """Return the ids each mult field's columns hold, one scan of each observation table.
 
+    A ``mult_list`` column's ids are read from its junction table instead, by its primary
+    key, and its table is scanned only for its other mult columns.
+
     Parameters:
         ctx: The import run's context, for the open database.
 
@@ -95,21 +98,26 @@ def referenced_mult_ids(ctx: ImportContext) -> dict[str, set[int]]:
         if schema is None:
             continue
         columns = [entry for entry in schema if mult_fields.is_mult_column(entry)]
+        lists = set(list_junctions.list_columns(columns))
+        for entry in columns:
+            if entry['field_name'] not in lists:
+                continue
+            name = import_util.mult_field_name(table_name, entry['field_name'], entry)
+            junction = q(list_junctions.junction_table(table_name, entry['field_name']))
+            mult_id = q(list_junctions.JUNCTION_MULT_COLUMN)
+            rows = db.general_select(f'DISTINCT {mult_id} FROM {junction}')  # nosec B608
+            used[name] |= {int(row[0]) for row in rows}
+        columns = [entry for entry in columns if entry['field_name'] not in lists]
         if not columns:
             continue
         names = [
             import_util.mult_field_name(table_name, entry['field_name'], entry) for entry in columns
         ]
-        is_list = [entry['field_type'] == 'mult_list' for entry in columns]
         found: list[set[int]] = [set() for _ in columns]
         selected = ','.join(q(entry['field_name']) for entry in columns)
         for row in db.stream_select(f'{selected} FROM {q(table_name)}'):  # nosec B608
             for index, stored in enumerate(row):
-                if stored is None:
-                    continue
-                if is_list[index]:
-                    found[index].update(int(mult_id) for mult_id in json.loads(stored))
-                else:
+                if stored is not None:
                     found[index].add(int(stored))
         for name, ids in zip(names, found, strict=True):
             used[name] |= ids

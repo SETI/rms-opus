@@ -67,6 +67,7 @@ from typing import Any, NamedTuple
 
 from django.db import connection
 
+from opus_import import list_junctions
 from opus_import.table_keys import NGRAM_TOKEN_SIZE
 from opus_support import UNSTORED_ASCII_CHARACTER
 
@@ -237,15 +238,6 @@ def min_of(expr: Expr) -> Expr:
 def max_of(expr: Expr) -> Expr:
     """Return `MAX(expr)`."""
     return _function('MAX', expr)
-
-
-def json_contains(expr: Expr, val: Any) -> Expr:
-    """Return `JSON_CONTAINS(expr, %s)`, testing membership of a JSON array.
-
-    MULTIGROUP fields hold a JSON list of mult ids, so a search for one value has
-    to ask whether the list contains it rather than whether the column equals it.
-    """
-    return _function('JSON_CONTAINS', expr, value(val))
 
 
 def json_extract_first(expr: Expr) -> Expr:
@@ -482,29 +474,6 @@ def search_results_source(search_id: int) -> Subquery:
 
 
 @dataclass(frozen=True)
-class JSONTable:
-    """A `JSON_TABLE(...)` table source that unpacks a JSON array into rows.
-
-    Renders `JSON_TABLE(<column>, "$[*]" COLUMNS (<value_column> TEXT PATH "$"))`,
-    which turns each element of a MULTIGROUP column's JSON list into its own row
-    so the elements can be counted.
-    """
-
-    source_column: Expr
-    value_column: str
-    alias: str
-
-    def render(self) -> tuple[str, list[Any]]:
-        """Return the `(sql, params)` of this source as it appears in a FROM clause."""
-        return (
-            f'JSON_TABLE({self.source_column.sql}, "$[*]" COLUMNS '
-            f'({quote_identifier(self.value_column)} TEXT PATH "$")) '
-            f'{quote_identifier(self.alias)}',
-            list(self.source_column.params),
-        )
-
-
-@dataclass(frozen=True)
 class AliasedTable:
     """A table joined under an alias, rendered `<table> AS <alias>`.
 
@@ -529,9 +498,9 @@ class AliasedTable:
         return sql, []
 
 
-TableSource = str | Subquery | JSONTable | AliasedTable
-"""The sources a FROM clause or a join can name -- a table, a `Subquery`, a `JSONTable` or
-an `AliasedTable`."""
+TableSource = str | Subquery | AliasedTable
+"""The sources a FROM clause or a join can name -- a table, a `Subquery` or an
+`AliasedTable`."""
 
 
 def _render_source(source: TableSource) -> tuple[str, list[Any]]:
@@ -566,6 +535,42 @@ def exists(source: TableSource, where: Expr) -> Expr:
     )
 
 
+def list_contains_any(table: str, column_name: str, mult_ids: Sequence[int]) -> Expr:
+    """Return the condition that an observation's ``mult_list`` column holds any of some ids.
+
+    The column's junction table (`opus_import.list_junctions`) holds one row per id of
+    each observation's list, so the condition is a semi-join on it: `EXISTS (SELECT 1 FROM
+    <junction> WHERE <junction>.obs_general_id=obs_general.id AND <junction>.mult_id IN
+    (%s,...))`, one placeholder per id, which reads the junction table's
+    ``(mult_id, obs_general_id)`` primary key. The statement it goes into names
+    ``obs_general``.
+
+    Parameters:
+        table: The table holding the column.
+        column_name: The ``mult_list`` column.
+        mult_ids: The ids, any of which the list must hold, bound as the integers they
+            are.
+
+    Returns:
+        An `Expr` whose parameters are the ids, in order.
+    """
+    junction = list_junctions.junction_table(table, column_name)
+    where = join_exprs(
+        [
+            columns_equal(
+                column(list_junctions.JUNCTION_OBSERVATION_COLUMN, junction),
+                column('id', 'obs_general'),
+            ),
+            in_values(
+                column(list_junctions.JUNCTION_MULT_COLUMN, junction),
+                list(mult_ids),
+            ),
+        ],
+        'AND',
+    )
+    return exists(junction, where)
+
+
 @dataclass(frozen=True)
 class Join:
     """One join onto a table source."""
@@ -574,19 +579,15 @@ class Join:
     kind: str
     #: The table name, or other `TableSource`, being joined in.
     source: TableSource
-    #: The ON condition, or None for a `JSON_TABLE` join, which has none.
-    on: Expr | None = None
+    #: The ON condition.
+    on: Expr
 
     def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this join."""
         if self.kind not in ('INNER', 'LEFT'):
             raise ValueError(f'Unsupported join kind: {self.kind!r}')
         source_sql, params = _render_source(self.source)
-        sql = f' {self.kind} JOIN {source_sql}'
-        if self.on is not None:
-            sql += f' ON {self.on.sql}'
-            params = params + list(self.on.params)
-        return sql, params
+        return f' {self.kind} JOIN {source_sql} ON {self.on.sql}', params + list(self.on.params)
 
 
 @dataclass
@@ -602,7 +603,7 @@ class FromSource:
     source: TableSource
     joins: list[Join] = field(default_factory=list)
 
-    def add_join(self, kind: str, source: TableSource, on: Expr | None = None) -> 'FromSource':
+    def add_join(self, kind: str, source: TableSource, on: Expr) -> 'FromSource':
         """Append a join to this source and return self."""
         self.joins.append(Join(kind, source, on))
         return self

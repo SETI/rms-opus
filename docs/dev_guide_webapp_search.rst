@@ -360,8 +360,21 @@ Four builders produce the clauses:
 Mult fields are handled inline in ``_search_select``: the user's readable labels are
 looked up in the worker's copy of the field's ``mult`` rows
 (:func:`~opus_app.apps.tools.import_constants.mult_table`) to get their ids, and a
-``GROUP`` field becomes an ``IN`` test while a ``MULTIGROUP`` field becomes an OR of JSON
-containment tests, because it holds a list. The surface geometry selector,
+``GROUP`` field becomes an ``IN`` test. A ``MULTIGROUP`` field holds a list, so it
+becomes a semi-join on the column's junction table
+(:func:`~opus_app.apps.tools.sql_builder.list_contains_any`), with the ids bound as
+integers::
+
+    EXISTS (SELECT 1 FROM obs_general_target_name
+            WHERE obs_general_target_name.obs_general_id = obs_general.id
+              AND obs_general_target_name.mult_id IN (%s, ...))
+
+The junction table holds one row per id of each observation's list, keyed
+``(mult_id, obs_general_id)``, so the test reads the rows of the selected values from its
+primary key, and an observation matches once however many of them its list holds
+(:ref:`dev_guide_database_schema_junction_tables`). The counts of a ``MULTIGROUP``
+field's values read the same table, grouping its rows by ``mult_id`` and joining them to
+the search's rows of ``search_results``. The surface geometry selector,
 ``obs_surface_geometry_name.target_name``, is the one field whose category holds several
 rows of an observation, one per body, so its test is put as ``EXISTS (SELECT 1 FROM
 obs_surface_geometry_target AS obs_surface_geometry_name WHERE

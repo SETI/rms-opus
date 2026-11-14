@@ -1394,3 +1394,75 @@ def test_a_schema_without_obs_preview_has_no_previews_to_check() -> None:
     do_validate.validate_previews(ctx)
     assert ctx.logger.messages_at('error') == []
     assert db.queries == []
+
+
+class _JunctionDB:
+    """A stand-in holding obs_general, its junction tables, and a disagreement count."""
+
+    def __init__(self, tables: list[str], mismatches: dict[str, tuple[int, int | None]]) -> None:
+        """Hold the tables and what each junction table's comparison finds."""
+        self.tables = tables
+        self.mismatches = mismatches
+        self.compared: list[tuple[str, str, str, str]] = []
+
+    def table_names(self, prefix: str) -> list[str]:
+        """Return the observation tables."""
+        assert prefix == 'obs_'
+        return list(self.tables)
+
+    def list_junction_mismatches(
+        self, table_name: str, column: str, junction: str, observation_column: str
+    ) -> tuple[int, int | None]:
+        """Record the comparison and return its count and first observation."""
+        self.compared.append((table_name, column, junction, observation_column))
+        return self.mismatches.get(junction, (0, None))
+
+
+_JUNCTIONS = ['obs_general', 'obs_general_target_class', 'obs_general_target_name', 'obs_pds']
+
+
+def test_each_list_column_is_compared_with_its_junction_table() -> None:
+    """Both of obs_general's list columns are compared, by its own id; agreement is quiet."""
+    db = _JunctionDB(_JUNCTIONS, {})
+    ctx = make_context(db=db)
+    do_validate.validate_junctions(ctx)
+    assert sorted(db.compared) == [
+        ('obs_general', 'target_class', 'obs_general_target_class', 'id'),
+        ('obs_general', 'target_name', 'obs_general_target_name', 'id'),
+    ]
+    assert ctx.logger.messages_at('error') == []
+
+
+def test_a_junction_table_that_disagrees_with_its_lists_is_an_error() -> None:
+    """The junction table, the column, the count and the first observation are named."""
+    db = _JunctionDB(_JUNCTIONS, {'obs_general_target_name': (3, 17)})
+    ctx = make_context(db=db)
+    do_validate.validate_junctions(ctx)
+    assert ctx.logger.messages_at('error') == [
+        'Junction table "obs_general_target_name" disagrees with obs_general.target_name '
+        'for 3 observations, the first with obs_general id 17'
+    ]
+
+
+def test_a_missing_junction_table_is_an_error() -> None:
+    """A list column without its junction table is reported, and nothing is compared."""
+    db = _JunctionDB(['obs_general', 'obs_general_target_class'], {})
+    ctx = make_context(db=db)
+    do_validate.validate_junctions(ctx)
+    assert ctx.logger.messages_at('error') == [
+        'Table "obs_general" has no junction table "obs_general_target_name" for its '
+        'mult_list column "target_name"'
+    ]
+    assert [compared[2] for compared in db.compared] == ['obs_general_target_class']
+
+
+def test_do_validate_runs_the_junction_check(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``--validate`` compares the junction tables with the lists."""
+    called: list[object] = []
+    for name in dir(do_validate):
+        if name.startswith('validate_'):
+            monkeypatch.setattr(do_validate, name, lambda ctx, name=name: called.append(name))
+    ctx = make_context(db=SimpleNamespace())
+    monkeypatch.setattr(ctx.logger, 'close', lambda *args, **kwargs: (0, 0, 0, 0))
+    assert do_validate.do_validate(ctx)
+    assert 'validate_junctions' in called

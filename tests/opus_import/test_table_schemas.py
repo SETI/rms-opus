@@ -32,7 +32,7 @@ from typing import Any
 import pytest
 
 import opus_support
-from opus_import import import_util, mult_fields, schema_files
+from opus_import import import_util, list_junctions, mult_fields, schema_files
 from opus_import.importdb.mysql import (
     MYSQL_CHARSET_SQL,
     MYSQL_ENUM_FIELD_TYPE,
@@ -722,3 +722,69 @@ def test_every_tooltip_a_column_names_has_a_definition() -> None:
             if (term, context) not in defined:
                 wrong.append(f'{_where(name, column)}: {term!r} in {context!r}')
     assert wrong == []
+
+
+# ---------------------------------------------------------------------------
+# The junction tables of the list columns
+# ---------------------------------------------------------------------------
+
+
+def _list_columns() -> list[tuple[str, str]]:
+    """Return every ``mult_list`` column, as its table and its name."""
+    return [
+        (name.removesuffix('.json'), entry['field_name'])
+        for name, entry in _columns()
+        if entry['field_type'] == list_junctions.LIST_FIELD_TYPE
+    ]
+
+
+def _junction_schema() -> list[dict[str, Any]]:
+    """Return what a list column's junction schema must hold: the id and the observation,
+    keyed ``(mult_id, obs_general_id)``, with the key the per-bundle delete reads and the
+    foreign key onto ``obs_general``."""
+    mult_id = list_junctions.JUNCTION_MULT_COLUMN
+    observation = list_junctions.JUNCTION_OBSERVATION_COLUMN
+    return [
+        {'field_name': mult_id, 'field_type': 'mult_idx', 'field_notnull': True},
+        {'field_name': observation, 'field_type': 'uint4', 'field_notnull': True},
+        {'primary_key': [mult_id, observation]},
+        {'key': [observation]},
+        {'foreign_key': {'columns': [observation], 'references': ['obs_general', 'id']}},
+    ]
+
+
+def test_the_list_columns_are_on_obs_general() -> None:
+    """A list column's junction table names its observation by ``obs_general_id``, and the
+    application correlates it with ``obs_general``."""
+    assert _list_columns()
+    assert {table for table, _ in _list_columns()} == {'obs_general'}
+
+
+def test_every_list_column_has_its_junction_schema() -> None:
+    """Each ``mult_list`` column has a schema file named for its junction table, holding
+    exactly the junction's columns and keys (the notes aside)."""
+    wrong = []
+    for table, column in _list_columns():
+        junction = list_junctions.junction_table(table, column)
+        path = _SCHEMA_DIR / f'{junction}.json'
+        if not path.is_file():
+            wrong.append(f'{junction}: no schema file')
+            continue
+        entries = [
+            {key: value for key, value in entry.items() if key not in ('comment', 'comments')}
+            for entry in _load(path)
+        ]
+        if entries != _junction_schema():
+            wrong.append(f'{junction}: {entries}')
+    assert wrong == []
+
+
+def test_every_junction_schema_belongs_to_a_list_column() -> None:
+    """A schema holding a ``mult_id`` column is a list column's junction table."""
+    junctions = {list_junctions.junction_table(table, column) for table, column in _list_columns()}
+    holding = {
+        name.removesuffix('.json')
+        for name, entry in _columns()
+        if entry['field_name'] == list_junctions.JUNCTION_MULT_COLUMN
+    }
+    assert holding == junctions

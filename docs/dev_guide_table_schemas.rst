@@ -27,6 +27,16 @@ Two files are not tables:
     -- and :mod:`opus_import.steps.do_dictionary` reads them to fill the
     ``definitions`` table.
 
+Each ``mult_list`` column has a junction table, ``<table>_<column>``, with a schema file
+of its own: ``obs_general_target_name.json`` and ``obs_general_target_class.json``. Its
+columns are ``mult_id``, one id of the list, and ``obs_general_id``; its primary key is
+``(mult_id, obs_general_id)``; it declares a table-level ``key`` on ``obs_general_id`` and
+a table-level ``foreign_key`` onto ``obs_general``. The import creates it after the
+table holding the column and fills it from that table's rows, so it has no
+``data_source`` (:ref:`dev_guide_database_schema_junction_tables`).
+``tests/opus_import/test_table_schemas.py`` requires every ``mult_list`` column to have
+such a file, and every file holding ``mult_id`` to be one.
+
 ``obs_surface_geometry_target.json`` is the schema of ``obs_surface_geometry_target``
 and also a *template* of the surface geometry categories: each body's category,
 ``obs_surface_geometry__<target>``, reads it with ``<TARGET>`` in its ``pi_*`` values
@@ -163,8 +173,9 @@ Defining the column
        ``obs_files`` declares its key ``(opus_id, short_name, version_name)`` this way,
        ``obs_general`` its keys ``(time1, opus_id)``, ``(right_asc, d_right_asc)`` and
        ``(declination1, declination2)``, ``obs_ring_geometry`` a key over each
-       longitude column and its ``d_`` partner, and ``obs_surface_geometry_target`` a
-       key on ``obs_general_id`` and keys that start with ``target_name``.
+       longitude column and its ``d_`` partner, ``obs_surface_geometry_target`` a
+       key on ``obs_general_id`` and keys that start with ``target_name``, and each
+       junction table of a ``mult_list`` column a key on ``obs_general_id``.
        A ``primary_key``, ``unique``, ``key`` or ``fulltext`` entry whose value is not a
        non-empty list of column names is refused.
    * - ``fulltext``
@@ -216,11 +227,12 @@ recognize raises :exc:`NotImplementedError` rather than being guessed at.
      - Needs ``field_enum_options``.
    * - ``mult_idx``
      - ``smallint unsigned``
-     - The id of a ``mult`` row of this column's mult field.
+     - The id of a ``mult`` row of this column's mult field; in a junction table, of the
+       ``mult_list`` column's field.
    * - ``mult_list``
      - ``JSON``
      - A list of ids of ``mult`` rows of this column's mult field, for a column an
-       observation can have several values of.
+       observation can have several values of. The column has a junction table.
    * - ``json``
      - ``JSON``
      - Arbitrary JSON that is not a list of mult ids.

@@ -30,6 +30,7 @@ from opus_import import (
     config_data,
     import_processes,
     import_util,
+    list_junctions,
     mult_fields,
     schema_version,
     table_keys,
@@ -302,7 +303,8 @@ def create_tables_for_import(
     `opus_import.config_data` lists is created if a packaged schema defines it, with the
     mission and instrument placeholders filled in for this bundle. A table with no schema
     is skipped, which is how a bundle ends up with only the tables its instrument has
-    columns in.
+    columns in. Each ``mult_list`` column's junction table
+    (`opus_import.list_junctions`) is created after the table holding the column.
 
     Parameters:
         ctx: The import run's context, for the open database and the caches.
@@ -310,7 +312,8 @@ def create_tables_for_import(
 
     Returns:
         The schema of each table, keyed by table name, and the table names in the order
-        the import should populate them.
+        the import should populate them; neither names a junction table, whose rows the
+        import derives from its observation table's (`opus_import.list_junctions`).
     """
     db = ctx.db
     assert db is not None
@@ -343,6 +346,13 @@ def create_tables_for_import(
         table_schemas[table_name] = table_schema
         table_names_in_order.append(table_name)
         db.create_table(table_name, table_schema)
+        for column in list_junctions.list_columns(table_schema):
+            junction = list_junctions.junction_table(table_name, column)
+            junction_schema = import_util.read_schema_for_table(ctx, junction)
+            # Every mult_list column has a packaged junction schema
+            # (tests/opus_import/test_table_schemas.py).
+            assert junction_schema is not None
+            db.create_table(junction, junction_schema)
 
     return table_schemas, table_names_in_order
 

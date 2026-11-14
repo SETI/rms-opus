@@ -7633,6 +7633,199 @@ Nothing above this line is rewritten by an executor.
   guide: nothing read it, since `ObsPreview.field_obs_preview_preview_images` asks
   rms-pdsfile whether an observation has a view set.
 
+### 2026-11-14, PR-20 (written against this file at 92aed872)
+
+- The branch is PR-19's head (92aed872), stacked on it.
+- **The junction tables.** `obs_general_target_name` and `obs_general_target_class`, each
+  `(mult_id SMALLINT UNSIGNED, obs_general_id INT UNSIGNED)`, primary key
+  `(mult_id, obs_general_id)`, a table-level `{"key": ["obs_general_id"]}` (in PR-07's keep
+  set, since the table starts `obs_` and its primary key does not lead with
+  `obs_general_id`) and a table-level `foreign_key` onto `obs_general.id` (restrict),
+  which finalization adds with the other children's. `mult_id` is declared `mult_idx`,
+  the field type that renders PR-14's id width. Each has a schema file of its own named
+  for the table. The name is `<table>_<column>` (`opus_import.list_junctions.junction_table`),
+  and the column names are the module's constants, read by the import, the application
+  and `golden_io`. `tests/opus_import/test_table_schemas.py` requires every `mult_list`
+  column to be on `obs_general`, to have a junction schema of exactly that shape (the
+  notes aside), and every schema holding a `mult_id` column to be one.
+- **The junction tables are not in `config_data.TABLES_TO_POPULATE`**, which lists the
+  tables the field functions compute row by row: `create_tables_for_import` creates each
+  junction table after the table holding its column, and returns neither in its schemas
+  nor in its order. Because their names start `obs_`, every step that iterates the
+  server's `obs_` tables reaches them unchanged: the per-bundle delete and its delete of
+  rows above a bundle's highest id (joined through `obs_general_id`, read by the key the
+  table is created with), `TableRowSink.discard`, the duplicate step, scorched earth,
+  finalization's keys and foreign keys, `ANALYZE`, the orphan count and the other
+  validations (`validate_param_info` skips a column starting `mult_` and
+  `obs_general_id`; `do_param_info` reads a junction schema and finds no `pi_` column);
+  `table_names` is hand-written and gains no row. The orphan count covers one direction
+  only, a junction row whose observation is gone; `validate_junctions` (the review fixes
+  below) compares each list with its junction rows both ways.
+- **The rows are written by `TableRowSink.add`**, from each `obs_general` row's final
+  values: the sink runs in the import's process after PR-09's replay has resolved every
+  placeholder, so the serial path and every pool size write the same junction rows, from
+  the JSON text the row stores (`list_junctions.junction_rows`, which reads the array and
+  keeps each id once, at its first place). A junction table loads by
+  `transaction_rows` like any other table, and `finish` loads it after the listed tables.
+- **The search** is `sql_builder.list_contains_any(table, column_name, mult_ids)`, not
+  the section's `(column, values)`: the junction table's name comes from the table and
+  column names, which an `Expr` does not carry. It renders `EXISTS (SELECT 1 FROM
+  <junction> WHERE <junction>.obs_general_id=obs_general.id AND <junction>.mult_id IN
+  (%s,...))`, one call for a multi-value selection. The ids are bound as the integers
+  `MultTable.ids_for` returns; the `str()` the old call added is gone. The two pinned SQL
+  texts in `integration_tests/apps_db_tests/test_search.py` change with it (the SQL and
+  the parameters' type); no API golden is involved.
+- **The mult count** of a `MULTIGROUP` field is `SELECT <junction>.mult_id, COUNT(*) FROM
+  <junction> [, <search's search_results rows> WHERE <junction>.obs_general_id =
+  results.id] GROUP BY <junction>.mult_id`. `category.restrict` applies to the other
+  fields only (the list columns are on `obs_general`, which restricts nothing).
+  **An observation counts once per distinct value**, where `JSON_TABLE` counted a value
+  once per place in the list. No list repeats an id at either scale: at fixture scale
+  every one of the 399 observations' `target_name` and `target_class` lists holds exactly
+  one id (the import goldens), and `pr19local`'s 29,752 observations hold 29,752 ids in
+  each column (`SUM(JSON_LENGTH(...))`), no NULL and no repeated id; so no golden could
+  change, and none did.
+- `sql_builder.JSONTable` and `sql_builder.json_contains` had no caller left and are
+  removed with their tests and their entries in the tools guide; `json_extract_first`
+  stays, since a sort on a `MULTIGROUP` field orders by the label of the list's first
+  entry. The JSON join was the only join without an `ON` condition, so `Join.on` and
+  `FromSource.add_join`'s `on` are required (the integration job's coverage run found
+  the `on is None` branch unreached once it was gone).
+- **PR-14's unused-value cleanup** reads a list column's ids in use with `SELECT DISTINCT
+  mult_id FROM <junction>`, from the junction table's primary key, and scans
+  `obs_general` only for its other mult columns. `import_tests/test_mult.py`'s own check
+  of unreferenced values still reads the JSON, so it cross-checks the junction tables.
+- `models.py` is edited: `ObsGeneralTargetClass` and `ObsGeneralTargetName`, each a
+  `CompositePrimaryKey('mult_id', 'obs_general_id')` with the `ForeignKey` onto
+  `ObsGeneral` that `create_opus_models.sh`'s rule names, which is what `opus_manage
+  inspectdb obs_general_target_class obs_general_target_name` against `pr20local` gives
+  before the script's rules. The application reads neither through the ORM.
+- `import_tests/tools/golden_io`'s mult-value mode maps a junction table's `mult_id` to
+  the value its list column's field names, as it does the JSON column's ids.
+- `SCHEMA_VERSION` is 12.
+- **Import goldens:** the two junction tables' files are added and `schema_version.tsv`
+  changes (11 to 12), nothing else (`make_mini_goldens`). Each junction file equals the
+  rows derived from `obs_general.tsv`'s lists (checked by a script). On `pr20local` both
+  junction tables hold 29,752 rows and an anti-join of each column's `JSON_TABLE` rows
+  against its junction table finds none missing.
+- **`bench_db --resort-probe`** (`benchmarks/resort_probe.py`), which needs
+  `--dump-queries` and runs after the replay on its connection:
+  - the **captured** shape is the inner `SELECT` of the one `INSERT INTO search_results`
+    of the block `resort.broad/resorted`;
+  - the **built search** is the one search id the block `resort.broad/default_order`
+    reads (``search_results`.`search_id` = N``); the search is built by `search.broad`
+    earlier in the capture or by that request itself;
+  - the **generated** shape is the captured `SELECT` with its own top-level `WHERE` (found
+    outside quotes and parentheses) replaced by `INNER JOIN search_results AS probe_set
+    ON probe_set.obs_general_id=obs_general.id WHERE probe_set.search_id = N`; the
+    select list, the window's order and any join for a sort column are the captured
+    statement's, and a top-level clause after the `WHERE` is refused rather than
+    dropped;
+  - each runs under `EXPLAIN ANALYZE` `EXPLAIN_RUNS` (5) times, the two alternating
+    (captured, generated, captured, ...), neither executed as a write, neither written
+    to a capture;
+  - metrics `db.resort_probe.broad.{captured,generated}.time_s` (the median wall-clock of
+    the `EXPLAIN ANALYZE`, as `db.plan.*.time_s` is timed, with the five times in the
+    run's `samples` under the same name, so `compare.py` takes the median and spread over
+    them), `.analyze_ms` (the median server-reported time to the top iterator's last
+    row, samples too), `.rows_returned` (each shape's exact count, by `SELECT COUNT(*)`
+    over it once after the timed runs; the review fixes below) and `.rows_examined` (from
+    the plans' access iterators), `db.resort_probe.broad.result_count` (the built search's
+    `user_searches.result_count`), `.ratio` (generated `time_s` over captured) and
+    `.valid` (1 or 0); `details.resort_probe` holds both statements, the built search's
+    id, every execution's figures, each shape's plain spread (range over median), the
+    last tree of each and the problems;
+  - **valid** only when the result count is non-zero, both shapes' exact counts equal
+    it, and both plans examined rows in every execution; an invalid probe, or one that
+    cannot run, is recorded (the run is appended) and then `bench_db` exits with an error
+    naming the problems.
+  - Only the broad search is probed (`resort_probe.PROBE_SEARCH`), the one PR-21's gate
+    names. A smoke run of `resort_probe.probe` on `pr20local`, with the two blocks
+    captured through Django's `CaptureQueriesContext` around the two requests, found a
+    valid measurement: both shapes returned the built search's 29,730 rows. Its times are
+    not a measurement (the shared server, not the harness) and are not recorded here.
+- Every new test was mutation-checked: each of 15 mutations of `resort_probe.py` and one of
+  `bench_db`'s refusal, 11 of the sink, `list_junctions`, the mult step's reads and
+  `list_contains_any`, and 3 of the schema files (a junction without its
+  `obs_general_id` key, its primary key reversed, a stray `mult_id` column) failed its
+  tests.
+- Results at e82c1e99: the gates pass (`run-all-checks.sh`, 3,165 unit tests); the import
+  suite 195 passed and 3 skipped; the integration job's run (`tests/opus_support`,
+  `tests/opus_app` and `integration_tests`, with coverage) 2,896 passed against
+  `pr20local` at 100% coverage. `pr20local` was built by `import_for_tests.sh` with this
+  branch's import code, which the later commits do not change. **No integration golden
+  changed.**
+- **The measurement** (§2.3; PR-20 imports twice, test scale), for the orchestrator: base
+  at 92aed872 and head each in its own worktree and virtual environment; three fixture
+  imports a side, A B B A A B, and one test-scale import a side, A B, each into its own
+  schema; `bench_web` runs alternated A B B A at §2.6's test-scale count, each side
+  serving its own schema; then `bench_db --dump-queries --resort-probe` once a side
+  against its own test-scale schema (the head's last, with `--commit-capture`). An
+  invalid probe makes that `bench_db` exit non-zero after recording its run.
+  - Target: `web.app-cold.search.target.wall_s`; secondary, the target mult counts,
+    `web.app-cold.fanout.empty.mults_target.latency_s` and
+    `web.app-cold.fanout.selected.mults_target.latency_s`. Their plans:
+    `db.plan.search.target/result_count.*` (on the head, a semi-join on
+    `obs_general_target_name`) and `db.plan.fanout.{empty,selected}/mults_target.*`
+    (on the head, the junction table grouped by `mult_id`), with the trees in the
+    result's details.
+  - For PR-21's gate, from the after side's `bench_db` run:
+    `db.resort_probe.broad.generated.time_s` against `.captured.time_s` (and `.ratio`),
+    their spreads from the samples, `db.resort_probe.broad.valid`, both shapes'
+    `.rows_returned` and `.result_count`. The before side's run gives the same figures
+    on PR-19's schema.
+- **Review fixes (2026-11-14)**, at the orchestrator's decisions on an independent review
+  and CodeRabbit's; each behavior fix has a test that fails with it reverted
+  (mutation-checked):
+  - *A probe that cannot run.* A capture without the `resort.broad` blocks, a re-sorted
+    request that built no search, or a statement the server refused raised out of
+    `bench_db` before `append_runs`, losing the side's replay plans. `resort_probe.measure`
+    records `ProbeError` or `MySQLdb.Error` as a failed measurement (`valid` 0, the error
+    as its problem, no samples), `bench_db.record_resort_probe` adds it to the run, and
+    `bench_db.probe_failure` makes the command exit non-zero after the run is recorded.
+  - *The junction tables against the lists.* `do_validate.validate_junctions` compares,
+    for each `mult_list` column, the distinct ids of each observation's JSON list with
+    its junction rows both ways (`ImportDBMySQL.list_junction_mismatches`: two anti-joins,
+    one over `JSON_TABLE` rows reading the junction's primary key, one over the junction
+    reading `obs_general` by `id`), and logs an error naming the junction table, how many
+    observations disagree and the least `obs_general` id among them; a missing junction
+    table is an error too. On `pr20local` both columns compare clean; with one
+    observation's `target_name` row deleted and one stray `target_class` row inserted,
+    in a transaction rolled back after, each column reported one observation.
+  - *Exact row counts.* `EXPLAIN ANALYZE` prints a large row count rounded
+    (`rows=1.38e+06` for 1,381,234), so the probe's comparison of the plan's figure with
+    the result count would have failed a correct complete-scale measurement. Each
+    shape's rows are counted once, after the timed runs, by `SELECT COUNT(*) FROM
+    (<shape>) AS counted`, and that count is compared; the plans' figures stay in
+    `details.resort_probe.runs.<shape>.plan_rows`. The smoke run on `pr20local` repeated
+    with the exact count: both shapes 29,730 rows, the result count, valid.
+  - The database schema guide's paragraph on the JSON lists points to the junction
+    tables for the search and the counts and to `sql_builder.json_extract_first` for the
+    sort; the import overview says a junction row is queued when its `obs_general` row is
+    handed to the loader and may load before it; `list_junctions.JUNCTION_OBSERVATION_COLUMN`
+    is `table_keys.OBSERVATION_DELETE_COLUMN`; the long lines this PR added are reflowed.
+  - Results at 7db60d6d: the gates pass (3,176 unit tests); the import suite, whose
+    `--validate` runs `validate_junctions` on every fixture import, 195 passed and 3
+    skipped. The integration job's run was not repeated: nothing in this batch changes
+    `opus_app` or the import's output.
+
+### 2026-11-14, PR-21 (written against this file at b67a1150)
+
+- **Not executed: the gate failed.** PR-20's test-scale session `a` (2026-11-13), after
+  side (PR-20's head b67a1150 serving its own import, `bench_test_after_a_1`),
+  `bench_db --dump-queries --resort-probe`: the re-sort from `search_results` (generated)
+  took 41.0 ms against 20.3 ms for the captured re-sort (`time_s` medians of five
+  alternated `EXPLAIN ANALYZE` runs each; spreads 62.9% and 39.5%; server-reported 39.1
+  ms against 18.4 ms), a ratio of 2.02, where the gate asks for less than 0.75. The probe
+  is valid: both shapes returned 29,730 rows, the broad search's result count, and both
+  examined rows in every run (generated 59,460, captured 29,750). The before side (PR-19's
+  head on its own import) gave 28.2 ms against 13.5 ms, a ratio of 2.09.
+- The generated shape joins the built search's rows of `search_results` to `obs_general`
+  and still sorts every row, so it examines both tables' rows where the captured shape
+  examines `obs_general`'s alone; with the broad search matching nearly every
+  observation, the re-evaluated `WHERE` costs less than the join that would replace it.
+- PR-22 is stacked on PR-20.
+
 ### 2026-11-14, PR-22 (written against this file at 92aed872)
 
 - The branch is PR-19's head (92aed872); it is to be stacked on PR-20, and on PR-21 if its
@@ -7658,7 +7851,7 @@ Nothing above this line is rewritten by an executor.
   from `LIKE` on the fixture (below), so none is held back.
 - **The application reads the entries from the packaged schemas**,
   `opus_import.schema_files.packaged_fulltext_columns()`, cached per process, rather than
-  asking the server: `SCHEMA_VERSION` (12) already guarantees the served schema is this
+  asking the server: `SCHEMA_VERSION` (13) already guarantees the served schema is this
   release's. `schema_files` is a module of its own because `import_util` imports pdsfile
   and numpy, which a web worker has no use for; `TABLE_SCHEMA_DIR` moved into it, and the
   nine other files that read it from `import_util` (`docs/_ext` among them) read it
@@ -7739,7 +7932,8 @@ Nothing above this line is rewritten by an executor.
   and the `FULLTEXT` tablespaces (`db.schema.fulltext_bytes`, inside
   `db.schema.index_bytes`) are already recorded. `scenarios/queries.sql` is left for the
   measurement's capture.
-- **Import goldens**: only `schema_version.tsv` (11 to 12). **API goldens unchanged.**
+- **Import goldens**: only `schema_version.tsv` (13, over PR-20's 12). **API goldens
+  unchanged.**
 - **#1301 at test scale.** The issue's steps (instrument Cassini ISS, the OPUS ID typed a
   character at a time) do not reproduce at test scale on the base: `pr22local` holds no
   `co-iss-n1546733885`, and typed out for `co-iss-n1869660829`, which it holds, every
@@ -7947,3 +8141,10 @@ Nothing above this line is rewritten by an executor.
   - Results at 787704ae plus the pragma: the gates pass (3,172 unit tests); the import suite 207 passed and
     3 skipped; `pr22local` set up again from this branch, and the integration job's run
     2,930 passed at 100% coverage.
+- **Restacked on PR-20 (2026-11-14)**, PR-21 not being executed: PR-20's head c0c43fe9
+  is merged in. `SCHEMA_VERSION` is 13 and the import golden `schema_version.tsv` says
+  so, so a PR-20 database fails this branch's schema guard. The merge's conflicts were
+  side by side, each side's lines kept: `bench_db`'s `django_settings` beside
+  `probe_resort`, `sql_builder`'s and `test_table_schemas`'s imports, the table schemas
+  guide's key list (the junction tables' key, then `fulltext`), and these notes after
+  PR-20's and PR-21's.

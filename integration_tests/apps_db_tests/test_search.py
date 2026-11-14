@@ -3838,8 +3838,8 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,%s)'
-        expected_params = [str(_mult_id('obs_general.target_name', 'SATURN'))]
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE EXISTS (SELECT 1 FROM `obs_general_target_name` WHERE `obs_general_target_name`.`obs_general_id`=`obs_general`.`id` AND `obs_general_target_name`.`mult_id` IN (%s))'
+        expected_params = [_mult_id('obs_general.target_name', 'SATURN')]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -3852,10 +3852,10 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,%s) OR JSON_CONTAINS(`obs_general`.`target_name`,%s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE EXISTS (SELECT 1 FROM `obs_general_target_name` WHERE `obs_general_target_name`.`obs_general_id`=`obs_general`.`id` AND `obs_general_target_name`.`mult_id` IN (%s,%s))'
         expected_params = [
-            str(_mult_id('obs_general.target_name', 'SATURN')),
-            str(_mult_id('obs_general.target_name', 'JUPITER')),
+            _mult_id('obs_general.target_name', 'SATURN'),
+            _mult_id('obs_general.target_name', 'JUPITER'),
         ]
         print(expected)
         print(expected_params)
