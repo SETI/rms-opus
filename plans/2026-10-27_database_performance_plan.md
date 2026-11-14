@@ -7381,11 +7381,13 @@ Nothing above this line is rewritten by an executor.
   server's workers.
 - It no longer refuses Django's local-memory cache: the searches it builds are rows of
   `search_results`, found built whatever the cache holds, so only the cached answers are
-  lost without memcached. Against the integration database it makes 504 requests, for the
-  empty search and 63 common searches, in about 5 s; a user-interface request for a warmed search stores
-  no search and builds nothing.
+  lost without memcached. Against the integration database it makes 503 requests, for the
+  empty search and 63 common searches, in about 5 s; a user-interface request for a warmed
+  search stores no search and builds nothing.
 - `bench_web` passes its own server's root as `--url`.
-- Only the empty search's first page is also asked for through the public `api/data.json`:
-  the user interface asks for pages through `__api/dataimages.json` alone, and the
-  site-wide cache keeps an `api/data.json` answer only for that exact URL, which the
-  harness's `pages.empty` asks for and a common search's visitor never does.
+- No search's first page is asked for through `api/data.json`, only through
+  `__api/dataimages.json`, as the user interface asks for it. Both views are
+  `never_cache`, so the site-wide cache stores neither answer; each reads the search's
+  rows of `search_results` on every request, and the second would only read the same rows
+  again. The harness's `pages.empty`, which reads `api/data.json`, finds the search built
+  and its rows in the buffer pool all the same.

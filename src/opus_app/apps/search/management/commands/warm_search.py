@@ -8,8 +8,7 @@ a time, so that the first visitor after a deploy finds each search's results bui
 and the web server's workers past their first request:
 
 * for the empty search, its result count; its first page, through the results page's
-  ``__api/dataimages.json`` and through the public ``api/data.json``, whose answer the
-  site-wide cache keeps for a client asking for that first page exactly; the fan-out of
+  ``__api/dataimages.json``; the fan-out of
   the default widgets (``settings.DEFAULT_WIDGETS``): the range endpoints of those that
   are ranges, and the menu, which carries the triggered tables; and the mult counts of
   every mult field ``api/fields.json`` lists, so that opening any mult widget is a cache
@@ -110,7 +109,9 @@ def _search_requests(
 
     Returns:
         The URLs relative to the site's API root: the result count, the first page as the
-        results page asks for it, the range endpoints, the menu, then the mult counts.
+        results page asks for it, the range endpoints, the menu, then the mult counts. No
+        page answer is cached, so a page asked for through ``api/data.json`` as well
+        would read the same rows again.
     """
     search = f'{query}&' if query else ''
     requests = [
@@ -143,17 +144,15 @@ def warm_requests(fields: Sequence[tuple[str, str]], default_widgets: Sequence[s
 
     Returns:
         The URLs relative to the site's API root, in this order -- the result count, the
-        first page through ``__api/dataimages.json`` and through the public
-        ``api/data.json``, the range endpoints of each default widget that is a range,
-        the menu, then every mult field's counts, default widgets first.
+        first page as the results page asks for it, the range endpoints of each default
+        widget that is a range, the menu, then every mult field's counts, default widgets
+        first.
     """
     ranges, mults = _default_widgets_of(dict(fields), default_widgets)
     for slug, kind in fields:
         if kind == MULT_TYPE and slug not in mults:
             mults.append(slug)
-    requests = _search_requests('', ranges, mults)
-    requests.insert(2, f'api/data.json?page=1&limit={settings.DEFAULT_PAGE_LIMIT}')
-    return requests
+    return _search_requests('', ranges, mults)
 
 
 def value_search_requests(

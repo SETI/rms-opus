@@ -129,12 +129,11 @@ def test_the_fields_are_the_answers_in_order_each_once() -> None:
 
 
 def test_the_requests_are_the_landing_pages() -> None:
-    """Count, first page for the results page and the public API, ranges among the
-    defaults, the menu, then every mult."""
+    """Count, first page for the results page, ranges among the defaults, the menu, then
+    every mult."""
     assert warm_search.warm_requests(_FIELDS, ['instrument', 'time1', 'target']) == [
         '__api/meta/result_count.json?reqno=1',
         '__api/dataimages.json?page=1&limit=100&reqno=1',
-        'api/data.json?page=1&limit=100',
         '__api/meta/range/endpoints/time1.json?reqno=1',
         '__menu.json?reqno=1',
         '__api/meta/mults/instrument.json?reqno=1',
@@ -225,10 +224,8 @@ def test_a_request_that_fails_fails_the_command_after_the_others(site: _Site) ->
 
 def test_a_request_with_no_answer_is_a_failure(site: _Site) -> None:
     """An unreachable server is reported as a request that failed, not raised."""
-    site.silent = frozenset({'api/data.json?page=1&limit=100'})
-    with pytest.raises(
-        CommandError, match=r'api/data\.json\?page=1&limit=100 \(no answer: refused\)'
-    ):
+    site.silent = frozenset({'__menu.json?reqno=1'})
+    with pytest.raises(CommandError, match=r'__menu\.json\?reqno=1 \(no answer: refused\)'):
         _warm()
 
 
