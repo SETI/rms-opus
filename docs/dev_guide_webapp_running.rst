@@ -40,7 +40,8 @@ Running it from the command line
 
 Django management commands are how the application is administered: creating its contrib
 tables, gathering its static files, opening a shell with the models loaded, running
-the development server, and pruning its stored searches. There are three ways to reach them. The first two are the same
+the development server, pruning its stored searches, and warming the landing page after a
+deploy. There are three ways to reach them. The first two are the same
 program under two names; the third is Django's own command, and is the only one that
 needs a second environment variable.
 
@@ -112,8 +113,9 @@ to do the second time.
 The commands worth knowing
 --------------------------
 
-All but ``prune`` are Django's own; ``prune`` is OPUS's, defined by the ``search`` app in
-:mod:`opus_app.apps.search.management.commands.prune`. Each one below takes
+``prune`` and ``warm_search`` are OPUS's, defined by the ``search`` app in
+:mod:`opus_app.apps.search.management.commands.prune` and
+:mod:`opus_app.apps.search.management.commands.warm_search`; the others are Django's own. Each one below takes
 ``opus_manage`` or ``python manage.py`` in front of it.
 
 .. list-table::
@@ -148,6 +150,16 @@ All but ``prune`` are Django's own; ``prune`` is OPUS's, defined by the ``search
        reports that and changes nothing. A server runs it from cron;
        :ref:`user_guide_deployment_prune` gives the options, their defaults and the
        sizing rule.
+   * - ``warm_search``
+     - Asks the running site's API, over HTTP and several requests at a time, for the
+       landing page -- the empty search's result count and first page, the default
+       widgets' fan-out, and the empty search's counts for every mult field -- and for
+       one search per value of each common field, such as each planet, mission and
+       instrument, so that their results are built and their answers cached. It prints
+       each request's status and time and the total, and exits with failure if a request
+       does not answer 200. Both deploy scripts run it after the switch;
+       :ref:`user_guide_deployment_warm_search` says when, and
+       :ref:`dev_guide_webapp_search_warm` what it warms.
 
 **The test suites are not run through any of them** -- ``pytest`` runs the holdings-free
 suite and ``pytest integration_tests`` the live-database ones; see

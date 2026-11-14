@@ -151,6 +151,33 @@ def test_a_scenario_that_cannot_be_measured_is_refused(
         web_scenarios.load_web_config(path, scale='fixture')
 
 
+def test_the_scenario_file_warms_no_state() -> None:
+    """A run warms only when asked, so a plain session measures a cold start."""
+    assert web_scenarios.load_web_config().warm == frozenset()
+
+
+def test_the_warm_flags_name_the_states_they_warm(tmp_path: Path) -> None:
+    """Each cold state takes its own flag."""
+    path = tmp_path / 'web.toml'
+    path.write_text(_SERVER + '[warm]\ndb-cold = true\napp-cold = false\n')
+    assert web_scenarios.load_web_config(path, scale='fixture').warm == frozenset({'db-cold'})
+
+
+@pytest.mark.parametrize(
+    ('warm', 'message'),
+    [('warm = true\n', r"names \['warm'\]"), ('db-cold = "yes"\n', 'true or false')],
+    ids=['not-a-cold-state', 'not-a-boolean'],
+)
+def test_a_warm_flag_that_is_not_a_cold_states_boolean_is_refused(
+    tmp_path: Path, warm: str, message: str
+) -> None:
+    """The warm state is never reset, so only the two cold states can warm."""
+    path = tmp_path / 'web.toml'
+    path.write_text(_SERVER + '[warm]\n' + warm)
+    with pytest.raises(ScenarioError, match=message):
+        web_scenarios.load_web_config(path, scale='fixture')
+
+
 def test_the_written_configuration_is_one_opus_reads(tmp_path: Path) -> None:
     """Every key the harness writes is one the loader accepts, cache location included."""
     path = bench_server.write_opus_config(

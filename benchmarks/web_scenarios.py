@@ -60,6 +60,9 @@ SEARCH_KINDS = ('search', 'pages', 'resort', 'fanout', 'files', 'previews')
 #: The scenario kinds that ask about the scale's observation.
 OBSERVATION_KINDS = ('categories', 'files', 'previews')
 
+#: The states a run resets to before a scenario, each of which may warm the landing page.
+COLD_STATES = ('db-cold', 'app-cold')
+
 
 class ScenarioError(Exception):
     """Raised when ``web.toml`` is inconsistent."""
@@ -152,6 +155,7 @@ class WebConfig:
         searches: The named searches, as query strings.
         scenarios: The sequential scenarios, in the order a pass runs them.
         concurrency: The concurrency scenario, run after them.
+        warm: The cold states whose resets end with the side's ``warm_search``.
     """
 
     path: Path
@@ -160,6 +164,7 @@ class WebConfig:
     searches: Mapping[str, str]
     scenarios: tuple[Scenario, ...] = ()
     concurrency: Concurrency | None = None
+    warm: frozenset[str] = frozenset()
 
 
 def _join(path: str, query: str) -> str:
@@ -301,10 +306,17 @@ def load_web_config(path: Path = WEB_TOML, *, scale: str = 'test') -> WebConfig:
         Its server settings, run counts, searches and expanded scenarios.
 
     Raises:
-        ScenarioError: If two scenarios share a name, or an entry is malformed.
+        ScenarioError: If two scenarios share a name, an entry is malformed, or
+            ``[warm]`` names a state that is not a cold one or gives one no boolean.
     """
     with path.open('rb') as stream:
         raw = tomllib.load(stream)
+    warm_flags = raw.get('warm', {})
+    unknown = sorted(set(warm_flags) - set(COLD_STATES))
+    if len(unknown) > 0:
+        raise ScenarioError(f'{path}: [warm] names {unknown}, not one of {list(COLD_STATES)}')
+    if not all(isinstance(flag, bool) for flag in warm_flags.values()):
+        raise ScenarioError(f'{path}: [warm] takes true or false for each state')
     server = raw['server']
     searches = {str(name): str(value) for name, value in raw['searches'].items()}
     opus_id = str(raw.get('observations', {}).get(scale, ''))
@@ -340,4 +352,5 @@ def load_web_config(path: Path = WEB_TOML, *, scale: str = 'test') -> WebConfig:
         searches=searches,
         scenarios=scenarios,
         concurrency=concurrency,
+        warm=frozenset(state for state, flag in warm_flags.items() if flag),
     )

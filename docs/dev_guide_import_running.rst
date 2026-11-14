@@ -425,6 +425,17 @@ Auxiliary tables and other steps
        application's cache (:ref:`dev_guide_import_steps_do_django`). If emptying the
        cache fails, the step fails. Without memcached there is no shared cache to empty,
        and each web worker keeps its own until it is restarted.
+   * - ``--carry-over-sessions-from SCHEMA``
+     - Replace the target schema's ``django_session`` and ``cart`` rows with SCHEMA's:
+       in one transaction, both tables are emptied, then SCHEMA's unexpired sessions that
+       own a cart row are copied, and each of its cart rows whose session was copied and
+       whose observation the target holds, matched by ``opus_id``, under the target's
+       ``obs_general_id``. SCHEMA's two tables are read before anything is written, and a
+       failure leaves the target's tables as they were. The log counts the rows copied and the cart
+       rows dropped. It reads no holdings, and is refused with any other step, with
+       bundles, with ``--read-only``, and when SCHEMA is the target schema (after
+       ``--override-db-schema``, in any case). ``deploy_new_code_and_database.sh`` runs it while the
+       web service is stopped (:ref:`user_guide_deployment_carry_over`).
    * - ``--validate``
      - Validate the imported tables. A check that logs an error keeps the invocation
        from marking the schema ready, and makes it exit with failure.
@@ -497,10 +508,12 @@ whole shape. It:
    ``Parallelism`` line, exiting non-zero with a fatal message if either is above it
    (:ref:`dev_guide_import_running_parallelism`).
 6. Rejects ``--scorched-earth`` without ``--yes``, ``--yes`` without
-   ``--scorched-earth``, and ``--join`` with any option it is refused with, each with a
-   fatal message and a non-zero exit.
+   ``--scorched-earth``, ``--join`` with any option it is refused with, and
+   ``--carry-over-sessions-from`` with any other step or naming the target schema, each
+   with a fatal message and a non-zero exit.
 7. Configures ``rms-pdsfile`` -- shelves-only unless ``--dont-use-shelves-only`` -- and
-   preloads both holdings roots. The ``rms-pdsfile`` logger is attached *after* the
+   preloads both holdings roots, unless the invocation carries sessions over, which reads
+   no holdings. The ``rms-pdsfile`` logger is attached *after* the
    preload, so the preload's own debug output stays out of the run's log.
 8. Opens the database through :func:`opus_import.importdb.get_db`, exiting non-zero if
    the connection fails.

@@ -32,6 +32,7 @@ from opus_import import bundle_registry, import_util, importdb
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
 from opus_import.steps import (
+    do_carry_over,
     do_cart,
     do_dictionary,
     do_django,
@@ -53,6 +54,7 @@ if TYPE_CHECKING:
     from types import FrameType
     from typing import TextIO
 
+    from opus_config import OpusConfig
     from opus_import.importdb.super import WarningHandler
 
 LOGNAME = 'opus_import.main'
@@ -436,6 +438,15 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         default=False,
         help='Create the cart table used by OPUS',
     )
+    parser.add_argument(
+        '--carry-over-sessions-from',
+        type=str,
+        default=None,
+        metavar='SCHEMA',
+        help="Replace the target schema's django_session and cart rows with SCHEMA's "
+        'unexpired sessions that own cart rows and those cart rows whose observations the '
+        'target holds; refused with any other step and when SCHEMA is the target',
+    )
 
     parser.add_argument(
         '--validate',
@@ -561,6 +572,39 @@ _JOIN_CONFLICTS = (
 )
 
 
+#: The options ``--carry-over-sessions-from`` is refused with: every step, since it runs
+#: while the web service is stopped and so runs alone, without reading the holdings; and
+#: ``--read-only``, under which it would copy nothing.
+CARRY_OVER_CONFLICTS = (
+    *_JOIN_CONFLICTS,
+    ('join', '--join'),
+    ('create_param_info', '--create-param-info'),
+    ('create_partables', '--create-partables'),
+    ('create_table_names', '--create-table-names'),
+    ('update_mult_info', '--update-mult-info'),
+    ('reset_search_tables', '--reset-search-tables'),
+    ('create_cart', '--create-cart'),
+    ('analyze_tables', '--analyze-tables'),
+    ('validate', '--validate'),
+    ('import_dictionary', '--import-dictionary'),
+    ('bundles', 'bundle descriptors'),
+)
+
+
+def _carry_over_conflicts(args: argparse.Namespace) -> str:
+    """Name the options given with ``--carry-over-sessions-from`` that it is refused with.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+
+    Returns:
+        The options, joined by commas; empty without the option or with none of them.
+    """
+    if args.carry_over_sessions_from is None:
+        return ''
+    return ', '.join(option for name, option in CARRY_OVER_CONFLICTS if getattr(args, name))
+
+
 def _join_conflicts(args: argparse.Namespace) -> str:
     """Name the options given with ``--join`` that it is refused with.
 
@@ -598,6 +642,44 @@ def _registry_finished(ctx: ImportContext, step: str) -> bool:
     return False
 
 
+def _prepare_holdings(
+    args: argparse.Namespace, config: OpusConfig, logger: pdslogger.PdsLogger
+) -> None:
+    """Load the holdings' shelves, so that the steps can read the holdings through pdsfile.
+
+    Parameters:
+        args: The parsed arguments, for the shelf and holdings-directory overrides.
+        config: The configuration, for the holdings directories.
+        logger: The run's logger, which pdsfile logs through once its preload is done.
+    """
+    if not args.dont_use_shelves_only:
+        Pds3File.use_shelves_only()
+        Pds4File.use_shelves_only()
+        Pds3File.require_shelves(True)
+        # PDS4 asks the shelves first and falls back to the file system when no
+        # shelf covers a path. The production holdings have no PDS4 shelves at all,
+        # so today every PDS4 existence check takes that fallback and this line
+        # costs nothing; a tree that does have them -- one a test builds, or the
+        # production tree once it grows them -- gets the shelf-answered existence
+        # PDS3 has. Requiring shelves turns a missing one into an exception, so the
+        # line below waits until every PDS4 bundle in the holdings has one.
+        # Pds4File.require_shelves(True)
+    if args.override_pds3_data_dir:
+        Pds3File.preload(args.override_pds3_data_dir)
+    else:
+        Pds3File.preload(config.paths.pds3_holdings)
+    if args.override_pds4_data_dir:
+        Pds4File.preload(args.override_pds4_data_dir)
+    else:
+        Pds4File.preload(config.paths.pds4_holdings)
+
+    # We do this after the preload because we don't want to see all the preload
+    # debug messages.
+    if not args.no_log_pdsfile:
+        Pds3File.set_logger(import_util.NoDupLogger(logger))
+        Pds4File.set_logger(import_util.NoDupLogger(logger))
+
+
 def main() -> None:
     """Run the import steps requested on the command line.
 
@@ -611,7 +693,8 @@ def main() -> None:
     Raises:
         SystemExit: With a non-zero status, logged first, when the arguments are
             contradictory, a bundle descriptor is bad, the database connection fails,
-            the observation import fails or is refused, ``--finalize`` or
+            the observation import fails or is refused, the carry-over fails or names
+            the schema it would write into, ``--finalize`` or
             ``--write-schema-version`` refuses, an exception reaches the top-level
             handler, or -- unless ``--ignore-errors`` -- ``--create-indexes``, the
             duplicate step, ``--create-param-info``, ``--update-mult-info``,
@@ -711,6 +794,24 @@ def main() -> None:
     if args.override_db_schema:
         our_schema_name = args.override_db_schema
 
+    carry_over_from = args.carry_over_sessions_from
+    if carry_over_from is not None:
+        conflict = _carry_over_conflicts(args)
+        if conflict:
+            logger.log(
+                'fatal', f'--carry-over-sessions-from runs alone; it is refused with {conflict}'
+            )
+            sys.exit(-1)
+        # Emptying the target first would empty the source. A server with
+        # lower_case_table_names set treats names differing only in case as one.
+        if carry_over_from.lower() == our_schema_name.lower():
+            logger.log(
+                'fatal',
+                f'--carry-over-sessions-from {carry_over_from} names the schema it would '
+                'write into; name the schema being served',
+            )
+            sys.exit(-1)
+
     try:  # Top-level exception handling so we always log what's going on
         # Start the profiling
         if args.profile:
@@ -722,32 +823,9 @@ def main() -> None:
             limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
         )
 
-        if not args.dont_use_shelves_only:
-            Pds3File.use_shelves_only()
-            Pds4File.use_shelves_only()
-            Pds3File.require_shelves(True)
-            # PDS4 asks the shelves first and falls back to the file system when no
-            # shelf covers a path. The production holdings have no PDS4 shelves at all,
-            # so today every PDS4 existence check takes that fallback and this line
-            # costs nothing; a tree that does have them -- one a test builds, or the
-            # production tree once it grows them -- gets the shelf-answered existence
-            # PDS3 has. Requiring shelves turns a missing one into an exception, so the
-            # line below waits until every PDS4 bundle in the holdings has one.
-            # Pds4File.require_shelves(True)
-        if args.override_pds3_data_dir:
-            Pds3File.preload(args.override_pds3_data_dir)
-        else:
-            Pds3File.preload(config.paths.pds3_holdings)
-        if args.override_pds4_data_dir:
-            Pds4File.preload(args.override_pds4_data_dir)
-        else:
-            Pds4File.preload(config.paths.pds4_holdings)
-
-        # We do this after the preload because we don't want to see all the preload
-        # debug messages.
-        if not args.no_log_pdsfile:
-            Pds3File.set_logger(import_util.NoDupLogger(logger))
-            Pds4File.set_logger(import_util.NoDupLogger(logger))
+        # The carry-over reads no holdings, and runs while the web service is stopped.
+        if carry_over_from is None:
+            _prepare_holdings(args, config, logger)
 
         try:
             ctx.db = importdb.get_db(
@@ -768,6 +846,13 @@ def main() -> None:
             sys.exit(-1)
 
         ctx.db.log_sql = args.log_sql
+
+        # The step runs alone (_carry_over_conflicts), so nothing below has work to do.
+        if carry_over_from is not None:
+            with ctx.timed('carry_over_sessions'):
+                carried = do_carry_over.carry_over_sessions(ctx, carry_over_from)
+            if not carried:
+                sys.exit(-1)
 
         # The path an import takes is chosen before anything else writes, so an import
         # refused for an interrupted finalization changes nothing. An invocation that

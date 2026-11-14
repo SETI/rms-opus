@@ -27,6 +27,19 @@ Before anything is measured the harness asks the side's settings, in the same
 environment, which cache backend they chose, and **refuses to run** on Django's
 local-memory fallback; after each run it refuses the run if memcached served nothing.
 
+**After a deploy.** ``web.toml``'s ``[warm]`` table and the ``--warm`` option name cold
+states to warm. Each such state's reset ends with the side's ``opus_manage
+warm_search``, as a deploy does once its workers start, so the state shows what a
+visitor meets after a deploy. The warm-up's wall-clock goes in the run's details. With
+``--promotion-carts N`` each run first times a promotion's window, from the
+application's stop until it has started again: the side's ``opus_import
+--carry-over-sessions-from`` from a schema holding N planted cart rows into the served
+schema, then memcached's restart. The served schema's own sessions and cart rows are
+saved before the window and put back after it, so every run starts from the same tables.
+The harness drops only a schema it made itself, and never one that still holds saved rows
+it has not put back: the next promotion puts them back first. A side without the command
+or the option skips the step, and the result names it among its skipped steps.
+
 Example, one side's web runs at fixture scale against the schema its import built::
 
     python -m benchmarks.bench_web --scale fixture --side before --pr PR-nn \\
@@ -81,6 +94,7 @@ from benchmarks.results import (
 )
 from benchmarks.sides import Side, SideError, Spelling, require_no_pythonpath
 from benchmarks.web_scenarios import (
+    COLD_STATES,
     PAGE_LIMIT,
     Concurrency,
     Request,
@@ -114,6 +128,27 @@ LOCMEM_MARKER = 'locmem'
 
 #: How many rounds the warm-up may take to have every worker serve every request.
 WARMUP_MAX_ROUNDS = 50
+
+#: The planted cart rows of one session, in the schema a promotion carries over from.
+PROMOTION_CART_ROWS_PER_SESSION = 100
+
+#: What every planted session key begins with.
+PROMOTION_SESSION_PREFIX = 'bench-carry-'
+
+#: What the schema a promotion carries over from is named after the served one.
+PROMOTION_SOURCE_SUFFIX = '_carry_source'
+
+#: The table that marks a schema as one the harness made to carry over from; a schema of
+#: that name without it is never dropped. It holds a row while the served schema's saved
+#: rows wait to be put back, and is empty otherwise.
+PROMOTION_SOURCE_MARK = 'bench_web_promotion_source'
+
+#: The tables a promotion replaces in the served schema, in the order they are filled.
+PROMOTION_TABLES = ('django_session', 'cart')
+
+#: What the served schema's own copy of each of `PROMOTION_TABLES` is saved under, in the
+#: schema a promotion carries over from, while a promotion is timed.
+PROMOTION_SAVED_PREFIX = 'saved_'
 
 
 class WebRunError(Exception):
@@ -541,6 +576,7 @@ class WebBench:
         schema: str,
         holdings: tuple[Path, Path],
         single_worker: bool = False,
+        warm_states: frozenset[str] = frozenset(),
     ) -> None:
         """Prepare the servers for one side; nothing is started.
 
@@ -556,6 +592,8 @@ class WebBench:
             single_worker: Start gunicorn with one worker of one thread instead of
                 ``web.toml``'s, so that every request is served by the same process and
                 thread, as the query capture needs.
+            warm_states: The cold states whose resets end with the side's
+                ``warm_search``.
         """
         self.server = server
         self.memcached = memcached
@@ -588,6 +626,9 @@ class WebBench:
         )
         self._connection: Any = None
         self._cache_gets = 0
+        self.warm_states = warm_states
+        self.promotion_source: str | None = None
+        self.restore_pending = False
 
     @property
     def connection(self) -> Any:
@@ -642,11 +683,20 @@ class WebBench:
             self.server, self.schema, self.side, self.spelling, self.env, self.errors_log
         )
 
-    def reset(self, state: str) -> None:
+    def reset(self, state: str) -> float | None:
         """Bring the servers to a cold state before a scenario.
 
         Parameters:
             state: ``db-cold`` or ``app-cold``.
+
+        Returns:
+            The wall-clock of the side's ``warm_search``, which runs last when the state
+            is one of `warm_states`; None when it does not run.
+
+        Raises:
+            WebRunError: If a worker has served a request once the servers are back up,
+                which `require_cold` checks before the warm-up sends its own requests
+                through them.
         """
         self.reset_search_tables()
         self.gunicorn.stop()
@@ -655,6 +705,306 @@ class WebBench:
             self.server.restart()
         self.gunicorn.start()
         self.memcached.restart()
+        self.require_cold()
+        if state not in self.warm_states:
+            return None
+        return self.warm_search()
+
+    def warm_search(self) -> float:
+        """Run the side's ``opus_manage warm_search`` against the running server.
+
+        Returns:
+            Its wall-clock.
+
+        Raises:
+            WebRunError: If it exits non-zero, since the state would then not be the one
+                the run sets out to measure.
+        """
+        started = time.perf_counter()
+        finished = self.side.warm_search(self.env, f'{self.gunicorn.base_url}/')
+        seconds = time.perf_counter() - started
+        if finished.returncode != 0:
+            raise WebRunError(
+                f'warm_search exited {finished.returncode}:\n'
+                f'{(finished.stdout + finished.stderr)[-4000:]}'
+            )
+        return seconds
+
+    def prepare_promotion(self, cart_rows: int) -> int:
+        """Make the schema a promotion carries sessions and carts over from.
+
+        The schema is named after the served one with `PROMOTION_SOURCE_SUFFIX`. A schema
+        of that name left by an earlier run of the harness, which holds the
+        `PROMOTION_SOURCE_MARK` table, is dropped first, once any saved rows it holds are
+        put back (`drop_leftover_promotion_source`); any other schema of that name is
+        refused and left as it is. The schema made holds that mark, empty and
+        transactional, ``django_session`` and ``cart`` as the served schema declares them
+        (``CREATE TABLE ... LIKE`` copies no foreign key), with `cart_rows` cart rows
+        naming the served schema's first observations, `PROMOTION_CART_ROWS_PER_SESSION`
+        to an unexpired session, and an empty copy of each of the two tables named with
+        `PROMOTION_SAVED_PREFIX`, which `time_promotion` saves the served schema's own
+        rows into.
+
+        Parameters:
+            cart_rows: The cart rows to plant.
+
+        Returns:
+            The cart rows planted: fewer than asked when the served schema holds fewer
+            observations.
+
+        Raises:
+            WebRunError: Naming the schema, if one of its name exists without the mark, or
+                holds saved rows that cannot be put back.
+        """
+        source = f'{self.schema}{PROMOTION_SOURCE_SUFFIX}'
+        served = f'`{self.schema}`'
+        quoted = f'`{source}`'
+        self.drop_leftover_promotion_source(source)
+        query(self.connection, f'CREATE DATABASE {quoted}')
+        # Named as soon as it exists, so that a failure below still has it dropped.
+        self.promotion_source = source
+        statements = (
+            f'CREATE TABLE {quoted}.`{PROMOTION_SOURCE_MARK}` (`id` INT) ENGINE=InnoDB',
+            *(
+                f'CREATE TABLE {quoted}.`{prefix}{table}` LIKE {served}.`{table}`'
+                for table in PROMOTION_TABLES
+                for prefix in ('', PROMOTION_SAVED_PREFIX)
+            ),
+            # The names are the harness's own; the row count is bound.
+            f'INSERT INTO {quoted}.cart (session_id, obs_general_id, opus_id, recycled) '  # nosec B608
+            f"SELECT CONCAT('{PROMOTION_SESSION_PREFIX}', (ROW_NUMBER() OVER (ORDER BY id) - 1) DIV "
+            f'{PROMOTION_CART_ROWS_PER_SESSION}), id, opus_id, 0 FROM {served}.obs_general '
+            'ORDER BY id LIMIT %s',
+            f'INSERT INTO {quoted}.django_session (session_key, session_data, expire_date) '  # nosec B608
+            f"SELECT DISTINCT session_id, '', UTC_TIMESTAMP() + INTERVAL 1 DAY FROM {quoted}.cart",
+        )
+        for statement in statements:
+            query(self.connection, statement, [cart_rows] if '%s' in statement else [])
+        planted = query(self.connection, f'SELECT COUNT(*) FROM {quoted}.cart')  # nosec B608
+        return int(planted[0][0])
+
+    def drop_leftover_promotion_source(self, source: str) -> None:
+        """Drop a schema an earlier run of the harness made to carry over from.
+
+        When its `PROMOTION_SOURCE_MARK` table holds a row, that run saved the served
+        schema's sessions and cart rows and ended before it put them back, so the served
+        schema holds the planted rows and the schema the only copy of its own. They are put
+        back first (`restore_served_rows`'s transaction), and the schema is dropped only
+        once they are.
+
+        Parameters:
+            source: The schema's name.
+
+        Raises:
+            WebRunError: Naming the schema, if it exists without the
+                `PROMOTION_SOURCE_MARK` table, so that the harness did not make it, or if
+                putting back the rows it saved fails; either way it is left as it is.
+        """
+        found = query(
+            self.connection,
+            'SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = %s',
+            [source],
+        )
+        if int(found[0][0]) == 0:
+            return
+        marked = query(
+            self.connection,
+            'SELECT COUNT(*) FROM information_schema.TABLES '
+            'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+            [source, PROMOTION_SOURCE_MARK],
+        )
+        if int(marked[0][0]) == 0:
+            raise WebRunError(
+                f'schema {source} exists and the harness did not make it (it holds no '
+                f'{PROMOTION_SOURCE_MARK} table): drop or rename it to time a promotion'
+            )
+        # The name is the harness's own; the statement carries no values.
+        pending = query(
+            self.connection,
+            f'SELECT COUNT(*) FROM `{source}`.`{PROMOTION_SOURCE_MARK}`',  # nosec B608
+        )
+        if int(pending[0][0]) > 0:
+            try:
+                self._restore_rows(source)
+            except Exception as err:
+                raise WebRunError(
+                    f'schema {source} holds the sessions and cart rows a promotion saved from '
+                    f'schema {self.schema} and did not put back, and putting them back failed '
+                    f'({err}): copy them from its {PROMOTION_SAVED_PREFIX}* tables into '
+                    f'{self.schema}, then drop {source}'
+                ) from err
+            sys.stdout.write(
+                f'put back the sessions and cart rows schema {source} held for schema '
+                f'{self.schema}, saved by a promotion that did not finish\n'
+            )
+        query(self.connection, f'DROP DATABASE `{source}`')
+
+    def drop_promotion_source(self) -> None:
+        """Drop the schema `prepare_promotion` made, if it made one.
+
+        A schema whose saved rows were not put back (`restore_pending`) holds the only copy
+        of the served schema's sessions and cart rows, and is kept.
+
+        Raises:
+            WebRunError: Naming the schema, when it is kept; the next run that times a
+                promotion puts its rows back (`drop_leftover_promotion_source`).
+        """
+        source = self.promotion_source
+        if source is None:
+            return
+        if self.restore_pending:
+            raise WebRunError(
+                f'schema {source} is kept: it holds the only copy of the sessions and cart '
+                f'rows of schema {self.schema}, which were not put back; the next run with '
+                f'--promotion-carts puts them back, or copy them from its '
+                f'{PROMOTION_SAVED_PREFIX}* tables'
+            )
+        query(self.connection, f'DROP DATABASE IF EXISTS `{source}`')
+        self.promotion_source = None
+
+    def time_promotion(self, run: dict[str, Any]) -> None:
+        """Time a promotion's window, from the application's stop to its start.
+
+        The window opens as the application is told to stop and closes when it has
+        started again, which is when every worker has loaded the application. Between
+        the two it holds what ``_promote.sh`` holds there: the side's carry-over from
+        `promotion_source` into the served schema, then memcached's restart (the symlink
+        switch, one rename, is not simulated). ``web.promotion.carry_over_s`` is the
+        carry-over alone.
+
+        Before the window opens, the served schema's ``cart`` and ``django_session`` are
+        saved into `promotion_source` (`save_served_rows`); once it has closed, however
+        it closes, a failed step included, they are put back (`restore_served_rows`), so
+        the next run and the other side find those tables as before. Neither is timed. A
+        save that fails raises before the application is stopped, and nothing is put
+        back. A restore that fails leaves `restore_pending` set, so the source is kept.
+
+        Parameters:
+            run: The run to record ``web.promotion.window_s`` and
+                ``web.promotion.carry_over_s`` into.
+
+        Raises:
+            WebRunError: If the carry-over exits non-zero or logs an error.
+            ServerError: If memcached or the application does not start again.
+        """
+        assert self.promotion_source is not None
+        assert self.spelling.carry_over is not None
+        self.save_served_rows()
+        started = time.perf_counter()
+        try:
+            self.gunicorn.stop()
+            stopped = time.perf_counter()
+            run_import_step(
+                self.side,
+                [self.spelling.carry_over, self.promotion_source],
+                self.env,
+                self.errors_log,
+            )
+            carried = time.perf_counter()
+            self.memcached.restart()
+            self.gunicorn.start()
+            ended = time.perf_counter()
+        finally:
+            self.restore_served_rows()
+        run['metrics']['web.promotion.carry_over_s'] = carried - stopped
+        run['metrics']['web.promotion.window_s'] = ended - started
+
+    def save_served_rows(self) -> None:
+        """Copy the served schema's sessions and cart rows into `promotion_source`.
+
+        Each of `PROMOTION_TABLES` replaces the rows of its copy named with
+        `PROMOTION_SAVED_PREFIX`, which `prepare_promotion` made, and a row goes into the
+        `PROMOTION_SOURCE_MARK` table, in one transaction; `restore_pending` is set once it
+        has committed.
+        """
+        source = self.promotion_source
+        assert source is not None
+        self._replace_rows(
+            self._saved_tables(source),
+            self._served_tables(),
+            f'INSERT INTO `{source}`.`{PROMOTION_SOURCE_MARK}` (`id`) VALUES (1)',  # nosec B608
+        )
+        self.restore_pending = True
+
+    def restore_served_rows(self) -> None:
+        """Put back the served schema's sessions and cart rows `save_served_rows` saved.
+
+        The served schema's `PROMOTION_TABLES` are emptied and filled from the saved
+        copies, and the `PROMOTION_SOURCE_MARK` table is emptied, in one transaction, so
+        their rows are either all put back, with no restore left pending, or left as the
+        promotion left them, with the restore still pending; `restore_pending` is cleared
+        once it has committed.
+        """
+        assert self.promotion_source is not None
+        self._restore_rows(self.promotion_source)
+        self.restore_pending = False
+
+    def _restore_rows(self, source: str) -> None:
+        """Put back the served schema's rows a schema saved, and clear its mark's row.
+
+        Parameters:
+            source: The schema that holds the saved copies.
+        """
+        self._replace_rows(
+            self._served_tables(),
+            self._saved_tables(source),
+            f'DELETE FROM `{source}`.`{PROMOTION_SOURCE_MARK}`',  # nosec B608
+        )
+
+    def _served_tables(self) -> dict[str, str]:
+        """Return each of `PROMOTION_TABLES`' qualified name in the served schema."""
+        return {table: f'`{self.schema}`.`{table}`' for table in PROMOTION_TABLES}
+
+    @staticmethod
+    def _saved_tables(source: str) -> dict[str, str]:
+        """Return the qualified name of each of `PROMOTION_TABLES`' saved copy.
+
+        Parameters:
+            source: The schema that holds the saved copies.
+
+        Returns:
+            Each table's saved copy, by the table's name.
+        """
+        return {
+            table: f'`{source}`.`{PROMOTION_SAVED_PREFIX}{table}`' for table in PROMOTION_TABLES
+        }
+
+    def _replace_rows(
+        self, target: Mapping[str, str], source: Mapping[str, str], mark: str
+    ) -> None:
+        """Replace the rows of each of `PROMOTION_TABLES` with another table's, atomically.
+
+        The tables are emptied in the reverse of `PROMOTION_TABLES`' order and filled in
+        it, and `mark` runs last, in one transaction that is rolled back if a statement
+        fails.
+
+        Parameters:
+            target: The qualified name of each table whose rows are replaced.
+            source: The qualified name of each table its rows are copied from, which has
+                the same columns in the same order.
+            mark: The statement that records, in the `PROMOTION_SOURCE_MARK` table,
+                whether a restore is pending once the rows are replaced.
+        """
+        # The names are the harness's own; the statements carry no values.
+        statements = [
+            *(
+                f'DELETE FROM {target[table]}'  # nosec B608
+                for table in reversed(PROMOTION_TABLES)
+            ),
+            *(
+                f'INSERT INTO {target[table]} SELECT * FROM {source[table]}'  # nosec B608
+                for table in PROMOTION_TABLES
+            ),
+            mark,
+        ]
+        query(self.connection, 'START TRANSACTION')
+        try:
+            for statement in statements:
+                query(self.connection, statement)
+        except Exception:
+            query(self.connection, 'ROLLBACK')
+            raise
+        query(self.connection, 'COMMIT')
 
     def require_cold(self) -> None:
         """Check that no worker has served a request since the application started.
@@ -841,10 +1191,14 @@ class WebBench:
         base_url = self.gunicorn.base_url
         concurrency = self.config.concurrency
         warmups = run['details'].setdefault('warmup', {})
-        for state in ('db-cold', 'app-cold'):
+        warm_searches = run['details'].setdefault('warm_search_s', {})
+        if self.promotion_source is not None:
+            self.time_promotion(run)
+        for state in COLD_STATES:
             for scenario in self.config.scenarios:
-                self.reset(state)
-                self.require_cold()
+                warmed = self.reset(state)
+                if warmed is not None:
+                    warm_searches[f'web.{state}.{scenario.name}'] = warmed
                 # One cookie jar per scenario, emptied only by the reset.
                 client = Client(base_url)
                 issued = self.run_scenario(state, scenario, run, client)
@@ -855,8 +1209,9 @@ class WebBench:
                 continue
             # Each half starts cold, so neither is measured on what the other loaded.
             for half in ('distinct', 'shared'):
-                self.reset(state)
-                self.require_cold()
+                warmed = self.reset(state)
+                if warmed is not None:
+                    warm_searches[f'web.{state}.concurrency.{half}'] = warmed
                 clients = [Client(base_url) for _ in range(concurrency.users)]
                 issued = self.run_concurrency_half(state, concurrency, half, run, clients)
                 if state == 'app-cold':
@@ -868,6 +1223,62 @@ class WebBench:
                 'is not using the harness memcached'
             )
         return run
+
+
+@dataclass(frozen=True)
+class DeploySteps:
+    """The steps of a deploy a side's web runs simulate.
+
+    Attributes:
+        warm_states: The cold states whose resets end with the side's ``warm_search``.
+        promotion_carts: The cart rows each run's timed promotion carries over, or None
+            for no promotion.
+        skipped: The steps asked for that the side does not have, by name.
+    """
+
+    warm_states: frozenset[str]
+    promotion_carts: int | None
+    skipped: tuple[str, ...]
+
+    def environment(self) -> dict[str, Any]:
+        """Return the result environment's entries for what the side runs.
+
+        Returns:
+            ``warm_states``, the states that warm (none on a side without the command),
+            and ``promotion_carts``, the cart rows each promotion carries over (None on a
+            side without the option); the steps skipped are recorded beside them.
+        """
+        return {'warm_states': sorted(self.warm_states), 'promotion_carts': self.promotion_carts}
+
+
+def deploy_steps(
+    warm_states: frozenset[str],
+    promotion_carts: int | None,
+    *,
+    has_warm_search: bool,
+    spelling: Spelling,
+) -> DeploySteps:
+    """Choose which of the deploy steps asked for a side runs.
+
+    Parameters:
+        warm_states: The cold states asked to warm.
+        promotion_carts: The cart rows asked for in a timed promotion, or None.
+        has_warm_search: Whether the side has ``opus_manage warm_search``.
+        spelling: The side's import options, which name its carry-over, if any.
+
+    Returns:
+        What the side runs: no warm-up without the command and no promotion without the
+        option, each then named among the skipped steps, ``warm_search`` and
+        ``carry_over_sessions``.
+    """
+    skipped = []
+    if len(warm_states) > 0 and not has_warm_search:
+        skipped.append('warm_search')
+        warm_states = frozenset()
+    if promotion_carts is not None and spelling.carry_over is None:
+        skipped.append('carry_over_sessions')
+        promotion_carts = None
+    return DeploySteps(warm_states, promotion_carts, tuple(skipped))
 
 
 def side_schema(label: Label, override: str | None) -> tuple[str, tuple[Path, Path]]:
@@ -917,6 +1328,23 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument('--repo-root', type=Path, required=True)
     parser.add_argument('--runs', type=int, default=None, help="default: web.toml's for the scale")
     parser.add_argument('--schema', default=None, help="serve this schema instead of the import's")
+    parser.add_argument(
+        '--warm',
+        action='append',
+        choices=COLD_STATES,
+        default=[],
+        help="end this cold state's reset with the side's warm_search, as after a deploy, "
+        "beside the states web.toml's [warm] names; repeatable",
+    )
+    parser.add_argument(
+        '--promotion-carts',
+        type=int,
+        default=None,
+        metavar='N',
+        help="time each run's promotion window, from the application's stop to its start: "
+        "the side's carry-over of N planted cart rows into the served schema, and the "
+        'cache restart',
+    )
     return parser.parse_args(argv)
 
 
@@ -943,6 +1371,13 @@ def main(argv: Sequence[str] | None = None) -> None:
         pr=args.pr, side=args.side, scale=args.scale, session=args.session, date=args.date
     )
     schema, holdings = side_schema(label, args.schema)
+    warm_states = config.warm | frozenset(args.warm)
+    steps = deploy_steps(
+        warm_states,
+        args.promotion_carts,
+        has_warm_search=len(warm_states) > 0 and side.has_warm_search(),
+        spelling=spelling,
+    )
     bench = WebBench(
         server=server,
         memcached=memcached,
@@ -952,6 +1387,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         config=config,
         schema=schema,
         holdings=holdings,
+        warm_states=steps.warm_states,
     )
     count = config.runs[args.scale] if args.runs is None else args.runs
     with server.running():
@@ -959,7 +1395,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             **host_environment(),
             **side.environment(),
             **server_environment(server),
-            'skipped_steps': list(spelling.skipped_steps),
+            'skipped_steps': [*spelling.skipped_steps, *steps.skipped],
+            **steps.environment(),
             'web_scenario_hash': scenario_hash([config.path]),
             'server_model': bench.gunicorn.server_model,
             'app_loading': 'eager',
@@ -978,6 +1415,8 @@ def main(argv: Sequence[str] | None = None) -> None:
                     'memcached_limit_maxbytes': int(memcached.stats()['limit_maxbytes']),
                 }
             )
+            if steps.promotion_carts is not None:
+                environment['promotion_cart_rows'] = bench.prepare_promotion(steps.promotion_carts)
             for position in range(count):
                 run = bench.one_run()
                 path = append_runs(label, environment, [run])
@@ -987,6 +1426,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         finally:
             bench.gunicorn.stop()
             memcached.stop()
+            bench.drop_promotion_source()
 
 
 if __name__ == '__main__':

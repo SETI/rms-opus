@@ -46,6 +46,27 @@ SCHEMA_VERSION_PROBE = (
     'print(SCHEMA_VERSION)\n'
 )
 
+#: What a side's interpreter runs to exit 0 when the side's web application has the
+#: ``warm_search`` management command, and 1 when it does not.
+WARM_SEARCH_PROBE = (
+    'import importlib.util, sys\n'
+    'try:\n'
+    "    found = importlib.util.find_spec('opus_app.apps.search.management.commands.warm_search')\n"
+    'except ModuleNotFoundError:\n'
+    '    found = None\n'
+    'sys.exit(0 if found is not None else 1)\n'
+)
+
+#: What a side's interpreter runs to issue ``opus_manage warm_search``: the console
+#: script's own entry point, with the side's settings module and the program's own
+#: arguments.
+WARM_SEARCH_PROGRAM = (
+    'import sys\n'
+    'from opus_app.manage import main\n'
+    "sys.argv = ['opus_manage', 'warm_search', *sys.argv[1:]]\n"
+    'main()\n'
+)
+
 #: An option string as a whole token: two dashes, then letters, digits and dashes, with
 #: neither a word character nor a dash on either side.
 _OPTION_TOKEN = re.compile(r'(?<![\w-])--[A-Za-z0-9][A-Za-z0-9-]*(?![\w-])')
@@ -204,6 +225,26 @@ class Side:
             raise SideError(f'{self.python} -m opus_import --help failed:\n{finished.stderr}')
         return finished.stdout
 
+    def has_warm_search(self) -> bool:
+        """Return whether the side's web application has ``opus_manage warm_search``.
+
+        Returns:
+            True when the side's interpreter finds the command's module.
+        """
+        return self.run(['-I', '-c', WARM_SEARCH_PROBE]).returncode == 0
+
+    def warm_search(self, env: Mapping[str, str], url: str) -> subprocess.CompletedProcess[str]:
+        """Run the side's ``opus_manage warm_search`` against a running server.
+
+        Parameters:
+            env: The environment, whose ``OPUS_CONFIG`` is the served side's.
+            url: The server's root, which the warm-up asks for every request.
+
+        Returns:
+            The finished command.
+        """
+        return self.run(['-c', WARM_SEARCH_PROGRAM, '--url', url], env=env)
+
     def has_coordinator(self) -> bool:
         """Return whether the side's ``opus_import_all`` starts and divides importers.
 
@@ -248,6 +289,8 @@ class Spelling:
             None where the side has none.
         join: The option that runs one importer drawing bundles from the registry, or
             None where the side has none; a side without it imports in one process.
+        carry_over: The option that carries sessions and carts over from another schema,
+            or None where the side has none.
     """
 
     erase: tuple[str, ...]
@@ -260,6 +303,7 @@ class Spelling:
     skipped_steps: tuple[str, ...]
     register_bundles: str | None = None
     join: str | None = None
+    carry_over: str | None = None
 
     @classmethod
     def from_help(cls, help_text: str) -> Spelling:
@@ -277,9 +321,9 @@ class Spelling:
             erase is ``--scorched-earth --yes`` when ``--yes`` is listed, else
             ``--drop-permanent-tables --scorched-earth``; the version step is
             ``--write-schema-version`` when listed, else skipped; timings are asked
-            for with ``--timing-json`` when listed, else skipped; and the registration
-            and the queue importer are ``--register-bundles`` and ``--join`` when
-            listed, else None.
+            for with ``--timing-json`` when listed, else skipped; and the registration,
+            the queue importer and the carry-over are ``--register-bundles``, ``--join``
+            and ``--carry-over-sessions-from`` when listed, else None.
         """
         listed = listed_options(help_text)
 
@@ -312,6 +356,9 @@ class Spelling:
             skipped_steps=tuple(skipped),
             register_bundles='--register-bundles' if '--register-bundles' in listed else None,
             join='--join' if '--join' in listed else None,
+            carry_over=(
+                '--carry-over-sessions-from' if '--carry-over-sessions-from' in listed else None
+            ),
         )
 
     def role(self, arguments: Sequence[str]) -> str:

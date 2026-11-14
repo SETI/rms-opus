@@ -206,6 +206,77 @@ def test_a_worker_count_above_the_ceiling_is_refused_before_the_database_opens(
     ]
 
 
+@pytest.mark.parametrize(
+    'arguments',
+    [
+        ['--carry-over-sessions-from', 'opus_ci_db'],
+        ['--override-db-schema', 'opus_new', '--carry-over-sessions-from', 'opus_new'],
+        ['--carry-over-sessions-from', 'OPUS_CI_DB'],
+    ],
+    ids=['configured-schema', 'overridden-schema', 'other-case'],
+)
+def test_the_carry_over_refuses_the_schema_it_would_write_into(
+    arguments: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Its target is emptied first, so the source being the target would empty both; the
+    refusal names the schema and comes before the database opens, so no statement runs.
+    A server with ``lower_case_table_names`` set treats names differing in case as one."""
+    logger, opened = _main_until_refused(arguments, monkeypatch)
+    assert opened == []
+    assert logger.messages_at('fatal') == [
+        f'--carry-over-sessions-from {arguments[-1]} names the schema it would write into; '
+        'name the schema being served'
+    ]
+
+
+def test_the_carry_over_runs_alone(monkeypatch: pytest.MonkeyPatch) -> None:
+    """It runs while the web service is stopped, so no other step shares the invocation."""
+    logger, opened = _main_until_refused(
+        ['--carry-over-sessions-from', 'opus_old', '--finalize', 'COISS_2002'], monkeypatch
+    )
+    assert opened == []
+    assert logger.messages_at('fatal') == [
+        '--carry-over-sessions-from runs alone; it is refused with --finalize, '
+        '--create-indexes, --create-param-info, --create-partables, --create-table-names, '
+        '--reset-search-tables, --create-cart, --analyze-tables, bundle descriptors'
+    ]
+
+
+#: The options that change how a step runs rather than adding one, which the carry-over
+#: accepts.
+_STEP_MODIFIERS = frozenset(
+    {
+        'yes',
+        'suppress_mult_messages',
+        'report_missing_ring_geo',
+        'report_missing_sky_geo',
+        'report_inventory_mismatch',
+        'force_metadata_index',
+        'ignore_missing_images',
+        'ignore_geo_mismatch',
+        'no_row_files',
+        'report_empty_products',
+        'fake_images',
+        'dont_use_shelves_only',
+        'no_log_pdsfile',
+        'log_sql',
+        'log_suppress_traceback',
+        'profile',
+    }
+)
+
+
+def test_every_step_option_is_refused_with_the_carry_over() -> None:
+    """A step added to the parser is refused with it too, or named a modifier above."""
+    refused = {name for name, _option in cli.CARRY_OVER_CONFLICTS}
+    flags = {
+        action.dest
+        for action in cli._create_argument_parser()._actions
+        if action.const is True and action.dest != 'help'
+    }
+    assert flags - refused - _STEP_MODIFIERS == set()
+
+
 @pytest.mark.parametrize(('given', 'parsed'), [('1', 1), ('12', 12), ('max', 'max')])
 def test_parser_reads_a_worker_count_or_max(given: str, parsed: int | str) -> None:
     """``--workers`` takes a whole number of at least 1, or ``max``; it is absent by default."""

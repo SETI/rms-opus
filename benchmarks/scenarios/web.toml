@@ -12,6 +12,14 @@ threads = 2
 memcached_port = 21211
 memcached_mb = 1024
 
+# Whether each cold state runs the side's `opus_manage warm_search` after its restarts
+# and before the scenario, as a deploy does once its workers start, so that state shows
+# what a visitor meets after a deploy. bench_web --warm STATE sets one for a session. A
+# side without the command skips it and records the step skipped.
+[warm]
+db-cold = false
+app-cold = false
+
 # Web runs per side in a floor session, by scale: the default of --runs. An A/B passes
 # the count the run-count table in docs/dev_guide_benchmarks.rst gives it.
 [runs]

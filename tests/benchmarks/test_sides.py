@@ -97,6 +97,7 @@ def test_timing_options_name_the_file() -> None:
         ('timing_json', '--timing-json'),
         ('register_bundles', '--register-bundles'),
         ('join', '--join'),
+        ('carry_over', '--carry-over-sessions-from'),
     ],
 )
 def test_this_checkouts_own_help_is_spelled_as_expected(field: str, expected: object) -> None:
@@ -184,4 +185,18 @@ def test_a_side_without_the_queue_has_no_registration_or_importer() -> None:
     spelling = Spelling.from_help(NEW_HELP)
     assert spelling.register_bundles is None
     assert spelling.join is None
+    assert spelling.carry_over is None
     assert spelling.role(['--join']) == '--join'
+
+
+def test_this_checkouts_web_application_has_warm_search() -> None:
+    """The probe finds the command in this tree, through this interpreter."""
+    assert Side(Path(sys.executable), Path.cwd()).has_warm_search() is True
+
+
+def test_a_side_without_the_command_is_told_apart(tmp_path: Path) -> None:
+    """An interpreter without the side's packages (no site directory) reports it absent."""
+    fake = tmp_path / 'python'
+    fake.write_text(f'#!/bin/sh\nexec {sys.executable} -I -S -c "$3"\n')
+    fake.chmod(0o755)
+    assert Side(fake, tmp_path).has_warm_search() is False

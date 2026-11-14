@@ -15,9 +15,18 @@
 # other for as long as it took to finish. Here they are one directory, and the
 # switch is one symlink.
 #
+# Sessions and carts live in the database, so a deploy that serves a new schema carries
+# them over from the schema being served, while the workers are stopped, before the
+# switch. Once the workers are started again the landing page's requests are answered
+# once, so the first visitor finds them cached. Both steps are functions in
+# _promote_steps.sh.
+#
 # Inputs (exported by the caller): OPUS_DIR, INSTALL_DIR naming the staged
-# installation to promote, and the two service names _read_deploy_env.sh supplies,
-# OPUS_WEB_SERVICE and OPUS_CACHE_SERVICE.
+# installation to promote, IMPORT_SCRIPT_DIR, the two service names
+# _read_deploy_env.sh supplies, OPUS_WEB_SERVICE and OPUS_CACHE_SERVICE, and
+# OPUS_PREVIOUS_DB_NAME, the schema to carry sessions and carts over from, empty or
+# unset for none. OPUS_WARM_SEARCH skips the warm-up when it is exactly "false"; unset,
+# or any other value, warms.
 
 if [[ ! -v OPUS_DIR ]]; then
     echo "INTERNAL ERROR: OPUS_DIR undefined"
@@ -33,6 +42,8 @@ if [[ ! -f "${INSTALL_DIR}/opus.toml" || ! -e "${INSTALL_DIR}/wsgi.py" ]]; then
     exit 1
 fi
 
+source ${IMPORT_SCRIPT_DIR}/_promote_steps.sh
+
 echo "Promoting ${INSTALL_DIR}"
 
 # The workers are stopped for the switch rather than across the whole deploy:
@@ -41,6 +52,14 @@ echo "Promoting ${INSTALL_DIR}"
 # afterwards because a worker that read the old installation's configuration would go
 # on answering from the old database until it was replaced.
 sudo systemctl stop "${OPUS_WEB_SERVICE}"
+
+# The served schema takes no requests from here, so nothing written to it is left behind.
+# A failure starts the web service again on the unchanged installation.
+if [[ -n ${OPUS_PREVIOUS_DB_NAME:-} ]]; then
+    if ! carry_over_sessions "${OPUS_PREVIOUS_DB_NAME}"; then
+        exit 1
+    fi
+fi
 
 # `ln -sfn` would do this in two steps, unlinking the old symlink before creating
 # the new one, and a deploy interrupted between them leaves no ${OPUS_DIR}/deployed
@@ -76,6 +95,12 @@ if [[ -n ${OPUS_CACHE_SERVICE} ]]; then
 fi
 
 sudo systemctl start "${OPUS_WEB_SERVICE}"
+
+# The empty search, its first page and the widgets' counts, into the cache just emptied.
+# A failure warns and the deploy goes on. The warm-up registers a search and a session as
+# a visitor's first requests do, so a deploy that promises to write nothing to the
+# database sets OPUS_WARM_SEARCH to false, which skips it; any other value warms.
+warm_search
 
 echo
 echo "Now serving: ${OPUS_DIR}/deployed -> $(readlink "${OPUS_DIR}/deployed")"

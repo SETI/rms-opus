@@ -161,6 +161,28 @@ class IndexStatement:
     key_count: int
 
 
+@dataclass(frozen=True)
+class CarriedOver:
+    """What `ImportDBSuper.carry_over_sessions` copied into the target schema.
+
+    Attributes:
+        sessions: The unexpired sessions that own a cart row, copied.
+        cart_rows: The cart rows copied.
+        source_cart_rows: The cart rows the source schema held, so that the ones not
+            copied (their observation or their session is not in the target) are
+            ``source_cart_rows - cart_rows``.
+    """
+
+    sessions: int
+    cart_rows: int
+    source_cart_rows: int
+
+    @property
+    def dropped_cart_rows(self) -> int:
+        """The source's cart rows that were not copied."""
+        return self.source_cart_rows - self.cart_rows
+
+
 class _SpaceBudget:
     """Temporary space the index builds running at once share, in bytes.
 
@@ -1088,6 +1110,28 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::run_ddl must be overridden')
+
+    def carry_over_sessions(self, source_schema: str) -> CarriedOver:
+        """Replace this schema's sessions and cart rows with another schema's.
+
+        One transaction: ``django_session`` and ``cart`` are emptied first, so running it
+        again gives the same result, and a failure leaves them as they were. The source's
+        unexpired sessions that own a cart row are copied, then each source cart row
+        whose observation (by OPUS ID) and session are both in this schema, with this
+        schema's ``obs_general_id``; a cart row's own id is not copied. A source that is
+        this schema is refused before anything is written, since emptying this schema's
+        tables would empty the source.
+
+        Parameters:
+            source_schema: The schema to copy from, on the same server; not this one.
+
+        Returns:
+            The sessions and cart rows copied, and the cart rows the source held.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::carry_over_sessions must be overridden')
 
     def set_next_id(self, table_name: str, next_id: int) -> None:
         """Make the next row a table's auto-increment key hands out take a given id.

@@ -36,6 +36,7 @@ in place, and two symbolic links say which installation is which:
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
     /opt/opus/deployed  -> staged/<database>_<timestamp>   # what the web server serves
     /opt/opus/import    -> staged/<database>_<timestamp>   # what an import is using
+    /opt/opus/deploy.lock                                  # held by the deploy running
 
 That shape is what makes a deploy safe to run against a live site, and it follows from
 one fact about OPUS: **a release that changes the table schemas cannot read a database
@@ -50,7 +51,11 @@ built alongside the running one and touching nothing it uses; the deploy that sw
 it moves the ``deployed`` symlink with a single rename, empties the shared cache, and
 restarts the workers. A failure before that moment leaves the site serving exactly what it
 was serving, and the previous installation is still on disk afterwards, so going back is
-another switch rather than a rebuild.
+another switch rather than a rebuild. Sessions and carts are rows of the database, so a
+deploy that switches to a new database carries them over while the workers are stopped
+(:ref:`user_guide_deployment_carry_over`), and every deploy ends by asking the site for
+the landing page and the common searches once, so the first visitors find them ready
+(:ref:`user_guide_deployment_warm_search`).
 
 Underneath the installation root the deploy chain also expects, or creates, these
 directories: ``staged/`` for the installations above, ``opus_logs/`` for the web
@@ -112,8 +117,15 @@ one is published in between.
 
 Either way the installation being replaced stays under ``staged/``, so going back is
 moving the ``deployed`` symlink onto it and restarting -- there is nothing to rebuild.
-Old installations are removed by hand, when the one after them has been trusted for a
-while.
+Going back by hand skips the carry-over, so the sessions and carts made since the deploy
+stay behind in the newer database; redeploying the previous database with
+``deploy_new_code_and_database.sh <previous database> ==<previous release>`` carries them
+back when that release can carry sessions over (:ref:`user_guide_deployment_carry_over`).
+The version specifier names the release that imported the previous database: left off,
+the newest release is installed, and the schema version check
+(:ref:`user_guide_deployment_schema_version`) refuses the database when that release
+carries another schema version. Old installations are removed by hand, when the one
+after them has been trusted for a while.
 
 The scripts
 -----------
@@ -127,10 +139,13 @@ The scripts
     the search tables of any searches made while the staged installation was being tried
     out, flushing the shared cache with them
     (``opus_import --import-dictionary --reset-search-tables``), and only then switches.
-    The import already finalized the database, so nothing else is rebuilt: the
-    ``deployed`` symlink is moved onto it, the cache service is restarted, and the
-    workers are started again. They are stopped only for the switch, not while the new
-    installation is being prepared.
+    The import already finalized the database, so nothing else is rebuilt: the workers
+    are stopped, the sessions and carts are carried over from the database being served
+    (:ref:`user_guide_deployment_carry_over`), the ``deployed`` symlink is moved onto the
+    new installation, the cache service is restarted, the workers are started again, and
+    the common searches are warmed (:ref:`user_guide_deployment_warm_search`). The workers
+    are stopped only for the carry-over and the switch, not while the new installation is
+    being prepared.
     Which units those are comes from ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
 
 ``deploy_new_code_only.sh [--no-database] [<version spec>]``
@@ -138,7 +153,9 @@ The scripts
     against the database already being served. It reads the database name out of the
     installation currently deployed, builds a new installation at the new release naming
     that same database, runs the same migration, static-file and description-table steps,
-    and switches to it the same way. It does not upgrade anything in place. It leaves the
+    and switches to it the same way, warming the common searches afterwards. The database
+    does not change, so there is nothing to carry over. It does not upgrade anything in
+    place. It leaves the
     search tables alone, so the searches users have made are still stored after the
     release; a release that changes either search table's columns changes the schema
     version, and is deployed with ``deploy_new_code_and_database.sh``.
@@ -154,8 +171,9 @@ The scripts
     It changes no id, so no observation row is touched.
 
     ``--no-database`` writes nothing to the database: it skips Django's migrations and
-    the description-table step, ``--update-mult-info`` with it, and still installs the
-    release, collects its static files and switches to it. It is for a release that
+    the description-table step, ``--update-mult-info`` with it, and the warm-up after the
+    switch, which stores searches and a session as visitors' requests do; it
+    still installs the release, collects its static files and switches to it. It is for a release that
     changes neither the import nor the table schemas -- the web application, its
     templates and static files, the documentation. Whether a release is one of those is
     your call, from its release notes, as whether it changed the schema is. It still
@@ -209,6 +227,20 @@ The scripts
 The optional argument of all three is a **PEP 440 version specifier** appended to the
 distribution name -- ``==<release>`` for a particular release, omitted for the newest.
 
+**One deploy runs at a time.** Each deploy script takes an exclusive ``flock`` on
+``deploy.lock`` in ``OPUS_DIR`` right after reading ``deploy.env``, before it reads which
+database is being served, and holds it until the switch is done. A deploy started while
+another holds it stops at once, having changed nothing, with::
+
+    ERROR: another deploy holds /opt/opus/deploy.lock; wait for it to finish.
+
+Otherwise a deploy that switched while another was building would leave the other
+carrying sessions and carts over from a database that had stopped being served, and the
+two would move the ``deployed`` symlink in turn. The lock goes with the deploy's shell, so
+a deploy that failed or was interrupted leaves nothing to remove.
+``run_full_opus_import.sh`` does not take it: an import builds beside the served
+installation, and runs while deploys come and go.
+
 ``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
 a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from
 ``OPUS_DB_HOST``, the second loads it into ``OPUS_PEER_DB_HOST``. Neither knows the name
@@ -249,6 +281,92 @@ being served is untouched:
 
 ``--write-schema-version`` never changes a version a database already records, so a
 release cannot claim a database another release imported.
+
+.. _user_guide_deployment_carry_over:
+
+Sessions and carts across a deploy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A user's session and cart are rows of the database being served, in ``django_session``
+and ``cart``. A new database starts with both empty, so ``deploy_new_code_and_database.sh``
+copies them across. It reads the database being served from the deployed installation's
+``opus.toml``, prints it as ``Sessions and carts carried over from:``, and, once the
+workers have stopped and before the switch, runs this against the new database::
+
+    opus_import --carry-over-sessions-from <database being served>
+
+In one transaction, it empties the new database's two tables, copies every session that
+has not expired and owns a cart row, and copies each cart row of those sessions whose
+observation the new database holds, matched by OPUS ID. A failure rolls all of it back.
+The log says how many sessions and cart rows it copied, and how many cart rows it dropped
+because their session had expired or their observation is not in the new database.
+
+A session without a cart is not copied. OPUS keeps nothing else in a session that a
+visitor would miss: a marker that the session exists, and the running total that caps
+one session's downloads, which starts again. A staff member signed in to Django's admin
+signs in again. The served database holds such a session for every caller of the public
+API that sends no cookie, so copying them would lengthen the time the site is down.
+
+* **A first deploy**, with no deployed installation, carries nothing; nor does a redeploy
+  of the database already being served. ``deploy_new_code_only.sh`` keeps the database, so
+  it has nothing to carry.
+* **If the carry-over fails**, the workers are started again on the installation that was
+  serving, nothing has switched, and the deploy exits with failure. The deploy first reads
+  the release's ``opus_import --help`` to learn whether it has the option; if that fails,
+  the deploy stops the same way.
+* **A release without the option**, such as an older one being deployed again, cannot
+  carry sessions over: its ``opus_import --help`` succeeds and lists no
+  ``--carry-over-sessions-from``. The deploy warns, leaves the sessions and carts where
+  they are, and switches.
+* **Going back by moving the** ``deployed`` **symlink by hand** skips the carry-over, so
+  the sessions and carts made since the deploy stay in the newer database. Redeploying
+  the previous database with ``deploy_new_code_and_database.sh <previous database>
+  ==<previous release>``, naming the release that imported it, carries them back, since
+  the step empties its target first and so runs in either direction, but only when that
+  release has ``--carry-over-sessions-from``.
+
+``--carry-over-sessions-from`` refuses to run with any other step, and refuses a database
+that is the one it would write into, before it changes anything.
+
+.. _user_guide_deployment_warm_search:
+
+Warming the common searches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every visitor's first search is the empty one, and most next choose one planet, mission or
+instrument. A search's results are built in the database the first time anyone asks for
+it, and its answers are cached in memcached; a new database has no search built, and a
+deploy restarts memcached. So both deploy scripts run this once the workers are started
+again::
+
+    opus_manage warm_search
+
+It asks the site's own API, over HTTP, for what those searches show: for the empty
+search, its result count and first page, the default widgets and the menu, and its counts
+for every mult field, so that opening any mult widget is a cache hit; then, for one search
+per value of each common field -- each planet, mission and instrument, among others -- the
+same count, first page, default widgets and menu. The fields come from ``api/fields.json``
+and the values from the empty search's counts, so they are always the database's own. It
+prints each request's status and time, and the total. The site is already serving while it runs.
+
+* **It asks the site at its public URL**, the configuration's ``public_url`` under
+  ``/opus/``, so the server has to be able to reach that address. ``--url`` names another,
+  such as ``http://localhost/opus/``; the host it names must be in ``allowed_hosts``.
+* **Several requests are in flight at once**, as many as ``--parallel`` says
+  (``opus_manage warm_search --help`` gives the default), so they reach several of the web
+  server's workers. The empty search's count is asked for
+  alone first, since its other requests read the results it builds, and each common
+  search's requests run in order, its count first.
+* **A failure is a warning**, not a failed deploy: the site serves, and the first visitors'
+  requests build the searches instead.
+* **A search's built results are in the database**, so they are found whatever the cache
+  holds; on Django's per-process cache, without memcached, only the cached answers are
+  lost.
+* ``deploy_new_code_only.sh --no-database`` skips it, since its requests store searches
+  and a session as visitors' do.
+
+Run it by hand after anything else that empties the cache, such as the steps in
+:ref:`user_guide_deployment_after_import`.
 
 .. _user_guide_deployment_config:
 

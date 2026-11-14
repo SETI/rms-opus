@@ -43,6 +43,13 @@ export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
+# One deploy at a time: held from before the served schema is read until the promotion
+# is done, and released when this script exits.
+source ${IMPORT_SCRIPT_DIR}/_deploy_lock.sh
+if ! take_deploy_lock "${OPUS_DIR}/deploy.lock"; then
+    echo "*** ABORTING: nothing was changed ***"
+    exit 1
+fi
 source ${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh
 source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 
@@ -54,6 +61,9 @@ export OPUS_SRC_DIR=${OPUS_DIR}/staged
 # rebuild.
 export OPUS_DIR_NAME=${OPUS_DB_NAME}_`date +%Y%m%dT%H%M%S`
 INSTALL_DIR=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
+source ${IMPORT_SCRIPT_DIR}/_promote_steps.sh
+export OPUS_PREVIOUS_DB_NAME=$(previous_db_name "${OPUS_DIR}/deployed/opus.toml" "${OPUS_DB_NAME}")
+echo "Sessions and carts carried over from: ${OPUS_PREVIOUS_DB_NAME:-(none)}"
 
 mkdir -p ${OPUS_LOG_DIR}
 # The application's log outlives the installation that wrote it, so a file left by a
@@ -107,8 +117,9 @@ opus_manage collectstatic --noinput
 # search tables of any searches made while the staged installation was being tried out.
 opus_import --import-dictionary --reset-search-tables
 
-# The staged installation is complete. Switch to it, empty the shared cache, and
-# restart the workers.
+# The staged installation is complete. Carry the sessions and carts over from the
+# schema being served, switch to it, empty the shared cache, restart the workers, and
+# warm the landing page.
 source ${IMPORT_SCRIPT_DIR}/_promote.sh
 
 echo
