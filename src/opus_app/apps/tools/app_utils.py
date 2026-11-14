@@ -38,6 +38,8 @@ from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.template import loader
 from django.utils.html import escape
 
+from opus_app.apps.cart.models import Cart
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
@@ -172,9 +174,6 @@ def get_session_id(request: HttpRequest) -> str | None:
     Raises:
         Http400Error: If ``__sessionid`` is not ASCII or is longer than ``cart.session_id``.
     """
-    # The cart's model is read when a request arrives, after Django has loaded the apps.
-    from opus_app.apps.cart.models import Cart
-
     session_id = None
     if request.GET is not None:  # pragma: no cover - only happens with real web browser
         session_id = request.GET.get('__sessionid', None)
