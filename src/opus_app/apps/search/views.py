@@ -406,7 +406,7 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
                 # because it wasn't bad for MySQL
                 pattern = regex.compile(f'({esc_partial_query})', regex.IGNORECASE | regex.V1)
                 final_results = [pattern.sub('<b>\\1</b>', x) for x in final_results]
-            except Exception:
+            except Exception:  # pragma: no cover - a pattern MySQL took and regex refuses
                 # Match highlighting is cosmetic. A query that will not compile as a
                 # regular expression leaves the text unhighlighted rather than failing
                 # the search the user asked for.
