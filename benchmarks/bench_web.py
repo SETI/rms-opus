@@ -705,7 +705,7 @@ class WebBench:
         return self.warm_search()
 
     def warm_search(self) -> float:
-        """Run the side's ``opus_manage warm_search`` against the served schema.
+        """Run the side's ``opus_manage warm_search`` against the running server.
 
         Returns:
             Its wall-clock.
@@ -715,7 +715,7 @@ class WebBench:
                 the run sets out to measure.
         """
         started = time.perf_counter()
-        finished = self.side.warm_search(self.env)
+        finished = self.side.warm_search(self.env, f'{self.gunicorn.base_url}/')
         seconds = time.perf_counter() - started
         if finished.returncode != 0:
             raise WebRunError(

@@ -23,9 +23,9 @@
 #
 # warm_search
 #     Skipped when OPUS_WARM_SEARCH is exactly "false"; any other value, or none, warms.
-#     Answers the landing page's requests once (opus_manage warm_search), so the first
-#     visitor finds them cached. A failure is a warning, never a failed deploy: the site
-#     serves, only more slowly at first. Returns 0.
+#     Asks the site for the landing page and the common searches once (opus_manage
+#     warm_search), so the first visitors find them ready. A failure is a warning, never
+#     a failed deploy: the site serves, only more slowly at first. Returns 0.
 #
 # Inputs: OPUS_CONFIG (exported by _opus_setup_environment.sh) naming the staged
 # installation's configuration, and that installation's virtualenv active, so that

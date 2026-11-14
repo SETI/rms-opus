@@ -232,45 +232,55 @@ the functions that do it.
 
 .. _dev_guide_webapp_search_warm:
 
-Warming the landing page
-------------------------
+Warming the common searches
+---------------------------
 
-The empty search, in the default sort, is the search every visitor starts with, and its
-result count, its first page and its mult counts are cached until the next import. A
-deploy empties memcached, so the first visitor after it would pay for all of them.
-``opus_manage warm_search``
-(:mod:`opus_app.apps.search.management.commands.warm_search`) asks for them once, from
-the deploy, instead.
+The empty search, in the default sort, is the search every visitor starts with, and most
+next choose one value of a general constraint. A search's results are built in
+``search_results`` the first time anyone asks for it and its answers are cached in
+memcached, and a deploy brings a database with no search built and an empty memcached, so
+the first visitors after it would pay for all of them. ``opus_manage warm_search``
+(:mod:`opus_app.apps.search.management.commands.warm_search`) asks for them once, from the
+deploy, instead.
 
-It issues ordinary requests through Django's test client rather than computing cache
-keys itself: a key depends on the search's hash, which depends on
-``DEFAULT_SORT_ORDER``, on how ``parse_order_slug`` resolves it through ``param_info``,
-on :func:`~opus_app.apps.tools.app_utils.sort_dictionary` and on
+It asks the running site's API over HTTP, as a browser would, rather than computing cache
+keys or building searches itself: a key depends on the search's hash, which depends on
+``DEFAULT_SORT_ORDER``, on how ``parse_order_slug`` resolves it through ``param_info``, on
+:func:`~opus_app.apps.tools.app_utils.sort_dictionary` and on
 :func:`~opus_app.apps.tools.app_utils.strip_numeric_suffix`, so only the views compute it
 correctly. No view knows it is being warmed, and nothing is stored that a visitor's
-request would not store.
+request would not store. Asking over HTTP also reaches the web server's workers, several at
+a time, so each is past its first request (:ref:`dev_guide_webapp_search_paraminfo_cache`).
 
 :func:`~opus_app.apps.search.management.commands.warm_search.warm_requests`
-    The requests, in order: the empty search's result count; its first page through
+    The empty search's requests, in order: its result count; its first page through
     ``api/data.json`` and through ``__api/dataimages.json``; the range endpoints of each
     widget in ``DEFAULT_WIDGETS`` that is a range; the menu, which lists the triggered
-    tables, for the empty search the base tables; and the mult counts of every searchable
-    mult field, the default widgets first.
+    tables, for the empty search the base tables; and the mult counts of every mult field,
+    the default widgets first.
 
-:func:`~opus_app.apps.search.management.commands.warm_search.searchable_fields`
-    The fields those mult counts are chosen from: every ``param_info`` row the search
-    menu offers (``display`` 1), with its form type.
+:func:`~opus_app.apps.search.management.commands.warm_search.value_search_requests`
+    One common search's requests, for one value of one field of
+    :data:`~opus_app.apps.search.management.commands.warm_search.COMMON_SEARCH_FIELDS`:
+    the same count, first page, default widgets' fan-out and menu, and the searched
+    field's own counts, which its widget shows.
 
-:func:`~opus_app.apps.search.management.commands.warm_search.warm_host`
-    The client's ``HTTP_HOST``: the first ``ALLOWED_HOSTS`` entry that is not ``*``, or
-    ``localhost`` when every entry is. The test client's own default host is not in
-    ``ALLOWED_HOSTS``, and every request would be answered 400.
+:func:`~opus_app.apps.search.management.commands.warm_search.api_fields`
+    The fields, and which are mults and which ranges, from ``api/fields.json``.
 
-The command refuses Django's local-memory cache, which would hold the answers only in its
-own process, and it warms memcached and the database's buffer pool, not the workers: each
-worker still loads its per-process caches (:ref:`dev_guide_webapp_search_paraminfo_cache`)
-on its first request. A request that does not answer 200 makes it exit with failure after
-the others; the deploy reports that as a warning.
+:func:`~opus_app.apps.search.management.commands.warm_search.counted_values`
+    A common field's values, from the empty search's counts for it, so that each is a
+    value some observation holds.
+
+The empty search's count is asked for first and alone, since it builds the results every
+other request of the empty search reads; the rest are then in flight ``--parallel`` at a
+time, each common search's requests in order so that its count builds its results before
+its pages read them. ``--url`` names the API root; without it the command asks
+``public_url`` under ``BASE_PATH``, where the web server serves the application
+(:func:`~opus_app.apps.search.management.commands.warm_search.default_site_url`). A
+request that does not answer 200, or gets no answer, makes it exit with failure after the
+others; the deploy reports that as a warning. The built results are rows of the database,
+so a search warmed under any cache backend is found built afterwards.
 
 Turning a search into SQL
 -------------------------
