@@ -97,15 +97,19 @@ class _Recorder:
 class _Side:
     """A side whose warm-up records itself and exits with a given status."""
 
-    def __init__(self, calls: list[str], status: int = 0) -> None:
+    def __init__(
+        self, calls: list[str], status: int = 0, served: list[tuple[int, str]] | None = None
+    ) -> None:
         """Make a stand-in side.
 
         Parameters:
             calls: The shared list its warm-up is recorded into.
             status: What its warm-up exits with.
+            served: The server's served log, which its warm-up's request is added to.
         """
         self.calls = calls
         self.status = status
+        self.served = served if served is not None else []
         self.env: dict[str, str] | None = None
         self.url: str | None = None
 
@@ -120,17 +124,45 @@ class _Side:
             A finished process exiting with the side's status.
         """
         self.calls.append('side.warm_search')
+        self.served.append((1, '/api/meta/result_count.json'))
         self.env = env
         self.url = url
         return subprocess.CompletedProcess([], self.status, 'out', 'err')
 
 
+class _Gunicorn(_Recorder):
+    """A recording gunicorn with a served log, which its start empties."""
+
+    def __init__(self, calls: list[str]) -> None:
+        """Make a stand-in gunicorn.
+
+        Parameters:
+            calls: The shared list each call is appended to.
+        """
+        super().__init__('gunicorn', calls)
+        self.requests: list[tuple[int, str]] = []
+
+    def start(self) -> None:
+        """Record the start and empty the served log, as new workers have served nothing."""
+        self.calls.append('gunicorn.start')
+        self.requests.clear()
+
+    def served(self) -> list[tuple[int, str]]:
+        """Return the served log's requests since the last start.
+
+        Returns:
+            Each request's worker process id and path.
+        """
+        return list(self.requests)
+
+
 def _bench(calls: list[str], warm_states: frozenset[str], status: int = 0) -> WebBench:
     """Return a WebBench over stand-ins; nothing is started."""
     bench = object.__new__(WebBench)
-    bench.side = _Side(calls, status)  # type: ignore[assignment]
+    gunicorn = _Gunicorn(calls)
+    bench.side = _Side(calls, status, gunicorn.requests)  # type: ignore[assignment]
     bench.server = _Recorder('mysql', calls)  # type: ignore[assignment]
-    bench.gunicorn = _Recorder('gunicorn', calls)  # type: ignore[assignment]
+    bench.gunicorn = gunicorn  # type: ignore[assignment]
     bench.gunicorn.base_url = 'http://127.0.0.1:8000'  # type: ignore[misc]
     bench.memcached = _Recorder('memcached', calls)  # type: ignore[assignment]
     bench.env = {'OPUS_CONFIG': 'opus.toml'}
@@ -161,6 +193,46 @@ def test_a_state_not_warmed_ends_with_the_cache_restart() -> None:
     assert _bench(calls, frozenset({'db-cold'})).reset('app-cold') is None
     assert calls[-1] == 'memcached.restart'
     assert 'side.warm_search' not in calls
+
+
+def test_the_cold_check_comes_before_the_warm_up() -> None:
+    """A request served before the warm-up fails the reset, and the warm-up never runs."""
+    calls: list[str] = []
+    bench = _bench(calls, frozenset({'db-cold'}))
+    requests = bench.gunicorn.requests  # type: ignore[attr-defined]
+    # A request reaches a worker between the application's start and the check.
+    bench.memcached = SimpleNamespace(  # type: ignore[assignment]
+        restart=lambda: requests.append((7, '/opus/'))
+    )
+    with pytest.raises(WebRunError, match='have served'):
+        bench.reset('db-cold')
+    assert 'side.warm_search' not in calls
+
+
+def test_a_run_whose_states_warm_passes_the_cold_check() -> None:
+    """The warm-up's own requests through the server do not fail the scenario after it."""
+    calls: list[str] = []
+    bench = _bench(calls, frozenset({'db-cold', 'app-cold'}))
+    bench.config = SimpleNamespace(  # type: ignore[assignment]
+        scenarios=[SimpleNamespace(name='landing')], concurrency=None
+    )
+    bench.promotion_source = None
+    scenario_states: list[str] = []
+
+    def run_scenario(state: str, *args: Any) -> list[Any]:
+        scenario_states.append(state)
+        bench._cache_gets += 1
+        return []
+
+    bench.run_scenario = run_scenario  # type: ignore[method-assign, assignment]
+    bench.warm_up = lambda issued: {'rounds': 0}  # type: ignore[method-assign]
+    run = bench.one_run()
+    assert scenario_states == ['db-cold', 'app-cold', 'warm']
+    assert sorted(run['details']['warm_search_s']) == [
+        'web.app-cold.landing',
+        'web.db-cold.landing',
+    ]
+    assert calls.count('side.warm_search') == 2
 
 
 def test_a_failed_warm_up_fails_the_run() -> None:

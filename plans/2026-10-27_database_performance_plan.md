@@ -7288,38 +7288,38 @@ Nothing above this line is rewritten by an executor.
   - Mutations, each failing its test: the leftover's row ignored; the final drop
     ignoring `restore_pending`; the flag never set, or never cleared.
   - Results, at ac849e9a: the gates pass (3,086 unit tests).
-- **Measurement** (2026-11-11, test scale; one schema, `bench_test_after_b_3`, imported
-  by PR-17's head 45ccaebb, since this PR changes no schema; before PR-17's head serving
-  it, which has neither step; after this PR's head e5e71573 with `--warm db-cold --warm
-  app-cold --promotion-carts 10000`; six web runs alternated, three a side, session `a`;
-  judged against the PR-00 floors; load averages 1.3 to 6.9, the PR-19 executor working
-  beside the runs):
+- **Measurement** (2026-11-13, test scale, session `r`, five web runs a side, B A A B B A
+  A B B A, replacing session `a`'s three, which measured a warm-up this PR no longer
+  ships): one schema, `bench_test_gate_with`, a copy of PR-17's test-scale import
+  (`SCHEMA_VERSION` 10, which this PR keeps); before PR-17's final head 86667054 serving
+  it, which has neither step; after this PR's head 6f60721d with `--warm db-cold --warm
+  app-cold --promotion-carts 10000`; judged against the PR-00 floors. Load averages 9.4
+  to 21.1, from other work on the machine; the first before run overlapped the last 40 s
+  of a `run-all-checks.sh`.
   - **Target, the head's db-cold first page of the empty search against its own warm:**
-    18.6 ms against 10.7 ms, 7.9 ms apart, within the web family's jitter of 12.9 ms, the
-    distance at which §2.6 counts two medians of a time metric as agreeing; by that
-    measure the target is met. Beside it, before against after, db-cold, which the target
-    does not judge: 24.8 ms to 18.6 ms, -25.0%, not beyond its floor (52.0%, the same
-    jitter over a small median). Behind the target, the warm-up did what it is for: the
-    empty search's db-cold result count 194.9 ms to 11.2 ms (-94.2%), and the page's
-    db-cold `Innodb_buffer_pool_reads` 220 to 0 and `Sort_merge_passes` 1 to 0.
+    19.4 ms against 18.3 ms, within the web family's jitter of 12.9 ms, the distance at
+    which §2.6 counts two medians of a time metric as agreeing: the target is met. Before
+    against after, db-cold, which the target does not judge: 44.1 ms to 19.4 ms, -56.0%,
+    beyond its floor (29.2%). Behind it, the empty search's db-cold result count 274.0 ms
+    to 1.9 ms (-99.3%), and the page's db-cold `Innodb_buffer_pool_reads` 263 to 0 and
+    `Sort_merge_passes` 1 to 0. The warm-up took 3.3 s, median over the runs' resets
+    (2.5 s to 4.9 s), asking the harness's own gunicorn.
   - **Two requests the warm-up does not issue:** the empty search's tenth page db-cold,
-    9.1 ms to 27.7 ms (reported; floor 198%); the planet widget db-cold, 39.0 ms to
-    28.3 ms (-27.5%, within its floor).
+    19.2 ms to 18.1 ms (-5.4%; floor 113.7%); the planet widget db-cold, 56.9 ms to
+    15.1 ms (-73.5%, beyond its floor of 22.7%), since its counts are among those the
+    warm-up asks for.
   - **Promotion window** (head only, 10,000 planted cart rows): `web.promotion.window_s`
-    2.48 s, of which the carry-over `web.promotion.carry_over_s` 0.62 s, measured by one
-    run after the review's fixes (at e2f3f136, session `w`, 2026-11-12, `--warm db-cold
-    --warm app-cold --promotion-carts 10000` against the same schema; load averages 3.9
-    to 11.2), since the window opens before the application's stop and closes once its
-    start returns. The runs above, which left out the stop and the start, gave 1.43 s and
-    0.66 s.
-  - **Guard regressed, accepted:** `web.app-cold.concurrency.shared.p95_s` 0.177 s to
-    0.227 s (+28.1%; floor 19.4%), every head run above every base run. The head serves
-    requests with the same code as the base; what differs is the warm-up, which builds
-    the empty search 1.5 s before sixteen users build the shared search together. A
-    check session `nowarmapp`, one run a side with the head warming db-cold only, gave
-    0.175 s against the base's 0.174 s. The regression is the harness measuring a
-    scenario right after the warm-up's writes, which a deploy does once; the
-    orchestrator accepts it. Every other guard held.
+    3.48 s, of which the carry-over `web.promotion.carry_over_s` 0.76 s (spread 41.6%).
+  - **Guard regressed, accepted:** `web.app-cold.concurrency.shared.p95_s` 0.216 s to
+    0.270 s (+24.7%; floor 15.9%), at five runs a side as §2.6 asks of a guard within
+    twice its floor. The head serves requests with the same code as the base; what
+    differs is the warm-up, whose searches' rows are written just before sixteen users
+    build the shared search together. Session `nowarmapp` (2026-11-11), one run a side
+    with the head warming db-cold only, gave 0.175 s against the base's 0.174 s; the
+    db-cold half, also warmed, held (+2.9%), and the distinct half improved (-25.8%).
+    The regression is the harness measuring a scenario right after the warm-up's
+    writes, which a deploy does once; the orchestrator accepts it. Every other guard
+    held.
 
 ### 2026-11-11, PR-19 (written against this file at e5e71573)
 
@@ -7808,6 +7808,55 @@ Nothing above this line is rewritten by an executor.
     `--validate` runs `validate_junctions` on every fixture import, 195 passed and 3
     skipped. The integration job's run was not repeated: nothing in this batch changes
     `opus_app` or the import's output.
+- **Measurement** (2026-11-13, test scale; base at 92aed872 and head at b67a1150, each in
+  its own worktree and virtual environment, each side importing and serving its own
+  schema; judged against the PR-00 floors):
+  - *Session `a`:* three fixture imports a side (A B B A A B), one test-scale import a
+    side (A B), web runs A B B A, then `bench_db --dump-queries --resort-probe` once a
+    side (the head's with `--commit-capture`). The target landed within twice its floor
+    and the test-scale import guard regressed on its one run a side, so §2.6's repeat
+    followed as session `r`, whose web and test-scale import figures replace session
+    `a`'s. The fixture imports and the `bench_db` figures are session `a`'s.
+  - *Session `r`:* ten web runs alternated (B A A B B A A B B A), five a side, on session
+    `a`'s two test-scale schemas; then six test-scale imports, three a side (B A A B B A).
+
+  | Metric | Before | After | Change |
+  |---|---|---|---|
+  | **Target:** target search, app-cold (`r`) | 99.0 ms | 63.1 ms | −36.2%, within its floor (41.4%): not improved |
+  | The same search, db-cold (`r`) | 139.6 ms | 100.7 ms | −27.8%, within its floor |
+  | Its `result_count` plan, rows examined (`a`) | 32,970 | 13,340 | −59.5% |
+  | Target mult count, empty search, app-cold (`r`) | 41.7 ms | 13.2 ms | −68.2%, within its floor |
+  | Target mult count, selected search, app-cold (`r`) | 28.7 ms | 20.5 ms | −28.5%, within its floor |
+  | Their plans' time, empty / selected (`a`) | 32.5 / 42.4 ms | 5.0 / 34.6 ms | −84.6% / −18.4% |
+  | Re-sort on the target, plan time (`a`) | 32.9 ms | 6.6 ms | −80.0%; rows examined −65.1% |
+  | Test-scale import, wall (`r`, guard) | 312.5 s | 312.2 s | −0.1%, held |
+  | Largest bundle's import (`r`, guard) | 72.1 s | 72.1 s | −0.1%, held |
+  | Fixture import, wall (`a`, guard) | 40.4 s | 42.3 s | +4.8%, held (spreads 2.5% / 7.8%) |
+
+  - **The target is a stop-and-report (§2.5), and the orchestrator keeps the PR.** The
+    target search's app-cold medians are 36% apart, but the floor of a time this small is
+    mostly the web jitter (41 ms of absolute noise on 99 ms), and the per-run values
+    overlap (before 79.9 to 102.3 ms, after 61.8 to 85.4 ms). The plans show the change
+    the PR is for: the search's `result_count` reads 59.5% fewer rows, a semi-join on
+    `obs_general_target_name` replacing a scan of every observation's JSON list; the
+    empty search's target mult count plans in 84.6% less time, grouping the junction
+    table's primary key; and the re-sort on the target plans in 80.0% less. Each
+    app-cold scenario on the target moved down as a whole (the target pages −28.9%, the
+    re-sort on the target −20.0%), none beyond its floor at this scale, where the tables
+    fit in memory; warm, where the search is already built, the medians agree within the
+    jitter. The scan the PR removes grows with the observations and the semi-join with
+    the matches.
+  - **The import guard holds.** Session `a`'s single test-scale import a side regressed
+    (+22.4% wall, +20.9% largest bundle), measured under a load of about ten. Session
+    `r`'s three a side, at loads of 1.5 to 4.2 with no other benchmark running, agree to
+    0.1%: writing the junction rows costs the import nothing measurable at test scale.
+    At fixture scale every after import was slower than every before one, by less than
+    the after side's own spread.
+  - Every web guard held in session `r`, and no metric regressed beyond its floor.
+  - PR-21's gate, from session `a`'s `bench_db`: see PR-21's notes.
+  - Session `r`'s first five web runs shared the machine with eight other jobs (load
+    9.9 to 17.9); the last five ran with none (load 5.8 to 9.8). The import repeat ran
+    alone. In session `a`, a gate run overlapped the fifth web run.
 
 ### 2026-11-14, PR-21 (written against this file at b67a1150)
 

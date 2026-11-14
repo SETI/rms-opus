@@ -702,6 +702,11 @@ class WebBench:
         Returns:
             The wall-clock of the side's ``warm_search``, which runs last when the state
             is one of `warm_states`; None when it does not run.
+
+        Raises:
+            WebRunError: If a worker has served a request once the servers are back up,
+                which `require_cold` checks before the warm-up sends its own requests
+                through them.
         """
         self.reset_search_tables()
         self.gunicorn.stop()
@@ -710,6 +715,7 @@ class WebBench:
             self.server.restart()
         self.gunicorn.start()
         self.memcached.restart()
+        self.require_cold()
         if state not in self.warm_states:
             return None
         return self.warm_search()
@@ -1203,7 +1209,6 @@ class WebBench:
                 warmed = self.reset(state)
                 if warmed is not None:
                     warm_searches[f'web.{state}.{scenario.name}'] = warmed
-                self.require_cold()
                 # One cookie jar per scenario, emptied only by the reset.
                 client = Client(base_url)
                 issued = self.run_scenario(state, scenario, run, client)
@@ -1217,7 +1222,6 @@ class WebBench:
                 warmed = self.reset(state)
                 if warmed is not None:
                     warm_searches[f'web.{state}.concurrency.{half}'] = warmed
-                self.require_cold()
                 clients = [Client(base_url) for _ in range(concurrency.users)]
                 issued = self.run_concurrency_half(state, concurrency, half, run, clients)
                 if state == 'app-cold':
