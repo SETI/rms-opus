@@ -7801,3 +7801,32 @@ Nothing above this line is rewritten by an executor.
   without the `MATCH`, `MATCH` for every qtype, the time-out cases without the injection)
   failed theirs; and the two import-suite mutations above (the stopword line, the whole
   term as the phrase) failed `test_fulltext.py`.
+- Results at 4899a245: the gates pass (`run-all-checks.sh`, 3,155 unit tests); the import
+  suite 207 passed and 3 skipped; the integration job's run (`tests/opus_support`,
+  `tests/opus_app` and `integration_tests`, with coverage) 2,919 passed against `pr22local`
+  at 100% coverage. `pr22local` was imported with this branch's code before the last two
+  commits, which change no import step (the `TABLE_SCHEMA_DIR` move, comments, the
+  import suite's key reader); its `schema_version` row is 12, `ready`.
+- **The measurement, for the orchestrator** (§2.3, measured on clones, test scale):
+  the base (the merge-base after PR-20 and PR-21 are in) imports once with
+  `bench_import --stop-before-finalization`; each side then runs `bench_import
+  --reuse-schema <that schema> --finalize-only` with its own interpreter, finalizing its
+  own copy (`import.finalization.wall_s`; the head's `FULLTEXT` builds are the
+  `import.phase.create_indexes:<table>:FULLTEXT KEY (<column>)_s` phases); the ceiling is
+  the head's finalization less the base's, at most 10% of the base's
+  `import.bundle_imports.wall_s` plus its finalization. `bench_db` once a side on its own
+  copy (`db.schema.index_bytes`, which includes `db.schema.fulltext_bytes`, and the
+  capture's `db.plan.autocomplete.bundleid/prefix_2` and `/prefix_6` plans, whose
+  `EXPLAIN ANALYZE` shows `Full-text index search` on the head), then `bench_web --schema
+  <copy>` alternated A B B A at §2.6's count. The target is the p50 of
+  `web.app-cold.autocomplete.bundleid.prefix_6.latency_s` (`COISS_`), with `prefix_2`
+  (`CO`) reported and the warm state reported, not judged. The branch that answered is
+  read from `details.top_statements['web.app-cold.autocomplete.bundleid']`: a digest
+  naming `search_results` is the joined branch, one without it the simple branch, and on
+  the head the digest holds `MATCH`; each digest's `count` gives the requests it served
+  (two timed requests, one statement each, unless one timed out and fell back, when the
+  simple digest appears beside the joined one). The time-out count is
+  `web.app-cold.autocomplete.bundleid.server.Max_execution_time_exceeded` (and the db-cold
+  one). At test scale the empty search holds fewer rows than
+  `STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD`, so both sides should answer from the joined
+  branch.
