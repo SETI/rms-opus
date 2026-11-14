@@ -499,7 +499,8 @@ workers start (:ref:`user_guide_deployment_warm_search`). ``web.toml``'s ``[warm
 flag for each cold state, ``db-cold`` and ``app-cold``, both false; a state whose flag is
 true, or that ``--warm STATE`` names (repeatable), ends its reset with the side's
 ``opus_manage warm_search``, asking the harness's own server, after memcached's restart
-and before the scenario. The
+and before the scenario. The served-log check comes before the warm-up, whose requests
+reach the same workers the scenario then meets. The
 warm-up's wall-clock is in the run's details under ``warm_search_s``, and its statements
 are not counted in the scenario's, since the statement statistics are emptied after it.
 A warm-up that fails fails the run.
