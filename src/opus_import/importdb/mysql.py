@@ -41,6 +41,7 @@ except ImportError:
     MYSQLDB_AVAILABLE = False
 
 from opus_config.config import DEFAULT_TRANSACTION_ROWS
+from opus_import import list_junctions
 from opus_import.importdb.super import (
     CarriedOver,
     DBRow,
@@ -2228,6 +2229,56 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             except MySQLdb.Error as e:
                 self._log_failure(f'Failed in stream_select: {e}')
                 raise ImportDBError(e) from e
+
+    def list_junction_mismatches(
+        self, table_name: str, column: str, junction: str, observation_column: str
+    ) -> tuple[int, int | None]:
+        """Compare a ``mult_list`` column's lists with its junction table's rows.
+
+        Each list is read as rows by ``JSON_TABLE``. One anti-join finds the ids of a list
+        with no junction row, reading the junction table's primary key; the other finds
+        the junction rows whose observation's list lacks their id, reading the table by
+        its observation column. Both scan their whole table.
+
+        Parameters:
+            table_name: The table holding the column.
+            column: The ``mult_list`` column.
+            junction: Its junction table.
+            observation_column: The table's column holding the observation's
+                ``obs_general`` id, the key of its rows.
+
+        Returns:
+            How many observations disagree, and the least ``obs_general`` id among them,
+            or None when none does.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        q = self.quote_identifier
+        table, ids, rows, found = q('t'), q('j'), q('x'), q('d')
+        value, observation = q('v'), q(observation_column)
+        mult_id = q(list_junctions.JUNCTION_MULT_COLUMN)
+        linked = q(list_junctions.JUNCTION_OBSERVATION_COLUMN)
+        # Every identifier is validated by quote_identifier; the statement binds no value.
+        listed = (
+            f'{q(table_name)} AS {table}, JSON_TABLE({table}.{q(column)}, '
+            f"'$[*]' COLUMNS ({value} INT PATH '$')) AS {ids}"
+        )
+        unlinked = (
+            f'SELECT {table}.{observation} AS {q("obs")} FROM {listed} '  # nosec B608
+            f'WHERE NOT EXISTS (SELECT 1 FROM {q(junction)} AS {rows} '
+            f'WHERE {rows}.{mult_id} = {ids}.{value} AND {rows}.{linked} = {table}.{observation})'
+        )
+        unlisted = (
+            f'SELECT {rows}.{linked} FROM {q(junction)} AS {rows} '  # nosec B608
+            f'WHERE NOT EXISTS (SELECT 1 FROM {listed} '
+            f'WHERE {table}.{observation} = {rows}.{linked} AND {ids}.{value} = {rows}.{mult_id})'
+        )
+        ((count, first),) = self.general_select(
+            f'COUNT(DISTINCT {found}.{q("obs")}), MIN({found}.{q("obs")}) '  # nosec B608
+            f'FROM ({unlinked} UNION ALL {unlisted}) AS {found}'
+        )
+        return int(count), None if first is None else int(first)
 
     def find_column_max(self, table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.

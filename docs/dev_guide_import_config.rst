@@ -67,6 +67,11 @@ Some of the names carry a placeholder, substituted per bundle by
    * - ``<INST>``
      - The instrument id, lowercased. ``COISS`` gives ``obs_instrument_coiss``.
 
+The list names no junction table. Each ``mult_list`` column's junction table,
+``obs_general_target_name`` and ``obs_general_target_class``, is created after the table
+holding the column and filled from that table's rows
+(:ref:`dev_guide_database_schema_junction_tables`).
+
 ``obs_surface_geometry_target`` holds every body's surface geometry, one row per
 observation and body; each row is computed under the body's category,
 ``obs_surface_geometry__<target>``, whose name ends in the encoded target name from

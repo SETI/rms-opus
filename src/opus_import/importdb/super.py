@@ -1627,6 +1627,30 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::stream_select must be overridden')
 
+    def list_junction_mismatches(
+        self, table_name: str, column: str, junction: str, observation_column: str
+    ) -> tuple[int, int | None]:
+        """Compare a ``mult_list`` column's lists with its junction table's rows.
+
+        An observation disagrees when an id of its list has no junction row, or a junction
+        row names an id its list lacks (`opus_import.list_junctions`).
+
+        Parameters:
+            table_name: The table holding the column.
+            column: The ``mult_list`` column.
+            junction: Its junction table.
+            observation_column: The table's column holding the observation's
+                ``obs_general`` id.
+
+        Returns:
+            How many observations disagree, and the least ``obs_general`` id among them,
+            or None when none does.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::list_junction_mismatches must be overridden')
+
     def find_column_max(self, table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.
 
