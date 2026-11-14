@@ -7658,9 +7658,9 @@ Nothing above this line is rewritten by an executor.
   finalization's keys and foreign keys, `ANALYZE`, the orphan count and the other
   validations (`validate_param_info` skips a column starting `mult_` and
   `obs_general_id`; `do_param_info` reads a junction schema and finds no `pi_` column);
-  `table_names` is hand-written and gains no row. No validation of its own was added:
-  the orphan count covers the junction tables, and the import goldens pin their
-  contents.
+  `table_names` is hand-written and gains no row. The orphan count covers one direction
+  only, a junction row whose observation is gone; `validate_junctions` (the review fixes
+  below) compares each list with its junction rows both ways.
 - **The rows are written by `TableRowSink.add`**, from each `obs_general` row's final
   values: the sink runs in the import's process after PR-09's replay has resolved every
   placeholder, so the serial path and every pool size write the same junction rows, from
@@ -7728,15 +7728,17 @@ Nothing above this line is rewritten by an executor.
     the `EXPLAIN ANALYZE`, as `db.plan.*.time_s` is timed, with the five times in the
     run's `samples` under the same name, so `compare.py` takes the median and spread over
     them), `.analyze_ms` (the median server-reported time to the top iterator's last
-    row, samples too), `.rows_returned` and `.rows_examined` (from the top iterator and
-    the access iterators), `db.resort_probe.broad.result_count` (the built search's
+    row, samples too), `.rows_returned` (each shape's exact count, by `SELECT COUNT(*)`
+    over it once after the timed runs; the review fixes below) and `.rows_examined` (from
+    the plans' access iterators), `db.resort_probe.broad.result_count` (the built search's
     `user_searches.result_count`), `.ratio` (generated `time_s` over captured) and
     `.valid` (1 or 0); `details.resort_probe` holds both statements, the built search's
     id, every execution's figures, each shape's plain spread (range over median), the
     last tree of each and the problems;
-  - **valid** only when the result count is non-zero and both shapes returned exactly it
-    and examined rows in every execution; an invalid probe is recorded (the run is
-    appended) and then `bench_db` exits with an error naming the problems.
+  - **valid** only when the result count is non-zero, both shapes' exact counts equal
+    it, and both plans examined rows in every execution; an invalid probe, or one that
+    cannot run, is recorded (the run is appended) and then `bench_db` exits with an error
+    naming the problems.
   - Only the broad search is probed (`resort_probe.PROBE_SEARCH`), the one PR-21's gate
     names. A smoke run of `resort_probe.probe` on `pr20local`, with the two blocks
     captured through Django's `CaptureQueriesContext` around the two requests, found a
@@ -7772,3 +7774,37 @@ Nothing above this line is rewritten by an executor.
     their spreads from the samples, `db.resort_probe.broad.valid`, both shapes'
     `.rows_returned` and `.result_count`. The before side's run gives the same figures
     on PR-19's schema.
+- **Review fixes (2026-11-14)**, at the orchestrator's decisions on an independent review
+  and CodeRabbit's; each behavior fix has a test that fails with it reverted
+  (mutation-checked):
+  - *A probe that cannot run.* A capture without the `resort.broad` blocks, a re-sorted
+    request that built no search, or a statement the server refused raised out of
+    `bench_db` before `append_runs`, losing the side's replay plans. `resort_probe.measure`
+    records `ProbeError` or `MySQLdb.Error` as a failed measurement (`valid` 0, the error
+    as its problem, no samples), `bench_db.record_resort_probe` adds it to the run, and
+    `bench_db.probe_failure` makes the command exit non-zero after the run is recorded.
+  - *The junction tables against the lists.* `do_validate.validate_junctions` compares,
+    for each `mult_list` column, the distinct ids of each observation's JSON list with
+    its junction rows both ways (`ImportDBMySQL.list_junction_mismatches`: two anti-joins,
+    one over `JSON_TABLE` rows reading the junction's primary key, one over the junction
+    reading `obs_general` by `id`), and logs an error naming the junction table, how many
+    observations disagree and the least `obs_general` id among them; a missing junction
+    table is an error too. On `pr20local` both columns compare clean; with one
+    observation's `target_name` row deleted and one stray `target_class` row inserted,
+    in a transaction rolled back after, each column reported one observation.
+  - *Exact row counts.* `EXPLAIN ANALYZE` prints a large row count rounded
+    (`rows=1.38e+06` for 1,381,234), so the probe's comparison of the plan's figure with
+    the result count would have failed a correct complete-scale measurement. Each
+    shape's rows are counted once, after the timed runs, by `SELECT COUNT(*) FROM
+    (<shape>) AS counted`, and that count is compared; the plans' figures stay in
+    `details.resort_probe.runs.<shape>.plan_rows`. The smoke run on `pr20local` repeated
+    with the exact count: both shapes 29,730 rows, the result count, valid.
+  - The database schema guide's paragraph on the JSON lists points to the junction
+    tables for the search and the counts and to `sql_builder.json_extract_first` for the
+    sort; the import overview says a junction row is queued when its `obs_general` row is
+    handed to the loader and may load before it; `list_junctions.JUNCTION_OBSERVATION_COLUMN`
+    is `table_keys.OBSERVATION_DELETE_COLUMN`; the long lines this PR added are reflowed.
+  - Results at 7db60d6d: the gates pass (3,176 unit tests); the import suite, whose
+    `--validate` runs `validate_junctions` on every fixture import, 195 passed and 3
+    skipped. The integration job's run was not repeated: nothing in this batch changes
+    `opus_app` or the import's output.
