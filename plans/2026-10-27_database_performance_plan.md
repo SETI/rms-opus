@@ -8200,3 +8200,68 @@ Nothing above this line is rewritten by an executor.
   too. Results at that merge: the gates pass (3,231 unit tests); the import suite 209
   passed and 3 skipped; `pr22local` set up again from the merge, and the integration
   job's run 2,929 passed at 100% coverage.
+- **CodeRabbit's review (2026-11-14)**, of 3ef090a3..03a201d5; each behavior fix has a
+  test that fails with it reverted (mutation-checked):
+  - *A dump that cannot be read.* `load_dump` piped the stopword line and `cat` into
+    `mysql`, whose status alone was returned, so an unreadable dump loaded nothing and
+    succeeded. The pipeline runs under `set -o pipefail` in a subshell, and a test gives
+    the load a missing dump. `clone_database.sh` (`/bin/sh`, no `pipefail`) checks the
+    dump is readable before its pipeline.
+  - *A real 2 ms limit in the fallback tests.* The cases that set
+    `STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD` to 2 ms sent the first `LIKE` with that
+    hint, so a slow server could give up on it unasked, the timing dependence #1279 is
+    about. `_string_choices_given_up` keeps the statement as sent for its record and its
+    injection, and runs a short-limit statement it does not give up on under
+    `STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2` instead.
+  - *The Django settings in result files.* `bench_db --dump-queries` records its
+    settings as the environment's `django_settings`, as `bench_web` does, in place of
+    `details.capture_django_settings`, so `compare.py`'s check covers the capture's
+    plans too; `django_settings` is pinned within a result file, compared as `{}` for
+    earlier runs that record none.
+  - Declined: the pre-merge check asking for the feature to leave this PR. The PR is
+    this plan's PR-22, and it fixes #1279 as the plan asks.
+  - Results with these fixes: the gates pass (3,233 unit tests); against `pr22local`,
+    `integration_tests/test_api/test_search_api.py` and
+    `integration_tests/apps_db_tests/test_search.py` 383 passed.
+- **Measurement** (2026-11-14, test scale, on clones; base PR-20's head 3ef090a3, head
+  03a201d5; judged against the PR-00 floors). The base's code imported once, stopping
+  before finalization (session `b`); each side finalized its own copy and ran `bench_db
+  --dump-queries` on it (session `d`, the head's with `--commit-capture`); then three web
+  sessions on the copies, B A A B each: `w` (default settings), `s`
+  (`STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD=1`) and `x` (that and
+  `STRINGCHOICE_SIMPLE_LIKE_TIME_THRESHOLD=0`). The default session is `w`, not `d`: the
+  capture `--commit-capture` writes made the head's worktree dirty, and `results.py`
+  refused the next web run into `d`'s file; the capture was kept and the worktree
+  restored. The digests confirm each session's branch: `w` the joined `LIKE` on both
+  sides, `s` the `LIKE` from every observation on both (the head's under its 50 ms
+  limit), `x` the base's `LIKE` and the head's `MATCH` beside it. No session timed a
+  statement out (`Max_execution_time_exceeded` 0 throughout). The machine was otherwise
+  quiet (load 1.4 to 9.9, no other benchmark).
+
+  | Metric | Before | After | Change |
+  |---|---|---|---|
+  | **Target:** `prefix_6` (`COISS_`), app-cold, index path (`x`) | 9.3 ms | 70.2 ms | +653%, beyond its floor (138%): not improved |
+  | `prefix_2` (`CO`), app-cold, index path (`x`) | 11.3 ms | 62.5 ms | +454%, beyond its floor |
+  | `prefix_6` / `prefix_2`, app-cold, simple branch (`s`) | 9.1 / 18.7 ms | 8.7 / 16.4 ms | −4.6% / −12.2%, within the floors |
+  | `prefix_6` / `prefix_2`, app-cold, default (`w`) | 14.6 / 33.3 ms | 13.7 / 31.9 ms | −6.1% / −4.0%, within the floors |
+  | Finalization, wall (`d`) | 24.17 s | 26.23 s | +2.06 s, 0.7% of the base's bundle imports and finalization (312.9 s); the ceiling is 10% |
+  | `db.schema.index_bytes` (`d`, guard) | 238.3 MB | 275.1 MB | +15.4%, regressed; `FULLTEXT` 33.1 MB of it, the rest +1.5% |
+
+  - Every guard held in sessions `w` and `s`. In `x`, the autocomplete scenario's wall
+    (+543%) and `web.warm.concurrency.distinct.p95_s` (13.0 to 53.6 ms) regressed, both
+    from the forced index path.
+  - **The target is a stop-and-report (§2.5), and the orchestrator keeps the PR**, for
+    the operator to rule on at merge. The index path is several times slower than `LIKE`
+    at test scale, as the review fixes' figures foresaw: the full-text search reads every
+    row holding its run and sorts them, where `LIKE` walks the covering key and stops at
+    the limit. What the PR changes by default costs nothing measurable: the joined
+    branch sends the base's statement, and the simple branch's first statement is the
+    base's `LIKE` under a shorter limit (`s`). The index is reached only after that
+    `LIKE` has run out of time, where the base would go on with the same `LIKE` up to
+    500 ms or answer nothing; whether it then answers sooner is the complete-scale
+    question (#1301) for PR-24's session. Its standing costs are the index bytes, the
+    finalization's 2 s at test scale and the servers' `ngram_token_size = 2` requirement.
+    The alternative is to drop the index and keep the #1279 fix alone.
+  - `bench_db`'s autocomplete plans (`d`, default settings, so the joined `LIKE` on both)
+    agree: `prefix_2` 18.96 against 19.63 ms, `prefix_6` 11.88 against 11.91 ms, the same
+    rows examined.
