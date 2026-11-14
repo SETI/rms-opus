@@ -129,11 +129,12 @@ def test_the_fields_are_the_answers_in_order_each_once() -> None:
 
 
 def test_the_requests_are_the_landing_pages() -> None:
-    """Count, first page twice, ranges among the defaults, the menu, then every mult."""
+    """Count, first page for the results page and the public API, ranges among the
+    defaults, the menu, then every mult."""
     assert warm_search.warm_requests(_FIELDS, ['instrument', 'time1', 'target']) == [
         '__api/meta/result_count.json?reqno=1',
-        'api/data.json?page=1&limit=100',
         '__api/dataimages.json?page=1&limit=100&reqno=1',
+        'api/data.json?page=1&limit=100',
         '__api/meta/range/endpoints/time1.json?reqno=1',
         '__menu.json?reqno=1',
         '__api/meta/mults/instrument.json?reqno=1',
@@ -143,13 +144,12 @@ def test_the_requests_are_the_landing_pages() -> None:
 
 
 def test_a_value_search_asks_for_the_default_widgets_and_its_own_field() -> None:
-    """Count, first page twice, ranges among the defaults, the menu, then the defaults'
-    mults and the searched field's."""
+    """Count, first page for the results page, ranges among the defaults, the menu, then
+    the defaults' mults and the searched field's."""
     assert warm_search.value_search_requests(
         'planet', 'Saturn Rings', _FIELDS, ['instrument', 'time1', 'target']
     ) == [
         '__api/meta/result_count.json?planet=Saturn+Rings&reqno=1',
-        'api/data.json?planet=Saturn+Rings&page=1&limit=100',
         '__api/dataimages.json?planet=Saturn+Rings&page=1&limit=100&reqno=1',
         '__api/meta/range/endpoints/time1.json?planet=Saturn+Rings&reqno=1',
         '__menu.json?planet=Saturn+Rings&reqno=1',

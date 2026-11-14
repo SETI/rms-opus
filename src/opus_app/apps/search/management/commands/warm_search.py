@@ -7,8 +7,9 @@ a time, so that the first visitor after a deploy finds each search's results bui
 ``search_results``, its answers cached, the rows they read in the database's buffer pool,
 and the web server's workers past their first request:
 
-* for the empty search, its result count; its first page, through the public
-  ``api/data.json`` and the results gallery's ``__api/dataimages.json``; the fan-out of
+* for the empty search, its result count; its first page, through the results page's
+  ``__api/dataimages.json`` and through the public ``api/data.json``, whose answer the
+  site-wide cache keeps for a client asking for that first page exactly; the fan-out of
   the default widgets (``settings.DEFAULT_WIDGETS``): the range endpoints of those that
   are ranges, and the menu, which carries the triggered tables; and the mult counts of
   every mult field ``api/fields.json`` lists, so that opening any mult widget is a cache
@@ -108,13 +109,12 @@ def _search_requests(
         mult_slugs: The mult widgets whose counts are asked for.
 
     Returns:
-        The URLs relative to the site's API root: the result count, the first page twice,
-        the range endpoints, the menu, then the mult counts.
+        The URLs relative to the site's API root: the result count, the first page as the
+        results page asks for it, the range endpoints, the menu, then the mult counts.
     """
     search = f'{query}&' if query else ''
     requests = [
         f'__api/meta/result_count.json?{search}reqno=1',
-        f'api/data.json?{search}page=1&limit={settings.DEFAULT_PAGE_LIMIT}',
         f'__api/dataimages.json?{search}page=1&limit={settings.DEFAULT_PAGE_LIMIT}&reqno=1',
     ]
     requests.extend(
@@ -143,14 +143,17 @@ def warm_requests(fields: Sequence[tuple[str, str]], default_widgets: Sequence[s
 
     Returns:
         The URLs relative to the site's API root, in this order -- the result count, the
-        first page twice, the range endpoints of each default widget that is a range,
+        first page through ``__api/dataimages.json`` and through the public
+        ``api/data.json``, the range endpoints of each default widget that is a range,
         the menu, then every mult field's counts, default widgets first.
     """
     ranges, mults = _default_widgets_of(dict(fields), default_widgets)
     for slug, kind in fields:
         if kind == MULT_TYPE and slug not in mults:
             mults.append(slug)
-    return _search_requests('', ranges, mults)
+    requests = _search_requests('', ranges, mults)
+    requests.insert(2, f'api/data.json?page=1&limit={settings.DEFAULT_PAGE_LIMIT}')
+    return requests
 
 
 def value_search_requests(
@@ -166,7 +169,8 @@ def value_search_requests(
 
     Returns:
         The URLs relative to the site's API root, in this order -- the search's result
-        count, its first page twice, the range endpoints of each default widget that is
+        count, its first page as the results page asks for it, the range endpoints of each
+        default widget that is
         a range, the menu, then the counts of each default widget that is a mult and of
         the searched field.
     """

@@ -254,7 +254,9 @@ a time, so each is past its first request (:ref:`dev_guide_webapp_search_paramin
 
 :func:`~opus_app.apps.search.management.commands.warm_search.warm_requests`
     The empty search's requests, in order: its result count; its first page through
-    ``api/data.json`` and through ``__api/dataimages.json``; the range endpoints of each
+    ``__api/dataimages.json``, as the results page asks for it, and through the public
+    ``api/data.json``, whose answer the site-wide cache keeps for a client asking for
+    exactly that page; the range endpoints of each
     widget in ``DEFAULT_WIDGETS`` that is a range; the menu, which lists the triggered
     tables, for the empty search the base tables; and the mult counts of every mult field,
     the default widgets first.
@@ -262,8 +264,8 @@ a time, so each is past its first request (:ref:`dev_guide_webapp_search_paramin
 :func:`~opus_app.apps.search.management.commands.warm_search.value_search_requests`
     One common search's requests, for one value of one field of
     :data:`~opus_app.apps.search.management.commands.warm_search.COMMON_SEARCH_FIELDS`:
-    the same count, first page, default widgets' fan-out and menu, and the searched
-    field's own counts, which its widget shows.
+    the same count, the first page as the results page asks for it, the default widgets'
+    fan-out and menu, and the searched field's own counts, which its widget shows.
 
 :func:`~opus_app.apps.search.management.commands.warm_search.api_fields`
     The fields, and which are mults and which ranges, from ``api/fields.json``.
