@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import pdsfile
 
-from opus_import import import_util, surface_geometry, table_keys
+from opus_import import import_util, list_junctions, surface_geometry, table_keys
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import do_import_obs, do_import_pool, do_import_tables
 
@@ -364,7 +364,7 @@ def import_one_index(
         pds_version=pds_version,
         obs_rows=obs_rows,
     )
-    sink = TableRowSink(ctx, table_names_in_order)
+    sink = TableRowSink(ctx, table_names_in_order, list_junctions.junctions(table_schemas))
 
     # Two bundles can produce the same OPUS ID; finalization's duplicate step keeps the
     # copy from the bundle registered later.
@@ -428,14 +428,19 @@ class TableRowSink:
     A table's rows are loaded as soon as `transaction_rows` of them are waiting, so the
     import holds at most that many rows of a table at once rather than a whole index's.
     A surface geometry row arrives under its body's category and waits with the surface
-    geometry table's rows (`opus_import.surface_geometry.physical_table`). An index that
-    fails partway takes back what was loaded (`discard`), so a failed index leaves no
-    rows, as it would if its rows were loaded only at the end.
+    geometry table's rows (`opus_import.surface_geometry.physical_table`). A row of a
+    table with ``mult_list`` columns also gives each column's junction table its rows
+    (`opus_import.list_junctions.junction_rows`), from the row's final values, so they
+    hold the ids the JSON column holds whichever process computed the row. An index
+    that fails partway takes back what was loaded (`discard`), so a failed index leaves
+    no rows, as it would if its rows were loaded only at the end.
 
     Attributes:
         ctx: The import run's context, for the open database and the logger.
         table_names_in_order: The tables, in the order `finish` loads what is left of
-            them.
+            them, before the junction tables.
+        junctions: The ``mult_list`` columns of each table that has any, as
+            `opus_import.list_junctions.junctions` returns them.
         rows: The rows waiting to be loaded, per table.
         first_loaded: The observation id of the first row loaded into each table, in the
             order the tables were first loaded.
@@ -443,6 +448,7 @@ class TableRowSink:
 
     ctx: ImportContext
     table_names_in_order: list[str]
+    junctions: dict[str, list[str]] = field(default_factory=dict)
     rows: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     first_loaded: dict[str, int] = field(default_factory=dict)
 
@@ -455,16 +461,21 @@ class TableRowSink:
             row: The row, with every value final.
         """
         table_name = surface_geometry.physical_table(table_name)
-        waiting = self.rows.setdefault(table_name, [])
-        waiting.append(row)
-        db = self.ctx.db
-        assert db is not None
-        if len(waiting) >= db.transaction_rows:
-            self._load(table_name)
+        self._wait(table_name, row)
+        for column in self.junctions.get(table_name, ()):
+            junction = list_junctions.junction_table(table_name, column)
+            observation_id = row[_observation_id_column(table_name)]
+            for junction_row in list_junctions.junction_rows(observation_id, row[column]):
+                self._wait(junction, junction_row)
 
     def finish(self) -> None:
-        """Load every row still waiting, table by table in order."""
-        for table_name in self.table_names_in_order:
+        """Load every row still waiting, table by table in order, then the junction tables."""
+        junction_tables = [
+            list_junctions.junction_table(table_name, column)
+            for table_name in self.table_names_in_order
+            for column in self.junctions.get(table_name, ())
+        ]
+        for table_name in [*self.table_names_in_order, *junction_tables]:
             self._load(table_name)
 
     def discard(self) -> None:
@@ -501,6 +512,20 @@ class TableRowSink:
             db.delete_rows(table_name, f'{column} >= %s AND {column} < %s', [first_id, end])
         self.first_loaded.clear()
         self.rows.clear()
+
+    def _wait(self, table_name: str, row: dict[str, Any]) -> None:
+        """Queue one row for a table, loading the table's rows once a transaction's worth wait.
+
+        Parameters:
+            table_name: The table.
+            row: The row.
+        """
+        waiting = self.rows.setdefault(table_name, [])
+        waiting.append(row)
+        db = self.ctx.db
+        assert db is not None
+        if len(waiting) >= db.transaction_rows:
+            self._load(table_name)
 
     def _load(self, table_name: str) -> None:
         """Load one table's waiting rows, each chunk under the bundle's guard.

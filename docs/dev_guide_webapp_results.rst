@@ -244,9 +244,10 @@ own constraint is removed from the search first**, so that ticking one box does 
 the other boxes read zero. The field's category is read as
 :func:`~opus_app.apps.tools.db_utils.resolve_category` resolves it, so the surface
 geometry selector's counts are over every row of ``obs_surface_geometry_target``, one per
-observation and body. A ``MULTIGROUP`` field holds a JSON list, so its counts come
-from a :class:`~opus_app.apps.tools.sql_builder.JSONTable` that explodes the list into
-rows. The values come back in the order of their ``disp_rank``, the integer rank
+observation and body. A ``MULTIGROUP`` field holds a JSON list, so its counts group the
+rows of the column's junction table by ``mult_id``, joined to the search's rows of
+``search_results`` when the search has selections; an observation counts once for each
+distinct value its list holds (:ref:`dev_guide_database_schema_junction_tables`). The values come back in the order of their ``disp_rank``, the integer rank
 finalization gives each value of the field
 (:ref:`dev_guide_import_steps_do_finalize_mult`).
 

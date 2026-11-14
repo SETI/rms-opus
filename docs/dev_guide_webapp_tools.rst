@@ -258,12 +258,6 @@ The shape of it
             +alias
             +render()
         }
-        class JSONTable {
-            +source_column
-            +value_column
-            +alias
-            +render()
-        }
         class AliasedTable {
             +table
             +alias
@@ -277,15 +271,12 @@ The shape of it
         Select "1" *-- "many" FromSource : FROM
         FromSource "1" *-- "many" Join
         FromSource ..> Subquery : source may be
-        FromSource ..> JSONTable : source may be
         FromSource ..> AliasedTable : source may be
         Join ..> Subquery : source may be
-        Join ..> JSONTable : source may be
         Join ..> AliasedTable : source may be
         Subquery *-- Select
         Select ..> Expr : columns, WHERE, GROUP BY, ORDER BY
         Join ..> Expr : ON
-        JSONTable ..> Expr : source column
         ValueError <|-- SQLIdentifierError
 
 Reading it in three groups:
@@ -299,8 +290,7 @@ one.
 and the joins hanging off it; :class:`~opus_app.apps.tools.sql_builder.Join` is one of
 those joins; and a source may be a plain table name, a
 :class:`~opus_app.apps.tools.sql_builder.Subquery` -- which holds a whole
-:class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- a
-:class:`~opus_app.apps.tools.sql_builder.JSONTable`, or an
+:class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- or an
 :class:`~opus_app.apps.tools.sql_builder.AliasedTable`, a table under an alias.
 The :class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is not a
 tree: a statement can hold a statement.
@@ -335,13 +325,9 @@ parameters its placeholders consume. Everything below returns one.
        :func:`~opus_app.apps.tools.sql_builder.min_of`,
        :func:`~opus_app.apps.tools.sql_builder.max_of`
      - The five aggregates OPUS uses.
-   * - :func:`~opus_app.apps.tools.sql_builder.json_contains`
-     - Whether a MULTIGROUP column's JSON list holds a value. A multiple-choice field
-       stores a list of mult ids, so a search for one value asks whether the list
-       contains it rather than whether the column equals it.
    * - :func:`~opus_app.apps.tools.sql_builder.json_extract_first`
-     - The first element of such a list, which is what a MULTIGROUP field sorts and joins
-       on, since it has no single value.
+     - The first element of a MULTIGROUP column's JSON list of mult ids, which is what
+       the field sorts and joins on, since it has no single value.
    * - :func:`~opus_app.apps.tools.sql_builder.angular_separation`
      - The angular distance between a longitude column and a target longitude, mapped
        into 0 to 180 degrees. **This is what makes a search that straddles zero degrees
@@ -422,6 +408,15 @@ The statement layer
     table holding several rows of one observation takes, so that the observation is not
     repeated once for each row a join would match.
 
+:func:`~opus_app.apps.tools.sql_builder.list_contains_any`
+    Whether a MULTIGROUP column's list holds any of some mult ids: an
+    :func:`~opus_app.apps.tools.sql_builder.exists` on the column's junction table,
+    ``EXISTS (SELECT 1 FROM <junction> WHERE <junction>.obs_general_id = obs_general.id
+    AND <junction>.mult_id IN (%s, ...))``, with the ids bound as integers. The junction
+    table, ``<table>_<column>``, holds one row per id of each observation's list
+    (:ref:`dev_guide_database_schema_junction_tables`), so the test reads its primary
+    key.
+
 :func:`~opus_app.apps.tools.sql_builder.scalar_subquery`
     A :class:`~opus_app.apps.tools.sql_builder.Select` of one column and at most one row
     as a value, ``(SELECT ...)``, which may name the outer statement's tables.
@@ -447,10 +442,6 @@ The statement layer
     derived table this simple into the statement that names it, so a join on ``id``
     reads the table's ``(search_id, obs_general_id)`` key and a range of ``sort_order``
     its primary key.
-
-:class:`~opus_app.apps.tools.sql_builder.JSONTable`
-    Turns each element of a MULTIGROUP column's JSON list into its own row, so the
-    elements can be counted. The mult-count endpoint is the caller.
 
 :exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError`
     Raised when a name about to be used as an identifier is unsafe.

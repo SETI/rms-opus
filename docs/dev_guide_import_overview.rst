@@ -404,7 +404,8 @@ the version step from running until it is imported again or deleted.
 Finally, a column whose ``pi_form_type`` is a GROUP type has its value replaced by the
 id of a ``mult`` row of its field, adding the value to the field if the field lacks it.
 A ``mult_list`` column holds several values and is written as a JSON array, with a missing
-value omitted rather than stored as null.
+value omitted rather than stored as null. Its junction table gets one row per distinct id
+of the array when the row is loaded (:ref:`dev_guide_database_schema_junction_tables`).
 
 Each computed row is left on the metadata dictionary under ``<table_name>_row`` as well
 as returned, which is how a later table's field methods read what an earlier one
@@ -474,7 +475,9 @@ either; it records the value, and the import's process resolves each one in the 
 the serial loop meets them, so every value gets the id the serial loop gives it.
 
 A ``mult_list`` column -- one an observation can have several values of -- stores a JSON
-array of those ids instead, with missing values omitted rather than stored as null.
+array of those ids instead, with missing values omitted rather than stored as null, and
+its junction table holds one row per distinct id of each array
+(:ref:`dev_guide_database_schema_junction_tables`).
 
 :ref:`dev_guide_import_steps_do_import_mult` describes the caching,
 :ref:`dev_guide_import_steps_do_finalize_mult` the order the values are listed in, and
