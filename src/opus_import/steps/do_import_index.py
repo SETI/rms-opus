@@ -28,8 +28,6 @@ own.
 from __future__ import annotations
 
 import csv
-import functools
-import json
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -776,8 +774,7 @@ def get_opus_products_rows_for_filespec(
     is, its checksum, and the ordering the results page shows the product types in. A
     file that is not the current version is never checked by default. A row's
     ``file_number`` is its position in the list, from 1, which with the observation's id
-    is the table's primary key and keeps the observation's files in this order. Each
-    string is stored without trailing spaces (`do_import_obs.stored_text`).
+    is the table's primary key and keeps the observation's files in this order.
 
     Two kinds of file are left out. A shared index or summary file that does not list
     this observation contributes nothing, since it holds no data for it; that check runs
@@ -958,17 +955,6 @@ def get_opus_products_rows_for_filespec(
 
         rows += current_rows
 
-    schema = _obs_files_schema()
     for file_number, row in enumerate(rows, 1):
         row['file_number'] = file_number
-        do_import_obs.strip_stored_text(row, schema)
     return rows
-
-
-@functools.cache
-def _obs_files_schema() -> TableSchema:
-    """Return the packaged ``obs_files`` schema, read once per process."""
-    schema: TableSchema = json.loads(
-        (import_util.TABLE_SCHEMA_DIR / 'obs_files.json').read_text(encoding='utf-8')
-    )
-    return schema

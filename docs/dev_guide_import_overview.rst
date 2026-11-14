@@ -386,9 +386,8 @@ reports rather than raises**, so one bad row does not end the run:
 * a flag column's value is folded onto ``Yes``/``No`` or ``On``/``Off``; ``N/A``,
   ``UNK`` and ``NULL`` become NULL quietly, and any other unrecognized spelling becomes
   NULL and logs an error;
-* a ``varcharNNN`` column keeps a value of the right type, without trailing spaces --
-  an over-long string is truncated, a non-string becomes the empty string -- and logs an
-  error either way;
+* a ``varcharNNN`` column keeps a value of the right type -- an over-long string is
+  truncated, a non-string becomes the empty string -- and logs an error either way;
 * a string bound for an ASCII column, ``varcharNNN`` or ``text``, that holds DEL logs an
   error and is stored with the DEL removed, so no stored value holds it even in a run
   that ignores errors. Any other character outside an ASCII column's character set is
