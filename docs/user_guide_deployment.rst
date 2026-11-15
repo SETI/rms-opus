@@ -665,11 +665,17 @@ undo. With ``OPUS_DB_DUMP_DIR`` set::
 **A second server receives the update as a new database.** With ``OPUS_PEER_DB_HOST`` set,
 the update ends by dumping the whole updated database and loading it onto that server
 under a new name, which its log gives; the database that server serves is never written.
-Nothing serves the loaded database there, so the switch needs no stop. On that server::
+Nothing serves the loaded database there, so the switch needs no stop, and the purge
+follows it at once: the way back on that server is the database it was serving, not a
+revert, and until the purge the loaded database holds both generations' rows and serves
+through the view's condition. On that server::
 
     OPUS_CONFIG=/opt/opus/deployed/opus.toml \
         /opt/opus/deployed/opus_venv/bin/opus_import \
         --override-db-schema <that database> --switch-generation
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import \
+        --override-db-schema <that database> --purge-generations
     ./import_and_deploy/deploy_new_code_and_database.sh <that database> ==<release>
 
 The deploy carries the sessions and carts over from the database that server was serving

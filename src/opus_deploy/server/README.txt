@@ -224,11 +224,14 @@ the update, with OPUS_DB_DUMP_DIR set:
 
 With OPUS_PEER_DB_HOST set, the update ends by loading the updated database
 onto that server under a new name, which the log gives. Nothing serves it
-there, so on that server the switch needs no stop:
+there, so on that server the switch needs no stop, and the purge follows at
+once, since the way back there is the database it was serving:
 
     export OPUS_CONFIG=/opt/opus/deployed/opus.toml
     /opt/opus/deployed/opus_venv/bin/opus_import \
         --override-db-schema <that database> --switch-generation
+    /opt/opus/deployed/opus_venv/bin/opus_import \
+        --override-db-schema <that database> --purge-generations
     ./import_and_deploy/deploy_new_code_and_database.sh \
         <that database> ==3.24.1
 

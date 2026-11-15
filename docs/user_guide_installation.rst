@@ -337,7 +337,9 @@ containing a space.
      - The MySQL server this installation connects to, usually ``localhost``.
    * - ``OPUS_DB_USER``, ``OPUS_DB_PASSWORD``
      - The MySQL account the import pipeline and the web application connect as. It
-       needs most privileges, including creating and dropping tables.
+       needs most privileges, including creating and dropping tables and views
+       (``CREATE VIEW``, since ``obs_general`` is a view), and ``SHOW VIEW``, without
+       which ``dump_db.sh`` cannot dump that view for a second server.
    * - ``OPUS_SECRET_KEY``
      - Django's signing key: unique to this server, and secret.
    * - ``PDS3_HOLDINGS_DIR``, ``PDS4_HOLDINGS_DIR``

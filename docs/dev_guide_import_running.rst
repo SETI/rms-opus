@@ -552,8 +552,10 @@ the generation being gone, fails the invocation. ``schema_version.pending_state`
 how far the pending generation has got: ``writing`` again whenever anything writes it, so
 a generation written after its stamp is never switched in.
 
-``run_incremental_opus_update.sh`` runs the first six invocations against the served
-schema, and ``promote_generation.sh`` runs the switch
+``run_incremental_opus_update.sh`` runs the invocations from ``--begin-generation``
+through ``--write-schema-version`` against the served schema, ``--import`` only when it
+names bundles to import and ``--delete-bundles`` only when it names bundles to drop, and
+``promote_generation.sh`` runs the switch
 (:ref:`user_guide_deployment`).
 
 Logging and diagnostics
