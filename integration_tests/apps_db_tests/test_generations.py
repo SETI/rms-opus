@@ -247,7 +247,9 @@ class HiddenGenerationTests(TestCase):
             f'/__api/stringsearchchoices/productid.json?productid={_HIDDEN_PRODUCT_ID[:12]}&reqno=1'
         )
         self._plant()
-        self.assertIn(_HIDDEN_PRODUCT_ID, self._get(path))
+        # Each choice comes back with the typed text in bold.
+        answer = self._get(path).replace('<b>', '').replace('</b>', '')
+        self.assertIn(_HIDDEN_PRODUCT_ID, answer)
 
     def test_files_and_product_types_omit_the_planted_files(self) -> None:
         """The served observation's files, under an OPUS ID the next generation shares."""
