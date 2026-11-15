@@ -926,28 +926,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     self.logger.log('debug', f'[SIM] Renamed tables: {cmd}')
                 return
 
-            previous = self._execute_and_fetchall(
-                'SELECT @@SESSION.lock_wait_timeout', 'rename_tables_atomically'
-            )[0][0]
-            self._execute('SET SESSION lock_wait_timeout = %s', [lock_wait_timeout_s])
-            try:
-                for attempt in range(1, attempts + 1):
-                    try:
-                        self._execute(cmd, mutates=True)
-                        break
-                    except MySQLdb.Error as e:
-                        if e.args and e.args[0] == ERR_LOCK_WAIT_TIMEOUT and attempt < attempts:
-                            if self.logger:
-                                self.logger.log(
-                                    'info',
-                                    f'  RENAME TABLE waited {lock_wait_timeout_s} s for a lock '
-                                    f'(attempt {attempt} of {attempts}); trying again',
-                                )
-                            continue
-                        self._log_failure(f'Failed in RENAME TABLE: {e}')
-                        raise ImportDBError(e) from e
-            finally:
-                self._execute('SET SESSION lock_wait_timeout = %s', [previous])
+            self._execute_waiting_for_locks(
+                cmd, 'RENAME TABLE', lock_wait_timeout_s=lock_wait_timeout_s, attempts=attempts
+            )
 
             if self.logger:
                 self.logger.log('debug', f'Renamed tables: {cmd}')
@@ -1090,8 +1071,62 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             self.create_obs_general_view(schema)
         return True
 
+    def _execute_waiting_for_locks(
+        self, cmd: str, what: str, *, lock_wait_timeout_s: int, attempts: int
+    ) -> None:
+        """Run a DDL statement with a bounded wait for the locks it needs, retried.
+
+        Each attempt runs with the session's ``lock_wait_timeout`` lowered to
+        ``lock_wait_timeout_s``, so a statement waiting behind a reader's transaction does
+        not in turn hold up every reader queued behind it for the server's default of a
+        year. A timed-out attempt is logged at info level and tried again; the session's
+        own value is restored afterwards.
+
+        Parameters:
+            cmd: The statement.
+            what: What the log and the failure call it.
+            lock_wait_timeout_s: How long one attempt waits for the locks.
+            attempts: How many times to try before the wait is a failure, at least 1.
+
+        Raises:
+            ImportDBError: If the server rejects the statement, or every attempt timed out.
+        """
+        previous = self._execute_and_fetchall('SELECT @@SESSION.lock_wait_timeout', what)[0][0]
+        self._execute('SET SESSION lock_wait_timeout = %s', [lock_wait_timeout_s])
+        try:
+            for attempt in range(1, attempts + 1):
+                try:
+                    self._execute(cmd, mutates=True)
+                    return
+                except MySQLdb.Error as e:
+                    timed_out = bool(e.args) and e.args[0] == ERR_LOCK_WAIT_TIMEOUT
+                    if timed_out and attempt < attempts:
+                        if self.logger:
+                            self.logger.log(
+                                'info',
+                                f'  {what} waited {lock_wait_timeout_s} s for a lock '
+                                f'(attempt {attempt} of {attempts}); trying again',
+                            )
+                        continue
+                    if timed_out:
+                        self._log_failure(
+                            f'{what} waited {lock_wait_timeout_s} s for a lock {attempts} '
+                            'times, each time behind a transaction reading the table; '
+                            f'nothing was changed: {e}'
+                        )
+                    else:
+                        self._log_failure(f'Failed in {what}: {e}')
+                    raise ImportDBError(e) from e
+        finally:
+            self._execute('SET SESSION lock_wait_timeout = %s', [previous])
+
     def create_obs_general_view(
-        self, schema: Sequence[SchemaColumn], served: int | None = None
+        self,
+        schema: Sequence[SchemaColumn],
+        served: int | None = None,
+        *,
+        lock_wait_timeout_s: int | None = None,
+        attempts: int = 1,
     ) -> None:
         """Create, or re-create, ``obs_general`` as the view of the served generation.
 
@@ -1102,15 +1137,26 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         which it names as a number (`opus_import.generations.in_generation_condition`
         with the number in place of each placeholder).
 
+        Re-creating the view of a schema being served waits for every transaction that has
+        read it to end; ``lock_wait_timeout_s`` bounds each wait, as a swap's rename does
+        (`rename_tables_atomically`).
+
         Parameters:
             schema: ``obs_general``'s table schema, whose columns, less the generation
                 columns, the view lists.
             served: The served generation, when the view must hide the rows of others;
                 None for a view of every row.
+            lock_wait_timeout_s: How long one attempt waits for the view's lock, or None
+                for the session's own wait, as for a view no request reads yet.
+            attempts: How many times to try before a bounded wait is a failure.
 
         Raises:
-            ImportDBError: If the server rejects the statement.
+            ImportDBError: If the server rejects the statement, or every bounded attempt
+                timed out.
+            ValueError: If ``attempts`` is less than 1, before anything is changed.
         """
+        if attempts < 1:
+            raise ValueError(f'attempts must be at least 1, not {attempts}')
         with self._operation('create_obs_general_view'):
             q = self.quote_identifier
             columns = ', '.join(q(name) for name in generations.view_columns(schema))
@@ -1124,6 +1170,14 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             if served is not None:
                 condition = generations.in_generation_condition(q, generations.OBS_GENERAL_ROWS)
                 cmd += ' WHERE ' + condition.replace('%s', str(int(served)))
+            if lock_wait_timeout_s is not None and not self.read_only:
+                self._execute_waiting_for_locks(
+                    cmd,
+                    'CREATE VIEW obs_general',
+                    lock_wait_timeout_s=lock_wait_timeout_s,
+                    attempts=attempts,
+                )
+                return
             try:
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:

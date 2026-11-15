@@ -748,7 +748,12 @@ class ImportDBSuper:
         raise NotImplementedError('ImportDBSuper::release_named_lock must be overridden')
 
     def create_obs_general_view(
-        self, schema: Sequence[SchemaColumn], served: int | None = None
+        self,
+        schema: Sequence[SchemaColumn],
+        served: int | None = None,
+        *,
+        lock_wait_timeout_s: int | None = None,
+        attempts: int = 1,
     ) -> None:
         """Create, or re-create, ``obs_general`` as the view of the served generation.
 
@@ -756,6 +761,10 @@ class ImportDBSuper:
             schema: ``obs_general``'s table schema.
             served: The served generation, when the view must hide the rows of others;
                 None for a view of every row.
+            lock_wait_timeout_s: How long one attempt waits for the view's lock, which
+                every transaction that has read the view holds, or None for the
+                session's own wait.
+            attempts: How many times to try before a bounded wait is a failure.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.

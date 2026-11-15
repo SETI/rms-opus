@@ -31,7 +31,7 @@ from opus_import.generations import (
 )
 from opus_import.import_fault import IMPORT_FAULT_ENV_VAR, InjectedImportFaultError
 from opus_import.importdb.mysql import ImportDBMySQL
-from opus_import.importdb.super import ImportDBSuper
+from opus_import.importdb.super import ImportDBError, ImportDBSuper
 from opus_import.schema_version import SCHEMA_STATE_READY, SCHEMA_VERSION
 from opus_import.steps import (
     do_django,
@@ -133,6 +133,80 @@ def test_a_view_of_one_generation_names_it_as_a_number() -> None:
         '(`obs_general_rows`.`removed_generation` IS NULL OR '
         '`obs_general_rows`.`removed_generation` > 3)'
     )
+
+
+class _LockedViewDB(_RecordingDB):
+    """A recording database whose first view re-creations wait out their lock."""
+
+    def __init__(self, lock_timeouts: int) -> None:
+        super().__init__()
+        self.lock_timeouts = lock_timeouts
+        # The MySQL layer tells a lock wait by the driver's own error.
+        self.driver = pytest.importorskip('MySQLdb')
+
+    def _execute(
+        self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
+    ) -> None:
+        self.executed.append((cmd, param_list))
+        if cmd.startswith('CREATE OR REPLACE') and self.lock_timeouts > 0:
+            self.lock_timeouts -= 1
+            raise self.driver.OperationalError(1205, 'Lock wait timeout exceeded')
+
+    def _execute_and_fetchall(
+        self, cmd: str, func_name: str, param_list: Any = None
+    ) -> list[tuple[Any, ...]]:
+        """Answer the session's lock wait timeout."""
+        assert cmd == 'SELECT @@SESSION.lock_wait_timeout'
+        return [(_SESSION_LOCK_WAIT_TIMEOUT,)]
+
+
+#: The session's own lock wait timeout, which a bounded wait restores.
+_SESSION_LOCK_WAIT_TIMEOUT = 50
+
+
+def test_a_view_re_created_while_served_waits_a_bounded_time_and_tries_again() -> None:
+    """A transaction reading the view holds its lock; each attempt waits a short time."""
+    db = _LockedViewDB(lock_timeouts=2)
+    db.create_obs_general_view(_obs_general_schema(), 3, lock_wait_timeout_s=5, attempts=3)
+    statements = [cmd.split(' ALGORITHM')[0] for cmd, _ in db.executed]
+    assert statements == [
+        'SET SESSION lock_wait_timeout = %s',
+        'CREATE OR REPLACE',
+        'CREATE OR REPLACE',
+        'CREATE OR REPLACE',
+        'SET SESSION lock_wait_timeout = %s',
+    ]
+    assert db.executed[0][1] == [5]
+    assert db.executed[-1][1] == [_SESSION_LOCK_WAIT_TIMEOUT]
+
+
+def test_a_view_that_never_gets_its_lock_fails_and_restores_the_wait() -> None:
+    """After the last attempt the wait is an error naming the view."""
+    db = _LockedViewDB(lock_timeouts=3)
+    with pytest.raises(ImportDBError, match='Lock wait timeout'):
+        db.create_obs_general_view(_obs_general_schema(), 3, lock_wait_timeout_s=5, attempts=3)
+    assert db.executed[-1] == ('SET SESSION lock_wait_timeout = %s', [_SESSION_LOCK_WAIT_TIMEOUT])
+
+
+def test_the_commands_re_create_the_view_with_the_swaps_bounded_wait() -> None:
+    """The begin, the purge and the abandon run while the site serves the view."""
+    created: list[tuple[int | None, dict[str, Any]]] = []
+
+    class _DB:
+        @staticmethod
+        def create_obs_general_view(schema: Any, served: int | None, **kwargs: Any) -> None:
+            created.append((served, kwargs))
+
+    do_generation.refresh_view(make_context(db=_DB()), 2)
+    assert created == [
+        (
+            2,
+            {
+                'lock_wait_timeout_s': table_swap.SWAP_LOCK_WAIT_TIMEOUT_S,
+                'attempts': table_swap.SWAP_RENAME_ATTEMPTS,
+            },
+        )
+    ]
 
 
 def test_dropping_obs_general_drops_the_view_before_the_table() -> None:

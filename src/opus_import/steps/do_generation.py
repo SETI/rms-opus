@@ -574,6 +574,11 @@ def _switch_step(ctx: ImportContext, number: int, step: Callable[[], object]) ->
 def refresh_view(ctx: ImportContext, served: int | None) -> None:
     """Re-create the ``obs_general`` view for the rows it is to show.
 
+    The site may be serving the view, so each attempt waits only as long as an auxiliary
+    table swap's rename does for the transactions reading it, and a view still held after
+    every attempt fails the command at that step, which running the command again
+    finishes.
+
     Parameters:
         ctx: The import run's context, for the open database.
         served: The generation the view is to show, while other generations' rows are in
@@ -585,7 +590,12 @@ def refresh_view(ctx: ImportContext, served: int | None) -> None:
     schema = import_util.read_schema_for_table(ctx, OBS_GENERAL_VIEW)
     # obs_general.json is packaged with opus_import, so the schema is always found.
     assert schema is not None
-    db.create_obs_general_view(schema, served)
+    db.create_obs_general_view(
+        schema,
+        served,
+        lock_wait_timeout_s=table_swap.SWAP_LOCK_WAIT_TIMEOUT_S,
+        attempts=table_swap.SWAP_RENAME_ATTEMPTS,
+    )
     shown = 'every row' if served is None else f'generation {served}'
     import_util.log_info(ctx, f'The obs_general view shows {shown}')
 
