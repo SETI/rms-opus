@@ -197,7 +197,7 @@ generation, which the site does not show until it is switched in:
 The bundles named are imported, replacing the copies the database holds;
 --drop names bundles to remove. A bundle named both ways is imported. The
 update runs detached, mails its log, and holds the deploy lock until it
-ends. Give it the version specifier of the release being served.
+ends. Without a version specifier it installs the release being served.
 
 promote_generation.sh takes the deploy lock, asks whether the switch would
 run (and stops nothing when it would be refused), stops the web server,

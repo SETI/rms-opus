@@ -5,12 +5,14 @@
 # switches it in. run_incremental_opus_update.sh runs this detached; it is not what an
 # operator types.
 #
-# Usage: _run_incremental_opus_update.sh [<version_spec>] [--drop <bundle>[,<bundle>...]] [<bundle> ...]
+# Usage: _run_incremental_opus_update.sh [<version_spec>]
+#            [--drop <bundle>[,<bundle>...]] [<bundle> ...]
 #
 # The update runs under an installation of its own, built beside the one being served
 # and naming the same schema, as a full import's does: it installs the release the version
-# specifier names, and its log directory is new, so ERRORS.log holds only what this run
-# wrote. The steps are functions in _incremental_opus_update_steps.sh.
+# specifier names, or with none the release being served, and its log directory is new, so
+# ERRORS.log holds only what this run wrote. The steps are functions in
+# _incremental_opus_update_steps.sh.
 #
 # It holds the deploy lock until it ends. It writes the served schema, and nothing else
 # may run DDL on it meanwhile: a code-only deploy rebuilds tables the update's
@@ -28,7 +30,6 @@ source ${IMPORT_SCRIPT_DIR}/_incremental_opus_update_steps.sh
 if ! parse_update_arguments "$@"; then
     exit 1
 fi
-export OPUS_VERSION_SPEC
 
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
 source ${IMPORT_SCRIPT_DIR}/_deploy_lock.sh
@@ -46,6 +47,17 @@ if ! OPUS_DB_NAME=$(served_schema_name "${OPUS_DIR}/deployed/opus.toml"); then
     exit 1
 fi
 export OPUS_DB_NAME
+
+# The generation is switched in and served by the deployed release, whose schema version
+# --begin-generation requires, so with no version specifier the update installs that
+# release rather than the newest.
+if [[ -z ${OPUS_VERSION_SPEC} ]]; then
+    if ! OPUS_VERSION_SPEC=$(deployed_release_spec "${OPUS_DIR}/deployed"); then
+        echo "*** ABORTING: nothing was changed ***"
+        exit 1
+    fi
+fi
+export OPUS_VERSION_SPEC
 
 export DATETIMEPID="`date +%Y%m%dT%H%M%S`_$$"
 export OPUS_LOG_DIR=${OPUS_DIR}/import_logs/${DATETIMEPID}
@@ -68,7 +80,7 @@ echo "Start time:" `date`
 echo
 echo "Hostname:" ${HOSTNAME}
 echo
-echo "Version spec:" "${OPUS_VERSION_SPEC:-(newest release)}"
+echo "Version spec:" "${OPUS_VERSION_SPEC}"
 echo
 echo "Bundles to import:" "${UPDATE_BUNDLES[*]:-(none)}"
 echo "Bundles to drop:" "${UPDATE_DROPS[*]:-(none)}"

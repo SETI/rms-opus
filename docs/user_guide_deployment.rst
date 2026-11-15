@@ -248,8 +248,9 @@ The scripts
     Then it dumps the database and loads it onto a second server as
     ``run_full_opus_import.sh`` does, under a new name, when ``deploy.env`` asks for that.
     It runs detached, mails the log to ``OPUS_IMPORT_MAIL_TO`` if that names anyone, and
-    holds the deploy lock until it ends. Give it the version specifier of the release
-    being served.
+    holds the deploy lock until it ends. Without a version specifier it installs the
+    release being served, read from the deployed installation, and refuses to start when
+    that release is not one PyPI has.
 
 ``promote_generation.sh [--revert]``
     **Switches the pending generation in.** It stops the web service, runs
@@ -264,7 +265,8 @@ The scripts
     when that succeeds. It holds the deploy lock throughout.
 
 The optional ``<version spec>`` of each is a **PEP 440 version specifier** appended to the
-distribution name -- ``==<release>`` for a particular release, omitted for the newest.
+distribution name -- ``==<release>`` for a particular release, omitted for the newest, or,
+for ``run_incremental_opus_update.sh``, for the release being served.
 
 **One deploy runs at a time.** Each deploy script takes an exclusive ``flock`` on
 ``deploy.lock`` in ``OPUS_DIR`` right after reading ``deploy.env``, before it reads which
@@ -611,8 +613,7 @@ database. The update is a new **generation** of the database: the site goes on s
 the generation it showed before while the update imports, and switches to the new one
 only when you switch it in. The steps, from the deploy directory::
 
-    ./import_and_deploy/run_incremental_opus_update.sh ==<release> \
-        COISS_2115 --drop COISS_2001
+    ./import_and_deploy/run_incremental_opus_update.sh COISS_2115 --drop COISS_2001
     #    ... wait for the mail; read the log and ERRORS.log ...
     ./import_and_deploy/promote_generation.sh
     #    ... check the site ...
@@ -620,9 +621,9 @@ only when you switch it in. The steps, from the deploy directory::
         /opt/opus/deployed/opus_venv/bin/opus_import --purge-generations
 
 1. **Update.** ``run_incremental_opus_update.sh`` imports the bundles it names and drops
-   the ones ``--drop`` names, in a pending generation the site does not show. Give it the
-   version specifier of the release being served. It refuses to start while a pending
-   generation exists, or while the last switch has not been purged.
+   the ones ``--drop`` names, in a pending generation the site does not show, under the
+   release being served unless given a version specifier. It refuses to start while a
+   pending generation exists, or while the last switch has not been purged.
 2. **Check.** Read its log, and ``ERRORS.log`` in the log directory it names. It stops at
    the first command that fails or logs an error, before the generation is marked ready
    to switch, and its log names the commands left to run. Run them from the installation

@@ -101,6 +101,7 @@ def run_deploy(
     web_service_active: bool = True,
     deploy_env: dict[str, str] | None = None,
     deployed_schema: str | None = 'served',
+    deployed_release: str = '3.25.0',
     generation_refusal: str = '',
 ) -> tuple[int, str, list[str]]:
     """Run a deploy script with its helpers stubbed and its commands faked.
@@ -122,6 +123,8 @@ def run_deploy(
             ``OPUS_DIR`` and the two services (`WEB_SERVICE`, `CACHE_SERVICE`).
         deployed_schema: The schema the deployed installation's ``opus.toml`` names, or
             None for an ``opus.toml`` that names none.
+        deployed_release: The rms-opus release the deployed installation's own
+            interpreter reports; empty for one that cannot report it.
         generation_refusal: What the fake ``python`` prints when asked why a switch or a
             revert would be refused; empty when it would run. It is not recorded.
 
@@ -137,6 +140,11 @@ def run_deploy(
     deployed = opus_dir(tmp_path) / 'deployed'
     (deployed / 'opus_venv' / 'bin').mkdir(parents=True)
     (deployed / 'opus_venv' / 'bin' / 'activate').write_text(':\n', encoding='utf-8')
+    deployed_python = deployed / 'opus_venv' / 'bin' / 'python'
+    deployed_python.write_text(
+        f'#!/bin/sh\necho {shlex.quote(deployed_release)}\n', encoding='utf-8'
+    )
+    deployed_python.chmod(0o755)
     (deployed / 'opus.toml').write_text(
         '' if deployed_schema is None else f'schema = "{deployed_schema}"\n', encoding='utf-8'
     )

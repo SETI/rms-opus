@@ -261,3 +261,31 @@ def test_sourcing_the_steps_runs_nothing(tmp_path: Path) -> None:
     """Every top-level line belongs to a function definition, so the tests can source it."""
     scripts.write_scripts(tmp_path)
     assert defines_only_functions(tmp_path / _STEPS)
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+@pytest.mark.parametrize(
+    ('release', 'printed', 'status'),
+    [
+        ('3.25.0', '==3.25.0', 0),
+        ('', 'cannot read the rms-opus release', 1),
+        ('3.25.1.dev4+g1234abc', 'a local build PyPI does not have', 1),
+    ],
+    ids=['release', 'unreadable', 'local-build'],
+)
+def test_the_deployed_release_is_read_from_the_deployed_interpreter(
+    tmp_path: Path, release: str, printed: str, status: int
+) -> None:
+    """A release PyPI has is pinned; anything else is an error and prints no pin."""
+    deployed = tmp_path / 'deployed'
+    interpreter = deployed / 'opus_venv' / 'bin' / 'python'
+    interpreter.parent.mkdir(parents=True)
+    interpreter.write_text(f'#!/bin/sh\necho {shlex.quote(release)}\n', encoding='utf-8')
+    interpreter.chmod(0o755)
+    found, output, _ran = _run_steps(
+        tmp_path, f'deployed_release_spec {shlex.quote(str(deployed))}'
+    )
+    assert found == status
+    assert printed in output
+    if status:
+        assert '==' not in output

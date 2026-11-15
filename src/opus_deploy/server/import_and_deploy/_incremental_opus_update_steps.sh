@@ -19,9 +19,10 @@
 #     the positional arguments split at commas; and UPDATE_DROPS to the bundles to drop,
 #     every --drop value split at commas, less any bundle UPDATE_BUNDLES names, since a
 #     bundle imported again already loses every row its earlier copy had. --drop may be
-#     given more than once; empty names, as from a doubled comma, are skipped. Prints the usage line and returns 1, setting nothing it would
-#     otherwise use, when an option is unknown, --drop has no value, a version specifier
-#     comes after the first argument, or there is neither a bundle nor a --drop.
+#     given more than once; empty names, as from a doubled comma, are skipped. Prints the
+#     usage line and returns 1, setting nothing it would otherwise use, when an option is
+#     unknown, --drop has no value, a version specifier comes after the first argument,
+#     or there is neither a bundle nor a --drop.
 #
 # update_invocations
 #     Prints the arguments of each opus_import invocation of the update, one invocation
@@ -45,11 +46,19 @@
 #
 # served_schema_name <deployed opus.toml>
 #     Prints the schema the served installation's opus.toml names. Prints an error on
-#     standard error, so that a command substitution shows it, and returns 1 when the file is missing or names no schema. It reads the file by
-#     previous_db_name's rule, so _promote_steps.sh has to be sourced as well.
+#     standard error, so that a command substitution shows it, and returns 1 when the
+#     file is missing or names no schema. It reads the file by previous_db_name's rule,
+#     so _promote_steps.sh has to be sourced as well.
+#
+# deployed_release_spec <deployed directory>
+#     Prints ==<release> for the rms-opus release the served installation runs, read from
+#     its own interpreter, which is what an update installs when given no version
+#     specifier. Prints an error on standard error and returns 1 when the release cannot
+#     be read, or is a local build, which PyPI does not have.
 
 print_update_usage() {
-    echo "Usage: run_incremental_opus_update.sh [<version_spec>] [--drop <bundle>[,<bundle>...]] [<bundle> ...]"
+    local usage="Usage: run_incremental_opus_update.sh [<version_spec>]"
+    echo "${usage} [--drop <bundle>[,<bundle>...]] [<bundle> ...]"
 }
 
 parse_update_arguments() {
@@ -180,5 +189,25 @@ served_schema_name() {
         return 1
     fi
     echo "${served}"
+    return 0
+}
+
+deployed_release_spec() {
+    local deployed=$1
+    local release
+    release=$("${deployed}/opus_venv/bin/python" -c \
+        'import importlib.metadata as m; print(m.version("rms-opus"))' 2> /dev/null) \
+        || release=""
+    if [[ -z ${release} ]]; then
+        echo "ERROR: cannot read the rms-opus release installed in ${deployed}." >&2
+        echo "       Give the update the version specifier of the release being served." >&2
+        return 1
+    fi
+    if [[ ${release} == *+* ]]; then
+        echo "ERROR: ${deployed} runs rms-opus ${release}, a local build PyPI does not have." >&2
+        echo "       Give the update the version specifier of a release." >&2
+        return 1
+    fi
+    echo "==${release}"
     return 0
 }

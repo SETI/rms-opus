@@ -1,9 +1,10 @@
 #!/bin/bash
 #
-# Usage: run_incremental_opus_update.sh [<version_spec>] [--drop <bundle>[,<bundle>...]] [<bundle> ...]
+# Usage: run_incremental_opus_update.sh [<version_spec>]
+#            [--drop <bundle>[,<bundle>...]] [<bundle> ...]
 #
 #   <version_spec>  a PEP 440 specifier appended to the distribution name, for
-#                   example '==3.23.0'. Omit it to install the newest release.
+#                   example '==3.23.0'. Omit it to install the release being served.
 #   --drop          bundles to drop from the served database without importing them
 #                   again. A bundle named here and as a <bundle> is imported again.
 #   <bundle>        bundles to import into the served database: a bundle it holds is

@@ -123,6 +123,34 @@ def test_the_update_writes_the_served_schema_then_copies_it_to_the_peer(
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
+@pytest.mark.parametrize(
+    ('arguments', 'version_spec'),
+    [(('COISS_2001',), '==3.25.0'), (('~=3.26', 'COISS_2001'), '~=3.26')],
+    ids=['deployed', 'given'],
+)
+def test_the_update_installs_the_deployed_release_unless_given_another(
+    tmp_path: Path, arguments: tuple[str, ...], version_spec: str
+) -> None:
+    """The generation is switched in under the deployed release, so it is the default."""
+    status, output, _ran = run_deploy(tmp_path, _UPDATE, *arguments)
+    assert status == 0, output
+    assert re.search(rf'^Version spec: {re.escape(version_spec)}$', output, re.M) is not None
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+@pytest.mark.parametrize('release', ['', '3.25.1.dev4+g1234abc'], ids=['unreadable', 'local'])
+def test_the_update_without_a_version_refuses_a_release_pypi_cannot_install(
+    tmp_path: Path, release: str
+) -> None:
+    """Nothing is run, and the operator is asked for a version specifier."""
+    status, output, ran = run_deploy(tmp_path, _UPDATE, 'COISS_2001', deployed_release=release)
+    assert status == 1
+    assert ran == []
+    assert 'version specifier' in output
+    assert 'nothing was changed' in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
 def test_a_failed_update_copies_nothing(tmp_path: Path) -> None:
     """The update stops at the invocation that failed, and the peer gets nothing."""
     status, _output, ran = run_deploy(
