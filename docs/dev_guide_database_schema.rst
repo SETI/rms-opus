@@ -90,11 +90,26 @@ The columns that identify an observation are stored once, in ``obs_general``: it
 
 ``obs_pds`` is the exception: it also has ``opus_id`` and ``bundle_id``, because they are search fields of their own, "OPUS ID" and "Bundle/Volume ID" in the "PDS Constraints" category. Each has a plain key and no foreign key. The import writes the same values into ``obs_pds`` as into ``obs_general``, and its validation step reports any ``obs_pds`` row whose ``bundle_id`` differs from its ``obs_general`` row's.
 
-Here is an example of the schema for the ``obs_general`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
+.. _dev_guide_database_schema_obs_general_rows:
+
+``obs_general`` is a view, and ``obs_general_rows`` its table. The observation rows live in the base table ``obs_general_rows``, each with the import generation that added it, ``added_generation``, and the one that retired it, ``removed_generation``, ``NULL`` while none has. ``obs_general`` is a view of the rows in the generation the database serves, ``schema_version.generation``: a row added at or before it and not retired at or before it. The view lists every column of the table but those two:
 
 ::
 
-    mysql> DESC obs_general;
+    CREATE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW obs_general AS
+      SELECT <every column but added_generation and removed_generation>
+      FROM obs_general_rows
+      WHERE added_generation <= COALESCE((SELECT generation FROM schema_version), 1)
+        AND (removed_generation IS NULL
+             OR removed_generation > COALESCE((SELECT generation FROM schema_version), 1))
+
+MySQL merges the view into each statement that names it, so the web application reads ``obs_general`` as a table, through ``obs_general_rows``'s keys, and evaluates the generation once per statement. A database with no version row shows generation 1, the one a fresh import writes. The child tables', ``cart``'s and the junction tables' foreign keys reference ``obs_general_rows``. The import reads and writes the base table under the name ``obs_general`` (:ref:`dev_guide_import_generations`), and creates the view, and ``schema_version`` empty if it is absent, whenever it creates the table. The child tables carry no generation, so a statement that reads a child table outside a search's results joins the view on ``obs_general_id``. Neither generation column has a key: nearly every row passes the test, and the import finds a bundle's rows through ``bundle_id``.
+
+Here is an example of the schema for the ``obs_general_rows`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
+
+::
+
+    mysql> DESC obs_general_rows;
     +----------------------+-------------------+------+-----+---------+
     | Field                | Type              | Null | Key | Default |
     +----------------------+-------------------+------+-----+---------+
@@ -925,8 +940,12 @@ The fields are:
 
 * ``version``: The :data:`~opus_import.schema_version.SCHEMA_VERSION` of the release whose import created the tables. A release that changes a table schema in a way an existing database does not have raises it, and is deployed with a fresh import.
 * ``state``: ``ready`` once the database is finished; ``appending`` while an append to it is writing.
+* ``generation``: The import generation the web application serves, which the ``obs_general`` view shows (:ref:`the obs_general view <dev_guide_database_schema_obs_general_rows>`). A fresh import writes 1.
+* ``pending_generation``: The generation an incremental update is writing, one above ``generation``, or ``NULL`` (:ref:`dev_guide_import_running_generations`).
+* ``pending_state``: How far the pending generation has got: ``writing`` from ``--begin-generation`` and again whenever anything writes it, ``finalized`` once every step of ``--finalize`` succeeded on it, ``validated`` once ``--validate`` passed on a finalized one, and ``ready`` once ``--write-schema-version`` stamped a validated one. Only a ``ready`` generation is switched in.
+* ``revertible``: 1 from a switch until the purge starts, while ``--revert-generation`` can switch back.
 
-The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), creates the table and writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append, and ``--delete-bundles`` on a finished database, set ``state`` to ``appending`` before the first write (:ref:`dev_guide_import_write_paths`). ``--scorched-earth`` drops the table before any other.
+The import creates the table empty when it creates ``obs_general_rows``, since the view reads it; an empty table is no row. The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append, and ``--delete-bundles`` on a finished database, set ``state`` to ``appending`` before the first write (:ref:`dev_guide_import_write_paths`). An update by generation writes neither ``version`` nor ``state``: the row stays ``ready``, and the update writes the generation columns. ``--scorched-earth`` drops the table before any other.
 
 Two things read it, and both require the release's own version in the ``ready`` state:
 
@@ -961,7 +980,7 @@ The ``import_bundle`` table is the bundle registry: the import's record of each 
 
 The fields are:
 
-* ``bundle_number``: The bundle's place in registration order, which fixes its id range and so which copy of a shared OPUS ID finalization keeps. A plain ``--import`` imports its bundles in this order; queue importers claim the largest pending bundle first, whatever its number. A bundle keeps its number when it is imported again.
+* ``bundle_number``: The bundle's place in registration order, which fixes its id range and so which copy of a shared OPUS ID finalization keeps. A plain ``--import`` imports its bundles in this order; queue importers claim the largest pending bundle first, whatever its number. A bundle keeps its number when it is imported again, except into a pending generation, which registers it afresh.
 * ``bundle_id``: The bundle, such as ``COISS_2002``. A bundle OPUS deliberately skips is never registered.
 * ``size_estimate``: The rows the bundle's primary index labels declared when it was registered.
 * ``first_id``: The ``obs_general.id`` of the bundle's first observation. A bundle's range starts where the range of the bundle registered before it ends, so the ranges ascend in ``bundle_number`` order and the copy of a shared OPUS ID that finalization keeps, the one with the highest ``id``, is the one from the bundle registered later.
@@ -971,6 +990,10 @@ The fields are:
 * ``process_id``: The ``import_process`` row of the importer that claimed the bundle, set with ``importing``, and kept on a ``failed`` bundle so its importer's log can be found; ``NULL`` for a bundle imported by a plain ``opus_import``, and once the bundle returns to ``pending``.
 * ``rows_done``: The ``obs_general`` rows the bundle's latest import has committed, advanced in each chunk's transaction.
 * ``losses``: How many importers died holding the bundle. Its second loss marks it ``failed``.
+* ``generation``: The import generation that registered this copy of the bundle; 1 on a fresh import.
+* ``retired_generation``: The generation that retired this copy, by importing the bundle again or dropping it, or ``NULL``. A bundle re-imported in a pending generation has two rows until the purge, its served copy's, retired at the pending generation, and its pending copy's, with a number and an id range after every existing one; the purge deletes the rows of the copies it deletes. The import reads and writes a bundle's **live row**, the one no generation retired.
+
+The unique key is ``(bundle_id, generation)``.
 
 The key on ``(state, size_estimate, bundle_number)`` is what a claim reads: scanned from its highest entry, it gives the largest ``pending`` bundle in one index entry, so a claim locks only the row it takes.
 

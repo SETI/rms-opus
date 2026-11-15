@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from import_tests.tools import build_run, fixture_layout, golden_io, run_logs
-from opus_import import import_util
+from opus_import import generations, import_util
 from opus_import.steps import do_import
 from opus_import.table_keys import (
     TableKey,
@@ -76,8 +76,10 @@ def _server_keys(credentials: DatabaseCredentials, schema: str) -> dict[str, set
         schema: The schema to read.
 
     Returns:
-        Each table's keys, keyed by table name.
+        Each table's keys, keyed by table name, ``obs_general`` for its base table, in
+        what a foreign key references too.
     """
+    logical = generations.logical_table_name
     indexes: dict[tuple[str, str], tuple[str, list[str]]] = {}
     for table, index, non_unique, column in golden_io.query(
         credentials,
@@ -87,7 +89,7 @@ def _server_keys(credentials: DatabaseCredentials, schema: str) -> dict[str, set
         [schema],
     ):
         kind = 'primary' if index == 'PRIMARY' else 'key' if int(non_unique) else 'unique'
-        indexes.setdefault((table, index), (kind, []))[1].append(column)
+        indexes.setdefault((logical(table), index), (kind, []))[1].append(column)
     keys: dict[str, set[TableKey]] = {}
     for (table, _index), (kind, columns) in indexes.items():
         keys.setdefault(table, set()).add(TableKey(kind, tuple(columns)))  # type: ignore[arg-type]
@@ -101,7 +103,7 @@ def _server_keys(credentials: DatabaseCredentials, schema: str) -> dict[str, set
         'ORDER BY TABLE_NAME, CONSTRAINT_NAME, ORDINAL_POSITION',
         [schema],
     ):
-        entry = foreign.setdefault((table, constraint), (ref_table, [], []))
+        entry = foreign.setdefault((logical(table), constraint), (logical(ref_table), [], []))
         entry[1].append(column)
         entry[2].append(ref_column)
     for (table, _constraint), (ref_table, columns, ref_columns) in foreign.items():
@@ -303,12 +305,13 @@ def _plant_copy(
                     parts.append('`bundle_id` = %s')
                     params.append(bundle)
                 assign = ', '.join(parts)
+            stored = generations.physical_table_name(table)
             cursor.execute(
-                f'CREATE TEMPORARY TABLE `plant` AS SELECT * FROM `{table}` WHERE {where}',
+                f'CREATE TEMPORARY TABLE `plant` AS SELECT * FROM `{stored}` WHERE {where}',
                 [original_id],
             )
             cursor.execute(f'UPDATE `plant` SET {assign}', params)
-            cursor.execute(f'INSERT INTO `{table}` SELECT * FROM `plant`')
+            cursor.execute(f'INSERT INTO `{stored}` SELECT * FROM `plant`')
             cursor.execute('DROP TEMPORARY TABLE `plant`')
         connection.commit()
     finally:
@@ -320,8 +323,9 @@ def _snapshot(credentials: DatabaseCredentials, schema: str) -> dict[str, tuple[
     """Return every table's row count and checksum."""
     snapshot = {}
     for table in golden_io.list_tables(credentials, schema):
-        (count,) = golden_io.query(credentials, schema, f'SELECT COUNT(*) FROM `{table}`')[0]
-        (_name, checksum) = golden_io.query(credentials, schema, f'CHECKSUM TABLE `{table}`')[0]
+        stored = generations.physical_table_name(table)
+        (count,) = golden_io.query(credentials, schema, f'SELECT COUNT(*) FROM `{stored}`')[0]
+        (_name, checksum) = golden_io.query(credentials, schema, f'CHECKSUM TABLE `{stored}`')[0]
         snapshot[table] = (int(count), int(checksum or 0))
     return snapshot
 
@@ -343,11 +347,11 @@ def _drop_two_keys(credentials: DatabaseCredentials, schema: str) -> list[str]:
         credentials,
         None,
         'SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = %s '
-        "AND TABLE_NAME = 'obs_general' AND COLUMN_NAME = 'opus_id'",
+        "AND TABLE_NAME = 'obs_general_rows' AND COLUMN_NAME = 'opus_id'",
         [schema],
     )[0]
     golden_io.execute(credentials, schema, f'ALTER TABLE `obs_pds` DROP FOREIGN KEY `{constraint}`')
-    golden_io.execute(credentials, schema, f'ALTER TABLE `obs_general` DROP KEY `{index}`')
+    golden_io.execute(credentials, schema, f'ALTER TABLE `obs_general_rows` DROP KEY `{index}`')
     return [f'obs_pds: {constraint}', f'obs_general: {index}']
 
 

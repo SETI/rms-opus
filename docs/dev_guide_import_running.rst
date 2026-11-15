@@ -175,10 +175,19 @@ beginning ``Import path:``, naming the schema and its version:
      - **Fresh import**: an empty schema, or one a fresh import is part way through,
        since a full import runs several invocations, which may run at once. The tables carry only
        the keys a load needs until ``--finalize`` adds the rest once.
-   * - One row, of this release's version, ``ready`` or ``appending``
+   * - One row, of this release's version, ``ready``, with a pending generation
+     - **Generation**: the bundles go into the pending generation
+       (`Updating a served schema by generation`_). The log line reads ``Import path:
+       generation <P>``. The row stays ``ready``, and the web application goes on serving
+       the generation it served.
+   * - One row, of this release's version, ``ready`` or ``appending``, no switch still
+       revertible
      - **Append**: the bundles load into the tables with their keys in place. The row is
        set to ``appending`` before the first bundle, and stays so until
        ``--write-schema-version``.
+   * - One row whose last generation switch can still be reverted
+     - **Refused**, naming ``--purge-generations``: an append would delete rows the revert
+       needs. ``--delete-bundles`` without a pending generation is refused the same way.
    * - A row of another version, more than one row, or a state that is neither
      - **Refused**, with a fatal message naming ``--scorched-earth --yes``: a schema is
        re-imported under the release that will serve it.
@@ -319,6 +328,8 @@ Import steps
      - Delete the named bundles' rows from every observation table, and their bundle
        registry rows, before any bundle is imported. A ``ready`` schema of this release's
        version is set to ``appending`` first, and needs the closing invocations again.
+       With a pending generation it retires the bundles' rows in it instead
+       (`Updating a served schema by generation`_).
    * - ``--scorched-earth``
      - Drop every table the import creates in the schema, leaving Django's own
        ``django_*`` and ``auth_*`` tables
@@ -404,7 +415,9 @@ Auxiliary tables and other steps
        keys follow, one at a time. It does nothing on a schema that has them all. See
        :ref:`dev_guide_import_steps_create_indexes`.
    * - ``--create-param-info``
-     - Build ``param_info`` beside the live table and swap it in.
+     - Build ``param_info`` beside the live table and swap it in. With a pending
+       generation it is built from that generation and left as ``param_info__new`` for
+       the switch, and so are the two below.
    * - ``--create-partables``
      - Build ``partables``, the same way.
    * - ``--create-table-names``
@@ -418,7 +431,8 @@ Auxiliary tables and other steps
        (:ref:`dev_guide_import_steps_do_update_mult_info`).
    * - ``--create-cart``
      - Drop and recreate the empty ``cart`` table. It needs ``obs_general``, and on a
-       schema without one it logs an error and creates nothing.
+       schema without one it logs an error and creates nothing. With a pending generation
+       it is refused, and ``--finalize`` leaves the cart alone.
    * - ``--reset-search-tables``
      - Drop and re-create the web application's search tables, ``user_searches`` and
        ``search_results``, empty from their schema files, then empty the web
@@ -438,7 +452,9 @@ Auxiliary tables and other steps
        web service is stopped (:ref:`user_guide_deployment_carry_over`).
    * - ``--validate``
      - Validate the imported tables. A check that logs an error keeps the invocation
-       from marking the schema ready, and makes it exit with failure.
+       from marking the schema ready, and makes it exit with failure. With a pending
+       generation it is refused until ``--finalize`` has succeeded on it, and marks the
+       generation ``validated`` when every check passes.
    * - ``--import-dictionary``
      - Rebuild ``contexts`` and ``definitions`` from scratch. It runs after every step
        above.
@@ -450,7 +466,85 @@ Auxiliary tables and other steps
        append's ``appending`` to ``ready``. It never changes a version the schema already
        records: over another version it logs an error and **exits non-zero**, leaving the
        row alone. It refuses the same way while any bundle in the bundle registry is not
-       ``done``.
+       ``done``. With a pending generation it writes neither the version nor the state:
+       it marks the generation ``ready`` to switch, and refuses unless ``--validate`` has
+       passed on it.
+   * - ``--begin-generation``, ``--switch-generation``, ``--purge-generations``,
+       ``--abandon-generation``, ``--revert-generation``
+     - The commands of an update by generation
+       (`Updating a served schema by generation`_). Each runs alone, reads no holdings,
+       and exits non-zero when it is refused.
+
+.. _dev_guide_import_running_generations:
+
+Updating a served schema by generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An update changes some bundles of the schema the site serves, without a full import and
+without showing a request a partial observation set. It writes the bundles into the served
+schema as a pending **generation**, which the ``obs_general`` view hides until it is
+switched in whole (:ref:`dev_guide_import_generations`). The invocations, each its own
+process, in order:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 65
+
+   * - Invocation
+     - What it does
+   * - ``--begin-generation``
+     - Starts the pending generation, one above the served one, on a ``ready`` schema of
+       this release's version. Refused while a generation is pending, naming
+       ``--abandon-generation``, and while the last switch can still be reverted, naming
+       ``--purge-generations``.
+   * - ``--import <bundles>``
+     - Imports the bundles into the pending generation. A bundle's rows of earlier
+       generations are retired, not deleted; it is registered afresh, with a number and an
+       id range after every existing one, so a re-imported bundle wins every duplicate
+       OPUS ID against an unchanged bundle.
+   * - ``--delete-bundles <bundles>``
+     - Retires the bundles' rows in the pending generation, and deletes the rows it added.
+   * - ``--finalize``
+     - Works on the pending generation: the duplicate step compares its rows only, and
+       retires a losing row an earlier generation added; the auxiliary tables are built
+       into their ``__new`` tables and left there. The mult step, the cart and the search
+       tables' reset do not run. The generation is ``finalized`` once every step succeeds.
+   * - ``--validate``
+     - Refused unless the generation is ``finalized`` or ``validated``; checks the
+       generation's rows, and marks it ``validated`` when every check passes.
+   * - ``--write-schema-version``
+     - Refused unless the generation is ``validated``; marks it ``ready`` to switch.
+   * - ``--switch-generation``
+     - Run while the web service is stopped (``promote_generation.sh``). Refused unless
+       the generation is ``ready``. It swaps the auxiliary tables in, keeping the live
+       ones as ``__prev``; points every cart row at the new generation's row with the same
+       OPUS ID, or deletes it when there is none; resets the search tables and flushes
+       the cache; and last, serves the generation and marks the switch revertible. Each
+       step finds out whether it has run, so running it again completes an interrupted
+       switch.
+   * - ``--purge-generations``
+     - Run after the switch, while the site serves. It first makes the switch
+       irreversible, then deletes the rows no served generation shows, then deletes the
+       values only they used and analyzes the tables.
+   * - ``--abandon-generation``
+     - Throws an unswitched pending generation away: the rows it added go, the rows it
+       retired come back, and the schema is as it was before ``--begin-generation``.
+   * - ``--revert-generation``
+     - Run while the web service is stopped, after a switch and before the purge: serves
+       the previous generation again, cart and auxiliary tables included, and leaves the
+       reverted one pending and ``ready``, to abandon or to switch again. It also undoes
+       a switch that stopped part way.
+
+The five generation commands hold a server-wide named lock on the schema while they run,
+and each is refused while another holds it. Every invocation that writes the pending
+generation records itself in ``import_process`` with a lock of its own, and a generation
+command is refused while any of them runs. ``schema_version.pending_state`` records how
+far the pending generation has got: ``writing`` again whenever anything writes it, so a
+generation written after its stamp is never switched in.
+
+``run_incremental_opus_update.sh`` runs the first six invocations against the served
+schema, and ``promote_generation.sh`` runs the switch
+(:ref:`user_guide_deployment`).
 
 Logging and diagnostics
 ~~~~~~~~~~~~~~~~~~~~~~~

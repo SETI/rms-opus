@@ -933,9 +933,7 @@ def test_the_highest_id_is_kept_and_the_others_deleted_children_first() -> None:
 
 def test_an_id_left_shared_after_the_step_is_an_error() -> None:
     """The closing check fails the step when any OPUS id still has two rows."""
-    db = _DuplicateDB(
-        [(3, 'a', 'B_1', 1), (8, 'a', 'B_2', 1)], remaining=[(1, 'a', 'B_1', 1)]
-    )
+    db = _DuplicateDB([(3, 'a', 'B_1', 1), (8, 'a', 'B_2', 1)], remaining=[(1, 'a', 'B_1', 1)])
     ctx = make_context(db=db)
     assert not do_duplicate_ids.delete_duplicate_opus_ids(ctx)
     assert ctx.logger.messages_at('error') == ['An OPUS ID still has more than one obs_general row']

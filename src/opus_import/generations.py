@@ -201,6 +201,6 @@ class GenerationState:
 
     @property
     def working_generation(self) -> int:
-        """The generation an import writes and finalization works on: the pending one, if
+        """The generation an import writes and finalization works on, the pending one if
         any, otherwise the served one."""
         return self.generation if self.pending is None else self.pending

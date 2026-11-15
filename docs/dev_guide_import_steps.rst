@@ -567,6 +567,70 @@ foreign key removes a cart row that names a deleted copy rather than leaving it
 orphaned, and ends by checking that no OPUS ID has two rows; a failure keeps the
 invocation from marking the schema ready, as a validation failure does.
 
+The step compares the rows of one generation (:ref:`dev_guide_import_generations`): the
+pending one, if there is one, and the served one otherwise. In a pending generation a
+re-imported bundle has ids above every unchanged bundle's, so it wins every duplicate
+against one; a losing row the pending generation added is deleted, and one an earlier
+generation added, which the served generation still shows, is retired instead.
+
+.. _dev_guide_import_steps_do_generation:
+
+opus_import.steps.do_generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The commands of an update by generation (:ref:`dev_guide_import_running_generations`):
+``--begin-generation``, ``--switch-generation``, ``--purge-generations``,
+``--abandon-generation`` and ``--revert-generation``, each run alone. Each holds the
+schema's generation lock (``GET_LOCK`` on a name :func:`~opus_import.importdb.lock_name`
+gives, without waiting) for its whole run, and is refused while any invocation that
+registered itself in ``import_process`` to write the pending generation is alive
+(:func:`~opus_import.steps.do_generation.register_writer`).
+
+**The retire.** With a pending generation P, the per-bundle delete
+(:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) retires the
+bundle's rows of earlier generations, setting ``removed_generation = P`` on the
+``obs_general`` rows an earlier generation added and none retired, a
+``transaction_rows`` chunk at a time through the ``bundle_id`` key
+(:func:`~opus_import.steps.do_import_tables.retire_bundle_rows`). It deletes only the rows
+P added, which lie in the range P's registration gave the bundle, so a rerun is clean.
+Registration in P retires the bundle's live registry row (``retired_generation = P``) and
+adds a row of its own, with the next number and a range after every existing one.
+
+**The switch** is refused unless P is ``ready``. Its steps, in order, each finding out
+whether it has run:
+
+#. the auxiliary tables' ``__new`` tables are swapped in with one rename, the live tables
+   kept as ``__prev``, after any ``__prev`` an earlier switch left is dropped
+   (:func:`~opus_import.table_swap.swap_in_keeping_previous`);
+#. every ``cart`` row whose observation is not in P is pointed at P's row with the same
+   ``opus_id``, or deleted when P has none, and the log counts both;
+#. the search tables are reset and the web application's cache flushed
+   (:ref:`dev_guide_import_steps_do_django`);
+#. last, one statement sets ``generation = P``, clears the pending generation and its
+   state, and sets ``revertible``.
+
+A test makes it fail after a step through ``OPUS_IMPORT_FAULT=switch_generation:<step>``.
+With nothing pending and ``revertible`` set, the last statement has run; the switch runs
+steps 1 to 3 again, which find nothing to do after a whole switch, and succeeds.
+
+**The revert** runs the switch backward while the switch is revertible: the ``__prev``
+tables back in, the reverted generation's kept as ``__new``; the cart moved to the
+previous generation; the search tables reset; then the previous generation served, P
+pending and ``ready`` again and the switch no longer revertible. On a pending generation
+that is ``ready``, it undoes whatever steps a switch that stopped part way ran.
+
+**The purge** is refused while a generation is pending. Its first statement, committed on
+its own, clears ``revertible``. It then drops the ``__prev`` tables; deletes every row
+retired at or before the served generation from every observation table, children first,
+with foreign keys checked
+(:func:`~opus_import.steps.do_import_tables.delete_observations`); deletes the registry
+rows retired by then; and runs the mult step (:ref:`dev_guide_import_steps_do_finalize_mult`)
+and ``ANALYZE``.
+
+**The abandon** deletes the rows P added, clears ``removed_generation = P`` and
+``retired_generation = P``, deletes P's registry rows, drops the ``__new`` tables and
+clears the pending generation. Rerun after an interruption, it finishes the work.
+
 .. _dev_guide_import_steps_do_finalize_mult:
 
 opus_import.steps.do_finalize_mult

@@ -104,6 +104,10 @@ A schema holding another release's version is imported into on neither path: it 
 re-imported under the release that will serve it, starting from
 ``opus_import --scorched-earth --yes``.
 
+**A served schema is updated by generation** (:ref:`dev_guide_import_generations`): the
+append path, into a pending generation the web application does not see until it is
+switched in whole.
+
 **On both paths each bundle is deleted, then loaded.**
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables` removes the
 bundle's rows from every observation table with foreign key checks on, so ``cart``'s
@@ -131,6 +135,40 @@ import creates before anything else runs.
 On either path a run can be **resumed rather than restarted**: the bundles already
 written stay, the registry names the ones that did not finish, and the per-step options
 let a second invocation redo only the part that failed.
+
+.. _dev_guide_import_generations:
+
+Generations: nothing is served until it is finished
+---------------------------------------------------
+
+The rule that keeps a request from reading a database part way through an import holds
+on a served schema too. Every ``obs_general`` row carries the import **generation** that
+added it, ``added_generation``, and the one that retired it, ``removed_generation``. The
+rows live in the base table ``obs_general_rows``, and ``obs_general`` is a view of the rows
+in the generation the schema serves, the ``generation`` column of its ``schema_version``
+row: a row is in generation G when it was added at or before G and was not retired at or
+before G. A fresh import writes generation 1, and its version row serves it. The child
+tables carry no generation; a request reaches a child row only through an observation the
+view returned, or a search built from the view.
+
+An update (:ref:`dev_guide_import_running_generations`) begins a **pending generation**,
+one above the served one, and writes only the bundles it changes into it: a re-imported
+bundle's old rows are retired at the pending generation and its new rows added in it, and
+a dropped bundle's rows are retired. The served generation still shows every row it
+showed, so nothing a request reads changes while the update imports, finalizes and
+validates. The auxiliary tables are built from the pending generation beside the live
+ones. The **switch**, while the web service is stopped, swaps those tables in, moves the
+cart to the new generation's rows and serves the new generation in one statement; the web
+workers restart afterwards, refreshing what each process caches. The retired rows stay
+until the **purge**, so until then a switch can be reverted, and an update that never
+switched can be abandoned with nothing served having changed.
+
+The import itself always reads and writes the base table:
+:mod:`opus_import.importdb` renders the name ``obs_general`` as ``obs_general_rows`` and
+reports the base table under the name ``obs_general``, and every step that compares
+observations -- the duplicate step, the unique-OPUS-ID check, the surface geometry
+bodies the auxiliary tables list -- reads the generation the run works on, the pending one
+if there is one and the served one otherwise.
 
 .. _dev_guide_import_context:
 

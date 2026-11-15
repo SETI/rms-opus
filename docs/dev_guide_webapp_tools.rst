@@ -295,6 +295,17 @@ those joins; and a source may be a plain table name, a
 The :class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is not a
 tree: a statement can hold a statement.
 
+**The served observations.** ``obs_general`` is a view of the rows of the import
+generation the database serves (:ref:`dev_guide_import_generations`); the child tables
+carry no generation. A statement that reads a child table's rows outside a search's
+results -- the autocomplete from every observation, the empty search's mult counts and
+range endpoints of a child's column, the product types and the files of an OPUS ID or of
+the empty search -- hangs
+:func:`~opus_app.apps.tools.sql_builder.served_observations_join` off the child's
+source, an inner join to ``obs_general`` on ``obs_general_id``, so a generation the
+database does not serve reaches no response. A statement joined to a search's results
+needs none: the search was built from the view.
+
 **The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
 order. It and :class:`~opus_app.apps.tools.sql_builder.FromSource` are the two mutable
 classes here, each accumulating what a caller adds to it.
@@ -576,7 +587,9 @@ opus_app.apps.tools.file_utils
 ------------------------------
 
 Lookups against ``obs_files``, the table listing every file of every observation. Every
-function here starts from one or more OPUS IDs and returns files that belong to them.
+function here starts from one or more OPUS IDs and returns files that belong to them,
+joined to the ``obs_general`` view, so an OPUS ID a generation the database does not serve
+shares returns only the served observation's files.
 **Nothing here writes to the database, and nothing here touches the filesystem** -- the
 size and the checksum are columns the import wrote from a shelf.
 

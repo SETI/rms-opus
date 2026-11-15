@@ -617,7 +617,7 @@ _JOIN_CONFLICTS = (
 )
 
 
-#: The generation commands: each runs alone, under the schema's generation lock.
+#: The generation commands, each run alone under the schema's generation lock.
 GENERATION_COMMANDS = (
     ('begin_generation', '--begin-generation'),
     ('switch_generation', '--switch-generation'),

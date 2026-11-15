@@ -61,6 +61,11 @@ bundle registry keeps a schema with an unfinished bundle from being finalized or
 ready.
 :ref:`dev_guide_import_write_paths` is the whole of it.
 
+A served schema is updated by **generation**: the bundles that changed are written into
+it as a pending generation, which the ``obs_general`` view hides until a switch, while the
+web service is stopped, serves it whole. The rows it replaced stay until a purge, so the
+switch can be reverted until then (:ref:`dev_guide_import_generations`).
+
 The auxiliary tables are built after the observation tables, but only ``param_info`` is
 derived from what was imported. ``table_names`` lists the observation tables that
 actually exist, while ``partables`` walks the configuration maps alone, so a mission that was never
@@ -164,7 +169,8 @@ means. The two ideas to carry into any other chapter:
 
 * An ``obs_*`` table corresponds one-for-one to a "Constraints" category in the user
   interface, and a row is one observation. ``obs_general`` is the master table: every
-  observation has a row there, and every other table's rows hang off it.
+  observation has a row there, and every other table's rows hang off it. It is a view of
+  the served generation's rows of the base table ``obs_general_rows``.
 * A field whose value comes from a fixed set stores the integer id of a row of the
   ``mult`` table rather than the value itself, which is what makes the checkbox searches
   fast. Each such field's values carry its ``field_id`` from ``mult_field``, and

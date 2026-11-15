@@ -3,7 +3,7 @@
 rm -f /tmp/_*models.py
 # obs_general is a view of the served generation's rows of obs_general_rows; the model
 # reads the view, so views are included and the base table's class is dropped below.
-/seti/newnav/capped-run.sh python manage.py inspectdb --include-views > /tmp/_models.py
+python manage.py inspectdb --include-views > /tmp/_models.py
 # Now hide all the new classes because there might be tables in the DB
 # we don't want to expose models for
 sed -e 's/^class /class ZZ/' < /tmp/_models.py > /tmp/___models.py

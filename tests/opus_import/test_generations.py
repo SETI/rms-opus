@@ -1,0 +1,577 @@
+"""Tests for the import generations of a served schema, against stand-ins.
+
+The SQL the MySQL layer renders for the served view, the name translation, the retire,
+and the cart's move are read from a recording connection; the generation commands'
+refusals, their lock, and the switch's order and resumption run against a stand-in that
+holds the version row.
+"""
+
+from __future__ import annotations
+
+import contextlib
+from typing import TYPE_CHECKING, Any
+
+import pytest
+
+from opus_import import generations, table_swap
+from opus_import.cli import _create_argument_parser, _generation_conflicts, _validate
+from opus_import.generations import (
+    PENDING_FINALIZED,
+    PENDING_READY,
+    PENDING_VALIDATED,
+    PENDING_WRITING,
+    GenerationState,
+)
+from opus_import.import_fault import IMPORT_FAULT_ENV_VAR, InjectedImportFaultError
+from opus_import.importdb.mysql import ImportDBMySQL
+from opus_import.importdb.super import ImportDBSuper
+from opus_import.schema_version import SCHEMA_STATE_READY, SCHEMA_VERSION
+from opus_import.steps import (
+    do_django,
+    do_duplicate_ids,
+    do_generation,
+    do_import_tables,
+    do_schema_version,
+    do_validate,
+)
+
+from .conftest import make_context
+
+if TYPE_CHECKING:
+    from opus_import.context import ImportContext
+
+
+class _Connection:
+    """A DB-API connection stand-in whose cursor reports one changed row."""
+
+    def cursor(self) -> Any:
+        """Return a cursor that does nothing."""
+        return contextlib.nullcontext(_Cursor())
+
+    def commit(self) -> None:
+        """Commit nothing."""
+
+    def rollback(self) -> None:
+        """Roll back nothing."""
+
+
+class _Cursor:
+    """A cursor that runs nothing and reports one row changed."""
+
+    rowcount = 1
+
+    def execute(self, cmd: str, params: Any = None) -> None:
+        """Run nothing."""
+
+
+class _RecordingDB(ImportDBMySQL):
+    """An ImportDBMySQL that records statements instead of running them."""
+
+    def __init__(self, tables: set[str] | None = None) -> None:
+        # Deliberately skips ImportDBMySQL.__init__, which connects to a server.
+        ImportDBSuper.__init__(self, 'host', 'db', 'schema', 'user', 'password', logger=None)
+        self.conn = _Connection()
+        self.executed: list[tuple[str, Any]] = []
+        self._table_names = set(tables or ())
+        self._table_info_cache = {}
+        self.default_engine = 'INNODB'
+
+    def _execute(
+        self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
+    ) -> None:
+        self.executed.append((cmd, param_list))
+
+
+def _obs_general_schema() -> list[dict[str, Any]]:
+    """Return a small schema of ``obs_general`` with the generation columns."""
+    return [
+        {'field_name': 'id', 'field_type': 'uint4', 'field_key': 'primary', 'field_notnull': True},
+        {'field_name': 'opus_id', 'field_type': 'varchar50', 'field_notnull': True},
+        {
+            'field_name': 'added_generation',
+            'field_type': 'uint4',
+            'field_notnull': True,
+            'data_source': 'GENERATION',
+        },
+        {'field_name': 'removed_generation', 'field_type': 'uint4', 'data_source': 'GENERATION'},
+    ]
+
+
+# ------------------------------------------------------------------------------------
+# The served view and the name translation
+# ------------------------------------------------------------------------------------
+
+
+def test_obs_general_is_created_as_its_base_table_then_the_view_of_the_served_generation() -> None:
+    """The base table first, then schema_version empty, then the merged view."""
+    db = _RecordingDB()
+    db.create_table('obs_general', _obs_general_schema())
+    statements = [cmd for cmd, _params in db.executed]
+    assert statements[0].startswith('CREATE TABLE IF NOT EXISTS `obs_general_rows` (')
+    assert statements[1].startswith('CREATE TABLE IF NOT EXISTS `schema_version` (')
+    view = statements[2]
+    assert view.startswith(
+        'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW `obs_general` AS SELECT '
+    )
+    assert 'SELECT `id`, `opus_id` FROM `obs_general_rows` WHERE' in view
+    served = 'COALESCE((SELECT `generation` FROM `schema_version`), 1)'
+    assert f'`added_generation` <= {served}' in view
+    assert f'`removed_generation` IS NULL OR `removed_generation` > {served}' in view
+    assert 'obs_general' in db.table_names()
+    assert 'obs_general_rows' not in db.table_names()
+
+
+def test_the_view_does_not_create_schema_version_again() -> None:
+    """A schema that has the version table keeps it."""
+    db = _RecordingDB({'schema_version'})
+    db.create_obs_general_view(_obs_general_schema())
+    assert len(db.executed) == 1
+    assert db.executed[0][0].startswith('CREATE OR REPLACE ALGORITHM=MERGE')
+
+
+def test_dropping_obs_general_drops_the_view_before_the_table() -> None:
+    """DROP TABLE refuses a view, and the view reads the table."""
+    db = _RecordingDB({'obs_general'})
+    db.drop_table('obs_general')
+    assert [cmd for cmd, _ in db.executed] == [
+        'DROP VIEW IF EXISTS `obs_general`',
+        'DROP TABLE `obs_general_rows`',
+    ]
+
+
+def test_the_import_names_are_mapped_both_ways() -> None:
+    """The base table is reported as obs_general and rendered from it."""
+    assert generations.physical_table_name('obs_general') == 'obs_general_rows'
+    assert generations.physical_table_name('obs_pds') == 'obs_pds'
+    assert generations.logical_table_name('OBS_GENERAL_ROWS') == 'obs_general'
+    assert generations.logical_table_name('obs_pds') == 'obs_pds'
+    assert generations.view_columns(_obs_general_schema()) == ['id', 'opus_id']
+
+
+def test_the_cart_is_moved_by_opus_id_then_the_rows_left_behind_deleted() -> None:
+    """Rows not in the generation point at its copy, or go."""
+    db = _RecordingDB()
+    assert db.repoint_cart(4) == (1, 1)
+    (update, update_params), (delete, delete_params) = db.executed
+    assert update.startswith('UPDATE `cart` AS `c` JOIN `obs_general_rows` AS `o`')
+    assert '`n`.`opus_id` = `o`.`opus_id`' in update
+    assert 'SET `c`.`obs_general_id` = `n`.`id` WHERE NOT (' in update
+    assert update_params == [4, 4, 4, 4]
+    assert delete.startswith('DELETE `c` FROM `cart` AS `c` JOIN `obs_general_rows` AS `o`')
+    assert delete_params == [4, 4]
+
+
+def test_a_bundle_is_retired_a_chunk_at_a_time_through_its_key() -> None:
+    """Only rows an earlier generation added and none retired, transaction_rows at a time."""
+    updates: list[tuple[str, Any, str, list[Any]]] = []
+
+    class _DB:
+        transaction_rows = 2
+        read_only = False
+
+        @staticmethod
+        def quote_identifier(name: str) -> str:
+            return f'`{name}`'
+
+        @staticmethod
+        def retrying(description: str, body: Any) -> Any:
+            return body()
+
+        def update_row(self, table: str, row: Any, where: str, params: list[Any]) -> int:
+            updates.append((table, row, where, params))
+            return 2 if len(updates) == 1 else 1
+
+    retired = do_import_tables.retire_bundle_rows(make_context(db=_DB()), 'B_1', 5)
+    assert retired == 3
+    table, row, where, params = updates[0]
+    assert (table, row) == ('obs_general', {'removed_generation': 5})
+    assert where == (
+        '`bundle_id`=%s AND `added_generation` < %s AND `removed_generation` IS NULL LIMIT %s'
+    )
+    assert params == ['B_1', 5, 2]
+    assert len(updates) == 2
+
+
+# ------------------------------------------------------------------------------------
+# The generation commands, against a stand-in holding the version row
+# ------------------------------------------------------------------------------------
+
+
+class _StateDB:
+    """A stand-in holding one version row and the generation lock, recording events."""
+
+    db_schema = 'opus_test'
+    read_only = False
+    transaction_rows = 100
+
+    def __init__(self, state: tuple[Any, ...] | None, *, lock_free: bool = True) -> None:
+        self.row = (
+            None if state is None else dict(zip(generations.STATE_COLUMNS, state, strict=True))
+        )
+        self.lock_free = lock_free
+        self.events: list[str] = []
+
+    def forget_table_names(self) -> None:
+        """Read nothing."""
+
+    def table_exists(self, table: str) -> bool:
+        """Hold the version table only."""
+        return table == 'schema_version' and self.row is not None
+
+    def read_rows(self, table: str, columns: list[str], *args: Any) -> list[tuple[Any, ...]]:
+        """Return the version row's columns."""
+        assert self.row is not None
+        return [tuple(self.row[column] for column in columns)]
+
+    def update_row(self, table: str, row: dict[str, Any], where: str, params: Any = None) -> int:
+        """Write the version row, recording the columns written."""
+        assert self.row is not None
+        self.row.update(row)
+        self.events.append(f'update {sorted(row)}')
+        return 1
+
+    def try_named_lock(self, name: str) -> bool:
+        """Grant the lock when it is free."""
+        self.events.append('lock')
+        return self.lock_free
+
+    def release_named_lock(self, name: str) -> None:
+        """Record the release."""
+        self.events.append('unlock')
+
+    @staticmethod
+    def quote_identifier(name: str) -> str:
+        return f'`{name}`'
+
+    def drop_table(self, table: str) -> None:
+        """Record a drop."""
+        self.events.append(f'drop {table}')
+
+
+def _ready(**changes: Any) -> tuple[Any, ...]:
+    """Return a version row serving generation 1, as a fresh import leaves it, changed."""
+    row = dict(
+        zip(
+            generations.STATE_COLUMNS,
+            (SCHEMA_VERSION, SCHEMA_STATE_READY, 1, None, None, 0),
+            strict=True,
+        )
+    )
+    row.update(changes)
+    return tuple(row[column] for column in generations.STATE_COLUMNS)
+
+
+@pytest.fixture
+def no_writers(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Report no invocation writing the pending generation."""
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
+
+
+def _context(db: _StateDB) -> ImportContext:
+    """Return a context on the stand-in, its version row read."""
+    ctx = make_context(db=db)
+    do_generation.load_generation_state(ctx)
+    return ctx
+
+
+@pytest.mark.usefixtures('no_writers')
+def test_begin_sets_the_next_generation_pending_and_writing() -> None:
+    """The served generation stays; the version row stays ready."""
+    db = _StateDB(_ready())
+    ctx = _context(db)
+    assert do_generation.begin_generation(ctx)
+    assert db.row is not None
+    assert (db.row['generation'], db.row['pending_generation'], db.row['pending_state']) == (
+        1,
+        2,
+        PENDING_WRITING,
+    )
+    assert db.row['state'] == SCHEMA_STATE_READY
+    assert ctx.import_generation == 2
+    assert db.events[0] == 'lock'
+    assert db.events[-1] == 'unlock'
+    # A stale __prev table, which only an interrupted purge leaves, goes first.
+    assert 'drop param_info__prev' in db.events
+
+
+@pytest.mark.usefixtures('no_writers')
+@pytest.mark.parametrize(
+    ('row', 'reason'),
+    [
+        (_ready(pending_generation=2, pending_state=PENDING_WRITING), 'already has the pending'),
+        (_ready(state='appending'), 'is appending, not ready'),
+        (_ready(version=SCHEMA_VERSION - 1), 'and this release is version'),
+        (_ready(generation=2, revertible=1), 'can still revert to generation 1'),
+    ],
+    ids=['pending', 'appending', 'version', 'revertible'],
+)
+def test_begin_is_refused_on_a_schema_it_cannot_start_one_in(
+    row: tuple[Any, ...], reason: str
+) -> None:
+    """Nothing is written, and the refusal says why."""
+    db = _StateDB(row)
+    ctx = _context(db)
+    assert not do_generation.begin_generation(ctx)
+    assert not any(event.startswith('update') for event in db.events)
+    (message,) = ctx.logger.messages_at('fatal')
+    assert reason in message
+
+
+def test_a_command_is_refused_while_another_holds_the_lock() -> None:
+    """The generation lock is taken without waiting."""
+    db = _StateDB(_ready(), lock_free=False)
+    ctx = _context(db)
+    assert not do_generation.begin_generation(ctx)
+    assert 'another generation command holds' in ctx.logger.messages_at('fatal')[0]
+
+
+def test_a_command_is_refused_while_a_writer_is_alive(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A registered invocation writing the pending generation holds every command off."""
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [7])
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
+    ctx = _context(db)
+    assert not do_generation.switch_generation(ctx)
+    assert 'import_process 7 still running' in ctx.logger.messages_at('fatal')[0]
+    assert db.events[-1] == 'unlock'
+
+
+def test_a_writer_is_refused_while_a_command_holds_the_lock() -> None:
+    """Registration takes the generation lock without waiting."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_WRITING), lock_free=False)
+    with pytest.raises(do_generation.GenerationRefusedError, match='holds'):
+        do_generation.register_writer(_context(db))
+
+
+@pytest.fixture
+def switch_steps(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Record the switch's steps instead of running them."""
+    steps: list[str] = []
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
+    monkeypatch.setattr(
+        table_swap, 'swap_in_keeping_previous', lambda ctx, tables: steps.append('swap')
+    )
+    monkeypatch.setattr(table_swap, 'swap_back_previous', lambda ctx, tables: steps.append('back'))
+    monkeypatch.setattr(
+        do_generation, '_point_cart', lambda ctx, generation: steps.append(f'cart {generation}')
+    )
+    monkeypatch.setattr(do_django, 'reset_search_tables', lambda ctx: steps.append('reset'))
+    return steps
+
+
+def test_the_switch_runs_its_steps_then_serves_the_generation_last(
+    switch_steps: list[str],
+) -> None:
+    """Swap, cart, reset, then the one statement that serves it."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
+    assert do_generation.switch_generation(_context(db))
+    assert switch_steps == ['swap', 'cart 2', 'reset']
+    assert db.row is not None
+    assert (db.row['generation'], db.row['pending_generation'], db.row['revertible']) == (
+        2,
+        None,
+        1,
+    )
+
+
+@pytest.mark.parametrize('step', [1, 2, 3])
+def test_an_interrupted_switch_stops_after_its_step_and_serves_nothing(
+    switch_steps: list[str], monkeypatch: pytest.MonkeyPatch, step: int
+) -> None:
+    """The fault raises after the named step; the version row is untouched; a rerun ends it."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
+    monkeypatch.setenv(IMPORT_FAULT_ENV_VAR, f'{do_generation.SWITCH_FAULT_SITE}:{step}')
+    with pytest.raises(InjectedImportFaultError):
+        do_generation.switch_generation(_context(db))
+    assert switch_steps == ['swap', 'cart 2', 'reset'][:step]
+    assert db.row is not None
+    assert db.row['pending_generation'] == 2
+    assert db.events[-1] == 'unlock'
+    monkeypatch.delenv(IMPORT_FAULT_ENV_VAR)
+    assert do_generation.switch_generation(_context(db))
+    assert db.row['generation'] == 2
+
+
+def test_a_switched_generation_is_completed_not_refused(switch_steps: list[str]) -> None:
+    """With nothing pending and the switch revertible, the steps run again for it."""
+    db = _StateDB(_ready(generation=2, revertible=1))
+    assert do_generation.switch_generation(_context(db))
+    assert switch_steps == ['swap', 'cart 2', 'reset']
+    assert not any(event.startswith('update') for event in db.events)
+
+
+def test_a_switch_of_an_unready_generation_is_refused(switch_steps: list[str]) -> None:
+    """Validation must have passed and the stamp been written."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_VALIDATED))
+    ctx = _context(db)
+    assert not do_generation.switch_generation(ctx)
+    assert switch_steps == []
+    assert 'no pending generation is ready' in ctx.logger.messages_at('fatal')[0]
+
+
+def test_a_revert_serves_the_previous_generation_with_the_reverted_one_pending(
+    switch_steps: list[str],
+) -> None:
+    """Swap back, the cart to the previous generation, reset, then the version row."""
+    db = _StateDB(_ready(generation=2, revertible=1))
+    assert do_generation.revert_generation(_context(db))
+    assert switch_steps == ['back', 'cart 1', 'reset']
+    assert db.row is not None
+    assert (
+        db.row['generation'],
+        db.row['pending_generation'],
+        db.row['pending_state'],
+        db.row['revertible'],
+    ) == (1, 2, PENDING_READY, 0)
+
+
+def test_a_revert_undoes_a_switch_that_stopped_part_way(switch_steps: list[str]) -> None:
+    """The pending generation stays pending and ready; the served one is untouched."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
+    assert do_generation.revert_generation(_context(db))
+    assert switch_steps == ['back', 'cart 1', 'reset']
+    assert not any(event.startswith('update') for event in db.events)
+
+
+def test_a_revert_after_the_purge_has_started_is_refused(switch_steps: list[str]) -> None:
+    """The purge's first statement ends revertibility."""
+    db = _StateDB(_ready(generation=2))
+    ctx = _context(db)
+    assert not do_generation.revert_generation(ctx)
+    assert switch_steps == []
+    assert 'no switch is revertible' in ctx.logger.messages_at('fatal')[0]
+
+
+@pytest.mark.usefixtures('no_writers')
+def test_the_purge_ends_revertibility_first_and_is_refused_with_a_pending_generation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A pending generation must be switched or abandoned before the purge."""
+    db = _StateDB(_ready(generation=2, pending_generation=3, pending_state=PENDING_WRITING))
+    ctx = _context(db)
+    assert not do_generation.purge_generations(ctx)
+    assert 'generation 3 is pending' in ctx.logger.messages_at('fatal')[0]
+
+
+@pytest.mark.usefixtures('no_writers')
+def test_abandon_is_refused_with_nothing_pending() -> None:
+    """There is nothing to throw away."""
+    db = _StateDB(_ready())
+    ctx = _context(db)
+    assert not do_generation.abandon_generation(ctx)
+    assert 'no generation is pending' in ctx.logger.messages_at('fatal')[0]
+
+
+# ------------------------------------------------------------------------------------
+# The closing invocations with a pending generation
+# ------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ('pending_state', 'runs'),
+    [
+        (PENDING_WRITING, False),
+        (PENDING_FINALIZED, True),
+        (PENDING_VALIDATED, True),
+    ],
+)
+def test_validation_runs_only_on_a_finalized_generation(
+    monkeypatch: pytest.MonkeyPatch, pending_state: str, runs: bool
+) -> None:
+    """Refused before finalization succeeds; marks the generation validated when it passes."""
+    ran: list[bool] = []
+
+    def passing(ctx: ImportContext) -> bool:
+        """Record the run, and pass."""
+        ran.append(True)
+        return True
+
+    monkeypatch.setattr(do_validate, 'do_validate', passing)
+    db = _StateDB(_ready(pending_generation=2, pending_state=pending_state))
+    assert _validate(_context(db)) is runs
+    assert bool(ran) is runs
+    assert db.row is not None
+    assert db.row['pending_state'] == (PENDING_VALIDATED if runs else pending_state)
+
+
+def test_a_failed_validation_leaves_the_generation_finalized(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A stamp never follows a failed validation."""
+    monkeypatch.setattr(do_validate, 'do_validate', lambda ctx: False)
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_VALIDATED))
+    assert not _validate(_context(db))
+    assert db.row is not None
+    assert db.row['pending_state'] == PENDING_FINALIZED
+
+
+@pytest.mark.parametrize(
+    ('pending_state', 'stamped'), [(PENDING_VALIDATED, True), (PENDING_FINALIZED, False)]
+)
+def test_the_stamp_marks_only_a_validated_generation_ready(
+    pending_state: str, stamped: bool
+) -> None:
+    """The version and state stay; only the pending state moves."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=pending_state))
+    assert do_schema_version.write_schema_version(_context(db)) is stamped
+    assert db.row is not None
+    assert db.row['pending_state'] == (PENDING_READY if stamped else pending_state)
+    assert (db.row['version'], db.row['state']) == (SCHEMA_VERSION, SCHEMA_STATE_READY)
+
+
+def test_the_duplicate_step_retires_a_served_copy_and_deletes_a_pending_one(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Of each OPUS id's copies in the pending generation, the highest id is kept."""
+    deleted: list[list[int]] = []
+    monkeypatch.setattr(
+        do_import_tables, 'delete_observations', lambda ctx, ids: deleted.append(list(ids))
+    )
+    updates: list[tuple[dict[str, Any], list[Any]]] = []
+    answers = [[(3, 'a', 'B_1', 1), (9, 'a', 'B_2', 2), (7, 'b', 'B_2', 2), (8, 'b', 'B_2', 2)], []]
+
+    class _DB:
+        read_only = False
+        transaction_rows = 100
+
+        @staticmethod
+        def quote_identifier(name: str) -> str:
+            return f'`{name}`'
+
+        @staticmethod
+        def table_exists(name: str) -> bool:
+            return True
+
+        @staticmethod
+        def general_select(cmd: str, params: Any = None) -> Any:
+            assert params == [2, 2, 2, 2]
+            return answers.pop(0)
+
+        @staticmethod
+        def update_row(table: str, row: dict[str, Any], where: str, params: list[Any]) -> int:
+            updates.append((row, params))
+            return len(params)
+
+    ctx = make_context(db=_DB())
+    ctx.generation_state = GenerationState(
+        SCHEMA_VERSION, SCHEMA_STATE_READY, 1, 2, 'writing', False
+    )
+    ctx.import_generation = 2
+    assert do_duplicate_ids.delete_duplicate_opus_ids(ctx)
+    assert deleted == [[7]]
+    assert updates == [({'removed_generation': 2}, [3])]
+
+
+def test_a_generation_command_runs_alone() -> None:
+    """Every step and every other command is refused beside it."""
+    parser = _create_argument_parser()
+    args = parser.parse_args(['--switch-generation', '--finalize', '--purge-generations'])
+    assert _generation_conflicts(args) == '--finalize, --purge-generations'
+    assert _generation_conflicts(parser.parse_args(['--switch-generation'])) == ''
+
+
+def test_a_schema_with_no_version_row_writes_the_first_generation() -> None:
+    """A fresh import's rows are added in generation 1."""
+    ctx = _context(_StateDB(None))
+    assert ctx.generation_state is None
+    assert ctx.import_generation == generations.FIRST_GENERATION
+    assert ctx.pending_generation is None

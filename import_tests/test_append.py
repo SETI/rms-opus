@@ -343,4 +343,5 @@ def test_a_fresh_import_with_a_failed_bundle_writes_no_version_row(
     version = build_run.run_pipeline_step(run.paths.config_file, build_run.VERSION_ARGS)
     assert version.returncode != 0
     assert f'{bundle} (failed)' in version.stdout
-    assert _version_rows(db_credentials, schema) is None
+    # The table exists, created empty beside the obs_general view that reads it; no row.
+    assert _version_rows(db_credentials, schema) == []

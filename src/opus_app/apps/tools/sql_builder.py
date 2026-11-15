@@ -583,7 +583,7 @@ class FromSource:
         return sql, params
 
 
-#: The served observations: a view of the rows of the import generation the schema
+#: The served observations, a view of the rows of the import generation the schema
 #: serves (`opus_import.generations`). A child table carries no generation, so a statement
 #: reading a child's rows outside a search's results reaches them through this view.
 OBS_GENERAL_TABLE = 'obs_general'

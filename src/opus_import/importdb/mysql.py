@@ -1096,9 +1096,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 
         The view reads ``schema_version``'s ``generation``, so ``schema_version`` is
         first created empty from its packaged schema when the schema lacks it. An empty
-        table reads as no version row, so the view shows no row until
-        ``--write-schema-version`` writes one, and the schema is neither served nor
-        appended to.
+        table reads as no version row, so the schema is neither served nor appended to
+        until ``--write-schema-version`` writes one; until then the view shows the first
+        generation, the one a fresh import writes.
 
         Parameters:
             schema: ``obs_general``'s table schema, whose columns, less the generation
@@ -1112,7 +1112,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                 self.create_table(SCHEMA_VERSION_TABLE, generations.schema_version_table_schema())
             q = self.quote_identifier
             served = (
-                f'(SELECT {q(generations.SERVED_GENERATION_COLUMN)} FROM {q(SCHEMA_VERSION_TABLE)})'
+                f'COALESCE((SELECT {q(generations.SERVED_GENERATION_COLUMN)} '  # nosec B608
+                f'FROM {q(SCHEMA_VERSION_TABLE)}), {generations.FIRST_GENERATION})'
             )
             added = q(generations.ADDED_GENERATION_COLUMN)
             removed = q(generations.REMOVED_GENERATION_COLUMN)
