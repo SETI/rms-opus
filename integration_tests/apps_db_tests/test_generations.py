@@ -6,8 +6,9 @@ rows of a pending generation, which an incremental update writes, sit beside the
 an observation in the next generation, a copy of a served one with its child rows, with
 the view showing the served generation alone, as ``--begin-generation`` leaves it, and
 asks the endpoints that read a child table outside a search's results: what they answer
-must be what they answered before the plant. The planted rows are deleted and the view
-put back afterwards.
+must be what they answered before the plant. The autocomplete from every observation is
+the exception: it suggests every stored value, as the mult choices list theirs. The
+planted rows are deleted and the view put back afterwards.
 
 These tests require a database the import test sequence built.
 """
@@ -239,14 +240,14 @@ class HiddenGenerationTests(TestCase):
         self._plant()
         self.assertEqual(self._answers(paths), before)
 
-    def test_the_autocomplete_from_every_observation_omits_the_planted_value(self) -> None:
-        """The branch that reads every observation's values, not the search's."""
+    def test_the_autocomplete_from_every_observation_suggests_the_planted_value(self) -> None:
+        """The branch that reads every stored value, as the mult choices do, not the view's."""
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 0
         path = (
             f'/__api/stringsearchchoices/productid.json?productid={_HIDDEN_PRODUCT_ID[:12]}&reqno=1'
         )
         self._plant()
-        self.assertNotIn(_HIDDEN_PRODUCT_ID, self._get(path))
+        self.assertIn(_HIDDEN_PRODUCT_ID, self._get(path))
 
     def test_files_and_product_types_omit_the_planted_files(self) -> None:
         """The served observation's files, under an OPUS ID the next generation shares."""

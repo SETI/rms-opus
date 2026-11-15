@@ -614,18 +614,6 @@ def served_observations_join(table: str) -> Join:
     )
 
 
-def keep_to_served_observations(from_source: FromSource, table: str) -> None:
-    """Hang `served_observations_join` off a table's source, unless it is obs_general's.
-
-    Parameters:
-        from_source: The table's source.
-        table: The table, or the alias its columns are read under; ``obs_general`` is the
-            view itself and needs no join.
-    """
-    if table != OBS_GENERAL_TABLE:
-        from_source.append_join(served_observations_join(table))
-
-
 #: The table holding every mult field's values, keyed ``(field_id, id)``.
 MULT_TABLE = 'mult'
 

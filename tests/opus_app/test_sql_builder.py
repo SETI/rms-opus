@@ -315,15 +315,6 @@ class SQLBuilderSelectTests(TestCase):
         )
         self.assertEqual(params, [])
 
-    def test__keep_to_served_observations_joins_a_child_and_leaves_obs_general(self) -> None:
-        """A child's source gains the join to the view; obs_general's, the view, does not."""
-        child = sql_builder.FromSource('obs_pds')
-        sql_builder.keep_to_served_observations(child, 'obs_pds')
-        self.assertEqual([join.kind for join in child.joins], ['STRAIGHT'])
-        general = sql_builder.FromSource('obs_general')
-        sql_builder.keep_to_served_observations(general, 'obs_general')
-        self.assertEqual(general.joins, [])
-
     def test__join_rejects_an_unknown_kind(self) -> None:
         """Only the kinds the builder renders are accepted."""
         join = sql_builder.Join('CROSS', 'obs_files', sql_builder.column('id', 'obs_files'))

@@ -298,13 +298,16 @@ tree: a statement can hold a statement.
 **The served observations.** ``obs_general`` is a view of the rows of the import
 generation the database serves (:ref:`dev_guide_import_generations`); the child tables
 carry no generation. A statement that reads a child table's rows outside a search's
-results -- the autocomplete from every observation, the empty search's mult counts and
-range endpoints of a child's column, the product types and the files of an OPUS ID or of
-the empty search -- hangs
+results -- the empty search's mult counts and range endpoints of a child's column, the
+product types and the files of an OPUS ID or of the empty search -- hangs
 :func:`~opus_app.apps.tools.sql_builder.served_observations_join` off the child's
 source, an inner join to ``obs_general`` on ``obs_general_id``, so a generation the
 database does not serve reaches no response. A statement joined to a search's results
-needs none: the search was built from the view.
+needs none: the search was built from the view. The autocomplete from every observation
+takes no join: like the mult choices, it suggests every stored value, so a value only a
+pending generation holds is offered before the switch and one only a retired generation
+holds until the purge, and the field's index answers it as it would without
+generations.
 
 **The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
 order. It and :class:`~opus_app.apps.tools.sql_builder.FromSource` are the two mutable
