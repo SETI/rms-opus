@@ -77,6 +77,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from benchmarks.results import (
+    GENERATION_SWITCH_KIND,
+    GENERATION_UPDATE_KIND,
     RESULTS_DIR,
     ResultError,
     higher_is_better,
@@ -96,7 +98,15 @@ if TYPE_CHECKING:
 GUARD_MARGIN = 0.05
 
 #: The run kinds whose metrics are compared; profiled and reused-schema runs are not.
-COMPARED_KINDS = ('import', 'import_unfinalized', 'finalize', 'db', 'web')
+COMPARED_KINDS = (
+    'import',
+    'import_unfinalized',
+    'finalize',
+    GENERATION_UPDATE_KIND,
+    GENERATION_SWITCH_KIND,
+    'db',
+    'web',
+)
 
 #: The guarded metrics, by name. The web ones are medians (each run's value of a
 #: scenario is its wall-clock, of a request its latency), except the concurrency p95. A

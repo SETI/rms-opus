@@ -34,13 +34,17 @@ Three **scales**, each named by a file under ``benchmarks/scenarios/``:
 ``tests/benchmarks/test_scenarios.py`` checks that the two holdings scales' groups
 agree with the script and with :mod:`opus_import.import_all`.
 
-Five commands, each run from the root of a checkout as ``python -m benchmarks.<name>``:
+The commands, each run from the root of a checkout as ``python -m benchmarks.<name>``:
 
 ``bench_server``
     Creates, starts, stops and reports on the MySQL server the harness owns.
 
 ``bench_import``
     Times import runs, invocation by invocation and step by step.
+
+``bench_generation``
+    Times an incremental update of a served schema, written in place into an import
+    generation, and the switch that serves it.
 
 ``bench_db``
     Measures the schema an import built, and the plans of the statements the web
@@ -206,8 +210,10 @@ Then create the data directory once, and start the server::
     python -m benchmarks.bench_server init
     python -m benchmarks.bench_server start
 
-Every bench command starts the server itself if it is down, and stops it again when it
-finishes; started by hand, it stays up until ``python -m benchmarks.bench_server stop``.
+Every bench command but ``bench_generation`` starts the server itself if it is down, and
+stops it again when it finishes; started by hand, it stays up until
+``python -m benchmarks.bench_server stop``. ``bench_generation`` never starts, stops or
+restarts it, and refuses to run while it is down.
 Keep ``server.toml``'s ``memory_budget_gb`` within what the machine can spare, and before
 a complete-scale import check that the data directory's filesystem has room for the
 whole schema.
@@ -422,6 +428,132 @@ because several steps log an error and still exit zero. Each run starts with a l
 directory of its own, and an ``ERRORS.log`` already holding anything fails it before it
 starts.
 
+A schema whose ``obs_general`` is a view of the rows in the import generation it serves
+holds its observations in the base table ``obs_general_rows``. The view shows no row
+until the import writes the version row, so every check the harness makes on what an
+import wrote, and every count of a run's rows, reads the base table.
+
+.. _dev_guide_benchmarks_generation:
+
+What an incremental update run is
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``bench_generation`` times an incremental update: the changed bundles written into the
+served schema as an import generation, which the ``obs_general`` view hides until the
+generation is switched in. It works on a schema a full import built, in place. It never
+copies the schema, never drops it, and never stops, starts or restarts the owned MySQL
+server, so ``bench_web`` can serve the same schema from another process while the update
+imports. Start the server first with ``python -m benchmarks.bench_server start``; the
+command refuses to run while it is down. A side whose ``opus_import --help`` lists no
+``--begin-generation`` cannot make such an update, and the command refuses it before
+anything runs. To update a copy instead, make one with ``bench_import --reuse-schema
+<schema> --clone`` and name the copy.
+
+``--schema`` names the schema. ``--bundles`` names the bundles to re-import or add, as
+the bundle import takes them, or ``--incremental-group SCALE`` names a scale whose import
+scenario has an incremental group, and the update re-imports that group, the scenario's
+largest bundle. The test scale's group can update a schema of the complete scale.
+``--drop`` names bundles to drop, as ``--delete-bundles`` takes them. A bundle both
+re-imported and dropped is refused, since a re-import already replaces every row of the
+bundle. ``--import-key`` works as it does for ``bench_import``.
+
+The **update** is these invocations of the side's ``opus_import``, each a process of its
+own whose ``OPUS_CONFIG`` names the schema, each given ``--timing-json``:
+
+#. ``--begin-generation``, recorded as ``import.generation.begin.wall_s``;
+#. the bundle import of the bundles to re-import or add,
+   ``import.generation.import.wall_s``;
+#. ``--delete-bundles`` of the bundles to drop, when ``--drop`` is given,
+   ``import.generation.delete.wall_s``;
+#. the side's finalization option, ``import.generation.finalize.wall_s``;
+#. the side's validation option, ``import.generation.validate.wall_s``;
+#. ``--write-schema-version``, which marks the generation ready to switch,
+   ``import.generation.write_schema_version.wall_s``.
+
+``import.generation.update.wall_s`` is their sum: the update's wall-clock, from
+``--begin-generation`` through ``--write-schema-version``. The **switch** is two more:
+
+#. ``--switch-generation``, ``import.generation.switch.wall_s``, which a deploy runs
+   while the web service is stopped, so it is the service's downtime;
+#. ``--purge-generations``, ``import.generation.purge.wall_s``, which deletes the rows
+   the switched-out generation alone held, while the site serves.
+
+``import.generation.switch_purge.wall_s`` is their sum. The update and the switch are
+each recorded as a run of their own, of kind ``generation_update`` and
+``generation_switch``. Each run also records, under its own prefix
+(``import.generation.update`` or ``import.generation.switch_purge``), the steps its
+invocations' timing files name (``.phase.<step>_s``), the peak resident set and the peak
+proportional set size of its invocations' process trees, and the server's counters over
+it, as an import run records them. Its details hold every invocation, the schema and the
+generation, and an update's hold the bundles each way, as given and expanded, and the
+rows the generation added and retired.
+
+Without a mode, the command runs the update and then the switch, recording each run as
+it finishes. ``--stop-before-switch`` runs the update alone and leaves its generation
+ready to switch; ``--switch-only`` then runs the switch alone on a generation an earlier
+command left ready. Each update and its switch leave the schema ready for the next
+update, so the command can run several times in place.
+
+Each phase is checked as an import run's invocations are. The bundle import must leave a
+row in the pending generation for every bundle it imports; rows the served generation
+already holds do not count. After the drop, no dropped bundle may keep a row in the
+pending generation. The version row must show the generation begun and writing after
+``--begin-generation``, and ready after ``--write-schema-version``. The switch is
+refused unless a generation is ready, since the side's switch succeeds doing nothing on
+a schema already switched. After the switch the schema must serve the generation, and
+after the purge it must not be revertible and must hold no retired row. A run that
+fails any of these records nothing.
+
+A result file holds the updates of one schema and one set of bundles: its environment
+records the schema as ``generation_schema`` and the bundles as ``generation_update``, and
+refuses runs that differ. Every other import run records ``generation_schema`` as null,
+so a full import and an update are never mixed in one file; give the update a session of
+its own. A switch records no bundles, so it appends beside the update it switched in.
+
+An update into a complete-scale schema, then its switch::
+
+    python -m benchmarks.bench_server start
+    python -m benchmarks.bench_generation --scale complete --side after --pr <tag> \
+        --session g --python venv/bin/python --repo-root . \
+        --schema <schema> --incremental-group test --stop-before-switch
+    python -m benchmarks.bench_generation --scale complete --side after --pr <tag> \
+        --session g --python venv/bin/python --repo-root . \
+        --schema <schema> --switch-only
+
+**Web runs during an update.** ``bench_web --app-cold-only`` serves the schema while the
+update imports. What is safe beside which phase:
+
+* **The update's phases**, ``--begin-generation`` through ``--write-schema-version``:
+  safe with ``--app-cold-only``. The served generation stays ``ready`` throughout, so
+  ``bench_web``'s version restamp, its search-table resets, its memcached restarts and
+  its ``warm_search`` all work as on an idle schema, and nothing the update writes is
+  visible until the switch. A run without ``--app-cold-only`` is not safe: its db-cold
+  pass restarts the MySQL server, which kills the update's connections.
+* **The switch**: never beside a web run. It empties the search tables and flushes the
+  cache a web run is reading, so ``bench_generation`` refuses to switch while anything
+  listens on ``web.toml``'s gunicorn or memcached port.
+* **The purge**: the side runs it while the site serves, but ``bench_generation`` runs
+  it straight after the switch, so no web run is beside it.
+
+Give the web runs during the update a session of their own, and run the same scenarios
+idle, with the same options, in another session, to compare them. The two commands
+share the server, so a web run's counters and statement statistics during the update
+count the update's work too; its latencies are the measurement. A scenario issued after
+the update has ended measures an idle schema, so choose a run count that ends before the
+update does. Start the update first, in the background, then the web runs; stop the web
+runs before the switch::
+
+    python -m benchmarks.bench_generation --scale complete --side after --pr <tag> \
+        --session g --python venv/bin/python --repo-root . \
+        --schema <schema> --incremental-group test --stop-before-switch &
+    python -m benchmarks.bench_web --scale complete --side after --pr <tag> \
+        --session wu --python venv/bin/python --repo-root . \
+        --schema <schema> --app-cold-only --runs 1
+    wait
+    python -m benchmarks.bench_generation --scale complete --side after --pr <tag> \
+        --session g --python venv/bin/python --repo-root . \
+        --schema <schema> --switch-only
+
 What a web run is
 ~~~~~~~~~~~~~~~~~
 
@@ -454,9 +586,9 @@ the run's details.
 Per scenario and state the run records the wall-clock and each request's latency, the
 statements executed against the schema, the twenty statement shapes with the most total
 latency, the server's buffer-pool misses, connections, sort-merge passes, on-disk
-temporary tables and statements stopped at the execution time limit, the schema's table
-count, and the workers' peak resident set. The buffer-pool misses
-(``Innodb_buffer_pool_reads``) are the reads a request waited on; they leave out the
+temporary tables and statements stopped at the execution time limit, the schema's count
+of base tables, its views left out, and the workers' peak resident set. The buffer-pool
+misses (``Innodb_buffer_pool_reads``) are the reads a request waited on; they leave out the
 pages InnoDB's read-ahead brought in beside them, so the run also records those
 (``Innodb_buffer_pool_read_ahead``) and every page read from disk
 (``Innodb_pages_read``). A cold scan that read-ahead serves shows few misses and many
@@ -482,8 +614,11 @@ refused before anything is written. Two sides that serve one schema expect diffe
 versions whenever the change raises it. A side whose code has no version checks nothing
 and is left alone. ``bench_server.clone_schema`` restamps a copied ``ready`` row the same
 way, to the version of the side that will use the copy, and copies any other row as it
-is. ``bench_db``'s query capture stamps its schema as ``bench_web`` does before it starts
-its server.
+is. It creates each of the source's views in the copy once the copy's tables exist,
+from the source's ``SHOW CREATE VIEW``, with every name the source schema qualifies
+qualified by the copy instead and without the ``DEFINER`` clause, so the view reads the
+copy's tables and the harness's own account defines it. ``bench_db``'s query capture
+stamps its schema as ``bench_web`` does before it starts its server.
 
 Before measuring, ``bench_web`` asks the side's settings, in the environment the workers
 run in, which cache they chose: it refuses to run on the local-memory fallback or on a
@@ -534,6 +669,12 @@ schema's and the mark is emptied, in one transaction, and the command says so. A
 there that fails keeps the schema and fails the command, naming it; its ``saved_cart``
 and ``saved_django_session`` hold the rows to put back.
 
+``--app-cold-only`` makes each run the app-cold pass alone, with its warm repetitions,
+so a run never restarts the MySQL server and another process can use it meanwhile, such
+as an incremental update (:ref:`dev_guide_benchmarks_generation`). The environment
+records the cold states a run's passes reset to as ``cold_states``, and a result file
+refuses web runs that differ in them.
+
 A side without ``warm_search``, or whose ``opus_import --help`` lists no
 ``--carry-over-sessions-from``, skips that step, and the result's ``skipped_steps``
 names it (``warm_search``, ``carry_over_sessions``). The environment records the states
@@ -549,9 +690,10 @@ earlier web run stored are not part of what the import wrote. Then, after
 ``ANALYZE TABLE`` on every table, with the statistics cache off: each table's data
 and index bytes, exact row count and index count, and the largest ``id`` of each mult
 table that has an ``id`` column; the schema's totals, its ``FULLTEXT`` tablespaces, and
-its size against the buffer pool; the size of ``preview_images`` beside ``obs_general``'s
-data, read from ``obs_preview`` or, on a schema without that table, from
-``obs_general``, and the table it was read from; and the per-index usage counters.
+its size against the buffer pool; the size of ``preview_images`` beside the data of the
+base table holding ``obs_general``'s rows, read from ``obs_preview`` or, on a schema
+without that table, from that base table, and the table it was read from; and the
+per-index usage counters.
 ``--ascii-columns`` counts the non-ASCII values of every column whose form type is
 ``STRING``.
 
