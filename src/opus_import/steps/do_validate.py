@@ -14,20 +14,50 @@ reads the rows already there, so every row's ``obs_general`` row is counted here
 observation's ``obs_preview`` row, which the results pages read, is counted too, and each
 ``mult_list`` column's lists are compared with its junction table, which the search and
 the counts read.
+
+With a pending generation the ``param_info`` the checks read is its own,
+``param_info__new``, which the switch puts in place (`param_info_table`): the live one
+describes the served generation, and lacks any table the pending generation adds.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from opus_import import generations, import_util, list_junctions, surface_geometry, table_keys
+from opus_import import (
+    generations,
+    import_util,
+    list_junctions,
+    surface_geometry,
+    table_keys,
+    table_swap,
+)
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
     from opus_import.importdb.super import ImportDBSuper
 
 
-def _body_category(db: ImportDBSuper) -> str | None:
+#: The table that describes every user-visible column.
+PARAM_INFO_TABLE = 'param_info'
+
+
+def param_info_table(ctx: ImportContext) -> str:
+    """Return the ``param_info`` the checks read: the one the schema will serve.
+
+    Parameters:
+        ctx: The import run's context, for its pending generation.
+
+    Returns:
+        ``param_info__new``, built from the pending generation for its switch, when there
+        is one; ``param_info`` otherwise.
+    """
+    if ctx.pending_generation is None:
+        return PARAM_INFO_TABLE
+    return table_swap.swap_new_name(PARAM_INFO_TABLE)
+
+
+def _body_category(db: ImportDBSuper, pi_table_name: str) -> str | None:
     """Return the surface geometry body category that stands for every body's.
 
     Every body's category describes ``obs_surface_geometry_target``'s columns the same way,
@@ -35,6 +65,7 @@ def _body_category(db: ImportDBSuper) -> str | None:
 
     Parameters:
         db: The open database.
+        pi_table_name: The ``param_info`` table read (`param_info_table`).
 
     Returns:
         The first ``obs_surface_geometry__`` category ``param_info`` holds, or None when it
@@ -43,7 +74,7 @@ def _body_category(db: ImportDBSuper) -> str | None:
     """
     q = db.quote_identifier
     res = db.general_select(
-        f'MIN({q("category_name")}) FROM {q("param_info")} WHERE {q("category_name")} LIKE %s',
+        f'MIN({q("category_name")}) FROM {q(pi_table_name)} WHERE {q("category_name")} LIKE %s',
         [surface_geometry.TARGET_CATEGORY_PREFIX.replace('_', '\\_') + '%'],
     )
     category = res[0][0] if res else None
@@ -77,11 +108,12 @@ def validate_param_info(ctx: ImportContext) -> None:
     ``id``, ``obs_general_id``, the ``d_`` (delta) columns and any column
     that has one, the ``mult_`` id columns, ``opus_id`` outside ``obs_general``,
     ``bundle_id`` outside ``obs_pds``, ``instrument_id`` outside ``obs_general``,
-    ``obs_general``'s generation columns, and everything in ``obs_files``. A surface geometry column other than ``target_name`` is
-    skipped when ``param_info`` has no body's category; the table holding rows then is
-    reported, since finalization gives every body it holds a category. A column with no
-    row is reported; a column with more than one is not, since the check tests only for
-    absence.
+    ``obs_general``'s generation columns, and everything in ``obs_files``. The
+    ``param_info`` read is `param_info_table`'s. A surface geometry column other than
+    ``target_name`` is skipped when ``param_info`` has no body's category; the table
+    holding rows then is reported, since finalization gives every body it holds a
+    category. A column with no row is reported; a column with more than one is not, since
+    the check tests only for absence.
 
     The rows are then scanned for a ``disp_order`` repeated within one category among
     the displayed parameters, and for a repeated slug. Both scans use a subquery that
@@ -104,9 +136,8 @@ def validate_param_info(ctx: ImportContext) -> None:
     logger.log('debug', 'Validating param_info table')
 
     obs_table_names = sorted(db.table_names(prefix='obs_'))
-    body_category = _body_category(db)
-
-    pi_table_name = 'param_info'
+    pi_table_name = param_info_table(ctx)
+    body_category = _body_category(db, pi_table_name)
 
     q = db.quote_identifier
 
@@ -244,8 +275,9 @@ def validate_min_max_order(ctx: ImportContext) -> None:
     pairs are exempt: a longitude range wraps, so the low end legitimately exceeds the
     high end. A bad row is named by its OPUS ID, which a table other than
     ``obs_general`` reads from the ``obs_general`` row it joins. A pair's ``param_info``
-    row is looked up under the category `_param_info_category` gives it, and a surface
-    geometry pair is skipped when ``param_info`` has no body's category.
+    row is looked up under the category `_param_info_category` gives it, in
+    `param_info_table`'s table, and a surface geometry pair is skipped when ``param_info``
+    has no body's category.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -260,9 +292,8 @@ def validate_min_max_order(ctx: ImportContext) -> None:
     logger.log('debug', 'Validating MIN/MAX columns')
 
     obs_table_names = sorted(db.table_names(prefix='obs_'))
-    body_category = _body_category(db)
-
-    pi_table_name = 'param_info'
+    pi_table_name = param_info_table(ctx)
+    body_category = _body_category(db, pi_table_name)
 
     q = db.quote_identifier
 
@@ -610,9 +641,22 @@ def do_validate(ctx: ImportContext) -> bool:
     """
     ctx.logger.open('Performing database validation', limits={'info': -1, 'debug': -1})
 
-    validate_param_info(ctx)
+    db = ctx.db
+    assert db is not None
+    pi_table_name = param_info_table(ctx)
+    db.forget_table_names()
+    described = db.table_exists(pi_table_name)
+    if not described:
+        ctx.logger.log(
+            'error',
+            f'"{pi_table_name}" does not exist, so no column is checked against it; '
+            '"opus_import --finalize" builds it',
+        )
+    if described:
+        validate_param_info(ctx)
     validate_nulls(ctx)
-    validate_min_max_order(ctx)
+    if described:
+        validate_min_max_order(ctx)
     validate_filter_wavelength_consistency(ctx)
     validate_orphans(ctx)
     validate_pds_bundle_ids(ctx)

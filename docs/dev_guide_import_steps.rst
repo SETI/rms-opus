@@ -944,6 +944,12 @@ error instead, and exits with failure once its other steps have run, so
 the same invocation overrides both, for a debugging run; ``opus_import_all`` never passes
 it to its finishing steps.
 
+**With a pending generation the checks read** ``param_info__new``, the description
+finalization built from it for the switch to put in place
+(:func:`~opus_import.steps.do_validate.param_info_table`), since the live ``param_info``
+describes the served generation and lacks any table the update adds. Without that table
+the two checks that read it are skipped and the validation fails, naming it.
+
 The checks, in this order:
 
 :func:`~opus_import.steps.do_validate.validate_param_info`

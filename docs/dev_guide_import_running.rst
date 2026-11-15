@@ -513,7 +513,8 @@ process, in order:
        tables' reset do not run. The generation is ``finalized`` once every step succeeds.
    * - ``--validate``
      - Refused unless the generation is ``finalized`` or ``validated``; checks the
-       generation's rows, and marks it ``validated`` when every check passes.
+       generation's rows against ``param_info__new``, the description finalization built
+       for the switch to serve, and marks it ``validated`` when every check passes.
    * - ``--write-schema-version``
      - Refused unless the generation is ``validated``; marks it ``ready`` to switch.
    * - ``--switch-generation``

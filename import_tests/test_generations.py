@@ -297,7 +297,21 @@ def test_an_abandoned_generation_leaves_the_base_tables_as_they_were(
     reimported, dropped = bundles
     copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'abandon')
     before = _base_tables(db_credentials, copy.schema)
-    _update(copy, reimported, dropped)
+    _ok(copy.step('--begin-generation'))
+    _ok(copy.step(*build_run.IMPORT_ARGS, reimported))
+    _ok(copy.step('--delete-bundles', dropped))
+    _ok(copy.step(*build_run.AUX_ARGS))
+    # Validation reads the description the switch will serve, not the live one.
+    described = "category_name = 'obs_general' AND name = 'time1'"
+    golden_io.execute(db_credentials, copy.schema, f'DELETE FROM param_info WHERE {described}')
+    _ok(copy.step(*build_run.VALIDATE_ARGS))
+    golden_io.execute(db_credentials, copy.schema, f'DELETE FROM param_info__new WHERE {described}')
+    failed = copy.step(*build_run.VALIDATE_ARGS)
+    assert failed.returncode != 0
+    assert 'obs_general.time1' in copy.errors()
+    assert _state(db_credentials, copy.schema)[4] == generations.PENDING_FINALIZED
+    for arguments in _CLOSING:
+        _ok(copy.step(*arguments))
     assert _state(db_credentials, copy.schema)[4] == generations.PENDING_READY
     _ok(copy.step('--create-param-info'))
     assert _state(db_credentials, copy.schema)[4] == generations.PENDING_WRITING

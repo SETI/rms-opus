@@ -773,6 +773,99 @@ def test_the_stamp_marks_only_a_validated_generation_ready(
     assert (db.row['version'], db.row['state']) == (SCHEMA_VERSION, SCHEMA_STATE_READY)
 
 
+class _ParamInfoDB:
+    """A stand-in with one ``obs_general`` range pair, recording the queries it answers."""
+
+    def __init__(self, tables: tuple[str, ...] = ()) -> None:
+        self.tables = set(tables)
+        self.selects: list[str] = []
+
+    def forget_table_names(self) -> None:
+        """Read nothing."""
+
+    def table_exists(self, table: str) -> bool:
+        """Hold the tables given."""
+        return table in self.tables
+
+    def table_names(self, prefix: str) -> list[str]:
+        """Name ``obs_general`` alone."""
+        return ['obs_general']
+
+    def table_info(self, table: str) -> list[dict[str, Any]]:
+        """Describe an id, the OPUS ID and one range pair."""
+        return [{'field_name': name} for name in ('id', 'opus_id', 'time1', 'time2')]
+
+    @staticmethod
+    def quote_identifier(name: str) -> str:
+        return f'`{name}`'
+
+    def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any, ...]]:
+        """Describe every column, as a range, and find no bad row."""
+        self.selects.append(cmd)
+        if cmd.startswith('MIN('):
+            return [(None,)]
+        if 'COUNT(*)' in cmd:
+            return [(1,)]
+        if cmd.lstrip().startswith('`form_type`'):
+            return [('RANGE',)]
+        return []
+
+
+def _pending_context(db: Any) -> ImportContext:
+    """Return a context writing generation 2, finalized, on a stand-in."""
+    ctx = make_context(db=db)
+    ctx.generation_state = GenerationState(
+        SCHEMA_VERSION, SCHEMA_STATE_READY, 1, 2, PENDING_FINALIZED, False
+    )
+    ctx.import_generation = 2
+    return ctx
+
+
+def test_a_pending_generation_is_validated_against_its_own_param_info() -> None:
+    """The switch puts param_info__new in place; the live table describes the served rows."""
+    db = _ParamInfoDB()
+    ctx = _pending_context(db)
+    assert do_validate.param_info_table(ctx) == 'param_info__new'
+    assert do_validate.param_info_table(make_context(db=db)) == 'param_info'
+    do_validate.validate_param_info(ctx)
+    do_validate.validate_min_max_order(ctx)
+    assert ctx.logger.messages_at('error') == []
+    described = [cmd for cmd in db.selects if 'param_info' in cmd]
+    assert described
+    assert all('`param_info__new`' in cmd for cmd in described)
+
+
+def test_a_pending_generation_with_no_param_info_of_its_own_fails_validation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The checks that read it are skipped, the others run, and the failure names it."""
+    ran: list[str] = []
+    for name in (
+        'validate_param_info',
+        'validate_nulls',
+        'validate_min_max_order',
+        'validate_filter_wavelength_consistency',
+        'validate_orphans',
+        'validate_pds_bundle_ids',
+        'validate_previews',
+        'validate_junctions',
+        'validate_unique_opus_ids',
+    ):
+        monkeypatch.setattr(do_validate, name, lambda ctx, name=name: ran.append(name))
+    ctx = _pending_context(_ParamInfoDB(tables=('param_info',)))
+    monkeypatch.setattr(
+        ctx.logger,
+        'close',
+        lambda *args, **kwargs: (0, len(ctx.logger.messages_at('error')), 0, 0),
+    )
+    assert not do_validate.do_validate(ctx)
+    (error,) = ctx.logger.messages_at('error')
+    assert '"param_info__new" does not exist' in error
+    assert 'validate_param_info' not in ran
+    assert 'validate_min_max_order' not in ran
+    assert 'validate_orphans' in ran
+
+
 def test_the_duplicate_step_retires_a_served_copy_and_deletes_a_pending_one(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

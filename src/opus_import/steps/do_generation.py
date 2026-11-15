@@ -693,8 +693,9 @@ def purge_generations(ctx: ImportContext) -> bool:
     """Delete the rows no served generation shows: ``--purge-generations``.
 
     Run after a switch, while the site serves. Refused while a generation is pending, and
-    while a revert has stopped part way (`unfinished_switch_problem`). Its first statement, committed on its own, ends the switch's revertibility, so a revert
-    is refused from before the first row goes. It then drops the auxiliary ``__prev``
+    while a revert has stopped part way (`unfinished_switch_problem`). Its first
+    statement, committed on its own, ends the switch's revertibility, so a revert is
+    refused from before the first row goes. It then drops the auxiliary ``__prev``
     tables; deletes every observation retired at or before the served generation from
     every observation table, children first, with foreign keys checked; deletes the
     registry rows of the copies retired by then; re-creates the view with no condition,
