@@ -583,6 +583,29 @@ class FromSource:
         return sql, params
 
 
+#: The served observations: a view of the rows of the import generation the schema
+#: serves (`opus_import.generations`). A child table carries no generation, so a statement
+#: reading a child's rows outside a search's results reaches them through this view.
+OBS_GENERAL_TABLE = 'obs_general'
+
+
+def served_observations_join(table: str) -> Join:
+    """Return the join that keeps a child table's rows to the served observations.
+
+    Renders `INNER JOIN obs_general ON obs_general.id = <table>.obs_general_id`, which
+    reads each row's observation through the view's primary key and drops the rows of a
+    generation the schema does not serve.
+
+    Parameters:
+        table: The child table, or the alias its columns are read under.
+    """
+    return Join(
+        'INNER',
+        OBS_GENERAL_TABLE,
+        columns_equal(column('id', OBS_GENERAL_TABLE), column('obs_general_id', table)),
+    )
+
+
 #: The table holding every mult field's values, keyed ``(field_id, id)``.
 MULT_TABLE = 'mult'
 

@@ -135,6 +135,9 @@ def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
 def do_param_info(ctx: ImportContext) -> bool:
     """Rebuild the ``param_info`` table, driven by ``--create-param-info``.
 
+    With a pending generation (`opus_import.generations`) the table is built from it and
+    left as ``param_info__new``, which the switch swaps in.
+
     A failed build leaves the live table as the previous run wrote it.
 
     Parameters:
@@ -145,5 +148,8 @@ def do_param_info(ctx: ImportContext) -> bool:
     """
     new_name = table_swap.swap_new_name('param_info')
     return table_swap.rebuild_tables_by_swap(
-        ctx, ['param_info'], lambda: fill_param_info(ctx, new_name)
+        ctx,
+        ['param_info'],
+        lambda: fill_param_info(ctx, new_name),
+        swap=ctx.pending_generation is None,
     )

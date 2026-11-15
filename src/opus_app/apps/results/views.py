@@ -1221,7 +1221,9 @@ def api_get_product_types_for_opus_id(request: HttpRequest, opus_id: str) -> Htt
 
     cursor = connection.cursor()
 
-    select, _from_source = _product_types_select()
+    select, from_source = _product_types_select()
+    # The served observation's files: an unserved generation may hold the same OPUS ID.
+    from_source.append_join(sql_builder.served_observations_join('obs_files'))
     select.add_where(
         sql_builder.binary_op(
             sql_builder.column('opus_id', 'obs_files'),
@@ -1309,6 +1311,10 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
                 sql_builder.column('id', sql_builder.SEARCH_RESULTS_ALIAS),
             ),
         )
+    else:
+        # Every served observation's files, read through the view, since an unserved
+        # generation has rows in obs_files too.
+        from_source.append_join(sql_builder.served_observations_join('obs_files'))
 
     sql, values = select.build()
     log.debug('get_product_types_for_search SQL: %r %r', sql, values)

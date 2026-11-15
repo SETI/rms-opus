@@ -529,5 +529,19 @@
               [   7, "OCC",  "Occultation Profile",    80, "Y", null, null],
               [   8, "REF",  "Reflectance Profile",    90, "Y", null, null]
         ]
+    },
+    {
+        "field_name": "added_generation",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "data_source": "GENERATION",
+        "comment": "The import generation that added the row; the served view shows it from that generation on."
+    },
+    {
+        "field_name": "removed_generation",
+        "field_type": "uint4",
+        "field_default": null,
+        "data_source": "GENERATION",
+        "comment": "The import generation that retired the row, or NULL; the served view hides it from that generation on."
     }
 ]

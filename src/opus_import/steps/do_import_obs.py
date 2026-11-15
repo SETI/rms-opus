@@ -27,7 +27,7 @@ from __future__ import annotations
 import traceback
 from typing import TYPE_CHECKING, Any
 
-from opus_import import config_data, deferred, import_util
+from opus_import import config_data, deferred, generations, import_util
 from opus_import.obs.obs_base import ObsBase
 from opus_import.obs.obs_ring_geometry import ObsRingGeometry
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
@@ -89,6 +89,9 @@ def import_observation_table(
     for table_column in table_schema:
         if 'field_name' not in table_column or table_column.get('put_mults_here', False):
             # A param_info row of another table's column, or a table-level key.
+            continue
+        if table_column.get('data_source') == generations.GENERATION_DATA_SOURCE:
+            # The loader writes the generation the import writes (do_import_index).
             continue
         field_name = table_column['field_name']
         field_type = table_column['field_type']

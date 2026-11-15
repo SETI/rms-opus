@@ -1,7 +1,9 @@
 #!/bin/sh
 # Run from the repository root, against a fully imported database.
 rm -f /tmp/_*models.py
-python manage.py inspectdb > /tmp/_models.py
+# obs_general is a view of the served generation's rows of obs_general_rows; the model
+# reads the view, so views are included and the base table's class is dropped below.
+/seti/newnav/capped-run.sh python manage.py inspectdb --include-views > /tmp/_models.py
 # Now hide all the new classes because there might be tables in the DB
 # we don't want to expose models for
 sed -e 's/^class /class ZZ/' < /tmp/_models.py > /tmp/___models.py
@@ -9,6 +11,14 @@ sed -e 's/^class /class ZZ/' < /tmp/_models.py > /tmp/___models.py
 sed -e 's/^class ZZ\(Mult\|Obs\|Partables\|TableNames\|UserSearches\)/class \1/' < /tmp/___models.py > /tmp/__models.py
 # The dictionary Contexts is still handing around badly
 sed -e 's/Contexts,/ZZContexts,/' < /tmp/__models.py > /tmp/_models.py
+# The children's foreign keys reference the base table, and their models relate to the
+# view's class, ObsGeneral, and the base table's class is hidden
+sed -e 's/^class ObsGeneralRows(/class ZZObsGeneralRows(/' \
+    -e "s/ForeignKey(ObsGeneralRows,/ForeignKey(ObsGeneral,/" \
+    -e "s/ForeignKey('ObsGeneralRows',/ForeignKey('ObsGeneral',/" \
+    -e "s/OneToOneField(ObsGeneralRows,/OneToOneField(ObsGeneral,/" \
+    -e "s/OneToOneField('ObsGeneralRows',/OneToOneField('ObsGeneral',/" < /tmp/_models.py > /tmp/__models.py
+mv /tmp/__models.py /tmp/_models.py
 # Every obs_general_id names its relation to ObsGeneral, so that the many relations
 # from one class to ObsGeneral do not clash
 sed -e "s/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/_models.py > /tmp/__models.py

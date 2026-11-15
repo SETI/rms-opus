@@ -235,8 +235,16 @@ def fill_table_names(ctx: ImportContext, new_table: str) -> bool:
 def do_table_names(ctx: ImportContext) -> None:
     """Rebuild the ``table_names`` table, driven by ``--create-table-names``.
 
+    With a pending generation (`opus_import.generations`) the table is built from it and
+    left as ``table_names__new``, which the switch swaps in.
+
     Parameters:
         ctx: The import run's context, for the open database and the logger.
     """
     new_name = table_swap.swap_new_name('table_names')
-    table_swap.rebuild_tables_by_swap(ctx, ['table_names'], lambda: fill_table_names(ctx, new_name))
+    table_swap.rebuild_tables_by_swap(
+        ctx,
+        ['table_names'],
+        lambda: fill_table_names(ctx, new_name),
+        swap=ctx.pending_generation is None,
+    )

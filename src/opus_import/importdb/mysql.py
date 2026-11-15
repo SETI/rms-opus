@@ -41,7 +41,7 @@ except ImportError:
     MYSQLDB_AVAILABLE = False
 
 from opus_config.config import DEFAULT_TRANSACTION_ROWS
-from opus_import import list_junctions
+from opus_import import generations, list_junctions
 from opus_import.importdb.super import (
     CarriedOver,
     DBRow,
@@ -52,6 +52,7 @@ from opus_import.importdb.super import (
     ResultRow,
     SchemaColumn,
 )
+from opus_import.schema_version import SCHEMA_VERSION_TABLE
 from opus_import.table_keys import (
     KeyKind,
     OnDelete,
@@ -638,6 +639,11 @@ class ImportDBMySQL(ImportDBSuper):
     def quote_identifier(self, s: str) -> str:
         """Return `s` backtick-quoted for use as an identifier.
 
+        The import reads and writes ``obs_general``'s base table, so the name
+        ``obs_general`` is rendered as ``obs_general_rows``
+        (`opus_import.generations.physical_table_name`); no column or schema has that
+        name.
+
         Parameters:
             s: The table, column or schema name.
 
@@ -650,7 +656,7 @@ class ImportDBMySQL(ImportDBSuper):
         """
         if not isinstance(s, str) or not _IDENTIFIER_RE.match(s):
             raise ImportDBError(f'Unsafe SQL identifier: {s!r}')
-        return '`' + s + '`'
+        return '`' + generations.physical_table_name(s) + '`'
 
     def _quoted_column_list(self, column_names: Sequence[str]) -> str:
         """Return the column names quoted and comma-separated.
@@ -711,7 +717,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
                 # Note: SQL table names are case-insensitive on SOME OSes and this
                 # query returns them in whatever case SQL returns them in.
                 # But table_exists does a case-insensitive match.
-                self._table_names = {x[0] for x in res}
+                self._table_names = {generations.logical_table_name(x[0]) for x in res}
                 # if self.logger:
                 #     self.logger.log('debug',
                 #             f'  Current table names: {sorted(self._table_names)}')
@@ -772,7 +778,9 @@ SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`,
 `CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`, `CHARACTER_SET_NAME`
 FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 `TABLE_NAME`=%s ORDER BY `ORDINAL_POSITION`"""
-            rows = self._execute_and_fetchall(cmd, 'table_info', [self.db_schema, table_name])
+            rows = self._execute_and_fetchall(
+                cmd, 'table_info', [self.db_schema, generations.physical_table_name(table_name)]
+            )
 
             column_list = []
 
@@ -854,6 +862,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     raise ImportDBError()
             else:
                 try:
+                    if table_name == generations.OBS_GENERAL_VIEW:
+                        # DROP TABLE refuses a view, and the view reads the table.
+                        self.drop_obs_general_view()
                     cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
                     self._execute(cmd, mutates=True)
                 except MySQLdb.Error as e:
@@ -1076,7 +1087,61 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             self.tables_created.append(table_name)
             self._table_info_cache.clear()
 
+        if table_name == generations.OBS_GENERAL_VIEW:
+            self.create_obs_general_view(schema)
         return True
+
+    def create_obs_general_view(self, schema: Sequence[SchemaColumn]) -> None:
+        """Create, or re-create, ``obs_general`` as the view of the served generation.
+
+        The view reads ``schema_version``'s ``generation``, so ``schema_version`` is
+        first created empty from its packaged schema when the schema lacks it. An empty
+        table reads as no version row, so the view shows no row until
+        ``--write-schema-version`` writes one, and the schema is neither served nor
+        appended to.
+
+        Parameters:
+            schema: ``obs_general``'s table schema, whose columns, less the generation
+                columns, the view lists.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        with self._operation('create_obs_general_view'):
+            if not self.table_exists(SCHEMA_VERSION_TABLE):
+                self.create_table(SCHEMA_VERSION_TABLE, generations.schema_version_table_schema())
+            q = self.quote_identifier
+            served = (
+                f'(SELECT {q(generations.SERVED_GENERATION_COLUMN)} FROM {q(SCHEMA_VERSION_TABLE)})'
+            )
+            added = q(generations.ADDED_GENERATION_COLUMN)
+            removed = q(generations.REMOVED_GENERATION_COLUMN)
+            columns = ', '.join(q(name) for name in generations.view_columns(schema))
+            # Every identifier is quoted by quote_identifier; the view's own name is the
+            # one place the name obs_general is rendered as itself.
+            cmd = (
+                'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW '  # nosec B608
+                f'`{generations.OBS_GENERAL_VIEW}` AS SELECT {columns} '
+                f'FROM {q(generations.OBS_GENERAL_ROWS)} '
+                f'WHERE {added} <= {served} AND ({removed} IS NULL OR {removed} > {served})'
+            )
+            try:
+                self._execute(cmd, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to create the view "obs_general": {e}')
+                raise ImportDBError(e) from e
+
+    def drop_obs_general_view(self) -> None:
+        """Drop the ``obs_general`` view, if the schema has it.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        try:
+            self._execute(f'DROP VIEW IF EXISTS `{generations.OBS_GENERAL_VIEW}`', mutates=True)
+        except MySQLdb.Error as e:
+            self._log_failure(f'Failed to drop the view "obs_general": {e}')
+            raise ImportDBError(e) from e
 
     def _create_key_clause(self, key: TableKey) -> str:
         """Return a key as a ``CREATE TABLE`` clause names it.
@@ -1149,7 +1214,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         spatial index is not a key here and is left out.
 
         Returns:
-            Each table's keys, keyed by table name, plain, unique and primary keys
+            Each table's keys, keyed by table name (``obs_general`` for its base table,
+            and in what a foreign key references), plain, unique and primary keys
             first, in the order the server lists them; a table with no key is absent.
 
         Raises:
@@ -1188,12 +1254,14 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 kind = 'unique'
             else:
                 kind = 'key'
+            table_name = generations.logical_table_name(table_name)
             indexes.setdefault((table_name, index_name), (kind, []))[1].append(column_name)
         foreign: dict[tuple[str, str], tuple[str, list[str], list[str], OnDelete]] = {}
         for table_name, constraint_name, column_name, ref_table, ref_column, rule in foreign_rows:
             on_delete: OnDelete = 'cascade' if rule == 'CASCADE' else 'restrict'
             entry = foreign.setdefault(
-                (table_name, constraint_name), (ref_table, [], [], on_delete)
+                (generations.logical_table_name(table_name), constraint_name),
+                (generations.logical_table_name(ref_table), [], [], on_delete),
             )
             entry[1].append(column_name)
             entry[2].append(ref_column)
@@ -1234,7 +1302,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             'SELECT `TABLE_ROWS` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=%s '
             'AND `TABLE_NAME`=%s',
             'key_space_bytes',
-            [self.db_schema, table_name],
+            [self.db_schema, generations.physical_table_name(table_name)],
         )
         rows = int(res[0][0] or 0) if res else 0
         columns_by_name = {
@@ -1384,6 +1452,58 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 self._log_failure(f'Failed in "{cmd}": {e}')
                 raise ImportDBError(e) from e
             self._table_info_cache.clear()
+
+    def repoint_cart(self, generation: int) -> tuple[int, int]:
+        """Point every cart row at an observation of a generation, by OPUS id.
+
+        One transaction. A cart row whose observation is not in the generation is pointed
+        at the generation's row with the same ``opus_id``; one the generation has no row
+        for is deleted. A cart row already in the generation is left alone, so running it
+        again changes nothing.
+
+        Parameters:
+            generation: The generation the cart is to name.
+
+        Returns:
+            How many rows were pointed at another observation, and how many deleted.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        q = self.quote_identifier
+        cart, old, new = q('cart'), q('o'), q('n')
+        rows = q(generations.OBS_GENERAL_ROWS)
+        old_in = generations.in_generation_condition(q, 'o')
+        new_in = generations.in_generation_condition(q, 'n')
+        # Every identifier is quoted by quote_identifier; the values are parameters.
+        update = (
+            f'UPDATE {cart} AS {q("c")} '  # nosec B608
+            f'JOIN {rows} AS {old} ON {old}.{q("id")} = {q("c")}.{q("obs_general_id")} '
+            f'JOIN {rows} AS {new} ON {new}.{q("opus_id")} = {old}.{q("opus_id")} AND {new_in} '
+            f'SET {q("c")}.{q("obs_general_id")} = {new}.{q("id")} WHERE NOT ({old_in})'
+        )
+        delete = (
+            f'DELETE {q("c")} FROM {cart} AS {q("c")} '  # nosec B608
+            f'JOIN {rows} AS {old} ON {old}.{q("id")} = {q("c")}.{q("obs_general_id")} '
+            f'WHERE NOT ({old_in})'
+        )
+        with self._operation('repoint_cart'):
+            if not MYSQLDB_AVAILABLE or self.read_only:
+                self._execute(update, [generation] * 4, mutates=True)
+                self._execute(delete, [generation] * 2, mutates=True)
+                return 0, 0
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(update, [generation] * 4, cur=cur, mutates=True)
+                    pointed = int(cur.rowcount)
+                    self._execute(delete, [generation] * 2, cur=cur, mutates=True)
+                    deleted = int(cur.rowcount)
+                self.conn.commit()
+            except MySQLdb.Error as e:
+                self.conn.rollback()
+                self._log_failure(f'Failed to point the cart at generation {generation}: {e}')
+                raise ImportDBError(e) from e
+        return pointed, deleted
 
     def carry_over_sessions(self, source_schema: str) -> CarriedOver:
         """Replace this schema's sessions and cart rows with another schema's.
@@ -2582,6 +2702,17 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         """
         granted = self._execute_and_fetchall('SELECT GET_LOCK(%s, 0)', 'try_named_lock', [name])
         return bool(granted) and granted[0][0] == 1
+
+    def release_named_lock(self, name: str) -> None:
+        """Free a lock `try_named_lock` took on this connection.
+
+        Parameters:
+            name: The lock's name.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'release_named_lock', [name])
 
     def holds_named_lock(self, name: str) -> bool:
         """Return whether ``IS_USED_LOCK(name)`` is this connection's ``CONNECTION_ID()``.

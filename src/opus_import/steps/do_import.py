@@ -23,9 +23,14 @@ which `choose_import_path` reads before the first bundle:
   deploy scripts refuse until ``--write-schema-version`` changes it back to ``ready``, and
   resumes every bundle an earlier append left unfinished. It never finalizes the schema
   itself: ``--finalize`` does, as after a fresh import.
+- **A schema with a pending generation** (`opus_import.steps.do_generation`) takes the
+  bundles into that generation: the append path, except that a bundle's rows of earlier
+  generations are retired rather than deleted, its new rows are added in the pending
+  generation, and the version row stays ``ready``.
 - **A schema with another release's version row** is refused, and so is **one with no
   version row but with those keys**, whose finalization was interrupted, in favor of
-  ``--finalize``.
+  ``--finalize``, and **one whose last generation switch can still be reverted**, which
+  an append would make irreversible.
 
 On both paths every bundle is registered in the bundle registry
 (`opus_import.steps.do_register`) before the first one starts, which fixes the range its
@@ -56,8 +61,15 @@ from opus_import import (
     primary_index,
     schema_version,
 )
+from opus_import.generations import PENDING_WRITING
 from opus_import.import_fault import import_fault_argument
-from opus_import.steps import do_import_index, do_import_tables, do_recover, do_register
+from opus_import.steps import (
+    do_generation,
+    do_import_index,
+    do_import_tables,
+    do_recover,
+    do_register,
+)
 from opus_import.table_keys import KEY_FILTERED_TABLE_PREFIXES, add_secondary_indexes
 
 if TYPE_CHECKING:
@@ -68,6 +80,10 @@ IMPORT_PATH_FRESH = 'fresh import'
 
 #: The path an import into a finalized schema takes.
 IMPORT_PATH_APPEND = 'append'
+
+#: The path an import into a served schema's pending generation takes; the log line names
+#: the generation after it.
+IMPORT_PATH_GENERATION = 'generation'
 
 #: How the log line naming the path starts.
 IMPORT_PATH_PREFIX = 'Import path: '
@@ -130,6 +146,25 @@ def choose_import_path(ctx: ImportContext) -> bool:
     rows = []
     if db.table_exists(schema_version.SCHEMA_VERSION_TABLE):
         rows = list(db.read_rows(schema_version.SCHEMA_VERSION_TABLE, ['version', 'state']))
+    state = ctx.generation_state
+    if rows and state is not None and state.pending is not None:
+        ctx.import_path = IMPORT_PATH_GENERATION
+        import_util.log_info(
+            ctx,
+            f'{IMPORT_PATH_PREFIX}{IMPORT_PATH_GENERATION} {state.pending}, into '
+            f'"{db.db_schema}" (version {state.version}, {state.state}; generation '
+            f'{state.generation} served)',
+        )
+        return True
+    if rows and state is not None and state.revertible:
+        ctx.logger.log(
+            'fatal',
+            f'"{db.db_schema}" can still revert its switch to generation {state.generation}, '
+            'and an append would make that impossible: "opus_import --purge-generations" '
+            'ends the revert, or "--revert-generation" then "--abandon-generation" undoes it',
+        )
+        ctx.import_has_bad_data = True
+        return False
     if rows:
         versions = ', '.join(f'version {version}, {state}' for version, state in rows)
         problem = None
@@ -348,16 +383,29 @@ def do_import_steps(ctx: ImportContext) -> bool:
         with ctx.timed('scorched_earth'):
             do_import_tables.delete_all_opus_tables(ctx)
         ctx.mult_fields = None
+        do_generation.load_generation_state(ctx)
+
+    pending = ctx.pending_generation
+    writes_pending = ctx.args.delete_bundles or ctx.args.requeue
+    writes_pending = writes_pending or ctx.args.register_bundles or ctx.args.do_import
+    if pending is not None and (writes_pending or ctx.args.join):
+        do_generation.set_pending_state(ctx, PENDING_WRITING)
 
     if ctx.args.delete_bundles:
         if not _none_importing(ctx, named_bundles, '--delete-bundles'):
             return False
-        if named_bundles and _schema_is_ready(ctx):
+        if pending is None and not _not_revertible(ctx, '--delete-bundles'):
+            return False
+        if named_bundles and pending is None and _schema_is_ready(ctx):
             _mark_appending(ctx)
         with ctx.timed('delete_bundles'):
             for bundle_id in named_bundles:
                 do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
-            bundle_registry.unregister_bundles(ctx, named_bundles)
+            if pending is None:
+                bundle_registry.unregister_bundles(ctx, named_bundles)
+            else:
+                bundle_registry.retire_copies(ctx, named_bundles, pending)
+                bundle_registry.delete_generation_copies(ctx, pending, named_bundles)
 
     if ctx.args.requeue and not requeue_bundles(ctx, named_bundles):
         return False
@@ -372,7 +420,8 @@ def do_import_steps(ctx: ImportContext) -> bool:
         if registration is None:
             return False
         # Registered bundles keep their states, so a rerun changes nothing on a finished
-        # schema; only a bundle added to it is new work.
+        # schema; only a bundle added to it is new work. A pending generation leaves the
+        # served schema ready.
         if ctx.import_path == IMPORT_PATH_APPEND and registration.added:
             _mark_appending(ctx)
         return True
@@ -874,13 +923,13 @@ def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str
         named_bundles: The bundles the command line's descriptors expand to.
 
     Returns:
-        On the append path, every bundle the registry holds that is ``pending`` or
-        ``failed`` and is not named, in registration order, then the named bundles in
-        the order named; on a fresh import, the named bundles. A bundle left
+        On the append and generation paths, every bundle the registry holds that is
+        ``pending`` or ``failed`` and is not named, in registration order, then the named
+        bundles in the order named; on a fresh import, the named bundles. A bundle left
         ``importing`` is not resumed: ``--requeue`` returns it, once the process holding
         it is known to have stopped.
     """
-    if ctx.import_path != IMPORT_PATH_APPEND:
+    if ctx.import_path not in (IMPORT_PATH_APPEND, IMPORT_PATH_GENERATION):
         return named_bundles
     resumable = (bundle_registry.BUNDLE_PENDING, bundle_registry.BUNDLE_FAILED)
     resumed = [
@@ -891,6 +940,31 @@ def _bundles_to_import(ctx: ImportContext, named_bundles: list[str]) -> list[str
             ctx, f'Resuming the unfinished bundles of an earlier append: {", ".join(resumed)}'
         )
     return [*(bundle for bundle in resumed if bundle not in named_bundles), *named_bundles]
+
+
+def _not_revertible(ctx: ImportContext, option: str) -> bool:
+    """Return whether the schema's last generation switch is past reverting, refusing an
+    option that would delete rows a revert needs if it is not.
+
+    Parameters:
+        ctx: The import run's context, for the version row and the log.
+        option: The option refused, as the message names it.
+
+    Returns:
+        True when no switch is revertible; otherwise False, after a fatal message.
+    """
+    state = ctx.generation_state
+    if state is None or not state.revertible:
+        return True
+    ctx.logger.log(
+        'fatal',
+        f'{option} refused: the switch to generation {state.generation} can still be '
+        'reverted, and deleting rows now would make that impossible; "opus_import '
+        '--purge-generations" ends the revert, or "--revert-generation" then '
+        '"--abandon-generation" undoes it',
+    )
+    ctx.import_has_bad_data = True
+    return False
 
 
 def _schema_is_ready(ctx: ImportContext) -> bool:

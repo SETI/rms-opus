@@ -234,8 +234,10 @@ class _CategoryDB:
         return f'`{name}`'
 
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any, ...]]:
-        """Answer the bodies query with each body's id and its selector value."""
-        assert params == ['obs_surface_geometry_name.target_name']
+        """Answer the bodies query, which reads the first generation's rows, with each
+        body's id and its selector value."""
+        assert params == [1, 1, 'obs_surface_geometry_name.target_name']
+        assert '`added_generation` <= %s' in cmd
         return [(7, 'SATURN'), (3, 'DIONE')]
 
     def insert_rows(self, table_name: str, rows: list[dict[str, Any]]) -> None:

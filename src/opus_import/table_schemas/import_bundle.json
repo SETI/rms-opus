@@ -11,7 +11,6 @@
         "field_name": "bundle_id",
         "field_type": "varchar75",
         "field_charset": "ascii",
-        "field_key": "unique",
         "field_notnull": true
     },
     {
@@ -70,6 +69,25 @@
         "field_default": "0",
         "field_notnull": true,
         "comment": "How many importers died holding the bundle."
+    },
+    {
+        "field_name": "generation",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "field_default": "1",
+        "comment": "The import generation that imported this copy of the bundle."
+    },
+    {
+        "field_name": "retired_generation",
+        "field_type": "uint4",
+        "field_default": null,
+        "comment": "The import generation that retired this copy of the bundle, or NULL."
+    },
+    {
+        "unique": [
+            "bundle_id",
+            "generation"
+        ]
     },
     {
         "key": [

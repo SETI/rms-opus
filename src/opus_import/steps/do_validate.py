@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from opus_import import import_util, list_junctions, surface_geometry, table_keys
+from opus_import import generations, import_util, list_junctions, surface_geometry, table_keys
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
@@ -76,8 +76,8 @@ def validate_param_info(ctx: ImportContext) -> None:
     `_param_info_category` gives it, apart from the ones users never search or see:
     ``id``, ``obs_general_id``, the ``d_`` (delta) columns and any column
     that has one, the ``mult_`` id columns, ``opus_id`` outside ``obs_general``,
-    ``bundle_id`` outside ``obs_pds``, ``instrument_id`` outside ``obs_general``, and
-    everything in ``obs_files``. A surface geometry column other than ``target_name`` is
+    ``bundle_id`` outside ``obs_pds``, ``instrument_id`` outside ``obs_general``,
+    ``obs_general``'s generation columns, and everything in ``obs_files``. A surface geometry column other than ``target_name`` is
     skipped when ``param_info`` has no body's category; the table holding rows then is
     reported, since finalization gives every body it holds a category. A column with no
     row is reported; a column with more than one is not, since the check tests only for
@@ -137,6 +137,7 @@ def validate_param_info(ctx: ImportContext) -> None:
                 or 'd_' + field_name in field_names
                 or (field_name == 'opus_id' and obs_table_name != 'obs_general')
                 or (field_name.startswith('mult_'))
+                or field_name in generations.GENERATION_COLUMNS
             ):
                 continue
             if field_name == 'bundle_id' and obs_table_name != 'obs_pds':
@@ -554,11 +555,14 @@ def validate_junctions(ctx: ImportContext) -> None:
 
 
 def validate_unique_opus_ids(ctx: ImportContext) -> None:
-    """Report OPUS IDs that more than one ``obs_general`` row carries.
+    """Report OPUS IDs that more than one ``obs_general`` row of one generation carries.
 
     ``obs_general.opus_id`` carries a plain key, and finalization's duplicate step is what
     leaves one row per OPUS ID, so a schema that has not been through it can hold two.
-    Any such id is an error, naming how many there are and the first ten.
+    Any such id is an error, naming how many there are and the first ten. The rows
+    compared are those of the generation the run works on
+    (`ImportContext.import_generation`): a re-imported bundle's retired rows share their
+    OPUS IDs with its rows in the pending generation, and no generation shows both.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -570,17 +574,20 @@ def validate_unique_opus_ids(ctx: ImportContext) -> None:
         return
     q = db.quote_identifier
     obs_general = q('obs_general')
+    generation = [ctx.import_generation] * 2
     # Every interpolation is an identifier produced by quote_identifier
-    # (^[A-Za-z0-9_]+$); the statement carries no values at all.
+    # (^[A-Za-z0-9_]+$); the generation is a parameter.
     shared = (
-        f'SELECT {q("opus_id")} FROM {obs_general} GROUP BY {q("opus_id")} '  # nosec B608
-        'HAVING COUNT(*) > 1'
+        f'SELECT {q("opus_id")} FROM {obs_general} {q("g")} '  # nosec B608
+        f'WHERE {generations.in_generation_condition(q, "g")} '
+        f'GROUP BY {q("opus_id")} HAVING COUNT(*) > 1'
     )
-    count = db.general_select(f'COUNT(*) FROM ({shared}) {q("d")}')[0][0]  # nosec B608
+    count = db.general_select(f'COUNT(*) FROM ({shared}) {q("d")}', generation)[0][0]  # nosec B608
     if count:
         rows = db.general_select(
             f'{q("opus_id")} FROM ({shared}) {q("d")} '  # nosec B608
-            f'ORDER BY {q("opus_id")} LIMIT 10'
+            f'ORDER BY {q("opus_id")} LIMIT 10',
+            generation,
         )
         shown = ', '.join(f'"{row[0]}"' for row in rows)
         ctx.logger.log(

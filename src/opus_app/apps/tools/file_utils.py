@@ -107,7 +107,8 @@ def get_pds_products(
     if loc_type == 'raw':
         select.add_column(obs_files_column('checksum'))
 
-    select.add_from('obs_files')
+    # The served observations' files: an unserved generation may hold the same OPUS ID.
+    select.add_from('obs_files').append_join(sql_builder.served_observations_join('obs_files'))
     if product_types != ['all']:
         # Because we didn't store @version in the database, when multiple versions (or
         # product types) are passed in, we need to query the database by both short name

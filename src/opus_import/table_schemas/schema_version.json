@@ -10,5 +10,31 @@
         "field_type": "enum",
         "field_enum_options": "'ready','appending'",
         "field_notnull": true
+    },
+    {
+        "field_name": "generation",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "comment": "The import generation the web application serves."
+    },
+    {
+        "field_name": "pending_generation",
+        "field_type": "uint4",
+        "field_default": null,
+        "comment": "The import generation an incremental update is writing, or NULL."
+    },
+    {
+        "field_name": "pending_state",
+        "field_type": "enum",
+        "field_enum_options": "'writing','finalized','validated','ready'",
+        "field_default": null,
+        "comment": "How far the pending generation has got, or NULL."
+    },
+    {
+        "field_name": "revertible",
+        "field_type": "uint1",
+        "field_default": "0",
+        "field_notnull": true,
+        "comment": "1 from a switch until the purge starts, while the switch can be reverted."
     }
 ]

@@ -149,7 +149,7 @@ def test_a_table_outside_the_filter_is_created_with_every_declared_key() -> None
     db = _RecordingDB(set())
     cmd = _create_statement(db, 'cart')
     for clause in (
-        'FOREIGN KEY (`obs_general_id`) REFERENCES `obs_general`(`id`) '
+        'FOREIGN KEY (`obs_general_id`) REFERENCES `obs_general_rows`(`id`) '
         'ON DELETE RESTRICT ON UPDATE CASCADE',
         'KEY `opus_id` (`opus_id`)',
         'KEY `bundle_id` (`bundle_id`)',
@@ -178,7 +178,7 @@ def test_a_table_level_foreign_key_renders_what_a_delete_does() -> None:
     assert cmd == (
         'CREATE TABLE IF NOT EXISTS `cart` ( `obs_general_id` int unsigned NOT NULL, '
         'CONSTRAINT one UNIQUE (obs_general_id) , FOREIGN KEY (`obs_general_id`) '
-        'REFERENCES `obs_general`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ) ENGINE=INNODB'
+        'REFERENCES `obs_general_rows`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ) ENGINE=INNODB'
     )
 
 
@@ -200,7 +200,7 @@ def test_the_statements_that_add_keys() -> None:
     foreign = TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)))
     assert db.add_foreign_key_statement('obs_pds', foreign) == (
         'ALTER TABLE `obs_pds` ADD FOREIGN KEY (`obs_general_id`) REFERENCES '
-        '`obs_general`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
+        '`obs_general_rows`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
     )
 
 
@@ -753,6 +753,7 @@ class _DeletingDB:
             'id_capacity': capacity,
             'state': 'importing',
             'started_at': None,
+            'generation': 1,
         }
         return [tuple(row[column] for column in columns)]
 
@@ -882,11 +883,12 @@ def test_a_bundle_the_registry_lacks_deletes_only_its_joined_rows() -> None:
 class _DuplicateDB(_DeletingDB):
     """A stand-in whose ``obs_general`` holds the duplicated rows it is given."""
 
-    def __init__(self, rows: list[tuple[int, str, str]], remaining: list[Any]) -> None:
+    def __init__(self, rows: list[tuple[int, str, str, int]], remaining: list[Any]) -> None:
         """Hold the duplicated rows, and what the closing check finds.
 
         Parameters:
-            rows: ``(id, opus_id, bundle_id)`` for every row sharing an OPUS id.
+            rows: ``(id, opus_id, bundle_id, added_generation)`` for every row sharing an
+                OPUS id.
             remaining: What the check after the deletes finds.
         """
         super().__init__([], ['obs_general', 'obs_pds'])
@@ -906,13 +908,16 @@ class _DuplicateDB(_DeletingDB):
 def test_the_highest_id_is_kept_and_the_others_deleted_children_first() -> None:
     """Another bundle's copy is logged at info level; the same bundle's as a warning."""
     db = _DuplicateDB(
-        [(3, 'a', 'B_1'), (8, 'a', 'B_2'), (4, 'b', 'B_1'), (5, 'b', 'B_1')], remaining=[]
+        [(3, 'a', 'B_1', 1), (8, 'a', 'B_2', 1), (4, 'b', 'B_1', 1), (5, 'b', 'B_1', 1)],
+        remaining=[],
     )
     ctx = make_context(db=db)
     assert do_duplicate_ids.delete_duplicate_opus_ids(ctx)
     # The OPUS id comes from the grouped side, so case variants the collation joins
     # come back under one spelling.
     assert '`g`.`id`, `d`.`opus_id`, `g`.`bundle_id`' in db.selects[0]
+    # Only the rows of the generation the run works on are compared.
+    assert db.selects[0].count('`added_generation` <= %s') == 2
     assert db.deletes == [
         ('obs_pds', '`obs_general_id` IN (%s,%s)', [3, 4]),
         ('obs_general', '`id` IN (%s,%s)', [3, 4]),
@@ -928,7 +933,9 @@ def test_the_highest_id_is_kept_and_the_others_deleted_children_first() -> None:
 
 def test_an_id_left_shared_after_the_step_is_an_error() -> None:
     """The closing check fails the step when any OPUS id still has two rows."""
-    db = _DuplicateDB([(3, 'a', 'B_1'), (8, 'a', 'B_2')], remaining=[(1, 'a', 'B_1')])
+    db = _DuplicateDB(
+        [(3, 'a', 'B_1', 1), (8, 'a', 'B_2', 1)], remaining=[(1, 'a', 'B_1', 1)]
+    )
     ctx = make_context(db=db)
     assert not do_duplicate_ids.delete_duplicate_opus_ids(ctx)
     assert ctx.logger.messages_at('error') == ['An OPUS ID still has more than one obs_general row']
@@ -1004,7 +1011,7 @@ def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
     assert 'ADD KEY (`obs_general_id`)' not in statement.sql
     assert [s.sql for s in db.foreign] == [
         'ALTER TABLE `obs_pds` ADD FOREIGN KEY (`obs_general_id`) REFERENCES '
-        '`obs_general`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
+        '`obs_general_rows`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
     ]
     assert db.analyzed == ['obs_pds', 'obs_pds']
     assert db.workers == 1

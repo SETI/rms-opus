@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING
 
 from opus_import import bundle_registry, import_util, importdb, mult_fields, primary_index
 from opus_import.bundle_registry import BUNDLE_REGISTRY_TABLE, RegistrationError
+from opus_import.generations import REGISTRY_GENERATION_COLUMN
 from opus_import.steps import do_import_mult, do_import_tables
 
 if TYPE_CHECKING:
@@ -159,7 +160,38 @@ def _remember_planned_ranges(
             int(row['first_id']),
             int(row['id_capacity']),
             str(row['state']),
+            generation=int(row[REGISTRY_GENERATION_COLUMN]),
         )
+
+
+def _copies_to_retire(
+    ctx: ImportContext,
+    bundles: Iterable[str],
+    registered: dict[str, bundle_registry.BundleRange],
+) -> list[str]:
+    """Return the bundles whose live rows a pending generation retires as it registers them.
+
+    A bundle registered in a pending generation whose live row an earlier generation
+    imported is a re-import: that copy is retired and the bundle registered afresh, with a
+    number and an id range after every existing one, since the served generation still
+    shows the old copy's rows in its range.
+
+    Parameters:
+        ctx: The import run's context, for the pending generation.
+        bundles: The bundles being registered.
+        registered: Every live row, keyed by bundle.
+
+    Returns:
+        The bundles, in order; none without a pending generation.
+    """
+    pending = ctx.pending_generation
+    if pending is None:
+        return []
+    return [
+        bundle_id
+        for bundle_id in dict.fromkeys(bundles)
+        if bundle_id in registered and registered[bundle_id].generation < pending
+    ]
 
 
 def register_bundles(
@@ -172,7 +204,9 @@ def register_bundles(
     number, its range and its state, unless `make_pending`, which is how an invocation
     that names bundles to import again marks them: a ``done`` or ``failed`` one is then
     returned to ``pending``, and an ``importing`` one, which another process holds,
-    refuses the registration. The same transaction numbers any mult field ``mult_field``
+    refuses the registration. In a pending generation, a bundle whose live row an earlier
+    generation imported has that row retired and is added afresh, in the same
+    transaction (`_copies_to_retire`). The same transaction numbers any mult field ``mult_field``
     lacks and writes the pinned fields' rows. A read-only run writes nothing, and keeps
     the rows it would have added in `ImportContext.planned_ranges`.
 
@@ -192,6 +226,7 @@ def register_bundles(
     db = ctx.db
     assert db is not None
     bundles = registrable_bundles(ctx, bundle_ids)
+    generation = ctx.import_generation
     with db.named_lock(importdb.lock_name(db.db_schema, REGISTRATION_LOCK)):
         # Before the transaction: creating a table commits on its own.
         create_registration_tables(ctx)
@@ -201,16 +236,22 @@ def register_bundles(
                 held = registered.get(bundle_id)
                 if held is not None and held.state == bundle_registry.BUNDLE_IMPORTING:
                     raise RegistrationError(importing_refusal(bundle_id))
-        start = max((row.end for row in registered.values()), default=0)
+        retired = _copies_to_retire(ctx, bundles, registered)
+        for bundle_id in retired:
+            del registered[bundle_id]
+        every_range = bundle_registry.registered_ranges(db, include_retired=True)
+        start = max((row.end for row in every_range), default=0)
         estimates = [
             (bundle_id, size_estimate(bundle_id))
             for bundle_id in dict.fromkeys(bundles)
             if bundle_id not in registered
         ]
-        new_rows = bundle_registry.plan_ranges(start, estimates)
+        new_rows = bundle_registry.plan_ranges(start, estimates, generation)
         if db.read_only:
-            _remember_planned_ranges(ctx, registered.values(), new_rows)
+            _remember_planned_ranges(ctx, every_range, new_rows)
         with db.transaction():
+            if retired:
+                bundle_registry.retire_copies(ctx, retired, generation)
             if new_rows:
                 db.insert_rows(BUNDLE_REGISTRY_TABLE, new_rows)
             if make_pending:

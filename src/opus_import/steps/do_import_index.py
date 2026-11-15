@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import pdsfile
 
-from opus_import import import_util, list_junctions, surface_geometry, table_keys
+from opus_import import generations, import_util, list_junctions, surface_geometry, table_keys
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import do_import_obs, do_import_pool, do_import_tables
 
@@ -458,9 +458,12 @@ class TableRowSink:
         Parameters:
             table_name: The table the row goes into, or the surface geometry category it
                 was computed under.
-            row: The row, with every value final.
+            row: The row, with every value final. An ``obs_general`` row is given the
+                generation the import writes (`ImportContext.import_generation`).
         """
         table_name = surface_geometry.physical_table(table_name)
+        if table_name == generations.OBS_GENERAL_VIEW:
+            row = {**row, generations.ADDED_GENERATION_COLUMN: self.ctx.import_generation}
         self._wait(table_name, row)
         for column in self.junctions.get(table_name, ()):
             junction = list_junctions.junction_table(table_name, column)

@@ -24,6 +24,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple
 
 from opus_import import import_util
+from opus_import.generations import OBS_GENERAL_VIEW, in_generation_condition
 from opus_import.mult_fields import MULT_FIELD_TABLE, MULT_TABLE
 
 if TYPE_CHECKING:
@@ -155,7 +156,8 @@ def read_category_schema(ctx: ImportContext, category: str) -> TableSchema | Non
 
 
 def stored_targets(ctx: ImportContext) -> list[StoredTarget]:
-    """Return the bodies ``obs_surface_geometry_target`` holds rows of.
+    """Return the bodies ``obs_surface_geometry_target`` holds rows of, in the generation
+    the run works on (`ImportContext.import_generation`).
 
     Parameters:
         ctx: The import run's context, for the open database.
@@ -171,15 +173,19 @@ def stored_targets(ctx: ImportContext) -> list[StoredTarget]:
         return []
     q = db.quote_identifier
     s, m, f, target = q('s'), q('m'), q('f'), q(TARGET_COLUMN)
-    # Every interpolation is an identifier produced by quote_identifier; the one value is
-    # a parameter.
+    g = q('g')
+    generation = ctx.import_generation
+    # Every interpolation is an identifier produced by quote_identifier; the values are
+    # parameters.
     sql = (
         f'DISTINCT {s}.{target}, {m}.{q("value")} FROM {q(SURFACE_GEOMETRY_TABLE)} {s} '
+        f'JOIN {q(OBS_GENERAL_VIEW)} {g} ON {g}.{q("id")}={s}.{q("obs_general_id")} '
+        f'AND {in_generation_condition(q, "g")} '
         f'JOIN {q(MULT_TABLE)} {m} ON {m}.{q("id")}={s}.{target} '
         f'JOIN {q(MULT_FIELD_TABLE)} {f} ON {f}.{q("field_id")}={m}.{q("field_id")} '
         f'WHERE {f}.{q("qualified_name")}=%s'
     )
-    rows = db.general_select(sql, [TARGET_FIELD])
+    rows = db.general_select(sql, [generation, generation, TARGET_FIELD])
     targets = [
         StoredTarget(int(target_id), import_util.encode_target_name(str(value)))
         for target_id, value in rows

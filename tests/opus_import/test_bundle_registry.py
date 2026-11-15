@@ -494,15 +494,16 @@ def test_the_registry_reads_nothing_when_it_has_no_table() -> None:
 
 def test_ranges_ascend_and_one_past_the_largest_id_is_refused() -> None:
     """Each range starts where the last ended; one ending past INT UNSIGNED's maximum fails."""
-    rows = bundle_registry.plan_ranges(7, [('A', 2), ('B', 3)])
+    rows = bundle_registry.plan_ranges(7, [('A', 2), ('B', 3)], 4)
     assert [(row['bundle_id'], row['first_id'], row['id_capacity']) for row in rows] == [
         ('A', 7, 200),
         ('B', 207, 300),
     ]
+    assert {row['generation'] for row in rows} == {4}
     last = bundle_registry.MAX_OBSERVATION_ID + 1
-    assert bundle_registry.plan_ranges(last - 100, [('C', 1)])[0]['first_id'] == last - 100
+    assert bundle_registry.plan_ranges(last - 100, [('C', 1)], 1)[0]['first_id'] == last - 100
     with pytest.raises(bundle_registry.RegistrationError, match='Bundle D'):
-        bundle_registry.plan_ranges(last - 99, [('D', 1)])
+        bundle_registry.plan_ranges(last - 99, [('D', 1)], 1)
 
 
 def test_a_bundle_that_outgrows_its_range_is_refused_naming_it() -> None:

@@ -271,11 +271,17 @@ def test_upsert_rows_omits_the_update_clause_for_a_key_only_row(db: _RecordingDB
 
 @pytest.mark.parametrize(
     'name',
-    ['obs_general', 'mult_obs_general_planet_id', 'cache_12', 'J2000_longitude', '_mult_val_'],
+    ['obs_pds', 'mult_obs_general_planet_id', 'cache_12', 'J2000_longitude', '_mult_val_'],
 )
 def test_quote_identifier_accepts_the_names_opus_uses(db: _RecordingDB, name: str) -> None:
     """Everything OPUS actually names is letters, digits and underscores."""
     assert db.quote_identifier(name) == f'`{name}`'
+
+
+def test_quote_identifier_renders_obs_general_as_its_base_table(db: _RecordingDB) -> None:
+    """The import reads and writes obs_general's base table, never the served view."""
+    assert db.quote_identifier('obs_general') == '`obs_general_rows`'
+    assert db.quote_identifier('obs_general_id') == '`obs_general_id`'
 
 
 @pytest.mark.parametrize(
@@ -307,7 +313,7 @@ def test_where_clause_values_travel_as_parameters(db: _RecordingDB) -> None:
     db.delete_rows('obs_general', where, where_params=['COISS_2002'])
 
     assert db.executed == [
-        ('DELETE FROM `obs_general` WHERE `bundle_id`=%s', ['COISS_2002']),
+        ('DELETE FROM `obs_general_rows` WHERE `bundle_id`=%s', ['COISS_2002']),
     ]
 
 
@@ -326,7 +332,7 @@ def test_a_joined_delete_deletes_the_rows_of_the_parents_it_selects(db: _Recordi
 
     assert db.executed == [
         (
-            'DELETE `c` FROM `obs_pds` AS `c` JOIN `obs_general` AS `p` '
+            'DELETE `c` FROM `obs_pds` AS `c` JOIN `obs_general_rows` AS `p` '
             'ON `p`.`id` = `c`.`obs_general_id` '
             'WHERE `p`.`bundle_id` = %s AND `p`.`id` BETWEEN %s AND %s',
             ['COISS_2002', 4, 9],
@@ -338,7 +344,7 @@ def test_a_where_clause_with_no_parameters_passes_none(db: _RecordingDB) -> None
     """An empty parameter list would make MySQLdb interpolate, so pass None."""
     db.delete_rows('obs_general', '`id` > 0')
 
-    assert db.executed == [('DELETE FROM `obs_general` WHERE `id` > 0', None)]
+    assert db.executed == [('DELETE FROM `obs_general_rows` WHERE `id` > 0', None)]
 
 
 def test_update_row_parameterizes_the_set_values_and_the_where(db: _RecordingDB) -> None:
@@ -573,7 +579,7 @@ def test_delete_rows_deletes_every_row_when_asked(db: _RecordingDB) -> None:
     """`all_rows=True` is the one way to empty a table."""
     db.delete_rows('obs_general', all_rows=True)
 
-    assert db.executed == [('DELETE FROM `obs_general`', None)]
+    assert db.executed == [('DELETE FROM `obs_general_rows`', None)]
 
 
 # ---------------------------------------------------------------------------
@@ -806,7 +812,7 @@ def test_bulk_load_names_the_table_columns_and_character_set(tmp_path: Path) -> 
 
     [(cmd, params)] = _statements(db, 'LOAD DATA')
     assert cmd == (
-        'LOAD DATA LOCAL INFILE %s INTO TABLE `obs_general` CHARACTER SET utf8mb4 '
+        'LOAD DATA LOCAL INFILE %s INTO TABLE `obs_general_rows` CHARACTER SET utf8mb4 '
         "FIELDS TERMINATED BY '\\t' ESCAPED BY '\\\\' LINES TERMINATED BY '\\n' "
         '(`id`,`note`,`opus_id`)'
     )
@@ -1453,7 +1459,7 @@ def test_each_guarded_chunk_records_its_progress_first_and_commits_last() -> Non
     db.bulk_load_rows('obs_general', [{'id': 1}, {'id': 2}, {'id': 3}], guard=guard)
 
     shapes = [cmd.split(' SET ')[0].split(' (')[0] for cmd, _ in conn.executed]
-    chunk = ['UPDATE `import_bundle`', 'UPDATE `import_process`', 'INSERT INTO `obs_general`']
+    chunk = ['UPDATE `import_bundle`', 'UPDATE `import_process`', 'INSERT INTO `obs_general_rows`']
     assert shapes == [*chunk, 'COMMIT', *chunk, 'COMMIT']
     first_update, params = conn.executed[0]
     assert first_update == (
@@ -1490,7 +1496,7 @@ def test_a_plain_imports_guard_counts_observations_and_checks_nothing() -> None:
 
     assert [cmd.split(' (')[0] for cmd, _ in conn.executed] == [
         'UPDATE `import_bundle` SET `rows_done`=%s WHERE `bundle_number`=%s AND `started_at`=%s',
-        'INSERT INTO `obs_general`',
+        'INSERT INTO `obs_general_rows`',
         'COMMIT',
         'INSERT INTO `obs_files`',
         'COMMIT',
@@ -1655,7 +1661,7 @@ def test_the_junction_comparison_anti_joins_both_ways() -> None:
     assert all(type(figure) is int for figure in found)
     (cmd,) = db.selects
     listed = (
-        "`obs_general` AS `t`, JSON_TABLE(`t`.`target_name`, '$[*]' COLUMNS (`v` INT PATH "
+        "`obs_general_rows` AS `t`, JSON_TABLE(`t`.`target_name`, '$[*]' COLUMNS (`v` INT PATH "
         "'$')) AS `j`"
     )
     assert cmd == (

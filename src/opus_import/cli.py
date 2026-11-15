@@ -31,6 +31,7 @@ from opus_config import MAX_WORKERS, ConfigError, get_config, resolve_parallelis
 from opus_import import bundle_registry, import_util, importdb
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
+from opus_import.generations import PENDING_FINALIZED, PENDING_VALIDATED, PENDING_WRITING
 from opus_import.steps import (
     do_carry_over,
     do_cart,
@@ -38,6 +39,7 @@ from opus_import.steps import (
     do_django,
     do_duplicate_ids,
     do_finalize_mult,
+    do_generation,
     do_import,
     do_import_tables,
     do_indexes,
@@ -452,7 +454,50 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--validate',
         action='store_true',
         default=False,
-        help='Validate the imported tables',
+        help='Validate the imported tables; with a pending generation, refused until '
+        '--finalize has succeeded on it, and the generation is marked validated when every '
+        'check passes',
+    )
+
+    # The incremental update of a served schema, one generation at a time
+    parser.add_argument(
+        '--begin-generation',
+        action='store_true',
+        default=False,
+        help='Start a pending generation in a ready schema, which --import, --delete-bundles, '
+        '--finalize, --validate and --write-schema-version then write and the web '
+        'application does not serve until --switch-generation; runs alone',
+    )
+    parser.add_argument(
+        '--switch-generation',
+        action='store_true',
+        default=False,
+        help='Serve the pending generation once --write-schema-version has marked it ready: '
+        'swap its auxiliary tables in, point the cart at it, reset the search tables, then '
+        'serve it. Run while the web service is stopped; running it again completes an '
+        'interrupted switch; runs alone',
+    )
+    parser.add_argument(
+        '--purge-generations',
+        action='store_true',
+        default=False,
+        help='After a switch, end its revertibility and delete the rows no served generation '
+        'shows, then delete unused mult values and analyze the tables; runs alone',
+    )
+    parser.add_argument(
+        '--abandon-generation',
+        action='store_true',
+        default=False,
+        help='Throw away the pending generation, restoring the schema as it was before '
+        '--begin-generation; runs alone',
+    )
+    parser.add_argument(
+        '--revert-generation',
+        action='store_true',
+        default=False,
+        help='Undo the last switch until --purge-generations runs: serve the previous '
+        'generation again, leaving the reverted one pending and ready. Run while the web '
+        'service is stopped; runs alone',
     )
 
     parser.add_argument(
@@ -572,6 +617,15 @@ _JOIN_CONFLICTS = (
 )
 
 
+#: The generation commands: each runs alone, under the schema's generation lock.
+GENERATION_COMMANDS = (
+    ('begin_generation', '--begin-generation'),
+    ('switch_generation', '--switch-generation'),
+    ('purge_generations', '--purge-generations'),
+    ('abandon_generation', '--abandon-generation'),
+    ('revert_generation', '--revert-generation'),
+)
+
 #: The options ``--carry-over-sessions-from`` is refused with: every step, since it runs
 #: while the web service is stopped and so runs alone, without reading the holdings; and
 #: ``--read-only``, under which it would copy nothing.
@@ -588,7 +642,84 @@ CARRY_OVER_CONFLICTS = (
     ('validate', '--validate'),
     ('import_dictionary', '--import-dictionary'),
     ('bundles', 'bundle descriptors'),
+    *GENERATION_COMMANDS,
 )
+
+
+#: The options a generation command is refused with: every step, the carry-over, and the
+#: other generation commands, which `CARRY_OVER_CONFLICTS` names.
+_GENERATION_CONFLICTS = (
+    *CARRY_OVER_CONFLICTS,
+    ('carry_over_sessions_from', '--carry-over-sessions-from'),
+)
+
+#: The options that write a pending generation, whose invocation registers itself in
+#: ``import_process`` so that no generation command runs beside it
+#: (`opus_import.steps.do_generation.register_writer`).
+_PENDING_WRITERS = (
+    'do_import',
+    'join',
+    'register_bundles',
+    'requeue',
+    'delete_bundles',
+    'finalize',
+    'create_indexes',
+    'create_param_info',
+    'create_partables',
+    'create_table_names',
+    'validate',
+    'write_schema_version',
+)
+
+
+def _generation_command(args: argparse.Namespace) -> str | None:
+    """Return the generation command given, or None."""
+    for name, option in GENERATION_COMMANDS:
+        if getattr(args, name):
+            return option
+    return None
+
+
+def _generation_conflicts(args: argparse.Namespace) -> str:
+    """Name the options given with a generation command that it is refused with.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+
+    Returns:
+        The options, joined by commas; empty without a generation command or with none.
+    """
+    command = _generation_command(args)
+    if command is None:
+        return ''
+    return ', '.join(
+        option
+        for name, option in _GENERATION_CONFLICTS
+        if option != command and getattr(args, name)
+    )
+
+
+def _run_generation_command(ctx: ImportContext, option: str) -> bool:
+    """Run the generation command the arguments name, timed under its name.
+
+    Parameters:
+        ctx: The import run's context, with the database open.
+        option: The command, as `_generation_command` returned it.
+
+    Returns:
+        Whether it succeeded.
+    """
+    args = ctx.args
+    with ctx.timed(option.removeprefix('--').replace('-', '_')):
+        if args.begin_generation:
+            return do_generation.begin_generation(ctx)
+        if args.switch_generation:
+            return do_generation.switch_generation(ctx)
+        if args.purge_generations:
+            return do_generation.purge_generations(ctx)
+        if args.abandon_generation:
+            return do_generation.abandon_generation(ctx)
+        return do_generation.revert_generation(ctx)
 
 
 def _carry_over_conflicts(args: argparse.Namespace) -> str:
@@ -640,6 +771,36 @@ def _registry_finished(ctx: ImportContext, step: str) -> bool:
         'them with --delete-bundles',
     )
     return False
+
+
+def _validate(ctx: ImportContext) -> bool:
+    """Run ``--validate``, gated and recorded on a pending generation.
+
+    With a pending generation, validation is refused unless the generation is finalized
+    or validated, so a generation whose finalization failed or was skipped is never
+    validated; it is marked validated when every check passes and finalized when one
+    fails.
+
+    Parameters:
+        ctx: The import run's context.
+
+    Returns:
+        Whether validation ran and passed.
+    """
+    pending = ctx.pending_generation
+    if pending is None:
+        return do_validate.do_validate(ctx)
+    current = do_generation.read_pending_state(ctx)
+    if current not in (PENDING_FINALIZED, PENDING_VALIDATED):
+        import_util.log_error(
+            ctx,
+            f'--validate refused: generation {pending} is {current}, and only a finalized '
+            'generation is validated; run "opus_import --finalize" first',
+        )
+        return False
+    passed = do_validate.do_validate(ctx)
+    do_generation.set_pending_state(ctx, PENDING_VALIDATED if passed else PENDING_FINALIZED)
+    return passed
 
 
 def _prepare_holdings(
@@ -794,6 +955,13 @@ def main() -> None:
     if args.override_db_schema:
         our_schema_name = args.override_db_schema
 
+    generation_command = _generation_command(args)
+    if generation_command is not None:
+        conflict = _generation_conflicts(args)
+        if conflict:
+            logger.log('fatal', f'{generation_command} runs alone; it is refused with {conflict}')
+            sys.exit(-1)
+
     carry_over_from = args.carry_over_sessions_from
     if carry_over_from is not None:
         conflict = _carry_over_conflicts(args)
@@ -823,8 +991,9 @@ def main() -> None:
             limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
         )
 
-        # The carry-over reads no holdings, and runs while the web service is stopped.
-        if carry_over_from is None:
+        # The carry-over and the generation commands read no holdings, and the carry-over
+        # and the switch run while the web service is stopped.
+        if carry_over_from is None and generation_command is None:
             _prepare_holdings(args, config, logger)
 
         try:
@@ -846,6 +1015,25 @@ def main() -> None:
             sys.exit(-1)
 
         ctx.db.log_sql = args.log_sql
+        do_generation.load_generation_state(ctx)
+
+        # A generation command runs alone (_generation_conflicts).
+        if generation_command is not None:
+            if not _run_generation_command(ctx, generation_command):
+                sys.exit(-1)
+            logger.close()
+            return
+
+        pending = ctx.pending_generation
+        if pending is not None and any(getattr(args, name) for name in _PENDING_WRITERS):
+            try:
+                writer = do_generation.register_writer(ctx)
+            except do_generation.GenerationRefusedError as e:
+                logger.log('fatal', str(e))
+                sys.exit(-1)
+            # Registered rather than run in a finally block, since the run leaves through
+            # sys.exit from several places.
+            atexit.register(writer.exit)
 
         # The step runs alone (_carry_over_conflicts), so nothing below has work to do.
         if carry_over_from is not None:
@@ -869,6 +1057,8 @@ def main() -> None:
         # registry.
         if args.finalize and not _registry_finished(ctx, '--finalize'):
             sys.exit(-1)
+        if args.finalize and pending is not None:
+            do_generation.set_pending_state(ctx, PENDING_WRITING)
 
         # The finishing steps that failed in this invocation. Any failure keeps it from
         # marking the schema ready, and makes it exit with failure once its other steps
@@ -904,8 +1094,9 @@ def main() -> None:
             logger.close()
 
         # After the duplicate step, whose deletions can leave a value unreferenced, and
-        # before the auxiliary tables, which read the mult rows.
-        if args.finalize:
+        # before the auxiliary tables, which read the mult rows. A pending generation
+        # leaves the values only retired rows use to the purge.
+        if args.finalize and pending is None:
             logger.open(
                 'Finalizing the mult fields',
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
@@ -935,6 +1126,20 @@ def main() -> None:
                     do_table_names.do_table_names(ctx)
 
             logger.close()
+
+        # A pending generation leaves the served schema's cart and searches alone: the
+        # switch points the cart at it and resets the search tables.
+        if pending is not None and args.create_cart:
+            if not args.finalize:
+                import_util.log_error(
+                    ctx,
+                    '--create-cart empties the served cart, so it is refused with a pending '
+                    'generation',
+                )
+                failed_steps.append('--create-cart')
+            args.create_cart = False
+        if pending is not None and args.finalize:
+            args.reset_search_tables = False
 
         # After the import, since the cart's foreign key needs obs_general.
         if args.create_cart or args.reset_search_tables:
@@ -968,9 +1173,13 @@ def main() -> None:
 
             logger.close()
 
+        # A pending generation is finalized once every step of --finalize succeeded.
+        if args.finalize and pending is not None and not failed_steps:
+            do_generation.set_pending_state(ctx, PENDING_FINALIZED)
+
         if args.validate:
             with ctx.timed('validate'):
-                if not do_validate.do_validate(ctx):
+                if not _validate(ctx):
                     failed_steps.append('--validate')
 
         if args.import_dictionary:

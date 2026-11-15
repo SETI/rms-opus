@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from opus_config.config import DEFAULT_INDEX_WORKERS, DEFAULT_WORKER_ROWS, DEFAULT_WORKERS
+from opus_import.generations import FIRST_GENERATION
 
 if TYPE_CHECKING:
     import argparse
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
 
     from opus_import.bundle_registry import BundleIds, BundleRange
     from opus_import.deferred import Capture
+    from opus_import.generations import GenerationState
     from opus_import.import_processes import BundleGuard, ImporterLock
     from opus_import.importdb.super import ImportDBSuper
     from opus_import.mult_fields import MultFieldInfo
@@ -256,6 +258,12 @@ class ImportContext:
         queue_entered: Whether a queue importer has begun recording itself in
             ``import_process``; until then it holds nothing, and a second interrupt
             stops it wherever it lands.
+        generation_state: The schema's ``schema_version`` row as `opus_import.cli` read
+            it when the run opened the database
+            (`opus_import.generations.GenerationState`), or None when it has none.
+        import_generation: The generation the observation rows this run writes are
+            added in: the pending generation, if any, otherwise the served one, and
+            `opus_import.generations.FIRST_GENERATION` for a schema with no version row.
     """
 
     args: argparse.Namespace
@@ -291,6 +299,8 @@ class ImportContext:
     log_path: str | None = None
     interrupts: int = 0
     queue_entered: bool = False
+    generation_state: GenerationState | None = None
+    import_generation: int = FIRST_GENERATION
 
     log: ImportLog = field(init=False)
 
@@ -302,6 +312,12 @@ class ImportContext:
         """Record that the run, and the bundle it is importing, produced an error."""
         self.import_has_bad_data = True
         self.bundle_has_errors = True
+
+    @property
+    def pending_generation(self) -> int | None:
+        """The generation an update is writing, or None when the schema has none."""
+        state = self.generation_state
+        return None if state is None else state.pending
 
     @contextlib.contextmanager
     def timed(self, step: str) -> Iterator[None]:
