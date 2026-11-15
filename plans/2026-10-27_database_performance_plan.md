@@ -8307,3 +8307,250 @@ Nothing above this line is rewritten by an executor.
     built the 1030 form.
   - The `bench_complete_after_full6x4_1` schema stays on the benchmark server until the
     chain's cleanup.
+
+### 2026-11-14, PR-23 (written against this file at 0f3a81f1)
+
+- **Design B, chosen by the operator on 2026-11-14.** The section's "Choosing: measure both,
+  report, discuss, then decide" gate was not run and nothing of design A is implemented;
+  design A's text stays as the record of what was weighed, and design B's scripts reuse its
+  structure (`_copy_database_to_peer.sh`, the steps file, the operator's command). The branch
+  is PR-22's head (0f3a81f1), stacked on PR-20's. PR-21 was not executed and PR-22 was
+  reduced to its test fix, so there is no `_load_db_steps.sh` and no session setting or
+  refusal for the peer load to carry. PR-24 is not implemented; its hook is the rule that a
+  finalization step states whether it runs on a pending generation or at the switch, written
+  at the head of `--finalize`'s sequence in `opus_import.cli`. `SCHEMA_VERSION` is 13.
+- **The view is not the section's: it has no condition while every row is served.** The
+  section's view, `WHERE added_generation <= (SELECT generation FROM schema_version) AND
+  ...`, was built first (with `COALESCE(..., 1)` so an unfinished schema showed its first
+  generation) and `EXPLAIN`ed on `pr23local` against PR-20's `pr20local` (the base's schema,
+  version 12, the same test-scale bundles), on the captured statements of
+  `benchmarks/scenarios/queries.sql` for the broad and target search builds, the empty and
+  broad first pages, the empty and selected mult counts of `instrument` and `target`, the
+  empty search's `time1` endpoints, the autocomplete's two prefixes, one observation's files
+  and the detail page, plus a metadata lookup by `opus_id` (`obs_general` and `obs_pds`
+  joined to it, as `query_table_for_opus_id` does). The subquery was evaluated once in every
+  statement (two `SUBQUERY` rows on `schema_version`, never `DEPENDENT SUBQUERY`), but two
+  access paths changed: the target search build read `obs_general_rows` by a full scan and
+  probed `obs_general_target_name` (base: the junction's primary key first, then
+  `obs_general` by `eq_ref`); and the empty search's `MIN(time1)`/`MAX(time2)` lost "Select
+  tables optimized away" and became a full scan. The optimizer prices the view's condition
+  as passing about one row in eight (an estimate of 4,094 of 30,709 in one plan), and that
+  estimate drives the flip; it also sent the selector count's join (below) through a
+  temporary table.
+  - **So the view selects every row, with no condition, whenever every row is in the served
+    generation** (after a fresh import and after a purge), and names the served generation
+    as a number while a generation is pending or retired rows wait for the purge
+    (`ImportDBMySQL.create_obs_general_view(schema, served)`). The commands that change
+    which rows it shows re-create it (`do_generation.refresh_view`): `--begin-generation`,
+    before it records the pending generation, so no row of it is written while the view
+    shows every row; the switch, as its step 4 before its last statement; the revert; the
+    purge, once the retired rows are gone; the abandon, with no condition unless retired
+    rows remain. The view is DDL re-created at begin while the site serves; it takes the
+    view's metadata lock for a moment.
+  - **`EXPLAIN` with this view** (the same statements, `pr23local` rebuilt): with no
+    condition every statement's access path equals the base's, table for table and key for
+    key, and there is no subquery at all. With the condition (the view re-created by hand on
+    `pr23local` to name generation 1, as during an update, then put back) two paths change,
+    as before: the target search build (`obs_general_rows` full scan first) and the empty
+    search's `time1` endpoints (full scan); the others equal the base's. That cost is paid
+    only while a generation is pending or awaiting its purge.
+  - The view needs no `schema_version` row, so `create_table` does not create
+    `schema_version` empty (the section's step for its subquery), and a schema with no
+    version row is still neither served nor appended to.
+- **The name translation** is in `ImportDBMySQL.quote_identifier`: the name `obs_general`
+  renders as `obs_general_rows`, so every statement the import builds, raw SQL included,
+  names the base table; `table_names`, `table_info`, `read_table_keys` (both the table and a
+  foreign key's referenced table) and `key_space_bytes` report or read the base table under
+  the name `obs_general`. `create_table('obs_general')` creates the table, then the view;
+  `drop_table('obs_general')` drops the view first, and scorched earth drops it before any
+  table (`drop_obs_general_view`). The view's own name and PR-18's carry-over, which names
+  the target's `obs_general` literally and so reads its view, are the places the import
+  names the view. `create_opus_models.sh` runs `inspectdb --include-views` and hides the
+  base table's class; `models.py` is unchanged, since the view has `ObsGeneral`'s columns.
+- **The generation columns** carry `"data_source": "GENERATION"` in `obs_general.json`:
+  `import_observation_table` computes nothing for them, and `TableRowSink.add` writes
+  `ImportContext.import_generation` into `added_generation` of each `obs_general` row in the
+  import's process, after PR-09's replay. `import_generation` is the pending generation if
+  any, otherwise the served one, and 1 for a schema with no version row.
+- **The registry.** `import_bundle`'s unique key is `(bundle_id, generation)`, `generation`
+  defaults to 1 and `retired_generation` is NULL. Every function of
+  `opus_import.bundle_registry` that names a bundle reads and writes its **live row**
+  (`retired_generation IS NULL`); a new range starts after every row's, retired rows
+  included (`registered_ranges(include_retired=True)`), since their ids are in use until
+  the purge. Registration in a pending generation retires a bundle's live row of an earlier
+  generation and adds a row of its own in the same transaction (`do_register._copies_to_retire`,
+  `bundle_registry.retire_copies`); a rerun within the generation keeps the generation's
+  row. `--delete-bundles` in a pending generation retires the bundle's live row and deletes
+  its row of the pending generation. Without a pending generation every row of the bundle
+  goes, as PR-08 made it.
+- **Refusals the section does not name.** A plain append and a plain `--delete-bundles` are
+  refused while a switch is revertible, naming `--purge-generations` (they delete by
+  `bundle_id`, which would delete the retired rows a revert needs). `--create-cart` is refused
+  with a pending generation (it drops the served cart), and `--finalize` with one skips it as
+  it skips the search reset; the section names only the reset. `--purge-generations` is
+  refused while a generation is pending. `--import-dictionary` still swaps at once with a
+  pending generation: the dictionary does not depend on the observations.
+- **What reads one generation.** The duplicate step, the unique-OPUS-ID validation and the
+  surface geometry bodies the auxiliary tables list (`surface_geometry.stored_targets`, now
+  joined to the base table's rows in the run's generation) read the generation the run
+  works on. The other validations read every row, as the section asks of the orphan counts.
+  In a pending generation the duplicate step deletes a losing row the generation added and
+  retires one an earlier generation added; the retire uses `update_row` with `LIMIT`, by
+  `bundle_id`'s key, `transaction_rows` at a time, inside `retrying`.
+- **`pending_state`.** `writing` is set by `--import`, `--delete-bundles`,
+  `--register-bundles`, `--requeue`, `--join` and at the start of `--finalize`; `finalized`
+  once `--finalize` ends with no failed step; `validated` or `finalized` by `--validate`
+  (`cli._validate`), which is refused before `finalized`; `ready` by `--write-schema-version`
+  (`do_schema_version._stamp_pending_generation`), refused unless `validated`.
+- **The lock.** Each generation command takes `GET_LOCK(lock_name(schema, 'generation'), 0)`
+  for its run (`do_generation.generation_command`, `ImportDBSuper.release_named_lock` is new)
+  and is refused while any `import_process` row's lock is held (`read_snapshot`'s `alive`).
+  An invocation that writes the pending generation (`cli._PENDING_WRITERS`: the import,
+  join, registration, requeue, delete, finalization and its auxiliary steps, validation,
+  the stamp) registers itself through PR-16a's `start_importer` on a sibling connection while
+  briefly holding the generation lock (`register_writer`), and frees it at exit. A `--join`
+  importer in a pending generation therefore has two `import_process` rows, its writer's and
+  its importer's.
+- **The switch and the revert complete each other.** The switch's steps are the aux swap
+  keeping `__prev`, the cart's move (`ImportDBMySQL.repoint_cart`: an `UPDATE ... JOIN` by
+  `opus_id` to the generation's row, then a `DELETE` of the rows left, one transaction), the
+  search reset and cache flush, the view, then the version row; the fault site is
+  `OPUS_IMPORT_FAULT=switch_generation:<1..4>`. The reset cannot tell whether it ran and runs
+  again on a rerun, which is harmless while the web service is stopped. With nothing pending
+  and `revertible` set, the switch runs steps 1 to 4 again for the served generation and
+  succeeds, which also completes a revert that stopped after swapping back; a revert of a
+  pending generation that is `ready` undoes whatever steps a switch that stopped part way ran
+  and changes no version column. The purge drops the `__prev` tables right after clearing
+  `revertible`, and `--begin-generation` drops any an interrupted purge left, so while a
+  generation is pending only a part-way switch leaves `__prev` tables. The purge finds the
+  retired ids in one scan of `obs_general_rows` (no key on `removed_generation`, as the
+  section decides) and deletes them by `do_import_tables.delete_observations`, which the
+  duplicate step now shares.
+- **`promote_generation.sh` asks first.** It runs
+  `do_generation.generation_command_problem(<step>)` through the deployed interpreter before
+  stopping the web service, so a switch or revert `opus_import` would refuse leaves the site
+  up (raised by the deploy-script review). It takes the deploy lock, reuses `warm_search`
+  and `previous_db_name` from `_promote_steps.sh`, and copies `_promote.sh`'s stop, cache
+  restart and start, which are not functions there.
+- **The scripts' other decisions:** `run_incremental_opus_update.sh` checks its arguments
+  first (the version spec only as the first argument, starting with `= < > ! ~`; `--drop`
+  repeatable; an empty name is the usage line); the internal script builds a staged
+  installation as a full import does, holds the deploy lock for its whole run (a code-only
+  deploy would rebuild the same `__new` tables, and DDL would spoil the dump), checks
+  `ERRORS.log` after every invocation and stops before the stamp, runs neither `migrate` nor
+  `--import-dictionary`, and names the peer's schema `opus3_<time>_<pid>` by the function
+  `_run_full_opus_import.sh` now shares. `dump_db.sh` dumps with `--single-transaction`;
+  `load_db.sh <dumped> [<target>]` creates the target and drops a view's `DEFINER` clause as
+  it reads the dump (the view is `SQL SECURITY INVOKER`, and the peer may lack the first
+  server's account). The guides tell the operator not to deploy code while a generation is
+  pending; nothing enforces it.
+- **The per-observation queries that read a child table without `obs_general`,
+  `search_results` or a row the view returned**, found by reading every `cursor.execute` site
+  under `src/opus_app/apps` and every ORM query on a per-observation model (the ORM's
+  `obs_general__opus_id` lookups join the view and are safe), each now hanging
+  `sql_builder.served_observations_join(<child>)` off the child's source:
+  1. the autocomplete from every observation (`api_string_search_choices`, the branch for a
+     search past `STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD` or timed out);
+  2. the empty search's mult counts of a column outside `obs_general`: a list column's
+     junction table, a child's `GROUP` column, the surface geometry selector and a body's
+     category (`api_get_mult_counts`);
+  3. the empty search's range endpoints of a child's column (`api_get_range_endpoints`,
+     whose ORM branch became the raw statement the selections branch already built);
+  4. the product types of an OPUS ID (`api_get_product_types_for_opus_id`, `obs_files` by
+     its own `opus_id`);
+  5. the empty search's product types (`api_get_product_types_for_search`);
+  6. `file_utils.get_pds_products`, `obs_files` by its own `opus_id`, behind `api/files/<opus_id>`,
+     `api/download/<opus_id>` and, by an OPUS ID a re-imported bundle shares with its retired
+     copy, every other caller.
+  The join is MySQL's `STRAIGHT_JOIN` (a `Join` kind of `sql_builder`), so the child is read
+  first with its own access path and each row's observation is one `eq_ref` on the view's
+  primary key. An `INNER JOIN` gave the selector count a temporary table, under the first
+  view (the integration suite's plan test failed), and `STRAIGHT_JOIN` keeps its index scan.
+  Either join changed the empty search's product type order, since the server sorts a
+  one-table `DISTINCT` by every selected column after the `ORDER BY`'s and a join by the
+  `ORDER BY`'s alone, so the two product type statements that gained the join order their
+  ties by the remaining columns explicitly (`results.views._join_served_observations`), and
+  no golden changed. These
+  statements' plans do change, by design: each gains the `eq_ref` lookup, the autocomplete's
+  covering skip scan becomes an index scan into a deduplicating table of `limit + 1` rows,
+  and a child's empty-search `MIN`/`MAX` loses "optimized away" for a scan of the child
+  (measured on `pr23local`; cached, and warmed after a promotion). A new mult value of a
+  pending generation is still listed before the switch, as the section accepts.
+- **The goldens** change in `obs_general.tsv` (the two generation columns, every row `1` and
+  `\N`, checked by a script: no other column differs), `schema_version.tsv` (13 and the four
+  columns) and `import_bundle.tsv` (`generation` 1, `retired_generation` `\N`); nothing else
+  (`make_mini_goldens`). `golden_io.list_tables` lists base tables only and reports
+  `obs_general_rows` as `obs_general`, reading it for every function that takes a table name,
+  so the golden keeps its name; `build_run.clone_schema` copies the views too.
+  **No API golden changed.**
+- **The harness** (`bench_server.clone_schema` recreates each view from `SHOW CREATE VIEW`, the
+  source's schema name replaced and the definer dropped; `scripts/import/clone_database.sh`
+  drops the definer too). The generation update is a command of its own,
+  `python -m benchmarks.bench_generation`, not a `bench_import` mode (`bench_import.py` is
+  past the module-size rule): `--schema <schema>` in place, `--bundles` or
+  `--incremental-group <scale's group>`, `--drop`, and `--stop-before-switch` or
+  `--switch-only`; it refuses a side without `--begin-generation`, never starts, restarts or
+  stops the server and never drops a schema, and records two runs, kinds `generation_update`
+  and `generation_switch`, with `import.generation.{begin,import,delete,finalize,validate,
+  write_schema_version,update,switch,purge,switch_purge}.wall_s` and the invocations'
+  `--timing-json` phases. `bench_web --app-cold-only` skips the db-cold pass, whose server
+  restart would kill the update's connections, so web scenarios can run while it imports.
+  The harness's own row checks read `obs_general_rows` where it exists, `bench_web`'s table
+  count counts base tables only, and the result files pin `generation_schema`,
+  `generation_update` and `cold_states`.
+- **Tests.** `tests/opus_import/test_generations.py` (the view's DDL both ways, the name
+  mapping, the drop order, the cart's move, the retire, every refusal of the five commands,
+  the lock both ways, the switch's order and its fault after each step and rerun, the
+  completion and the revert of a part-way switch, the closing invocations' gating, the
+  duplicate step's retire) and a sink case in `test_table_row_sink.py`;
+  `import_tests/test_generations.py` (a copy of the main run updated, one bundle re-imported
+  and one dropped: the served rows identical before the switch, the full import's less the
+  dropped bundle after it, the planted cart row moved and moved back by a revert, the purge
+  leaving only served rows and deleting a value only the dropped bundle used, the view's
+  condition present only between begin and purge; an abandon restoring every base table; the
+  switch killed after each step and completed by a rerun);
+  `integration_tests/apps_db_tests/test_generations.py` (an observation planted in the next
+  generation, with its `obs_pds`, `obs_type_image`, `obs_wavelength`, `obs_files` (under the
+  served copy's OPUS ID) and junction rows, is in no endpoint's answer); `tests/opus_deploy`
+  (the steps file, the peer copy's three cases, the usage line, `promote_generation.sh`'s
+  order, failures and pre-check, the dump and load); `tests/benchmarks` (view cloning, the
+  update command). Every new test was mutation-checked, each mutation failing its tests:
+  19 of the import's source (the translation, the view's drop order and condition, the
+  begin's refusals and view, the lock and the writers' check, the switch's fault site and
+  completion, the revert of a part-way switch, the gating of validation and the stamp, the
+  duplicate step's retire, the commands' conflicts, the retire's `<`, the cart's delete,
+  the purge's `__prev` drop, the sink's generation, the bodies' generation), 5 against the
+  import suite (the begin's view, the purge's mult step, the abandon's restore, the cart's
+  move, the revert's view), 5 against `pr23local` (each of the joins above removed) and one
+  of `keep_to_served_observations`, 2 of the scripts (`promote_generation.sh`'s pre-check,
+  `load_db.sh`'s definer), plus the deploy-script and harness reviews' own 43 and 53.
+- **Results** on the final head: the gates pass (`run-all-checks.sh`, 3,345 unit tests); the
+  import suite 198 passed and 3 skipped; `pr23local` set up again from this branch (its
+  `obs_general` view with no condition, `schema_version` 13, generation 1) and the
+  integration job's run 2,903 passed at 100% coverage. The subagent-written deploy scripts
+  and harness were reviewed and tested here; no deploy script, `load_db.sh`, `dump_db.sh` or
+  `bench_*` command was run for real, and no MySQL view was loaded on a second server.
+- **The measurement, for the orchestrator** (not run here; the section's test-scale design is
+  replaced by the orchestrator's complete-scale one). `S="--side <side> --pr PR-23 --python
+  <side's interpreter> --repo-root <side's checkout>"`:
+  1. the full imports, base and head, as PR-16a's: `python -m benchmarks.bench_import
+     --scale complete $S --session <label> --coordinator 6 --import-key workers=24
+     --import-key cpu_fraction=0.8`, each into `bench_complete_<side>_<label>_1`;
+  2. the web scenarios on each, as for any schema-changing PR: `python -m
+     benchmarks.bench_web --scale complete $S --session <label> --schema <schema>`;
+  3. the update into the head's schema, the server started first (`python -m
+     benchmarks.bench_server start`; the command refuses a stopped server): `python -m
+     benchmarks.bench_generation --scale complete $S --session <label> --schema <schema>
+     (--bundles <descriptors> | --incremental-group <scale>) [--drop <descriptors>]
+     --stop-before-switch`, recording `import.generation.{begin,import,delete,finalize,
+     validate,write_schema_version}.wall_s` and their sum, the target,
+     `import.generation.update.wall_s`;
+  4. `bench_web` while it imports, in another process: `python -m benchmarks.bench_web
+     --scale complete $S --session <label> --schema <schema> --app-cold-only --runs 1`
+     (the db-cold pass would restart the server under the update), against an idle session
+     with `--app-cold-only` too; its latencies are the comparison, its counters include the
+     update's statements;
+  5. after `bench_web` ends, `python -m benchmarks.bench_generation ... --switch-only`:
+     `import.generation.switch.wall_s`, the service's downtime, and
+     `import.generation.purge.wall_s`. The switch refuses while anything listens on the
+     harness's gunicorn or memcached port.
