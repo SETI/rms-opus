@@ -8554,3 +8554,86 @@ Nothing above this line is rewritten by an executor.
      `import.generation.switch.wall_s`, the service's downtime, and
      `import.generation.purge.wall_s`. The switch refuses while anything listens on the
      harness's gunicorn or memcached port.
+- **The review (2026-11-15).** An independent read-only review found five defects, each
+  fixed on this branch with its tests:
+  - an abandon, or a write into the pending generation, after a switch that stopped part
+    way, and a purge after a revert that stopped part way, are refused
+    (`unfinished_switch_problem`), and a revert of a part-way switch runs its steps in
+    reverse;
+  - `--validate` reads the pending generation's `param_info__new`;
+  - `register_writer` reads the generation again under its lock, and `set_pending_state`
+    fails on a lost state;
+  - the second server's copy is purged before it is promoted.
+
+  Also fixed:
+  - the view's re-creation waits for locks only as long as the swap's rename does;
+  - the abandon restores the retired rows by primary key after one scan;
+  - the update installs the deployed release unless given a specifier;
+  - every rebuild after the stamp sets the generation back to `writing`;
+  - a refused generation command exits with status 3, and `promote_generation.sh` tells a
+    refusal from a part-way step.
+
+  Two races remain:
+  - a writer that started before an abandon passes the check of a new begin that reuses
+    the generation's number;
+  - a begin can start under a plain writer, which is not registered.
+
+  The product types' tie order was left: their `ORDER BY` names every selected column.
+- **The measurement (2026-11-15), complete scale**, the orchestrator's.
+  - **Full imports**, 6 importers × 4 workers, `--session full6x4`:
+    | | wall-clock | bundle imports | finalization | registration |
+    |---|---|---|---|---|
+    | base (PR-22, 0f3a81f1) | 3,145.6 s | 1,482 s | 1,515 s | 145 s |
+    | head (febe305e) | 3,123.7 s | 1,472 s | 1,506 s | 142 s |
+
+    Where the runs differ:
+    - The head's run was OOM-killed at 19 minutes inside the capped scope (about 33.6 GB),
+      which holds the owned mysqld's 18 GB pool and the 24 workers together, and was rerun
+      in a 48 GB scope.
+    - The base ran in the capped scope; its first attempt was killed the same way.
+    - One run a side, not the three §2.3 asks for a target with no floor: the update's
+      difference from a full import is several times the import's spread (PR-22's own
+      head imported in 3,350.9 s).
+  - **The web guards, the view's cost**: `bench_web`, both sides alternated three times
+    (`--session web`), and the head's runs repeated on 4c2f1d83 (`--session web2`).
+    - Every guard held except the bundle-ID autocomplete, judged app-cold, from every
+      observation, since the empty search exceeds the count threshold.
+    - On febe305e it took 334 ms against 36 ms, about 9 times slower.
+      - `bundle_id` is `obs_pds`'s column.
+      - The join to the view cost the loose index scan of the column's key.
+      - The autocomplete's full branch therefore takes no join: it suggests every stored
+        value, as the mult choices list theirs.
+    - On 4c2f1d83 it took 52 ms against 36 ms, which `compare` still calls a regression.
+      - The statement is the base's: identical text, plan ("Using index for group-by") and
+        time (both 0.00–0.03 s).
+      - The difference is a second cold worker. In the head's runs the request's two
+        prefixes reached two workers: 2 connections and 37 statements, against 1
+        connection and 27 statements for the base.
+      - Other scenarios move the same way in both directions: `fanout.selected` went from 3
+        connections to 2 (108 statements to 92), `pages.empty` from 2 to 1 (62 to 55).
+      - Held on that reading.
+    - The searches' app-cold medians are 15–30% lower on the head (`search.empty` 5.23 s
+      against 4.34 s). This is not explained, and no improvement is claimed.
+  - **The update**, `bench_generation` into the head's schema, on 4c2f1d83:
+    | | update | of it: import | finalize | validate | switch | purge |
+    |---|---|---|---|---|---|---|
+    | `gen3`: the test scale's incremental group, `NHPELO_1001` | 216.2 s | 80.9 s | 11.9 s | 121.4 s | 1.8 s | 21.5 s |
+    | `gen2`: `COISS_2111,COUVIS_0002,COVIMS_0006,GO_0017,VGISS_8201,NHPELO_1001`, `HSTJ0_9975` dropped | 455.6 s | 193.6 s | 12.6 s | 246.1 s | 0.9 s | 33.2 s |
+
+    Reading the table:
+    - `begin` and `write_schema_version` took 0.5 s and 1.4–1.5 s; `gen2`'s `delete`,
+      1.4 s.
+    - Update, switch and purge sum to 239.4 s and 490.6 s, against the full import's
+      3,123.7 s: 13.0 and 6.4 times faster. The service is down only for the switch.
+    - The validation, which reads the whole schema, is half of each update; scoping it to
+      the pending generation is the obvious next gain.
+    - `gen1` repeated `gen3`, but was disturbed by probes against the server and is not
+      used.
+  - **The site while the update imports.** `genweb3` was `bench_web --app-cold-only`
+    beside `gen3`, against an idle `idleweb3`, one run each. The update overlapped only the
+    first 3.6 of the session's 5.8 minutes.
+    - The heavy scenarios were 0–10% slower: `search.empty` +1.9%, `fanout.empty` +6.2%,
+      `files.broad` +10.1%, `concurrency` p95 −0.6% and −2.3%.
+    - The small ones scattered both ways, by up to +128% on a 0.04 s page.
+  - **Kept**: the full import is unchanged, the view costs no guard, and an update is
+    several times faster than the full import it replaces.
