@@ -9,6 +9,7 @@ holds the version row.
 from __future__ import annotations
 
 import contextlib
+import re
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -230,8 +231,15 @@ class _StateDB:
         return [tuple(self.row[column] for column in columns)]
 
     def update_row(self, table: str, row: dict[str, Any], where: str, params: Any = None) -> int:
-        """Write the version row, recording the columns written."""
+        """Write the version row when it meets a condition on one column, recording the
+        columns written, and return how many rows matched."""
         assert self.row is not None
+        equal = re.fullmatch(r'`(\w+)`=%s', where)
+        null = re.fullmatch(r'`(\w+)` IS NULL', where)
+        if equal is not None and self.row[equal.group(1)] != params[0]:
+            return 0
+        if null is not None and self.row[null.group(1)] is not None:
+            return 0
         self.row.update(row)
         self.events.append(f'update {sorted(row)}')
         return 1
@@ -349,6 +357,76 @@ def test_a_writer_is_refused_while_a_command_holds_the_lock() -> None:
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_WRITING), lock_free=False)
     with pytest.raises(do_generation.GenerationRefusedError, match='holds'):
         do_generation.register_writer(_context(db))
+
+
+@pytest.mark.parametrize(
+    'now',
+    [
+        _ready(generation=2, revertible=1),
+        _ready(),
+        _ready(generation=2, pending_generation=3, pending_state=PENDING_WRITING),
+    ],
+    ids=['switched', 'abandoned', 'switched-and-begun'],
+)
+def test_a_writer_is_refused_when_its_generation_changed_before_the_lock(
+    now: tuple[Any, ...],
+) -> None:
+    """The row it started by is read again under the lock, and nothing registers."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_WRITING))
+    ctx = _context(db)
+    db.row = dict(zip(generations.STATE_COLUMNS, now, strict=True))
+    with pytest.raises(do_generation.GenerationRefusedError, match='no longer pending'):
+        do_generation.register_writer(ctx)
+    assert db.events == ['lock', 'unlock']
+
+
+def test_a_writer_registers_under_the_lock_with_the_row_read_again(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The row read under the lock replaces the one read as the invocation started."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_WRITING))
+    ctx = _context(db)
+    assert db.row is not None
+    db.row['pending_state'] = PENDING_FINALIZED
+    importer = object()
+    opened: list[object] = []
+
+    def start_importer(lock_db: object, log_path: str) -> object:
+        """Record the connection the row is taken on."""
+        opened.append(lock_db)
+        return importer
+
+    def open_sibling_connection() -> _StateDB:
+        """Return the stand-in itself."""
+        return db
+
+    monkeypatch.setattr(do_generation.import_processes, 'create_process_table', lambda db: None)
+    monkeypatch.setattr(do_generation.import_processes, 'start_importer', start_importer)
+    monkeypatch.setattr(db, 'open_sibling_connection', open_sibling_connection, raising=False)
+    assert do_generation.register_writer(ctx) is importer
+    assert opened == [db]
+    assert ctx.generation_state is not None
+    assert ctx.generation_state.pending_state == PENDING_FINALIZED
+    assert db.events == ['lock', 'unlock']
+
+
+def test_a_pending_state_with_no_pending_generation_to_hold_it_fails_loudly() -> None:
+    """A generation switched in or abandoned under a writer is not silently re-marked."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_WRITING))
+    ctx = _context(db)
+    db.row = dict(zip(generations.STATE_COLUMNS, _ready(generation=2, revertible=1), strict=True))
+    with pytest.raises(do_generation.GenerationLostError, match='no longer pending'):
+        do_generation.set_pending_state(ctx, PENDING_FINALIZED)
+    assert db.row['pending_state'] is None
+
+
+def test_a_read_only_run_records_no_pending_state_and_does_not_fail() -> None:
+    """A read-only run executes nothing, so no row matches."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_WRITING))
+    ctx = _context(db)
+    db.read_only = True
+    db.row = dict(zip(generations.STATE_COLUMNS, _ready(), strict=True))
+    do_generation.set_pending_state(ctx, PENDING_FINALIZED)
 
 
 @pytest.fixture

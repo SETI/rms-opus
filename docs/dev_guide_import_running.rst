@@ -541,12 +541,15 @@ process, in order:
        reverted one pending and ``ready``, to abandon or to switch again. It also undoes
        a switch that stopped part way.
 
-The five generation commands hold a server-wide named lock on the schema while they run,
-and each is refused while another holds it. Every invocation that writes the pending
-generation records itself in ``import_process`` with a lock of its own, and a generation
-command is refused while any of them runs. ``schema_version.pending_state`` records how
-far the pending generation has got: ``writing`` again whenever anything writes it, so a
-generation written after its stamp is never switched in.
+Each generation command holds a server-wide named lock on the schema while it runs, and
+is refused while another holds it. Every invocation that writes the pending generation
+records itself in ``import_process`` with a lock of its own, while briefly holding the
+generation lock, and a generation command is refused while any of them runs. It reads the
+version row again under that lock, and is refused when a generation command has switched
+in or abandoned the generation since it started; a pending state it then cannot record,
+the generation being gone, fails the invocation. ``schema_version.pending_state`` records
+how far the pending generation has got: ``writing`` again whenever anything writes it, so
+a generation written after its stamp is never switched in.
 
 ``run_incremental_opus_update.sh`` runs the first six invocations against the served
 schema, and ``promote_generation.sh`` runs the switch

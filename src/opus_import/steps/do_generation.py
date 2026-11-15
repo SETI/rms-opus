@@ -100,6 +100,11 @@ class GenerationRefusedError(Exception):
     changes anything; the message says why."""
 
 
+class GenerationLostError(Exception):
+    """The pending generation an invocation was writing stopped being pending under it;
+    the message names it."""
+
+
 def read_generation_state(db: ImportDBSuper) -> GenerationState | None:
     """Return the schema's one version row, or None when it has none or several.
 
@@ -150,17 +155,28 @@ def set_pending_state(ctx: ImportContext, pending_state: str) -> None:
     Parameters:
         ctx: The import run's context, for the open database and the pending generation.
         pending_state: One of the ``generations.PENDING_`` constants.
+
+    Raises:
+        GenerationLostError: If the generation is no longer pending, so there is no row
+            to record it in.
     """
     db = ctx.db
     pending = ctx.pending_generation
     assert db is not None
     assert pending is not None
-    db.update_row(
+    matched = db.update_row(
         SCHEMA_VERSION_TABLE,
         {PENDING_STATE_COLUMN: pending_state},
         f'{db.quote_identifier(PENDING_GENERATION_COLUMN)}=%s',
         [pending],
     )
+    # A read-only run executes nothing and matches no row.
+    if matched == 0 and not db.read_only:
+        raise GenerationLostError(
+            f'Generation {pending} is no longer pending, so it cannot be marked '
+            f'{pending_state}: a generation command switched it in or abandoned it while '
+            'this invocation ran'
+        )
     import_util.log_info(ctx, f'Generation {pending} is {pending_state}')
 
 
@@ -233,18 +249,23 @@ def register_writer(ctx: ImportContext) -> import_processes.ImporterLock:
 
     The row and its liveness lock are taken on a connection of their own while briefly
     holding the generation lock, so no generation command starts between this
-    invocation's check and its registration.
+    invocation's check and its registration. The version row is read again under the
+    lock: the invocation chose its path by the row it read as it started, and a switch or
+    an abandon may have run since.
 
     Parameters:
-        ctx: The import run's context, for the open database and the log's path.
+        ctx: The import run's context, for the open database and the log's path, and the
+            version row it read as it started (`ImportContext.generation_state`), which
+            is replaced by the one read under the lock.
 
     Returns:
         The invocation's row and lock, which it frees when it ends
         (`opus_import.import_processes.ImporterLock.exit`).
 
     Raises:
-        GenerationRefusedError: If a generation command holds the generation lock, or a
-            switch of the pending generation stopped part way.
+        GenerationRefusedError: If a generation command holds the generation lock, the
+            generation the invocation started to write is no longer the pending one, or
+            a switch of it stopped part way.
     """
     db = ctx.db
     assert db is not None
@@ -255,7 +276,19 @@ def register_writer(ctx: ImportContext) -> import_processes.ImporterLock:
             'writes its pending generation until it ends'
         )
     try:
+        started = ctx.generation_state
         state = _require_state(ctx)
+        if started is None or (state.generation, state.pending) != (
+            started.generation,
+            started.pending,
+        ):
+            now = 'none' if state.pending is None else f'generation {state.pending}'
+            raise GenerationRefusedError(
+                f'Generation {ctx.pending_generation} is no longer pending: generation '
+                f'{state.generation} is served and {now} is pending, since a generation '
+                'command ran while this invocation started; run it again'
+            )
+        ctx.generation_state = state
         unfinished = unfinished_switch_problem(db, state)
         if unfinished is not None:
             raise GenerationRefusedError(
