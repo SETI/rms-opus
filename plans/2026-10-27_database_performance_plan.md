@@ -8594,12 +8594,14 @@ Nothing above this line is rewritten by an executor.
     advising an abandon.
   - Left: `promote_generation.sh --revert` of a ready generation never switched still
     stops the site and resets the searches, harmlessly.
-- **The measurement (2026-11-15), complete scale**, the orchestrator's.
+- **The measurement (2026-11-15), complete scale**, the orchestrator's. The harness's
+  result files name these commits by their hashes before a rewrite of the branch's
+  messages: b6183a9c was febe305e, fdd16322 was 4c2f1d83.
   - **Full imports**, 6 importers × 4 workers, `--session full6x4`:
     | | wall-clock | bundle imports | finalization | registration |
     |---|---|---|---|---|
     | base (PR-22, 0f3a81f1) | 3,145.6 s | 1,482 s | 1,515 s | 145 s |
-    | head (febe305e) | 3,123.7 s | 1,472 s | 1,506 s | 142 s |
+    | head (b6183a9c) | 3,123.7 s | 1,472 s | 1,506 s | 142 s |
 
     Where the runs differ:
     - The head's run was OOM-killed at 19 minutes inside the capped scope (about 33.6 GB),
@@ -8610,15 +8612,15 @@ Nothing above this line is rewritten by an executor.
       difference from a full import is several times the import's spread (PR-22's own
       head imported in 3,350.9 s).
   - **The web guards, the view's cost**: `bench_web`, both sides alternated three times
-    (`--session web`), and the head's runs repeated on 4c2f1d83 (`--session web2`).
+    (`--session web`), and the head's runs repeated on fdd16322 (`--session web2`).
     - Every guard held except the bundle-ID autocomplete, judged app-cold, from every
       observation, since the empty search exceeds the count threshold.
-    - On febe305e it took 334 ms against 36 ms, about 9 times slower.
+    - On b6183a9c it took 334 ms against 36 ms, about 9 times slower.
       - `bundle_id` is `obs_pds`'s column.
       - The join to the view cost the loose index scan of the column's key.
       - The autocomplete's full branch therefore takes no join: it suggests every stored
         value, as the mult choices list theirs.
-    - On 4c2f1d83 it took 52 ms against 36 ms, which `compare` still calls a regression.
+    - On fdd16322 it took 52 ms against 36 ms, which `compare` still calls a regression.
       - The statement is the base's: identical text, plan ("Using index for group-by") and
         time (both 0.00–0.03 s).
       - The difference is a second cold worker. In the head's runs the request's two
@@ -8629,7 +8631,7 @@ Nothing above this line is rewritten by an executor.
       - Held on that reading.
     - The searches' app-cold medians are 15–30% lower on the head (`search.empty` 5.23 s
       against 4.34 s). This is not explained, and no improvement is claimed.
-  - **The update**, `bench_generation` into the head's schema, on 4c2f1d83:
+  - **The update**, `bench_generation` into the head's schema, on fdd16322:
     | | update | of it: import | finalize | validate | switch | purge |
     |---|---|---|---|---|---|---|
     | `gen3`: the test scale's incremental group, `NHPELO_1001` | 216.2 s | 80.9 s | 11.9 s | 121.4 s | 1.8 s | 21.5 s |
