@@ -1339,9 +1339,15 @@ class _JunctionDB:
         return list(self.tables)
 
     def list_junction_mismatches(
-        self, table_name: str, column: str, junction: str, observation_column: str
+        self,
+        table_name: str,
+        column: str,
+        junction: str,
+        observation_column: str,
+        first_id: int | None = None,
     ) -> tuple[int, int | None]:
         """Record the comparison and return its count and first observation."""
+        assert first_id is None
         self.compared.append((table_name, column, junction, observation_column))
         return self.mismatches.get(junction, (0, None))
 

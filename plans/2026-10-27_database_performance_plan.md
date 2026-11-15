@@ -8687,3 +8687,23 @@ Nothing above this line is rewritten by an executor.
     under); `create_table` re-creating the view (a connection reaching it on a schema
     with a version row has read the table list again at its start and at registration).
   - Results: the gates pass; the import suite 203 passed and 3 skipped.
+- **`--validate` with a generation pending checks what the update wrote**, not the whole
+  schema (`do_validate.GenerationScope`). Its first id is the end of every range an earlier
+  generation registered, retired ones included (`bundle_registry.end_before_generation`):
+  every range of the pending generation starts there, one it registered and then dropped
+  included, and no served row's id is that high; `added_generation`, which has no key, is
+  only a residual test.
+  - The min/max, `obs_pds` bundle and preview checks read the generation's observations by
+    `obs_general_rows`' primary key, and their child rows by each table's `obs_general_id`
+    key; the junction comparison takes the first id.
+  - The orphan count reads child rows from the first id up by their own `obs_general_id`,
+    still against every `obs_general_rows` row: an orphan has no observation to select it
+    by, an update deletes only its own observations, and the served rows it hides are
+    retired with their children kept. This replaces the section's "the orphan counts read
+    every row".
+  - The filter check compares the filters the generation's observations carry, across
+    every observation the generation shows, so a bundle that disagrees with served rows is
+    still reported. The NULL check is skipped and says so, since it describes the schema.
+    `param_info` and the unique-OPUS-ID check are unchanged.
+  - `EXPLAIN` on `pr23local`, with a first id leaving 1% of the rows in scope, shows a range
+    on a primary key or an `obs_general_id` key, then `eq_ref`, for every per-row statement.

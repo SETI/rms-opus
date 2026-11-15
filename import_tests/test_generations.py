@@ -23,6 +23,8 @@ from opus_import.import_processes import HOLD_AFTER_CHUNK_FAULT_SITE
 from opus_import.steps import do_generation
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from import_tests.tools.golden_io import DatabaseCredentials
 
 #: The cart session the cases plant a row for.
@@ -527,3 +529,227 @@ def test_the_closing_invocations_write_the_pending_generation_alone(
     assert refused.returncode != 0
     assert '--write-schema-version run alone' in refused.stdout
     assert _state(db_credentials, copy.schema)[4] == generations.PENDING_WRITING
+
+
+#: The bundle an ``obs_pds`` row is given in a planted defect, which no import writes.
+_PLANTED_BUNDLE = 'PLANTED_BY_THE_VALIDATION_TEST'
+
+#: The wavelength a planted filter disagreement records: below any real one, so it is the
+#: least of its group's values whichever way they compare.
+_PLANTED_WAVELENGTH = -1
+
+
+def _log_since(path: Path, start: int) -> str:
+    """Return what a log has gained since it held `start` characters."""
+    return path.read_text(encoding='utf-8')[start:] if path.exists() else ''
+
+
+def _log_size(path: Path) -> int:
+    """Return how many characters a log holds."""
+    return len(path.read_text(encoding='utf-8')) if path.exists() else 0
+
+
+def _observation(
+    credentials: DatabaseCredentials, schema: str, condition: str, values: list[Any]
+) -> tuple[int, str]:
+    """Return the id and OPUS ID of the first observation a condition selects that has both
+    times and a target name."""
+    (obs_id, opus_id) = golden_io.query(
+        credentials,
+        schema,
+        'SELECT id, opus_id FROM obs_general_rows WHERE time2 IS NOT NULL AND '  # nosec B608
+        f'JSON_LENGTH(target_name) > 0 AND {condition} ORDER BY id LIMIT 1',
+        values,
+    )[0]
+    return int(obs_id), str(opus_id)
+
+
+def _plant_row_defects(credentials: DatabaseCredentials, schema: str, obs_id: int) -> None:
+    """Give an observation a defect for each per-row check: its times out of order, no
+    ``obs_preview`` row, another bundle in ``obs_pds`` and no junction row for its target
+    names."""
+    for statement, values in (
+        ('UPDATE obs_general_rows SET time1 = time2 + 1 WHERE id = %s', [obs_id]),
+        ('DELETE FROM obs_preview WHERE obs_general_id = %s', [obs_id]),
+        ('UPDATE obs_pds SET bundle_id = %s WHERE obs_general_id = %s', [_PLANTED_BUNDLE, obs_id]),
+        ('DELETE FROM obs_general_target_name WHERE obs_general_id = %s', [obs_id]),
+    ):
+        golden_io.execute(credentials, schema, statement, values)
+
+
+def _plant_orphan(
+    credentials: DatabaseCredentials, schema: str, source_id: int, orphan_id: int
+) -> None:
+    """Copy an observation's ``obs_wavelength`` row to an id no observation has, as a delete
+    that left its child rows behind would."""
+    columns = [
+        name for name, _type in golden_io.table_columns(credentials, schema, 'obs_wavelength')
+    ]
+    listed = ', '.join(f'`{name}`' for name in columns)
+    selected = ', '.join('%s' if name == 'obs_general_id' else f'`{name}`' for name in columns)
+    connection = golden_io.connect(credentials, schema)
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SET foreign_key_checks = 0')
+        cursor.execute(
+            f'INSERT INTO obs_wavelength ({listed}) SELECT {selected} '  # nosec B608
+            'FROM obs_wavelength WHERE obs_general_id = %s',
+            [orphan_id, source_id],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+
+def _plant_wavelength(credentials: DatabaseCredentials, schema: str, obs_id: int) -> None:
+    """Make an observation's first wavelength disagree with its filter's."""
+    golden_io.execute(
+        credentials,
+        schema,
+        'UPDATE obs_wavelength SET wavelength1 = %s WHERE obs_general_id = %s',
+        [_PLANTED_WAVELENGTH, obs_id],
+    )
+
+
+def _hubble_bundles(credentials: DatabaseCredentials, schema: str) -> tuple[str, str, str]:
+    """Return the first two bundles of Hubble observations, and a filter of the second."""
+    (first, _filter), (second, filter_name) = golden_io.query(
+        credentials,
+        schema,
+        'SELECT g.bundle_id, MIN(h.filter_name) FROM obs_mission_hubble h '
+        'JOIN obs_general_rows g ON g.id = h.obs_general_id WHERE h.filter_name IS NOT NULL '
+        'GROUP BY g.bundle_id ORDER BY g.bundle_id LIMIT 2',
+    )
+    return str(first), str(second), str(filter_name)
+
+
+def _plant_filter(
+    credentials: DatabaseCredentials, schema: str, generation: int, filter_name: str
+) -> None:
+    """Give a generation's first Hubble observation a filter and a wavelength of its own,
+    as a bundle that disagrees with the served observations of the filter would."""
+    (obs_id,) = golden_io.query(
+        credentials,
+        schema,
+        'SELECT h.obs_general_id FROM obs_mission_hubble h '
+        'JOIN obs_general_rows g ON g.id = h.obs_general_id '
+        'WHERE g.added_generation = %s ORDER BY h.obs_general_id LIMIT 1',
+        [generation],
+    )[0]
+    golden_io.execute(
+        credentials,
+        schema,
+        'UPDATE obs_mission_hubble SET filter_name = %s WHERE obs_general_id = %s',
+        [filter_name, obs_id],
+    )
+    _plant_wavelength(credentials, schema, int(obs_id))
+
+
+def _served_filter_of_its_own(
+    credentials: DatabaseCredentials, schema: str, leaving_out: tuple[str, str]
+) -> tuple[int, str]:
+    """Return a Voyager ISS observation outside two bundles whose filter another observation
+    shares, and the filter."""
+    (obs_id, filter_name) = golden_io.query(
+        credentials,
+        schema,
+        'SELECT c.obs_general_id, c.filter_name FROM obs_instrument_vgiss c '
+        'JOIN obs_general_rows g ON g.id = c.obs_general_id '
+        'WHERE g.bundle_id NOT IN (%s, %s) AND c.filter_name IN ('
+        'SELECT filter_name FROM obs_instrument_vgiss GROUP BY filter_name '
+        'HAVING COUNT(*) > 1) ORDER BY c.obs_general_id LIMIT 1',
+        list(leaving_out),
+    )[0]
+    return int(obs_id), str(filter_name)
+
+
+def _range_ends(credentials: DatabaseCredentials, schema: str) -> tuple[int, int]:
+    """Return the first id after every registered range, and the last id of the first
+    served range, which its bundle leaves unused."""
+    (after,) = golden_io.query(
+        credentials, schema, 'SELECT MAX(first_id + id_capacity) FROM import_bundle'
+    )[0]
+    (unused,) = golden_io.query(
+        credentials,
+        schema,
+        'SELECT first_id + id_capacity - 1 FROM import_bundle WHERE generation = 1 '
+        'AND retired_generation IS NULL ORDER BY first_id LIMIT 1',
+    )[0]
+    taken = golden_io.query(
+        credentials, schema, 'SELECT COUNT(*) FROM obs_general_rows WHERE id = %s', [unused]
+    )
+    assert int(taken[0][0]) == 0
+    return int(after), int(unused)
+
+
+def test_a_pending_generation_is_validated_by_what_the_update_wrote(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """Defects planted in the pending generation's rows are reported and those planted in
+    served rows are not, though the generation's observations of a filter are compared with
+    the served ones; once the generation is abandoned, the whole schema's check reports the
+    served defects."""
+    reimported, served_bundle, served_filter = _hubble_bundles(db_credentials, main_run.schema)
+    dropped = _drop_bundle(main_run, reimported)
+    assert dropped != served_bundle
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'validate')
+    schema = copy.schema
+    _ok(copy.step('--begin-generation'))
+    _ok(copy.step(*build_run.IMPORT_ARGS, reimported))
+    _ok(copy.step('--delete-bundles', dropped))
+    _ok(copy.step(*build_run.AUX_ARGS))
+
+    pending_id, pending_opus_id = _observation(db_credentials, schema, 'added_generation = %s', [2])
+    served_id, served_opus_id = _observation(
+        db_credentials,
+        schema,
+        'added_generation = 1 AND removed_generation IS NULL AND bundle_id NOT IN (%s, %s)',
+        [reimported, dropped],
+    )
+    _plant_row_defects(db_credentials, schema, pending_id)
+    _plant_row_defects(db_credentials, schema, served_id)
+    # An orphan past every range the generation registered stands for one a bundle it
+    # imported and then dropped left behind: that range's registry row is gone.
+    after_ranges, unused = _range_ends(db_credentials, schema)
+    _plant_orphan(db_credentials, schema, pending_id, after_ranges)
+    _plant_orphan(db_credentials, schema, served_id, unused)
+    _plant_filter(db_credentials, schema, 2, served_filter)
+    own_id, own_filter = _served_filter_of_its_own(db_credentials, schema, (reimported, dropped))
+    _plant_wavelength(db_credentials, schema, own_id)
+
+    errors_log, warnings_log = copy.paths.errors_log, copy.paths.warnings_log
+    errors_start, warnings_start = _log_size(errors_log), _log_size(warnings_log)
+    assert copy.step(*build_run.VALIDATE_ARGS).returncode != 0
+    errors = _log_since(errors_log, errors_start)
+    warnings = _log_since(warnings_log, warnings_start)
+    assert _state(db_credentials, schema)[4] == generations.PENDING_FINALIZED
+    assert f'first 100: {pending_opus_id}' in errors
+    assert served_opus_id not in errors
+    assert '1 obs_general rows have no obs_preview row' in errors
+    assert 'Table "obs_pds" has 1 rows whose bundle_id differs' in errors
+    assert 'Table "obs_wavelength" has 1 rows whose obs_general row is missing' in errors
+    assert (
+        'disagrees with obs_general.target_name for 1 observations, the first with '
+        f'obs_general id {pending_id}'
+    ) in errors
+    # The generation's observation of a served filter is compared with the served ones.
+    assert f'obs_mission_hubble filter "{served_filter}": {_PLANTED_WAVELENGTH} and' in warnings
+    assert f'obs_instrument_vgiss filter "{own_filter}"' not in warnings
+
+    # With no generation pending, every row is checked.
+    _ok(copy.step('--abandon-generation'))
+    errors_start, warnings_start = _log_size(errors_log), _log_size(warnings_log)
+    assert copy.step(*build_run.VALIDATE_ARGS).returncode != 0
+    errors = _log_since(errors_log, errors_start)
+    warnings = _log_since(warnings_log, warnings_start)
+    assert f'first 100: {served_opus_id}' in errors
+    assert '1 obs_general rows have no obs_preview row' in errors
+    assert 'Table "obs_pds" has 1 rows whose bundle_id differs' in errors
+    assert 'Table "obs_wavelength" has 2 rows whose obs_general row is missing' in errors
+    assert (
+        'disagrees with obs_general.target_name for 1 observations, the first with '
+        f'obs_general id {served_id}'
+    ) in errors
+    assert f'obs_instrument_vgiss filter "{own_filter}": {_PLANTED_WAVELENGTH} and' in warnings

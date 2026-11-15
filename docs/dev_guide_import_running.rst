@@ -512,9 +512,13 @@ process, in order:
        into their ``__new`` tables and left there. The mult step, the cart and the search
        tables' reset do not run. The generation is ``finalized`` once every step succeeds.
    * - ``--validate``
-     - Refused unless the generation is ``finalized`` or ``validated``; checks the
-       generation's rows against ``param_info__new``, the description finalization built
-       for the switch to serve, and marks it ``validated`` when every check passes.
+     - Refused unless the generation is ``finalized`` or ``validated``. It checks what the
+       update wrote rather than the whole schema: the observations the generation added
+       and their rows, and the filters they carry against every observation the
+       generation shows. It reads ``param_info__new``, the description finalization built
+       for the switch to serve, and skips the check for nullable columns that hold no
+       NULL (:ref:`dev_guide_import_steps_do_validate`). It marks the generation
+       ``validated`` when every check passes.
    * - ``--write-schema-version``
      - Refused unless the generation is ``validated``; marks it ``ready`` to switch.
    * - ``--switch-generation``

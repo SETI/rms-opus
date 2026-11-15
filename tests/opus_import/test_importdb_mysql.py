@@ -1679,3 +1679,32 @@ def test_a_junction_table_that_agrees_has_no_first_observation() -> None:
     """No disagreement gives a count of 0 and no id."""
     db = _ComparingDB((0, None))
     assert db.list_junction_mismatches('obs_general', 'target_class', 'j', 'id') == (0, None)
+
+
+class _ScopedComparingDB(_ComparingDB):
+    """A comparing database that records the values each select binds."""
+
+    def __init__(self, row: tuple[Any, Any]) -> None:
+        """Hold the row every select returns, and record the values."""
+        super().__init__(row)
+        self.values: list[Any] = []
+
+    def general_select(self, cmd: str, param_list: Any = None) -> list[tuple[Any, Any]]:
+        """Record the statement and its values, and return the row."""
+        self.selects.append(cmd)
+        self.values.append(param_list)
+        return [self.row]
+
+
+def test_the_junction_comparison_from_a_first_id_reads_each_tables_range() -> None:
+    """Both anti-joins start their table at the first id, by its observation column."""
+    db = _ScopedComparingDB((0, None))
+    found = db.list_junction_mismatches(
+        'obs_instrument_x', 'modes', 'obs_instrument_x_modes', 'obs_general_id', 1500
+    )
+    assert found == (0, None)
+    (cmd,) = db.selects
+    assert db.values == [[1500, 1500]]
+    assert 'WHERE `t`.`obs_general_id` >= %s AND NOT EXISTS (SELECT 1 FROM' in cmd
+    assert 'WHERE `x`.`obs_general_id` >= %s AND NOT EXISTS (SELECT 1 FROM' in cmd
+    assert cmd.count('%s') == 2

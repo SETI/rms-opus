@@ -244,6 +244,32 @@ def registered_ranges(db: ImportDBSuper, *, include_retired: bool = False) -> li
     return [_range(row) for row in db.read_rows(BUNDLE_REGISTRY_TABLE, _RANGE_COLUMNS, order)]
 
 
+def end_before_generation(db: ImportDBSuper, generation: int) -> int:
+    """Return the first id after every range a generation before the given one registered.
+
+    Registration lays a new range out after every row's, retired rows included, and only
+    a row of the generation itself is deleted while it is pending, so every range the
+    generation registers starts at or after this id, and every range before it ends at or
+    before it.
+
+    Parameters:
+        db: The open database.
+        generation: The generation.
+
+    Returns:
+        The end of the last of those ranges, retired ones included; 0 when there is none
+        or the registry is absent.
+    """
+    return max(
+        (
+            row.end
+            for row in registered_ranges(db, include_retired=True)
+            if row.generation < generation
+        ),
+        default=0,
+    )
+
+
 def _range(row: Sequence[object]) -> BundleRange:
     """Return a `BundleRange` from a row of `_RANGE_COLUMNS`."""
     number, bundle_id, size_estimate, first_id, capacity, state, started_at, generation = row
