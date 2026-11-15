@@ -8654,3 +8654,36 @@ Nothing above this line is rewritten by an executor.
     - The small ones scattered both ways, by up to +128% on a 0.04 s page.
   - **Kept**: the full import is unchanged, the view costs no guard, and an update is
     several times faster than the full import it replaces.
+- **CodeRabbit's review (2026-11-15)**, of 65be837f. Fixed, each with tests, the important
+  ones mutation-checked:
+  - Every invocation that writes a schema with a version row registers in
+    `import_process` (`cli._WRITERS`, `cli._registers_writer`), the served rows' writers
+    too, so the second race above is closed: a begin is refused while a plain append runs,
+    and an append that started before a begin is refused at registration. An erase and a
+    read-only run register nothing; a schema with no version row is never begun on. A
+    registered `--join` importer imports under its writer's row, so it has one
+    `import_process` row, in a pending generation too.
+  - `--finalize`, `--validate` and `--write-schema-version` write a pending generation as
+    its sole writer (`register_writer(sole=True)`): refused while any other registered
+    invocation is alive, and holding `generation_sole_writer`, a named lock on the row's
+    connection, which refuses every other writer of it. A condition on the state alone
+    would not have done: a writer during `--finalize` writes the same `writing`, and a
+    whole finalization during a validation ends at `finalized` again.
+  - The pending generation is read again after `--scorched-earth`; the import path
+    checks the version and state before the generation path; `read_generation_state`
+    finds no generation in a `schema_version` without the generation columns, and the
+    erase drops an `obs_general` base table of such a schema by its own name (MySQL 8.0
+    only notes a `DROP VIEW IF EXISTS` of a base table, but `DROP TABLE
+    obs_general_rows` failed there).
+  - An abandon marks the generation `writing` first, and deletes the child rows left in
+    the id ranges the generation registered.
+  - The update dumps the served schema under the peer's new name, so an operator's dump
+    of it survives; `load_db.sh` drops only the view's `DEFINER` line's clause; the
+    wrappers quote their paths; `clone_database.sh` stops on a failed step;
+    `create_opus_models.sh` marks the view's `id` as its primary key, checked by
+    regenerating the models against `pr23local`.
+  - Declined: moving the generation options out of `opus_import.cli` (it was past the
+    module-size rule, at 1,028 lines, at PR-22's head, so the move would not bring it
+    under); `create_table` re-creating the view (a connection reaching it on a schema
+    with a version row has read the table list again at its start and at registration).
+  - Results: the gates pass; the import suite 203 passed and 3 skipped.

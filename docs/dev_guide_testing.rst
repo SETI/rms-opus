@@ -93,8 +93,9 @@ variables.
 Only the host, user and password are taken from that file; the schema it names is never
 touched. Each run creates schemas named ``opus_import_test_<pid>`` and drops every one of
 them when the session ends, pass or fail, so nothing is left on the server to clean up.
-The account therefore needs to create and drop schemas, and in them tables and views
-(``obs_general`` is a view).
+The account therefore needs every privilege on the schemas named
+``opus_import_test_%``: it creates and drops them, and in them creates, alters and drops
+tables and views (``obs_general`` is a view), and reads and writes their rows.
 
 There is no third source, and no guessing between the two. With ``OPUS_CONFIG`` pointing
 at ``tests/fixtures/opus_ci.toml`` -- which is what ``scripts/run-all-checks.sh`` sets
