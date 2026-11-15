@@ -257,10 +257,11 @@ def retire_bundle_rows(ctx: ImportContext, bundle_id: str, generation: int) -> i
     """Retire a bundle's observations at a pending generation, which hides them from it.
 
     Every ``obs_general`` row of the bundle that an earlier generation added and none has
-    retired gets ``removed_generation`` set to the pending generation,
-    `ImportDBSuper.transaction_rows` rows to a statement, found through the
-    ``bundle_id`` key. The rows stay until the purge; the served generation goes on
-    showing them.
+    retired gets ``removed_generation`` set to the pending generation. The bundle's rows
+    are walked through the ``bundle_id`` key a range of ids at a time, each range holding
+    at most `ImportDBSuper.transaction_rows` of them (`_bundle_id_ranges`), and each
+    statement reads only its range, so no row is read twice. The rows stay until the
+    purge; the served generation goes on showing them.
 
     Parameters:
         ctx: The import run's context, for the open database.
@@ -274,24 +275,54 @@ def retire_bundle_rows(ctx: ImportContext, bundle_id: str, generation: int) -> i
     assert db is not None
     q = db.quote_identifier
     where = (
-        f'{q("bundle_id")}=%s AND {q(generations.ADDED_GENERATION_COLUMN)} < %s AND '
-        f'{q(generations.REMOVED_GENERATION_COLUMN)} IS NULL LIMIT %s'
+        f'{q("bundle_id")}=%s AND {q("id")} BETWEEN %s AND %s AND '
+        f'{q(generations.ADDED_GENERATION_COLUMN)} < %s AND '
+        f'{q(generations.REMOVED_GENERATION_COLUMN)} IS NULL'
     )
     retired = 0
-    while True:
-        matched = db.retrying(
+    for first_id, last_id in _bundle_id_ranges(db, 'obs_general', bundle_id):
+        retired += db.retrying(
             f'Retiring bundle "{bundle_id}"',
             functools.partial(
                 db.update_row,
                 'obs_general',
                 {generations.REMOVED_GENERATION_COLUMN: generation},
                 where,
-                [bundle_id, generation, db.transaction_rows],
+                [bundle_id, first_id, last_id, generation],
             ),
         )
-        retired += matched
-        if matched < db.transaction_rows:
-            return retired
+    return retired
+
+
+def restore_retired_rows(
+    ctx: ImportContext, obs_general_ids: Sequence[int], generation: int
+) -> None:
+    """Show again observations a pending generation retired, as abandoning it does.
+
+    `ImportDBSuper.transaction_rows` observations to a statement, each found by its
+    primary key, so a statement reads and locks only the rows it changes.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        obs_general_ids: The observations, read from a scan for ``removed_generation``.
+        generation: The pending generation; a row another generation retired is left.
+    """
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    for start in range(0, len(obs_general_ids), db.transaction_rows):
+        chunk = list(obs_general_ids[start : start + db.transaction_rows])
+        placeholders = ','.join(['%s'] * len(chunk))
+        db.retrying(
+            f'Restoring the rows generation {generation} retired',
+            functools.partial(
+                db.update_row,
+                'obs_general',
+                {generations.REMOVED_GENERATION_COLUMN: None},
+                f'{q("id")} IN ({placeholders}) AND {q(generations.REMOVED_GENERATION_COLUMN)}=%s',
+                [*chunk, generation],
+            ),
+        )
 
 
 def delete_observations(ctx: ImportContext, obs_general_ids: Sequence[int]) -> None:

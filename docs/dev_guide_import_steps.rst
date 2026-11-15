@@ -589,9 +589,9 @@ registered itself in ``import_process`` to write the pending generation is alive
 **The retire.** With a pending generation P, the per-bundle delete
 (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) retires the
 bundle's rows of earlier generations, setting ``removed_generation = P`` on the
-``obs_general`` rows an earlier generation added and none retired, a
-``transaction_rows`` chunk at a time through the ``bundle_id`` key
-(:func:`~opus_import.steps.do_import_tables.retire_bundle_rows`). It deletes only the rows
+``obs_general`` rows an earlier generation added and none retired, one range of ids at a
+time, each holding at most ``transaction_rows`` of the bundle's rows and read through the
+``bundle_id`` key (:func:`~opus_import.steps.do_import_tables.retire_bundle_rows`). It deletes only the rows
 P added, which lie in the range P's registration gave the bundle, so a rerun is clean.
 Registration in P retires the bundle's live registry row (``retired_generation = P``) and
 adds a row of its own, with the next number and a range after every existing one.
@@ -650,7 +650,10 @@ and ``ANALYZE``.
 
 **The abandon** deletes the rows P added, clears ``removed_generation = P`` and
 ``retired_generation = P``, deletes P's registry rows, drops the ``__new`` tables and
-clears the pending generation. Rerun after an interruption, it finishes the work.
+clears the pending generation. Neither generation column has a key, so one scan of
+``obs_general_rows`` finds the rows P added and the rows it retired, and each is then
+changed by its primary key, ``transaction_rows`` to a statement. Rerun after an
+interruption, it finishes the work.
 
 .. _dev_guide_import_steps_do_finalize_mult:
 

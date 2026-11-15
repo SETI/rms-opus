@@ -699,6 +699,30 @@ def _observation_ids(ctx: ImportContext, where: str, params: list[object]) -> li
     return [int(row[0]) for row in rows]
 
 
+def _abandoned_ids(ctx: ImportContext, pending: int) -> tuple[list[int], list[int]]:
+    """Return the observations a pending generation added and those it retired, in order.
+
+    Neither generation column has a key, so both are found in one scan of the base table,
+    which reads without locking; the rows are then changed by their primary key.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        pending: The pending generation.
+    """
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    added_column, removed_column = q(ADDED_GENERATION_COLUMN), q(REMOVED_GENERATION_COLUMN)
+    rows = db.general_select(
+        f'{q("id")}, {added_column} FROM {q("obs_general")} '  # nosec B608
+        f'WHERE {added_column}=%s OR {removed_column}=%s ORDER BY {q("id")}',
+        [pending, pending],
+    )
+    added = [int(obs_id) for obs_id, added_in in rows if int(added_in) == pending]
+    retired = [int(obs_id) for obs_id, added_in in rows if int(added_in) != pending]
+    return added, retired
+
+
 def purge_generations(ctx: ImportContext) -> bool:
     """Delete the rows no served generation shows: ``--purge-generations``.
 
@@ -784,21 +808,14 @@ def abandon_generation(ctx: ImportContext) -> None:
         unfinished = unfinished_switch_problem(db, state)
         if unfinished is not None:
             raise GenerationRefusedError(f'--abandon-generation refused: {unfinished}')
-        q = db.quote_identifier
-        ids = _observation_ids(ctx, f'{q(ADDED_GENERATION_COLUMN)}=%s', [pending])
+        added, retired = _abandoned_ids(ctx, pending)
         import_util.log_info(
-            ctx, f'Abandoning generation {pending}: deleting {len(ids)} observations'
+            ctx,
+            f'Abandoning generation {pending}: deleting {len(added)} observations and '
+            f'restoring {len(retired)}',
         )
-        do_import_tables.delete_observations(ctx, ids)
-        while True:
-            matched = db.update_row(
-                'obs_general',
-                {REMOVED_GENERATION_COLUMN: None},
-                f'{q(REMOVED_GENERATION_COLUMN)}=%s LIMIT %s',
-                [pending, db.transaction_rows],
-            )
-            if matched < db.transaction_rows:
-                break
+        do_import_tables.delete_observations(ctx, added)
+        do_import_tables.restore_retired_rows(ctx, retired, pending)
         bundle_registry.delete_generation_copies(ctx, pending)
         bundle_registry.restore_retired_copies(ctx, pending)
         table_swap.drop_swap_leftovers(ctx, AUX_TABLES)

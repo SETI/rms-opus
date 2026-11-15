@@ -241,9 +241,11 @@ def test_the_cart_is_moved_by_opus_id_then_the_rows_left_behind_deleted() -> Non
     assert delete_params == [4, 4]
 
 
-def test_a_bundle_is_retired_a_chunk_at_a_time_through_its_key() -> None:
-    """Only rows an earlier generation added and none retired, transaction_rows at a time."""
+def test_a_bundle_is_retired_a_range_of_ids_at_a_time_through_its_key() -> None:
+    """Only rows an earlier generation added and none retired, each range read once."""
+    selects: list[list[Any]] = []
     updates: list[tuple[str, Any, str, list[Any]]] = []
+    bundle_ids = [[10, 11], [12]]
 
     class _DB:
         transaction_rows = 2
@@ -257,19 +259,70 @@ def test_a_bundle_is_retired_a_chunk_at_a_time_through_its_key() -> None:
         def retrying(description: str, body: Any) -> Any:
             return body()
 
+        @staticmethod
+        def general_select(cmd: str, params: Any = None) -> list[tuple[Any, ...]]:
+            assert cmd.startswith('`id` FROM `obs_general` WHERE `bundle_id`=%s')
+            selects.append(list(params))
+            return [(obs_id,) for obs_id in bundle_ids.pop(0)] if bundle_ids else []
+
         def update_row(self, table: str, row: Any, where: str, params: list[Any]) -> int:
             updates.append((table, row, where, params))
-            return 2 if len(updates) == 1 else 1
+            return params[2] - params[1] + 1
 
     retired = do_import_tables.retire_bundle_rows(make_context(db=_DB()), 'B_1', 5)
     assert retired == 3
-    table, row, where, params = updates[0]
+    assert selects == [['B_1', 2], ['B_1', 11, 2]]
+    assert [params for _table, _row, _where, params in updates] == [
+        ['B_1', 10, 11, 5],
+        ['B_1', 12, 12, 5],
+    ]
+    table, row, where, _params = updates[0]
     assert (table, row) == ('obs_general', {'removed_generation': 5})
     assert where == (
-        '`bundle_id`=%s AND `added_generation` < %s AND `removed_generation` IS NULL LIMIT %s'
+        '`bundle_id`=%s AND `id` BETWEEN %s AND %s AND `added_generation` < %s AND '
+        '`removed_generation` IS NULL'
     )
-    assert params == ['B_1', 5, 2]
-    assert len(updates) == 2
+    assert 'LIMIT' not in where
+
+
+def test_an_abandon_finds_its_rows_in_one_scan_and_restores_them_by_key() -> None:
+    """The rows it added and the rows it retired, apart; the retired back by primary key."""
+    selects: list[tuple[str, Any]] = []
+    updates: list[tuple[dict[str, Any], str, list[Any]]] = []
+
+    class _DB:
+        transaction_rows = 2
+
+        @staticmethod
+        def quote_identifier(name: str) -> str:
+            return f'`{name}`'
+
+        @staticmethod
+        def retrying(description: str, body: Any) -> Any:
+            return body()
+
+        @staticmethod
+        def general_select(cmd: str, params: Any = None) -> list[tuple[Any, ...]]:
+            selects.append((cmd, params))
+            return [(3, 1), (4, 1), (5, 1), (8, 2), (9, 2)]
+
+        @staticmethod
+        def update_row(table: str, row: dict[str, Any], where: str, params: list[Any]) -> int:
+            assert table == 'obs_general'
+            updates.append((row, where, params))
+            return len(params) - 1
+
+    ctx = make_context(db=_DB())
+    added, retired = do_generation._abandoned_ids(ctx, 2)
+    assert (added, retired) == ([8, 9], [3, 4, 5])
+    ((cmd, params),) = selects
+    assert 'WHERE `added_generation`=%s OR `removed_generation`=%s' in cmd
+    assert params == [2, 2]
+    do_import_tables.restore_retired_rows(ctx, retired, 2)
+    assert updates == [
+        ({'removed_generation': None}, '`id` IN (%s,%s) AND `removed_generation`=%s', [3, 4, 2]),
+        ({'removed_generation': None}, '`id` IN (%s) AND `removed_generation`=%s', [5, 2]),
+    ]
 
 
 # ------------------------------------------------------------------------------------
