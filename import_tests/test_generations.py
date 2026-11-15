@@ -20,7 +20,7 @@ from import_tests.tools import build_run, fixture_layout, golden_io
 from opus_import import generations
 from opus_import.import_fault import IMPORT_FAULT_ENV_VAR
 from opus_import.import_processes import HOLD_AFTER_CHUNK_FAULT_SITE
-from opus_import.steps import do_generation
+from opus_import.steps import do_generation, do_generation_purge
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -280,7 +280,7 @@ def test_an_update_is_hidden_until_the_switch_and_whole_after_it(
     assert not _planted_value_kept(db_credentials, schema)
     assert not _view_has_condition(db_credentials, schema)
     assert _state(db_credentials, schema)[2:] == (2, None, None, 0)
-    # A revert after the purge has started is refused.
+    # A revert after the purge is refused.
     refused = copy.step('--revert-generation')
     assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
     assert 'no switch is revertible' in refused.stdout
@@ -412,6 +412,70 @@ def test_an_interrupted_switch_completes_when_run_again(
             == 1
         )
         _ok(copy.step('--revert-generation'))
+
+
+def _retired_count(credentials: DatabaseCredentials, schema: str) -> int:
+    """Return how many rows of ``obs_general_rows`` a generation has retired."""
+    rows = golden_io.query(
+        credentials,
+        schema,
+        'SELECT COUNT(*) FROM obs_general_rows WHERE removed_generation IS NOT NULL',
+    )
+    return int(rows[0][0])
+
+
+def test_an_interrupted_purge_refuses_a_revert_and_finishes_when_run_again(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    bundles: tuple[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Killed after each of its steps in turn, each run redoing what the last did: until
+    the last step the switch stays revertible, which keeps the web application joining the
+    view, but the __prev tables are gone from the first, so the revert, the begin and a
+    rebuild of the served auxiliary tables are refused, changing nothing; a run with no
+    fault finishes the purge."""
+    reimported, dropped = bundles
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'purge_fault')
+    schema = copy.schema
+    _update(copy, reimported, dropped)
+    _ok(copy.step('--switch-generation'))
+    served = _served_without_ids(db_credentials, schema, dropped)
+    assert _retired_count(db_credentials, schema) > 0
+    last = len(do_generation_purge.PURGE_STEPS)
+    for step in range(1, last + 1):
+        monkeypatch.setenv(IMPORT_FAULT_ENV_VAR, f'{do_generation_purge.PURGE_FAULT_SITE}:{step}')
+        assert copy.step('--purge-generations').returncode != 0, step
+        monkeypatch.delenv(IMPORT_FAULT_ENV_VAR)
+        tables = golden_io.list_tables(db_credentials, schema)
+        assert not any(table.endswith(('__prev', '__new')) for table in tables), step
+        # The retired rows go at step 2, the view's condition at step 4.
+        assert (_retired_count(db_credentials, schema) > 0) == (step < 2), step
+        assert _view_has_condition(db_credentials, schema) == (step < 4), step
+        assert _served_without_ids(db_credentials, schema, dropped) == served, step
+        if step == last:
+            assert _state(db_credentials, schema)[2:] == (2, None, None, 0)
+            continue
+        assert _state(db_credentials, schema)[2:] == (2, None, None, 1), step
+        for arguments in (('--revert-generation',), ('--begin-generation',)):
+            refused = copy.step(*arguments)
+            assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS, arguments
+            assert 'the purge of the rows generation 2 retired has started' in refused.stdout
+        rebuilt = copy.step(*build_run.AUX_ARGS)
+        assert rebuilt.returncode != 0
+        assert 'the purge of the rows generation 2 retired has started' in rebuilt.stdout
+        assert _state(db_credentials, schema)[2:] == (2, None, None, 1), step
+        assert _served_without_ids(db_credentials, schema, dropped) == served, step
+
+    _ok(copy.step('--purge-generations'))
+    assert _state(db_credentials, schema)[2:] == (2, None, None, 0)
+    assert _retired_count(db_credentials, schema) == 0
+    assert not _view_has_condition(db_credentials, schema)
+    assert _served_without_ids(db_credentials, schema, dropped) == served
+    refused = copy.step('--revert-generation')
+    assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
+    assert 'no switch is revertible' in refused.stdout
 
 
 def _swap_back_by_hand(credentials: DatabaseCredentials, schema: str) -> None:

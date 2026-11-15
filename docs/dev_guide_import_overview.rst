@@ -151,8 +151,8 @@ before G. A fresh import writes generation 1, and its version row serves it. Whi
 row is in the served generation the view has no condition, so a request reads the table
 as it would the table itself; while other generations' rows are there, it names the
 served generation (:ref:`the obs_general view <dev_guide_database_schema_obs_general_rows>`). The child
-tables carry no generation; a request reaches a child row only through an observation the
-view returned, or a search built from the view.
+tables carry no generation; while other generations' rows are there, a request reaches a
+child row only through an observation the view returned, or a search built from the view.
 
 An update (:ref:`dev_guide_import_running_generations`) begins a **pending generation**,
 one above the served one, and writes only the bundles it changes into it: a re-imported

@@ -531,17 +531,20 @@ process, in order:
        step finds out whether it has run, so running it again completes an interrupted
        switch.
    * - ``--purge-generations``
-     - Run after the switch, while the site serves. It first makes the switch
-       irreversible, then deletes the rows no served generation shows, then deletes the
-       values only they used and analyzes the tables. Refused while a revert has
-       stopped part way.
+     - Run after the switch, while the site serves. It first drops the ``__prev``
+       auxiliary tables, which makes the switch irreversible, then deletes the rows no
+       served generation shows, re-creates the view with no condition, and only then
+       clears ``revertible``; last it deletes the values only the deleted rows used and
+       analyzes the tables. Refused while a revert has stopped part way. One that stopped
+       part way refuses the revert, the begin and every rebuild of the served auxiliary
+       tables or the cart until it is run again, which finishes it.
    * - ``--abandon-generation``
      - Throws an unswitched pending generation away: the rows it added go, the rows it
        retired come back, and the schema is as it was before ``--begin-generation``.
        Refused while a switch of the generation, or a revert of that switch, has stopped
        part way, as is every write to the generation.
    * - ``--revert-generation``
-     - Run while the web service is stopped, after a switch and before the purge: serves
+     - Run while the web service is stopped, after a switch and before the purge starts: serves
        the previous generation again, cart and auxiliary tables included, and leaves the
        reverted one pending and ``ready``, to abandon or to switch again. It also undoes
        a switch that stopped part way.

@@ -35,6 +35,6 @@
         "field_type": "uint1",
         "field_default": "0",
         "field_notnull": true,
-        "comment": "1 from a switch until the purge starts, while the switch can be reverted."
+        "comment": "1 from a switch until the purge has deleted the rows it retired."
     }
 ]

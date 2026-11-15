@@ -590,8 +590,9 @@ class FromSource:
 
 
 #: The served observations, a view of the rows of the import generation the schema
-#: serves (`opus_import.generations`). A child table carries no generation, so a statement
-#: reading a child's rows outside a search's results reaches them through this view.
+#: serves (`opus_import.generations`). A child table carries no generation, so while the
+#: schema holds another generation's rows, a statement reading a child's rows outside a
+#: search's results reaches them through this view.
 OBS_GENERAL_TABLE = 'obs_general'
 
 
@@ -602,7 +603,9 @@ def served_observations_join(table: str) -> Join:
     inner join that drops the rows of a generation the schema does not serve, and that
     reads the child first, so the statement keeps the child's own access path and the
     order its rows come in, and reads each row's observation through the view's primary
-    key.
+    key. A caller hangs it only while the schema holds such rows
+    (`opus_app.apps.tools.db_utils.unserved_observations_exist`); otherwise it drops
+    nothing and costs each child row the lookup.
 
     Parameters:
         table: The child table, or the alias its columns are read under.

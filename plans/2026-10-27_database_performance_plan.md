@@ -8707,3 +8707,57 @@ Nothing above this line is rewritten by an executor.
     `param_info` and the unique-OPUS-ID check are unchanged.
   - `EXPLAIN` on `pr23local`, with a first id leaving 1% of the rows in scope, shows a range
     on a primary key or an `obs_general_id` key, then `eq_ref`, for every per-row statement.
+- **The join to the served observations is conditional.** At complete scale, `bench_db`'s
+  `fanout.empty/mults_target` took 1.04 s on this branch against 0.14 s without the join,
+  and `mults_observationtype` 0.36 s against 0.30 s: every junction or child row did an
+  `eq_ref` lookup into `obs_general_rows`, and outside an update the join filters nothing.
+  - The six statements of "The per-observation queries" above hang
+    `served_observations_join` only while `db_utils.unserved_observations_exist()` is true:
+    one read of `schema_version`'s `pending_generation` and `revertible`, per statement
+    that needs it (once for a range's two statements), never cached across requests,
+    since a begin runs while the site serves. No table or no row joins nothing. With no
+    generation in flight each statement is the joined one less the join, and the product
+    types' tie order is added only with the join, so their statements are PR-22's. The
+    autocomplete's full branch still takes no join.
+  - The condition is exact because `revertible` now outlives the retired rows. The purge's
+    steps (`PURGE_STEPS`, fault site `purge_generations:<1..5>`): drop the auxiliary
+    `__new`/`__old` leftovers, then the `__prev` tables; delete the retired observations;
+    delete the retired registry rows; re-create the view with no condition; clear
+    `revertible`; then the mult step and `ANALYZE`. Dropping `__prev` first keeps the
+    revert refused from before the first row goes: `unfinished_purge_problem` (revertible,
+    nothing pending, `__prev` not whole, no `__new`) refuses `--revert-generation` (which
+    would otherwise have found no `__prev` to swap, pointed the cart and served a part-
+    purged generation), the begin, and the served rebuilds in `cli` (an interrupted
+    rebuild would leave `__new` with no `__prev`, the mark of a part-way revert, and let a
+    revert run); `generation_command_problem` reports it for a revert. Leftover `__new`
+    tables go before `__prev` so an interrupted purge never looks like a part-way revert.
+    A rerun finishes an interrupted purge. The purge and the abandon moved to
+    `opus_import.steps.do_generation_purge`, which keeps `do_generation` under the
+    1,000-line rule; `require_state`, `update_version_row` and `command_step` became public
+    for it.
+  - The begin no longer drops stale `__prev` tables and the abandon no longer scans for
+    retired rows (`_has_retired_rows` is gone): no switch revertible and nothing pending
+    now implies no retired row and no `__prev` table. Retirement happens only in a pending
+    generation, at that generation (`retire_bundle_rows`, the duplicate step, a pending
+    `--delete-bundles`); a begin needs `revertible = 0`, which the purge sets only after
+    deleting every row retired at or before the served generation; so every retired row
+    while P is pending has `removed_generation = P`, and the abandon restores them all and
+    re-creates the view with no condition. The state the abandon guarded against, retired
+    rows with nothing pending and `revertible = 0`, arose only from the old purge order.
+  - One window is left: a request that reads the version row just before a begin commits,
+    and runs its statement after the update's first child rows are committed, does not
+    join. The begin records the pending generation before any row of it is written and the
+    first `--import` is a separate invocation started after it, so the window is the gap
+    between one request's two statements against an invocation's start-up; Django's READ
+    COMMITTED gives each statement its own snapshot, so no transaction closes it.
+  - Tests: `tests/opus_app/test_unserved_observations.py` (the reader's states, the
+    missing table, other errors, a read per call); `tests/opus_import/test_generations.py`
+    (the purge's order, its fault after each step with the revert and the begin refused
+    and a rerun finishing it, `unfinished_purge_problem`'s shapes, the revert refused
+    cleanly, the pre-check); `import_tests/test_generations.py` (the purge killed after
+    each step in turn, the view's condition and `revertible` at each, the revert, the
+    begin and a served rebuild refused, then finished);
+    `integration_tests/apps_db_tests/test_generations.py` (the plant hidden both as a
+    pending generation and as rows a revertible switch retired; no `STRAIGHT_JOIN` with
+    neither; each child statement equal to the plain one plus the join with either).
+    Written while a benchmark ran; not yet run.

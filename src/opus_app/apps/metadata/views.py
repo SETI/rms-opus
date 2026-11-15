@@ -69,7 +69,7 @@ from opus_app.apps.tools.app_utils import (
     json_response,
     strip_numeric_suffix,
 )
-from opus_app.apps.tools.db_utils import resolve_category
+from opus_app.apps.tools.db_utils import resolve_category, unserved_observations_exist
 from opus_app.apps.tools.import_constants import get_table_name, mult_table
 from opus_import import list_junctions
 from opus_support import (
@@ -381,8 +381,8 @@ def api_get_mult_counts(
             assert search_id is not None
             select.add_from(sql_builder.search_results_source(search_id))
             select.add_where(search_results_join_condition(counted_table))
-        elif counted_table != sql_builder.OBS_GENERAL_TABLE:
-            # Every served observation: a child table's rows are kept to them, since a
+        elif counted_table != sql_builder.OBS_GENERAL_TABLE and unserved_observations_exist():
+            # Every served observation: a child table's rows are kept to them while a
             # generation the schema does not serve has rows there too.
             counted_source.append_join(sql_builder.served_observations_join(counted_table))
 
@@ -624,6 +624,13 @@ def api_get_range_endpoints(
         endpoints_select.add_column(sql_builder.max_of(max_column))
         nulls_select = sql_builder.Select()
         nulls_select.add_column(sql_builder.count_star())
+        # No selections: every served observation's row, which a child table reaches
+        # through the view while an unserved generation has rows there too.
+        join_served = (
+            not selections
+            and table_name != sql_builder.OBS_GENERAL_TABLE
+            and unserved_observations_exist()
+        )
         for select in (endpoints_select, nulls_select):
             category_source = select.add_from(category.source)
             if selections:
@@ -632,10 +639,7 @@ def api_get_range_endpoints(
                 assert search_id is not None
                 select.add_from(sql_builder.search_results_source(search_id))
                 select.add_where(search_results_join_condition(table_name))
-            elif table_name != sql_builder.OBS_GENERAL_TABLE:
-                # No selections: every served observation's row, which a child table
-                # reaches through the view, since an unserved generation has rows there
-                # too.
+            elif join_served:
                 category_source.append_join(sql_builder.served_observations_join(table_name))
             # A surface geometry body's category is the body's rows of a table every
             # body shares, so each statement keeps to them.

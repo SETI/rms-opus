@@ -619,10 +619,10 @@ steps 1 to 4 again, which find nothing to do after a whole switch, and succeeds.
 **The view.** ``--begin-generation`` re-creates the ``obs_general`` view to show the
 served generation alone, by number, before it records the pending generation, so no row
 of P is written while the view shows every row. The switch and the revert re-create it to
-show the generation they serve; the purge, and an abandon that leaves no retired row,
-re-create it with no condition.
+show the generation they serve; the purge and the abandon re-create it with no condition.
 
-**The revert** runs the switch backward while the switch is revertible: the ``__prev``
+**The revert** runs the switch backward while the switch is revertible and no purge has
+started (below): the ``__prev``
 tables back in, the reverted generation's kept as ``__new``; the cart moved to the
 previous generation; the search tables reset; the view re-created to show the previous
 generation; then the previous generation served, P
@@ -640,18 +640,40 @@ tables and the view may belong to either generation, so the abandon, every write
 pending generation and the purge are refused, naming the switch and the revert, either of
 which finishes it.
 
-**The purge** is refused while a generation is pending, or a revert is unfinished. Its
-first statement, committed on
-its own, clears ``revertible``. It then drops the ``__prev`` tables; deletes every row
-retired at or before the served generation from every observation table, children first,
-with foreign keys checked
-(:func:`~opus_import.steps.do_import_tables.delete_observations`); deletes the registry
-rows retired by then; and runs the mult step (:ref:`dev_guide_import_steps_do_finalize_mult`)
-and ``ANALYZE``.
+**The purge** (:func:`~opus_import.steps.do_generation_purge.purge_generations`, beside
+the abandon in :mod:`opus_import.steps.do_generation_purge`) is refused while a generation
+is pending, or a revert is unfinished. Its steps, in order:
+
+#. the auxiliary tables' leftover ``__new`` and ``__old`` tables are dropped, then the
+   ``__prev`` tables, so no revert can run from before the first row goes;
+#. every row retired at or before the served generation is deleted from every
+   observation table, children first, with foreign keys checked
+   (:func:`~opus_import.steps.do_import_tables.delete_observations`);
+#. the registry rows retired by then are deleted;
+#. the view is re-created with no condition;
+#. last, ``revertible`` is cleared.
+
+It then runs the mult step (:ref:`dev_guide_import_steps_do_finalize_mult`) and
+``ANALYZE``. ``revertible`` stays set for as long as retired rows remain, so the web
+application keeps a child table's rows to the served observations until the last is gone
+(:ref:`dev_guide_webapp_tools`), and a begin is refused until then. A test makes it fail
+after a step through ``OPUS_IMPORT_FAULT=purge_generations:<step>``; every step can run
+again, so a rerun finishes the work.
+
+**An unfinished purge** is a revertible switch with nothing pending whose ``__prev``
+tables are not all there and no ``__new`` table beside them
+(:func:`~opus_import.steps.do_generation.unfinished_purge_problem`), since the purge drops
+every ``__new`` table before the first ``__prev`` one. The served generation's rows are
+whole, but the previous generation's retired rows may be part deleted, so the revert is
+refused, and so are the begin and every rebuild of the served auxiliary tables or the cart
+(a rebuild that stopped part way would leave ``__new`` tables marking a part-way revert),
+each naming the purge, which finishes it.
 
 **The abandon** deletes the rows P added, clears ``removed_generation = P`` and
-``retired_generation = P``, deletes P's registry rows, drops the ``__new`` tables and
-clears the pending generation. Neither generation column has a key, so one scan of
+``retired_generation = P``, deletes P's registry rows, drops the ``__new`` tables,
+re-creates the view with no condition and clears the pending generation. P was begun with
+no row retired, which the purge's order ensures, so every retired row is one P retired, and
+the view is left showing every row. Neither generation column has a key, so one scan of
 ``obs_general_rows`` finds the rows P added and the rows it retired, and each is then
 changed by its primary key, ``transaction_rows`` to a statement. Rerun after an
 interruption, it finishes the work.

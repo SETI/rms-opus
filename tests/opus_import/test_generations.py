@@ -37,7 +37,9 @@ from opus_import.schema_version import SCHEMA_STATE_READY, SCHEMA_VERSION
 from opus_import.steps import (
     do_django,
     do_duplicate_ids,
+    do_finalize_mult,
     do_generation,
+    do_generation_purge,
     do_import_tables,
     do_schema_version,
     do_validate,
@@ -341,7 +343,7 @@ def test_an_abandon_finds_its_rows_in_one_scan_and_restores_them_by_key() -> Non
             return len(params) - 1
 
     ctx = make_context(db=_DB())
-    added, retired = do_generation._abandoned_ids(ctx, 2)
+    added, retired = do_generation_purge._abandoned_ids(ctx, 2)
     assert (added, retired) == ([8, 9], [3, 4, 5])
     ((cmd, params),) = selects
     assert 'WHERE `added_generation`=%s OR `removed_generation`=%s' in cmd
@@ -434,8 +436,9 @@ class _StateDB:
         return f'`{name}`'
 
     def drop_table(self, table: str) -> None:
-        """Record a drop."""
+        """Record a drop, and forget the table."""
         self.events.append(f'drop {table}')
+        self.tables.discard(table)
 
 
 def _ready(**changes: Any) -> tuple[Any, ...]:
@@ -449,6 +452,11 @@ def _ready(**changes: Any) -> tuple[Any, ...]:
     )
     row.update(changes)
     return tuple(row[column] for column in generations.STATE_COLUMNS)
+
+
+#: The auxiliary tables' names after a switch's swap and after a revert's.
+_PREV = tuple(table_swap.swap_prev_name(table) for table in do_generation.AUX_TABLES)
+_NEW = tuple(table_swap.swap_new_name(table) for table in do_generation.AUX_TABLES)
 
 
 @pytest.fixture
@@ -487,29 +495,34 @@ def test_begin_sets_the_next_generation_pending_and_writing(no_writers: list[str
     assert no_writers == ['view 1']
     assert db.events[0] == 'lock'
     assert db.events[-1] == 'unlock'
-    # A stale __prev table, which only an interrupted purge leaves, goes first.
-    assert 'drop param_info__prev' in db.events
+    # No switch is revertible, so the purge has dropped every __prev table already.
+    assert not any(event.startswith('drop') for event in db.events)
 
 
 @pytest.mark.usefixtures('no_writers')
 @pytest.mark.parametrize(
-    ('row', 'reason'),
+    ('row', 'tables', 'reason'),
     [
-        (_ready(pending_generation=2, pending_state=PENDING_WRITING), 'already has the pending'),
-        (_ready(state='appending'), 'is appending, not ready'),
-        (_ready(version=SCHEMA_VERSION - 1), 'and this release is version'),
-        (_ready(generation=2, revertible=1), 'can still revert to generation 1'),
+        (
+            _ready(pending_generation=2, pending_state=PENDING_WRITING),
+            (),
+            'already has the pending',
+        ),
+        (_ready(state='appending'), (), 'is appending, not ready'),
+        (_ready(version=SCHEMA_VERSION - 1), (), 'and this release is version'),
+        (_ready(generation=2, revertible=1), _PREV, 'can still revert to generation 1'),
+        (_ready(generation=2, revertible=1), (), 'holds retired rows: the purge of the rows'),
     ],
-    ids=['pending', 'appending', 'version', 'revertible'],
+    ids=['pending', 'appending', 'version', 'revertible', 'purge-started'],
 )
 def test_begin_is_refused_on_a_schema_it_cannot_start_one_in(
-    row: tuple[Any, ...], reason: str
+    row: tuple[Any, ...], tables: tuple[str, ...], reason: str
 ) -> None:
-    """Nothing is written, and the refusal says why."""
-    db = _StateDB(row)
+    """Nothing is written or dropped, and the refusal says why."""
+    db = _StateDB(row, tables=tables)
     with pytest.raises(do_generation.GenerationRefusedError, match=reason):
         do_generation.begin_generation(_context(db))
-    assert not any(event.startswith('update') for event in db.events)
+    assert [event for event in db.events if event not in ('lock', 'unlock')] == []
 
 
 def test_a_command_is_refused_while_another_holds_the_lock() -> None:
@@ -819,7 +832,7 @@ def test_a_revert_serves_the_previous_generation_with_the_reverted_one_pending(
     switch_steps: list[str],
 ) -> None:
     """Swap back, the cart to the previous generation, reset, then the version row."""
-    db = _StateDB(_ready(generation=2, revertible=1))
+    db = _StateDB(_ready(generation=2, revertible=1), tables=_PREV)
     do_generation.revert_generation(_context(db))
     assert switch_steps == ['back', 'cart 1', 'reset', 'view 1']
     assert db.row is not None
@@ -840,28 +853,171 @@ def test_a_revert_undoes_a_switch_that_stopped_part_way(switch_steps: list[str])
     assert not any(event.startswith('update') for event in db.events)
 
 
-def test_a_revert_after_the_purge_has_started_is_refused(switch_steps: list[str]) -> None:
-    """The purge's first statement ends revertibility."""
-    db = _StateDB(_ready(generation=2))
-    with pytest.raises(do_generation.GenerationRefusedError, match='no switch is revertible'):
+@pytest.mark.parametrize(
+    ('row', 'tables', 'reason'),
+    [
+        (_ready(generation=2), (), 'no switch is revertible'),
+        (_ready(generation=2, revertible=1), (), 'the purge of the rows generation 2 retired'),
+        (_ready(generation=2, revertible=1), _PREV[:1], 'the purge of the rows generation 2'),
+    ],
+    ids=['purged', 'purge-started', 'purge-dropping'],
+)
+def test_a_revert_after_the_purge_has_started_is_refused(
+    switch_steps: list[str], row: tuple[Any, ...], tables: tuple[str, ...], reason: str
+) -> None:
+    """The purge drops the __prev tables before the first row goes, and ends
+    revertibility only once the last has gone; a revert is refused cleanly either way,
+    running no step and changing nothing."""
+    db = _StateDB(row, tables=tables)
+    with pytest.raises(do_generation.GenerationRefusedError, match=reason):
         do_generation.revert_generation(_context(db))
     assert switch_steps == []
+    assert [event for event in db.events if event not in ('lock', 'unlock')] == []
+    assert db.tables == set(tables)
 
 
 @pytest.mark.usefixtures('no_writers')
-def test_the_purge_ends_revertibility_first_and_is_refused_with_a_pending_generation(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_the_purge_is_refused_with_a_pending_generation() -> None:
     """A pending generation must be switched or abandoned before the purge."""
     db = _StateDB(_ready(generation=2, pending_generation=3, pending_state=PENDING_WRITING))
     with pytest.raises(do_generation.GenerationRefusedError, match='generation 3 is pending'):
-        do_generation.purge_generations(_context(db))
-    assert not any(event.startswith('update') for event in db.events)
+        do_generation_purge.purge_generations(_context(db))
+    assert not any(event.startswith(('update', 'drop')) for event in db.events)
 
 
-#: The auxiliary tables' names after a switch's swap and after a revert's.
-_PREV = tuple(table_swap.swap_prev_name(table) for table in do_generation.AUX_TABLES)
-_NEW = tuple(table_swap.swap_new_name(table) for table in do_generation.AUX_TABLES)
+#: A rebuild's leftover ``__new`` table beside the ``__prev`` tables of a switch.
+_LEFTOVER = table_swap.swap_new_name(do_generation.AUX_TABLES[0])
+
+
+class _PurgeDB(_StateDB):
+    """A stand-in that also records the condition the purge selects retired rows by."""
+
+    def __init__(self, state: tuple[Any, ...], *, tables: tuple[str, ...]) -> None:
+        super().__init__(state, tables=tables)
+        self.deleted_where: list[tuple[str, list[Any]]] = []
+
+
+@pytest.fixture
+def purging(monkeypatch: pytest.MonkeyPatch) -> _PurgeDB:
+    """Return a switched schema, with a rebuild's leftover beside its __prev tables, whose
+    purge records its work in the stand-in's events instead of doing it; each event of
+    the purge's own steps carries the ``revertible`` it ran under."""
+    db = _PurgeDB(_ready(generation=2, revertible=1), tables=(*_PREV, _LEFTOVER))
+
+    def event(name: str) -> None:
+        assert db.row is not None
+        db.events.append(f'{name} r={db.row["revertible"]}')
+
+    def observation_ids(ctx: Any, where: str, params: list[Any]) -> list[int]:
+        db.deleted_where.append((where, params))
+        return [5, 6]
+
+    def finalize_mult(ctx: Any) -> bool:
+        event('mult')
+        return True
+
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
+    monkeypatch.setattr(do_generation_purge, '_observation_ids', observation_ids)
+    monkeypatch.setattr(
+        do_import_tables, 'delete_observations', lambda ctx, ids: event(f'delete {ids}')
+    )
+    monkeypatch.setattr(
+        bundle_registry, 'purge_retired_copies', lambda ctx, served: event(f'registry {served}')
+    )
+    monkeypatch.setattr(do_generation, 'refresh_view', lambda ctx, served: event(f'view {served}'))
+    monkeypatch.setattr(do_finalize_mult, 'finalize_mult', finalize_mult)
+    monkeypatch.setattr(do_import_tables, 'analyze_all_tables', lambda ctx: event('analyze'))
+    return db
+
+
+#: The drops of the purge's first step: the leftovers of a rebuild, then the __prev tables.
+_PURGE_DROPS = [
+    *(
+        f'drop {name_for(table)}'
+        for name_for in (table_swap.swap_new_name, table_swap.swap_old_name)
+        for table in reversed(do_generation.AUX_TABLES)
+    ),
+    *(f'drop {table}' for table in reversed(_PREV)),
+]
+
+#: What each of the purge's steps records, in order.
+_PURGE_STEP_EVENTS = [
+    _PURGE_DROPS,
+    ['delete [5, 6] r=1'],
+    ['registry 2 r=1'],
+    ['view None r=1'],
+    ["update ['revertible']"],
+]
+
+
+def test_the_purge_ends_revertibility_only_after_the_last_retired_row_is_gone(
+    purging: _PurgeDB,
+) -> None:
+    """The __prev tables go first, so no revert runs once a row has gone; the retired
+    rows, their registry rows and the view's condition next; revertible last, so the web
+    application keeps a child table's rows to the served generation until then."""
+    assert do_generation_purge.purge_generations(_context(purging))
+    assert purging.events == [
+        'lock',
+        *(event for step in _PURGE_STEP_EVENTS for event in step),
+        'mult r=0',
+        'analyze r=0',
+        'unlock',
+    ]
+    assert purging.tables == set()
+    assert purging.row is not None
+    assert purging.row['revertible'] == 0
+    assert purging.deleted_where == [
+        ('`removed_generation` IS NOT NULL AND `removed_generation` <= %s', [2])
+    ]
+
+
+@pytest.mark.parametrize('step', range(1, len(do_generation_purge.PURGE_STEPS) + 1))
+def test_an_interrupted_purge_refuses_a_revert_and_a_begin_and_finishes_when_run_again(
+    purging: _PurgeDB, monkeypatch: pytest.MonkeyPatch, step: int
+) -> None:
+    """Stopped after any step before the last, the switch stays revertible, so the web
+    application keeps joining, but the __prev tables are gone: the revert and the begin
+    are refused, naming the purge, and a rerun finishes it."""
+    monkeypatch.setenv(IMPORT_FAULT_ENV_VAR, f'{do_generation_purge.PURGE_FAULT_SITE}:{step}')
+    with pytest.raises(InjectedImportFaultError):
+        do_generation_purge.purge_generations(_context(purging))
+    assert purging.events == [
+        'lock',
+        *(event for events in _PURGE_STEP_EVENTS[:step] for event in events),
+        'unlock',
+    ]
+    monkeypatch.delenv(IMPORT_FAULT_ENV_VAR)
+    assert purging.row is not None
+    ctx = _context(purging)
+    assert ctx.db is not None
+    assert ctx.generation_state is not None
+    unfinished = do_generation.unfinished_purge_problem(ctx.db, ctx.generation_state)
+    last = step == len(do_generation_purge.PURGE_STEPS)
+    if last:
+        assert purging.row['revertible'] == 0
+        assert unfinished is None
+    else:
+        assert purging.row['revertible'] == 1
+        assert unfinished is not None
+        assert '--purge-generations' in unfinished
+        purging.events.clear()
+        with pytest.raises(do_generation.GenerationRefusedError, match='purge of the rows'):
+            do_generation.revert_generation(ctx)
+        with pytest.raises(do_generation.GenerationRefusedError, match='holds retired rows'):
+            do_generation.begin_generation(ctx)
+        assert [event for event in purging.events if event not in ('lock', 'unlock')] == []
+    purging.events.clear()
+    assert do_generation_purge.purge_generations(_context(purging))
+    assert purging.events[-5:] == [
+        f'view None r={0 if last else 1}',
+        "update ['revertible']",
+        'mult r=0',
+        'analyze r=0',
+        'unlock',
+    ]
+    assert purging.row['revertible'] == 0
+    assert purging.row['generation'] == 2
 
 
 @pytest.mark.parametrize(
@@ -902,12 +1058,50 @@ def test_an_unfinished_switch_or_revert_is_told_by_its_auxiliary_tables(
         assert '--revert-generation' in problem
 
 
+@pytest.mark.parametrize(
+    ('row', 'tables', 'started'),
+    [
+        (_ready(pending_generation=2, pending_state=PENDING_READY), (), False),
+        (_ready(generation=2), (), False),
+        (_ready(generation=2, revertible=1), _PREV, False),
+        (_ready(generation=2, revertible=1), (*_PREV, _LEFTOVER), False),
+        (_ready(generation=2, revertible=1), _NEW, False),
+        (_ready(generation=2, revertible=1), (), True),
+        (_ready(generation=2, revertible=1), _PREV[:2], True),
+    ],
+    ids=[
+        'pending',
+        'purged',
+        'switched',
+        'rebuild-left-over',
+        'part-way-revert',
+        'purge-started',
+        'purge-dropping',
+    ],
+)
+def test_an_unfinished_purge_is_a_revertible_switch_without_its_prev_tables(
+    row: tuple[Any, ...], tables: tuple[str, ...], started: bool
+) -> None:
+    """__prev tables not all there and no __new beside them, with the switch revertible;
+    __new with no __prev is a part-way revert, which unfinished_switch_problem reports."""
+    ctx = _context(_StateDB(row, tables=tables))
+    assert ctx.db is not None
+    assert ctx.generation_state is not None
+    problem = do_generation.unfinished_purge_problem(ctx.db, ctx.generation_state)
+    if started:
+        assert problem is not None
+        assert 'generation 1 cannot be served again' in problem
+        assert '--purge-generations' in problem
+    else:
+        assert problem is None
+
+
 @pytest.mark.usefixtures('no_writers')
 def test_abandon_is_refused_while_a_switch_has_stopped_part_way() -> None:
     """It would delete the rows the cart was pointed at, and drop nothing."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY), tables=_PREV)
     with pytest.raises(do_generation.GenerationRefusedError, match='stopped part way'):
-        do_generation.abandon_generation(_context(db))
+        do_generation_purge.abandon_generation(_context(db))
     assert [event for event in db.events if event not in ('lock', 'unlock')] == []
 
 
@@ -916,7 +1110,7 @@ def test_the_purge_is_refused_while_a_revert_has_stopped_part_way() -> None:
     """It would delete the retired rows the cart was pointed back at; revertibility stays."""
     db = _StateDB(_ready(generation=2, revertible=1), tables=_NEW)
     with pytest.raises(do_generation.GenerationRefusedError, match='a revert of generation 2'):
-        do_generation.purge_generations(_context(db))
+        do_generation_purge.purge_generations(_context(db))
     assert db.row is not None
     assert db.row['revertible'] == 1
     assert [event for event in db.events if event not in ('lock', 'unlock')] == []
@@ -935,7 +1129,7 @@ def test_abandon_is_refused_with_nothing_pending() -> None:
     """There is nothing to throw away."""
     db = _StateDB(_ready())
     with pytest.raises(do_generation.GenerationRefusedError, match='no generation is pending'):
-        do_generation.abandon_generation(_context(db))
+        do_generation_purge.abandon_generation(_context(db))
 
 
 def test_an_abandon_unreadies_the_generation_first_and_deletes_its_ranges_rows(
@@ -956,8 +1150,7 @@ def test_an_abandon_unreadies_the_generation_first_and_deletes_its_ranges_rows(
 
         return step
 
-    monkeypatch.setattr(do_generation, '_abandoned_ids', lambda ctx, pending: ([8, 9], [3]))
-    monkeypatch.setattr(do_generation, '_has_retired_rows', lambda ctx: False)
+    monkeypatch.setattr(do_generation_purge, '_abandoned_ids', lambda ctx, pending: ([8, 9], [3]))
     for module, name in [
         (do_import_tables, 'delete_observations'),
         (do_import_tables, 'delete_rows_in_id_ranges'),
@@ -976,7 +1169,7 @@ def test_an_abandon_unreadies_the_generation_first_and_deletes_its_ranges_rows(
             bundle_registry.BundleRange(3, 'C_1', 4, 31, 5, 'done', None, 2),
         ],
     )
-    do_generation.abandon_generation(_context(db))
+    do_generation_purge.abandon_generation(_context(db))
     assert [step[:2] for step in steps] == [
         ('delete_observations', PENDING_WRITING),
         ('delete_rows_in_id_ranges', PENDING_WRITING),
@@ -1028,10 +1221,17 @@ def test_the_rows_in_id_ranges_are_deleted_from_every_child_table() -> None:
 
 
 class _ReadOnlyStateDB(_StateDB):
-    """A read-only stand-in the deploy chain's pre-check opens, naming who holds a lock."""
+    """A read-only stand-in the deploy chain's pre-check opens, naming who holds a lock;
+    its tables are a switch's __prev tables unless given."""
 
-    def __init__(self, state: tuple[Any, ...] | None, *, lock_holder: int | None) -> None:
-        super().__init__(state)
+    def __init__(
+        self,
+        state: tuple[Any, ...] | None,
+        *,
+        lock_holder: int | None,
+        tables: tuple[str, ...] = _PREV,
+    ) -> None:
+        super().__init__(state, tables=tables)
         self.lock_holder = lock_holder
         self.closed = False
 
@@ -1113,6 +1313,22 @@ def test_the_deploy_chains_pre_check_names_what_the_command_would_refuse(
         assert found is not None
         assert problem in found
     assert opened == [{'read_only': True}]
+    assert db.closed
+    assert db.events == []
+
+
+def test_the_deploy_chains_pre_check_refuses_a_revert_once_the_purge_has_started(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A revertible switch whose __prev tables are gone is not stopped for: the revert
+    would be refused, and the purge finishes the work while the site serves."""
+    db = _ReadOnlyStateDB(_ready(generation=2, revertible=1), lock_holder=None, tables=())
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: db)
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
+    found = do_generation.generation_command_problem('--revert-generation')
+    assert found is not None
+    assert 'the purge of the rows generation 2 retired has started' in found
+    assert do_generation.generation_command_problem('--switch-generation') is None
     assert db.closed
     assert db.events == []
 

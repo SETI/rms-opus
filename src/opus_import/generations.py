@@ -16,7 +16,8 @@ selects the rows in the served generation, which it names as a number, and the c
 that change the served generation re-create it (`opus_import.steps.do_generation`).
 MySQL merges the view into each query that names it, so the web application reads
 ``obs_general`` as a table and cannot miss the test. The child tables carry no
-generation: a request reaches a child row only through an ``obs_general`` id.
+generation: while other generations' rows are there, a request reaches a child row only
+through an ``obs_general`` id the view returned.
 
 The import reads and writes the base table. `opus_import.importdb` translates the name
 ``obs_general`` to ``obs_general_rows`` wherever it renders a table name
@@ -64,7 +65,8 @@ PENDING_GENERATION_COLUMN = 'pending_generation'
 #: ``schema_version``'s column saying how far the pending generation has got, or NULL.
 PENDING_STATE_COLUMN = 'pending_state'
 
-#: ``schema_version``'s column that is true from a switch until the purge starts.
+#: ``schema_version``'s column that is true from a switch until the purge has deleted the
+#: rows the switch retired.
 REVERTIBLE_COLUMN = 'revertible'
 
 #: The pending generation is being written, or was written after its last stamp.
@@ -171,8 +173,8 @@ class GenerationState:
         generation: The generation the web application serves.
         pending: The generation an update is writing, or None.
         pending_state: How far it has got, one of the ``PENDING_`` constants, or None.
-        revertible: Whether a switch can still be reverted, true from a switch until the
-            purge starts.
+        revertible: True from a switch until the purge has deleted the rows it retired;
+            the switch can be reverted while its ``__prev`` tables are whole as well.
     """
 
     version: int

@@ -40,6 +40,7 @@ from opus_import.steps import (
     do_duplicate_ids,
     do_finalize_mult,
     do_generation,
+    do_generation_purge,
     do_import,
     do_import_tables,
     do_indexes,
@@ -734,7 +735,10 @@ def _rebuilds_pending(args: argparse.Namespace) -> bool:
 #: The options that rebuild the served auxiliary tables or the cart when no generation is
 #: pending. A rebuild drops the ``__new`` tables that mark a revert stopped part way, and
 #: the cart rows it points at the previous generation, so neither runs while one is
-#: unfinished (`opus_import.steps.do_generation.unfinished_switch_problem`).
+#: unfinished (`opus_import.steps.do_generation.unfinished_switch_problem`). Nor does one
+#: run while a purge is unfinished (`opus_import.steps.do_generation.unfinished_purge_problem`):
+#: a rebuild that stopped part way would leave ``__new`` tables with no ``__prev`` beside
+#: them, which mark a part-way revert, and so let a revert serve the purged generation.
 _SERVED_REBUILDS = (
     'create_param_info',
     'create_partables',
@@ -800,9 +804,9 @@ def _run_generation_command(ctx: ImportContext, option: str) -> bool:
         elif args.switch_generation:
             do_generation.switch_generation(ctx)
         elif args.purge_generations:
-            return do_generation.purge_generations(ctx)
+            return do_generation_purge.purge_generations(ctx)
         elif args.abandon_generation:
-            do_generation.abandon_generation(ctx)
+            do_generation_purge.abandon_generation(ctx)
         else:
             do_generation.revert_generation(ctx)
     return True
@@ -1131,7 +1135,9 @@ def main() -> None:
             atexit.register(writer.exit)
         state = ctx.generation_state
         if pending is None and state is not None and _rebuilds_served(args):
-            unfinished = do_generation.unfinished_switch_problem(ctx.db, state)
+            unfinished = do_generation.unfinished_switch_problem(
+                ctx.db, state
+            ) or do_generation.unfinished_purge_problem(ctx.db, state)
             if unfinished is not None:
                 logger.log('fatal', f'Refused: {unfinished}')
                 sys.exit(-1)

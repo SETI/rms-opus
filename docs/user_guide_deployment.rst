@@ -643,7 +643,9 @@ only when you switch it in. The steps, from the deploy directory::
    the web service is started again when it was serving before.
 4. **Purge.** Once the site has been checked, ``opus_import --purge-generations`` deletes
    the rows the switch replaced, while the site serves. Until it runs, the switch can be
-   undone; once it starts, it cannot.
+   undone; once it starts, it cannot. If it stops part way, run it again, which
+   finishes it; until then the revert, a new update and a code deploy's rebuild of the
+   auxiliary tables are refused.
 
 **Undoing an update.** Before the purge, switch back and then throw the update away::
 
