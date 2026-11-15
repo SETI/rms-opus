@@ -23,6 +23,11 @@ option run on its own:
 - ``--abandon-generation`` (`abandon_generation`) throws away an unswitched P, and
   ``--revert-generation`` (`revert_generation`) runs a switch backward until the purge.
 
+A switch or a revert that stopped part way leaves the auxiliary tables in a shape no
+finished one leaves (`unfinished_switch_problem`), and until it is completed or undone,
+the abandon, the purge and every write to P are refused: each would delete rows the cart
+was pointed at, or drop auxiliary tables the way back needs.
+
 Each command holds a server-wide named lock on the schema for its whole run and is
 refused while another holds it; every invocation that writes P registers itself in
 ``import_process`` with its liveness lock while briefly holding that lock
@@ -238,7 +243,8 @@ def register_writer(ctx: ImportContext) -> import_processes.ImporterLock:
         (`opus_import.import_processes.ImporterLock.exit`).
 
     Raises:
-        GenerationRefusedError: If a generation command holds the generation lock.
+        GenerationRefusedError: If a generation command holds the generation lock, or a
+            switch of the pending generation stopped part way.
     """
     db = ctx.db
     assert db is not None
@@ -249,6 +255,12 @@ def register_writer(ctx: ImportContext) -> import_processes.ImporterLock:
             'writes its pending generation until it ends'
         )
     try:
+        state = _require_state(ctx)
+        unfinished = unfinished_switch_problem(db, state)
+        if unfinished is not None:
+            raise GenerationRefusedError(
+                f'Nothing writes generation {state.pending} now: {unfinished}'
+            )
         import_processes.create_process_table(db)
         lock_db = db.open_sibling_connection()
         return import_processes.start_importer(lock_db, ctx.log_path or '')
@@ -276,6 +288,57 @@ def _update_version_row(
     if value is None:
         return db.update_row(SCHEMA_VERSION_TABLE, values, f'{q(column)} IS NULL')
     return db.update_row(SCHEMA_VERSION_TABLE, values, f'{q(column)}=%s', [value])
+
+
+def _existing_tables(db: ImportDBSuper, name_for: Callable[[str], str]) -> list[str]:
+    """Return the auxiliary tables that exist under one kind of swap name."""
+    db.forget_table_names()
+    return [name_for(table) for table in AUX_TABLES if db.table_exists(name_for(table))]
+
+
+def unfinished_switch_problem(db: ImportDBSuper, state: GenerationState) -> str | None:
+    """Say whether a switch or a revert stopped part way, and how to finish it.
+
+    While a generation is pending, only a switch leaves ``__prev`` tables: from its first
+    step, which swaps the pending generation's auxiliary tables in, until it serves the
+    generation, and a revert of it swaps them back last. While no generation is pending
+    and the switch is revertible, a revert swaps the ``__prev`` tables back first and
+    keeps the tables it replaces as ``__new``, so ``__new`` tables with no ``__prev``
+    table beside them mark a revert that stopped before serving the previous generation.
+    In either shape the cart, the search tables and the view may belong to either
+    generation.
+
+    Parameters:
+        db: The open database.
+        state: The schema's version row.
+
+    Returns:
+        None when no switch or revert is unfinished; otherwise what is unfinished and the
+        commands that finish it.
+    """
+    if state.pending is not None:
+        kept = _existing_tables(db, table_swap.swap_prev_name)
+        if not kept:
+            return None
+        return (
+            f'a switch of generation {state.pending}, or a revert of it, stopped part way '
+            f"({', '.join(kept)} hold generation {state.generation}'s auxiliary tables); "
+            'with the web service stopped, "opus_import --switch-generation" completes the '
+            'switch and "opus_import --revert-generation" undoes it (promote_generation.sh, '
+            'or promote_generation.sh --revert)'
+        )
+    if not state.revertible or _existing_tables(db, table_swap.swap_prev_name):
+        return None
+    built = _existing_tables(db, table_swap.swap_new_name)
+    if not built:
+        return None
+    return (
+        f'a revert of generation {state.generation} stopped part way ({", ".join(built)} '
+        f'hold its auxiliary tables); with the web service stopped, "opus_import '
+        '--revert-generation" completes the revert and "opus_import --switch-generation" '
+        'serves the generation again (promote_generation.sh --revert, or '
+        'promote_generation.sh)'
+    )
 
 
 def begin_generation(ctx: ImportContext) -> None:
@@ -432,17 +495,30 @@ def _switch_steps(ctx: ImportContext, generation: int) -> None:
     _switch_step(ctx, 4, lambda: refresh_view(ctx, generation))
 
 
-def _revert_steps(ctx: ImportContext, generation: int) -> None:
+def _revert_steps(ctx: ImportContext, generation: int, *, swap_first: bool) -> None:
     """Run the switch's steps backward, for the generation served again.
+
+    The order decides which auxiliary tables a revert that stops part way leaves, which is
+    how `unfinished_switch_problem` finds one: the swap back comes first after a whole
+    switch, leaving ``__new`` tables from the start, and last after a switch that stopped
+    part way, keeping its ``__prev`` tables to the end.
 
     Parameters:
         ctx: The import run's context.
         generation: The generation served again.
+        swap_first: Whether the ``__prev`` tables are swapped back before the other steps
+            rather than after them.
     """
-    table_swap.swap_back_previous(ctx, AUX_TABLES)
-    _point_cart(ctx, generation)
-    do_django.reset_search_tables(ctx)
-    refresh_view(ctx, generation)
+    if swap_first:
+        table_swap.swap_back_previous(ctx, AUX_TABLES)
+        _point_cart(ctx, generation)
+        do_django.reset_search_tables(ctx)
+        refresh_view(ctx, generation)
+    else:
+        refresh_view(ctx, generation)
+        do_django.reset_search_tables(ctx)
+        _point_cart(ctx, generation)
+        table_swap.swap_back_previous(ctx, AUX_TABLES)
 
 
 def _switch_step(ctx: ImportContext, number: int, step: Callable[[], object]) -> None:
@@ -523,9 +599,9 @@ def revert_generation(ctx: ImportContext) -> None:
     ``ready``, and the switch is not revertible any more, so the reverted-from generation
     can be abandoned or switched again. Each step finds out whether it has run, as the
     switch's do. A switch that stopped before its last statement left its generation
-    pending and ``ready``, and the same steps undo whatever of it ran, the served
-    generation unchanged. Refused otherwise: once the purge has started, or with nothing
-    switched.
+    pending and ``ready``, and the same steps, in the opposite order, undo whatever of it
+    ran, the served generation unchanged (`_revert_steps`). Refused otherwise: once the
+    purge has started, or with nothing switched.
 
     Parameters:
         ctx: The import run's context.
@@ -539,7 +615,7 @@ def revert_generation(ctx: ImportContext) -> None:
         if refusal is not None:
             raise GenerationRefusedError(f'--revert-generation refused: {refusal}')
         if state.pending is not None and state.pending_state == PENDING_READY:
-            _revert_steps(ctx, state.generation)
+            _revert_steps(ctx, state.generation, swap_first=False)
             import_util.log_info(
                 ctx,
                 f'Generation {state.generation} is served, and generation '
@@ -548,7 +624,7 @@ def revert_generation(ctx: ImportContext) -> None:
             return
         reverted = state.generation
         previous = reverted - 1
-        _revert_steps(ctx, previous)
+        _revert_steps(ctx, previous, swap_first=True)
         _update_version_row(
             ctx,
             {
@@ -583,8 +659,8 @@ def _observation_ids(ctx: ImportContext, where: str, params: list[object]) -> li
 def purge_generations(ctx: ImportContext) -> bool:
     """Delete the rows no served generation shows: ``--purge-generations``.
 
-    Run after a switch, while the site serves. Refused while a generation is pending. Its
-    first statement, committed on its own, ends the switch's revertibility, so a revert
+    Run after a switch, while the site serves. Refused while a generation is pending, and
+    while a revert has stopped part way (`unfinished_switch_problem`). Its first statement, committed on its own, ends the switch's revertibility, so a revert
     is refused from before the first row goes. It then drops the auxiliary ``__prev``
     tables; deletes every observation retired at or before the served generation from
     every observation table, children first, with foreign keys checked; deletes the
@@ -611,6 +687,10 @@ def purge_generations(ctx: ImportContext) -> bool:
             )
         db = ctx.db
         assert db is not None
+        # The purge deletes the retired rows a part-way revert has pointed the cart at.
+        unfinished = unfinished_switch_problem(db, state)
+        if unfinished is not None:
+            raise GenerationRefusedError(f'--purge-generations refused: {unfinished}')
         q = db.quote_identifier
         _update_version_row(ctx, {REVERTIBLE_COLUMN: 0}, SERVED_GENERATION_COLUMN, state.generation)
         # Next, so no __prev table outlives the revert it served (begin_generation drops
@@ -639,6 +719,8 @@ def abandon_generation(ctx: ImportContext) -> None:
     made live again; its auxiliary ``__new`` tables are dropped; the view is re-created,
     with no condition unless retired rows remain; and last the version row's pending
     generation is cleared. Running it again after an interruption finishes the work.
+    Refused while a switch of the pending generation, or a revert of it, has stopped part
+    way (`unfinished_switch_problem`).
 
     Parameters:
         ctx: The import run's context.
@@ -653,6 +735,11 @@ def abandon_generation(ctx: ImportContext) -> None:
         pending = state.pending
         db = ctx.db
         assert db is not None
+        # Abandoning deletes the rows a part-way switch has pointed the cart at, and would
+        # serve the pending generation's auxiliary tables against the served rows.
+        unfinished = unfinished_switch_problem(db, state)
+        if unfinished is not None:
+            raise GenerationRefusedError(f'--abandon-generation refused: {unfinished}')
         q = db.quote_identifier
         ids = _observation_ids(ctx, f'{q(ADDED_GENERATION_COLUMN)}=%s', [pending])
         import_util.log_info(

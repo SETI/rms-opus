@@ -346,3 +346,72 @@ def test_an_interrupted_switch_completes_when_run_again(
             == 1
         )
         _ok(copy.step('--revert-generation'))
+
+
+def _swap_back_by_hand(credentials: DatabaseCredentials, schema: str) -> None:
+    """Swap the __prev auxiliary tables back in, as a revert's first step does."""
+    renames = ', '.join(
+        f'{table} TO {table}__new, {table}__prev TO {table}' for table in do_generation.AUX_TABLES
+    )
+    golden_io.execute(credentials, schema, f'RENAME TABLE {renames}')
+
+
+def test_an_unfinished_switch_or_revert_refuses_what_would_lose_the_way_back(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    bundles: tuple[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A part-way switch refuses the abandon and a write to its generation; a part-way
+    revert refuses the purge; finishing each lets them run with the cart intact."""
+    reimported, dropped = bundles
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'unfinished')
+    schema = copy.schema
+    old_target = _plant_cart_row(db_credentials, schema, reimported)
+    _update(copy, reimported, dropped)
+
+    # A switch stopped after pointing the cart at the pending generation.
+    monkeypatch.setenv(IMPORT_FAULT_ENV_VAR, f'{do_generation.SWITCH_FAULT_SITE}:2')
+    assert copy.step('--switch-generation').returncode != 0
+    monkeypatch.delenv(IMPORT_FAULT_ENV_VAR)
+    (moved,) = _cart_target(db_credentials, schema)
+    assert moved != old_target
+    refused = copy.step('--abandon-generation')
+    assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
+    assert 'stopped part way' in refused.stdout
+    written = copy.step(*build_run.AUX_ARGS)
+    assert written.returncode != 0
+    assert 'stopped part way' in written.stdout
+    assert _cart_target(db_credentials, schema) == [moved]
+    assert _state(db_credentials, schema)[3:5] == (2, generations.PENDING_READY)
+    # The revert undoes it, after which the abandon leaves the cart as it was.
+    _ok(copy.step('--revert-generation'))
+    assert _cart_target(db_credentials, schema) == [old_target]
+    _ok(copy.step('--abandon-generation'))
+    assert _cart_target(db_credentials, schema) == [old_target]
+
+    # A revert stopped after swapping the auxiliary tables back and pointing the cart.
+    _update(copy, reimported, dropped)
+    _ok(copy.step('--switch-generation'))
+    _swap_back_by_hand(db_credentials, schema)
+    golden_io.execute(
+        db_credentials,
+        schema,
+        'UPDATE cart SET obs_general_id = %s WHERE session_id = %s',
+        [old_target, _SESSION],
+    )
+    refused = copy.step('--purge-generations')
+    assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
+    assert 'a revert of generation 2' in refused.stdout
+    assert _state(db_credentials, schema)[2:] == (2, None, None, 1)
+    retired = golden_io.query(
+        db_credentials,
+        schema,
+        'SELECT COUNT(*) FROM obs_general_rows WHERE removed_generation IS NOT NULL',
+    )
+    assert int(retired[0][0]) > 0
+    assert _cart_target(db_credentials, schema) == [old_target]
+    _ok(copy.step('--revert-generation'))
+    assert _state(db_credentials, schema)[2:] == (1, 2, generations.PENDING_READY, 0)
+    assert _cart_target(db_credentials, schema) == [old_target]

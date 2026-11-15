@@ -203,19 +203,26 @@ class _StateDB:
     read_only = False
     transaction_rows = 100
 
-    def __init__(self, state: tuple[Any, ...] | None, *, lock_free: bool = True) -> None:
+    def __init__(
+        self,
+        state: tuple[Any, ...] | None,
+        *,
+        lock_free: bool = True,
+        tables: tuple[str, ...] = (),
+    ) -> None:
         self.row = (
             None if state is None else dict(zip(generations.STATE_COLUMNS, state, strict=True))
         )
         self.lock_free = lock_free
+        self.tables = set(tables)
         self.events: list[str] = []
 
     def forget_table_names(self) -> None:
         """Read nothing."""
 
     def table_exists(self, table: str) -> bool:
-        """Hold the version table only."""
-        return table == 'schema_version' and self.row is not None
+        """Hold the version table, when there is a row, and the tables given."""
+        return (table == 'schema_version' and self.row is not None) or table in self.tables
 
     def read_rows(self, table: str, columns: list[str], *args: Any) -> list[tuple[Any, ...]]:
         """Return the version row's columns."""
@@ -429,10 +436,11 @@ def test_a_revert_serves_the_previous_generation_with_the_reverted_one_pending(
 
 
 def test_a_revert_undoes_a_switch_that_stopped_part_way(switch_steps: list[str]) -> None:
-    """The pending generation stays pending and ready; the served one is untouched."""
+    """The steps run in the opposite order, so the __prev tables go last; the pending
+    generation stays pending and ready, and the served one is untouched."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
     do_generation.revert_generation(_context(db))
-    assert switch_steps == ['back', 'cart 1', 'reset', 'view 1']
+    assert switch_steps == ['view 1', 'reset', 'cart 1', 'back']
     assert not any(event.startswith('update') for event in db.events)
 
 
@@ -453,6 +461,77 @@ def test_the_purge_ends_revertibility_first_and_is_refused_with_a_pending_genera
     with pytest.raises(do_generation.GenerationRefusedError, match='generation 3 is pending'):
         do_generation.purge_generations(_context(db))
     assert not any(event.startswith('update') for event in db.events)
+
+
+#: The auxiliary tables' names after a switch's swap and after a revert's.
+_PREV = tuple(table_swap.swap_prev_name(table) for table in do_generation.AUX_TABLES)
+_NEW = tuple(table_swap.swap_new_name(table) for table in do_generation.AUX_TABLES)
+
+
+@pytest.mark.parametrize(
+    ('row', 'tables', 'unfinished'),
+    [
+        (_ready(pending_generation=2, pending_state=PENDING_READY), _NEW, None),
+        (_ready(pending_generation=2, pending_state=PENDING_READY), _PREV, 'a switch of'),
+        (_ready(pending_generation=2, pending_state=PENDING_WRITING), _PREV, 'a switch of'),
+        (_ready(generation=2, revertible=1), _PREV, None),
+        (_ready(generation=2, revertible=1), _NEW, 'a revert of generation 2'),
+        (_ready(generation=2, revertible=1), _PREV + _NEW, None),
+        (_ready(generation=2), _NEW, None),
+    ],
+    ids=[
+        'pending',
+        'part-way-switch',
+        'written-after-a-part-way-switch',
+        'switched',
+        'part-way-revert',
+        'rebuild-left-over',
+        'purged',
+    ],
+)
+def test_an_unfinished_switch_or_revert_is_told_by_its_auxiliary_tables(
+    row: tuple[Any, ...], tables: tuple[str, ...], unfinished: str | None
+) -> None:
+    """__prev beside a pending generation; __new with no __prev beside a revertible one."""
+    ctx = _context(_StateDB(row, tables=tables))
+    assert ctx.db is not None
+    assert ctx.generation_state is not None
+    problem = do_generation.unfinished_switch_problem(ctx.db, ctx.generation_state)
+    if unfinished is None:
+        assert problem is None
+    else:
+        assert problem is not None
+        assert unfinished in problem
+        assert '--switch-generation' in problem
+        assert '--revert-generation' in problem
+
+
+@pytest.mark.usefixtures('no_writers')
+def test_abandon_is_refused_while_a_switch_has_stopped_part_way() -> None:
+    """It would delete the rows the cart was pointed at, and drop nothing."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY), tables=_PREV)
+    with pytest.raises(do_generation.GenerationRefusedError, match='stopped part way'):
+        do_generation.abandon_generation(_context(db))
+    assert [event for event in db.events if event not in ('lock', 'unlock')] == []
+
+
+@pytest.mark.usefixtures('no_writers')
+def test_the_purge_is_refused_while_a_revert_has_stopped_part_way() -> None:
+    """It would delete the retired rows the cart was pointed back at; revertibility stays."""
+    db = _StateDB(_ready(generation=2, revertible=1), tables=_NEW)
+    with pytest.raises(do_generation.GenerationRefusedError, match='a revert of generation 2'):
+        do_generation.purge_generations(_context(db))
+    assert db.row is not None
+    assert db.row['revertible'] == 1
+    assert [event for event in db.events if event not in ('lock', 'unlock')] == []
+
+
+def test_a_writer_is_refused_while_a_switch_has_stopped_part_way() -> None:
+    """A rebuild would replace the __new tables, and the next switch drop the __prev ones."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY), tables=_PREV)
+    with pytest.raises(do_generation.GenerationRefusedError, match='stopped part way'):
+        do_generation.register_writer(_context(db))
+    assert db.events == ['lock', 'unlock']
 
 
 @pytest.mark.usefixtures('no_writers')

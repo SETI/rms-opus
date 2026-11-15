@@ -626,9 +626,21 @@ tables back in, the reverted generation's kept as ``__new``; the cart moved to t
 previous generation; the search tables reset; the view re-created to show the previous
 generation; then the previous generation served, P
 pending and ``ready`` again and the switch not revertible. On a pending generation
-that is ``ready``, it undoes whatever steps a switch that stopped part way ran.
+that is ``ready``, it undoes whatever steps a switch that stopped part way ran, in the
+opposite order: the view, the search tables and the cart first, the ``__prev`` tables
+last.
 
-**The purge** is refused while a generation is pending. Its first statement, committed on
+**An unfinished switch or revert** is told by the auxiliary tables it leaves
+(:func:`~opus_import.steps.do_generation.unfinished_switch_problem`): ``__prev`` tables
+beside a pending generation, which a switch keeps from its first step and a revert of it
+swaps back last; ``__new`` tables with no ``__prev`` beside a revertible switch, which a
+revert of a whole switch leaves from its first step. Either way the cart, the search
+tables and the view may belong to either generation, so the abandon, every write to the
+pending generation and the purge are refused, naming the switch and the revert, either of
+which finishes it.
+
+**The purge** is refused while a generation is pending, or a revert is unfinished. Its
+first statement, committed on
 its own, clears ``revertible``. It then drops the ``__prev`` tables; deletes every row
 retired at or before the served generation from every observation table, children first,
 with foreign keys checked
