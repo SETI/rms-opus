@@ -15,7 +15,13 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from opus_import import generations, importdb, table_swap
-from opus_import.cli import _create_argument_parser, _generation_conflicts, _validate
+from opus_import.cli import (
+    _create_argument_parser,
+    _generation_conflicts,
+    _rebuilds_pending,
+    _validate,
+    expand_aggregate_options,
+)
 from opus_import.generations import (
     PENDING_FINALIZED,
     PENDING_READY,
@@ -808,6 +814,28 @@ def test_the_duplicate_step_retires_a_served_copy_and_deletes_a_pending_one(
     assert do_duplicate_ids.delete_duplicate_opus_ids(ctx)
     assert deleted == [[7]]
     assert updates == [({'removed_generation': 2}, [3])]
+
+
+@pytest.mark.parametrize(
+    ('arguments', 'rebuilds'),
+    [
+        (['--finalize'], True),
+        (['--create-indexes'], True),
+        (['--create-param-info'], True),
+        (['--create-partables'], True),
+        (['--create-table-names'], True),
+        (['--validate'], False),
+        (['--write-schema-version'], False),
+        (['--analyze-tables'], False),
+    ],
+)
+def test_every_rebuild_from_the_pending_generation_marks_it_writing(
+    arguments: list[str], rebuilds: bool
+) -> None:
+    """A generation rebuilt after its stamp must be finalized, validated and stamped again."""
+    args = _create_argument_parser().parse_args(arguments)
+    expand_aggregate_options(args)
+    assert _rebuilds_pending(args) is rebuilds
 
 
 def test_a_generation_command_runs_alone() -> None:

@@ -672,6 +672,28 @@ _PENDING_WRITERS = (
 )
 
 
+#: The finalization group's options that rebuild from a pending generation's rows, each
+#: marking it ``writing`` again, so a generation rebuilt after its stamp is switched in
+#: only once it is finalized, validated and stamped again. ``--finalize`` turns every one
+#: on (`expand_aggregate_options`); the import group's options mark it in
+#: `opus_import.steps.do_import.do_import_steps`.
+_PENDING_REBUILDS = (
+    'create_indexes',
+    'create_param_info',
+    'create_partables',
+    'create_table_names',
+)
+
+
+def _rebuilds_pending(args: argparse.Namespace) -> bool:
+    """Return whether the arguments rebuild anything from a pending generation's rows.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+    """
+    return any(getattr(args, name) for name in _PENDING_REBUILDS)
+
+
 def _generation_command(args: argparse.Namespace) -> str | None:
     """Return the generation command given, or None."""
     for name, option in GENERATION_COMMANDS:
@@ -1069,7 +1091,7 @@ def main() -> None:
         # registry.
         if args.finalize and not _registry_finished(ctx, '--finalize'):
             sys.exit(-1)
-        if args.finalize and pending is not None:
+        if pending is not None and _rebuilds_pending(args):
             do_generation.set_pending_state(ctx, PENDING_WRITING)
 
         # The finishing steps that failed in this invocation. Any failure keeps it from

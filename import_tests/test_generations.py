@@ -292,14 +292,17 @@ def test_an_abandoned_generation_leaves_the_base_tables_as_they_were(
     created_schemas: list[str],
     bundles: tuple[str, str],
 ) -> None:
-    """Abandoning before the switch restores every observation table and the registry."""
+    """Abandoning before the switch restores every observation table and the registry;
+    before that, a rebuild after the stamp unmarks the generation, so it is not switched."""
     reimported, dropped = bundles
     copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'abandon')
     before = _base_tables(db_credentials, copy.schema)
-    _ok(copy.step('--begin-generation'))
-    _ok(copy.step(*build_run.IMPORT_ARGS, reimported))
-    _ok(copy.step('--delete-bundles', dropped))
-    _ok(copy.step(*build_run.AUX_ARGS))
+    _update(copy, reimported, dropped)
+    assert _state(db_credentials, copy.schema)[4] == generations.PENDING_READY
+    _ok(copy.step('--create-param-info'))
+    assert _state(db_credentials, copy.schema)[4] == generations.PENDING_WRITING
+    refused = copy.step('--switch-generation')
+    assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
     assert _base_tables(db_credentials, copy.schema) != before
     _ok(copy.step('--abandon-generation'))
     assert _base_tables(db_credentials, copy.schema) == before
