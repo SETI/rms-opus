@@ -531,11 +531,16 @@ def list_contains_any(table: str, column_name: str, mult_ids: Sequence[int]) -> 
     return exists(junction, where)
 
 
+#: The SQL each join kind renders as.
+_JOIN_KEYWORDS = {'INNER': 'INNER JOIN', 'LEFT': 'LEFT JOIN', 'STRAIGHT': 'STRAIGHT_JOIN'}
+
+
 @dataclass(frozen=True)
 class Join:
     """One join onto a table source."""
 
-    #: 'INNER' or 'LEFT'.
+    #: 'INNER', 'LEFT', or 'STRAIGHT' for MySQL's ``STRAIGHT_JOIN``, an inner join that
+    #: reads the source it is hung on before the one it joins.
     kind: str
     #: The table name, or other `TableSource`, being joined in.
     source: TableSource
@@ -544,10 +549,11 @@ class Join:
 
     def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this join."""
-        if self.kind not in ('INNER', 'LEFT'):
+        if self.kind not in _JOIN_KEYWORDS:
             raise ValueError(f'Unsupported join kind: {self.kind!r}')
         source_sql, params = _render_source(self.source)
-        return f' {self.kind} JOIN {source_sql} ON {self.on.sql}', params + list(self.on.params)
+        keyword = _JOIN_KEYWORDS[self.kind]
+        return f' {keyword} {source_sql} ON {self.on.sql}', params + list(self.on.params)
 
 
 @dataclass
@@ -592,18 +598,32 @@ OBS_GENERAL_TABLE = 'obs_general'
 def served_observations_join(table: str) -> Join:
     """Return the join that keeps a child table's rows to the served observations.
 
-    Renders `INNER JOIN obs_general ON obs_general.id = <table>.obs_general_id`, which
-    reads each row's observation through the view's primary key and drops the rows of a
-    generation the schema does not serve.
+    Renders `STRAIGHT_JOIN obs_general ON obs_general.id = <table>.obs_general_id`: an
+    inner join that drops the rows of a generation the schema does not serve, and that
+    reads the child first, so the statement keeps the child's own access path and the
+    order its rows come in, and reads each row's observation through the view's primary
+    key.
 
     Parameters:
         table: The child table, or the alias its columns are read under.
     """
     return Join(
-        'INNER',
+        'STRAIGHT',
         OBS_GENERAL_TABLE,
         columns_equal(column('id', OBS_GENERAL_TABLE), column('obs_general_id', table)),
     )
+
+
+def keep_to_served_observations(from_source: FromSource, table: str) -> None:
+    """Hang `served_observations_join` off a table's source, unless it is obs_general's.
+
+    Parameters:
+        from_source: The table's source.
+        table: The table, or the alias its columns are read under; ``obs_general`` is the
+            view itself and needs no join.
+    """
+    if table != OBS_GENERAL_TABLE:
+        from_source.append_join(served_observations_join(table))
 
 
 #: The table holding every mult field's values, keyed ``(field_id, id)``.

@@ -494,7 +494,8 @@ process, in order:
      - What it does
    * - ``--begin-generation``
      - Starts the pending generation, one above the served one, on a ``ready`` schema of
-       this release's version. Refused while a generation is pending, naming
+       this release's version, after re-creating the ``obs_general`` view to show only the
+       served generation. Refused while a generation is pending, naming
        ``--abandon-generation``, and while the last switch can still be reverted, naming
        ``--purge-generations``.
    * - ``--import <bundles>``
@@ -519,7 +520,8 @@ process, in order:
        the generation is ``ready``. It swaps the auxiliary tables in, keeping the live
        ones as ``__prev``; points every cart row at the new generation's row with the same
        OPUS ID, or deletes it when there is none; resets the search tables and flushes
-       the cache; and last, serves the generation and marks the switch revertible. Each
+       the cache; re-creates the ``obs_general`` view to show the generation; and last,
+       serves the generation and marks the switch revertible. Each
        step finds out whether it has run, so running it again completes an interrupted
        switch.
    * - ``--purge-generations``

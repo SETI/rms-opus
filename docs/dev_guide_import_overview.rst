@@ -147,7 +147,10 @@ added it, ``added_generation``, and the one that retired it, ``removed_generatio
 rows live in the base table ``obs_general_rows``, and ``obs_general`` is a view of the rows
 in the generation the schema serves, the ``generation`` column of its ``schema_version``
 row: a row is in generation G when it was added at or before G and was not retired at or
-before G. A fresh import writes generation 1, and its version row serves it. The child
+before G. A fresh import writes generation 1, and its version row serves it. While every
+row is in the served generation the view has no condition, so a request reads the table
+as it would the table itself; while other generations' rows are there, it names the
+served generation (:ref:`the obs_general view <dev_guide_database_schema_obs_general_rows>`). The child
 tables carry no generation; a request reaches a child row only through an observation the
 view returned, or a search built from the view.
 

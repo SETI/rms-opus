@@ -1069,7 +1069,11 @@ def main() -> None:
 
         # The finalization group's sequence, which later steps extend in place: the keys,
         # then the duplicate step, then the mult step, then the auxiliary tables, the cart
-        # and the cache tables, then ANALYZE.
+        # and the cache tables, then ANALYZE. With a pending generation the mult step, the
+        # cart and the search tables' reset wait for the switch or the purge, and the
+        # auxiliary tables are left for the switch; a step added here says which it does:
+        # works on the pending generation, or runs at the switch
+        # (opus_import.steps.do_generation).
         if args.create_indexes:
             logger.open(
                 'Creating secondary keys',

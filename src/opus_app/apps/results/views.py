@@ -1223,7 +1223,7 @@ def api_get_product_types_for_opus_id(request: HttpRequest, opus_id: str) -> Htt
 
     select, from_source = _product_types_select()
     # The served observation's files: an unserved generation may hold the same OPUS ID.
-    from_source.append_join(sql_builder.served_observations_join('obs_files'))
+    _join_served_observations(select, from_source)
     select.add_where(
         sql_builder.binary_op(
             sql_builder.column('opus_id', 'obs_files'),
@@ -1314,7 +1314,7 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
     else:
         # Every served observation's files, read through the view, since an unserved
         # generation has rows in obs_files too.
-        from_source.append_join(sql_builder.served_observations_join('obs_files'))
+        _join_served_observations(select, from_source)
 
     sql, values = select.build()
     log.debug('get_product_types_for_search SQL: %r %r', sql, values)
@@ -1386,19 +1386,42 @@ def _product_types_select() -> tuple[sql_builder.Select, sql_builder.FromSource]
     only in how they narrow the rows down.
     """
     select = sql_builder.Select(distinct=True)
-    for column_name in (
-        'category',
-        'short_name',
-        'full_name',
-        'version_number',
-        'version_name',
-        'sort_order',
-    ):
+    for column_name in _PRODUCT_TYPE_COLUMNS:
         select.add_column(sql_builder.column(column_name, 'obs_files'))
     from_source = select.add_from('obs_files')
     select.add_order_by(sql_builder.column('sort_order', 'obs_files'))
     select.add_order_by(sql_builder.column('version_number', 'obs_files'), descending=True)
     return select, from_source
+
+
+#: The product type columns, in the order the product_types endpoints select them.
+_PRODUCT_TYPE_COLUMNS = (
+    'category',
+    'short_name',
+    'full_name',
+    'version_number',
+    'version_name',
+    'sort_order',
+)
+
+
+def _join_served_observations(
+    select: sql_builder.Select, from_source: sql_builder.FromSource
+) -> None:
+    """Keep a product_types statement to the served observations' files, in its order.
+
+    The server sorts a ``DISTINCT`` over one table by every selected column after the
+    ``ORDER BY``'s, and one over a join by the ``ORDER BY``'s alone, so the ties the two
+    columns leave are broken here as the one-table statement breaks them.
+
+    Parameters:
+        select: The statement `_product_types_select` returned.
+        from_source: Its ``obs_files`` source.
+    """
+    from_source.append_join(sql_builder.served_observations_join('obs_files'))
+    for column_name in _PRODUCT_TYPE_COLUMNS:
+        if column_name not in ('sort_order', 'version_number'):
+            select.add_order_by(sql_builder.column(column_name, 'obs_files'))
 
 
 def get_search_results_chunk_error_handler(error: tuple[int, str]) -> HttpResponse:

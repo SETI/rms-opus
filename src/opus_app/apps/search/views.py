@@ -321,11 +321,9 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
         select = sql_builder.Select(distinct=True, max_execution_time=max_time)
         select.add_column(param_column)
-        category_source = select.add_from(category.source)
-        if param_category != sql_builder.OBS_GENERAL_TABLE:
-            # Every served observation's value: an unserved generation has rows in a
-            # child table too, so its rows are read through the view.
-            category_source.append_join(sql_builder.served_observations_join(param_category))
+        # Every served observation's value: an unserved generation has rows in a child
+        # table too, so its rows are read through the view.
+        sql_builder.keep_to_served_observations(select.add_from(category.source), param_category)
         category.restrict(select)
 
         if partial_query:

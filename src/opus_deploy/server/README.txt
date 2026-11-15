@@ -202,8 +202,8 @@ ends. Give it the version specifier of the release being served.
 promote_generation.sh takes the deploy lock, asks whether the switch would
 run (and stops nothing when it would be refused), stops the web server,
 switches the generation in, restarts the cache service and the web server,
-and warms the common searches. If the switch fails, the web server stays stopped:
-running promote_generation.sh again completes the switch, and
+and warms the common searches. If the switch fails, the web server stays
+stopped: running promote_generation.sh again completes the switch, and
 `promote_generation.sh --revert` goes back. The purge deletes the rows the
 switch replaced, while the site serves.
 
@@ -214,8 +214,9 @@ Until the purge, the update can be undone:
 
 An update that failed, or one not yet switched in, is thrown away with the
 second command alone. Deploy no code while a generation is pending: a
-code-only deploy's auxiliary tables would wait for the switch. Without a second server that holds a copy, take a dump
-of the served database before the update, with OPUS_DB_DUMP_DIR set:
+code-only deploy's auxiliary tables would wait for the switch. Without a
+second server that holds a copy, take a dump of the served database before
+the update, with OPUS_DB_DUMP_DIR set:
 
     ./database/dump_db.sh <the served database>
 

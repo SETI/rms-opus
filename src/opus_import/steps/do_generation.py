@@ -7,7 +7,7 @@ purge, so a switch can be reverted until then. The commands, each an ``opus_impo
 option run on its own:
 
 - ``--begin-generation`` (`begin_generation`) starts P on a ``ready`` schema of this
-  release's version. The version row stays ``ready``, so every web worker goes on serving
+  release's version, first re-creating the ``obs_general`` view to show only G. The version row stays ``ready``, so every web worker goes on serving
   G and a worker started meanwhile passes the version check.
 - ``--import``, ``--delete-bundles``, ``--finalize``, ``--validate`` and
   ``--write-schema-version`` then write P, each changed by its own module when P is
@@ -39,6 +39,7 @@ from opus_import.generations import (
     ADDED_GENERATION_COLUMN,
     FIRST_GENERATION,
     GENERATION_LOCK,
+    OBS_GENERAL_VIEW,
     PENDING_GENERATION_COLUMN,
     PENDING_READY,
     PENDING_STATE_COLUMN,
@@ -72,7 +73,12 @@ AUX_TABLES = ('param_info', 'partables', 'table_names')
 SWITCH_FAULT_SITE = 'switch_generation'
 
 #: The steps of ``--switch-generation``, in order, as the log and the fault site name them.
-SWITCH_STEPS = ('swap the auxiliary tables', 'point the cart', 'reset the search tables')
+SWITCH_STEPS = (
+    'swap the auxiliary tables',
+    'point the cart',
+    'reset the search tables',
+    'show the generation in the view',
+)
 
 
 class GenerationRefusedError(Exception):
@@ -258,7 +264,9 @@ def begin_generation(ctx: ImportContext) -> bool:
     """Start a pending generation, one above the served one: ``--begin-generation``.
 
     Refused unless the schema's one version row holds this release's version, ``ready``,
-    with no pending generation and no switch still revertible.
+    with no pending generation and no switch still revertible. The ``obs_general`` view
+    is re-created to show the served generation alone before the pending one is recorded
+    (`refresh_view`).
 
     Parameters:
         ctx: The import run's context.
@@ -295,6 +303,9 @@ def begin_generation(ctx: ImportContext) -> bool:
             assert db is not None
             for table in reversed(AUX_TABLES):
                 db.drop_table(table_swap.swap_prev_name(table))
+            # Before the generation is recorded, so no row of it is ever written while
+            # the view shows every row.
+            refresh_view(ctx, state.generation)
             _update_version_row(
                 ctx,
                 {PENDING_GENERATION_COLUMN: pending, PENDING_STATE_COLUMN: PENDING_WRITING},
@@ -320,9 +331,10 @@ def switch_generation(ctx: ImportContext) -> bool:
     ones kept as ``__prev`` (`opus_import.table_swap.swap_in_keeping_previous`); every
     cart row naming an observation the pending generation does not show is pointed at
     its row with the same OPUS id, or deleted; the search tables are reset and the cache
-    flushed; and last, one statement serves the pending generation, clears it and marks
-    the switch revertible. With no pending generation and a revertible switch, the last
-    statement has already run: the first three steps run again for the served generation,
+    flushed; the ``obs_general`` view is re-created to show the pending generation
+    (`refresh_view`); and last, one statement serves the pending generation, clears it
+    and marks the switch revertible. With no pending generation and a revertible switch, the last
+    statement has already run: the other steps run again for the served generation,
     which finds nothing to do after a whole switch and completes a revert that stopped
     part way, and it succeeds.
 
@@ -382,6 +394,7 @@ def _switch_steps(ctx: ImportContext, generation: int) -> None:
     _switch_step(ctx, 1, lambda: table_swap.swap_in_keeping_previous(ctx, AUX_TABLES))
     _switch_step(ctx, 2, lambda: _point_cart(ctx, generation))
     _switch_step(ctx, 3, lambda: do_django.reset_search_tables(ctx))
+    _switch_step(ctx, 4, lambda: refresh_view(ctx, generation))
 
 
 def _revert_steps(ctx: ImportContext, generation: int) -> None:
@@ -394,6 +407,7 @@ def _revert_steps(ctx: ImportContext, generation: int) -> None:
     table_swap.swap_back_previous(ctx, AUX_TABLES)
     _point_cart(ctx, generation)
     do_django.reset_search_tables(ctx)
+    refresh_view(ctx, generation)
 
 
 def _switch_step(ctx: ImportContext, number: int, step: Callable[[], object]) -> None:
@@ -411,6 +425,36 @@ def _switch_step(ctx: ImportContext, number: int, step: Callable[[], object]) ->
     step()
     if import_fault_argument(SWITCH_FAULT_SITE) == str(number):
         raise InjectedImportFaultError(f'{SWITCH_FAULT_SITE}:{number}')
+
+
+def refresh_view(ctx: ImportContext, served: int | None) -> None:
+    """Re-create the ``obs_general`` view for the rows it is to show.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        served: The generation the view is to show, while other generations' rows are in
+            the table; None once every row is in the served generation, for a view of
+            every row with no condition.
+    """
+    db = ctx.db
+    assert db is not None
+    schema = import_util.read_schema_for_table(ctx, OBS_GENERAL_VIEW)
+    # obs_general.json is packaged with opus_import, so the schema is always found.
+    assert schema is not None
+    db.create_obs_general_view(schema, served)
+    shown = 'every row' if served is None else f'generation {served}'
+    import_util.log_info(ctx, f'The obs_general view shows {shown}')
+
+
+def _has_retired_rows(ctx: ImportContext) -> bool:
+    """Return whether any row of ``obs_general_rows`` has been retired."""
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    rows = db.general_select(
+        f'1 FROM {q(OBS_GENERAL_VIEW)} WHERE {q(REMOVED_GENERATION_COLUMN)} IS NOT NULL LIMIT 1'  # nosec B608
+    )
+    return len(rows) > 0
 
 
 def _point_cart(ctx: ImportContext, generation: int) -> None:
@@ -438,7 +482,7 @@ def revert_generation(ctx: ImportContext) -> bool:
 
     The ``__prev`` auxiliary tables are swapped back in and the reverted-from ones kept as
     ``__new``; the cart is pointed at the previous generation; the search tables are
-    reset; and last, the previous generation is served again with the reverted-from one
+    reset; the view is re-created to show the previous generation; and last, the previous generation is served again with the reverted-from one
     pending and ``ready``, no longer revertible, so it can be abandoned or switched again.
     Each step finds out whether it has run, as the switch's do. A switch that stopped
     before its last statement left its generation pending and ``ready``, and the same
@@ -513,7 +557,8 @@ def purge_generations(ctx: ImportContext) -> bool:
     is refused from before the first row goes. It then drops the auxiliary ``__prev``
     tables; deletes every observation retired at or before the served generation from
     every observation table, children first, with foreign keys checked; deletes the
-    registry rows of the copies retired by then; and runs finalization's mult step and
+    registry rows of the copies retired by then; re-creates the view with no condition,
+    every row left being in the served generation; and runs finalization's mult step and
     ``ANALYZE``. The rows it deletes are in no served generation, so no request reads
     them.
 
@@ -547,6 +592,8 @@ def purge_generations(ctx: ImportContext) -> bool:
             import_util.log_info(ctx, f'Purging {len(ids)} retired observations')
             do_import_tables.delete_observations(ctx, ids)
             bundle_registry.purge_retired_copies(ctx, served)
+            # Every row left is in the served generation.
+            refresh_view(ctx, None)
             mult_done = do_finalize_mult.finalize_mult(ctx)
             do_import_tables.analyze_all_tables(ctx)
     except GenerationRefusedError as e:
@@ -561,8 +608,9 @@ def abandon_generation(ctx: ImportContext) -> bool:
 
     The rows the pending generation added are deleted from every observation table; the
     rows it retired are restored; its registry rows are deleted and the copies it retired
-    made live again; its auxiliary ``__new`` tables are dropped; and last the version
-    row's pending generation is cleared. Running it again after an interruption finishes
+    made live again; its auxiliary ``__new`` tables are dropped; the view is re-created,
+    with no condition unless retired rows remain; and last the version row's pending
+    generation is cleared. Running it again after an interruption finishes
     the work.
 
     Parameters:
@@ -599,6 +647,8 @@ def abandon_generation(ctx: ImportContext) -> bool:
             bundle_registry.delete_generation_copies(ctx, pending)
             bundle_registry.restore_retired_copies(ctx, pending)
             table_swap.drop_swap_leftovers(ctx, AUX_TABLES)
+            # Rows a purge that stopped part way left keep the view's condition.
+            refresh_view(ctx, state.generation if _has_retired_rows(ctx) else None)
             _update_version_row(
                 ctx,
                 {PENDING_GENERATION_COLUMN: None, PENDING_STATE_COLUMN: None},

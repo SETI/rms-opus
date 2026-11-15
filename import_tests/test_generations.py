@@ -74,6 +74,18 @@ def _state(credentials: DatabaseCredentials, schema: str) -> tuple[Any, ...]:
     return tuple(golden_io.query(credentials, schema, f'SELECT {columns} FROM schema_version')[0])
 
 
+def _view_has_condition(credentials: DatabaseCredentials, schema: str) -> bool:
+    """Return whether the obs_general view selects rows by a condition."""
+    rows = golden_io.query(
+        credentials,
+        None,
+        'SELECT VIEW_DEFINITION FROM information_schema.VIEWS '
+        "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'obs_general'",
+        [schema],
+    )
+    return ' where ' in str(rows[0][0]).lower()
+
+
 def _cart_target(credentials: DatabaseCredentials, schema: str) -> list[int]:
     """Return the observations the planted session's cart names."""
     rows = golden_io.query(
@@ -203,11 +215,13 @@ def test_an_update_is_hidden_until_the_switch_and_whole_after_it(
     dropped_count = _served_count(db_credentials, schema, dropped)
     assert reimported_count > 0
     assert dropped_count > 0
+    assert not _view_has_condition(db_credentials, schema)
 
     _update(copy, reimported, dropped)
     assert copy.errors() == ''
 
     # Before the switch, nothing a request reads has changed.
+    assert _view_has_condition(db_credentials, schema)
     assert _served(db_credentials, schema) == before
     assert _served_count(db_credentials, schema, reimported) == reimported_count
     assert _served_count(db_credentials, schema, dropped) == dropped_count
@@ -259,6 +273,7 @@ def test_an_update_is_hidden_until_the_switch_and_whole_after_it(
     total = golden_io.query(db_credentials, schema, 'SELECT COUNT(*) FROM obs_general_rows')
     assert int(total[0][0]) == len(_served(db_credentials, schema))
     assert not _planted_value_kept(db_credentials, schema)
+    assert not _view_has_condition(db_credentials, schema)
     assert _state(db_credentials, schema)[2:] == (2, None, None, 0)
     # A revert after the purge has started is refused.
     refused = copy.step('--revert-generation')
@@ -294,6 +309,7 @@ def test_an_abandoned_generation_leaves_the_base_tables_as_they_were(
         if table.endswith(('__new', '__prev'))
     ]
     assert leftovers == []
+    assert not _view_has_condition(db_credentials, copy.schema)
 
 
 def test_an_interrupted_switch_completes_when_run_again(

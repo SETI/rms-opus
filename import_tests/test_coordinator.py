@@ -251,11 +251,8 @@ def _compare_with_main_run(case: Case, main_run: build_run.ImportRun) -> None:
 
 
 def _no_version_row(case: Case) -> bool:
-    """Return whether a case's schema has no version row: no version table, or the empty
-    one created beside the obs_general view that reads it."""
-    if not case.rows("SHOW TABLES LIKE 'schema_version'"):
-        return True
-    return case.rows('SELECT COUNT(*) FROM schema_version') == [(0,)]
+    """Return whether a case's schema has no version table, which nothing finalized."""
+    return not case.rows("SHOW TABLES LIKE 'schema_version'")
 
 
 def test_a_killed_importer_frees_its_lock_and_its_bundle_is_imported_again(

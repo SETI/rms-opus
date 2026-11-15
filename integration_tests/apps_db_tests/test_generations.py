@@ -3,16 +3,20 @@
 ``obs_general`` is a view of the rows of the import generation the schema serves; the
 rows of a pending generation, which an incremental update writes, sit beside them in
 ``obs_general_rows`` and in the child tables, which carry no generation. Each test plants
-an observation in the next generation, a copy of a served one with its child rows, and
+an observation in the next generation, a copy of a served one with its child rows, with
+the view showing the served generation alone, as ``--begin-generation`` leaves it, and
 asks the endpoints that read a child table outside a search's results: what they answer
-must be what they answered before the plant. The planted rows are deleted afterwards.
+must be what they answered before the plant. The planted rows are deleted and the view
+put back afterwards.
 
 These tests require a database the import test sequence built.
 """
 
 from __future__ import annotations
 
+import json
 import logging
+from importlib.resources import files
 from typing import Any
 from unittest import TestCase
 
@@ -24,7 +28,10 @@ from django.test import Client
 from opus_import.generations import (
     ADDED_GENERATION_COLUMN,
     OBS_GENERAL_ROWS,
+    OBS_GENERAL_VIEW,
     SERVED_GENERATION_COLUMN,
+    in_generation_condition,
+    view_columns,
 )
 from opus_import.schema_version import SCHEMA_VERSION_TABLE
 
@@ -51,6 +58,27 @@ _CHILD_TABLES = (
     'obs_files',
     'obs_general_target_name',
 )
+
+
+def _set_view(served: int | None) -> None:
+    """Re-create the obs_general view as the import does: of every row, or of one generation.
+
+    Parameters:
+        served: The generation shown, or None for every row.
+    """
+    schema = json.loads(
+        (files('opus_import') / 'table_schemas' / 'obs_general.json').read_text(encoding='utf-8')
+    )
+    columns = ', '.join(f'`{name}`' for name in view_columns(schema))
+    statement = (
+        'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW '  # nosec B608
+        f'`{OBS_GENERAL_VIEW}` AS SELECT {columns} FROM `{OBS_GENERAL_ROWS}`'
+    )
+    if served is not None:
+        condition = in_generation_condition(lambda name: f'`{name}`', OBS_GENERAL_ROWS)
+        statement += ' WHERE ' + condition.replace('%s', str(served))
+    with connection.cursor() as cursor:
+        cursor.execute(statement)
 
 
 def _stored_columns(table: str) -> list[str]:
@@ -126,13 +154,17 @@ class HiddenGenerationTests(TestCase):
                 [self.hidden_id],
             )
             cursor.execute('DELETE FROM search_results')
+        _set_view(None)
+        with connection.cursor() as cursor:
             cursor.execute('DELETE FROM user_searches')
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = self.saved_threshold
         cache.clear()
         logging.disable(logging.NOTSET)
 
     def _plant(self) -> None:
-        """Copy the source observation into the next generation, with its child rows."""
+        """Copy the source observation into the next generation, with its child rows,
+        once the view shows the served generation alone."""
+        _set_view(self.next_generation - 1)
         hidden = self.hidden_id
         _copy_rows(
             OBS_GENERAL_ROWS,
@@ -210,7 +242,9 @@ class HiddenGenerationTests(TestCase):
     def test_the_autocomplete_from_every_observation_omits_the_planted_value(self) -> None:
         """The branch that reads every observation's values, not the search's."""
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 0
-        path = f'/__api/stringsearchchoices/productid.json?productid={_HIDDEN_PRODUCT_ID[:12]}'
+        path = (
+            f'/__api/stringsearchchoices/productid.json?productid={_HIDDEN_PRODUCT_ID[:12]}&reqno=1'
+        )
         self._plant()
         self.assertNotIn(_HIDDEN_PRODUCT_ID, self._get(path))
 

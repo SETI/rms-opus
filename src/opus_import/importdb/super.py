@@ -747,11 +747,15 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::release_named_lock must be overridden')
 
-    def create_obs_general_view(self, schema: Sequence[SchemaColumn]) -> None:
+    def create_obs_general_view(
+        self, schema: Sequence[SchemaColumn], served: int | None = None
+    ) -> None:
         """Create, or re-create, ``obs_general`` as the view of the served generation.
 
         Parameters:
             schema: ``obs_general``'s table schema.
+            served: The served generation, when the view must hide the rows of others;
+                None for a view of every row.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.

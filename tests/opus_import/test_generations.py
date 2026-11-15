@@ -102,31 +102,30 @@ def _obs_general_schema() -> list[dict[str, Any]]:
 # ------------------------------------------------------------------------------------
 
 
-def test_obs_general_is_created_as_its_base_table_then_the_view_of_the_served_generation() -> None:
-    """The base table first, then schema_version empty, then the merged view."""
+def test_obs_general_is_created_as_its_base_table_then_a_view_of_every_row() -> None:
+    """A fresh import's rows are all in its generation, so the view has no condition."""
     db = _RecordingDB()
     db.create_table('obs_general', _obs_general_schema())
-    statements = [cmd for cmd, _params in db.executed]
-    assert statements[0].startswith('CREATE TABLE IF NOT EXISTS `obs_general_rows` (')
-    assert statements[1].startswith('CREATE TABLE IF NOT EXISTS `schema_version` (')
-    view = statements[2]
-    assert view.startswith(
-        'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW `obs_general` AS SELECT '
+    (table, _), (view, _) = db.executed
+    assert table.startswith('CREATE TABLE IF NOT EXISTS `obs_general_rows` (')
+    assert view == (
+        'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW `obs_general` AS '
+        'SELECT `id`, `opus_id` FROM `obs_general_rows`'
     )
-    assert 'SELECT `id`, `opus_id` FROM `obs_general_rows` WHERE' in view
-    served = 'COALESCE((SELECT `generation` FROM `schema_version`), 1)'
-    assert f'`added_generation` <= {served}' in view
-    assert f'`removed_generation` IS NULL OR `removed_generation` > {served}' in view
     assert 'obs_general' in db.table_names()
     assert 'obs_general_rows' not in db.table_names()
 
 
-def test_the_view_does_not_create_schema_version_again() -> None:
-    """A schema that has the version table keeps it."""
-    db = _RecordingDB({'schema_version'})
-    db.create_obs_general_view(_obs_general_schema())
-    assert len(db.executed) == 1
-    assert db.executed[0][0].startswith('CREATE OR REPLACE ALGORITHM=MERGE')
+def test_a_view_of_one_generation_names_it_as_a_number() -> None:
+    """While other generations' rows are in the table, the view shows the served one's."""
+    db = _RecordingDB()
+    db.create_obs_general_view(_obs_general_schema(), 3)
+    ((view, _),) = db.executed
+    assert view.endswith(
+        'FROM `obs_general_rows` WHERE `obs_general_rows`.`added_generation` <= 3 AND '
+        '(`obs_general_rows`.`removed_generation` IS NULL OR '
+        '`obs_general_rows`.`removed_generation` > 3)'
+    )
 
 
 def test_dropping_obs_general_drops_the_view_before_the_table() -> None:
@@ -262,9 +261,15 @@ def _ready(**changes: Any) -> tuple[Any, ...]:
 
 
 @pytest.fixture
-def no_writers(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Report no invocation writing the pending generation."""
+def no_writers(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Report no invocation writing the pending generation, and record the view's
+    re-creations instead of running them."""
+    views: list[str] = []
     monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
+    monkeypatch.setattr(
+        do_generation, 'refresh_view', lambda ctx, served: views.append(f'view {served}')
+    )
+    return views
 
 
 def _context(db: _StateDB) -> ImportContext:
@@ -274,9 +279,9 @@ def _context(db: _StateDB) -> ImportContext:
     return ctx
 
 
-@pytest.mark.usefixtures('no_writers')
-def test_begin_sets_the_next_generation_pending_and_writing() -> None:
-    """The served generation stays; the version row stays ready."""
+def test_begin_sets_the_next_generation_pending_and_writing(no_writers: list[str]) -> None:
+    """The view shows the served generation alone first; the version row stays ready."""
+    assert no_writers == []
     db = _StateDB(_ready())
     ctx = _context(db)
     assert do_generation.begin_generation(ctx)
@@ -288,6 +293,7 @@ def test_begin_sets_the_next_generation_pending_and_writing() -> None:
     )
     assert db.row['state'] == SCHEMA_STATE_READY
     assert ctx.import_generation == 2
+    assert no_writers == ['view 1']
     assert db.events[0] == 'lock'
     assert db.events[-1] == 'unlock'
     # A stale __prev table, which only an interrupted purge leaves, goes first.
@@ -355,6 +361,9 @@ def switch_steps(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         do_generation, '_point_cart', lambda ctx, generation: steps.append(f'cart {generation}')
     )
     monkeypatch.setattr(do_django, 'reset_search_tables', lambda ctx: steps.append('reset'))
+    monkeypatch.setattr(
+        do_generation, 'refresh_view', lambda ctx, served: steps.append(f'view {served}')
+    )
     return steps
 
 
@@ -364,7 +373,7 @@ def test_the_switch_runs_its_steps_then_serves_the_generation_last(
     """Swap, cart, reset, then the one statement that serves it."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
     assert do_generation.switch_generation(_context(db))
-    assert switch_steps == ['swap', 'cart 2', 'reset']
+    assert switch_steps == ['swap', 'cart 2', 'reset', 'view 2']
     assert db.row is not None
     assert (db.row['generation'], db.row['pending_generation'], db.row['revertible']) == (
         2,
@@ -373,7 +382,7 @@ def test_the_switch_runs_its_steps_then_serves_the_generation_last(
     )
 
 
-@pytest.mark.parametrize('step', [1, 2, 3])
+@pytest.mark.parametrize('step', [1, 2, 3, 4])
 def test_an_interrupted_switch_stops_after_its_step_and_serves_nothing(
     switch_steps: list[str], monkeypatch: pytest.MonkeyPatch, step: int
 ) -> None:
@@ -382,7 +391,7 @@ def test_an_interrupted_switch_stops_after_its_step_and_serves_nothing(
     monkeypatch.setenv(IMPORT_FAULT_ENV_VAR, f'{do_generation.SWITCH_FAULT_SITE}:{step}')
     with pytest.raises(InjectedImportFaultError):
         do_generation.switch_generation(_context(db))
-    assert switch_steps == ['swap', 'cart 2', 'reset'][:step]
+    assert switch_steps == ['swap', 'cart 2', 'reset', 'view 2'][:step]
     assert db.row is not None
     assert db.row['pending_generation'] == 2
     assert db.events[-1] == 'unlock'
@@ -395,7 +404,7 @@ def test_a_switched_generation_is_completed_not_refused(switch_steps: list[str])
     """With nothing pending and the switch revertible, the steps run again for it."""
     db = _StateDB(_ready(generation=2, revertible=1))
     assert do_generation.switch_generation(_context(db))
-    assert switch_steps == ['swap', 'cart 2', 'reset']
+    assert switch_steps == ['swap', 'cart 2', 'reset', 'view 2']
     assert not any(event.startswith('update') for event in db.events)
 
 
@@ -414,7 +423,7 @@ def test_a_revert_serves_the_previous_generation_with_the_reverted_one_pending(
     """Swap back, the cart to the previous generation, reset, then the version row."""
     db = _StateDB(_ready(generation=2, revertible=1))
     assert do_generation.revert_generation(_context(db))
-    assert switch_steps == ['back', 'cart 1', 'reset']
+    assert switch_steps == ['back', 'cart 1', 'reset', 'view 1']
     assert db.row is not None
     assert (
         db.row['generation'],
@@ -428,7 +437,7 @@ def test_a_revert_undoes_a_switch_that_stopped_part_way(switch_steps: list[str])
     """The pending generation stays pending and ready; the served one is untouched."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
     assert do_generation.revert_generation(_context(db))
-    assert switch_steps == ['back', 'cart 1', 'reset']
+    assert switch_steps == ['back', 'cart 1', 'reset', 'view 1']
     assert not any(event.startswith('update') for event in db.events)
 
 

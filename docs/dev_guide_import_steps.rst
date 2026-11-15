@@ -606,17 +606,26 @@ whether it has run:
    ``opus_id``, or deleted when P has none, and the log counts both;
 #. the search tables are reset and the web application's cache flushed
    (:ref:`dev_guide_import_steps_do_django`);
+#. the ``obs_general`` view is re-created to show P
+   (:func:`~opus_import.steps.do_generation.refresh_view`);
 #. last, one statement sets ``generation = P``, clears the pending generation and its
    state, and sets ``revertible``.
 
 A test makes it fail after a step through ``OPUS_IMPORT_FAULT=switch_generation:<step>``.
 With nothing pending and ``revertible`` set, the last statement has run; the switch runs
-steps 1 to 3 again, which find nothing to do after a whole switch, and succeeds.
+steps 1 to 4 again, which find nothing to do after a whole switch, and succeeds.
+
+**The view.** ``--begin-generation`` re-creates the ``obs_general`` view to show the
+served generation alone, by number, before it records the pending generation, so no row
+of P is written while the view shows every row. The switch and the revert re-create it to
+show the generation they serve; the purge, and an abandon that leaves no retired row,
+re-create it with no condition.
 
 **The revert** runs the switch backward while the switch is revertible: the ``__prev``
 tables back in, the reverted generation's kept as ``__new``; the cart moved to the
-previous generation; the search tables reset; then the previous generation served, P
-pending and ``ready`` again and the switch no longer revertible. On a pending generation
+previous generation; the search tables reset; the view re-created to show the previous
+generation; then the previous generation served, P
+pending and ``ready`` again and the switch not revertible. On a pending generation
 that is ``ready``, it undoes whatever steps a switch that stopped part way ran.
 
 **The purge** is refused while a generation is pending. Its first statement, committed on

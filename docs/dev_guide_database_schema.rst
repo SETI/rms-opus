@@ -92,18 +92,22 @@ The columns that identify an observation are stored once, in ``obs_general``: it
 
 .. _dev_guide_database_schema_obs_general_rows:
 
-``obs_general`` is a view, and ``obs_general_rows`` its table. The observation rows live in the base table ``obs_general_rows``, each with the import generation that added it, ``added_generation``, and the one that retired it, ``removed_generation``, ``NULL`` while none has. ``obs_general`` is a view of the rows in the generation the database serves, ``schema_version.generation``: a row added at or before it and not retired at or before it. The view lists every column of the table but those two:
+``obs_general`` is a view, and ``obs_general_rows`` its table. The observation rows live in the base table ``obs_general_rows``, each with the import generation that added it, ``added_generation``, and the one that retired it, ``removed_generation``, ``NULL`` while none has. ``obs_general`` is a view of the rows in the generation the database serves, ``schema_version.generation``: a row added at or before it and not retired at or before it. The view lists every column of the table but those two. While every row is in the served generation -- after a fresh import, and after a purge -- it selects them all, with no condition:
 
 ::
 
     CREATE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW obs_general AS
       SELECT <every column but added_generation and removed_generation>
       FROM obs_general_rows
-      WHERE added_generation <= COALESCE((SELECT generation FROM schema_version), 1)
-        AND (removed_generation IS NULL
-             OR removed_generation > COALESCE((SELECT generation FROM schema_version), 1))
 
-MySQL merges the view into each statement that names it, so the web application reads ``obs_general`` as a table, through ``obs_general_rows``'s keys, and evaluates the generation once per statement. A database with no version row shows generation 1, the one a fresh import writes. The child tables', ``cart``'s and the junction tables' foreign keys reference ``obs_general_rows``. The import reads and writes the base table under the name ``obs_general`` (:ref:`dev_guide_import_generations`), and creates the view, and ``schema_version`` empty if it is absent, whenever it creates the table. The child tables carry no generation, so a statement that reads a child table outside a search's results joins the view on ``obs_general_id``. Neither generation column has a key: nearly every row passes the test, and the import finds a bundle's rows through ``bundle_id``.
+While a generation is pending, or a switch's retired rows wait for the purge, it selects the served generation's rows, the generation written as a number, here 4:
+
+::
+
+      ... FROM obs_general_rows
+      WHERE added_generation <= 4 AND (removed_generation IS NULL OR removed_generation > 4)
+
+The commands that change which rows the view shows re-create it: ``--begin-generation``, before the pending generation is recorded; ``--switch-generation`` and ``--revert-generation``, while the web service is stopped; ``--purge-generations`` and ``--abandon-generation``, once no other generation's rows remain (:ref:`dev_guide_import_steps_do_generation`). MySQL merges the view into each statement that names it, so the web application reads ``obs_general`` as a table, through ``obs_general_rows``'s keys; with no condition, a statement reads the table exactly as it would read the table itself. The child tables', ``cart``'s and the junction tables' foreign keys reference ``obs_general_rows``. The import reads and writes the base table under the name ``obs_general`` (:ref:`dev_guide_import_generations`), and creates the view whenever it creates the table. The child tables carry no generation, so a statement that reads a child table outside a search's results joins the view on ``obs_general_id``. Neither generation column has a key: nearly every row passes the test, and the import finds a bundle's rows through ``bundle_id``.
 
 Here is an example of the schema for the ``obs_general_rows`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
 
@@ -133,6 +137,8 @@ Here is an example of the schema for the ``obs_general_rows`` table (note this m
     | declination1         | double            | YES  | MUL | NULL    |
     | declination2         | double            | YES  | MUL | NULL    |
     | observation_type     | smallint unsigned | NO   |     | NULL    |
+    | added_generation     | int unsigned      | NO   |     | NULL    |
+    | removed_generation   | int unsigned      | YES  |     | NULL    |
     +----------------------+-------------------+------+-----+---------+
 
 Besides the keys shown, ``obs_general`` has three keys over two columns each:
@@ -929,12 +935,16 @@ The ``schema_version`` table records which generation of the table schemas impor
 ::
 
     mysql> DESC schema_version;
-    +---------+---------------------------+------+-----+---------+
-    | Field   | Type                      | Null | Key | Default |
-    +---------+---------------------------+------+-----+---------+
-    | version | int unsigned              | NO   | PRI | NULL    |
-    | state   | enum('ready','appending') | NO   |     | NULL    |
-    +---------+---------------------------+------+-----+---------+
+    +--------------------+-------------------------------------------------+------+-----+---------+
+    | Field              | Type                                            | Null | Key | Default |
+    +--------------------+-------------------------------------------------+------+-----+---------+
+    | version            | int unsigned                                    | NO   | PRI | NULL    |
+    | state              | enum('ready','appending')                       | NO   |     | NULL    |
+    | generation         | int unsigned                                    | NO   |     | NULL    |
+    | pending_generation | int unsigned                                    | YES  |     | NULL    |
+    | pending_state      | enum('writing','finalized','validated','ready') | YES  |     | NULL    |
+    | revertible         | tinyint unsigned                                | NO   |     | 0       |
+    +--------------------+-------------------------------------------------+------+-----+---------+
 
 The fields are:
 
@@ -945,7 +955,7 @@ The fields are:
 * ``pending_state``: How far the pending generation has got: ``writing`` from ``--begin-generation`` and again whenever anything writes it, ``finalized`` once every step of ``--finalize`` succeeded on it, ``validated`` once ``--validate`` passed on a finalized one, and ``ready`` once ``--write-schema-version`` stamped a validated one. Only a ``ready`` generation is switched in.
 * ``revertible``: 1 from a switch until the purge starts, while ``--revert-generation`` can switch back.
 
-The import creates the table empty when it creates ``obs_general_rows``, since the view reads it; an empty table is no row. The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append, and ``--delete-bundles`` on a finished database, set ``state`` to ``appending`` before the first write (:ref:`dev_guide_import_write_paths`). An update by generation writes neither ``version`` nor ``state``: the row stays ``ready``, and the update writes the generation columns. ``--scorched-earth`` drops the table before any other.
+The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append, and ``--delete-bundles`` on a finished database, set ``state`` to ``appending`` before the first write (:ref:`dev_guide_import_write_paths`). An update by generation writes neither ``version`` nor ``state``: the row stays ``ready``, and the update writes the generation columns. ``--scorched-earth`` drops the table before any other.
 
 Two things read it, and both require the release's own version in the ``ready`` state:
 
@@ -962,21 +972,23 @@ The ``import_bundle`` table is the bundle registry: the import's record of each 
 ::
 
     mysql> DESC import_bundle;
-    +---------------+---------------------------------------------+------+-----+---------+----------------+
-    | Field         | Type                                        | Null | Key | Default | Extra          |
-    +---------------+---------------------------------------------+------+-----+---------+----------------+
-    | bundle_number | smallint unsigned                           | NO   | PRI | NULL    | auto_increment |
-    | bundle_id     | varchar(75)                                 | NO   | UNI | NULL    |                |
-    | size_estimate | bigint unsigned                             | NO   |     | NULL    |                |
-    | first_id      | int unsigned                                | NO   |     | NULL    |                |
-    | id_capacity   | int unsigned                                | NO   |     | NULL    |                |
-    | state         | enum('pending','importing','done','failed') | NO   | MUL | pending |                |
-    | started_at    | datetime                                    | YES  |     | NULL    |                |
-    | finished_at   | datetime                                    | YES  |     | NULL    |                |
-    | process_id    | int unsigned                                | YES  |     | NULL    |                |
-    | rows_done     | bigint unsigned                             | NO   |     | 0       |                |
-    | losses        | tinyint unsigned                            | NO   |     | 0       |                |
-    +---------------+---------------------------------------------+------+-----+---------+----------------+
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
+    | Field              | Type                                        | Null | Key | Default | Extra          |
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
+    | bundle_number      | smallint unsigned                           | NO   | PRI | NULL    | auto_increment |
+    | bundle_id          | varchar(75)                                 | NO   | MUL | NULL    |                |
+    | size_estimate      | bigint unsigned                             | NO   |     | NULL    |                |
+    | first_id           | int unsigned                                | NO   |     | NULL    |                |
+    | id_capacity        | int unsigned                                | NO   |     | NULL    |                |
+    | state              | enum('pending','importing','done','failed') | NO   | MUL | pending |                |
+    | started_at         | datetime                                    | YES  |     | NULL    |                |
+    | finished_at        | datetime                                    | YES  |     | NULL    |                |
+    | process_id         | int unsigned                                | YES  |     | NULL    |                |
+    | rows_done          | bigint unsigned                             | NO   |     | 0       |                |
+    | losses             | tinyint unsigned                            | NO   |     | 0       |                |
+    | generation         | int unsigned                                | NO   |     | 1       |                |
+    | retired_generation | int unsigned                                | YES  |     | NULL    |                |
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
 
 The fields are:
 

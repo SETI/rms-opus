@@ -52,7 +52,6 @@ from opus_import.importdb.super import (
     ResultRow,
     SchemaColumn,
 )
-from opus_import.schema_version import SCHEMA_VERSION_TABLE
 from opus_import.table_keys import (
     KeyKind,
     OnDelete,
@@ -1091,41 +1090,40 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             self.create_obs_general_view(schema)
         return True
 
-    def create_obs_general_view(self, schema: Sequence[SchemaColumn]) -> None:
+    def create_obs_general_view(
+        self, schema: Sequence[SchemaColumn], served: int | None = None
+    ) -> None:
         """Create, or re-create, ``obs_general`` as the view of the served generation.
 
-        The view reads ``schema_version``'s ``generation``, so ``schema_version`` is
-        first created empty from its packaged schema when the schema lacks it. An empty
-        table reads as no version row, so the schema is neither served nor appended to
-        until ``--write-schema-version`` writes one; until then the view shows the first
-        generation, the one a fresh import writes.
+        While every row of ``obs_general_rows`` is in the served generation the view
+        selects every row, with no condition, so a statement that names it reads the
+        table exactly as it would read the table itself. While a generation is pending,
+        or retired rows wait for the purge, it selects the rows in the served generation,
+        which it names as a number (`opus_import.generations.in_generation_condition`
+        with the number in place of each placeholder).
 
         Parameters:
             schema: ``obs_general``'s table schema, whose columns, less the generation
                 columns, the view lists.
+            served: The served generation, when the view must hide the rows of others;
+                None for a view of every row.
 
         Raises:
-            ImportDBError: If the server rejects a statement.
+            ImportDBError: If the server rejects the statement.
         """
         with self._operation('create_obs_general_view'):
-            if not self.table_exists(SCHEMA_VERSION_TABLE):
-                self.create_table(SCHEMA_VERSION_TABLE, generations.schema_version_table_schema())
             q = self.quote_identifier
-            served = (
-                f'COALESCE((SELECT {q(generations.SERVED_GENERATION_COLUMN)} '  # nosec B608
-                f'FROM {q(SCHEMA_VERSION_TABLE)}), {generations.FIRST_GENERATION})'
-            )
-            added = q(generations.ADDED_GENERATION_COLUMN)
-            removed = q(generations.REMOVED_GENERATION_COLUMN)
             columns = ', '.join(q(name) for name in generations.view_columns(schema))
-            # Every identifier is quoted by quote_identifier; the view's own name is the
-            # one place the name obs_general is rendered as itself.
+            # Every identifier is quoted by quote_identifier and the generation is an int;
+            # the view's own name is the one place obs_general is rendered as itself.
             cmd = (
                 'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW '  # nosec B608
                 f'`{generations.OBS_GENERAL_VIEW}` AS SELECT {columns} '
-                f'FROM {q(generations.OBS_GENERAL_ROWS)} '
-                f'WHERE {added} <= {served} AND ({removed} IS NULL OR {removed} > {served})'
+                f'FROM {q(generations.OBS_GENERAL_ROWS)}'
             )
+            if served is not None:
+                condition = generations.in_generation_condition(q, generations.OBS_GENERAL_ROWS)
+                cmd += ' WHERE ' + condition.replace('%s', str(int(served)))
             try:
                 self._execute(cmd, mutates=True)
             except MySQLdb.Error as e:

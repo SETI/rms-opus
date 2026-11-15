@@ -9,10 +9,14 @@ is **in generation G** when ``added_generation <= G`` and ``removed_generation``
 or greater than G.
 
 ``obs_general`` is a view of the rows in the generation the schema serves, the
-``generation`` column of its one ``schema_version`` row. MySQL merges the view into each
-query that names it, so the web application reads ``obs_general`` as a table and cannot
-miss the test. The child tables carry no generation: a request reaches a child row only
-through an ``obs_general`` id.
+``generation`` column of its one ``schema_version`` row. While every row is in that
+generation -- after a fresh import, and after a purge -- the view selects every row with
+no condition; while a generation is pending or retired rows wait for the purge, it
+selects the rows in the served generation, which it names as a number, and the commands
+that change the served generation re-create it (`opus_import.steps.do_generation`).
+MySQL merges the view into each query that names it, so the web application reads
+``obs_general`` as a table and cannot miss the test. The child tables carry no
+generation: a request reaches a child row only through an ``obs_general`` id.
 
 The import reads and writes the base table. `opus_import.importdb` translates the name
 ``obs_general`` to ``obs_general_rows`` wherever it renders a table name
@@ -25,13 +29,9 @@ from Django and nothing that needs a configuration file.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from importlib.resources import files
 from typing import Any
-
-from opus_import.schema_version import SCHEMA_VERSION_TABLE
 
 #: The view of the served generation's observations, the name every reader uses.
 OBS_GENERAL_VIEW = 'obs_general'
@@ -99,8 +99,6 @@ STATE_COLUMNS = (
     REVERTIBLE_COLUMN,
 )
 
-_TABLE_SCHEMA_DIR = files('opus_import') / 'table_schemas'
-
 
 def physical_table_name(table_name: str) -> str:
     """Return the table a name refers to: the base table for ``obs_general``.
@@ -141,13 +139,6 @@ def view_columns(schema: Sequence[dict[str, Any]]) -> list[str]:
         for entry in schema
         if 'field_name' in entry and entry['field_name'] not in GENERATION_COLUMNS
     ]
-
-
-def schema_version_table_schema() -> list[dict[str, Any]]:
-    """Return the packaged schema of ``schema_version``, which the view reads."""
-    text = (_TABLE_SCHEMA_DIR / f'{SCHEMA_VERSION_TABLE}.json').read_text(encoding='utf-8')
-    schema: list[dict[str, Any]] = json.loads(text)
-    return schema
 
 
 def in_generation_condition(quote: Callable[[str], str], alias: str) -> str:
