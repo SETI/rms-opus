@@ -27,6 +27,18 @@ EXPECTED_FILES = (
     Path('log_analyzer/run_log_analyzer_update.sh_template'),
 )
 
+#: The scripts the chain runs as programs rather than sources: the operator's commands,
+#: the detached wrappers and the scripts they run, and the database scripts.
+EXECUTED_SCRIPTS = (
+    Path('import_and_deploy/deploy_new_code_and_database.sh'),
+    Path('import_and_deploy/promote_generation.sh'),
+    Path('import_and_deploy/run_incremental_opus_update.sh'),
+    Path('import_and_deploy/_incremental_opus_update_wrapper.sh'),
+    Path('import_and_deploy/_run_incremental_opus_update.sh'),
+    Path('database/dump_db.sh'),
+    Path('database/load_db.sh'),
+)
+
 
 def test_the_chain_ships_inside_the_distribution(tmp_path: Path) -> None:
     """Every directory of it, not just the top: this is what package data gets wrong."""
@@ -84,7 +96,8 @@ def test_the_copy_is_the_packaged_file(tmp_path: Path) -> None:
     assert 'deploy.env' in reader.read_text(encoding='utf-8')
 
 
-def test_shell_scripts_come_out_executable(tmp_path: Path) -> None:
+@pytest.mark.parametrize('script', EXECUTED_SCRIPTS, ids=lambda path: path.name)
+def test_shell_scripts_come_out_executable(tmp_path: Path, script: Path) -> None:
     """A wheel does not carry the executable bit, so the command has to apply it.
 
     Without this the copy is a directory of files the operator has to chmod before the
@@ -92,9 +105,14 @@ def test_shell_scripts_come_out_executable(tmp_path: Path) -> None:
     """
     scripts.write_scripts(tmp_path)
 
-    deploy = tmp_path / 'import_and_deploy' / 'deploy_new_code_and_database.sh'
+    assert os.access(tmp_path / script, os.X_OK)
+
+
+def test_data_files_come_out_not_executable(tmp_path: Path) -> None:
+    """The template is read, never run."""
+    scripts.write_scripts(tmp_path)
+
     template = tmp_path / 'deploy.env.template'
-    assert os.access(deploy, os.X_OK)
     assert not stat.S_IMODE(template.stat().st_mode) & stat.S_IXUSR
 
 

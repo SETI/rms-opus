@@ -17,7 +17,8 @@ source ${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh
 source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 
 export DATETIMEPID="`date +%Y%m%dT%H%M%S`_$$"
-export OPUS_DB_NAME="opus3_${DATETIMEPID}"
+source ${IMPORT_SCRIPT_DIR}/_copy_database_to_peer.sh
+export OPUS_DB_NAME=$(new_schema_name "${DATETIMEPID}")
 export OPUS_LOG_DIR=${OPUS_DIR}/import_logs/${DATETIMEPID}
 
 # The import runs under an installation of its own, built beside the one being
@@ -80,36 +81,8 @@ source ${IMPORT_SCRIPT_DIR}/_opus_import_bundles.sh
 echo
 echo
 
-# What happens to the finished database, which is whatever deploy.env asked for. With
-# OPUS_DB_DUMP_DIR empty the import is done when the database is built -- a dump of the
-# full holdings is tens of gigabytes and hours of writing, so it happens because a
-# server asked for it. With a directory but no peer, the dump is written and stays
-# there; with both, it is written and loaded onto the second server. A peer with no
-# directory cannot happen: _read_deploy_env.sh refuses that combination before any of
-# this runs.
-if [[ -n ${OPUS_DB_DUMP_DIR} ]]; then
-    echo "================================"
-    echo "=== DUMP DATABASE TO ARCHIVE ==="
-    echo "================================"
-    echo
-    echo "Start time:" `date`
-    echo
-    "${DATABASE_SCRIPT_DIR}/dump_db.sh" "${OPUS_DB_NAME}"
-    echo
-    echo
-
-    if [[ -n ${OPUS_PEER_DB_HOST} ]]; then
-        echo "==========================================="
-        echo "=== LOAD DATABASE ON THE SECOND SERVER  ==="
-        echo "==========================================="
-        echo
-        echo "Start time:" `date`
-        echo
-        "${DATABASE_SCRIPT_DIR}/load_db.sh" "${OPUS_DB_NAME}"
-        echo
-        echo
-    fi
-fi
+# The dump, and the load onto a second server, that deploy.env asks for.
+copy_database_to_peer "${OPUS_DB_NAME}" "${OPUS_DB_NAME}"
 
 echo "End time:" `date`
 echo
