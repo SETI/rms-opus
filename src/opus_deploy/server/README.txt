@@ -215,7 +215,9 @@ Until the purge, the update can be undone:
     /opt/opus/deployed/opus_venv/bin/opus_import --abandon-generation
 
 An update that failed, or one not yet switched in, is thrown away with the
-second command alone. Deploy no code while a generation is pending: a
+second command alone; after a switch that stopped part way it is refused
+until promote_generation.sh, or the same with --revert, has finished what
+was begun. Deploy no code while a generation is pending: a
 code-only deploy's auxiliary tables would wait for the switch. Without a
 second server that holds a copy, take a dump of the served database before
 the update, with OPUS_DB_DUMP_DIR set:

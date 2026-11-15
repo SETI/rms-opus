@@ -650,7 +650,10 @@ only when you switch it in. The steps, from the deploy directory::
 ``promote_generation.sh --revert`` stops the web service, serves the previous generation
 again, and starts the web service only when that succeeds; the reverted update is left
 pending, so ``promote_generation.sh`` switches it in again. An update that failed, or one
-not yet switched in, is thrown away with the ``--abandon-generation`` command alone.
+not yet switched in, is thrown away with the ``--abandon-generation`` command alone. After
+a switch that stopped part way it is refused, as is the purge after a revert that stopped
+part way, until ``promote_generation.sh`` or ``promote_generation.sh --revert`` has
+finished what was begun: either would delete rows the carts were already pointed at.
 
 **Deploy no code while a generation is pending.** A code-only deploy rebuilds the
 auxiliary tables, and with a generation pending it leaves them for the switch rather than
