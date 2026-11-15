@@ -19,6 +19,11 @@ sed -e 's/^class ObsGeneralRows(/class ZZObsGeneralRows(/' \
     -e "s/OneToOneField(ObsGeneralRows,/OneToOneField(ObsGeneral,/" \
     -e "s/OneToOneField('ObsGeneralRows',/OneToOneField('ObsGeneral',/" < /tmp/_models.py > /tmp/__models.py
 mv /tmp/__models.py /tmp/_models.py
+# A view has no primary key for inspectdb to read, and a field named id that is not the
+# primary key fails Django's checks (models.E004), so the view's id is marked as the
+# base table's primary key it is
+sed -e '/^class ObsGeneral(models.Model):$/,/^class /s/^    id = models.PositiveIntegerField()$/    id = models.PositiveIntegerField(primary_key=True)/' < /tmp/_models.py > /tmp/__models.py
+mv /tmp/__models.py /tmp/_models.py
 # Every obs_general_id names its relation to ObsGeneral, so that the many relations
 # from one class to ObsGeneral do not clash
 sed -e "s/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/_models.py > /tmp/__models.py

@@ -60,16 +60,18 @@ def _run_copy(tmp_path: Path, call: str, environment: dict[str, str]) -> tuple[i
     ('dump_dir', 'peer', 'expected'),
     [
         ('', '', []),
-        ('dumps', '', ['dump_db.sh opus_source']),
-        ('dumps', 'peer.example', ['dump_db.sh opus_source', 'load_db.sh opus_source opus_target']),
+        ('dumps', '', ['dump_db.sh opus_source opus_target']),
+        ('dumps', 'peer.example', ['dump_db.sh opus_source opus_target', 'load_db.sh opus_target']),
     ],
     ids=['no-dump-directory', 'dump-only', 'dump-and-load'],
 )
 def test_the_copy_does_what_deploy_env_asks(
     tmp_path: Path, dump_dir: str, peer: str, expected: list[str]
 ) -> None:
-    """Nothing without a dump directory; the dump with one; the dump then the load onto
-    the peer, as the target schema, with a peer as well."""
+    """Nothing without a dump directory; the dump with one, under the target schema's
+    name, so an update's dump of the served schema never replaces one taken of it under
+    its own; the dump then the load onto the peer, as the target schema, with a peer as
+    well."""
     status, output, ran = _run_copy(
         tmp_path,
         'copy_database_to_peer opus_source opus_target; echo CONTINUED',

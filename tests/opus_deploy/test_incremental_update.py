@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 #: The operator's command, the script it detaches, and the internal script, in the chain.
 _COMMAND = 'import_and_deploy/run_incremental_opus_update.sh'
 _WRAPPER = 'import_and_deploy/_incremental_opus_update_wrapper.sh'
+_FULL_WRAPPER = 'import_and_deploy/_full_opus_import_wrapper.sh'
 _UPDATE = 'import_and_deploy/_run_incremental_opus_update.sh'
 _FULL_IMPORT = 'import_and_deploy/_run_full_opus_import.sh'
 
@@ -101,11 +102,44 @@ def test_the_wrapper_mails_the_log_with_the_result(
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
+@pytest.mark.parametrize('wrapper', [_WRAPPER, _FULL_WRAPPER], ids=['update', 'full-import'])
+def test_a_wrapper_runs_from_paths_with_spaces(tmp_path: Path, wrapper: str) -> None:
+    """``TMPDIR`` decides where the log goes, and a space in it, or in the chain's
+    directory, neither splits the command nor makes the redirection ambiguous."""
+    chain = tmp_path / 'the chain'
+    scripts.write_scripts(chain)
+    calls = tmp_path / 'calls'
+    script = _UPDATE if wrapper == _WRAPPER else _FULL_IMPORT
+    write_recorder(chain / script, calls, 'echo "run output"')
+    log = tmp_path / 'a temporary directory' / 'opus update.log'
+    log.parent.mkdir()
+    environment = {
+        'PATH': '/usr/bin:/bin',
+        'IMPORT_SCRIPT_DIR': str(chain / 'import_and_deploy'),
+        'NOHUP_LOGFILE': str(log),
+    }
+    assert BASH is not None
+    finished = subprocess.run(  # nosec B603 - bash and the packaged script
+        [BASH, str(chain / wrapper), 'COISS_2001'],
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert finished.returncode == 0, finished.stderr
+    assert calls.read_text(encoding='utf-8').splitlines() == [
+        f'{script.rsplit("/", 1)[1]} COISS_2001'
+    ]
+    assert log.read_text(encoding='utf-8') == 'run output\n'
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
 def test_the_update_writes_the_served_schema_then_copies_it_to_the_peer(
     tmp_path: Path,
 ) -> None:
-    """Every invocation in order, then the dump of the served schema and its load onto
-    the peer under a new schema name."""
+    """Every invocation in order, then the dump of the served schema under a new schema
+    name, which leaves a dump the operator took of it alone, and its load onto the peer
+    under that name."""
     status, output, ran = run_deploy(
         tmp_path, _UPDATE, 'COISS_2001', '--drop', 'COISS_2002', deploy_env=_WITH_PEER
     )
@@ -118,8 +152,9 @@ def test_the_update_writes_the_served_schema_then_copies_it_to_the_peer(
         'opus_import --validate',
         'opus_import --write-schema-version',
     ]
-    assert ran[-2] == 'dump_db.sh served'
-    assert re.fullmatch(rf'load_db\.sh served {_NEW_SCHEMA.pattern}', ran[-1]) is not None
+    match = re.fullmatch(rf'dump_db\.sh served ({_NEW_SCHEMA.pattern})', ran[-2])
+    assert match is not None
+    assert ran[-1] == f'load_db.sh {match[1]}'
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
@@ -194,6 +229,6 @@ def test_the_full_import_copies_its_new_schema_under_its_own_name(tmp_path: Path
     """The dump of the new schema, then its load onto the peer under the same name."""
     status, output, ran = run_deploy(tmp_path, _FULL_IMPORT, '==3.25.0', deploy_env=_WITH_PEER)
     assert status == 0, output
-    match = re.fullmatch(rf'dump_db\.sh ({_NEW_SCHEMA.pattern})', ran[-2])
+    match = re.fullmatch(rf'dump_db\.sh ({_NEW_SCHEMA.pattern}) \1', ran[-2])
     assert match is not None
-    assert ran[-1] == f'load_db.sh {match[1]} {match[1]}'
+    assert ran[-1] == f'load_db.sh {match[1]}'

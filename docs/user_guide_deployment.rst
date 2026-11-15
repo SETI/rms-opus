@@ -290,14 +290,17 @@ too, since it changes what is served.
 
 ``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
 a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from
-``OPUS_DB_HOST``, the second loads it into ``OPUS_PEER_DB_HOST``, under a second name when
-one is given (``load_db.sh <dumped database> <new database>``) and under the dump's name
-otherwise, and refuses a database that is already there. Neither knows the name of any
-machine. Both run scripts, ``run_full_opus_import.sh`` and
-``run_incremental_opus_update.sh``, end with them, by the same ``deploy.env`` variables:
-the first when ``OPUS_DB_DUMP_DIR`` names a directory, and the second as well when there
-is a peer. A full import loads its new database under its own name; an update loads the
-served database under a new one. The dump is one consistent snapshot that takes no table
+``OPUS_DB_HOST``, or ``<dump name>.sql`` when a second name is given
+(``dump_db.sh <database> <dump name>``); the second loads a dump into
+``OPUS_PEER_DB_HOST``, under a second name when one is given
+(``load_db.sh <dumped database> <new database>``) and under the dump's name otherwise, and
+refuses a database that is already there. Neither knows the name of any machine. Both run
+scripts, ``run_full_opus_import.sh`` and ``run_incremental_opus_update.sh``, end with
+them, by the same ``deploy.env`` variables: the first when ``OPUS_DB_DUMP_DIR`` names a
+directory, and the second as well when there is a peer. A full import dumps and loads its
+new database under its own name; an update dumps the served database under a new name,
+which its log gives, so a dump taken of the served database before the update is left as
+it was, and loads it under that name. The dump is one consistent snapshot that takes no table
 locks (``mysqldump --single-transaction``), so a database being served is dumped whole
 while the site goes on writing carts and searches to it.
 ``scripts/import/clone_database.sh`` in the repository copies one database to another on
@@ -665,6 +668,9 @@ being served, so a copy is the way back from anything the generation commands ca
 undo. With ``OPUS_DB_DUMP_DIR`` set::
 
     ./database/dump_db.sh <the database being served>
+
+The update's own dump at its end is written under the new name its log gives, so it
+leaves this one as it was.
 
 **A second server receives the update as a new database.** With ``OPUS_PEER_DB_HOST`` set,
 the update ends by dumping the whole updated database and loading it onto that server

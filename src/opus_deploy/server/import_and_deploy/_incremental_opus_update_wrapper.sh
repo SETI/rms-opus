@@ -1,5 +1,5 @@
 #!/bin/bash
-${IMPORT_SCRIPT_DIR}/_run_incremental_opus_update.sh "$@" > ${NOHUP_LOGFILE} 2>&1
+"${IMPORT_SCRIPT_DIR}/_run_incremental_opus_update.sh" "$@" > "${NOHUP_LOGFILE}" 2>&1
 if [ $? -eq 0 ]; then
     RESULT="succeeded"
 else

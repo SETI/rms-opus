@@ -52,8 +52,9 @@ echo "CREATE DATABASE ${DATABASE};" \
 # A view's definer names an account of the first server, which the second may not have
 # and which only an account with SET_USER_ID may name. The obs_general view runs with its
 # reader's rights (SQL SECURITY INVOKER), so the clause is dropped from the dump as it is
-# read.
+# read: only from the line mysqldump writes it on, which starts with the clause, so a
+# row's text that happens to hold the same words is loaded as it was dumped.
 set -o pipefail
-sed -e 's/ DEFINER=`[^`]*`@`[^`]*`//g' "${SQLDUMP}" \
+sed -e '/^\/\*!50013 DEFINER=/s/ DEFINER=`[^`]*`@`[^`]*`//' "${SQLDUMP}" \
     | mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}" \
         "${DATABASE}"

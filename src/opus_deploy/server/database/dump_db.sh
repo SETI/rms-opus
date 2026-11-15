@@ -2,11 +2,12 @@
 #
 # Dump one database to a file, so that a second server can load it.
 #
-# Usage: dump_db.sh <database name>
+# Usage: dump_db.sh <database name> [<dump name>]
 #
-# Where it writes and which server it reads come from deploy.env: OPUS_DB_DUMP_DIR
-# and OPUS_DB_HOST. Nothing here knows the name of any machine, and with no dump
-# directory configured there is nowhere to write, which it says.
+# It writes <dump name>.sql, or <database name>.sql without a second name. Where it
+# writes and which server it reads come from deploy.env: OPUS_DB_DUMP_DIR and
+# OPUS_DB_HOST. Nothing here knows the name of any machine, and with no dump directory
+# configured there is nowhere to write, which it says.
 #
 # Both run scripts, run_full_opus_import.sh and run_incremental_opus_update.sh, call it
 # through copy_database_to_peer (import_and_deploy/_copy_database_to_peer.sh) at their end
@@ -14,8 +15,8 @@
 # names a second server as well.
 set -e
 
-if [[ $# -ne 1 ]]; then
-    echo "Usage: $(basename "$0") <database_name>" >&2
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+    echo "Usage: $(basename "$0") <database_name> [<dump_name>]" >&2
     exit 2
 fi
 
@@ -31,7 +32,7 @@ if [[ -z ${OPUS_DB_DUMP_DIR} ]]; then
 fi
 
 DATABASE=$1
-SQLDUMP="${OPUS_DB_DUMP_DIR}/${DATABASE}.sql"
+SQLDUMP="${OPUS_DB_DUMP_DIR}/${2:-$1}.sql"
 
 mkdir -p "${OPUS_DB_DUMP_DIR}"
 

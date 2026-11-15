@@ -124,6 +124,31 @@ def test_the_load_drops_a_views_definer(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_dump_given_a_name_is_written_under_it(tmp_path: Path) -> None:
+    """The served database's own dump is left as it was."""
+    dumps = tmp_path / 'dumps'
+    dumps.mkdir()
+    (dumps / 'opus3_served.sql').write_text('the recovery copy\n', encoding='utf-8')
+    status, output, ran = _run_database_script(tmp_path, 'dump_db.sh', 'opus3_served', 'opus3_y')
+    assert status == 0, output
+    assert ran == f'mysqldump --single-transaction {_CREDENTIALS} -h db.local opus3_served\n'
+    assert (dumps / 'opus3_y.sql').read_text(encoding='utf-8') == f'{_DUMP_TEXT}\n'
+    assert (dumps / 'opus3_served.sql').read_text(encoding='utf-8') == 'the recovery copy\n'
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_the_load_keeps_a_rows_text_that_names_a_definer(tmp_path: Path) -> None:
+    """Only the view's clause, on the line mysqldump writes it on, is dropped."""
+    dumps = tmp_path / 'dumps'
+    dumps.mkdir()
+    row = "INSERT INTO `contexts` VALUES ('prefix DEFINER=`alice`@`localhost` suffix');"
+    (dumps / 'opus3_served.sql').write_text(f'{row}\n', encoding='utf-8')
+    status, output, ran = _run_database_script(tmp_path, 'load_db.sh', 'opus3_served', 'opus3_y')
+    assert status == 0, output
+    assert ran.splitlines()[-1] == row
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
 def test_the_load_refuses_a_dump_that_is_not_there(tmp_path: Path) -> None:
     """It names the dump it looked for and creates nothing on the peer."""
     status, output, ran = _run_database_script(tmp_path, 'load_db.sh', 'opus3_x', 'opus3_y')

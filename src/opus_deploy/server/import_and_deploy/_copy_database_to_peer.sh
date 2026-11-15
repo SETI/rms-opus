@@ -12,9 +12,11 @@
 #
 # copy_database_to_peer <source schema> <target schema>
 #     With OPUS_DB_DUMP_DIR empty, does nothing. With a directory there, dumps the source
-#     schema into it (dump_db.sh); with OPUS_PEER_DB_HOST naming a host as well, then
-#     loads that dump onto the host as the target schema (load_db.sh), which must not
-#     exist there. Returns 1 when either script fails, 0 otherwise.
+#     schema into it under the target schema's name (dump_db.sh), so an update's dump of
+#     the served schema never replaces a dump an operator took of it under its own name;
+#     with OPUS_PEER_DB_HOST naming a host as well, then loads that dump onto the host as
+#     the target schema (load_db.sh), which must not exist there. Returns 1 when either
+#     script fails, 0 otherwise.
 #
 # Inputs: DATABASE_SCRIPT_DIR, the chain's database/ directory; OPUS_DB_DUMP_DIR and
 # OPUS_PEER_DB_HOST, from _read_deploy_env.sh.
@@ -40,7 +42,7 @@ copy_database_to_peer() {
         echo
         echo "Start time:" `date`
         echo
-        "${DATABASE_SCRIPT_DIR}/dump_db.sh" "${source_schema}" || return 1
+        "${DATABASE_SCRIPT_DIR}/dump_db.sh" "${source_schema}" "${target_schema}" || return 1
         echo
         echo
 
@@ -51,7 +53,7 @@ copy_database_to_peer() {
             echo
             echo "Start time:" `date`
             echo
-            "${DATABASE_SCRIPT_DIR}/load_db.sh" "${source_schema}" "${target_schema}" || return 1
+            "${DATABASE_SCRIPT_DIR}/load_db.sh" "${target_schema}" || return 1
             echo
             echo
         fi
