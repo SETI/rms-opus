@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from typing import TextIO
 
     from opus_config import OpusConfig
+    from opus_import.generations import GenerationState
     from opus_import.importdb.super import WarningHandler
 
 LOGNAME = 'opus_import.main'
@@ -653,10 +654,11 @@ _GENERATION_CONFLICTS = (
     ('carry_over_sessions_from', '--carry-over-sessions-from'),
 )
 
-#: The options that write a pending generation, whose invocation registers itself in
-#: ``import_process`` so that no generation command runs beside it
-#: (`opus_import.steps.do_generation.register_writer`).
-_PENDING_WRITERS = (
+#: The options that write the observation rows, the registry, the version row or the
+#: auxiliary tables, the served ones or a pending generation's. On a schema with a version
+#: row, their invocation registers itself in ``import_process`` so that no generation
+#: command runs beside it (`opus_import.steps.do_generation.register_writer`).
+_WRITERS = (
     'do_import',
     'join',
     'register_bundles',
@@ -667,6 +669,14 @@ _PENDING_WRITERS = (
     'create_param_info',
     'create_partables',
     'create_table_names',
+    'validate',
+    'write_schema_version',
+)
+
+#: The options that move a pending generation's state forward, whose invocation writes it
+#: as its sole writer, so the state recorded describes rows no other invocation changed.
+_SOLE_WRITERS = (
+    'finalize',
     'validate',
     'write_schema_version',
 )
@@ -683,6 +693,33 @@ _PENDING_REBUILDS = (
     'create_partables',
     'create_table_names',
 )
+
+
+def _registers_writer(args: argparse.Namespace, state: GenerationState | None) -> bool:
+    """Return whether the invocation registers itself as a writer of the schema.
+
+    It does when it writes (`_WRITERS`) a schema with a version row, which a generation
+    could be begun on. An invocation that erases the schema first is not registered,
+    since the erase drops ``import_process`` and the version row with it, and neither is
+    a read-only one, which writes nothing.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+        state: The schema's version row as the invocation started, or None.
+    """
+    if state is None or args.scorched_earth or args.read_only:
+        return False
+    return any(getattr(args, name) for name in _WRITERS)
+
+
+def _writes_as_sole_writer(args: argparse.Namespace, pending: int | None) -> bool:
+    """Return whether the invocation writes the pending generation as its sole writer.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+        pending: The pending generation, or None.
+    """
+    return pending is not None and any(getattr(args, name) for name in _SOLE_WRITERS)
 
 
 def _rebuilds_pending(args: argparse.Namespace) -> bool:
@@ -1080,12 +1117,15 @@ def main() -> None:
             return
 
         pending = ctx.pending_generation
-        if pending is not None and any(getattr(args, name) for name in _PENDING_WRITERS):
+        if _registers_writer(args, ctx.generation_state):
             try:
-                writer = do_generation.register_writer(ctx)
+                writer = do_generation.register_writer(
+                    ctx, sole=_writes_as_sole_writer(args, pending)
+                )
             except do_generation.GenerationRefusedError as e:
                 logger.log('fatal', str(e))
                 sys.exit(-1)
+            ctx.writer = writer
             # Registered rather than run in a finally block, since the run leaves through
             # sys.exit from several places.
             atexit.register(writer.exit)
@@ -1112,6 +1152,8 @@ def main() -> None:
 
         if not do_import.do_import_steps(ctx):
             sys.exit(-1)
+        # Read again: --scorched-earth erased the version row, and its pending generation.
+        pending = ctx.pending_generation
 
         # Before the first finalization step, so a refused finalization changes nothing;
         # after the bundles this invocation imports or deletes, which can finish the

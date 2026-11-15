@@ -360,3 +360,50 @@ def test_a_second_interrupt_once_the_importer_records_itself_stops_it_before_a_c
     assert ctx.logger.messages_at('fatal') == [
         'Interrupted: this importer claims nothing more and exits'
     ]
+
+
+class _RegisteredWriter(HeldImporter):
+    """The row an invocation registered as a writer, recording whether it was exited."""
+
+    process_id = 41
+    name = 'opus:writer'
+
+    def __init__(self) -> None:
+        self.exited = False
+
+    def exit(self) -> None:  # type: ignore[override]
+        """Record the exit."""
+        self.exited = True
+
+
+def test_a_registered_writer_imports_from_the_queue_under_its_own_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One row per importer: no second row is started, and the writer's row is left to
+    the invocation's end, which frees it."""
+    db = RegistryDB({'import_bundle': registry_rows({'B_1': 'done'})})
+    ctx = make_context(db=db)
+    writer = _RegisteredWriter()
+    ctx.writer = writer  # type: ignore[assignment]
+    started: list[str] = []
+    monkeypatch.setattr(import_processes, 'create_process_table', lambda db: None)
+    monkeypatch.setattr(
+        import_processes, 'start_importer', lambda lock_db, log_path: started.append(log_path)
+    )
+    assert do_import.import_from_queue(ctx, None)
+    assert started == []
+    assert not writer.exited
+    assert ctx.importer is None
+    assert 'Importer 41, holding the lock "opus:writer"' in ctx.logger.messages_at('info')
+
+
+def test_a_claim_passes_over_a_retired_copy() -> None:
+    """A retired copy is in no queue, however large: the claim takes the live bundle."""
+    rows = registry_rows({'A_1': 'pending', 'B_1': 'pending'})
+    rows[0]['size_estimate'] = 20
+    rows[0]['retired_generation'] = 2
+    db = RegistryDB({'import_bundle': rows})
+    ctx = make_context(db=db)
+    claim = bundle_registry.claim_bundle(ctx, None, (), HeldImporter())  # type: ignore[arg-type]
+    assert claim is not None
+    assert claim.bundle_id == 'B_1'

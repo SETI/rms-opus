@@ -590,8 +590,9 @@ def tables_holding_bundle(
     """Return which of those tables carry rows belonging to one bundle.
 
     A table with `BUNDLE_COLUMN` is asked by it, and one with only `OBSERVATION_COLUMN`
-    by joining ``obs_general`` through it. A table with neither carries none: that is
-    every mult table, and every table the dictionary and finalization steps write.
+    by joining ``obs_general``'s base table through it, so every generation's rows are
+    asked about, as they are in ``obs_general`` itself. A table with neither carries none:
+    that is every mult table, and every table the dictionary and finalization steps write.
 
     Parameters:
         credentials: How to reach the server.
@@ -612,7 +613,8 @@ def tables_holding_bundle(
             )
         elif OBSERVATION_COLUMN in names:
             statement = (
-                f'SELECT 1 FROM `{table}` t JOIN `obs_general` g '
+                f'SELECT 1 FROM `{table}` t '
+                f'JOIN `{generations.physical_table_name("obs_general")}` g '
                 f'ON g.`id` = t.`{OBSERVATION_COLUMN}` WHERE g.`{BUNDLE_COLUMN}` = %s LIMIT 1'
             )
         else:

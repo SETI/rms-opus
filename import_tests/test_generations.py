@@ -10,13 +10,16 @@ import wrote is read from the base table, ``obs_general_rows``.
 
 from __future__ import annotations
 
+import subprocess  # nosec B404
+import time
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from import_tests.tools import build_run, golden_io
+from import_tests.tools import build_run, fixture_layout, golden_io
 from opus_import import generations
 from opus_import.import_fault import IMPORT_FAULT_ENV_VAR
+from opus_import.import_processes import HOLD_AFTER_CHUNK_FAULT_SITE
 from opus_import.steps import do_generation
 
 if TYPE_CHECKING:
@@ -286,6 +289,49 @@ def main_run_version(credentials: DatabaseCredentials, schema: str) -> int:
     return int(golden_io.query(credentials, schema, 'SELECT version FROM schema_version')[0][0])
 
 
+def _orphan_last_added_observation(credentials: DatabaseCredentials, schema: str) -> None:
+    """Delete the pending generation's last observation from the base table alone, as a
+    killed import leaves the child rows of an ``obs_general`` chunk it never committed."""
+    connection = golden_io.connect(credentials, schema)
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
+        cursor.execute(
+            'DELETE FROM obs_general_rows WHERE added_generation = 2 ORDER BY id DESC LIMIT 1'
+        )
+        assert cursor.rowcount == 1
+        connection.commit()
+    finally:
+        connection.close()
+
+
+def _start_holding_import(
+    copy: build_run.SchemaCopy, bundle: str, credentials: DatabaseCredentials
+) -> subprocess.Popen[str]:
+    """Start a plain ``--import`` of a bundle that sleeps after its first chunk commits,
+    and return once it is that far."""
+    environment = build_run.run_environment(copy.paths.config_file)
+    environment[IMPORT_FAULT_ENV_VAR] = f'{HOLD_AFTER_CHUNK_FAULT_SITE}:600'
+    process = subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's module
+        [str(build_run.THIS_PYTHON), '-m', 'opus_import', *build_run.IMPORT_ARGS, bundle],
+        cwd=fixture_layout.REPO_ROOT,
+        env=environment,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+    deadline = time.monotonic() + 300
+    statement = (
+        'SELECT COUNT(*) FROM import_bundle '
+        "WHERE bundle_id = %s AND state = 'importing' AND rows_done > 0"
+    )
+    while golden_io.query(credentials, copy.schema, statement, [bundle])[0][0] == 0:
+        assert process.poll() is None, 'the holding import exited'
+        assert time.monotonic() < deadline, 'the holding import never committed a chunk'
+        time.sleep(0.5)
+    return process
+
+
 def test_an_abandoned_generation_leaves_the_base_tables_as_they_were(
     main_run: build_run.ImportRun,
     db_credentials: DatabaseCredentials,
@@ -318,6 +364,7 @@ def test_an_abandoned_generation_leaves_the_base_tables_as_they_were(
     refused = copy.step('--switch-generation')
     assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
     assert _base_tables(db_credentials, copy.schema) != before
+    _orphan_last_added_observation(db_credentials, copy.schema)
     _ok(copy.step('--abandon-generation'))
     assert _base_tables(db_credentials, copy.schema) == before
     leftovers = [
@@ -437,3 +484,46 @@ def test_an_unfinished_switch_or_revert_refuses_what_would_lose_the_way_back(
     _ok(copy.step('--revert-generation'))
     assert _state(db_credentials, schema)[2:] == (1, 2, generations.PENDING_READY, 0)
     assert _cart_target(db_credentials, schema) == [old_target]
+
+
+def test_a_writer_of_the_served_rows_holds_a_begin_off(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    bundles: tuple[str, str],
+) -> None:
+    """A plain append registers itself before it writes, so a begin is refused while it
+    runs rather than leaving the append to write the served rows of a pending generation."""
+    reimported, _dropped = bundles
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'plain_writer')
+    process = _start_holding_import(copy, reimported, db_credentials)
+    try:
+        refused = copy.step('--begin-generation')
+    finally:
+        process.kill()
+        process.wait()
+    assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
+    assert 'still running' in refused.stdout
+    assert _state(db_credentials, copy.schema)[3] is None
+
+
+def test_the_closing_invocations_write_the_pending_generation_alone(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    bundles: tuple[str, str],
+) -> None:
+    """Validation is refused while another invocation writes the pending generation, so
+    the state it records describes rows nothing changed while it read them."""
+    reimported, _dropped = bundles
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'sole_writer')
+    _ok(copy.step('--begin-generation'))
+    process = _start_holding_import(copy, reimported, db_credentials)
+    try:
+        refused = copy.step(*build_run.VALIDATE_ARGS)
+    finally:
+        process.kill()
+        process.wait()
+    assert refused.returncode != 0
+    assert '--write-schema-version run alone' in refused.stdout
+    assert _state(db_credentials, copy.schema)[4] == generations.PENDING_WRITING

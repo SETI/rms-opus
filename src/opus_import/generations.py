@@ -86,8 +86,13 @@ REGISTRY_GENERATION_COLUMN = 'generation'
 RETIRED_GENERATION_COLUMN = 'retired_generation'
 
 #: What `opus_import.importdb.lock_name` is given, after the schema, for the lock every
-#: generation command holds and every writer of a pending generation takes briefly.
+#: generation command holds and every writer takes briefly to register.
 GENERATION_LOCK = 'generation'
+
+#: What `opus_import.importdb.lock_name` is given, after the schema, for the lock an
+#: invocation that moves the pending generation's state forward holds while it runs, so
+#: no other writer registers beside it.
+GENERATION_SOLE_WRITER_LOCK = 'generation_sole_writer'
 
 #: The columns of ``schema_version`` `GenerationState` reads, in its order.
 STATE_COLUMNS = (

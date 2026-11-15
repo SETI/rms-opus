@@ -248,6 +248,9 @@ class ImportContext:
             writes (`opus_import.deferred`), or None in the import's own process.
         importer: This process's row and lock as an importer drawing from the queue
             (`opus_import.import_processes.ImporterLock`), or None for a plain import.
+        writer: This process's row and lock as a registered writer of the schema
+            (`opus_import.steps.do_generation.register_writer`), or None when it is not
+            registered. A queue importer that is registered imports under this row.
         load_guard: What each chunk of the bundle being imported runs in its
             transaction (`opus_import.import_processes.BundleGuard`), or None outside a
             bundle.
@@ -295,6 +298,7 @@ class ImportContext:
     index_workers: int = DEFAULT_INDEX_WORKERS
     capture: Capture | None = None
     importer: ImporterLock | None = None
+    writer: ImporterLock | None = None
     load_guard: BundleGuard | None = None
     log_path: str | None = None
     interrupts: int = 0

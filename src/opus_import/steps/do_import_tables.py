@@ -125,9 +125,11 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
     """Drop every table the import creates, leaving Django's own.
 
     The ``obs_general`` view goes first, with ``DROP VIEW``, since ``DROP TABLE`` refuses
-    a view. The tables are the ones `OPUS_TABLE_PREFIXES` and `OPUS_TABLE_NAMES` name,
-    dropped in an order the foreign keys allow: ``schema_version`` first, so an erase that stops
-    part way leaves a schema nothing serves or deploys onto; then every ``obs_`` table
+    a view; in a schema of an earlier version ``obs_general`` is a base table, which goes
+    in ``obs_general``'s place in the order below. The tables are the ones
+    `OPUS_TABLE_PREFIXES` and `OPUS_TABLE_NAMES` name, dropped in an order the foreign keys
+    allow: ``schema_version`` first, so an erase that stops part way leaves a schema
+    nothing serves or deploys onto; then every ``obs_`` table
     but ``obs_general``; ``cart``; ``obs_general``; the ``definitions`` tables, which
     reference ``contexts``; every other exact name but ``mult``; and ``mult`` and every
     ``mult_`` table, ``mult_field`` and ``mult_group`` among them, last.
@@ -225,12 +227,7 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
             [registered.first_id, last],
         )[0][0]
         above = registered.first_id if highest is None else int(highest) + 1
-        in_orphans = f'{q("obs_general_id")} BETWEEN %s AND %s'
-        for table_name in joined:
-            db.retrying(
-                description,
-                functools.partial(db.delete_rows, table_name, in_orphans, [above, last]),
-            )
+        _delete_id_range_rows(db, joined, above, last, description)
     parent = q(db.JOINED_PARENT_ALIAS)
     in_chunk = f'{parent}.{q("bundle_id")} = %s AND {parent}.{q("id")} BETWEEN %s AND %s'
     for first_id, last_id in _bundle_id_ranges(db, 'obs_general', bundle_id, within):
@@ -250,6 +247,52 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
         db.retrying(
             description,
             functools.partial(_delete_id_range, db, 'obs_general', bundle_id, first_id, last_id),
+        )
+
+
+def _delete_id_range_rows(
+    db: ImportDBSuper, table_names: Sequence[str], first_id: int, last_id: int, description: str
+) -> None:
+    """Delete the tables' rows whose ``obs_general_id`` lies in a range, a table at a time.
+
+    Parameters:
+        db: The open database.
+        table_names: Observation tables other than ``obs_general``.
+        first_id: The range's first id.
+        last_id: The range's last id.
+        description: What `ImportDBSuper.retrying` logs if a statement is retried.
+    """
+    in_range = f'{db.quote_identifier("obs_general_id")} BETWEEN %s AND %s'
+    for table_name in table_names:
+        db.retrying(
+            description,
+            functools.partial(db.delete_rows, table_name, in_range, [first_id, last_id]),
+        )
+
+
+def delete_rows_in_id_ranges(ctx: ImportContext, ranges: Sequence[tuple[int, int]]) -> None:
+    """Delete every observation table's rows but ``obs_general``'s in ranges of ids.
+
+    Abandoning a pending generation runs it over the ranges the generation registered,
+    once it has deleted the observations the generation added. Only that generation's
+    rows lie in those ranges, so what it deletes are the rows a killed import committed
+    for observations whose ``obs_general`` rows it never committed.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        ranges: The first and last id of each range.
+    """
+    db = ctx.db
+    assert db is not None
+    db.forget_table_names()
+    joined = [
+        name
+        for name in sorted(db.table_names(prefix=['obs_']))
+        if not table_keys.is_bundle_keyed_table(name)
+    ]
+    for first_id, last_id in ranges:
+        _delete_id_range_rows(
+            db, joined, first_id, last_id, f'Deleting the rows of ids {first_id}-{last_id}'
         )
 
 

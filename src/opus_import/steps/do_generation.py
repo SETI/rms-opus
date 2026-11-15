@@ -29,12 +29,15 @@ the abandon, the purge and every write to P are refused: each would delete rows 
 was pointed at, or drop auxiliary tables the way back needs.
 
 Each command holds a server-wide named lock on the schema for its whole run and is
-refused while another holds it; every invocation that writes P registers itself in
-``import_process`` with its liveness lock while briefly holding that lock
-(`register_writer`), and a command is refused while any registered invocation is alive.
-A refused command raises `GenerationRefusedError` before it changes anything, and
-``opus_import`` then exits with `GENERATION_REFUSED_EXIT_STATUS`, so the deploy chain can
-tell a refusal from a command that stopped part way.
+refused while another holds it; every invocation that writes the schema, P or the served
+rows, registers itself in ``import_process`` with its liveness lock while briefly holding
+that lock (`register_writer`), and a command is refused while any registered invocation is
+alive. An invocation that moves P's state forward, ``--finalize``, ``--validate`` or
+``--write-schema-version``, registers as P's sole writer, so the state it records
+describes rows no other invocation changed meanwhile. A refused command raises
+`GenerationRefusedError` before it changes anything, and ``opus_import`` then exits with
+`GENERATION_REFUSED_EXIT_STATUS`, so the deploy chain can tell a refusal from a command
+that stopped part way.
 """
 
 from __future__ import annotations
@@ -48,6 +51,7 @@ from opus_import.generations import (
     ADDED_GENERATION_COLUMN,
     FIRST_GENERATION,
     GENERATION_LOCK,
+    GENERATION_SOLE_WRITER_LOCK,
     OBS_GENERAL_VIEW,
     PENDING_GENERATION_COLUMN,
     PENDING_READY,
@@ -108,11 +112,18 @@ class GenerationLostError(Exception):
 def read_generation_state(db: ImportDBSuper) -> GenerationState | None:
     """Return the schema's one version row, or None when it has none or several.
 
+    A ``schema_version`` table without the generation columns, which a schema of an earlier
+    version has, holds no generation either, so such a schema reaches the version check
+    that refuses it, or the erase that ends it, rather than a failed read.
+
     Parameters:
         db: The open database.
     """
     db.forget_table_names()
     if not db.table_exists(SCHEMA_VERSION_TABLE):
+        return None
+    present = {column['field_name'] for column in db.table_info(SCHEMA_VERSION_TABLE)}
+    if not present.issuperset(STATE_COLUMNS):
         return None
     rows = db.read_rows(SCHEMA_VERSION_TABLE, list(STATE_COLUMNS))
     if len(rows) != 1:
@@ -143,8 +154,9 @@ def _require_state(ctx: ImportContext) -> GenerationState:
     state = read_generation_state(ctx.db)
     if state is None:
         raise GenerationRefusedError(
-            f'"{ctx.db.db_schema}" has no single {SCHEMA_VERSION_TABLE} row, so it has no '
-            'generation: an incremental update writes a finished schema'
+            f'"{ctx.db.db_schema}" has no single {SCHEMA_VERSION_TABLE} row with the '
+            'generation columns, so it has no generation: an incremental update writes a '
+            f'finished schema of version {SCHEMA_VERSION}'
         )
     return state
 
@@ -244,28 +256,55 @@ def _writers_message(db: ImportDBSuper) -> str | None:
     )
 
 
-def register_writer(ctx: ImportContext) -> import_processes.ImporterLock:
-    """Record an invocation that writes the pending generation in ``import_process``.
+def _sole_writer_lock(db: ImportDBSuper) -> str:
+    """Return the name of the lock a sole writer of the pending generation holds."""
+    return importdb.lock_name(db.db_schema, GENERATION_SOLE_WRITER_LOCK)
+
+
+def _generations(state: GenerationState | None) -> tuple[int, int | None] | None:
+    """Return the served and pending generations of a version row, None without one."""
+    return None if state is None else (state.generation, state.pending)
+
+
+def _describe_generations(state: GenerationState | None) -> str:
+    """Return what a version row serves and holds pending, for a refusal."""
+    if state is None:
+        return f'the schema has no single {SCHEMA_VERSION_TABLE} row with a generation'
+    pending = 'none' if state.pending is None else f'generation {state.pending}'
+    return f'generation {state.generation} is served and {pending} is pending'
+
+
+def register_writer(ctx: ImportContext, *, sole: bool = False) -> import_processes.ImporterLock:
+    """Record an invocation that writes the schema in ``import_process``.
 
     The row and its liveness lock are taken on a connection of their own while briefly
     holding the generation lock, so no generation command starts between this
-    invocation's check and its registration. The version row is read again under the
-    lock: the invocation chose its path by the row it read as it started, and a switch or
+    invocation's check and its registration, and every generation command is refused
+    while the row's lock is held. The version row is read again under the lock: the
+    invocation chose its path by the row it read as it started, and a begin, a switch or
     an abandon may have run since.
+
+    A sole writer of the pending generation, one that moves its state forward, is refused
+    while any other registered invocation is alive, and holds a lock of its own on the
+    same connection until it ends, which refuses every other writer of the pending
+    generation meanwhile; so the state it records after reading the generation describes
+    rows nothing else wrote while it read them.
 
     Parameters:
         ctx: The import run's context, for the open database and the log's path, and the
             version row it read as it started (`ImportContext.generation_state`), which
             is replaced by the one read under the lock.
+        sole: Whether the invocation writes the pending generation as its sole writer.
 
     Returns:
         The invocation's row and lock, which it frees when it ends
         (`opus_import.import_processes.ImporterLock.exit`).
 
     Raises:
-        GenerationRefusedError: If a generation command holds the generation lock, the
-            generation the invocation started to write is no longer the pending one, or
-            a switch of it stopped part way.
+        GenerationRefusedError: If a generation command holds the generation lock; the
+            served or pending generation is not the one the invocation started by; a
+            switch of the pending generation stopped part way; another invocation is
+            alive and this one would be the sole writer; or a sole writer is alive.
     """
     db = ctx.db
     assert db is not None
@@ -273,32 +312,69 @@ def register_writer(ctx: ImportContext) -> import_processes.ImporterLock:
     if not db.try_named_lock(name):
         raise GenerationRefusedError(
             f'A generation command holds "{db.db_schema}"\'s generation lock, so nothing '
-            'writes its pending generation until it ends'
+            'writes the schema until it ends'
         )
     try:
         started = ctx.generation_state
-        state = _require_state(ctx)
-        if started is None or (state.generation, state.pending) != (
-            started.generation,
-            started.pending,
-        ):
-            now = 'none' if state.pending is None else f'generation {state.pending}'
+        state = read_generation_state(db)
+        if _generations(state) != _generations(started):
+            lost = (
+                'The schema changed'
+                if started is None or started.pending is None
+                else f'Generation {started.pending} is no longer pending'
+            )
             raise GenerationRefusedError(
-                f'Generation {ctx.pending_generation} is no longer pending: generation '
-                f'{state.generation} is served and {now} is pending, since a generation '
-                'command ran while this invocation started; run it again'
+                f'{lost}: {_describe_generations(state)}, since a generation command ran '
+                'while this invocation started; run it again'
             )
         ctx.generation_state = state
-        unfinished = unfinished_switch_problem(db, state)
-        if unfinished is not None:
-            raise GenerationRefusedError(
-                f'Nothing writes generation {state.pending} now: {unfinished}'
-            )
+        if state is not None and state.pending is not None:
+            unfinished = unfinished_switch_problem(db, state)
+            if unfinished is not None:
+                raise GenerationRefusedError(
+                    f'Nothing writes generation {state.pending} now: {unfinished}'
+                )
+            _refuse_beside_sole_writer(db, state.pending, sole=sole)
         import_processes.create_process_table(db)
         lock_db = db.open_sibling_connection()
-        return import_processes.start_importer(lock_db, ctx.log_path or '')
+        writer = import_processes.start_importer(lock_db, ctx.log_path or '')
+        if sole and not lock_db.try_named_lock(_sole_writer_lock(db)):
+            writer.exit()
+            raise GenerationRefusedError(
+                f'Another invocation holds generation {ctx.pending_generation} as its sole '
+                'writer; wait for it to finish'
+            )
+        return writer
     finally:
         db.release_named_lock(name)
+
+
+def _refuse_beside_sole_writer(db: ImportDBSuper, pending: int, *, sole: bool) -> None:
+    """Refuse a writer of the pending generation that would run beside a sole writer.
+
+    Parameters:
+        db: The open database, holding the generation lock.
+        pending: The pending generation.
+        sole: Whether the writer would be the sole writer itself.
+
+    Raises:
+        GenerationRefusedError: If a sole writer is alive, or this one would be and
+            another registered invocation is alive.
+    """
+    if db.named_lock_holder(_sole_writer_lock(db)) is not None:
+        raise GenerationRefusedError(
+            f'Generation {pending} is being finalized, validated or stamped, which runs '
+            'alone; wait for it to finish'
+        )
+    if not sole:
+        return
+    alive = _alive_writers(db)
+    if alive:
+        raise GenerationRefusedError(
+            f'import_process {", ".join(str(process) for process in alive)} still writing '
+            f'"{db.db_schema}"; --finalize, --validate and --write-schema-version run alone '
+            f'on generation {pending}, so wait for them to finish'
+        )
 
 
 def _update_version_row(
@@ -782,13 +858,16 @@ def purge_generations(ctx: ImportContext) -> bool:
 def abandon_generation(ctx: ImportContext) -> None:
     """Throw away an unswitched pending generation: ``--abandon-generation``.
 
-    The rows the pending generation added are deleted from every observation table; the
-    rows it retired are restored; its registry rows are deleted and the copies it retired
-    made live again; its auxiliary ``__new`` tables are dropped; the view is re-created,
-    with no condition unless retired rows remain; and last the version row's pending
-    generation is cleared. Running it again after an interruption finishes the work.
-    Refused while a switch of the pending generation, or a revert of it, has stopped part
-    way (`unfinished_switch_problem`).
+    First the pending generation is marked ``writing``, so a switch refuses it from before
+    the first row goes. The rows it added are then deleted from every observation table,
+    and with them every other observation table's rows in the id ranges it registered,
+    which a killed import can leave with no ``obs_general`` row; the rows it retired are
+    restored; its registry rows are deleted and the copies it retired made live again;
+    its auxiliary ``__new`` tables are dropped; the view is re-created, with no condition
+    unless retired rows remain; and last the version row's pending generation is cleared.
+    Running it again after an interruption finishes the work. Refused while a switch of
+    the pending generation, or a revert of it, has stopped part way
+    (`unfinished_switch_problem`).
 
     Parameters:
         ctx: The import run's context.
@@ -808,6 +887,11 @@ def abandon_generation(ctx: ImportContext) -> None:
         unfinished = unfinished_switch_problem(db, state)
         if unfinished is not None:
             raise GenerationRefusedError(f'--abandon-generation refused: {unfinished}')
+        # A ready generation would otherwise stay switchable after an interruption that
+        # left it part deleted.
+        _update_version_row(
+            ctx, {PENDING_STATE_COLUMN: PENDING_WRITING}, PENDING_GENERATION_COLUMN, pending
+        )
         added, retired = _abandoned_ids(ctx, pending)
         import_util.log_info(
             ctx,
@@ -815,6 +899,14 @@ def abandon_generation(ctx: ImportContext) -> None:
             f'restoring {len(retired)}',
         )
         do_import_tables.delete_observations(ctx, added)
+        do_import_tables.delete_rows_in_id_ranges(
+            ctx,
+            [
+                (registered.first_id, registered.end - 1)
+                for registered in bundle_registry.registered_ranges(db, include_retired=True)
+                if registered.generation == pending
+            ],
+        )
         do_import_tables.restore_retired_rows(ctx, retired, pending)
         bundle_registry.delete_generation_copies(ctx, pending)
         bundle_registry.restore_retired_copies(ctx, pending)

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from opus_import import generations, import_processes, importdb, table_swap
+from opus_import import bundle_registry, generations, import_processes, importdb, table_swap
 from opus_import.cli import (
     _create_argument_parser,
     _generation_conflicts,
@@ -84,10 +84,18 @@ class _RecordingDB(ImportDBMySQL):
         self._table_info_cache = {}
         self.default_engine = 'INNODB'
 
+    #: What ``INFORMATION_SCHEMA.TABLES`` says ``obs_general`` is, or None when absent.
+    obs_general_type: str | None = 'VIEW'
+
     def _execute(
         self, cmd: str, param_list: Any = None, cur: Any = None, mutates: bool = False
     ) -> None:
         self.executed.append((cmd, param_list))
+
+    def _execute_and_fetchall(self, cmd: str, func_name: str, param_list: Any = None) -> Any:
+        """Answer the one query these tests reach, what ``obs_general`` is."""
+        assert func_name == 'obs_general_type', func_name
+        return [] if self.obs_general_type is None else [(self.obs_general_type,)]
 
 
 def _obs_general_schema() -> list[dict[str, Any]]:
@@ -215,9 +223,28 @@ def test_dropping_obs_general_drops_the_view_before_the_table() -> None:
     db = _RecordingDB({'obs_general'})
     db.drop_table('obs_general')
     assert [cmd for cmd, _ in db.executed] == [
-        'DROP VIEW IF EXISTS `obs_general`',
+        'DROP VIEW `obs_general`',
         'DROP TABLE `obs_general_rows`',
     ]
+
+
+def test_an_obs_general_base_table_of_an_earlier_version_is_dropped_by_its_name() -> None:
+    """A schema of an earlier version has no view to drop, and its base table is
+    obs_general itself, which the erase drops in its turn."""
+    db = _RecordingDB({'obs_general'})
+    db.obs_general_type = 'BASE TABLE'
+    db.drop_obs_general_view()
+    assert db.executed == []
+    db.drop_table('obs_general')
+    assert [cmd for cmd, _ in db.executed] == ['DROP TABLE `obs_general`']
+
+
+def test_a_schema_without_obs_general_drops_no_view() -> None:
+    """The erase of a schema that never had obs_general sends no DROP VIEW."""
+    db = _RecordingDB()
+    db.obs_general_type = None
+    db.drop_obs_general_view()
+    assert db.executed == []
 
 
 def test_the_import_names_are_mapped_both_ways() -> None:
@@ -344,12 +371,16 @@ class _StateDB:
         *,
         lock_free: bool = True,
         tables: tuple[str, ...] = (),
+        columns: tuple[str, ...] = generations.STATE_COLUMNS,
+        sole_writer: int | None = None,
     ) -> None:
         self.row = (
             None if state is None else dict(zip(generations.STATE_COLUMNS, state, strict=True))
         )
         self.lock_free = lock_free
         self.tables = set(tables)
+        self.columns = columns
+        self.sole_writer = sole_writer
         self.events: list[str] = []
 
     def forget_table_names(self) -> None:
@@ -359,10 +390,21 @@ class _StateDB:
         """Hold the version table, when there is a row, and the tables given."""
         return (table == 'schema_version' and self.row is not None) or table in self.tables
 
+    def table_info(self, table: str) -> list[dict[str, Any]]:
+        """Return the version table's columns."""
+        assert table == 'schema_version'
+        return [{'field_name': column} for column in self.columns]
+
     def read_rows(self, table: str, columns: list[str], *args: Any) -> list[tuple[Any, ...]]:
         """Return the version row's columns."""
         assert self.row is not None
+        assert set(columns) <= set(self.columns)
         return [tuple(self.row[column] for column in columns)]
+
+    def named_lock_holder(self, name: str) -> int | None:
+        """Return the sole writer's connection, the only lock these tests ask about."""
+        assert name == importdb.lock_name(self.db_schema, generations.GENERATION_SOLE_WRITER_LOCK)
+        return self.sole_writer
 
     def update_row(self, table: str, row: dict[str, Any], where: str, params: Any = None) -> int:
         """Write the version row when it meets a condition on one column, recording the
@@ -542,6 +584,148 @@ def test_a_writer_registers_under_the_lock_with_the_row_read_again(
     assert ctx.generation_state is not None
     assert ctx.generation_state.pending_state == PENDING_FINALIZED
     assert db.events == ['lock', 'unlock']
+
+
+class _LockConnection:
+    """The sibling connection a writer's row is taken on, recording the locks it takes."""
+
+    def __init__(self, *, grants: bool = True) -> None:
+        self.grants = grants
+        self.locks: list[str] = []
+
+    def try_named_lock(self, name: str) -> bool:
+        """Record the lock, and grant it unless told not to."""
+        self.locks.append(name)
+        return self.grants
+
+
+class _Writer:
+    """What `import_processes.start_importer` returns, recording its exit."""
+
+    def __init__(self) -> None:
+        self.exited = False
+
+    def exit(self) -> None:
+        """Record the exit."""
+        self.exited = True
+
+
+@pytest.fixture
+def registering(monkeypatch: pytest.MonkeyPatch) -> tuple[_LockConnection, Any]:
+    """Take a writer's row on a recording connection, and return both."""
+    connection = _LockConnection()
+    writer = _Writer()
+    monkeypatch.setattr(import_processes, 'create_process_table', lambda db: None)
+    monkeypatch.setattr(import_processes, 'start_importer', lambda lock_db, log_path: writer)
+    monkeypatch.setattr(_StateDB, 'open_sibling_connection', lambda self: connection, raising=False)
+    return connection, writer
+
+
+def _sole_writer_lock() -> str:
+    """Return the sole writer's lock on the stand-in's schema."""
+    return importdb.lock_name('opus_test', generations.GENERATION_SOLE_WRITER_LOCK)
+
+
+def test_a_writer_of_the_served_rows_registers_and_holds_a_begin_off(
+    registering: tuple[_LockConnection, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With nothing pending the version row is read again under the lock, and the row
+    registered then refuses a begin."""
+    connection, writer = registering
+    db = _StateDB(_ready())
+    ctx = _context(db)
+    assert do_generation.register_writer(ctx) is writer
+    assert connection.locks == []
+    assert db.events == ['lock', 'unlock']
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [7])
+    with pytest.raises(do_generation.GenerationRefusedError, match='import_process 7 still'):
+        do_generation.begin_generation(ctx)
+
+
+def test_a_writer_of_the_served_rows_is_refused_once_a_generation_has_begun(
+    registering: tuple[_LockConnection, Any],
+) -> None:
+    """It chose to write the served rows by the row it read as it started."""
+    db = _StateDB(_ready())
+    ctx = _context(db)
+    db.row = dict(
+        zip(
+            generations.STATE_COLUMNS,
+            _ready(pending_generation=2, pending_state=PENDING_WRITING),
+            strict=True,
+        )
+    )
+    with pytest.raises(
+        do_generation.GenerationRefusedError,
+        match='The schema changed: generation 1 is served and generation 2 is pending',
+    ):
+        do_generation.register_writer(ctx)
+    assert db.events == ['lock', 'unlock']
+
+
+def test_the_sole_writer_is_refused_beside_another_writer(
+    registering: tuple[_LockConnection, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Finalization, validation and the stamp record a state of rows nothing else writes;
+    another writer of the pending generation registers beside a writer that is not sole."""
+    connection, writer = registering
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [7])
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_FINALIZED))
+    with pytest.raises(do_generation.GenerationRefusedError, match='import_process 7 still'):
+        do_generation.register_writer(_context(db), sole=True)
+    assert connection.locks == []
+    assert do_generation.register_writer(_context(db)) is writer
+
+
+def test_the_sole_writer_holds_its_lock_on_its_rows_connection(
+    registering: tuple[_LockConnection, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The lock lasts as long as the row's, and frees with it."""
+    connection, writer = registering
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_FINALIZED))
+    assert do_generation.register_writer(_context(db), sole=True) is writer
+    assert connection.locks == [_sole_writer_lock()]
+    # Read through the fixture's tuple: the identity check narrows `writer`'s type.
+    assert not registering[1].exited
+    assert db.events == ['lock', 'unlock']
+
+
+def test_a_sole_writer_whose_lock_is_not_granted_frees_its_row(
+    registering: tuple[_LockConnection, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Nothing is left registered."""
+    connection, writer = registering
+    connection.grants = False
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_FINALIZED))
+    with pytest.raises(do_generation.GenerationRefusedError, match='as its sole writer'):
+        do_generation.register_writer(_context(db), sole=True)
+    assert writer.exited
+
+
+@pytest.mark.parametrize('sole', [False, True], ids=['writer', 'sole-writer'])
+def test_no_writer_registers_while_the_sole_writer_runs(
+    registering: tuple[_LockConnection, Any], monkeypatch: pytest.MonkeyPatch, sole: bool
+) -> None:
+    """While the pending generation is finalized, validated or stamped, nothing else
+    writes it."""
+    connection, _writer = registering
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_FINALIZED), sole_writer=12)
+    with pytest.raises(do_generation.GenerationRefusedError, match='which runs alone'):
+        do_generation.register_writer(_context(db), sole=sole)
+    assert connection.locks == []
+    assert db.events == ['lock', 'unlock']
+
+
+def test_a_version_table_without_the_generation_columns_holds_no_generation() -> None:
+    """A schema of an earlier version is read as having none, and its columns are never
+    selected, so it reaches the refusals and the erase rather than a failed read."""
+    db = _StateDB(_ready(), columns=('version', 'state'))
+    assert do_generation.read_generation_state(db) is None  # type: ignore[arg-type]
+    with pytest.raises(do_generation.GenerationRefusedError, match='the generation columns'):
+        do_generation.begin_generation(_context(db))
 
 
 def test_a_pending_state_with_no_pending_generation_to_hold_it_fails_loudly() -> None:
@@ -752,6 +936,95 @@ def test_abandon_is_refused_with_nothing_pending() -> None:
     db = _StateDB(_ready())
     with pytest.raises(do_generation.GenerationRefusedError, match='no generation is pending'):
         do_generation.abandon_generation(_context(db))
+
+
+def test_an_abandon_unreadies_the_generation_first_and_deletes_its_ranges_rows(
+    monkeypatch: pytest.MonkeyPatch, no_writers: list[str]
+) -> None:
+    """A ready generation is marked writing before the first row goes, so an interrupted
+    abandon leaves nothing a switch serves; the rows left in the id ranges it registered
+    go before its registry rows, and no other generation's range is touched."""
+    db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
+    steps: list[Any] = []
+
+    def record(name: str) -> Any:
+        """Return a stand-in step that records its name, the state, and its argument."""
+
+        def step(ctx: Any, *args: Any) -> None:
+            assert db.row is not None
+            steps.append((name, db.row['pending_state'], *args))
+
+        return step
+
+    monkeypatch.setattr(do_generation, '_abandoned_ids', lambda ctx, pending: ([8, 9], [3]))
+    monkeypatch.setattr(do_generation, '_has_retired_rows', lambda ctx: False)
+    for module, name in [
+        (do_import_tables, 'delete_observations'),
+        (do_import_tables, 'delete_rows_in_id_ranges'),
+        (do_import_tables, 'restore_retired_rows'),
+        (bundle_registry, 'delete_generation_copies'),
+        (bundle_registry, 'restore_retired_copies'),
+        (table_swap, 'drop_swap_leftovers'),
+    ]:
+        monkeypatch.setattr(module, name, record(name))
+    monkeypatch.setattr(
+        bundle_registry,
+        'registered_ranges',
+        lambda db, include_retired: [
+            bundle_registry.BundleRange(1, 'A_1', 4, 1, 10, 'done', None, 1),
+            bundle_registry.BundleRange(2, 'B_1', 4, 21, 10, 'importing', None, 2),
+            bundle_registry.BundleRange(3, 'C_1', 4, 31, 5, 'done', None, 2),
+        ],
+    )
+    do_generation.abandon_generation(_context(db))
+    assert [step[:2] for step in steps] == [
+        ('delete_observations', PENDING_WRITING),
+        ('delete_rows_in_id_ranges', PENDING_WRITING),
+        ('restore_retired_rows', PENDING_WRITING),
+        ('delete_generation_copies', PENDING_WRITING),
+        ('restore_retired_copies', PENDING_WRITING),
+        ('drop_swap_leftovers', PENDING_WRITING),
+    ]
+    assert steps[1][2] == [(21, 30), (31, 35)]
+    assert db.row is not None
+    assert (db.row['pending_generation'], db.row['pending_state']) == (None, None)
+    assert no_writers == ['view None']
+
+
+def test_the_rows_in_id_ranges_are_deleted_from_every_child_table() -> None:
+    """Each range from every observation table but obs_general, by obs_general_id."""
+    deleted: list[tuple[str, str, list[Any]]] = []
+
+    class _DB:
+        @staticmethod
+        def quote_identifier(name: str) -> str:
+            return f'`{name}`'
+
+        @staticmethod
+        def forget_table_names() -> None:
+            """Read nothing."""
+
+        @staticmethod
+        def table_names(prefix: Any = None) -> list[str]:
+            assert prefix == ['obs_']
+            return ['obs_pds', 'obs_general', 'obs_files']
+
+        @staticmethod
+        def retrying(description: str, body: Any) -> Any:
+            return body()
+
+        @staticmethod
+        def delete_rows(table: str, where: str, params: list[Any]) -> None:
+            deleted.append((table, where, params))
+
+    do_import_tables.delete_rows_in_id_ranges(make_context(db=_DB()), [(21, 30), (31, 35)])
+    where = '`obs_general_id` BETWEEN %s AND %s'
+    assert deleted == [
+        ('obs_files', where, [21, 30]),
+        ('obs_pds', where, [21, 30]),
+        ('obs_files', where, [31, 35]),
+        ('obs_pds', where, [31, 35]),
+    ]
 
 
 class _ReadOnlyStateDB(_StateDB):

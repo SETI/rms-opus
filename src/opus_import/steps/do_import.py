@@ -126,7 +126,9 @@ def choose_import_path(ctx: ImportContext) -> bool:
     A schema with no ``schema_version`` row and none of the secondary keys finalization
     adds -- an empty schema, or one a fresh import is part way through -- is imported
     fresh. A schema whose one row holds this release's version is appended to, whether
-    the row is ``ready`` or an earlier append left it ``appending``. Anything else is
+    the row is ``ready`` or an earlier append left it ``appending``, unless the row names
+    a pending generation, which the import then writes, or a switch still revertible,
+    which refuses an append. Anything else is
     refused: a row of another version, or several rows, since a schema is re-imported
     under the release that will serve it; and no row but such keys, a finalization that
     was interrupted, since loading into tables that carry every index is what a fresh
@@ -147,24 +149,6 @@ def choose_import_path(ctx: ImportContext) -> bool:
     if db.table_exists(schema_version.SCHEMA_VERSION_TABLE):
         rows = list(db.read_rows(schema_version.SCHEMA_VERSION_TABLE, ['version', 'state']))
     state = ctx.generation_state
-    if rows and state is not None and state.pending is not None:
-        ctx.import_path = IMPORT_PATH_GENERATION
-        import_util.log_info(
-            ctx,
-            f'{IMPORT_PATH_PREFIX}{IMPORT_PATH_GENERATION} {state.pending}, into '
-            f'"{db.db_schema}" (version {state.version}, {state.state}; generation '
-            f'{state.generation} served)',
-        )
-        return True
-    if rows and state is not None and state.revertible:
-        ctx.logger.log(
-            'fatal',
-            f'"{db.db_schema}" can still revert its switch to generation {state.generation}, '
-            'and an append would make that impossible: "opus_import --purge-generations" '
-            'ends the revert, or "--revert-generation" then "--abandon-generation" undoes it',
-        )
-        ctx.import_has_bad_data = True
-        return False
     if rows:
         versions = ', '.join(f'version {version}, {state}' for version, state in rows)
         problem = None
@@ -186,6 +170,24 @@ def choose_import_path(ctx: ImportContext) -> bool:
                 f'"{db.db_schema}" {problem}, so nothing is imported into it: a schema is '
                 're-imported under the release that will serve it, starting with '
                 '"opus_import --scorched-earth --yes"',
+            )
+            ctx.import_has_bad_data = True
+            return False
+        if state is not None and state.pending is not None:
+            ctx.import_path = IMPORT_PATH_GENERATION
+            import_util.log_info(
+                ctx,
+                f'{IMPORT_PATH_PREFIX}{IMPORT_PATH_GENERATION} {state.pending}, into '
+                f'"{db.db_schema}" (version {state.version}, {state.state}; generation '
+                f'{state.generation} served)',
+            )
+            return True
+        if state is not None and state.revertible:
+            ctx.logger.log(
+                'fatal',
+                f'"{db.db_schema}" can still revert its switch to generation {state.generation}, '
+                'and an append would make that impossible: "opus_import --purge-generations" '
+                'ends the revert, or "--revert-generation" then "--abandon-generation" undoes it',
             )
             ctx.import_has_bad_data = True
             return False
@@ -549,7 +551,9 @@ def import_from_queue(
     """Import bundles from the registry's queue until none is left: one importer's run.
 
     The importer first records itself in ``import_process`` and takes its lock, on a
-    connection of its own (`opus_import.import_processes.start_importer`). It then
+    connection of its own (`opus_import.import_processes.start_importer`), unless the
+    invocation registered itself as a writer already (`ImportContext.writer`), whose row
+    and lock it imports under, so each importer has one row. It then
     claims the largest ``pending`` bundle no other process holds
     (`opus_import.bundle_registry.claim_bundle`), deletes its rows and imports it, marks
     it ``done``, and claims the next, until no bundle is ``pending``. It never erases or
@@ -586,9 +590,12 @@ def import_from_queue(
     db = ctx.db
     assert db is not None
     ctx.queue_entered = True
-    import_processes.create_process_table(db)
-    lock_db = db.open_sibling_connection()
-    importer = import_processes.start_importer(lock_db, ctx.log_path or '')
+    importer = ctx.writer
+    if importer is None:
+        import_processes.create_process_table(db)
+        lock_db = db.open_sibling_connection()
+        importer = import_processes.start_importer(lock_db, ctx.log_path or '')
+    owned = importer is not ctx.writer
     failures: list[str] = []
     try:
         ctx.importer = importer
@@ -628,7 +635,9 @@ def import_from_queue(
         return False
     finally:
         ctx.importer = None
-        importer.exit()
+        # A writer's row is freed as the invocation ends (opus_import.cli).
+        if owned:
+            importer.exit()
     if failures:
         ctx.logger.log(
             'fatal', f'This importer failed to import, and deleted: {", ".join(failures)}'

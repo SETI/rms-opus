@@ -17,6 +17,7 @@ from typing import Any
 import pytest
 
 from opus_import import cli, import_util
+from opus_import.generations import PENDING_WRITING, GenerationState
 from opus_import.importdb.super import ImportDBError, ImportDBSuper, IndexStatement
 from opus_import.schema_version import SCHEMA_VERSION
 from opus_import.steps import (
@@ -676,6 +677,45 @@ def test_a_schema_no_import_may_append_to_is_refused(
     (message,) = ctx.logger.messages_at('fatal')
     assert named in message
     assert '--scorched-earth --yes' in message
+
+
+def _choose_with_generation(
+    version: int, *, pending: int | None, revertible: bool = False
+) -> tuple[bool, Any]:
+    """Choose a path against a ready schema of a version whose row names generations."""
+    db = _StateDB([(version, 'ready')], {}, [])
+    ctx = make_context(db=db)
+    pending_state = None if pending is None else PENDING_WRITING
+    ctx.generation_state = GenerationState(version, 'ready', 1, pending, pending_state, revertible)
+    return do_import.choose_import_path(ctx), ctx
+
+
+def test_a_pending_generation_of_this_version_is_written() -> None:
+    """The import writes the generation, logged with the generation served."""
+    chosen, ctx = _choose_with_generation(SCHEMA_VERSION, pending=2)
+    assert chosen
+    assert ctx.import_path == do_import.IMPORT_PATH_GENERATION
+    assert ctx.logger.messages_at('info') == [
+        f'Import path: generation 2, into "opus_test" (version {SCHEMA_VERSION}, ready; '
+        'generation 1 served)'
+    ]
+
+
+@pytest.mark.parametrize(
+    ('pending', 'revertible'), [(2, False), (None, True)], ids=['pending', 'revertible']
+)
+def test_another_versions_schema_is_refused_whatever_its_generations(
+    pending: int | None, revertible: bool
+) -> None:
+    """The release check comes first: no import writes another release's schema, a
+    pending generation of it included, and the refusal names the version."""
+    chosen, ctx = _choose_with_generation(
+        SCHEMA_VERSION + 1, pending=pending, revertible=revertible
+    )
+    assert not chosen
+    assert ctx.import_path is None
+    (message,) = ctx.logger.messages_at('fatal')
+    assert f'is version {SCHEMA_VERSION + 1} and this release is version' in message
 
 
 def test_an_interrupted_finalization_refuses_the_import() -> None:

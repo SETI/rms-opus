@@ -305,15 +305,18 @@ class RegistryDB:
     def lock_first_row(
         self, table_name: str, column: str, where: str, where_params: list[Any], order_by: list[str]
     ) -> Any:
-        """Return the first pending row of the ones the claim may take, highest first."""
+        """Return the first pending row of the ones the claim may take, highest first; a
+        retired copy only when the clause does not ask for live rows."""
         state, *names = where_params
         excluded_count = where.split('NOT IN (', 1)[1].count('%s') if 'NOT IN' in where else 0
         among = names[: len(names) - excluded_count]
         excluded = names[len(names) - excluded_count :]
+        live = '`retired_generation` IS NULL' in where
         rows = [
             row
             for row in self.tables[table_name]
             if row['state'] == state
+            and (not live or row.get('retired_generation') is None)
             and (not among or row['bundle_id'] in among)
             and row['bundle_id'] not in excluded
         ]

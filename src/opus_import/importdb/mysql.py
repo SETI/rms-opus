@@ -238,6 +238,10 @@ ERRS_RETRYABLE = frozenset({ERR_DEADLOCK, ERR_LOCK_WAIT_TIMEOUT})
 #: The server's "duplicate entry for key".
 ERR_DUPLICATE_KEY = 1062
 
+#: ``INFORMATION_SCHEMA.TABLES``'s ``TABLE_TYPE`` of a view and of a base table.
+_VIEW_TABLE_TYPE = 'VIEW'
+_BASE_TABLE_TYPE = 'BASE TABLE'
+
 #: The errors that mean the server or the connection refuses ``LOAD DATA LOCAL INFILE``:
 #: the server's "not allowed" (1148) and "loading local data is disabled" (3948), and the
 #: client library's own refusal of the server's file request (2068).
@@ -862,9 +866,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             else:
                 try:
                     if table_name == generations.OBS_GENERAL_VIEW:
-                        # DROP TABLE refuses a view, and the view reads the table.
-                        self.drop_obs_general_view()
-                    cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
+                        cmd = self._drop_obs_general_statement()
+                    else:
+                        cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
                     self._execute(cmd, mutates=True)
                 except MySQLdb.Error as e:
                     self._log_failure(f'Failed in drop_table on "{table_name}": {e}')
@@ -1187,14 +1191,50 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
     def drop_obs_general_view(self) -> None:
         """Drop the ``obs_general`` view, if the schema has it.
 
+        A schema of an earlier version, whose ``obs_general`` is a base table, keeps it:
+        `drop_table` drops that table in its turn.
+
         Raises:
-            ImportDBError: If the server rejects the statement.
+            ImportDBError: If the server rejects a statement.
         """
+        if self._obs_general_type() != _VIEW_TABLE_TYPE:
+            return
         try:
-            self._execute(f'DROP VIEW IF EXISTS `{generations.OBS_GENERAL_VIEW}`', mutates=True)
+            self._execute(f'DROP VIEW `{generations.OBS_GENERAL_VIEW}`', mutates=True)
         except MySQLdb.Error as e:
             self._log_failure(f'Failed to drop the view "obs_general": {e}')
             raise ImportDBError(e) from e
+
+    def _obs_general_type(self) -> str | None:
+        """Return what ``obs_general`` is: ``VIEW``, ``BASE TABLE``, or None when absent.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        cmd = (
+            'SELECT `TABLE_TYPE` FROM `INFORMATION_SCHEMA`.`TABLES` '
+            'WHERE `TABLE_SCHEMA`=%s AND `TABLE_NAME`=%s'
+        )
+        rows = self._execute_and_fetchall(
+            cmd, 'obs_general_type', [self.db_schema, generations.OBS_GENERAL_VIEW]
+        )
+        return None if not rows else str(rows[0][0])
+
+    def _drop_obs_general_statement(self) -> str:
+        """Drop the ``obs_general`` view, and return the statement that drops its table.
+
+        DROP TABLE refuses a view, and the view reads the table, so the view goes first.
+        In a schema of an earlier version ``obs_general`` is the base table itself, and the
+        statement drops it under that name.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        legacy = self._obs_general_type() == _BASE_TABLE_TYPE
+        self.drop_obs_general_view()
+        if legacy:
+            return f'DROP TABLE `{generations.OBS_GENERAL_VIEW}`'
+        return f'DROP TABLE {self.quote_identifier(generations.OBS_GENERAL_VIEW)}'
 
     def _create_key_clause(self, key: TableKey) -> str:
         """Return a key as a ``CREATE TABLE`` clause names it.

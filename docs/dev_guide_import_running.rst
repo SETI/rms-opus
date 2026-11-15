@@ -543,14 +543,21 @@ process, in order:
        a switch that stopped part way.
 
 Each generation command holds a server-wide named lock on the schema while it runs, and
-is refused while another holds it. Every invocation that writes the pending generation
-records itself in ``import_process`` with a lock of its own, while briefly holding the
-generation lock, and a generation command is refused while any of them runs. It reads the
-version row again under that lock, and is refused when a generation command has switched
-in or abandoned the generation since it started; a pending state it then cannot record,
-the generation being gone, fails the invocation. ``schema_version.pending_state`` records
-how far the pending generation has got: ``writing`` again whenever anything writes it, so
-a generation written after its stamp is never switched in.
+is refused while another holds it. Every invocation that writes a schema with a version
+row -- the pending generation or the served rows: an import, a registration, a requeue, a
+delete, the finalization or one of its steps, validation or the stamp -- records itself in
+``import_process`` with a lock of its own, while briefly holding the generation lock, and
+a generation command is refused while any of them runs, so no generation is begun under a
+plain append. It reads the version row again under that lock, and is refused when the
+served or the pending generation is not the one it started by; a pending state it then
+cannot record, the generation being gone, fails the invocation. An invocation that erases
+the schema first, or is read-only, records nothing. ``--finalize``, ``--validate`` and
+``--write-schema-version`` write the pending generation alone: each is refused while
+another invocation writes it, and every other writer of it is refused while one of them
+runs, so the state each records describes rows nothing else changed meanwhile.
+``schema_version.pending_state`` records how far the pending generation has got:
+``writing`` again whenever anything writes it, and from the start of an abandon, so a
+generation written after its stamp, or part deleted, is never switched in.
 
 ``run_incremental_opus_update.sh`` runs the invocations from ``--begin-generation``
 through ``--write-schema-version`` against the served schema, ``--import`` only when it
