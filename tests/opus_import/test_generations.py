@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from opus_import import generations, importdb, table_swap
+from opus_import import generations, import_processes, importdb, table_swap
 from opus_import.cli import (
     _create_argument_parser,
     _generation_conflicts,
@@ -267,7 +267,7 @@ def test_a_bundle_is_retired_a_range_of_ids_at_a_time_through_its_key() -> None:
 
         def update_row(self, table: str, row: Any, where: str, params: list[Any]) -> int:
             updates.append((table, row, where, params))
-            return params[2] - params[1] + 1
+            return int(params[2] - params[1] + 1)
 
     retired = do_import_tables.retire_bundle_rows(make_context(db=_DB()), 'B_1', 5)
     assert retired == 3
@@ -533,8 +533,8 @@ def test_a_writer_registers_under_the_lock_with_the_row_read_again(
         """Return the stand-in itself."""
         return db
 
-    monkeypatch.setattr(do_generation.import_processes, 'create_process_table', lambda db: None)
-    monkeypatch.setattr(do_generation.import_processes, 'start_importer', start_importer)
+    monkeypatch.setattr(import_processes, 'create_process_table', lambda db: None)
+    monkeypatch.setattr(import_processes, 'start_importer', start_importer)
     monkeypatch.setattr(db, 'open_sibling_connection', open_sibling_connection, raising=False)
     assert do_generation.register_writer(ctx) is importer
     assert opened == [db]

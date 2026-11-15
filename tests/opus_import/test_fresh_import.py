@@ -1350,7 +1350,8 @@ def test_do_validate_runs_the_junction_check(monkeypatch: pytest.MonkeyPatch) ->
     for name in dir(do_validate):
         if name.startswith('validate_'):
             monkeypatch.setattr(do_validate, name, lambda ctx, name=name: called.append(name))
-    ctx = make_context(db=SimpleNamespace())
+    db = SimpleNamespace(forget_table_names=lambda: None, table_exists=lambda name: True)
+    ctx = make_context(db=db)
     monkeypatch.setattr(ctx.logger, 'close', lambda *args, **kwargs: (0, 0, 0, 0))
     assert do_validate.do_validate(ctx)
     assert 'validate_junctions' in called
