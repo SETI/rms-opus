@@ -591,8 +591,9 @@ registered itself in ``import_process`` to write the pending generation is alive
 bundle's rows of earlier generations, setting ``removed_generation = P`` on the
 ``obs_general`` rows an earlier generation added and none retired, one range of ids at a
 time, each holding at most ``transaction_rows`` of the bundle's rows and read through the
-``bundle_id`` key (:func:`~opus_import.steps.do_import_tables.retire_bundle_rows`). It deletes only the rows
-P added, which lie in the range P's registration gave the bundle, so a rerun is clean.
+``bundle_id`` key (:func:`~opus_import.steps.do_import_tables.retire_bundle_rows`). It
+deletes only the rows P added, which lie in the range P's registration gave the bundle,
+so a rerun is clean.
 Registration in P retires the bundle's live registry row (``retired_generation = P``) and
 adds a row of its own, with the next number and a range after every existing one.
 
@@ -951,7 +952,7 @@ it to its finishing steps.
 finalization built from it for the switch to put in place
 (:func:`~opus_import.steps.do_validate.param_info_table`), since the live ``param_info``
 describes the served generation and lacks any table the update adds. Without that table
-the two checks that read it are skipped and the validation fails, naming it.
+the checks that read it are skipped and the validation fails, naming it.
 
 The checks, in this order:
 

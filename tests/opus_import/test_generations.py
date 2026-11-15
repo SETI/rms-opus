@@ -19,6 +19,7 @@ from opus_import.cli import (
     _create_argument_parser,
     _generation_conflicts,
     _rebuilds_pending,
+    _rebuilds_served,
     _validate,
     expand_aggregate_options,
 )
@@ -1056,6 +1057,28 @@ def test_every_rebuild_from_the_pending_generation_marks_it_writing(
     args = _create_argument_parser().parse_args(arguments)
     expand_aggregate_options(args)
     assert _rebuilds_pending(args) is rebuilds
+
+
+@pytest.mark.parametrize(
+    ('arguments', 'rebuilds'),
+    [
+        (['--finalize'], True),
+        (['--create-param-info'], True),
+        (['--create-partables'], True),
+        (['--create-table-names'], True),
+        (['--create-cart'], True),
+        (['--create-indexes'], False),
+        (['--validate'], False),
+        (['--write-schema-version'], False),
+    ],
+)
+def test_a_rebuild_of_the_served_tables_is_told_from_the_other_steps(
+    arguments: list[str], rebuilds: bool
+) -> None:
+    """The steps an unfinished revert refuses, since they drop the tables that mark it."""
+    args = _create_argument_parser().parse_args(arguments)
+    expand_aggregate_options(args)
+    assert _rebuilds_served(args) is rebuilds
 
 
 def test_a_generation_command_runs_alone() -> None:

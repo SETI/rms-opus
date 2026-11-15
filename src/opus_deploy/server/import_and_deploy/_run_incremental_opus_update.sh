@@ -38,7 +38,6 @@ if ! take_deploy_lock "${OPUS_DIR}/deploy.lock"; then
     exit 1
 fi
 source ${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh
-source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 source ${IMPORT_SCRIPT_DIR}/_promote_steps.sh
 source ${IMPORT_SCRIPT_DIR}/_copy_database_to_peer.sh
 
@@ -58,6 +57,9 @@ if [[ -z ${OPUS_VERSION_SPEC} ]]; then
     fi
 fi
 export OPUS_VERSION_SPEC
+# After the specifier is settled, so the chain's release is checked against the one the
+# update installs.
+source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 
 export DATETIMEPID="`date +%Y%m%dT%H%M%S`_$$"
 export OPUS_LOG_DIR=${OPUS_DIR}/import_logs/${DATETIMEPID}

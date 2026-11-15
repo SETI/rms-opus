@@ -421,6 +421,11 @@ def test_an_unfinished_switch_or_revert_refuses_what_would_lose_the_way_back(
     refused = copy.step('--purge-generations')
     assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
     assert 'a revert of generation 2' in refused.stdout
+    # A rebuild of the served auxiliary tables or the cart would drop the tables that
+    # mark the unfinished revert, and so let the purge run.
+    rebuilt = copy.step(*build_run.AUX_ARGS)
+    assert rebuilt.returncode != 0
+    assert 'a revert of generation 2' in rebuilt.stdout
     assert _state(db_credentials, schema)[2:] == (2, None, None, 1)
     retired = golden_io.query(
         db_credentials,

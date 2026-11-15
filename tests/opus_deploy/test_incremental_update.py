@@ -138,7 +138,9 @@ def test_the_update_installs_the_deployed_release_unless_given_another(
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
-@pytest.mark.parametrize('release', ['', '3.25.1.dev4+g1234abc'], ids=['unreadable', 'local'])
+@pytest.mark.parametrize(
+    'release', ['', '3.25.1.dev4', '3.25.1.dev4+g1234abc'], ids=['unreadable', 'dev', 'local']
+)
 def test_the_update_without_a_version_refuses_a_release_pypi_cannot_install(
     tmp_path: Path, release: str
 ) -> None:
@@ -158,6 +160,18 @@ def test_a_failed_update_copies_nothing(tmp_path: Path) -> None:
     )
     assert status != 0
     assert ran[-1] == 'opus_import --finalize'
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_refused_begin_advises_no_abandon(tmp_path: Path) -> None:
+    """No generation was begun, so there is nothing to throw away."""
+    status, output, ran = run_deploy(
+        tmp_path, _UPDATE, 'COISS_2001', failing_import='--begin-generation'
+    )
+    assert status != 0
+    assert ran == ['opus_import --begin-generation']
+    assert 'No generation was begun' in output
+    assert '--abandon-generation' not in output
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')

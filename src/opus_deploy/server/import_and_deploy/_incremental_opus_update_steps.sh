@@ -54,7 +54,8 @@
 #     Prints ==<release> for the rms-opus release the served installation runs, read from
 #     its own interpreter, which is what an update installs when given no version
 #     specifier. Prints an error on standard error and returns 1 when the release cannot
-#     be read, or is a local build, which PyPI does not have.
+#     be read, or is a development build (a .dev or local version), which PyPI does not
+#     have.
 
 print_update_usage() {
     local usage="Usage: run_incremental_opus_update.sh [<version_spec>]"
@@ -155,6 +156,10 @@ run_update_invocations() {
         fi
         echo
         echo "ERROR: opus_import ${invocations[index]} failed or logged errors."
+        if [[ ${index} -eq 0 ]]; then
+            echo "       No generation was begun, and nothing was changed; the log says why."
+            return 1
+        fi
         echo "       The pending generation is not served. Either fix the cause and run"
         echo "       what is left, from the installation this update built:"
         for remaining in "${invocations[@]:index}"; do
@@ -203,8 +208,9 @@ deployed_release_spec() {
         echo "       Give the update the version specifier of the release being served." >&2
         return 1
     fi
-    if [[ ${release} == *+* ]]; then
-        echo "ERROR: ${deployed} runs rms-opus ${release}, a local build PyPI does not have." >&2
+    if [[ ${release} == *+* || ${release} == *.dev* ]]; then
+        echo "ERROR: ${deployed} runs rms-opus ${release}," >&2
+        echo "       a development build PyPI does not have." >&2
         echo "       Give the update the version specifier of a release." >&2
         return 1
     fi

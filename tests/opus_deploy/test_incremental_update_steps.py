@@ -269,9 +269,10 @@ def test_sourcing_the_steps_runs_nothing(tmp_path: Path) -> None:
     [
         ('3.25.0', '==3.25.0', 0),
         ('', 'cannot read the rms-opus release', 1),
-        ('3.25.1.dev4+g1234abc', 'a local build PyPI does not have', 1),
+        ('3.25.1.dev4', 'a development build PyPI does not have', 1),
+        ('3.25.1.dev4+g1234abc', 'a development build PyPI does not have', 1),
     ],
-    ids=['release', 'unreadable', 'local-build'],
+    ids=['release', 'unreadable', 'dev-build', 'local-build'],
 )
 def test_the_deployed_release_is_read_from_the_deployed_interpreter(
     tmp_path: Path, release: str, printed: str, status: int

@@ -694,6 +694,27 @@ def _rebuilds_pending(args: argparse.Namespace) -> bool:
     return any(getattr(args, name) for name in _PENDING_REBUILDS)
 
 
+#: The options that rebuild the served auxiliary tables or the cart when no generation is
+#: pending. A rebuild drops the ``__new`` tables that mark a revert stopped part way, and
+#: the cart rows it points at the previous generation, so neither runs while one is
+#: unfinished (`opus_import.steps.do_generation.unfinished_switch_problem`).
+_SERVED_REBUILDS = (
+    'create_param_info',
+    'create_partables',
+    'create_table_names',
+    'create_cart',
+)
+
+
+def _rebuilds_served(args: argparse.Namespace) -> bool:
+    """Return whether the arguments rebuild a served auxiliary table or the cart.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+    """
+    return any(getattr(args, name) for name in _SERVED_REBUILDS)
+
+
 def _generation_command(args: argparse.Namespace) -> str | None:
     """Return the generation command given, or None."""
     for name, option in GENERATION_COMMANDS:
@@ -1068,6 +1089,12 @@ def main() -> None:
             # Registered rather than run in a finally block, since the run leaves through
             # sys.exit from several places.
             atexit.register(writer.exit)
+        state = ctx.generation_state
+        if pending is None and state is not None and _rebuilds_served(args):
+            unfinished = do_generation.unfinished_switch_problem(ctx.db, state)
+            if unfinished is not None:
+                logger.log('fatal', f'Refused: {unfinished}')
+                sys.exit(-1)
 
         # The step runs alone (_carry_over_conflicts), so nothing below has work to do.
         if carry_over_from is not None:

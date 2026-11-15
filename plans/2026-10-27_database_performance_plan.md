@@ -8579,6 +8579,21 @@ Nothing above this line is rewritten by an executor.
   - a begin can start under a plain writer, which is not registered.
 
   The product types' tie order was left: their `ORDER BY` names every selected column.
+
+  A second review, of the fixes, found more:
+  - A plain rebuild of the served auxiliary tables or the cart (`--finalize`,
+    `--create-param-info`, `--create-partables`, `--create-table-names`, `--create-cart`)
+    after a revert that stopped part way would have dropped the `__new` tables that mark
+    it, and so let the purge run. It is refused while `unfinished_switch_problem` reports
+    anything (`cli._rebuilds_served`), and a mutation of that refusal fails the import
+    suite.
+  - The deployed release was refused only for a local version. A `.dev` version, which
+    this project's builds carry instead, is refused too.
+  - The chain's release is checked after the default specifier is filled in.
+  - After a refused `--begin-generation` the update says nothing was begun, rather than
+    advising an abandon.
+  - Left: `promote_generation.sh --revert` of a ready generation never switched still
+    stops the site and resets the searches, harmlessly.
 - **The measurement (2026-11-15), complete scale**, the orchestrator's.
   - **Full imports**, 6 importers × 4 workers, `--session full6x4`:
     | | wall-clock | bundle imports | finalization | registration |

@@ -249,8 +249,9 @@ The scripts
     ``run_full_opus_import.sh`` does, under a new name, when ``deploy.env`` asks for that.
     It runs detached, mails the log to ``OPUS_IMPORT_MAIL_TO`` if that names anyone, and
     holds the deploy lock until it ends. Without a version specifier it installs the
-    release being served, read from the deployed installation, and refuses to start when
-    that release is not one PyPI has.
+    release being served, read from the deployed installation, and aborts before
+    changing anything when that release is a development build, which PyPI does not
+    have.
 
 ``promote_generation.sh [--revert]``
     **Switches the pending generation in.** It stops the web service, runs
