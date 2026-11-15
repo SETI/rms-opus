@@ -277,7 +277,7 @@ def test_an_update_is_hidden_until_the_switch_and_whole_after_it(
     assert _state(db_credentials, schema)[2:] == (2, None, None, 0)
     # A revert after the purge has started is refused.
     refused = copy.step('--revert-generation')
-    assert refused.returncode != 0
+    assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS
     assert 'no switch is revertible' in refused.stdout
 
 

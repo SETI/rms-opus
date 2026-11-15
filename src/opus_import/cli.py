@@ -707,19 +707,25 @@ def _run_generation_command(ctx: ImportContext, option: str) -> bool:
         option: The command, as `_generation_command` returned it.
 
     Returns:
-        Whether it succeeded.
+        Whether it succeeded: False only when the purge's mult step failed.
+
+    Raises:
+        opus_import.steps.do_generation.GenerationRefusedError: If the command is
+            refused, having changed nothing.
     """
     args = ctx.args
     with ctx.timed(option.removeprefix('--').replace('-', '_')):
         if args.begin_generation:
-            return do_generation.begin_generation(ctx)
-        if args.switch_generation:
-            return do_generation.switch_generation(ctx)
-        if args.purge_generations:
+            do_generation.begin_generation(ctx)
+        elif args.switch_generation:
+            do_generation.switch_generation(ctx)
+        elif args.purge_generations:
             return do_generation.purge_generations(ctx)
-        if args.abandon_generation:
-            return do_generation.abandon_generation(ctx)
-        return do_generation.revert_generation(ctx)
+        elif args.abandon_generation:
+            do_generation.abandon_generation(ctx)
+        else:
+            do_generation.revert_generation(ctx)
+    return True
 
 
 def _carry_over_conflicts(args: argparse.Namespace) -> str:
@@ -1017,9 +1023,15 @@ def main() -> None:
         ctx.db.log_sql = args.log_sql
         do_generation.load_generation_state(ctx)
 
-        # A generation command runs alone (_generation_conflicts).
+        # A generation command runs alone (_generation_conflicts). A refusal has its own
+        # exit status, so the deploy chain knows the command changed nothing.
         if generation_command is not None:
-            if not _run_generation_command(ctx, generation_command):
+            try:
+                succeeded = _run_generation_command(ctx, generation_command)
+            except do_generation.GenerationRefusedError as e:
+                logger.log('fatal', str(e))
+                sys.exit(do_generation.GENERATION_REFUSED_EXIT_STATUS)
+            if not succeeded:
                 sys.exit(-1)
             logger.close()
             return

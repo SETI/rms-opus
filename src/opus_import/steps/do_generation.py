@@ -7,8 +7,9 @@ purge, so a switch can be reverted until then. The commands, each an ``opus_impo
 option run on its own:
 
 - ``--begin-generation`` (`begin_generation`) starts P on a ``ready`` schema of this
-  release's version, first re-creating the ``obs_general`` view to show only G. The version row stays ``ready``, so every web worker goes on serving
-  G and a worker started meanwhile passes the version check.
+  release's version, first re-creating the ``obs_general`` view to show only G. The
+  version row stays ``ready``, so every web worker goes on serving G and a worker started
+  meanwhile passes the version check.
 - ``--import``, ``--delete-bundles``, ``--finalize``, ``--validate`` and
   ``--write-schema-version`` then write P, each changed by its own module when P is
   pending; ``schema_version.pending_state`` records how far P has got, and only
@@ -22,10 +23,13 @@ option run on its own:
 - ``--abandon-generation`` (`abandon_generation`) throws away an unswitched P, and
   ``--revert-generation`` (`revert_generation`) runs a switch backward until the purge.
 
-The five commands hold a server-wide named lock on the schema for their whole run and
-are refused while another holds it; every invocation that writes P registers itself in
+Each command holds a server-wide named lock on the schema for its whole run and is
+refused while another holds it; every invocation that writes P registers itself in
 ``import_process`` with its liveness lock while briefly holding that lock
 (`register_writer`), and a command is refused while any registered invocation is alive.
+A refused command raises `GenerationRefusedError` before it changes anything, and
+``opus_import`` then exits with `GENERATION_REFUSED_EXIT_STATUS`, so the deploy chain can
+tell a refusal from a command that stopped part way.
 """
 
 from __future__ import annotations
@@ -81,9 +85,14 @@ SWITCH_STEPS = (
 )
 
 
+#: The status ``opus_import`` exits with when a generation command is refused, having
+#: changed nothing. ``promote_generation.sh`` reads it.
+GENERATION_REFUSED_EXIT_STATUS = 3
+
+
 class GenerationRefusedError(Exception):
-    """A generation command or a write to the pending generation is refused; the message
-    says why."""
+    """A generation command or a write to the pending generation is refused, before it
+    changes anything; the message says why."""
 
 
 def read_generation_state(db: ImportDBSuper) -> GenerationState | None:
@@ -187,22 +196,31 @@ def generation_command(ctx: ImportContext, option: str) -> Iterator[None]:
     assert db is not None
     name = _generation_lock(db)
     if not db.try_named_lock(name):
-        raise GenerationRefusedError(
-            f'{option} refused: another generation command holds "{db.db_schema}"\'s '
-            'generation lock'
-        )
+        raise GenerationRefusedError(f'{option} refused: {_lock_held_message(db)}')
     try:
-        alive = _alive_writers(db)
-        if alive:
-            raise GenerationRefusedError(
-                f'{option} refused: import_process '
-                f'{", ".join(str(process) for process in alive)} still running against '
-                f'"{db.db_schema}"; wait for them to finish'
-            )
+        writers = _writers_message(db)
+        if writers is not None:
+            raise GenerationRefusedError(f'{option} refused: {writers}')
         yield
     finally:
         with contextlib.suppress(importdb.ImportDBError):
             db.release_named_lock(name)
+
+
+def _lock_held_message(db: ImportDBSuper) -> str:
+    """Return why a generation command is refused while another holds the lock."""
+    return f'another generation command holds "{db.db_schema}"\'s generation lock'
+
+
+def _writers_message(db: ImportDBSuper) -> str | None:
+    """Return why a generation command is refused while writers are alive, or None."""
+    alive = _alive_writers(db)
+    if not alive:
+        return None
+    return (
+        f'import_process {", ".join(str(process) for process in alive)} still running '
+        f'against "{db.db_schema}"; wait for them to finish'
+    )
 
 
 def register_writer(ctx: ImportContext) -> import_processes.ImporterLock:
@@ -260,7 +278,7 @@ def _update_version_row(
     return db.update_row(SCHEMA_VERSION_TABLE, values, f'{q(column)}=%s', [value])
 
 
-def begin_generation(ctx: ImportContext) -> bool:
+def begin_generation(ctx: ImportContext) -> None:
     """Start a pending generation, one above the served one: ``--begin-generation``.
 
     Refused unless the schema's one version row holds this release's version, ``ready``,
@@ -271,58 +289,83 @@ def begin_generation(ctx: ImportContext) -> bool:
     Parameters:
         ctx: The import run's context.
 
-    Returns:
-        True if it started one; False, logged as fatal, if refused.
+    Raises:
+        GenerationRefusedError: If refused.
     """
-    try:
-        with generation_command(ctx, '--begin-generation'):
-            state = _require_state(ctx)
-            problem = None
-            if state.version != SCHEMA_VERSION:
-                problem = f'is version {state.version} and this release is version {SCHEMA_VERSION}'
-            elif state.state != SCHEMA_STATE_READY:
-                problem = f'is {state.state}, not {SCHEMA_STATE_READY}'
-            elif state.pending is not None:
-                problem = (
-                    f'already has the pending generation {state.pending} '
-                    f'({state.pending_state}); "opus_import --abandon-generation" throws it away'
-                )
-            elif state.revertible:
-                problem = (
-                    f'can still revert to generation {state.generation - 1}; '
-                    '"opus_import --purge-generations" ends that, or "--revert-generation" '
-                    'then "--abandon-generation" undoes the switch'
-                )
-            if problem is not None:
-                raise GenerationRefusedError(f'--begin-generation refused: the schema {problem}')
-            pending = state.generation + 1
-            # A purge that stopped before dropping them leaves __prev tables no revert can
-            # use; while a generation is pending, only a switch that stopped part way
-            # leaves any.
-            db = ctx.db
-            assert db is not None
-            for table in reversed(AUX_TABLES):
-                db.drop_table(table_swap.swap_prev_name(table))
-            # Before the generation is recorded, so no row of it is ever written while
-            # the view shows every row.
-            refresh_view(ctx, state.generation)
-            _update_version_row(
-                ctx,
-                {PENDING_GENERATION_COLUMN: pending, PENDING_STATE_COLUMN: PENDING_WRITING},
-                PENDING_GENERATION_COLUMN,
-                None,
+    with generation_command(ctx, '--begin-generation'):
+        state = _require_state(ctx)
+        problem = None
+        if state.version != SCHEMA_VERSION:
+            problem = f'is version {state.version} and this release is version {SCHEMA_VERSION}'
+        elif state.state != SCHEMA_STATE_READY:
+            problem = f'is {state.state}, not {SCHEMA_STATE_READY}'
+        elif state.pending is not None:
+            problem = (
+                f'already has the pending generation {state.pending} '
+                f'({state.pending_state}); "opus_import --abandon-generation" throws it away'
             )
-            import_util.log_info(
-                ctx, f'Generation {pending} begun; generation {state.generation} is served'
+        elif state.revertible:
+            problem = (
+                f'can still revert to generation {state.generation - 1}; '
+                '"opus_import --purge-generations" ends that, or "--revert-generation" '
+                'then "--abandon-generation" undoes the switch'
             )
-    except GenerationRefusedError as e:
-        ctx.logger.log('fatal', str(e))
-        return False
+        if problem is not None:
+            raise GenerationRefusedError(f'--begin-generation refused: the schema {problem}')
+        pending = state.generation + 1
+        # A purge that stopped before dropping them leaves __prev tables no revert can
+        # use; while a generation is pending, only a switch that stopped part way
+        # leaves any.
+        db = ctx.db
+        assert db is not None
+        for table in reversed(AUX_TABLES):
+            db.drop_table(table_swap.swap_prev_name(table))
+        # Before the generation is recorded, so no row of it is ever written while
+        # the view shows every row.
+        refresh_view(ctx, state.generation)
+        _update_version_row(
+            ctx,
+            {PENDING_GENERATION_COLUMN: pending, PENDING_STATE_COLUMN: PENDING_WRITING},
+            PENDING_GENERATION_COLUMN,
+            None,
+        )
+        import_util.log_info(
+            ctx, f'Generation {pending} begun; generation {state.generation} is served'
+        )
     load_generation_state(ctx)
-    return True
 
 
-def switch_generation(ctx: ImportContext) -> bool:
+def _switch_refusal(state: GenerationState) -> str | None:
+    """Return why ``--switch-generation`` is refused on a version row, or None.
+
+    It runs with a pending generation that is ``ready``, and with none pending while the
+    last switch is revertible, which it completes.
+    """
+    if state.pending is None and state.revertible:
+        return None
+    if state.pending is not None and state.pending_state == PENDING_READY:
+        return None
+    return (
+        f'no pending generation is ready (pending {state.pending}, {state.pending_state}); '
+        '"opus_import --write-schema-version" marks one ready once it is validated'
+    )
+
+
+def _revert_refusal(state: GenerationState) -> str | None:
+    """Return why ``--revert-generation`` is refused on a version row, or None.
+
+    It runs while the last switch is revertible, and with a pending generation that is
+    ``ready``, whose switch may have stopped part way.
+    """
+    if state.revertible or (state.pending is not None and state.pending_state == PENDING_READY):
+        return None
+    return (
+        'no switch is revertible (a purge has started since, or no generation was '
+        'switched in) and no pending generation is ready'
+    )
+
+
+def switch_generation(ctx: ImportContext) -> None:
     """Serve the pending generation: ``--switch-generation``, run while the web service is
     stopped.
 
@@ -333,55 +376,47 @@ def switch_generation(ctx: ImportContext) -> bool:
     its row with the same OPUS id, or deleted; the search tables are reset and the cache
     flushed; the ``obs_general`` view is re-created to show the pending generation
     (`refresh_view`); and last, one statement serves the pending generation, clears it
-    and marks the switch revertible. With no pending generation and a revertible switch, the last
-    statement has already run: the other steps run again for the served generation,
-    which finds nothing to do after a whole switch and completes a revert that stopped
-    part way, and it succeeds.
+    and marks the switch revertible. With no pending generation and a revertible switch,
+    the last statement has already run: the other steps run again for the served
+    generation, which finds nothing to do after a whole switch and completes a revert
+    that stopped part way.
 
     Parameters:
         ctx: The import run's context.
 
-    Returns:
-        True when the pending generation is served; False, logged, if refused.
+    Raises:
+        GenerationRefusedError: If refused.
     """
-    try:
-        with generation_command(ctx, '--switch-generation'):
-            state = _require_state(ctx)
-            if state.pending is None and state.revertible:
-                import_util.log_info(
-                    ctx, f'Generation {state.generation} is already served; completing its switch'
-                )
-                _switch_steps(ctx, state.generation)
-                return True
-            if state.pending is None or state.pending_state != PENDING_READY:
-                raise GenerationRefusedError(
-                    '--switch-generation refused: no pending generation is ready '
-                    f'(pending {state.pending}, {state.pending_state}); '
-                    '"--write-schema-version" marks one ready once it is validated'
-                )
-            pending = state.pending
-            _switch_steps(ctx, pending)
-            _update_version_row(
-                ctx,
-                {
-                    SERVED_GENERATION_COLUMN: pending,
-                    PENDING_GENERATION_COLUMN: None,
-                    PENDING_STATE_COLUMN: None,
-                    REVERTIBLE_COLUMN: 1,
-                },
-                PENDING_GENERATION_COLUMN,
-                pending,
-            )
+    with generation_command(ctx, '--switch-generation'):
+        state = _require_state(ctx)
+        refusal = _switch_refusal(state)
+        if refusal is not None:
+            raise GenerationRefusedError(f'--switch-generation refused: {refusal}')
+        if state.pending is None:
             import_util.log_info(
-                ctx,
-                f'Generation {pending} is served; "opus_import --purge-generations" deletes '
-                f"generation {state.generation}'s retired rows once it has been checked",
+                ctx, f'Generation {state.generation} is already served; completing its switch'
             )
-    except GenerationRefusedError as e:
-        ctx.logger.log('fatal', str(e))
-        return False
+            _switch_steps(ctx, state.generation)
+            return
+        pending = state.pending
+        _switch_steps(ctx, pending)
+        _update_version_row(
+            ctx,
+            {
+                SERVED_GENERATION_COLUMN: pending,
+                PENDING_GENERATION_COLUMN: None,
+                PENDING_STATE_COLUMN: None,
+                REVERTIBLE_COLUMN: 1,
+            },
+            PENDING_GENERATION_COLUMN,
+            pending,
+        )
+        import_util.log_info(
+            ctx,
+            f'Generation {pending} is served; "opus_import --purge-generations" deletes '
+            f"generation {state.generation}'s retired rows once it has been checked",
+        )
     load_generation_state(ctx)
-    return True
 
 
 def _switch_steps(ctx: ImportContext, generation: int) -> None:
@@ -451,8 +486,9 @@ def _has_retired_rows(ctx: ImportContext) -> bool:
     db = ctx.db
     assert db is not None
     q = db.quote_identifier
+    removed = q(REMOVED_GENERATION_COLUMN)
     rows = db.general_select(
-        f'1 FROM {q(OBS_GENERAL_VIEW)} WHERE {q(REMOVED_GENERATION_COLUMN)} IS NOT NULL LIMIT 1'  # nosec B608
+        f'1 FROM {q(OBS_GENERAL_VIEW)} WHERE {removed} IS NOT NULL LIMIT 1'  # nosec B608
     )
     return len(rows) > 0
 
@@ -476,65 +512,60 @@ def _point_cart(ctx: ImportContext, generation: int) -> None:
     )
 
 
-def revert_generation(ctx: ImportContext) -> bool:
+def revert_generation(ctx: ImportContext) -> None:
     """Run the last switch backward: ``--revert-generation``, while the web service is
     stopped.
 
     The ``__prev`` auxiliary tables are swapped back in and the reverted-from ones kept as
     ``__new``; the cart is pointed at the previous generation; the search tables are
-    reset; the view is re-created to show the previous generation; and last, the previous generation is served again with the reverted-from one
-    pending and ``ready``, no longer revertible, so it can be abandoned or switched again.
-    Each step finds out whether it has run, as the switch's do. A switch that stopped
-    before its last statement left its generation pending and ``ready``, and the same
-    steps undo whatever of it ran, the served generation unchanged. Refused otherwise:
-    once the purge has started, or with nothing switched.
+    reset; the view is re-created to show the previous generation; and last, the
+    previous generation is served again with the reverted-from one pending and
+    ``ready``, and the switch is not revertible any more, so the reverted-from generation
+    can be abandoned or switched again. Each step finds out whether it has run, as the
+    switch's do. A switch that stopped before its last statement left its generation
+    pending and ``ready``, and the same steps undo whatever of it ran, the served
+    generation unchanged. Refused otherwise: once the purge has started, or with nothing
+    switched.
 
     Parameters:
         ctx: The import run's context.
 
-    Returns:
-        True when the previous generation is served; False, logged, if refused.
+    Raises:
+        GenerationRefusedError: If refused.
     """
-    try:
-        with generation_command(ctx, '--revert-generation'):
-            state = _require_state(ctx)
-            if state.pending is not None and state.pending_state == PENDING_READY:
-                _revert_steps(ctx, state.generation)
-                import_util.log_info(
-                    ctx,
-                    f'Generation {state.generation} is served, and generation '
-                    f'{state.pending} is pending and ready, as before the switch began',
-                )
-                return True
-            if not state.revertible:
-                raise GenerationRefusedError(
-                    '--revert-generation refused: no switch is revertible (a purge has '
-                    'started since, or no generation was switched in)'
-                )
-            reverted = state.generation
-            previous = reverted - 1
-            _revert_steps(ctx, previous)
-            _update_version_row(
-                ctx,
-                {
-                    SERVED_GENERATION_COLUMN: previous,
-                    PENDING_GENERATION_COLUMN: reverted,
-                    PENDING_STATE_COLUMN: PENDING_READY,
-                    REVERTIBLE_COLUMN: 0,
-                },
-                REVERTIBLE_COLUMN,
-                1,
-            )
+    with generation_command(ctx, '--revert-generation'):
+        state = _require_state(ctx)
+        refusal = _revert_refusal(state)
+        if refusal is not None:
+            raise GenerationRefusedError(f'--revert-generation refused: {refusal}')
+        if state.pending is not None and state.pending_state == PENDING_READY:
+            _revert_steps(ctx, state.generation)
             import_util.log_info(
                 ctx,
-                f'Generation {previous} is served again; generation {reverted} is pending and '
-                'ready: "--abandon-generation" throws it away, "--switch-generation" serves it',
+                f'Generation {state.generation} is served, and generation '
+                f'{state.pending} is pending and ready, as before the switch began',
             )
-    except GenerationRefusedError as e:
-        ctx.logger.log('fatal', str(e))
-        return False
+            return
+        reverted = state.generation
+        previous = reverted - 1
+        _revert_steps(ctx, previous)
+        _update_version_row(
+            ctx,
+            {
+                SERVED_GENERATION_COLUMN: previous,
+                PENDING_GENERATION_COLUMN: reverted,
+                PENDING_STATE_COLUMN: PENDING_READY,
+                REVERTIBLE_COLUMN: 0,
+            },
+            REVERTIBLE_COLUMN,
+            1,
+        )
+        import_util.log_info(
+            ctx,
+            f'Generation {previous} is served again; generation {reverted} is pending and '
+            'ready: "--abandon-generation" throws it away, "--switch-generation" serves it',
+        )
     load_generation_state(ctx)
-    return True
 
 
 def _observation_ids(ctx: ImportContext, where: str, params: list[object]) -> list[int]:
@@ -566,119 +597,107 @@ def purge_generations(ctx: ImportContext) -> bool:
         ctx: The import run's context.
 
     Returns:
-        True if it ran; False, logged, if refused or its mult step failed.
+        True if it ran; False, logged, if its mult step failed.
+
+    Raises:
+        GenerationRefusedError: If refused.
     """
-    try:
-        with generation_command(ctx, '--purge-generations'):
-            state = _require_state(ctx)
-            if state.pending is not None:
-                raise GenerationRefusedError(
-                    f'--purge-generations refused: generation {state.pending} is pending; '
-                    'switch it in or abandon it first'
-                )
-            db = ctx.db
-            assert db is not None
-            q = db.quote_identifier
-            _update_version_row(
-                ctx, {REVERTIBLE_COLUMN: 0}, SERVED_GENERATION_COLUMN, state.generation
+    with generation_command(ctx, '--purge-generations'):
+        state = _require_state(ctx)
+        if state.pending is not None:
+            raise GenerationRefusedError(
+                f'--purge-generations refused: generation {state.pending} is pending; '
+                'switch it in or abandon it first'
             )
-            # Next, so no __prev table outlives the revert it served (begin_generation drops
-            # any an interrupted purge leaves, too).
-            for table in reversed(AUX_TABLES):
-                db.drop_table(table_swap.swap_prev_name(table))
-            served = state.generation
-            removed = q(REMOVED_GENERATION_COLUMN)
-            ids = _observation_ids(ctx, f'{removed} IS NOT NULL AND {removed} <= %s', [served])
-            import_util.log_info(ctx, f'Purging {len(ids)} retired observations')
-            do_import_tables.delete_observations(ctx, ids)
-            bundle_registry.purge_retired_copies(ctx, served)
-            # Every row left is in the served generation.
-            refresh_view(ctx, None)
-            mult_done = do_finalize_mult.finalize_mult(ctx)
-            do_import_tables.analyze_all_tables(ctx)
-    except GenerationRefusedError as e:
-        ctx.logger.log('fatal', str(e))
-        return False
+        db = ctx.db
+        assert db is not None
+        q = db.quote_identifier
+        _update_version_row(ctx, {REVERTIBLE_COLUMN: 0}, SERVED_GENERATION_COLUMN, state.generation)
+        # Next, so no __prev table outlives the revert it served (begin_generation drops
+        # any an interrupted purge leaves, too).
+        for table in reversed(AUX_TABLES):
+            db.drop_table(table_swap.swap_prev_name(table))
+        served = state.generation
+        removed = q(REMOVED_GENERATION_COLUMN)
+        ids = _observation_ids(ctx, f'{removed} IS NOT NULL AND {removed} <= %s', [served])
+        import_util.log_info(ctx, f'Purging {len(ids)} retired observations')
+        do_import_tables.delete_observations(ctx, ids)
+        bundle_registry.purge_retired_copies(ctx, served)
+        # Every row left is in the served generation.
+        refresh_view(ctx, None)
+        mult_done = do_finalize_mult.finalize_mult(ctx)
+        do_import_tables.analyze_all_tables(ctx)
     load_generation_state(ctx)
     return mult_done
 
 
-def abandon_generation(ctx: ImportContext) -> bool:
+def abandon_generation(ctx: ImportContext) -> None:
     """Throw away an unswitched pending generation: ``--abandon-generation``.
 
     The rows the pending generation added are deleted from every observation table; the
     rows it retired are restored; its registry rows are deleted and the copies it retired
     made live again; its auxiliary ``__new`` tables are dropped; the view is re-created,
     with no condition unless retired rows remain; and last the version row's pending
-    generation is cleared. Running it again after an interruption finishes
-    the work.
+    generation is cleared. Running it again after an interruption finishes the work.
 
     Parameters:
         ctx: The import run's context.
 
-    Returns:
-        True if it ran; False, logged, if refused.
+    Raises:
+        GenerationRefusedError: If refused.
     """
-    try:
-        with generation_command(ctx, '--abandon-generation'):
-            state = _require_state(ctx)
-            if state.pending is None:
-                raise GenerationRefusedError(
-                    '--abandon-generation refused: no generation is pending'
-                )
-            pending = state.pending
-            db = ctx.db
-            assert db is not None
-            q = db.quote_identifier
-            ids = _observation_ids(ctx, f'{q(ADDED_GENERATION_COLUMN)}=%s', [pending])
-            import_util.log_info(
-                ctx, f'Abandoning generation {pending}: deleting {len(ids)} observations'
+    with generation_command(ctx, '--abandon-generation'):
+        state = _require_state(ctx)
+        if state.pending is None:
+            raise GenerationRefusedError('--abandon-generation refused: no generation is pending')
+        pending = state.pending
+        db = ctx.db
+        assert db is not None
+        q = db.quote_identifier
+        ids = _observation_ids(ctx, f'{q(ADDED_GENERATION_COLUMN)}=%s', [pending])
+        import_util.log_info(
+            ctx, f'Abandoning generation {pending}: deleting {len(ids)} observations'
+        )
+        do_import_tables.delete_observations(ctx, ids)
+        while True:
+            matched = db.update_row(
+                'obs_general',
+                {REMOVED_GENERATION_COLUMN: None},
+                f'{q(REMOVED_GENERATION_COLUMN)}=%s LIMIT %s',
+                [pending, db.transaction_rows],
             )
-            do_import_tables.delete_observations(ctx, ids)
-            while True:
-                matched = db.update_row(
-                    'obs_general',
-                    {REMOVED_GENERATION_COLUMN: None},
-                    f'{q(REMOVED_GENERATION_COLUMN)}=%s LIMIT %s',
-                    [pending, db.transaction_rows],
-                )
-                if matched < db.transaction_rows:
-                    break
-            bundle_registry.delete_generation_copies(ctx, pending)
-            bundle_registry.restore_retired_copies(ctx, pending)
-            table_swap.drop_swap_leftovers(ctx, AUX_TABLES)
-            # Rows a purge that stopped part way left keep the view's condition.
-            refresh_view(ctx, state.generation if _has_retired_rows(ctx) else None)
-            _update_version_row(
-                ctx,
-                {PENDING_GENERATION_COLUMN: None, PENDING_STATE_COLUMN: None},
-                PENDING_GENERATION_COLUMN,
-                pending,
-            )
-            import_util.log_info(
-                ctx, f'Generation {pending} abandoned; generation {state.generation} is served'
-            )
-    except GenerationRefusedError as e:
-        ctx.logger.log('fatal', str(e))
-        return False
+            if matched < db.transaction_rows:
+                break
+        bundle_registry.delete_generation_copies(ctx, pending)
+        bundle_registry.restore_retired_copies(ctx, pending)
+        table_swap.drop_swap_leftovers(ctx, AUX_TABLES)
+        # Rows a purge that stopped part way left keep the view's condition.
+        refresh_view(ctx, state.generation if _has_retired_rows(ctx) else None)
+        _update_version_row(
+            ctx,
+            {PENDING_GENERATION_COLUMN: None, PENDING_STATE_COLUMN: None},
+            PENDING_GENERATION_COLUMN,
+            pending,
+        )
+        import_util.log_info(
+            ctx, f'Generation {pending} abandoned; generation {state.generation} is served'
+        )
     load_generation_state(ctx)
-    return True
 
 
 def generation_command_problem(option: str) -> str | None:
     """Say why a switch or a revert of the schema ``OPUS_CONFIG`` names would be refused.
 
     The deploy chain asks before it stops the web service, so a command that would change
-    nothing leaves the site up. The connection is the import's own, opened read-only.
+    nothing leaves the site up. It asks what the command itself checks before it changes
+    anything: the version row, the generation lock, and the invocations writing the
+    pending generation. The connection is the import's own, opened read-only.
 
     Parameters:
         option: ``--switch-generation`` or ``--revert-generation``.
 
     Returns:
-        None when the command would run, as a switch with a pending generation that is
-        ``ready``, or one served and still revertible, which it completes; a revert of a
-        revertible switch, or of a pending generation that is ``ready``. Otherwise the
-        reason.
+        None when the command would run; otherwise the reason it would be refused.
 
     Raises:
         ImportDBError: If the database cannot be read.
@@ -695,16 +714,15 @@ def generation_command_problem(option: str) -> str | None:
     )
     try:
         state = read_generation_state(db)
+        if state is None:
+            return f'"{database.schema}" has no single {SCHEMA_VERSION_TABLE} row'
+        if db.named_lock_holder(_generation_lock(db)) is not None:
+            return _lock_held_message(db)
+        writers = _writers_message(db)
+        if writers is not None:
+            return writers
     finally:
         db.close()
-    if state is None:
-        return f'"{database.schema}" has no single {SCHEMA_VERSION_TABLE} row'
-    ready = state.pending is not None and state.pending_state == PENDING_READY
-    if ready or (state.pending is None and state.revertible):
-        return None
     if option == '--revert-generation':
-        return 'no switch is revertible and no pending generation is ready'
-    return (
-        f'no pending generation is ready (pending {state.pending}, {state.pending_state}); '
-        '"opus_import --write-schema-version" marks one ready once it is validated'
-    )
+        return _revert_refusal(state)
+    return _switch_refusal(state)

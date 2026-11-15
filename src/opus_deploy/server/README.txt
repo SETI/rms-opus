@@ -204,8 +204,10 @@ run (and stops nothing when it would be refused), stops the web server,
 switches the generation in, restarts the cache service and the web server,
 and warms the common searches. If the switch fails, the web server stays
 stopped: running promote_generation.sh again completes the switch, and
-`promote_generation.sh --revert` goes back. The purge deletes the rows the
-switch replaced, while the site serves.
+`promote_generation.sh --revert` goes back. A switch refused after the
+stop changed nothing, and the web server is started again if it was
+serving. The purge deletes the rows the switch replaced, while the site
+serves.
 
 Until the purge, the update can be undone:
 

@@ -628,12 +628,14 @@ only when you switch it in. The steps, from the deploy directory::
    to switch, and its log names the commands left to run. Run them from the installation
    the update built, or throw the generation away (below).
 3. **Promote.** ``promote_generation.sh`` first asks whether the switch would run, and
-   stops nothing when it would be refused (no generation ready to switch). It then stops
-   the web service, switches the generation in, restarts the cache service, starts the
-   web service and warms the common searches. The site is down only for the switch. If
-   the switch fails the web service stays stopped: run ``promote_generation.sh`` again,
-   which completes the switch, or ``promote_generation.sh --revert``, which undoes the
-   steps of the switch that ran.
+   stops nothing when it would be refused: no generation ready to switch, another
+   generation command running, or an ``opus_import`` still writing the update. It then
+   stops the web service, switches the generation in, restarts the cache service, starts
+   the web service and warms the common searches. The site is down only for the switch.
+   If the switch fails the web service stays stopped: run ``promote_generation.sh``
+   again, which completes the switch, or ``promote_generation.sh --revert``, which undoes
+   the steps of the switch that ran. A switch refused after the stop changed nothing, and
+   the web service is started again when it was serving before.
 4. **Purge.** Once the site has been checked, ``opus_import --purge-generations`` deletes
    the rows the switch replaced, while the site serves. Until it runs, the switch can be
    undone; once it starts, it cannot.

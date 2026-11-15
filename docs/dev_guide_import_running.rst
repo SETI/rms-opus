@@ -472,8 +472,9 @@ Auxiliary tables and other steps
    * - ``--begin-generation``, ``--switch-generation``, ``--purge-generations``,
        ``--abandon-generation``, ``--revert-generation``
      - The commands of an update by generation
-       (`Updating a served schema by generation`_). Each runs alone, reads no holdings,
-       and exits non-zero when it is refused.
+       (`Updating a served schema by generation`_). Each runs alone and reads no
+       holdings. A refused command changes nothing and exits with status 3, which
+       ``promote_generation.sh`` tells from a command that stopped part way.
 
 .. _dev_guide_import_running_generations:
 

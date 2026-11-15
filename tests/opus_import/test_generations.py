@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from opus_import import generations, table_swap
+from opus_import import generations, importdb, table_swap
 from opus_import.cli import _create_argument_parser, _generation_conflicts, _validate
 from opus_import.generations import (
     PENDING_FINALIZED,
@@ -284,7 +284,7 @@ def test_begin_sets_the_next_generation_pending_and_writing(no_writers: list[str
     assert no_writers == []
     db = _StateDB(_ready())
     ctx = _context(db)
-    assert do_generation.begin_generation(ctx)
+    do_generation.begin_generation(ctx)
     assert db.row is not None
     assert (db.row['generation'], db.row['pending_generation'], db.row['pending_state']) == (
         1,
@@ -316,28 +316,24 @@ def test_begin_is_refused_on_a_schema_it_cannot_start_one_in(
 ) -> None:
     """Nothing is written, and the refusal says why."""
     db = _StateDB(row)
-    ctx = _context(db)
-    assert not do_generation.begin_generation(ctx)
+    with pytest.raises(do_generation.GenerationRefusedError, match=reason):
+        do_generation.begin_generation(_context(db))
     assert not any(event.startswith('update') for event in db.events)
-    (message,) = ctx.logger.messages_at('fatal')
-    assert reason in message
 
 
 def test_a_command_is_refused_while_another_holds_the_lock() -> None:
     """The generation lock is taken without waiting."""
     db = _StateDB(_ready(), lock_free=False)
-    ctx = _context(db)
-    assert not do_generation.begin_generation(ctx)
-    assert 'another generation command holds' in ctx.logger.messages_at('fatal')[0]
+    with pytest.raises(do_generation.GenerationRefusedError, match='another generation command'):
+        do_generation.begin_generation(_context(db))
 
 
 def test_a_command_is_refused_while_a_writer_is_alive(monkeypatch: pytest.MonkeyPatch) -> None:
     """A registered invocation writing the pending generation holds every command off."""
     monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [7])
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
-    ctx = _context(db)
-    assert not do_generation.switch_generation(ctx)
-    assert 'import_process 7 still running' in ctx.logger.messages_at('fatal')[0]
+    with pytest.raises(do_generation.GenerationRefusedError, match='import_process 7 still'):
+        do_generation.switch_generation(_context(db))
     assert db.events[-1] == 'unlock'
 
 
@@ -372,7 +368,7 @@ def test_the_switch_runs_its_steps_then_serves_the_generation_last(
 ) -> None:
     """Swap, cart, reset, then the one statement that serves it."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
-    assert do_generation.switch_generation(_context(db))
+    do_generation.switch_generation(_context(db))
     assert switch_steps == ['swap', 'cart 2', 'reset', 'view 2']
     assert db.row is not None
     assert (db.row['generation'], db.row['pending_generation'], db.row['revertible']) == (
@@ -396,14 +392,14 @@ def test_an_interrupted_switch_stops_after_its_step_and_serves_nothing(
     assert db.row['pending_generation'] == 2
     assert db.events[-1] == 'unlock'
     monkeypatch.delenv(IMPORT_FAULT_ENV_VAR)
-    assert do_generation.switch_generation(_context(db))
+    do_generation.switch_generation(_context(db))
     assert db.row['generation'] == 2
 
 
 def test_a_switched_generation_is_completed_not_refused(switch_steps: list[str]) -> None:
     """With nothing pending and the switch revertible, the steps run again for it."""
     db = _StateDB(_ready(generation=2, revertible=1))
-    assert do_generation.switch_generation(_context(db))
+    do_generation.switch_generation(_context(db))
     assert switch_steps == ['swap', 'cart 2', 'reset', 'view 2']
     assert not any(event.startswith('update') for event in db.events)
 
@@ -411,10 +407,9 @@ def test_a_switched_generation_is_completed_not_refused(switch_steps: list[str])
 def test_a_switch_of_an_unready_generation_is_refused(switch_steps: list[str]) -> None:
     """Validation must have passed and the stamp been written."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_VALIDATED))
-    ctx = _context(db)
-    assert not do_generation.switch_generation(ctx)
+    with pytest.raises(do_generation.GenerationRefusedError, match='no pending generation is'):
+        do_generation.switch_generation(_context(db))
     assert switch_steps == []
-    assert 'no pending generation is ready' in ctx.logger.messages_at('fatal')[0]
 
 
 def test_a_revert_serves_the_previous_generation_with_the_reverted_one_pending(
@@ -422,7 +417,7 @@ def test_a_revert_serves_the_previous_generation_with_the_reverted_one_pending(
 ) -> None:
     """Swap back, the cart to the previous generation, reset, then the version row."""
     db = _StateDB(_ready(generation=2, revertible=1))
-    assert do_generation.revert_generation(_context(db))
+    do_generation.revert_generation(_context(db))
     assert switch_steps == ['back', 'cart 1', 'reset', 'view 1']
     assert db.row is not None
     assert (
@@ -436,7 +431,7 @@ def test_a_revert_serves_the_previous_generation_with_the_reverted_one_pending(
 def test_a_revert_undoes_a_switch_that_stopped_part_way(switch_steps: list[str]) -> None:
     """The pending generation stays pending and ready; the served one is untouched."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
-    assert do_generation.revert_generation(_context(db))
+    do_generation.revert_generation(_context(db))
     assert switch_steps == ['back', 'cart 1', 'reset', 'view 1']
     assert not any(event.startswith('update') for event in db.events)
 
@@ -444,10 +439,9 @@ def test_a_revert_undoes_a_switch_that_stopped_part_way(switch_steps: list[str])
 def test_a_revert_after_the_purge_has_started_is_refused(switch_steps: list[str]) -> None:
     """The purge's first statement ends revertibility."""
     db = _StateDB(_ready(generation=2))
-    ctx = _context(db)
-    assert not do_generation.revert_generation(ctx)
+    with pytest.raises(do_generation.GenerationRefusedError, match='no switch is revertible'):
+        do_generation.revert_generation(_context(db))
     assert switch_steps == []
-    assert 'no switch is revertible' in ctx.logger.messages_at('fatal')[0]
 
 
 @pytest.mark.usefixtures('no_writers')
@@ -456,18 +450,107 @@ def test_the_purge_ends_revertibility_first_and_is_refused_with_a_pending_genera
 ) -> None:
     """A pending generation must be switched or abandoned before the purge."""
     db = _StateDB(_ready(generation=2, pending_generation=3, pending_state=PENDING_WRITING))
-    ctx = _context(db)
-    assert not do_generation.purge_generations(ctx)
-    assert 'generation 3 is pending' in ctx.logger.messages_at('fatal')[0]
+    with pytest.raises(do_generation.GenerationRefusedError, match='generation 3 is pending'):
+        do_generation.purge_generations(_context(db))
+    assert not any(event.startswith('update') for event in db.events)
 
 
 @pytest.mark.usefixtures('no_writers')
 def test_abandon_is_refused_with_nothing_pending() -> None:
     """There is nothing to throw away."""
     db = _StateDB(_ready())
-    ctx = _context(db)
-    assert not do_generation.abandon_generation(ctx)
-    assert 'no generation is pending' in ctx.logger.messages_at('fatal')[0]
+    with pytest.raises(do_generation.GenerationRefusedError, match='no generation is pending'):
+        do_generation.abandon_generation(_context(db))
+
+
+class _ReadOnlyStateDB(_StateDB):
+    """A read-only stand-in the deploy chain's pre-check opens, naming who holds a lock."""
+
+    def __init__(self, state: tuple[Any, ...] | None, *, lock_holder: int | None) -> None:
+        super().__init__(state)
+        self.lock_holder = lock_holder
+        self.closed = False
+
+    def named_lock_holder(self, name: str) -> int | None:
+        """Return the generation lock's holder."""
+        assert name == importdb.lock_name(self.db_schema, generations.GENERATION_LOCK)
+        return self.lock_holder
+
+    def close(self) -> None:
+        """Record the close."""
+        self.closed = True
+
+
+@pytest.mark.parametrize(
+    ('row', 'lock_holder', 'alive', 'option', 'problem'),
+    [
+        (_ready(pending_generation=2, pending_state=PENDING_READY), None, [], '--switch', None),
+        (_ready(generation=2, revertible=1), None, [], '--switch', None),
+        (_ready(generation=2, revertible=1), None, [], '--revert', None),
+        (_ready(pending_generation=2, pending_state=PENDING_READY), None, [], '--revert', None),
+        (
+            _ready(pending_generation=2, pending_state=PENDING_VALIDATED),
+            None,
+            [],
+            '--switch',
+            'no pending generation is ready',
+        ),
+        (_ready(generation=2), None, [], '--revert', 'no switch is revertible'),
+        (
+            _ready(pending_generation=2, pending_state=PENDING_READY),
+            41,
+            [],
+            '--switch',
+            'another generation command holds',
+        ),
+        (
+            _ready(pending_generation=2, pending_state=PENDING_READY),
+            None,
+            [7],
+            '--switch',
+            'import_process 7 still running',
+        ),
+        (None, None, [], '--switch', 'has no single schema_version row'),
+    ],
+    ids=[
+        'ready',
+        'completing',
+        'revertible',
+        'part-way',
+        'unready',
+        'purged',
+        'locked',
+        'writer',
+        'no-row',
+    ],
+)
+def test_the_deploy_chains_pre_check_names_what_the_command_would_refuse(
+    monkeypatch: pytest.MonkeyPatch,
+    row: tuple[Any, ...] | None,
+    lock_holder: int | None,
+    alive: list[int],
+    option: str,
+    problem: str | None,
+) -> None:
+    """The version row, the generation lock and the live writers, read without writing."""
+    db = _ReadOnlyStateDB(row, lock_holder=lock_holder)
+    opened: list[dict[str, Any]] = []
+
+    def get_db(*args: Any, **kwargs: Any) -> _ReadOnlyStateDB:
+        opened.append(kwargs)
+        return db
+
+    monkeypatch.setattr(importdb, 'get_db', get_db)
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: alive)
+    found = do_generation.generation_command_problem(f'{option}-generation')
+    if problem is None:
+        assert found is None
+    else:
+        assert found is not None
+        assert problem in found
+    assert opened == [{'read_only': True}]
+    assert db.closed
+    assert db.events == []
 
 
 # ------------------------------------------------------------------------------------

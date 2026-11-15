@@ -23,6 +23,7 @@ import opus_config.config
 import opus_import.__main__
 from opus_config import OPUS_CONFIG_ENV_VAR
 from opus_import import cli, importdb
+from opus_import.steps import do_generation
 
 from .conftest import RecordingLogger, make_context
 
@@ -182,6 +183,43 @@ def _main_until_refused(
         cli.main()
     assert excinfo.value.code != 0
     return logger, opened
+
+
+class _LockedSchema:
+    """A database whose generation lock another connection holds, and which has no
+    version row."""
+
+    db_schema = 'opus_ci_db'
+    log_sql = False
+
+    def forget_table_names(self) -> None:
+        """Read nothing."""
+
+    def table_exists(self, table: str) -> bool:
+        """Hold no table."""
+        return False
+
+    def try_named_lock(self, name: str) -> bool:
+        """Refuse every lock."""
+        return False
+
+
+def test_a_refused_generation_command_exits_with_its_own_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The deploy chain tells a refusal, which changed nothing, from a failure by it."""
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: _LockedSchema())
+    monkeypatch.setattr(sys, 'argv', ['opus_import', '--switch-generation'])
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    assert excinfo.value.code == do_generation.GENERATION_REFUSED_EXIT_STATUS
+    (message,) = logger.messages_at('fatal')
+    assert message.startswith('--switch-generation refused: another generation command holds')
 
 
 def test_the_first_line_logged_says_how_much_of_the_computer_the_run_may_use(

@@ -8,9 +8,13 @@ revert, and ``opus_manage`` the warm-up, all in one record, so the order is pinn
 from __future__ import annotations
 
 import fcntl
+import re
 from typing import TYPE_CHECKING
 
 import pytest
+
+from opus_deploy import scripts
+from opus_import.steps.do_generation import GENERATION_REFUSED_EXIT_STATUS
 
 from .conftest import BASH, CACHE_SERVICE, WEB_SERVICE, opus_dir, run_deploy
 
@@ -70,6 +74,46 @@ def test_a_failed_switch_leaves_the_web_service_stopped_and_names_both_ways_on(
     assert ran == [_STOP, 'opus_import --switch-generation']
     assert _AGAIN in output
     assert _REVERT in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+@pytest.mark.parametrize(
+    ('arguments', 'step'),
+    [((), '--switch-generation'), (('--revert',), '--revert-generation')],
+    ids=['switch', 'revert'],
+)
+def test_a_step_refused_after_the_stop_starts_the_web_service_it_stopped(
+    tmp_path: Path, arguments: tuple[str, ...], step: str
+) -> None:
+    """A refusal changed nothing, so the site serves again what it served; no half-switch
+    is named, and the exit is non-zero."""
+    status, output, ran = run_deploy(tmp_path, _SCRIPT, *arguments, refused_import=step)
+    assert status == 1
+    assert ran == [_STOP, f'opus_import {step}', _START]
+    assert 'was refused, and changed nothing' in output
+    assert 'half-switched' not in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_refused_step_leaves_a_service_that_was_already_stopped_stopped(
+    tmp_path: Path,
+) -> None:
+    """A service stopped before the script ran may be stopped on a part-way switch."""
+    status, output, ran = run_deploy(
+        tmp_path, _SCRIPT, refused_import='--switch-generation', web_service_active=False
+    )
+    assert status == 1
+    assert ran == [_STOP, 'opus_import --switch-generation']
+    assert 'was refused, and changed nothing' in output
+    assert 'stays stopped' in output
+
+
+def test_the_script_reads_the_refused_status_opus_import_exits_with(tmp_path: Path) -> None:
+    """The status is written in the script, and has to be the import's."""
+    scripts.write_scripts(tmp_path)
+    text = (tmp_path / _SCRIPT).read_text(encoding='utf-8')
+    (status,) = re.findall(r'^GENERATION_REFUSED_STATUS=(\d+)$', text, flags=re.MULTILINE)
+    assert int(status) == GENERATION_REFUSED_EXIT_STATUS
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')

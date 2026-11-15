@@ -19,6 +19,7 @@ import subprocess  # nosec B404
 from typing import TYPE_CHECKING
 
 from opus_deploy import scripts
+from opus_import.steps.do_generation import GENERATION_REFUSED_EXIT_STATUS
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -96,6 +97,8 @@ def run_deploy(
     *arguments: str,
     migration_check: str = 'clean',
     failing_import: str | None = None,
+    refused_import: str | None = None,
+    web_service_active: bool = True,
     deploy_env: dict[str, str] | None = None,
     deployed_schema: str | None = 'served',
     generation_refusal: str = '',
@@ -111,6 +114,10 @@ def run_deploy(
             cannot start.
         failing_import: The arguments, joined by spaces, for which the fake
             ``opus_import`` exits 1; every other call exits 0.
+        refused_import: The arguments, joined by spaces, for which the fake
+            ``opus_import`` exits with the status of a refused generation command.
+        web_service_active: What the fake ``systemctl is-active`` answers. It is not
+            recorded.
         deploy_env: Further variables the stand-in ``deploy.env`` sets, beside
             ``OPUS_DIR`` and the two services (`WEB_SERVICE`, `CACHE_SERVICE`).
         deployed_schema: The schema the deployed installation's ``opus.toml`` names, or
@@ -164,10 +171,16 @@ def run_deploy(
         'opus_manage': (
             f'[[ "$*" == "migrate --plan --check" ]] && {{ {MIGRATION_CHECKS[migration_check]}; }}'
         ),
-        'opus_import': (
-            f'[[ "$*" == {shlex.quote(failing_import)} ]] && exit 1'
-            if failing_import is not None
-            else ''
+        'opus_import': '\n'.join(
+            [
+                f'[[ "$*" == {shlex.quote(failing_import)} ]] && exit 1'
+                if failing_import is not None
+                else '',
+                f'[[ "$*" == {shlex.quote(refused_import)} ]] && '
+                f'exit {GENERATION_REFUSED_EXIT_STATUS}'
+                if refused_import is not None
+                else '',
+            ]
         ),
     }
     for command in FAKE_COMMANDS:
@@ -175,6 +188,11 @@ def run_deploy(
     fake_python = fake_bin / 'python'
     fake_python.write_text(f'#!/bin/sh\necho {shlex.quote(generation_refusal)}\n', encoding='utf-8')
     fake_python.chmod(0o755)
+    fake_systemctl = fake_bin / 'systemctl'
+    fake_systemctl.write_text(
+        f'#!/bin/sh\nexit {0 if web_service_active else 3}\n', encoding='utf-8'
+    )
+    fake_systemctl.chmod(0o755)
 
     assert BASH is not None
     finished = subprocess.run(  # nosec B603 - bash and the packaged script

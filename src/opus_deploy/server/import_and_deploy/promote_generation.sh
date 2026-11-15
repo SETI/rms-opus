@@ -13,19 +13,25 @@
 # searches are warmed, as at the end of a deploy, because each worker and the shared cache
 # hold what they read from the generation being replaced.
 #
-# It first asks whether opus_import would refuse the step (no generation ready to switch,
-# or no switch to revert), and then stops nothing.
+# It first asks whether opus_import would refuse the step -- no generation ready to switch,
+# no switch to revert, another generation command holding the schema's generation lock,
+# or an invocation still writing the pending generation -- and then stops nothing.
 #
 # **On failure the web service stays stopped.** Starting it on a half-switched schema
 # would serve one generation's auxiliary tables, carts and caches against the other's
 # rows. Running this again completes an interrupted switch; --revert runs the switch
 # backward (opus_import --revert-generation), and starts the web service only when that
 # succeeds. A revert is possible until opus_import --purge-generations deletes the rows the
-# switch retired.
+# switch retired. A step refused after the stop changed nothing, and when the web service
+# was serving before the stop, it is started again.
 #
 # It runs opus_import from the deployed installation, against the configuration it
 # serves, and holds the deploy lock throughout, since it changes what is served.
 set -e
+
+# The status opus_import exits with when it refuses a generation command, having changed
+# nothing (opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS).
+GENERATION_REFUSED_STATUS=3
 
 REVERT=false
 if [[ ${1:-} == --revert ]]; then
@@ -90,9 +96,32 @@ if [[ -n ${REFUSAL} ]]; then
     exit 1
 fi
 
+# Whether the site was serving before the stop: after a refusal, which changes nothing,
+# starting the web service again restores what was served only if it was serving.
+WAS_SERVING=false
+if systemctl is-active --quiet "${OPUS_WEB_SERVICE}"; then
+    WAS_SERVING=true
+fi
+
 sudo systemctl stop "${OPUS_WEB_SERVICE}"
 
-if ! opus_import "${STEP}"; then
+STATUS=0
+opus_import "${STEP}" || STATUS=$?
+if [[ ${STATUS} -eq ${GENERATION_REFUSED_STATUS} ]]; then
+    echo
+    echo "ERROR: opus_import ${STEP} was refused, and changed nothing; its log says why."
+    if ${WAS_SERVING}; then
+        echo "       The web service is started again, serving what it served before."
+        sudo systemctl start "${OPUS_WEB_SERVICE}"
+    else
+        echo "       The web service was stopped before this ran, and stays stopped: an"
+        echo "       earlier switch or revert may have stopped part way. Once the cause"
+        echo "       of the refusal is gone, run promote_generation.sh again, which"
+        echo "       completes a switch, or promote_generation.sh --revert."
+    fi
+    exit 1
+fi
+if [[ ${STATUS} -ne 0 ]]; then
     echo
     echo "ERROR: opus_import ${STEP} failed. The web service stays stopped: starting it"
     echo "       on a half-switched schema would serve one generation's auxiliary"
