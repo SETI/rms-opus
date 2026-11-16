@@ -40,11 +40,6 @@ The harness drops only a schema it made itself, and never one that still holds s
 it has not put back: the next promotion puts them back first. A side without the command
 or the option skips the step, and the result names it among its skipped steps.
 
-**Beside another process.** ``--app-cold-only`` makes each run the app-cold pass alone,
-with its warm repetitions, so the run never restarts the MySQL server, and another
-process can use the server meanwhile: an incremental update importing into the served
-schema (`benchmarks.bench_generation`), say.
-
 Example, one side's web runs at fixture scale against the schema its import built::
 
     python -m benchmarks.bench_web --scale fixture --side before --pr PR-nn \\
@@ -80,10 +75,10 @@ from benchmarks.bench_server import (
     reexec_with_socket,
     restamp_version,
     server_environment,
+    write_opus_config,
 )
 from benchmarks.import_scenarios import holdings_for
 from benchmarks.monitor import read_kb
-from benchmarks.opus_config_file import write_opus_config
 from benchmarks.results import (
     RESULTS_DIR,
     SCALES,
@@ -126,9 +121,6 @@ SCENARIO_COUNTERS = (
     'Created_tmp_disk_tables',
     'Max_execution_time_exceeded',
 )
-
-#: The cold state whose reset leaves the MySQL server running.
-APP_COLD = 'app-cold'
 
 #: How many statement shapes each scenario keeps, by total latency.
 TOP_DIGESTS = 20
@@ -481,25 +473,6 @@ def unserved(
     return [url for url in urls if not every <= served_by.get(f'/{url}', set())]
 
 
-def base_table_count(connection: Any, schema: str) -> int:
-    """Return how many base tables a schema holds, its views left out.
-
-    Parameters:
-        connection: The harness's connection.
-        schema: The schema.
-
-    Returns:
-        The count, which a per-search table changes and a view never does.
-    """
-    tables = query(
-        connection,
-        'SELECT COUNT(*) FROM information_schema.TABLES '
-        "WHERE TABLE_SCHEMA = %s AND TABLE_TYPE = 'BASE TABLE'",
-        [schema],
-    )
-    return int(tables[0][0])
-
-
 def run_import_step(
     side: Side, arguments: Sequence[str], env: Mapping[str, str], errors_log: Path
 ) -> None:
@@ -609,7 +582,6 @@ class WebBench:
         holdings: tuple[Path, Path],
         single_worker: bool = False,
         warm_states: frozenset[str] = frozenset(),
-        cold_states: tuple[str, ...] = COLD_STATES,
     ) -> None:
         """Prepare the servers for one side; nothing is started.
 
@@ -627,8 +599,6 @@ class WebBench:
                 thread, as the query capture needs.
             warm_states: The cold states whose resets end with the side's
                 ``warm_search``.
-            cold_states: The cold states a run's passes reset to, in order: both, or
-                ``app-cold`` alone for a run that never restarts the MySQL server.
         """
         self.server = server
         self.memcached = memcached
@@ -662,7 +632,6 @@ class WebBench:
         self._connection: Any = None
         self._cache_gets = 0
         self.warm_states = warm_states
-        self.cold_states = cold_states
         self.promotion_source: str | None = None
         self.restore_pending = False
 
@@ -1124,7 +1093,12 @@ class WebBench:
             }
             for text, count, total, quantile, merges, disk in digests
         ]
-        metrics[f'{prefix}.table_count'] = base_table_count(self.connection, self.schema)
+        tables = query(
+            self.connection,
+            'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s',
+            [self.schema],
+        )
+        metrics[f'{prefix}.table_count'] = int(tables[0][0])
         stats = self.memcached.stats()
         self._cache_gets += int(stats['cmd_get']) - int(before[1]['cmd_get'])
         metrics[f'{prefix}.worker_peak_rss_kb'] = max(
@@ -1208,7 +1182,7 @@ class WebBench:
         return list(outcome.issued)
 
     def one_run(self) -> dict[str, Any]:
-        """Make one run: a pass for each of `cold_states`, the db-cold pass first.
+        """Make one run: the db-cold pass, then the app-cold pass.
 
         Returns:
             The result run.
@@ -1225,7 +1199,7 @@ class WebBench:
         warm_searches = run['details'].setdefault('warm_search_s', {})
         if self.promotion_source is not None:
             self.time_promotion(run)
-        for state in self.cold_states:
+        for state in COLD_STATES:
             for scenario in self.config.scenarios:
                 warmed = self.reset(state)
                 if warmed is not None:
@@ -1233,7 +1207,7 @@ class WebBench:
                 # One cookie jar per scenario, emptied only by the reset.
                 client = Client(base_url)
                 issued = self.run_scenario(state, scenario, run, client)
-                if state == APP_COLD:
+                if state == 'app-cold':
                     warmups[f'web.warm.{scenario.name}'] = self.warm_up(issued)
                     self.run_scenario('warm', scenario, run, client)
             if concurrency is None:
@@ -1245,7 +1219,7 @@ class WebBench:
                     warm_searches[f'web.{state}.concurrency.{half}'] = warmed
                 clients = [Client(base_url) for _ in range(concurrency.users)]
                 issued = self.run_concurrency_half(state, concurrency, half, run, clients)
-                if state == APP_COLD:
+                if state == 'app-cold':
                     warmups[f'web.warm.concurrency.{half}'] = self.warm_up(issued)
                     self.run_concurrency_half('warm', concurrency, half, run, clients)
         if self._cache_gets == 0:
@@ -1312,19 +1286,6 @@ def deploy_steps(
     return DeploySteps(warm_states, promotion_carts, tuple(skipped))
 
 
-def cold_states(*, app_cold_only: bool) -> tuple[str, ...]:
-    """Return the cold states a run's passes reset to.
-
-    Parameters:
-        app_cold_only: Whether to leave out the db-cold pass, the only one that restarts
-            the MySQL server.
-
-    Returns:
-        Every state of `COLD_STATES`, in order, or `APP_COLD` alone.
-    """
-    return (APP_COLD,) if app_cold_only else COLD_STATES
-
-
 def side_schema(label: Label, override: str | None) -> tuple[str, tuple[Path, Path]]:
     """Find the schema a side's web runs serve, and the holdings they are given.
 
@@ -1389,12 +1350,6 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         "the side's carry-over of N planted cart rows into the served schema, and the "
         'cache restart',
     )
-    parser.add_argument(
-        '--app-cold-only',
-        action='store_true',
-        help='make each run the app-cold pass alone, with its warm repetitions, never '
-        'restarting the MySQL server, so another process can use it meanwhile',
-    )
     return parser.parse_args(argv)
 
 
@@ -1438,7 +1393,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         schema=schema,
         holdings=holdings,
         warm_states=steps.warm_states,
-        cold_states=cold_states(app_cold_only=args.app_cold_only),
     )
     count = config.runs[args.scale] if args.runs is None else args.runs
     with server.running():
@@ -1450,7 +1404,6 @@ def main(argv: Sequence[str] | None = None) -> None:
             **steps.environment(),
             'web_scenario_hash': scenario_hash([config.path]),
             'server_model': bench.gunicorn.server_model,
-            'cold_states': list(bench.cold_states),
             'app_loading': 'eager',
             'cache_owned': True,
         }

@@ -9,10 +9,7 @@ import process tree's summed proportional set size, ``Pss``, which counts a page
 forked workers share once rather than once per process); the server's checkpoint age,
 sampled on the same beat when the monitor is given a way to ask the server; its own
 ``--timing-json`` step timings; and, after a bundle-import invocation, the check that
-the permanent ``obs_general`` holds rows for every bundle the invocation imports. Where
-``obs_general`` is a view of the rows of one import generation, the check reads its base
-table (`benchmarks.bench_server.obs_general_table`), and an import into a pending
-generation must have written rows of that generation.
+the permanent ``obs_general`` holds rows for every bundle the invocation imports.
 """
 
 from __future__ import annotations
@@ -28,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 
 import MySQLdb
 
-from benchmarks.bench_server import ADDED_GENERATION_COLUMN, obs_general_table, quote_identifier
+from benchmarks.bench_server import quote_identifier
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -260,9 +257,6 @@ class InvocationMonitor:
         self._sampler: _MemorySampler | None = None
         self._started = 0.0
         self.records: list[InvocationRecord] = []
-        #: The import generation a bundle import writes, whose rows `check_bundles_landed`
-        #: looks for, or None to look for rows of any generation.
-        self.generation: int | None = None
 
     def expect_groups(self, groups: Sequence[str]) -> None:
         """Name every descriptor group the run's bundle imports will be given.
@@ -276,24 +270,6 @@ class InvocationMonitor:
         """Expand every announced group now, so no invocation's timing includes it."""
         if len(self._expanded) == 0 and len(self._groups) > 0:
             self._expanded = dict(zip(self._groups, self._expand(self._groups), strict=True))
-
-    def bundles_of(self, group: str) -> list[str]:
-        """Return the bundles an announced descriptor group expands to.
-
-        Parameters:
-            group: One of the groups `expect_groups` named.
-
-        Returns:
-            Its bundles, less the ones the import skips; every announced group is expanded
-            first if it was not already.
-
-        Raises:
-            RunFailedError: If the group was not announced.
-        """
-        self.expand_groups()
-        if group not in self._expanded:
-            raise RunFailedError(f'the bundle group {group!r} was not announced')
-        return self._expanded[group]
 
     def is_bundle_import(self, arguments: Sequence[str]) -> bool:
         """Return whether an invocation imports bundles.
@@ -376,9 +352,7 @@ class InvocationMonitor:
 
         An invocation that imported into a namespace other than the permanent tables,
         or into nothing, leaves them out, and its timing would measure work that a
-        served database never sees. The rows are looked for in the base table that holds
-        the observations (`obs_general_table`), and, when `generation` is set, among the
-        rows that generation added.
+        served database never sees.
 
         Parameters:
             bundles: The bundles the invocation imports.
@@ -388,37 +362,27 @@ class InvocationMonitor:
         """
         if len(bundles) == 0:
             return
-        placeholders = ', '.join(['%s'] * len(bundles))
-        added = (
-            ''
-            if self.generation is None
-            else f' AND {quote_identifier(ADDED_GENERATION_COLUMN)} = %s'
-        )
-        parameters = (*bundles, *(() if self.generation is None else (self.generation,)))
         with contextlib.closing(self._server.connect()) as connection:
+            cursor = connection.cursor()
             try:
-                table = obs_general_table(connection, self._schema)
-                cursor = connection.cursor()
-                try:
-                    cursor.execute(
-                        f'SELECT DISTINCT bundle_id FROM {quote_identifier(self._schema)}.'  # nosec B608 - quoted identifiers, placeholders
-                        f'{quote_identifier(table)} WHERE bundle_id IN ({placeholders}){added}',
-                        parameters,
-                    )
-                    present = {str(row[0]) for row in cursor.fetchall()}
-                finally:
-                    cursor.close()
+                placeholders = ', '.join(['%s'] * len(bundles))
+                cursor.execute(
+                    f'SELECT DISTINCT bundle_id FROM {quote_identifier(self._schema)}.obs_general '  # nosec B608 - quoted identifier, placeholders
+                    f'WHERE bundle_id IN ({placeholders})',
+                    tuple(bundles),
+                )
+                present = {str(row[0]) for row in cursor.fetchall()}
             except MySQLdb.Error as err:
                 raise RunFailedError(
-                    f'cannot read the observations of {self._schema} after importing '
-                    f'{list(bundles)}: {err}'
+                    f'cannot read {self._schema}.obs_general after importing {list(bundles)}: {err}'
                 ) from err
+            finally:
+                cursor.close()
         missing = [bundle for bundle in bundles if bundle not in present]
         if len(missing) > 0:
-            where = '' if self.generation is None else f' in generation {self.generation}'
             raise RunFailedError(
-                f'after importing {list(bundles)}, {self._schema}.{table} has no row{where} '
-                f'for {missing}: the invocation did not write the permanent tables'
+                f'after importing {list(bundles)}, {self._schema}.obs_general has no row for '
+                f'{missing}: the invocation did not write the permanent tables'
             )
 
     def summary(self) -> dict[str, Any]:

@@ -67,14 +67,6 @@ WARM_SEARCH_PROGRAM = (
     'main()\n'
 )
 
-#: The options of an incremental update into the served schema: one begins an import
-#: generation, which the bundle import and the deletion of bundles then write and the
-#: closing invocations finish, one switches it in, and one purges the rows it retired.
-BEGIN_GENERATION = '--begin-generation'
-SWITCH_GENERATION = '--switch-generation'
-PURGE_GENERATIONS = '--purge-generations'
-DELETE_BUNDLES = '--delete-bundles'
-
 #: An option string as a whole token: two dashes, then letters, digits and dashes, with
 #: neither a word character nor a dash on either side.
 _OPTION_TOKEN = re.compile(r'(?<![\w-])--[A-Za-z0-9][A-Za-z0-9-]*(?![\w-])')
@@ -299,9 +291,6 @@ class Spelling:
             None where the side has none; a side without it imports in one process.
         carry_over: The option that carries sessions and carts over from another schema,
             or None where the side has none.
-        begin_generation: The option that begins an import generation in a served
-            schema, or None where the side has none; a side without it cannot update a
-            schema in a generation.
     """
 
     erase: tuple[str, ...]
@@ -315,7 +304,6 @@ class Spelling:
     register_bundles: str | None = None
     join: str | None = None
     carry_over: str | None = None
-    begin_generation: str | None = None
 
     @classmethod
     def from_help(cls, help_text: str) -> Spelling:
@@ -334,9 +322,8 @@ class Spelling:
             ``--drop-permanent-tables --scorched-earth``; the version step is
             ``--write-schema-version`` when listed, else skipped; timings are asked
             for with ``--timing-json`` when listed, else skipped; and the registration,
-            the queue importer, the carry-over and the start of a generation are
-            ``--register-bundles``, ``--join``, ``--carry-over-sessions-from`` and
-            ``--begin-generation`` when listed, else None.
+            the queue importer and the carry-over are ``--register-bundles``, ``--join``
+            and ``--carry-over-sessions-from`` when listed, else None.
         """
         listed = listed_options(help_text)
 
@@ -372,7 +359,6 @@ class Spelling:
             carry_over=(
                 '--carry-over-sessions-from' if '--carry-over-sessions-from' in listed else None
             ),
-            begin_generation=BEGIN_GENERATION if BEGIN_GENERATION in listed else None,
         )
 
     def role(self, arguments: Sequence[str]) -> str:
@@ -388,8 +374,7 @@ class Spelling:
             ``bundle_import:<group>`` (the group being the last argument), ``erase``,
             ``register_bundles``, ``join``, ``finalize``, ``import_dictionary``,
             ``migrate``, ``validate``, ``write_schema_version``, ``reset_search_tables``,
-            ``begin_generation``, ``delete_bundles``, ``switch_generation``,
-            ``purge_generations``, or, for anything else, its options joined by spaces.
+            or, for anything else, its options joined by spaces.
         """
         if self.bundle_import in arguments:
             return f'bundle_import:{arguments[-1]}'
@@ -406,10 +391,6 @@ class Spelling:
             ({self.validate}, 'validate'),
             (set(self.write_schema_version), 'write_schema_version'),
             ({self.reset_search_tables}, 'reset_search_tables'),
-            ({BEGIN_GENERATION}, 'begin_generation'),
-            ({DELETE_BUNDLES}, 'delete_bundles'),
-            ({SWITCH_GENERATION}, 'switch_generation'),
-            ({PURGE_GENERATIONS}, 'purge_generations'),
         )
         for options, name in roles:
             if len(options) > 0 and options.issubset(arguments):

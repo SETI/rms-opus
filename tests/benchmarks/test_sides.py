@@ -98,7 +98,6 @@ def test_timing_options_name_the_file() -> None:
         ('register_bundles', '--register-bundles'),
         ('join', '--join'),
         ('carry_over', '--carry-over-sessions-from'),
-        ('begin_generation', '--begin-generation'),
     ],
 )
 def test_this_checkouts_own_help_is_spelled_as_expected(field: str, expected: object) -> None:
@@ -133,10 +132,6 @@ def test_this_checkouts_own_help_is_spelled_as_expected(field: str, expected: ob
             'register_bundles',
         ),
         (NEW_HELP + ' --register-bundles --join', ['--join'], 'join'),
-        (NEW_HELP, ['--begin-generation', '--timing-json', 't.json'], 'begin_generation'),
-        (NEW_HELP, ['--delete-bundles', 'COISS_2002'], 'delete_bundles'),
-        (NEW_HELP, ['--switch-generation'], 'switch_generation'),
-        (NEW_HELP, ['--purge-generations'], 'purge_generations'),
     ],
 )
 def test_an_invocation_is_named_by_its_role_on_either_side(
@@ -205,11 +200,3 @@ def test_a_side_without_the_command_is_told_apart(tmp_path: Path) -> None:
     fake.write_text(f'#!/bin/sh\nexec {sys.executable} -I -S -c "$3"\n')
     fake.chmod(0o755)
     assert Side(fake, tmp_path).has_warm_search() is False
-
-
-def test_a_side_lists_the_start_of_a_generation_or_not() -> None:
-    """Only a side whose help lists it can update a schema in a generation."""
-    assert Spelling.from_help(NEW_HELP).begin_generation is None
-    assert Spelling.from_help(NEW_HELP + ' --begin-generation').begin_generation == (
-        '--begin-generation'
-    )

@@ -8857,3 +8857,11 @@ Nothing above this line is rewritten by an executor.
     integration job runs on every push; the unit suite tests the reader alone.
   - *Recorded:* child rows with no `obs_general_rows` row, which a killed append (not a
     generation) can leave, are not hidden outside an update, as in PR-22.
+- **Split for review (2026-11-16).** Once its base was `db-perf`, CodeRabbit skipped this
+  pull request outright: 105 reviewable files, over its cap of 100. The operator asked for
+  CodeRabbit's review, so the benchmark harness's part moved to PR-23a, stacked on this
+  one: `bench_generation`, `bench_web --app-cold-only`, the view-aware
+  `bench_server.clone_schema` and the harness's other changes, their tests under
+  `tests/benchmarks/`, and `dev_guide_benchmarks.rst`. Nothing outside the harness uses
+  them, and `db-perf`'s harness tests pass against this branch's code. The measurements
+  above were made with the harness as PR-23a has it.

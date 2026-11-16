@@ -114,20 +114,6 @@ def test_previews_are_read_from_obs_general_on_a_schema_without_obs_preview(
     ]
 
 
-def test_a_schema_whose_obs_general_is_a_view_is_measured_by_its_base_table(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The view has no data of its own; obs_general_rows holds its rows."""
-    previews, _ = _previews(
-        monkeypatch,
-        {'obs_general_rows': {'data_bytes': 32000}, 'obs_preview': {'data_bytes': 9000}},
-    )
-
-    assert previews is not None
-    assert previews['table'] == 'obs_preview'
-    assert previews['ratio_to_obs_general_data'] == 0.2
-
-
 def test_a_schema_without_either_table_records_no_previews(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

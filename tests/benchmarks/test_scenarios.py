@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks import import_scenarios, opus_config_file, web_scenarios
+from benchmarks import bench_server, import_scenarios, web_scenarios
 from benchmarks.app_servers import ServerError
 from benchmarks.web_scenarios import ScenarioError
 from import_tests.tools import holdings_survey
@@ -180,7 +180,7 @@ def test_a_warm_flag_that_is_not_a_cold_states_boolean_is_refused(
 
 def test_the_written_configuration_is_one_opus_reads(tmp_path: Path) -> None:
     """Every key the harness writes is one the loader accepts, cache location included."""
-    path = opus_config_file.write_opus_config(
+    path = bench_server.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
         pds3_holdings=tmp_path / 'holdings',
@@ -196,14 +196,14 @@ def test_the_written_configuration_is_one_opus_reads(tmp_path: Path) -> None:
 
 def test_a_session_sets_import_keys_the_loader_reads(tmp_path: Path) -> None:
     """``--import-key`` values reach the side's configuration with their types."""
-    path = opus_config_file.write_opus_config(
+    path = bench_server.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
         pds3_holdings=tmp_path / 'holdings',
         pds4_holdings=tmp_path / 'pds4-holdings',
         run_dir=tmp_path / 'run',
         cache_location='127.0.0.1:21211',
-        extra_import=opus_config_file.parse_import_keys(
+        extra_import=bench_server.parse_import_keys(
             ['index_workers=22', 'bulk_load=false', 'server_tmpdir=/var/tmp/x']
         ),
     )
@@ -215,7 +215,7 @@ def test_a_session_sets_import_keys_the_loader_reads(tmp_path: Path) -> None:
 
 def test_a_harness_import_key_given_by_its_caller_is_written_once(tmp_path: Path) -> None:
     """``log_file`` passed to `write_opus_config` replaces the harness's own, once."""
-    path = opus_config_file.write_opus_config(
+    path = bench_server.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
         pds3_holdings=tmp_path / 'holdings',
@@ -231,14 +231,14 @@ def test_a_control_character_in_an_import_value_survives_the_configuration(
     tmp_path: Path,
 ) -> None:
     """A newline in a value is escaped rather than breaking the file."""
-    path = opus_config_file.write_opus_config(
+    path = bench_server.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
         pds3_holdings=tmp_path / 'holdings',
         pds4_holdings=tmp_path / 'pds4-holdings',
         run_dir=tmp_path / 'run',
         cache_location='127.0.0.1:21211',
-        extra_import=opus_config_file.parse_import_keys(['server_tmpdir=/var/tmp/a\nb\x7f']),
+        extra_import=bench_server.parse_import_keys(['server_tmpdir=/var/tmp/a\nb\x7f']),
     )
     assert load_config(path).import_.server_tmpdir == '/var/tmp/a\nb\x7f'
 
@@ -262,25 +262,25 @@ def test_an_import_key_value_is_a_number_a_boolean_or_else_a_string(
     text: str, value: object
 ) -> None:
     """A value that does not read as a finite number or a boolean stays as written."""
-    assert opus_config_file.parse_import_keys([f'k={text}']) == {'k': value}
+    assert bench_server.parse_import_keys([f'k={text}']) == {'k': value}
 
 
 @pytest.mark.parametrize('pair', ['index_workers', '=3'])
 def test_an_import_key_without_a_key_and_value_is_refused(pair: str) -> None:
     """Each ``--import-key`` is ``KEY=VALUE``."""
     with pytest.raises(ValueError, match='KEY=VALUE'):
-        opus_config_file.parse_import_keys([pair])
+        bench_server.parse_import_keys([pair])
 
 
 @pytest.mark.parametrize('pair', ['index workers=2', 'index.workers=2', 'a"b=1'])
 def test_an_import_key_that_is_not_a_key_name_is_refused(pair: str) -> None:
     """A key TOML would not read bare is refused before any configuration is written."""
     with pytest.raises(ValueError, match='not an \\[import\\] key name'):
-        opus_config_file.parse_import_keys([pair])
+        bench_server.parse_import_keys([pair])
 
 
-@pytest.mark.parametrize('key', opus_config_file.HARNESS_IMPORT_KEYS)
+@pytest.mark.parametrize('key', bench_server.HARNESS_IMPORT_KEYS)
 def test_an_import_key_naming_a_log_the_harness_reads_is_refused(key: str) -> None:
     """The harness reads its runs' logs from where it put them."""
     with pytest.raises(ValueError, match='the harness sets'):
-        opus_config_file.parse_import_keys([f'{key}=/tmp/x.log'])
+        bench_server.parse_import_keys([f'{key}=/tmp/x.log'])
