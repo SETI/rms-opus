@@ -8865,3 +8865,20 @@ Nothing above this line is rewritten by an executor.
   `tests/benchmarks/`, and `dev_guide_benchmarks.rst`. Nothing outside the harness uses
   them, and `db-perf`'s harness tests pass against this branch's code. The measurements
   above were made with the harness as PR-23a has it.
+
+### 2026-11-16, PR-23a (written against this file at 54760861)
+
+- **Split from PR-23** so that each pull request fits CodeRabbit's cap of 100 reviewable
+  files (see PR-23's "Split for review"). It carries the benchmark harness's support for
+  generations unchanged from PR-23's 411f1e2c: `bench_generation`, `bench_web
+  --app-cold-only`, the view-aware `bench_server.clone_schema`, the harness's other
+  changes, their tests and `dev_guide_benchmarks.rst`.
+- **A complex search and a column set**, asked for by the operator: PR-23's scenarios
+  searched on one table, or two, and paged the default columns. `web.toml`'s `complex`
+  search selects on four tables (a time range, `instrument=Cassini ISS` and
+  `target=Saturn` on `obs_general` and its junction, a ring radius range on
+  `obs_ring_geometry`, a latitude range on Saturn's surface geometry), and runs as
+  `search.complex`, `pages.complex`, `resort.complex` and `fanout.complex`. A `pages`
+  scenario may name a column set from `[columns]`, asked for as `cols`;
+  `pages.complex_geometry` asks for columns from the same four tables. At complete scale
+  the search matches 51,068 observations, so its pages 10 and last exist.
