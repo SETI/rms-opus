@@ -8760,4 +8760,73 @@ Nothing above this line is rewritten by an executor.
     `integration_tests/apps_db_tests/test_generations.py` (the plant hidden both as a
     pending generation and as rows a revertible switch retired; no `STRAIGHT_JOIN` with
     neither; each child statement equal to the plain one plus the join with either).
-    Written while a benchmark ran; not yet run.
+  - Results on cecfab54: the gates pass (`run-all-checks.sh`, 3,477 unit tests); the import
+    suite passes (205 passed, 3 skipped); the integration suite passes against a database
+    this branch imported (2,912 passed, 100% coverage); the mutations are caught.
+- **The measurement (2026-11-16), complete scale, from scratch**, the orchestrator's, on
+  cecfab54 against PR-22's head 0f3a81f1 (the tree `db-perf` holds after PR-20 and PR-22
+  merged), on an idle machine: every phase waited for five minutes under three busy CPUs,
+  and the top processes, sampled every five minutes, show no other job. Every run in a
+  48 GB scope. It supersedes the 2026-11-15 web and update figures, which predate the
+  conditional join and the scoped validation.
+  - **Full imports**, 6 importers × 4 workers, `--session clean`, this branch first:
+    | | wall-clock | bundle imports | finalization | of it: secondary keys |
+    |---|---|---|---|---|
+    | base (0f3a81f1) | 2,946 s | 1,482 s | 1,327 s | 1,210 s |
+    | head (cecfab54) | 3,052 s | 1,487 s | 1,425 s | 1,312 s |
+
+    Reading the table:
+    - The difference is the key build, which is single-connection DDL whose time moves
+      between runs of the same code: `obs_files` took 790 s and 935 s here, and between
+      761 s and 934 s in the earlier imports of either side; `obs_general`'s keys took
+      38 s and 136 s here, and between 27 s and 147 s before.
+    - An earlier rerun on the same commits (`--session rerun`, 2026-11-16) built the base's
+      `obs_files` keys in 155 s, and every table's faster, giving the base 2,067 s against
+      3,056 s. It was the base's only such run and is not used; the importers' logs keep
+      each table's key time for such a comparison.
+    - The 2026-11-15 pair went the other way (3,145.6 s against 3,123.7 s): the full import
+      is unchanged within the key build's variation.
+  - **`bench_db`** (`--session dbc`, `--dump-queries`, alternated three runs a side): every
+    captured statement planned with `EXPLAIN ANALYZE`; schema data and index bytes held.
+    - `fanout.empty/mults_target` no longer appears: the conditional join leaves it the
+      base's.
+    - `fanout.empty/mults_observationtype` 0.36 s against 0.29 s (+24%), outside both
+      spreads (6%); in the rerun +19%.
+    - The page statements, about 1 ms on either side, range from 3% faster to 12% slower
+      on the head, within or near their spreads (6–30%).
+    - `search.ring_radius/result_count` and `resort.ring_radius/resorted` reported +95%
+      (0.98 s against 1.89 s), but the optimizer chose between two plans in each run on
+      both sides: a scan of `obs_ring_geometry` with a primary-key lookup per match
+      (0.95 s), or the `time1` index walked with a lookup into `obs_ring_geometry` per
+      observation (1.86 s). The base took the slow plan in one of its three runs and the
+      head in two, so the medians differ by the plan, not by the view.
+  - **`bench_web`** (`--session webc`, alternated three runs a side): 13 of 18 guards held.
+    The five that regressed are small requests:
+    - `app-cold.autocomplete.bundleid` 39.5 ms against 36.2 ms (+9%); in the rerun it was
+      18% faster on the head.
+    - `app-cold.pages.empty` 64.7 ms against 47.7 ms; `warm.pages.empty.page_1` 5.5 ms
+      against 3.8 ms; `warm.pages.empty.page_last` 10.7 ms against 6.6 ms;
+      `warm.fanout.empty` 7.3 ms against 6.8 ms.
+    - The other searches' page scenarios move both ways by as much:
+      `app-cold.pages.selective` is 47% faster on the head and `app-cold.pages.target` 28%
+      faster, while their statements are within 3–12% of the base's.
+    - The heavy guards are within 3%: `search.empty` +1.2%, `fanout.empty` +1.8%,
+      `fanout.selected` +2.4%, `concurrency` p95 −3.0% and −1.2%.
+  - **The updates**, `bench_generation` into the head's schema:
+    | | update | of it: import | finalize | validate | switch | purge |
+    |---|---|---|---|---|---|---|
+    | `genc1`: the test scale's incremental group, `NHPELO_1001` | 112.1 s | 83.6 s | 15.7 s | 10.9 s | 1.0 s | 24.6 s |
+    | `genc2`: `COISS_2111,COUVIS_0002,COVIMS_0006,GO_0017,VGISS_8201,NHPELO_1001`, `HSTJ0_9975` dropped | 200.6 s | 172.3 s | 10.4 s | 14.6 s | 0.6 s | 29.7 s |
+
+    Reading the table:
+    - `begin` took 0.5 s and `write_schema_version` 1.4 s; `genc2`'s `delete`, 1.4 s.
+    - Update, switch and purge sum to 137.7 s and 230.9 s, against the head's full import
+      of 3,052 s: 22 and 13 times faster. The service is down only for the switch.
+    - The scoped validation takes 11–15 s, against 121–246 s for the whole schema's.
+  - **The site while the update imports.** `genwebc` was `bench_web --app-cold-only` beside
+    `genc1`, against an idle `idlewebc` after it, one run each. The heavy scenarios moved
+    by −14% to +7% (`search.empty` +2.5%, `fanout.empty` −14.4%, `files.broad` +0.3%,
+    `concurrency` p95 +3.9% and +0.7%); the small ones scattered both ways.
+  - **Kept**: the full import is unchanged within its variation, no heavy guard moved by
+    more than 3%, and an update with its switch and purge is 13–22 times faster than the
+    full import it replaces.
