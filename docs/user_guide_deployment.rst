@@ -239,8 +239,8 @@ The scripts
     own process, stopping at the first that fails or writes to ``ERRORS.log``::
 
         opus_import --begin-generation
-        opus_import --import <bundle> ...           # when bundles are named
         opus_import --delete-bundles <bundle> ...   # when --drop names any
+        opus_import --import <bundle> ...           # when bundles are named
         opus_import --finalize
         opus_import --validate
         opus_import --write-schema-version
@@ -645,8 +645,8 @@ only when you switch it in. The steps, from the deploy directory::
 4. **Purge.** Once the site has been checked, ``opus_import --purge-generations`` deletes
    the rows the switch replaced, while the site serves. Until it runs, the switch can be
    undone; once it starts, it cannot. If it stops part way, run it again, which
-   finishes it; until then the revert, a new update and a code deploy's rebuild of the
-   auxiliary tables are refused.
+   finishes it; until then the revert, the switch, a new update and a code deploy's
+   rebuild of the auxiliary tables are refused.
 
 **Undoing an update.** Before the purge, switch back and then throw the update away::
 

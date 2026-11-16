@@ -220,6 +220,31 @@ def test_the_commands_re_create_the_view_with_the_swaps_bounded_wait() -> None:
     ]
 
 
+@pytest.mark.parametrize(
+    ('obs_general_type', 'created'),
+    [(None, True), ('VIEW', False)],
+    ids=['view-missing', 'view-there'],
+)
+def test_an_existing_obs_general_table_gets_its_view_when_it_has_none(
+    obs_general_type: str | None, created: bool
+) -> None:
+    """A table whose view's statement failed after it is given its view the next time
+    it is asked for; an existing view, which may name a generation, is left alone."""
+    db = _RecordingDB({'obs_general'})
+    db.obs_general_type = obs_general_type
+    assert db.create_table('obs_general', _obs_general_schema()) is False
+    views = [cmd for cmd, _ in db.executed if 'VIEW' in cmd]
+    assert views == (
+        [
+            'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW `obs_general` AS '
+            'SELECT `id`, `opus_id` FROM `obs_general_rows`'
+        ]
+        if created
+        else []
+    )
+    assert not any(cmd.startswith('CREATE TABLE') for cmd, _ in db.executed)
+
+
 def test_dropping_obs_general_drops_the_view_before_the_table() -> None:
     """DROP TABLE refuses a view, and the view reads the table."""
     db = _RecordingDB({'obs_general'})
@@ -821,6 +846,45 @@ def test_a_switched_generation_is_completed_not_refused(switch_steps: list[str])
     assert not any(event.startswith('update') for event in db.events)
 
 
+@pytest.mark.parametrize('built', [_NEW, _NEW[:1]], ids=['whole', 'part'])
+def test_completing_a_switch_beside_an_unfinished_rebuild_is_refused(
+    switch_steps: list[str], built: tuple[str, ...]
+) -> None:
+    """__new tables beside a whole __prev set, with nothing pending, are a served rebuild
+    that stopped part way: the switch would swap them in and drop the __prev set."""
+    db = _StateDB(_ready(generation=2, revertible=1), tables=(*_PREV, *built))
+    with pytest.raises(do_generation.GenerationRefusedError, match='rebuild of the served'):
+        do_generation.switch_generation(_context(db))
+    assert switch_steps == []
+    ctx = _context(db)
+    assert ctx.db is not None
+    assert ctx.generation_state is not None
+    problem = do_generation.unfinished_rebuild_problem(ctx.db, ctx.generation_state)
+    assert problem is not None
+    assert "generation 1's __prev tables" in problem
+
+
+@pytest.mark.parametrize(
+    ('row', 'tables'),
+    [
+        (_ready(generation=2, revertible=1), _NEW),
+        (_ready(generation=2, revertible=1), (*_PREV[:1], *_NEW)),
+        (_ready(generation=2, revertible=0), (*_PREV, *_NEW)),
+        (_ready(generation=2, revertible=1, pending_generation=3), (*_PREV, *_NEW)),
+    ],
+    ids=['revert-marker', 'purge-started', 'not-revertible', 'pending'],
+)
+def test_only_new_tables_beside_a_whole_revertible_prev_set_are_an_unfinished_rebuild(
+    row: tuple[Any, ...], tables: tuple[str, ...]
+) -> None:
+    """A part-way revert's __new tables, a purge's, and any shape with a generation
+    pending or nothing revertible are other states, which other checks name."""
+    ctx = _context(_StateDB(row, tables=tables))
+    assert ctx.db is not None
+    assert ctx.generation_state is not None
+    assert do_generation.unfinished_rebuild_problem(ctx.db, ctx.generation_state) is None
+
+
 def test_a_switch_of_an_unready_generation_is_refused(switch_steps: list[str]) -> None:
     """Validation must have passed and the stamp been written."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_VALIDATED))
@@ -1140,7 +1204,8 @@ def test_an_abandon_unreadies_the_generation_first_and_deletes_its_ranges_rows(
 ) -> None:
     """A ready generation is marked writing before the first row goes, so an interrupted
     abandon leaves nothing a switch serves; the rows left in the id ranges it registered
-    go before its registry rows, and no other generation's range is touched."""
+    go before its registry rows, and no other generation's range is touched; the view
+    loses its condition only once nothing is pending."""
     db = _StateDB(_ready(pending_generation=2, pending_state=PENDING_READY))
     steps: list[Any] = []
 
@@ -1163,6 +1228,13 @@ def test_an_abandon_unreadies_the_generation_first_and_deletes_its_ranges_rows(
         (table_swap, 'drop_swap_leftovers'),
     ]:
         monkeypatch.setattr(module, name, record(name))
+
+    def refresh_view(ctx: Any, served: int | None) -> None:
+        """Record the view's re-creation and the pending generation at that moment."""
+        assert db.row is not None
+        steps.append(('refresh_view', db.row['pending_generation'], served))
+
+    monkeypatch.setattr(do_generation, 'refresh_view', refresh_view)
     monkeypatch.setattr(
         bundle_registry,
         'registered_ranges',
@@ -1180,11 +1252,12 @@ def test_an_abandon_unreadies_the_generation_first_and_deletes_its_ranges_rows(
         ('delete_generation_copies', PENDING_WRITING),
         ('restore_retired_copies', PENDING_WRITING),
         ('drop_swap_leftovers', PENDING_WRITING),
+        ('refresh_view', None),
     ]
     assert steps[1][2] == [(21, 30), (31, 35)]
+    assert steps[-1][2] is None
     assert db.row is not None
     assert (db.row['pending_generation'], db.row['pending_state']) == (None, None)
-    assert no_writers == ['view None']
 
 
 def test_the_rows_in_id_ranges_are_deleted_from_every_child_table() -> None:

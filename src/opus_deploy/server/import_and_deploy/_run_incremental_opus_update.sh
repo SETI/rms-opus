@@ -113,11 +113,11 @@ echo "======================================="
 echo
 echo "Start time:" `date`
 echo
-run_update_invocations "${OPUS_LOG_DIR}"
+run_update_invocations "${OPUS_LOG_DIR}" || exit 1
 echo
 echo
 
-copy_database_to_peer "${OPUS_DB_NAME}" "${PEER_DB_NAME}"
+copy_database_to_peer "${OPUS_DB_NAME}" "${PEER_DB_NAME}" || exit 1
 
 echo "End time:" `date`
 echo

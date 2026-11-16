@@ -146,8 +146,8 @@ def test_the_update_writes_the_served_schema_then_copies_it_to_the_peer(
     assert status == 0, output
     assert ran[:-2] == [
         'opus_import --begin-generation',
-        'opus_import --import COISS_2001',
         'opus_import --delete-bundles COISS_2002',
+        'opus_import --import COISS_2001',
         'opus_import --finalize',
         'opus_import --validate',
         'opus_import --write-schema-version',

@@ -212,7 +212,8 @@ serves.
 Until the purge, the update can be undone:
 
     ./import_and_deploy/promote_generation.sh --revert
-    /opt/opus/deployed/opus_venv/bin/opus_import --abandon-generation
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import --abandon-generation
 
 An update that failed, or one not yet switched in, is thrown away with the
 second command alone; after a switch that stopped part way it is refused

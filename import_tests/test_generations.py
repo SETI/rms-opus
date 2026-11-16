@@ -311,7 +311,7 @@ def _start_holding_import(
     copy: build_run.SchemaCopy, bundle: str, credentials: DatabaseCredentials
 ) -> subprocess.Popen[str]:
     """Start a plain ``--import`` of a bundle that sleeps after its first chunk commits,
-    and return once it is that far."""
+    and return once it is that far; if it never gets there, stop it before failing."""
     environment = build_run.run_environment(copy.paths.config_file)
     environment[IMPORT_FAULT_ENV_VAR] = f'{HOLD_AFTER_CHUNK_FAULT_SITE}:600'
     process = subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's module
@@ -327,10 +327,15 @@ def _start_holding_import(
         'SELECT COUNT(*) FROM import_bundle '
         "WHERE bundle_id = %s AND state = 'importing' AND rows_done > 0"
     )
-    while golden_io.query(credentials, copy.schema, statement, [bundle])[0][0] == 0:
-        assert process.poll() is None, 'the holding import exited'
-        assert time.monotonic() < deadline, 'the holding import never committed a chunk'
-        time.sleep(0.5)
+    try:
+        while golden_io.query(credentials, copy.schema, statement, [bundle])[0][0] == 0:
+            assert process.poll() is None, 'the holding import exited'
+            assert time.monotonic() < deadline, 'the holding import never committed a chunk'
+            time.sleep(0.5)
+    except BaseException:
+        process.kill()
+        process.wait()
+        raise
     return process
 
 

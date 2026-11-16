@@ -207,11 +207,15 @@ def abandon_generation(ctx: ImportContext) -> None:
     and with them every other observation table's rows in the id ranges it registered,
     which a killed import can leave with no ``obs_general`` row; the rows it retired are
     restored; its registry rows are deleted and the copies it retired made live again;
-    its auxiliary ``__new`` tables are dropped; the view is re-created with no condition,
-    since the generation was begun with no row retired
-    (`opus_import.steps.do_generation.begin_generation`), so every retired row was retired
-    by it and has been restored; and last the version row's pending generation is cleared.
-    Running it again after an interruption finishes the work. Refused while a switch of
+    its auxiliary ``__new`` tables are dropped; the version row's pending generation is
+    cleared; and last the view is re-created with no condition, since the generation was
+    begun with no row retired (`opus_import.steps.do_generation.begin_generation`), so
+    every retired row was retired by it and has been restored. The view keeps naming the
+    served generation until the pending generation is cleared, so no write into it is
+    ever shown. Running it again after an interruption before the clear finishes the
+    work; after it, the view still names the served generation, which shows every row,
+    and ``--purge-generations``, which then has nothing to delete, re-creates it with no
+    condition. Refused while a switch of
     the pending generation, or a revert of it, has stopped part way
     (`opus_import.steps.do_generation.unfinished_switch_problem`).
 
@@ -261,15 +265,16 @@ def abandon_generation(ctx: ImportContext) -> None:
         bundle_registry.delete_generation_copies(ctx, pending)
         bundle_registry.restore_retired_copies(ctx, pending)
         table_swap.drop_swap_leftovers(ctx, do_generation.AUX_TABLES)
-        # Every row left is in the served generation: the generation was begun with no
-        # row retired, so every retired row was retired by it and is restored above.
-        do_generation.refresh_view(ctx, None)
         do_generation.update_version_row(
             ctx,
             {PENDING_GENERATION_COLUMN: None, PENDING_STATE_COLUMN: None},
             PENDING_GENERATION_COLUMN,
             pending,
         )
+        # Every row left is in the served generation: the generation was begun with no
+        # row retired, so every retired row was retired by it and is restored above.
+        # Only now, with nothing pending to write into, does the view lose its condition.
+        do_generation.refresh_view(ctx, None)
         import_util.log_info(
             ctx, f'Generation {pending} abandoned; generation {state.generation} is served'
         )

@@ -545,9 +545,11 @@ process, in order:
        part way, as is every write to the generation.
    * - ``--revert-generation``
      - Run while the web service is stopped, after a switch and before the purge starts: serves
-       the previous generation again, cart and auxiliary tables included, and leaves the
-       reverted one pending and ``ready``, to abandon or to switch again. It also undoes
-       a switch that stopped part way.
+       the previous generation again, auxiliary tables included, points the cart back at
+       it, and leaves the reverted one pending and ``ready``, to abandon or to switch
+       again. A cart row the switch deleted, because the new generation has no
+       observation with its OPUS ID, is not restored. It also undoes a switch that stopped
+       part way.
 
 Each generation command holds a server-wide named lock on the schema while it runs, and
 is refused while another holds it. Every invocation that writes a schema with a version

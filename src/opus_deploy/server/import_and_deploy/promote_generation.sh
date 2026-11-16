@@ -85,7 +85,7 @@ echo "Installation: ${INSTALL_DIR}"
 echo
 
 # Asked before the stop, so a command opus_import would refuse leaves the site up.
-if ! REFUSAL=$(python -c "from opus_import.steps.do_generation import generation_command_problem as p; print(p('${STEP}') or '')"); then
+if ! REFUSAL=$(python -c "import sys; from opus_import.steps.do_generation import generation_command_problem as p; print(p(sys.argv[1]) or '')" "${STEP}"); then
     echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
     echo "*** ABORTING: nothing was changed ***"
     exit 1

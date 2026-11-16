@@ -37,7 +37,7 @@ NOHUP_LOGFILE="$(mktemp --tmpdir opus_update.XXXXXXXX.log)" || {
 }
 export NOHUP_LOGFILE
 
-nohup ${IMPORT_SCRIPT_DIR}/_incremental_opus_update_wrapper.sh "$@" > /dev/null &
+nohup "${IMPORT_SCRIPT_DIR}/_incremental_opus_update_wrapper.sh" "$@" > /dev/null &
 
 echo "*** INCREMENTAL UPDATE IS RUNNING ***"
 echo "Log file: ${NOHUP_LOGFILE}"
