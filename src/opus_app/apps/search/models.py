@@ -267,6 +267,36 @@ class ObsGeneral(models.Model):
         db_table = 'obs_general'
 
 
+class ObsGeneralTargetClass(models.Model):
+    pk = models.CompositePrimaryKey('mult_id', 'obs_general_id')
+    mult_id = models.PositiveSmallIntegerField()
+    obs_general = models.ForeignKey(
+        ObsGeneral,
+        models.DO_NOTHING,
+        related_name='%(class)s_general_id',
+        db_column='obs_general_id',
+    )
+
+    class Meta:
+        managed = False
+        db_table = 'obs_general_target_class'
+
+
+class ObsGeneralTargetName(models.Model):
+    pk = models.CompositePrimaryKey('mult_id', 'obs_general_id')
+    mult_id = models.PositiveSmallIntegerField()
+    obs_general = models.ForeignKey(
+        ObsGeneral,
+        models.DO_NOTHING,
+        related_name='%(class)s_general_id',
+        db_column='obs_general_id',
+    )
+
+    class Meta:
+        managed = False
+        db_table = 'obs_general_target_name'
+
+
 class ObsInstrumentCocirs(models.Model):
     obs_general = models.OneToOneField(
         ObsGeneral,

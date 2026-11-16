@@ -165,3 +165,94 @@ def test_the_take_back_deletes_obs_general_last_even_when_it_loaded_after_a_chil
     sink.discard()
     deletes = [event[1] for event in db.events if event[0] == 'delete']
     assert deletes == ['obs_files', 'obs_general']
+
+
+class _RowKeepingDB(_LoadingDB):
+    """A stand-in that also keeps the rows of every load."""
+
+    def __init__(self, transaction_rows: int) -> None:
+        """Hold the load size, and no rows yet."""
+        super().__init__(transaction_rows)
+        self.rows: dict[str, list[dict[str, Any]]] = {}
+
+    def bulk_load_rows(
+        self, table_name: str, rows: list[dict[str, Any]], guard: object = None
+    ) -> None:
+        """Record the load and keep its rows."""
+        super().bulk_load_rows(table_name, rows, guard)
+        self.rows.setdefault(table_name, []).extend(dict(row) for row in rows)
+
+
+def _junction_rows(db: _RowKeepingDB) -> dict[str, list[dict[str, Any]]]:
+    """Return every row loaded into a junction table, by table."""
+    return {
+        table: rows
+        for table, rows in db.rows.items()
+        if table in ('obs_general_target_name', 'obs_general_target_class')
+    }
+
+
+def _keeping_sink(transaction_rows: int) -> tuple[TableRowSink, _RowKeepingDB]:
+    """Return a junction sink over a database that keeps what it loads."""
+    db = _RowKeepingDB(transaction_rows)
+    ctx = make_context(db=db)
+    ctx.bundle_ids = bundle_registry.BundleIds(_RANGE)
+    sink = TableRowSink(ctx, list(ORDER), {'obs_general': ['target_name', 'target_class']})
+    return sink, db
+
+
+def test_an_obs_general_row_gives_each_list_column_one_junction_row_per_distinct_id() -> None:
+    """Each id of each list becomes a row naming the observation; a repeated id one row,
+    and an empty list none."""
+    sink, db = _keeping_sink(100)
+    sink.add('obs_general', {'id': 10, 'target_name': '[4, 9, 4]', 'target_class': '[1]'})
+    sink.add('obs_general', {'id': 11, 'target_name': None, 'target_class': '[2, 1]'})
+    sink.finish()
+    assert _junction_rows(db) == {
+        'obs_general_target_name': [
+            {'mult_id': 4, 'obs_general_id': 10},
+            {'mult_id': 9, 'obs_general_id': 10},
+        ],
+        'obs_general_target_class': [
+            {'mult_id': 1, 'obs_general_id': 10},
+            {'mult_id': 2, 'obs_general_id': 11},
+            {'mult_id': 1, 'obs_general_id': 11},
+        ],
+    }
+
+
+def test_the_junction_tables_load_after_the_tables_and_by_the_transaction() -> None:
+    """A junction table loads each time a transaction's worth of its rows waits, and the
+    finish loads what is left of it after every listed table."""
+    sink, db = _keeping_sink(2)
+    sink.add('obs_general', {'id': 10, 'target_name': '[4, 9]', 'target_class': '[1]'})
+    assert _loads(db) == [('load', 'obs_general_target_name', 2)]
+    sink.finish()
+    assert _loads(db)[1:] == [
+        ('load', 'obs_general', 1),
+        ('load', 'obs_surface_geometry_target', 0),
+        ('load', 'obs_files', 0),
+        ('load', 'obs_general_target_name', 0),
+        ('load', 'obs_general_target_class', 1),
+    ]
+
+
+def test_a_failed_index_takes_back_its_junction_rows_by_observation() -> None:
+    """A junction table's rows are taken back by ``obs_general_id``, before obs_general."""
+    sink, db = _keeping_sink(1)
+    sink.add('obs_general', {'id': 10, 'target_name': '[4]', 'target_class': '[1]'})
+    sink.discard()
+    deletes = [event for event in db.events if event[0] == 'delete']
+    assert deletes == [
+        ('delete', 'obs_general_target_class', ('`obs_general_id`', 10, 100)),
+        ('delete', 'obs_general_target_name', ('`obs_general_id`', 10, 100)),
+        ('delete', 'obs_general', ('`id`', 10, 100)),
+    ]
+
+
+def test_a_table_without_list_columns_gives_no_junction_rows() -> None:
+    """Only the tables `junctions` names give junction rows."""
+    sink, db = _keeping_sink(100)
+    sink.add('obs_files', {'obs_general_id': 10, 'target_name': '[4]'})
+    sink.finish()
+    assert not any(_junction_rows(db).values())

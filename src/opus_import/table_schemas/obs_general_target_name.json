@@ -1,0 +1,36 @@
+[
+    {
+        "field_name": "mult_id",
+        "field_type": "mult_idx",
+        "field_notnull": true,
+        "comments": "With obs_general_id, the primary key; one id of the observation's obs_general.target_name list, in that column's mult field."
+    },
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "comments": "With mult_id, the primary key; it links the record to obs_general."
+    },
+    {
+        "primary_key": [
+            "mult_id",
+            "obs_general_id"
+        ]
+    },
+    {
+        "key": [
+            "obs_general_id"
+        ]
+    },
+    {
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
+    }
+]

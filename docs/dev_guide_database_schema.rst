@@ -31,7 +31,7 @@ OPUS understands the following high-level field types:
   * ``Mission`` = ``Galileo`` (stored in the database as the value ``1``)
   * ``Saturn Orbit Number (By Checkbox)`` = ``044`` (stored in the database as the value ``23``)
   * ``Body Occultation Flag`` = ``N/A`` (stored in the database as the value ``0``)
-* ``MULTIGROUP``: Multiple selections in a list of possible options. This is similar to a ``GROUP``, except that instead of having a single option selected represented as an integer, the database contains a JSON list (using the SQL ``JSON`` data type) containing, potentially, multiple integers. This type is used when a single observation can apply to more than one entry in the group, such as ``Intended Target Name`` (where one observation can be intended for multiple targets in PDS4) or ``Nominal Target Class`` (where multiple intended targets results in multiple target classes). Searching by the user is performed the same way as with a ``GROUP``, except that the matching is done against any of the entries in the list, not just a single integer. If any of the entries match, the observation is returned as a search result. When displaying metadata, each entry in the list is converted to a string by looking up its ``mult`` row and then they are joined together by commas. The functionality provided by ``MULTIGROUP`` is a strict superset of ``GROUP`` and technically we could remove the ``GROUP`` type entirely. However, the performance of searching and retrieving the values from a ``MULTIGROUP`` is roughly 30% slower than a ``GROUP`` due to the need to handle the arbitrary length list of values, and thus we keep both types around for performance. Examples:
+* ``MULTIGROUP``: Multiple selections in a list of possible options. This is similar to a ``GROUP``, except that instead of having a single option selected represented as an integer, the database contains a JSON list (using the SQL ``JSON`` data type) containing, potentially, multiple integers. This type is used when a single observation can apply to more than one entry in the group, such as ``Intended Target Name`` (where one observation can be intended for multiple targets in PDS4) or ``Nominal Target Class`` (where multiple intended targets results in multiple target classes). Searching by the user is performed the same way as with a ``GROUP``, except that the matching is done against any of the entries in the list, not just a single integer. If any of the entries match, the observation is returned as a search result. Each ``MULTIGROUP`` column has a junction table holding one row per entry of each observation's list, which the search and the counts of the field's values read (:ref:`dev_guide_database_schema_junction_tables`). When displaying metadata, each entry in the list is converted to a string by looking up its ``mult`` row and then they are joined together by commas. The functionality provided by ``MULTIGROUP`` is a strict superset of ``GROUP``. A ``GROUP`` stores its value in the observation's own row, where a ``MULTIGROUP`` needs its junction table beside the list, so the two types are kept apart. Examples:
 
   * ``Intended Target Name`` = ``Jupiter,Amalthea``
   * ``Nominal Target Class`` = ``Planet,Regular Satellite``
@@ -368,7 +368,7 @@ The web application joins ``mult`` the same way, once for each mult column a sta
 reads, each time under an alias of its own and with the field's id as a parameter
 (:func:`opus_app.apps.tools.sql_builder.mult_join`).
 
-Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists, and more complicated SQL queries are required to extract the contents of those lists and match them with the ``mult`` rows:
+Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists of ``mult`` ids:
 
 ::
 
@@ -379,7 +379,11 @@ Fields like ``Intended Target Name`` that support multiple simultaneous options 
     | [0]         | [3]          |
     +-------------+--------------+
 
-To better understand how this is used, search for SQL commands containing ``JSON_`` in the ``views.py`` files under ``apps``.
+Each such column also has a junction table with one row per id of each observation's
+list, and the search and the counts of the field's values read that table rather than
+the list (:ref:`dev_guide_database_schema_junction_tables`). A sort on the field joins
+``mult`` on the list's first entry
+(:func:`opus_app.apps.tools.sql_builder.json_extract_first`).
 
 NULL and NOT NULL Columns
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -539,6 +543,48 @@ And as predicted a single OPUS ID is likely to appear more than once:
     | coiss_calib  | calibrated/CO...ta/1460960653_1..._CALIB.LBL               |    3793 |  NULL |   NULL |
     | coiss_calib  | calibrated/CO.../data/146096065...3_1_CALIB.IMG            | 4202496 |  NULL |   NULL |
     +--------------+--------------...---------------...-------------------------+---------+-------+--------+
+
+.. _dev_guide_database_schema_junction_tables:
+
+The Junction Tables of the ``MULTIGROUP`` Columns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A ``MULTIGROUP`` column holds a JSON list of ``mult`` ids. Each such column has a junction
+table named ``<table>_<column>``: ``obs_general.target_name`` has
+``obs_general_target_name``, and ``obs_general.target_class`` has
+``obs_general_target_class``. A junction table holds one row for each distinct id in each
+observation's list:
+
+::
+
+    mysql> DESC obs_general_target_name;
+    +----------------+-------------------+------+-----+---------+
+    | Field          | Type              | Null | Key | Default |
+    +----------------+-------------------+------+-----+---------+
+    | mult_id        | smallint unsigned | NO   | PRI | NULL    |
+    | obs_general_id | int unsigned      | NO   | PRI | NULL    |
+    +----------------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``mult_id``: One id of the observation's list, in the column's mult field.
+* ``obs_general_id``: The observation, a foreign key onto ``obs_general.id``.
+
+The primary key is ``(mult_id, obs_general_id)``, so the observations holding one value
+are one range of it. A second key on ``obs_general_id`` lets the import's per-bundle
+steps reach a bundle's rows by joining ``obs_general``. A list that repeats an id has one
+row for it, and an empty list has none.
+
+The import writes a junction table's rows beside the observation's ``obs_general`` row,
+from the same ids as the JSON list. A search for any of some values is a semi-join on the
+junction table, an ``EXISTS`` that reads its primary key. The counts of a field's values
+group the junction table's rows by ``mult_id``, joined to the search's rows of
+``search_results`` when the search has selections. The JSON list stays in
+``obs_general`` for the pages that show it, and a sort on the field orders by the label
+of the list's first entry. Finalization reads the ids in use from the junction table
+when it deletes the ``mult`` values no observation holds. The import's validation step
+compares each observation's list with its junction rows, both ways, and reports any
+observation on which they disagree.
 
 .. _dev_guide_database_schema_obs_preview:
 

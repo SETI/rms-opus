@@ -147,11 +147,17 @@ class SQLBuilderExpressionTests(TestCase):
         self.assertEqual(expr.sql, '`obs_files`.`opus_id` IN %s')
         self.assertEqual(expr.params, [['a', 'b']])
 
-    def test__json_contains(self) -> None:
-        "[test_sql_builder.py] json_contains: the MULTIGROUP membership test"
-        expr = sql_builder.json_contains(sql_builder.column('target_name', 'obs_general'), '1')
-        self.assertEqual(expr.sql, 'JSON_CONTAINS(`obs_general`.`target_name`,%s)')
-        self.assertEqual(expr.params, ['1'])
+    def test__list_contains_any(self) -> None:
+        "[test_sql_builder.py] list_contains_any: a semi-join on the list column's junction table"
+        expr = sql_builder.list_contains_any('obs_general', 'target_name', [4, 9])
+        self.assertEqual(
+            expr.sql,
+            'EXISTS (SELECT 1 FROM `obs_general_target_name` WHERE '
+            '`obs_general_target_name`.`obs_general_id`=`obs_general`.`id` AND '
+            '`obs_general_target_name`.`mult_id` IN (%s,%s))',
+        )
+        self.assertEqual(expr.params, [4, 9])
+        self.assertTrue(all(isinstance(param, int) for param in expr.params))
 
     def test__json_extract_first(self) -> None:
         "[test_sql_builder.py] json_extract_first: the MULTIGROUP join key"
@@ -313,7 +319,11 @@ class SQLBuilderSelectTests(TestCase):
         "[test_sql_builder.py] Select: only INNER and LEFT joins"
         select = sql_builder.Select()
         select.add_column(sql_builder.column('id', 'a'))
-        select.add_from('a').add_join('RIGHT', 'b', None)
+        select.add_from('a').add_join(
+            'RIGHT',
+            'b',
+            sql_builder.columns_equal(sql_builder.column('id', 'a'), sql_builder.column('id', 'b')),
+        )
         with self.assertRaises(ValueError):
             select.build()
 
@@ -347,26 +357,6 @@ class SQLBuilderSelectTests(TestCase):
             ' WHERE `obs_files`.`short_name`=`t1`.`short_name`',
         )
         self.assertEqual(params, ['sess'])
-
-    def test__select_json_table_source(self) -> None:
-        "[test_sql_builder.py] Select: the JSON_TABLE join the mult counts use"
-        select = sql_builder.Select()
-        select.add_column(sql_builder.column('_mult_val_', 'obs_general'))
-        select.add_from('obs_general').add_join(
-            'INNER',
-            sql_builder.JSONTable(
-                source_column=sql_builder.column('target_name', 'obs_general'),
-                value_column='_mult_val_',
-                alias='obs_general',
-            ),
-        )
-        sql, _params = select.build()
-        self.assertEqual(
-            sql,
-            'SELECT `obs_general`.`_mult_val_` FROM `obs_general`'
-            ' INNER JOIN JSON_TABLE(`obs_general`.`target_name`, "$[*]"'
-            ' COLUMNS (`_mult_val_` TEXT PATH "$")) `obs_general`',
-        )
 
 
 class SQLBuilderStatementTests(TestCase):

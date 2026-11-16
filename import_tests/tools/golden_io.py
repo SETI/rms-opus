@@ -45,7 +45,7 @@ from typing import TYPE_CHECKING, Any
 
 import MySQLdb
 
-from opus_import import import_util, mult_fields
+from opus_import import import_util, list_junctions, mult_fields
 from opus_support import collation_key
 
 if TYPE_CHECKING:
@@ -362,7 +362,8 @@ def _mult_columns() -> dict[str, dict[str, tuple[str, bool]]]:
 
     Returns:
         For each table, each such column's field (its qualified name) and whether the
-        column holds a JSON list of ids rather than one.
+        column holds a JSON list of ids rather than one. A ``mult_list`` column's junction
+        table holds one id of the column's field in each row.
     """
     columns: dict[str, dict[str, tuple[str, bool]]] = {
         table: dict(table_columns) for table, table_columns in _OTHER_MULT_COLUMNS.items()
@@ -372,8 +373,11 @@ def _mult_columns() -> dict[str, dict[str, tuple[str, bool]]]:
         for entry in json.loads(schema_file.read_text(encoding='utf-8')):
             if mult_fields.is_mult_column(entry):
                 name = import_util.mult_field_name(table, entry['field_name'], entry)
-                is_list = entry['field_type'] == 'mult_list'
+                is_list = entry['field_type'] == list_junctions.LIST_FIELD_TYPE
                 columns.setdefault(table, {})[entry['field_name']] = (name, is_list)
+                if is_list:
+                    junction = list_junctions.junction_table(table, entry['field_name'])
+                    columns[junction] = {list_junctions.JUNCTION_MULT_COLUMN: (name, False)}
     return columns
 
 

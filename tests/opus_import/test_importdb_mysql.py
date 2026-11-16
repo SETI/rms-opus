@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import re
 import warnings
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -1624,3 +1625,51 @@ def test_the_carry_over_refuses_to_run_without_the_driver(
             'the MySQLdb driver is not installed',
         )
     ]
+
+
+class _ComparingDB(_RecordingDB):
+    """A recording database whose selects return one row of a count and an id."""
+
+    def __init__(self, row: tuple[Any, Any]) -> None:
+        """Hold the row every select returns."""
+        super().__init__()
+        self.row = row
+        self.selects: list[str] = []
+
+    def general_select(self, cmd: str, param_list: Any = None) -> list[tuple[Any, Any]]:
+        """Record the statement and return the row."""
+        assert param_list is None
+        self.selects.append(cmd)
+        return [self.row]
+
+
+def test_the_junction_comparison_anti_joins_both_ways() -> None:
+    """Ids of a list without a junction row, and junction rows whose id the list lacks,
+    are both counted, by observation; the figures come back as integers whatever number
+    type the driver gives."""
+    db = _ComparingDB((Decimal(2), Decimal(17)))
+    found = db.list_junction_mismatches(
+        'obs_general', 'target_name', 'obs_general_target_name', 'id'
+    )
+    assert found == (2, 17)
+    assert all(type(figure) is int for figure in found)
+    (cmd,) = db.selects
+    listed = (
+        "`obs_general` AS `t`, JSON_TABLE(`t`.`target_name`, '$[*]' COLUMNS (`v` INT PATH "
+        "'$')) AS `j`"
+    )
+    assert cmd == (
+        'COUNT(DISTINCT `d`.`obs`), MIN(`d`.`obs`) FROM ('
+        f'SELECT `t`.`id` AS `obs` FROM {listed} WHERE NOT EXISTS (SELECT 1 FROM '
+        '`obs_general_target_name` AS `x` WHERE `x`.`mult_id` = `j`.`v` AND '
+        '`x`.`obs_general_id` = `t`.`id`) UNION ALL '
+        'SELECT `x`.`obs_general_id` FROM `obs_general_target_name` AS `x` WHERE NOT EXISTS '
+        f'(SELECT 1 FROM {listed} WHERE `t`.`id` = `x`.`obs_general_id` AND '
+        '`j`.`v` = `x`.`mult_id`)) AS `d`'
+    )
+
+
+def test_a_junction_table_that_agrees_has_no_first_observation() -> None:
+    """No disagreement gives a count of 0 and no id."""
+    db = _ComparingDB((0, None))
+    assert db.list_junction_mismatches('obs_general', 'target_class', 'j', 'id') == (0, None)

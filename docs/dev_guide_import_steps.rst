@@ -500,7 +500,8 @@ here. It then adds them in three phases:
    index each foreign key needs already exists, and adding the foreign key does not have
    to create it, one table at a time. No packaged schema has such a column: every
    observation table's ``obs_general_id`` leads its primary key or, in
-   ``obs_surface_geometry_target``, a plain key the table is created with.
+   ``obs_surface_geometry_target`` and the junction tables of the ``mult_list``
+   columns, a plain key the table is created with.
 2. **The foreign keys**, one at a time with ``foreign_key_checks`` off, after every
    plain key: with the checks off, adding a foreign key is an in-place change that does
    not read the rows already there, and each one takes an exclusive lock on
@@ -582,8 +583,9 @@ every append runs it again. It has three parts, in this order:
    :func:`~opus_import.steps.do_finalize_mult.referenced_mult_ids` finds the ids in use:
    it reads each observation table once, through an unbuffered cursor
    (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.stream_select`), and collects every
-   mult column's distinct ids, reading a ``mult_list`` column's ids out of its JSON list
-   in the same scan. A pinned field keeps every row its list gives, since the list is
+   mult column's distinct ids. A ``mult_list`` column's ids are read from its junction
+   table instead (:ref:`dev_guide_database_schema_junction_tables`), whose primary key
+   leads with the id. A pinned field keeps every row its list gives, since the list is
    the intended set of choices; the absent value the import adds to a pinned field whose
    list has none, under
    :data:`~opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted once no
@@ -914,6 +916,16 @@ The checks, in this order:
     import writes one for every observation, and the results pages read an
     observation's preview images from it. Any such row is an error.
 
+:func:`~opus_import.steps.do_validate.validate_junctions`
+    For each ``mult_list`` column, compares the distinct ids of each observation's JSON
+    list with its rows of the column's junction table, both ways
+    (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.list_junction_mismatches`): an id
+    with no junction row, and a junction row whose id the list lacks. The search and the
+    counts of the field's values read the junction table, and the pages that show the
+    list read the JSON, so the two must agree. Disagreement is an error naming the
+    junction table, how many observations disagree and the least ``obs_general`` id
+    among them; a missing junction table is an error too.
+
 :func:`~opus_import.steps.do_validate.validate_unique_opus_ids`
     Groups ``obs_general`` by ``opus_id`` and reports any OPUS ID more than one row
     carries, with how many there are and the first ten. ``opus_id`` carries a plain key,
@@ -1020,8 +1032,9 @@ Its functions:
 :func:`~opus_import.steps.do_import_tables.create_tables_for_import`
     Creates the mult tables if the schema lacks them
     (:func:`~opus_import.mult_fields.create_mult_tables`), then every table a bundle
-    needs that the schema lacks. It returns the schemas it read and the table names in
-    order, which is what the index importer walks.
+    needs that the schema lacks, each followed by the junction tables of its
+    ``mult_list`` columns. It returns the schemas it read and the table names in order,
+    which is what the index importer walks; neither names a junction table.
 
 .. _dev_guide_import_steps_scorched_earth:
 
@@ -1059,8 +1072,9 @@ Its functions:
     statement per table that joins ``obs_general`` on ``obs_general_id``
     (:meth:`~opus_import.importdb.super.ImportDBSuper.delete_joined_rows`), selecting
     by the bundle and the chunk's range of ids -- for ``obs_files``, every file of each
-    observation, and for ``obs_surface_geometry_target``, every body's row of each,
-    through the key on ``obs_general_id`` it is created with -- followed by the chunk's
+    observation, and for ``obs_surface_geometry_target`` and each junction table of a
+    ``mult_list`` column, every row of each, through the key on ``obs_general_id`` the
+    table is created with -- followed by the chunk's
     ``obs_general`` rows. Each statement is its
     own transaction, so none holds a whole large bundle's undo, and none reads rows
     outside its range -- which matters on a fresh import, whose tables have no other
@@ -1116,10 +1130,13 @@ Importing every observation one primary index file describes.
     holds at most that many rows of a table at once rather than a whole index's. A
     surface geometry row arrives under its body's category and waits with
     ``obs_surface_geometry_target``'s rows
-    (:func:`~opus_import.surface_geometry.physical_table`).
-    :meth:`~opus_import.steps.do_import_index.TableRowSink.finish` loads what is still
-    waiting, table by table in the order walked. Tables therefore load in no fixed order relative to one
-    another during the index, which the foreign keys tolerate because a bundle loads with
+    (:func:`~opus_import.surface_geometry.physical_table`). An ``obs_general`` row also
+    gives each ``mult_list`` column's junction table one row per distinct id of its list
+    (:func:`~opus_import.list_junctions.junction_rows`), from the row's final values, so
+    the junction table holds the ids the JSON column holds whichever process computed
+    the row. :meth:`~opus_import.steps.do_import_index.TableRowSink.finish` loads what is
+    still waiting, table by table in the order walked, then the junction tables. Tables
+    therefore load in no fixed order relative to one another during the index, which the foreign keys tolerate because a bundle loads with
     their checks off (:ref:`dev_guide_import_steps_do_import`). An index that fails
     partway is taken back by
     :meth:`~opus_import.steps.do_import_index.TableRowSink.discard`, which deletes every

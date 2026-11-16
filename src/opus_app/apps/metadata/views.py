@@ -72,6 +72,7 @@ from opus_app.apps.tools.app_utils import (
 )
 from opus_app.apps.tools.db_utils import TARGET_COLUMN, resolve_category
 from opus_app.apps.tools.import_constants import get_table_name, mult_table
+from opus_import import list_junctions
 from opus_support import (
     format_unit_value,
     get_default_unit,
@@ -336,27 +337,19 @@ def api_get_mult_counts(
 
         # The database column, not the model field name: the two differ for a
         # field declared with db_column.
-        param_column = sql_builder.column(
-            table_model._meta.get_field(param_info.name).column, table_name
-        )
+        param_column_name = table_model._meta.get_field(param_info.name).column
 
         select = sql_builder.Select()
+        source: sql_builder.TableSource
         if param_info.form_type == 'MULTIGROUP':
-            # This extracts the list of mult ids from the JSON list and creates a new
-            # column with them that is then summarized by count.
-            counted_column = sql_builder.column('_mult_val_', table_name)
-            select.add_column(counted_column)
-            select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
-            select.add_from(category.source).add_join(
-                'INNER',
-                sql_builder.JSONTable(
-                    source_column=param_column, value_column='_mult_val_', alias=table_name
-                ),
-            )
+            # The column holds a list of ids, and its junction table one row per id of
+            # each observation's list, so the counts group the junction table's rows.
+            counted_table = list_junctions.junction_table(table_name, param_column_name)
+            counted_column = sql_builder.column(list_junctions.JUNCTION_MULT_COLUMN, counted_table)
+            source = counted_table
         else:
-            counted_column = param_column
-            select.add_column(counted_column)
-            select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
+            counted_table = table_name
+            counted_column = sql_builder.column(param_column_name, table_name)
             source = category.source
             if category.is_selector:
                 # The selector counts every row of its table by the primary key's first
@@ -367,8 +360,10 @@ def api_get_mult_counts(
                 source = sql_builder.AliasedTable(
                     category.table, category.alias, ignore_for_group_by=('PRIMARY',)
                 )
-            select.add_from(source)
-        category.restrict(select)
+            category.restrict(select)
+        select.add_column(counted_column)
+        select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
+        select.add_from(source)
 
         search_id = get_search_id(selections, extras, api_code=api_code)
 
@@ -386,7 +381,7 @@ def api_get_mult_counts(
             # The check above returned already if the search could not be built.
             assert search_id is not None
             select.add_from(sql_builder.search_results_source(search_id))
-            select.add_where(search_results_join_condition(table_name))
+            select.add_where(search_results_join_condition(counted_table))
 
         select.add_group_by(counted_column)
 
@@ -398,7 +393,6 @@ def api_get_mult_counts(
 
         mult_result_list = []
         for row in results:
-            # A MULTIGROUP column's ids come out of JSON_TABLE as text.
             mult_id = row[0]
             mult = mult_rows.get(int(mult_id)) if mult_id is not None else None
             if mult is None:  # pragma: no cover - import error
