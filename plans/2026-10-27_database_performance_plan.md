@@ -8830,3 +8830,30 @@ Nothing above this line is rewritten by an executor.
   - **Kept**: the full import is unchanged within its variation, no heavy guard moved by
     more than 3%, and an update with its switch and purge is 13–22 times faster than the
     full import it replaces.
+- **An independent review of cecfab54 (2026-11-16)**, in place of CodeRabbit's, which skips
+  the pull request once its base is `db-perf`: its 105 reviewable files exceed CodeRabbit's
+  cap of 100, and its incremental review does not apply. The review found no state in
+  which an unserved generation's rows reach a response, and confirmed the purge keeps
+  `revertible` set until the last retired row is gone. Its low findings, at the
+  orchestrator's decisions:
+  - *Fixed:* `--switch-generation` with nothing pending ran while a purge was unfinished,
+    and `promote_generation.sh`'s pre-check let it stop the web service to change nothing.
+    The switch and `generation_command_problem` refuse it with `unfinished_purge_problem`'s
+    message (unit, pre-check and import tests).
+  - *Fixed:* the append's refusal and `--delete-bundles`'s, during a revertible switch,
+    named the revert and the abandon, which an unfinished purge refuses; they say the purge
+    also finishes a purge that stopped part way.
+  - *Recorded:* the begin window above can last longer than one request: the empty
+    search's mult counts, range endpoints and product types are cached under keys that
+    name no generation, so a request inside the window would keep a pending generation's
+    values in the cache until a switch or a revert flushes it; the abandon flushes
+    nothing.
+  - *Recorded:* a switch made while one of `AUX_TABLES` had no live table leaves its
+    `__prev` set incomplete, which `unfinished_purge_problem` then reads as a purge
+    started, refusing a served rebuild with that message; the revert already failed in that
+    state.
+  - *Recorded:* the six gated statements are tested against a database only by
+    `integration_tests/apps_db_tests/test_generations.py`, which the self-hosted
+    integration job runs on every push; the unit suite tests the reader alone.
+  - *Recorded:* child rows with no `obs_general_rows` row, which a killed append (not a
+    generation) can leave, are not hidden outside an update, as in PR-22.

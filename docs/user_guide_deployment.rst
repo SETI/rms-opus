@@ -634,7 +634,8 @@ only when you switch it in. The steps, from the deploy directory::
    the update built, or throw the generation away (below).
 3. **Promote.** ``promote_generation.sh`` first asks whether the switch would run, and
    stops nothing when it would be refused: no generation ready to switch, another
-   generation command running, or an ``opus_import`` still writing the update. It then
+   generation command running, an ``opus_import`` still writing the update, or a purge
+   that stopped part way, which ``opus_import --purge-generations`` finishes. It then
    stops the web service, switches the generation in, restarts the cache service, starts
    the web service and warms the common searches. The site is down only for the switch.
    If the switch fails the web service stays stopped: run ``promote_generation.sh``

@@ -433,9 +433,9 @@ def test_an_interrupted_purge_refuses_a_revert_and_finishes_when_run_again(
 ) -> None:
     """Killed after each of its steps in turn, each run redoing what the last did: until
     the last step the switch stays revertible, which keeps the web application joining the
-    view, but the __prev tables are gone from the first, so the revert, the begin and a
-    rebuild of the served auxiliary tables are refused, changing nothing; a run with no
-    fault finishes the purge."""
+    view, but the __prev tables are gone from the first, so the revert, the begin, the
+    switch and a rebuild of the served auxiliary tables are refused, changing nothing; a
+    run with no fault finishes the purge."""
     reimported, dropped = bundles
     copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'purge_fault')
     schema = copy.schema
@@ -458,7 +458,11 @@ def test_an_interrupted_purge_refuses_a_revert_and_finishes_when_run_again(
             assert _state(db_credentials, schema)[2:] == (2, None, None, 0)
             continue
         assert _state(db_credentials, schema)[2:] == (2, None, None, 1), step
-        for arguments in (('--revert-generation',), ('--begin-generation',)):
+        for arguments in (
+            ('--revert-generation',),
+            ('--begin-generation',),
+            ('--switch-generation',),
+        ):
             refused = copy.step(*arguments)
             assert refused.returncode == do_generation.GENERATION_REFUSED_EXIT_STATUS, arguments
             assert 'the purge of the rows generation 2 retired has started' in refused.stdout

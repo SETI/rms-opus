@@ -665,9 +665,10 @@ tables are not all there and no ``__new`` table beside them
 (:func:`~opus_import.steps.do_generation.unfinished_purge_problem`), since the purge drops
 every ``__new`` table before the first ``__prev`` one. The served generation's rows are
 whole, but the previous generation's retired rows may be part deleted, so the revert is
-refused, and so are the begin and every rebuild of the served auxiliary tables or the cart
-(a rebuild that stopped part way would leave ``__new`` tables marking a part-way revert),
-each naming the purge, which finishes it.
+refused, and so are the begin, the switch (which would only stop the web service to change
+nothing) and every rebuild of the served auxiliary tables or the cart (a rebuild that
+stopped part way would leave ``__new`` tables marking a part-way revert), each naming the
+purge, which finishes it.
 
 **The abandon** deletes the rows P added, clears ``removed_generation = P`` and
 ``retired_generation = P``, deletes P's registry rows, drops the ``__new`` tables,

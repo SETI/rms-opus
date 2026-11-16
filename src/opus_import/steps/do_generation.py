@@ -597,7 +597,8 @@ def switch_generation(ctx: ImportContext) -> None:
     and marks the switch revertible. With no pending generation and a revertible switch,
     the last statement has already run: the other steps run again for the served
     generation, which finds nothing to do after a whole switch and completes a revert
-    that stopped part way.
+    that stopped part way; that is refused while a purge is unfinished
+    (`unfinished_purge_problem`), which a rerun of the purge finishes instead.
 
     Parameters:
         ctx: The import run's context.
@@ -607,7 +608,9 @@ def switch_generation(ctx: ImportContext) -> None:
     """
     with generation_command(ctx, '--switch-generation'):
         state = require_state(ctx)
-        refusal = _switch_refusal(state)
+        db = ctx.db
+        assert db is not None
+        refusal = _switch_refusal(state) or unfinished_purge_problem(db, state)
         if refusal is not None:
             raise GenerationRefusedError(f'--switch-generation refused: {refusal}')
         if state.pending is None:
@@ -830,8 +833,8 @@ def generation_command_problem(option: str) -> str | None:
     The deploy chain asks before it stops the web service, so a command that would change
     nothing leaves the site up. It asks what the command itself checks before it changes
     anything: the version row, the generation lock, the invocations writing the pending
-    generation, and for a revert, whether a purge has started. The connection is the
-    import's own, opened read-only.
+    generation, and whether a purge has started. The connection is the import's own,
+    opened read-only.
 
     Parameters:
         option: ``--switch-generation`` or ``--revert-generation``.
@@ -863,6 +866,6 @@ def generation_command_problem(option: str) -> str | None:
             return writers
         if option == '--revert-generation':
             return _revert_refusal(state) or unfinished_purge_problem(db, state)
+        return _switch_refusal(state) or unfinished_purge_problem(db, state)
     finally:
         db.close()
-    return _switch_refusal(state)

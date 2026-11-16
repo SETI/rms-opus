@@ -813,8 +813,9 @@ def test_an_interrupted_switch_stops_after_its_step_and_serves_nothing(
 
 
 def test_a_switched_generation_is_completed_not_refused(switch_steps: list[str]) -> None:
-    """With nothing pending and the switch revertible, the steps run again for it."""
-    db = _StateDB(_ready(generation=2, revertible=1))
+    """With nothing pending and the switch revertible, its __prev tables whole, the steps
+    run again for it."""
+    db = _StateDB(_ready(generation=2, revertible=1), tables=_PREV)
     do_generation.switch_generation(_context(db))
     assert switch_steps == ['swap', 'cart 2', 'reset', 'view 2']
     assert not any(event.startswith('update') for event in db.events)
@@ -1006,6 +1007,8 @@ def test_an_interrupted_purge_refuses_a_revert_and_a_begin_and_finishes_when_run
             do_generation.revert_generation(ctx)
         with pytest.raises(do_generation.GenerationRefusedError, match='holds retired rows'):
             do_generation.begin_generation(ctx)
+        with pytest.raises(do_generation.GenerationRefusedError, match='purge of the rows'):
+            do_generation.switch_generation(ctx)
         assert [event for event in purging.events if event not in ('lock', 'unlock')] == []
     purging.events.clear()
     assert do_generation_purge.purge_generations(_context(purging))
@@ -1317,18 +1320,21 @@ def test_the_deploy_chains_pre_check_names_what_the_command_would_refuse(
     assert db.events == []
 
 
-def test_the_deploy_chains_pre_check_refuses_a_revert_once_the_purge_has_started(
+def test_the_deploy_chains_pre_check_refuses_a_switch_or_revert_once_the_purge_has_started(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A revertible switch whose __prev tables are gone is not stopped for: the revert
-    would be refused, and the purge finishes the work while the site serves."""
+    and the switch would be refused, and the purge finishes the work while the site
+    serves."""
     db = _ReadOnlyStateDB(_ready(generation=2, revertible=1), lock_holder=None, tables=())
     monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: db)
     monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
     found = do_generation.generation_command_problem('--revert-generation')
     assert found is not None
     assert 'the purge of the rows generation 2 retired has started' in found
-    assert do_generation.generation_command_problem('--switch-generation') is None
+    found = do_generation.generation_command_problem('--switch-generation')
+    assert found is not None
+    assert 'the purge of the rows generation 2 retired has started' in found
     assert db.closed
     assert db.events == []
 

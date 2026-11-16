@@ -187,7 +187,8 @@ def choose_import_path(ctx: ImportContext) -> bool:
                 'fatal',
                 f'"{db.db_schema}" can still revert its switch to generation {state.generation}, '
                 'and an append would make that impossible: "opus_import --purge-generations" '
-                'ends the revert, or "--revert-generation" then "--abandon-generation" undoes it',
+                'ends the revert, or finishes a purge that stopped part way; before a purge '
+                'starts, "--revert-generation" then "--abandon-generation" undoes it',
             )
             ctx.import_has_bad_data = True
             return False
@@ -969,8 +970,8 @@ def _not_revertible(ctx: ImportContext, option: str) -> bool:
         'fatal',
         f'{option} refused: the switch to generation {state.generation} can still be '
         'reverted, and deleting rows now would make that impossible; "opus_import '
-        '--purge-generations" ends the revert, or "--revert-generation" then '
-        '"--abandon-generation" undoes it',
+        '--purge-generations" ends the revert, or finishes a purge that stopped part way; '
+        'before a purge starts, "--revert-generation" then "--abandon-generation" undoes it',
     )
     ctx.import_has_bad_data = True
     return False
