@@ -2,12 +2,14 @@
 
 import json
 import logging
+from collections.abc import Callable
 from typing import Any
 from unittest import TestCase
 
 import requests
 from django.conf import settings
 from django.core.cache import cache
+from django.db import OperationalError, connection
 from rest_framework.test import RequestsClient
 
 from opus_app.apps.tools.app_utils import (
@@ -16,8 +18,21 @@ from opus_app.apps.tools.app_utils import (
     http400_search_params_invalid,
     http400_unknown_slug,
 )
+from opus_app.apps.tools.db_utils import MYSQL_EXECUTION_TIME_EXCEEDED
 
 from .api_test_helper import ApiTestHelper, go_live_target
+
+#: The execution-time limit, in milliseconds, the string-choices time-out cases give the
+#: statement joined to the search's results. It marks that statement for
+#: `ApiSearchTests._run_stringsearchchoices_timed_out`, which interrupts it as the server
+#: does when a statement outlasts its limit; the setUp's limit on the other statement,
+#: 1000000, is a different hint.
+_JOINED_TIME_LIMIT_MS = 1
+
+#: The server's message for a statement interrupted at its execution-time limit.
+_EXECUTION_TIME_EXCEEDED_MESSAGE = (
+    'Query execution was interrupted, maximum statement execution time exceeded'
+)
 
 
 class ApiSearchTests(ApiTestHelper, TestCase):
@@ -95,6 +110,42 @@ class ApiSearchTests(ApiTestHelper, TestCase):
         print(new_choices)
         jdata['choices'] = new_choices
         self.assertEqual(expected, jdata)
+
+    def _run_stringsearchchoices_timed_out(self, url: str, expected: dict[str, Any]) -> None:
+        """Assert the choices a request gives when its joined statement outlasts its limit.
+
+        The statement joined to the search's results carries the limit
+        `_JOINED_TIME_LIMIT_MS`, and the server is made to interrupt it as it does a
+        statement that outlasts its limit, with the error the endpoint falls back on. A
+        real 1 ms limit is beaten by any statement that runs in less, so whether it fired
+        would depend on this machine's speed and on what the buffer pool holds. Every
+        other statement runs as it is. The endpoint runs in this process, which is where
+        the interruption is made.
+
+        Parameters:
+            url: Path of the API endpoint.
+            expected: Choices that must all appear in the response.
+        """
+        if go_live_target():  # pragma: no cover - remote server
+            self.skipTest('the time-out is made inside the application in this process')
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = _JOINED_TIME_LIMIT_MS
+        hint = f'MAX_EXECUTION_TIME({_JOINED_TIME_LIMIT_MS})'
+        interrupted: list[str] = []
+
+        def interrupt_joined_statement(
+            execute: Callable[..., Any], sql: str, params: Any, many: bool, context: Any
+        ) -> Any:
+            """Interrupt the joined statement, and run every other one."""
+            if hint in sql:
+                interrupted.append(sql)
+                raise OperationalError(
+                    MYSQL_EXECUTION_TIME_EXCEEDED, _EXECUTION_TIME_EXCEEDED_MESSAGE
+                )
+            return execute(sql, params, many, context)
+
+        with connection.execute_wrapper(interrupt_joined_statement):
+            self._run_stringsearchchoices_subset(url, expected)
+        self.assertEqual(len(interrupted), 1)
 
         ###################################################
         ######### /__api/normalizeinput API TESTS #########
@@ -1114,7 +1165,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
 
     def test__api_stringsearchchoices_bundleid_002_coiss_timeout(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COISS timeout"
-        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
+        # The joined statement is interrupted at its limit, so every observation answers.
         url = (
             '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+ISS&reqno=123'
         )
@@ -1124,11 +1175,11 @@ class ApiSearchTests(ApiTestHelper, TestCase):
             'truncated_results': False,
             'reqno': 123,
         }
-        self._run_stringsearchchoices_subset(url, expected)
+        self._run_stringsearchchoices_timed_out(url, expected)
 
     def test__api_stringsearchchoices_bundleid_002_couvis_timeout(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid 002 instrumentid COUVIS timeout"
-        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
+        # The joined statement is interrupted at its limit, so every observation answers.
         url = '/__api/stringsearchchoices/bundleid.json?bundleid=002&instrument=Cassini+UVIS&reqno=123'
         expected = {
             'choices': ['COISS_2<b>002</b>', 'COUVIS_0<b>002</b>'],
@@ -1136,7 +1187,7 @@ class ApiSearchTests(ApiTestHelper, TestCase):
             'truncated_results': False,
             'reqno': 123,
         }
-        self._run_stringsearchchoices_subset(url, expected)
+        self._run_stringsearchchoices_timed_out(url, expected)
 
     def test__api_stringsearchchoices_bundleid_o_0017_cache(self) -> None:
         "[test_search_api.py] /api/stringsearchchoices: bundleid O_0017 cached reqno"
