@@ -58,12 +58,19 @@ SIDES = ('before', 'after')
 SCALES = ('fixture', 'test', 'complete')
 BRANDS = ('mysql',)
 
+#: The run kinds of an incremental update into an import generation: the update, from the
+#: generation's start to its stamp, and the switch, with the purge after it.
+GENERATION_UPDATE_KIND = 'generation_update'
+GENERATION_SWITCH_KIND = 'generation_switch'
+
 #: The suffix of a metric that is better higher; every other metric is better lower.
 HIGHER_IS_BETTER_SUFFIX = '_per_s'
 
 #: Environment entries that must not change within one result file: a file whose runs
 #: came from two commits, two interpreters, two servers, imports shared among importers
-#: in two ways, or web runs that warmed or promoted differently is not one label's runs.
+#: in two ways, incremental updates of two schemas or bundle sets mixed with each other or
+#: with full imports, or web runs that warmed, promoted or reset differently is not one
+#: label's runs.
 PINNED_ENVIRONMENT_KEYS = (
     'git_sha',
     'git_dirty',
@@ -75,19 +82,25 @@ PINNED_ENVIRONMENT_KEYS = (
     'import_keys',
     'importers',
     'coordinator_importers',
+    'generation_schema',
+    'generation_update',
     'warm_states',
     'promotion_carts',
     'promotion_cart_rows',
+    'cold_states',
 )
 
 #: What a pinned entry is compared as in a file whose earlier runs do not record it: a
-#: run that records no ``import_keys`` set none, and one that records no importer count
-#: imported in one process. The web runs' entries have none, since a file's import runs
-#: record neither.
+#: run that records no ``import_keys`` set none, one that records no importer count
+#: imported in one process, and one that records no generation schema or update was no
+#: incremental update. The web runs' entries have none, since a file's import runs
+#: record none of them.
 PINNED_ENVIRONMENT_DEFAULTS: dict[str, Any] = {
     'import_keys': {},
     'importers': None,
     'coordinator_importers': None,
+    'generation_schema': None,
+    'generation_update': None,
 }
 
 _RESULT_NAME = re.compile(

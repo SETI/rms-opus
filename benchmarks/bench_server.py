@@ -1,6 +1,7 @@
-"""The MySQL server the harness owns, the schemas on it, and the configuration it writes.
+"""The MySQL server the harness owns, and the schemas on it.
 
-`benchmarks.app_servers` holds the other two owned servers, memcached and gunicorn.
+`benchmarks.app_servers` holds the other two owned servers, memcached and gunicorn, and
+`benchmarks.opus_config_file` the ``OPUS_CONFIG`` the harness writes.
 Nothing here touches a server the harness did not start. The MySQL server runs from
 the generic tarball named in ``scenarios/server.toml``, with its own data directory,
 socket and ``my.cnf`` rendered from ``scenarios/my.cnf.template``; the import and
@@ -42,7 +43,6 @@ from benchmarks.app_servers import (
     wait_for,
 )
 from benchmarks.results import SCENARIOS_DIR, filesystem_type
-from import_tests.tools import build_run
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping, Sequence
@@ -643,6 +643,9 @@ def drop_schema(server: MysqlServer, schema: str) -> None:
         query(connection, f'DROP DATABASE IF EXISTS {quote_identifier(schema)}')
 
 
+#: The table holding a schema's one version row.
+SCHEMA_VERSION_TABLE = 'schema_version'
+
 #: The only version-row state a side serves, and the only one the harness restamps. The
 #: harness reads it from the schema as text rather than importing a side's code, so it
 #: repeats the value.
@@ -674,12 +677,12 @@ def restamp_version(server: MysqlServer, schema: str, version: int) -> str | Non
         exists = query(
             connection,
             'SELECT COUNT(*) FROM information_schema.TABLES '
-            "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'schema_version'",
-            [schema],
+            'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+            [schema, SCHEMA_VERSION_TABLE],
         )[0][0]
         if exists == 0:
             return None
-        table = f'{quote_identifier(schema)}.schema_version'
+        table = f'{quote_identifier(schema)}.{quote_identifier(SCHEMA_VERSION_TABLE)}'
         states = query(connection, f'SELECT state FROM {table}')  # nosec B608 - quoted identifier
         if len(states) == 0:
             return None
@@ -692,6 +695,101 @@ def restamp_version(server: MysqlServer, schema: str, version: int) -> str | Non
         if state == SCHEMA_ROW_READY_STATE:
             query(connection, f'UPDATE {table} SET version = %s', [version])  # nosec B608 - quoted identifier
         return state
+
+
+#: A view definition's ``DEFINER`` clause, as ``SHOW CREATE VIEW`` prints it: the
+#: account in backquotes, a backquote inside a name doubled, and the space after it.
+_DEFINER_CLAUSE = re.compile(r'DEFINER=`(?:[^`]|``)*`@`(?:[^`]|``)*`\s*')
+
+
+def portable_view_definition(definition: str, source: str, target: str) -> str:
+    """Rewrite a view's ``SHOW CREATE VIEW`` text so that it creates the view in another schema.
+
+    Every name the text qualifies with the source schema is qualified with the target
+    instead, so the view reads the target's tables. The ``DEFINER`` clause is dropped, so
+    the view is defined by the account that creates it and creating it needs no privilege
+    to name another account (``SET_USER_ID``); its algorithm and ``SQL SECURITY`` clause
+    are kept.
+
+    Parameters:
+        definition: The ``Create View`` column of ``SHOW CREATE VIEW`` on the source.
+        source: The schema the view was read from.
+        target: The schema it is created in.
+
+    Returns:
+        The ``CREATE VIEW`` statement for the target.
+    """
+    qualified = definition.replace(f'{quote_identifier(source)}.', f'{quote_identifier(target)}.')
+    return _DEFINER_CLAUSE.sub('', qualified, count=1)
+
+
+def copy_views(connection: Any, source: str, target: str) -> list[str]:
+    """Create every view of one schema in another, whose tables already exist.
+
+    Each view is created from ``SHOW CREATE VIEW`` on the source, rewritten for the target
+    (`portable_view_definition`), in name order.
+
+    Parameters:
+        connection: An open connection.
+        source: The schema whose views are copied.
+        target: The schema they are created in.
+
+    Returns:
+        The views created, in the order created.
+    """
+    views = [
+        str(row[0])
+        for row in query(
+            connection,
+            'SELECT TABLE_NAME FROM information_schema.TABLES '
+            "WHERE TABLE_SCHEMA = %s AND TABLE_TYPE = 'VIEW' ORDER BY TABLE_NAME",
+            [source],
+        )
+    ]
+    for view in views:
+        definition = query(
+            connection, f'SHOW CREATE VIEW {quote_identifier(source)}.{quote_identifier(view)}'
+        )[0][1]
+        query(connection, portable_view_definition(str(definition), source, target))
+    return views
+
+
+#: The base table holding the observations of a schema whose ``obs_general`` is a view of
+#: the rows in the import generation it serves. The harness reads the schema rather than
+#: importing a side's code, so it repeats the name.
+OBS_GENERAL_ROWS_TABLE = 'obs_general_rows'
+
+#: ``obs_general``, the base table holding the observations of every other schema.
+OBS_GENERAL_TABLE = 'obs_general'
+
+#: The columns of `OBS_GENERAL_ROWS_TABLE` naming the import generation that added a row
+#: and the one that retired it (NULL while no generation has).
+ADDED_GENERATION_COLUMN = 'added_generation'
+REMOVED_GENERATION_COLUMN = 'removed_generation'
+
+
+def obs_general_table(connection: Any, schema: str) -> str:
+    """Return the base table that holds a schema's observations, in whichever generation.
+
+    A schema whose ``obs_general`` is a view shows only the rows of the generation it
+    serves, and none at all before its version row is written, so the harness's checks
+    on what an import wrote read the base table.
+
+    Parameters:
+        connection: An open connection.
+        schema: The schema.
+
+    Returns:
+        `OBS_GENERAL_ROWS_TABLE` when the schema has that base table, else
+        `OBS_GENERAL_TABLE`.
+    """
+    found = query(
+        connection,
+        'SELECT COUNT(*) FROM information_schema.TABLES '
+        "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND TABLE_TYPE = 'BASE TABLE'",
+        [schema, OBS_GENERAL_ROWS_TABLE],
+    )
+    return OBS_GENERAL_ROWS_TABLE if int(found[0][0]) > 0 else OBS_GENERAL_TABLE
 
 
 def clone_schema(
@@ -709,8 +807,9 @@ def clone_schema(
     ``foreign_key_checks`` off so that tables may be created and filled in any order;
     then its rows are copied with ``INSERT ... SELECT``, naming the stored columns only,
     since MySQL computes a generated column and refuses a value for one. The copies run
-    over several connections at once. The target is dropped first if it exists. Last,
-    a copied version row is restamped to `version` (`restamp_version`).
+    over several connections at once. Every view of the source is created in the target
+    once its tables exist (`copy_views`). The target is dropped first if it exists.
+    Last, a copied version row is restamped to `version` (`restamp_version`).
 
     Parameters:
         server: The owned server.
@@ -722,7 +821,7 @@ def clone_schema(
         connections: How many tables are copied at once.
 
     Returns:
-        The copy's wall-clock seconds, creation and restamp included.
+        The copy's wall-clock seconds, creation, views and restamp included.
 
     Raises:
         ServerError: If the source has no tables.
@@ -750,6 +849,7 @@ def clone_schema(
                 f'SHOW CREATE TABLE {quote_identifier(source)}.{quote_identifier(table)}',
             )[0][1]
             query(connection, definition)
+        copy_views(connection, source, target)
 
     def copy(table: str) -> None:
         """Copy one table's rows on a connection of its own.
@@ -780,148 +880,6 @@ def clone_schema(
     if version is not None:
         restamp_version(server, target, version)
     return time.perf_counter() - started
-
-
-#: The ``[import]`` keys `write_opus_config` sets, which name the logs a run's results
-#: are read from, so ``--import-key`` refuses them.
-HARNESS_IMPORT_KEYS = ('log_file', 'debug_log_file')
-
-
-def _import_key_value(text: str) -> object:
-    """Return an ``--import-key`` value as the type TOML would give it.
-
-    Parameters:
-        text: The value as written.
-
-    Returns:
-        A boolean for ``true`` or ``false``, a whole number, a finite decimal number, or
-        else the text itself.
-    """
-    if text in ('true', 'false'):
-        return text == 'true'
-    with contextlib.suppress(ValueError):
-        return int(text)
-    with contextlib.suppress(ValueError):
-        number = float(text)
-        if math.isfinite(number):
-            return number
-    return text
-
-
-def parse_import_keys(pairs: Sequence[str]) -> dict[str, object]:
-    """Read ``--import-key`` arguments into the ``[import]`` keys they set.
-
-    Parameters:
-        pairs: Each ``KEY=VALUE``.
-
-    Returns:
-        The keys, each value a whole number, a finite decimal number, a boolean or a
-        string, in argument order.
-
-    Raises:
-        ValueError: If an argument has no ``=``, or its key is not a TOML bare key, or
-            is one of `HARNESS_IMPORT_KEYS`.
-    """
-    keys: dict[str, object] = {}
-    for pair in pairs:
-        key, separator, text = pair.partition('=')
-        if not separator or not key:
-            raise ValueError(f'--import-key takes KEY=VALUE, not {pair!r}')
-        if not re.fullmatch(r'[A-Za-z0-9_-]+', key):
-            raise ValueError(f'--import-key {pair!r}: {key!r} is not an [import] key name')
-        if key in HARNESS_IMPORT_KEYS:
-            raise ValueError(
-                f'--import-key {pair!r}: the harness sets {key} itself and reads that log'
-            )
-        keys[key] = _import_key_value(text)
-    return keys
-
-
-def write_opus_config(
-    path: Path,
-    *,
-    schema: str,
-    pds3_holdings: Path,
-    pds4_holdings: Path,
-    run_dir: Path,
-    cache_location: str,
-    extra_import: Mapping[str, object] | None = None,
-) -> Path:
-    """Write the ``OPUS_CONFIG`` a harness-run import or web application reads.
-
-    Every directory it names is created under `run_dir`, so each run starts with an
-    empty log directory.
-
-    Parameters:
-        path: The file to write.
-        schema: The schema on the owned server.
-        pds3_holdings: The PDS3 holdings root.
-        pds4_holdings: The PDS4 holdings root.
-        run_dir: The run's own scratch directory.
-        cache_location: The owned memcached's ``host:port``.
-        extra_import: Further ``[import]`` keys and their values -- an integer, a
-            boolean or a string -- or None for none. One the file sets itself
-            (``log_file``, ``debug_log_file``) takes this value instead. A side whose
-            configuration does not know a key refuses the file, so a session sets one
-            only for a side that does.
-
-    Returns:
-        The path written.
-    """
-    log_dir = run_dir / 'logs'
-    for directory in (log_dir, run_dir / 'tar', run_dir / 'manifest', run_dir / 'static'):
-        directory.mkdir(parents=True, exist_ok=True)
-
-    def toml(value: object) -> str:
-        """Return a TOML basic string."""
-        return f'"{build_run.toml_string(str(value))}"'
-
-    import_keys: dict[str, object] = {
-        'log_file': str(log_dir / 'opus_import.log'),
-        'debug_log_file': str(log_dir / 'opus_import_debug.log'),
-        **(extra_import or {}),
-    }
-    lines = [
-        '[database]',
-        'brand = "MySQL"',
-        f'host = {toml(DB_HOST)}',
-        'database = ""',
-        f'schema = {toml(schema)}',
-        f'user = {toml(DB_USER)}',
-        f'password = {toml(DB_PASSWORD)}',
-        '',
-        '[paths]',
-        f'pds3_holdings = {toml(pds3_holdings)}',
-        f'pds4_holdings = {toml(pds4_holdings)}',
-        f'opus_log_file = {toml(log_dir / "opus_log.txt")}',
-        f'import_log_dir = {toml(log_dir)}',
-        f'tar_dir = {toml(str(run_dir / "tar") + "/")}',
-        f'manifest_dir = {toml(str(run_dir / "manifest") + "/")}',
-        f'last_blog_update_file = {toml(run_dir / "last_blog_update.txt")}',
-        f'notification_file = {toml(run_dir / "notification.html")}',
-        f'opus_static_root = {toml(run_dir / "static")}',
-        '',
-        '[django]',
-        'secret_key = "benchmark-harness-throwaway-key"',
-        'debug = false',
-        'allowed_hosts = ["127.0.0.1", "localhost"]',
-        'cache_server_prefix = "benchmarks"',
-        f'cache_location = {toml(cache_location)}',
-        'public_url = "https://opus.invalid/"',
-        'product_http_path = "https://opus.invalid/"',
-        'viewmaster_url = "https://viewmaster.invalid/"',
-        'tar_file_url = "https://opus.invalid/tar/"',
-        'log_file_level = "WARNING"',
-        'log_console_level = "WARNING"',
-        'log_django_level = "WARNING"',
-        '',
-        '[import]',
-        *(f'{key} = {build_run.toml_value(value)}' for key, value in import_keys.items()),
-        '',
-    ]
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text('\n'.join(lines), encoding='utf-8')
-    return path
 
 
 def main(argv: Sequence[str] | None = None) -> None:

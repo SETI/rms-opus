@@ -10,7 +10,8 @@ field (``MAX(id)`` of each per-field ``mult_`` table, or of each field's ``mult`
 the schema's index bytes including InnoDB's ``FULLTEXT`` auxiliary tablespaces,
 which ``information_schema.TABLES`` leaves out; the schema's total beside
 ``innodb_buffer_pool_size``; the size of ``preview_images``, in ``obs_preview`` or, on a
-schema without that table, in ``obs_general``; and the index-usage snapshot.
+schema without that table, in the base table holding ``obs_general``'s rows; and the
+index-usage snapshot.
 
 ``--dump-queries`` captures the statements each web scenario's requests issue against
 this side's own schema (`benchmarks.query_capture`) into the session's scratch
@@ -50,13 +51,14 @@ from typing import TYPE_CHECKING, Any
 from benchmarks import query_capture, resort_probe
 from benchmarks.app_servers import MemcachedServer
 from benchmarks.bench_server import (
+    OBS_GENERAL_ROWS_TABLE,
+    OBS_GENERAL_TABLE,
     MysqlServer,
     load_server_config,
     query,
     quote_identifier,
     reexec_with_socket,
     server_environment,
-    write_opus_config,
 )
 from benchmarks.bench_web import (
     Client,
@@ -67,6 +69,7 @@ from benchmarks.bench_web import (
     run_sequence,
     side_schema,
 )
+from benchmarks.opus_config_file import write_opus_config
 from benchmarks.results import (
     REPO_ROOT,
     SCALES,
@@ -197,10 +200,14 @@ def like_literal(text: str) -> str:
     return text.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
 
+#: The base tables that may hold ``obs_general``'s rows, in the order they are looked for: a
+#: schema whose ``obs_general`` is a view holds them in ``obs_general_rows``.
+OBS_GENERAL_BASE_TABLES = (OBS_GENERAL_TABLE, OBS_GENERAL_ROWS_TABLE)
+
 #: The tables that may hold ``preview_images``, in the order they are looked for: a schema
-#: holds the column in ``obs_preview`` where it has that table, and in ``obs_general``
-#: otherwise.
-PREVIEW_TABLES = ('obs_preview', 'obs_general')
+#: holds the column in ``obs_preview`` where it has that table, and otherwise in the base
+#: table holding ``obs_general``'s rows.
+PREVIEW_TABLES = ('obs_preview', *OBS_GENERAL_BASE_TABLES)
 
 
 def preview_images(
@@ -209,7 +216,8 @@ def preview_images(
     """Return the size of ``preview_images`` beside ``obs_general``'s data.
 
     The column is read from the first of `PREVIEW_TABLES` the schema has, so a schema of
-    either shape is measured. Both ``DATA_LENGTH`` and ``JSON_STORAGE_SIZE`` count a large
+    any shape is measured, and the ratio is to the data of the first of
+    `OBS_GENERAL_BASE_TABLES` it has. Both ``DATA_LENGTH`` and ``JSON_STORAGE_SIZE`` count a large
     value's off-page pages, which a scan of ``obs_general``'s other columns never reads,
     so the ratio overstates what holding the column elsewhere saves a scan.
 
@@ -221,7 +229,7 @@ def preview_images(
     Returns:
         The table holding the column, the column's average and total storage size, and
         the total's ratio to ``obs_general``'s data length; None when the schema has
-        neither table.
+        none of the tables.
     """
     table = next((name for name in PREVIEW_TABLES if name in statistics), None)
     if table is None:
@@ -232,7 +240,8 @@ def preview_images(
         'COALESCE(SUM(JSON_STORAGE_SIZE(preview_images)), 0) '
         f'FROM {quote_identifier(schema)}.{quote_identifier(table)}',  # nosec B608 - quoted
     )[0]
-    obs_general_data_bytes = statistics.get('obs_general', {}).get('data_bytes', 0)
+    base = next((name for name in OBS_GENERAL_BASE_TABLES if name in statistics), None)
+    obs_general_data_bytes = 0 if base is None else statistics[base].get('data_bytes', 0)
     return {
         'table': table,
         'average_bytes': float(average),
