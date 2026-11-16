@@ -9,6 +9,9 @@ the search they act on, and expanded here into their requests:
 ``pages``
     The first, tenth and last page of the search's results through ``api/data.json``,
     preceded by an untimed result count so the pages measure paging and not the build.
+    One that names a column set (``columns``) from ``web.toml``'s ``[columns]`` asks for
+    those columns as ``cols`` in place of the default ones, and is named
+    ``pages.<search>_<columns>``.
 ``resort``
     The first page sorted by ``web.toml``'s re-sort order, preceded by an untimed first
     page in the default order, so the timed request re-sorts a search already built.
@@ -220,8 +223,9 @@ def _expand(
         The scenario.
 
     Raises:
-        ScenarioError: If the entry names an unknown kind or search, lacks the search its
-            kind needs, or needs an observation the scale does not name.
+        ScenarioError: If the entry names an unknown kind, search or column set, lacks the
+            search its kind needs, names a column set outside a ``pages`` scenario, or
+            needs an observation the scale does not name.
     """
     kind = entry['kind']
     requests: tuple[Request, ...]
@@ -234,11 +238,21 @@ def _expand(
         raise ScenarioError(f"scenario {entry} needs this scale's [observations] entry")
     search = searches[search_name] if search_name is not None else ''
     limit = f'limit={PAGE_LIMIT}'
+    columns_name = entry.get('columns')
+    if columns_name is not None and kind != 'pages':
+        raise ScenarioError(f'scenario {entry} names columns, which only a pages scenario takes')
+    columns = raw.get('columns', {})
+    if columns_name is not None and columns_name not in columns:
+        raise ScenarioError(f'scenario {entry} names the unknown columns {columns_name!r}')
     if kind == 'search':
         url = _join(_join('__api/meta/result_count.json', search), 'reqno=1')
         return Scenario(f'search.{search_name}', kind, (Request('result_count', url),))
     if kind == 'pages':
         data = _join('api/data.json', search)
+        name = f'pages.{search_name}'
+        if columns_name is not None:
+            data = _join(data, f'cols={columns[columns_name]}')
+            name = f'pages.{search_name}_{columns_name}'
         requests = (
             Request(
                 'build',
@@ -249,7 +263,7 @@ def _expand(
             Request('page_10', _join(data, f'page=10&{limit}')),
             Request('page_last', _join(data, f'page={{last}}&{limit}')),
         )
-        return Scenario(f'pages.{search_name}', kind, requests, last_page_of=search_name)
+        return Scenario(name, kind, requests, last_page_of=search_name)
     if kind == 'resort':
         data = _join('api/data.json', search)
         order = raw['resort']['order']

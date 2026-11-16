@@ -111,6 +111,50 @@ def test_a_pages_scenario_builds_untimed_and_completes_its_last_page(tmp_path: P
     assert scenario.last_page_of == 'broad'
 
 
+def test_a_pages_scenario_asks_for_its_column_set(tmp_path: Path) -> None:
+    """A column set replaces the default columns on every page, and names the scenario."""
+    path = tmp_path / 'web.toml'
+    path.write_text(
+        '[server]\nport = 1\nworkers = 1\nthreads = 1\nmemcached_port = 2\nmemcached_mb = 1\n'
+        '[runs]\nfixture = 1\n[searches]\nbroad = "time1=2000-01-01"\n'
+        '[columns]\nwide = "opusid,RINGGEOringradius1"\n'
+        '[[scenarios]]\nkind = "pages"\nsearch = "broad"\n'
+        '[[scenarios]]\nkind = "pages"\nsearch = "broad"\ncolumns = "wide"\n'
+    )
+    plain, wide = web_scenarios.load_web_config(path).scenarios
+    assert plain.name == 'pages.broad'
+    assert wide.name == 'pages.broad_wide'
+    assert wide.last_page_of == 'broad'
+    assert wide.requests[0].url == plain.requests[0].url
+    assert [request.url for request in wide.requests[1:]] == [
+        'api/data.json?time1=2000-01-01&cols=opusid,RINGGEOringradius1&page=1&limit=100',
+        'api/data.json?time1=2000-01-01&cols=opusid,RINGGEOringradius1&page=10&limit=100',
+        'api/data.json?time1=2000-01-01&cols=opusid,RINGGEOringradius1&page={last}&limit=100',
+    ]
+
+
+@pytest.mark.parametrize(
+    ('entry', 'message'),
+    [
+        ('kind = "pages"\nsearch = "broad"\ncolumns = "none"\n', 'unknown columns'),
+        ('kind = "search"\nsearch = "broad"\ncolumns = "wide"\n', 'only a pages scenario'),
+    ],
+)
+def test_a_column_set_that_cannot_be_asked_for_is_refused(
+    tmp_path: Path, entry: str, message: str
+) -> None:
+    """An unknown column set, or one on a scenario that pages nothing, fails at load."""
+    path = tmp_path / 'web.toml'
+    path.write_text(
+        '[server]\nport = 1\nworkers = 1\nthreads = 1\nmemcached_port = 2\nmemcached_mb = 1\n'
+        '[runs]\nfixture = 1\n[searches]\nbroad = "time1=2000-01-01"\n'
+        '[columns]\nwide = "opusid"\n'
+        f'[[scenarios]]\n{entry}'
+    )
+    with pytest.raises(web_scenarios.ScenarioError, match=message):
+        web_scenarios.load_web_config(path)
+
+
 def test_an_unknown_search_is_refused(tmp_path: Path) -> None:
     """A scenario naming a search web.toml does not define fails at load."""
     path = tmp_path / 'web.toml'

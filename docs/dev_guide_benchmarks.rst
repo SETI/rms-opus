@@ -559,7 +559,9 @@ What a web run is
 
 Each scenario is a named sequence of requests issued one after another with one cookie
 jar, as a browser issues them; ``benchmarks/web_scenarios.py`` says what each kind of
-scenario in ``web.toml`` expands to. Every request carries ``Connection: close``.
+scenario in ``web.toml`` expands to. A ``pages`` scenario may name a column set from
+``web.toml``'s ``[columns]`` table, which its pages ask for in place of the default
+columns. Every request carries ``Connection: close``.
 
 One run is two passes over the scenarios. In the **db-cold** pass each scenario is
 preceded by emptying the search tables with the side's own option, stopping the
