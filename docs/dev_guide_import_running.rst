@@ -453,8 +453,11 @@ Auxiliary tables and other steps
    * - ``--validate``
      - Validate the imported tables. A check that logs an error keeps the invocation
        from marking the schema ready, and makes it exit with failure. With a pending
-       generation it is refused until ``--finalize`` has succeeded on it, and marks the
-       generation ``validated`` when every check passes.
+       generation it is refused until ``--finalize`` has succeeded on it, checks what the
+       update wrote, and marks the generation ``validated`` when every check passes. With
+       none pending it checks the generation the site serves, leaving out the
+       observations a switch retired until the purge deletes them
+       (:ref:`dev_guide_import_steps_do_validate`).
    * - ``--import-dictionary``
      - Rebuild ``contexts`` and ``definitions`` from scratch. It runs after every step
        above.

@@ -826,3 +826,67 @@ def test_a_pending_generation_is_validated_by_what_the_update_wrote(
         f'obs_general id {served_id}'
     ) in errors
     assert f'obs_instrument_vgiss filter "{own_filter}": {_PLANTED_WAVELENGTH} and' in warnings
+
+
+def test_a_switched_generation_is_validated_without_the_rows_it_retired(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+) -> None:
+    """From the switch until the purge, defects planted in a row the switch retired are not
+    reported, its filter's served observations included, and one planted in a served row
+    is."""
+    reimported, _served_bundle, _served_filter = _hubble_bundles(db_credentials, main_run.schema)
+    dropped = _drop_bundle(main_run, reimported)
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'switched')
+    schema = copy.schema
+    _update(copy, reimported, dropped)
+    _ok(copy.step('--switch-generation'))
+    assert _state(db_credentials, schema)[2:] == (2, None, None, 1)
+
+    retired_id, retired_opus_id = _observation(
+        db_credentials,
+        schema,
+        'removed_generation = %s AND bundle_id = %s AND id IN (SELECT obs_general_id FROM '
+        'obs_mission_hubble WHERE filter_name IS NOT NULL)',
+        [2, reimported],
+    )
+    (retired_filter,) = golden_io.query(
+        db_credentials,
+        schema,
+        'SELECT filter_name FROM obs_mission_hubble WHERE obs_general_id = %s',
+        [retired_id],
+    )[0]
+    for statement, values in (
+        ('UPDATE obs_general_rows SET time1 = time2 + 1 WHERE id = %s', [retired_id]),
+        ('DELETE FROM obs_preview WHERE obs_general_id = %s', [retired_id]),
+        (
+            'UPDATE obs_pds SET bundle_id = %s WHERE obs_general_id = %s',
+            [_PLANTED_BUNDLE, retired_id],
+        ),
+    ):
+        golden_io.execute(db_credentials, schema, statement, values)
+    _plant_wavelength(db_credentials, schema, retired_id)
+    served_id, served_opus_id = _observation(
+        db_credentials,
+        schema,
+        'added_generation = 1 AND removed_generation IS NULL AND bundle_id NOT IN (%s, %s)',
+        [reimported, dropped],
+    )
+    golden_io.execute(
+        db_credentials,
+        schema,
+        'UPDATE obs_general_rows SET time1 = time2 + 1 WHERE id = %s',
+        [served_id],
+    )
+
+    errors_log, warnings_log = copy.paths.errors_log, copy.paths.warnings_log
+    errors_start, warnings_start = _log_size(errors_log), _log_size(warnings_log)
+    assert copy.step(*build_run.VALIDATE_ARGS).returncode != 0
+    errors = _log_since(errors_log, errors_start)
+    warnings = _log_since(warnings_log, warnings_start)
+    assert f'first 100: {served_opus_id}' in errors
+    assert retired_opus_id not in errors
+    assert 'obs_preview' not in errors
+    assert 'obs_pds' not in errors
+    assert f'obs_mission_hubble filter "{retired_filter}"' not in warnings

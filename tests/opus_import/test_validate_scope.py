@@ -2,8 +2,10 @@
 stand-ins.
 
 Each check's statements are recorded by a stand-in database. With a generation pending
-they read the rows the update wrote (`do_validate.GenerationScope`); with none, every row,
-with no condition and no value.
+they read the rows the update wrote (`do_validate.GenerationScope`); with none while the
+rows the last switch retired await the purge, the served generation's
+(`do_validate.served_generation_only`); otherwise every row, with no condition and no
+value.
 """
 
 from __future__ import annotations
@@ -101,13 +103,16 @@ class _ScopeDB:
 
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any, ...]]:
         """Record the select; give the filters for a ``DISTINCT``, the count for a
-        ``COUNT``, a range for ``form_type``, and no row otherwise."""
+        ``COUNT``, one NULL for each column a ``SUM`` counts, a range for ``form_type``,
+        and no row otherwise."""
         flat = ' '.join(cmd.split())
         self.selects.append((flat, None if params is None else list(params)))
         if flat.startswith('DISTINCT'):
             return list(self.groups)
         if flat.startswith('COUNT('):
             return [(self.count,)]
+        if flat.startswith('SUM('):
+            return [(1,) * flat.count('SUM(')]
         if flat.startswith('`form_type`'):
             return [('RANGE',)]
         return []
@@ -133,8 +138,28 @@ def _served(db: _ScopeDB) -> ImportContext:
     return make_context(db=db)
 
 
+#: The generation served after the switch of the revertible cases.
+_SWITCHED = 2
+
+
+def _revertible(db: _ScopeDB) -> ImportContext:
+    """Return a context serving a switched-in generation whose retired rows remain."""
+    ctx = make_context(db=db)
+    ctx.generation_state = GenerationState(
+        SCHEMA_VERSION, SCHEMA_STATE_READY, _SWITCHED, None, None, True
+    )
+    ctx.import_generation = _SWITCHED
+    return ctx
+
+
 #: The condition that an ``obs_general`` row aliased ``g`` is one the generation added.
 _ADDED = '`g`.`id` >= %s AND `g`.`added_generation` = %s'
+
+#: The condition that an ``obs_general`` row aliased ``g`` is in a generation.
+_IN_GENERATION = (
+    '`g`.`added_generation` <= %s AND (`g`.`removed_generation` IS NULL OR '
+    '`g`.`removed_generation` > %s)'
+)
 
 
 # ------------------------------------------------------------------------------------
@@ -161,6 +186,27 @@ def test_no_pending_generation_has_no_scope() -> None:
     assert do_validate.generation_scope(_pending(db)) == do_validate.GenerationScope(
         _PENDING, _FIRST_ID
     )
+
+
+@pytest.mark.parametrize(
+    ('pending', 'revertible', 'served'),
+    [(None, True, _SWITCHED), (None, False, None), (3, False, None), (3, True, None)],
+)
+def test_only_the_served_generation_is_read_while_retired_rows_remain(
+    pending: int | None, revertible: bool, served: int | None
+) -> None:
+    """From a switch until the purge, with no generation pending; never otherwise."""
+    ctx = make_context(db=_ScopeDB({}))
+    assert do_validate.served_generation_only(ctx) is None
+    ctx.generation_state = GenerationState(
+        SCHEMA_VERSION,
+        SCHEMA_STATE_READY,
+        _SWITCHED,
+        pending,
+        None if pending is None else 'writing',
+        revertible,
+    )
+    assert do_validate.served_generation_only(ctx) == served
 
 
 def test_the_scopes_conditions_read_the_keys() -> None:
@@ -217,6 +263,32 @@ def test_min_max_reads_every_row_with_no_generation_pending() -> None:
     ]
 
 
+def test_min_max_reads_the_served_generation_while_retired_rows_remain() -> None:
+    """``obs_general`` and a child, each kept to the served generation's observations."""
+    db = _ScopeDB(_TABLES | {'param_info': []}, _REGISTRY)
+    do_validate.validate_min_max_order(_revertible(db))
+    scanned = [select for select in db.selects if 'opus_id' in select[0]]
+    assert scanned == [
+        (
+            '`g`.`opus_id` FROM `obs_general` `g` WHERE `g`.`time2` < `g`.`time1` AND '
+            + _IN_GENERATION,
+            [_SWITCHED, _SWITCHED],
+        ),
+        (
+            '`g`.`opus_id` FROM `obs_ring_geometry` `c` JOIN `obs_general` `g` ON `g`.`id` = '
+            '`c`.`obs_general_id` WHERE `c`.`phase2` < `c`.`phase1` AND ' + _IN_GENERATION,
+            [_SWITCHED, _SWITCHED],
+        ),
+    ]
+
+
+def test_orphans_are_counted_against_every_row_while_retired_rows_remain() -> None:
+    """A retired observation's rows are not orphans, so the statements carry no condition."""
+    db = _ScopeDB(_TABLES, _REGISTRY)
+    do_validate.validate_orphans(_revertible(db))
+    assert [values for _cmd, values in db.selects] == [None, None, None]
+
+
 def test_orphans_are_counted_by_their_own_observation_id_while_pending() -> None:
     """An orphan has no obs_general row to select it by, so it is chosen by its own id."""
     db = _ScopeDB(_TABLES, _REGISTRY)
@@ -253,6 +325,9 @@ def test_obs_pds_is_compared_for_the_generations_rows_while_pending() -> None:
     db = _ScopeDB(_TABLES, _REGISTRY)
     do_validate.validate_pds_bundle_ids(_served(db))
     assert db.selects == [(compared, None)]
+    db = _ScopeDB(_TABLES, _REGISTRY)
+    do_validate.validate_pds_bundle_ids(_revertible(db))
+    assert db.selects == [(f'{compared} AND {_IN_GENERATION}', [_SWITCHED, _SWITCHED])]
 
 
 def test_previews_are_counted_for_the_generations_observations_while_pending() -> None:
@@ -267,6 +342,9 @@ def test_previews_are_counted_for_the_generations_observations_while_pending() -
     db = _ScopeDB(_TABLES, _REGISTRY)
     do_validate.validate_previews(_served(db))
     assert db.selects == [(counted, None)]
+    db = _ScopeDB(_TABLES, _REGISTRY)
+    do_validate.validate_previews(_revertible(db))
+    assert db.selects == [(f'{counted} AND {_IN_GENERATION}', [_SWITCHED, _SWITCHED])]
 
 
 @pytest.mark.parametrize(('pending', 'first_id'), [(True, _FIRST_ID), (False, None)])
@@ -338,6 +416,21 @@ def test_every_filter_is_compared_with_no_generation_pending() -> None:
     ]
 
 
+def test_every_served_filter_is_compared_while_retired_rows_remain() -> None:
+    """One grouped statement over the served generation's observations, so a filter the
+    update corrected is not compared with its retired rows."""
+    db = _ScopeDB({'obs_instrument_vgiss': ['obs_general_id', 'filter_name']}, _REGISTRY)
+    do_validate.validate_filter_wavelength_consistency(_revertible(db))
+    assert db.selects == [
+        (
+            f'`c`.`filter_name`, {_RANGES} FROM `obs_instrument_vgiss` `c` JOIN `obs_general` '
+            f'`g` ON `g`.`id` = `c`.`obs_general_id` {_WAVELENGTHS} WHERE {_IN_GENERATION} '
+            'GROUP BY `c`.`filter_name`',
+            [_SWITCHED, _SWITCHED],
+        )
+    ]
+
+
 class _FilterRowDB(_ScopeDB):
     """A stand-in whose grouped filter query returns one disagreeing row."""
 
@@ -380,6 +473,36 @@ def test_the_null_check_is_skipped_and_says_so_while_pending() -> None:
     ]
 
 
+def test_the_null_check_counts_the_served_generation_while_retired_rows_remain() -> None:
+    """``obs_general`` by its own generation columns, a child through its observation."""
+    db = _ScopeDB(
+        {'obs_general': ['id', 'time1'], 'obs_ring_geometry': ['obs_general_id', 'phase1']},
+        _REGISTRY,
+    )
+    do_validate.validate_nulls(_revertible(db))
+    in_generation = _IN_GENERATION.replace('`g`', '`c`')
+    assert db.selects == [
+        (
+            'SUM(`c`.`id` IS NULL), SUM(`c`.`time1` IS NULL) FROM `obs_general` `c` WHERE '
+            + in_generation,
+            [_SWITCHED, _SWITCHED],
+        ),
+        (
+            'SUM(`c`.`obs_general_id` IS NULL), SUM(`c`.`phase1` IS NULL) FROM '
+            '`obs_ring_geometry` `c` JOIN `obs_general` `g` ON `g`.`id` = `c`.`obs_general_id` '
+            f'WHERE {_IN_GENERATION}',
+            [_SWITCHED, _SWITCHED],
+        ),
+    ]
+
+
+def test_the_null_check_counts_every_row_otherwise() -> None:
+    """One scan of each table, with no condition and no value."""
+    db = _ScopeDB({'obs_general': ['id', 'time1']}, _REGISTRY)
+    do_validate.validate_nulls(_served(db))
+    assert db.selects == [('SUM(`id` IS NULL), SUM(`time1` IS NULL) FROM `obs_general`', None)]
+
+
 def test_unique_opus_ids_compare_the_generation_the_update_writes() -> None:
     """The pending generation's rows: its own and the served ones it keeps."""
     db = _ScopeDB(_TABLES, _REGISTRY)
@@ -410,4 +533,13 @@ def test_a_pending_validation_logs_its_scope_first(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(ctx.logger, 'close', lambda *args, **kwargs: (0, 0, 0, 0))
     assert do_validate.do_validate(ctx)
     assert ctx.logger.messages_at('info') == []
+    assert db.selects == []
+    db = _ScopeDB(_TABLES | {'param_info': []}, _REGISTRY)
+    ctx = _revertible(db)
+    monkeypatch.setattr(ctx.logger, 'close', lambda *args, **kwargs: (0, 0, 0, 0))
+    assert do_validate.do_validate(ctx)
+    assert ctx.logger.messages_at('info') == [
+        f'Validating generation {_SWITCHED}, the one served, while the observations the last '
+        'switch retired await "opus_import --purge-generations"'
+    ]
     assert db.selects == []

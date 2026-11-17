@@ -8943,3 +8943,18 @@ Nothing above this line is rewritten by an executor.
     schema did so in 3 of 3 rounds and PR-23's in 3 of 4; with the 20-page sample, 2 of
     6. `prefer_ordering_index=off` does not change it. The sample fixes the warm flip;
     the re-sort after a restart needs the plan fixed in the query.
+- **`--validate` from a switch until the purge (2026-11-17)**, at the operator's question
+  what it does with no generation pending. It read every row of `obs_general_rows`, so the
+  observations the switch retired, and their child rows, were checked beside the served
+  ones: a filter whose wavelengths the update corrected was reported as inconsistent with
+  its retired observations, and a retired row's defects were reported under OPUS IDs the
+  site serves. While no generation is pending and the switch is revertible
+  (`do_validate.served_generation_only`), the min/max, `obs_pds` bundle, preview, filter
+  and NULL checks read the served generation's observations alone, and the log names it.
+  The orphan count and the junction comparison still read every row: a retired
+  observation's child rows are not orphans, it keeps its list and its junction rows
+  together, and the purge deletes them with it. `param_info` and the unique-OPUS-ID check
+  already read the served generation. With every row served, nothing changes.
+  `import_tests/test_generations.py` plants defects in a retired row after a switch and
+  one in a served row; only the served one is reported, and without the fix the retired
+  row's min/max, `obs_pds` and preview defects are reported too.
