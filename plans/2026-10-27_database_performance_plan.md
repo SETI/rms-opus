@@ -9283,6 +9283,24 @@ reversions, each failing a test).
   - *Option 2:* its target is "not improved". The facet count is slower on broad searches,
     slower warm on every search, and slower for a child table's widget, and saves at most
     about 250 ms cold on mid-sized searches.
+- **The connection each web thread opens on its first request**, which made the complex
+  search's `pages` scenarios' cold medians 64–69% slower on PR-23, is filed as #1560.
+  Keeping `obs_general` a table while no generation is pending (#1557) and pinning the
+  ring-radius search build's join order (#1559) are deferred until the stack is finished.
+
+### 2026-11-17, PR-24a (written against this file at df58114f)
+
+- **A plan that changes is flagged, not averaged** (`benchmarks.query_capture`,
+  `benchmarks.compare`). The replay records each execution's plan shape: the `EXPLAIN
+  ANALYZE` tree's iterators and what they name, without estimates, measurements or
+  numbers. `compare` lists under its table every statement whose plan took more than one
+  shape between one side's `bench_db` runs or within one run, keeps its block's
+  `db.plan` rows whatever their change, and marks their verdict "plan changed". A median
+  over two plans' executions is what turned the ring-radius search's flip into a
+  regression or nothing, by how its runs fell.
+- The shape normalizes per-search table names (`cache_12`), so a statement's runs over
+  different search ids match; statements are matched across runs by tag, position and
+  text with numbers set aside. Plans that differ between the two sides are not flagged.
 
 ### 2026-11-17, PR-23b (written against this file at 208b19c0)
 
