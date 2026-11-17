@@ -21,14 +21,17 @@
 #     bundle imported again already loses every row its earlier copy had. --drop may be
 #     given more than once; empty names, as from a doubled comma, are skipped. Prints the
 #     usage line and returns 1, setting nothing it would otherwise use, when an option is
-#     unknown, --drop has no value, a version specifier comes after the first argument,
-#     or there is neither a bundle nor a --drop.
+#     unknown, --drop has no value, a name split from a comma-separated argument begins
+#     with "-", a version specifier comes after the first argument, or there is neither a
+#     bundle nor a --drop.
 #
 # update_invocations
 #     Prints the arguments of each opus_import invocation of the update, one invocation
-#     a line, in order: --begin-generation; --import and the bundles, when there are any;
-#     --delete-bundles and the bundles to drop, when there are any; then --finalize,
-#     --validate and --write-schema-version. Reads UPDATE_BUNDLES and UPDATE_DROPS.
+#     a line, in order: --begin-generation; --delete-bundles and the bundles to drop, when
+#     there are any; --import and the bundles, when there are any; then --finalize,
+#     --validate and --write-schema-version. The drops come first so that a descriptor
+#     the import expands to a dropped bundle imports it again rather than losing it. Reads
+#     UPDATE_BUNDLES and UPDATE_DROPS.
 #
 # run_update_invocations <log directory>
 #     Runs each invocation update_invocations prints, as its own opus_import process, and
@@ -81,6 +84,10 @@ parse_update_arguments() {
                 fi
                 IFS=, read -ra names <<< "$2"
                 for name in "${names[@]}"; do
+                    if [[ ${name} == -* ]]; then
+                        print_update_usage
+                        return 1
+                    fi
                     if [[ -n ${name} ]]; then
                         drops+=("${name}")
                     fi
@@ -94,6 +101,10 @@ parse_update_arguments() {
             *)
                 IFS=, read -ra names <<< "$1"
                 for name in "${names[@]}"; do
+                    if [[ ${name} == -* ]]; then
+                        print_update_usage
+                        return 1
+                    fi
                     if [[ -n ${name} ]]; then
                         bundles+=("${name}")
                     fi
@@ -125,11 +136,11 @@ parse_update_arguments() {
 
 update_invocations() {
     echo "--begin-generation"
-    if [[ ${#UPDATE_BUNDLES[@]} -gt 0 ]]; then
-        echo "--import ${UPDATE_BUNDLES[*]}"
-    fi
     if [[ ${#UPDATE_DROPS[@]} -gt 0 ]]; then
         echo "--delete-bundles ${UPDATE_DROPS[*]}"
+    fi
+    if [[ ${#UPDATE_BUNDLES[@]} -gt 0 ]]; then
+        echo "--import ${UPDATE_BUNDLES[*]}"
     fi
     echo "--finalize"
     echo "--validate"

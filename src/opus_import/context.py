@@ -223,7 +223,8 @@ class ImportContext:
             a bundle.
         planned_ranges: The registry rows a read-only run's registration planned and,
             being read-only, did not write, keyed by bundle, so the run imports a new
-            bundle from the range it would have registered.
+            bundle, or a pending generation's new copy of a live one, from the range it
+            would have registered.
         current_bundle_id: The bundle being imported, or None outside a bundle.
         current_index_row_number: The 1-based index row being imported, or None.
         current_primary_filespec: The primary filespec of the observation being imported,

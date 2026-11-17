@@ -8865,6 +8865,47 @@ Nothing above this line is rewritten by an executor.
   `tests/benchmarks/`, and `dev_guide_benchmarks.rst`. Nothing outside the harness uses
   them, and `db-perf`'s harness tests pass against this branch's code. The measurements
   above were made with the harness as PR-23a has it.
+- **CodeRabbit's full review (2026-11-16)**, of 54760861, the first once the split brought
+  the pull request under its cap. At the orchestrator's decisions, each behavior fix with a
+  test that fails with it reverted (mutation-checked):
+  - *Fixed:* `--switch-generation` with nothing pending, beside a whole `__prev` set and the
+    `__new` tables an interrupted rebuild of the served auxiliary tables leaves, would have
+    dropped the previous generation's tables and swapped the rebuild's in;
+    `unfinished_rebuild_problem` refuses the switch and the deploy pre-check (the revert
+    drops `__new` first, so it runs).
+  - *Fixed:* `--abandon-generation` re-created the view with no condition before clearing
+    the pending generation, so an interruption between them left a writable generation
+    shown; it clears the pending generation first. An interruption between leaves the view
+    naming the served generation, which shows every row, and `--purge-generations`, with
+    nothing to delete, re-creates it with no condition.
+  - *Fixed:* a plain import registered as a writer did not check its writer lock before a
+    chunk committed, so a writer whose lock connection dropped could keep committing after
+    an abandon took it for finished; `BundleGuard` checks the writer lock as it checks an
+    importer's, and the plain loop ends with a fatal message.
+  - *Fixed:* `validate_param_info`'s check that surface-geometry rows have a body category
+    counted rows of observations a pending generation retired; it counts the validated
+    generation's.
+  - *Fixed:* a read-only registration into a pending generation planned a new copy of a
+    live bundle, but `bundle_range` answered with the live row; the plan takes precedence.
+  - *Fixed:* `create_table('obs_general')` on an existing base table whose view's statement
+    had failed created no view; it creates a missing view and leaves an existing one.
+  - *Fixed:* `repoint_cart` committed or rolled back inside an enclosing `transaction()`.
+  - *Fixed, deploy chain:* the drops run before the import, so a descriptor that expands to
+    a dropped bundle imports it again; a comma-separated name beginning with `-` is
+    refused; the wrapper path is quoted; the README's abandon sets `OPUS_CONFIG`; the
+    runner exits on a failed step explicitly; `promote_generation.sh` passes the step to
+    Python as an argument.
+  - *Documented:* a revert does not restore the cart rows the switch deleted (their OPUS
+    IDs absent from the switched-in generation); an update run with a release whose pinned
+    `mult_options` differ relabels served `mult` rows at registration; the import overview
+    and the steps guide name the generation path, retirement in place of deletion, the
+    switch's separate steps, the generation columns' base table, and ranges registered
+    afresh in a pending generation.
+  - *Not changed:* reading the version row and the child aggregate in one
+    `transaction.atomic()`: Django's MySQL connections run READ COMMITTED, where each
+    statement takes its own snapshot, so the block would not close the begin window
+    recorded above. A class diagram for `dev_guide_architecture.rst`: the chapter predates
+    this pull request, which adds a paragraph and a sentence to it.
 
 ### 2026-11-16, PR-23a (written against this file at 54760861)
 

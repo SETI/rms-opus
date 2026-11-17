@@ -977,6 +977,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         """
         with self._operation('create_table'):
             if ignore_if_exists and self.table_exists(table_name):
+                if table_name == generations.OBS_GENERAL_VIEW and self._obs_general_type() is None:
+                    # The base table is there but not its view, as when the view's
+                    # statement failed after the table's: create it, as for a new table.
+                    self.create_obs_general_view(schema)
                 return False
 
             cmd = ''
@@ -1591,9 +1595,11 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                     pointed = int(cur.rowcount)
                     self._execute(delete, [generation] * 2, cur=cur, mutates=True)
                     deleted = int(cur.rowcount)
-                self.conn.commit()
+                if not self._in_transaction:
+                    self.conn.commit()
             except MySQLdb.Error as e:
-                self.conn.rollback()
+                if not self._in_transaction:
+                    self.conn.rollback()
                 self._log_failure(f'Failed to point the cart at generation {generation}: {e}')
                 raise ImportDBError(e) from e
         return pointed, deleted

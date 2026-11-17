@@ -219,10 +219,20 @@ def validate_param_info(ctx: ImportContext) -> None:
     q = db.quote_identifier
 
     geometry_table = surface_geometry.SURFACE_GEOMETRY_TABLE
+    # Only rows of observations in the generation the run validates need a category: a
+    # pending generation that retired every observation with surface geometry leaves
+    # their rows for the purge, and builds param_info without their bodies.
+    generation = ctx.import_generation
+    s, g = q('s'), q('g')
     if (
         body_category is None
         and geometry_table in obs_table_names
-        and db.general_select(f'1 FROM {q(geometry_table)} LIMIT 1')
+        and db.general_select(
+            f'1 FROM {q(geometry_table)} {s} '  # nosec B608 - quoted identifiers
+            f'JOIN {q("obs_general")} {g} ON {g}.{q("id")}={s}.{q("obs_general_id")} '
+            f'AND {generations.in_generation_condition(q, "g")} LIMIT 1',
+            [generation, generation],
+        )
     ):
         logger.log(
             'error',

@@ -496,6 +496,40 @@ def unfinished_purge_problem(db: ImportDBSuper, state: GenerationState) -> str |
     )
 
 
+def unfinished_rebuild_problem(db: ImportDBSuper, state: GenerationState) -> str | None:
+    """Say whether a rebuild of the served auxiliary tables stopped part way beside a
+    revertible switch, so that completing the switch would swap its tables in.
+
+    With nothing pending and the switch revertible, a whole set of ``__prev`` tables is
+    the previous generation's, kept for a revert, and no switch or revert leaves ``__new``
+    tables beside it; a rebuild of the served auxiliary tables builds its tables under
+    those names before it swaps them in. Completing the switch would drop the ``__prev``
+    set and swap in whatever the rebuild left, so it is refused until the rebuild has been
+    run again. A revert drops the ``__new`` tables before it swaps the ``__prev`` ones
+    back, so it is not refused.
+
+    Parameters:
+        db: The open database.
+        state: The schema's version row.
+
+    Returns:
+        None when no such rebuild is unfinished; otherwise what is unfinished and the
+        command that finishes it.
+    """
+    if state.pending is not None or not state.revertible:
+        return None
+    if len(_existing_tables(db, table_swap.swap_prev_name)) != len(AUX_TABLES):
+        return None
+    built = _existing_tables(db, table_swap.swap_new_name)
+    if not built:
+        return None
+    return (
+        f'a rebuild of the served auxiliary tables stopped part way ({", ".join(built)} '
+        f"beside generation {state.generation - 1}'s __prev tables); running that rebuild "
+        'again finishes it'
+    )
+
+
 def begin_generation(ctx: ImportContext) -> None:
     """Start a pending generation, one above the served one: ``--begin-generation``.
 
@@ -598,7 +632,9 @@ def switch_generation(ctx: ImportContext) -> None:
     the last statement has already run: the other steps run again for the served
     generation, which finds nothing to do after a whole switch and completes a revert
     that stopped part way; that is refused while a purge is unfinished
-    (`unfinished_purge_problem`), which a rerun of the purge finishes instead.
+    (`unfinished_purge_problem`), which a rerun of the purge finishes instead, and while a
+    rebuild of the served auxiliary tables is (`unfinished_rebuild_problem`), whose
+    tables it would otherwise swap in.
 
     Parameters:
         ctx: The import run's context.
@@ -610,7 +646,11 @@ def switch_generation(ctx: ImportContext) -> None:
         state = require_state(ctx)
         db = ctx.db
         assert db is not None
-        refusal = _switch_refusal(state) or unfinished_purge_problem(db, state)
+        refusal = (
+            _switch_refusal(state)
+            or unfinished_purge_problem(db, state)
+            or unfinished_rebuild_problem(db, state)
+        )
         if refusal is not None:
             raise GenerationRefusedError(f'--switch-generation refused: {refusal}')
         if state.pending is None:
@@ -773,8 +813,9 @@ def revert_generation(ctx: ImportContext) -> None:
     stopped.
 
     The ``__prev`` auxiliary tables are swapped back in and the reverted-from ones kept as
-    ``__new``; the cart is pointed at the previous generation; the search tables are
-    reset; the view is re-created to show the previous generation; and last, the
+    ``__new``; the cart is pointed at the previous generation, though a cart row the
+    switch deleted, its OPUS ID absent from the switched-in generation, is not restored;
+    the search tables are reset; the view is re-created to show the previous generation; and last, the
     previous generation is served again with the reverted-from one pending and
     ``ready``, and the switch is not revertible any more, so the reverted-from generation
     can be abandoned or switched again. Each step finds out whether it has run, as the
@@ -866,6 +907,10 @@ def generation_command_problem(option: str) -> str | None:
             return writers
         if option == '--revert-generation':
             return _revert_refusal(state) or unfinished_purge_problem(db, state)
-        return _switch_refusal(state) or unfinished_purge_problem(db, state)
+        return (
+            _switch_refusal(state)
+            or unfinished_purge_problem(db, state)
+            or unfinished_rebuild_problem(db, state)
+        )
     finally:
         db.close()

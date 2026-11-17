@@ -1437,10 +1437,11 @@ def test_an_importer_refused_its_lock_commits_nothing() -> None:
 
 
 def _guarded(
-    matched: int = 1, holds: int = 1, importer: bool = True
+    matched: int = 1, holds: int = 1, importer: bool = True, writer: bool = False
 ) -> tuple[_ConnectedDB, _CommitRecordingConnection, import_processes.BundleGuard]:
     """Return a connection writing by INSERT statements, its scripted connection, and a
-    guard for bundle 3 under importer 9 (or no importer)."""
+    guard for bundle 3 under importer 9 (or no importer, with process 9's lock as its
+    writer lock or no writer)."""
     conn = _CommitRecordingConnection(matched=matched)
     db = _ConnectedDB(conn)
     db.bulk_load_path = BULK_LOAD_PATH_INSERT
@@ -1448,7 +1449,13 @@ def _guarded(
     lock_conn = _ScriptedConnection({'SELECT IS_USED_LOCK': [(holds,)]})
     lock = import_processes.ImporterLock(_ConnectedDB(lock_conn), 9, 'opus:lock')
     ids = bundle_registry.BundleIds(bundle_registry.BundleRange(3, 'B_3', 10, 0, 1000, 'importing'))
-    return db, conn, import_processes.BundleGuard(ids, lock if importer else None)
+    return (
+        db,
+        conn,
+        import_processes.BundleGuard(
+            ids, lock if importer else None, lock if writer and not importer else None
+        ),
+    )
 
 
 def test_each_guarded_chunk_records_its_progress_first_and_commits_last() -> None:
@@ -1501,6 +1508,24 @@ def test_a_plain_imports_guard_counts_observations_and_checks_nothing() -> None:
         'INSERT INTO `obs_files`',
         'COMMIT',
     ]
+
+
+@pytest.mark.parametrize('holds', [0, 1], ids=['lock-lost', 'lock-held'])
+def test_a_plain_import_with_a_writer_lock_commits_only_while_it_holds_it(holds: int) -> None:
+    """A registered writer's chunk is checked before its commit, as an importer's is: a
+    generation command takes a writer whose lock is gone for finished."""
+    db, conn, guard = _guarded(holds=holds, importer=False, writer=True)
+
+    if holds:
+        db.bulk_load_rows('obs_general', [{'id': 1}], guard=guard)
+        assert conn.commits == 1
+        assert guard.ids.rows_done == 1
+        return
+    with pytest.raises(import_processes.LostImporterError, match='opus:lock'):
+        db.bulk_load_rows('obs_general', [{'id': 1}], guard=guard)
+    assert conn.commits == 0
+    assert conn.executed[-1] == ('ROLLBACK', None)
+    assert guard.ids.rows_done == 0
 
 
 def test_an_update_reports_the_rows_it_matched_changed_or_not() -> None:

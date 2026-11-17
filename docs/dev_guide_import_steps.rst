@@ -179,8 +179,13 @@ path it takes, the schema and its version
   since a full import runs one invocation per bundle group: the **fresh import**. Each
   observation table is created with only the keys a load needs
   (:ref:`dev_guide_import_db_keys`);
+* **one row, holding this release's version, in the** ``ready`` **state, with a pending
+  generation**: the **generation** path, into that generation
+  (:ref:`dev_guide_import_steps_do_generation`); a ``ready`` schema whose switch is still
+  revertible refuses an append, naming the purge;
 * **one row, holding this release's version, in the** ``ready`` **or** ``appending``
-  **state**: the **append**, into the tables with their keys in place;
+  **state, with no pending generation**: the **append**, into the tables with their keys
+  in place;
 * **a row of another version, more than one row, or another state**: refused, with a
   fatal message naming ``opus_import --scorched-earth --yes``, since a schema is
   re-imported under the release that will serve it;
@@ -242,11 +247,12 @@ live. In order:
    named bundles. A bundle OPUS skips is never registered.
 10. **Import each bundle.** It is moved to ``importing`` -- a bundle another process
     took meanwhile is an error, and is left to that process -- and
-    :attr:`~opus_import.context.ImportContext.bundle_has_errors` is cleared; it is deleted
-    from every observation table
-    (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) with
-    foreign key checks on, so ``cart``'s cascading foreign key removes the cart rows that
-    name its observations; it is imported through
+    :attr:`~opus_import.context.ImportContext.bundle_has_errors` is cleared; its earlier
+    rows go (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`):
+    outside a generation update it is deleted from every observation table with foreign
+    key checks on, so ``cart``'s cascading foreign key removes the cart rows that name its
+    observations, and in one its served rows are retired at the pending generation and
+    only rows that generation added are deleted; it is imported through
     :func:`~opus_import.steps.do_import.import_one_bundle` with the checks off
     (:meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked`), which
     validation's orphan count stands in for; and it is marked ``done``, or ``failed``
@@ -624,7 +630,8 @@ show the generation they serve; the purge and the abandon re-create it with no c
 **The revert** runs the switch backward while the switch is revertible and no purge has
 started (below): the ``__prev``
 tables back in, the reverted generation's kept as ``__new``; the cart moved to the
-previous generation; the search tables reset; the view re-created to show the previous
+previous generation (a cart row the switch deleted, because P has no observation with its
+OPUS ID, stays deleted); the search tables reset; the view re-created to show the previous
 generation; then the previous generation served, P
 pending and ``ready`` again and the switch not revertible. On a pending generation
 that is ``ready``, it undoes whatever steps a switch that stopped part way ran, in the
@@ -670,11 +677,21 @@ nothing) and every rebuild of the served auxiliary tables or the cart (a rebuild
 stopped part way would leave ``__new`` tables marking a part-way revert), each naming the
 purge, which finishes it.
 
+**An unfinished rebuild** of the served auxiliary tables beside a revertible switch leaves
+``__new`` tables beside a whole set of ``__prev`` tables, with nothing pending
+(:func:`~opus_import.steps.do_generation.unfinished_rebuild_problem`). Completing the switch
+would drop the ``__prev`` set and swap in what the rebuild left, so the switch is refused
+until the rebuild has been run again; the revert drops the ``__new`` tables before it swaps
+the ``__prev`` ones back, so it runs.
+
 **The abandon** deletes the rows P added, clears ``removed_generation = P`` and
 ``retired_generation = P``, deletes P's registry rows, drops the ``__new`` tables,
-re-creates the view with no condition and clears the pending generation. P was begun with
-no row retired, which the purge's order ensures, so every retired row is one P retired, and
-the view is left showing every row. Neither generation column has a key, so one scan of
+clears the pending generation and, last, re-creates the view with no condition, so the
+view never shows every row while P can still be written. P was begun with no row retired,
+which the purge's order ensures, so every retired row is one P retired, and the view is
+left showing every row. An abandon stopped between the last two steps leaves the view
+naming the served generation, which shows every row; ``--purge-generations``, with nothing
+to delete, re-creates it with no condition. Neither generation column has a key, so one scan of
 ``obs_general_rows`` finds the rows P added and the rows it retired, and each is then
 changed by its primary key, ``transaction_rows`` to a statement. Rerun after an
 interruption, it finishes the work.

@@ -331,10 +331,14 @@ def bundle_range(ctx: ImportContext, bundle_id: str) -> BundleRange | None:
         bundle_id: The bundle.
 
     Returns:
-        Its row; in a read-only run, the row its registration planned and did not write
-        (`ImportContext.planned_ranges`) when the registry does not hold it; otherwise
-        None when the registry does not hold it or is absent.
+        In a read-only run, the row its registration planned and did not write
+        (`ImportContext.planned_ranges`), which takes the place of a live copy a pending
+        generation's registration would have retired; otherwise its row, or None when the
+        registry does not hold it or is absent.
     """
+    planned = ctx.planned_ranges.get(bundle_id)
+    if planned is not None:
+        return planned
     db = ctx.db
     assert db is not None
     rows: Sequence[Sequence[object]] = []
@@ -345,9 +349,7 @@ def bundle_range(ctx: ImportContext, bundle_id: str) -> BundleRange | None:
             f'{db.quote_identifier("bundle_id")}=%s AND {live_condition(db)}',
             [bundle_id],
         )
-    if rows:
-        return _range(rows[0])
-    return ctx.planned_ranges.get(bundle_id)
+    return _range(rows[0]) if rows else None
 
 
 def bundle_ids(ctx: ImportContext, bundle_id: str) -> BundleIds | None:

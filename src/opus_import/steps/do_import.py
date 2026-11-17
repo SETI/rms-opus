@@ -290,7 +290,9 @@ def _import_bundle_indexes(ctx: ImportContext, bundle_id: str) -> bool:
     if ctx.bundle_ids is None:
         import_util.log_error(ctx, f'{bundle_id} is not in the bundle registry')
         return False
-    ctx.load_guard = import_processes.BundleGuard(ctx.bundle_ids, ctx.importer)
+    ctx.load_guard = import_processes.BundleGuard(
+        ctx.bundle_ids, ctx.importer, ctx.writer if ctx.importer is None else None
+    )
 
     try:
         found = primary_index.locate(bundle_id, vol_info)
@@ -443,31 +445,38 @@ def do_import_steps(ctx: ImportContext) -> bool:
         _mark_appending(ctx)
 
     with ctx.timed('import'):
-        for bundle_id in bundle_id_list:
-            claim = None
-            if bundle_id in registered:
-                claim = bundle_registry.start_bundle(ctx, bundle_id)
-                if claim is None:
-                    # Another process took the bundle after registration.
-                    import_util.log_error(ctx, do_register.importing_refusal(bundle_id))
-                    if not ctx.args.ignore_errors:
-                        break
-                    continue
-            ctx.bundle_has_errors = False
-            with ctx.timed(f'delete_bundle:{bundle_id}'):
-                do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
-            with ctx.timed(f'import_bundle:{bundle_id}'), db.foreign_keys_unchecked():
-                imported = import_one_bundle(ctx, bundle_id)
-            if not imported:
-                ctx.logger.log('fatal', f'Import of bundle {bundle_id} failed - Aborting')
-                ctx.mark_bad_data()
-            if claim is not None:
-                failed = ctx.bundle_has_errors and not ctx.args.ignore_errors
-                state = bundle_registry.BUNDLE_FAILED if failed else bundle_registry.BUNDLE_DONE
-                if not bundle_registry.finish_bundle(ctx, claim, state):
-                    import_util.log_error(ctx, _lost_message(bundle_id))
-            if not imported and not ctx.args.ignore_errors:
-                break
+        try:
+            for bundle_id in bundle_id_list:
+                claim = None
+                if bundle_id in registered:
+                    claim = bundle_registry.start_bundle(ctx, bundle_id)
+                    if claim is None:
+                        # Another process took the bundle after registration.
+                        import_util.log_error(ctx, do_register.importing_refusal(bundle_id))
+                        if not ctx.args.ignore_errors:
+                            break
+                        continue
+                ctx.bundle_has_errors = False
+                with ctx.timed(f'delete_bundle:{bundle_id}'):
+                    do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
+                with ctx.timed(f'import_bundle:{bundle_id}'), db.foreign_keys_unchecked():
+                    imported = import_one_bundle(ctx, bundle_id)
+                if not imported:
+                    ctx.logger.log('fatal', f'Import of bundle {bundle_id} failed - Aborting')
+                    ctx.mark_bad_data()
+                if claim is not None:
+                    failed = ctx.bundle_has_errors and not ctx.args.ignore_errors
+                    state = bundle_registry.BUNDLE_FAILED if failed else bundle_registry.BUNDLE_DONE
+                    if not bundle_registry.finish_bundle(ctx, claim, state):
+                        import_util.log_error(ctx, _lost_message(bundle_id))
+                if not imported and not ctx.args.ignore_errors:
+                    break
+        except import_processes.LostImporterError as e:
+            # A generation command may take this writer for finished from here on, so
+            # nothing more is written.
+            ctx.logger.log('fatal', str(e))
+            ctx.mark_bad_data()
+            return False
 
     if ctx.import_has_bad_data and not ctx.args.ignore_errors:
         ctx.logger.log('fatal', 'ERRORs found during import - aborting early')

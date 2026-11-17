@@ -104,11 +104,11 @@ def _update(arguments: str) -> str:
         ('--drop COISS_2001,COISS_2002', ['--delete-bundles COISS_2001 COISS_2002']),
         (
             '==3.25.0 --drop COISS_2009 COISS_2001',
-            ['--import COISS_2001', '--delete-bundles COISS_2009'],
+            ['--delete-bundles COISS_2009', '--import COISS_2001'],
         ),
         (
             'COISS_2001,COISS_2002 --drop COISS_2002,COISS_2003',
-            ['--import COISS_2001 COISS_2002', '--delete-bundles COISS_2003'],
+            ['--delete-bundles COISS_2003', '--import COISS_2001 COISS_2002'],
         ),
         ('COISS_2001 --drop COISS_2001', ['--import COISS_2001']),
         ('--drop COISS_2001 --drop ,COISS_2002,', ['--delete-bundles COISS_2001 COISS_2002']),
@@ -163,6 +163,8 @@ def test_a_leading_version_specifier_is_not_a_bundle(
         'COISS_2001 --drop --verbose',
         'COISS_2001 --force',
         'A ==3.25.0',
+        'COISS_2001,--scorched-earth,--yes',
+        '--drop COISS_2001,--scorched-earth,--yes',
     ],
     ids=[
         'nothing',
@@ -173,6 +175,8 @@ def test_a_leading_version_specifier_is_not_a_bundle(
         'drop-followed-by-option',
         'unknown-option',
         'version-not-first',
+        'option-in-a-bundle-list',
+        'option-in-a-drop-list',
     ],
 )
 def test_arguments_that_name_nothing_to_do_print_the_usage_line(
@@ -194,9 +198,14 @@ def test_a_failed_invocation_stops_the_update_and_names_what_is_left(tmp_path: P
         tmp_path, _update('COISS_2001 --drop COISS_2002'), failing='--import COISS_2001'
     )
     assert status != 0
-    assert ran == [_BEGIN, 'opus_import --import COISS_2001']
+    assert ran == [
+        _BEGIN,
+        'opus_import --delete-bundles COISS_2002',
+        'opus_import --import COISS_2001',
+    ]
     assert 'ERROR: opus_import --import COISS_2001 failed or logged errors.' in output
-    assert '    opus_import --delete-bundles COISS_2002\n' in output
+    assert '    opus_import --import COISS_2001\n' in output
+    assert '    opus_import --delete-bundles COISS_2002\n' not in output
     assert '    opus_import --write-schema-version\n' in output
     assert '    opus_import --abandon-generation\n' in output
     assert 'DONE' not in output
@@ -225,7 +234,11 @@ def test_the_error_log_check_fails_only_on_a_non_empty_log(
 ) -> None:
     """An absent or empty ERRORS.log passes; one that holds anything fails and is shown."""
     errors = tmp_path / 'logs' / 'ERRORS.log'
-    write = '' if contents is None else f'printf %s {shlex.quote(contents)} > {errors}; '
+    write = (
+        ''
+        if contents is None
+        else f'printf %s {shlex.quote(contents)} > {shlex.quote(str(errors))}; '
+    )
     status, output, _ran = _run_steps(
         tmp_path, f'{write}if check_update_error_log "$LOGS"; then exit 0; else exit 1; fi'
     )
@@ -251,7 +264,8 @@ def test_the_served_schema_is_read_from_the_deployed_configuration(
     if toml is not None:
         deployed.write_text(toml, encoding='utf-8')
     status, output, _ran = _run_steps(
-        tmp_path, f'if served_schema_name {deployed}; then exit 0; else exit 1; fi'
+        tmp_path,
+        f'if served_schema_name {shlex.quote(str(deployed))}; then exit 0; else exit 1; fi',
     )
     assert status == expected_status
     assert expected_output in output
