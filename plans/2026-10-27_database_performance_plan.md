@@ -9232,3 +9232,39 @@ reversions, each failing a test).
   (34.3–37.6 s), and 39.0 s app-cold (34.7–40.7 s).
 - **CodeRabbit, on 6da7388e:** `require_served_view` also refuses a view with a top-level
   `LIMIT`, which the import never makes.
+- **Searches of every size**, after the report, on the same copies: each captured search's
+  build (`selective`, `complex`, `surface_geometry`, `target`, `ring_radius`, the selected
+  fan-out, `broad`, and for option 1 the empty search), timed cold after a server restart
+  and as the median of five warm executions. These are timed by the client around the
+  statement, not by `EXPLAIN ANALYZE`, so they are not the probe's figures.
+  - *Option 2:* each built search's mult counts for `instrument`, `observationtype` and
+    `imagetype`, from `obs_facet` against the captured counts, returning the same counts.
+    For the two columns of `obs_general_rows` the facet count is 18–43% faster cold on
+    searches of 10,697 to 519,991 rows (at most about 250 ms), 5–17% slower on the fan-out,
+    and on the broad search 4% faster for `observationtype` and 17% slower for
+    `instrument`. Warm, those two columns are 4–35% slower on every search. `imagetype`, the
+    child table's widget, is slower on every search, cold and warm.
+  - *Option 1:* each build's `SELECT` ordered by `default_rank` against `(time1, opus_id)`,
+    wrapped as `SELECT COUNT(*), SUM(rn * id)` so the numbering is compared on the server;
+    every numbering matched. Cold and warm ratios: `selective` 0.93 and 0.86, `complex`
+    0.97 and 0.97, `surface_geometry` 0.96 and 0.93, `target` 0.86 and 0.72, `ring_radius`
+    0.94 and 0.93, the fan-out 0.90 and 0.85, `broad` 0.86 and 0.80, the empty search 0.81
+    and 0.69. The saving is the sort's share of the build: tens of milliseconds on a
+    constrained search, 0.1–0.3 s on the largest. The wrapping gives `complex` and
+    `ring_radius` slower plans than the application's `INSERT ... SELECT` gets (`ring_radius`
+    1.77 s warm against 0.99 s), the same plan for both orders, so their ratios compare like
+    for like and their times do not.
+
+### 2026-11-17, ruling on PR-24 (written against this file at d94d6d53)
+
+- **Neither option is implemented.** The operator ruled on the report and the sweeps
+  above.
+  - *Option 1:* its target is "not improved" against the floors. Like for like it saves
+    0.1–0.3 s on the largest builds and tens of milliseconds on constrained ones. A build
+    runs once and is then cached, and the empty search, which gains most, is warmed after
+    every deploy. Against that it costs a column, a key, a full re-import, and a
+    renumbering of every observation after each import and update, which under design B
+    falls in the switch, while the site is down.
+  - *Option 2:* its target is "not improved". The facet count is slower on broad searches,
+    slower warm on every search, and slower for a child table's widget, and saves at most
+    about 250 ms cold on mid-sized searches.
