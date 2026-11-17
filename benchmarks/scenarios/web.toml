@@ -70,6 +70,11 @@ complete = "co-iss-w1477654052"
 mult_widgets = ["instrument", "observationtype", "target"]
 range_slugs = ["time1"]
 
+# The mult counts a mults scenario asks for after the default widgets': a widget on
+# obs_type_image, a child table holding one row for each observation.
+[mults]
+widgets = ["imagetype"]
+
 # The order a re-sort asks for, in place of the default.
 [resort]
 order = "-time1,opusid"
@@ -174,6 +179,16 @@ search = "selected"
 [[scenarios]]
 kind = "fanout"
 search = "complex"
+
+# The mult counts of a broad search and of a selective one, which the fan-out is not
+# issued for.
+[[scenarios]]
+kind = "mults"
+search = "broad"
+
+[[scenarios]]
+kind = "mults"
+search = "selective"
 
 # A mult widget outside the defaults.
 [[scenarios]]

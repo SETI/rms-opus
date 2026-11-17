@@ -155,6 +155,33 @@ def test_a_column_set_that_cannot_be_asked_for_is_refused(
         web_scenarios.load_web_config(path)
 
 
+def test_a_mults_scenario_builds_untimed_then_counts_the_default_widgets_and_its_own(
+    tmp_path: Path,
+) -> None:
+    """The result count is untimed; the default widgets' counts come first, then
+    [mults] widgets'."""
+    path = tmp_path / 'web.toml'
+    path.write_text(
+        '[server]\nport = 1\nworkers = 1\nthreads = 1\nmemcached_port = 2\nmemcached_mb = 1\n'
+        '[runs]\nfixture = 1\n[searches]\nbroad = "time1=2000-01-01"\n'
+        '[fanout]\nmult_widgets = ["instrument"]\nrange_slugs = []\n'
+        '[mults]\nwidgets = ["imagetype"]\n'
+        '[[scenarios]]\nkind = "mults"\nsearch = "broad"\n'
+    )
+    scenario = web_scenarios.load_web_config(path).scenarios[0]
+    assert scenario.name == 'mults.broad'
+    assert [(request.name, request.timed) for request in scenario.requests] == [
+        ('build', False),
+        ('mults_instrument', True),
+        ('mults_imagetype', True),
+    ]
+    assert [request.url for request in scenario.requests] == [
+        '__api/meta/result_count.json?time1=2000-01-01&reqno=1',
+        '__api/meta/mults/instrument.json?time1=2000-01-01&reqno=1',
+        '__api/meta/mults/imagetype.json?time1=2000-01-01&reqno=1',
+    ]
+
+
 def test_an_unknown_search_is_refused(tmp_path: Path) -> None:
     """A scenario naming a search web.toml does not define fails at load."""
     path = tmp_path / 'web.toml'

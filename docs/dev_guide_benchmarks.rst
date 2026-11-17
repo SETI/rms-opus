@@ -53,6 +53,10 @@ The commands, each run from the root of a checkout as ``python -m benchmarks.<na
 ``bench_web``
     Times the web scenarios against a gunicorn it starts, in three cache states.
 
+``option_prototypes``
+    Builds a schema option that is measured before it is implemented on a copy of a
+    schema, and times the build.
+
 ``compare``
     Renders two result files as a before/after table, and computes noise floors.
 
@@ -561,6 +565,62 @@ runs before the switch::
         --session g --python venv/bin/python --repo-root . \
         --schema <schema> --switch-only
 
+.. _dev_guide_benchmarks_prototypes:
+
+What a prototype run is
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A schema option can be measured on real data before the application uses it: the
+option is built as a **prototype** on a copy of a finished schema, and ``bench_db
+--option-probe`` (below) times the statements the application would issue against it
+beside the ones it issues. ``option_prototypes`` builds one prototype per command, with
+``--source`` naming the schema to copy, ``--target`` the copy and ``--option`` the
+option:
+
+``default_rank``
+    Each observation's place in the default sort order, ``(time1, opus_id)``, in a
+    keyed column of the base table holding ``obs_general``'s rows: one ``ALTER TABLE``
+    adds ``default_rank INT UNSIGNED`` and its key, and one ``UPDATE`` writes each row's
+    ``ROW_NUMBER() OVER (ORDER BY time1, opus_id)``. Where ``obs_general`` is a view, the
+    view is then created again listing the column, by the import's own
+    :meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_obs_general_view` given
+    ``obs_general.json``'s columns with the rank declared after them.
+
+``facet``
+    A narrow table, ``obs_facet``, keyed by ``obs_general_id``, holding each
+    observation's value of every mult field whose ``field_type`` is ``mult_idx``,
+    ``flag_yesno`` or ``flag_onoff`` and whose table holds one row per observation:
+    ``obs_general`` and each table whose primary key is ``obs_general_id`` alone. Each
+    column is named by its field's qualified name and has the type the import gives a
+    mult id. The columns come from the import's own field metadata
+    (:func:`opus_import.mult_fields.packaged_mult_columns`), so a list column, held in a
+    junction table, and a field of a table with several rows per observation have none.
+    One ``INSERT ... SELECT`` fills the table from ``obs_general`` left joined to each of
+    those tables; a field whose table the copy lacks is left out, and the run's details
+    name it.
+
+The copy is made with ``bench_server.clone_schema``, views included, and the source is
+only read. The copy must show every row it holds: a schema whose ``obs_general`` hides
+rows of a pending generation is refused. Each step is timed (``clone_s``, then
+``alter_s``, ``fill_s`` and ``view_s`` or ``create_s`` and ``fill_s``, and their sum,
+``build_s``), and the option's cost in bytes is read after ``ANALYZE TABLE`` with the
+statistics cache off: for the rank, the change in the base table's data and index bytes
+(the ``ALTER`` rebuilds the table, since a column cannot be added in place together with
+a key, so the data bytes count that rebuild too) and the key's own size from InnoDB's
+persistent statistics, ``key_bytes``; for the facet table, its data and index bytes and
+its column count. The metrics are under ``prototype.<option>.`` in a run of kind
+``prototype``, which ``compare`` does not compare. The label's environment then names
+the copy as its schema, so ``bench_db`` and ``bench_web`` given the same label measure the
+copy. The prototype is built by the harness's own process, with the import code of the
+checkout the harness runs from, so the side given must be that checkout::
+
+    python -m benchmarks.option_prototypes --scale complete --side after --pr <tag> \
+        --session rank --python venv/bin/python --repo-root . \
+        --source <schema> --target <schema>_rank --option default_rank
+    python -m benchmarks.bench_db --scale complete --side after --pr <tag> \
+        --session rank --python venv/bin/python --repo-root . --dump-queries \
+        --option-probe
+
 What a web run is
 ~~~~~~~~~~~~~~~~~
 
@@ -758,6 +818,57 @@ why, and the command exits with an error after recording the run. A probe that c
 run -- a capture without the re-sort scenario's blocks, a re-sorted request that built
 no search, or a statement the server refuses -- is recorded the same way, with the error
 as its problem, so the run's other measurements are kept.
+
+``--option-probe``, given with ``--dump-queries``, times the statements each prototyped
+schema option (:ref:`dev_guide_benchmarks_prototypes`) would answer with, after the
+replay (``benchmarks/option_probe.py``). Each request it covers is a **pair** of shapes:
+the **captured** shape, the ``SELECT`` the application issued, from the capture; and the
+**prototype** shape, the ``SELECT`` the option would answer with, generated from it and
+from the built searches' ids and written into no capture file:
+
+* for ``default_rank``, the empty search's first and last pages
+  (``pages.empty/page_1`` and ``pages.empty/page_last``) read as a range of
+  ``obs_general.default_rank`` with no search built, in place of a range of the search's
+  ``search_results`` rows (``empty_page_1``, ``empty_page_last``); and the broad search's
+  build (``search.broad/result_count``) numbering its rows by ``default_rank`` in place of
+  ``(time1, opus_id)`` (``broad_build``);
+* for ``facet``, each mult count of the ``mults.broad`` and ``mults.selective``
+  scenarios whose column ``obs_facet`` holds, counted from ``obs_facet`` joined to the
+  search's ``search_results`` rows in place of the column's own table
+  (``<search>.mults_<slug>``). A ``mults`` scenario asks for the default widgets' counts
+  and those of ``web.toml``'s ``[mults] widgets``, a widget on a child table among them.
+  A count of a column ``obs_facet`` does not hold, such as a list column's, is not
+  probed, and the details say so.
+
+Where the schema does not carry an option -- no ``default_rank`` column in
+``obs_general``, no ``obs_facet`` table -- the option's captured shapes are timed alone
+and the details say the option was skipped; that is not a failure, so a floor session on
+the unmodified schema measures the captured shapes' noise.
+
+Each shape is timed from a **cold start**: the server is restarted, and the shape's
+``SELECT`` runs under ``EXPLAIN ANALYZE`` once on a connection opened after the restart,
+its cold time, then five more times on that connection, whose median is its warm time.
+``--option-probe-rounds`` times every shape that many times over, a restart before each;
+each figure is the median over the rounds, with every value kept in the run's
+``samples``. Then each shape's rows are read once: a page or a count is fetched and
+compared with the other shape's row for row (a page in order), and a build is counted
+with ``SELECT COUNT(*)`` over it.
+
+The metrics are under ``db.option_probe.<option>.<pair>.``: ``cold_s``, ``warm_s``,
+``cold_analyze_ms`` and ``warm_analyze_ms`` (the time to the last row the top iterator
+reports), ``rows_examined`` and ``rows_returned``, all of the shape the schema answers
+the pair with -- the prototype shape where it carries the option, the captured one where
+it does not. ``compare`` therefore compares a floor session on the unmodified schema
+with a run on a prototype's copy pair by pair, and judges a pair's ``cold_s`` against the
+captured shape's floor. Where the prototype shape is timed, the captured shape's figures
+on the same copy are under ``.captured.``, beside ``cold_ratio`` and ``warm_ratio``, the
+prototype's time over the captured one's. Each pair records ``valid``, and each option
+``db.option_probe.<option>.valid``. A pair is not valid when a shape returned no rows,
+when the two returned different numbers of rows or different rows, or when a statement
+failed; an option whose captured shapes the capture lacks is not valid as a whole. The
+details keep each pair's statements, every execution's figures and the last ``EXPLAIN
+ANALYZE`` tree of each shape. A run holding a probe that is not valid is recorded, and
+the command then exits with an error naming every problem.
 
 Result files
 ------------
