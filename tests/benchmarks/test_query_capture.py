@@ -200,3 +200,22 @@ def test_each_execution_s_plan_shape_is_recorded(monkeypatch: pytest.MonkeyPatch
         first: query_capture.plan_shape(ANALYZE_TREE),
         second: query_capture.plan_shape(other),
     }
+
+
+@pytest.mark.parametrize(
+    ('text', 'expected'),
+    [
+        ('ring_radius1 > 70000.5', 'ring_radius1 > ?'),
+        ('ring_radius1 > 80000', 'ring_radius1 > ?'),
+        ('ring_radius1 > -70000.5', 'ring_radius1 > ?'),
+        ('(x >= -1.2e+3)', '(x >= ?)'),
+        ('x-5', 'x-?'),
+        ('(x)-5', '(x)-?'),
+        ('x - 5', 'x - ?'),
+        ('cache_12.id', 'cache_?.id'),
+        ('using time1', 'using time1'),
+    ],
+)
+def test_a_literal_is_one_placeholder_whatever_its_form(text: str, expected: str) -> None:
+    """Digits, decimals, exponent and a unary minus go; an operator and a name's digit stay."""
+    assert query_capture.normalize_numbers(text) == expected

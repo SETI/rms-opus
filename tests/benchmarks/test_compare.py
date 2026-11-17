@@ -680,6 +680,15 @@ def test_a_steady_plan_or_one_without_shapes_is_not_a_change() -> None:
     assert compare.plan_changes(_db_result(unshaped, _replayed('SELECT 1', ['bbb'] * 5, 1.0))) == []
 
 
+def test_statements_differing_only_in_a_literal_s_form_are_matched() -> None:
+    """A decimal, an integer and a negative literal at the same place are one statement."""
+    content = _db_result(
+        _replayed('SELECT 1 FROM t WHERE r > 70000.5', ['aaa'] * 5, 1.0),
+        _replayed('SELECT 1 FROM t WHERE r > -80000', ['bbb'] * 5, 1.0),
+    )
+    assert [change.shapes for change in compare.plan_changes(content)] == [2]
+
+
 def test_another_statement_at_the_same_place_is_not_matched() -> None:
     """Two runs that issued different statements have no plan to compare."""
     content = _db_result(

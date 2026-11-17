@@ -84,6 +84,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from benchmarks.query_capture import normalize_numbers
 from benchmarks.results import (
     GENERATION_SWITCH_KIND,
     GENERATION_UPDATE_KIND,
@@ -169,10 +170,6 @@ def metric_family(metric: str) -> str:
         return OPTION_PROBE_FAMILY
     return metric.split('.')[0]
 
-
-#: A number in a statement's text, written as ``?`` where statements are matched across
-#: runs, which may build their searches under other ids.
-_STATEMENT_NUMBER = re.compile(r'\d+')
 
 _P95_SUFFIX = '.p95_s'
 _SAMPLES_SUFFIX = '.latency_s'
@@ -294,7 +291,8 @@ def plan_changes(content: Mapping[str, Any]) -> list[PlanChange]:
     """Find the replayed statements whose plan took more than one shape.
 
     A statement is matched across a file's ``db`` runs by its block's tag, its place in
-    the block, and its text with every number written as ``?``. A plan without recorded
+    the block, and its text with its numbers written as ``?`` (`normalize_numbers`),
+    since runs may build their searches under other ids. A plan without recorded
     shapes is passed over.
 
     Parameters:
@@ -314,7 +312,7 @@ def plan_changes(content: Mapping[str, Any]) -> list[PlanChange]:
             key = (
                 str(entry['tag']),
                 int(entry['position']),
-                _STATEMENT_NUMBER.sub('?', str(entry['statement'])),
+                normalize_numbers(str(entry['statement'])),
             )
             seen.setdefault(key, []).append((index, tuple(str(shape) for shape in plan['shapes'])))
     changes = [PlanChange(tag, position, tuple(runs)) for (tag, position, _), runs in seen.items()]

@@ -71,10 +71,12 @@ _ON_TABLE = re.compile(r'\bon (?P<table>\w+)')
 _PLAN_NODE = re.compile(
     r'^(?P<indent>\s*)-> (?P<what>.*?)(?:\s+\((?:cost=|rows=|actual |never executed).*)?$'
 )
-#: A number in an iterator's description: a literal, a row limit, a search's id in a
-#: per-search table's name (``cache_12``). A digit ending a word, as in ``time1``, is not
-#: one.
-_LITERAL = re.compile(rf'(?<![A-Za-z0-9.]){_NUMBER}(?!\w)')
+#: A number in a statement or a plan: a literal, with its sign when the minus does not
+#: follow an operand, a row limit, a search's id in a per-search table's name
+#: (``cache_12``). A digit ending a word, as in ``time1``, is not one.
+_LITERAL = re.compile(
+    r'(?:(?<![\w)\]`\'".])-)?(?<![A-Za-z0-9.])\d+(?:\.\d*)?(?:[eE][+-]?\d+)?(?!\w)'
+)
 #: How many hexadecimal digits of a plan shape's digest name it.
 SHAPE_ID_DIGITS = 12
 _INNER_SELECT = re.compile(r'\b(SELECT|WITH)\b', re.IGNORECASE)
@@ -298,13 +300,30 @@ def summarize_analyze(plan: str) -> dict[str, Any]:
     }
 
 
+def normalize_numbers(text: str) -> str:
+    """Write every number in a statement or a plan as ``?``.
+
+    A literal is one ``?`` whatever its digits, decimals, exponent or sign, so two
+    statements or plans that differ only in their literals, or in the search a
+    per-search table belongs to, read the same. A minus after an operand is an operator
+    and stays.
+
+    Parameters:
+        text: The statement, or an iterator's description.
+
+    Returns:
+        The text with its numbers written as ``?``.
+    """
+    return _LITERAL.sub('?', text)
+
+
 def plan_shape(plan: str) -> str:
     """Return an ``EXPLAIN ANALYZE`` tree without what changes from one execution to the next.
 
     The shape keeps each iterator, its place in the tree, and the tables, indexes and
     conditions it names, so a different join order or access path gives a different
     shape. It drops the cost and row estimates and the measured times and rows, and
-    writes every number in a description as ``?``, so the same plan over another search's
+    writes every number in a description as ``?`` (`normalize_numbers`), so the same plan over another search's
     rows, in another search's table, or with another literal, has the same shape.
 
     Parameters:
@@ -317,7 +336,7 @@ def plan_shape(plan: str) -> str:
     for line in plan.splitlines():
         node = _PLAN_NODE.match(line)
         if node is not None:
-            lines.append(f'{node["indent"]}-> {_LITERAL.sub("?", node["what"])}')
+            lines.append(f'{node["indent"]}-> {normalize_numbers(node["what"])}')
     return '\n'.join(lines)
 
 
