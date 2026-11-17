@@ -995,7 +995,7 @@ describes the served generation and lacks any table the update adds. Without tha
 the checks that read it are skipped and the validation fails, naming it.
 
 **With a pending generation the checks read what the update wrote**, not the whole schema
-(:class:`~opus_import.steps.do_validate.GenerationScope`). Registration lays every range
+(:class:`~opus_import.validation_queries.GenerationScope`). Registration lays every range
 the pending generation registers out after every range an earlier generation registered,
 retired ones included, so the end of those earlier ranges
 (:func:`~opus_import.bundle_registry.end_before_generation`) divides the ids: the
@@ -1009,7 +1009,7 @@ generation, how many observations it added and that first id before the checks r
 switch until the purge, ``obs_general_rows`` still holds the observations the switch
 retired, with their rows of the other tables, which the ``obs_general`` view hides. The
 checks then leave them out, as the site does
-(:func:`~opus_import.steps.do_validate.served_generation_only`), and the log names the
+(:func:`~opus_import.validation_queries.served_generation_only`), and the log names the
 served generation before the checks run; so a filter whose wavelengths the update
 corrected is not compared with its retired observations. Otherwise every row is served,
 and every row is read with no condition.

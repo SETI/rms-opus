@@ -2,10 +2,10 @@
 stand-ins.
 
 Each check's statements are recorded by a stand-in database. With a generation pending
-they read the rows the update wrote (`do_validate.GenerationScope`); with none while the
-rows the last switch retired await the purge, the served generation's
-(`do_validate.served_generation_only`); otherwise every row, with no condition and no
-value.
+they read the rows the update wrote (`validation_queries.GenerationScope`); with none
+while the rows the last switch retired await the purge, the served generation's
+(`validation_queries.served_generation_only`); otherwise every row, with no condition and
+no value.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from opus_import import bundle_registry
+from opus_import import bundle_registry, validation_queries
 from opus_import.context import ImportContext
 from opus_import.generations import GenerationState
 from opus_import.schema_version import SCHEMA_STATE_READY, SCHEMA_VERSION
@@ -182,8 +182,8 @@ def test_the_scope_starts_after_every_earlier_generations_range(
 def test_no_pending_generation_has_no_scope() -> None:
     """Every row is read when no generation is pending."""
     db = _ScopeDB({}, _REGISTRY)
-    assert do_validate.generation_scope(_served(db)) is None
-    assert do_validate.generation_scope(_pending(db)) == do_validate.GenerationScope(
+    assert validation_queries.generation_scope(_served(db)) is None
+    assert validation_queries.generation_scope(_pending(db)) == validation_queries.GenerationScope(
         _PENDING, _FIRST_ID
     )
 
@@ -197,7 +197,7 @@ def test_only_the_served_generation_is_read_while_retired_rows_remain(
 ) -> None:
     """From a switch until the purge, with no generation pending; never otherwise."""
     ctx = make_context(db=_ScopeDB({}))
-    assert do_validate.served_generation_only(ctx) is None
+    assert validation_queries.served_generation_only(ctx) is None
     ctx.generation_state = GenerationState(
         SCHEMA_VERSION,
         SCHEMA_STATE_READY,
@@ -206,12 +206,12 @@ def test_only_the_served_generation_is_read_while_retired_rows_remain(
         None if pending is None else 'writing',
         revertible,
     )
-    assert do_validate.served_generation_only(ctx) == served
+    assert validation_queries.served_generation_only(ctx) == served
 
 
 def test_the_scopes_conditions_read_the_keys() -> None:
     """The observations by primary key and generation, their rows by observation id."""
-    scope = do_validate.GenerationScope(_PENDING, _FIRST_ID)
+    scope = validation_queries.GenerationScope(_PENDING, _FIRST_ID)
     q = _ScopeDB.quote_identifier
     assert scope.added(q, 'g') == (_ADDED, [_FIRST_ID, _PENDING])
     assert scope.children(q, 'c') == ('`c`.`obs_general_id` >= %s', [_FIRST_ID])
@@ -365,7 +365,7 @@ def test_junctions_are_compared_from_the_scopes_first_id(
 #: The least and greatest of every wavelength column, as the filter query selects them.
 _RANGES = ', '.join(
     f"MIN(IFNULL(`w`.`{name}`, 'NULL')), MAX(IFNULL(`w`.`{name}`, 'NULL'))"
-    for name in do_validate._WAVELENGTH_FIELDS
+    for name in validation_queries.WAVELENGTH_FIELDS
 )
 
 #: The join of an instrument table, aliased ``c``, to its wavelength rows.
@@ -438,7 +438,7 @@ class _FilterRowDB(_ScopeDB):
         """Give the generation's filter, then a group whose first wavelength disagrees."""
         rows = super().general_select(cmd, params)
         if cmd.startswith('`c`'):
-            agreeing = [0.5, 0.5] * (len(do_validate._WAVELENGTH_FIELDS) - 1)
+            agreeing = [0.5, 0.5] * (len(validation_queries.WAVELENGTH_FIELDS) - 1)
             return [('CLEAR', 0.4, 0.7, *agreeing)]
         return rows
 
