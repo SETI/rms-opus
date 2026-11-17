@@ -22,6 +22,14 @@ checks then read what the update wrote rather than the whole schema (`Generation
 the per-row checks read the observations the pending generation added and their rows of
 the other tables, the filter check compares only the filters those observations carry,
 and the NULL check, which describes the schema rather than the rows, does not run.
+
+With no generation pending the checks read the generation the schema serves. From a
+switch until the purge, ``obs_general_rows`` still holds the observations the switch
+retired, with their rows of the other tables, which the ``obs_general`` view hides; the
+checks then read the served generation's observations and their rows alone
+(`served_generation_only`), as the site does, so a filter the update corrected is not
+compared with its retired rows. Otherwise every row is served, and every row is read with
+no condition.
 """
 
 from __future__ import annotations
@@ -132,6 +140,41 @@ def generation_scope(ctx: ImportContext) -> GenerationScope | None:
         return None
     assert ctx.db is not None
     return GenerationScope(pending, bundle_registry.end_before_generation(ctx.db, pending))
+
+
+def served_generation_only(ctx: ImportContext) -> int | None:
+    """Return the served generation while the rows the last switch retired await the purge.
+
+    From a switch until the purge no generation is pending, and ``obs_general_rows`` still
+    holds the observations the switch retired, with their rows of the other tables, which
+    the ``obs_general`` view hides. The checks then read the served generation alone.
+
+    Parameters:
+        ctx: The import run's context, for its generation state.
+
+    Returns:
+        The served generation while no generation is pending and the last switch is
+        revertible; None otherwise, when either a generation is pending
+        (`generation_scope`) or every row is served.
+    """
+    state = ctx.generation_state
+    if state is None or state.pending is not None or not state.revertible:
+        return None
+    return state.generation
+
+
+def _served(q: Callable[[str], str], alias: str, generation: int) -> tuple[str, list[int]]:
+    """Return the test that an ``obs_general`` row is in the served generation.
+
+    Parameters:
+        q: The database's identifier quoting.
+        alias: The alias the row's columns are qualified by, unquoted.
+        generation: The served generation (`served_generation_only`).
+
+    Returns:
+        The condition, and the values its placeholders take.
+    """
+    return generations.in_generation_condition(q, alias), [generation, generation]
 
 
 def _body_category(db: ImportDBSuper, pi_table_name: str) -> str | None:
@@ -316,7 +359,9 @@ def validate_nulls(ctx: ImportContext) -> None:
     data. ``obs_surface_geometry_target`` is counted once, over every body's rows, so a column
     is reported only when no body's rows hold a NULL in it. While a generation is pending
     the check does not run, and says so: it describes the whole schema, and the few
-    bundles an update writes would make it report columns falsely.
+    bundles an update writes would make it report columns falsely. While the rows the
+    last switch retired await the purge, only the served generation's rows are counted
+    (`served_generation_only`).
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -339,7 +384,7 @@ def validate_nulls(ctx: ImportContext) -> None:
     logger.log('debug', 'Validating non-NULL columns')
 
     obs_table_names = sorted(db.table_names(prefix='obs_'))
-    q = db.quote_identifier
+    served = served_generation_only(ctx)
 
     for obs_table_name in obs_table_names:
         nullable = [
@@ -349,11 +394,7 @@ def validate_nulls(ctx: ImportContext) -> None:
         ]
         if not nullable:
             continue
-        # One scan of the table counts the NULLs in every nullable column, so the
-        # check costs the same whichever columns carry a key. An empty table's sums
-        # are NULL, which counts as none found.
-        counts = ', '.join(f'SUM({q(name)} IS NULL)' for name in nullable)
-        (row,) = db.general_select(f'{counts} FROM {q(obs_table_name)}')
+        (row,) = db.general_select(*_null_count_query(db, obs_table_name, nullable, served))
         for field_name, count in zip(nullable, row, strict=True):
             if not count:
                 logger.log(
@@ -363,8 +404,52 @@ def validate_nulls(ctx: ImportContext) -> None:
                 )
 
 
+def _null_count_query(
+    db: ImportDBSuper, table_name: str, nullable: Sequence[str], served: int | None
+) -> tuple[str, list[int] | None]:
+    """Return the query counting the NULLs of each nullable column of a table.
+
+    One scan of the table counts the NULLs in every nullable column, so the check costs
+    the same whichever columns carry a key. An empty table's sums are NULL, which counts
+    as none found.
+
+    Parameters:
+        db: The open database.
+        table_name: The observation table.
+        nullable: Its columns that allow NULL.
+        served: The served generation while retired rows await the purge
+            (`served_generation_only`), or None for every row.
+
+    Returns:
+        The statement for `ImportDBSuper.general_select`, and its values, or None when it
+        has none.
+    """
+    q = db.quote_identifier
+    # Every interpolation is an identifier produced by quote_identifier
+    # (^[A-Za-z0-9_]+$); every value is a parameter.
+    if served is None:
+        counts = ', '.join(f'SUM({q(name)} IS NULL)' for name in nullable)
+        return f'{counts} FROM {q(table_name)}', None  # nosec B608
+    child, observation = q('c'), q('g')
+    counts = ', '.join(f'SUM({child}.{q(name)} IS NULL)' for name in nullable)
+    if table_name == generations.OBS_GENERAL_VIEW:
+        condition, values = _served(q, 'c', served)
+        return f'{counts} FROM {q(table_name)} {child} WHERE {condition}', values  # nosec B608
+    condition, values = _served(q, 'g', served)
+    cmd = (
+        f'{counts} FROM {q(table_name)} {child} '  # nosec B608
+        f'JOIN {q("obs_general")} {observation} ON {observation}.{q("id")} = '
+        f'{child}.{q("obs_general_id")} WHERE {condition}'
+    )
+    return cmd, values
+
+
 def _min_max_query(
-    db: ImportDBSuper, table_name: str, field_name1: str, scope: GenerationScope | None
+    db: ImportDBSuper,
+    table_name: str,
+    field_name1: str,
+    scope: GenerationScope | None,
+    served: int | None,
 ) -> tuple[str, list[int] | None]:
     """Return the query for the OPUS IDs of the rows whose pair of columns is out of order.
 
@@ -372,7 +457,9 @@ def _min_max_query(
         db: The open database.
         table_name: The observation table.
         field_name1: The pair's low end; its high end ends in ``2`` instead.
-        scope: The pending generation's rows (`generation_scope`), or None for every row.
+        scope: The pending generation's rows (`generation_scope`), or None.
+        served: Without a scope, the served generation while retired rows await the purge
+            (`served_generation_only`); None with neither, for every row.
 
     Returns:
         The statement for `ImportDBSuper.general_select`, and its values, or None when it
@@ -382,7 +469,7 @@ def _min_max_query(
     field_name2 = field_name1[:-1] + '2'
     # Every interpolation is an identifier produced by quote_identifier
     # (^[A-Za-z0-9_]+$); every value is a parameter.
-    if scope is None:
+    if scope is None and served is None:
         if table_name == 'obs_general':
             cmd = f"""
 {q('opus_id')} FROM {q(table_name)} WHERE
@@ -393,18 +480,25 @@ def _min_max_query(
 JOIN {q('obs_general')} {q('g')} ON {q('g')}.{q('id')} = {q('c')}.{q('obs_general_id')}
 WHERE {q('c')}.{q(field_name2)} < {q('c')}.{q(field_name1)}"""  # nosec B608
         return cmd, None
-    added, values = scope.added(q, 'g')
+    children = ''
+    child_values: list[int] = []
+    if scope is None:
+        assert served is not None
+        observations, values = _served(q, 'g', served)
+    else:
+        observations, values = scope.added(q, 'g')
+        condition, child_values = scope.children(q, 'c')
+        children = f' AND {condition}'
     if table_name == 'obs_general':
         cmd = f"""
 {q('g')}.{q('opus_id')} FROM {q(table_name)} {q('g')} WHERE
-{q('g')}.{q(field_name2)} < {q('g')}.{q(field_name1)} AND {added}"""  # nosec B608
+{q('g')}.{q(field_name2)} < {q('g')}.{q(field_name1)} AND {observations}"""  # nosec B608
         return cmd, values
-    children, child_values = scope.children(q, 'c')
     cmd = f"""
 {q('g')}.{q('opus_id')} FROM {q(table_name)} {q('c')}
 JOIN {q('obs_general')} {q('g')} ON {q('g')}.{q('id')} = {q('c')}.{q('obs_general_id')}
-WHERE {q('c')}.{q(field_name2)} < {q('c')}.{q(field_name1)} AND {children}
-AND {added}"""  # nosec B608
+WHERE {q('c')}.{q(field_name2)} < {q('c')}.{q(field_name1)}{children}
+AND {observations}"""  # nosec B608
     return cmd, child_values + values
 
 
@@ -420,7 +514,8 @@ def validate_min_max_order(ctx: ImportContext) -> None:
     row is looked up under the category `_param_info_category` gives it, in
     `param_info_table`'s table, and a surface geometry pair is skipped when ``param_info``
     has no body's category. While a generation is pending only the rows of the
-    observations it added are read (`GenerationScope`).
+    observations it added are read (`GenerationScope`), and while the rows the last
+    switch retired await the purge only the served generation's (`served_generation_only`).
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -438,6 +533,7 @@ def validate_min_max_order(ctx: ImportContext) -> None:
     pi_table_name = param_info_table(ctx)
     body_category = _body_category(db, pi_table_name)
     scope = generation_scope(ctx)
+    served = served_generation_only(ctx)
 
     q = db.quote_identifier
 
@@ -481,7 +577,7 @@ def validate_min_max_order(ctx: ImportContext) -> None:
             if pi_form_type is None or pi_form_type.startswith('LONG'):
                 continue
 
-            res = db.general_select(*_min_max_query(db, obs_table_name, field_name1, scope))
+            res = db.general_select(*_min_max_query(db, obs_table_name, field_name1, scope, served))
             if len(res):
                 opus_ids = [x[0] for x in res]
                 logger.log(
@@ -540,6 +636,7 @@ def _filter_wavelength_query(
     group_columns: Sequence[str],
     scope: GenerationScope | None,
     groups: Sequence[tuple[Any, ...]],
+    served: int | None,
 ) -> tuple[str, list[Any] | None]:
     """Return the query for each filter's least and greatest wavelength values.
 
@@ -547,14 +644,17 @@ def _filter_wavelength_query(
         db: The open database.
         table_name: The observation table holding the filter.
         group_columns: The columns a filter is grouped by, the filter's last.
-        scope: The pending generation's rows (`generation_scope`), or None for every row.
+        scope: The pending generation's rows (`generation_scope`), or None.
         groups: With a scope, the filters to compare (`_filter_groups`); not empty.
+        served: Without a scope, the served generation while retired rows await the purge
+            (`served_generation_only`); None with neither, for every row.
 
     Returns:
         The statement for `ImportDBSuper.general_select`, grouped by `group_columns`, and
         its values, or None when it has none. With a scope it reads every observation of
         the pending generation, the served ones it keeps included and the ones it retires
-        left out, that carries one of `groups`.
+        left out, that carries one of `groups`; with `served`, every observation of the
+        served generation.
     """
     q = db.quote_identifier
     child, wavelength = q('c'), q('w')
@@ -570,10 +670,20 @@ def _filter_wavelength_query(
         f'LEFT JOIN {q("obs_wavelength")} {wavelength} ON '
         f'{child}.{q("obs_general_id")} = {wavelength}.{q("obs_general_id")}'
     )
-    if scope is None:
+    observation = q('g')
+    if scope is None and served is None:
         cmd = f'{grouped}, {ranges} FROM {source} {joined} GROUP BY {grouped}'  # nosec B608
         return cmd, None
-    observation = q('g')
+    if scope is None:
+        assert served is not None
+        condition, served_values = _served(q, 'g', served)
+        cmd = (
+            f'{grouped}, {ranges} FROM {source} '  # nosec B608
+            f'JOIN {q("obs_general")} {observation} ON {observation}.{q("id")} = '
+            f'{child}.{q("obs_general_id")} {joined} '
+            f'WHERE {condition} GROUP BY {grouped}'
+        )
+        return cmd, list(served_values)
     live = generations.in_generation_condition(q, 'g')
     match = ' AND '.join(f'{child}.{q(name)} <=> %s' for name in group_columns)
     carried = ' OR '.join(f'({match})' for _group in groups)
@@ -601,7 +711,10 @@ def validate_filter_wavelength_consistency(ctx: ImportContext) -> None:
     While a generation is pending only the filters its own observations carry are
     compared (`GenerationScope`), but across every observation the generation shows, so
     a bundle that disagrees with the served rows of its filter is still reported; a table
-    the generation added no observation to is not read.
+    the generation added no observation to is not read. While the rows the last switch
+    retired await the purge only the served generation's observations are compared
+    (`served_generation_only`), so a filter whose wavelengths the update corrected is not
+    compared with its retired rows.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -618,6 +731,7 @@ def validate_filter_wavelength_consistency(ctx: ImportContext) -> None:
 
     obs_table_names = sorted(db.table_names(prefix='obs_'))
     scope = generation_scope(ctx)
+    served = served_generation_only(ctx)
 
     for obs_table_name in obs_table_names:
         column_list = db.table_info(obs_table_name)
@@ -640,7 +754,7 @@ def validate_filter_wavelength_consistency(ctx: ImportContext) -> None:
                     continue
 
             res = db.general_select(
-                *_filter_wavelength_query(db, obs_table_name, group_columns, scope, groups)
+                *_filter_wavelength_query(db, obs_table_name, group_columns, scope, groups, served)
             )
             for row in res:
                 for col in range(start_col, len(row) - 1, 2):
@@ -667,7 +781,9 @@ def validate_orphans(ctx: ImportContext) -> None:
     ``obs_general_rows``, retired ones included: an orphan has no ``obs_general`` row to
     select it by, so the rows are chosen by their own ``obs_general_id``, and every child
     row an update writes, or leaves behind by deleting an observation, names an id from
-    the scope's first up.
+    the scope's first up. With no generation pending every row is counted against every
+    row of ``obs_general_rows`` too: a retired observation's rows are not orphans, and the
+    purge deletes them with it.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -717,7 +833,8 @@ def validate_pds_bundle_ids(ctx: ImportContext) -> None:
     beside ``obs_general.bundle_id``, which the per-bundle delete selects by; the two
     must agree, or a search by bundle and the delete would see different bundles. Any
     such row is an error, with the count. While a generation is pending only the rows of
-    the observations it added are compared (`GenerationScope`).
+    the observations it added are compared (`GenerationScope`), and while the rows the last
+    switch retired await the purge only the served generation's (`served_generation_only`).
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -736,11 +853,15 @@ JOIN {q('obs_general')} {q('g')} ON {q('g')}.{q('id')} = {q('p')}.{q('obs_genera
 WHERE {q('p')}.{q('bundle_id')} <> {q('g')}.{q('bundle_id')}"""  # nosec B608
     values: list[int] | None = None
     scope = generation_scope(ctx)
+    served = served_generation_only(ctx)
     if scope is not None:
         children, child_values = scope.children(q, 'p')
         added, added_values = scope.added(q, 'g')
         cmd += f' AND {children} AND {added}'
         values = child_values + added_values
+    elif served is not None:
+        condition, values = _served(q, 'g', served)
+        cmd += f' AND {condition}'
     count = db.general_select(cmd, values)[0][0]
     if count:
         ctx.logger.log(
@@ -754,7 +875,8 @@ def validate_previews(ctx: ImportContext) -> None:
     The import writes one ``obs_preview`` row for every observation, and the results
     pages read an observation's preview images from it, so an observation without one
     is an error, with the count. While a generation is pending only the observations it
-    added are read (`GenerationScope`).
+    added are read (`GenerationScope`), and while the rows the last switch retired await
+    the purge only the served generation's (`served_generation_only`).
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -773,9 +895,13 @@ LEFT JOIN {q('obs_preview')} {q('p')} ON {q('p')}.{q('obs_general_id')} = {q('g'
 WHERE {q('p')}.{q('obs_general_id')} IS NULL"""  # nosec B608
     values: list[int] | None = None
     scope = generation_scope(ctx)
+    served = served_generation_only(ctx)
     if scope is not None:
         added, values = scope.added(q, 'g')
         cmd += f' AND {added}'
+    elif served is not None:
+        condition, values = _served(q, 'g', served)
+        cmd += f' AND {condition}'
     count = db.general_select(cmd, values)[0][0]
     if count:
         ctx.logger.log('error', f'{count} obs_general rows have no obs_preview row')
@@ -792,7 +918,9 @@ def validate_junctions(ctx: ImportContext) -> None:
     among them; so is a missing junction table. A junction row whose observation is gone
     is `validate_orphans`' to report, and is counted here too. While a generation is
     pending only the lists and the junction rows of observation ids it could have written
-    are compared (`GenerationScope.first_id`).
+    are compared (`GenerationScope.first_id`). With none pending every list is compared, a
+    retired observation's included: it keeps both its list and its junction rows until
+    the purge deletes them together.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
@@ -876,11 +1004,22 @@ def validate_unique_opus_ids(ctx: ImportContext) -> None:
 
 
 def _log_scope(ctx: ImportContext) -> None:
-    """Log what a pending generation's validation reads: its generation and observations.
+    """Log what validation reads, unless it reads every row.
+
+    A pending generation's validation names the generation and the observations it added;
+    one while retired rows await the purge names the served generation.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
     """
+    served = served_generation_only(ctx)
+    if served is not None:
+        ctx.logger.log(
+            'info',
+            f'Validating generation {served}, the one served, while the observations the '
+            'last switch retired await "opus_import --purge-generations"',
+        )
+        return
     scope = generation_scope(ctx)
     if scope is None:
         return
@@ -906,7 +1045,8 @@ def do_validate(ctx: ImportContext) -> bool:
 
     Every check runs, so one run reports every failure; each is logged at error level.
     While a generation is pending the checks read what the update wrote
-    (`GenerationScope`), and the scope is logged first.
+    (`GenerationScope`); while the rows the last switch retired await the purge, the
+    served generation (`served_generation_only`). Either is logged first.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
