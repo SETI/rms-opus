@@ -71,12 +71,22 @@ _ON_TABLE = re.compile(r'\bon (?P<table>\w+)')
 _PLAN_NODE = re.compile(
     r'^(?P<indent>\s*)-> (?P<what>.*?)(?:\s+\((?:cost=|rows=|actual |never executed).*)?$'
 )
-#: A number in a statement or a plan: a literal, with its sign when the minus does not
-#: follow an operand, a row limit, a search's id in a per-search table's name
-#: (``cache_12``). A digit ending a word, as in ``time1``, is not one.
-_LITERAL = re.compile(
-    r'(?:(?<![\w)\]`\'".])-)?(?<![A-Za-z0-9.])\d+(?:\.\d*)?(?:[eE][+-]?\d+)?(?!\w)'
-)
+#: A number in a statement or a plan: a literal, with the minus before it, a row limit,
+#: a search's id in a per-search table's name (``cache_12``). A digit ending a word, as in
+#: ``time1``, is not one. Whether the minus is a sign is `_literal_placeholder`'s to say.
+_LITERAL = re.compile(r'(?P<minus>-)?(?<![A-Za-z0-9.])\d+(?:\.\d*)?(?:[eE][+-]?\d+)?(?!\w)')
+#: The words a signed literal can follow, upper-cased: after any other word a minus is
+#: an operator.
+_SIGN_AFTER = frozenset(
+    {
+        'AND', 'AS', 'BETWEEN', 'BY', 'CASE', 'DIV', 'ELSE', 'HAVING', 'IN', 'INTERVAL',
+        'IS', 'LIKE', 'LIMIT', 'MOD', 'NOT', 'OFFSET', 'ON', 'OR', 'REGEXP', 'RETURN',
+        'SELECT', 'SET', 'THEN', 'VALUES', 'WHEN', 'WHERE', 'XOR',
+    }
+)  # fmt: skip
+#: The characters that end an operand other than a word: a closing bracket or quote, or
+#: the dot of a qualified name.
+_OPERAND_END = frozenset(')]`\'".')
 #: How many hexadecimal digits of a plan shape's digest name it.
 SHAPE_ID_DIGITS = 12
 _INNER_SELECT = re.compile(r'\b(SELECT|WITH)\b', re.IGNORECASE)
@@ -314,7 +324,37 @@ def normalize_numbers(text: str) -> str:
     Returns:
         The text with its numbers written as ``?``.
     """
-    return _LITERAL.sub('?', text)
+    return _LITERAL.sub(_literal_placeholder, text)
+
+
+def _literal_placeholder(match: re.Match[str]) -> str:
+    """Return the placeholder of a literal `_LITERAL` matched.
+
+    A minus before the digits is the literal's sign unless what precedes it, past any
+    whitespace, ends an operand: a word that is not a keyword a literal can follow
+    (`_SIGN_AFTER`), a closing bracket or quote, or a dot. An operator minus stays.
+
+    Parameters:
+        match: The literal.
+
+    Returns:
+        ``?``, or ``-?`` when the minus is an operator.
+    """
+    if match.group('minus') is None:
+        return '?'
+    text = match.string
+    end = match.start()
+    while end > 0 and text[end - 1].isspace():
+        end -= 1
+    start = end
+    while start > 0 and (text[start - 1].isalnum() or text[start - 1] == '_'):
+        start -= 1
+    word = text[start:end]
+    if word:
+        operand = not word.isalpha() or word.upper() not in _SIGN_AFTER
+    else:
+        operand = end > 0 and text[end - 1] in _OPERAND_END
+    return '-?' if operand else '?'
 
 
 def plan_shape(plan: str) -> str:
