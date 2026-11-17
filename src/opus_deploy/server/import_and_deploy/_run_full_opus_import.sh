@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# A PEP 440 version specifier appended to the distribution name ("==3.23.0"),
-# or empty for the newest release. The deploy installs rms-opus from PyPI, so
-# this selects a release rather than a source revision.
+# A version spec (_version_spec.sh): a PEP 440 specifier appended to the
+# distribution name ("==3.23.0"), "@" and a git ref ("@main"), or empty for the
+# newest release.
 export OPUS_VERSION_SPEC=${1:-}
 
 export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )

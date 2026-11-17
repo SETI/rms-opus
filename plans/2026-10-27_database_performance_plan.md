@@ -9283,3 +9283,21 @@ reversions, each failing a test).
   - *Option 2:* its target is "not improved". The facet count is slower on broad searches,
     slower warm on every search, and slower for a child table's widget, and saves at most
     about 250 ms cold on mid-sized searches.
+
+### 2026-11-17, PR-23b (written against this file at 208b19c0)
+
+- **Deploying a revision with no release**, at the operator's request for an easier way
+  to test PR-23's deploy chain than building a wheel and pointing pip at it. Every
+  script that takes a version spec also takes "@" and a git branch, tag or commit, which
+  installs `rms-opus @ git+https://github.com/SETI/rms-opus.git@<ref>`
+  (`_version_spec.sh`: `is_version_spec`, `check_version_spec`,
+  `opus_requirement`). Each script checks its spec before it runs anything, so a ref
+  without its "@" is refused by name rather than by pip once an installation is half
+  built. `update_deploy_scripts.sh @<ref>` refreshes the chain from the revision, and
+  the chain-version advice names it in place of the two commands it ran.
+- **The incremental update's default** is what the served installation runs: its
+  release, or, for one pip built from git, the commit pip recorded in
+  `direct_url.json`, so an update of a revision under test needs no spec. A
+  development build with no recorded commit is still refused.
+- `opus_deploy_scripts --from` was considered and not added: `update_deploy_scripts.sh`
+  already installs a spec and rewrites the chain.

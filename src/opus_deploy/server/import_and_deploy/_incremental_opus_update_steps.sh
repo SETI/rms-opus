@@ -15,15 +15,16 @@
 #
 # parse_update_arguments [<version_spec>] [--drop <bundle>[,<bundle>...]] [<bundle> ...]
 #     Sets OPUS_VERSION_SPEC to the first argument when it begins with a PEP 440
-#     operator (= < > ! ~), and empty otherwise; UPDATE_BUNDLES to the bundles to import,
+#     operator (= < > ! ~) or "@", and empty otherwise; UPDATE_BUNDLES to the bundles to import,
 #     the positional arguments split at commas; and UPDATE_DROPS to the bundles to drop,
 #     every --drop value split at commas, less any bundle UPDATE_BUNDLES names, since a
 #     bundle imported again already loses every row its earlier copy had. --drop may be
 #     given more than once; empty names, as from a doubled comma, are skipped. Prints the
 #     usage line and returns 1, setting nothing it would otherwise use, when an option is
 #     unknown, --drop has no value, a name split from a comma-separated argument begins
-#     with "-", a version specifier comes after the first argument, or there is neither a
-#     bundle nor a --drop.
+#     with "-", a version spec comes after the first argument or is not one
+#     (is_version_spec, from _version_spec.sh, which the caller sources), or there is
+#     neither a bundle nor a --drop.
 #
 # update_invocations
 #     Prints the arguments of each opus_import invocation of the update, one invocation
@@ -54,11 +55,12 @@
 #     so _promote_steps.sh has to be sourced as well.
 #
 # deployed_release_spec <deployed directory>
-#     Prints ==<release> for the rms-opus release the served installation runs, read from
-#     its own interpreter, which is what an update installs when given no version
-#     specifier. Prints an error on standard error and returns 1 when the release cannot
-#     be read, or is a development build (a .dev or local version), which PyPI does not
-#     have.
+#     Prints the version spec of what the served installation runs, read from its own
+#     interpreter, which is what an update installs when given none: ==<release> for a
+#     release, and @<commit> for an installation pip built from a git ref, whose commit
+#     pip records (direct_url.json). Prints an error on standard error and returns 1 when
+#     the release cannot be read, or is a development build (a .dev or local version)
+#     with no recorded commit, which neither PyPI nor the repository can give again.
 
 print_update_usage() {
     local usage="Usage: run_incremental_opus_update.sh [<version_spec>]"
@@ -71,7 +73,11 @@ parse_update_arguments() {
     local -a drops=()
     local -a names
     local name bundle kept
-    if [[ ${1:-} == [=\<\>\!~]* ]]; then
+    if [[ ${1:-} == [=\<\>\!~@]* ]]; then
+        if ! is_version_spec "$1"; then
+            print_update_usage
+            return 1
+        fi
         version_spec=$1
         shift
     fi
@@ -94,7 +100,7 @@ parse_update_arguments() {
                 done
                 shift 2
                 ;;
-            -* | [=\<\>\!~]*)
+            -* | [=\<\>\!~@]*)
                 print_update_usage
                 return 1
                 ;;
@@ -210,19 +216,30 @@ served_schema_name() {
 
 deployed_release_spec() {
     local deployed=$1
-    local release
-    release=$("${deployed}/opus_venv/bin/python" -c \
-        'import importlib.metadata as m; print(m.version("rms-opus"))' 2> /dev/null) \
-        || release=""
-    if [[ -z ${release} ]]; then
+    local release commit
+    # The release on the first line, and the commit a git install was built from, if
+    # any, on the second.
+    { read -r release; read -r commit; } < <("${deployed}/opus_venv/bin/python" -c '
+import importlib.metadata as m, json
+d = m.distribution("rms-opus")
+print(d.version)
+u = json.loads(d.read_text("direct_url.json") or "{}").get("vcs_info", {})
+print(u.get("commit_id", "") if u.get("vcs") == "git" else "")
+' 2> /dev/null) || true
+    if [[ -n ${commit:-} && ${commit} =~ ^[0-9a-f]+$ ]]; then
+        echo "@${commit}"
+        return 0
+    fi
+    if [[ -z ${release:-} ]]; then
         echo "ERROR: cannot read the rms-opus release installed in ${deployed}." >&2
-        echo "       Give the update the version specifier of the release being served." >&2
+        echo "       Give the update the version spec of what is being served." >&2
         return 1
     fi
     if [[ ${release} == *+* || ${release} == *.dev* ]]; then
         echo "ERROR: ${deployed} runs rms-opus ${release}," >&2
-        echo "       a development build PyPI does not have." >&2
-        echo "       Give the update the version specifier of a release." >&2
+        echo "       a development build that records no git commit to install again." >&2
+        echo "       Give the update the version spec of what is being served: its" >&2
+        echo "       release's specifier, or '@' and its branch, tag or commit." >&2
         return 1
     fi
     echo "==${release}"

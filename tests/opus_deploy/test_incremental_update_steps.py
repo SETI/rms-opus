@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 #: The steps, and the promotion's steps they need, inside the packaged chain.
 _STEPS = 'import_and_deploy/_incremental_opus_update_steps.sh'
 _PROMOTE_STEPS = 'import_and_deploy/_promote_steps.sh'
+_VERSION_SPEC = 'import_and_deploy/_version_spec.sh'
 
 #: The usage line the update's scripts print.
 _USAGE = (
@@ -77,7 +78,8 @@ def _run_steps(
         body += f'[[ "$*" == {shlex.quote(logs_error)} ]] && echo "ERROR: bad label" >> {errors}\n'
     write_recorder(fake_bin / 'opus_import', calls, body)
     sourced = ' '.join(
-        f'source {shlex.quote(str(chain / name))};' for name in (_PROMOTE_STEPS, _STEPS)
+        f'source {shlex.quote(str(chain / name))};'
+        for name in (_VERSION_SPEC, _PROMOTE_STEPS, _STEPS)
     )
     assert BASH is not None
     finished = subprocess.run(  # nosec B603 - bash and the packaged files
@@ -136,13 +138,17 @@ def test_the_update_runs_its_invocations_in_order(
 @pytest.mark.skipif(BASH is None, reason='needs bash')
 @pytest.mark.parametrize(
     ('arguments', 'version_spec'),
-    [('==3.25.0 COISS_2001', '==3.25.0'), ('COISS_2001', '')],
-    ids=['given', 'omitted'],
+    [
+        ('==3.25.0 COISS_2001', '==3.25.0'),
+        ('@db-perf-pr-23 COISS_2001', '@db-perf-pr-23'),
+        ('COISS_2001', ''),
+    ],
+    ids=['given', 'git-ref', 'omitted'],
 )
 def test_a_leading_version_specifier_is_not_a_bundle(
     tmp_path: Path, arguments: str, version_spec: str
 ) -> None:
-    """The first argument is the version specifier when it begins with an operator."""
+    """The first argument is the version spec when it begins with an operator or "@"."""
     status, output, _ran = _run_steps(
         tmp_path,
         f'parse_update_arguments {arguments}; echo "[$OPUS_VERSION_SPEC] [${{UPDATE_BUNDLES[*]}}]"',
@@ -163,6 +169,8 @@ def test_a_leading_version_specifier_is_not_a_bundle(
         'COISS_2001 --drop --verbose',
         'COISS_2001 --force',
         'A ==3.25.0',
+        'A @main',
+        '@a..b COISS_2001',
         'COISS_2001,--scorched-earth,--yes',
         '--drop COISS_2001,--scorched-earth,--yes',
     ],
@@ -175,6 +183,8 @@ def test_a_leading_version_specifier_is_not_a_bundle(
         'drop-followed-by-option',
         'unknown-option',
         'version-not-first',
+        'git-ref-not-first',
+        'not-a-git-ref',
         'option-in-a-bundle-list',
         'option-in-a-drop-list',
     ],
@@ -283,15 +293,17 @@ def test_sourcing_the_steps_runs_nothing(tmp_path: Path) -> None:
     [
         ('3.25.0', '==3.25.0', 0),
         ('', 'cannot read the rms-opus release', 1),
-        ('3.25.1.dev4', 'a development build PyPI does not have', 1),
-        ('3.25.1.dev4+g1234abc', 'a development build PyPI does not have', 1),
+        ('3.25.1.dev4', 'records no git commit', 1),
+        ('3.25.1.dev4+g1234abc', 'records no git commit', 1),
+        ('3.25.1.dev4+g1234abc\n1234abcd', '@1234abcd', 0),
     ],
-    ids=['release', 'unreadable', 'dev-build', 'local-build'],
+    ids=['release', 'unreadable', 'dev-build', 'local-build', 'git-build'],
 )
 def test_the_deployed_release_is_read_from_the_deployed_interpreter(
     tmp_path: Path, release: str, printed: str, status: int
 ) -> None:
-    """A release PyPI has is pinned; anything else is an error and prints no pin."""
+    """A release PyPI has is pinned, and a git build's recorded commit named; anything else
+    is an error and prints no pin."""
     deployed = tmp_path / 'deployed'
     interpreter = deployed / 'opus_venv' / 'bin' / 'python'
     interpreter.parent.mkdir(parents=True)

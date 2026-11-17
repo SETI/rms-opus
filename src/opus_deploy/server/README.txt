@@ -143,6 +143,11 @@ deploy against another release's application.
     cd /opt/opus/deploy
     ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
 
+Wherever a release is named, "@" and a git branch, tag or commit names a
+revision with no release instead, which pip builds from a clone of the
+repository (the server needs git): update_deploy_scripts.sh @main, then
+deploy_new_code_only.sh @main, and so on.
+
 Then the deploy itself, and which one it is depends on the release. One deploy
 runs at a time: each takes a lock on deploy.lock in OPUS_DIR before it reads
 anything, and a second deploy started meanwhile stops at once, changing nothing.
@@ -197,7 +202,8 @@ generation, which the site does not show until it is switched in:
 The bundles named are imported, replacing the copies the database holds;
 --drop names bundles to remove. A bundle named both ways is imported. The
 update runs detached, mails its log, and holds the deploy lock until it
-ends. Without a version specifier it installs the release being served.
+ends. Without a version spec it installs what is being served: its release,
+or the git commit it was built from.
 
 promote_generation.sh takes the deploy lock, asks whether the switch would
 run (and stops nothing when it would be refused), stops the web server,
@@ -279,7 +285,8 @@ for a while.
 --------------------------------------------------------------------------------
 
   import_and_deploy/
-    update_deploy_scripts.sh          Brings this directory up to a release.
+    update_deploy_scripts.sh          Brings this directory up to a release
+                                      or a git revision.
                                       The first command of every upgrade.
     run_full_opus_import.sh           A full import, under a new installation
                                       of the release being deployed.

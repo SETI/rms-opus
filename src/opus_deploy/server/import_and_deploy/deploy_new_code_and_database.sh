@@ -28,9 +28,9 @@ if [[ $# < 1 || $# > 2 ]]; then
     echo "Usage: deploy_new_code_and_database.sh <database_name> [<version_spec>]"
     echo
     echo "  <version_spec>  a PEP 440 specifier appended to the distribution name,"
-    echo "                  for example '==3.23.0'. Omit it to install the newest"
-    echo "                  release. The deploy installs rms-opus from PyPI, so this"
-    echo "                  selects a release rather than a source revision."
+    echo "                  for example '==3.23.0', or '@' and a git branch, tag or"
+    echo "                  commit to install an unreleased revision, for example"
+    echo "                  '@main'. Omit it to install the newest release."
     exit 1
 fi
 
@@ -41,6 +41,11 @@ export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/
 
 export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
+
+source ${IMPORT_SCRIPT_DIR}/_version_spec.sh
+if ! check_version_spec deploy_new_code_and_database.sh "${OPUS_VERSION_SPEC}"; then
+    exit 1
+fi
 
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
 # One deploy at a time: held from before the served schema is read until the promotion
